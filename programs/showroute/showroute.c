@@ -40,7 +40,7 @@ const struct option optarg_options[] = {
 	{ "source\0", no_argument, &show_source, true, },
 	{ "gateway\0", no_argument, &show_gateway, true, },
 	{ "destination\0", no_argument, &show_destination, true, },
-	{ "debug\0", no_argument, NULL, OPT_DEBUG, },
+	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "ipv4\0", no_argument, NULL, OPT_IPv4, },
 	{ "ipv6\0", no_argument, NULL, OPT_IPv6, },
 	{ "verbose\0", no_argument, NULL, OPT_VERBOSE, },
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 		}
 		switch ((enum opt)c) {
 		case OPT_DEBUG:
-			optarg_debug(true);
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 		case OPT_IPv4:
 			optarg_family(&family, &ipv4_info);

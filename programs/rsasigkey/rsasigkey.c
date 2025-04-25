@@ -90,7 +90,7 @@ enum opt {
 };
 
 const struct option optarg_options[] = {
-	{ "debug\0",               no_argument,        NULL,   OPT_DEBUG, },
+	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",             no_argument,        NULL,   OPT_VERBOSE, },
 	{ "seeddev\0<device>",     required_argument,  NULL,   OPT_SEEDDEV, },
 	{ "help\0",                no_argument,        NULL,   OPT_HELP, },
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_DEBUG:
-			cur_debugging = -1;
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 
 		case OPT_SEEDDEV:       /* nonstandard random device for seed */

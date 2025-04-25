@@ -48,7 +48,7 @@ const struct option optarg_options[] =
 {
 	{ "config\0<file>",      required_argument, NULL, OPT_CONFIG },
 	{ "conn\0<conn-name>",   required_argument, NULL, OPT_CONN },
-	{ "debug\0",             no_argument, NULL, OPT_DEBUG, },
+	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
 	{ "rootdir"METAOPT_OBSOLETE, no_argument, NULL, 0, },
 	{ "rootdir2"METAOPT_OBSOLETE, no_argument, NULL, 0, },
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 			optarg_verbose(logger, LEMPTY);
 			continue;
 		case OPT_DEBUG:
-			optarg_debug(/*enable*/true);
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 
 		case OPT_CONFIG:

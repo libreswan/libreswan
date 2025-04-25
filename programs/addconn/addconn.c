@@ -175,7 +175,7 @@ enum opt {
 const struct option optarg_options[] =
 {
 	{ "config\0<file>", required_argument, NULL, OPT_CONFIG, },
-	{ "debug\0", no_argument, NULL, OPT_DEBUG, },
+	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0", no_argument, NULL, OPT_VERBOSE, },
 	{ "autoall\0", no_argument, NULL, OPT_AUTOALL, },
 	{ "addall\0", no_argument, NULL, OPT_AUTOALL, }, /* alias, backwards compat */
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_DEBUG:
-			optarg_debug(/*enable*/true);
+			optarg_debug(OPTARG_DEBUG_YES);
 			continue;
 
 		case OPT_CONFIGSETUP:
