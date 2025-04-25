@@ -11,18 +11,20 @@ west #
  echo done
 done
 west #
- run() { local c=$(basename $1) ; /testing/x509/import.sh $1.p12 ; set ipsec certutil -L -n $c ; echo " $@" ; "$@" ; ../../guestbin/ipsec-start-stop.sh $c ; }
-west #
  # This should fail as the intermediate has no BC=CA; also dump
 west #
  # intermediate.
 west #
- run real/mainca/west-bc-missing-chain-end
+ ./run.sh real/mainca/west-bc-missing-chain-end
+begin #
+ /testing/x509/import.sh real/mainca/west-bc-missing-chain-end.p12
  ipsec pk12util -w nss-pw -i real/mainca/west-bc-missing-chain-end.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n mainca -t CT,,
  ipsec certutil -O -n west-bc-missing-chain-end
 "west-bc-missing-chain-end" [E=west-bc-missing-chain-end@testing.libreswan.org,CN=west-bc-missing-chain-end.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+end #
+begin #
  ipsec certutil -L -n west-bc-missing-chain-end
 Certificate:
     Data:
@@ -66,11 +68,17 @@ Certificate:
             User
         Object Signing Flags:
             User
-+ ipsec start
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add west-bc-missing-chain-end
+end #
+begin #
+ ipsec addconn --name west-bc-missing-chain-end rightid=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org right=192.1.2.23 left=%defaultroute leftid=%fromcert leftcert=west-bc-missing-chain-end
 "west-bc-missing-chain-end": added IKEv2 connection
-+ ipsec up west-bc-missing-chain-end
+end #
+begin #
+ ipsec up west-bc-missing-chain-end
 "west-bc-missing-chain-end" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-missing-chain-end" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-missing-chain-end" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -80,8 +88,11 @@ Redirecting to: [initsystem]
 "west-bc-missing-chain-end" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west-bc-missing-chain-end" #2: IMPAIR: revival: skip scheduling revival event
 "west-bc-missing-chain-end" #1: deleting IKE SA (sent IKE_AUTH request)
-+ ipsec stop
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
 west #
  ipsec certutil -L -n west-bc-missing-chain-end
 Certificate:
@@ -131,13 +142,17 @@ west #
 west #
  # DB, has CA=no
 west #
- run bc-n-ca/bc-n-ca-west
+ ./run.sh bc-n-ca/bc-n-ca-west
+begin #
+ /testing/x509/import.sh bc-n-ca/bc-n-ca-west.p12
  ipsec pk12util -w nss-pw -i bc-n-ca/bc-n-ca-west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
  ipsec certutil -M -n bc-n-ca -t CT,,
  ipsec certutil -O -n bc-n-ca-west
 "bc-n-ca" [E=testing@libreswan.org,CN=Libreswan test CA for bc-n-ca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
   "bc-n-ca-west" [E=user-bc-n-ca-west@testing.libreswan.org,CN=bc-n-ca-west.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA]
+end #
+begin #
  ipsec certutil -L -n bc-n-ca-west
 Certificate:
     Data:
@@ -182,11 +197,17 @@ Certificate:
             User
         Object Signing Flags:
             User
-+ ipsec start
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
-+ ipsec add bc-n-ca-west
+end #
+begin #
+ ipsec addconn --name bc-n-ca-west rightid=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org right=192.1.2.23 left=%defaultroute leftid=%fromcert leftcert=bc-n-ca-west
 "bc-n-ca-west": added IKEv2 connection
-+ ipsec up bc-n-ca-west
+end #
+begin #
+ ipsec up bc-n-ca-west
 "bc-n-ca-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "bc-n-ca-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "bc-n-ca-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -196,8 +217,11 @@ Redirecting to: [initsystem]
 "bc-n-ca-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "bc-n-ca-west" #2: IMPAIR: revival: skip scheduling revival event
 "bc-n-ca-west" #1: deleting IKE SA (sent IKE_AUTH request)
-+ ipsec stop
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
 west #
  ipsec certutil -L -n bc-n-ca
 Certificate:
