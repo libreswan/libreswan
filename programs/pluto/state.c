@@ -86,14 +86,7 @@ bool uniqueIDs = false;
  * is done outside pluto, by ipsec checknflog
  */
 uint16_t pluto_nflog_group = 0;
-
-#ifdef XFRM_LIFETIME_DEFAULT
-/*
- * Note: variable is only used to display in ipsec status
- * actual work is done outside pluto, via sysctl interface.
- */
-uint16_t pluto_xfrmlifetime = 30;
-#endif
+deltatime_t pluto_expire_lifetime;
 
 /*
  * Handle for each and every state.

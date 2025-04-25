@@ -280,7 +280,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKEBUF, NULL, NULL, },
   { "ike-socket-errqueue",  kv_config,  kt_bool,  KBF_IKE_ERRQUEUE, NULL, NULL, },
 #ifdef XFRM_LIFETIME_DEFAULT
-  { "xfrmlifetime",  kv_config,  kt_unsigned,  KBF_XFRMLIFETIME, NULL, NULL, },
+  { "expire-lifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, NULL, },
+  { "xfrmlifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, NULL, }, /* legacy */
 #endif
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
   { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete variant, very common */

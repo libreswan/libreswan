@@ -1,0 +1,33 @@
+<varlistentry>
+  <term>
+    <option>expire-lifetime</option>
+  </term>
+  <listitem>
+    <para>
+      The time in seconds until the acquire kernel state times out.
+      On &Linux;, the default value, determined by
+      <filename>/proc/sys/net/core/xfrm_acq_expires</filename> is 30
+      seconds.  On BSD, this option is ignored.
+    </para>
+    <para>
+      On-demand connections (such as Opportunistic,
+      <option>auto=ondemand</option>, or <command>ipsec
+      route</command>) have an IPsec trap policy installed in the
+      kernel.  If an outgoing (or inbound) packet matches this policy,
+      a state is created in the kernel and then the kernel sends an
+      ACQUIRE message to the IKE daemon pluto.  While this state is in
+      place, no new acquires will come in for this connection.  The
+      default should be fine for most people.  One use case of
+      shortening these is if opportunistc encryption is used towards
+      cloud instances that can quickly re-use IP addresses.
+    </para>
+    <para>
+      See also <option>failureshunt</option> and
+      <option>negotiationshunt</option>
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.3 this option was called
+      <option>xfrmlifetime</option>.
+    </para>
+  </listitem>
+</varlistentry>
