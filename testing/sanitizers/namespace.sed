@@ -15,3 +15,4 @@ s/qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000/state UNKNOWN
 s/ brd [0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\} scope/ scope/
 s/^\(default .*\) metric 1024 pref medium/\1/g
 /^::1 dev lo proto kernel metric 256 pref medium/d
+/nsenter --mount/d
