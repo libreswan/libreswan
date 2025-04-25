@@ -150,7 +150,3 @@ west #
  echo done
 done
 west #
- # stop on east caused crash on west at some point in the past
-west #
- hostname |grep west > /dev/null || ipsec stop
-west #

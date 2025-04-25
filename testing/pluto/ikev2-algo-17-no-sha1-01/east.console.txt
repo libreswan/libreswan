@@ -130,8 +130,3 @@ east #
  echo "initdone"
 initdone
 east #
- # stop on east caused crash on west at some point in the past
-east #
- hostname |grep west > /dev/null || ipsec stop
-Redirecting to: [initsystem]
-east #
