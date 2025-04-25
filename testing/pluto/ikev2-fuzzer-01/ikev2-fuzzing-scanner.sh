@@ -44,6 +44,17 @@ string=""
 RESULT=""
 pl=""
 
+# Wrap the command in begin#/end# markers that the sanitizer will
+# recognize a command between prompts, that way the command's output
+# will be sanitized.
+
+RUN() {
+    echo "begin #"
+    echo " $@"
+    "$@"
+    echo "end #"
+}
+
 random_len() {
 	FLOOR=30;
 	CEILING=${max_len};
@@ -84,10 +95,10 @@ do
 		count=$((count+1))
 	fi
 	echo "" > /tmp/pluto.log
-	ipsec start
+	RUN ipsec start
 	../../guestbin/wait-until-pluto-started
 	plutopid=$(cat /run/pluto/pluto.pid)
-	ipsec auto --add test
+	RUN ipsec add test
 	if [ $? != 0 ] ; then
 		continue
 	fi
@@ -99,7 +110,7 @@ do
 	echo "${pl}" | xxd -r -p | nc -u $IP 500 || echo "expect error"
 	(pidof pluto | grep ${plutopid} > /dev/null) || echo "pluto crashed?"
 	ipsec status 2>/dev/null > /dev/null
-	ipsec stop
+	RUN ipsec stop
 	# grep "bytes from" /tmp/pluto.log
 	# grep "sending" /tmp/pluto.log || echo ""
 	sleep 1

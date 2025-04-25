@@ -19,16 +19,17 @@ echo :
 echo :
 
 RUN() {
+    echo "begin #"
     echo " $@"
     "$@"
+    echo "end #"
 }
 
 echo : ${conn} RESTARTING PLUTO
-ipsec stop
+RUN ipsec stop
 rm OUTPUT/road.pluto.log
 ln -s road.pluto.${conn}.log OUTPUT/road.pluto.log
-# frequent shunt checks; also needs shuntlifetime 10s
-ipsec start
+RUN ipsec start
 ../../guestbin/wait-until-pluto-started
 
 echo : ${conn} LOADING CONNECTION

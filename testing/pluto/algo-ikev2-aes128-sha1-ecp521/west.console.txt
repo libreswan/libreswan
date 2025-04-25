@@ -28,8 +28,14 @@ conn algo
 /etc/ipsec.d/ipsec.secrets ...
 @west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 starting pluto ...
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add algo
 "algo": added IKEv2 connection
+end #
 west #
  ipsec auto --up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

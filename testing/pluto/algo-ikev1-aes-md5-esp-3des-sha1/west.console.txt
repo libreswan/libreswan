@@ -28,8 +28,14 @@ conn algo
 /etc/ipsec.d/ipsec.secrets ...
 @west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 starting pluto ...
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add algo
 "algo": added IKEv1 connection
+end #
 west #
  ipsec auto --up algo
 "algo" #1: initiating IKEv1 Main Mode connection

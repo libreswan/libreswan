@@ -5,62 +5,233 @@ initdone
 west #
  count_max=20 ./ikev2-fuzzing-scanner.sh
 ./ikev2-fuzzing-scanner.sh run 20 times
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec start
 Redirecting to: [initsystem]
+end #
+begin #
+ ipsec add test
 "test": added IKEv2 connection
+end #
+begin #
+ ipsec stop
 Redirecting to: [initsystem]
+end #
 ran 20 times
 west #

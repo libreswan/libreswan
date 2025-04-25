@@ -19,8 +19,10 @@ echo :
 echo :
 
 RUN() {
+    echo "begin #"
     echo " $@"
     "$@"
+    echo "end #"
 }
 
 echo : ${conn} RESTARTING PLUTO

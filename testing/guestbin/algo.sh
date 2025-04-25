@@ -1,5 +1,12 @@
 # algo-{ikev1,ikev2}-<ike>-{esp,ah}-<esp|ah>
 
+RUN() {
+    echo "begin #"
+    echo " $@"
+    "$@"
+    echo "end #"
+}
+
 if test $# -gt 0 ; then
     d=$1
     install=false
@@ -124,7 +131,7 @@ EOF
 echo starting pluto ...
 
 if ${install} ; then
-    ipsec start
+    RUN ipsec start
     ../../guestbin/wait-until-pluto-started
-    ipsec auto --add algo
+    RUN ipsec add algo
 fi
