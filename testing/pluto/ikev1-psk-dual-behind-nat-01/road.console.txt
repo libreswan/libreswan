@@ -83,10 +83,10 @@ src 192.0.2.102/32 dst 0.0.0.0/0
 road #
  # check both connections still work on east
 road #
- hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.101
+ hostname | grep east > /dev/null && ../../guestbin/ping-once.sh --up 192.0.2.101
 road #
- hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.102
+ hostname | grep east > /dev/null && ../../guestbin/ping-once.sh --up 192.0.2.102
 road #
  ipsec whack --trafficstatus
-#2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, lease=192.0.2.102/32
+#2: "road-east", username=xroad, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, lease=192.0.2.102/32
 road #

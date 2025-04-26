@@ -80,10 +80,10 @@ src 192.0.2.101/32 dst 0.0.0.0/0
 north #
  # check both connections still work on east
 north #
- hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.101
+ hostname | grep east > /dev/null && ../../guestbin/ping-once.sh --up 192.0.2.101
 north #
- hostname | grep east > /dev/null && ping -n -q -c 2 192.0.2.102
+ hostname | grep east > /dev/null && ../../guestbin/ping-once.sh --up 192.0.2.102
 north #
  ipsec whack --trafficstatus
-#2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, lease=192.0.2.101/32
+#2: "north-east", username=use1, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, lease=192.0.2.101/32
 north #

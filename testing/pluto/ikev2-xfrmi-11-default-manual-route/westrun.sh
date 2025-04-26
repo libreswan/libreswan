@@ -4,6 +4,6 @@ ipsec auto --up west
 # add route
 ../../guestbin/ip.sh address add 192.0.1.254/24 dev ipsec1
 ../../guestbin/ip.sh route add 192.0.2.0/24 dev ipsec1
-ping -n -q -w 4 -c 2 -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ../../guestbin/ip.sh -s link show ipsec1
 echo done

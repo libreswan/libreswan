@@ -25,24 +25,21 @@ north #
 "northnet-eastnet" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "northnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
- ping -n -q -w 4 -c 2 -I 192.0.3.254 192.0.22.254
-PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
---- 192.0.22.254 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.22.254
+up
 north #
  echo done
 done
 north #
  ipsec whack --trafficstatus
-#2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+#2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 north #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
-           168       2      0       0       0       0 
+            84       1      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
-           168       2      0       0       0       0 
+            84       1      0       0       0       0 
 north #
  ../../guestbin/ip.sh rule show
 0:	from all lookup local
