@@ -31,9 +31,7 @@ set #
 "rise-set": added IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 198.18.15.15 198.18.12.12
-PING 198.18.12.12 (198.18.12.12) from 198.18.15.15 : 56(84) bytes of data. From 198.18.15.15 icmp_seq=1 Destination Host Unreachable --- 198.18.12.12 ping statistics --- 1 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+up
 set #
  ipsec _kernel state
 src 198.18.1.15 dst 198.18.1.12

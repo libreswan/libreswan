@@ -43,9 +43,7 @@ west #
 initiate completed successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. From 192.0.1.254 icmp_seq=1 Destination Host Unreachable --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, +1 errors, 100% packet loss, time XXXX
+up
 west #
  ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.1.0/24

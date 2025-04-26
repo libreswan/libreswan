@@ -16,9 +16,7 @@ east #
 "east-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
 east #
  ../../guestbin/ping-once.sh --up -I 192.0.2.254 192.0.1.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.2.254 192.0.1.254
-PING 192.0.1.254 (192.0.1.254) from 192.0.2.254 : 56(84) bytes of data. --- 192.0.1.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+up
 east #
  ipsec showstates
 #1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); RETRANSMIT in XXs; REKEY in XXs; REPLACE in XXs; newest; idle;
