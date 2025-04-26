@@ -6,9 +6,8 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-null
-"westnet-eastnet-null": ikev2=no has been replaced by keyexchange=ikev1
-"westnet-eastnet-null": added IKEv1 connection
+ ipsec add west-east
+"west-east": added IKEv1 connection
 east #
  echo "initdone"
 initdone

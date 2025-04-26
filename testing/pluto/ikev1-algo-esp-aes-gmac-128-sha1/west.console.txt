@@ -24,37 +24,29 @@ west #
 west #
  ipsec whack --impair suppress-retransmits
 west #
- ipsec whack --impair proposal-parser
-west #
- ipsec auto --add westnet-eastnet-null
-"westnet-eastnet-null": ikev2=no has been replaced by keyexchange=ikev1
-"westnet-eastnet-null": IMPAIR: ignoring proposal error: AEAD ESP encryption algorithm NULL_AUTH_AES_GMAC must have 'NONE' as the integrity algorithm
-"westnet-eastnet-null": added IKEv1 connection
+ ipsec add west-east
+"west-east": added IKEv1 connection
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-null
-"westnet-eastnet-null" #1: initiating IKEv1 Main Mode connection
-"westnet-eastnet-null" #1: sent Main Mode request
-"westnet-eastnet-null" #1: sent Main Mode I2
-"westnet-eastnet-null" #1: sent Main Mode I3
-"westnet-eastnet-null" #1: Peer ID is ID_FQDN: '@east'
-"westnet-eastnet-null" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
-"westnet-eastnet-null" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
-"westnet-eastnet-null" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=NULL_AUTH_AES_GMAC_128-HMAC_SHA1_96 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
-"westnet-eastnet-null" #2: sent Quick Mode request
-"westnet-eastnet-null" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
-"westnet-eastnet-null" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-null" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
-ERROR: "westnet-eastnet-null" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
+ ipsec up west-east
+"west-east" #1: initiating IKEv1 Main Mode connection
+"west-east" #1: sent Main Mode request
+"west-east" #1: sent Main Mode I2
+"west-east" #1: sent Main Mode I3
+"west-east" #1: Peer ID is ID_FQDN: '@east'
+"west-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
+"west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
+"west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=NULL_AUTH_AES_GMAC_128-NONE pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
+"west-east" #2: sent Quick Mode request
+"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
+#2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

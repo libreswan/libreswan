@@ -1,4 +1,4 @@
-ipsec auto --up westnet-eastnet-null
+ipsec up west-east
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-ipsec whack --trafficstatus
+ipsec trafficstatus
 echo done
