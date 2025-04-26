@@ -32,7 +32,9 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
+ # expect a fail - peer's password is missing
+west #
+ ipsec up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -43,12 +45,12 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. --- 192.0.2.254 ping statistics --- 1 packets transmitted, 0 received, 100% packet loss, time XXXX
+ # expect block/acquire stopping traffic
 west #
- ipsec whack --trafficstatus
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec trafficstatus
 west #
  echo done
 done
