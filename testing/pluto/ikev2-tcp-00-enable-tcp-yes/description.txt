@@ -1,5 +1,8 @@
-IKEv2 roadwarrior configured to start with TCP and skip UDP completely.
+initiator has enable-tcp=yes, only tries TCP, succeeds
 
-east blocks UDP just in case.
+EAST has UDP blocked
 
-connection should establish with TCP.
+WEST tries with TCP and establishes.
+
+(yes, enable-tcp=yes gives no hint that it has the side effect of
+disabling UDP)

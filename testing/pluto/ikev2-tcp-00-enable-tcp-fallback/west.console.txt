@@ -30,6 +30,8 @@ initdone
 west #
  ipsec whack --impair revival
 west #
+ # UDP will fail
+west #
  ipsec up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -37,6 +39,13 @@ west #
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "west" #1: IMPAIR: revival: skip scheduling revival event
 "west" #1: deleting IKE SA (sent IKE_SA_INIT request)
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec trafficstatus
+west #
+ # TCP will succeed
 west #
  ipsec whack --impair trigger_revival:1
 "west": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
@@ -51,7 +60,7 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # should show tcp being used

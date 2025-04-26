@@ -28,7 +28,9 @@ west #
  echo "initdone"
 initdone
 west #
- # unfortunately does not yet indicate it is using TCP
+ ipsec whack --impair revival
+west #
+ # TCP will establish!
 west #
  ipsec up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using TCP
@@ -41,10 +43,10 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
+ ipsec trafficstatus
 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- # should show tcp being used
+ # should show TCP state and policy
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23

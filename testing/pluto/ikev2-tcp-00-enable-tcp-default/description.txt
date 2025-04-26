@@ -1,1 +1,6 @@
-initiator has enable-tcp=no responder has enable-tcp=yes; should fail
+initiator has the default #enable-tcp=no responder has enable-tcp=yes; should fail
+
+EAST has UDP blocked
+
+West tries with UPD and fails.
+West retries with UDP and still fails.

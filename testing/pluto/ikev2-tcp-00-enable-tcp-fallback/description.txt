@@ -1,4 +1,6 @@
-IKEv2 roadwarrior configured with TCP fallback.
+initiator with enable-tcp=fallback, tries UDP the TCP
 
-east blocks UDP so road should trigger the fallback and the
-connection should establish with TCP.
+EAST has UDP blocked
+
+WEST tries with UDP and fails.
+WEST retries with TCP and succeeds.
