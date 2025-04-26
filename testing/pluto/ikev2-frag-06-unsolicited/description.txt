@@ -1,2 +1,2 @@
-east sends an unsolicited IKEV2_FRAGMENTATION_SUPPORTED
+east sends an unsolicited IKEV2_FRAGMENTATION_SUPPORTED, it should be ignored
 
