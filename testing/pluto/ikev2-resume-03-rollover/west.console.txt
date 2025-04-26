@@ -31,7 +31,7 @@ west #
 west #
  ipsec whack --suspend --name west-east
 west #
- # resume after one key rollover
+ # resume after one key rollover; since east has old key things work
 west #
  ipsec up west-east
 "west-east" #3: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
@@ -50,7 +50,9 @@ west #
 west #
  ipsec whack --suspend --name west-east
 west #
- # resume after two key rollovers - ticket expired
+ # resume after two key rollovers - east has lost key causing expire
+west #
+ # fortunately revival kicks in and the session establishes
 west #
  ipsec up west-east
 "west-east" #5: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
@@ -67,10 +69,8 @@ west #
 "west-east" #6: received v2N_TICKET_LT_OPAQUE
 "west-east" #7: initiator established Child SA using #6; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-up UNEXPECTED
-# ping -n -c 1  -i 2 -w 1   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data. 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms --- 192.0.2.254 ping statistics --- 1 packets transmitted, 1 received, 0% packet loss, time XXXX rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  ipsec trafficstatus
 #7: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'

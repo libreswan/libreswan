@@ -1,1 +1,10 @@
-IKE_SESSION_RESUME of IKE SA which was first authenticated using PSK
+attempted IKE_SESSION_RESUME of IKE SA, when EAST has rolled over it's secret
+
+One rollover:
+
+Because EAST keeps the previous secret the resume works.
+
+Two rollovers:
+
+Now EASt has lost WEST's resume secret so the resume is rejected.  But
+because the connection is "up" it goes onto revival.

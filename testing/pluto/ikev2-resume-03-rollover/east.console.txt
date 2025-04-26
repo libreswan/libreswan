@@ -12,13 +12,19 @@ east #
  echo "initdone"
 initdone
 east #
+ # cause secrets to rollover
+east #
  ipsec whack --impair trigger:EVENT_REINIT_SECRET
 IMPAIR: injecting timer event EVENT_REINIT_SECRET
 refreshed session resume keys, issuing key 2
 east #
- ipsec whack --impair trigger:EVENT_REINIT_SECRET --impair trigger:EVENT_REINIT_SECRET
+ # roll over key twice; looses key west used
+east #
+ ipsec whack --impair trigger:EVENT_REINIT_SECRET
 IMPAIR: injecting timer event EVENT_REINIT_SECRET
 refreshed session resume keys, issuing key 3
+east #
+ ipsec whack --impair trigger:EVENT_REINIT_SECRET
 IMPAIR: injecting timer event EVENT_REINIT_SECRET
 refreshed session resume keys, issuing key 4
 east #
