@@ -3,11 +3,8 @@ Creating NSS database containing host keys
 road #
  # confirm that the network is alive
 road #
- ping6 -n -q -c 4 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
+up
 road #
  # ensure that clear text does not get through
 road #
@@ -17,10 +14,8 @@ road #
 road #
  # confirm clear text does not get through
 road #
- ping6 -n -q -c 4 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down 2001:db8:1:2::23
+down
 road #
  ipsec start
 Redirecting to: [initsystem]
@@ -67,14 +62,11 @@ road #
 "v6-tunnel-east-road" #2: sent Quick Mode request
 "v6-tunnel-east-road" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 road #
- ping6 -n -q -c 4 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
+up
 road #
  ipsec whack --trafficstatus
-#2: "v6-tunnel-east-road", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+#2: "v6-tunnel-east-road", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@east'
 road #
  echo done
 done

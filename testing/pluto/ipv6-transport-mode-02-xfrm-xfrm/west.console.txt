@@ -3,11 +3,8 @@ Creating NSS database containing host keys
 west #
  # confirm that the network is alive
 west #
- ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:1:2::45 2001:db8:1:2::23
+up
 west #
  # ensure that clear text does not get through
 west #
@@ -17,11 +14,8 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:1:2::45 2001:db8:1:2::23
+up
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -169,11 +163,8 @@ west #
 "v6-transport" #2: sent Quick Mode request
 "v6-transport" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- ping6 -n -q -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:1:2::45 2001:db8:1:2::23
+up
 west #
  ipsec _kernel state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23

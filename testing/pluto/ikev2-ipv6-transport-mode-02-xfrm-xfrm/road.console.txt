@@ -3,11 +3,8 @@ Creating NSS database containing host keys
 road #
  # confirm that the network is alive
 road #
- ping6 -n -q -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:3::209 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:1:3::209 2001:db8:1:2::23
+up
 road #
  ip6tables -A INPUT -i eth0 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j DROP
 road #
@@ -15,10 +12,8 @@ road #
 road #
  # confirm clear text does not get through
 road #
- ping6 -n -q -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:3::209 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 2001:db8:1:3::209 2001:db8:1:2::23
+down
 road #
  ipsec start
 Redirecting to: [initsystem]
@@ -62,11 +57,8 @@ road #
 "v6-transport" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "v6-transport" #2: initiator established Child SA using #1; IPsec transport [2001:db8:1:3::209/128===2001:db8:1:2::23/128] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
- ping6 -n -q -c 4 -I 2001:db8:1:3::209 2001:db8:1:2::23
-PING 2001:db8:1:2::23 (2001:db8:1:2::23) from 2001:db8:1:3::209 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:1:3::209 2001:db8:1:2::23
+up
 road #
  echo done
 done

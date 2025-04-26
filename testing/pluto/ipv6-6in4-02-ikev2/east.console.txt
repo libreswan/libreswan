@@ -13,7 +13,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-#2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@west'
+#2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@west'
 east #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.2.45

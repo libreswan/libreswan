@@ -3,11 +3,8 @@ Creating NSS database containing host keys
 west #
  # confirm that the network is alive
 west #
- ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
---- 2001:db8:0:2::254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
+up
 west #
  # ensure that clear text does not get through
 west #
@@ -17,10 +14,8 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
---- 2001:db8:0:2::254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+ ../../guestbin/ping-once.sh --down -I 2001:db8:0:1::254 2001:db8:0:2::254
+down
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -66,17 +61,14 @@ west #
 "westnet-eastnet-6in4" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-6in4" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
-PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
---- 2001:db8:0:2::254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
+up
 west #
  echo done
 done
 west #
  ipsec whack --trafficstatus
-#2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=2^63B, id='@east'
+#2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@east'
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
