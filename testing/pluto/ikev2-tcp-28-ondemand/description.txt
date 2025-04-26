@@ -1,1 +1,1 @@
-Basic pluto test with west has auto=ondemand and xfrm stack, using TCP.
+Basic pluto test with west has auto=ondemand using TCP only
