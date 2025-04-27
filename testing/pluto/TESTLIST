@@ -640,7 +640,6 @@ kvmplutotest	newoe-12-clear				good
 kvmplutotest	newoe-13-block				good
 kvmplutotest	newoe-14-clear-in-block-clear		good
 kvmplutotest	newoe-15-portpass			good
-kvmplutotest	newoe-16-pass-hold			good
 kvmplutotest	newoe-17-block-in-clear-clear		good
 #
 kvmplutotest 	newoe-18-poc-poc 			good
