@@ -17,7 +17,6 @@ REF_CONSOLE_FIXUPS+=" ipsec-stop.sed"
 REF_CONSOLE_FIXUPS+=" ipsec-restart.sed"
 
 REF_CONSOLE_FIXUPS+=" pluto-whack-sanitize.sed"
-REF_CONSOLE_FIXUPS+=" host-ping-sanitize.sed"
 REF_CONSOLE_FIXUPS+=" namespace.sed"
 REF_CONSOLE_FIXUPS+=" xfrmi.sed"
 # note order, sed goes first
