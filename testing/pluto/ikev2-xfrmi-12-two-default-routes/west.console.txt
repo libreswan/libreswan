@@ -13,5 +13,5 @@ west #
 initdone
 west #
  ipsec whack --trafficstatus
-#2: "north-west-default", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@north'
+#2: "north-west-default", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
 west #

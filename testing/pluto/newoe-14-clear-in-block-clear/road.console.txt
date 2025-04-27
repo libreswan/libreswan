@@ -23,11 +23,8 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -q -w 2 -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  # wait on OE retransmits and rekeying
 road #
@@ -93,11 +90,8 @@ road #
 road #
  # ping should succeed due to mutual clear policy
 road #
- ping -n -q -w 2 -c 1 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
 road #
  echo done
 done

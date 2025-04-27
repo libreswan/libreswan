@@ -18,11 +18,9 @@ westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #
- ping -n -q -s 80 -c 8 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 80(108) bytes of data.
---- 192.0.2.254 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # approx 7 pings trigger rekey
+west #
+ ping -n -q -s 80 -c 8 -I 192.0.1.254 192.0.2.254 > /dev/null
 west #
  # this should have something like westnet-eastnet-ikev2{3} and no packet loss.
 west #

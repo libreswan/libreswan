@@ -13,7 +13,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-#2: "eastnet-any"[1] 192.1.33.222, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='192.1.3.209', lease=192.0.3.10/32
+#2: "eastnet-any"[1] 192.1.33.222, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='192.1.3.209', lease=192.0.3.10/32
 east #
  ipsec _kernel state
 src 192.1.33.222 dst 192.1.2.23

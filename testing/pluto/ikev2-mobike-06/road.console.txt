@@ -31,14 +31,11 @@ road #
 "road-eastnet"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.3.10
 "road-eastnet"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.10/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATD=192.1.2.23:4500 DPD=passive}
 road #
- ping -n -q -W 1 -c 2 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-2 packets transmitted, 2 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='192.1.2.23', lease=192.0.3.10/32
+#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23', lease=192.0.3.10/32
 road #
  # note this end should be 192.1.3.209
 road #
@@ -113,11 +110,8 @@ road #
 road #
  # MOBIKE ping should work
 road #
- ping -n -q -W 8 -c 8 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up 192.1.2.23
+up
 road #
  # "ip xfrm" output this end should be 192.1.33.222
 road #
@@ -125,7 +119,7 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=840, outBytes=840, maxBytes=2^63B, id='192.1.2.23', lease=192.0.3.10/32
+#2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='192.1.2.23', lease=192.0.3.10/32
 road #
  ipsec _kernel state
 src 192.1.2.23 dst 192.1.33.222

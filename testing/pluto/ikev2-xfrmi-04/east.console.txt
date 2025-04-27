@@ -28,14 +28,14 @@ initdone
 east #
  ipsec whack --trafficstatus
 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@north'
-#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@west'
+#2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
 east #
  ../../guestbin/ip.sh -s link show ipsec1
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     RX:  bytes packets errors dropped  missed   mcast           
-           252       3      0       0       0       0 
+           168       2      0       0       0       0 
     TX:  bytes packets errors dropped carrier collsns           
-           252       3      0       0       0       0 
+           168       2      0       0       0       0 
 east #
  ../../guestbin/ip.sh rule show
 0:	from all lookup local

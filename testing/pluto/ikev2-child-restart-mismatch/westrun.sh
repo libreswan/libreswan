@@ -1,5 +1,5 @@
 ipsec auto --up westnet-eastnet-ikev2a
-ping -n -q -w 1 -c 4 -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 # These two conns are mismatched and should fail
 # The whack should release the socket on receiving NO_PROPOSAL_CHOSEN
 ipsec auto --up westnet-eastnet-ikev2b
