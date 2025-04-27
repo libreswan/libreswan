@@ -25,18 +25,30 @@ west #
 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- # find out the actual number of packets
+ # find out the actual number of bytes
 west #
  actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
 west #
  echo $actual
 512
 west #
- pings() { local n=0 ; while test $n -lt $1 ; do  n=$((n + 1)) ; ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; done ; }
+ # First take the SA up-to, but not over, the limit by spraying the
 west #
- pingover() { while ipsec trafficstatus | grep -e "$1" ; do ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; sleep 5 ; done ; }
+ # peer with ping packets.
 west #
- pings $((actual / 84))
+ #
+west #
+ # Second, slowly drip packets into the SA until the trafficstatus for
+west #
+ # the state disappears indicating a replace/rekey.
+west #
+ spray() { local n=0 ; while test $n -lt $1 ; do  n=$((n + 1)) ; ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; done ; }
+west #
+ drip() { while ipsec trafficstatus | grep -e "$1" ; do ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; sleep 5 ; done ; }
+west #
+ # once
+west #
+ spray $((actual / 84))
 up
 up
 up
@@ -44,13 +56,15 @@ up
 up
 up
 west #
- pingover '#2'
+ drip '#2'
 #2: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
 up
 #2: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2KiB, id='@east'
 up
 west #
- pings $((actual / 84))
+ # twice
+west #
+ spray $((actual / 84))
 up
 up
 up
@@ -58,13 +72,15 @@ up
 up
 up
 west #
- pingover '#3'
+ drip '#3'
 #3: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
 up
 #3: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2KiB, id='@east'
 up
 west #
- pings $((actual / 84))
+ # thrice
+west #
+ spray $((actual / 84))
 up
 up
 up
@@ -72,7 +88,7 @@ up
 up
 up
 west #
- pingover '#4'
+ drip '#4'
 #4: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
 up
 #4: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2KiB, id='@east'

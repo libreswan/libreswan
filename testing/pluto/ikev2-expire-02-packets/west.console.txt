@@ -32,54 +32,76 @@ west #
  echo $actual
 5
 west #
- # $actual-1 pings will not trigger rekey; expect #2 to remain
+ # First take the SA up-to, but not over, the limit by spraying the
 west #
- ping -n -q -c $((actual - 1)) -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # peer with ping packets.
 west #
- ipsec trafficstatus
+ #
+west #
+ # Second, slowly drip packets into the SA until the trafficstatus for
+west #
+ # the state disappears indicating a replace/rekey.
+west #
+ spray() { local n=0 ; while test $n -lt $1 ; do  n=$((n + 1)) ; ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; done ; }
+west #
+ drip() { while ipsec trafficstatus | grep -e "$1" ; do ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; sleep 5 ; done ; }
+west #
+ # once; add one for compression
+west #
+ spray $((actual / 84 + 1))
+up
+west #
+ drip '#2'
+#2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+up
+#2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+up
+#2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+up
 #2: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+up
+#2: "west", type=ESP, add_time=1234567890, inBytes=420, outBytes=420, maxBytes=2^63B, id='@east'
+up
 west #
- # next ping will go over and initiate a rekey; and then further pings
+ # twice; add one for compression
 west #
- # go to #3
+ spray $((actual / 84 + 1))
+up
 west #
- ping -n -q -c ${actual} -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- sleep 5
-west #
- ipsec trafficstatus
+ drip '#3'
+#3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+up
+#3: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
+up
 #3: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+up
+#3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+up
+#3: "west", type=ESP, add_time=1234567890, inBytes=420, outBytes=420, maxBytes=2^63B, id='@east'
+up
 west #
- # and again
+ # thrice; add one for compression
 west #
- ping -n -q -c ${actual} -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ spray $((actual / 84 + 1))
+up
 west #
- sleep 5
-west #
- ipsec trafficstatus
+ drip '#4'
+#4: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+up
 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
-west #
- echo done
-done
+up
+#4: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^63B, id='@east'
+up
+#4: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
+up
+#4: "west", type=ESP, add_time=1234567890, inBytes=420, outBytes=420, maxBytes=2^63B, id='@east'
+up
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
@@ -87,7 +109,6 @@ src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4

@@ -25,65 +25,77 @@ west #
 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- # find out the actual number of packets
+ # find out the actual number of bytes (need to allow for compression)
 west #
  actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
 west #
  echo $actual
 512
 west #
- # pings will get to almost rekey, but rekey wouldn't trigger; expect
+ # First take the SA up-to, but not over, the limit by spraying the
 west #
- # only #2 IPsec original Child SA; expression truncates but that is
+ # peer with ping packets.
 west #
- # good enough
+ #
 west #
- ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-6 packets transmitted, 6 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # Second, slowly drip packets into the SA until the trafficstatus for
 west #
- ipsec trafficstatus
-#2: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
+ # the state disappears indicating a replace/rekey.
 west #
- # next pings will go over and initiate a rekey expect only #3 IPsec
+ spray() { local n=0 ; while test $n -lt $1 ; do  n=$((n + 1)) ; ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; done ; }
 west #
- # first rekeyed Child SA #2 should have expired and replaced.
+ drip() { while ipsec trafficstatus | grep -e "$1" ; do ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; sleep 5 ; done ; }
 west #
- ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-6 packets transmitted, 6 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # once; add one for compression
 west #
- sleep 5
+ spray $((actual / 84 + 1))
+up
+up
+up
+up
+up
+up
+up
 west #
- ipsec trafficstatus
-#3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2KiB, id='@east'
+ drip '#2'
+#2: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2KiB, id='@east'
+up
 west #
- # expect only #4 IPsec second rekeyed Child SA
+ # twice; add one for compression
 west #
- ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-6 packets transmitted, 6 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ spray $((actual / 84 + 1))
+up
+up
+up
+up
+up
+up
+up
 west #
- sleep 5
+ drip '#3'
+#3: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2KiB, id='@east'
+up
 west #
- ipsec trafficstatus
-#4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
+ # thrice; add one for compression
 west #
- echo done
-done
+ spray $((actual / 84 + 1))
+up
+up
+up
+up
+up
+up
+up
+west #
+ drip '#4'
+#4: "west", type=ESP, add_time=1234567890, inBytes=588, outBytes=588, maxBytes=2KiB, id='@east'
+up
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
@@ -92,12 +104,10 @@ src 192.1.2.45 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
-	lastused YYYY-MM-DD HH:MM:SS
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 flag esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -142,6 +152,7 @@ west #
  grep "initiating rekey to replace Child SA" OUTPUT/$(hostname).pluto.log
 "west" #3: initiating rekey to replace Child SA #2 using IKE SA #1
 "west" #4: initiating rekey to replace Child SA #3 using IKE SA #1
+"west" #5: initiating rekey to replace Child SA #4 using IKE SA #1
 west #
  # should be absent
 west #
@@ -157,4 +168,7 @@ west #
 "west" #3: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
 "west" #3: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
 "west" #3: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+"west" #4: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
+"west" #4: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+"west" #4: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
 west #

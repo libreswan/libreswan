@@ -1,28 +1,33 @@
 ipsec auto --up west
 
-# find out the actual number of packets
-actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
-echo $actual
-
-# pings will get to almost rekey, but rekey wouldn't trigger; expect
-# only #2 IPsec original Child SA; expression truncates but that is
-# good enough
-ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 : ==== cut ====
 ip -s xfrm state
 : ==== tuc ====
 
-ipsec trafficstatus
+# find out the actual number of bytes (need to allow for compression)
+actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
+echo $actual
 
-# next pings will go over and initiate a rekey expect only #3 IPsec
-# first rekeyed Child SA #2 should have expired and replaced.
-ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
-sleep 5
-ipsec trafficstatus
+# First take the SA up-to, but not over, the limit by spraying the
+# peer with ping packets.
+#
+# Second, slowly drip packets into the SA until the trafficstatus for
+# the state disappears indicating a replace/rekey.
 
-# expect only #4 IPsec second rekeyed Child SA
-ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
-sleep 5
-ipsec trafficstatus
+spray() { local n=0 ; while test $n -lt $1 ; do  n=$((n + 1)) ; ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; done ; }
+drip() { while ipsec trafficstatus | grep -e "$1" ; do ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; sleep 5 ; done ; }
 
-echo done
+# once; add one for compression
+
+spray $((actual / 84 + 1))
+drip '#2'
+
+# twice; add one for compression
+
+spray $((actual / 84 + 1))
+drip '#3'
+
+# thrice; add one for compression
+
+spray $((actual / 84 + 1))
+drip '#4'

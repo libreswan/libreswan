@@ -27,13 +27,41 @@ west #
 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
+ # First take the SA up-to, but not over, the limit by spraying the
+west #
+ # peer with ping packets.
+west #
+ #
+west #
+ # Second, slowly drip packets into the SA until the trafficstatus for
+west #
+ # the state disappears indicating a replace/rekey.
+west #
+ spray() { local n=0 ; while test $n -lt $1 ; do  n=$((n + 1)) ; ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; done ; }
+west #
+ drip() { while ipsec trafficstatus | grep -e "$1" ; do ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254 ; sleep 5 ; done ; }
+west #
  # pings will not trigger a soft expire
 west #
- ping -n -q -c 18 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-18 packets transmitted, 18 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ spray 18
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
+up
 west #
  # expect #2 IPsec original Child SA
 west #
@@ -42,16 +70,13 @@ west #
 west #
  # now trigger soft expire
 west #
- ping -n -q -c 8 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-8 packets transmitted, 7 received, 12.5% packet loss, time XXXXms
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  # #2 will still around
 west #
  ipsec trafficstatus
-#3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2KiB, id='@east'
+#2: "west", type=ESP, add_time=1234567890, inBytes=1596, outBytes=1596, maxBytes=2KiB, id='@east'
 west #
  # now trigger hard expire
 west #
