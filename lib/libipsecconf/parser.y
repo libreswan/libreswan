@@ -51,7 +51,7 @@ static void parser_key_value_warning(struct parser *parser,
 				     const char *s, ...) PRINTF_LIKE(4);
 
 void parse_key_value(struct parser *parser, enum end default_end,
-		     shunk_t key, const char *string);
+		     shunk_t key, shunk_t value);
 
 static void yyerror(struct parser *parser, const char *msg);
 static void new_parser_key_value(struct parser *parser,
@@ -150,21 +150,21 @@ statement_kw:
 		 */
 		char *key = $1; /* must free? */
 		char *value = $3; /* must free */
-		parse_key_value(parser, END_ROOF, shunk1(key), value);
+		parse_key_value(parser, END_ROOF, shunk1(key), shunk1(value));
 		pfreeany(key);
 		pfreeany(value);
 	}
 	| KEYWORD EQUAL STRING {
 		char *key = $1;
 		char *value = $3;
-		parse_key_value(parser, END_ROOF, shunk1(key), value);
+		parse_key_value(parser, END_ROOF, shunk1(key), shunk1(value));
 		/* free strings allocated by lexer */
 		pfreeany(key);
 		pfreeany(value);
 	}
 	| KEYWORD EQUAL {
 		char *key = $1;
-		parse_key_value(parser, END_ROOF, shunk1(key), "");
+		parse_key_value(parser, END_ROOF, shunk1(key), shunk1(""));
 		pfreeany(key);
 	}
 
@@ -399,7 +399,7 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 			key = shunk1("auth");
 		}
 
-		parse_key_value(&parser, default_end, key, value);
+		parse_key_value(&parser, default_end, key, shunk1(value));
 		scanner_next_line(&parser);
 	}
 
@@ -838,7 +838,7 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 }
 
 void parse_key_value(struct parser *parser, enum end default_end,
-		     shunk_t key, const char *string)
+		     shunk_t key, shunk_t value)
 {
 	struct keyword kw[1];
 	if (!parser_find_keyword(key, default_end, kw, parser)) {
@@ -851,14 +851,14 @@ void parse_key_value(struct parser *parser, enum end default_end,
 
 	switch (kw->keydef->type) {
 	case kt_lset:
-		ok = parse_kt_lset(kw, shunk1(string), &number, parser);
+		ok = parse_kt_lset(kw, value, &number, parser);
 		break;
 	case kt_sparse_name:
-		ok = parse_kt_sparse_name(kw, shunk1(string), &number, parser);
+		ok = parse_kt_sparse_name(kw, value, &number, parser);
 		break;
 	case kt_pubkey:
 	case kt_host:
-		ok = parse_kt_loose_sparse_name(kw, shunk1(string), &number, parser);
+		ok = parse_kt_loose_sparse_name(kw, value, &number, parser);
 		break;
 	case kt_string:
 	case kt_also:
@@ -874,38 +874,38 @@ void parse_key_value(struct parser *parser, enum end default_end,
 		break;
 
 	case kt_unsigned:
-		ok = parse_kt_unsigned(kw, shunk1(string), &number, parser);
+		ok = parse_kt_unsigned(kw, value, &number, parser);
 		break;
 
 	case kt_seconds:
-		ok = parse_kt_deltatime(kw, shunk1(string), TIMESCALE_SECONDS,
+		ok = parse_kt_deltatime(kw, value, TIMESCALE_SECONDS,
 					&deltatime, parser);
 		break;
 
 	case kt_milliseconds:
-		ok = parse_kt_deltatime(kw, shunk1(string), TIMESCALE_MILLISECONDS,
+		ok = parse_kt_deltatime(kw, value, TIMESCALE_MILLISECONDS,
 					&deltatime, parser);
 		break;
 
 	case kt_bool:
-		ok = parse_kt_bool(kw, shunk1(string), &number, parser);
+		ok = parse_kt_bool(kw, value, &number, parser);
 		break;
 
 	case kt_percent:
-		ok = parse_kt_percent(kw, shunk1(string), &number, parser);
+		ok = parse_kt_percent(kw, value, &number, parser);
 		break;
 
 	case kt_binary:
-		ok = parse_kt_binary(kw, shunk1(string), &number, parser);
+		ok = parse_kt_binary(kw, value, &number, parser);
 		break;
 
 	case kt_byte:
-		ok = parse_kt_byte(kw, shunk1(string), &number, parser);
+		ok = parse_kt_byte(kw, value, &number, parser);
 		break;
 
 	case kt_obsolete:
 		/* drop it on the floor */
-		parser_key_value_warning(parser, kw, shunk1(string),
+		parser_key_value_warning(parser, kw, value,
 					 "obsolete keyword ignored");
 		ok = false;
 		break;
@@ -913,6 +913,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	}
 
 	if (ok) {
-		new_parser_key_value(parser, kw, shunk1(string), number, deltatime);
+		new_parser_key_value(parser, kw, value, number, deltatime);
 	}
 }
