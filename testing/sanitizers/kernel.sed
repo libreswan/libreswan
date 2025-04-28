@@ -56,3 +56,9 @@ b end-kernel
 b start-kernel
 
 :end-kernel
+
+# Workaround https://bugzilla.redhat.com/show_bug.cgi?id=2362706
+# https://github.com/libreswan/libreswan/issues/2181
+
+/^grep: \/tmp\/pluto.log: No data available/ d
+/^cat: \/tmp\/pluto.log: No data available/ d
