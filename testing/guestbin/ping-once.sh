@@ -169,7 +169,7 @@ case "${result}-${op}" in
     down-up | up-down )
 	echo ${result} UNEXPECTED
 	echo "# ${ping}"
-	echo ${output}
+	echo "${output}"
 	exit 1
 	;;
     error-error )
@@ -179,6 +179,6 @@ case "${result}-${op}" in
     * )
         echo unexpected status ${status}
 	echo "# ${ping}"
-	echo ${output}
+	echo "${output}"
 	exit 1 ;;
 esac
