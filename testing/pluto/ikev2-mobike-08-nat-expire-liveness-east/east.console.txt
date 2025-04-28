@@ -65,6 +65,8 @@ XfrmOutStateInvalid     	0
 XfrmAcquireError        	0
 XfrmOutStateDirError    	0
 XfrmInStateDirError     	0
+XfrmInIptfsError        	0
+XfrmOutNoQueueSpace     	0
 east #
  # the ping stops liveness; this is a debug message!
 east #

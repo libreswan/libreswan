@@ -154,6 +154,8 @@ XfrmOutStateInvalid     	0
 XfrmAcquireError        	0
 XfrmOutStateDirError    	0
 XfrmInStateDirError     	0
+XfrmInIptfsError        	0
+XfrmOutNoQueueSpace     	0
 west #
  ipsec delete westnet4-eastnet4
 "westnet4-eastnet4": terminating SAs using this connection
