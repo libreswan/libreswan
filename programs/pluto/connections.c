@@ -3770,14 +3770,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 			if (wm->dpddelay != NULL &&
 			    wm->dpdtimeout != NULL) {
 				diag_t d;
-				d = ttodeltatime(wm->dpddelay,
+				d = ttodeltatime(shunk1(wm->dpddelay),
 						 &config->dpd.delay,
 						 dpd_timescale);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
 							 wm->dpddelay);
 				}
-				d = ttodeltatime(wm->dpdtimeout,
+				d = ttodeltatime(shunk1(wm->dpdtimeout),
 						 &config->dpd.timeout,
 						 dpd_timescale);
 				if (d != NULL) {
@@ -3797,7 +3797,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		case IKEv2:
 			if (wm->dpddelay != NULL) {
 				diag_t d;
-				d = ttodeltatime(wm->dpddelay,
+				d = ttodeltatime(shunk1(wm->dpddelay),
 						 &config->dpd.delay,
 						 dpd_timescale);
 				if (d != NULL) {

@@ -560,7 +560,7 @@ static bool parser_kw_deltatime(struct keyword *kw, const char *yytext,
 				deltatime_t *deltatime,
 				struct parser *parser)
 {
-	diag_t diag = ttodeltatime(yytext, deltatime, default_timescale);
+	diag_t diag = ttodeltatime(shunk1(yytext), deltatime, default_timescale);
 	if (diag != NULL) {
 		parser_kw_warning(parser, kw, yytext, "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);

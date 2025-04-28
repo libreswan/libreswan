@@ -213,7 +213,7 @@ deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default
 	passert((optarg_options[optarg_index].has_arg == required_argument) ||
 		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
 	deltatime_t deltatime;
-	diag_t diag = ttodeltatime(optarg, &deltatime, default_timescale);
+	diag_t diag = ttodeltatime(shunk1(optarg), &deltatime, default_timescale);
 	if (diag != NULL) {
 		optarg_fatal(logger, "%s", str_diag(diag));
 	}

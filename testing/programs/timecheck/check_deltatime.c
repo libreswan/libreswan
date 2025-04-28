@@ -106,7 +106,7 @@ static void check_ttodeltatime(void)
 		fprintf(stdout, "ttodeltatime(%s, "PRI_SCALE") ok=%s\n",
 			t->str, pri_timescale(t->timescale), bool_str(t->ok));
 		deltatime_t d;
-		diag_t diag = ttodeltatime(t->str, &d, t->timescale);
+		diag_t diag = ttodeltatime(shunk1(t->str), &d, t->timescale);
 		if (t->ok) {
 			if (diag != NULL) {
 				fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly returned: %s\n",
