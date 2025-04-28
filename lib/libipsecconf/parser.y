@@ -54,9 +54,9 @@ void parse_key_value(struct parser *parser, enum end default_end,
 		     shunk_t key, const char *string);
 
 static void yyerror(struct parser *parser, const char *msg);
-static void new_parser_kw(struct parser *parser,
-			  struct keyword *keyword, const char *string,
-			  uintmax_t number, deltatime_t time);
+static void new_parser_key_value(struct parser *parser,
+				 struct keyword *key, shunk_t value,
+				 uintmax_t number, deltatime_t time);
 
 /**
  * Functions
@@ -439,19 +439,19 @@ void parser_freeany_config_parsed(struct config_parsed **cfgp)
 	}
 }
 
-void new_parser_kw(struct parser *parser,
-		   struct keyword *kw,
-		   const char *yytext,
-		   uintmax_t number,
-		   deltatime_t deltatime)
+void new_parser_key_value(struct parser *parser,
+			  struct keyword *key,
+			  shunk_t value,
+			  uintmax_t number,
+			  deltatime_t deltatime)
 {
 	/* both means no prefix */
 	const char *section = "???";
 	switch (parser->section) {
 	case SECTION_CONFIG_SETUP:
 		section = "'config setup'";
-		if ((kw->keydef->validity & kv_config) == LEMPTY) {
-			parser_key_value_warning(parser, kw, shunk1(yytext),
+		if ((key->keydef->validity & kv_config) == LEMPTY) {
+			parser_key_value_warning(parser, key, value,
 						 "invalid %s keyword ignored",
 						 section);
 			/* drop it on the floor */
@@ -460,8 +460,8 @@ void new_parser_kw(struct parser *parser,
 		break;
 	case SECTION_CONN:
 		section = "conn";
-		if ((kw->keydef->validity & kv_conn) == LEMPTY) {
-			parser_key_value_warning(parser, kw, shunk1(yytext),
+		if ((key->keydef->validity & kv_conn) == LEMPTY) {
+			parser_key_value_warning(parser, key, value,
 						 "invalid %s keyword ignored", section);
 			/* drop it on the floor */
 			return;
@@ -469,9 +469,9 @@ void new_parser_kw(struct parser *parser,
 		break;
 	case SECTION_CONN_DEFAULT:
 		section = "'conn %%default'";
-		if ((kw->keydef->validity & kv_conn) == LEMPTY ||
-		    kw->keydef->field == KSCF_ALSO) {
-			parser_key_value_warning(parser, kw, shunk1(yytext),
+		if ((key->keydef->validity & kv_conn) == LEMPTY ||
+		    key->keydef->field == KSCF_ALSO) {
+			parser_key_value_warning(parser, key, value,
 						 "invalid %s keyword ignored", section);
 			/* drop it on the floor */
 			return;
@@ -482,27 +482,27 @@ void new_parser_kw(struct parser *parser,
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
 	for (end = parser->kw; (*end) != NULL; end = &(*end)->next) {
-		if ((*end)->keyword.keydef != kw->keydef) {
+		if ((*end)->keyword.keydef != key->keydef) {
 			continue;
 		}
-		if (((*end)->keyword.keyleft != kw->keyleft) &&
-		    ((*end)->keyword.keyright != kw->keyright)) {
+		if (((*end)->keyword.keyleft != key->keyleft) &&
+		    ((*end)->keyword.keyright != key->keyright)) {
 			continue;
 		}
-		if (kw->keydef->validity & kv_duplicateok) {
+		if (key->keydef->validity & kv_duplicateok) {
 			continue;
 		}
 		/* note the weird behaviour! */
 		if (parser->section == SECTION_CONFIG_SETUP) {
-			parser_key_value_warning(parser, kw, shunk1(yytext),
+			parser_key_value_warning(parser, key, value,
 						 "overriding earlier %s keyword with new value", section);
 			pfreeany((*end)->string);
-			(*end)->string = clone_str(yytext, "keyword.string"); /*handles NULL*/
+			(*end)->string = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
 			(*end)->number = number;
 			(*end)->deltatime = deltatime;
 			return;
 		}
-		parser_key_value_warning(parser, kw, shunk1(yytext),
+		parser_key_value_warning(parser, key, value,
 					 "ignoring duplicate %s keyword", section);
 		return;
 	}
@@ -513,15 +513,15 @@ void new_parser_kw(struct parser *parser,
 	 */
 	struct kw_list *new = alloc_thing(struct kw_list, "kw_list");
 	(*new) = (struct kw_list) {
-		.keyword = *kw,
-		.string = clone_str(yytext, "keyword.list"), /*handles NULL*/
+		.keyword = *key,
+		.string = clone_hunk_as_string(value, "keyword.list"), /*handles NULL*/
 		.number = number,
 		.deltatime = deltatime,
 	};
 
-	ldbgf(DBG_TMI, parser->logger, "  %s%s=%s number=%ju field=%u", kw->keydef->keyname,
-	      leftright(kw), new->string, new->number,
-	      kw->keydef->field);
+	ldbgf(DBG_TMI, parser->logger, "  %s%s=%s number=%ju field=%u", key->keydef->keyname,
+	      leftright(key), new->string, new->number,
+	      key->keydef->field);
 
 	/* append the new kw_list to the list */
 	(*end) = new;
@@ -914,6 +914,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	}
 
 	if (ok) {
-		new_parser_kw(parser, kw, string, number, deltatime);
+		new_parser_key_value(parser, kw, shunk1(string), number, deltatime);
 	}
 }
