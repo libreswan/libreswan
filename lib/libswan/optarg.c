@@ -235,7 +235,7 @@ uintmax_t optarg_uintmax(const struct logger *logger)
 uintmax_t optarg_udp_bufsize(const struct logger *logger)
 {
 	uintmax_t u;
-	diag_t d = ttobinary(optarg, &u, /*byte-scale*/true);
+	diag_t d = ttobinary(shunk1(optarg), &u, /*byte-scale*/true);
 	if (d != NULL) {
 		/* leaks D; oops */
 		optarg_fatal(logger, "%s", str_diag(d));

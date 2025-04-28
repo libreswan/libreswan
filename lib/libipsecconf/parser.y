@@ -599,7 +599,7 @@ static bool parser_kw_percent(struct keyword *kw, const char *yytext,
 static bool parser_kw_binary(struct keyword *kw, const char *yytext,
 			     uintmax_t *number, struct parser *parser)
 {
-	diag_t diag = ttobinary(yytext, number, 0 /* no B prefix */);
+	diag_t diag = ttobinary(shunk1(yytext), number, 0 /* no B prefix */);
 	if (diag != NULL) {
 		parser_kw_warning(parser, kw, yytext,
 				  "%s, keyword ignored", str_diag(diag));
@@ -613,7 +613,7 @@ static bool parser_kw_binary(struct keyword *kw, const char *yytext,
 static bool parser_kw_byte(struct keyword *kw, const char *yytext,
 			   uintmax_t *number, struct parser *parser)
 {
-	diag_t diag = ttobinary(yytext, number, 1 /* with B prefix */);
+	diag_t diag = ttobinary(shunk1(yytext), number, 1 /* with B prefix */);
 	if (diag != NULL) {
 		parser_kw_warning(parser, kw, yytext,
 				  "%s, keyword ignored", str_diag(diag));

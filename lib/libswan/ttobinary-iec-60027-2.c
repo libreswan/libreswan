@@ -27,18 +27,18 @@
 #include "ip_encap.h"
 #include "jambuf.h"
 
-diag_t ttobinary(const char *t, uintmax_t *r, bool byte_scale)
+diag_t ttobinary(shunk_t t, uintmax_t *r, bool byte_scale)
 {
 	*r = 0;
-	shunk_t cursor = shunk1(t);
+	shunk_t cursor = t;
 	const char *suffix = (byte_scale ? " Bytes" : "");
 
 	uint64_t decimal, numerator, denominator;
 	err_t err = shunk_to_decimal(cursor, &cursor, &decimal,
 				     &numerator, &denominator);
 	if (err != NULL) {
-		return diag("bad binary%s value \"%s\": %s",
-			    suffix,  t, err);
+		return diag("bad binary%s value \""PRI_SHUNK"\": %s",
+			    suffix,  pri_shunk(t), err);
 	}
 
 	const struct scale *scale =
@@ -53,7 +53,8 @@ diag_t ttobinary(const char *t, uintmax_t *r, bool byte_scale)
 	uintmax_t binary;
 	err_t e = scale_decimal(scale, decimal, numerator, denominator, &binary);
 	if (e != NULL) {
-		return diag("invalid binary%s \"%s\", %s", suffix, t, e);
+		return diag("invalid binary%s \""PRI_SHUNK"\", %s",
+			    suffix, pri_shunk(t), e);
 	}
 
 	*r = binary;
