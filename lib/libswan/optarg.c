@@ -377,7 +377,7 @@ void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 
 	/* work through the updates */
 	const struct option *option = &optarg_options[optarg_index];
-	if (!lmod_arg(mods, &debug_lmod_info, optarg, debug == OPTARG_DEBUG_YES)) {
+	if (!lmod_arg(mods, &debug_lmod_info, shunk1(optarg), debug == OPTARG_DEBUG_YES)) {
 		fprintf(stderr, "whack: unrecognized --%s%s'%s' option ignored\n",
 			option->name,
 			(option->has_arg == optional_argument ? "=" : " "),

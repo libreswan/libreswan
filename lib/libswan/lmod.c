@@ -68,10 +68,10 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 }
 
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
-	      const char *args, bool enable)
+	      shunk_t args, bool enable)
 {
 	bool ok = true;
-	shunk_t cursor = shunk1(args);
+	shunk_t cursor = args;
 	while (true) {
 		shunk_t elem = shunk_token(&cursor, NULL/*delim*/, "+, \t");
 		if (elem.ptr == NULL) {

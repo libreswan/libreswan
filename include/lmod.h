@@ -17,6 +17,7 @@
 #define _LMOD_H_
 
 #include "lset.h"
+#include "shunk.h"
 
 struct jambuf;
 
@@ -54,7 +55,7 @@ struct lmod_info {
 };
 
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
-	      const char *optarg, bool enable);
+	      shunk_t optarg, bool enable);
 
 typedef struct {
 	char buf[512]; /* arbitrary */
