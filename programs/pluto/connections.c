@@ -112,7 +112,7 @@ void vdbg_connection(const struct connection *c,
 		     struct verbose verbose, where_t where,
 		     const char *message, ...)
 {
-	if (LDBGP(DBG_BASE, c->logger)) {
+	if (!LDBGP(DBG_BASE, c->logger)) {
 		return;
 	}
 	verbose.rc_flags = DEBUG_STREAM;
