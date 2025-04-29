@@ -20,8 +20,7 @@ RUN ipsec start
 /testing/guestbin/wait-until-pluto-started
 ipsec whack --impair suppress_retransmits
 ipsec whack --impair revival
-RUN ipsec addconn \
-    --name ${name} \
+RUN ipsec addconn --name ${name} \
     'rightid=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' \
     'right=192.1.2.23' \
     'left=%defaultroute' \

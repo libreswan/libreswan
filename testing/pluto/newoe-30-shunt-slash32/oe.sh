@@ -33,8 +33,7 @@ RUN ipsec start
 ../../guestbin/wait-until-pluto-started
 
 echo : ${conn} LOADING CONNECTION
-RUN ipsec addconn \
-    --name road \
+RUN ipsec addconn --name road \
     --retransmit-timeout 5s \
     --retransmit-interval 5s \
     --host 192.1.3.209 \
