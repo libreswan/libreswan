@@ -213,7 +213,7 @@ deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default
 	passert((optarg_options[optarg_index].has_arg == required_argument) ||
 		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
 	deltatime_t deltatime;
-	diag_t diag = ttodeltatime(optarg, &deltatime, default_timescale);
+	diag_t diag = ttodeltatime(shunk1(optarg), &deltatime, default_timescale);
 	if (diag != NULL) {
 		optarg_fatal(logger, "%s", str_diag(diag));
 	}
@@ -235,7 +235,7 @@ uintmax_t optarg_uintmax(const struct logger *logger)
 uintmax_t optarg_udp_bufsize(const struct logger *logger)
 {
 	uintmax_t u;
-	diag_t d = ttobinary(optarg, &u, /*byte-scale*/true);
+	diag_t d = ttobinary(shunk1(optarg), &u, /*byte-scale*/true);
 	if (d != NULL) {
 		/* leaks D; oops */
 		optarg_fatal(logger, "%s", str_diag(d));
@@ -377,7 +377,7 @@ void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 
 	/* work through the updates */
 	const struct option *option = &optarg_options[optarg_index];
-	if (!lmod_arg(mods, &debug_lmod_info, optarg, debug == OPTARG_DEBUG_YES)) {
+	if (!ttolmod(shunk1(optarg), mods, &debug_lmod_info, debug == OPTARG_DEBUG_YES)) {
 		fprintf(stderr, "whack: unrecognized --%s%s'%s' option ignored\n",
 			option->name,
 			(option->has_arg == optional_argument ? "=" : " "),

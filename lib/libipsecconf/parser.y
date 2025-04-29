@@ -560,7 +560,7 @@ static bool parser_kw_deltatime(struct keyword *kw, const char *yytext,
 				deltatime_t *deltatime,
 				struct parser *parser)
 {
-	diag_t diag = ttodeltatime(yytext, deltatime, default_timescale);
+	diag_t diag = ttodeltatime(shunk1(yytext), deltatime, default_timescale);
 	if (diag != NULL) {
 		parser_kw_warning(parser, kw, yytext, "%s, keyword ignored", str_diag(diag));
 		pfree_diag(&diag);
@@ -599,7 +599,7 @@ static bool parser_kw_percent(struct keyword *kw, const char *yytext,
 static bool parser_kw_binary(struct keyword *kw, const char *yytext,
 			     uintmax_t *number, struct parser *parser)
 {
-	diag_t diag = ttobinary(yytext, number, 0 /* no B prefix */);
+	diag_t diag = ttobinary(shunk1(yytext), number, 0 /* no B prefix */);
 	if (diag != NULL) {
 		parser_kw_warning(parser, kw, yytext,
 				  "%s, keyword ignored", str_diag(diag));
@@ -613,7 +613,7 @@ static bool parser_kw_binary(struct keyword *kw, const char *yytext,
 static bool parser_kw_byte(struct keyword *kw, const char *yytext,
 			   uintmax_t *number, struct parser *parser)
 {
-	diag_t diag = ttobinary(yytext, number, 1 /* with B prefix */);
+	diag_t diag = ttobinary(shunk1(yytext), number, 1 /* with B prefix */);
 	if (diag != NULL) {
 		parser_kw_warning(parser, kw, yytext,
 				  "%s, keyword ignored", str_diag(diag));
@@ -634,7 +634,7 @@ static bool parser_kw_lset(struct keyword *kw, const char *yytext,
 	 * separated list and can handle no-XXX (ex: all,no-xauth).
 	 * The final set of enabled bits is returned in .set.
 	 */
-	if (!lmod_arg(&result, kw->keydef->info, yytext, true/*enable*/)) {
+	if (!ttolmod(shunk1(yytext), &result, kw->keydef->info, true/*enable*/)) {
 		/*
 		 * If the lookup failed, complain.
 		 *

@@ -22,11 +22,11 @@
 #include "passert.h"
 #include "lswlog.h"
 
-diag_t ttodeltatime(const char *t, deltatime_t *d, enum timescale default_timescale)
+diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 {
 	*d = deltatime_zero;
 
-	shunk_t cursor = shunk1(t);
+	shunk_t cursor = t;
 
 	/* parse:
 	 *
@@ -43,21 +43,23 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, enum timescale default_timesc
 				     &numerator, &denominator);
 
 	if (err != NULL) {
-		return diag("invalid duration \"%s\", %s", t, err);
+		return diag("invalid duration \""PRI_SHUNK"\", %s",
+			    pri_shunk(t), err);
 	}
 
 	/* [<SCALE>] */
 	const struct scale *scale = ttotimescale(cursor, default_timescale);
 	if (scale == NULL) {
-		return diag("duration \"%s\" has an unrecognized multiplier \""PRI_SHUNK"\"",
-			    t, pri_shunk(cursor));
+		return diag("duration \""PRI_SHUNK"\" has an unrecognized multiplier \""PRI_SHUNK"\"",
+			    pri_shunk(t), pri_shunk(cursor));
 	}
 
 	uintmax_t microseconds;
 	err_t e = scale_decimal(scale, decimal, numerator, denominator, &microseconds);
 
 	if (e != NULL) {
-		return diag("invalid duration \"%s\", %s", t, e);
+		return diag("invalid duration \""PRI_SHUNK"\", %s",
+			    pri_shunk(t), e);
 	}
 
 	*d = deltatime_from_microseconds(microseconds);

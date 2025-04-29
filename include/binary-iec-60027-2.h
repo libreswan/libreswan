@@ -20,7 +20,8 @@
 #include <stdint.h>	/* for uintmax_t */
 
 #include "diag.h"
+#include "shunk.h"
 
-diag_t ttobinary(const char *t,  uintmax_t *b, bool prefix_B);
+diag_t ttobinary(shunk_t t,  uintmax_t *b, bool prefix_B);
 
 #endif
