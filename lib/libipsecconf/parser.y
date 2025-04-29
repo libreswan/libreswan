@@ -338,17 +338,22 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 
 	for (char **argp = argv + start; (*argp) != NULL; argp++) {
 
-		const char *arg = (*argp);
-		/* toss any leading -- */
-		eat(arg, "--");
-
+		const char *const arg = (*argp);
 		shunk_t cursor = shunk1(arg);
 
-		/* whack's --to switches ends */
-		if (hunk_streq(cursor, "to")) {
+		/* only whack options have -- */
+		bool whack = hunk_streat(&cursor, "--");
+
+		/*
+		 * Parse simple whack --OPTIONs (remember leading "--"
+		 * indicating a whack option was stripped and WHACK
+		 * set).
+		 */
+
+		if (whack && hunk_streq(cursor, "to")) {
 			default_end++;
 			if (default_end >= END_ROOF) {
-				llog(ERROR_STREAM, logger, "too many 'to's");
+				llog(ERROR_STREAM, logger, "too many '--to's");
 				parser_freeany_config_parsed(&cfgp);
 				exit(1);
 			}
@@ -356,50 +361,66 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 			continue;
 		}
 
+		if (whack && hunk_streat(&cursor, "nego")) {
+			parse_key_value(&parser, default_end,
+					shunk1("negotiationshunt"),
+					cursor);
+			scanner_next_line(&parser);
+			continue;
+		}
+
+		if (whack && hunk_streat(&cursor, "fail")) {
+			parse_key_value(&parser, default_end,
+					shunk1("failureshunt"),
+					cursor);
+			scanner_next_line(&parser);
+			continue;
+		}
+
 		/*
-		 * Parse KEY=VALUE or, when there's no '=', KEY VALUE.
-		 *
-		 * VALUE is a string to avoid need to pass shunk_t
-		 * into parser_kw().
+		 * Parse KEY=VALUE (and --KEY=VALUE).  When whack,
+		 * also allow --KEY VALUE.
 		 */
 
 		char sep;
 		shunk_t key = shunk_token(&cursor, &sep, "=");
-		const char *value;
+		shunk_t value;
 		if (sep == '=') {
-			/* skip key and '=' */
-			value = arg + key.len + 1;
-		} else if (hunk_strcasestarteq(key, "nego")) { /*negoPASS*/
-			/* hack */
-			key = shunk1("negotiationshunt");
-			value = arg + strlen("nego");
-		} else if (hunk_strcasestarteq(key, "fail")) { /*failNONE*/
-			/* hack */
-			key = shunk1("failureshunt");
-			value = arg + strlen("fail");
-		} else {
-			/* no '=' */
+			value = cursor;
+		} else if (whack) {
+			/* only allow --KEY VALUE when whack compat */
 			if (argp[1] == NULL) {
-				llog(ERROR_STREAM, logger, "missing parameter for %s", arg);
+				llog(ERROR_STREAM, logger, "missing argument for %s", arg);
 				parser_freeany_config_parsed(&cfgp);
 				return NULL;
 			}
-			value = argp[1];
-			scanner_next_line(&parser);
+			/* skip/use next arg */
 			argp++;
+			value = shunk1(*argp);
+			scanner_next_line(&parser);
+		} else {
+			llog(ERROR_STREAM, logger, "missing '=' in %s", arg);
+			parser_freeany_config_parsed(&cfgp);
+			exit(1);
 		}
 
-		/* map --host onto left/right */
-		if (hunk_strcaseeq(key, "host")) {
+		/*
+		 * Handle whack --KEY=VALUE options by mapping the KEY
+		 * onto the equivalent ipsec.conf KEY.
+		 */
+
+		if (whack && hunk_streq(key, "host")) {
 			key = shunk1(default_end == LEFT_END ? "left" :
 				     default_end == RIGHT_END ? "right" :
 				     "???");
-		} else if (hunk_strcaseeq(key, "authby")) {
+		}
+
+		if (whack && hunk_streq(key, "authby")) {
 			/* XXX: whack's authby semantics */
 			key = shunk1("auth");
 		}
 
-		parse_key_value(&parser, default_end, key, shunk1(value));
+		parse_key_value(&parser, default_end, key, value);
 		scanner_next_line(&parser);
 	}
 
