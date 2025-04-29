@@ -634,7 +634,7 @@ static bool parser_kw_lset(struct keyword *kw, const char *yytext,
 	 * separated list and can handle no-XXX (ex: all,no-xauth).
 	 * The final set of enabled bits is returned in .set.
 	 */
-	if (!lmod_arg(&result, kw->keydef->info, shunk1(yytext), true/*enable*/)) {
+	if (!ttolmod(shunk1(yytext), &result, kw->keydef->info, true/*enable*/)) {
 		/*
 		 * If the lookup failed, complain.
 		 *

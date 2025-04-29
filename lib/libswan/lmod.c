@@ -67,8 +67,9 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 	return LIN(clr, mod.clr);
 }
 
-bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
-	      shunk_t args, bool enable)
+bool ttolmod(shunk_t args, lmod_t *mod,
+	     const struct lmod_info *info,
+	     bool enable)
 {
 	bool ok = true;
 	shunk_t cursor = args;
