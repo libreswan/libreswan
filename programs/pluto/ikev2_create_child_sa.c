@@ -528,17 +528,24 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
+static void llog_v2_success_sent_CREATE_CHILD_SA_child_request(struct ike_sa *ike)
 {
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-	if (larval != NULL) {
-		llog(RC_LOG, larval->sa.logger,
-		     "sent CREATE_CHILD_SA request to rekey Child SA "PRI_SO" using IKE SA "PRI_SO,
-		     pri_so(larval->sa.st_v2_rekey_pred),
-		     pri_so(ike->sa.st_serialno));
-	} else {
-		llog(RC_LOG, ike->sa.logger, "rekey of Child SA abandoned");
+	if (larval == NULL) {
+		llog(RC_LOG, ike->sa.logger, "Child SA abandoned");
+		return;
+	}
+	LLOG_JAMBUF(RC_LOG, larval->sa.logger, buf) {
+		jam_string(buf, "sent CREATE_CHILD_SA request to ");
+		if (larval->sa.st_v2_rekey_pred == SOS_NOBODY) {
+			jam_string(buf, "create Child SA");
+		} else {
+			jam_string(buf, "rekey Child SA ");
+			jam_so(buf, larval->sa.st_v2_rekey_pred);
+		}
+		jam_string(buf, " using IKE SA ");
+		jam_so(buf, ike->sa.st_serialno);
 	}
 }
 
@@ -558,7 +565,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_child_initiate_transi
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
-	.llog_success = llog_v2_success_rekey_child_request,
+	.llog_success = llog_v2_success_sent_CREATE_CHILD_SA_child_request,
 	.timeout_event = EVENT_RETAIN,
 };
 
@@ -911,25 +918,12 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-static void llog_v2_success_new_child_request(struct ike_sa *ike)
-{
-	/* XXX: should the lerval SA be a parameter? */
-	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-	if (larval != NULL) {
-		llog(RC_LOG, larval->sa.logger,
-		     "sent CREATE_CHILD_SA request to create Child SA using IKE SA "PRI_SO,
-		     pri_so(ike->sa.st_serialno));
-	} else {
-		llog(RC_LOG, ike->sa.logger, "create Child SA abandoned");
-	}
-}
-
 static const struct v2_transition v2_CREATE_CHILD_SA_new_child_initiate_transition = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
-	.llog_success = llog_v2_success_new_child_request,
+	.llog_success = llog_v2_success_sent_CREATE_CHILD_SA_child_request,
 	.timeout_event = EVENT_RETAIN,
 };
 
