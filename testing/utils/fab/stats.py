@@ -16,10 +16,11 @@
 
 from collections import defaultdict
 import threading
+import re
 
 from fab import logutil
 
-_INTERESTING = ("total/failed", "total/unresolved")
+_INTERESTING = re.compile(r"tests/[-a-z]*/errors/[-a-z]*")
 
 class Results:
 
@@ -51,8 +52,8 @@ class Results:
             if len(self.counts):
                 log("Progress:")
                 for key, values in sorted(self.counts.items()):
-                    if key in _INTERESTING:
-                        log(f"  {key}: {len(values)} {" ".join(values)}")
+                    if _INTERESTING.match(key):
+                        log(f"  {key}: {len(values)}: {" ".join(values)}")
                     else:
                         log(f"  {key}: {len(values)}")
 
@@ -60,10 +61,9 @@ class Results:
         with self.lock:
             if len(self.counts):
                 log("Details:")
-                for key in _INTERESTING:
-                    if key in self.counts:
-                        values = self.counts[key]
-                        log(f"  {key}: {" ".join(values)}")
+                for key, values in sorted(self.counts.items()):
+                    if _INTERESTING.match(key):
+                        log(f"  {key}: {len(values)}: {" ".join(values)}")
                 log("Summary:")
                 for key, values in sorted(self.counts.items()):
                     log(f"  {key}: {len(values)}")
