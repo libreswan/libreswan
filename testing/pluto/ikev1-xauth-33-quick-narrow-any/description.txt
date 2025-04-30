@@ -1,1 +1,3 @@
 ikev1 Main+XAUTH+ModeCFG+Quick except Quick wants to narrow
+
+in part based on github #2051

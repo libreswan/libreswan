@@ -2111,7 +2111,8 @@ static struct connection *fc_try(const struct connection *c,
 			 *
 			 * In addition to the obvious (IN), need to
 			 * check that the ranges exactly match.  Why?
-			 * IKEv1 doesn't do narrowing, mostly.
+			 * IKEv1 doesn't do narrowing, mostly, note
+			 * the exception.
 			 */
 
 			if (!selector_in_selector(*local_client, d_spd->local->client)) {
@@ -2122,7 +2123,11 @@ static struct connection *fc_try(const struct connection *c,
 				continue;
 			}
 
-			if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
+			if (selector_is_all(d_spd->local->client)) {
+				selector_buf s1;
+				vdbg("allowing SPD, local client is %s aka all or %%any",
+				     str_selector(&d_spd->local->client, &s1));
+			} else if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
 				selector_buf s1, s2;
 				vdbg("skipping SPD, initiator's local client range %s must match %s",
 				     str_selector(local_client, &s2),

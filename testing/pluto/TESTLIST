@@ -962,14 +962,13 @@ kvmplutotest	xauth-pluto-28-twobehindnat	good
 kvmplutotest	ikev1-xauth-30-retransmit-xchg-mode-cfg-request		good
 kvmplutotest	ikev1-xauth-31-one-each-way				wip	github/633
 kvmplutotest	ikev1-xauth-32-lost-mode-cfg				good	github/1785
-kvmplutotest	ikev1-xauth-33-quick-narrows				wip	github/1857
+kvmplutotest	ikev1-xauth-33-quick-narrow-any				good	github/1857,github/2051
 kvmplutotest	ikev1-xauth-34-modecfg-push-only			good	github/1954
 kvmplutotest	ikev1-xauth-34-modecfg-pull-only			good	github/1954
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-wrong			good	github/1955
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-missing			good	github/1955
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-psk			good	github/1955
 kvmplutotest	ikev1-xauth-35-xauth-only-lease-x509			good	github/1955
-kvmplutotest	ikev1-xauth-36-github-2051				wip	github/2051
 
 #
 # Aggressive Mode Pluto Tests
