@@ -293,6 +293,68 @@ static void init_netlink_xfrm_fd(struct logger *logger)
 
 }
 
+#define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
+
+static void update_xfrm_acq_expires(struct logger *logger)
+{
+	int r = open(XFRM_ACQ_EXPIRES, O_RDONLY);
+	if (r < 0) {
+		llog_error(logger, errno,
+			   "failed to open '"XFRM_ACQ_EXPIRES"' for reading");
+		return;
+	}
+
+	char line[255];
+	ssize_t n = read(r, line, sizeof(line));
+	if (n < 0) {
+		llog_error(logger, errno,
+			   "failed to read '"XFRM_ACQ_EXPIRES"'");
+		close(r);
+		return;
+	}
+
+	close(r);
+
+	int lifetime = atoi(line);
+	if (lifetime <= 0) {
+		llog_error(logger, 0, "could not parse '"XFRM_ACQ_EXPIRES"' containing '%s'", line);
+		return;
+	}
+
+	if (!pluto_expire_lifetime.is_set || deltasecs(pluto_expire_lifetime) < 1/*second*/) {
+		pluto_expire_lifetime = deltatime(lifetime);
+		llog(RC_LOG, logger, "setting expire-lifetime= to %jd from '"XFRM_ACQ_EXPIRES"'",
+		     deltasecs(pluto_expire_lifetime));
+		return;
+	}
+
+	if (lifetime == deltasecs(pluto_expire_lifetime)) {
+		/* nothing to do */
+		return;
+	}
+
+	/* re-open so can write configured value; should just work */
+
+	char numstr[255];
+	sprintf(numstr,"%ju", deltasecs(pluto_expire_lifetime));
+	llog(RC_LOG, logger, "setting '"XFRM_ACQ_EXPIRES"' to '%s' from expire-lifetime=%jd",
+	     numstr, deltasecs(pluto_expire_lifetime));
+
+	int w = open(XFRM_ACQ_EXPIRES, O_WRONLY);
+	if (w < 0) {
+		llog_error(logger, errno,
+			   "failed to open "XFRM_ACQ_EXPIRES" for writing");
+		return;
+	}
+
+	n = write(w, numstr, strlen(numstr));
+	if (n == -1) {
+		llog_error(logger, errno, "failed to write '%s' to '"XFRM_ACQ_EXPIRES"'", numstr);
+	}
+
+	close(w);
+}
+
 /*
  * init_netlink - Initialize the netlink interface.  Opens the sockets and
  * then binds to the broadcast socket.
@@ -308,60 +370,7 @@ static void kernel_xfrm_init(struct logger *logger)
 	 */
 	xfrm_needs_outbound_replay_window_cleared = kernel_ge(KINFO_LINUX, 6, 10, 0);
 
-#define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
-#define XFRM_STAT "/proc/net/xfrm_stat"
-
-	struct stat buf;
-	if (stat(XFRM_STAT, &buf) != 0) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
-			    "no XFRM kernel support detected, missing "XFRM_STAT);
-	}
-
-	int fd = open(XFRM_ACQ_EXPIRES, O_RDONLY);
-	if (fd < 0) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
-			    "no XFRM kernel support detected, failed to open "XFRM_ACQ_EXPIRES" for reading");
-	}
-
-	char line[255];
-	ssize_t n = read(fd, line, sizeof(line));
-	if (n < 0) {
-		llog_error(logger, errno, "ignoring expire-lifetime= option, failed to read %s", XFRM_ACQ_EXPIRES);
-	} else {
-		int lifetime = atoi(line);
-		if (lifetime <= 0) {
-			llog_error(logger, 0, "ignoring expire-lifetime= option, could not parse %s containing %s", XFRM_ACQ_EXPIRES, line);
-		} else if (!pluto_expire_lifetime.is_set ||
-			   deltasecs(pluto_expire_lifetime) < 1/*second*/) {
-			pluto_expire_lifetime = deltatime(lifetime);
-			llog(RC_LOG, logger, "using expire-lifetime=%jd from "XFRM_ACQ_EXPIRES,
-			     deltasecs(pluto_expire_lifetime));
-		} else if (lifetime != deltasecs(pluto_expire_lifetime)) {
-			/* re-open for writing */
-			close(fd);
-			fd = open(XFRM_ACQ_EXPIRES, O_WRONLY);
-			if (fd < 0) {
-				llog_error(logger, errno, "ignoring expire-lifetime= option, failed to open "XFRM_ACQ_EXPIRES" for writing");
-			} else {
-				char numstr[255];
-
-				sprintf(numstr,"%ju", deltasecs(pluto_expire_lifetime));
-				n = write(fd, numstr, strlen(numstr));
-				if (n == -1) {
-					llog_error(logger, errno, "ignoring expire-lifetime= option, failed to write '%s' to %s",
-						   numstr, XFRM_ACQ_EXPIRES);
-				} else {
-					ldbg(logger, "successfully set kernel expire-lifetime=%s", numstr);
-				}
-			}
-		}
-	}
-
-	if (fd >= 0) {
-		close(fd);
-		fd = -1;
-	}
-
+	update_xfrm_acq_expires(logger);
 
 	nl_send_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
