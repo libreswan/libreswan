@@ -45,11 +45,11 @@ initiating 4 connections
 "west-east/3x0" #4: IMPAIR: job 4 helper 0 #4/#4 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is warped by 4 milliseconds
 "west-east/4x0" #5: initiating Child SA using IKE SA #1
 "west-east/4x0" #5: IMPAIR: job 5 helper 0 #5/#5 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is warped by 5 milliseconds
-"west-east/2x0" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"west-east/2x0" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "west-east/2x0" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.253/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-"west-east/4x0" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"west-east/4x0" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "west-east/4x0" #5: initiator established Child SA using #1; IPsec tunnel [192.0.1.251/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-"west-east/3x0" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"west-east/3x0" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "west-east/3x0" #4: initiator established Child SA using #1; IPsec tunnel [192.0.1.252/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  # CHILD #2->#6

@@ -73,7 +73,7 @@ west #
 west #
  ipsec auto --up ah=sha1
 "ah=sha1" #7: initiating Child SA using IKE SA #5
-"ah=sha1" #7: sent CREATE_CHILD_SA request to create Child SA using IKE SA #5
+"ah=sha1" #7: sent CREATE_CHILD_SA request to create Child SA using IKE SA #5 {AH <0xAHAH}
 "ah=sha1" #7: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
  sleep 1

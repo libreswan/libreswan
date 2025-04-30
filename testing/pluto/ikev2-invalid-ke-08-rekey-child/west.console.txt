@@ -46,5 +46,5 @@ west #
 west #
  ipsec whack --rekey-child --name west
 "west" #3: initiating rekey to replace Child SA #2
-"west" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1
+"west" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESP <0xESPESP}
 ... should fail due to invalid ke ...

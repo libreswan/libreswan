@@ -33,7 +33,7 @@ west #
 "cuckoo" #3: IMPAIR: job 3 helper 0 #3/#3 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is pausing for 5 seconds
 west #
  ../../guestbin/wait-for-pluto.sh '#3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1'
-"cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 west #
  # Process the response to this end's CREATE_CHILD_SA request.  It
 west #

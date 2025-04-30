@@ -44,23 +44,23 @@ initiating 8 connections
 "road/0x6" #7: initiating Child SA using IKE SA #1
 "road/0x7" #8: initiating Child SA using IKE SA #1
 "road/0x8" #9: initiating Child SA using IKE SA #1
-"road/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x2" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 "road/0x2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "road/0x2" #3: IMPAIR: revival: skip scheduling revival event
-"road/0x3" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x3" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x3" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x4" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x4" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x4" #5: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 "road/0x4" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "road/0x4" #5: IMPAIR: revival: skip scheduling revival event
-"road/0x5" #6: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x5" #6: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x5" #6: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.1.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x6" #7: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x6" #7: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x6" #7: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x7" #8: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x7" #8: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x7" #8: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.3.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
-"road/0x8" #9: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x8" #9: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESPinUDP <0xESPESP}
 "road/0x8" #9: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===10.0.4.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 NATD=192.1.2.23:4500 DPD=passive}
 road #
  sleep 3

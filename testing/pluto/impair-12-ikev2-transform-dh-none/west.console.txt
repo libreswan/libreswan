@@ -40,7 +40,7 @@ west #
 "dh" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
-"dh" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
+"dh" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3 {ESP <0xESPESP}
 "dh" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 "dh" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #3
 "dh" #2: ESP traffic information: in=84B out=84B
@@ -65,7 +65,7 @@ west #
 "dh" #6: initiating rekey to replace Child SA #4 using IKE SA #5
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
-"dh" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5
+"dh" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5 {ESP <0xESPESP}
 "dh" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 "dh" #4: sent INFORMATIONAL request to delete established Child SA using IKE SA #5
 "dh" #4: ESP traffic information: in=84B out=84B
@@ -118,7 +118,7 @@ west #
 "dh" #4: initiating rekey to replace Child SA #2 using IKE SA #3
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
 "dh" #4: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
-"dh" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3
+"dh" #4: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #3 {ESP <0xESPESP}
 "dh" #4: initiator rekeyed Child SA #2 using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 "dh" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #3
 "dh" #2: ESP traffic information: in=84B out=84B
@@ -143,7 +143,7 @@ west #
 "dh" #6: initiating rekey to replace Child SA #4 using IKE SA #5
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
 "dh" #6: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
-"dh" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5
+"dh" #6: sent CREATE_CHILD_SA request to rekey Child SA #4 using IKE SA #5 {ESP <0xESPESP}
 "dh" #6: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 "dh" #4: sent INFORMATIONAL request to delete established Child SA using IKE SA #5
 "dh" #4: ESP traffic information: in=84B out=84B

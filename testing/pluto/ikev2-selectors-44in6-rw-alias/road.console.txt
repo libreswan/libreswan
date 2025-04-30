@@ -28,7 +28,7 @@ initiating 2 connections
 "road/0x1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "road/0x2" #3: initiating Child SA using IKE SA #1
-"road/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"road/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "road/0x2" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 road #
  ipsec _kernel state
@@ -131,9 +131,9 @@ road #
  ipsec whack --rekey-child --name road
 "road/0x2" #5: initiating rekey to replace Child SA #3 using IKE SA #4
 "road/0x1" #6: initiating rekey to replace Child SA #2 using IKE SA #4
-"road/0x2" #5: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #4
+"road/0x2" #5: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #4 {ESP <0xESPESP}
 "road/0x2" #5: initiator rekeyed Child SA #3 using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
-"road/0x1" #6: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #4
+"road/0x1" #6: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #4 {ESP <0xESPESP}
 "road/0x1" #6: initiator rekeyed Child SA #2 using #4; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 "road/0x2" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #4
 "road/0x2" #3: ESP traffic information: in=168B out=168B

@@ -55,7 +55,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-vti-02
 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
-"westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
 "westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
 "westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
