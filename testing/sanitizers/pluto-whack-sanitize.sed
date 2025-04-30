@@ -18,6 +18,9 @@ s/\(rekeyed Child SA.*[^A-Z]IPCOMP.\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPE
 s/\(rekeyed Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
 s/\(rekeyed Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
 
+# IKEv2: {ESP <0xESPESP}
+s/{\([A-Z]*\)\([^=]*\) <0x[a-f0-9]*\(.*\)}/{\1\2 <0x\1\1\3}/
+
 # Generated RSA keys have some fuzz
 s/ \([0-9]\)[0-9][0-9][0-9]-bit RSA/ \1nnn-bit RSA/
 s/ \([0-9]\)[0-9][0-9]-bit RSA/ \1nn-bit RSA/
