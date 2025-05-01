@@ -587,7 +587,12 @@ static void llog_v2_success_sent_CREATE_CHILD_SA_child_request(struct ike_sa *ik
 		 * exchanges (expecially when they cross streams)
 		 */
 		const struct ipsec_proto_info *proto = ikev2_child_sa_proto_info(larval);
-		jam(buf, " <0x%08" PRIx32, proto->inbound.spi);
+		jam(buf, " <0x%08"PRIx32, ntohl(proto->inbound.spi));
+		/* optional IPCOMP */
+		if (larval->sa.st_ipcomp.inbound.spi != 0) {
+			jam(buf, " IPCOMP <0x%04"PRIx32, ntohl(larval->sa.st_ipcomp.inbound.spi));
+		}
+		/* close */
 		jam_string(buf, "}");
 	}
 }
