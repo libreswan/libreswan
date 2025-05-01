@@ -86,4 +86,6 @@ void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 void set_larval_v2_transition(struct child_sa *larval, const struct finite_state *to,
 			      where_t where);
 
+void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa *child);
+
 #endif

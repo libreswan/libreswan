@@ -66,6 +66,8 @@
 #include "ikev2_parent.h"
 #include "ikev2_states.h"
 #include "ikev2_notification.h"
+#include "iface.h"
+#include "nat_traversal.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -676,6 +678,52 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	}
 
 	return v2N_NOTHING_WRONG;
+}
+
+void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa *larval)
+{
+	const struct config *config = larval->sa.st_connection->config;
+	jam_string(buf, "{");
+	/*
+	 * While ESP/AH isn't dynamic (from config),
+	 * inTCP/inUDP are (determined by the negotiating IKE
+	 * SA).  For completeness include both.
+	 */
+	jam_enum_short(buf, &encap_proto_names, config->child_sa.encap_proto);
+	if (larval->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
+		jam_string(buf, "inTCP");
+	} else if (nat_traversal_detected(&larval->sa)) {
+		jam_string(buf, "inUDP");
+	}
+#if 0
+	/*
+	 * Show negotiation parameters?  For moment, no. They
+	 * are just a copy/paste from config and can be seen
+	 * with connectionstatus.
+	 */
+	if (config->esn.yes && config->esn.no) {
+		jam_string(buf, " ESN?");
+	} else if (config->esn.yes) {
+		jam_string(buf, " ESN=Y");
+	} else if (config->esn.no) {
+		jam_string(buf, " ESN=N");
+	}
+	if (config->child_sa.iptfs.enabled) {
+		jam_string(buf, " IPTFS?");
+	}
+#endif
+	/*
+	 * This is a must.  It's needed to pair two Child SA
+	 * exchanges (expecially when they cross streams)
+	 */
+	const struct ipsec_proto_info *proto = ikev2_child_sa_proto_info(larval);
+	jam(buf, " <0x%08"PRIx32, ntohl(proto->inbound.spi));
+	/* optional IPCOMP */
+	if (larval->sa.st_ipcomp.inbound.spi != 0) {
+		jam(buf, " IPCOMP <0x%04"PRIx32, ntohl(larval->sa.st_ipcomp.inbound.spi));
+	}
+	/* close */
+	jam_string(buf, "}");
 }
 
 void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
