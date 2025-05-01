@@ -35,7 +35,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSASSA-PSS with SHA2_512 and '192.1.2.23'
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (IKE_AUTH_I) and sending notification
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

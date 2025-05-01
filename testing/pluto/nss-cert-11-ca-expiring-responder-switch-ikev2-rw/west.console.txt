@@ -46,7 +46,7 @@ west #
 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "old-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"old-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"old-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "old-west" #1: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
 "old-west" #2: received INTERNAL_IP4_ADDRESS 192.0.1.0
 "old-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -61,7 +61,7 @@ west #
 "new-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "new-west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "new-west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"new-west" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"new-west" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #4 {ESP <0xESPESP}
 "new-west" #3: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
 "new-west" #4: received INTERNAL_IP4_ADDRESS 192.0.1.0
 "new-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -76,7 +76,7 @@ west #
 "old-west" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "old-west" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "old-west" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"old-west" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"old-west" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
 "old-west" #5: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
 "old-west" #6: received INTERNAL_IP4_ADDRESS 192.0.1.0
 "old-west" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -91,7 +91,7 @@ west #
 "new-west" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "new-west" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "new-west" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"new-west" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"new-west" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #8 {ESP <0xESPESP}
 "new-west" #7: initiator established IKE SA; authenticated peer certificate 'CN=east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=west-ca'
 "new-west" #8: received INTERNAL_IP4_ADDRESS 192.0.1.0
 "new-west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}

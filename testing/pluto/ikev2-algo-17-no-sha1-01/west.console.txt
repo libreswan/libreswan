@@ -141,7 +141,7 @@ west #
 "westnet-eastnet-no-sha1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-no-sha1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-no-sha1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-no-sha1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-no-sha1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-no-sha1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet-eastnet-no-sha1" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "westnet-eastnet-no-sha1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
