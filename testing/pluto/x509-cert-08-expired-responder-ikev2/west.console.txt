@@ -32,7 +32,7 @@ west #
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "west" #1: NSS: ERROR: IPsec certificate CN=east-expired invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 "west" #1: X509: certificate payload rejected for this connection
 "west" #1: encountered fatal error in state IKE_AUTH_I

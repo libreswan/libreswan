@@ -35,7 +35,7 @@ north #
 "north-east-21" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east-21" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east-21" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"north-east-21" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"north-east-21" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "north-east-21" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "north-east-21" #2: initiator established Child SA using #1; IPsec tunnel [192.0.31.0/24===192.0.21.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
@@ -43,7 +43,7 @@ north #
 "north-east-22" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east-22" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east-22" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"north-east-22" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"north-east-22" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #4 {ESP <0xESPESP}
 "north-east-22" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "north-east-22" #4: initiator established Child SA using #3; IPsec tunnel [192.0.32.0/24===192.0.22.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
@@ -51,7 +51,7 @@ north #
 "north-east-23" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east-23" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east-23" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"north-east-23" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"north-east-23" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
 "north-east-23" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "north-east-23" #6: initiator established Child SA using #5; IPsec tunnel [192.0.33.0/24===192.0.23.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
@@ -59,7 +59,7 @@ north #
 "north-east-24" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "north-east-24" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east-24" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"north-east-24" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"north-east-24" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #8 {ESP <0xESPESP}
 "north-east-24" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "north-east-24" #8: initiator established Child SA using #7; IPsec tunnel [192.0.34.0/24===192.0.24.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #

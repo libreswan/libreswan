@@ -51,7 +51,7 @@ west #
 "westnet4-eastnet4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet4-eastnet4" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet4-eastnet4" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet4-eastnet4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet4-eastnet4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "westnet4-eastnet4" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet4-eastnet4" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -59,7 +59,7 @@ west #
 "westnet6-eastnet6" #3: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
 "westnet6-eastnet6" #3: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
 "westnet6-eastnet6" #3: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet6-eastnet6" #3: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
+"westnet6-eastnet6" #3: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500; Child SA #4 {ESP <0xESPESP}
 "westnet6-eastnet6" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet6-eastnet6" #4: initiator established Child SA using #3; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -132,7 +132,7 @@ west #
 "westnet4-eastnet4" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet4-eastnet4" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet4-eastnet4" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet4-eastnet4" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet4-eastnet4" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
 "westnet4-eastnet4" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet4-eastnet4" #6: added 192.0.1.251/24 to ipsec-interface ipsec1@NONE
 "westnet4-eastnet4" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -141,7 +141,7 @@ west #
 "westnet6-eastnet6" #7: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
 "westnet6-eastnet6" #7: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
 "westnet6-eastnet6" #7: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet6-eastnet6" #7: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
+"westnet6-eastnet6" #7: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500; Child SA #8 {ESP <0xESPESP}
 "westnet6-eastnet6" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet6-eastnet6" #8: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@NONE
 "westnet6-eastnet6" #8: initiator established Child SA using #7; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -214,7 +214,7 @@ west #
 "westnet4-eastnet4" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet4-eastnet4" #9: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet4-eastnet4" #9: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet4-eastnet4" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet4-eastnet4" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #10 {ESP <0xESPESP}
 "westnet4-eastnet4" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet4-eastnet4" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -222,7 +222,7 @@ west #
 "westnet6-eastnet6" #11: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
 "westnet6-eastnet6" #11: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
 "westnet6-eastnet6" #11: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet6-eastnet6" #11: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500
+"westnet6-eastnet6" #11: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500; Child SA #12 {ESP <0xESPESP}
 "westnet6-eastnet6" #11: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 "westnet6-eastnet6" #12: initiator established Child SA using #11; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
