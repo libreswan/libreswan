@@ -1504,6 +1504,22 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 #define STATE_V2_IKE_AUTH_IR STATE_V2_ESTABLISHED_IKE_SA
 
+/* sent EXCHANGE {request,response} to <address> */
+static void llog_v2_success_sent_IKE_AUTH_request(struct ike_sa *ike)
+{
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "sent IKE_AUTH request to ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+		if (larval != NULL) {
+			jam_string(buf, "; Child SA ");
+			jam_so(buf, larval->sa.st_serialno);
+			jam_string(buf, " ");
+			jam_v2_success_child_sa_request_details(buf, larval);
+		}
+	}
+}
+
 /*
  * Initiate IKE_AUTH
  */
@@ -1513,7 +1529,7 @@ static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.to = &state_v2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.processor  = initiate_v2_IKE_AUTH_request,
-	.llog_success = llog_v2_success_exchange_sent_to,
+	.llog_success = llog_v2_success_sent_IKE_AUTH_request,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
