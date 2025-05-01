@@ -60,7 +60,7 @@ west #
 "westnet-eastnet-esp-3des-alg" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-esp-3des-alg" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "westnet-eastnet-esp-3des-alg" #2: sent Quick Mode request
-"westnet-eastnet-esp-3des-alg" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+"westnet-eastnet-esp-3des-alg" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

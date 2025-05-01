@@ -1,23 +1,9 @@
-#why filter? /^010 .* retransmission; will wait .*/d
-#why filter? /discarding duplicate packet; already STATE_MAIN_I3/d
-#why filter? /^002 .*received Vendor ID Payload/d
-
-# IKEv1
-/inbound IPsec SA installed/ s/ESP=>0x[a-f0-9]* <0x[a-f0-9]*/ESP=>0xESPESP <0xESPESP/
-s/\(IPsec SA established .* mode\) \([^ ]*ESP[^>]*>\)0x[a-f0-9]* <0x[a-f0-9]* \(xfrm.[^ ]* IPCOMP.>0x\)[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3ESPESP <0xESPESP \4/
-s/\(IPsec SA established .* mode\) \([^ ]*ESP[^=]*=>\)0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1 \20xESPESP <0xESPESP \3/
-s/\(IPsec SA established .* mode\) \([^ ]*AH[^ ]*\)0x[a-f0-9]* \(.*\)0x[a-f0-9]* \(.*\)$/\1 \20xAHAH \30xAHAH \4/
-
-# IKEv2; need to handle {ESP,AH}/TCP
-s/\(established Child SA.*[^A-Z]IPCOMP.\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
-s/\(established Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
-s/\(established Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
-
-# IKEv2; need to handle {ESP,AH}/TCP
-s/\(rekeyed Child SA.*[^A-Z]IPCOMP.\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
-s/\(rekeyed Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
-s/\(rekeyed Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
-
+# {ESP=>0xf38023da <0xf7e45c43 ...}
+# {AH=>0xf38023da <0xf7e45c43 ...}
+# {ESPinUDP/ESN=>0xf38023da <0xf7e45c43 ...}
+s/{\([A-Z]*\)\([^=]*\)=>0x[a-f0-9]* <0x[a-f0-9]*\(.*\)}/{\1\2=>0x\1\1 <0x\1\1\3}/
+# {... IPCOMP=... }
+s/{\(.*\) IPCOMP=>0x[a-f0-9]* <0x[a-f0-9]*\(.*\)}/{\1 IPCOMP=>0xCPI <0xCPI\2}/
 # IKEv2: {ESP <0xESPESP}
 s/{\([A-Z]*\)\([^=]*\) <0x[a-f0-9]*\(.*\)}/{\1\2 <0x\1\1\3}/
 
