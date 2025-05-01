@@ -70,7 +70,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-00
 "westnet-eastnet-ikev2-00" #3: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-00" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"westnet-eastnet-ikev2-00" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-ikev2-00" #3: initiator established Child SA using #1; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
@@ -80,7 +80,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-01
 "westnet-eastnet-ikev2-01" #4: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-01" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"westnet-eastnet-ikev2-01" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-ikev2-01" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0/24===192.0.201.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
@@ -96,7 +96,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2-11
 "westnet-eastnet-ikev2-11" #5: initiating Child SA using IKE SA #1
-"westnet-eastnet-ikev2-11" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1
+"westnet-eastnet-ikev2-11" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-ikev2-11" #5: initiator established Child SA using #1; IPsec tunnel [192.0.111.0/24===192.0.211.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.111.254 192.0.211.254

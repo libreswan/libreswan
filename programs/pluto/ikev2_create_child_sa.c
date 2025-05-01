@@ -60,6 +60,8 @@
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
+#include "iface.h"
+#include "nat_traversal.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 
@@ -528,17 +530,65 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
+static void llog_v2_success_sent_CREATE_CHILD_SA_child_request(struct ike_sa *ike)
 {
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-	if (larval != NULL) {
-		llog(RC_LOG, larval->sa.logger,
-		     "sent CREATE_CHILD_SA request to rekey Child SA "PRI_SO" using IKE SA "PRI_SO,
-		     pri_so(larval->sa.st_v2_rekey_pred),
-		     pri_so(ike->sa.st_serialno));
-	} else {
-		llog(RC_LOG, ike->sa.logger, "rekey of Child SA abandoned");
+	if (larval == NULL) {
+		llog(RC_LOG, ike->sa.logger, "Child SA abandoned");
+		return;
+	}
+	LLOG_JAMBUF(RC_LOG, larval->sa.logger, buf) {
+		jam_string(buf, "sent CREATE_CHILD_SA request to ");
+		if (larval->sa.st_v2_rekey_pred == SOS_NOBODY) {
+			jam_string(buf, "create Child SA");
+		} else {
+			jam_string(buf, "rekey Child SA ");
+			jam_so(buf, larval->sa.st_v2_rekey_pred);
+		}
+		jam_string(buf, " using IKE SA ");
+		jam_so(buf, ike->sa.st_serialno);
+		/*
+		 * Append some dynamic details (i.e., things that
+		 * can't be determined from configstatus.
+		 */
+		jam_string(buf, " {");
+		const struct config *config = larval->sa.st_connection->config;
+		/*
+		 * While ESP/AH isn't dynamic (from config),
+		 * inTCP/inUDP are (determined by the negotiating IKE
+		 * SA).  For completeness include both.
+		 */
+		jam_enum_short(buf, &encap_proto_names, config->child_sa.encap_proto);
+		if (larval->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
+			jam_string(buf, "inTCP");
+		} else if (nat_traversal_detected(&larval->sa)) {
+			jam_string(buf, "inUDP");
+		}
+#if 0
+		/*
+		 * Show negotiation parameters?  For moment, no. They
+		 * are just a copy/paste from config and can be seen
+		 * with connectionstatus.
+		 */
+		if (config->esn.yes && config->esn.no) {
+			jam_string(buf, " ESN?");
+		} else if (config->esn.yes) {
+			jam_string(buf, " ESN=Y");
+		} else if (config->esn.no) {
+			jam_string(buf, " ESN=N");
+		}
+		if (config->child_sa.iptfs.enabled) {
+			jam_string(buf, " IPTFS?");
+		}
+#endif
+		/*
+		 * This is a must.  It's needed to pair two Child SA
+		 * exchanges (expecially when they cross streams)
+		 */
+		const struct ipsec_proto_info *proto = ikev2_child_sa_proto_info(larval);
+		jam(buf, " <0x%08" PRIx32, proto->inbound.spi);
+		jam_string(buf, "}");
 	}
 }
 
@@ -558,7 +608,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_child_initiate_transi
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
-	.llog_success = llog_v2_success_rekey_child_request,
+	.llog_success = llog_v2_success_sent_CREATE_CHILD_SA_child_request,
 	.timeout_event = EVENT_RETAIN,
 };
 
@@ -911,25 +961,12 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-static void llog_v2_success_new_child_request(struct ike_sa *ike)
-{
-	/* XXX: should the lerval SA be a parameter? */
-	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-	if (larval != NULL) {
-		llog(RC_LOG, larval->sa.logger,
-		     "sent CREATE_CHILD_SA request to create Child SA using IKE SA "PRI_SO,
-		     pri_so(ike->sa.st_serialno));
-	} else {
-		llog(RC_LOG, ike->sa.logger, "create Child SA abandoned");
-	}
-}
-
 static const struct v2_transition v2_CREATE_CHILD_SA_new_child_initiate_transition = {
 	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
-	.llog_success = llog_v2_success_new_child_request,
+	.llog_success = llog_v2_success_sent_CREATE_CHILD_SA_child_request,
 	.timeout_event = EVENT_RETAIN,
 };
 

@@ -102,7 +102,7 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 west #
  ipsec whack --rekey-child --name west
 "west" #3: initiating rekey to replace Child SA #2 using IKE SA #1
-"west" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1
+"west" #3: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #1 {ESPinTCP <0xESPESP}
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 "west" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west" #2: ESP traffic information: in=84B out=84B
