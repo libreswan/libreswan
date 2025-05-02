@@ -152,31 +152,40 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 }
 #endif
 
-static void add_conn(struct starter_conn *conn,
-		     const char *p1, const char *p2, const char *p3,
-		     const char *ctlsocket,
-		     int *exit_status,
+PRINTF_LIKE(4)
+static void fprint_conn(FILE *file,
+			const struct starter_conn *conn,
+			const char *alias,
+			const char *fmt, ...)
+{
+	if (alias != NULL) {
+		fprintf(file, "alias %s ", alias);
+	}
+	fprintf(file, "conn %s: ", conn->name);
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(file, fmt, ap);
+	va_end(ap);
+	fprintf(file, "\n");
+}
+
+static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL*/,
+		     const char *ctlsocket, int *exit_status,
 		     struct logger *logger)
 {
 	/* found name or alias */
 	if (conn->state == STATE_ADDED) {
-		fprintf(stderr, "\n%s%s%sconn %s already added\n",
-			p1, p2, p3,
-			conn->name);
+		fprint_conn(stderr, conn, alias, "already added");
 		return;
 	}
 
 	if (conn->state == STATE_FAILED) {
-		fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
-			p1, p2, p3,
-			conn->name);
+		fprint_conn(stderr, conn, alias, "did not load properly");
 		return;
 	}
 
 	if (!confread_validate_conn(conn, logger)) {
-		fprintf(stderr, "\n%s%s%sconn %s did not validate\n",
-			p1, p2, p3,
-			conn->name);
+		fprint_conn(stderr, conn, alias, "did not validate");
 		return;
 	}
 
@@ -189,13 +198,24 @@ static void add_conn(struct starter_conn *conn,
 	    autostart != AUTOSTART_ADD) {
 		if (verbose) {
 			name_buf nb;
-			printf("  overriding auto=%s with auto=add\n",
-			       str_sparse_short(&autostart_names, autostart, &nb));
+			fprintf(stdout, "  overriding auto=%s with auto=add",
+				str_sparse_short(&autostart_names, autostart, &nb));
 		}
 		conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
 	}
 
+	if (verbose) {
+		fprintf(stdout, "  resolving default routes");
+		fprintf(stdout, "\n");
+	}
+
 	resolve_default_routes(conn, logger);
+
+	if (verbose) {
+		fprintf(stdout, "  sending to pluto");
+		fprintf(stdout, "\n");
+	}
+
 	int status = starter_whack_add_conn(ctlsocket, conn, logger);
 	/* don't loose existing status */
 	if (status != 0) {
@@ -214,7 +234,7 @@ static bool find_and_add_conn_by_name(const char *connname,
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link)  {
 		if (streq(conn->name, connname)) {
-			add_conn(conn, "", "", "", ctlsocket, exit_status, logger);
+			add_conn(conn, NULL, ctlsocket, exit_status, logger);
 			return true;
 		}
 	}
@@ -232,7 +252,7 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
 				  conn->values[KSCF_CONNALIAS].string)) {
-			add_conn(conn, "alias: ", connname, " ", ctlsocket, exit_status, logger);
+			add_conn(conn, connname, ctlsocket, exit_status, logger);
 			return true;
 		}
 	}
@@ -562,15 +582,13 @@ int main(int argc, char *argv[])
 	} else {
 
 		/* load named conns, regardless of their state */
-		if (verbose > 0) {
-			printf("loading named conns:");
-		}
-
 		for (int connum = optind; connum < argc; connum++) {
 			const char *connname = argv[connum];
 
 			if (verbose > 0) {
-				printf(" %s\n", connname);
+				fprintf(stdout, "loading conns matching %s:", connname);
+				fprintf(stdout, "\n");
+
 			}
 
 			if (find_and_add_conn_by_name(connname, cfg, ctlsocket,
@@ -586,8 +604,7 @@ int main(int argc, char *argv[])
 
 			/* we found neither name nor alias */
 			exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
-			fprintf(stderr, "conn '%s': not found (tried aliases)\n",
-				connname);
+			fprintf(stderr, "conn %s: not found (tried aliases)\n", connname);
 		}
 	}
 
