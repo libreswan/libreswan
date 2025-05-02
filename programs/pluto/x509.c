@@ -711,7 +711,7 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 						 &wildcards, verbose);
 		if (!m) {
 			id_buf idb;
-			return diag("peer ID_DER_ASN1_DN '%s' does not match expected '%s'",
+			return diag("peer ID DER_ASN1_DN '%s' does not match expected '%s'",
 				    end_cert->subjectName, str_id(peer_id, &idb));
 		}
 
@@ -736,7 +736,7 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 	{
 		esb_buf b;
 		return diag("unhandled ID type %s; cannot match peer's certificate with expected peer ID",
-			    str_enum(&ike_id_type_names, peer_id->kind, &b));
+			    str_enum_short(&ike_id_type_names, peer_id->kind, &b));
 	}
 	}
 }
