@@ -1299,93 +1299,106 @@ west #
          jam_enum 1: ID_IPV4_ADDR OK
          search ID_IPV4_ADDR: OK
          match ID_IPV4_ADDR: OK
-         short_name 1: ID_IPV4_ADDR OK
-         jam_enum_short 1: ID_IPV4_ADDR OK
-         jam_enum_human 1: id-ipv4-addr OK
+         short_name 1: IPV4_ADDR OK
+         jam_enum_short 1: IPV4_ADDR OK
+         jam_enum_human 1: ipv4-addr OK
+         match IPV4_ADDR [short]: OK
     2 -> ID_FQDN
          jam_enum 2: ID_FQDN OK
          search ID_FQDN: OK
          match ID_FQDN: OK
-         short_name 2: ID_FQDN OK
-         jam_enum_short 2: ID_FQDN OK
-         jam_enum_human 2: id-fqdn OK
+         short_name 2: FQDN OK
+         jam_enum_short 2: FQDN OK
+         jam_enum_human 2: fqdn OK
+         match FQDN [short]: OK
     3 -> ID_USER_FQDN
          jam_enum 3: ID_USER_FQDN OK
          search ID_USER_FQDN: OK
          match ID_USER_FQDN: OK
-         short_name 3: ID_USER_FQDN OK
-         jam_enum_short 3: ID_USER_FQDN OK
-         jam_enum_human 3: id-user-fqdn OK
+         short_name 3: USER_FQDN OK
+         jam_enum_short 3: USER_FQDN OK
+         jam_enum_human 3: user-fqdn OK
+         match USER_FQDN [short]: OK
     4 -> ID_IPV4_ADDR_SUBNET
          jam_enum 4: ID_IPV4_ADDR_SUBNET OK
          search ID_IPV4_ADDR_SUBNET: OK
          match ID_IPV4_ADDR_SUBNET: OK
-         short_name 4: ID_IPV4_ADDR_SUBNET OK
-         jam_enum_short 4: ID_IPV4_ADDR_SUBNET OK
-         jam_enum_human 4: id-ipv4-addr-subnet OK
+         short_name 4: IPV4_ADDR_SUBNET OK
+         jam_enum_short 4: IPV4_ADDR_SUBNET OK
+         jam_enum_human 4: ipv4-addr-subnet OK
+         match IPV4_ADDR_SUBNET [short]: OK
     5 -> ID_IPV6_ADDR
          jam_enum 5: ID_IPV6_ADDR OK
          search ID_IPV6_ADDR: OK
          match ID_IPV6_ADDR: OK
-         short_name 5: ID_IPV6_ADDR OK
-         jam_enum_short 5: ID_IPV6_ADDR OK
-         jam_enum_human 5: id-ipv6-addr OK
+         short_name 5: IPV6_ADDR OK
+         jam_enum_short 5: IPV6_ADDR OK
+         jam_enum_human 5: ipv6-addr OK
+         match IPV6_ADDR [short]: OK
     6 -> ID_IPV6_ADDR_SUBNET
          jam_enum 6: ID_IPV6_ADDR_SUBNET OK
          search ID_IPV6_ADDR_SUBNET: OK
          match ID_IPV6_ADDR_SUBNET: OK
-         short_name 6: ID_IPV6_ADDR_SUBNET OK
-         jam_enum_short 6: ID_IPV6_ADDR_SUBNET OK
-         jam_enum_human 6: id-ipv6-addr-subnet OK
+         short_name 6: IPV6_ADDR_SUBNET OK
+         jam_enum_short 6: IPV6_ADDR_SUBNET OK
+         jam_enum_human 6: ipv6-addr-subnet OK
+         match IPV6_ADDR_SUBNET [short]: OK
     7 -> ID_IPV4_ADDR_RANGE
          jam_enum 7: ID_IPV4_ADDR_RANGE OK
          search ID_IPV4_ADDR_RANGE: OK
          match ID_IPV4_ADDR_RANGE: OK
-         short_name 7: ID_IPV4_ADDR_RANGE OK
-         jam_enum_short 7: ID_IPV4_ADDR_RANGE OK
-         jam_enum_human 7: id-ipv4-addr-range OK
+         short_name 7: IPV4_ADDR_RANGE OK
+         jam_enum_short 7: IPV4_ADDR_RANGE OK
+         jam_enum_human 7: ipv4-addr-range OK
+         match IPV4_ADDR_RANGE [short]: OK
     8 -> ID_IPV6_ADDR_RANGE
          jam_enum 8: ID_IPV6_ADDR_RANGE OK
          search ID_IPV6_ADDR_RANGE: OK
          match ID_IPV6_ADDR_RANGE: OK
-         short_name 8: ID_IPV6_ADDR_RANGE OK
-         jam_enum_short 8: ID_IPV6_ADDR_RANGE OK
-         jam_enum_human 8: id-ipv6-addr-range OK
+         short_name 8: IPV6_ADDR_RANGE OK
+         jam_enum_short 8: IPV6_ADDR_RANGE OK
+         jam_enum_human 8: ipv6-addr-range OK
+         match IPV6_ADDR_RANGE [short]: OK
     9 -> ID_DER_ASN1_DN
          jam_enum 9: ID_DER_ASN1_DN OK
          search ID_DER_ASN1_DN: OK
          match ID_DER_ASN1_DN: OK
-         short_name 9: ID_DER_ASN1_DN OK
-         jam_enum_short 9: ID_DER_ASN1_DN OK
-         jam_enum_human 9: id-der-asn1-dn OK
+         short_name 9: DER_ASN1_DN OK
+         jam_enum_short 9: DER_ASN1_DN OK
+         jam_enum_human 9: der-asn1-dn OK
+         match DER_ASN1_DN [short]: OK
    10 -> ID_DER_ASN1_GN
          jam_enum 10: ID_DER_ASN1_GN OK
          search ID_DER_ASN1_GN: OK
          match ID_DER_ASN1_GN: OK
-         short_name 10: ID_DER_ASN1_GN OK
-         jam_enum_short 10: ID_DER_ASN1_GN OK
-         jam_enum_human 10: id-der-asn1-gn OK
+         short_name 10: DER_ASN1_GN OK
+         jam_enum_short 10: DER_ASN1_GN OK
+         jam_enum_human 10: der-asn1-gn OK
+         match DER_ASN1_GN [short]: OK
    11 -> ID_KEY_ID
          jam_enum 11: ID_KEY_ID OK
          search ID_KEY_ID: OK
          match ID_KEY_ID: OK
-         short_name 11: ID_KEY_ID OK
-         jam_enum_short 11: ID_KEY_ID OK
-         jam_enum_human 11: id-key-id OK
+         short_name 11: KEY_ID OK
+         jam_enum_short 11: KEY_ID OK
+         jam_enum_human 11: key-id OK
+         match KEY_ID [short]: OK
    12 -> ID_FC_NAME
          jam_enum 12: ID_FC_NAME OK
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
-         short_name 12: ID_FC_NAME OK
-         jam_enum_short 12: ID_FC_NAME OK
-         jam_enum_human 12: id-fc-name OK
+         short_name 12: FC_NAME OK
+         jam_enum_short 12: FC_NAME OK
+         jam_enum_human 12: fc-name OK
+         match FC_NAME [short]: OK
    13 -> ID_NULL
          jam_enum 13: ID_NULL OK
          search ID_NULL: OK
          match ID_NULL: OK
-         short_name 13: ID_NULL OK
-         jam_enum_short 13: ID_NULL OK
-         jam_enum_human 13: id-null OK
+         short_name 13: NULL OK
+         jam_enum_short 13: NULL OK
+         jam_enum_human 13: null OK
+         match NULL [short]: OK
 name for -1 present (should be absent)
   ikev1_exchange_names: [0..34)
     0 -> ISAKMP_XCHG_NONE
@@ -1465,93 +1478,106 @@ name for -1 present (should be absent)
          jam_enum 1: ID_IPV4_ADDR OK
          search ID_IPV4_ADDR: OK
          match ID_IPV4_ADDR: OK
-         short_name 1: ID_IPV4_ADDR OK
-         jam_enum_short 1: ID_IPV4_ADDR OK
-         jam_enum_human 1: id-ipv4-addr OK
+         short_name 1: IPV4_ADDR OK
+         jam_enum_short 1: IPV4_ADDR OK
+         jam_enum_human 1: ipv4-addr OK
+         match IPV4_ADDR [short]: OK
     2 -> ID_FQDN
          jam_enum 2: ID_FQDN OK
          search ID_FQDN: OK
          match ID_FQDN: OK
-         short_name 2: ID_FQDN OK
-         jam_enum_short 2: ID_FQDN OK
-         jam_enum_human 2: id-fqdn OK
+         short_name 2: FQDN OK
+         jam_enum_short 2: FQDN OK
+         jam_enum_human 2: fqdn OK
+         match FQDN [short]: OK
     3 -> ID_USER_FQDN
          jam_enum 3: ID_USER_FQDN OK
          search ID_USER_FQDN: OK
          match ID_USER_FQDN: OK
-         short_name 3: ID_USER_FQDN OK
-         jam_enum_short 3: ID_USER_FQDN OK
-         jam_enum_human 3: id-user-fqdn OK
+         short_name 3: USER_FQDN OK
+         jam_enum_short 3: USER_FQDN OK
+         jam_enum_human 3: user-fqdn OK
+         match USER_FQDN [short]: OK
     4 -> ID_IPV4_ADDR_SUBNET
          jam_enum 4: ID_IPV4_ADDR_SUBNET OK
          search ID_IPV4_ADDR_SUBNET: OK
          match ID_IPV4_ADDR_SUBNET: OK
-         short_name 4: ID_IPV4_ADDR_SUBNET OK
-         jam_enum_short 4: ID_IPV4_ADDR_SUBNET OK
-         jam_enum_human 4: id-ipv4-addr-subnet OK
+         short_name 4: IPV4_ADDR_SUBNET OK
+         jam_enum_short 4: IPV4_ADDR_SUBNET OK
+         jam_enum_human 4: ipv4-addr-subnet OK
+         match IPV4_ADDR_SUBNET [short]: OK
     5 -> ID_IPV6_ADDR
          jam_enum 5: ID_IPV6_ADDR OK
          search ID_IPV6_ADDR: OK
          match ID_IPV6_ADDR: OK
-         short_name 5: ID_IPV6_ADDR OK
-         jam_enum_short 5: ID_IPV6_ADDR OK
-         jam_enum_human 5: id-ipv6-addr OK
+         short_name 5: IPV6_ADDR OK
+         jam_enum_short 5: IPV6_ADDR OK
+         jam_enum_human 5: ipv6-addr OK
+         match IPV6_ADDR [short]: OK
     6 -> ID_IPV6_ADDR_SUBNET
          jam_enum 6: ID_IPV6_ADDR_SUBNET OK
          search ID_IPV6_ADDR_SUBNET: OK
          match ID_IPV6_ADDR_SUBNET: OK
-         short_name 6: ID_IPV6_ADDR_SUBNET OK
-         jam_enum_short 6: ID_IPV6_ADDR_SUBNET OK
-         jam_enum_human 6: id-ipv6-addr-subnet OK
+         short_name 6: IPV6_ADDR_SUBNET OK
+         jam_enum_short 6: IPV6_ADDR_SUBNET OK
+         jam_enum_human 6: ipv6-addr-subnet OK
+         match IPV6_ADDR_SUBNET [short]: OK
     7 -> ID_IPV4_ADDR_RANGE
          jam_enum 7: ID_IPV4_ADDR_RANGE OK
          search ID_IPV4_ADDR_RANGE: OK
          match ID_IPV4_ADDR_RANGE: OK
-         short_name 7: ID_IPV4_ADDR_RANGE OK
-         jam_enum_short 7: ID_IPV4_ADDR_RANGE OK
-         jam_enum_human 7: id-ipv4-addr-range OK
+         short_name 7: IPV4_ADDR_RANGE OK
+         jam_enum_short 7: IPV4_ADDR_RANGE OK
+         jam_enum_human 7: ipv4-addr-range OK
+         match IPV4_ADDR_RANGE [short]: OK
     8 -> ID_IPV6_ADDR_RANGE
          jam_enum 8: ID_IPV6_ADDR_RANGE OK
          search ID_IPV6_ADDR_RANGE: OK
          match ID_IPV6_ADDR_RANGE: OK
-         short_name 8: ID_IPV6_ADDR_RANGE OK
-         jam_enum_short 8: ID_IPV6_ADDR_RANGE OK
-         jam_enum_human 8: id-ipv6-addr-range OK
+         short_name 8: IPV6_ADDR_RANGE OK
+         jam_enum_short 8: IPV6_ADDR_RANGE OK
+         jam_enum_human 8: ipv6-addr-range OK
+         match IPV6_ADDR_RANGE [short]: OK
     9 -> ID_DER_ASN1_DN
          jam_enum 9: ID_DER_ASN1_DN OK
          search ID_DER_ASN1_DN: OK
          match ID_DER_ASN1_DN: OK
-         short_name 9: ID_DER_ASN1_DN OK
-         jam_enum_short 9: ID_DER_ASN1_DN OK
-         jam_enum_human 9: id-der-asn1-dn OK
+         short_name 9: DER_ASN1_DN OK
+         jam_enum_short 9: DER_ASN1_DN OK
+         jam_enum_human 9: der-asn1-dn OK
+         match DER_ASN1_DN [short]: OK
    10 -> ID_DER_ASN1_GN
          jam_enum 10: ID_DER_ASN1_GN OK
          search ID_DER_ASN1_GN: OK
          match ID_DER_ASN1_GN: OK
-         short_name 10: ID_DER_ASN1_GN OK
-         jam_enum_short 10: ID_DER_ASN1_GN OK
-         jam_enum_human 10: id-der-asn1-gn OK
+         short_name 10: DER_ASN1_GN OK
+         jam_enum_short 10: DER_ASN1_GN OK
+         jam_enum_human 10: der-asn1-gn OK
+         match DER_ASN1_GN [short]: OK
    11 -> ID_KEY_ID
          jam_enum 11: ID_KEY_ID OK
          search ID_KEY_ID: OK
          match ID_KEY_ID: OK
-         short_name 11: ID_KEY_ID OK
-         jam_enum_short 11: ID_KEY_ID OK
-         jam_enum_human 11: id-key-id OK
+         short_name 11: KEY_ID OK
+         jam_enum_short 11: KEY_ID OK
+         jam_enum_human 11: key-id OK
+         match KEY_ID [short]: OK
    12 -> ID_FC_NAME
          jam_enum 12: ID_FC_NAME OK
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
-         short_name 12: ID_FC_NAME OK
-         jam_enum_short 12: ID_FC_NAME OK
-         jam_enum_human 12: id-fc-name OK
+         short_name 12: FC_NAME OK
+         jam_enum_short 12: FC_NAME OK
+         jam_enum_human 12: fc-name OK
+         match FC_NAME [short]: OK
    13 -> ID_NULL
          jam_enum 13: ID_NULL OK
          search ID_NULL: OK
          match ID_NULL: OK
-         short_name 13: ID_NULL OK
-         jam_enum_short 13: ID_NULL OK
-         jam_enum_human 13: id-null OK
+         short_name 13: NULL OK
+         jam_enum_short 13: NULL OK
+         jam_enum_human 13: null OK
+         match NULL [short]: OK
   ikev1_ipsec_attr_names: [1..32002)
     1 -> SA_LIFE_TYPE
          jam_enum 1: SA_LIFE_TYPE OK
@@ -2488,65 +2514,74 @@ name for -1 present (should be absent)
          jam_enum 1: ID_IPV4_ADDR OK
          search ID_IPV4_ADDR: OK
          match ID_IPV4_ADDR: OK
-         short_name 1: ID_IPV4_ADDR OK
-         jam_enum_short 1: ID_IPV4_ADDR OK
-         jam_enum_human 1: id-ipv4-addr OK
+         short_name 1: IPV4_ADDR OK
+         jam_enum_short 1: IPV4_ADDR OK
+         jam_enum_human 1: ipv4-addr OK
+         match IPV4_ADDR [short]: OK
     2 -> ID_FQDN
          jam_enum 2: ID_FQDN OK
          search ID_FQDN: OK
          match ID_FQDN: OK
-         short_name 2: ID_FQDN OK
-         jam_enum_short 2: ID_FQDN OK
-         jam_enum_human 2: id-fqdn OK
+         short_name 2: FQDN OK
+         jam_enum_short 2: FQDN OK
+         jam_enum_human 2: fqdn OK
+         match FQDN [short]: OK
     3 -> ID_USER_FQDN
          jam_enum 3: ID_USER_FQDN OK
          search ID_USER_FQDN: OK
          match ID_USER_FQDN: OK
-         short_name 3: ID_USER_FQDN OK
-         jam_enum_short 3: ID_USER_FQDN OK
-         jam_enum_human 3: id-user-fqdn OK
+         short_name 3: USER_FQDN OK
+         jam_enum_short 3: USER_FQDN OK
+         jam_enum_human 3: user-fqdn OK
+         match USER_FQDN [short]: OK
     5 -> ID_IPV6_ADDR
          jam_enum 5: ID_IPV6_ADDR OK
          search ID_IPV6_ADDR: OK
          match ID_IPV6_ADDR: OK
-         short_name 5: ID_IPV6_ADDR OK
-         jam_enum_short 5: ID_IPV6_ADDR OK
-         jam_enum_human 5: id-ipv6-addr OK
+         short_name 5: IPV6_ADDR OK
+         jam_enum_short 5: IPV6_ADDR OK
+         jam_enum_human 5: ipv6-addr OK
+         match IPV6_ADDR [short]: OK
     9 -> ID_DER_ASN1_DN
          jam_enum 9: ID_DER_ASN1_DN OK
          search ID_DER_ASN1_DN: OK
          match ID_DER_ASN1_DN: OK
-         short_name 9: ID_DER_ASN1_DN OK
-         jam_enum_short 9: ID_DER_ASN1_DN OK
-         jam_enum_human 9: id-der-asn1-dn OK
+         short_name 9: DER_ASN1_DN OK
+         jam_enum_short 9: DER_ASN1_DN OK
+         jam_enum_human 9: der-asn1-dn OK
+         match DER_ASN1_DN [short]: OK
    10 -> ID_DER_ASN1_GN
          jam_enum 10: ID_DER_ASN1_GN OK
          search ID_DER_ASN1_GN: OK
          match ID_DER_ASN1_GN: OK
-         short_name 10: ID_DER_ASN1_GN OK
-         jam_enum_short 10: ID_DER_ASN1_GN OK
-         jam_enum_human 10: id-der-asn1-gn OK
+         short_name 10: DER_ASN1_GN OK
+         jam_enum_short 10: DER_ASN1_GN OK
+         jam_enum_human 10: der-asn1-gn OK
+         match DER_ASN1_GN [short]: OK
    11 -> ID_KEY_ID
          jam_enum 11: ID_KEY_ID OK
          search ID_KEY_ID: OK
          match ID_KEY_ID: OK
-         short_name 11: ID_KEY_ID OK
-         jam_enum_short 11: ID_KEY_ID OK
-         jam_enum_human 11: id-key-id OK
+         short_name 11: KEY_ID OK
+         jam_enum_short 11: KEY_ID OK
+         jam_enum_human 11: key-id OK
+         match KEY_ID [short]: OK
    12 -> ID_FC_NAME
          jam_enum 12: ID_FC_NAME OK
          search ID_FC_NAME: OK
          match ID_FC_NAME: OK
-         short_name 12: ID_FC_NAME OK
-         jam_enum_short 12: ID_FC_NAME OK
-         jam_enum_human 12: id-fc-name OK
+         short_name 12: FC_NAME OK
+         jam_enum_short 12: FC_NAME OK
+         jam_enum_human 12: fc-name OK
+         match FC_NAME [short]: OK
    13 -> ID_NULL
          jam_enum 13: ID_NULL OK
          search ID_NULL: OK
          match ID_NULL: OK
-         short_name 13: ID_NULL OK
-         jam_enum_short 13: ID_NULL OK
-         jam_enum_human 13: id-null OK
+         short_name 13: NULL OK
+         jam_enum_short 13: NULL OK
+         jam_enum_human 13: null OK
+         match NULL [short]: OK
   ikev2_last_proposal_desc: [0..3)
     0 -> v2_PROPOSAL_LAST
          jam_enum 0: v2_PROPOSAL_LAST OK
