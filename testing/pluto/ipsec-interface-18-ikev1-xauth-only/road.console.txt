@@ -25,7 +25,7 @@ road #
 "road-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
 "road-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
 "road-east" #1: sent Aggressive Mode request
-"road-east" #1: Peer ID is ID_FQDN: '@east'
+"road-east" #1: Peer ID is FQDN: '@east'
 "road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 "road-east" #1: prompt for Username:
 "road-east" #1: prompt for Password:

@@ -22,8 +22,8 @@ west #
 "san" #1: initiating IKEv1 Aggressive Mode connection
 "san" #1: I am sending a certificate request
 "san" #1: sent Aggressive Mode request
-"san" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-"san" #1: X509: authentication failed; peer ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"san" #1: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"san" #1: X509: authentication failed; peer ID DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "san" #1: initial Aggressive Mode packet claiming to be from C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-east@testing.libreswan.org on 192.1.2.23:500 but no connection has been authorized
 "san" #1: sending notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "san" #1: IMPAIR: retransmit so timing out SA (may retry)

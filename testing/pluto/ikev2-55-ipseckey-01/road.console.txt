@@ -25,9 +25,9 @@ road #
 List of Public Keys:
  
 TIMESTAMP, 2192 RSA Key AwXXXXXXX (no private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_FQDN '@east'
+       FQDN '@east'
 TIMESTAMP, 3104 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_FQDN '@road.testing.libreswan.org'
+       FQDN '@road.testing.libreswan.org'
 road #
  ipsec auto --up road-east-ikev2
 "road-east-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -55,9 +55,9 @@ road #
 List of Public Keys:
  
 TIMESTAMP, 2192 RSA Key AwXXXXXXX (no private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_FQDN '@east'
+       FQDN '@east'
 TIMESTAMP, 3104 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_FQDN '@road.testing.libreswan.org'
+       FQDN '@road.testing.libreswan.org'
 road #
  ipsec whack --trafficstatus
 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'

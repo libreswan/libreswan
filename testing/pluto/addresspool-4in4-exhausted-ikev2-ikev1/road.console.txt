@@ -18,7 +18,7 @@ road #
 "road-east" #1: sent Main Mode request
 "road-east" #1: sent Main Mode I2
 "road-east" #1: sent Main Mode I3
-"road-east" #1: Peer ID is ID_FQDN: '@east'
+"road-east" #1: Peer ID is FQDN: '@east'
 "road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "road-east" #1: modecfg: Sending IP request (MODECFG_I1)
 "road-east" #1: received Delete SA payload: self-deleting ISAKMP State #1

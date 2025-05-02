@@ -23,7 +23,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #1: I am sending my cert
 "westnet-eastnet-ipv4-psk-ikev1" #1: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #1: sent Main Mode I3
-"westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"westnet-eastnet-ipv4-psk-ikev1" #1: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #1: prompt for Username:
@@ -67,7 +67,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #3: I am sending my cert
 "westnet-eastnet-ipv4-psk-ikev1" #3: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #3: sent Main Mode I3
-"westnet-eastnet-ipv4-psk-ikev1" #3: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"westnet-eastnet-ipv4-psk-ikev1" #3: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #3: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #3: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #3: prompt for Username:
@@ -101,7 +101,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #5: I am sending my cert
 "westnet-eastnet-ipv4-psk-ikev1" #5: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #5: sent Main Mode I3
-"westnet-eastnet-ipv4-psk-ikev1" #5: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"westnet-eastnet-ipv4-psk-ikev1" #5: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #5: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #5: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #5: prompt for Username:
@@ -135,7 +135,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #7: I am sending my cert
 "westnet-eastnet-ipv4-psk-ikev1" #7: I am sending a certificate request
 "westnet-eastnet-ipv4-psk-ikev1" #7: sent Main Mode I3
-"westnet-eastnet-ipv4-psk-ikev1" #7: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"westnet-eastnet-ipv4-psk-ikev1" #7: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #7: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev1" #7: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #7: prompt for Username:

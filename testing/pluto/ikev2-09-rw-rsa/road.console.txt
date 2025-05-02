@@ -31,7 +31,7 @@ road #
 "road-eastnet-nonat":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-eastnet-nonat":   conn_prio: 32,24,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road-eastnet-nonat":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
+"road-eastnet-nonat":   our idtype: FQDN; our id=@road; their idtype: FQDN; their id=@east
 "road-eastnet-nonat":   sendca: all; our sendcert: always; their sendcert: always;
 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-eastnet-nonat":   nat-traversal: encapsulation:auto; keepalive:20s

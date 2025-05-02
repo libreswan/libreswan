@@ -175,7 +175,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 : oe.negopass.failnone.fail-child WAIT FOR IKE_AUTH TO FAIL
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 : oe.negopass.failnone.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negopass.failnone.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
@@ -360,7 +360,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 : oe.negopass.faildrop.fail-child WAIT FOR IKE_AUTH TO FAIL
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 : oe.negopass.faildrop.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negopass.faildrop.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
@@ -543,7 +543,7 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
 : oe.negopass.failpass.fail-child WAIT FOR IKE_AUTH TO FAIL
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 : oe.negopass.failpass.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negopass.failpass.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
@@ -728,7 +728,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 : oe.negodrop.failnone.fail-child WAIT FOR IKE_AUTH TO FAIL
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 : oe.negodrop.failnone.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negodrop.failnone.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
@@ -915,7 +915,7 @@ src 192.1.3.209/32 dst 192.1.2.23/32
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 : oe.negodrop.faildrop.fail-child WAIT FOR IKE_AUTH TO FAIL
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 : oe.negodrop.faildrop.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negodrop.faildrop.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop
@@ -1100,7 +1100,7 @@ fired and forgotten
 src 192.1.3.209/32 dst 192.1.2.23/32
 	dir out priority 0 ptype main
 : oe.negodrop.failpass.fail-child WAIT FOR IKE_AUTH TO FAIL
-"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"road#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 "road#192.1.2.23/32"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 : oe.negodrop.failpass.fail-child WAIT FOR ACQUIRE TO EXPIRE
 : oe.negodrop.failpass.fail-child FAILURE KERNEL POLICY - WHEN failpass OR faildrop

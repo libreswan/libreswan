@@ -25,7 +25,7 @@ east #
 "ipv4-psk-ikev2-transport":   v2-auth-hash-policy: none;
 "ipv4-psk-ikev2-transport":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "ipv4-psk-ikev2-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"ipv4-psk-ikev2-transport":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"ipv4-psk-ikev2-transport":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@west
 "ipv4-psk-ikev2-transport":   sendca: all; our sendcert: always; their sendcert: always;
 "ipv4-psk-ikev2-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "ipv4-psk-ikev2-transport":   nat-traversal: encapsulation:auto; keepalive:20s

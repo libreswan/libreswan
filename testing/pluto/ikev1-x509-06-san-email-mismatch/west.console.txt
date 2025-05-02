@@ -25,8 +25,8 @@ west #
 "san" #1: I am sending my cert
 "san" #1: I am sending a certificate request
 "san" #1: sent Main Mode I3
-"san" #1: Peer ID is ID_USER_FQDN: 'NOTeast@testing.libreswan.org'
-"san" #1: X509: authentication failed; peer certificate subjectAltName extension does not match ID_USER_FQDN 'NOTeast@testing.libreswan.org'
+"san" #1: Peer ID is USER_FQDN: 'NOTeast@testing.libreswan.org'
+"san" #1: X509: authentication failed; peer certificate subjectAltName extension does not match USER_FQDN 'NOTeast@testing.libreswan.org'
 "san" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "san" #1: STATE_MAIN_I3: 10 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "san" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

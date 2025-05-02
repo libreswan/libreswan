@@ -126,7 +126,7 @@ Connection list:
 "westnet-eastnet-aes128":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-aes128":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-aes128":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-aes128":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-aes128":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet-aes128":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-aes128":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-aes128":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -152,7 +152,7 @@ west #
 "westnet-eastnet-aes128" #1: sent Main Mode request
 "westnet-eastnet-aes128" #1: sent Main Mode I2
 "westnet-eastnet-aes128" #1: sent Main Mode I3
-"westnet-eastnet-aes128" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-aes128" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-aes128" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-aes128" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-aes128" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}

@@ -45,7 +45,7 @@ east #
 east #
  ipsec checkpubkeys
 TIMESTAMP, 2048 RSA Key AwXXXXXXX (has private key), until TIMESTAMP fatal (expired)
-       ID_DER_ASN1_DN 'CN=east-expired'
+       DER_ASN1_DN 'CN=east-expired'
        Issuer 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 east #
  echo "initdone"

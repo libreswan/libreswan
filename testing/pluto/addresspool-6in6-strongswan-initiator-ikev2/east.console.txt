@@ -116,7 +116,7 @@ Connection list:
 "rw-eastnet-ipv6":   v2-auth-hash-policy: none;
 "rw-eastnet-ipv6":   conn_prio: 64,97,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "rw-eastnet-ipv6":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"rw-eastnet-ipv6":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
+"rw-eastnet-ipv6":   our idtype: FQDN; our id=@east; their idtype: %none; their id=(none)
 "rw-eastnet-ipv6":   sendca: all; our sendcert: always; their sendcert: always;
 "rw-eastnet-ipv6":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "rw-eastnet-ipv6":   nat-traversal: encapsulation:auto; keepalive:20s

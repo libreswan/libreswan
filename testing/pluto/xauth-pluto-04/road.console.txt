@@ -24,7 +24,7 @@ road #
 "xauth-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
 "xauth-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
 "xauth-road-eastnet-psk" #1: sent Aggressive Mode request
-"xauth-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
+"xauth-road-eastnet-psk" #1: Peer ID is FQDN: '@east'
 "xauth-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "xauth-road-eastnet-psk" #1: prompt for Username:
 "xauth-road-eastnet-psk" #1: prompt for Password:

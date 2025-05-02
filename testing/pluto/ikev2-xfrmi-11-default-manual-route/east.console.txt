@@ -119,7 +119,7 @@ Connection list:
 "westnet-eastnet":   v2-auth-hash-policy: none;
 "westnet-eastnet":   conn_prio: 0,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"westnet-eastnet":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@west
 "westnet-eastnet":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s

@@ -32,7 +32,7 @@ west #
 "west-east":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "west-east":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"west-east":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"west-east":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "west-east":   sendca: all; our sendcert: always; their sendcert: always;
 "west-east":   dpd: passive; delay:0s; timeout:0s
 "west-east":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -52,7 +52,7 @@ west #
 "westnet-eastnet":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -67,7 +67,7 @@ west #
 "west-east" #1: sent Main Mode request
 "west-east" #1: sent Main Mode I2
 "west-east" #1: sent Main Mode I3
-"west-east" #1: Peer ID is ID_FQDN: '@east'
+"west-east" #1: Peer ID is FQDN: '@east'
 "west-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}
 "west-east" #2: sent Quick Mode request

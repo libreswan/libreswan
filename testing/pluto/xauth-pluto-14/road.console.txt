@@ -19,7 +19,7 @@ road #
 "modecfg-road-east" #1: sent Main Mode request
 "modecfg-road-east" #1: sent Main Mode I2
 "modecfg-road-east" #1: sent Main Mode I3
-"modecfg-road-east" #1: Peer ID is ID_FQDN: '@east'
+"modecfg-road-east" #1: Peer ID is FQDN: '@east'
 "modecfg-road-east" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "modecfg-road-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 "modecfg-road-east" #1: prompt for Username:

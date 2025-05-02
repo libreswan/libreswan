@@ -26,7 +26,7 @@ north #
 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "north-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "north-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
-"north-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"north-east" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "north-east" #2: prepare-client output: net.ipv4.conf.vti0.disable_policy = 1
 "north-east" #2: prepare-client output: net.ipv4.conf.vti0.rp_filter = 0
 "north-east" #2: prepare-client output: net.ipv4.conf.vti0.forwarding = 1

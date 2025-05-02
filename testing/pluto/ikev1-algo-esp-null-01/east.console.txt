@@ -24,7 +24,7 @@ east #
 "westnet-eastnet-null":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-null":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-null":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-null":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
+"westnet-eastnet-null":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@west
 "westnet-eastnet-null":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-null":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-null":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts

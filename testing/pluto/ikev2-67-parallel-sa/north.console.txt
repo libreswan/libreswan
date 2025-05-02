@@ -24,7 +24,7 @@ initiating 2 connections
 "northnet-eastnet/0x1" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "northnet-eastnet/0x1" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "northnet-eastnet/0x1" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
-"northnet-eastnet/0x1" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"northnet-eastnet/0x1" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "northnet-eastnet/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 "northnet-eastnet/0x2" #3: initiating Child SA using IKE SA #1
 "northnet-eastnet/0x2" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}

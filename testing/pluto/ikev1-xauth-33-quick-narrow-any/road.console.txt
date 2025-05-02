@@ -21,7 +21,7 @@ road #
 "road-east" #1: sent Main Mode request
 "road-east" #1: sent Main Mode I2
 "road-east" #1: sent Main Mode I3
-"road-east" #1: Peer ID is ID_FQDN: '@east'
+"road-east" #1: Peer ID is FQDN: '@east'
 "road-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "road-east" #1: prompt for Username:
 "road-east" #1: prompt for Password:
@@ -59,7 +59,7 @@ road #
 "road-narrows-east" #3: sent Main Mode request
 "road-narrows-east" #3: sent Main Mode I2
 "road-narrows-east" #3: sent Main Mode I3
-"road-narrows-east" #3: Peer ID is ID_FQDN: '@east'
+"road-narrows-east" #3: Peer ID is FQDN: '@east'
 "road-narrows-east" #3: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "road-narrows-east" #3: prompt for Username:
 "road-narrows-east" #3: prompt for Password:

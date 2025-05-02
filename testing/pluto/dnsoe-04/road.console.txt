@@ -34,9 +34,9 @@ road #
 List of Public Keys:
  
 TIMESTAMP, 2191 RSA Key AQBBBBBBB (no private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_IPV4_ADDR '192.1.2.23'
+       IPV4_ADDR '192.1.2.23'
 TIMESTAMP,    0 RSA Key AQAAAAAAA (no private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_IPV4_ADDR '192.1.2.23'
+       IPV4_ADDR '192.1.2.23'
 road #
  echo "initdone"
 initdone
@@ -67,7 +67,7 @@ road #
 List of Public Keys:
  
 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.2.23'
+       IPV4_ADDR '192.1.2.23'
 road #
  echo done
 done

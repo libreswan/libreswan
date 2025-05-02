@@ -33,5 +33,5 @@ east #
  # Authentication should be AUTH_NULL
 east #
  grep '^[^|].*authenticated' /tmp/pluto.log
-"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: responder established IKE SA; authenticated peer using authby=null and ID_IPV4_ADDR '192.1.3.209'
+"private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: responder established IKE SA; authenticated peer using authby=null and IPV4_ADDR '192.1.3.209'
 east #

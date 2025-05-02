@@ -69,7 +69,7 @@ west #
 "west-to-east" #1: sent Main Mode request
 "west-to-east" #1: sent Main Mode I2
 "west-to-east" #1: sent Main Mode I3
-"west-to-east" #1: Peer ID is ID_FQDN: '@east'
+"west-to-east" #1: Peer ID is FQDN: '@east'
 "west-to-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
 "west-to-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-to-east" #2: sent Quick Mode request

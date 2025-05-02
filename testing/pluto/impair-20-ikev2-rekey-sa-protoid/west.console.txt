@@ -27,7 +27,7 @@ west #
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
-"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
@@ -57,7 +57,7 @@ west #
 "west" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #4: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #4: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #5 {ESP <0xESPESP}
-"west" #4: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #4: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west" #5: initiator established Child SA using #4; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
@@ -82,7 +82,7 @@ west #
 "west" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #8 {ESP <0xESPESP}
-"west" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
@@ -107,7 +107,7 @@ west #
 "west" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #11 {ESP <0xESPESP}
-"west" #10: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"west" #10: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

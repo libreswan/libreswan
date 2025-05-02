@@ -18,7 +18,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 west #
  ipsec status | grep idtype
-"ikev2-westnet-eastnet-x509-cr":   our idtype: ID_IPV4_ADDR; our id=192.1.2.45; their idtype: ID_IPV4_ADDR; their id=192.1.2.23
+"ikev2-westnet-eastnet-x509-cr":   our idtype: IPV4_ADDR; our id=192.1.2.45; their idtype: IPV4_ADDR; their id=192.1.2.23
 west #
  ipsec whack --impair suppress_retransmits
 west #

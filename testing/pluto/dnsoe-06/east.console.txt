@@ -20,7 +20,7 @@ east #
 List of Public Keys:
  
 TIMESTAMP, 2192 RSA Key AQXXXX (loaded private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_IPV4_ADDR '192.1.2.67'
+       IPV4_ADDR '192.1.2.67'
 east #
  # give OE policies time to load
 east #
@@ -43,7 +43,7 @@ east #
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
 |    auth method: IKEv2_AUTH_NULL (0xd)
-"clear-or-private#192.1.3.0/24"[1] ...192.1.3.209 #1: responder established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"clear-or-private#192.1.3.0/24"[1] ...192.1.3.209 #1: responder established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 |    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
 east #
  # NO ipsec tunnel should be up

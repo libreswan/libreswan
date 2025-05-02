@@ -23,7 +23,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #1: IKE_AUTH response redirects to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #2: scheduling redirect 1 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: redirect: skip scheduling redirect event
@@ -35,7 +35,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #3: processed IKE_SA_INIT response from 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request to 192.1.3.33:UDP/500; Child SA #4 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #3: IKE_AUTH response redirects to new gateway 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #4: scheduling redirect 2 to 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #4: IMPAIR: redirect: skip scheduling redirect event
@@ -47,7 +47,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #5: IKE_AUTH response redirects to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #6: scheduling redirect 3 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #6: IMPAIR: redirect: skip scheduling redirect event
@@ -59,7 +59,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #7: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #7: processed IKE_SA_INIT response from 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #7: sent IKE_AUTH request to 192.1.3.33:UDP/500; Child SA #8 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #7: IKE_AUTH response redirects to new gateway 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #8: scheduling redirect 4 to 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2" #8: IMPAIR: redirect: skip scheduling redirect event
@@ -71,7 +71,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #9: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #9: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #10 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #9: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #9: IKE_AUTH response redirects to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #10: scheduling redirect 5 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #10: IMPAIR: redirect: skip scheduling redirect event
@@ -83,7 +83,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #11: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #11: processed IKE_SA_INIT response from 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #11: sent IKE_AUTH request to 192.1.3.33:UDP/500; Child SA #12 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #11: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #11: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #11: IKE_AUTH redirect exceeds limit; assuming redirect loop
 "westnet-eastnet-ipv4-psk-ikev2" #12: connection is supposed to remain up; revival attempt 1 scheduled in 300 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #12: IMPAIR: revival: skip scheduling revival event
@@ -96,7 +96,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #13: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #13: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ikev2" #13: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #14 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #13: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"westnet-eastnet-ipv4-psk-ikev2" #13: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #13: IKE_AUTH response redirects to new gateway 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #14: scheduling redirect 1 to 192.1.3.33
 "westnet-eastnet-ipv4-psk-ikev2" #14: IMPAIR: redirect: skip scheduling redirect event

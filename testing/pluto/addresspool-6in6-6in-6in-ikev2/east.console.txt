@@ -24,7 +24,7 @@ east #
 "east":   v2-auth-hash-policy: none;
 "east":   conn_prio: 64,97,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"east":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
+"east":   our idtype: FQDN; our id=@east; their idtype: %none; their id=(none)
 "east":   sendca: all; our sendcert: always; their sendcert: always;
 "east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "east":   nat-traversal: encapsulation:auto; keepalive:20s

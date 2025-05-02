@@ -47,7 +47,7 @@ west #
 "westnet-eastnet-6in4":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "westnet-eastnet-6in4":   conn_prio: 64,64,0; interface: ipsec1@NONE; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-6in4":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-6in4":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet-6in4":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-6in4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet-6in4":   nat-traversal: encapsulation:auto; keepalive:20s
