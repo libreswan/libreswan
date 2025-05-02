@@ -152,6 +152,94 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 }
 #endif
 
+static void add_conn(struct starter_conn *conn,
+		     const char *p1, const char *p2, const char *p3,
+		     const char *ctlsocket,
+		     int *exit_status,
+		     struct logger *logger)
+{
+	/* found name or alias */
+	if (conn->state == STATE_ADDED) {
+		fprintf(stderr, "\n%s%s%sconn %s already added\n",
+			p1, p2, p3,
+			conn->name);
+		return;
+	}
+
+	if (conn->state == STATE_FAILED) {
+		fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
+			p1, p2, p3,
+			conn->name);
+		return;
+	}
+
+	if (!confread_validate_conn(conn, logger)) {
+		fprintf(stderr, "\n%s%s%sconn %s did not validate\n",
+			p1, p2, p3,
+			conn->name);
+		return;
+	}
+
+	/*
+	 * Scrub AUTOSTART; conns will need to be
+	 * started manually.
+	 */
+	enum autostart autostart = conn->values[KNCF_AUTO].option;
+	if (autostart != AUTOSTART_UNSET &&
+	    autostart != AUTOSTART_ADD) {
+		if (verbose) {
+			name_buf nb;
+			printf("  overriding auto=%s with auto=add\n",
+			       str_sparse_short(&autostart_names, autostart, &nb));
+		}
+		conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
+	}
+
+	resolve_default_routes(conn, logger);
+	int status = starter_whack_add_conn(ctlsocket, conn, logger);
+	/* don't loose existing status */
+	if (status != 0) {
+		(*exit_status) = status;
+	}
+	conn->state = STATE_ADDED;
+}
+
+static bool find_and_add_conn_by_name(const char *connname,
+				      struct starter_config *cfg,
+				      const char *ctlsocket,
+				      int *exit_status,
+				      struct logger *logger)
+{
+	/* find first name match, if any */
+	struct starter_conn *conn = NULL;
+	TAILQ_FOREACH(conn, &cfg->conns, link)  {
+		if (streq(conn->name, connname)) {
+			add_conn(conn, "", "", "", ctlsocket, exit_status, logger);
+			return true;
+		}
+	}
+
+	return false; /* not-found */
+}
+
+static bool find_and_add_conn_by_alias(const char *connname,
+				       struct starter_config *cfg,
+				       const char *ctlsocket,
+				       int *exit_status,
+				       struct logger *logger)
+{
+	struct starter_conn *conn = NULL;
+	TAILQ_FOREACH(conn, &cfg->conns, link) {
+		if (lsw_alias_cmp(connname,
+				  conn->values[KSCF_CONNALIAS].string)) {
+			add_conn(conn, "alias: ", connname, " ", ctlsocket, exit_status, logger);
+			return true;
+		}
+	}
+
+	return false; /* not-found */
+}
+
 enum opt {
 	OPT_HELP = 'h',
 	OPT_CONFIG = 256,
@@ -435,6 +523,7 @@ int main(int argc, char *argv[])
 			if (verbose > 0) {
 				printf("    %s\n", conn->name);
 			}
+
 			resolve_default_routes(conn, logger);
 			starter_whack_add_conn(ctlsocket, conn, logger);
 		}
@@ -454,6 +543,7 @@ int main(int argc, char *argv[])
 
 		if (verbose > 0)
 			printf("\n");
+
 	} else if (name != NULL) {
 
 		struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
@@ -465,100 +555,39 @@ int main(int argc, char *argv[])
 			llog(ERROR_STREAM, logger, "%s did not validate", conn->name);
 			exit(1);
 		}
+
 		resolve_default_routes(conn, logger);
 		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
 
 	} else {
-		/* load named conns, regardless of their state */
-		int connum;
 
+		/* load named conns, regardless of their state */
 		if (verbose > 0) {
 			printf("loading named conns:");
 		}
 
-		for (connum = optind; connum < argc; connum++) {
+		for (int connum = optind; connum < argc; connum++) {
 			const char *connname = argv[connum];
-
-			const char *p1 = "";	/* message prefix components */
-			const char *p2 = "";
-			const char *p3 = "";
 
 			if (verbose > 0) {
 				printf(" %s\n", connname);
 			}
 
-			/* find first name match, if any */
-			struct starter_conn *conn = NULL;
-			TAILQ_FOREACH(conn, &cfg->conns, link)  {
-				if (streq(conn->name, connname)) {
-					break;
-				}
-			}
-
-			if (conn == NULL) {
-				/* We didn't find name; look for first alias */
-
-				p1 = "alias: ";
-				p2 = connname;
-				p3 = " ";
-
-				TAILQ_FOREACH(conn, &cfg->conns, link) {
-					if (lsw_alias_cmp(connname,
-						conn->values[KSCF_CONNALIAS].string)) {
-						break;
-					}
-				}
-			}
-
-			if (conn == NULL) {
-				/* we found neither name nor alias */
-				exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
-				fprintf(stderr, "conn '%s': not found (tried aliases)\n",
-					connname);
+			if (find_and_add_conn_by_name(connname, cfg, ctlsocket,
+						      &exit_status, logger)) {
 				continue;
 			}
 
-			/* found name or alias */
-			if (conn->state == STATE_ADDED) {
-				fprintf(stderr, "\n%s%s%sconn %s already added\n",
-					p1, p2, p3,
-					conn->name);
+			/* We didn't find name; look for first alias */
+			if (find_and_add_conn_by_alias(connname, cfg, ctlsocket,
+						       &exit_status, logger)) {
 				continue;
 			}
 
-			if (conn->state == STATE_FAILED) {
-				fprintf(stderr, "\n%s%s%sconn %s did not load properly\n",
-					p1, p2, p3,
-					conn->name);
-				continue;
-			}
-
-			if (!confread_validate_conn(conn, logger)) {
-				fprintf(stderr, "\n%s%s%sconn %s did not validate\n",
-					p1, p2, p3,
-					conn->name);
-				continue;
-			}
-
-			/*
-			 * Scrub AUTOSTART; conns will need to be
-			 * started manually.
-			 */
-			enum autostart autostart = conn->values[KNCF_AUTO].option;
-			if (autostart != AUTOSTART_UNSET &&
-			    autostart != AUTOSTART_ADD) {
-				if (verbose) {
-					name_buf nb;
-					printf("  overriding auto=%s with auto=add\n",
-					       str_sparse_short(&autostart_names, autostart, &nb));
-				}
-				conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
-			}
-
-			resolve_default_routes(conn, logger);
-			exit_status = starter_whack_add_conn(ctlsocket,
-							     conn, logger);
-			conn->state = STATE_ADDED;
+			/* we found neither name nor alias */
+			exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
+			fprintf(stderr, "conn '%s': not found (tried aliases)\n",
+				connname);
 		}
 	}
 
