@@ -194,14 +194,23 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	 * started manually.
 	 */
 	enum autostart autostart = conn->values[KNCF_AUTO].option;
-	if (autostart != AUTOSTART_UNSET &&
-	    autostart != AUTOSTART_ADD) {
-		if (verbose) {
-			name_buf nb;
-			fprintf(stdout, "  overriding auto=%s with auto=add",
-				str_sparse_short(&autostart_names, autostart, &nb));
-		}
+	switch (autostart) {
+	case AUTOSTART_UNSET:
+	case AUTOSTART_ADD:
+	case AUTOSTART_IGNORE:
+	case AUTOSTART_KEEP:
+		break;
+	case AUTOSTART_START:
+	case AUTOSTART_ROUTE:
+	case AUTOSTART_ONDEMAND:
+	case AUTOSTART_UP:
+	{
+		name_buf nb;
+		fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=add",
+			    str_sparse_short(&autostart_names, autostart, &nb));
 		conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
+	}
+
 	}
 
 	if (verbose) {
