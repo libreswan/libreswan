@@ -264,7 +264,7 @@ static int show_ipseckey(struct secret_pubkey_stuff *pks,
 	return 0;
 }
 
-static int show_pem(struct secret_pubkey_stuff *pks)
+static int show_pem(struct secret_pubkey_stuff *pks, struct logger *logger)
 {
 	chunk_t der = empty_chunk; /* must free */
 	diag_t d = secret_pubkey_stuff_to_pubkey_der(pks, &der);
@@ -278,7 +278,7 @@ static int show_pem(struct secret_pubkey_stuff *pks)
 	 * The output should be accepted by
 	 * openssl pkey -in /tmp/x -inform PEM -pubin -noout -text
 	 */
-	llog_pem_hunk(PRINTF_FLAGS, &global_logger, "PUBLIC KEY", der);
+	llog_pem_hunk(PRINTF_FLAGS, logger, "PUBLIC KEY", der);
 
 	free_chunk_content(&der);
 
@@ -630,7 +630,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (pem_flg) {
-		status = show_pem(pks);
+		status = show_pem(pks, logger);
 		goto out;
 	}
 

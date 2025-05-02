@@ -339,7 +339,7 @@ static void check_subnet_from_address(void)
 		CHECK_INFO(subnet);
 
 		ip_address prefix = subnet_prefix(*subnet);
-		if (!sameaddr(&prefix, &a)) {
+		if (!address_eq_address(prefix, a)) {
 			address_buf pb, ab;
 			FAIL("subnet_prefix(&s) returned %s, expecting %s",
 				str_address(&prefix, &pb), str_address(&a, &ab));

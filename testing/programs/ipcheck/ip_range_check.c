@@ -471,7 +471,7 @@ static void check_range_to_address(void)
 		str_address(&address, &out);
 
 		if (t->address == NULL) {
-			if (!address_is_unset(&address)) {
+			if (address.is_set) {
 				FAIL("range_to_address(%s + %jx -> %s) should have returned <unset>",
 				     t->range, t->offset, out.buf);
 			}

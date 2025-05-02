@@ -550,7 +550,7 @@ int main(int argc, char *argv[])
 				if (verbose) {
 					name_buf nb;
 					printf("  overriding auto=%s with auto=add\n",
-					       str_sparse(&autostart_names, autostart, &nb));
+					       str_sparse_short(&autostart_names, autostart, &nb));
 				}
 				conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
 			}

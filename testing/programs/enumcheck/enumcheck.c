@@ -33,7 +33,7 @@ static void test_enum(enum_names *enum_test, int i,
 	char scratch[100];
 
 	/* find a name, if any, for this value */
-	enum_buf name;
+	name_buf name;
 	bool found = enum_long(enum_test, i, &name);
 	switch (expect) {
 	case OPTIONAL:
@@ -68,7 +68,7 @@ static void test_enum(enum_names *enum_test, int i,
 	{
 		printf(PREFIX "jam_enum %d: ", i);
 		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
-		jam_enum(&buf, enum_test, i);
+		jam_enum_long(&buf, enum_test, i);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (hunk_streq(s, name.buf)) {
@@ -119,8 +119,8 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	printf(PREFIX "short_name %d: ", i);
-	enum_buf short_name;
-	if (!enum_name_short(enum_test, i, &short_name)) {
+	name_buf short_name;
+	if (!enum_short(enum_test, i, &short_name)) {
 		printf("ERROR\n");
 		errors++;
 		return;
@@ -237,7 +237,8 @@ static void test_enum_range(char *enumname, enum_names *enum_test, long int floo
 	printf("\n");
 }
 
-static void test_enums(const char *enumname, enum_names *enum_test, const struct clash *clashes)
+static void test_enums(const char *enumname, enum_names *enum_test,
+		       const struct clash *clashes, struct logger *logger)
 {
 	struct bounds b = enum_bounds(enum_test);
 	printf("  %s: [%ld..%ld)\n", enumname, b.floor, b.roof);
@@ -282,7 +283,7 @@ static void test_enums(const char *enumname, enum_names *enum_test, const struct
 		 * and another at 64000 say.  10% is pretty arbitrary.
 		 */
 		if (count * 10 < en->en_checklen) {
-			llog_pexpect(&global_logger, HERE,
+			llog_pexpect(logger, HERE,
 				     "enum table %s at level %u of size %zu only contains %u names",
 				     enumname, level, en->en_checklen, count);
 		}
@@ -301,7 +302,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	printf("%s:\n", title);
 
 	printf(PREFIX "enum_enum_name %lu %lu: ", table, val);
-	enum_buf name;
+	name_buf name;
 	bool name_ok = enum_enum_name(een, table, val, &name);
 	printf("%s ", (name_ok ? name.buf : "NULL"));
 	if (name_ok == val_ok) {
@@ -315,8 +316,8 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	if (en == NULL) {
 		printf("N/A\n");
 	} else {
-		enum_buf n;
-		if (enum_name(en, val, &n)) {
+		name_buf n;
+		if (enum_long(en, val, &n)) {
 			/*
 			 * Should point to the same static string.
 			 * name.buf and n.buf are never NULL.
@@ -357,7 +358,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 		jam_enum_enum_short(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
-		enum_buf enb;
+		name_buf enb;
 		if (val_ok && hunk_streq(s, str_enum_short(en, val, &enb))) {
 			printf("OK\n");
 		} else if (s.len > 0) {
@@ -405,9 +406,9 @@ int main(int argc UNUSED, char *argv[])
 				{ EVENT_v1_NAT_KEEPALIVE, EVENT_v2_NAT_KEEPALIVE, },
 				{ -1, -1, },
 			};
-			test_enums("event_type_names", c->enum_names, clash);
+			test_enums("event_type_names", c->enum_names, clash, logger);
 		} else {
-			test_enums(c->name, c->enum_names, NULL);
+			test_enums(c->name, c->enum_names, NULL, logger);
 		}
 	}
 

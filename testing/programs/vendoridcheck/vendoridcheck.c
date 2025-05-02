@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	FOR_EACH_ELEMENT(t, tests) {
 		shunk_t vid = shunk1(t->vid);
 		if (LDBGP(DBG_TMI, logger)) {
-			enum_buf tidb;
+			name_buf tidb;
 			LDBG_log(logger, "looking up %d [%s]",
 				 t->id, str_vendorid(t->id, &tidb));
 			LDBG_hunk(logger, vid);
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
 		enum known_vendorid id = vendorid_by_shunk(vid);
 		if (id != t->id) {
-			enum_buf idb, tidb;
+			name_buf idb, tidb;
 			llog_passert(logger, HERE,
 				     "lookup for %d [%s] returned %d [%s]",
 				     t->id, str_vendorid(t->id, &tidb),

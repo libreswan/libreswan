@@ -96,7 +96,7 @@ static void check_sockaddr_as_endpoint(struct logger *logger)
 			} else if (!streq(err, t->err)) {
 				FAIL("sockaddr_to_address_port() returned error '%s', expecting '%s'", err, t->err);
 			}
-			if (!address_is_unset(address)) {
+			if (address->is_set) {
 				FAIL("sockaddr_to_address_port() failed yet address is set");
 			}
 			if (hport(port) != 0) {
