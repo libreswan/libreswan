@@ -257,16 +257,18 @@ static bool find_and_add_conn_by_alias(const char *connname,
 				       int *exit_status,
 				       struct logger *logger)
 {
+	bool found = false;
+
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
 				  conn->values[KSCF_CONNALIAS].string)) {
 			add_conn(conn, connname, ctlsocket, exit_status, logger);
-			return true;
+			found = true;
 		}
 	}
 
-	return false; /* not-found */
+	return found; /* not-found */
 }
 
 enum opt {
