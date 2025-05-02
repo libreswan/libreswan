@@ -1507,9 +1507,22 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 /* sent EXCHANGE {request,response} to <address> */
 static void llog_v2_success_sent_IKE_AUTH_request(struct ike_sa *ike)
 {
+	const struct connection *c = ike->sa.st_connection;
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent IKE_AUTH request to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		/* AUTH payload (proof-of-identity) */
+		jam_string(buf, " with ");
+		enum keyword_auth authby = local_v2_auth(ike);
+		enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
+		jam_enum_human(buf, &ikev2_auth_method_names, auth_method);
+		/* ID payload */
+		jam_string(buf, " and ");
+		jam_enum_short(buf, &ike_id_type_names, c->local->host.id.kind);
+		jam_string(buf, " '");
+		jam_id_bytes(buf, &c->local->host.id, jam_raw_bytes);
+		jam_string(buf, "'");
+		/* optional child sa */
 		struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 		if (larval != NULL) {
 			jam_string(buf, "; Child SA ");
