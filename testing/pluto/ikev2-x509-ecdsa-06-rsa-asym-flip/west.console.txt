@@ -60,10 +60,10 @@ west #
 List of Public Keys:
  
 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
-       ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
+       DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
-       ID_FQDN '@west.testing.libreswan.org'
+       FQDN '@west.testing.libreswan.org'
        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
 west #
  # test delete/free

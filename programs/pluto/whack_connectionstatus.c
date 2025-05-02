@@ -857,14 +857,14 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ":  ");
 		/* our id */
 		jam_string(buf, " our idtype: ");
-		jam_enum(buf, &ike_id_type_names, c->local->host.id.kind);
+		jam_enum_short(buf, &ike_id_type_names, c->local->host.id.kind);
 		jam_string(buf, ";");
 		jam_string(buf, " our id=");
 		jam_id(buf, &c->local->host.id);
 		jam_string(buf, ";");
 		/* our id */
 		jam_string(buf, " their idtype: ");
-		jam_enum(buf, &ike_id_type_names, c->remote->host.id.kind);
+		jam_enum_short(buf, &ike_id_type_names, c->remote->host.id.kind);
 		jam_string(buf, ";");
 		jam_string(buf, " their id=");
 		jam_id(buf, &c->remote->host.id);

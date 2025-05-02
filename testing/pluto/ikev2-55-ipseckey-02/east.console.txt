@@ -25,7 +25,7 @@ east #
 "road-east":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-east":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@road.testing.libreswan.org
+"road-east":   our idtype: FQDN; our id=@east; their idtype: FQDN; their id=@road.testing.libreswan.org
 "road-east":   sendca: all; our sendcert: always; their sendcert: always;
 "road-east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-east":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -39,7 +39,7 @@ east #
 List of Public Keys:
  
 TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_FQDN '@east'
+       FQDN '@east'
 east #
  echo "initdone"
 initdone

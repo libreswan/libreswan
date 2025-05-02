@@ -14,7 +14,7 @@ north #
 "northnet-westnet-ipv4-psk" #1: sent Main Mode request
 "northnet-westnet-ipv4-psk" #1: sent Main Mode I2
 "northnet-westnet-ipv4-psk" #1: sent Main Mode I3
-"northnet-westnet-ipv4-psk" #1: Peer ID is ID_FQDN: '@east'
+"northnet-westnet-ipv4-psk" #1: Peer ID is FQDN: '@east'
 "northnet-westnet-ipv4-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "northnet-westnet-ipv4-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.1.0/24}
 "northnet-westnet-ipv4-psk" #2: sent Quick Mode request
@@ -121,7 +121,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "northnet-westnet-ipv4-psk":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@north; their idtype: ID_FQDN; their id=@east
+"northnet-westnet-ipv4-psk":   our idtype: FQDN; our id=@north; their idtype: FQDN; their id=@east
 "northnet-westnet-ipv4-psk":   sendca: all; our sendcert: always; their sendcert: always;
 "northnet-westnet-ipv4-psk":   dpd: passive; delay:0s; timeout:0s
 "northnet-westnet-ipv4-psk":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts

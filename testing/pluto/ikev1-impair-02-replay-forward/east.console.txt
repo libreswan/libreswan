@@ -67,7 +67,7 @@ packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packe
 packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
 packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 3
-"westnet-eastnet" #1: Peer ID is ID_FQDN: '@west'
+"westnet-eastnet" #1: Peer ID is FQDN: '@west'
 "westnet-eastnet" #1: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 3

@@ -796,7 +796,7 @@ enum_names ikev2_hash_algorithm_names = {
 
 /* Identification type values */
 
-static const char *const ike_idtype_name[] = {
+static const char *const ike_id_type_name[] = {
 	/* private to Pluto */
 	[0] = "%fromcert",	/* -1, ID_FROMCERT:taken from certificate */
 	[1] = "%none",	/* 0, ID_NONE */
@@ -823,12 +823,12 @@ static const char *const ike_idtype_name[] = {
  * Local boilerplate macro for idtype name range initializer.
  * - macro is undef'ed very shortly
  * - not function-like since it expands to a struct initializer
- * - first entry in ike_idtype_name corresponds to ID_FROMCERT
+ * - first entry in ike_id_type_name corresponds to ID_FROMCERT
  */
 #define ID_NR(from,to,next) { \
 		(from), (to), \
-		&ike_idtype_name[(from)-ID_FROMCERT], (to)-(from) + 1, \
-		NULL, /* prefix */ \
+		&ike_id_type_name[(from)-ID_FROMCERT], (to)-(from) + 1, \
+		"ID_", /* prefix */ \
 		next \
 	}
 
@@ -838,18 +838,18 @@ enum_names ikev1_ike_id_type_names = ID_NR(ID_IPV4_ADDR, ID_NULL, NULL);
 /*
  * all names, including private-to-pluto
  * Tricky: lower bound and uppers bound are treated as unsigned long
- * so we have to tack two ranges onto ike_idtype_names.
+ * so we have to tack two ranges onto ike_id_type_names.
  *
  * XXX: why not treat them as longs?
  */
-static enum_names ike_idtype_names_fromcert = ID_NR(ID_FROMCERT, ID_FROMCERT, NULL);
-enum_names ike_id_type_names = ID_NR(ID_NONE, ID_NULL, &ike_idtype_names_fromcert);
+static enum_names ike_id_type_names_fromcert = ID_NR(ID_FROMCERT, ID_FROMCERT, NULL);
+enum_names ike_id_type_names = ID_NR(ID_NONE, ID_NULL, &ike_id_type_names_fromcert);
 
 /* IKEv2 names exclude ID_IPV4_ADDR_SUBNET, ID_IPV6_ADDR_SUBNET-ID_IPV6_ADDR_RANGE */
 
-static enum_names ikev2_idtype_names_3 = ID_NR(ID_DER_ASN1_DN, ID_NULL,	NULL);
-static enum_names ikev2_idtype_names_2 = ID_NR(ID_IPV6_ADDR, ID_IPV6_ADDR, &ikev2_idtype_names_3);
-enum_names ikev2_ike_id_type_names = ID_NR(ID_IPV4_ADDR, ID_RFC822_ADDR, &ikev2_idtype_names_2);
+static enum_names ikev2_id_type_names_3 = ID_NR(ID_DER_ASN1_DN, ID_NULL,	NULL);
+static enum_names ikev2_id_type_names_2 = ID_NR(ID_IPV6_ADDR, ID_IPV6_ADDR, &ikev2_id_type_names_3);
+enum_names ikev2_ike_id_type_names = ID_NR(ID_IPV4_ADDR, ID_RFC822_ADDR, &ikev2_id_type_names_2);
 
 #undef ID_NR
 

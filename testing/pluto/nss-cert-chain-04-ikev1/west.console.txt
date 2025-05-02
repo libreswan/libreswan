@@ -45,7 +45,7 @@ west #
 "road-chain-B":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "road-chain-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road-chain-B":   our idtype: ID_FQDN; our id=@west_chain_endcert.testing.libreswan.org; their idtype: ID_FQDN; their id=@east.testing.libreswan.org
+"road-chain-B":   our idtype: FQDN; our id=@west_chain_endcert.testing.libreswan.org; their idtype: FQDN; their id=@east.testing.libreswan.org
 "road-chain-B":   sendca: all; our sendcert: always; their sendcert: always;
 "road-chain-B":   dpd: passive; delay:0s; timeout:0s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -73,7 +73,7 @@ west #
 "road-chain-B" #1: I am sending a CA cert chain
 "road-chain-B" #1: I am sending a certificate request
 "road-chain-B" #1: sent Main Mode I3
-"road-chain-B" #1: Peer ID is ID_FQDN: '@east.testing.libreswan.org'
+"road-chain-B" #1: Peer ID is FQDN: '@east.testing.libreswan.org'
 "road-chain-B" #1: authenticated peer certificate '@east.testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road-chain-B" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "road-chain-B" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.254/32===192.0.2.254/32}

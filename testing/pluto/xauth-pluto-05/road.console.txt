@@ -34,7 +34,7 @@ road #
 "modecfg-road-eastnet-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "modecfg-road-eastnet-psk":   conn_prio: 32,24,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "modecfg-road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"modecfg-road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
+"modecfg-road-eastnet-psk":   our idtype: FQDN; our id=@roadrandom; their idtype: FQDN; their id=@east
 "modecfg-road-eastnet-psk":   sendca: all; our sendcert: always; their sendcert: always;
 "modecfg-road-eastnet-psk":   dpd: passive; delay:0s; timeout:0s
 "modecfg-road-eastnet-psk":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -54,7 +54,7 @@ road #
 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH19 keylen 0) ignored.
 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,DH31 keylen 0) ignored.
 "modecfg-road-eastnet-psk" #1: sent Aggressive Mode request
-"modecfg-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
+"modecfg-road-eastnet-psk" #1: Peer ID is FQDN: '@east'
 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "modecfg-road-eastnet-psk" #1: prompt for Username:
 "modecfg-road-eastnet-psk" #1: prompt for Password:

@@ -132,7 +132,7 @@ Connection list:
 "v6-transport":   policy: IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "v6-transport":   conn_prio: 128,128,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"v6-transport":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"v6-transport":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "v6-transport":   sendca: all; our sendcert: always; their sendcert: always;
 "v6-transport":   dpd: passive; delay:0s; timeout:0s
 "v6-transport":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -156,7 +156,7 @@ west #
 "v6-transport" #1: sent Main Mode request
 "v6-transport" #1: sent Main Mode I2
 "v6-transport" #1: sent Main Mode I3
-"v6-transport" #1: Peer ID is ID_FQDN: '@east'
+"v6-transport" #1: Peer ID is FQDN: '@east'
 "v6-transport" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "v6-transport" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "v6-transport" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TRANSPORT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048}

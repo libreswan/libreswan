@@ -18,7 +18,7 @@ east #
 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
 east #
  ipsec status | grep idtype
-"ikev2-westnet-eastnet-x509-cr":   our idtype: ID_FQDN; our id=@right; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
+"ikev2-westnet-eastnet-x509-cr":   our idtype: FQDN; our id=@right; their idtype: IPV4_ADDR; their id=192.1.2.45
 east #
  echo "initdone"
 initdone

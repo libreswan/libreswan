@@ -25,7 +25,7 @@ east #
 "road-east-ikev2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-east-ikev2":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-east-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road-east-ikev2":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.3.209
+"road-east-ikev2":   our idtype: IPV4_ADDR; our id=192.1.2.23; their idtype: IPV4_ADDR; their id=192.1.3.209
 "road-east-ikev2":   sendca: all; our sendcert: always; their sendcert: always;
 "road-east-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-east-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -39,7 +39,7 @@ east #
 List of Public Keys:
  
 TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_IPV4_ADDR '192.1.2.23'
+       IPV4_ADDR '192.1.2.23'
 east #
  echo "initdone"
 initdone
@@ -51,9 +51,9 @@ east #
 List of Public Keys:
  
 TIMESTAMP, 3104 RSA Key AwXXXXXXX (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.3.209'
+       IPV4_ADDR '192.1.3.209'
 TIMESTAMP, 2192 RSA Key AwXXXXXXX (has private key), until --- -- --:--:-- ---- ok (expires never)
-       ID_IPV4_ADDR '192.1.2.23'
+       IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus
 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.3.209'

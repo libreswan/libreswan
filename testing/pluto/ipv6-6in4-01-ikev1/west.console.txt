@@ -40,7 +40,7 @@ west #
 "westnet-eastnet-6in4":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "westnet-eastnet-6in4":   conn_prio: 64,64,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-6in4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-6in4":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
+"westnet-eastnet-6in4":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
 "westnet-eastnet-6in4":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet-6in4":   dpd: passive; delay:0s; timeout:0s
 "westnet-eastnet-6in4":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -57,7 +57,7 @@ west #
 "westnet-eastnet-6in4" #1: sent Main Mode request
 "westnet-eastnet-6in4" #1: sent Main Mode I2
 "westnet-eastnet-6in4" #1: sent Main Mode I3
-"westnet-eastnet-6in4" #1: Peer ID is ID_FQDN: '@east'
+"westnet-eastnet-6in4" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-6in4" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-6in4" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-6in4" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 2001:db8:0:1::/64===2001:db8:0:2::/64}

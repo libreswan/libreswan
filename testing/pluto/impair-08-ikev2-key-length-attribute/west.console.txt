@@ -23,7 +23,7 @@ west #
 "aes128" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
-"aes128" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"aes128" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "aes128": initiating delete of connection's IKE SA #1 (and Child SA #2)
@@ -62,7 +62,7 @@ west #
 "aes128" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #5: IMPAIR: emitting fixed-length key-length attribute with 0 key
 "aes128" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
-"aes128" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"aes128" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #6: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "aes128" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
@@ -81,7 +81,7 @@ west #
 "aes128" #8: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #8: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #8: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #9 {ESP <0xESPESP}
-"aes128" #8: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"aes128" #8: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #9: initiator established Child SA using #8; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "aes128": initiating delete of connection's IKE SA #8 (and Child SA #9)
@@ -102,7 +102,7 @@ west #
 "aes128" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #10: IMPAIR: duplicating key-length attribute
 "aes128" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #11 {ESP <0xESPESP}
-"aes128" #10: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"aes128" #10: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #11: initiator established Child SA using #10; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 "aes128": initiating delete of connection's IKE SA #10 (and Child SA #11)
@@ -141,7 +141,7 @@ west #
 "aes128" #14: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #14: IMPAIR: omitting fixed-size key-length attribute
 "aes128" #14: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #15 {ESP <0xESPESP}
-"aes128" #14: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"aes128" #14: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "aes128" #15: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "aes128" #15: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
@@ -197,7 +197,7 @@ west #
 "3des" #21: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "3des" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "3des" #21: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #22 {ESP <0xESPESP}
-"3des" #21: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"3des" #21: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "3des" #22: initiator established Child SA using #21; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 "3des": initiating delete of connection's IKE SA #21 (and Child SA #22)
@@ -220,7 +220,7 @@ west #
 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "3des" #23: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "3des" #23: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #24 {ESP <0xESPESP}
-"3des" #23: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"3des" #23: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "3des" #24: initiator established Child SA using #23; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 "3des": initiating delete of connection's IKE SA #23 (and Child SA #24)

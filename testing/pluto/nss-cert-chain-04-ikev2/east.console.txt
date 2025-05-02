@@ -51,7 +51,7 @@ east #
 "road-A":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road-A":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id=@someone.testing.libreswan.org
+"road-A":   our idtype: FQDN; our id=@east.testing.libreswan.org; their idtype: FQDN; their id=@someone.testing.libreswan.org
 "road-A":   sendca: none; our sendcert: always; their sendcert: always;
 "road-A":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-A":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -73,7 +73,7 @@ east #
 "road-chain-B":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "road-chain-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "road-chain-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"road-chain-B":   our idtype: ID_FQDN; our id=@east.testing.libreswan.org; their idtype: ID_FQDN; their id=@west_chain_endcert.testing.libreswan.org
+"road-chain-B":   our idtype: FQDN; our id=@east.testing.libreswan.org; their idtype: FQDN; their id=@west_chain_endcert.testing.libreswan.org
 "road-chain-B":   sendca: none; our sendcert: always; their sendcert: always;
 "road-chain-B":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "road-chain-B":   nat-traversal: encapsulation:auto; keepalive:20s

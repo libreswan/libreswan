@@ -114,7 +114,7 @@ Connection list:
 "failureshunt":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "failureshunt":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "failureshunt":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"failureshunt":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
+"failureshunt":   our idtype: IPV4_ADDR; our id=192.1.2.23; their idtype: IPV4_ADDR; their id=192.1.2.45
 "failureshunt":   sendca: all; our sendcert: always; their sendcert: always;
 "failureshunt":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "failureshunt":   nat-traversal: encapsulation:auto; keepalive:20s
@@ -135,7 +135,7 @@ Connection list:
 "westnet-eastnet":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "westnet-eastnet":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
+"westnet-eastnet":   our idtype: IPV4_ADDR; our id=192.1.2.23; their idtype: IPV4_ADDR; their id=192.1.2.45
 "westnet-eastnet":   sendca: all; our sendcert: always; their sendcert: always;
 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "westnet-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s

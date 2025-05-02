@@ -844,7 +844,7 @@ static void show_pubkey(struct show *s, struct pubkey *pubkey, bool utc, const c
 	id_buf idb;
 	esb_buf b;
 	show(s, "       %s '%s'",
-		     str_enum(&ike_id_type_names, pubkey->id.kind, &b),
+		     str_enum_short(&ike_id_type_names, pubkey->id.kind, &b),
 		     str_id(&pubkey->id, &idb));
 
 	if (pubkey->issuer.len > 0) {

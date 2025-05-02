@@ -43,7 +43,7 @@ west #
  ipsec auto --up ikev1-aggr-failtest  # sanitize-retransmits
 "ikev1-aggr-failtest" #2: initiating IKEv1 Aggressive Mode connection
 "ikev1-aggr-failtest" #2: sent Aggressive Mode request
-"ikev1-aggr-failtest" #2: Peer ID is ID_FQDN: '@east-v1'
+"ikev1-aggr-failtest" #2: Peer ID is FQDN: '@east-v1'
 "ikev1-aggr-failtest" #2: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
 "ikev1-aggr-failtest" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "ikev1-aggr-failtest" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

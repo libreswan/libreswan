@@ -47,7 +47,7 @@ west #
  # Child SA needed to switch to "b" before establishing.
 west #
  ../../guestbin/wait-for-pluto.sh --match '"a" #2: responder established IKE SA'
-"a" #2: responder established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+"a" #2: responder established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 west #
  ../../guestbin/wait-for-pluto.sh --match '"a" #3: switched to "b"'
 "a" #3: switched to "b"

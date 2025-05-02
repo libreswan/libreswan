@@ -54,5 +54,5 @@ road #
  # Authentication should be AUTH_NULL
 road #
  grep '^[^|].*authenticated' /tmp/pluto.log
-"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and ID_NULL 'ID_NULL'
+"private-or-clear#192.1.2.23/32"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
 road #

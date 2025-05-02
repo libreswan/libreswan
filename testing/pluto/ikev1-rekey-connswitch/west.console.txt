@@ -53,7 +53,7 @@ west #
 "TUNNEL-A" #1: I am sending my cert
 "TUNNEL-A" #1: I am sending a certificate request
 "TUNNEL-A" #1: sent Main Mode I3
-"TUNNEL-A" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+"TUNNEL-A" #1: Peer ID is DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 "TUNNEL-A" #1: authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "TUNNEL-A" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "TUNNEL-A" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
@@ -140,7 +140,7 @@ west #
 "TUNNEL-A":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "TUNNEL-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-A":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-A":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -162,7 +162,7 @@ west #
 "TUNNEL-B":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "TUNNEL-B":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-B":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"TUNNEL-B":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-B":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-B":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-B":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-B":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -183,7 +183,7 @@ west #
 "TUNNEL-C":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "TUNNEL-C":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-C":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-C":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-C":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -216,7 +216,7 @@ west #
 "TUNNEL-A":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "TUNNEL-A":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-A":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"TUNNEL-A":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-A":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-A":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-A":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-A":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts
@@ -238,7 +238,7 @@ west #
 "TUNNEL-C":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "TUNNEL-C":   conn_prio: 32,32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "TUNNEL-C":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"TUNNEL-C":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
+"TUNNEL-C":   our idtype: DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
 "TUNNEL-C":   sendca: all; our sendcert: never; their sendcert: never;
 "TUNNEL-C":   dpd: passive; delay:0s; timeout:0s
 "TUNNEL-C":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts

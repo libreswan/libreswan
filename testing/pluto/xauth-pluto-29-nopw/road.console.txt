@@ -21,8 +21,8 @@ road #
 "xauth-road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
 "xauth-road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 "xauth-road-eastnet-psk" #1: sent Aggressive Mode request
-"xauth-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
-"xauth-road-eastnet-psk" #1: Peer ID is ID_FQDN: '@east'
+"xauth-road-eastnet-psk" #1: Peer ID is FQDN: '@east'
+"xauth-road-eastnet-psk" #1: Peer ID is FQDN: '@east'
 "xauth-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "xauth-road-eastnet-psk" #1: prompt for Username:
 "xauth-road-eastnet-psk" #1: prompt for Password:
@@ -43,8 +43,8 @@ road #
 "xauth-road-eastnet-psk" #2: multiple DH groups in aggressive mode can cause interop failure
 "xauth-road-eastnet-psk" #2: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 "xauth-road-eastnet-psk" #2: sent Aggressive Mode request
-"xauth-road-eastnet-psk" #2: Peer ID is ID_FQDN: '@east'
-"xauth-road-eastnet-psk" #2: Peer ID is ID_FQDN: '@east'
+"xauth-road-eastnet-psk" #2: Peer ID is FQDN: '@east'
+"xauth-road-eastnet-psk" #2: Peer ID is FQDN: '@east'
 "xauth-road-eastnet-psk" #2: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "xauth-road-eastnet-psk" #2: prompt for Username:
 "xauth-road-eastnet-psk" #2: prompt for Password:

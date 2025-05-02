@@ -21,7 +21,7 @@ north #
 "north-east" #1: sent Main Mode request
 "north-east" #1: sent Main Mode I2
 "north-east" #1: sent Main Mode I3
-"north-east" #1: Peer ID is ID_FQDN: '@east'
+"north-east" #1: Peer ID is FQDN: '@east'
 "north-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "north-east" #1: prompt for Username:
 "north-east" #1: prompt for Password:

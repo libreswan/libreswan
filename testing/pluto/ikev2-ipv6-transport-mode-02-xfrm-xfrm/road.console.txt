@@ -39,7 +39,7 @@ road #
 "v6-transport":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 "v6-transport":   conn_prio: 128,128,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "v6-transport":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"v6-transport":   our idtype: ID_FQDN; our id=@road; their idtype: ID_FQDN; their id=@east
+"v6-transport":   our idtype: FQDN; our id=@road; their idtype: FQDN; their id=@east
 "v6-transport":   sendca: all; our sendcert: always; their sendcert: always;
 "v6-transport":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 "v6-transport":   nat-traversal: encapsulation:auto; keepalive:20s

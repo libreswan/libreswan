@@ -319,7 +319,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 		id_buf idb;
 		return diag("authentication failed: %zu byte hash received from peer %s '%s' does not match %zu byte hash of negotiated PRF %s",
 			    sig.len,
-			    str_enum(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
+			    str_enum_short(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
 			    str_id(&ike->sa.st_connection->remote->host.id, &idb),
 			    hash_len, ike->sa.st_oakley.ta_prf->common.fqn);
 	}
@@ -342,7 +342,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 		id_buf idb;
 		esb_buf kb;
 		return diag("authentication failed: computed hash does not match hash received from peer %s '%s'",
-			    str_enum(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
+			    str_enum_short(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
 			    str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	}
 
@@ -362,7 +362,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			jam_string(buf, "using authby=");
 			jam_enum(buf, &keyword_auth_names, authby);
 			jam_string(buf, " and ");
-			jam_enum(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
+			jam_enum_short(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
 			jam_string(buf, " '");
 			jam_id_bytes(buf, &ike->sa.st_connection->remote->host.id, jam_raw_bytes);
 			jam_string(buf, "'");

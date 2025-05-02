@@ -675,7 +675,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 		id_buf idb;
 		enum_buf kb;
 		return diag("%s certificate contains no subjectAltName extension to match %s '%s'",
-			    who, str_enum(&ike_id_type_names, id->kind, &kb),
+			    who, str_enum_short(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
 	}
 
@@ -691,7 +691,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 		id_buf idb;
 		enum_buf kb;
 		return diag("%s certificate subjectAltName extension failed to decode while looking for %s '%s'",
-			    who, str_enum(&ike_id_type_names, id->kind, &kb),
+			    who, str_enum_short(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
 	}
 
@@ -822,7 +822,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	PORT_FreeArena(arena, PR_FALSE);
 	esb_buf esb;
 	return diag("%s certificate subjectAltName extension does not match %s '%s'",
-		    who, str_enum(&ike_id_type_names, id->kind, &esb),
+		    who, str_enum_short(&ike_id_type_names, id->kind, &esb),
 		    ascii_id);
 }
 

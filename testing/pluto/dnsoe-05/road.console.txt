@@ -44,15 +44,15 @@ road #
 List of Public Keys:
  
 TIMESTAMP,    0 RSA Key AQAAAAAAA (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.2.66'
+       IPV4_ADDR '192.1.2.66'
 TIMESTAMP, 2191 RSA Key AQBBBBBBB (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.2.66'
+       IPV4_ADDR '192.1.2.66'
 TIMESTAMP, 2192 RSA Key AQCCCCCCC (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.2.66'
+       IPV4_ADDR '192.1.2.66'
 TIMESTAMP, 2192 RSA Key AQDDDDDDD (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.2.66'
+       IPV4_ADDR '192.1.2.66'
 TIMESTAMP, 2192 RSA Key AQO9bJbr3 (no private key), until TIMESTAMP warning (expires in X days)
-       ID_IPV4_ADDR '192.1.2.66'
+       IPV4_ADDR '192.1.2.66'
 road #
  # should show established tunnel and no bare shunts
 road #

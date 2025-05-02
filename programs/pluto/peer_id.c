@@ -825,7 +825,6 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
        }
 
        return diag_diag(&d, "X509: authentication failed; ");
-       return NULL;
 }
 
 /*
