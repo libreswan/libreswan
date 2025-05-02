@@ -166,11 +166,13 @@ for commit in $(git -C ${rutdir} rev-list \
 
     if test -n "${resultdir}"; then
 	TESTED=TESTED
+	testeddir=${resultdir}
     else
 	TESTED=UNTESTED
+	testeddir=-
     fi
 
-    echo ${TESTED}: ${resultdir} ${commit} ${interesting} ${index} ${#run_commits[@]} ${run_bias} 1>&2
+    echo ${TESTED}: ${testeddir} ${commit} ${interesting} ${index} ${#run_commits[@]} ${run_bias} 1>&2
 
     # Skip uninteresting commits - don't include them in untested
     # runs.

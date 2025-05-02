@@ -436,15 +436,32 @@ hardlink -v ${rutdir} ${resultsdir}
 # Clean out old logs
 #
 # The script can run for a long time before idleing so do this every
-# time.  Never delete log files for -0- commits (i.e., releases).
+# time.
+#
+# Never delete log files for -0- commits (i.e., releases) and/or tag:
 
-STATUS "deleting *.log.gz files older than 14 days"
+STATUS "Trimming the test run"
 
-find ${summarydir} \
-     -type d -name '*-0-*' -prune \
-     -o \
-     -type f -name '*.log.gz' -mtime +14 -print0 | \
-    xargs -0 --no-run-if-empty rm -v
+{
+    RUN ${bindir}/gime-work.sh ${summarydir} ${rutdir} ${branch_tag} 2>&1
+} | {
+    # only tested
+    grep -e '^TESTED:'
+} | {
+    # leave tags and -0- commits alone
+    grep -v -e '-0-' -e tag:
+} | {
+    while read status resultdir hash interesting xxx ; do
+	# delete any large files greater than 2 weeks old
+	find ${resultdir} -name '*.log.gz' -mtime +14 -print -delete
+	# delete booring test results greater than 14 days old
+	if test "${interesting}" = false ; then
+	    find ${resultdir} -maxdepth 0 -mtime +14 | while read resultdir ; do
+		echo THINKING ABOUT DELETING ${resultdir}
+	    done
+	fi
+    done
+}
 
 # Updating tests/
 
