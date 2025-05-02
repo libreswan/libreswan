@@ -5,13 +5,9 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- # ipsec add any-east
-east #
- ipsec add north-any-east
-"north-any-east": added IKEv2 connection
-east #
- ipsec add road-any-east
+ ipsec add any-east # alias
 "road-any-east": added IKEv1 connection
+"north-any-east": added IKEv2 connection
 east #
  echo initdone
 initdone

@@ -6,11 +6,12 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec add west-cuckold
+ ipsec add west # alias; includes west-base, oops!
+"west-base": added IKEv2 connection
 "west-cuckold": added IKEv2 connection
-west #
- ipsec add west-cuckoo
 "west-cuckoo": added IKEv2 connection
+west #
+ ipsec delete west-base
 west #
  echo "initdone"
 initdone
