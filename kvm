@@ -382,6 +382,8 @@ while test $# -gt 0 ; do
 		directories[${#directories[@]}]=$(realpath --relative-to=$PWD "$1")
 	    elif test -z "${relative}" -a -d "${rutdir}/$1" ; then
 		directories[${#directories[@]}]=$(realpath --relative-to=${rutdir} "${rutdir}/$1")
+	    elif test -z "${relative}" -a -d "${rutdir}/testing/pluto/$1" ; then
+		directories[${#directories[@]}]=$(realpath --relative-to=${rutdir} "${rutdir}/testing/pluto/$1")
 	    elif test -z "${ops[*]}" ; then
 		# first argument, should be a command
 		echo "unrecognized command: $1" 1>&2
