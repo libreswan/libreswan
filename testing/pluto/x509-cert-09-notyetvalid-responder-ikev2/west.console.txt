@@ -30,7 +30,7 @@ west #
 "nss-cert" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "nss-cert" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "nss-cert" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"nss-cert" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"nss-cert" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "nss-cert" #1: NSS: ERROR: IPsec certificate CN=east-notyetvalid invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
 "nss-cert" #1: X509: certificate payload rejected for this connection
 "nss-cert" #1: encountered fatal error in state IKE_AUTH_I

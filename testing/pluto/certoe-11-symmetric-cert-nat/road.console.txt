@@ -30,7 +30,7 @@ road #
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500; Child SA #2 {ESPinUDP <0xESPESP}
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'; Child SA #2 {ESPinUDP <0xESPESP}
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}

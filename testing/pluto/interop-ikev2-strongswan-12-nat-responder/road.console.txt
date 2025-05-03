@@ -16,7 +16,7 @@ road #
 "road-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/4500 {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}, initiating IKE_AUTH
-"road-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500; Child SA #2 {ESPinUDP <0xESPESP}
+"road-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESPinUDP <0xESPESP}
 "road-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "road-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 NATD=192.1.2.23:4500 DPD=passive}
 road #

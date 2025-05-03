@@ -47,7 +47,7 @@ west #
 "esp=null-none" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "esp=null-none" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-"esp=null-none" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"esp=null-none" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "esp=null-none" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "esp=null-none" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
 up
@@ -67,7 +67,7 @@ west #
 "esp=null-none" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "esp=null-none" #3: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-"esp=null-none" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #4 {ESP <0xESPESP}
+"esp=null-none" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
 "esp=null-none" #3: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "esp=null-none" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-NONE DPD=passive}
 up

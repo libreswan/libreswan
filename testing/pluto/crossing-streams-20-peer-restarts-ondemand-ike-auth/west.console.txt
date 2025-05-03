@@ -51,7 +51,7 @@ IMPAIR: stop processing inbound drip packet 1
 "east-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 west #
  ../../guestbin/wait-for-pluto.sh '#1: sent IKE_AUTH request'
-"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"east-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 west #
  ../../guestbin/wait-for-inbound.sh 2
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2

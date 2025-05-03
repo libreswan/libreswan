@@ -82,7 +82,7 @@ begin #
 "west-bc-missing-chain-end" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-bc-missing-chain-end" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-missing-chain-end" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-bc-missing-chain-end" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"west-bc-missing-chain-end" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-missing-chain-end.testing.libreswan.org, E=west-bc-missing-chain-end@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "west-bc-missing-chain-end" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "west-bc-missing-chain-end" #1: encountered fatal error in state IKE_AUTH_I
 "west-bc-missing-chain-end" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -211,7 +211,7 @@ begin #
 "bc-n-ca-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "bc-n-ca-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "bc-n-ca-west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"bc-n-ca-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"bc-n-ca-west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=bc-n-ca-west.testing.libreswan.org, E=user-bc-n-ca-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "bc-n-ca-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "bc-n-ca-west" #1: encountered fatal error in state IKE_AUTH_I
 "bc-n-ca-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
