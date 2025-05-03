@@ -702,11 +702,6 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
-
 		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
@@ -732,10 +727,6 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
 		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
@@ -759,10 +750,6 @@ static void routed_kernel_policy_to_unrouted(struct connection *c,
 {
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
 
@@ -781,10 +768,6 @@ static void unrouted_kernel_policy_to_unrouted(struct connection *c,
 					       const char *story)
 {
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -805,10 +788,6 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
 
 		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
@@ -955,10 +934,6 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
 		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
@@ -985,10 +960,6 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
-
 		do_updown(UPDOWN_DOWN, c, spd, child, logger);
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
@@ -1013,10 +984,6 @@ static void unrouted_tunnel_to_unrouted(struct connection *c,
 	/* currently down and unrouted */
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -1073,9 +1040,6 @@ static void routed_inbound_negotiation_to_unrouted(struct connection *c,
 	ldbg_routing(logger, "OOPS: ROUTED_INBOUND has no outbound policy");
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
 						   logger, where);
@@ -1098,10 +1062,6 @@ static void unrouted_inbound_to_unrouted(struct connection *c,
 	ldbg_routing(logger, "OOPS: UNROUTED_INBOUND doesn't have outbound!");
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);

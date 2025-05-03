@@ -5590,22 +5590,6 @@ bool is_xauth(const struct connection *c)
 		c->local->host.config->xauth.client || c->remote->host.config->xauth.client);
 }
 
-bool is_v1_cisco_split(const struct spd *spd UNUSED, where_t where UNUSED)
-{
-#ifdef USE_CISCO_SPLIT
-	if (spd->connection->config->remote_peer_cisco &&
-	    spd->connection->child.spds.list == spd &&
-	    spd->connection->child.spds.len > 1) {
-		ldbg(spd->connection->logger,
-		     "kernel: skipping first SPD, remotepeertype is CISCO, damage done "PRI_WHERE,
-		     pri_where(where));
-		return true;
-	}
-#endif
-	return false;
-}
-
-
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
 const char *connection_sa_name(const struct connection *c, enum sa_kind sa_kind)
 {

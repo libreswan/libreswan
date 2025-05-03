@@ -945,11 +945,6 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		spd->wip.ok = true;
 
-		if (is_v1_cisco_split(spd, HERE)) {
-			/* XXX: why is CISCO skipped? */
-			continue;
-		}
-
 		PEXPECT(logger, spd->wip.ok);
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.bare_shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
@@ -1041,10 +1036,6 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	}
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		if (is_v1_cisco_split(spd, HERE)) {
-			continue;
-		}
 
 		PEXPECT(logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
