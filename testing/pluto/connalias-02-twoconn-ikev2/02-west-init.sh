@@ -2,7 +2,7 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
-ipsec add west-cuckold
-ipsec add west-cuckoo
+ipsec add west # alias; includes west-base, oops!
+ipsec delete west-base
 
 echo "initdone"
