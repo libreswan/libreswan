@@ -34,12 +34,17 @@ rise #
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP
 "rise-set" #1: sent IKE_SA_INIT request to 198.18.1.15:UDP/500
 "rise-set" #1: processed IKE_SA_INIT response from 198.18.1.15:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500; Child SA #2 {ESP <0xESPESP}
+"rise-set" #1: sent IKE_AUTH request to 198.18.1.15:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #
  ../../guestbin/ping-once.sh --up -I 198.18.12.12 198.18.15.15
-up
+down UNEXPECTED
+# ping -n -c 1  -i 6 -w 5   -I 198.18.12.12 198.18.15.15
+PING 198.18.15.15 (198.18.15.15) from 198.18.12.12 : 56(84) bytes of data.
+From 198.18.12.12 icmp_seq=1 Destination Host Unreachable
+--- 198.18.15.15 ping statistics ---
+1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
 rise #
  ipsec _kernel state
 src 198.18.1.12 dst 198.18.1.15

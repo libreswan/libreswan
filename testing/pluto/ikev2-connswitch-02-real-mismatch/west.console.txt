@@ -24,7 +24,7 @@ west #
 "westnet-eastnet-foo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-foo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-foo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-foo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-foo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@westfoo'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-foo" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@eastfoo' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-foo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -36,7 +36,7 @@ west #
 "westnet-eastnet-bar" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-bar" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-bar" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-bar" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #4 {ESP <0xESPESP}
+"westnet-eastnet-bar" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@westbar'; Child SA #4 {ESP <0xESPESP}
 "westnet-eastnet-bar" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "westnet-eastnet-bar" #3: encountered fatal error in state IKE_AUTH_I
 "westnet-eastnet-bar" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

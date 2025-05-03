@@ -31,7 +31,7 @@ west #
 "west-cuckoo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-cuckoo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-cuckoo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-cuckoo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"west-cuckoo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "west-cuckoo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckoo" #1: IKE_AUTH response redirects to new gateway 192.1.3.33
 "west-cuckoo" #2: scheduling redirect 1 to 192.1.3.33
@@ -43,7 +43,7 @@ west #
 "west-cuckoo" #3: initiating IKEv2 connection to 192.1.3.33 using UDP
 "west-cuckoo" #3: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
 "west-cuckoo" #3: processed IKE_SA_INIT response from 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-cuckoo" #3: sent IKE_AUTH request to 192.1.3.33:UDP/500; Child SA #4 {ESP <0xESPESP}
+"west-cuckoo" #3: sent IKE_AUTH request to 192.1.3.33:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
 "west-cuckoo" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckoo" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -55,7 +55,7 @@ west #
 "west-cuckold" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-cuckold" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-cuckold" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"west-cuckold" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
+"west-cuckold" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #6 {ESP <0xESPESP}
 "west-cuckold" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckold" #6: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "west-cuckold" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
