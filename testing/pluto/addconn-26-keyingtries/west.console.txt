@@ -28,6 +28,7 @@ west #
 "westnet-eastnet-k2": added IKEv2 connection
 west #
  ipsec auto --add  nevernegotiate
+conn nevernegotiate: overriding auto=route with auto=add
 "nevernegotiate": warning: keyingtries=0 ignored, connection will never negotiate
 "nevernegotiate": added unoriented passthrough connection (neither left=10.0.1.1 nor right=0.0.0.0 match an interface)
 west #

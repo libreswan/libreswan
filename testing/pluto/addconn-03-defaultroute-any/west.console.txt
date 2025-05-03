@@ -10,8 +10,8 @@ west #
 west #
  ipsec addconn --verbose test
 opening file: /etc/ipsec.conf
-loading named conns: test
-  overriding auto=ignore with auto=add
+loading conns matching test:
+  resolving default routes
 resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer <any>
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
@@ -47,6 +47,7 @@ resolving family=IPv4 src=<defaultroute> gateway=192.1.2.254 peer <any>
   success: src=192.1.2.45 gateway=192.1.2.254
 resolving family=IPv4 src=<any> gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
+  sending to pluto
 "test": added IKEv2 connection
 west #
  # base line check - remove routes and try again

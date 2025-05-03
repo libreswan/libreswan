@@ -7,22 +7,24 @@ west #
 west #
  ipsec addconn --verbose west
 opening file: /etc/ipsec.conf
-loading named conns: west
-  overriding auto=ignore with auto=add
+loading conns matching west:
+  resolving default routes
 resolving family=IPv4 src=%eth1 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %eth1
   seeking NOTHING
+  sending to pluto
 "west": added IKEv2 connection
 west #
  ipsec addconn --verbose west-bogus
 opening file: /etc/ipsec.conf
-loading named conns: west-bogus
-  overriding auto=ignore with auto=add
+loading conns matching west-bogus:
+  resolving default routes
 resolving family=IPv4 src=%bogus1 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %bogus1
   seeking NOTHING
+  sending to pluto
 "west-bogus": added unoriented IKEv2 connection (neither left=%bogus1 nor right=192.1.2.23 match an interface)
 west #
  echo "initdone"

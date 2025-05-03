@@ -22,12 +22,13 @@ west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
 ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
-loading named conns: percentage-wip
-  overriding auto=ignore with auto=add
+loading conns matching percentage-wip:
+  resolving default routes
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
+  sending to pluto
 "percentage-wip": added IKEv2 connection
 west #
  ipsec status | grep margin
@@ -37,12 +38,13 @@ west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
 ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
-loading named conns: percentage-wip
-  overriding auto=ignore with auto=add
+loading conns matching percentage-wip:
+  resolving default routes
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
   seeking NOTHING
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
+  sending to pluto
 "percentage-wip": added IKEv2 connection
 west #
  ipsec status | grep margin
