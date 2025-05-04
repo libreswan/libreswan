@@ -199,7 +199,7 @@ static bool fmt_common_shell_out(char *buf,
 		}
 	}
 
-	JDuint("PLUTO_IS_PEER_CISCO", c->config->remote_peer_cisco);
+	JDuint("PLUTO_IS_PEER_CISCO", c->remote->host.config->xauth.cisco);
 	JDstr("PLUTO_PEER_DNS_INFO", (child != NULL && child->sa.st_seen_cfg_dns != NULL ? child->sa.st_seen_cfg_dns : ""));
 	JDstr("PLUTO_PEER_DOMAIN_INFO", (child != NULL && child->sa.st_seen_cfg_domains != NULL ? child->sa.st_seen_cfg_domains : ""));
 	JDstr("PLUTO_PEER_BANNER", (child != NULL && child->sa.st_seen_cfg_banner != NULL ? child->sa.st_seen_cfg_banner : ""));

@@ -971,11 +971,13 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 	ldbg(ike->sa.logger, "phase 1 IV completed");
 
-	/* It seems as per Cisco implementation, XAUTH and MODECFG
-	 * are not supposed to be performed again during rekey
+	/*
+	 * It seems as per Cisco implementation, XAUTH and MODECFG are
+	 * not supposed to be performed again during rekey
 	 */
-	if (c->established_ike_sa != SOS_NOBODY && c->local->host.config->xauth.client &&
-	    c->config->remote_peer_cisco) {
+	if (c->established_ike_sa != SOS_NOBODY &&
+	    c->local->host.config->xauth.client &&
+	    c->remote->host.config->xauth.cisco) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
@@ -987,8 +989,9 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 		}
 	}
 
-	if (c->established_ike_sa != SOS_NOBODY && c->local->host.config->xauth.client &&
-	    c->config->remote_peer_cisco) {
+	if (c->established_ike_sa != SOS_NOBODY &&
+	    c->local->host.config->xauth.client &&
+	    c->remote->host.config->xauth.cisco) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
@@ -1129,7 +1132,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 	 */
 	if (c->established_ike_sa != SOS_NOBODY &&
 	    ike->sa.st_connection->local->host.config->xauth.client &&
-	    ike->sa.st_connection->config->remote_peer_cisco) {
+	    ike->sa.st_connection->remote->host.config->xauth.cisco) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
@@ -1143,7 +1146,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 
 	if (c->established_ike_sa != SOS_NOBODY &&
 	    ike->sa.st_connection->local->host.config->xauth.client &&
-	    ike->sa.st_connection->config->remote_peer_cisco) {
+	    ike->sa.st_connection->remote->host.config->xauth.cisco) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
