@@ -159,17 +159,6 @@ static const struct sparse_names kw_pubkey_names = {
 	},
 };
 
-/*
- *  Cisco interop: remote peer type
- */
-
-static const struct sparse_names kw_remote_peer_type_names = {
-	.list = {
-		SPARSE("cisco",         REMOTE_PEER_CISCO),
-		SPARSE_NULL
-	},
-};
-
 static const struct sparse_names kw_xauthby_names = {
 	.list = {
 		SPARSE("file",	XAUTHBY_FILE),
@@ -407,9 +396,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "sec-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, },
 
   /* Cisco interop: remote peer type */
-  { "remote-peer-type",  kv_conn,  kt_sparse_name,  KNCF_REMOTE_PEER_TYPE, &kw_remote_peer_type_names, NULL, },
+  { "remote-peer-type",  kv_conn,  kt_string,  KNCF_REMOTE_PEER_TYPE, NULL, NULL, },
   /* another alias used by NetworkManager-libreswan :/ */
-  { "remote_peer_type",  kv_conn,  kt_sparse_name,  KNCF_REMOTE_PEER_TYPE, &kw_remote_peer_type_names, NULL, },
+  { "remote_peer_type",  kv_conn,  kt_string,  KNCF_REMOTE_PEER_TYPE, NULL, NULL, },
 
   /* Network Manager support */
 #ifdef HAVE_NM
