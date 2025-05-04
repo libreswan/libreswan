@@ -116,6 +116,8 @@ struct host_end_config {
 		bool server;
 		bool client;
 		char *username;
+		bool cisco;		/* Cisco interop: remote peer
+					 * type */
 	} xauth;
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
@@ -335,9 +337,6 @@ struct config {
 #ifdef HAVE_NM
 	bool nm_configured;		/* Network Manager support */
 #endif
-
-	bool remote_peer_cisco;		/* Cisco interop: remote peer
-					 * type */
 
 	enum yna_options encapsulation;	/* encapsulation mode of
 					 * auto/yes/no */

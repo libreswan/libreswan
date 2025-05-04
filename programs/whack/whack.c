@@ -1991,11 +1991,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
-			if (streq(optarg, "cisco")) {
-				msg.remote_peer_type = REMOTE_PEER_CISCO;
-			} else {
-				diagw("--remote-peer-type options are 'cisco'");
-			}
+			msg.remote_peer_type = optarg;
 			continue;
 
 #ifdef HAVE_NM

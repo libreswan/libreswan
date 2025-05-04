@@ -100,10 +100,12 @@ enum autostart {
 extern const struct sparse_names autostart_names;
 
 /* Cisco interop: values remote_peer_type= */
-enum keyword_remote_peer_type {
-	REMOTE_PEER_UNSET = 0,
+enum remote_peer_type {
+	REMOTE_PEER_IETF = 1,
 	REMOTE_PEER_CISCO,
 };
+
+extern const struct sparse_names remote_peer_type_names;
 
 enum keyword_auth {
 	AUTH_UNSET = 0,

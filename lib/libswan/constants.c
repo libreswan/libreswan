@@ -42,6 +42,7 @@
 #include "encap_proto.h"
 #include "initiated_by.h"
 #include "connection_owner.h"
+#include "sparse_names.h"
 
 const char *bool_str(bool b)
 {
@@ -2495,4 +2496,18 @@ const enum_names event_type_names = {
 	ARRAY_REF(event_retain_name),
 	"EVENT_", /* prefix */
 	&event_v2_names,
+};
+
+/*
+ *  Cisco interop: remote peer type
+ *
+ * does this belong anywhere?
+ */
+
+const struct sparse_names remote_peer_type_names = {
+	.list = {
+		SPARSE("ietf",         REMOTE_PEER_IETF),
+		SPARSE("cisco",        REMOTE_PEER_CISCO),
+		SPARSE_NULL
+	},
 };

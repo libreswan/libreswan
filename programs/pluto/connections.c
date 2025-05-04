@@ -3814,7 +3814,19 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		/* Cisco interop: remote peer type */
-		config->remote_peer_cisco = wm->remote_peer_type == REMOTE_PEER_CISCO;
+		enum remote_peer_type remote_peer_type =
+			extract_sparse_name("", "remote-peer-type",
+					    wm->remote_peer_type,
+					    REMOTE_PEER_IETF,
+					    &remote_peer_type_names,
+					    wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
+		/* just blat both ends */
+		FOR_EACH_ELEMENT(end, config->end) {
+			end->host.xauth.cisco = (remote_peer_type == REMOTE_PEER_CISCO);
+		}
 
 		config->child_sa.metric = wm->metric;
 		config->child_sa.mtu = wm->mtu;
