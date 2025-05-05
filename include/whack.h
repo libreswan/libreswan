@@ -358,7 +358,7 @@ struct whack_message {
 	bool fake_strongswan;
 
 	/* send our own libreswan vendorid or not */
-	bool send_vendorid;
+	enum yn_options send_vendorid;
 
 	/* Checking if this connection is configured by Network Manager */
 	enum yn_options nm_configured;
