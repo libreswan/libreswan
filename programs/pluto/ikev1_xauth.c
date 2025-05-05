@@ -80,6 +80,9 @@
 #include "impair.h"
 #include "ikev1_message.h"
 
+struct attrs;
+struct modecfg_pbs;
+
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 					 struct msg_digest *md,
@@ -87,7 +90,91 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 
 static diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				     struct pbs_in *attrs,
-				     lset_t *received);
+				     struct attrs *attrs_received);
+
+/* see emit_mode_cfg_attrs() */
+
+struct attrs {
+	bool ikev1_internal_ip4_address;
+	bool ikev1_internal_ip4_netmask;
+	bool ikev1_internal_ip4_dns;
+	bool ikev1_internal_ip4_subnet;
+	bool modecfg_domain;
+	bool modecfg_banner;
+	bool cisco_split_inc;
+};
+
+static bool visit_attrs(const struct attrs *attrs,
+			struct modecfg_pbs *modecfg_pbs,
+			struct ike_sa *ike,
+			bool (*visitor)(struct modecfg_pbs *, unsigned, struct ike_sa *))
+{
+#define VISIT(FIELD, ATTR)						\
+	if (attrs->FIELD) {						\
+		if (!visitor(modecfg_pbs, ATTR, ike)) {			\
+			return false;					\
+		}							\
+	}
+	VISIT(ikev1_internal_ip4_address, IKEv1_INTERNAL_IP4_ADDRESS);
+	VISIT(ikev1_internal_ip4_netmask, IKEv1_INTERNAL_IP4_NETMASK);
+	VISIT(ikev1_internal_ip4_dns, IKEv1_INTERNAL_IP4_DNS);
+	VISIT(ikev1_internal_ip4_subnet, IKEv1_INTERNAL_IP4_SUBNET);
+	VISIT(modecfg_domain, MODECFG_DOMAIN);
+	VISIT(modecfg_banner, MODECFG_BANNER);
+	VISIT(cisco_split_inc, CISCO_SPLIT_INC);
+#undef VISIT
+	return true;
+}
+
+static bool set_attr(struct attrs *attrs, unsigned attr)
+{
+	switch (attr) {
+	case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+		attrs->ikev1_internal_ip4_address = true;
+		return true;
+	case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+		attrs->ikev1_internal_ip4_netmask = true;
+		return true;
+	case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+		attrs->ikev1_internal_ip4_dns = true;
+		return true;
+	case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
+		attrs->ikev1_internal_ip4_subnet = true;
+		return true;
+	case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+		attrs->modecfg_domain = true;
+		return true;
+	case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+		attrs->modecfg_banner = true;
+		return true;
+	case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+		attrs->cisco_split_inc = true;
+		return true;
+	case IKEv1_INTERNAL_IP4_NBNS:
+		/* ignore */
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Danger: double negative logic.
+ *
+ * visit_attrs() returns true when there are no attrs; so have
+ * no_attr(), and hence, vist_attrs() return false when there is an
+ * attr.
+ */
+
+static bool no_attr(struct modecfg_pbs *pbs UNUSED, unsigned attr UNUSED, struct ike_sa *ike UNUSED)
+{
+	return false;
+}
+
+static bool has_attrs(const struct attrs *attrs)
+{
+	/* i.e., there's not no attrs */
+	return !visit_attrs(attrs, NULL, NULL, no_attr);
+}
 
 /* CISCO_SPLIT_INC example payload
  *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
@@ -445,41 +532,14 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 	}
 }
 
-static bool emit_mode_cfg_attrs(struct modecfg_pbs *modecfg_pbs,
-				struct ike_sa *ike,
-				lset_t attrs)
+static bool emit_empty_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
+				     unsigned attr_type,
+				     struct ike_sa *ike UNUSED)
 {
-	/* Send the attributes requested by the client. */
-	int attr_type = 0;
-	while (attrs != LEMPTY) {
-		if (attrs & 1) {
-			if (!emit_mode_cfg_attr(modecfg_pbs, attr_type, ike)) {
-				return false;
-			}
-		}
-		attr_type++;
-		attrs >>= 1;
-	}
-
-	/*
-	 * Send these even if the client didn't request them. Due to
-	 * and unwise use of a bitmask the limited range of lset_t
-	 * causes us to loose track of whether the client requested
-	 * them. No biggie, the MODECFG draft allows us to send
-	 * attributes that the client didn't request and if we set
-	 * MODECFG_DOMAIN and MODECFG_BANNER in connection
-	 * configuration we probably want the client to see them
-	 * anyway.
-	 *
-	 * ??? might we be sending them twice?
-	 *
-	 * XXX: potentially yes.
-	 */
-	emit_mode_cfg_attr(modecfg_pbs, MODECFG_DOMAIN, ike);
-	emit_mode_cfg_attr(modecfg_pbs, MODECFG_BANNER, ike);
-	emit_mode_cfg_attr(modecfg_pbs, CISCO_SPLIT_INC, ike);
-
-	return true;
+	struct isakmp_attribute attrh = {
+		.isaat_af_type = attr_type,
+	};
+	return modecfg_out_attr(modecfg_pbs, &attrh, NULL);
 }
 
 /*
@@ -530,7 +590,7 @@ static bool get_internal_address(struct ike_sa *ike)
 
 static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 				      unsigned mode_cfg_type,
-				      lset_t attrs)
+				      struct attrs attrs_recv)
 {
 	struct fragment_pbs_out packet;
 	if (!open_fragment_pbs_out("MODE_CFG", &packet, ike->sa.logger)) {
@@ -587,51 +647,33 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 	};
 
 	switch (mode_cfg_type) {
-	case ISAKMP_CFG_REPLY:
-		if (!emit_mode_cfg_attrs(&modecfg_pbs, ike, attrs)) {
+
+	case ISAKMP_CFG_REQUEST: /* client initiating */
+		/* send empty prompts */
+		FOR_EACH_ELEMENT(attr, default_attrs) {
+			if (!emit_empty_mode_cfg_attr(&modecfg_pbs, (*attr), ike)) {
+				return false;
+			}
+		}
+		break;
+	case ISAKMP_CFG_REPLY: /* server responding */
+		if (!visit_attrs(&attrs_recv, &modecfg_pbs, ike, emit_mode_cfg_attr)) {
 			return false;
 		}
 		break;
-	case ISAKMP_CFG_SET:
+
+	case ISAKMP_CFG_SET: /* server initiating */
 		FOR_EACH_ELEMENT(attr, default_attrs) {
 			if (!emit_mode_cfg_attr(&modecfg_pbs, *attr, ike)) {
 				return false;
 			}
 		}
 		break;
-	case ISAKMP_CFG_REQUEST:
-		FOR_EACH_ELEMENT(attr, default_attrs) {
-			struct isakmp_attribute attrh = {
-				.isaat_af_type = *attr,
-			};
-			if (!modecfg_out_attr(&modecfg_pbs, &attrh, NULL)) {
-				return false;
-			}
-		}
-		break;
-	case ISAKMP_CFG_ACK:
-	{
+	case ISAKMP_CFG_ACK: /* client responding */
 		/* send back empty entries */
-		int attr_type = 0;
-		while (attrs != LEMPTY) {
-			if (attrs & 1) {
-				struct isakmp_attribute attrh = {
-					.isaat_af_type = attr_type,
-				};
-				if (!modecfg_out_attr(&modecfg_pbs, &attrh, NULL)) {
-					return false;
-				}
-			}
-			attr_type++;
-			attrs >>= 1;
-		}
-		/*
-		 * XXX: should also, possibly send back ACK for
-		 * MODECFG_DOMAIN, MODECFG_BANNER, and CISCO_SPLIT_INC
-		 * but ignore that.
-		 */
+		visit_attrs(&attrs_recv, &modecfg_pbs, NULL, emit_empty_mode_cfg_attr);
 		break;
-	}
+
 	default:
 		bad_case(mode_cfg_type);
 	}
@@ -659,7 +701,7 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
  */
 static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 						     unsigned cfg_message,
-						     lset_t attrs,
+						     const struct attrs attrs_recv,
 						     struct msg_digest *md)
 {
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
@@ -687,7 +729,7 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 		return false;
 	}
 
-	if (!emit_mode_cfg_attrs(&modecfg_pbs, ike, attrs)) {
+	if (!visit_attrs(&attrs_recv, &modecfg_pbs, ike, emit_mode_cfg_attr)) {
 		return false;
 	}
 
@@ -748,7 +790,7 @@ stf_status initiate_MODE_CFG_SET(struct ike_sa *ike, struct crypt_mac iv)
 		return STF_FATAL;
 	}
 
-	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_SET, LEMPTY)) {
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_SET, (struct attrs){0})) {
 		return STF_FATAL;
 	}
 
@@ -895,7 +937,7 @@ stf_status modecfg_send_request(struct ike_sa *ike)
 						 "IKE sending mode cfg request", HERE);
 	change_v1_state(&ike->sa, STATE_MODE_CFG_I1);
 
-	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REQUEST, LEMPTY)) {
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REQUEST, (struct attrs){0})) {
 		return STF_FATAL;
 	}
 
@@ -1626,7 +1668,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	lset_t resp = LEMPTY;
+	struct attrs recv;
 
 	dbg("arrived in modecfg_inR0");
 
@@ -1651,18 +1693,8 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 				/* reject malformed */
 				return STF_FAIL_v1N;
 			}
-			switch (attr.isaat_af_type) {
-			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-				/* ignore */
-				break;
 
-			default:
+			if (!set_attr(&recv, attr.isaat_af_type)) {
 				log_bad_attr("modecfg (CFG_REQUEST)", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
@@ -1679,7 +1711,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 		}
 
 		ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
-		if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REPLY, resp)) {
+		if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_REPLY, recv)) {
 			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 			return STF_FATAL;
 		}
@@ -1720,7 +1752,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	lset_t resp = LEMPTY;
+	struct attrs recv = {0};
 
 	dbg("modecfg_inI2");
 
@@ -1794,22 +1826,20 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 				     caddr.buf);
 			}
 
-			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			set_attr(&recv, attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 			break;
 		}
 
 		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-			break;
-		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-			/* ignore */
-			break;
 		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-			/* ignore - we will always send/receive these */
+			set_attr(&recv, attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			break;
+		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+			/* ignore */
 			break;
 
 		default:
@@ -1817,7 +1847,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			break;
 		}
 	}
-	/* log_state(LOG_DEBUG, st, "ModeCfg ACK: 0x%" PRIxLSET, resp); */
+	/* log_state(LOG_DEBUG, st, "ModeCfg ACK: 0x%" PRIxLSET, recv); */
 
 	/*
 	 * Build the response.
@@ -1828,7 +1858,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	 * ISAKMP initiator, propose remote SPD as address.
 	 */
 
-	if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_ACK, resp, md)) {
+	if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_ACK, recv, md)) {
 		/* something to send back */
 		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 		return STF_FATAL;
@@ -1839,7 +1869,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	 * that we can start phase 2 properly
 	 */
 	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
-	if (resp != LEMPTY)
+	if (has_attrs(&recv))
 		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
 	dbg("modecfg_inI2(STF_OK)");
@@ -1950,11 +1980,12 @@ static void append_cisco_split_spd(struct connection *c,
 
 diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			      struct pbs_in *attrs,
-			      lset_t *received)
+			      struct attrs *received)
 {
 	struct connection *c = ike->sa.st_connection;
 
-	lset_t resp = LEMPTY;
+	struct attrs resp = {0};
+
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 		struct isakmp_attribute attr;
 		struct pbs_in strattr;
@@ -1988,7 +2019,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			     "Received IPv4 address: %s",
 			     caddr.buf);
 
-			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			resp.ikev1_internal_ip4_address = true;
 			break;
 		}
 
@@ -2002,7 +2033,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 			address_buf b;
 			dbg("Received IP4 NETMASK %s", str_address(&a, &b));
-			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			resp.ikev1_internal_ip4_netmask = true;
 			break;
 		}
 
@@ -2023,7 +2054,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 			append_st_cfg_dns(&ike->sa, a_str);
 
-			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			resp.ikev1_internal_ip4_dns = true;
 			break;
 		}
 
@@ -2031,12 +2062,14 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
 								       false/*don't-ignore*/,
 								       ike->sa.logger));
+			resp.modecfg_domain = true;
 			break;
 
 		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			ike->sa.st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
 								     false/*don't-ignore*/,
 								     ike->sa.logger);
+			resp.modecfg_banner = true;
 			break;
 
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
@@ -2101,10 +2134,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 #endif
 			}
 
-			/*
-			 * ??? this won't work because CISCO_SPLIT_INC is way bigger than LELEM_ROOF
-			 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-			 */
+			resp.cisco_split_inc = true;
 			break;
 		}
 
@@ -2142,7 +2172,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	lset_t resp = LEMPTY;
+	struct attrs recv = {0};
 
 	dbg("modecfg_inR1: received mode cfg reply");
 
@@ -2165,24 +2195,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 				return STF_FAIL_v1N;
 			}
 
-			switch (attr.isaat_af_type) {
-			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-				break;
-
-			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-				/* ignore */
-				break;
-			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
-			case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
-			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-				/* ignore - we will always send/receive these */
-				break;
-
-			default:
+			if (!set_attr(&recv, attr.isaat_af_type)) {
 				log_bad_attr("modecfg (CFG_ACK)", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
@@ -2191,7 +2204,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 
 	case ISAKMP_CFG_REPLY:
 	{
-		diag_t d = process_mode_cfg_attrs(ike, attrs, &resp);
+		diag_t d = process_mode_cfg_attrs(ike, attrs, &recv);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -2213,7 +2226,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 
 	/* we are done with this exchange, clear things so that we can start phase 2 properly */
 	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
-	if (resp != LEMPTY)
+	if (has_attrs(&recv))
 		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
 	dbg("modecfg_inR1(STF_OK)");
@@ -2230,13 +2243,13 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	lset_t resp = LEMPTY;
+	struct attrs recv = {0};
 
 	switch (ma->isama_type) {
 
 	case ISAKMP_CFG_SET:
 	{
-		diag_t d = process_mode_cfg_attrs(ike, attrs, &resp);
+		diag_t d = process_mode_cfg_attrs(ike, attrs, &recv);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -2266,7 +2279,7 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 	ike->sa.st_v1_phase_2_iv = md->v1_decrypt_iv;
 
-	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_ACK, resp)) {
+	if (!record_n_send_v1_mode_cfg(ike, ISAKMP_CFG_ACK, recv)) {
 		return STF_FATAL;
 	}
 
@@ -2278,7 +2291,7 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	zero(&ike->sa.st_v1_phase_2_iv);
 
-	if (resp != LEMPTY) {
+	if (has_attrs(&recv)) {
 		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 	}
 
