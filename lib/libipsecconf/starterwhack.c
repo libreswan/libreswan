@@ -345,8 +345,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
 
 	/* Activate sending out own vendorid */
-	if (conn->values[KNCF_SEND_VENDORID].set)
-		msg.send_vendorid = conn->values[KNCF_SEND_VENDORID].option;
+	msg.send_vendorid = conn->values[KNCF_SEND_VENDORID].option;
 
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
 	if (conn->values[KNCF_INITIAL_CONTACT].set)

@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add send-vendorid=
+"send-vendorid=": added IKEv2 connection
+west #
+ ipsec add send-vendorid=yes
+"send-vendorid=yes": added IKEv2 connection
+west #
+ ipsec add send-vendorid=no
+"send-vendorid=no": added IKEv2 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(send-vendorid:[^;]*;\).*$/\1 \2/p'
+"send-vendorid=": send-vendorid:no;
+"send-vendorid=no": send-vendorid:no;
+"send-vendorid=yes": send-vendorid:yes;
+west #

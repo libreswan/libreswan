@@ -161,6 +161,7 @@ kvmplutotest	addconn-45-unknown-parameter			good
 kvmplutotest	addconn-46-iptfs				good
 kvmplutotest	addconn-47-ikepad				good
 kvmplutotest	addconn-48-shunts				good
+kvmplutotest	addconn-50-send-vendorid			good
 
 #################################################################
 # IKEv2 tests

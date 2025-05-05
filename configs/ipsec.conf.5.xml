@@ -196,6 +196,11 @@
 <!ENTITY NetBSD '<application>NetBSD</application>'>
 <!ENTITY FreeBSD '<application>FreeBSD</application>'>
 <!ENTITY OpenBSD '<application>OpenBSD</application>'>
+
+<!-- definitely wrong but nothing better? -->
+<!ENTITY yN_options 'yes|<emphasis>no</emphasis>'>
+<!-- <!ENTITY Yn_options '<replaceable><default>yes</default>|no</replaceable>'> -->
+
 ]>
 
 <refentry>
