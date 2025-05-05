@@ -320,42 +320,44 @@ static void check_selector_is(void)
 {
 	static const struct test {
 		int line;
-		struct selector from;
+		const char *selector;
 		bool is_unset;
 		bool is_zero;
 		bool is_all;
-		bool contains_one_address;
+		bool is_address;
+		bool is_subnet;
 	} tests[] = {
 		/* all */
-		{ LN, { 0, NULL, NULL, },            .is_unset = true, },
-		/* all */
-		{ LN, { &ipv4_info, "0.0.0.0/0", "0/0", },    .is_all = true, },
-		{ LN, { &ipv6_info, "::/0", "0/0", },         .is_all = true, },
+		{ LN, "0.0.0.0/0",   .is_all = true, .is_subnet = true, },
+		{ LN, "::/0",        .is_all = true, .is_subnet = true, },
 		/* some */
-		{ LN, { &ipv4_info, "127.0.0.0/31", "0/0", }, .is_unset = false, },
-		{ LN, { &ipv6_info, "8000::/127", "0/0", },   .is_unset = false, },
+		{ LN, "127.0.0.0/31", .is_subnet = true, },
+		{ LN, "8000::/127",   .is_subnet = true, },
 		/* one */
-		{ LN, { &ipv4_info, "127.0.0.1/32", "0/0", }, .contains_one_address = true, },
-		{ LN, { &ipv6_info, "8000::/128", "0/0", },   .contains_one_address = true, },
+		{ LN, "127.0.0.1/32", .is_address = true, .is_subnet = true, },
+		{ LN, "8000::1/128",  .is_address = true, .is_subnet = true, },
 		/* none */
-		{ LN, { &ipv4_info, "0.0.0.0/32", "0/0", },   .is_zero = true, },
-		{ LN, { &ipv6_info, "::/128", "0/0", },       .is_zero = true, },
+		{ LN, "0.0.0.0/32",   .is_zero = true, .is_subnet = true, },
+		{ LN, "::/128",       .is_zero = true, .is_subnet = true, },
+		/* none */
+		{ LN, "0.0.0.0/32/tcp/22", .is_unset = false, },
+		{ LN, "::/128/tcp",        .is_unset = false, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		err_t err;
 		const struct test *t = &tests[ti];
-		PRINT("%s subnet=%s protoport=%s unset=%s zero=%s all=%s one=%s",
-		      pri_afi(t->from.afi),
-		      t->from.addresses != NULL ? t->from.addresses : "<unset>",
-		      t->from.protoport != NULL ? t->from.protoport : "<unset>",
+		PRINT("subnet=%s unset=%s zero=%s all=%s address=%s subnet=%s",
+		      (t->selector != NULL ? t->selector : "<unset>"),
 		      bool_str(t->is_unset),
 		      bool_str(t->is_zero),
 		      bool_str(t->is_all),
-		      bool_str(t->contains_one_address));
+		      bool_str(t->is_address),
+		      bool_str(t->is_subnet));
 
 		ip_selector tmp, *selector = &tmp;
-		err = do_selector_from_ttoselector(&t->from, selector);
+		ip_address nonzero_host;
+		err = ttoselector_num(shunk1(t->selector), NULL, selector, &nonzero_host);
 		if (err != NULL) {
 			FAIL("to_selector() failed: %s", err);
 		}
@@ -363,7 +365,8 @@ static void check_selector_is(void)
 		CHECK_COND(selector, is_unset);
 		CHECK_COND2(selector, is_zero);
 		CHECK_COND2(selector, is_all);
-		CHECK_COND2(selector, contains_one_address);
+		CHECK_COND2(selector, is_address);
+		CHECK_COND2(selector, is_subnet);
 	}
 }
 

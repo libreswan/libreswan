@@ -160,14 +160,15 @@ static const struct selector_test {
 	bool is_unset;
 	bool is_zero;
 	bool is_all;
-	bool contains_one_address;
+	bool is_address;
+	bool is_subnet;
 } selector_tests[] = {
-	{ LN, NULL, NULL,                     "<unset-selector>", .is_unset = true, },
-	{ LN, NULL, &unset_selector,          "<unset-selector>", .is_unset = true, },
-	{ LN, &ipv4_info, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, },
-	{ LN, &ipv6_info, &ipv6_info.selector.zero, "::/128",           .is_zero = true, },
-	{ LN, &ipv4_info, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_all = true, },
-	{ LN, &ipv6_info, &ipv6_info.selector.all,  "::/0",             .is_all = true, },
+	{ LN, NULL,       NULL,                     "<unset-selector>", .is_unset = true, },
+	{ LN, NULL,       &unset_selector,          "<unset-selector>", .is_unset = true, },
+	{ LN, &ipv4_info, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, .is_subnet = true, },
+	{ LN, &ipv6_info, &ipv6_info.selector.zero, "::/128",           .is_zero = true, .is_subnet = true, },
+	{ LN, &ipv4_info, &ipv4_info.selector.all,  "0.0.0.0/0",        .is_all = true,  .is_subnet = true, },
+	{ LN, &ipv6_info, &ipv6_info.selector.all,  "::/0",             .is_all = true,  .is_subnet = true, },
 };
 
 static void check_ip_info_address(void)
@@ -431,8 +432,8 @@ static void check_ip_info_selector(void)
 		CHECK_COND(selector, is_unset);
 		CHECK_COND2(selector, is_zero);
 		CHECK_COND2(selector, is_all);
-
-		CHECK_COND2(selector, contains_one_address);
+		CHECK_COND2(selector, is_address);
+		CHECK_COND2(selector, is_subnet);
 	}
 
 	static const struct {

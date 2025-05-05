@@ -151,6 +151,8 @@ const struct ip_info *selector_info(const ip_selector selector);
 
 bool selector_is_zero(const ip_selector selector);	/* ::/128 or 0.0.0.0/32 */
 bool selector_is_all(const ip_selector selector);	/* ::/0 or 0.0.0.0/0 */
+bool selector_is_subnet(const ip_selector selector);	/* i.e., no proto/port */
+bool selector_is_address(const ip_selector selector);
 
 /* attributes */
 
@@ -168,8 +170,6 @@ ip_address selector_prefix_mask(const ip_selector selector);
 
 int selector_prefix_len(const ip_selector selector); /* <0 when non-CIDR*/
 int selector_host_len(const ip_selector selector); /* <0 when non-CIDR*/
-
-bool selector_contains_one_address(const ip_selector selector);
 
 bool address_in_selector(const ip_address l, const ip_selector r);
 bool endpoint_in_selector(const ip_endpoint l, const ip_selector r);

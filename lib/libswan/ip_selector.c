@@ -54,7 +54,33 @@ bool selector_is_all(const ip_selector selector)
 	return selector_eq_selector(selector, afi->selector.all);
 }
 
-bool selector_contains_one_address(const ip_selector selector)
+bool selector_is_subnet(const ip_selector selector)
+{
+	const struct ip_info *afi = selector_info(selector);
+	if (afi == NULL) {
+		/* NULL+unset+unknown+any */
+		return false;
+	}
+
+	if (selector.ipproto != 0 || selector.hport != 0) {
+		return false;
+	}
+
+#if 0
+	if (thingeq(selector.hi, unset_ip_bytes)) {
+		/* Since .hi is zero, so must .lo */
+		return false;
+	}
+#endif
+
+	if (ip_bytes_prefix_len(afi, selector.lo, selector.hi) < 0) {
+		return false;
+	}
+
+	return true;
+}
+
+bool selector_is_address(const ip_selector selector)
 {
 	const struct ip_info *afi = selector_info(selector);
 	if (afi == NULL) {

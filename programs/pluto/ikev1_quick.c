@@ -2060,7 +2060,7 @@ static struct connection *fc_try(const struct connection *c,
 		 */
 		if (c->pool[IPv4_INDEX] != NULL) {
 			ip_range pool_range = addresspool_range(c->pool[IPv4_INDEX]);
-			if (!selector_contains_one_address(*remote_client)) {
+			if (!selector_is_address(*remote_client)) {
 				range_buf rb;
 				selector_buf cb;
 				vdbg("skipping connection with address pool %s, remote client %s is not an address",
