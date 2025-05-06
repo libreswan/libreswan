@@ -735,7 +735,9 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 /* assume 0 is unset */
 
 static unsigned extract_sparse(const char *leftright, const char *name,
-			       unsigned value, unsigned unset, unsigned never,
+			       unsigned value,
+			       unsigned value_when_unset /*i.e., 0*/,
+			       unsigned value_when_never_negotiate,
 			       const struct sparse_names *names,
 			       const struct whack_message *wm,
 			       struct logger *logger)
@@ -747,28 +749,30 @@ static unsigned extract_sparse(const char *leftright, const char *name,
 			     "warning: %s%s=%s ignored for never-negotiate connection",
 			     leftright, name, str_sparse(names, value, &sb));
 		}
-		return never;
-	} else if (value == 0) {
-		return unset;
-	} else {
-		return value;
+		return value_when_never_negotiate;
 	}
+
+	if (value == 0) {
+		return value_when_unset;
+	}
+
+	return value;
 }
 
 static bool extract_yn(const char *leftright, const char *name,
-		       enum yn_options value, bool unset,
+		       enum yn_options value, enum yn_options value_when_unset,
 		       const struct whack_message *wm, struct logger *logger)
 {
-	/* note that 0 gets mapped to YN_UNSET(0) and then UNSET */
 	enum yn_options yn = extract_sparse(leftright, name, value,
-					    /*unset*/YN_UNSET, /*never*/YN_NO,
+					    value_when_unset, /*never*/YN_NO,
 					    &yn_option_names, wm, logger);
+
 	switch (yn) {
 	case YN_NO: return false;
 	case YN_YES: return true;
-	case YN_UNSET: return unset;
+	default:
+		bad_sparse(logger, &yn_option_names, yn);
 	}
-	bad_sparse(logger, &yn_option_names, yn);
 }
 
 /*
@@ -776,22 +780,24 @@ static bool extract_yn(const char *leftright, const char *name,
  * warning is issued but the value is saved regardless:
  *
  * This is to stop:
- *   iptfs=no; iptfs-fragmentation=no
+ *   iptfs=no; iptfs-fragmentation=yes
  * showing as:
  *   iptfs: no; fragmentation: no;
  */
 
 static bool extract_yn_p(const char *leftright, const char *name, enum yn_options yn,
-			 bool unset, const struct whack_message *wm, struct logger *logger,
+			 enum yn_options value_when_unset,
+			 const struct whack_message *wm, struct logger *logger,
 			 const char *p_leftright, const char *p_name, enum yn_options p)
 {
 	const struct sparse_names *names = &yn_option_names;
 
-	if (yn == YN_UNSET) {
-		return unset;
+	if (yn == 0) {
+		/* no argument */
+		return value_when_unset;
 	}
 
-	bool value = false;
+	bool value;
 	switch (yn) {
 	case YN_NO: value = false; break;
 	case YN_YES: value = true; break;
@@ -824,13 +830,14 @@ static bool extract_yn_p(const char *leftright, const char *name, enum yn_option
 
 static enum yna_options extract_yna(const char *leftright, const char *name,
 				    enum yna_options yna,
-				    enum yna_options unset,
-				    enum yna_options never,
+				    enum yna_options value_when_unset,
+				    enum yna_options value_when_never_negotiate,
 				    const struct whack_message *wm,
 				    struct logger *logger)
 {
 	return extract_sparse(leftright, name, yna,
-			      unset, never,
+			      value_when_unset,
+			      value_when_never_negotiate,
 			      &yna_option_names, wm, logger);
 }
 
@@ -1065,7 +1072,7 @@ static diag_t extract_host_end(struct host_end *host,
 	const char *leftright = host_config->leftright;
 
 	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
-				    false, wm, logger);
+				    /*value_when_unset*/YN_NO, wm, logger);
 	if (groundhog) {
 		if (is_fips_mode()) {
 			return diag("%sgroundhog=yes is invalid in FIPS mode",
@@ -2755,10 +2762,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Extract policy bits.
 	 */
 
-	bool pfs = extract_yn("", "pfs", wm->pfs, true, wm, c->logger);
+	bool pfs = extract_yn("", "pfs", wm->pfs,
+			      /*value_when_unset*/YN_YES,
+			      wm, c->logger);
 	config->child_sa.pfs = pfs;
 
-	bool compress = extract_yn("", "compress", wm->compress, false, wm, c->logger);
+	bool compress = extract_yn("", "compress", wm->compress,
+				   /*value_when_unset*/YN_NO,
+				   wm, c->logger);
 	config->child_sa.ipcomp = compress;
 
 	/* sanity check?  done below */
@@ -2879,7 +2890,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 #endif
 
 	config->intermediate = extract_yn("", "intermediate", wm->intermediate,
-					  /*default*/false, wm, c->logger);
+					  /*value_when_unset*/YN_NO,
+					  wm, c->logger);
 	if (config->intermediate) {
 		if (wm->ike_version < IKEv2) {
 			return diag("intermediate requires IKEv2");
@@ -2887,7 +2899,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->session_resumption = extract_yn("", "session_resumption", wm->session_resumption,
-						/*default*/false, wm, c->logger);
+						/*value_when_unset*/YN_NO,
+						wm, c->logger);
 	if (config->session_resumption) {
 		if (wm->ike_version < IKEv2) {
 			return diag("session resumption requires IKEv2");
@@ -2895,14 +2908,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug,
-					   /*default*/false, wm, c->logger);
+					   /*value_when_unset*/YN_NO,
+					   wm, c->logger);
 	config->overlapip = extract_yn("", "overlapip", wm->overlapip,
-				       /*default*/false, wm, c->logger);
+				       /*value_when_unset*/YN_NO, wm, c->logger);
 
 	bool ms_dh_downgrade = extract_yn("", "ms-dh-downgrade", wm->ms_dh_downgrade,
-					  /*default*/false, wm, c->logger);
+					  /*value_when_unset*/YN_NO, wm, c->logger);
 	bool pfs_rekey_workaround = extract_yn("", "pfs-rekey-workaround", wm->pfs_rekey_workaround,
-					       /*default*/false, wm, c->logger);
+					       /*value_when_unset*/YN_NO, wm, c->logger);
 	if (ms_dh_downgrade && pfs_rekey_workaround) {
 		return diag("cannot specify both ms-dh-downgrade=yes and pfs-rekey-workaround=yes");
 	}
@@ -2910,10 +2924,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
 	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id,
-					  /*default*/false, wm, c->logger);
+					  /*value_when_unset*/YN_NO, wm, c->logger);
 	/* IKEv2 only; IKEv1 uses xauth=pam */
 	config->ikev2_pam_authorize = extract_yn("", "pam-authorize", wm->pam_authorize,
-						 /*default*/false, wm, c->logger);
+						 /*value_when_unset*/YN_NO, wm, c->logger);
 
 	if (wm->ike_version >= IKEv2) {
 		if (wm->ikepad != YNA_UNSET) {
@@ -2931,7 +2945,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
-						       /*default*/true/*YES-TRUE*/,wm, c->logger);
+						       /*value_when_unset*/YN_YES,wm, c->logger);
 
 	if (wm->aggressive == YN_YES && wm->ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
@@ -2940,19 +2954,24 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
 	config->aggressive = extract_yn("", "aggressive", wm->aggressive,
-					/*default*/false, wm, c->logger);
+					/*value_when_unset*/YN_NO,
+					wm, c->logger);
 
 	config->decap_dscp = extract_yn("", "decap-dscp", wm->decap_dscp,
-					/*default*/false, wm, c->logger);
+					/*value_when_unset*/YN_NO,
+					wm, c->logger);
 
 	config->encap_dscp = extract_yn("", "encap-dscp", wm->encap_dscp,
-					/*default*/true, wm, c->logger);
+					/*value_when_unset*/YN_YES,
+					wm, c->logger);
 
 	config->nopmtudisc = extract_yn("", "nopmtudisc", wm->nopmtudisc,
-					/*default*/false, wm, c->logger);
+					/*value_when_unset*/YN_NO,
+					wm, c->logger);
 
 	bool mobike = extract_yn("", "mobike", wm->mobike,
-				 /*default*/false, wm, c->logger);
+				 /*value_when_unset*/YN_NO,
+				 wm, c->logger);
 	config->mobike = mobike;
 	if (mobike) {
 		if (wm->ike_version < IKEv2) {
@@ -2975,7 +2994,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* this warns when never_negotiate() */
 	bool iptfs = extract_yn("", "iptfs", wm->iptfs,
-				/*default*/false, wm, c->logger);
+				/*value_when_unset*/YN_NO,
+				wm, c->logger);
 	if (iptfs) {
 		/* lots of incompatibility */
 		if (wm->ike_version < IKEv2) {
@@ -3039,7 +3059,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	config->child_sa.iptfs.fragmentation =
 		extract_yn_p("", "iptfs-fragmentation", wm->iptfs_fragmentation,
-			     /*default*/true, wm, c->logger,
+			     /*value_when_unset*/YN_YES,
+			     wm, c->logger,
 			     "", "iptfs", wm->iptfs);
 
 	/*
@@ -3086,7 +3107,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	} else {
 		config->redirect.accept =
 			extract_yn("", "acceept-redirect", wm->accept_redirect,
-				   /*default*/false, wm, c->logger);
+				   /*value_when_unset*/YN_NO,
+				   wm, c->logger);
 	}
 
 	/* fragmentation */
@@ -3231,8 +3253,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
-			   (wm->ike_version == IKEv2 && (wm->end[LEFT_END].addresspool != NULL ||
-							 wm->end[RIGHT_END].addresspool != NULL)),
+			   /*value_when_unset*/(wm->ike_version < IKEv2 ? YN_NO :
+						wm->end[LEFT_END].addresspool != NULL ? YN_YES :
+						wm->end[RIGHT_END].addresspool != NULL ? YN_YES :
+						YN_NO),
 			   wm, c->logger);
 #if 0
 	/*
@@ -3248,9 +3272,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->narrowing = narrowing;
 
 	config->rekey = extract_yn("", "rekey", wm->rekey,
-				   /*default*/true, wm, c->logger);
+				   /*value_when_unset*/YN_YES,
+				   wm, c->logger);
 	config->reauth = extract_yn("", "reauth", wm->reauth,
-				    /*default*/false, wm, c->logger);
+				    /*value_when_unset*/YN_NO,
+				    wm, c->logger);
 
 	switch (wm->autostart) {
 	case AUTOSTART_UP:
@@ -3596,12 +3622,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->encapsulation = extract_yna("", "encapsulation", wm->encapsulation,
-					    YNA_AUTO, YNA_NO, wm, c->logger);
+					    /*value_when_unset*/YNA_AUTO,
+					    /*value_when_never_negotiate*/YNA_NO,
+					    wm, c->logger);
 
 	config->vti.shared = extract_yn("", "vti-shared", wm->vti_shared,
-					/*default*/false, wm, c->logger);
+					/*value_when_unset*/YN_NO, wm, c->logger);
 	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing,
-					 /*default*/false, wm, c->logger);
+					 /*value_when_unset*/YN_NO, wm, c->logger);
 	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
 		llog(RC_LOG, c->logger,
 		     "warning: length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
@@ -3839,8 +3867,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_initial_contact = wm->initial_contact;
 		config->send_vid_cisco_unity = wm->cisco_unity;
 		config->send_vid_fake_strongswan = wm->fake_strongswan;
-		config->send_vendorid = extract_yn("", "send-vendorid",
-						   wm->send_vendorid, false,
+		config->send_vendorid = extract_yn("", "send-vendorid", wm->send_vendorid,
+						   /*value_when_unset*/YN_NO,
 						   wm, c->logger);
 		if (d != NULL) {
 			return d;
@@ -3872,7 +3900,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	config->modecfg.pull = extract_yn("", "modecfgpull", wm->modecfgpull,
-					  /*default*/false, wm, c->logger);
+					  /*value_when_unset*/YN_NO,
+					  wm, c->logger);
 
 	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
@@ -3955,7 +3984,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 #ifdef HAVE_NM
 	config->nm_configured = extract_yn("", "nm-configured", wm->nm_configured,
-					   /*default*/false, wm, c->logger);
+					   /*value_when_unset*/YN_NO,
+					   wm, c->logger);
 #endif
 
 #ifdef USE_NFLOG
