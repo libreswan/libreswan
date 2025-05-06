@@ -119,7 +119,7 @@ kvmplutotest	addconn-09-dpd-vs-liveness			good
 kvmplutotest	addconn-10-duplicate-key			good
 kvmplutotest	addconn-11-bignum				good
 kvmplutotest	addconn-12-family				good	github:540;github:579
-kvmplutotest	addconn-13-subnets				good
+kvmplutotest	addconn-13-selectors				good
 kvmplutotest	addconn-14-addresspool				good
 kvmplutotest	addconn-15-sourceip				good
 kvmplutotest	addconn-16-empty-config-option			good

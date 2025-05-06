@@ -1,0 +1,2 @@
+test interaction with subnet=, subnets=, and protoport=
+
