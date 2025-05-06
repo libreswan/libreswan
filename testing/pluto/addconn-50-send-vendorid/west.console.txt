@@ -5,17 +5,67 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec add send-vendorid=
+ RUN() { echo " $@" 1>&2 ; "$@" ; }
+west #
+ add() { name=$1 ; expr "${name}" : '.*=$' && shift ; RUN ipsec addconn --name ${name} left=192.1.2.45 right=192.1.2.23 "$@" ; }
+west #
+ add send-vendorid=
+14
+ ipsec addconn --name send-vendorid= left=192.1.2.45 right=192.1.2.23
 "send-vendorid=": added IKEv2 connection
 west #
- ipsec add send-vendorid=yes
+ add send-vendorid=yes
+0
+ ipsec addconn --name send-vendorid=yes left=192.1.2.45 right=192.1.2.23 send-vendorid=yes
 "send-vendorid=yes": added IKEv2 connection
 west #
- ipsec add send-vendorid=no
+ add send-vendorid=no
+0
+ ipsec addconn --name send-vendorid=no left=192.1.2.45 right=192.1.2.23 send-vendorid=no
 "send-vendorid=no": added IKEv2 connection
 west #
- ipsec connectionstatus | sed -n -e 's/^\([^:]*:\) .* \(send-vendorid:[^;]*;\).*$/\1 \2/p'
+ add cisco-unity=
+12
+ ipsec addconn --name cisco-unity= left=192.1.2.45 right=192.1.2.23
+"cisco-unity=": added IKEv2 connection
+west #
+ add cisco-unity=yes
+0
+ ipsec addconn --name cisco-unity=yes left=192.1.2.45 right=192.1.2.23 cisco-unity=yes
+"cisco-unity=yes": added IKEv2 connection
+west #
+ add cisco-unity=no
+0
+ ipsec addconn --name cisco-unity=no left=192.1.2.45 right=192.1.2.23 cisco-unity=no
+"cisco-unity=no": added IKEv2 connection
+west #
+ add fake-strongswan=
+16
+ ipsec addconn --name fake-strongswan= left=192.1.2.45 right=192.1.2.23
+"fake-strongswan=": added IKEv2 connection
+west #
+ add fake-strongswan=yes
+0
+ ipsec addconn --name fake-strongswan=yes left=192.1.2.45 right=192.1.2.23 fake-strongswan=yes
+"fake-strongswan=yes": added IKEv2 connection
+west #
+ add fake-strongswan=no
+0
+ ipsec addconn --name fake-strongswan=no left=192.1.2.45 right=192.1.2.23 fake-strongswan=no
+"fake-strongswan=no": added IKEv2 connection
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("send-vendorid[^:]*:\) .* \(send-vendorid:[^;]*;\).*$/\1 \2/p'
 "send-vendorid=": send-vendorid:no;
 "send-vendorid=no": send-vendorid:no;
 "send-vendorid=yes": send-vendorid:yes;
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("cisco-unity[^:]*:\) .* \(cisco-unity:[^;]*;\).*$/\1 \2/p'
+"cisco-unity=": cisco-unity:no;
+"cisco-unity=no": cisco-unity:no;
+"cisco-unity=yes": cisco-unity:yes;
+west #
+ ipsec connectionstatus | sed -n -e 's/^\("fake-strongswan[^:]*:\) .* \(fake-strongswan:[^;]*;\).*$/\1 \2/p'
+"fake-strongswan=": fake-strongswan:no;
+"fake-strongswan=no": fake-strongswan:no;
+"fake-strongswan=yes": fake-strongswan:yes;
 west #
