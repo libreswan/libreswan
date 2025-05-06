@@ -1743,40 +1743,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 		}
 
-	} else if (src->subnet != NULL && (wm->ike_version == IKEv1 ||
-					   src->protoport.is_set)) {
-
-		/*
-		 * Legacy syntax:
-		 *
-		 * - IKEv1
-		 * - when protoport= was also specified
-		 *
-		 * Merge protoport into the selector.
-		 */
-		ip_subnet subnet;
-		ip_address nonzero_host;
-		err_t e = ttosubnet_num(shunk1(src->subnet), NULL,
-					&subnet, &nonzero_host);
-		if (nonzero_host.is_set) {
-			address_buf hb;
-			llog(RC_LOG, logger, "zeroing non-zero host identifier %s in %ssubnet=%s",
-			     leftright, str_address(&nonzero_host, &hb), src->subnet);
-		}
-		if (e != NULL) {
-			return diag("%ssubnet=%s invalid, %s",
-				    leftright, src->subnet, e);
-		}
-		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
-		     leftright, leftright, leftright, leftright);
-		child_selectors->len = 1;
-		child_selectors->list = alloc_things(ip_selector, 1, "subnet-selectors");
-		child_selectors->list[0] =
-			selector_from_subnet_protoport(subnet, src->protoport);
-		const struct ip_info *afi = subnet_info(subnet);
-		child_selectors->ip[afi->ip_index].len = 1;
-		child_selectors->ip[afi->ip_index].list = child_selectors->list;
-
 	} else if (src->subnet != NULL) {
 
 		/*
@@ -1787,7 +1753,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		 */
 		ldbg(logger, "%s child selectors from %ssubnet (selector); %s.config.has_client=true",
 		     leftright, leftright, leftright);
-		passert(wm->ike_version == IKEv2);
 		ip_address nonzero_host;
 		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL,
 					    &child_config->selectors, &nonzero_host);
@@ -1795,12 +1760,36 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 leftright, src->subnet);
 		}
+
+		if (wm->ike_version == IKEv1) {
+			if (child_config->selectors.len > 1) {
+				return diag("IKEv1 does not support %ssubnet= with multiple selectors", leftright);
+			}
+		}
+
+		if (src->protoport.is_set) {
+			if (child_config->selectors.len > 1) {
+				return diag("%ssubnet= must be a single subnet when combined with %sprotoport=",
+					    leftright, leftright);
+			}
+			if (!selector_is_subnet(child_config->selectors.list[0])) {
+				return diag("%ssubnet= cannot be a selector when combined with %sprotoport=",
+					    leftright, leftright);
+			}
+			ip_subnet subnet = selector_subnet(child_config->selectors.list[0]);
+			ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
+			     leftright, leftright, leftright, leftright);
+			child_selectors->list[0] =
+				selector_from_subnet_protoport(subnet, src->protoport);
+		}
+
 		if (nonzero_host.is_set) {
 			address_buf hb;
 			llog(RC_LOG, logger,
 			     "zeroing non-sero address identifier %s in %ssubnet=%s",
 			     str_address(&nonzero_host, &hb), leftright, src->subnet);
 		}
+
 	} else {
 		ldbg(logger, "%s child selectors unknown; probably derived from host?!?",
 		     leftright);
@@ -3826,6 +3815,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		/* just blat both ends */
 		FOR_EACH_ELEMENT(end, config->end) {
 			end->host.xauth.cisco = (remote_peer_type == REMOTE_PEER_CISCO);
+#ifdef USE_CISCO_SPLIT
+			end->host.modecfg.cisco_split = (remote_peer_type == REMOTE_PEER_CISCO);
+#endif
 		}
 
 		config->child_sa.metric = wm->metric;
