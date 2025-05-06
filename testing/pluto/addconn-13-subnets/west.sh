@@ -24,3 +24,6 @@ ipsec auto --add s1ss1-s1
 ipsec auto --add s1ss2-s1
 ipsec auto --add s2ss1-s1
 ipsec auto --add s2ss2-s1
+
+ipsec add ikev1-s1ssh
+ipsec add ikev1-s2

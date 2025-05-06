@@ -74,3 +74,9 @@ west #
  ipsec auto --add s2ss2-s1
 "s2ss2-s1": failed to add connection: multi-selector leftsubnet="2.2.2.1/32,2.2.2.2/32" combined with leftsubnets="2.2.2.3/32,2.2.2.4/32"
 west #
+ ipsec add ikev1-s1ssh
+"ikev1-s1ssh": failed to add connection: leftsubnet=2.2.2.1/32/tcp/22 invalid, non-decimal digit in number
+west #
+ ipsec add ikev1-s2
+"ikev1-s2": failed to add connection: leftsubnet=2.2.2.1/32,2.2.2.2/32 invalid, non-decimal digit in number
+west #
