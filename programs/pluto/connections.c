@@ -3866,7 +3866,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		config->send_initial_contact = wm->initial_contact;
 		config->send_vid_cisco_unity = wm->cisco_unity;
-		config->send_vid_fake_strongswan = wm->fake_strongswan;
+		config->send_vid_fake_strongswan = extract_yn("", "fake-strongswan", wm->fake_strongswan,
+							      /*value_when_unset*/YN_NO,
+							      wm, c->logger);
 		config->send_vendorid = extract_yn("", "send-vendorid", wm->send_vendorid,
 						   /*value_when_unset*/YN_NO,
 						   wm, c->logger);

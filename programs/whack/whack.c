@@ -852,7 +852,7 @@ const struct option optarg_options[] = {
 	{ "initialcontact\0", no_argument, NULL,  CD_INITIAL_CONTACT },
 	{ "cisco_unity\0", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "cisco-unity\0", no_argument, NULL, CD_CISCO_UNITY },
-	{ "fake-strongswan\0", no_argument, NULL, CD_FAKE_STRONGSWAN },
+	{ "fake-strongswan\0", optional_argument, NULL, CD_FAKE_STRONGSWAN },
 	{ "mobike\0", optional_argument, NULL, CD_MOBIKE },
 
 	{ "dpddelay\0", required_argument, NULL, CD_DPDDELAY },
@@ -1949,8 +1949,8 @@ int main(int argc, char **argv)
 			msg.cisco_unity = true;
 			continue;
 
-		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan */
-			msg.fake_strongswan = true;
+		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
+			msg.fake_strongswan = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */

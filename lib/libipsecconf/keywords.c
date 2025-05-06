@@ -370,7 +370,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "iptfs-init-delay",  kv_conn,  kt_seconds,  KNCF_IPTFS_INIT_DELAY, NULL, NULL, },
   { "iptfs-drop-time",  kv_conn,  kt_seconds,  KNCF_IPTFS_DROP_TIME, NULL, NULL, },
 
-  { "fake-strongswan",  kv_conn,  kt_bool,  KNCF_VID_STRONGSWAN, NULL, NULL, },
+  { "fake-strongswan",  kv_conn,  kt_sparse_name,  KNCF_FAKE_STRONGSWAN, &yn_option_names, NULL, },
   { "send-vendorid",  kv_conn,  kt_sparse_name,  KNCF_SEND_VENDORID, &yn_option_names, NULL, },
   { "sha2-truncbug",  kv_conn,  kt_sparse_name,  KNCF_SHA2_TRUNCBUG, &yn_option_names, NULL, },
   { "ms-dh-downgrade",  kv_conn,  kt_sparse_name,  KNCF_MS_DH_DOWNGRADE, &yn_option_names, NULL, },

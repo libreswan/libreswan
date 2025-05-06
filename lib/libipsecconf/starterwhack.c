@@ -355,8 +355,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_CISCO_UNITY].set)
 		msg.cisco_unity = conn->values[KNCF_CISCO_UNITY].option;
 
-	if (conn->values[KNCF_VID_STRONGSWAN].set)
-		msg.fake_strongswan = conn->values[KNCF_VID_STRONGSWAN].option;
+	msg.fake_strongswan = conn->values[KNCF_FAKE_STRONGSWAN].option;
 
 	/* Active our Cisco interop code if set */
 	msg.remote_peer_type = conn->values[KNCF_REMOTE_PEER_TYPE].string;
