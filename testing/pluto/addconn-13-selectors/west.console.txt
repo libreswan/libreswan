@@ -48,7 +48,7 @@ west #
 west #
  ./host4.sh s1-s2 leftsubnet=2.2.2.1/32            rightsubnet=1.1.1.1/32,1.1.1.2/32 keyexchange=ikev1
  ipsec addconn --name s1-s2 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=2.2.2.1/32 rightsubnet=1.1.1.1/32,1.1.1.2/32 keyexchange=ikev1
-"s1-s2": failed to add connection: rightsubnet=1.1.1.1/32,1.1.1.2/32 invalid, non-decimal digit in number
+"s1-s2": failed to add connection: IKEv1 does not support rightsubnet= with multiple selectors
  ipsec connectionstatus s1-s2
 west #
  # right is expanded to multiple connections
@@ -158,7 +158,7 @@ west #
 west #
  ./host4.sh s0p  leftsubnet=                      leftprotoport=tcp/22
  ipsec addconn --name s0p leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet= leftprotoport=tcp/22
-"s0p": failed to add connection: leftsubnet= invalid, empty string
+"s0p": failed to add connection: leftsubnet= invalid, empty field
  ipsec connectionstatus s0p
 west #
  ./host4.sh s1p  leftsubnet=2.2.2.1/32            leftprotoport=tcp/22
@@ -169,7 +169,7 @@ west #
 west #
  ./host4.sh s2p  leftsubnet=2.2.2.1/32,2.2.2.2/32 leftprotoport=tcp/22
  ipsec addconn --name s2p leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=2.2.2.1/32,2.2.2.2/32 leftprotoport=tcp/22
-"s2p": failed to add connection: leftsubnet=2.2.2.1/32,2.2.2.2/32 invalid, non-decimal digit in number
+"s2p": failed to add connection: leftsubnet= must be a single subnet when combined with leftprotoport=
  ipsec connectionstatus s2p
 west #
  # however, protoport works with multiple subnets=
