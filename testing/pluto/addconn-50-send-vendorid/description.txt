@@ -1,5 +1,5 @@
-test iptfs using whack and addconn
+test various send vendor id config fields
 
-Note: because the kernel lacks IPTFS and there's no way to
-force behaviour this test is deficient.
-
+send-vendorid
+fake-strongswan
+cisco-unity
