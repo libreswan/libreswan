@@ -1,0 +1,154 @@
+../../guestbin/prep.sh
+east #
+ ifconfig ipsec1 create reqid 100
+east #
+ ifconfig ipsec1 inet tunnel 192.1.2.23 192.1.2.45
+east #
+ ifconfig ipsec1 inet 198.18.23.23/24 198.18.45.45
+east #
+ ifconfig ipsec1
+ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
+	options=0
+	tunnel inet 192.1.2.23 --> 192.1.2.45
+	inet 198.18.23.23 --> 198.18.45.45 netmask 0xffffff00
+	groups: ipsec
+	reqid: 100
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+east #
+ ipsec _kernel state
+No SAD entries.
+east #
+ ipsec _kernel policy
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+east #
+ echo 'add 192.1.2.45 192.1.2.23 esp 4523 -m tunnel -u 100 -E rijndael-cbc "45-----Key----23" -A hmac-sha1 "45------Hash------23" ;' | setkey -c
+east #
+ echo 'add 192.1.2.23 192.1.2.45 esp 2345 -m tunnel -u 100 -E rijndael-cbc "23-----Key----45" -A hmac-sha1 "23------Hash------45" ;' | setkey -c
+east #
+ ifconfig ipsec1
+ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400
+	options=0
+	tunnel inet 192.1.2.23 --> 192.1.2.45
+	inet 198.18.23.23 --> 198.18.45.45 netmask 0xffffff00
+	groups: ipsec
+	reqid: 100
+	nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
+east #
+ ipsec _kernel state
+192.1.2.23 192.1.2.45
+	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+192.1.2.45 192.1.2.23
+	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last:                     	hard: 0(s)	soft: 0(s)
+	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 0	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+east #
+ ipsec _kernel policy
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+east #
+ ../../guestbin/ping-once.sh --up -I 198.18.23.23 198.18.45.45
+up
+east #
+ ipsec _kernel state
+192.1.2.23 192.1.2.45
+	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000001 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 152(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=1
+192.1.2.45 192.1.2.23
+	esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=100(0x00000064)
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	seq=0x00000000 replay=0 flags=0x00000040 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 0(s)	soft: 0(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=1
+east #
+ ipsec _kernel policy
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=1 seq=3 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	in ipsec
+	esp/tunnel/192.1.2.45-192.1.2.23/unique:100
+	spid=3 seq=2 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+0.0.0.0/0[any] 0.0.0.0/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=2 seq=1 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+::/0[any] ::/0[any] any
+	out ipsec
+	esp/tunnel/192.1.2.23-192.1.2.45/unique:100
+	spid=4 seq=0 pid=PID scope=ifnet ifname=ipsec1
+	refcnt=1
+east #
+ setkey -F
+east #
+ ifconfig ipsec1 destroy
+east #
