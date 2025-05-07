@@ -7,7 +7,7 @@ PKG_BASE ?= /usr/local
 # See: https://github.com/libreswan/libreswan/issues/735
 # OpenBSD seems to call GCC egcc
 #CC=egcc
-CC=clang-17
+CC=clang-18
 
 WARNING_CFLAGS += -Wself-assign
 USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN

@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2023 Andrew Cagney
+# Copyright (C) 2015-2025 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -1157,7 +1157,7 @@ $(KVM_NETBSD_DOMAIN)-base.iso: | netbsd/base.sh
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_ISO_RELEASE ?= 7.6
+KVM_OPENBSD_ISO_RELEASE ?= 7.7
 KVM_OPENBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' openbsd' | sort -V | tail -1))
 
 KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)/amd64/
@@ -1165,8 +1165,8 @@ KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE
 # not openbsd... as gets deleted by rm openbsd.*
 KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
 KVM_OPENBSD_ISO_HASH ?= SHA256
-KVM_OPENBSD_ISO_CKSUM ?= 60cba8cb391b50bba8fa10fc768bd0529636f5345d82133c93e22c798d8e5269
-# note: strip "."; upstream ISO name omits it
+KVM_OPENBSD_ISO_CKSUM ?= da0106e39463f015524dca806f407c37a9bdd17e6dfffe533b06a2dd2edd8a27
+# note: need to strip "." from version as upstream ISO file omits it
 KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL)/install$(subst .,,$(KVM_OPENBSD_ISO_RELEASE)).iso
 
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)

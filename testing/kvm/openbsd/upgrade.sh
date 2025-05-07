@@ -32,7 +32,7 @@ add git
 add bash
 # stem with branch, see pkg_add
 add gcc%11
-add llvm%17
+add llvm%18
 
 sync ; sync ; sync
 
