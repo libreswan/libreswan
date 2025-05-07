@@ -707,22 +707,35 @@ kvm-keys-ok:
 #    $(notdir $@), and $* (matching % in pattern rules) to get the
 #    name from the target.
 #
-# Because the gateway is created directly from net/swandefault and
-# that file contains hardwired IP addresses, only one is possible.
-#
-# XXX: Why?  Perhaps it is so that SSHing into the VMs is possible,
-# but with lots of VMs what address gets assigned stops being
-# predictable.
+# Because the gateway is created directly from the below using
+# hardwired IP addresses, only one gateway is possible.
 #
 # To avoid the problem where the host has no "default" KVM network
 # (there's a strong rumour that libreswan's main testing machine has
 # this problem) define a dedicated swandefault gateway.
+#
+# This:
+#
+# [ 00.00] IPv4: martian source 198.19.0.1 from 198.19.0.73, on dev eth0
+# [ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 cd dd 9e 08 06
+#
+# typically indicates that two machines have ended up with the same
+# lease.
+#
+# For instance, /var/lib/libvirt/dnsmasq/swandefault.status show
+# 198.19.0.73 leased to ethernet address 52:54:00:cd:dd:9e which is
+# "fedora", but "fedoraw"'s ip addr shows it owning the lease:
+#
+# 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+#    link/ether 52:54:00:c8:26:8f brd ff:ff:ff:ff:ff:ff
+#    inet 198.19.0.73/16 metric 1024 brd 198.19.255.255 scope global dynamic eth0
+#
 
 KVM_GATEWAY_NAME ?= swandefault
 KVM_GATEWAY_ADDRESS ?= 198.19.0.1
 KVM_GATEWAY_PREFIX ?= 16
-KVM_GATEWAY_DHCP_START ?= 198.19.0.2
-KVM_GATEWAY_DHCP_END ?= 198.19.4.254
+KVM_GATEWAY_DHCP_START ?= 198.19.1.0
+KVM_GATEWAY_DHCP_END ?= 198.19.16.255
 
 KVM_GATEWAY = $(KVM_POOLDIR)/$(KVM_GATEWAY_NAME)
 
