@@ -79,6 +79,7 @@
 #include "ikev1_hash.h"
 #include "impair.h"
 #include "ikev1_message.h"
+#include "spd_db.h"		/* for spd_db_add() */
 
 struct attrs;
 struct modecfg_pbs;
@@ -439,23 +440,26 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 		}
 		break;
 
-	/*
-	 * XXX: not sending if our end is 0.0.0.0/0 equals previous
-	 * previous behaviour.
-	 */
 	case CISCO_SPLIT_INC:
-	{
-		/* XXX: bitstomask(c->child.spds.list->local->client.maskbits), */
-		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
-		ip_address addr = selector_prefix(c->child.spds.list->local->client);
-		struct CISCO_split_item i = {0};
-		memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
-		memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
-		if (!pbs_out_struct(&attrval, &CISCO_split_desc, &i, sizeof(i), NULL)) {
-			return false;
+		/*
+		 * XXX: this code is not executed when our end is
+		 * 0.0.0.0/0.  This matches previous behavour
+		 * (previous to what?).  See caller.
+		 */
+		FOR_EACH_ITEM(selector, &c->local->config->child.selectors) {
+			ip_address mask = selector_prefix_mask(*selector);
+			ip_address addr = selector_prefix(*selector);
+			address_buf ab, mb;
+			llog(RC_LOG, ike->sa.logger, "sending CISCO_SPLIT %s/%s",
+			     str_address(&addr, &ab), str_address(&mask, &mb));
+			struct CISCO_split_item i = {0};
+			memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
+			memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
+			if (!pbs_out_struct(&attrval, &CISCO_split_desc, &i, sizeof(i), NULL)) {
+				return false;
+			}
 		}
 		break;
-	}
 
 	default:
 	{
@@ -1899,6 +1903,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			      struct attrs *received)
 {
 	struct connection *c = ike->sa.st_connection;
+	struct logger *logger = ike->sa.logger;
 
 	struct attrs resp = {0};
 
@@ -2017,11 +2022,150 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 		}
 
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-			llog(RC_LOG, ike->sa.logger,
-			     "received and ignored CISCO_SPLIT_INC in MODE_CFG %s payload",
-			     modecfg_payload);
-			resp.cisco_split_inc = true;
+		{
+			if (!c->config->host.cisco.split) {
+#if 1
+				llog(RC_LOG, logger, "received and ignored CISCO_SPLIT_INC in MODE_CFG %s payload",
+				     modecfg_payload);
+
+#else
+				llog(RC_LOG, logger, "ignoring CISCO_SPLITs in MODE_CFG %s payload, cisco-split=no",
+				     modecfg_payload);
+#endif
+				break;
+			}
+
+			/* Guestimate the number of splits. */
+			struct pbs_in split_attr = strattr;
+			const unsigned nr_splits = pbs_in_left(&split_attr).len / CISCO_split_desc.size;
+			if (nr_splits == 0) {
+				llog(RC_LOG, logger, "ignoring CISCO_SPLITs in MODE_CFG %s payload, payload emty",
+				     modecfg_payload);
+				break;
+			}
+
+			/* save for building SPDs */
+			ip_selector local_client = c->child.spds.list[0].local->client;
+
+			/* potentially over-allocate */
+			discard_connection_spds(c);
+			alloc_connection_spds(c, nr_splits);
+
+			unsigned split_nr = 0;
+			while (pbs_in_left(&split_attr).len > 0) {
+
+				struct CISCO_split_item i;
+				diag_t d = pbs_in_struct(&split_attr, &CISCO_split_desc,
+							 &i, sizeof(i), NULL);
+				if (d != NULL) {
+					llog(RC_LOG, logger,
+					     "invalid CISCO_SPLIT in MODE_CFG %s payload, %s",
+					     modecfg_payload, str_diag(d));
+					pfree_diag(&d);
+					/* presumably a truncated
+					 * split */
+					break;
+				}
+
+				ip_address addr = address_from_in_addr(&i.cs_addr);
+				ip_address mask = address_from_in_addr(&i.cs_mask);
+				ip_subnet split_subnet;
+				err_t ugh = address_mask_to_subnet(addr, mask, &split_subnet);
+				if (ugh != NULL) {
+					LLOG_JAMBUF(RC_LOG, logger, buf) {
+						jam_string(buf, "ignoring CISCO_SPLIT ");
+						jam_address(buf, &addr);
+						jam_string(buf, "/");
+						jam_address(buf, &mask);
+						jam_string(buf, " in MODE_CFG ");
+						jam_string(buf, modecfg_payload);
+						jam_string(buf, " payload, ");
+						jam_string(buf, ugh);
+					}
+					continue;
+				}
+
+				ip_selector split = selector_from_subnet(split_subnet);
+				if (selector_is_all(split)) {
+					/* %any has to be useful?!? */
+					LLOG_JAMBUF(RC_LOG, logger, buf) {
+						jam_string(buf, "ignoring CISCO_SPLIT ");
+						jam_selector(buf, &split);
+						jam_string(buf, " in MODE_CFG ");
+						jam_string(buf, modecfg_payload);
+						jam_string(buf, " payload invalid, covers all addresses");
+					}
+					continue;
+				}
+
+				if (c->remote->config->child.selectors.len > 0) {
+					bool found = false;
+					FOR_EACH_ITEM(selector, &c->remote->config->child.selectors) {
+						if (selector_in_selector(split, *selector)) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						LLOG_JAMBUF(RC_LOG, logger, buf) {
+							jam_string(buf, "ignoring CISCO_SPLIT ");
+							jam_selector(buf, &split);
+							jam_string(buf, " in MODE_CFG ");
+							jam_string(buf, modecfg_payload);
+							jam_string(buf, " payload, covers all addresses");
+						}
+						continue;
+					}
+				}
+
+				bool already_split = false;
+				FOR_EACH_ITEM(spd, &c->child.spds) {
+					if (selector_range_eq_selector_range(split, spd->remote->client)) {
+						/* duplicate entry: ignore */
+						LLOG_JAMBUF(RC_LOG, logger, buf) {
+							jam_string(buf, "ignoring CISCO_SPLIT ");
+							jam_selector(buf, &split);
+							jam_string(buf, " in MODE_CFG ");
+							jam_string(buf, modecfg_payload);
+							jam_string(buf, " payload, duplicate of existing SPD ");
+							jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+						}
+						already_split = true;
+						break;
+					}
+				}
+				if (already_split) {
+					continue;
+				}
+
+				LLOG_JAMBUF(RC_LOG, logger, buf) {
+					jam_string(buf, "received CISCO_SPLIT ");
+					jam_selector(buf, &split);
+					jam_string(buf, " in MODE_CFG ");
+					jam_string(buf, modecfg_payload);
+					jam_string(buf, " payload, adding SPD ");
+					jam_selector_pair(buf, &local_client, &split);
+				}
+
+				PASSERT(logger, split_nr < c->child.spds.len);
+				struct spd *spd = &c->child.spds.list[split_nr];
+				spd->local->client = local_client;
+				spd->remote->client = split;
+				spd_db_add(spd);
+				split_nr++;
+			}
+
+			if (split_nr == 0) {
+				/* this is a disaster */
+				return diag("CISCO_SPLIT MODE_CFG %s payload contained no valid splits",
+					    modecfg_payload);
+			}
+
+			ldbg(logger, "CISCO_SPLITs found %u, accepted %u",
+			     c->child.spds.len, split_nr);
+			c->child.spds.len = split_nr;
 			break;
+		}
 
 		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:

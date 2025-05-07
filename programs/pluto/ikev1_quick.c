@@ -797,6 +797,28 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 2) {
 			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
+		} else if (c->child.spds.len > 1) {
+			/*
+			 * Multiple SPDs means that CISCO_SPLIT was
+			 * exchanged during MODE_CFG.
+			 */
+			PEXPECT(ike->sa.logger, c->config->host.cisco.split);
+			ip_selector remote_client;
+			if (c->remote->config->child.selectors.len > 0) {
+				remote_client = c->remote->config->child.selectors.list[0];
+			} else {
+				const struct ip_info *client_afi = selector_info(c->child.spds.list->remote->client);
+				remote_client = client_afi->selector.all;
+			}
+			selector_buf sb;
+			llog(RC_LOG, child->sa.logger, "CISCO_SPLIT: sending %s for Quick Mode peer selector",
+			     str_selector(&remote_client, &sb));
+			if (!emit_subnet_id(REMOTE_PERSPECTIVE,
+					    selector_subnet(remote_client),
+					    remote_client.ipproto,
+					    remote_client.hport, &rbody)) {
+				return STF_INTERNAL_ERROR;
+			}
 		} else {
 			if (!emit_subnet_id(REMOTE_PERSPECTIVE,
 					    selector_subnet(c->child.spds.list->remote->client),
