@@ -969,7 +969,14 @@ const char *str_connection_suffix(const struct connection *c,
 #define PRI_CONNECTION "%s%s"
 #define pri_connection(C,B) str_connection_short(C), str_connection_suffix(C, B)
 
-struct connection **sort_connections(void);
+struct connections {
+	unsigned len;
+	struct connection *data[];
+};
+
+struct connections *sort_connections(void);
+void free_connections(struct connections *connections);
+
 int connection_compare(const struct connection *ca,
 		       const struct connection *cb);
 

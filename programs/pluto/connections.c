@@ -5070,14 +5070,15 @@ static int connection_compare_qsort(const void *l, const void *r)
  *
  * See also sort_states().
  */
-struct connection **sort_connections(void)
+
+struct connections *sort_connections(void)
 {
 	/* count up the connections */
 	unsigned nr_connections = 0;
 	{
 		struct connection_filter cq = {
 			.search = {
-				.order = NEW2OLD,
+				.order = OLD2NEW,
 				.verbose.logger = &global_logger,
 				.where = HERE,
 			},
@@ -5087,31 +5088,26 @@ struct connection **sort_connections(void)
 		}
 	}
 
-	if (nr_connections == 0) {
-		return NULL;
-	}
+	struct connections *connections = alloc_items(struct connections,
+						      nr_connections);
 
-	/* make a NULL terminated array of connections */
-	struct connection **connections = alloc_things(struct connection *,
-						       nr_connections + 1,
-						       "connection array");
 	{
 		unsigned i = 0;
 		struct connection_filter cq = {
 			.search = {
-				.order = NEW2OLD,
+				.order = OLD2NEW,
 				.verbose.logger = &global_logger,
 				.where = HERE,
 			},
 		};
 		while (next_connection(&cq)) {
-			connections[i++] = cq.c;
+			connections->data[i++] = cq.c;
 		}
 		passert(i == nr_connections);
 	}
 
 	/* sort it! */
-	qsort(connections, nr_connections, sizeof(struct connection *),
+	qsort(connections->data, nr_connections, sizeof(struct connection *),
 	      connection_compare_qsort);
 
 	return connections;

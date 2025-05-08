@@ -41,26 +41,6 @@ static whack_connections_visitor_cb visit_connections_bottom_up;
 static whack_connections_visitor_cb visit_connections_root;
 
 /*
- * When there's no name, whack all connections.
- *
- * How to decorate this with a header / footer?
- */
-
-void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
-				  whack_connection_visitor_cb *visit_connection)
-{
-	struct connection **connections = sort_connections();
-	if (connections == NULL) {
-		return;
-	}
-
-	for (struct connection **cp = connections; *cp != NULL; cp++) {
-		visit_connection(m, s, (*cp));
-	}
-	pfree(connections);
-}
-
-/*
  * Try by name.
  *
  * Search OLD2NEW so that a template connection matching name is found

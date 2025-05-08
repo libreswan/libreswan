@@ -181,7 +181,11 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 void whack_trafficstatus(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
-		whack_all_connections_sorted(m, s, whack_trafficstatus_connection);
+		struct connections *connections = sort_connections();
+		ITEMS_FOR_EACH(cp, connections) {
+			whack_trafficstatus_connection(m, s, (*cp));
+		}
+		pfree(connections);
 		return;
 	}
 

@@ -159,19 +159,16 @@ static void show_brief_connection_statuses(struct show *s)
 	int count = 0;
 	int active = 0;
 
-	struct connection **connections = sort_connections();
-	if (connections != NULL) {
-		/* make an array of connections, sort it, and report it */
-		for (struct connection **c = connections; *c != NULL; c++) {
-			count++;
-			if ((*c)->routing.state == RT_ROUTED_TUNNEL ||
-			    (*c)->routing.state == RT_UNROUTED_TUNNEL) {
-				active++;
-				show_brief_connection_status(s, *c);
-			}
+	struct connections *connections = sort_connections();
+	ITEMS_FOR_EACH(cp, connections) {
+		count++;
+		if ((*cp)->routing.state == RT_ROUTED_TUNNEL ||
+		    (*cp)->routing.state == RT_UNROUTED_TUNNEL) {
+			active++;
+			show_brief_connection_status(s, (*cp));
 		}
-		pfree(connections);
 	}
+	pfree(connections);
 
 	show(s, "# Total IPsec connections: loaded %d, active %d",
 		     count, active);

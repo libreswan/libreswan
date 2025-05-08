@@ -47,14 +47,6 @@ typedef unsigned (whack_connection_visitor_cb)
  struct connection *c);
 
 /*
- * Sort all connections then call-back WHACK_CONNECTION() for each.
- *
- * DO NOT USE THIS IF CONNECTIONS ARE EXPECTED TO BE DELETED.
- */
-void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
-				  whack_connection_visitor_cb *visit_connection);
-
-/*
  * Visit the connection "root" identified by M (for aliases there may
  * be multiple "root" connections and they are processed in chrono
  * order)
