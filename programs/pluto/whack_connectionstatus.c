@@ -1054,8 +1054,8 @@ void whack_connectionstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_connections_bottom_up(m, s, whack_connection_status,
-				    (struct each) {
-					    .log_unknown_name = true,
-				    });
+	visit_connection_tree(m, s, OLD2NEW, whack_connection_status,
+			      (struct each) {
+				      .log_unknown_name = true,
+			      });
 }
