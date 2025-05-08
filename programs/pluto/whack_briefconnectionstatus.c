@@ -174,7 +174,7 @@ static void show_brief_connection_statuses(struct show *s)
 		     count, active);
 }
 
-/* Callback function from whack_briefconnectionstatus() -> whack_connections_bottom_up() */
+/* Callback function from whack_briefconnectionstatus() -> walk_connection_tree() */
 static unsigned whack_briefconnectionstatus_cb(const struct whack_message *m UNUSED,
 					struct show *s,
 					struct connection *c)
@@ -192,11 +192,14 @@ void whack_briefconnectionstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	/* Iterate the connections looking for the m->name connection. Calls the
-	 * whack_briefconnectionstatus_cb() callback if found, which directly calls
-	 * show_brief_connection_status() */
-	whack_connections_bottom_up(m, s, whack_briefconnectionstatus_cb,
-				    (struct each) {
-					    .log_unknown_name = true,
-				    });
+	/*
+	 * Iterate the connections looking for the m->name
+	 * connection. Calls the whack_briefconnectionstatus_cb()
+	 * callback if found, which directly calls
+	 * show_brief_connection_status().
+	 */
+	visit_connection_tree(m, s, OLD2NEW, whack_briefconnectionstatus_cb,
+			      (struct each) {
+				      .log_unknown_name = true,
+			      });
 }
