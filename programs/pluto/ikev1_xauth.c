@@ -89,6 +89,7 @@ static stf_status xauth_client_ackstatus(struct ike_sa *ike,
 					 uint16_t ap_id);
 
 static diag_t process_mode_cfg_attrs(struct ike_sa *ike,
+				     const char *modecfg_payload,
 				     struct pbs_in *attrs,
 				     struct attrs *attrs_received);
 
@@ -1990,6 +1991,7 @@ static void append_cisco_split_spd(struct connection *c,
  */
 
 diag_t process_mode_cfg_attrs(struct ike_sa *ike,
+			      const char *modecfg_payload,
 			      struct pbs_in *attrs,
 			      struct attrs *received)
 {
@@ -2102,8 +2104,8 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 							 &i, sizeof(i), NULL);
 				if (d != NULL) {
 					llog(RC_LOG, ike->sa.logger,
-					     "ignoring malformed CISCO_SPLIT_INC payload: %s",
-					     str_diag(d));
+					     "ignoring malformed CISCO_SPLIT_INC in %s payload from server: %s",
+					     modecfg_payload, str_diag(d));
 					pfree_diag(&d);
 					break;
 				}
@@ -2215,7 +2217,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 
 	case ISAKMP_CFG_REPLY:
 	{
-		diag_t d = process_mode_cfg_attrs(ike, attrs, &recv);
+		diag_t d = process_mode_cfg_attrs(ike, "RESPONSE", attrs, &recv);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -2260,7 +2262,7 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 
 	case ISAKMP_CFG_SET:
 	{
-		diag_t d = process_mode_cfg_attrs(ike, attrs, &recv);
+		diag_t d = process_mode_cfg_attrs(ike, "SET", attrs, &recv);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
