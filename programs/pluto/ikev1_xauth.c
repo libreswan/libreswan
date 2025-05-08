@@ -106,12 +106,14 @@ struct attrs {
 
 static bool visit_attrs(const struct attrs *attrs,
 			struct modecfg_pbs *modecfg_pbs,
+			const char *modecfg_payload,
 			struct ike_sa *ike,
-			bool (*visitor)(struct modecfg_pbs *, unsigned, struct ike_sa *))
+			bool (*visitor)(struct modecfg_pbs *, const char *modecfg_payload,
+					unsigned, struct ike_sa *))
 {
 #define VISIT(FIELD, ATTR)						\
 	if (attrs->FIELD) {						\
-		if (!visitor(modecfg_pbs, ATTR, ike)) {			\
+		if (!visitor(modecfg_pbs, modecfg_payload, ATTR, ike)) {	\
 			return false;					\
 		}							\
 	}
@@ -165,7 +167,10 @@ static bool set_attr(struct attrs *attrs, unsigned attr)
  * attr.
  */
 
-static bool no_attr(struct modecfg_pbs *pbs UNUSED, unsigned attr UNUSED, struct ike_sa *ike UNUSED)
+static bool no_attr(struct modecfg_pbs *pbs UNUSED,
+		    const char *modecfg_payload UNUSED,
+		    unsigned attr UNUSED,
+		    struct ike_sa *ike UNUSED)
 {
 	return false;
 }
@@ -173,7 +178,7 @@ static bool no_attr(struct modecfg_pbs *pbs UNUSED, unsigned attr UNUSED, struct
 static bool has_attrs(const struct attrs *attrs)
 {
 	/* i.e., there's not no attrs */
-	return !visit_attrs(attrs, NULL, NULL, no_attr);
+	return !visit_attrs(attrs, NULL, NULL, NULL, no_attr);
 }
 
 /* CISCO_SPLIT_INC example payload
@@ -484,6 +489,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
  */
 
 static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
+			       const char *modecfg_payload,
 			       unsigned attr, struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -498,21 +504,24 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 		 * client to send the DNS name to the server?
 		 */
 		if (c->config->modecfg.dns.len == 0) {
-			ldbg(ike->sa.logger, "we are not sending internal DNS");
+			ldbg(ike->sa.logger, "skip sending internal DNS in %s payload, nothing to send",
+			     modecfg_payload);
 			return true;
 		}
 		return isakmp_add_attr(modecfg_pbs, attr, ike);
 
 	case MODECFG_DOMAIN:
 		if (c->config->modecfg.domains == NULL) {
-			ldbg(ike->sa.logger, "we are not sending a domain");
+			ldbg(ike->sa.logger, "skip sending domains in %s payload, nothing to send",
+			     modecfg_payload);
 			return true;
 		}
 		return isakmp_add_attr(modecfg_pbs, MODECFG_DOMAIN, ike);
 
 	case MODECFG_BANNER:
 		if (c->config->modecfg.banner == NULL) {
-			ldbg(ike->sa.logger, "We are not sending a banner");
+			ldbg(ike->sa.logger, "skip sending banner in %s payload, nothing to send",
+			     modecfg_payload);
 			return true;
 		}
 		return isakmp_add_attr(modecfg_pbs, MODECFG_BANNER, ike);
@@ -520,10 +529,12 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 	case CISCO_SPLIT_INC:
 		if (selector_is_unset(&c->spd->local->client) ||
 		    selector_is_all(c->spd->local->client)) {
-			ldbg(ike->sa.logger, "We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+			ldbg(ike->sa.logger, "skip sending CISCO_SPLIT in %s payload, we are 0.0.0.0/0",
+			     modecfg_payload);
 			return true;
 		}
-		ldbg(ike->sa.logger, "We are sending our subnet as CISCO_SPLIT_INC");
+		ldbg(ike->sa.logger, "sending CISCO_SPLIT in %s payload with our selectors",
+		     modecfg_payload);
 		return isakmp_add_attr(modecfg_pbs, CISCO_SPLIT_INC, ike);
 
 	default:
@@ -533,6 +544,7 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 }
 
 static bool emit_empty_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
+				     const char *modecfg_payload UNUSED,
 				     unsigned attr_type,
 				     struct ike_sa *ike UNUSED)
 {
@@ -651,27 +663,27 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 	case ISAKMP_CFG_REQUEST: /* client initiating */
 		/* send empty prompts */
 		FOR_EACH_ELEMENT(attr, default_attrs) {
-			if (!emit_empty_mode_cfg_attr(&modecfg_pbs, (*attr), ike)) {
+			if (!emit_empty_mode_cfg_attr(&modecfg_pbs, "client REQUEST", (*attr), ike)) {
 				return false;
 			}
 		}
 		break;
 	case ISAKMP_CFG_REPLY: /* server responding */
-		if (!visit_attrs(&attrs_recv, &modecfg_pbs, ike, emit_mode_cfg_attr)) {
+		if (!visit_attrs(&attrs_recv, &modecfg_pbs, "server RESPONSE", ike, emit_mode_cfg_attr)) {
 			return false;
 		}
 		break;
 
 	case ISAKMP_CFG_SET: /* server initiating */
 		FOR_EACH_ELEMENT(attr, default_attrs) {
-			if (!emit_mode_cfg_attr(&modecfg_pbs, *attr, ike)) {
+			if (!emit_mode_cfg_attr(&modecfg_pbs, "server SET", *attr, ike)) {
 				return false;
 			}
 		}
 		break;
 	case ISAKMP_CFG_ACK: /* client responding */
 		/* send back empty entries */
-		visit_attrs(&attrs_recv, &modecfg_pbs, NULL, emit_empty_mode_cfg_attr);
+		visit_attrs(&attrs_recv, &modecfg_pbs, "client ACK", ike, emit_empty_mode_cfg_attr);
 		break;
 
 	default:
@@ -728,7 +740,7 @@ static bool build_v1_modecfg_ack_from_md_in_reply_stream(struct ike_sa *ike,
 		return false;
 	}
 
-	if (!visit_attrs(&attrs_recv, &modecfg_pbs, ike, emit_mode_cfg_attr)) {
+	if (!visit_attrs(&attrs_recv, &modecfg_pbs, "client ack", ike, emit_mode_cfg_attr)) {
 		return false;
 	}
 
