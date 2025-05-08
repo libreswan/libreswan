@@ -90,8 +90,24 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define alloc_things(THING, COUNT, NAME)			\
 	((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
-#define overalloc_things(THING, COUNT, EXTRA)				\
-	((THING*) alloc_bytes(sizeof(THING) * (COUNT) +  (EXTRA), #THING"s"))
+/* sizeof(THING1) + COUNT*sizeof(THING2) */
+#define overalloc_things(THING1, COUNT, THING2)				\
+	((THING1*) alloc_bytes(sizeof(THING1) + (COUNT) * sizeof(THING2), \
+			       #THING1"+"#THING2"s"))
+
+#define alloc_items(ITEMS, COUNT)					\
+	({								\
+		ITEMS *_items = overalloc_things(ITEMS, COUNT,		\
+						 (ITEMS){0}.data[0]);	\
+		_items->len = (COUNT);					\
+		_items;							\
+	})
+
+#define ITEMS_FOR_EACH(ITEM, ITEMS)					\
+	for (typeof((ITEMS)->data[0]) *ITEM =				\
+		     (ITEMS) != NULL ? (ITEMS)->data : NULL;		\
+	     ITEM != NULL && ITEM < (ITEMS)->data + (ITEMS)->len;	\
+	     ITEM++)
 
 #define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\
 	{								\
