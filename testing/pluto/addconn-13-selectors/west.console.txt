@@ -69,8 +69,8 @@ west #
 "s1-ss2/0x1": added IKEv2 connection
 "s1-ss2/0x2": added IKEv2 connection
  ipsec connectionstatus s1-ss2
-"s1-ss2/0x2": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
 "s1-ss2/0x1": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"s1-ss2/0x2": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
 west #
  ./host4.sh s2-ss1 leftsubnet=2.2.2.1/32,2.2.2.2/32 rightsubnets=1.1.1.1/32
  ipsec addconn --name s2-ss1 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=2.2.2.1/32,2.2.2.2/32 rightsubnets=1.1.1.1/32
@@ -101,16 +101,16 @@ west #
 "ss1-ss2/1x1": added IKEv2 connection
 "ss1-ss2/1x2": added IKEv2 connection
  ipsec connectionstatus ss1-ss2
-"ss1-ss2/1x2": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
 "ss1-ss2/1x1": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"ss1-ss2/1x2": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
 west #
  ./host4.sh ss2-ss1 leftsubnets=2.2.2.1/32,2.2.2.2/32 rightsubnets=1.1.1.1/32
  ipsec addconn --name ss2-ss1 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnets=2.2.2.1/32,2.2.2.2/32 rightsubnets=1.1.1.1/32
 "ss2-ss1/1x1": added IKEv2 connection
 "ss2-ss1/2x1": added IKEv2 connection
  ipsec connectionstatus ss2-ss1
-"ss2-ss1/2x1": 2.2.2.2/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
 "ss2-ss1/1x1": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"ss2-ss1/2x1": 2.2.2.2/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
 west #
  ./host4.sh ss2-ss2 leftsubnets=2.2.2.1/32,2.2.2.2/32 rightsubnets=1.1.1.1/32,1.1.1.2/32
  ipsec addconn --name ss2-ss2 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnets=2.2.2.1/32,2.2.2.2/32 rightsubnets=1.1.1.1/32,1.1.1.2/32
@@ -119,10 +119,10 @@ west #
 "ss2-ss2/2x1": added IKEv2 connection
 "ss2-ss2/2x2": added IKEv2 connection
  ipsec connectionstatus ss2-ss2
-"ss2-ss2/2x2": 2.2.2.2/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
-"ss2-ss2/2x1": 2.2.2.2/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
-"ss2-ss2/1x2": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
 "ss2-ss2/1x1": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"ss2-ss2/1x2": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
+"ss2-ss2/2x1": 2.2.2.2/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"ss2-ss2/2x2": 2.2.2.2/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.2/32; unrouted; my_ip=unset; their_ip=unset;
 west #
  # left accumulates both
 west #
@@ -131,8 +131,8 @@ west #
 "s1ss1-s1/0x0": added IKEv2 connection
 "s1ss1-s1/1x0": added IKEv2 connection
  ipsec connectionstatus s1ss1-s1
-"s1ss1-s1/1x0": 2.2.2.3/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
 "s1ss1-s1/0x0": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"s1ss1-s1/1x0": 2.2.2.3/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
 west #
  ./host4.sh s1ss2-s1 leftsubnet=2.2.2.1/32            leftsubnets=2.2.2.3/32,2.2.2.4/32 rightsubnet=1.1.1.1/32
  ipsec addconn --name s1ss2-s1 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=2.2.2.1/32 leftsubnets=2.2.2.3/32,2.2.2.4/32 rightsubnet=1.1.1.1/32
@@ -140,9 +140,9 @@ west #
 "s1ss2-s1/1x0": added IKEv2 connection
 "s1ss2-s1/2x0": added IKEv2 connection
  ipsec connectionstatus s1ss2-s1
-"s1ss2-s1/2x0": 2.2.2.4/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
-"s1ss2-s1/1x0": 2.2.2.3/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
 "s1ss2-s1/0x0": 2.2.2.1/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"s1ss2-s1/1x0": 2.2.2.3/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
+"s1ss2-s1/2x0": 2.2.2.4/32===192.1.2.45[@west]...192.1.2.23[@east]===1.1.1.1/32; unrouted; my_ip=unset; their_ip=unset;
 west #
  ./host4.sh s2ss1-s1 leftsubnet=2.2.2.1/32,2.2.2.2/32 leftsubnets=2.2.2.3/32            rightsubnet=1.1.1.1/32
  ipsec addconn --name s2ss1-s1 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=2.2.2.1/32,2.2.2.2/32 leftsubnets=2.2.2.3/32 rightsubnet=1.1.1.1/32
@@ -191,6 +191,6 @@ west #
 "s2p/1x0": added IKEv2 connection
 "s2p/2x0": added IKEv2 connection
  ipsec connectionstatus s2p
-"s2p/2x0": 2.2.2.2/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 "s2p/1x0": 2.2.2.1/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
+"s2p/2x0": 2.2.2.2/32/TCP/22===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;
 west #

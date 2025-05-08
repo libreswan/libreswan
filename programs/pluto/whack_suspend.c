@@ -52,8 +52,11 @@ void whack_suspend(const struct whack_message *m, struct show *s)
 	/*
 	 * This is old-to-new which means that aliases are processed
 	 * before templates.
+	 *
+	 * XXX: this isn't true; but does it matter?  A suspended
+	 * connection should stick around.
 	 */
-	whack_connection(m, s, whack_suspend_connection,
-			 /*alias_order*/OLD2NEW,
-			 (struct each) {0});
+	visit_root_connection(m, s, whack_suspend_connection,
+			      /*alias_order*/OLD2NEW,
+			      (struct each) {0});
 }

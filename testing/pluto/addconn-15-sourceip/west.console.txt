@@ -57,8 +57,8 @@ west #
 "sourceips-inside-subnets": warning: skipping mismatched leftsubnets=1.0.0.0/24 rightsubnets=2::/64
 "sourceips-inside-subnets/2x2": connection is using multiple sourceips
 "sourceips-inside-subnets/2x2": added IKEv2 connection
-"sourceips-inside-subnets/2x2": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; my_ip=1.0.0.1; their_ip=unset;
 "sourceips-inside-subnets/1x1": 1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2::/64; unrouted; my_ip=1::1; their_ip=unset;
+"sourceips-inside-subnets/2x2": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; my_ip=1.0.0.1; their_ip=unset;
 west #
  add sourceip-inside-subnet-protoport
 "sourceip-inside-subnet-protoport": added IKEv2 connection

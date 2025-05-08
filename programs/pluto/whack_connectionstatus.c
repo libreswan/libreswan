@@ -1025,22 +1025,18 @@ void show_connection_statuses(struct show *s)
 	int count = 0;
 	int active = 0;
 
-	struct connection **connections = sort_connections();
-	if (connections != NULL) {
-		/* make an array of connections, sort it, and report it */
-		for (struct connection **c = connections; *c != NULL; c++) {
-			count++;
-			if ((*c)->routing.state == RT_ROUTED_TUNNEL) {
-				active++;
-			}
-			show_connection_status(s, *c);
+	struct connections *connections = sort_connections();
+	ITEMS_FOR_EACH(c, connections) {
+		count++;
+		if ((*c)->routing.state == RT_ROUTED_TUNNEL) {
+			active++;
 		}
-		pfree(connections);
-		show_separator(s);
+		show_connection_status(s, *c);
 	}
+	pfree(connections);
 
-	show(s, "Total IPsec connections: loaded %d, active %d",
-		     count, active);
+	show_separator(s);
+	show(s, "Total IPsec connections: loaded %d, active %d", count, active);
 }
 
 static unsigned whack_connection_status(const struct whack_message *m UNUSED,
@@ -1058,8 +1054,8 @@ void whack_connectionstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	whack_connections_bottom_up(m, s, whack_connection_status,
-				    (struct each) {
-					    .log_unknown_name = true,
-				    });
+	visit_connection_tree(m, s, OLD2NEW, whack_connection_status,
+			      (struct each) {
+				      .log_unknown_name = true,
+			      });
 }

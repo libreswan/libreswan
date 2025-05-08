@@ -35,48 +35,65 @@ struct each {
 };
 
 /*
- * Returns a count of the applicable connections.
+ * Called for each connection.  Returns a count of the applicable
+ * connections.
  *
  * XXX: strange code indentation is to stop emacs indent getting
  * confused.
  *
  */
-typedef unsigned (whack_connection_visitor_cb)
+
+typedef unsigned (connection_visitor_cb)
 (const struct whack_message *m,
  struct show *s,
  struct connection *c);
 
 /*
- * Sort all connections then call-back WHACK_CONNECTION() for each.
+ * Find and visit "root" connection matching WM.name.
  *
- * DO NOT USE THIS IF CONNECTIONS ARE EXPECTED TO BE DELETED.
- */
-void whack_all_connections_sorted(const struct whack_message *m, struct show *s,
-				  whack_connection_visitor_cb *visit_connection);
-
-/*
- * Visit the connection "root" identified by M (for aliases there may
- * be multiple "root" connections and they are processed in chrono
- * order)
+ * A lookup by NAME, ALIAS, $CO_SERIAL, and #SO_SERIAL until there's a
+ * match.  Note that for ALIAS there can be multiple matches and each
+ * is called back in turn.
  *
  * Danger:
  *
- * When deleting connections, ALIAS_ORDER should be NEW2OLD so that
- * when the alias root is a template all instances are deleted before
- * the template (instances are always newer than their templates).
- *
- * This way deleting an alias connection tree can't corrupt the search
- * list.
+ * When performing an operation that can delete a connection, ORDER
+ * must be NEW2OLD.  This is so that ALIAS instances are processed
+ * (and deleted) before the ALIAS root (instances are always newer
+ * than their templates).  Deleting the TEMPLATE and then the
+ * INSTANCES would corrupt the search list.
  */
 
-void whack_connection(const struct whack_message *m, struct show *s,
-		      whack_connection_visitor_cb *visit_connection,
-		      enum chrono alias_order,
-		      struct each each);
+void visit_root_connection(const struct whack_message *wm, struct show *s,
+			   connection_visitor_cb *connection_visitor,
+			   enum chrono order, struct each each);
+
+/*
+ * Visit the connection "tree" matching WM.name.
+ *
+ * A lookup by NAME, ALIAS, $CO_SERIAL, and #SO_SERIAL until there's a
+ * match is used to find the connection "root" and then the
+ * connection's tree is walked in ORDER.  Note that for ALIAS there
+ * can be multiple matches and, hence, multiple trees.
+ *
+ * Danger:
+ *
+ * When performing an operation that can delete a connection, ORDER
+ * must be NEW2OLD.  This is so that ALIAS instances are processed
+ * (and deleted) before the ALIAS root (instances are always newer
+ * than their templates).  Deleting the TEMPLATE and then the
+ * INSTANCES would corrupt the search list.
+ */
+
+void visit_connection_tree(const struct whack_message *wm,
+			   struct show *s,
+			   enum chrono order,
+			   connection_visitor_cb *connection_visitor,
+			   struct each each);
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,
 					   struct connection *c,
-					   whack_connection_visitor_cb *visit_connection);
+					   connection_visitor_cb *visit_connection);
 
 /*
  * Visit all the connections matching M, bottom up.
@@ -88,7 +105,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m, struct
  * worry about connection disappearing.
  */
 void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
-				 whack_connection_visitor_cb *visit_connection,
+				 connection_visitor_cb *visit_connection,
 				 struct each each);
 
 /*

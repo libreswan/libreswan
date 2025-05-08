@@ -159,25 +159,22 @@ static void show_brief_connection_statuses(struct show *s)
 	int count = 0;
 	int active = 0;
 
-	struct connection **connections = sort_connections();
-	if (connections != NULL) {
-		/* make an array of connections, sort it, and report it */
-		for (struct connection **c = connections; *c != NULL; c++) {
-			count++;
-			if ((*c)->routing.state == RT_ROUTED_TUNNEL ||
-			    (*c)->routing.state == RT_UNROUTED_TUNNEL) {
-				active++;
-				show_brief_connection_status(s, *c);
-			}
+	struct connections *connections = sort_connections();
+	ITEMS_FOR_EACH(cp, connections) {
+		count++;
+		if ((*cp)->routing.state == RT_ROUTED_TUNNEL ||
+		    (*cp)->routing.state == RT_UNROUTED_TUNNEL) {
+			active++;
+			show_brief_connection_status(s, (*cp));
 		}
-		pfree(connections);
 	}
+	pfree(connections);
 
 	show(s, "# Total IPsec connections: loaded %d, active %d",
 		     count, active);
 }
 
-/* Callback function from whack_briefconnectionstatus() -> whack_connections_bottom_up() */
+/* Callback function from whack_briefconnectionstatus() -> walk_connection_tree() */
 static unsigned whack_briefconnectionstatus_cb(const struct whack_message *m UNUSED,
 					struct show *s,
 					struct connection *c)
@@ -195,11 +192,14 @@ void whack_briefconnectionstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	/* Iterate the connections looking for the m->name connection. Calls the
-	 * whack_briefconnectionstatus_cb() callback if found, which directly calls
-	 * show_brief_connection_status() */
-	whack_connections_bottom_up(m, s, whack_briefconnectionstatus_cb,
-				    (struct each) {
-					    .log_unknown_name = true,
-				    });
+	/*
+	 * Iterate the connections looking for the m->name
+	 * connection. Calls the whack_briefconnectionstatus_cb()
+	 * callback if found, which directly calls
+	 * show_brief_connection_status().
+	 */
+	visit_connection_tree(m, s, OLD2NEW, whack_briefconnectionstatus_cb,
+			      (struct each) {
+				      .log_unknown_name = true,
+			      });
 }
