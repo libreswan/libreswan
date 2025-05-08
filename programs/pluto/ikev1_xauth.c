@@ -699,10 +699,9 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
  * record'n'send the global REPLY_STREAM being
  * built here!
  */
-static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
-						     unsigned cfg_message,
-						     const struct attrs attrs_recv,
-						     struct msg_digest *md)
+static bool build_v1_modecfg_ack_from_md_in_reply_stream(struct ike_sa *ike,
+							 const struct attrs attrs_recv,
+							 struct msg_digest *md)
 {
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 
@@ -720,7 +719,7 @@ static bool build_v1_modecfg_from_md_in_reply_stream(struct ike_sa *ike,
 	/* ATTR out */
 
 	struct isakmp_mode_attr attrh = {
-		.isama_type = cfg_message,
+		.isama_type = ISAKMP_CFG_ACK,
 		.isama_identifier = ma->isama_identifier,
 	};
 
@@ -1858,7 +1857,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	 * ISAKMP initiator, propose remote SPD as address.
 	 */
 
-	if (!build_v1_modecfg_from_md_in_reply_stream(ike, ISAKMP_CFG_ACK, recv, md)) {
+	if (!build_v1_modecfg_ack_from_md_in_reply_stream(ike, recv, md)) {
 		/* something to send back */
 		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 		return STF_FATAL;
