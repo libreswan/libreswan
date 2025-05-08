@@ -316,7 +316,8 @@ static void vdbg_lease(struct verbose verbose,
 	}
 }
 
-static void scribble_remote_lease(struct connection *c, ip_address ia,
+static void scribble_remote_lease(struct connection *c,
+				  ip_address ia,
 				  unsigned assigned_nr,
 				  struct logger *logger, where_t where)
 {
@@ -765,7 +766,7 @@ static err_t assign_requested_lease(struct connection *c,
 err_t assign_remote_lease(struct connection *c,
 			  const char *xauth_username,
 			  const struct ip_info *afi,
-			  const ip_address *lease_address,
+			  const ip_address preferred_address,
 			  struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() xauth=%s family=%s",
@@ -822,8 +823,9 @@ err_t assign_remote_lease(struct connection *c,
 	/*
 	 * If the peer's given a preferred address try to assign that.
 	 */
-	if (new_lease == NULL && is_set(lease_address)) {
-		err_t e = assign_requested_lease(c, pool, &reusable_id, lease_address,
+	if (new_lease == NULL && preferred_address.is_set) {
+		err_t e = assign_requested_lease(c, pool, &reusable_id,
+						 &preferred_address,
 						 &new_lease, verbose);
 		if (e != NULL) {
 			pfreeany(reusable_id);

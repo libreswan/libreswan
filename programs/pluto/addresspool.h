@@ -33,7 +33,7 @@ struct addresspool *addresspool_addref(struct addresspool *pool);
 err_t assign_remote_lease(struct connection *c,
 			  const char *xauth_username/*possibly-NULL|NUL*/,
 			  const struct ip_info *afi,
-			  const ip_address *lease_address,
+			  const ip_address preferred_address,
 			  struct logger *logger);
 
 extern void free_that_address_lease(struct connection *c, const struct ip_info *afi,

@@ -574,8 +574,8 @@ static bool get_internal_address(struct ike_sa *ike)
 
 	const char *from;
 	if (c->pool[afi->ip_index] != NULL) {
-		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
-					      afi, /*remote-address*/NULL,
+		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username, afi,
+					      /*preferred-address*/unset_address,
 					      ike->sa.logger);
 		if (e != NULL) {
 			llog(RC_LOG, ike->sa.logger, "leasing %s address failed: %s",
