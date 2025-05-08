@@ -46,7 +46,7 @@ void whack_unroute(const struct whack_message *m, struct show *s)
 	}
 
 	visit_root_connection(m, s, whack_unroute_connections,
-			      /*alias_order*/OLD2NEW,
+			      /*alias_order*/NEW2OLD,
 			      (struct each) {
 				      .log_unknown_name = true,
 			      });
