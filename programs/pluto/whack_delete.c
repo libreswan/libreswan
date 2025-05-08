@@ -44,12 +44,14 @@ void whack_addconn_delete(const struct whack_message *m, struct show *s)
 	/*
 	 * This is old-to-new which means that aliases are processed
 	 * before templates.
+	 *
+	 * XXX: this isn't true
 	 */
-	whack_connection(m, s, whack_delete_connections,
-			 /*alias_order*/OLD2NEW,
-			 (struct each) {
-				 .log_unknown_name = false,
-			 });
+	visit_root_connection(m, s, whack_delete_connections,
+			      /*alias_order*/OLD2NEW,
+			      (struct each) {
+				      .log_unknown_name = false,
+			      });
 }
 
 void whack_delete(const struct whack_message *m, struct show *s)
@@ -63,10 +65,12 @@ void whack_delete(const struct whack_message *m, struct show *s)
 	/*
 	 * This is old-to-new which means that aliases are processed
 	 * before templates.
+	 *
+	 * XXX: this isn't true
 	 */
-	whack_connection(m, s, whack_delete_connections,
-			 /*alias_order*/OLD2NEW,
-			 (struct each) {
-				 .log_unknown_name = true,
-			 });
+	visit_root_connection(m, s, whack_delete_connections,
+			      /*alias_order*/OLD2NEW,
+			      (struct each) {
+				      .log_unknown_name = true,
+			      });
 }
