@@ -1958,30 +1958,6 @@ static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
 	return clone_str(strbuf, attr_name);
 }
 
-#ifdef USE_CISCO_SPLIT
-static void append_cisco_split_spd(struct connection *c,
-				   ip_selector wire_selector)
-{
-	/* grow the child SPD route by 1 */
-	realloc_things(c->child.spds.list,
-		       c->child.spds.len,
-		       c->child.spds.len + 1,
-		       "cisco SPDs");
-	struct spd *spd = &c->child.spds.list[c->child.spds.len];
-	c->child.spds.len++;
-
-	/*
-	 * Fill it in; realloc leaves fields 0; see
-	 * alloc_connection_spds()
-	 */
-	init_connection_spd(c, spd);
-	spd->local->client = c->child.spds.list[0].local->client;
-	spd->remote->client = wire_selector; /*OK;not first*/
-
-	spd_db_rehash_remote_client(spd);
-}
-#endif
-
 /*
  * STATE_MODE_CFG_R1:
  * HDR*, HASH, ATTR(SET=IP) --> HDR*, HASH, ATTR(ACK,OK)
@@ -2121,30 +2097,10 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 					break;
 				}
 
-#ifdef USE_CISCO_SPLIT
-				ip_selector wire_selector = selector_from_subnet(wire_subnet);
-				bool already_split = false;
-				FOR_EACH_ITEM(spd, &c->child.spds) {
-					if (selector_range_eq_selector_range(wire_selector, spd->remote->client)) {
-						/* duplicate entry: ignore */
-						subnet_buf pretty_subnet;
-						llog(RC_LOG, ike->sa.logger,
-						     "CISCO_SPLIT_INC subnet %s already has an spd - ignoring",
-						     str_subnet(&wire_subnet, &pretty_subnet));
-						already_split = true;
-						break;
-					}
-				}
-
-				if (!already_split) {
-					append_cisco_split_spd(c, wire_selector);
-				}
-#else
 				subnet_buf pretty_subnet;
 				llog(RC_LOG, ike->sa.logger,
 				     "received and ignored CISCO_SPLIT_INC subnet %s",
 				     str_subnet(&wire_subnet, &pretty_subnet));
-#endif
 			}
 
 			resp.cisco_split_inc = true;

@@ -234,9 +234,6 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_NFLOG
 	" NFLOG"
 #endif
-#ifdef USE_CISCO_SPLIT
-	" CISCO_SPLIT"
-#endif
 ;
 
 /* create lockfile, or die in the attempt */
