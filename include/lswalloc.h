@@ -90,23 +90,27 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define alloc_things(THING, COUNT, NAME)			\
 	((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
-/* sizeof(THING1) + COUNT*sizeof(THING2) */
-#define overalloc_things(THING1, COUNT, THING2)				\
-	((THING1*) alloc_bytes(sizeof(THING1) + (COUNT) * sizeof(THING2), \
-			       #THING1"+"#THING2"s"))
-
 #define alloc_items(ITEMS, COUNT)					\
 	({								\
-		ITEMS *_items = overalloc_things(ITEMS, COUNT,		\
-						 (ITEMS){0}.data[0]);	\
+		size_t _new = (sizeof(ITEMS) + sizeof((ITEMS){0}.item[0]) * (COUNT)); \
+		ITEMS *_items = alloc_bytes(_new, "alloc-"#ITEMS"-items"); \
 		_items->len = (COUNT);					\
 		_items;							\
 	})
 
+#define realloc_items(ITEMS, COUNT)					\
+	({								\
+		void *_items = (ITEMS);					\
+		size_t _old = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * (ITEMS)->len); \
+		size_t _new = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * (COUNT)); \
+		realloc_bytes(&_items, _old, _new, "realloc-"#ITEMS"-items"); \
+		(ITEMS) = _items;					\
+		(ITEMS)->len = (COUNT);					\
+	})
+
 #define ITEMS_FOR_EACH(ITEM, ITEMS)					\
-	for (typeof((ITEMS)->data[0]) *ITEM =				\
-		     (ITEMS) != NULL ? (ITEMS)->data : NULL;		\
-	     ITEM != NULL && ITEM < (ITEMS)->data + (ITEMS)->len;	\
+	for (typeof((ITEMS)->item[0]) *ITEM = ((ITEMS) != NULL ? (ITEMS)->item : NULL); \
+	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
 	     ITEM++)
 
 #define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\

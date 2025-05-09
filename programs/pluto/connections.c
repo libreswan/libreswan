@@ -5101,13 +5101,13 @@ struct connections *sort_connections(void)
 			},
 		};
 		while (next_connection(&cq)) {
-			connections->data[i++] = cq.c;
+			connections->item[i++] = cq.c;
 		}
 		passert(i == nr_connections);
 	}
 
 	/* sort it! */
-	qsort(connections->data, nr_connections, sizeof(struct connection *),
+	qsort(connections->item, nr_connections, sizeof(struct connection *),
 	      connection_compare_qsort);
 
 	return connections;
