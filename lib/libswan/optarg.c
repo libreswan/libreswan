@@ -260,10 +260,15 @@ uintmax_t optarg_udp_bufsize(const struct logger *logger)
 uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const struct sparse_names *names)
 {
 	if (optarg == NULL) {
-		passert(optarg_options[optarg_index].has_arg == optional_argument);
-		passert(optional != 0);
+		PEXPECT(logger, (optarg_options[optarg_index].has_arg == optional_argument ||
+				 optarg_options[optarg_index].has_arg == no_argument));
+		PEXPECT(logger, optional != 0);
 		return optional;
 	}
+
+	PEXPECT(logger, (optarg_options[optarg_index].has_arg == optional_argument ||
+			 optarg_options[optarg_index].has_arg == required_argument));
+	/* stumble on */
 
 	const struct sparse_name *name = sparse_lookup_by_name(names, shunk1(optarg));
 	if (name == NULL) {
