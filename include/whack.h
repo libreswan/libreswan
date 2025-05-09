@@ -504,7 +504,6 @@ struct whackpacker {
 
 extern err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger);
-extern void clear_end(const char *leftright, struct whack_end *e);
 
 int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 		   char xauthusername[MAX_XAUTH_USERNAME_LEN],

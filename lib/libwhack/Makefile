@@ -22,7 +22,6 @@ include $(top_srcdir)/mk/config.mk
 
 LIB = libwhack.a
 
-OBJS += whacklib.o
 OBJS += aliascomp.o
 OBJS += pickle.o
 OBJS += send.o

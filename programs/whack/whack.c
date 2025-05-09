@@ -1025,7 +1025,6 @@ int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
 
-	struct whack_message msg;
 	char esp_buf[256];	/* uses snprintf */
 	bool seen[OPTION_ENUMS_ROOF] = {0};
 	lset_t opts_seen = LEMPTY;
@@ -1036,46 +1035,39 @@ int main(int argc, char **argv)
 	int xauthpasslen = 0;	/* includes '\0' */
 	bool ignore_errors = false;
 
-	zero(&msg);	/* ??? pointer fields might not be NULLed */
-
-	clear_end("left", &msg.end[LEFT_END]);
-	clear_end("right", &msg.end[RIGHT_END]);
-	struct whack_end *end = &msg.end[LEFT_END];
-
 	struct optarg_family host_family = { 0, };
 	struct optarg_family child_family = { 0, };
 
-	msg.whack_from = WHACK_FROM_WHACK;		/* use whack defaults */
+	struct whack_message msg = {
+		.whack_from = WHACK_FROM_WHACK,
+		.end[LEFT_END].leftright = "left",
+		.end[RIGHT_END].leftright = "right",
 
-	msg.name = NULL;
-	msg.remote_host = NULL;
-	msg.dnshostname = NULL;
+		/*
+		 * XXX: none of these initializations should be
+		 * needed.
+		 */
 
-	msg.esp = NULL;
-	msg.ike = NULL;
-	msg.pfsgroup = NULL;
-	msg.nat_keepalive = true;
+		.nat_keepalive = true,
 
-	msg.xauthby = XAUTHBY_FILE;
-	msg.xauthfail = XAUTHFAIL_HARD;
+		.xauthby = XAUTHBY_FILE,
+		.xauthfail = XAUTHFAIL_HARD,
 
-	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
-	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
-	msg.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT;
-	msg.keyingtries.set = false;
-	/* whack cannot access kernel_ops->replay_window */
-	msg.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
+		.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS, /* max uint_64_t */
+		.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS, /* max uint_64_t */
+		.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT,
+		.keyingtries.set = false,
+		/* whack cannot access kernel_ops->replay_window */
+		.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 
-	msg.host_afi = NULL;
-	msg.child_afi = NULL;
+		/* set defaults to ICMP PING request */
+		.oppo.ipproto = IPPROTO_ICMP,
+		.oppo.local.port = ip_hport(8),
+		.oppo.remote.port = ip_hport(0),
 
-	msg.enable_tcp = 0; /* aka unset */;
-	msg.tcp_remoteport = 0; /* aka unset */
+	};
 
-	/* set defaults to ICMP PING request */
-	msg.oppo.ipproto = IPPROTO_ICMP;
-	msg.oppo.local.port = ip_hport(8);
-	msg.oppo.remote.port = ip_hport(0);
+	struct whack_end *end = &msg.end[LEFT_END];
 
 	for (;;) {
 
