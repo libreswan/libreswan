@@ -469,9 +469,9 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 		 * - CK_PERMENANT that doesn't update TS
 		 */
 		local_route = (local->len > 0 ? local->list[0] :
-			       c->spd->local->client);
+			       c->child.spds.list->local->client);
 		ip_selector remote_client = (remote->len > 0 ? remote->list[0] :
-					     c->spd->remote->client);
+					     c->child.spds.list->remote->client);
 		/* reroute remote to pair up with dest */
 		remote_route = selector_from_address_protocol_port(c->remote->host.addr,
 								   selector_protocol(remote_client),
@@ -2224,7 +2224,7 @@ static void expire_bare_shunts(struct logger *logger)
 		 * It passed all checks; need to replace.
 		 */
 		ldbg_bare_shunt(logger, "expiring old (restoring template connection)", bsp);
-		install_prospective_kernel_policy(c->spd,
+		install_prospective_kernel_policy(c->child.spds.list,
 						  SHUNT_KIND_ONDEMAND,
 						  logger, HERE);
 		free_bare_shunt(bspp, logger);

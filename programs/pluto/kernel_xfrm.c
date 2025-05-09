@@ -1270,13 +1270,13 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	};
 
 	const struct spd_end_info local = {
-		.end = c->spd->local,
+		.end = c->child.spds.list->local,
 		.endpoint = child->sa.st_iface_endpoint->local_endpoint,
 		.spi = proto_info->inbound.spi,
 	};
 
 	const struct spd_end_info remote = {
-		.end = c->spd->remote,
+		.end = c->child.spds.list->remote,
 		.endpoint = child->sa.st_remote_endpoint,
 		.spi = proto_info->outbound.spi,
 	};

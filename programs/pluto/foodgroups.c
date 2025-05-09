@@ -282,7 +282,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		pexpect(flp->bdry == B_record || flp->bdry == B_file);
 
 		/* Find where new entry ought to go in new_targets. */
-		ip_range lsn = selector_range(g->spd->local->client);
+		ip_range lsn = selector_range(g->child.spds.list->local->client);
 		struct fg_targets **pp;
 		int r;
 
@@ -293,7 +293,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 				break;
 			}
 
-			r = rangecmp(lsn, selector_range((*pp)->group->spd->local->client));
+			r = rangecmp(lsn, selector_range((*pp)->group->child.spds.list->local->client));
 			if (r == 0) {
 				r = subnetcmp(sn, (*pp)->subnet);
 			}
@@ -374,7 +374,7 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_range_port(&t->group->spd->local->client, &asource),
+				str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->name);
@@ -385,7 +385,7 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_range_port(&t->group->spd->local->client, &asource),
+				str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->name);
@@ -413,8 +413,8 @@ void load_groups(struct logger *logger)
 				r = -1; /* no more new; next is old */
 			}
 			if (r == 0)
-				r = subnetcmp(selector_subnet(op->group->spd->local->client),
-					      selector_subnet(np->group->spd->local->client));
+				r = subnetcmp(selector_subnet(op->group->child.spds.list->local->client),
+					      selector_subnet(np->group->child.spds.list->local->client));
 			if (r == 0)
 				r = subnetcmp(op->subnet, np->subnet);
 			if (r == 0)

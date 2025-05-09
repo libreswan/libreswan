@@ -303,14 +303,14 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 * (but this isn't documented).
 		 */
 
-		if (!address_in_selector_range(remote_address, d->spd->remote->client)) {
+		if (!address_in_selector_range(remote_address, d->child.spds.list->remote->client)) {
 			address_buf ab;
 			selector_buf sb;
 			connection_buf cb;
 			vdbg("skipping "PRI_CONNECTION", as %s is-not in range %s",
 			     pri_connection(d, &cb),
 			     str_address(&remote_address, &ab),
-			     str_selector(&d->spd->remote->client, &sb));
+			     str_selector(&d->child.spds.list->remote->client, &sb));
 			continue;
 		}
 
@@ -323,14 +323,14 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 */
 
 		if (c != NULL &&
-		    range_in_range(selector_range(c->spd->remote->client),
-				   selector_range(d->spd->remote->client))) {
+		    range_in_range(selector_range(c->child.spds.list->remote->client),
+				   selector_range(d->child.spds.list->remote->client))) {
 			selector_buf s1, s2;
 			connection_buf cb;
 			vdbg("skipping "PRI_CONNECTION", as best range of %s is narrower than %s",
 			     pri_connection(d, &cb),
-			     str_selector(&c->spd->remote->client, &s1),
-			     str_selector(&d->spd->remote->client, &s2));
+			     str_selector(&c->child.spds.list->remote->client, &s1),
+			     str_selector(&d->child.spds.list->remote->client, &s2));
 			continue;
 		}
 
@@ -338,8 +338,8 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		connection_buf dc;
 		vdbg("saving "PRI_CONNECTION", opportunistic %s range better than %s",
 		     pri_connection(d, &dc),
-		     str_selector(&d->spd->remote->client, &s1),
-		     c == NULL ? "n/a" : str_selector(&c->spd->remote->client, &s2));
+		     str_selector(&d->child.spds.list->remote->client, &s1),
+		     c == NULL ? "n/a" : str_selector(&c->child.spds.list->remote->client, &s2));
 		c = d;
 		/* keep looking */
 	}

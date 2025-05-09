@@ -537,7 +537,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			if (selector_eq_address(remote_subnet, d->remote->host.addr)) {
 				ldbg(d->logger,
 				     "forcing remote %s.spd.has_client=false",
-				     d->spd->remote->config->leftright);
+				     d->child.spds.list->remote->config->leftright);
 			}
 			continue;
 		}

@@ -3314,7 +3314,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &child->sa.st_ah,
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
-					      c->spd,
+					      c->child.spds.list,
 					      child->sa.logger);
 			}
 
@@ -3327,7 +3327,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &child->sa.st_esp,
 					      &isakmp_esp_transform_desc,
 					      &esp_trans_pbs,
-					      c->spd,
+					      c->child.spds.list,
 					      child->sa.logger);
 			}
 
@@ -3340,7 +3340,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &child->sa.st_ipcomp,
 					      &isakmp_ipcomp_transform_desc,
 					      &ipcomp_trans_pbs,
-					      c->spd,
+					      c->child.spds.list,
 					      child->sa.logger);
 			}
 

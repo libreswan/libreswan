@@ -334,11 +334,11 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 	case IKEv1_INTERNAL_IP4_ADDRESS:
 	{
 		/* YES, REMOTE, as leased */
-		if (!PEXPECT(ike->sa.logger, c->spd->remote->client.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.is_set)) {
 			return false;
 		}
 		if (!pbs_out_address(&attrval,
-				     selector_prefix(c->spd->remote->client),
+				     selector_prefix(c->child.spds.list->remote->client),
 				     "IP_addr")) {
 			/* already logged */
 			return false;
@@ -348,15 +348,15 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	case IKEv1_INTERNAL_IP4_SUBNET:
 	{
-		if (!PEXPECT(ike->sa.logger, c->spd->local->client.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.is_set)) {
 			return false;
 		}
-		ip_address addr = selector_prefix(c->spd->local->client);
+		ip_address addr = selector_prefix(c->child.spds.list->local->client);
 		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
 			/* already logged */
 			return false;
 		}
-		ip_address mask = selector_prefix_mask(c->spd->local->client);
+		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_subnet(mask)")) {
 			/* already logged */
 			return false;
@@ -366,10 +366,10 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	case IKEv1_INTERNAL_IP4_NETMASK:
 	{
-		if (!PEXPECT(ike->sa.logger, c->spd->local->client.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.is_set)) {
 			return false;
 		}
-		ip_address mask = selector_prefix_mask(c->spd->local->client);
+		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
 		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
 			/* already logged */
 			return false;
@@ -443,9 +443,9 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 	 */
 	case CISCO_SPLIT_INC:
 	{
-		/* XXX: bitstomask(c->spd->local->client.maskbits), */
-		ip_address mask = selector_prefix_mask(c->spd->local->client);
-		ip_address addr = selector_prefix(c->spd->local->client);
+		/* XXX: bitstomask(c->child.spds.list->local->client.maskbits), */
+		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
+		ip_address addr = selector_prefix(c->child.spds.list->local->client);
 		struct CISCO_split_item i = {0};
 		memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
 		memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
@@ -528,8 +528,8 @@ static bool emit_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 		return isakmp_add_attr(modecfg_pbs, MODECFG_BANNER, ike);
 
 	case CISCO_SPLIT_INC:
-		if (selector_is_unset(&c->spd->local->client) ||
-		    selector_is_all(c->spd->local->client)) {
+		if (selector_is_unset(&c->child.spds.list->local->client) ||
+		    selector_is_all(c->child.spds.list->local->client)) {
 			ldbg(ike->sa.logger, "skip sending CISCO_SPLIT in %s payload, we are 0.0.0.0/0",
 			     modecfg_payload);
 			return true;
@@ -594,7 +594,7 @@ static bool get_internal_address(struct ike_sa *ike)
 
 		from = "lease";
 
-	} else if (PEXPECT(ike->sa.logger, c->spd->remote->client.is_set)) {
+	} else if (PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.is_set)) {
 
 		from = "remote SPD";
 
@@ -603,7 +603,7 @@ static bool get_internal_address(struct ike_sa *ike)
 	}
 	selector_buf iab;
 	ldbg(ike->sa.logger, "internal address %s from %s",
-	     str_selector(&c->spd->remote->client, &iab),
+	     str_selector(&c->child.spds.list->remote->client, &iab),
 	     from);
 
 	return true;
@@ -1826,7 +1826,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			c->local->child.lease[afi->ip_index] = a;
 
 			subnet_buf caddr;
-			str_selector_range(&c->spd->local->client, &caddr);
+			str_selector_range(&c->child.spds.list->local->client, &caddr);
 			llog(RC_LOG, ike->sa.logger, "Received IP address %s", caddr.buf);
 
 			/*
@@ -1840,7 +1840,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			 * overrides the MODE_CFG address.
 			 */
 			if (c->local->config->child.sourceip.len == 0) {
-				ip_address sourceip = spd_end_sourceip(c->spd->local);
+				ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
 				pexpect(address_eq_address(a, sourceip));
 				llog(RC_LOG, ike->sa.logger, "setting ip source address to %s",
 				     caddr.buf);
@@ -2011,7 +2011,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 					    "^*(&^(* IKEv1 doing something with the address it received");
 
 			subnet_buf caddr;
-			str_selector_range(&c->spd->local->client, &caddr);
+			str_selector_range(&c->child.spds.list->local->client, &caddr);
 			llog(RC_LOG, ike->sa.logger,
 			     "Received IPv4 address: %s",
 			     caddr.buf);
@@ -2078,7 +2078,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				passert(c->child.spds.len == 1);
 				set_child_has_client(c, remote, true);
 				update_first_selector(c, remote, ipv4_info.selector.all);
-				spd_db_rehash_remote_client(c->spd);
+				spd_db_rehash_remote_client(c->child.spds.list);
 			}
 
 			while (pbs_left(&strattr) > 0) {

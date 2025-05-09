@@ -279,9 +279,9 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 	 *
 	 * Meaningless (with multiple TS)?
 	 */
-	set_child_has_client(c, local, !selector_eq_address(c->spd->local->client,
+	set_child_has_client(c, local, !selector_eq_address(c->child.spds.list->local->client,
 							    c->local->host.addr));
-	set_child_has_client(c, remote, !selector_eq_address(c->spd->remote->client,
+	set_child_has_client(c, remote, !selector_eq_address(c->child.spds.list->remote->client,
 							     c->remote->host.addr));
 }
 
@@ -1698,16 +1698,16 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * being chosen because it had the narrowest
 			 * client selector?
 			 */
-			if (!selector_in_selector(cc->spd->remote->client,
-						  t->spd->remote->client)) {
+			if (!selector_in_selector(cc->child.spds.list->remote->client,
+						  t->child.spds.list->remote->client)) {
 				dbg_ts("skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
 			/* require responder address match; why? */
 			ip_address cc_this_client_address =
-				selector_prefix(cc->spd->local->client);
+				selector_prefix(cc->child.spds.list->local->client);
 			ip_address t_this_client_address =
-				selector_prefix(t->spd->local->client);
+				selector_prefix(t->child.spds.list->local->client);
 			if (!address_eq_address(cc_this_client_address,
 						t_this_client_address)) {
 				dbg_ts("skipping; responder addresses don't match");
@@ -1724,9 +1724,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				t->remote->child.selectors.proposed.list == t->remote->config->child.selectors.list);
 			pexpect(t->local->child.selectors.proposed.list == t->local->child.selectors.assigned ||
 				t->local->child.selectors.proposed.list == t->local->config->child.selectors.list);
-			pexpect(selector_eq_selector(t->spd->remote->client,
+			pexpect(selector_eq_selector(t->child.spds.list->remote->client,
 						     t->remote->child.selectors.proposed.list[0]));
-			pexpect(selector_eq_selector(t->spd->local->client,
+			pexpect(selector_eq_selector(t->child.spds.list->local->client,
 						     t->local->child.selectors.proposed.list[0]));
 			pexpect(!is_labeled(t));
 			struct child_selector_ends ends = {
@@ -1862,9 +1862,9 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
 	pexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
-	pexpect(selector_eq_selector(c->spd->remote->client,
+	pexpect(selector_eq_selector(c->child.spds.list->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
-	pexpect(selector_eq_selector(c->spd->local->client,
+	pexpect(selector_eq_selector(c->child.spds.list->local->client,
 				     c->local->child.selectors.proposed.list[0]));
 
 	/* the return needs to match what was proposed */
@@ -1898,7 +1898,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	scribble_ts_response_on_initiator(child, &best, verbose);
-	spd_db_rehash_remote_client(c->spd);
+	spd_db_rehash_remote_client(c->child.spds.list);
 
 	return true;
 }
@@ -1946,9 +1946,9 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
 	pexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
-	pexpect(selector_eq_selector(c->spd->remote->client,
+	pexpect(selector_eq_selector(c->child.spds.list->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
-	pexpect(selector_eq_selector(c->spd->local->client,
+	pexpect(selector_eq_selector(c->child.spds.list->local->client,
 				     c->local->child.selectors.proposed.list[0]));
 	const struct child_selector_ends ends = {
 		.i.selectors = &c->remote->child.selectors.proposed,

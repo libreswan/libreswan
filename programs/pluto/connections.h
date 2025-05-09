@@ -796,8 +796,6 @@ struct connection {
 		struct spds spds;
 	} child;
 
-	struct spd *spd;			/* HACK: points to child.spds.list */
-
 	/* internal fields: */
 
 	unsigned long next_instance_serial;

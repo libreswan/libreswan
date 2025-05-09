@@ -1022,7 +1022,7 @@ void process_v1_packet(struct msg_digest *md)
 		 * should be checked and acted on accordingly.
 		 */
 
-		const struct spd_end *this = ike->sa.st_connection->spd->local;
+		const struct spd_end *this = ike->sa.st_connection->child.spds.list->local;
 		esb_buf b;
 		pdbg(ike->sa.logger,
 		     " %s processing received isakmp_xchg_type %s; xauthserver=%s xauthclient=%s modecfgserver=%s modecfgclient=%s modecfgpull=%s",
@@ -2587,7 +2587,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
-				       st->st_connection->spd,
+				       st->st_connection->child.spds.list,
 				       pexpect_child_sa(st),
 				       st->logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
@@ -2644,7 +2644,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
-				       st->st_connection->spd,
+				       st->st_connection->child.spds.list,
 				       pexpect_child_sa(st),
 				       st->logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");

@@ -595,7 +595,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			"CAT: configured, not setting host source IP address to %s local CAT = %s->true",
 			str_address(&ip, &ipb), bool_str(local->has_cat));
 		local->has_cat = true; /* create NAT entry */
-		ip_address this_client_prefix = selector_prefix(cc->spd->local->client);
+		ip_address this_client_prefix = selector_prefix(cc->child.spds.list->local->client);
 		if (address_eq_address(this_client_prefix, ip)) {
 			/*
 			 * The address we received is same as this

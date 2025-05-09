@@ -625,7 +625,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	 * connections do not.
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
-		if (!add_sec_label_kernel_policy(c->spd, direction,
+		if (!add_sec_label_kernel_policy(c->child.spds.list, direction,
 						 /*logger*/logger, where,
 						 "ondemand security label")) {
 			if (direction == DIRECTION_INBOUND) {
@@ -636,9 +636,9 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 				ldbg(logger, "pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
 				/* go back to old routing */
-				struct spd_owner owner = spd_owner(c->spd, c->routing.state,
+				struct spd_owner owner = spd_owner(c->child.spds.list, c->routing.state,
 								   logger, where);
-				delete_spd_kernel_policy(c->spd, &owner, DIRECTION_OUTBOUND,
+				delete_spd_kernel_policy(c->child.spds.list, &owner, DIRECTION_OUTBOUND,
 							 KERNEL_POLICY_PRESENT,
 							 /*logger*/logger,
 							 where, "security label policy");
@@ -648,24 +648,24 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	}
 
 	/* a new route: no deletion required, but preparation is */
-	if (!do_updown(UPDOWN_PREPARE, c, c->spd, NULL/*ST*/, logger)) {
+	if (!do_updown(UPDOWN_PREPARE, c, c->child.spds.list, NULL/*ST*/, logger)) {
 		ldbg(logger, "kernel: %s() prepare command returned an error", __func__);
 	}
 
-	if (!do_updown(UPDOWN_ROUTE, c, c->spd, NULL/*ST*/, logger)) {
+	if (!do_updown(UPDOWN_ROUTE, c, c->child.spds.list, NULL/*ST*/, logger)) {
 		/* Failure!  Unwind our work. */
 		ldbg(logger, "kernel: %s() route command returned an error", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, c->spd, NULL/*st*/, logger)) {
+		if (!do_updown(UPDOWN_DOWN, c, c->child.spds.list, NULL/*st*/, logger)) {
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		/* go back to old routing */
-		struct spd_owner owner = spd_owner(c->spd, c->routing.state,
+		struct spd_owner owner = spd_owner(c->child.spds.list, c->routing.state,
 						   logger, where);
-		delete_spd_kernel_policy(c->spd, &owner,
+		delete_spd_kernel_policy(c->child.spds.list, &owner,
 					 DIRECTION_OUTBOUND,
 					 KERNEL_POLICY_PRESENT,
 					 logger, where, "failed security label");
-		delete_spd_kernel_policy(c->spd, &owner,
+		delete_spd_kernel_policy(c->child.spds.list, &owner,
 					 DIRECTION_INBOUND,
 					 KERNEL_POLICY_PRESENT,
 					 logger, where, "failed security label");
@@ -1784,7 +1784,7 @@ static bool dispatch_1(enum routing_event event,
 			 * or replaced with the OE template's ondemand
 			 * policy.
 			 */
-			orphan_holdpass(c, c->spd, logger);
+			orphan_holdpass(c, c->child.spds.list, logger);
 			/*
 			 * The OE template, and not this connection
 			 * owns the routing.
@@ -1834,7 +1834,7 @@ static bool dispatch_1(enum routing_event event,
 			 * or replaced with the OE template's ondemand
 			 * policy.
 			 */
-			orphan_holdpass(c, c->spd, logger);
+			orphan_holdpass(c, c->child.spds.list, logger);
 			/*
 			 * The OE template, and not this connection
 			 * owns the routing.

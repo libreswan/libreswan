@@ -285,7 +285,6 @@ void discard_connection_spds(struct connection *c)
 		discard_spd_content(spd);
 	}
 	pfree_list(&c->child.spds);
-	c->spd = NULL;
 	c->child.spds = (struct spds) {0};
 }
 
@@ -2213,7 +2212,6 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 		.len = nr_spds,
 		.list = alloc_things(struct spd, nr_spds, "spds"),
 	};
-	c->spd = c->child.spds.list;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		init_connection_spd(c, spd);
 	}
@@ -5263,9 +5261,8 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * path there is only one (just like there is only one
 	 * selector).
 	 */
-	if (c->spd != NULL) {
-		PEXPECT_WHERE(c->logger, where, c->child.spds.len == 1);
-		ip_selector old_client = c->spd->end[lr].client;
+	if (c->child.spds.len == 1) {
+		ip_selector old_client = c->child.spds.list->end[lr].client;
 		if (!selector_eq_selector(old_selector, old_client)) {
 			selector_buf sb, cb;
 			llog_pexpect(c->logger, where,
@@ -5275,7 +5272,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 				     end->config->leftright,
 				     str_selector(&old_client, &cb));
 		}
-		c->spd->end[lr].client = new_selector;
+		c->child.spds.list->end[lr].client = new_selector;
 	}
 
 	/*

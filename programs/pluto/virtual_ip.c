@@ -357,8 +357,8 @@ bool is_virtual_remote(const struct connection *c,
 	}
 	vdbg("virt: %s() %s local/remote spd %s/%s; config %s/%s",
 	     __func__, bool_str(virt),
-	     bool_str(c->spd->local->virt != NULL),
-	     bool_str(c->spd->remote->virt != NULL),
+	     bool_str(c->child.spds.list->local->virt != NULL),
+	     bool_str(c->child.spds.list->remote->virt != NULL),
 	     bool_str(c->local->config->child.virt != NULL),
 	     bool_str(c->remote->config->child.virt != NULL));
 	pexpect((c->remote->config->child.virt != NULL) >= (virt));
@@ -417,11 +417,11 @@ static err_t check_virtual_net_allowed(const struct connection *c,
 {
 	vdbg("virt: %s() spd %s/%s; config %s/%s",
 	     __func__,
-	     bool_str(c->spd->local->virt != NULL),
-	     bool_str(c->spd->remote->virt != NULL),
+	     bool_str(c->child.spds.list->local->virt != NULL),
+	     bool_str(c->child.spds.list->remote->virt != NULL),
 	     bool_str(c->local->config->child.virt != NULL),
 	     bool_str(c->remote->config->child.virt != NULL));
-	const struct virtual_ip *virt = c->spd->remote->virt;
+	const struct virtual_ip *virt = c->child.spds.list->remote->virt;
 	if (virt == NULL)
 		return NULL;
 
@@ -524,7 +524,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				continue;
 			}
 
-			if (!selector_overlaps_selector(remote_client, d->spd->remote->client)) {
+			if (!selector_overlaps_selector(remote_client, d->child.spds.list->remote->client)) {
 				/*
 				 * For instance when REMOTE_CLIENT is IPv6
 				 * and remote .client is IPv4 (but can
@@ -558,7 +558,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 			llog(RC_LOG, verbose.logger,
 			     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
 			     str_selector_range(&remote_client, &pcb),
-			     str_selector_range(&d->spd->remote->client, &dcb),
+			     str_selector_range(&d->child.spds.list->remote->client, &dcb),
 			     pri_connection(d, &cbuf),
 			     kernel_ops->interface_name);
 
