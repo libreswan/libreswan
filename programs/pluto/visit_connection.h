@@ -96,19 +96,6 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m, struct
 					   connection_visitor_cb *visit_connection);
 
 /*
- * Visit all the connections matching M, bottom up.
- *
- * This means that an instance is visited before it's template; and
- * group templates are visited before the matching group.
- *
- * Caller of whack_connection() takes a reference so never needs to
- * worry about connection disappearing.
- */
-void whack_connections_bottom_up(const struct whack_message *m, struct show *s,
-				 connection_visitor_cb *visit_connection,
-				 struct each each);
-
-/*
  * Visit each of a connection's states in turn.
  *
  * The callback is presented with each of the connection's states

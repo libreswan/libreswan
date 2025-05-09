@@ -113,16 +113,16 @@ void whack_rekey(const struct whack_message *m, struct show *s, enum sa_kind sa_
 
 	switch (sa_kind) {
 	case IKE_SA:
-		whack_connections_bottom_up(m, s, whack_rekey_ike,
-					    (struct each) {
-						    .log_unknown_name = true,
-					    });
+		visit_connection_tree(m, s, OLD2NEW, whack_rekey_ike,
+				      (struct each) {
+					      .log_unknown_name = true,
+				      });
 		return;
 	case CHILD_SA:
-		whack_connections_bottom_up(m, s, whack_rekey_child,
-					    (struct each) {
-						    .log_unknown_name = true,
-					    });
+		visit_connection_tree(m, s, OLD2NEW, whack_rekey_child,
+				      (struct each) {
+					      .log_unknown_name = true,
+				      });
 		return;
 	}
 	bad_case(sa_kind);

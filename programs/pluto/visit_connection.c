@@ -388,28 +388,19 @@ void visit_connection_tree(const struct whack_message *wm,
 			   connection_visitor_cb *connection_visitor,
 			   struct each each)
 {
-	visit_connections(wm, s, order,
-			  walk_connection_tree,
-			  connection_visitor, &each);
-}
-
-void whack_connections_bottom_up(const struct whack_message *m,
-				 struct show *s,
-				 connection_visitor_cb *connection_visitor,
-				 struct each each)
-{
 	/*
 	 * Danger:
 	 *
-	 * When deleting connections, ALIAS_ORDER should be NEW2OLD so
-	 * that when the alias root is a template all instances are
-	 * deleted before the template (instances are always newer
-	 * than their templates).
+	 * When performing an operation that can delete connections,
+	 * ORDER MUST be NEW2OLD so that when the alias root is a
+	 * template all instances are deleted before the template
+	 * (instances are always newer than their templates).
 	 *
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	visit_connections(m, s, NEW2OLD, walk_connection_tree,
+	visit_connections(wm, s, order,
+			  walk_connection_tree,
 			  connection_visitor, &each);
 }
 
