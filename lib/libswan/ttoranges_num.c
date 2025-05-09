@@ -36,26 +36,22 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 
 	dbg("%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
-	/*
-	 * Two passes:
-	 *
-	 *   Pass 1: determine the number of tokens.
-	 *   Pass 1.5: allocate list pointers; zero counters
-	 *   Pass 2: save the values.
-	 */
-
-	struct shunks *tokens = shunks(input, delims, KEEP_EMPTY_SHUNKS, HERE); /* must free */
+	struct shunks *tokens = ttoshunks(input, delims, KEEP_EMPTY_SHUNKS); /* must free */
 	if (tokens->kept_empty_shunks) {
 		pfree(tokens);
 		return diag("empty field");
 	}
 
+	if (tokens->len == 0) {
+		pfree(tokens);
+		return NULL;
+	}
+
 	dbg("%s() nr tokens %u", __func__, tokens->len);
 	output->list = alloc_things(ip_token, tokens->len, "selectors");
-	output->len = tokens->len;
+	output->len = 0;
 
-	unsigned nr = 0;
-	FOR_EACH_ITEM(token, tokens) {
+	ITEMS_FOR_EACH(token, tokens) {
 		passert(token->len > 0);
 		ip_token tmp_token;
 		err_t e = ttorange_num(*token, input_afi, &tmp_token);
@@ -68,7 +64,7 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 			zero(output);
 			return d;
 		}
-		output->list[nr++] = tmp_token;
+		output->list[output->len++] = tmp_token;
 	}
 
 	pfree(tokens);

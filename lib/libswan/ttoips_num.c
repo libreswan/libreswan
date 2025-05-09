@@ -43,7 +43,7 @@ diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
 	 * Reduce sequences such as "A ,, " to just A, and ", ," to an
 	 * empty list.
 	 */
-	struct shunks *tokens = shunks(input, ", ", EAT_EMPTY_SHUNKS, HERE); /* must free */
+	struct shunks *tokens = ttoshunks(input, ", ", EAT_EMPTY_SHUNKS); /* must free */
 
 	/*
 	 * The result should be non-empty.
@@ -57,7 +57,7 @@ diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
 	 * Now parse the fields and build the table.
 	 */
 
-	FOR_EACH_ITEM(token, tokens) {
+	ITEMS_FOR_EACH(token, tokens) {
 		passert(token->len > 0);
 		dbg("parsing "PRI_SHUNK" %p %u",
 		    pri_shunk(*token), *ptr, (*len));

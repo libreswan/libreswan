@@ -920,15 +920,26 @@ static void check_hunks(void)
 		       "???"));
 		shunk_t input = shunk1(t->input);
 
-		struct shunks *output = shunks(input, t->delims, t->opt, HERE);
-		unsigned len;
-		for (len = 0; t->output[len] != NULL; len++) {
+		struct shunks *output = ttoshunks(input, t->delims, t->opt);
+		unsigned len = 0;
+		ITEMS_FOR_EACH(shunk, output) {
+			if (t->output[len] == NULL) {
+				FAIL("shunks(\"%s\",\"%s\") returned %u shunks, expecting %u",
+				     t->input, t->delims, output->len, len);
+			}
 			shunk_t s = shunk1(t->output[len]);
-			if (!hunk_eq(s, output->list[len])) {
+			if (!hunk_eq(s, *shunk)) {
 				FAIL("shunks(\"%s\",\"%s\")[%u]==\""PRI_SHUNK"\" does not match expected \""PRI_SHUNK"\"",
-				     t->input, t->delims, len,pri_shunk(output->list[len]),
+				     t->input, t->delims, len,
+				     pri_shunk(output->item[len]),
 				     pri_shunk(s));
 			}
+			len++;
+		}
+
+		if (t->output[len] != NULL) {
+			FAIL("shunks(\"%s\",\"%s\")->len==%u is missing %s",
+			     t->input, t->delims, output->len, t->output[len]);
 		}
 
 		if (t->kept_empty_shunks != output->kept_empty_shunks) {
@@ -936,11 +947,6 @@ static void check_hunks(void)
 			     t->input, t->delims,
 			     bool_str(output->kept_empty_shunks),
 			     bool_str(t->kept_empty_shunks));
-		}
-
-		if (len != output->len) {
-			FAIL("shunks(\"%s\",\"%s\")->len==%u does not match expected %u",
-			     t->input, t->delims, output->len, len);
 		}
 
 		pfree(output);

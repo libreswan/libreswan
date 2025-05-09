@@ -46,15 +46,22 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 	 *   Pass 2: save the values in separate IPv[46] lists.
 	 */
 
-	struct shunks *tokens = shunks(input, delims, KEEP_EMPTY_SHUNKS, HERE); /* must free */
+	struct shunks *tokens = ttoshunks(input, delims, KEEP_EMPTY_SHUNKS); /* must free */
+
 	if (tokens->kept_empty_shunks) {
 		pfree(tokens);
 		return diag("empty field");
 	}
 
+	if (tokens->len == 0) {
+		pfree(tokens);
+		return NULL;
+	}
+
+	dbg("%s() nr tokens %u", __func__, tokens->len);
+
 	for (unsigned pass = 1; pass <= 2; pass++) {
-		unsigned nr_tokens = 0;
-		FOR_EACH_ITEM(token, tokens) {
+		ITEMS_FOR_EACH(token, tokens) {
 			passert(token->len > 0);
 			ip_token tmp_token;
 			ip_address tmp_nonzero;
@@ -81,33 +88,26 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 			}
 			/* advance the lengths */
 			output->ip[afi->ip_index].len++;
-			nr_tokens++;
-		}
-		if (nr_tokens == 0) {
-			pfree(tokens);
-			return NULL;
 		}
 		switch (pass) {
 		case 1:
 			/*
 			 * Pass 1.5: Allocate.
 			 */
-			dbg("%s() nr tokens %u", __func__, nr_tokens);
-			output->list = alloc_things(ip_token, nr_tokens, "selectors");
+			output->list = alloc_things(ip_token, tokens->len, "selectors");
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				enum ip_index ip = afi->ip_index;
 				output->ip[ip].list = output->list + output->len;
 				output->len += output->ip[ip].len;
 				output->ip[ip].len = 0; /* ready for second pass */
 			}
-			passert(output->len == nr_tokens);
 			break;
 		case 2:
-			passert(nr_tokens == output->len);
 			break;
 		}
 	}
 
+	passert(output->len == tokens->len);
 	pfree(tokens);
 	return NULL;
 }

@@ -297,8 +297,7 @@ err_t shunk_to_decimal(shunk_t input, shunk_t *cursor, uintmax_t *decimal,
 	return NULL;
 }
 
-struct shunks *shunks(shunk_t input, const char *delims,
-		      enum shunks_opt opt, where_t where)
+struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 {
 	ldbgf(DBG_TMI, &global_logger,
 	      "%s() input=\""PRI_SHUNK"\" delims=\"%s\"",
@@ -308,8 +307,7 @@ struct shunks *shunks(shunk_t input, const char *delims,
 	 * Allocate a minimal buffer.  Will grow it as more tokens are
 	 * found.
 	 */
-	size_t tokens_size = sizeof(struct shunks);
-	struct shunks *tokens = alloc_bytes(tokens_size, where->func);
+	struct shunks *tokens = alloc_items(struct shunks, 0);
 
 	shunk_t cursor = input;
 	while (true) {
@@ -331,14 +329,9 @@ struct shunks *shunks(shunk_t input, const char *delims,
 		      "%s() [%u] \""PRI_SHUNK"\"",
 		      __func__, tokens->len, pri_shunk(token));
 		/* grow by one shunk_t */
-		void *new = tokens;
-		size_t new_size = tokens_size + sizeof(shunk_t);
-		realloc_bytes(&new, tokens_size, new_size, where->func);
-		tokens = new;
-		tokens_size = new_size;
+		realloc_items(tokens, tokens->len + 1);
 		/* save */
-		tokens->list[tokens->len] = token;
-		tokens->len++;
+		tokens->item[tokens->len - 1] = token;
 	}
 
 	return tokens;
