@@ -767,15 +767,19 @@ err_t assign_remote_lease(struct connection *c,
 			  const char *xauth_username,
 			  const struct ip_info *afi,
 			  const ip_address preferred_address,
+			  ip_address *assigned_address,
 			  struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() xauth=%s family=%s",
 		     __func__, (xauth_username == NULL ? "n/a" : xauth_username),
 		     afi->ip_name);
 
+	(*assigned_address) = unset_address;
+
 	if (c->remote->child.lease[afi->ip_index].is_set &&
 	    connection_lease(c, afi, verbose) != NULL) {
 		ldbg(logger, "connection both thinks it has, and really has a lease");
+		(*assigned_address) = c->remote->child.lease[afi->ip_index];
 		return NULL;
 	}
 
@@ -880,15 +884,14 @@ err_t assign_remote_lease(struct connection *c,
 	 * Convert the leases offset into the address pool's range,
 	 * into an IP_address.
 	 */
-	ip_address ia;
-	err_t err = pool_lease_to_address(pool, new_lease, &ia);
+	err_t err = pool_lease_to_address(pool, new_lease, assigned_address);
 	if (err != NULL) {
 		llog_pexpect(logger, HERE, "%s", err);
 		return "confused, bad address";
 	}
 
 	/* assign and back link */
-	scribble_remote_lease(c, ia, next_lease_nr, logger, HERE);
+	scribble_remote_lease(c, (*assigned_address), next_lease_nr, logger, HERE);
 	new_lease->assigned_to = c->serialno;
 
 	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
@@ -898,7 +901,7 @@ err_t assign_remote_lease(struct connection *c,
 			jam_string(buf, " recoverable");
 		}
 		jam_string(buf, " lease ");
-		jam_address_sensitive(buf, &ia);
+		jam_address_sensitive(buf, assigned_address);
 		jam_string(buf, " from addresspool ");
 		jam_range(buf, &pool->r);
 		if (old_growth != pool->nr_leases) {
