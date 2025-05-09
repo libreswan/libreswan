@@ -3843,9 +3843,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		/* just blat both ends */
 		FOR_EACH_ELEMENT(end, config->end) {
 			end->host.xauth.cisco = (remote_peer_type == REMOTE_PEER_CISCO);
-#ifdef USE_CISCO_SPLIT
-			end->host.modecfg.cisco_split = (remote_peer_type == REMOTE_PEER_CISCO);
-#endif
 		}
 
 		config->child_sa.metric = wm->metric;
