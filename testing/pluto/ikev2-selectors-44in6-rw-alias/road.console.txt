@@ -129,16 +129,16 @@ road #
 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 road #
  ipsec whack --rekey-child --name road
-"road/0x2" #5: initiating rekey to replace Child SA #3 using IKE SA #4
-"road/0x1" #6: initiating rekey to replace Child SA #2 using IKE SA #4
-"road/0x2" #5: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #4 {ESP <0xESPESP}
-"road/0x2" #5: initiator rekeyed Child SA #3 using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
-"road/0x1" #6: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #4 {ESP <0xESPESP}
-"road/0x1" #6: initiator rekeyed Child SA #2 using #4; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
-"road/0x2" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #4
-"road/0x2" #3: ESP traffic information: in=168B out=168B
+"road/0x1" #5: initiating rekey to replace Child SA #2 using IKE SA #4
+"road/0x2" #6: initiating rekey to replace Child SA #3 using IKE SA #4
+"road/0x1" #5: sent CREATE_CHILD_SA request to rekey Child SA #2 using IKE SA #4 {ESP <0xESPESP}
+"road/0x1" #5: initiator rekeyed Child SA #2 using #4; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"road/0x2" #6: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #4 {ESP <0xESPESP}
+"road/0x2" #6: initiator rekeyed Child SA #3 using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
 "road/0x1" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #4
 "road/0x1" #2: ESP traffic information: in=168B out=168B
+"road/0x2" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #4
+"road/0x2" #3: ESP traffic information: in=168B out=168B
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -147,6 +147,6 @@ road #
 up
 road #
  ipsec trafficstatus
-#6: "road/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
-#5: "road/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#5: "road/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+#6: "road/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 road #
