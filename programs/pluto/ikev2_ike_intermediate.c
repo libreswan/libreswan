@@ -298,8 +298,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		} else {
 			for (unsigned i = 0; i < ppk_ids_shunks->len; i++) {
 				const struct secret_ppk_stuff *ppk =
-					get_connection_ppk(c, /*ppk_id*/NULL,
-							   /*index*/i);
+					get_connection_ppk(c, null_shunk, /*index*/i);
 				if (ppk != NULL) {
 					found_one = true;
 					chunk_t ppk_confirmation =
@@ -481,7 +480,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 			const struct secret_ppk_stuff *ppk_candidate =
 				get_connection_ppk(ike->sa.st_connection,
-						   /*ppk_id*/&payl.ppk_id_payl.ppk_id,
+						   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id_payl.ppk_id),
 						   /*index*/0);
 
 			if (ppk_candidate != NULL) {
@@ -666,7 +665,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 		}
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk(ike->sa.st_connection,
-					   /*ppk_id*/&payl.ppk_id,
+					   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 					   /*index*/0);
 		free_chunk_content(&payl.ppk_id);
 
