@@ -280,7 +280,6 @@ struct config {
 	bool rekey;				/* rekey state either Phase */
 	bool reauth;				/* IKEv2 only initiate re-authentication */
 	bool narrowing;
-	bool send_no_esp_tfc;
 	bool send_initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool send_vendorid;			/* Send our vendorid? Security vs Debugging help */
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
@@ -398,6 +397,12 @@ struct config {
 		struct child_proposals proposals; /* raw proposals */
 		struct ikev2_proposals *v2_ike_auth_proposals;
 	} child_sa;
+
+	struct {
+		struct {
+			bool esp_tfc_padding_not_supported;	/* notification */
+		} send;
+	} child;
 
 	struct {
 		bool allow;

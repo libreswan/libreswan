@@ -124,7 +124,8 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		jam_string(buf, ini);
 		ini = " ";
 		bool nat = nat_traversal_detected(st);
-		bool tfc = c->config->child_sa.tfcpad != 0 && !st->st_seen_no_tfc;
+		bool tfc = (c->config->child_sa.tfcpad != 0 &&
+			    !st->st_seen_esp_tfc_padding_not_supported);
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		bool iptfs = st->st_seen_and_use_iptfs;
 		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;

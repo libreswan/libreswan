@@ -286,7 +286,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
-	if (cc->config->send_no_esp_tfc &&
+	if (cc->config->child.send.esp_tfc_padding_not_supported &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
 		return false;
 	}
@@ -434,9 +434,10 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	}
 
 	/* is not not negotiated */
-	larval_child->sa.st_seen_no_tfc = (request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	larval_child->sa.st_seen_esp_tfc_padding_not_supported =
+		(request_md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
 	ldbg(larval_child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
-	     bool_str(larval_child->sa.st_seen_no_tfc));
+	     bool_str(larval_child->sa.st_seen_esp_tfc_padding_not_supported));
 
 	ikev2_derive_child_keys(ike, larval_child);
 
@@ -557,9 +558,9 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (cc->config->send_no_esp_tfc &&
+	if (cc->config->child.send.esp_tfc_padding_not_supported &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
-			return false;
+		return false;
 	}
 
 	if (larval_child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp &&
@@ -868,9 +869,11 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		str_enum(&kernel_mode_stories, required_mode, &rmb));
 	child->sa.st_kernel_mode = required_mode;
 
-	child->sa.st_seen_no_tfc = (md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
+	/* not negotiated */
+	child->sa.st_seen_esp_tfc_padding_not_supported =
+		(md->pd[PD_v2N_ESP_TFC_PADDING_NOT_SUPPORTED] != NULL);
 	ldbg(child->sa.logger, "received ESP_TFC_PADDING_NOT_SUPPORTED=%s",
-	     bool_str(child->sa.st_seen_no_tfc));
+	     bool_str(child->sa.st_seen_esp_tfc_padding_not_supported));
 
 	if (md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		struct pbs_in pbs = md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;

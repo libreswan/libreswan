@@ -265,7 +265,7 @@ enum keywords {
 	KNCF_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KNCF_INITIAL_CONTACT,	/* send initial contact VID */
 	KNCF_CISCO_UNITY,	/* send cisco unity VID */
-	KNCF_NO_ESP_TFC,	/* send ESP_TFC_PADDING_NOT_SUPPORTED */
+	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
 	KNCF_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KNCF_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */

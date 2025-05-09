@@ -360,7 +360,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "initial-contact",  kv_conn,  kt_bool,  KNCF_INITIAL_CONTACT, NULL, NULL, },
   { "cisco-unity",  kv_conn,  kt_bool,  KNCF_CISCO_UNITY, NULL, NULL, },
-  { "send-no-esp-tfc",  kv_conn,  kt_bool,  KNCF_NO_ESP_TFC, NULL, NULL, },
+  { "send-esp-tfc-padding-not-supported",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, NULL, },
+  { "send-no-esp-tfc",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, NULL, }, /*compat, but forever*/
 
   { "iptfs",  kv_conn,  kt_sparse_name,  KNCF_IPTFS, &yn_option_names, NULL, },
   { "iptfs-fragmentation",  kv_conn,  kt_sparse_name,  KNCF_IPTFS_FRAGMENTATION, &yn_option_names, NULL, },

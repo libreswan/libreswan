@@ -114,7 +114,7 @@ static void help(void)
 		"	[--remote-peer-type <cisco>] \\\n"
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
-		"	[--tfc <size>] [--send-no-esp-tfc] \\\n"
+		"	[--tfc <size>] [--send-esp-tfc-padding-not-supported] \\\n"
 		"	[--iptfs[={yes,no}] \\\n"
 		"         [--iptfs-fragmentation[={yes,no}]] \\\n"
 		"         [--iptfs-packet-size <size>] \\\n"
@@ -510,7 +510,7 @@ enum opt {
 	CD_MTU,
 	CD_PRIORITY,
 	CD_TFC,
-	CD_SEND_TFCPAD,
+	CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
 	CD_PFS,
 	CD_REQID,
 	CD_NFLOG_GROUP,
@@ -882,7 +882,8 @@ const struct option optarg_options[] = {
 	{ "mtu\0", required_argument, NULL, CD_MTU },
 	{ "priority\0", required_argument, NULL, CD_PRIORITY },
 	{ "tfc\0", required_argument, NULL, CD_TFC },
-	{ "send-no-esp-tfc\0", no_argument, NULL, CD_SEND_TFCPAD },
+	{ "send-esp-tfc-padding-not-supported\0yes|no", optional_argument, NULL, CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED },
+	{ "send-no-esp-tfc\0", no_argument, NULL, CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED },
 	{ "pfs\0", optional_argument, NULL, CD_PFS },
 	{ "reqid\01-65535", required_argument, NULL, CD_REQID },
 #ifdef USE_NFLOG
@@ -2267,8 +2268,9 @@ int main(int argc, char **argv)
 			msg.tfc = optarg_uintmax(logger);
 			continue;
 
-		case CD_SEND_TFCPAD:	/* --send-no-esp-tfc */
-			msg.send_no_esp_tfc = true;
+		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */
+			msg.send_esp_tfc_padding_not_supported =
+				optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_PFS:	/* --pfs */

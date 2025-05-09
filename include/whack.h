@@ -375,7 +375,7 @@ struct whack_message {
 
 	uintmax_t priority;
 	uintmax_t tfc;
-	bool send_no_esp_tfc;
+	enum yn_options send_esp_tfc_padding_not_supported;
 
 	enum yn_options iptfs;
 	enum yn_options iptfs_fragmentation;

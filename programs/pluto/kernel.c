@@ -1398,7 +1398,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 		if (direction == DIRECTION_OUTBOUND &&
 		    c->config->child_sa.tfcpad != 0 &&
-		    !child->sa.st_seen_no_tfc) {
+		    !child->sa.st_seen_esp_tfc_padding_not_supported) {
 			ldbg(child->sa.logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
 			     c->config->child_sa.tfcpad);
 			said_next->tfcpad = c->config->child_sa.tfcpad;
