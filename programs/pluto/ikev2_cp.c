@@ -306,8 +306,10 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 		return true; /*non-fatal*/
 	}
 
-	err_t e = assign_remote_lease(cc, /*xauth-username*/NULL,
-				      afi, /*remote-address*/NULL,
+	ip_address assigned_address; /* ignore */
+	err_t e = assign_remote_lease(cc, /*xauth-username*/NULL, afi,
+				      /*preferred-address*/unset_address,
+				      &assigned_address,
 				      child->sa.logger);
 	if (e != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",

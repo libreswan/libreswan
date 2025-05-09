@@ -574,8 +574,11 @@ static bool get_internal_address(struct ike_sa *ike)
 
 	const char *from;
 	if (c->pool[afi->ip_index] != NULL) {
-		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
-					      afi, /*remote-address*/NULL,
+
+		ip_address assigned_address;
+		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username, afi,
+					      /*preferred-address*/unset_address,
+					      &assigned_address,
 					      ike->sa.logger);
 		if (e != NULL) {
 			llog(RC_LOG, ike->sa.logger, "leasing %s address failed: %s",
@@ -584,12 +587,17 @@ static bool get_internal_address(struct ike_sa *ike)
 		}
 
 		ldbg(c->logger, "another hack to get the SPD in sync");
-		c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
-		spd_db_rehash_remote_client(c->spd);
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			spd->remote->client = selector_from_address(assigned_address);
+			spd_db_rehash_remote_client(spd);
+		}
 
 		from = "lease";
+
 	} else if (PEXPECT(ike->sa.logger, c->spd->remote->client.is_set)) {
+
 		from = "remote SPD";
+
 	} else {
 		return false;
 	}
