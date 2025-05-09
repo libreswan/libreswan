@@ -4007,7 +4007,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->child_sa.tfcpad = wm->tfc;
 	}
 
-	config->send_no_esp_tfc = wm->send_no_esp_tfc;
+	config->child.send.esp_tfc_padding_not_supported =
+		extract_yn("", "send-esp-tfc-padding-not-supported",
+			   wm->send_esp_tfc_padding_not_supported,
+			   YN_NO, wm, c->logger);
 
 	/*
 	 * Since security labels use the same REQID for everything,

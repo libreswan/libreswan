@@ -315,8 +315,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.priority = conn->values[KNCF_PRIORITY].option;
 	if (conn->values[KNCF_TFC].set)
 		msg.tfc = conn->values[KNCF_TFC].option;
-	if (conn->values[KNCF_NO_ESP_TFC].set)
-		msg.send_no_esp_tfc = conn->values[KNCF_NO_ESP_TFC].option;
+	msg.send_esp_tfc_padding_not_supported =
+		conn->values[KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED].option;
 	msg.nflog_group = conn->values[KNCF_NFLOG_GROUP].string;
 	msg.reqid = conn->values[KNCF_REQID].string;
 

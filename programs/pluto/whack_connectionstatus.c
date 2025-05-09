@@ -734,7 +734,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " cisco-unity:%s;", bool_str(c->config->send_vid_cisco_unity));
 		jam(buf, " fake-strongswan:%s;", bool_str(c->config->send_vid_fake_strongswan));
 		jam(buf, " send-vendorid:%s;", bool_str(c->config->send_vendorid));
-		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->send_no_esp_tfc));
+		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->child.send.esp_tfc_padding_not_supported));
 	}
 
 	SHOW_JAMBUF(s, buf) {
