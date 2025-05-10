@@ -383,7 +383,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
 		struct ppk_id_payload ppk_id_p =
-			ppk_id_payload(PPK_ID_FIXED, ppk->id,
+			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id),
 				       ike->sa.logger);
 
 		struct pbs_out ppks;
@@ -705,7 +705,6 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 				get_connection_ppk(ike->sa.st_connection,
 						   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 						   /*index*/0);
-			free_chunk_content(&payl.ppk_id);
 			if (ppk != NULL) {
 				found_ppk = true;
 			}

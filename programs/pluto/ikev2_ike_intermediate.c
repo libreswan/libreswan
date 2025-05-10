@@ -266,7 +266,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk_and_ppk_id(c);
 			if (ppk != NULL) {
-				chunk_t ppk_id = ppk->id;
+				shunk_t ppk_id = HUNK_AS_SHUNK(ppk->id);
 				found_one = true;
 				chunk_t ppk_confirmation =
 					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
@@ -302,8 +302,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 								      &ike->sa.st_ike_spis,
 								      ike->sa.logger);
 					/* cast away const! */
-					chunk_t ppk_id = chunk2((void *) ppk_ids_shunks->item[i].ptr,
-								ppk_ids_shunks->item[i].len);
+					shunk_t ppk_id = ppk_ids_shunks->item[i];
 					struct ppk_id_payload payl =
 						ppk_id_payload(PPK_ID_FIXED, ppk_id,
 							       ike->sa.logger);
@@ -504,7 +503,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				}
 				free_chunk_content(&ppk_confirmation);
 			}
-			free_chunk_content(&payl.ppk_id_payl.ppk_id);
 			ppk_id_key_payls = ppk_id_key_payls->next;
 		}
 
@@ -662,7 +660,6 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 			get_connection_ppk(ike->sa.st_connection,
 					   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 					   /*index*/0);
-		free_chunk_content(&payl.ppk_id);
 
 		recalc_v2_ppk_interm_keymat(ike, ppk->key,
 					    &ike->sa.st_ike_spis,

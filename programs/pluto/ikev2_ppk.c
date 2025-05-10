@@ -43,7 +43,7 @@
  */
 
 struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
-				     const chunk_t ppk_id,
+				     const shunk_t ppk_id,
 				     struct logger *logger)
 {
 	struct ppk_id_payload payload = {
@@ -77,7 +77,8 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *outs)
  * Payload, we store PPK_ID and its type in payl
  */
 bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
-			      struct ppk_id_payload *payl, struct ike_sa *ike)
+			      struct ppk_id_payload *payl,
+			      struct ike_sa *ike)
 {
 	diag_t d;
 	struct pbs_in pbs = *notify_pbs;
@@ -109,25 +110,24 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	}
 	}
 
-	shunk_t data = pbs_in_left(&pbs);
+	shunk_t ppk_id = pbs_in_left(&pbs);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
+		LDBG_hunk(ike->sa.logger, ppk_id);
+	}
 
-	if (data.len == 0) {
+	if (ppk_id.len == 0) {
 		llog_sa(RC_LOG, ike, "PPK ID data must be at least 1 byte");
 		return false;
 	}
 
-	if (data.len > PPK_ID_MAXLEN) {
+	if (ppk_id.len > PPK_ID_MAXLEN) {
 		llog_sa(RC_LOG, ike, "PPK ID %zu byte length exceeds %u",
-			data.len, PPK_ID_MAXLEN);
+			ppk_id.len, PPK_ID_MAXLEN);
 		return false;
 	}
 
-	/* clone ppk id data without ppk id type byte */
-	payl->ppk_id = clone_hunk(data, "PPK_ID data");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id);
-	}
-
+	(*payl) = ppk_id_payload(id_type, ppk_id, ike->sa.logger);
 	return true;
 }
 
@@ -208,8 +208,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	}
 
 	/* clone ppk id and ppk confirmation data */
-	payl->ppk_id_payl = ppk_id_payload(id_type, clone_hunk(ppk_id, "PPK_ID data"),
-					   ike->sa.logger);
+	payl->ppk_id_payl = ppk_id_payload(id_type, ppk_id, ike->sa.logger);
 	payl->ppk_confirmation = ppk_confirmation;
 
 	return true;
