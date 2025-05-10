@@ -3877,10 +3877,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
 		if (config->ppk_ids != NULL) {
-			config->ppk_ids_shunks = shunks(shunk1(config->ppk_ids),
-							", ",
-							EAT_EMPTY_SHUNKS,
-							HERE); /* process into shunks once */
+			config->ppk_ids_shunks = ttoshunks(shunk1(config->ppk_ids),
+							   ", ",
+							   EAT_EMPTY_SHUNKS); /* process into shunks once */
 		}
 	}
 
@@ -5099,13 +5098,13 @@ struct connections *sort_connections(void)
 			},
 		};
 		while (next_connection(&cq)) {
-			connections->data[i++] = cq.c;
+			connections->item[i++] = cq.c;
 		}
 		passert(i == nr_connections);
 	}
 
 	/* sort it! */
-	qsort(connections->data, nr_connections, sizeof(struct connection *),
+	qsort(connections->item, nr_connections, sizeof(struct connection *),
 	      connection_compare_qsort);
 
 	return connections;

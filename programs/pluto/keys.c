@@ -584,7 +584,7 @@ const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connec
 		 * at least one secrets entry that matches a PPK_ID from the
 		 * list.
 		 */
-		FOR_EACH_ITEM(ppk_id_shunk, ppk_ids_shunks) {
+		ITEMS_FOR_EACH(ppk_id_shunk, ppk_ids_shunks) {
 			ldbg(c->logger, "try to find PPK with PPK_ID:");
 			ldbg_hunk(c->logger, *ppk_id_shunk);
 
@@ -622,8 +622,7 @@ const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
 		ldbg(c->logger, "looking for PPK with PPK ID in list %s at place: %u",
 		     c->config->ppk_ids, index);
 
-		/* XXX cast away the const qualifier from shunk_t pointer... */
-		shunk_t id = ppk_ids_shunks->list[index];
+		shunk_t id = ppk_ids_shunks->item[index];
 
 		ldbg(c->logger, "try to find PPK with PPK_ID:");
 		ldbg_hunk(c->logger, id);

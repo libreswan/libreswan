@@ -974,7 +974,7 @@ const char *str_connection_suffix(const struct connection *c,
 
 struct connections {
 	unsigned len;
-	struct connection *data[];
+	struct connection *item[];
 };
 
 struct connections *sort_connections(void);

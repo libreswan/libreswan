@@ -308,8 +308,9 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 								      ike->sa.st_ni, ike->sa.st_nr,
 								      &ike->sa.st_ike_spis,
 								      ike->sa.logger);
-					ppk_id = chunk2((void *) ppk_ids_shunks->list[i].ptr,
-						                 ppk_ids_shunks->list[i].len);
+					/* cast away const! */
+					ppk_id = chunk2((void *) ppk_ids_shunks->item[i].ptr,
+							ppk_ids_shunks->item[i].len);
 					struct ppk_id_payload payl = { .type = 0, };
 					create_ppk_id_payload(&ppk_id, &payl);
 					struct pbs_out ppks;
