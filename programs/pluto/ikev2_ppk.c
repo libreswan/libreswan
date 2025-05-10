@@ -200,7 +200,8 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	}
 
 	/* clone ppk id and ppk confirmation data */
-	payl->ppk_id_payl.ppk_id = clone_hunk(ppk_id, "PPK_ID data");
+	payl->ppk_id_payl = ppk_id_payload(id_type, clone_hunk(ppk_id, "PPK_ID data"),
+					   ike->sa.logger);
 	payl->ppk_confirmation = clone_hunk(ppk_confirmation, "PPK Confirmation data");
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id_payl.ppk_id);
