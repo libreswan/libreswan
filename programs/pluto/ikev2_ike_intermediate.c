@@ -274,7 +274,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 							      ike->sa.st_ni, ike->sa.st_nr,
 							      &ike->sa.st_ike_spis,
 							      ike->sa.logger);
-				struct ppk_id_payload payl =
+				const struct ppk_id_payload payl =
 					ppk_id_payload(PPK_ID_FIXED, ppk_id, ike->sa.logger);
 				struct pbs_out ppks;
 				if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
@@ -303,7 +303,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 								      ike->sa.logger);
 					/* cast away const! */
 					shunk_t ppk_id = ppk_ids_shunks->item[i];
-					struct ppk_id_payload payl =
+					const struct ppk_id_payload payl =
 						ppk_id_payload(PPK_ID_FIXED, ppk_id,
 							       ike->sa.logger);
 					struct pbs_out ppks;
@@ -488,7 +488,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					dbg("found matching PPK, send PPK_IDENTITY back");
 					ppk = ppk_candidate;
 					/* we have a match, send PPK_IDENTITY back */
-					struct ppk_id_payload ppk_id_p =
+					const struct ppk_id_payload ppk_id_p =
 						ppk_id_payload(PPK_ID_FIXED,
 							       payl.ppk_id_payl.ppk_id,
 							       ike->sa.logger);

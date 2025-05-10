@@ -62,7 +62,7 @@ struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *outs)
+bool emit_unified_ppk_id(const struct ppk_id_payload *payl, struct pbs_out *outs)
 {
 	uint8_t type = PPK_ID_FIXED;
 	if (!pbs_out_thing(outs, type, "PPK_ID_FIXED")) {

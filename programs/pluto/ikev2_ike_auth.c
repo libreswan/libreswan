@@ -382,7 +382,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
-		struct ppk_id_payload ppk_id_p =
+		const struct ppk_id_payload ppk_id_p =
 			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id),
 				       ike->sa.logger);
 
