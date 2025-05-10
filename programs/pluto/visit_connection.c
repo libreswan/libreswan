@@ -59,8 +59,8 @@ static bool whack_connection_by_name(const struct whack_message *m,
 	struct connection_filter by_name = {
 		.name = m->name,
 		.search = {
-			.order = order, /* only one, order doesn't
-					 * matter! */
+			.order = OLD2NEW, /* only one, order doesn't
+					   * matter! */
 			.verbose.logger = show_logger(s),
 			.where = HERE,
 		},
