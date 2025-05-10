@@ -138,8 +138,8 @@ static void help(void)
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
-		"	[--encapsulation[={auto,yes,no}] [--no-nat-keepalive] \\\n"
-		"	[--ikev1-natt <both|rfc|drafts>] [--no-nat_keepalive] \\\n"
+		"	[--encapsulation[={auto,yes,no}] [--nat-keepalive {yes,no}] \\\n"
+		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--xauthserver | --xauthclient] \\\n"
 		"	[--addresspool <network range>] \\\n"
@@ -555,6 +555,7 @@ enum opt {
 	CD_ACCEPT_REDIRECT_TO,
 	CD_ENCAPSULATION,
 	CD_NO_NAT_KEEPALIVE,
+	CD_NAT_KEEPALIVE,
 	CD_IKEV1_NATT,
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
@@ -846,7 +847,9 @@ const struct option optarg_options[] = {
 	{ "iptfs-reorder-window\0", required_argument, NULL, CD_IPTFS_REORDER_WINDOW },
 	{ "iptfs-drop-time\0", required_argument, NULL, CD_IPTFS_DROP_TIME },
 
-	{ "no-nat_keepalive\0", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ OPT("nat-keepalive", "YES|no"), required_argument, NULL,  CD_NAT_KEEPALIVE },
+	{ RENAME_OPT("no-nat_keepalive", "nat-keepalive"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ RENAME_OPT("no-nat-keepalive", "nat-keepalive"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt\0", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt\0", required_argument, NULL, CD_IKEV1_NATT },
 	{ "initialcontact\0", no_argument, NULL,  CD_INITIAL_CONTACT },
@@ -1047,8 +1050,6 @@ int main(int argc, char **argv)
 		 * XXX: none of these initializations should be
 		 * needed.
 		 */
-
-		.nat_keepalive = true,
 
 		.xauthby = XAUTHBY_FILE,
 		.xauthfail = XAUTHFAIL_HARD,
@@ -1926,8 +1927,11 @@ int main(int argc, char **argv)
 			msg.nic_offload = optarg_sparse(logger, 0, &nic_offload_option_names);
 			continue;
 
-		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
-			msg.nat_keepalive = false;
+		case CD_NO_NAT_KEEPALIVE:	/* --no-nat-keepalive */
+			msg.nat_keepalive = YN_NO;
+			continue;
+		case CD_NAT_KEEPALIVE:	/* --nat-keepalive {yes,no} */
+			msg.nat_keepalive = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */

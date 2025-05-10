@@ -119,7 +119,6 @@ static struct starter_config *alloc_starter_config(void)
 
 # define DOPT(kbf, v)  { d->values[kbf].option = (v); }
 
-	DOPT(KNCF_NAT_KEEPALIVE, true);    /* per conn */
 	DOPT(KNCF_TYPE, KS_TUNNEL);
 
 	DOPT(KNCF_INITIAL_CONTACT, true);
