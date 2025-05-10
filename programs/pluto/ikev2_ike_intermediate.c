@@ -275,13 +275,8 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 							      ike->sa.st_ni, ike->sa.st_nr,
 							      &ike->sa.st_ike_spis,
 							      ike->sa.logger);
-				struct ppk_id_payload payl = { .type = 0, };
-				create_ppk_id_payload(&ppk_id, &payl);
-				if (DBGP(DBG_BASE)) {
-					DBG_log("ppk type: %d", (int) payl.type);
-					DBG_dump_hunk("ppk_id from payload:", payl.ppk_id);
-				}
-
+				struct ppk_id_payload payl =
+					ppk_id_payload(PPK_ID_FIXED, ppk_id, ike->sa.logger);
 				struct pbs_out ppks;
 				if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
 					return STF_INTERNAL_ERROR;
@@ -310,8 +305,9 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					/* cast away const! */
 					ppk_id = chunk2((void *) ppk_ids_shunks->item[i].ptr,
 							ppk_ids_shunks->item[i].len);
-					struct ppk_id_payload payl = { .type = 0, };
-					create_ppk_id_payload(&ppk_id, &payl);
+					struct ppk_id_payload payl =
+						ppk_id_payload(PPK_ID_FIXED, ppk_id,
+							       ike->sa.logger);
 					struct pbs_out ppks;
 					if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
 						return STF_INTERNAL_ERROR;
@@ -494,9 +490,10 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					dbg("found matching PPK, send PPK_IDENTITY back");
 					ppk = ppk_candidate;
 					/* we have a match, send PPK_IDENTITY back */
-					struct ppk_id_payload ppk_id_p = { .type = 0, };
-					create_ppk_id_payload(&payl.ppk_id_payl.ppk_id, &ppk_id_p);
-
+					struct ppk_id_payload ppk_id_p =
+						ppk_id_payload(PPK_ID_FIXED,
+							       payl.ppk_id_payl.ppk_id,
+							       ike->sa.logger);
 					struct pbs_out ppks;
 					if (!open_v2N_output_pbs(response.pbs, v2N_PPK_IDENTITY, &ppks)) {
 						return STF_INTERNAL_ERROR;

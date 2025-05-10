@@ -38,14 +38,24 @@
 #include "ikev2_psk.h"
 
 /*
- * used by initiator, to properly construct struct
- * from chunk_t we got from .secrets
+ * Used by initiator, to properly construct struct from chunk_t we got
+ * from .secrets
  */
-bool create_ppk_id_payload(const chunk_t *ppk_id, struct ppk_id_payload *payl)
+
+struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
+				     const chunk_t ppk_id,
+				     struct logger *logger)
 {
-	payl->type = PPK_ID_FIXED;	/* currently we support only this type */
-	payl->ppk_id = *ppk_id;
-	return true;
+	struct ppk_id_payload payload = {
+		.type = type,
+		.ppk_id = ppk_id,
+	};
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "ppk type: %d", (int) payload.type);
+		LDBG_log(logger, "ppk_id from payload:");
+		LDBG_hunk(logger, payload.ppk_id);
+	}
+	return payload;
 }
 
 /*

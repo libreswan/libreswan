@@ -382,12 +382,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
-		struct ppk_id_payload ppk_id_p = { .type = 0, };
-		create_ppk_id_payload(&ppk->id, &ppk_id_p);
-		if (DBGP(DBG_BASE)) {
-			DBG_log("ppk type: %d", (int) ppk_id_p.type);
-			DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id);
-		}
+		struct ppk_id_payload ppk_id_p =
+			ppk_id_payload(PPK_ID_FIXED, ppk->id,
+				       ike->sa.logger);
 
 		struct pbs_out ppks;
 		if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY, &ppks)) {

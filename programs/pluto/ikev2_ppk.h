@@ -30,7 +30,9 @@ struct ppk_id_key_payload {
 	chunk_t ppk_confirmation;
 };
 
-extern bool create_ppk_id_payload(const chunk_t *ppk_id, struct ppk_id_payload *payl);
+struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
+				     const chunk_t ppk_id,
+				     struct logger *logger);
 extern bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *pbs);
 extern bool extract_v2N_ppk_identity(const struct pbs_in *pbs, struct ppk_id_payload *payl,
 				     struct ike_sa *ike);
