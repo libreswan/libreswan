@@ -154,6 +154,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 {
 	diag_t d;
 	struct pbs_in pbs = *notify_pbs;
+	zero(payl);
 
 	uint8_t id_byte;
 	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
@@ -182,20 +183,27 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 
 	payl->ppk_id_payl.type = id_type;
 
-	shunk_t ppk_id;
-	size_t data_len = pbs.roof - pbs.cur;
-	d = pbs_in_shunk(&pbs, data_len - PPK_CONFIRMATION_LEN, &ppk_id, "PPK ID data");
-	if (d != NULL) {
-		llog(RC_LOG, ike->sa.logger,
-		     "%s", str_diag(d));
+	shunk_t id_and_confirmation = pbs_in_left(&pbs);
+	if (id_and_confirmation.len < PPK_CONFIRMATION_LEN) {
+		llog(RC_LOG, ike->sa.logger, "ID+CONFIRMATION must be at least %u bytes, was %zu bytes",
+		     PPK_CONFIRMATION_LEN, id_and_confirmation.len);
 		return false;
-
 	}
 
-	shunk_t ppk_confirmation = pbs_in_left(&pbs);
+	size_t ppk_id_len = id_and_confirmation.len - PPK_CONFIRMATION_LEN;
+	shunk_t ppk_id = hunk_slice(id_and_confirmation, 0, ppk_id_len);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
+		LDBG_hunk(ike->sa.logger, ppk_id);
+	}
 
-	if (ppk_confirmation.len != PPK_CONFIRMATION_LEN) {
-		llog_sa(RC_LOG, ike, "PPK Confirmation data must be exactly 8 bytes.");
+	shunk_t ppk_confirmation = hunk_slice(id_and_confirmation, ppk_id_len, id_and_confirmation.len);
+	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "extracted PPK Confirmation:");
+		LDBG_hunk(ike->sa.logger, ppk_confirmation);
+	}
+	if (!PEXPECT(ike->sa.logger, ppk_confirmation.len == PPK_CONFIRMATION_LEN)) {
+		/* above math screwed up */
 		return false;
 	}
 
@@ -203,12 +211,6 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	payl->ppk_id_payl = ppk_id_payload(id_type, clone_hunk(ppk_id, "PPK_ID data"),
 					   ike->sa.logger);
 	payl->ppk_confirmation = clone_hunk(ppk_confirmation, "PPK Confirmation data");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id_payl.ppk_id);
-	}
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("Extracted PPK Confirmation", payl->ppk_confirmation);
-	}
 
 	return true;
 }
