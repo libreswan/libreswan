@@ -259,7 +259,6 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
 		struct connection *const c = ike->sa.st_connection;
 		struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
-		chunk_t ppk_id;
 		bool found_one = false;
 
 		if (ppk_ids_shunks == NULL) {
@@ -267,7 +266,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk_and_ppk_id(c);
 			if (ppk != NULL) {
-				ppk_id = ppk->id;
+				chunk_t ppk_id = ppk->id;
 				found_one = true;
 				chunk_t ppk_confirmation =
 					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
@@ -303,8 +302,8 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 								      &ike->sa.st_ike_spis,
 								      ike->sa.logger);
 					/* cast away const! */
-					ppk_id = chunk2((void *) ppk_ids_shunks->item[i].ptr,
-							ppk_ids_shunks->item[i].len);
+					chunk_t ppk_id = chunk2((void *) ppk_ids_shunks->item[i].ptr,
+								ppk_ids_shunks->item[i].len);
 					struct ppk_id_payload payl =
 						ppk_id_payload(PPK_ID_FIXED, ppk_id,
 							       ike->sa.logger);
