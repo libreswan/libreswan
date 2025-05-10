@@ -27,7 +27,7 @@ struct ppk_id_payload {
 
 struct ppk_id_key_payload {
 	struct ppk_id_payload ppk_id_payl;
-	chunk_t ppk_confirmation;
+	shunk_t ppk_confirmation;
 };
 
 struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,

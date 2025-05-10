@@ -505,7 +505,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				free_chunk_content(&ppk_confirmation);
 			}
 			free_chunk_content(&payl.ppk_id_payl.ppk_id);
-			free_chunk_content(&payl.ppk_confirmation);
 			ppk_id_key_payls = ppk_id_key_payls->next;
 		}
 
