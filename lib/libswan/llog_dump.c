@@ -34,6 +34,11 @@
 void llog_dump(lset_t rc_flags, const struct logger *logger,
 	       const void *p, size_t len)
 {
+	if (p == NULL) {
+		PEXPECT(logger, len == 0);
+		llog(rc_flags, logger, "  <null>");
+		return;
+	}
 	const uint8_t *cp = p;
 	do {
 		/* each line shows 16 bytes; remember sizeof includes '\0' */

@@ -382,12 +382,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
-		struct ppk_id_payload ppk_id_p = { .type = 0, };
-		create_ppk_id_payload(&ppk->id, &ppk_id_p);
-		if (DBGP(DBG_BASE)) {
-			DBG_log("ppk type: %d", (int) ppk_id_p.type);
-			DBG_dump_hunk("ppk_id from payload:", ppk_id_p.ppk_id);
-		}
+		const struct ppk_id_payload ppk_id_p =
+			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id),
+				       ike->sa.logger);
 
 		struct pbs_out ppks;
 		if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY, &ppks)) {
@@ -706,9 +703,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk(ike->sa.st_connection,
-						   /*ppk_id*/&payl.ppk_id,
+						   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 						   /*index*/0);
-			free_chunk_content(&payl.ppk_id);
 			if (ppk != NULL) {
 				found_ppk = true;
 			}

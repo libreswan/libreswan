@@ -606,16 +606,16 @@ const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connec
  * conn option list.
  */
 const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
-						  chunk_t *ppk_id,
+						  shunk_t ppk_id,
 						  unsigned int index)
 {
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
-	if (ppk_id != NULL) {
+	if (ppk_id.len > 0) {
 		/* try to find PPK with PPK_ID ppk_id */
 		ldbg(c->logger, "looking for PPK with ID:");
-		ldbg_hunk(c->logger, *ppk_id);
-		return secret_ppk_stuff_by_id(pluto_secrets, HUNK_AS_SHUNK(*ppk_id));
+		ldbg_hunk(c->logger, ppk_id);
+		return secret_ppk_stuff_by_id(pluto_secrets, ppk_id);
 	} else {
 		passert(index < ppk_ids_shunks->len);
 

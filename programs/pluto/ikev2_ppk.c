@@ -38,21 +38,31 @@
 #include "ikev2_psk.h"
 
 /*
- * used by initiator, to properly construct struct
- * from chunk_t we got from .secrets
+ * Used by initiator, to properly construct struct from chunk_t we got
+ * from .secrets
  */
-bool create_ppk_id_payload(const chunk_t *ppk_id, struct ppk_id_payload *payl)
+
+struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
+				     const shunk_t ppk_id,
+				     struct logger *logger)
 {
-	payl->type = PPK_ID_FIXED;	/* currently we support only this type */
-	payl->ppk_id = *ppk_id;
-	return true;
+	struct ppk_id_payload payload = {
+		.type = type,
+		.ppk_id = ppk_id,
+	};
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "ppk type: %d", (int) payload.type);
+		LDBG_log(logger, "ppk_id from payload:");
+		LDBG_hunk(logger, payload.ppk_id);
+	}
+	return payload;
 }
 
 /*
  * used by initiator to make chunk_t from ppk_id payload
  * for sending it in PPK_ID Notify Payload over the wire
  */
-bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *outs)
+bool emit_unified_ppk_id(const struct ppk_id_payload *payl, struct pbs_out *outs)
 {
 	uint8_t type = PPK_ID_FIXED;
 	if (!pbs_out_thing(outs, type, "PPK_ID_FIXED")) {
@@ -67,7 +77,8 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, struct pbs_out *outs)
  * Payload, we store PPK_ID and its type in payl
  */
 bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
-			      struct ppk_id_payload *payl, struct ike_sa *ike)
+			      struct ppk_id_payload *payl,
+			      struct ike_sa *ike)
 {
 	diag_t d;
 	struct pbs_in pbs = *notify_pbs;
@@ -99,25 +110,24 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	}
 	}
 
-	shunk_t data = pbs_in_left(&pbs);
+	shunk_t ppk_id = pbs_in_left(&pbs);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
+		LDBG_hunk(ike->sa.logger, ppk_id);
+	}
 
-	if (data.len == 0) {
+	if (ppk_id.len == 0) {
 		llog_sa(RC_LOG, ike, "PPK ID data must be at least 1 byte");
 		return false;
 	}
 
-	if (data.len > PPK_ID_MAXLEN) {
+	if (ppk_id.len > PPK_ID_MAXLEN) {
 		llog_sa(RC_LOG, ike, "PPK ID %zu byte length exceeds %u",
-			data.len, PPK_ID_MAXLEN);
+			ppk_id.len, PPK_ID_MAXLEN);
 		return false;
 	}
 
-	/* clone ppk id data without ppk id type byte */
-	payl->ppk_id = clone_hunk(data, "PPK_ID data");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id);
-	}
-
+	(*payl) = ppk_id_payload(id_type, ppk_id, ike->sa.logger);
 	return true;
 }
 
@@ -144,6 +154,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 {
 	diag_t d;
 	struct pbs_in pbs = *notify_pbs;
+	zero(payl);
 
 	uint8_t id_byte;
 	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
@@ -172,32 +183,33 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 
 	payl->ppk_id_payl.type = id_type;
 
-	shunk_t ppk_id;
-	size_t data_len = pbs.roof - pbs.cur;
-	d = pbs_in_shunk(&pbs, data_len - PPK_CONFIRMATION_LEN, &ppk_id, "PPK ID data");
-	if (d != NULL) {
-		llog(RC_LOG, ike->sa.logger,
-		     "%s", str_diag(d));
+	shunk_t id_and_confirmation = pbs_in_left(&pbs);
+	if (id_and_confirmation.len < PPK_CONFIRMATION_LEN) {
+		llog(RC_LOG, ike->sa.logger, "ID+CONFIRMATION must be at least %u bytes, was %zu bytes",
+		     PPK_CONFIRMATION_LEN, id_and_confirmation.len);
 		return false;
-
 	}
 
-	shunk_t ppk_confirmation = pbs_in_left(&pbs);
+	size_t ppk_id_len = id_and_confirmation.len - PPK_CONFIRMATION_LEN;
+	shunk_t ppk_id = hunk_slice(id_and_confirmation, 0, ppk_id_len);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
+		LDBG_hunk(ike->sa.logger, ppk_id);
+	}
 
-	if (ppk_confirmation.len != PPK_CONFIRMATION_LEN) {
-		llog_sa(RC_LOG, ike, "PPK Confirmation data must be exactly 8 bytes.");
+	shunk_t ppk_confirmation = hunk_slice(id_and_confirmation, ppk_id_len, id_and_confirmation.len);
+	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "extracted PPK Confirmation:");
+		LDBG_hunk(ike->sa.logger, ppk_confirmation);
+	}
+	if (!PEXPECT(ike->sa.logger, ppk_confirmation.len == PPK_CONFIRMATION_LEN)) {
+		/* above math screwed up */
 		return false;
 	}
 
 	/* clone ppk id and ppk confirmation data */
-	payl->ppk_id_payl.ppk_id = clone_hunk(ppk_id, "PPK_ID data");
-	payl->ppk_confirmation = clone_hunk(ppk_confirmation, "PPK Confirmation data");
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id_payl.ppk_id);
-	}
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("Extracted PPK Confirmation", payl->ppk_confirmation);
-	}
+	payl->ppk_id_payl = ppk_id_payload(id_type, ppk_id, ike->sa.logger);
+	payl->ppk_confirmation = ppk_confirmation;
 
 	return true;
 }

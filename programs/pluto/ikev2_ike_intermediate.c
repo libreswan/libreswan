@@ -259,7 +259,6 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
 		struct connection *const c = ike->sa.st_connection;
 		struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
-		chunk_t ppk_id;
 		bool found_one = false;
 
 		if (ppk_ids_shunks == NULL) {
@@ -267,7 +266,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk_and_ppk_id(c);
 			if (ppk != NULL) {
-				ppk_id = ppk->id;
+				shunk_t ppk_id = HUNK_AS_SHUNK(ppk->id);
 				found_one = true;
 				chunk_t ppk_confirmation =
 					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
@@ -275,13 +274,8 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 							      ike->sa.st_ni, ike->sa.st_nr,
 							      &ike->sa.st_ike_spis,
 							      ike->sa.logger);
-				struct ppk_id_payload payl = { .type = 0, };
-				create_ppk_id_payload(&ppk_id, &payl);
-				if (DBGP(DBG_BASE)) {
-					DBG_log("ppk type: %d", (int) payl.type);
-					DBG_dump_hunk("ppk_id from payload:", payl.ppk_id);
-				}
-
+				const struct ppk_id_payload payl =
+					ppk_id_payload(PPK_ID_FIXED, ppk_id, ike->sa.logger);
 				struct pbs_out ppks;
 				if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
 					return STF_INTERNAL_ERROR;
@@ -298,8 +292,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		} else {
 			for (unsigned i = 0; i < ppk_ids_shunks->len; i++) {
 				const struct secret_ppk_stuff *ppk =
-					get_connection_ppk(c, /*ppk_id*/NULL,
-							   /*index*/i);
+					get_connection_ppk(c, null_shunk, /*index*/i);
 				if (ppk != NULL) {
 					found_one = true;
 					chunk_t ppk_confirmation =
@@ -309,10 +302,10 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 								      &ike->sa.st_ike_spis,
 								      ike->sa.logger);
 					/* cast away const! */
-					ppk_id = chunk2((void *) ppk_ids_shunks->item[i].ptr,
-							ppk_ids_shunks->item[i].len);
-					struct ppk_id_payload payl = { .type = 0, };
-					create_ppk_id_payload(&ppk_id, &payl);
+					shunk_t ppk_id = ppk_ids_shunks->item[i];
+					const struct ppk_id_payload payl =
+						ppk_id_payload(PPK_ID_FIXED, ppk_id,
+							       ike->sa.logger);
 					struct pbs_out ppks;
 					if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
 						return STF_INTERNAL_ERROR;
@@ -481,7 +474,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 			const struct secret_ppk_stuff *ppk_candidate =
 				get_connection_ppk(ike->sa.st_connection,
-						   /*ppk_id*/&payl.ppk_id_payl.ppk_id,
+						   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id_payl.ppk_id),
 						   /*index*/0);
 
 			if (ppk_candidate != NULL) {
@@ -495,9 +488,10 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					dbg("found matching PPK, send PPK_IDENTITY back");
 					ppk = ppk_candidate;
 					/* we have a match, send PPK_IDENTITY back */
-					struct ppk_id_payload ppk_id_p = { .type = 0, };
-					create_ppk_id_payload(&payl.ppk_id_payl.ppk_id, &ppk_id_p);
-
+					const struct ppk_id_payload ppk_id_p =
+						ppk_id_payload(PPK_ID_FIXED,
+							       payl.ppk_id_payl.ppk_id,
+							       ike->sa.logger);
 					struct pbs_out ppks;
 					if (!open_v2N_output_pbs(response.pbs, v2N_PPK_IDENTITY, &ppks)) {
 						return STF_INTERNAL_ERROR;
@@ -509,8 +503,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				}
 				free_chunk_content(&ppk_confirmation);
 			}
-			free_chunk_content(&payl.ppk_id_payl.ppk_id);
-			free_chunk_content(&payl.ppk_confirmation);
 			ppk_id_key_payls = ppk_id_key_payls->next;
 		}
 
@@ -666,9 +658,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 		}
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk(ike->sa.st_connection,
-					   /*ppk_id*/&payl.ppk_id,
+					   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 					   /*index*/0);
-		free_chunk_content(&payl.ppk_id);
 
 		recalc_v2_ppk_interm_keymat(ike, ppk->key,
 					    &ike->sa.st_ike_spis,
