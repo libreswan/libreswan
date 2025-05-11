@@ -386,7 +386,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	/* rebuild the SPDs */
 	discard_connection_spds(cc);
 	PEXPECT(cc->logger, oriented(cc));
-	add_connection_spds(cc);
+	build_connection_spds_from_proposals(cc);
 
 	return true;
 }

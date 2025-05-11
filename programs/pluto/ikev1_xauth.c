@@ -1131,7 +1131,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	append_end_selector(c->remote, selector_info(selector), selector, verbose.logger, HERE);
 
 	discard_connection_spds(c);
-	add_connection_spds(c);
+	build_connection_spds_from_proposals(c);
 
 	return true;
 }
