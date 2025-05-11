@@ -168,9 +168,11 @@ struct whack_end {
 	char *updown;		/* string */
 	char *virt;
 	char *addresspool;
-	bool xauth_server;	/* for XAUTH */
-	bool xauth_client;
-	char *xauth_username;
+
+	enum yn_options xauthserver;	/* for XAUTH */
+	enum yn_options xauthclient;
+	char *xauthusername;
+
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 	char *sendcert;
 	enum eap_options eap;

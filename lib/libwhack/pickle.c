@@ -332,7 +332,7 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_STRING(&end->groups) &&
 		PICKLE_STRING(&end->updown) &&
 		PICKLE_STRING(&end->virt) &&
-		PICKLE_STRING(&end->xauth_username) &&
+		PICKLE_STRING(&end->xauthusername) &&
 		PICKLE_STRING(&end->host_addr_name) &&
 		PICKLE_STRING(&end->interface_ip) &&
 		PICKLE_STRING(&end->vti) &&
