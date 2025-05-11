@@ -60,50 +60,26 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 
 	dbg("%s() nr tokens %u", __func__, tokens->len);
 
-	for (unsigned pass = 1; pass <= 2; pass++) {
-		ITEMS_FOR_EACH(token, tokens) {
-			passert(token->len > 0);
-			ip_token tmp_token;
-			ip_address tmp_nonzero;
-			err_t e = ttoselector_num(*token, input_afi, &tmp_token, &tmp_nonzero);
-			const struct ip_info *afi = selector_info(tmp_token);
-			switch (pass) {
-			case 1:
-				/* validate during first pass */
-				if (e != NULL) {
-					diag_t d = diag(PRI_SHUNK" invalid, %s",
-							pri_shunk(*token), e);
-					pfree(tokens);
-					return d;
-				}
-				if (tmp_nonzero.is_set && !nonzero_host->is_set) {
-					*nonzero_host = tmp_nonzero; /* save first */
-				}
-				break;
-			case 2:
-				/* save value during second pass */
-				passert(e == NULL);
-				output->ip[afi->ip_index].list[output->ip[afi->ip_index].len] = tmp_token;
-				break;
-			}
-			/* advance the lengths */
-			output->ip[afi->ip_index].len++;
+	output->list = alloc_things(ip_token, tokens->len, "selectors");
+	output->len = tokens->len;
+
+	unsigned nr = 0;
+	ITEMS_FOR_EACH(token, tokens) {
+		ip_address tmp_nonzero;
+		err_t e = ttoselector_num(*token, input_afi,
+					  &output->list[nr++],
+					  &tmp_nonzero);
+		/* validate during first pass */
+		if (e != NULL) {
+			diag_t d = diag(PRI_SHUNK" invalid, %s",
+					pri_shunk(*token), e);
+			pfree(tokens);
+			pfree(output->list);
+			zero(output);
+			return d;
 		}
-		switch (pass) {
-		case 1:
-			/*
-			 * Pass 1.5: Allocate.
-			 */
-			output->list = alloc_things(ip_token, tokens->len, "selectors");
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				enum ip_index ip = afi->ip_index;
-				output->ip[ip].list = output->list + output->len;
-				output->len += output->ip[ip].len;
-				output->ip[ip].len = 0; /* ready for second pass */
-			}
-			break;
-		case 2:
-			break;
+		if (tmp_nonzero.is_set && !nonzero_host->is_set) {
+			*nonzero_host = tmp_nonzero; /* save first */
 		}
 	}
 

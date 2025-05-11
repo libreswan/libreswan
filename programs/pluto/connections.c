@@ -4275,7 +4275,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * end.  Either both ends use a AFI or both don't.
 	 */
 
-	struct {
+	struct end_family {
 		bool used;
 		const char *field;
 		char *value;
@@ -4284,26 +4284,30 @@ static diag_t extract_connection(const struct whack_message *wm,
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		const ip_ranges *const pools = &c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (selectors->ip[afi->ip_index].len > 0) {
-					end_family[end][afi->ip_index].used = true;
-					end_family[end][afi->ip_index].field = "subnet";
-					end_family[end][afi->ip_index].value = whack_ends[end]->subnet;
+			FOR_EACH_ITEM(selector, selectors) {
+				const struct ip_info *afi = selector_type(selector);
+				struct end_family *family = &end_family[end][afi->ip_index];
+				if (!family->used) {
+					family->used = true;
+					family->field = "subnet";
+					family->value = whack_ends[end]->subnet;
 				}
 			}
 		} else if (pools->len > 0) {
 			FOR_EACH_ITEM(range, pools) {
 				const struct ip_info *afi = range_type(range);
 				/* only one for now */
-				passert(end_family[end][afi->ip_index].used == false);
-				end_family[end][afi->ip_index].used = true;
-				end_family[end][afi->ip_index].field = "addresspool";
-				end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
+				struct end_family *family = &end_family[end][afi->ip_index];
+				passert(family->used == false);
+				family->used = true;
+				family->field = "addresspool";
+				family->value = whack_ends[end]->addresspool;
 			}
 		} else {
-			end_family[end][host_afi->ip_index].used = true;
-			end_family[end][host_afi->ip_index].field = "";
-			end_family[end][host_afi->ip_index].value = whack_ends[end]->host_addr_name;
+			struct end_family *family = &end_family[end][host_afi->ip_index];
+			family->used = true;
+			family->field = "";
+			family->value = whack_ends[end]->host_addr_name;
 		}
 	}
 
@@ -5238,7 +5242,6 @@ void append_end_selector(struct connection_end *end,
 
 	/* space? */
 	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
-	PASSERT_WHERE(logger, where, end->child.selectors.proposed.ip[afi->ip_index].len == 0);
 
 	/*
 	 * Ensure proposed is pointing at assigned aka scratch.
@@ -5254,10 +5257,6 @@ void append_end_selector(struct connection_end *end,
 	/* append the selector to assigned */
 	unsigned i = end->child.selectors.proposed.len++;
 	end->child.selectors.assigned[i] = selector;
-
-	/* keep IPv[46] table in sync */
-	end->child.selectors.proposed.ip[afi->ip_index].len = 1;
-	end->child.selectors.proposed.ip[afi->ip_index].list = &end->child.selectors.assigned[i];
 
 	selector_buf nb;
 	ldbg(logger, "%s() %s.child.selectors.proposed[%d] %s "PRI_WHERE,
