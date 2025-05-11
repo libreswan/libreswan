@@ -533,7 +533,7 @@ const struct option optarg_options[] = {
 #ifdef KERNEL_XFRM
 	{ OPT("use-xfrm"), no_argument, NULL, OPT_USE_XFRM },
 #endif
-	{ OBSOLETE_OPT("interface", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
+	{ IGNORE_OPT("interface", "not-implemented", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
 	{ OPT("listen", "<ifaddr>"), required_argument, NULL, OPT_LISTEN },
 	{ OPT("listen-tcp"), no_argument, NULL, OPT_LISTEN_TCP },
 	{ OPT("no-listen-udp"), no_argument, NULL, OPT_NO_LISTEN_UDP },

@@ -46,9 +46,10 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 		}
 		const char *optname = optarg_options[optarg_index].name;
 		const char *optmeta = optname + strlen(optname);	/* at '\0?' */
-		if (memeq(optmeta, METAOPT_OBSOLETE, 2)) {
+		if (memeq(optmeta, METAOPT_IGNORE, 2)) {
+			const char *release = optmeta + 2;
 			llog(RC_LOG|NO_PREFIX, logger,
-			     "warning: option \"--%s\" is obsolete; ignored", optname);
+			     "warning: ignoring option \"--%s\" that was removed in Libreswan %s", optname, release);
 			continue;	/* ignore it! */
 		}
 		if (memeq(optmeta, METAOPT_REPLACE, 2)) {
@@ -163,7 +164,7 @@ void optarg_usage(const char *progname, const char *arguments,
 			continue;
 		}
 
-		if (memeq(meta, METAOPT_OBSOLETE, 2)) {
+		if (memeq(meta, METAOPT_IGNORE, 2)) {
 			/*
 			 * Option is no longer valid, skip.
 			 */
