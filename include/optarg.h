@@ -59,11 +59,11 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
  *
  */
 
-#define METAOPT_RENAME   "\0>"		/* warn that option was renamed */
+#define METAOPT_REPLACE   "\0>"		/* warn that option was replaced */
 #define METAOPT_OBSOLETE "\0!"		/* warn, and ignore, option */
 #define METAOPT_HEADING  "\r\a\n\t"	/* new line with heading */
 
-#define RENAME_OPT(OLD, NEW, ...)	OLD METAOPT_RENAME NEW
+#define REPLACE_OPT(OLD, NEW, RELEASE, ...)	OLD METAOPT_REPLACE NEW "\n" RELEASE
 #define OBSOLETE_OPT(OLD, ...)		OLD METAOPT_OBSOLETE
 #define HEADING_OPT(HEADING)		{ METAOPT_HEADING HEADING, no_argument, NULL, 0, }
 #define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__

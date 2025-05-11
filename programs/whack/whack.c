@@ -848,8 +848,8 @@ const struct option optarg_options[] = {
 	{ "iptfs-drop-time\0", required_argument, NULL, CD_IPTFS_DROP_TIME },
 
 	{ OPT("nat-keepalive", "YES|no"), required_argument, NULL,  CD_NAT_KEEPALIVE },
-	{ RENAME_OPT("no-nat_keepalive", "nat-keepalive"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
-	{ RENAME_OPT("no-nat-keepalive", "nat-keepalive"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ REPLACE_OPT("no-nat_keepalive", "nat-keepalive", "5.3"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ REPLACE_OPT("no-nat-keepalive", "nat-keepalive", "5.3"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt\0", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt\0", required_argument, NULL, CD_IKEV1_NATT },
 	{ "initialcontact\0", no_argument, NULL,  CD_INITIAL_CONTACT },
@@ -895,7 +895,7 @@ const struct option optarg_options[] = {
 	{ "conn-mark\0", required_argument, NULL, CD_CONN_MARK },
 	{ "conn-mark-in\0", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out\0", required_argument, NULL, CD_CONN_MARK_OUT },
-	{ RENAME_OPT("vtiip", "vti"),  required_argument, NULL, END_VTI }, /* backward compat */
+	{ REPLACE_OPT("vtiip", "vti", "5.3"),  required_argument, NULL, END_VTI }, /* backward compat */
 	{ "vti\0",  required_argument, NULL, END_VTI },
 	{ "vti-iface\0", required_argument, NULL, CD_VTI_INTERFACE }, /* backward compat */
 	{ "vti-interface\0", required_argument, NULL, CD_VTI_INTERFACE },

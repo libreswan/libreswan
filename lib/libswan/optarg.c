@@ -51,9 +51,20 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 			     "warning: option \"--%s\" is obsolete; ignored", optname);
 			continue;	/* ignore it! */
 		}
-		if (memeq(optmeta, METAOPT_RENAME, 2)) {
-			llog(RC_LOG, logger,
-			     "warning: option \"--%s\" is obsolete; use \"--%s\"", optname, optmeta+2);
+		if (memeq(optmeta, METAOPT_REPLACE, 2)) {
+			/* NEWNAME\nVERSION */
+			shunk_t cursor = shunk1(optmeta + 2);
+			char delim;
+			shunk_t newname = shunk_token(&cursor, &delim, "\n");
+			shunk_t release = cursor;
+			LLOG_JAMBUF(RC_LOG|NO_PREFIX, logger, buf) {
+				jam_string(buf, "warning: option \"--");
+				jam_string(buf, optname);
+				jam_string(buf, "\" was replaced by \"--");
+				jam_shunk(buf, newname);
+				jam_string(buf, "\" in libreswan version ");
+				jam_shunk(buf, release);
+			}
 		}
 		if (c == 0) {
 			/*
@@ -144,9 +155,9 @@ void optarg_usage(const char *progname, const char *arguments,
 		/* parse '\0...' meta characters */
 		const char *meta = nm + strlen(nm);
 
-		if (memeq(meta, METAOPT_RENAME, 2)) {
+		if (memeq(meta, METAOPT_REPLACE, 2)) {
 			/*
-			 * Option has been renamed, don't show old
+			 * Option has been replaced, don't show old
 			 * name.
 			 */
 			continue;
