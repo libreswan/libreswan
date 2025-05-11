@@ -135,13 +135,13 @@ static void help(void)
 #ifdef HAVE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
 #endif
-		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
 		"	[--dontrekey] [--aggressive] \\\n"
 		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
 		"	[--encapsulation[={auto,yes,no}] [--nat-keepalive {yes,no}] \\\n"
 		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
-		"	[--xauthserver | --xauthclient] \\\n"
+		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
+		"	[--xauthserver[={YES,no}]] [ --xauthclient[={YES,no}] ] \\\n"
 		"	[--addresspool <network range>] \\\n"
 		"	[--modecfgserver[={yes,no}] | --modecfgclient[={yes,no}]] [--modecfgpull[={yes,no}]] \\\n"
 		"	[--modecfgdns <ip-address, ip-address>  \\\n"
@@ -848,8 +848,8 @@ const struct option optarg_options[] = {
 	{ "iptfs-drop-time\0", required_argument, NULL, CD_IPTFS_DROP_TIME },
 
 	{ OPT("nat-keepalive", "YES|no"), required_argument, NULL,  CD_NAT_KEEPALIVE },
-	{ RENAME_OPT("no-nat_keepalive", "nat-keepalive"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
-	{ RENAME_OPT("no-nat-keepalive", "nat-keepalive"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ REPLACE_OPT("no-nat_keepalive", "nat-keepalive", "5.3"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
+	{ REPLACE_OPT("no-nat-keepalive", "nat-keepalive", "5.3"), no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt\0", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt\0", required_argument, NULL, CD_IKEV1_NATT },
 	{ "initialcontact\0", no_argument, NULL,  CD_INITIAL_CONTACT },
@@ -865,9 +865,9 @@ const struct option optarg_options[] = {
 	{ "accept-redirect\0", required_argument, NULL, CD_ACCEPT_REDIRECT },
 	{ "accept-redirect-to\0", required_argument, NULL, CD_ACCEPT_REDIRECT_TO },
 
-	{ "xauth\0", no_argument, NULL, END_XAUTHSERVER },
-	{ "xauthserver\0", no_argument, NULL, END_XAUTHSERVER },
-	{ "xauthclient\0", no_argument, NULL, END_XAUTHCLIENT },
+	{ REPLACE_OPT("xauth", "xauthserver", "5.3"), no_argument, NULL, END_XAUTHSERVER },
+	{ OPT("xauthserver", "YES|no"), optional_argument, NULL, END_XAUTHSERVER },
+	{ OPT("xauthclient", "YES|no"), optional_argument, NULL, END_XAUTHCLIENT },
 	{ "xauthby\0", required_argument, NULL, CD_XAUTHBY },
 	{ "xauthfail\0", required_argument, NULL, CD_XAUTHFAIL },
 	{ "modecfgpull\0", optional_argument, NULL, CD_MODECFGPULL },
@@ -895,7 +895,7 @@ const struct option optarg_options[] = {
 	{ "conn-mark\0", required_argument, NULL, CD_CONN_MARK },
 	{ "conn-mark-in\0", required_argument, NULL, CD_CONN_MARK_IN },
 	{ "conn-mark-out\0", required_argument, NULL, CD_CONN_MARK_OUT },
-	{ RENAME_OPT("vtiip", "vti"),  required_argument, NULL, END_VTI }, /* backward compat */
+	{ REPLACE_OPT("vtiip", "vti", "5.3"),  required_argument, NULL, END_VTI }, /* backward compat */
 	{ "vti\0",  required_argument, NULL, END_VTI },
 	{ "vti-iface\0", required_argument, NULL, CD_VTI_INTERFACE }, /* backward compat */
 	{ "vti-interface\0", required_argument, NULL, CD_VTI_INTERFACE },
@@ -2139,12 +2139,12 @@ int main(int argc, char **argv)
 			child_family.type = &ipv6_info;
 			continue;
 
-		case END_XAUTHSERVER:	/* --xauthserver */
-			end->xauth_server = true;
+		case END_XAUTHSERVER:	/* --xauthserver[={yes,no}] */
+			end->xauthserver = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
-		case END_XAUTHCLIENT:	/* --xauthclient */
-			end->xauth_client = true;
+		case END_XAUTHCLIENT:	/* --xauthclient[={yes,no}] */
+			end->xauthclient =  optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case OPT_USERNAME:	/* --username, was --xauthname */
@@ -2153,7 +2153,7 @@ int main(int argc, char **argv)
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			end->xauth_username = optarg;
+			end->xauthusername = optarg;
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
 			usernamelen = jam_str(xauthusername, sizeof(xauthusername), optarg) - xauthusername + 1;

@@ -183,8 +183,8 @@ enum keywords {
 	 * initial ones come in left/right variants.
 	 */
 
-	KNCF_XAUTHSERVER,	/* left/right */
-	KNCF_XAUTHCLIENT,	/* left/right */
+	KWYN_XAUTHSERVER,	/* left/right */
+	KWYN_XAUTHCLIENT,	/* left/right */
 	KNCF_MODECONFIGSERVER,	/* left/right */
 	KNCF_MODECONFIGCLIENT,	/* left/right */
 	KNCF_CAT,	/* left/right */

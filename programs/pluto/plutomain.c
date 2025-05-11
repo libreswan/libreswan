@@ -509,11 +509,11 @@ const struct option optarg_options[] = {
 	HEADING_OPT("  Configuration:"),
 	{ OPT("rundir", "<dirname>"), required_argument, NULL, OPT_RUNDIR }, /* was ctlbase */
 	{ OPT("secretsfile", "<secrets-file>"), required_argument, NULL, OPT_SECRETSFILE },
-	{ RENAME_OPT("coredir", "dumpdir"), required_argument, NULL, OPT_DUMPDIR },	/* redundant spelling */
+	{ REPLACE_OPT("coredir", "dumpdir", "3.9"), required_argument, NULL, OPT_DUMPDIR },	/* redundant spelling */
 	{ OPT("dumpdir", "<dirname>"), required_argument, NULL, OPT_DUMPDIR },
 	{ OPT("statsbin", "<filename>"), required_argument, NULL, OPT_STATSBIN },
 	{ OPT("ipsecdir", "<dirname>"), required_argument, NULL, OPT_IPSECDIR },
-	{ RENAME_OPT("foodgroupsdir", "ipsecdir"), required_argument, NULL, OPT_IPSECDIR },	/* redundant spelling */
+	{ REPLACE_OPT("foodgroupsdir", "ipsecdir", "3.9"), required_argument, NULL, OPT_IPSECDIR },	/* redundant spelling */
 	{ OPT("nssdir", "<dirname>"), required_argument, NULL, OPT_NSSDIR },	/* nss-tools use -d */
 	{ OPT("nhelpers", "<number>"), required_argument, NULL, OPT_NHELPERS },
 	{ OPT("leak-detective"), no_argument, NULL, OPT_LEAK_DETECTIVE },
@@ -533,7 +533,7 @@ const struct option optarg_options[] = {
 #ifdef KERNEL_XFRM
 	{ OPT("use-xfrm"), no_argument, NULL, OPT_USE_XFRM },
 #endif
-	{ OBSOLETE_OPT("interface", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
+	{ IGNORE_OPT("interface", "not-implemented", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
 	{ OPT("listen", "<ifaddr>"), required_argument, NULL, OPT_LISTEN },
 	{ OPT("listen-tcp"), no_argument, NULL, OPT_LISTEN_TCP },
 	{ OPT("no-listen-udp"), no_argument, NULL, OPT_NO_LISTEN_UDP },

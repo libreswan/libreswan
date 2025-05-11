@@ -1343,9 +1343,13 @@ static diag_t extract_host_end(struct host_end *host,
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = src->host_type;
 	host_config->addr_name = clone_str(src->host_addr_name, "host ip");
-	host_config->xauth.server = src->xauth_server;
-	host_config->xauth.client = src->xauth_client;
-	host_config->xauth.username = clone_str(src->xauth_username, "xauth username");
+	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
+					       YN_NO, wm, logger);
+	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
+					       YN_NO, wm, logger);
+	host_config->xauth.username = extract_string(leftright, "xauthusername",
+						     src->xauthusername,
+						     wm, logger);
 	host_config->eap = src->eap;
 
 	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {

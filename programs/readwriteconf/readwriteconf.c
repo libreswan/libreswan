@@ -50,8 +50,8 @@ const struct option optarg_options[] =
 	{ "conn\0<conn-name>",   required_argument, NULL, OPT_CONN },
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
-	{ "rootdir"METAOPT_OBSOLETE, no_argument, NULL, 0, },
-	{ "rootdir2"METAOPT_OBSOLETE, no_argument, NULL, 0, },
+	{ IGNORE_OPT("rootdir", "5.3"), no_argument, NULL, 0, },
+	{ IGNORE_OPT("rootdir2", "5.3"), no_argument, NULL, 0, },
 	{ "nosetup",             no_argument, NULL, OPT_NOSETUP },
 	{ "help",                no_argument, NULL, OPT_HELP },
 	{ 0, 0, 0, 0 }
