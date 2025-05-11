@@ -167,7 +167,8 @@ void vdbg_connection(const struct connection *c,
 	/* selectors local->remote */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
-		jam_string(buf, "selectors:");
+		jam_string(buf, "selectors");
+		jam_string(buf, " proposed:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
 			FOR_EACH_ITEM(selector, &end->selectors.proposed) {
 				jam_string(buf, " ");
@@ -175,7 +176,15 @@ void vdbg_connection(const struct connection *c,
 			}
 			jam_string(buf, " ->");
 		}
-		jam_string(buf, "; lease:");
+		jam_string(buf, " accepted:");
+		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
+			FOR_EACH_ITEM(selector, &end->selectors.accepted) {
+				jam_string(buf, " ");
+				jam_selector(buf, selector);
+			}
+			jam_string(buf, " ->");
+		}
+		jam_string(buf, "; leases:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
 			FOR_EACH_ELEMENT(lease, end->lease) {
 				if (lease->is_set) {
@@ -2090,11 +2099,13 @@ static void mark_parse(/*const*/ char *wmmark,
 }
 
 /*
- * Turn the config selectors / addresspool / host-addr into proposals.
+ * Turn the config's selectors / addresspool / host-addr into
+ * proposals.
  */
 
-void add_proposals(struct connection *d, const struct ip_info *host_afi,
-		   struct verbose verbose)
+void build_connection_proposals_from_configs(struct connection *d,
+					     const struct ip_info *host_afi,
+					     struct verbose verbose)
 {
 	vdbg("%s() host-afi=%s", __func__, (host_afi == NULL ? "N/A" : host_afi->ip_name));
 	verbose.level++;
@@ -2182,8 +2193,12 @@ void add_proposals(struct connection *d, const struct ip_info *host_afi,
 		}
 
 		vexpect(is_permanent(d) || is_group(d) || is_template(d));
-		vdbg("%s selector proposals from unset host family %s",
+		vdbg("%s selector proposals from host family %s",
 		     leftright, host_afi->ip_name);
+		/*
+		 * Note: not afi->selector.all.  It needs to
+		 * differentiate so it knows it is to be updated.
+		 */
 		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
 	}
 }
@@ -4336,7 +4351,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	VERBOSE_DBGP(DBG_BASE, c->logger, "%s() ...", __func__);
-	add_proposals(c, host_afi, verbose);
+	build_connection_proposals_from_configs(c, host_afi, verbose);
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
@@ -5199,8 +5214,13 @@ void append_end_selector(struct connection_end *end,
 {
 	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
 				      selector_info(selector) == afi));
+
+	/* space? */
+	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
+	PASSERT_WHERE(logger, where, end->child.selectors.proposed.ip[afi->ip_index].len == 0);
+
 	/*
-	 * Either uninitialized, or using the (first) scratch entry
+	 * Ensure proposed is pointing at assigned aka scratch.
 	 */
 	if (end->child.selectors.proposed.list == NULL) {
 		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len == 0);
@@ -5209,13 +5229,11 @@ void append_end_selector(struct connection_end *end,
 		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len > 0);
 		PASSERT_WHERE(logger, where, end->child.selectors.proposed.list == end->child.selectors.assigned);
 	}
-	/* space? */
-	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
-	PASSERT_WHERE(logger, where, end->child.selectors.proposed.ip[afi->ip_index].len == 0);
 
-	/* append the selector to assigned; always initlaize .list */
+	/* append the selector to assigned */
 	unsigned i = end->child.selectors.proposed.len++;
 	end->child.selectors.assigned[i] = selector;
+
 	/* keep IPv[46] table in sync */
 	end->child.selectors.proposed.ip[afi->ip_index].len = 1;
 	end->child.selectors.proposed.ip[afi->ip_index].list = &end->child.selectors.assigned[i];

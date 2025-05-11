@@ -358,7 +358,7 @@ struct connection *spd_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(d);
 
 	/* leave breadcrumb */
@@ -389,7 +389,7 @@ struct connection *labeled_template_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	add_proposals(p, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_configs(p, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(p);
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
@@ -428,7 +428,7 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
 	c->child.sec_label = clone_hunk(sec_label, __func__);
 
-	add_proposals(c, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_configs(c, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(c);
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
@@ -455,7 +455,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(d);
 
 	connection_buf tb;
@@ -484,7 +484,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					   verbose, where);
 
 	/* real selectors are still unknown */
-	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	add_connection_spds(d);
 
 	connection_buf tb;
