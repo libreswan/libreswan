@@ -56,6 +56,7 @@ OBJS += shunt_names.o
 OBJS += global_redirect_names.o
 OBJS += send_ca_policy_names.o
 OBJS += sendcert_policy_names.o
+OBJS += xauthby_names.o
 
 OBJS += fips_mode.o
 OBJS += fips_mode_names.o

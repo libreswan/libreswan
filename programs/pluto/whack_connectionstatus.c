@@ -523,13 +523,12 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, " xauth them:");
 		jam_string(buf, COMBO(c->remote->config->host.xauth));
 		jam_string(buf, ",");
-		/* should really be an enum name */
-		jam_string(buf, " ");
-		jam_string(buf, (c->local->config->host.xauth.server ?
-				 c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
-				 c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
-				 "xauthby:alwaysok;" :
-				 ""));
+		jam_string(buf, " "); /* XXX: BOGUS */
+		if (c->local->config->host.xauth.server) {
+			jam_string(buf, " xauthby:");
+			jam_sparse_short(buf, &xauthby_names, c->config->xauthby);
+			jam_string(buf, ";");
+		}
 		jam_string(buf, " my_username=");
 		jam_string(buf, (c->local->config->host.xauth.username == NULL ? "[any]" :
 				 c->local->config->host.xauth.username));

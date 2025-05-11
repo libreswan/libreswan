@@ -1051,7 +1051,6 @@ int main(int argc, char **argv)
 		 * needed.
 		 */
 
-		.xauthby = XAUTHBY_FILE,
 		.xauthfail = XAUTHFAIL_HARD,
 
 		.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS, /* max uint_64_t */
@@ -2218,20 +2217,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
-			if (streq(optarg, "file")) {
-				msg.xauthby = XAUTHBY_FILE;
-				continue;
-#ifdef AUTH_HAVE_PAM
-			} else if (streq(optarg, "pam")) {
-				msg.xauthby = XAUTHBY_PAM;
-				continue;
-#endif
-			} else if (streq(optarg, "alwaysok")) {
-				msg.xauthby = XAUTHBY_ALWAYSOK;
-				continue;
-			} else {
-				optarg_fatal(logger, "unknown method");
-			}
+			msg.xauthby = optarg_sparse(logger, 0, &xauthby_names);
 			continue;
 
 		case CD_XAUTHFAIL:	/* --xauthfail */

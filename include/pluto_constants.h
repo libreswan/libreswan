@@ -117,12 +117,6 @@ enum keyword_auth {
 	AUTH_EAPONLY,
 };
 
-enum keyword_xauthby {
-	XAUTHBY_FILE = 0,
-	XAUTHBY_PAM = 1,
-	XAUTHBY_ALWAYSOK = 2,
-};
-
 enum keyword_xauthfail {
 	XAUTHFAIL_HARD = 0,
 	XAUTHFAIL_SOFT = 1,

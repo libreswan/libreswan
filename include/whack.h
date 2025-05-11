@@ -45,6 +45,7 @@
 #include "end.h"
 #include "shunt.h"
 #include "global_redirect.h"
+#include "xauthby.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -367,7 +368,7 @@ struct whack_message {
 	enum yn_options nm_configured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
-	enum keyword_xauthby xauthby;
+	enum xauthby xauthby;
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;

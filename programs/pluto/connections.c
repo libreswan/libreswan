@@ -3877,7 +3877,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		config->xauthby = wm->xauthby;
+		config->xauthby = extract_sparse("", "xauthby", wm->xauthby,
+						 /*value_when_unset*/XAUTHBY_FILE,
+						 /*value_when_never_negotiate*/XAUTHBY_FILE,
+						 &xauthby_names, wm, c->logger);
 		config->xauthfail = wm->xauthfail;
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
