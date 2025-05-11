@@ -262,7 +262,7 @@ enum keywords {
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
-	KNCF_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
+	KWYN_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KNCF_INITIAL_CONTACT,	/* send initial contact VID */
 	KNCF_CISCO_UNITY,	/* send cisco unity VID */
 	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,

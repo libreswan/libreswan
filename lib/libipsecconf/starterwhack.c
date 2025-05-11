@@ -336,10 +336,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
 
-	if (conn->values[KNCF_NAT_KEEPALIVE].set)
-		msg.nat_keepalive = conn->values[KNCF_NAT_KEEPALIVE].option;
-	else
-		msg.nat_keepalive = true;
+	msg.nat_keepalive = conn->values[KWYN_NAT_KEEPALIVE].option;
 
 	/* can be 0 aka unset */
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;

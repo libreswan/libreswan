@@ -119,7 +119,6 @@ static struct starter_config *alloc_starter_config(void)
 
 # define DOPT(kbf, v)  { d->values[kbf].option = (v); }
 
-	DOPT(KNCF_NAT_KEEPALIVE, true);    /* per conn */
 	DOPT(KNCF_TYPE, KS_TUNNEL);
 
 	DOPT(KNCF_INITIAL_CONTACT, true);
@@ -140,25 +139,13 @@ static struct starter_config *alloc_starter_config(void)
 
 # undef DOPT
 
-	d->ike_version = IKEv2;
-	d->authby = AUTHBY_NONE; /* blank goes to defaults */
-	d->never_negotiate_shunt = SHUNT_UNSET;
-	d->negotiation_shunt = SHUNT_UNSET;
-	d->failure_shunt = SHUNT_UNSET;
-
-	d->sighash_policy = POL_SIGHASH_DEFAULTS;
-
 	d->end[LEFT_END].leftright = "left";
-	d->end[LEFT_END].host_family = NULL;
-	d->end[LEFT_END].addr = unset_address;
-	d->end[LEFT_END].nexttype = KH_NOTSET;
-	d->end[LEFT_END].nexthop = unset_address;
 
 	d->end[RIGHT_END].leftright = "right";
-	d->end[RIGHT_END].host_family = NULL;
-	d->end[RIGHT_END].addr = unset_address;
-	d->end[RIGHT_END].nexttype = KH_NOTSET;
-	d->end[RIGHT_END].nexthop = unset_address;
+
+	d->ike_version = IKEv2;
+
+	d->sighash_policy = POL_SIGHASH_DEFAULTS;
 
 	d->xfrm_if_id = UINT32_MAX;
 

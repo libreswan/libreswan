@@ -356,7 +356,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "pfs",  kv_conn,  kt_sparse_name,  KNCF_PFS, &yn_option_names, NULL, },
   { "session-resumption",  kv_conn,  kt_sparse_name,  KNCF_SESSION_RESUMPTION, &yn_option_names, NULL, },
 
-  { "nat-keepalive",  kv_conn,  kt_bool,  KNCF_NAT_KEEPALIVE, NULL, NULL, },
+  { "nat-keepalive",  kv_conn,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, &yn_option_names, NULL, },
 
   { "initial-contact",  kv_conn,  kt_bool,  KNCF_INITIAL_CONTACT, NULL, NULL, },
   { "cisco-unity",  kv_conn,  kt_bool,  KNCF_CISCO_UNITY, NULL, NULL, },
