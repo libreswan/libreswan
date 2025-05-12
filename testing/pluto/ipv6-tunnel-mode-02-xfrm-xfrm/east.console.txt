@@ -105,7 +105,7 @@ Connection list:
 "v6-tunnel": 2001:db8:1:2::23[@east]...2001:db8:1:2::45[@west]; unrouted; my_ip=unset; their_ip=unset;
 "v6-tunnel":   host: oriented; local: 2001:db8:1:2::23; remote: 2001:db8:1:2::45;
 "v6-tunnel":   my_updown=ipsec _updown;
-"v6-tunnel":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"v6-tunnel":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "v6-tunnel":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "v6-tunnel":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "v6-tunnel":   sec_label:unset;

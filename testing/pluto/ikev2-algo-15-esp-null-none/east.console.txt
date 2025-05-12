@@ -15,7 +15,7 @@ east #
 "esp=null-none": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "esp=null-none":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "esp=null-none":   my_updown=ipsec _updown;
-"esp=null-none":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"esp=null-none":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "esp=null-none":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "esp=null-none":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "esp=null-none":   sec_label:unset;

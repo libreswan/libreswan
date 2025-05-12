@@ -15,7 +15,7 @@ road #
 "road-eastnet-psk": 192.1.3.209[@roadrandom]---192.1.3.254...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "road-eastnet-psk":   host: oriented; local: 192.1.3.209; remote: 192.1.2.23;
 "road-eastnet-psk":   my_updown=ipsec _updown;
-"road-eastnet-psk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"road-eastnet-psk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-eastnet-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "road-eastnet-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-eastnet-psk":   sec_label:unset;

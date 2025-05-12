@@ -502,10 +502,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	 * XXX: better way to do this would be to PBAD() the first
 	 * check! Then we'd really know.
 	 */
-#define COMBO(END)					\
-	((END).server && (END).client ? "BOTH!?!" :	\
-	 (END).server ? "server" :			\
-	 (END).client ? "client" :			\
+#define COMBO(END)						\
+	((END).server && (END).client ? "client+server" :	\
+	 (END).server ? "server" :				\
+	 (END).client ? "client" :				\
 	 "none")
 
 	SHOW_JAMBUF(s, buf) {
@@ -523,13 +523,14 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, " xauth them:");
 		jam_string(buf, COMBO(c->remote->config->host.xauth));
 		jam_string(buf, ",");
-		/* should really be an enum name */
-		jam_string(buf, " ");
-		jam_string(buf, (c->local->config->host.xauth.server ?
-				 c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
-				 c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
-				 "xauthby:alwaysok;" :
-				 ""));
+		if (c->local->config->host.xauth.server) {
+			jam_string(buf, " xauthby:");
+			jam_sparse_short(buf, &xauthby_names, c->config->xauthby);
+			jam_string(buf, ";");
+			jam_string(buf, " xauthfail:");
+			jam_sparse_short(buf, &xauthfail_names, c->config->xauthfail);
+			jam_string(buf, ";");
+		}
 		jam_string(buf, " my_username=");
 		jam_string(buf, (c->local->config->host.xauth.username == NULL ? "[any]" :
 				 c->local->config->host.xauth.username));

@@ -18,7 +18,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...%any[%fromcert]==={192.0.2.1-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "roadnet-eastnet-ipv4-psk-ikev1":   host: oriented; local: 192.1.2.23; remote: %any;
 "roadnet-eastnet-ipv4-psk-ikev1":   mycert=east; my_updown=ipsec _updown;
-"roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
+"roadnet-eastnet-ipv4-psk-ikev1":   xauth us:server, xauth them:server, xauthby:alwaysok; xauthfail:hard; my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
 "roadnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
@@ -39,7 +39,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev1"[1]: 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.254[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]==={192.0.2.1/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.1;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   host: oriented; local: 192.1.2.23; remote: 192.1.2.254; established ISAKMP SA: #3;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   mycert=east; my_updown=ipsec _updown;
-"roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; my_username=[any]; their_username=[any]
+"roadnet-eastnet-ipv4-psk-ikev1"[1]:   xauth us:server, xauth them:server, xauthby:alwaysok; xauthfail:hard; my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
 "roadnet-eastnet-ipv4-psk-ikev1"[1]:   sec_label:unset;

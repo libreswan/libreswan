@@ -128,7 +128,7 @@ west #
 "TUNNEL-A": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; routed-tunnel; my_ip=unset; their_ip=unset;
 "TUNNEL-A":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "TUNNEL-A":   mycert=west; my_updown=ipsec _updown;
-"TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-A":   sec_label:unset;
@@ -150,7 +150,7 @@ west #
 "TUNNEL-B": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.244/32; prospective erouted; eroute owner: #0
 "TUNNEL-B":     oriented; my_ip=unset; their_ip=unset;
 "TUNNEL-B":   mycert=west; my_updown=ipsec _updown;
-"TUNNEL-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"TUNNEL-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-B":   sec_label:unset;
@@ -171,7 +171,7 @@ west #
 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset;
 "TUNNEL-C":   mycert=west; my_updown=ipsec _updown;
-"TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-C":   sec_label:unset;
@@ -204,7 +204,7 @@ west #
 "TUNNEL-A": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.254/32; erouted; eroute owner: #2
 "TUNNEL-A":     oriented; my_ip=unset; their_ip=unset;
 "TUNNEL-A":   mycert=west; my_updown=ipsec _updown;
-"TUNNEL-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-A":   sec_label:unset;
@@ -226,7 +226,7 @@ west #
 "TUNNEL-C": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.234/32; erouted; eroute owner: #4
 "TUNNEL-C":     oriented; my_ip=unset; their_ip=unset;
 "TUNNEL-C":   mycert=west; my_updown=ipsec _updown;
-"TUNNEL-C":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "TUNNEL-C":   sec_label:unset;

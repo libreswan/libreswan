@@ -32,7 +32,7 @@ west #
 "westnet-eastnet-alias": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-alias":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-alias":   my_updown=ipsec _updown;
-"westnet-eastnet-alias":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-alias":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-alias":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-alias":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-alias":   sec_label:unset;
@@ -53,7 +53,7 @@ west #
 "westnet-eastnet-second": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-second":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-second":   my_updown=ipsec _updown;
-"westnet-eastnet-second":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-second":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-second":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-second":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-second":   sec_label:unset;

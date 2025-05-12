@@ -13,7 +13,7 @@ east #
 "east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
 "east":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "east":   my_updown=ipsec _updown;
-"east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "east":   sec_label:unset;

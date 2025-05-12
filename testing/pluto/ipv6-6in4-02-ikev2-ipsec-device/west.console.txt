@@ -35,7 +35,7 @@ west #
 "westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2001:db8:0:2::/64; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-6in4":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-6in4":   my_updown=ipsec _updown;
-"westnet-eastnet-6in4":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-6in4":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-6in4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-6in4":   sec_label:unset;

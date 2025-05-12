@@ -12,7 +12,7 @@ east #
 "east": 2001:db8:0:2::/64===2001:db8:1:2::23[@east]...%any==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;
 "east":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "east":   my_updown=ipsec _updown;
-"east":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "east":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "east":   sec_label:unset;

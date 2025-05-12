@@ -115,7 +115,7 @@ Connection list:
 "westnet-eastnet-esp-null-alg": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-esp-null-alg":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-esp-null-alg":   my_updown=ipsec _updown;
-"westnet-eastnet-esp-null-alg":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-esp-null-alg":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-esp-null-alg":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-esp-null-alg":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-esp-null-alg":   sec_label:unset;

@@ -110,7 +110,7 @@ Connection list:
 "northnet-westnet-ipv4-psk": 192.0.3.0/24===192.1.3.33[@north]...192.1.2.23[@east]===192.0.1.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "northnet-westnet-ipv4-psk":   host: oriented; local: 192.1.3.33; remote: 192.1.2.23; established ISAKMP SA: #1;
 "northnet-westnet-ipv4-psk":   my_updown=ipsec _updown;
-"northnet-westnet-ipv4-psk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"northnet-westnet-ipv4-psk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "northnet-westnet-ipv4-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "northnet-westnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "northnet-westnet-ipv4-psk":   sec_label:unset;

@@ -15,7 +15,7 @@ west #
 "nss-cert": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "nss-cert":   mycert=west; my_updown=ipsec _updown;
-"nss-cert":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"nss-cert":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert":   sec_label:unset;

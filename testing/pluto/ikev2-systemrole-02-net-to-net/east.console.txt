@@ -137,7 +137,7 @@ Connection list:
 "192.1.2.23-to-192.1.2.45": 192.1.2.23...192.1.2.45; routed-ondemand; my_ip=unset; their_ip=unset;
 "192.1.2.23-to-192.1.2.45":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "192.1.2.23-to-192.1.2.45":   my_updown=ipsec _updown;
-"192.1.2.23-to-192.1.2.45":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"192.1.2.23-to-192.1.2.45":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "192.1.2.23-to-192.1.2.45":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "192.1.2.23-to-192.1.2.45":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "192.1.2.23-to-192.1.2.45":   sec_label:unset;

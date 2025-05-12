@@ -3913,8 +3913,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		config->xauthby = wm->xauthby;
-		config->xauthfail = wm->xauthfail;
+		config->xauthby = extract_sparse("", "xauthby", wm->xauthby,
+						 /*value_when_unset*/XAUTHBY_FILE,
+						 /*value_when_never_negotiate*/XAUTHBY_FILE,
+						 &xauthby_names, wm, c->logger);
+		config->xauthfail = extract_sparse("", "xauthfail", wm->xauthfail,
+						   /*value_when_unset*/XAUTHFAIL_HARD,
+						   /*value_when_never_negotiate*/XAUTHFAIL_HARD,
+						   &xauthfail_names, wm, c->logger);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");

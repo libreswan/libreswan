@@ -121,7 +121,7 @@ Connection list:
 "v6-transport": 2001:db8:1:2::45[@west]...2001:db8:1:2::23[@east]; unrouted; my_ip=unset; their_ip=unset;
 "v6-transport":   host: oriented; local: 2001:db8:1:2::45; remote: 2001:db8:1:2::23;
 "v6-transport":   my_updown=ipsec _updown;
-"v6-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"v6-transport":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "v6-transport":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "v6-transport":   sec_label:unset;

@@ -36,7 +36,7 @@ east #
 "nss-cert-ocsp": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=192.0.1.254;
 "nss-cert-ocsp":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "nss-cert-ocsp":   mycert=east; my_updown=ipsec _updown;
-"nss-cert-ocsp":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"nss-cert-ocsp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-ocsp":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "nss-cert-ocsp":   sec_label:unset;

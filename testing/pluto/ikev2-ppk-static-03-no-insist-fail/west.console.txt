@@ -17,7 +17,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ppk":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown;
-"westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ppk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ipv4-psk-ppk":   sec_label:unset;
