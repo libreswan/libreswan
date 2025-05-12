@@ -343,12 +343,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.send_vendorid = conn->values[KNCF_SEND_VENDORID].option;
 
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
-	if (conn->values[KNCF_INITIAL_CONTACT].set)
-		msg.initial_contact = conn->values[KNCF_INITIAL_CONTACT].option;
+	msg.initial_contact = conn->values[KWYN_INITIAL_CONTACT].option;
 
 	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
-	if (conn->values[KNCF_CISCO_UNITY].set)
-		msg.cisco_unity = conn->values[KNCF_CISCO_UNITY].option;
+	msg.cisco_unity = conn->values[KWYN_CISCO_UNITY].option;
 
 	msg.fake_strongswan = conn->values[KNCF_FAKE_STRONGSWAN].option;
 
