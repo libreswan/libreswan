@@ -26,7 +26,7 @@
 
 typedef struct {
 	bool is_set;
-	enum ip_version version;
+	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
 	struct ip_bytes lo;
 	struct ip_bytes hi;
 } ip_range;
@@ -34,7 +34,7 @@ typedef struct {
 #define PRI_RANGE "<range-%s:IPv%d["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>"
 #define pri_range(R)					\
 		((R)->is_set ? "set" : "unset"),	\
-		(R)->version,				\
+		(R)->ip_version,				\
 		pri_ip_bytes((R)->lo),			\
 		pri_ip_bytes((R)->hi)
 

@@ -90,7 +90,7 @@ void ip_endpoint_check(void)
 			 */
 			e = (ip_endpoint) {
 				.is_set = true,
-				.version = a.version,
+				.ip_version = a.ip_version,
 				.bytes = a.bytes,
 				.hport = t->hport,
 				.ipproto = protocol->ipproto,

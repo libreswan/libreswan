@@ -38,7 +38,7 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 {
 	ip_range r = {
 		.is_set = true,
-		.version = afi->ip_version,
+		.ip_version = afi->ip_version,
 		.lo = lo,
 		.hi = hi,
 	};
@@ -138,7 +138,7 @@ const struct ip_info *range_info(const ip_range range)
 	}
 
 	/* may return NULL */
-	return ip_version_info(range.version);
+	return ip_version_info(range.ip_version);
 }
 
 bool range_is_unset(const ip_range *range)
@@ -231,10 +231,10 @@ bool range_eq_range(const ip_range l, const ip_range r)
 		return false;
 	}
 
-	return (ip_bytes_cmp(l.version, l.lo,
-			     r.version, r.lo) == 0 &&
-		ip_bytes_cmp(l.version, l.hi,
-			     r.version, r.hi) == 0);
+	return (ip_bytes_cmp(l.ip_version, l.lo,
+			     r.ip_version, r.lo) == 0 &&
+		ip_bytes_cmp(l.ip_version, l.hi,
+			     r.ip_version, r.hi) == 0);
 }
 
 bool address_in_range(const ip_address address, const ip_range range)
@@ -255,10 +255,10 @@ bool range_in_range(const ip_range inner, const ip_range outer)
 		return false;
 	}
 
-	return (ip_bytes_cmp(inner.version, inner.lo,
-			     outer.version, outer.lo) >= 0 &&
-		ip_bytes_cmp(inner.version, inner.hi,
-			     outer.version, outer.hi) <= 0);
+	return (ip_bytes_cmp(inner.ip_version, inner.lo,
+			     outer.ip_version, outer.lo) >= 0 &&
+		ip_bytes_cmp(inner.ip_version, inner.hi,
+			     outer.ip_version, outer.hi) <= 0);
 }
 
 ip_address range_start(const ip_range range)
@@ -289,13 +289,13 @@ bool range_overlaps_range(const ip_range l, const ip_range r)
 	}
 
 	/* l before r */
-	if (ip_bytes_cmp(l.version, l.hi,
-			 r.version, r.lo) < 0) {
+	if (ip_bytes_cmp(l.ip_version, l.hi,
+			 r.ip_version, r.lo) < 0) {
 		return false;
 	}
 	/* l after r */
-	if (ip_bytes_cmp(l.version, l.lo,
-			 r.version, r.hi) > 0) {
+	if (ip_bytes_cmp(l.ip_version, l.lo,
+			 r.ip_version, r.hi) > 0) {
 		return false;
 	}
 
@@ -436,8 +436,8 @@ void pexpect_range(const ip_range *r, where_t where)
 	}
 
 	if (r->is_set == false ||
-	    r->version == 0 ||
-	    ip_bytes_cmp(r->version, r->lo, r->version, r->hi) > 0) {
+	    r->ip_version == 0 ||
+	    ip_bytes_cmp(r->ip_version, r->lo, r->ip_version, r->hi) > 0) {
 		llog_pexpect(&global_logger, where, "invalid range: "PRI_RANGE, pri_range(r));
 	}
 }

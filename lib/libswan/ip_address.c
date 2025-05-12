@@ -31,7 +31,7 @@ ip_address address_from_raw(where_t where,
 {
 	ip_address a = {
 		.is_set = true,
-		.version = afi->ip_version,
+		.ip_version = afi->ip_version,
 		.bytes = bytes,
 	};
 	pexpect_address(&a, where);
@@ -90,7 +90,7 @@ const struct ip_info *address_info(const ip_address address)
 	}
 
 	/* may return NULL */
-	return ip_version_info(address.version);
+	return ip_version_info(address.ip_version);
 }
 
 shunk_t address_as_shunk(const ip_address *address)
@@ -243,7 +243,7 @@ bool address_eq_address(const ip_address l, const ip_address r)
 		return false;
 	}
 	/* must compare individual fields */
-	return (l.version == r.version &&
+	return (l.ip_version == r.ip_version &&
 		thingeq(l.bytes, r.bytes));
 }
 
@@ -270,7 +270,7 @@ void pexpect_address(const ip_address *a, where_t where)
 	}
 
 	if (a->is_set == false ||
-	    a->version == 0) {
+	    a->ip_version == 0) {
 		llog_pexpect(&global_logger, where, "invalid address: "PRI_ADDRESS, pri_address(a));
 	}
 }
