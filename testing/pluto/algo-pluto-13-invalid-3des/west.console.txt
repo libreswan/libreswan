@@ -22,7 +22,7 @@ west #
 "westnet-eastnet-aes256": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-aes256":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-aes256":   my_updown=ipsec _updown;
-"westnet-eastnet-aes256":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-aes256":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-aes256":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-aes256":   sec_label:unset;

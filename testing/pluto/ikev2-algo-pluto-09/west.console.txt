@@ -29,7 +29,7 @@ west #
 "westnet-eastnet-dh19": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "westnet-eastnet-dh19":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-dh19":   my_updown=ipsec _updown;
-"westnet-eastnet-dh19":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-dh19":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-dh19":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-dh19":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-dh19":   sec_label:unset;

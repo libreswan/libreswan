@@ -104,7 +104,7 @@ Connection list:
 "rw-eastnet-ipv6": 2001:db8:0:2::/64===2001:db8:1:2::23[@east]...%any==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;
 "rw-eastnet-ipv6":   host: oriented; local: 2001:db8:1:2::23; remote: %any;
 "rw-eastnet-ipv6":   my_updown=ipsec _updown;
-"rw-eastnet-ipv6":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"rw-eastnet-ipv6":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "rw-eastnet-ipv6":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "rw-eastnet-ipv6":   modecfg info: us:server, them:client, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "rw-eastnet-ipv6":   sec_label:unset;

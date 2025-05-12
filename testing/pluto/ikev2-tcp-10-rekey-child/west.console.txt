@@ -29,7 +29,7 @@ west #
 "west": 192.0.1.0/24===192.1.2.45:4500[@west]...192.1.2.23:4500[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 "west":   host: oriented; local: 192.1.2.45:4500; remote: 192.1.2.23:4500;
 "west":   my_updown=ipsec _updown;
-"west":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "west":   sec_label:unset;

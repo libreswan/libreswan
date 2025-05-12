@@ -103,7 +103,7 @@ Connection list:
 "west-rsasigkey-east-rsasigkey": 192.0.2.0/24===192.1.2.23...192.1.2.45===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;
 "west-rsasigkey-east-rsasigkey":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "west-rsasigkey-east-rsasigkey":   my_updown=ipsec _updown;
-"west-rsasigkey-east-rsasigkey":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"west-rsasigkey-east-rsasigkey":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "west-rsasigkey-east-rsasigkey":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "west-rsasigkey-east-rsasigkey":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "west-rsasigkey-east-rsasigkey":   sec_label:unset;

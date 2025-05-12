@@ -13,7 +13,7 @@ east #
 "east-any": 192.1.2.23...%any; unrouted; my_ip=unset; their_ip=unset;
 "east-any":   host: oriented; local: 192.1.2.23; remote: %any;
 "east-any":   my_updown=ipsec _updown;
-"east-any":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"east-any":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "east-any":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "east-any":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "east-any":   sec_label:unset;

@@ -67,7 +67,7 @@ west #
 "westnet-eastnet-ikev2a": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #1;
 "westnet-eastnet-ikev2a":   my_updown=ipsec _updown;
-"westnet-eastnet-ikev2a":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-ikev2a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2a":   sec_label:unset;
@@ -92,7 +92,7 @@ west #
 "westnet-eastnet-ikev2b": 192.0.100.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.200.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ikev2b":   my_updown=ipsec _updown;
-"westnet-eastnet-ikev2b":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-ikev2b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2b":   sec_label:unset;
@@ -116,7 +116,7 @@ west #
 "westnet-eastnet-ikev2c": 192.0.101.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ikev2c":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "westnet-eastnet-ikev2c":   my_updown=ipsec _updown;
-"westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet-ikev2c":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet-ikev2c":   sec_label:unset;

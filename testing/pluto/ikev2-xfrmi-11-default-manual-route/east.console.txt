@@ -107,7 +107,7 @@ Connection list:
 "westnet-eastnet": 0.0.0.0/0===192.1.2.23[@east]...192.1.2.45[@west]===0.0.0.0/0; routed-tunnel; my_ip=unset; their_ip=unset;
 "westnet-eastnet":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45; established IKE SA: #1;
 "westnet-eastnet":   my_updown=ipsec _updown;
-"westnet-eastnet":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"westnet-eastnet":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "westnet-eastnet":   sec_label:unset;

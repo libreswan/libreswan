@@ -101,7 +101,7 @@ Connection list:
 "roadnet-eastnet-ipv4-psk-ikev2": 0.0.0.0/0===192.1.2.23[@east]...192.1.3.209[@road]==={192.0.2.1-192.0.2.200}; unrouted; my_ip=unset; their_ip=unset;
 "roadnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.23; remote: 192.1.3.209;
 "roadnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
-"roadnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"roadnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
 "roadnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;

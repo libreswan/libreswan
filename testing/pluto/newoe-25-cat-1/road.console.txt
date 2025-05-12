@@ -111,7 +111,7 @@ Connection list:
 "block": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 "block":     oriented; my_ip=unset; their_ip=unset;
 "block":   my_updown=ipsec _updown;
-"block":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"block":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "block":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "block":   sec_label:unset;
@@ -132,7 +132,7 @@ Connection list:
 "clear": 192.1.3.209---192.1.3.254...%group; unrouted; eroute owner: #0
 "clear":     oriented; my_ip=unset; their_ip=unset;
 "clear":   my_updown=ipsec _updown;
-"clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear":   sec_label:unset;
@@ -152,7 +152,7 @@ Connection list:
 "clear":   conn serial: $1;
 "clear#192.1.2.253/32": 192.1.3.209---192.1.3.254...%any===192.1.2.253/32; routed-ondemand; my_ip=unset; their_ip=unset;
 "clear#192.1.2.253/32":   my_updown=ipsec _updown;
-"clear#192.1.2.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"clear#192.1.2.253/32":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear#192.1.2.253/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.2.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear#192.1.2.253/32":   sec_label:unset;
@@ -172,7 +172,7 @@ Connection list:
 "clear#192.1.3.253/32": 192.1.3.209---192.1.3.254...%any===192.1.3.253/32; prospective erouted; eroute owner: #0
 "clear#192.1.3.253/32":     oriented; my_ip=unset; their_ip=unset;
 "clear#192.1.3.253/32":   my_updown=ipsec _updown;
-"clear#192.1.3.253/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"clear#192.1.3.253/32":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear#192.1.3.253/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.3.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear#192.1.3.253/32":   sec_label:unset;
@@ -192,7 +192,7 @@ Connection list:
 "clear#192.1.3.254/32": 192.1.3.209---192.1.3.254...%any===192.1.3.254/32; prospective erouted; eroute owner: #0
 "clear#192.1.3.254/32":     oriented; my_ip=unset; their_ip=unset;
 "clear#192.1.3.254/32":   my_updown=ipsec _updown;
-"clear#192.1.3.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"clear#192.1.3.254/32":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear#192.1.3.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.3.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear#192.1.3.254/32":   sec_label:unset;
@@ -212,7 +212,7 @@ Connection list:
 "clear-or-private": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 "clear-or-private":     oriented; my_ip=unset; their_ip=unset;
 "clear-or-private":   my_updown=ipsec _updown;
-"clear-or-private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"clear-or-private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear-or-private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 "clear-or-private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "clear-or-private":   sec_label:unset;
@@ -233,7 +233,7 @@ Connection list:
 "private": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 "private":     oriented; my_ip=unset; their_ip=unset;
 "private":   my_updown=ipsec _updown;
-"private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 "private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "private":   sec_label:unset;
@@ -254,7 +254,7 @@ Connection list:
 "private-or-clear": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunisticgroup[ID_NULL]; unrouted; eroute owner: #0
 "private-or-clear":     oriented; my_ip=unset; their_ip=unset;
 "private-or-clear":   my_updown=ipsec _updown;
-"private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 "private-or-clear":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "private-or-clear":   sec_label:unset;
@@ -275,7 +275,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24": 192.1.3.209[ID_NULL]---192.1.3.254...%opportunistic[ID_NULL]===192.1.2.0/24; prospective erouted; eroute owner: #0
 "private-or-clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset;
 "private-or-clear#192.1.2.0/24":   my_updown=ipsec _updown;
-"private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear#192.1.2.0/24":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 "private-or-clear#192.1.2.0/24":   sec_label:unset;

@@ -33,7 +33,7 @@ west #
 "road-chain-B": 192.0.1.254/32===192.1.2.45[@west_chain_endcert.testing.libreswan.org]...192.1.2.23[@east.testing.libreswan.org]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=unset;
 "road-chain-B":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "road-chain-B":   mycert=west_chain_endcert; my_updown=ipsec _updown;
-"road-chain-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"road-chain-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-chain-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-chain-B":   sec_label:unset;

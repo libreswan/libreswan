@@ -13,7 +13,7 @@ east #
 "ipv4-psk-ikev2-transport": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;
 "ipv4-psk-ikev2-transport":   host: oriented; local: 192.1.2.23; remote: 192.1.2.45;
 "ipv4-psk-ikev2-transport":   my_updown=ipsec _updown;
-"ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+"ipv4-psk-ikev2-transport":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "ipv4-psk-ikev2-transport":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "ipv4-psk-ikev2-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "ipv4-psk-ikev2-transport":   sec_label:unset;
