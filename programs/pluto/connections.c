@@ -2155,7 +2155,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 				selector_buf sb;
 				vdbg("%s selector formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+				append_end_selector(end, selector, verbose.logger, HERE);
 			}
 			continue;
 		}
@@ -2180,7 +2180,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+			append_end_selector(end, selector, verbose.logger, HERE);
 			continue;
 		}
 
@@ -2202,8 +2202,14 @@ void build_connection_proposals_from_configs(struct connection *d,
 		/*
 		 * Note: not afi->selector.all.  It needs to
 		 * differentiate so it knows it is to be updated.
+		 *
+		 * XXX: should there be afi->selector.any, with
+		 * .is_set=false, and .version=AFI?
+		 *
+		 * XXX: if pluto were to allow
+		 * host=either-ipv4-or-ipv6 that would break down?!?
 		 */
-		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
+		append_end_selector(end, unset_selector, verbose.logger, HERE);
 	}
 }
 
@@ -5244,12 +5250,9 @@ bool dpd_active_locally(const struct connection *c)
 }
 
 void append_end_selector(struct connection_end *end,
-			 const struct ip_info *afi, ip_selector selector/*could be unset*/,
+			 ip_selector selector/*can be unset!*/,
 			 const struct logger *logger, where_t where)
 {
-	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
-				      selector_info(selector) == afi));
-
 	/* space? */
 	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
 
@@ -5302,8 +5305,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * truncate the selector list.
 	 */
 	zero(&end->child.selectors.proposed);
-	const struct ip_info *afi = selector_info(new_selector);
-	append_end_selector(end, afi, new_selector, c->logger, where);
+	append_end_selector(end, new_selector, c->logger, where);
 
 	/*
 	 * If needed, also update the SPD.  It's assumed for this code

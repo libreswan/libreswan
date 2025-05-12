@@ -179,8 +179,7 @@ struct connection *group_instantiate(struct connection *group,
 	{								\
 		PASSERT(LOGGER, (END)->child.selectors.proposed.list == NULL); \
 		PASSERT(LOGGER, (END)->child.selectors.proposed.len == 0); \
-		append_end_selector(END, selector_info(SELECTOR),	\
-				    SELECTOR, LOGGER, HERE);		\
+		append_end_selector(END, SELECTOR, LOGGER, HERE);	\
 	}
 
 	/*
@@ -561,7 +560,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 				selector_buf sb;
 				vdbg("%s selector formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+				append_end_selector(end, selector, verbose.logger, HERE);
 			}
 			continue;
 		}
@@ -586,7 +585,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+			append_end_selector(end, selector, verbose.logger, HERE);
 			continue;
 		}
 
@@ -606,7 +605,7 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 		vexpect(is_permanent(c) || is_group(c) || is_template(c));
 		vdbg("%s selector proposals from unset host family %s",
 		     leftright, host_afi->ip_name);
-		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
+		append_end_selector(end, unset_selector, verbose.logger, HERE);
 #else
 		llog_pexpect(verbose.logger, HERE, "no address");
 		return false;

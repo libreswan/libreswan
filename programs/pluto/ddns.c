@@ -177,8 +177,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		pdbg(logger, "  updated %s.selector to %s",
 		    c->remote->config->leftright,
 		    str_selector(&remote, &new));
-		append_end_selector(c->remote, selector_info(remote), remote,
-				    c->logger, HERE);
+		append_end_selector(c->remote, remote, c->logger, HERE);
 	}
 
 	/*

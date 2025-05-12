@@ -624,8 +624,7 @@ void update_end_selector_where(struct connection *c, enum end end,
 	update_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
 				  NULL, HERE)
 
-void append_end_selector(struct connection_end *end,
-			 const struct ip_info *afi, ip_selector s,
+void append_end_selector(struct connection_end *end, ip_selector s,
 			 const struct logger *logger, where_t where);
 
 struct spd_end {
