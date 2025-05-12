@@ -347,8 +347,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.initial_contact = conn->values[KNCF_INITIAL_CONTACT].option;
 
 	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
-	if (conn->values[KNCF_CISCO_UNITY].set)
-		msg.cisco_unity = conn->values[KNCF_CISCO_UNITY].option;
+	msg.cisco_unity = conn->values[KWYN_CISCO_UNITY].option;
 
 	msg.fake_strongswan = conn->values[KNCF_FAKE_STRONGSWAN].option;
 

@@ -357,7 +357,7 @@ struct whack_message {
 	 * Option to just send the Cisco VID - the other end will behave
 	 * differently (ModeCFG + RSA?)
 	 */
-	bool cisco_unity;
+	enum yn_options cisco_unity;
 
 	/* Option to send strongswan VID to allow better interop */
 	enum yn_options fake_strongswan;

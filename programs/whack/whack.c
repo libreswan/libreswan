@@ -136,7 +136,7 @@ static void help(void)
 		"	[--policylabel <label>] \\\n"
 #endif
 		"	[--dontrekey] [--aggressive] \\\n"
-		"	[--initialcontact] [--cisco-unity] [--fake-strongswan] \\\n"
+		"	[--initialcontact] [--cisco-unity[={yes,no}]] [--fake-strongswan] \\\n"
 		"	[--encapsulation[={auto,yes,no}] [--nat-keepalive {yes,no}] \\\n"
 		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
@@ -853,8 +853,8 @@ const struct option optarg_options[] = {
 	{ "ikev1_natt\0", required_argument, NULL, CD_IKEV1_NATT },	/* obsolete _ */
 	{ "ikev1-natt\0", required_argument, NULL, CD_IKEV1_NATT },
 	{ "initialcontact\0", no_argument, NULL,  CD_INITIAL_CONTACT },
-	{ "cisco_unity\0", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
-	{ "cisco-unity\0", no_argument, NULL, CD_CISCO_UNITY },
+	{ OPT("cisco-unity", "yes|no"), optional_argument, NULL, CD_CISCO_UNITY },
+	{ REPLACE_OPT("cisco_unity", "cisco-unity", "3.9"), no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
 	{ "fake-strongswan\0", optional_argument, NULL, CD_FAKE_STRONGSWAN },
 	{ "mobike\0", optional_argument, NULL, CD_MOBIKE },
 
@@ -1940,7 +1940,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
-			msg.cisco_unity = true;
+			msg.cisco_unity = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */

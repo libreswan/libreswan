@@ -342,7 +342,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nat-keepalive",  kv_conn,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, &yn_option_names, NULL, },
 
   { "initial-contact",  kv_conn,  kt_bool,  KNCF_INITIAL_CONTACT, NULL, NULL, },
-  { "cisco-unity",  kv_conn,  kt_bool,  KNCF_CISCO_UNITY, NULL, NULL, },
+  { "cisco-unity",  kv_conn,  kt_sparse_name,  KWYN_CISCO_UNITY, &yn_option_names, NULL, },
   { "send-esp-tfc-padding-not-supported",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, NULL, },
   { "send-no-esp-tfc",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, NULL, }, /*compat, but forever*/
 
