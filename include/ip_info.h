@@ -41,15 +41,15 @@ struct ip_info {
 	struct {
 		const ip_address unspec;	/* 0.0.0.0 or :: */
 		const ip_address loopback;	/* 127.0.0.1 or ::1 */
+		const ip_address unset;
 	} address;
 
 	/*
 	 * ip_endpoint
 	 */
-#if 0
 	struct {
+		const ip_address unset;
 	} endpoint;
-#endif
 
 	/*
 	 * ip_subnet.
@@ -57,6 +57,7 @@ struct ip_info {
 	struct {
 		const ip_subnet zero;		/* ::/128 or 0.0.0.0/32 */
 		const ip_subnet all;		/* ::/0 or 0.0.0.0/0 */
+		const ip_address unset;
 	} subnet;
 
 	/*
@@ -65,6 +66,7 @@ struct ip_info {
 	struct {
 		const ip_range zero;
 		const ip_range all;
+		const ip_address unset;
 	} range;
 
 	/*
@@ -80,6 +82,8 @@ struct ip_info {
 		const ip_selector zero;		/* ::/128 or 0.0.0.0/32 */
 		/* matches all addresses */
 		const ip_selector all;		/* ::/0 or 0.0.0.0/0 */
+		/* not set yet has family */
+		const ip_selector unset;
 	} selector;
 
 	/*

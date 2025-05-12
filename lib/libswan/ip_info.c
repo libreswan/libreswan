@@ -157,21 +157,29 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.jam.address = jam_ipv4_address,
 		.jam.address_wrapped = jam_ipv4_address,
 
-		/* ip_address - .address.any matches grep */
+		/*
+		 * Known values.
+		 *
+		 * Use .address.unset, and not .address-{...}, when
+		 * initializing so that `grep -e address.unset` finds
+		 * it.
+		 */
 		.address.unspec = { .is_set = true, .ip_version = IPv4, }, /* 0.0.0.0 */
 		.address.loopback = { .is_set = true, .ip_version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
-
-		/* ip_subnet - .subnet.any matches grep */
-		.subnet.zero = { .is_set = true, .ip_version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
-		.subnet.all = { .is_set = true, .ip_version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
-
-		/* ip_range - .range.any matches grep */
+		/* none/zero */
 		.range.zero = { .is_set = true, .ip_version = IPv4, },
-		.range.all = { .is_set = true, .ip_version = IPv4, .hi = IPv4_FF, },
-
-		/* ip_selector - .selector.any matches grep */
 		.selector.zero = { .is_set = true, .ip_version = IPv4, }, /* 0.0.0.0/0 */
-		.selector.all = { .is_set = true, .ip_version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0/0 */
+		.subnet.zero = { .is_set = true, .ip_version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
+		/* all addresses */
+		.range.all = { .is_set = true, .ip_version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0-255.255.255.255 */
+		.selector.all = { .is_set = true, .ip_version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0-255.255.255.255 */
+		.subnet.all = { .is_set = true, .ip_version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
+		/* unset, yet IP version is known */
+		.address.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv4, },
+		.endpoint.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv4, },
+		.range.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv4, },
+		.selector.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv4, },
+		.subnet.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv4, },
 
 		/* ike */
 		.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
@@ -216,21 +224,30 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.jam.address = jam_ipv6_address,
 		.jam.address_wrapped = jam_ipv6_address_wrapped,
 
-		/* ip_address - .address.any matches grep */
+
+		/*
+		 * Known values.
+		 *
+		 * Use the syntax .address.unset, and not
+		 * .address-{...}, when initializing so that `grep -e
+		 * address.unset` finds it.
+		 */
 		.address.unspec = { .is_set = true, .ip_version = IPv6, }, /* :: */
 		.address.loopback = { .is_set = true, .ip_version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-
-		/* ip_subnet - .subnet.any matches grep */
-		.subnet.zero = { .is_set = true, .ip_version = IPv6, .maskbits = 128, }, /* ::/128 */
-		.subnet.all = { .is_set = true, .ip_version = IPv6, .maskbits = 0, }, /* ::/0 */
-
-		/* ip_range - .range.any matches grep */
+		/* none/zero */
 		.range.zero = { .is_set = true, .ip_version = IPv6, },
-		.range.all = { .is_set = true, .ip_version = IPv6, .hi = IPv6_FF, },
-
-		/* ip_selector - .selector.any matches grep */
 		.selector.zero = { .is_set = true, .ip_version = IPv6, }, /* ::/0 */
-		.selector.all = { .is_set = true, .ip_version = IPv6, .hi = IPv6_FF, }, /* ::/0 */
+		.subnet.zero = { .is_set = true, .ip_version = IPv6, .maskbits = 128, }, /* ::/128 */
+		/* all addresses */
+		.range.all = { .is_set = true, .ip_version = IPv6, .hi = IPv6_FF, }, /* ::-ffff:..:ffff */
+		.selector.all = { .is_set = true, .ip_version = IPv6, .hi = IPv6_FF, }, /* ::-ffff:..:ffff */
+		.subnet.all = { .is_set = true, .ip_version = IPv6, .maskbits = 0, }, /* ::/0 */
+		/* unset, yet IP version is known */
+		.address.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv6, },
+		.endpoint.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv6, },
+		.range.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv6, },
+		.subnet.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv6, },
+		.selector.unset = { .is_set = false/*YES-FALSE*/, .ip_version = IPv6, },
 
 		/* ike */
 		.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,
