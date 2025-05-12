@@ -37,8 +37,8 @@ west #
  add sourceips-inside-selectors
 "sourceips-inside-selectors": connection is using multiple subnets
 "sourceips-inside-selectors": added IKEv2 connection
-"sourceips-inside-selectors": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; my_ip=1.0.0.1; their_ip=unset;
 "sourceips-inside-selectors": 1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2::/64; unrouted; my_ip=1::1; their_ip=unset;
+"sourceips-inside-selectors": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; my_ip=1.0.0.1; their_ip=unset;
 west #
  # subnets= tests can't check inside/outside
 west #
