@@ -175,7 +175,7 @@ size_t jam_selector_pair(struct jambuf *buf,
 			 const ip_selector *src,
 			 const ip_selector *dst)
 {
-	if (selector_is_unset(src) || selector_is_unset(dst)) {
+	if (selector_is_unset(src) && selector_is_unset(dst)) {
 		return jam_string(buf, "<unset-selectors>");
 	}
 

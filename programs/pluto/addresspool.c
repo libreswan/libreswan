@@ -333,9 +333,6 @@ static void scribble_remote_lease(struct connection *c,
 		return;
 	}
 	remote_selectors->assigned[assigned_nr] = selector;
-	/* keep IPv[46] table in sync */
-	remote_selectors->proposed.ip[afi->ip_index].len = 1;
-	remote_selectors->proposed.ip[afi->ip_index].list = &remote_selectors->assigned[assigned_nr];
 
 	selector_buf nb;
 	ldbg(c->logger, "%s() remote.child.selectors.assigned[%d] %s "PRI_WHERE,

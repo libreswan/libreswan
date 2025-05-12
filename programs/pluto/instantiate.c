@@ -243,7 +243,7 @@ struct connection *group_instantiate(struct connection *group,
 	connection_db_add(t);
 
 	/* fill in the SPDs */
-	add_connection_spds(t);
+	build_connection_spds_from_proposals(t);
 
 	connection_buf gb;
 	vdbg_connection(t, verbose, HERE,
@@ -358,8 +358,8 @@ struct connection *spd_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
-	add_connection_spds(d);
+	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_spds_from_proposals(d);
 
 	/* leave breadcrumb */
 	pexpect(d->negotiating_child_sa == SOS_NOBODY);
@@ -389,8 +389,8 @@ struct connection *labeled_template_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	add_proposals(p, NULL/*afi-isn't-needed*/, verbose);
-	add_connection_spds(p);
+	build_connection_proposals_from_configs(p, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_spds_from_proposals(p);
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
 	pexpect(p->routing.state == RT_UNROUTED);
@@ -428,8 +428,8 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
 	c->child.sec_label = clone_hunk(sec_label, __func__);
 
-	add_proposals(c, NULL/*afi-isn't-needed*/, verbose);
-	add_connection_spds(c);
+	build_connection_proposals_from_configs(c, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_spds_from_proposals(c);
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
 	pexpect(c->routing.state == RT_UNROUTED);
@@ -455,8 +455,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
-	add_connection_spds(d);
+	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_spds_from_proposals(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,
@@ -484,8 +484,8 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					   verbose, where);
 
 	/* real selectors are still unknown */
-	add_proposals(d, NULL/*afi-isn't-needed*/, verbose);
-	add_connection_spds(d);
+	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_spds_from_proposals(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,
@@ -639,7 +639,7 @@ struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *
 					   verbose, where);
 
 	update_v1_quick_n_dirty_selectors(d, remote_subnet, verbose);
-	add_connection_spds(d);
+	build_connection_spds_from_proposals(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,
@@ -693,7 +693,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	set_end_selector(d->remote, remote_selector, d->logger);
 
 	PEXPECT(d->logger, oriented(d));
-	add_connection_spds(d);
+	build_connection_spds_from_proposals(d);
 
 	connection_buf tb;
 	vdbg_connection(d, verbose, where,

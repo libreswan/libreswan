@@ -115,10 +115,6 @@ err_t ttoselector_num(shunk_t src, const struct ip_info *afi,
 /* comma/space separated list */
 
 typedef struct {
-	struct {
-		unsigned len;
-		ip_selector *list;
-	} ip[IP_INDEX_ROOF];
 	unsigned len;
 	ip_selector *list;
 } ip_selectors;

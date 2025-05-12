@@ -259,16 +259,10 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	bool ask_for_ip[IP_INDEX_ROOF] = {0};
 	bool ask_for_something = false;
 
-	FOR_EACH_ELEMENT(afi, ip_families) {
-		if (cc->pool[afi->ip_index] != NULL) {
-			dbg("pool says to ask for %s", afi->ip_name);
-			ask_for_ip[afi->ip_index] = true;
-		}
-		const ip_selectors *selectors = &cc->local->child.selectors.proposed;
-		if (selectors->ip[afi->ip_index].len > 0) {
-			dbg("local.selectors.proposed.ip[%s].len > 0 so ask", afi->ip_name);
-			ask_for_ip[afi->ip_index] = true;
-		}
+	FOR_EACH_ITEM(proposed, &cc->local->child.selectors.proposed) {
+		const struct ip_info *afi = selector_type(proposed);
+		ldbg(child->sa.logger, "pool says to ask for %s", afi->ip_name);
+		ask_for_ip[afi->ip_index] = true;
 		ask_for_something |= ask_for_ip[afi->ip_index];
 	}
 
@@ -386,7 +380,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	/* rebuild the SPDs */
 	discard_connection_spds(cc);
 	PEXPECT(cc->logger, oriented(cc));
-	add_connection_spds(cc);
+	build_connection_spds_from_proposals(cc);
 
 	return true;
 }

@@ -1120,7 +1120,7 @@ void vdbg_connection(const struct connection *c,
 void init_connection_spd(struct connection *c, struct spd *spd);
 void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
-void add_connection_spds(struct connection *c);
+void build_connection_spds_from_proposals(struct connection *c);
 
 /* connections */
 
@@ -1183,8 +1183,9 @@ struct child_policy child_sa_policy(const struct connection *c);
 bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);
 
-void add_proposals(struct connection *c, const struct ip_info *host_afi,
-		   struct verbose verbose);
+void build_connection_proposals_from_configs(struct connection *c,
+					     const struct ip_info *host_afi,
+					     struct verbose verbose);
 
 reqid_t child_reqid(const struct config *config, struct logger *logger);
 

@@ -167,7 +167,8 @@ void vdbg_connection(const struct connection *c,
 	/* selectors local->remote */
 	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
-		jam_string(buf, "selectors:");
+		jam_string(buf, "selectors");
+		jam_string(buf, " proposed:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
 			FOR_EACH_ITEM(selector, &end->selectors.proposed) {
 				jam_string(buf, " ");
@@ -175,7 +176,15 @@ void vdbg_connection(const struct connection *c,
 			}
 			jam_string(buf, " ->");
 		}
-		jam_string(buf, "; lease:");
+		jam_string(buf, " accepted:");
+		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
+			FOR_EACH_ITEM(selector, &end->selectors.accepted) {
+				jam_string(buf, " ");
+				jam_selector(buf, selector);
+			}
+			jam_string(buf, " ->");
+		}
+		jam_string(buf, "; leases:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
 			FOR_EACH_ELEMENT(lease, end->lease) {
 				if (lease->is_set) {
@@ -2094,11 +2103,13 @@ static void mark_parse(/*const*/ char *wmmark,
 }
 
 /*
- * Turn the config selectors / addresspool / host-addr into proposals.
+ * Turn the config's selectors / addresspool / host-addr into
+ * proposals.
  */
 
-void add_proposals(struct connection *d, const struct ip_info *host_afi,
-		   struct verbose verbose)
+void build_connection_proposals_from_configs(struct connection *d,
+					     const struct ip_info *host_afi,
+					     struct verbose verbose)
 {
 	vdbg("%s() host-afi=%s", __func__, (host_afi == NULL ? "N/A" : host_afi->ip_name));
 	verbose.level++;
@@ -2186,8 +2197,12 @@ void add_proposals(struct connection *d, const struct ip_info *host_afi,
 		}
 
 		vexpect(is_permanent(d) || is_group(d) || is_template(d));
-		vdbg("%s selector proposals from unset host family %s",
+		vdbg("%s selector proposals from host family %s",
 		     leftright, host_afi->ip_name);
+		/*
+		 * Note: not afi->selector.all.  It needs to
+		 * differentiate so it knows it is to be updated.
+		 */
 		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
 	}
 }
@@ -2221,62 +2236,83 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 	}
 }
 
-void add_connection_spds(struct connection *c)
+void build_connection_spds_from_proposals(struct connection *c)
 {
-	unsigned indent = 0;
-	ldbg(c->logger, "%*sadding connection spds using proposed", indent, "");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "");
+	vdbg("adding connection spds using proposed");
+	verbose.level++;
 
-	indent = 1;
-	const ip_selectors *left = &c->end[LEFT_END].child.selectors.proposed;
-	const ip_selectors *right = &c->end[RIGHT_END].child.selectors.proposed;
-	ldbg(c->logger, "%*sleft=%u right=%u",
-	     indent, "", left->len, right->len);
+	const ip_selectors *left_proposals = &c->end[LEFT_END].child.selectors.proposed;
+	const ip_selectors *right_proposals = &c->end[RIGHT_END].child.selectors.proposed;
+	vdbg("left=%u right=%u", left_proposals->len, right_proposals->len);
 
-	/* Calculate the total number of SPDs. */
+	const struct ip_info *left_host_afi = address_info(c->end[LEFT_END].host.addr);
+	const struct ip_info *right_host_afi = address_info(c->end[RIGHT_END].host.addr);
+
+	/*
+	 * Pass 1: Calculate the total number of SPDs.
+	 *
+	 * Note: Given subnet#, .proposed will contain a single unset
+	 * entry.  The expectation is that it will be filled in (now
+	 * or later) with the host's address.
+	 */
+
 	unsigned nr_spds = 0;
-	FOR_EACH_ELEMENT(afi, ip_families) {
-		const ip_selectors *left = &c->end[LEFT_END].child.selectors.proposed;
-		const ip_selectors *right = &c->end[RIGHT_END].child.selectors.proposed;
-		ldbg(c->logger, "%*sleft[%s]=%u right[%s]=%u",
-		     indent+1, "",
-		     afi->ip_name, left->ip[afi->ip_index].len,
-		     afi->ip_name, right->ip[afi->ip_index].len);
-		nr_spds += (left->ip[afi->ip_index].len * right->ip[afi->ip_index].len);
+	FOR_EACH_ITEM(left_selector, left_proposals) {
+		const struct ip_info *left_afi = selector_type(left_selector);
+		if (left_afi == NULL) {
+			left_afi = left_host_afi;
+		}
+		FOR_EACH_ITEM(right_selector, right_proposals) {
+			const struct ip_info *right_afi = selector_type(right_selector);
+			if (right_afi == NULL) {
+				right_afi = right_host_afi;
+			}
+			if (left_afi == right_afi) {
+				nr_spds ++;
+			}
+		}
 	}
 
 	/* Allocate the SPDs. */
 	alloc_connection_spds(c, nr_spds);
 
-	/* Now fill them in. */
-	unsigned spds = 0;
-	FOR_EACH_ELEMENT(afi, ip_families) {
-		enum ip_index ip = afi->ip_index;
-		const ip_selectors *left_selectors = &c->end[LEFT_END].child.selectors.proposed;
-		FOR_EACH_ITEM(left_selector, &left_selectors->ip[ip]) {
-			const ip_selectors *right_selectors = &c->end[RIGHT_END].child.selectors.proposed;
-			FOR_EACH_ITEM(right_selector, &right_selectors->ip[ip]) {
-				indent = 2;
+	/*
+	 * Pass 2: fill them in, hashing each as it is added.
+	 */
+
+	unsigned spd_nr = 0;
+	FOR_EACH_ITEM(left_selector, left_proposals) {
+		const struct ip_info *left_afi = selector_type(left_selector);
+		if (left_afi == NULL) {
+			left_afi = left_host_afi;
+		}
+		FOR_EACH_ITEM(right_selector, right_proposals) {
+			const struct ip_info *right_afi = selector_type(right_selector);
+			if (right_afi == NULL) {
+				right_afi = right_host_afi;
+			}
+			verbose.level = 2;
+			if (left_afi == right_afi) {
 				selector_pair_buf spb;
-				ldbg(c->logger, "%*s%s", indent, "",
-				     str_selector_pair(left_selector, right_selector, &spb));
-				indent = 3;
-				struct spd *spd = &c->child.spds.list[spds++];
-				PASSERT(c->logger, spd < c->child.spds.list + c->child.spds.len);
+				vdbg("%s", str_selector_pair(left_selector, right_selector, &spb));
+				verbose.level = 3;
+				struct spd *spd = &c->child.spds.list[spd_nr++];
+				vassert(spd < c->child.spds.list + c->child.spds.len);
 				ip_selector *selectors[] = {
 					[LEFT_END] = left_selector,
 					[RIGHT_END] = right_selector,
 				};
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const ip_selector *selector = selectors[end];
-					const struct child_end_config *child_end = &c->end[end].config->child;
+					const struct child_end_config *child_end =
+						&c->end[end].config->child;
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
-					spd_end->client = *selector;
+					spd_end->client = (*selectors[end]);
 					spd_end->virt = virtual_ip_addref(child_end->virt);
 					selector_buf sb;
-					ldbg(c->logger,
-					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
-					     indent, "", spd_end->config->leftright,
+					vdbg("%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+					     spd_end->config->leftright,
 					     str_selector(&spd_end->client, &sb),
 					     leftright,
 					     bool_str(spd_end->child->has_client),
@@ -4243,7 +4279,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * end.  Either both ends use a AFI or both don't.
 	 */
 
-	struct {
+	struct end_family {
 		bool used;
 		const char *field;
 		char *value;
@@ -4252,26 +4288,30 @@ static diag_t extract_connection(const struct whack_message *wm,
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		const ip_ranges *const pools = &c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (selectors->ip[afi->ip_index].len > 0) {
-					end_family[end][afi->ip_index].used = true;
-					end_family[end][afi->ip_index].field = "subnet";
-					end_family[end][afi->ip_index].value = whack_ends[end]->subnet;
+			FOR_EACH_ITEM(selector, selectors) {
+				const struct ip_info *afi = selector_type(selector);
+				struct end_family *family = &end_family[end][afi->ip_index];
+				if (!family->used) {
+					family->used = true;
+					family->field = "subnet";
+					family->value = whack_ends[end]->subnet;
 				}
 			}
 		} else if (pools->len > 0) {
 			FOR_EACH_ITEM(range, pools) {
 				const struct ip_info *afi = range_type(range);
 				/* only one for now */
-				passert(end_family[end][afi->ip_index].used == false);
-				end_family[end][afi->ip_index].used = true;
-				end_family[end][afi->ip_index].field = "addresspool";
-				end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
+				struct end_family *family = &end_family[end][afi->ip_index];
+				passert(family->used == false);
+				family->used = true;
+				family->field = "addresspool";
+				family->value = whack_ends[end]->addresspool;
 			}
 		} else {
-			end_family[end][host_afi->ip_index].used = true;
-			end_family[end][host_afi->ip_index].field = "";
-			end_family[end][host_afi->ip_index].value = whack_ends[end]->host_addr_name;
+			struct end_family *family = &end_family[end][host_afi->ip_index];
+			family->used = true;
+			family->field = "";
+			family->value = whack_ends[end]->host_addr_name;
 		}
 	}
 
@@ -4340,7 +4380,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	VERBOSE_DBGP(DBG_BASE, c->logger, "%s() ...", __func__);
-	add_proposals(c, host_afi, verbose);
+	build_connection_proposals_from_configs(c, host_afi, verbose);
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
@@ -5203,8 +5243,12 @@ void append_end_selector(struct connection_end *end,
 {
 	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
 				      selector_info(selector) == afi));
+
+	/* space? */
+	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
+
 	/*
-	 * Either uninitialized, or using the (first) scratch entry
+	 * Ensure proposed is pointing at assigned aka scratch.
 	 */
 	if (end->child.selectors.proposed.list == NULL) {
 		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len == 0);
@@ -5213,16 +5257,10 @@ void append_end_selector(struct connection_end *end,
 		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len > 0);
 		PASSERT_WHERE(logger, where, end->child.selectors.proposed.list == end->child.selectors.assigned);
 	}
-	/* space? */
-	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
-	PASSERT_WHERE(logger, where, end->child.selectors.proposed.ip[afi->ip_index].len == 0);
 
-	/* append the selector to assigned; always initlaize .list */
+	/* append the selector to assigned */
 	unsigned i = end->child.selectors.proposed.len++;
 	end->child.selectors.assigned[i] = selector;
-	/* keep IPv[46] table in sync */
-	end->child.selectors.proposed.ip[afi->ip_index].len = 1;
-	end->child.selectors.proposed.ip[afi->ip_index].list = &end->child.selectors.assigned[i];
 
 	selector_buf nb;
 	ldbg(logger, "%s() %s.child.selectors.proposed[%d] %s "PRI_WHERE,

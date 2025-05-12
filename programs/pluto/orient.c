@@ -387,7 +387,7 @@ bool orient(struct connection *c, struct logger *logger)
 	 * policies from the selectors (which also enters them into
 	 * the SPD_DB.
 	 */
-	add_connection_spds(c);
+	build_connection_spds_from_proposals(c);
 
 	for (enum ip_index i = 0; i < IP_INDEX_ROOF; i++) {
 		if (c->remote->config->child.addresspool[i] != NULL) {
