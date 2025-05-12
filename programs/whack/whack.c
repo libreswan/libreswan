@@ -1043,8 +1043,19 @@ int main(int argc, char **argv)
 
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_WHACK,
-		.end[LEFT_END].leftright = "left",
-		.end[RIGHT_END].leftright = "right",
+
+		/*
+		 * XXX: gcc (nb3 20231008) 10.5.0 is convinced that
+		 * the shorter:
+		 *
+		 *   .end[LEFT_END].leftright = "left",
+		 *
+		 * leaves the .id field uninitialized.
+		 */
+		.end = {
+			[LEFT_END] = { .leftright = "left", },
+			[RIGHT_END] = { .leftright = "right", },
+		},
 
 		/*
 		 * XXX: none of these initializations should be
