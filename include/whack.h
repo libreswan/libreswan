@@ -46,6 +46,7 @@
 #include "shunt.h"
 #include "global_redirect.h"
 #include "xauthby.h"
+#include "xauthfail.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -371,7 +372,7 @@ struct whack_message {
 	enum xauthby xauthby;
 
 	/* XAUTH failure mode can be hard (default) or soft */
-	enum keyword_xauthfail xauthfail;
+	enum xauthfail xauthfail;
 	char *sendca;
 
 	/* Force the MTU for this connection */

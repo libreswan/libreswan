@@ -226,7 +226,7 @@ struct config {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	enum xauthby xauthby;
-	enum keyword_xauthfail xauthfail;
+	enum xauthfail xauthfail;
 	enum send_ca_policy send_ca;
 
 	reqid_t sa_reqid;

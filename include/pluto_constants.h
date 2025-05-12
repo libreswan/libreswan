@@ -117,11 +117,6 @@ enum keyword_auth {
 	AUTH_EAPONLY,
 };
 
-enum keyword_xauthfail {
-	XAUTHFAIL_HARD = 0,
-	XAUTHFAIL_SOFT = 1,
-};
-
 /* OCSP related constants - defaults picked from NSS defaults */
 #define OCSP_DEFAULT_CACHE_SIZE 1000
 #define OCSP_DEFAULT_CACHE_MIN_AGE 3600
