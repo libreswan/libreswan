@@ -2155,7 +2155,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 				selector_buf sb;
 				vdbg("%s selector formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+				append_end_selector(end, selector, verbose.logger, HERE);
 			}
 			continue;
 		}
@@ -2163,13 +2163,16 @@ void build_connection_proposals_from_configs(struct connection *d,
 		/* {left,right}= */
 		if (address_is_specified(end->host.addr)) {
 			/*
-			 * Default the end's child selector (client)
-			 * to a subnet containing only the end's host
-			 * address.
+			 * When there's no subnet=, and the host.addr
+			 * is known, default the selector to the
+			 * host's addr (with protoport added).
 			 *
-			 * If the other end has multiple child
-			 * selectors then the combination becomes a
-			 * list.
+			 * Code will update_end_selector() to
+			 * host.addr once host.addr is (for instance
+			 * during orient()); or to a lease (for
+			 * instance because the peer assigned an
+			 * address using IKEv2 CP, or IKEv1 MODE_CFG);
+			 * or?
 			 */
 			address_buf ab;
 			protoport_buf pb;
@@ -2180,17 +2183,20 @@ void build_connection_proposals_from_configs(struct connection *d,
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			append_end_selector(end, selector_info(selector), selector, verbose.logger, HERE);
+			append_end_selector(end, selector, verbose.logger, HERE);
 			continue;
 		}
 
 		/*
-		 * to-be-determined from the host (for instance,
-		 * waiting on DNS) or the opportunistic group (needs
-		 * to be expanded).
+		 * Make space for the to-be-determined selector so
+		 * that there's something to iterate over and
+		 * something containing the intended address family.
 		 *
-		 * Make space regardless so that loops have something
-		 * to iterate over.
+		 * When called by instantiate() and HOST_AFI==NULL,
+		 * this code isn't reached.  This is because both the
+		 * local (connection is oriented) and remote (the
+		 * packet from the peer triggering the instantiate)
+		 * host.addr are known.
 		 */
 		if (vbad(host_afi == NULL)) {
 			return;
@@ -2200,10 +2206,13 @@ void build_connection_proposals_from_configs(struct connection *d,
 		vdbg("%s selector proposals from host family %s",
 		     leftright, host_afi->ip_name);
 		/*
-		 * Note: not afi->selector.all.  It needs to
+		 * Note: NOT afi->selector.all.  It needs to
 		 * differentiate so it knows it is to be updated.
+		 *
+		 * selector.unset has .is_set=false so looks unset;
+		 * but has .version=IPv[46].
 		 */
-		append_end_selector(end, host_afi, unset_selector, verbose.logger, HERE);
+		append_end_selector(end, host_afi->selector.unset, verbose.logger, HERE);
 	}
 }
 
@@ -2246,29 +2255,21 @@ void build_connection_spds_from_proposals(struct connection *c)
 	const ip_selectors *right_proposals = &c->end[RIGHT_END].child.selectors.proposed;
 	vdbg("left=%u right=%u", left_proposals->len, right_proposals->len);
 
-	const struct ip_info *left_host_afi = address_info(c->end[LEFT_END].host.addr);
-	const struct ip_info *right_host_afi = address_info(c->end[RIGHT_END].host.addr);
-
 	/*
 	 * Pass 1: Calculate the total number of SPDs.
 	 *
-	 * Note: Given subnet#, .proposed will contain a single unset
-	 * entry.  The expectation is that it will be filled in (now
-	 * or later) with the host's address.
+	 * Note: All selectors in the proposal, even unset selectors,
+	 * have .version set.  When there's no subnet= and the
+	 * host-addr isn't known it is set to selector.unset (aka
+	 * .is_set=false, .version=..., )
 	 */
 
 	unsigned nr_spds = 0;
 	FOR_EACH_ITEM(left_selector, left_proposals) {
-		const struct ip_info *left_afi = selector_type(left_selector);
-		if (left_afi == NULL) {
-			left_afi = left_host_afi;
-		}
+		vexpect(left_selector->ip_version != 0);
 		FOR_EACH_ITEM(right_selector, right_proposals) {
-			const struct ip_info *right_afi = selector_type(right_selector);
-			if (right_afi == NULL) {
-				right_afi = right_host_afi;
-			}
-			if (left_afi == right_afi) {
+			vexpect(right_selector->ip_version != 0);
+			if (left_selector->ip_version == right_selector->ip_version) {
 				nr_spds ++;
 			}
 		}
@@ -2283,17 +2284,9 @@ void build_connection_spds_from_proposals(struct connection *c)
 
 	unsigned spd_nr = 0;
 	FOR_EACH_ITEM(left_selector, left_proposals) {
-		const struct ip_info *left_afi = selector_type(left_selector);
-		if (left_afi == NULL) {
-			left_afi = left_host_afi;
-		}
 		FOR_EACH_ITEM(right_selector, right_proposals) {
-			const struct ip_info *right_afi = selector_type(right_selector);
-			if (right_afi == NULL) {
-				right_afi = right_host_afi;
-			}
 			verbose.level = 2;
-			if (left_afi == right_afi) {
+			if (left_selector->ip_version == right_selector->ip_version) {
 				selector_pair_buf spb;
 				vdbg("%s", str_selector_pair(left_selector, right_selector, &spb));
 				verbose.level = 3;
@@ -5248,12 +5241,9 @@ bool dpd_active_locally(const struct connection *c)
 }
 
 void append_end_selector(struct connection_end *end,
-			 const struct ip_info *afi, ip_selector selector/*could be unset*/,
+			 ip_selector selector/*can be unset!*/,
 			 const struct logger *logger, where_t where)
 {
-	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
-				      selector_info(selector) == afi));
-
 	/* space? */
 	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
 
@@ -5306,8 +5296,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * truncate the selector list.
 	 */
 	zero(&end->child.selectors.proposed);
-	const struct ip_info *afi = selector_info(new_selector);
-	append_end_selector(end, afi, new_selector, c->logger, where);
+	append_end_selector(end, new_selector, c->logger, where);
 
 	/*
 	 * If needed, also update the SPD.  It's assumed for this code

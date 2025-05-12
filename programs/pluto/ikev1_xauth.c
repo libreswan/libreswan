@@ -1128,7 +1128,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	selector_buf sb;
 	vdbg("%s selector formed from address pool %s",
 	     c->remote->config->leftright, str_selector(&selector, &sb));
-	append_end_selector(c->remote, selector_info(selector), selector, verbose.logger, HERE);
+	append_end_selector(c->remote, selector, verbose.logger, HERE);
 
 	discard_connection_spds(c);
 	build_connection_spds_from_proposals(c);

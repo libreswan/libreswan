@@ -33,7 +33,7 @@ ip_endpoint endpoint_from_raw(where_t where,
 {
 	ip_endpoint endpoint = {
 		.is_set = true,
-		.version = afi->ip_version,
+		.ip_version = afi->ip_version,
 		.bytes = bytes,
 		.hport = port.hport,
 		.ipproto = protocol->ipproto,
@@ -126,7 +126,7 @@ const struct ip_info *endpoint_info(const ip_endpoint endpoint)
 	}
 
 	/* may return NULL */
-	return ip_version_info(endpoint.version);
+	return ip_version_info(endpoint.ip_version);
 }
 
 bool endpoint_is_unset(const ip_endpoint *endpoint)
@@ -294,7 +294,7 @@ bool endpoint_eq_endpoint(const ip_endpoint l, const ip_endpoint r)
 	}
 
 	/* must compare individual fields */
-	return (l.version == r.version &&
+	return (l.ip_version == r.ip_version &&
 		thingeq(l.bytes, r.bytes) &&
 		l.ipproto == r.ipproto &&
 		l.hport == r.hport);
@@ -333,7 +333,7 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 
 	const struct ip_protocol *protocol = endpoint_protocol(*e);
 	if (e->is_set == false ||
-	    e->version == 0 ||
+	    e->ip_version == 0 ||
 	    e->ipproto == 0 ||
 	    protocol == NULL /* ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {

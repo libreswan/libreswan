@@ -41,7 +41,8 @@ typedef struct {
 	 * Index into the struct ip_info array; must be stream
 	 * friendly.
 	 */
-	enum ip_version version; /* 0, 4, 6 */
+	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
+
 	/*
 	 * We need something that makes static IPv4 initializers
 	 * possible (struct in_addr requires htonl() which is run-time
@@ -57,7 +58,7 @@ typedef struct {
 #define PRI_SUBNET "<subnet-%s:IPv%d["PRI_IP_BYTES"]/%u>"
 #define pri_subnet(S)					\
 		((S)->is_set ? "set" : "unset"),	\
-		(S)->version,				\
+			(S)->ip_version,		\
 		pri_ip_bytes((S)->bytes),		\
 		(S)->maskbits
 

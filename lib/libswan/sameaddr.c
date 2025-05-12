@@ -42,8 +42,8 @@ addrcmp(const ip_address *l, const ip_address *r)
 		return 1;
 	}
 
-	return ip_bytes_cmp(l->version, l->bytes,
-			    r->version, r->bytes);
+	return ip_bytes_cmp(l->ip_version, l->bytes,
+			    r->ip_version, r->bytes);
 }
 
 /*

@@ -96,8 +96,8 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 			return err;
 		}
 		passert(afi == address_info(end_address));
-		if (ip_bytes_cmp(start_address.version, start_address.bytes,
-				 end_address.version, end_address.bytes) > 0) {
+		if (ip_bytes_cmp(start_address.ip_version, start_address.bytes,
+				 end_address.ip_version, end_address.bytes) > 0) {
 			return "start of range is greater than end";
 		}
 		*dst = range_from_raw(HERE, afi,
