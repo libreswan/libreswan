@@ -263,7 +263,7 @@ enum keywords {
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
 	KWYN_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
-	KNCF_INITIAL_CONTACT,	/* send initial contact VID */
+	KWYN_INITIAL_CONTACT,	/* send initial contact VID */
 	KWYN_CISCO_UNITY,	/* send cisco unity VID */
 	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
 	KNCF_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */

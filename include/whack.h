@@ -350,8 +350,8 @@ struct whack_message {
 	/* Option to tweak sending NATT drafts, rfc or both */
 	enum ikev1_natt_policy nat_ikev1_method;
 
-	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */
-	bool initial_contact;
+	/* Option to allow sending INITIAL-CONTACT payload */
+	enum yn_options initial_contact;
 
 	/*
 	 * Option to just send the Cisco VID - the other end will behave

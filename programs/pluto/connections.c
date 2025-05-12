@@ -3893,7 +3893,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		} else {
 			config->ikev1_natt = wm->nat_ikev1_method;
 		}
-		config->send_initial_contact = wm->initial_contact;
+		config->send_initial_contact = extract_yn("", "initial-contact", wm->initial_contact,
+							  /*value_when_unset*/YN_NO,
+							  wm, c->logger);
 		config->send_vid_cisco_unity = extract_yn("", "cisco-unity", wm->cisco_unity,
 							  /*value_when_unset*/YN_NO,
 							  wm, c->logger);
