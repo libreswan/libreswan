@@ -150,7 +150,7 @@ static bool unpack_shunk(struct whackpacker *wp, shunk_t *shunk, const char *wha
  *   do don't free it
  */
 
-static bool pack_string(struct whackpacker *wp, char **p, const char *what, struct logger *logger)
+static bool pack_string(struct whackpacker *wp, const char **p, const char *what, struct logger *logger)
 {
 	if ((*p) == NULL) {
 		/* NULL pointer encoded as zero bytes */
@@ -167,7 +167,7 @@ static bool pack_string(struct whackpacker *wp, char **p, const char *what, stru
 	return true;
 }
 
-static bool unpack_string(struct whackpacker *wp, char **p, const char *what, struct logger *logger)
+static bool unpack_string(struct whackpacker *wp, const char **p, const char *what, struct logger *logger)
 {
 	if ((*p) == NULL) {
 		/* unpack NULL as NULL */
@@ -274,7 +274,7 @@ static bool unpack_constant_string(struct whackpacker *wp UNUSED,
  * in and out/
  */
 struct pickler {
-	bool (*string)(struct whackpacker *wp, char **p, const char *what, struct logger *logger);
+	bool (*string)(struct whackpacker *wp, const char **p, const char *what, struct logger *logger);
 	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what, struct logger *logger);
 	bool (*chunk)(struct whackpacker *wp, chunk_t *s, const char *what, struct logger *logger);
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what, struct logger *logger);

@@ -995,7 +995,7 @@ static char *ctlsocket = NULL;
  * This is pretty bespoke.
  */
 
-static void msg_host_name(struct optarg_family *family, ip_address *address, char **dns_name)
+static void msg_host_name(struct optarg_family *family, ip_address *address, const char **dns_name)
 {
 	if (ttoaddress_num(shunk1(optarg), family->type, address) == NULL) {
 		/*

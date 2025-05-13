@@ -138,52 +138,52 @@ enum whack_command {
 struct whack_end {
 	const char *leftright;	/* either "left" or "right" (not shipped) */
 
-	char *id;		/* id string (if any) -- decoded by pluto */
-	char *ca;		/* distinguished name string (if any) -- parsed by pluto */
-	char *groups;		/* access control groups (if any) -- parsed by pluto */
+	const char *id;		/* id string (if any) -- decoded by pluto */
+	const char *ca;		/* distinguished name string (if any) -- parsed by pluto */
+	const char *groups;		/* access control groups (if any) -- parsed by pluto */
 
 	/*
 	 * Where, if anywhere, is the public/private key coming from?
 	 * Pass everything over and let pluto decide what if anything
 	 * conflict.
 	 */
-	char *cert;
-	char *ckaid;
-	char *pubkey;
+	const char *cert;
+	const char *ckaid;
+	const char *pubkey;
 	enum ipseckey_algorithm_type pubkey_alg;
 
 	enum keyword_auth auth;
 
 	enum keyword_host host_type;
 	ip_address host_addr;
-	char *ikeport;			/* host */
+	const char *ikeport;			/* host */
 	ip_address nexthop;		/* host */
-	char *sourceip;
-	char *vti;			/* host */
-	char *interface_ip;		/* for ipsec-interface */
+	const char *sourceip;
+	const char *vti;			/* host */
+	const char *interface_ip;		/* for ipsec-interface */
 
-	char *subnet; /* child */
-	char *subnets;	/* alias subnet expansion */
+	const char *subnet; /* child */
+	const char *subnets;	/* alias subnet expansion */
 	ip_protoport protoport;
 
 	bool key_from_DNS_on_demand;
-	char *updown;		/* string */
-	char *virt;
-	char *addresspool;
+	const char *updown;		/* string */
+	const char *virt;
+	const char *addresspool;
 
 	enum yn_options xauthserver;	/* for XAUTH */
 	enum yn_options xauthclient;
-	char *xauthusername;
+	const char *xauthusername;
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
-	char *sendcert;
+	const char *sendcert;
 	enum eap_options eap;
 	enum ike_cert_type certtype;
 
 	enum yn_options modecfgserver;	/* for MODECFG */
 	enum yn_options modecfgclient;
 
-	char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME
+	const char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME
 				 * pluto will convert to IP address again,
 				 * if this is non-NULL when conn fails.
 				 */
@@ -231,7 +231,7 @@ struct whack_message {
 	enum whack_command whack_command;
 
 	/* name is used in connection and initiate */
-	char *name;
+	const char *name;
 
 	/* for debugging! */
 	lmod_t debugging;
@@ -303,32 +303,32 @@ struct whack_message {
 						 * IKEv2 Session
 						 * Resumption */
 
-	char *ipsec_max_bytes;
-	char *ipsec_max_packets;
+	const char *ipsec_max_bytes;
+	const char *ipsec_max_packets;
 
 	deltatime_t ikelifetime;
 	deltatime_t ipsec_lifetime;
 
 	deltatime_t rekeymargin; /* which SA? */
-	char *rekeyfuzz;
+	const char *rekeyfuzz;
 
 	struct {
 		bool set;
 		uintmax_t value;
 	} keyingtries;
 
-	char *replay_window;
+	const char *replay_window;
 	deltatime_t retransmit_timeout;
 	deltatime_t retransmit_interval;
 	enum nic_offload_options nic_offload;
-	char *ipsec_interface;
+	const char *ipsec_interface;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
-	char *dpddelay;		/* seconds */
-	char *dpdtimeout;	/* seconds */
+	const char *dpddelay;		/* seconds */
+	const char *dpdtimeout;	/* seconds */
 
 	/* Cisco interop:  remote peer type */
-	char *remote_peer_type;
+	const char *remote_peer_type;
 
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;
@@ -373,7 +373,7 @@ struct whack_message {
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum xauthfail xauthfail;
-	char *sendca;
+	const char *sendca;
 
 	/* Force the MTU for this connection */
 	int mtu;
@@ -390,10 +390,10 @@ struct whack_message {
 	deltatime_t iptfs_drop_time;
 	deltatime_t iptfs_init_delay;
 
-	char *reqid;
-	char *nflog_group;
+	const char *reqid;
+	const char *nflog_group;
 
-	char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
+	const char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
 
 	struct whack_end end[END_ROOF];
 
@@ -401,19 +401,19 @@ struct whack_message {
 	const struct ip_info *host_afi;
 	const struct ip_info *child_afi;
 
-	char *ike;			/* ike algo string (separated by commas) */
-	char *pfsgroup;			/* pfsgroup will be "encapsulated" in esp string for pluto */
-	char *esp;			/* esp algo string (separated by commas) */
+	const char *ike;			/* ike algo string (separated by commas) */
+	const char *pfsgroup;			/* pfsgroup will be "encapsulated" in esp string for pluto */
+	const char *esp;			/* esp algo string (separated by commas) */
 
 	/* for WHACK_KEY: */
 	bool whack_key;
 	bool whack_addkey;
-	char *keyid;	/* string 8 */
+	const char *keyid;	/* string 8 */
 	enum ipseckey_algorithm_type pubkey_alg;
-	char *pubkey;
+	const char *pubkey;
 
 	/* for REMOTE_HOST */
-	char *remote_host;
+	const char *remote_host;
 
 	struct {
 		struct {
@@ -444,39 +444,39 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for connalias string */
-	char *connalias;
+	const char *connalias;
 
 	/* for IKEv1 MODECFG and IKEv2 CP */
-	char *modecfgdns;
-	char *modecfgdomains;
-	char *modecfgbanner;
+	const char *modecfgdns;
+	const char *modecfgdomains;
+	const char *modecfgbanner;
 
-	char *mark;
-	char *mark_in;
-	char *mark_out;
+	const char *mark;
+	const char *mark_in;
+	const char *mark_out;
 
-	char *vti_interface;
+	const char *vti_interface;
 	enum yn_options vti_routing;	/* perform routing into vti
 					 * device or not */
 	enum yn_options vti_shared;	/* use remote %any and skip
 					 * cleanup on down? */
 
 	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-	char *ppk_ids;
+	const char *ppk_ids;
 
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
 	enum global_redirect global_redirect;
-	char *redirect_to;	/* used by WHACK_ADD,
+	const char *redirect_to;	/* used by WHACK_ADD,
 				 * WHACK_ACTIVE_REDIRECT and
 				 * WHACK_GLOBAL_REDIRECT */
 	enum yn_options accept_redirect;
-	char *accept_redirect_to;
+	const char *accept_redirect_to;
 	enum yna_options send_redirect;
 
 	/* what metric to put on ipsec routes */
 	int metric;
 
-	char *dnshostname;
+	const char *dnshostname;
 
 	/* space for strings (hope there is enough room) */
 	size_t str_size;
