@@ -249,54 +249,6 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 	return NULL;
 }
 
-err_t shunk_to_decimal(shunk_t input, shunk_t *cursor, uintmax_t *decimal,
-			uintmax_t *numerator, uintmax_t *denominator)
-{
-	*decimal = 0;
-	*numerator = 0;
-	*denominator = 0;
-
-	/* [<DECIMAL>] */
-	bool have_decimal = false;
-	if (is_digit(input)) {
-		err_t err = shunk_to_uintmax(input, &input, 10/*base*/, decimal);
-		if (err != NULL) {
-			return err;
-		}
-		have_decimal = true;
-	}
-
-	/* [.<FRACTION>] */
-	if (is_char(input, '.')) {
-		/* drop '.' */
-		input = hunk_slice(input, 1, input.len);
-		/* need to handle .01 */
-		shunk_t tmp = input;
-		/* reject ".???", allow "0." and ".0" */
-		err_t err = shunk_to_uintmax(input, &input, 10/*base*/, numerator);
-		if (err != NULL && !have_decimal) {
-			return "invalid decimal fraction";
-		}
-		*denominator = 1;
-		for (ptrdiff_t s = 0; s < input.ptr - tmp.ptr; s++) {
-			(*denominator) *= 10;
-		}
-	} else if (!have_decimal) {
-		return "invalid decimal";
-	}
-
-	/* no cursor means no trailing input */
-	if (cursor == NULL) {
-		if (input.len > 0) {
-			return "unexpected input at end";
-		}
-		return NULL;
-	}
-
-	*cursor = input;
-	return NULL;
-}
-
 struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 {
 	ldbgf(DBG_TMI, &global_logger,

@@ -21,6 +21,51 @@
 #include "jambuf.h"
 #include "lswlog.h"
 
+err_t tto_mixed_decimal(shunk_t input, shunk_t *cursor, struct mixed_decimal *number)
+{
+	zero(number);
+
+	/* [<DECIMAL>] */
+	bool have_decimal = false;
+	if (is_digit(input)) {
+		err_t err = shunk_to_uintmax(input, &input, 10/*base*/, &number->decimal);
+		if (err != NULL) {
+			return err;
+		}
+		have_decimal = true;
+	}
+
+	/* [.<FRACTION>] */
+	if (is_char(input, '.')) {
+		/* drop '.' */
+		input = hunk_slice(input, 1, input.len);
+		/* need to handle .01 */
+		shunk_t tmp = input;
+		/* reject ".???", allow "0." and ".0" */
+		err_t err = shunk_to_uintmax(input, &input, 10/*base*/, &number->numerator);
+		if (err != NULL && !have_decimal) {
+			return "invalid decimal fraction";
+		}
+		number->denominator = 1;
+		for (ptrdiff_t s = 0; s < input.ptr - tmp.ptr; s++) {
+			number->denominator *= 10;
+		}
+	} else if (!have_decimal) {
+		return "invalid decimal";
+	}
+
+	/* no cursor means no trailing input */
+	if (cursor == NULL) {
+		if (input.len > 0) {
+			return "unexpected input at end";
+		}
+		return NULL;
+	}
+
+	*cursor = input;
+	return NULL;
+}
+
 const struct scale *ttoscale(shunk_t cursor, const struct scales *scales,
 			     unsigned default_scale)
 {
@@ -42,65 +87,65 @@ const struct scale *ttoscale(shunk_t cursor, const struct scales *scales,
  * This does not work for things like 30/60 seconds
  */
 
-size_t jam_decimal(struct jambuf *buf, uintmax_t decimal,
-		   uintmax_t numerator, uintmax_t denominator)
+size_t jam_mixed_decimal(struct jambuf *buf, struct mixed_decimal number)
 {
 	size_t s = 0;
 	const unsigned base = 10;
 
-	s += jam(buf, "%ju", decimal);
+	s += jam(buf, "%ju", number.decimal);
 
-	if (numerator == 0) {
+	if (number.numerator == 0) {
 		return s;
 	}
 
-	if (numerator >= denominator) {
+	if (number.numerator >= number.denominator) {
 		/* should not be called */
-		s += jam(buf, ".%ju/%ju", numerator, denominator);
+		s += jam(buf, ".%ju/%ju", number.numerator, number.denominator);
 		return s;
 	}
 
 	/* strip trailing zeros */
-	while (numerator % base == 0 &&
-	       denominator % base == 0) {
-		numerator /= base;
-		denominator /= base;
+	while (number.numerator % base == 0 &&
+	       number.denominator % base == 0) {
+		number.numerator /= base;
+		number.denominator /= base;
 	}
 
 	/* determine precision */
 	unsigned precision = 0;
-	while (denominator % base == 0) {
-		denominator /= base;
+	while (number.denominator % base == 0) {
+		number.denominator /= base;
 		precision += 1;
 	}
 
-	s += jam(buf, ".%0*ju", precision, numerator);
+	s += jam(buf, ".%0*ju", precision, number.numerator);
 	return s;
 }
 
-err_t scale_decimal(const struct scale *scale, uintmax_t decimal,
-		    uintmax_t numerator, uintmax_t denominator,
-		    uintmax_t *value)
+err_t scale_mixed_decimal(const struct scale *scale,
+			  struct mixed_decimal number,
+			  uintmax_t *value)
 {
 	ldbgf(DBG_TMI, &global_logger,
 	      "%s() decimal=%ju numerator=%ju denominator=%ju "PRI_SCALE"\n",
-	      __func__, decimal, numerator, denominator, pri_scale(scale));
+	      __func__, number.decimal, number.numerator, number.denominator,
+	      pri_scale(scale));
 
 	/*
-	 * Check that scaling DECIMAL doesn't overflow.
+	 * Check that scaling NUMBER.DECIMAL doesn't overflow.
 	 */
 
-	if (UINTMAX_MAX / scale->multiplier < decimal) {
+	if (UINTMAX_MAX / scale->multiplier < number.decimal) {
 		return "overflow";
 	}
 
-	*value = decimal * scale->multiplier;
-	if (numerator > 0 && denominator > 0) {
-		if (denominator > scale->multiplier) {
+	*value = number.decimal * scale->multiplier;
+	if (number.numerator > 0 && number.denominator > 0) {
+		if (number.denominator > scale->multiplier) {
 			return "underflow";
 		}
 		/* fails on really small fractions? */
-		(*value) += (numerator * (scale->multiplier / denominator));
+		(*value) += (number.numerator * (scale->multiplier / number.denominator));
 	}
 
 	return NULL;

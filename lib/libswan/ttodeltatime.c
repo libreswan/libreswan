@@ -36,12 +36,8 @@ diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 	 */
 
 	/* [<DECIMAL>][.<FRACTION>] */
-	uintmax_t decimal;
-	uintmax_t numerator;
-	uintmax_t denominator;
-	err_t err = shunk_to_decimal(cursor, &cursor, &decimal,
-				     &numerator, &denominator);
-
+	struct mixed_decimal number;
+	err_t err = tto_mixed_decimal(cursor, &cursor, &number);
 	if (err != NULL) {
 		return diag("invalid duration \""PRI_SHUNK"\", %s",
 			    pri_shunk(t), err);
@@ -55,7 +51,7 @@ diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 	}
 
 	uintmax_t microseconds;
-	err_t e = scale_decimal(scale, decimal, numerator, denominator, &microseconds);
+	err_t e = scale_mixed_decimal(scale, number, &microseconds);
 
 	if (e != NULL) {
 		return diag("invalid duration \""PRI_SHUNK"\", %s",

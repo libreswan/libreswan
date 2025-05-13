@@ -33,9 +33,8 @@ diag_t ttobinary(shunk_t t, uintmax_t *r, bool byte_scale)
 	shunk_t cursor = t;
 	const char *suffix = (byte_scale ? " Bytes" : "");
 
-	uint64_t decimal, numerator, denominator;
-	err_t err = shunk_to_decimal(cursor, &cursor, &decimal,
-				     &numerator, &denominator);
+	struct mixed_decimal number;
+	err_t err = tto_mixed_decimal(cursor, &cursor, &number);
 	if (err != NULL) {
 		return diag("bad binary%s value \""PRI_SHUNK"\": %s",
 			    suffix,  pri_shunk(t), err);
@@ -51,7 +50,7 @@ diag_t ttobinary(shunk_t t, uintmax_t *r, bool byte_scale)
 	}
 
 	uintmax_t binary;
-	err_t e = scale_decimal(scale, decimal, numerator, denominator, &binary);
+	err_t e = scale_mixed_decimal(scale, number, &binary);
 	if (e != NULL) {
 		return diag("invalid binary%s \""PRI_SHUNK"\", %s",
 			    suffix, pri_shunk(t), e);
