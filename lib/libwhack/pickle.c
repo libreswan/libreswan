@@ -349,41 +349,42 @@ static bool pickle_whack_message(struct whackpacker *wp,
 				 const struct pickler *pickle,
 				 struct logger *logger)
 {
-	return (PICKLE_STRING(&wp->msg->name) && /* first */
-		pickle_whack_end(wp, "left", &wp->msg->end[LEFT_END], pickle, logger) &&
-		pickle_whack_end(wp, "right",&wp->msg->end[RIGHT_END], pickle, logger) &&
-		PICKLE_STRING(&wp->msg->ike) &&
-		PICKLE_STRING(&wp->msg->esp) &&
-		PICKLE_STRING(&wp->msg->connalias) &&
-		PICKLE_STRING(&wp->msg->dnshostname) &&
-		PICKLE_STRING(&wp->msg->modecfgdns) &&
-		PICKLE_STRING(&wp->msg->modecfgdomains) &&
-		PICKLE_STRING(&wp->msg->modecfgbanner) &&
-		PICKLE_STRING(&wp->msg->mark) &&
-		PICKLE_STRING(&wp->msg->mark_in) &&
-		PICKLE_STRING(&wp->msg->mark_out) &&
-		PICKLE_STRING(&wp->msg->vti_interface) &&
-		PICKLE_STRING(&wp->msg->ipsec_interface) &&
-		PICKLE_STRING(&wp->msg->remote_host) &&
-		PICKLE_STRING(&wp->msg->ppk_ids) &&
-		PICKLE_STRING(&wp->msg->redirect_to) &&
-		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
-		PICKLE_STRING(&wp->msg->keyid) &&
-		PICKLE_STRING(&wp->msg->pubkey) &&
-		PICKLE_THINGS(&wp->msg->impairments.list, wp->msg->impairments.len) &&
-		PICKLE_STRING(&wp->msg->sec_label) &&
-		PICKLE_IP_INFO(&wp->msg->host_afi) &&
-		PICKLE_IP_INFO(&wp->msg->child_afi) &&
-		PICKLE_STRING(&wp->msg->dpdtimeout) &&
-		PICKLE_STRING(&wp->msg->dpddelay) &&
-		PICKLE_STRING(&wp->msg->nflog_group) &&
-		PICKLE_STRING(&wp->msg->reqid) &&
-		PICKLE_STRING(&wp->msg->sendca) &&
-		PICKLE_STRING(&wp->msg->remote_peer_type) &&
-		PICKLE_STRING(&wp->msg->ipsec_max_bytes) &&
-		PICKLE_STRING(&wp->msg->ipsec_max_packets) &&
-		PICKLE_STRING(&wp->msg->rekeyfuzz) &&
-		PICKLE_STRING(&wp->msg->replay_window) &&
+	struct whack_message *wm = wp->msg;
+	return (PICKLE_STRING(&wm->name) && /* first */
+		pickle_whack_end(wp, "left", &wm->end[LEFT_END], pickle, logger) &&
+		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
+		PICKLE_STRING(&wm->ike) &&
+		PICKLE_STRING(&wm->esp) &&
+		PICKLE_STRING(&wm->connalias) &&
+		PICKLE_STRING(&wm->dnshostname) &&
+		PICKLE_STRING(&wm->modecfgdns) &&
+		PICKLE_STRING(&wm->modecfgdomains) &&
+		PICKLE_STRING(&wm->modecfgbanner) &&
+		PICKLE_STRING(&wm->mark) &&
+		PICKLE_STRING(&wm->mark_in) &&
+		PICKLE_STRING(&wm->mark_out) &&
+		PICKLE_STRING(&wm->vti_interface) &&
+		PICKLE_STRING(&wm->ipsec_interface) &&
+		PICKLE_STRING(&wm->remote_host) &&
+		PICKLE_STRING(&wm->ppk_ids) &&
+		PICKLE_STRING(&wm->redirect_to) &&
+		PICKLE_STRING(&wm->accept_redirect_to) &&
+		PICKLE_STRING(&wm->keyid) &&
+		PICKLE_STRING(&wm->pubkey) &&
+		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
+		PICKLE_STRING(&wm->sec_label) &&
+		PICKLE_IP_INFO(&wm->host_afi) &&
+		PICKLE_IP_INFO(&wm->child_afi) &&
+		PICKLE_STRING(&wm->dpdtimeout) &&
+		PICKLE_STRING(&wm->dpddelay) &&
+		PICKLE_STRING(&wm->nflog_group) &&
+		PICKLE_STRING(&wm->reqid) &&
+		PICKLE_STRING(&wm->sendca) &&
+		PICKLE_STRING(&wm->remote_peer_type) &&
+		PICKLE_STRING(&wm->ipsec_max_bytes) &&
+		PICKLE_STRING(&wm->ipsec_max_packets) &&
+		PICKLE_STRING(&wm->rekeyfuzz) &&
+		PICKLE_STRING(&wm->replay_window) &&
 		true);
 }
 
