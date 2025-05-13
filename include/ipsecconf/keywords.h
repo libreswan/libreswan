@@ -225,8 +225,8 @@ enum keywords {
 	KNCF_REQUIRE_ID_ON_CERTIFICATE,
 	KNCF_DNS_MATCH_ID,
 	KNCF_IPSEC_LIFETIME,
-	KNCF_IPSEC_MAXBYTES,
-	KNCF_IPSEC_MAXPACKETS,
+	KWS_IPSEC_MAX_BYTES,
+	KWS_IPSEC_MAX_PACKETS,
 	KNCF_REKEY,
 	KNCF_REAUTH,
 	KNCF_REKEYMARGIN,
@@ -331,7 +331,6 @@ enum keyword_type {
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
 	kt_percent,             /* a number representing percentage */
-	kt_byte,                /* a number representing Binary bytes with prefixs. KiB.. IEC 60027-2/ISO 8000 */
 	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
 	kt_range,               /* ip address range 1.2.3.4-1.2.3.10 */
 	kt_ipaddr,              /* an IP address */

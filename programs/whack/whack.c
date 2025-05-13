@@ -1063,8 +1063,6 @@ int main(int argc, char **argv)
 		 * needed.
 		 */
 
-		.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS, /* max uint_64_t */
-		.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS, /* max uint_64_t */
 		.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT,
 		.keyingtries.set = false,
 		/* whack cannot access kernel_ops->replay_window */
@@ -1894,11 +1892,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
-			msg.sa_ipsec_max_bytes = optarg_uintmax(logger); /* TODO accept K/M/G/T etc */
+			msg.ipsec_max_bytes = optarg;
 			continue;
 
 		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
-			msg.sa_ipsec_max_packets = optarg_uintmax(logger); /* TODO accept K/M/G/T etc */
+			msg.ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */

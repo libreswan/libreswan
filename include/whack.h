@@ -303,8 +303,8 @@ struct whack_message {
 						 * IKEv2 Session
 						 * Resumption */
 
-	uintmax_t sa_ipsec_max_bytes;
-	uintmax_t sa_ipsec_max_packets;
+	char *ipsec_max_bytes;
+	char *ipsec_max_packets;
 
 	deltatime_t ikelifetime;
 	deltatime_t ipsec_lifetime;

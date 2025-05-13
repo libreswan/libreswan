@@ -31,7 +31,7 @@
 
 #include "deltatime.h"
 #include "timescale.h"
-#include "binary-iec-60027-2.h"
+#include "binaryscale-iec-60027-2.h"
 
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser.h"	/* includes parser.tab.h" */
@@ -629,21 +629,7 @@ static bool parse_kt_percent(struct keyword *key, shunk_t value,
 static bool parse_kt_binary(struct keyword *key, shunk_t value,
 			    uintmax_t *number, struct parser *parser)
 {
-	diag_t diag = ttobinary(value, number, 0 /* no B prefix */);
-	if (diag != NULL) {
-		parser_key_value_warning(parser, key, value,
-					 "%s, keyword ignored", str_diag(diag));
-		pfree_diag(&diag);
-		return false;
-	}
-
-	return true;
-}
-
-static bool parse_kt_byte(struct keyword *key, shunk_t value,
-			  uintmax_t *number, struct parser *parser)
-{
-	diag_t diag = ttobinary(value, number, 1 /* with B prefix */);
+	diag_t diag = tto_scaled_uintmax(value, number, &binary_scales);
 	if (diag != NULL) {
 		parser_key_value_warning(parser, key, value,
 					 "%s, keyword ignored", str_diag(diag));
@@ -918,10 +904,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 
 	case kt_binary:
 		ok = parse_kt_binary(kw, value, &number, parser);
-		break;
-
-	case kt_byte:
-		ok = parse_kt_byte(kw, value, &number, parser);
 		break;
 
 	case kt_obsolete:

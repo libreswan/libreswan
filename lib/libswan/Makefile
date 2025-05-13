@@ -89,7 +89,6 @@ OBJS += sparse_names.o
 OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
 OBJS += ttoaddresses_num.o
-OBJS += ttobinary-iec-60027-2.o
 OBJS += ttobool.o
 OBJS += ttocidr_num.o
 OBJS += ttoips_num.o

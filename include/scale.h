@@ -19,9 +19,44 @@
 
 #include <stdint.h>	/* for uintmax_t */
 
+#include "diag.h"
 #include "shunk.h"
 
 struct jambuf;
+
+/*
+ * Mixed number conversion.
+ *
+ * Parse DECIMAL.FRACTION into DECIMAL+NUMERATOR/DENOMINATOR where
+ * DENOMINATOR is a multiple of 10.
+ *
+ * If CURSOR is NULL, having text following the numeric value is
+ * considered an error (strtoul() silently ignores trailing junk when
+ * END=NULL).
+ *
+ * If CURSOR is non-NULL, it is set to the text following the numeric
+ * value.
+ * For instance 3.45 breaks down into:
+ *
+ *    decimal(3) + numerator(45)/denominator(100)
+ *
+ * See wikipedia.
+ */
+
+struct mixed_decimal {
+	uintmax_t decimal; /* wikipedia calls it WHOLE */
+	uintmax_t numerator;
+	uintmax_t denominator;
+};
+
+err_t tto_mixed_decimal(shunk_t input, shunk_t *cursor,
+		       struct mixed_decimal *number);
+
+size_t jam_mixed_decimal(struct jambuf *buf, struct mixed_decimal number);
+
+/*
+ * Conversion to/from <number><scale>.
+ */
 
 struct scale {
 	const char *suffix;
@@ -34,19 +69,22 @@ struct scale {
 
 struct scales {
 	uintmax_t base;
+	const char *name;
+	unsigned default_scale;
 	struct {
 		const struct scale *list;
 		unsigned len;
 	} scale;
 };
 
-const struct scale *ttoscale(shunk_t cursor, const struct scales *scales,
+const struct scale *ttoscale(shunk_t cursor,
+			     const struct scales *scales,
 			     unsigned default_scale);
 
-err_t scale_decimal(const struct scale *scale, uintmax_t decimal,
-		    uintmax_t numerator, uintmax_t denominator,
-		    uintmax_t *value);
+err_t scale_mixed_decimal(const struct scale *scale,
+			 struct mixed_decimal number,
+			 uintmax_t *value);
 
-size_t jam_decimal(struct jambuf *buf, uintmax_t decimal, uintmax_t numerator, uintmax_t denominator);
+diag_t tto_scaled_uintmax(shunk_t cursor, uintmax_t *value, const struct scales *scales);
 
 #endif

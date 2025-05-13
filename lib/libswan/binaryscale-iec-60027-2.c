@@ -14,13 +14,13 @@
  *
  */
 
-#include "binary-iec-60027-2.h"
-
-#include "lswcdefs.h"
-#include "constants.h"		/* for binary_per_kilo */
 #include "binaryscale-iec-60027-2.h"
 
-static const struct scale binaryscale[] = {
+#include "scale.h"
+#include "lswcdefs.h"
+#include "constants.h"		/* for binary_per_kilo */
+
+static const struct scale binary_scale[] = {
 	{"",   1, },
 	{"Ki", 1 * binary_per_kilo, },
 	{"Mi", 1 * binary_per_mega, },
@@ -30,7 +30,14 @@ static const struct scale binaryscale[] = {
 	{"Ei", 1 * binary_per_exa, },
 };
 
-static const struct scale binarybytescale[] = {
+const struct scales binary_scales = {
+	.base = 1024,
+	.name = "binary",
+	.default_scale = 0,
+	.scale = { ARRAY_REF(binary_scale), },
+};
+
+static const struct scale binary_byte_scale[] = {
 	{"",    1, },
 	{"KiB", 1 * binary_per_kilo, },
 	{"MiB", 1 * binary_per_mega, },
@@ -40,22 +47,9 @@ static const struct scale binarybytescale[] = {
 	{"PiB", 1 * binary_per_exa, },
 };
 
-static const struct scales binaryscales = {
+const struct scales binary_byte_scales = {
 	.base = 1024,
-	.scale = { ARRAY_REF(binaryscale), },
+	.name = "binary byte",
+	.default_scale = 0,
+	.scale = { ARRAY_REF(binary_byte_scale), },
 };
-
-static const struct scales binarybytescales = {
-	.base = 1024,
-	.scale = { ARRAY_REF(binarybytescale), },
-};
-
-const struct scale *ttobinaryscale(shunk_t cursor)
-{
-	return ttoscale(cursor, &binaryscales, 0);
-}
-
-const struct scale *ttobinarybytesscale(shunk_t cursor)
-{
-	return ttoscale(cursor, &binarybytescales, 0);
-}

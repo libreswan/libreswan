@@ -361,12 +361,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "pfs-rekey-workaround",  kv_conn,  kt_sparse_name,  KNCF_PFS_REKEY_WORKAROUND, &yn_option_names, NULL, },
   { "require-id-on-certificate",  kv_conn,  kt_sparse_name,  KNCF_REQUIRE_ID_ON_CERTIFICATE, &yn_option_names, NULL, },
   { "dns-match-id,",  kv_conn,  kt_sparse_name,  KNCF_DNS_MATCH_ID, &yn_option_names, NULL, },
-  { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },
+  { "ipsec-max-bytes",  kv_conn,  kt_string,  KWS_IPSEC_MAX_BYTES, NULL, NULL, },
+  { "ipsec-max-packets",  kv_conn,  kt_string,  KWS_IPSEC_MAX_PACKETS, NULL, NULL, },
   { "ipsec-lifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, },
   { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
   { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
   { "salifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
-  { "ipsec-max-packets",  kv_conn,  kt_binary,  KNCF_IPSEC_MAXPACKETS, NULL, NULL, },
 
   { "retransmit-timeout",  kv_conn,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT, NULL, NULL, },
   { "retransmit-interval",  kv_conn,  kt_milliseconds,  KNCF_RETRANSMIT_INTERVAL, NULL, NULL, },

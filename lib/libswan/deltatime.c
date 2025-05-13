@@ -175,11 +175,18 @@ deltatime_t deltatime_from_timeval(struct timeval t)
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d)
 {
 	size_t s = 0;
+	struct timeval tv;
 	if (d.dt.tv_sec < 0) {
 		s += jam(buf, "-");
-		d.dt = negate_timeval(d.dt);
+		tv = negate_timeval(d.dt);
+	} else {
+		tv = d.dt;
 	}
-	jam_decimal(buf, d.dt.tv_sec, d.dt.tv_usec, 1000000/*us*/);
+	s += jam_mixed_decimal(buf, (struct mixed_decimal) {
+			.decimal = tv.tv_sec,
+			.numerator = tv.tv_usec,
+			.denominator = 1000000/*us*/,
+		});
 	return s;
 }
 

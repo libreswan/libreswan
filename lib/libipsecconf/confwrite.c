@@ -171,7 +171,6 @@ static void confwrite_value(FILE *out,
 			break;
 
 		case kt_binary:
-		case kt_byte:
 		case kt_unsigned:
 			if (values[k->field].set) {
 				fprintf(out, "\t%s%s=%jd\n", side, k->keyname,

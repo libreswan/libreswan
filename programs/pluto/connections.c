@@ -105,6 +105,7 @@
 #include "sparse_names.h"
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
 #include "whack_pubkey.h"
+#include "binaryscale-iec-60027-2.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -977,6 +978,37 @@ static uintmax_t extract_uintmax(const char *leftright,
 		return 0;
 	}
 	return uintmax;
+}
+
+static uintmax_t extract_scaled_uintmax(const char *leftright,
+					const char *name,
+					const char *value,
+					const struct scales *scales,
+					uintmax_t max,
+					const char *what,
+					const struct whack_message *wm,
+					diag_t *d,
+					struct logger *logger)
+{
+	(*d) = NULL;
+
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
+		return max;
+	}
+
+	uintmax_t number;
+	diag_t diag = tto_scaled_uintmax(shunk1(value), &number, scales);
+	if ((*d) != NULL) {
+		(*d) = diag_diag(&diag, "%s%s=%s invalid, ", leftright, name, value);
+		return max;
+	}
+	if (number > max) {
+		humber_buf hb;
+		llog(RC_LOG, logger, "%s limited to the max allowed %s",
+		     what, str_humber(max, &hb));
+		return max;
+	}
+	return number;
 }
 
 static ip_cidr extract_cidr_num(const char *leftright,
@@ -3697,7 +3729,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 			}
 
 			/* byte/packet counters for packet offload on linux requires >= 6.7 */
-			if (wm->sa_ipsec_max_bytes != 0 || wm->sa_ipsec_max_packets != 0) {
+			if (wm->ipsec_max_bytes != NULL ||
+			    wm->ipsec_max_packets != NULL) {
 				if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
 					return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
 				}
@@ -3784,19 +3817,25 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 *
 		 * XXX: this code isn't yet doing this.
 		 */
-		config->sa_ipsec_max_bytes = wm->sa_ipsec_max_bytes;
-		if (wm->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) {
-			llog(RC_LOG, c->logger,
-			     "IPsec max bytes limited to the maximum allowed %s",
-			     IPSEC_SA_MAX_OPERATIONS_STRING);
-			config->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
+
+		config->sa_ipsec_max_bytes =
+			extract_scaled_uintmax("", "ipsec-max-bytes", wm->ipsec_max_bytes,
+					       &binary_byte_scales,
+					       IPSEC_SA_MAX_OPERATIONS,
+					       "IPsec max bytes",
+					       wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
 		}
-		config->sa_ipsec_max_packets = wm->sa_ipsec_max_packets;
-		if (wm->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) {
-			llog(RC_LOG, c->logger,
-			     "IPsec max packets limited to the maximum allowed %s",
-			     IPSEC_SA_MAX_OPERATIONS_STRING);
-			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS;
+
+		config->sa_ipsec_max_packets =
+			extract_scaled_uintmax("", "ipsec-max-packets", wm->ipsec_max_packets,
+					       &binary_scales,
+					       IPSEC_SA_MAX_OPERATIONS,
+					       "IPsec max packets",
+					       wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
 		}
 
 		if (deltatime_cmp(config->sa_rekey_margin, >=, config->sa_ipsec_max_lifetime)) {
