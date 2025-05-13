@@ -269,8 +269,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_REKEYMARGIN].set) {
 		msg.rekeymargin = conn->values[KNCF_REKEYMARGIN].deltatime;
 	}
-	msg.sa_ipsec_max_bytes = conn->values[KNCF_IPSEC_MAXBYTES].option;
-	msg.sa_ipsec_max_packets = conn->values[KNCF_IPSEC_MAXPACKETS].option;
+	msg.ipsec_max_bytes = conn->values[KWS_IPSEC_MAX_BYTES].string;
+	msg.ipsec_max_packets = conn->values[KWS_IPSEC_MAX_PACKETS].string;
 	msg.sa_rekeyfuzz_percent = conn->values[KNCF_REKEYFUZZ].option;
 	if (conn->values[KNCF_KEYINGTRIES].set) {
 		msg.keyingtries.set = true;
