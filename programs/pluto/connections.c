@@ -1011,6 +1011,43 @@ static uintmax_t extract_scaled_uintmax(const char *leftright,
 	return number;
 }
 
+static uintmax_t extract_percent(const char *leftright, const char *name, const char *value,
+				 uintmax_t value_when_unset,
+				 const struct whack_message *wm,
+				 diag_t *d,
+				 struct logger *logger)
+{
+	(*d) = NULL;
+
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
+		return value_when_unset;
+	}
+
+	/* NUMBER% */
+
+	uintmax_t percent;
+	shunk_t cursor = shunk1(value);
+	err_t err = shunk_to_uintmax(cursor, &cursor, /*base*/10, &percent);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		return value_when_unset;
+	}
+
+	if (!hunk_streq(cursor, "%")) {
+		(*d) = diag("%s%s=%s invalid, expecting %% character", leftright, name, value);
+		return value_when_unset;
+	}
+
+	if (percent > INT_MAX - 100) {
+		llog(RC_LOG, logger, "%s%s=%s is way to large, using %ju%%",
+		     leftright, name, value, value_when_unset);
+		return value_when_unset;
+	}
+
+	return percent;
+}
+
+
 static ip_cidr extract_cidr_num(const char *leftright,
 				const char *name,
 				const char *value,
@@ -2376,6 +2413,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 			       deltatime_t lifetime_max,
 			       deltatime_t lifetime_fips,
 			       deltatime_t rekeymargin,
+			       uintmax_t rekeyfuzz_percent,
 			       struct logger *logger,
 			       const struct whack_message *wm)
 {
@@ -2417,20 +2455,16 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 	 * which is the maximum possible rekey margin.  INT_MAX is
 	 * arbitrary as an upper bound - anything to stop overflow.
 	 */
-	if (wm->sa_rekeyfuzz_percent > INT_MAX - 100) {
-		return diag("rekeyfuzz=%jd%% is so large it causes overflow",
-			    wm->sa_rekeyfuzz_percent);
-	}
 
 	deltatime_t min_lifetime = deltatime_scale(rekeymargin,
-						   100 + wm->sa_rekeyfuzz_percent,
+						   100 + rekeyfuzz_percent,
 						   100);
 
 	if (deltatime_cmp(max_lifetime, <, min_lifetime)) {
 		return diag("%s%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%% yet less than the maximum allowed %ju",
 			    fips, 
 			    lifetime_name, deltasecs(*lifetime),
-			    deltasecs(rekeymargin), wm->sa_rekeyfuzz_percent,
+			    deltasecs(rekeymargin), rekeyfuzz_percent,
 			    deltasecs(min_lifetime));
 	}
 
@@ -2447,7 +2481,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 		     "%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%%, setting to %jd seconds",
 		     lifetime_name, deltasecs(*lifetime),
 		     deltasecs(wm->rekeymargin),
-		     wm->sa_rekeyfuzz_percent,
+		     rekeyfuzz_percent,
 		     deltasecs(min_lifetime));
 		source = "min";
 		*lifetime = min_lifetime;
@@ -3753,13 +3787,21 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	}
 
+	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz", wm->rekeyfuzz,
+						      SA_REPLACEMENT_FUZZ_DEFAULT,
+						      wm, &d, c->logger);
+
 	if (never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 
+		if (d != NULL) {
+			return d;
+		}
+
 		deltatime_t rekeymargin;
 		if (wm->rekeymargin.is_set) {
-			if (deltasecs(wm->rekeymargin) > (INT_MAX / (100 + (intmax_t)wm->sa_rekeyfuzz_percent))) {
+			if (deltasecs(wm->rekeymargin) > (INT_MAX / (100 + (intmax_t)rekeyfuzz_percent))) {
 				return diag("rekeymargin=%jd is so large it causes overflow",
 					    deltasecs(wm->rekeymargin));
 			}
@@ -3774,7 +3816,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     IKE_SA_LIFETIME_DEFAULT,
 				     IKE_SA_LIFETIME_MAXIMUM,
 				     FIPS_IKE_SA_LIFETIME_MAXIMUM,
-				     rekeymargin,
+				     rekeymargin, rekeyfuzz_percent,
 				     c->logger, wm);
 		if (d != NULL) {
 			return d;
@@ -3784,13 +3826,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     IPSEC_SA_LIFETIME_DEFAULT,
 				     IPSEC_SA_LIFETIME_MAXIMUM,
 				     FIPS_IPSEC_SA_LIFETIME_MAXIMUM,
-				     rekeymargin,
+				     rekeymargin, rekeyfuzz_percent,
 				     c->logger, wm);
 		if (d != NULL) {
 			return d;
 		}
 
-		config->sa_rekey_fuzz = wm->sa_rekeyfuzz_percent;
+		config->sa_rekey_fuzz = rekeyfuzz_percent;
 
 		config->retransmit_timeout =
 			(wm->retransmit_timeout.is_set ? wm->retransmit_timeout :

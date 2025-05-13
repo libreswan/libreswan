@@ -123,8 +123,6 @@ static struct starter_config *alloc_starter_config(void)
 
 	DOPT(KNCF_REPLAY_WINDOW, IPSEC_SA_DEFAULT_REPLAY_WINDOW);
 
-	DOPT(KNCF_REKEYFUZZ, SA_REPLACEMENT_FUZZ_DEFAULT);
-
 	DOPT(KNCF_HOSTADDRFAMILY, AF_UNSPEC);
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
@@ -133,7 +131,6 @@ static struct starter_config *alloc_starter_config(void)
 # undef DOPT
 
 	d->end[LEFT_END].leftright = "left";
-
 	d->end[RIGHT_END].leftright = "right";
 
 	d->ike_version = IKEv2;

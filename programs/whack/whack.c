@@ -544,7 +544,7 @@ enum opt {
 	CD_IPSEC_MAX_BYTES,
 	CD_IPSEC_MAX_PACKETS,
 	CD_REKEYMARGIN,
-	CD_RKFUZZ,
+	CD_REKEYFUZZ,
 	CD_KTRIES,
 	CD_REPLAY_WINDOW,
 	CD_DPDDELAY,
@@ -917,7 +917,7 @@ const struct option optarg_options[] = {
 	{ "rekeymargin\0", required_argument, NULL, CD_REKEYMARGIN },
 	/* OBSOLETE */
 	{ "rekeywindow\0", required_argument, NULL, CD_REKEYMARGIN },
-	{ "rekeyfuzz\0", required_argument, NULL, CD_RKFUZZ },
+	{ "rekeyfuzz\0", required_argument, NULL, CD_REKEYFUZZ },
 	{ "keyingtries\0", required_argument, NULL, CD_KTRIES },
 	{ "replay-window\0", required_argument, NULL, CD_REPLAY_WINDOW },
 	{ "ike\0",    required_argument, NULL, CD_IKE },
@@ -1063,7 +1063,6 @@ int main(int argc, char **argv)
 		 * needed.
 		 */
 
-		.sa_rekeyfuzz_percent = SA_REPLACEMENT_FUZZ_DEFAULT,
 		.keyingtries.set = false,
 		/* whack cannot access kernel_ops->replay_window */
 		.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
@@ -1903,8 +1902,8 @@ int main(int argc, char **argv)
 			msg.rekeymargin = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 
-		case CD_RKFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.sa_rekeyfuzz_percent = optarg_uintmax(logger);
+		case CD_REKEYFUZZ:	/* --rekeyfuzz <percentage> */
+			msg.rekeyfuzz = optarg;
 			continue;
 
 		case CD_KTRIES:	/* --keyingtries <count> */
