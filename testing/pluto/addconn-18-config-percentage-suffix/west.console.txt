@@ -9,7 +9,6 @@ west #
 initdone
 west #
  ipsec auto --add percentage-good
-ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
 "percentage-good": added IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval
@@ -21,7 +20,6 @@ west #
 west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
-ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
 loading conns matching percentage-wip:
   resolving default routes
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
@@ -29,15 +27,13 @@ resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
   sending to pluto
-"percentage-wip": added IKEv2 connection
+"percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
 west #
  ipsec status | grep margin
 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
-"percentage-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
-ipsec addconn: /etc/ipsec.conf:18: warning: bad percentage multiplier "foo", keyword ignored: rekeyfuzz=10foo
 loading conns matching percentage-wip:
   resolving default routes
 resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
@@ -45,9 +41,8 @@ resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
   seeking NOTHING
   sending to pluto
-"percentage-wip": added IKEv2 connection
+"percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
 west #
  ipsec status | grep margin
 "percentage-good":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 10%;
-"percentage-wip":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 west #
