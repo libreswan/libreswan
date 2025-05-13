@@ -111,7 +111,6 @@ static void confwrite_value(FILE *out,
 			break;
 
 		case kt_pubkey:
-		case kt_percent:
 		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:

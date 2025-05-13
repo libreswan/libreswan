@@ -123,8 +123,6 @@ static struct starter_config *alloc_starter_config(void)
 
 	DOPT(KNCF_REPLAY_WINDOW, IPSEC_SA_DEFAULT_REPLAY_WINDOW);
 
-	DOPT(KNCF_REKEYFUZZ, SA_REPLACEMENT_FUZZ_DEFAULT);
-
 	DOPT(KNCF_HOSTADDRFAMILY, AF_UNSPEC);
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
@@ -133,7 +131,6 @@ static struct starter_config *alloc_starter_config(void)
 # undef DOPT
 
 	d->end[LEFT_END].leftright = "left";
-
 	d->end[RIGHT_END].leftright = "right";
 
 	d->ike_version = IKEv2;
@@ -186,7 +183,6 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_bool:
 		case kt_sparse_name:
 		case kt_unsigned:
-		case kt_percent:
 		case kt_binary:
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup));
@@ -507,7 +503,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_bool:
 	case kt_sparse_name:
 	case kt_unsigned:
-	case kt_percent:
 	case kt_binary:
 		/* all treated as a number for now */
 		if (values[field].set == k_set) {

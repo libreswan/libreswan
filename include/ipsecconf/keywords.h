@@ -230,7 +230,7 @@ enum keywords {
 	KNCF_REKEY,
 	KNCF_REAUTH,
 	KNCF_REKEYMARGIN,
-	KNCF_REKEYFUZZ,
+	KWS_REKEYFUZZ,
 	KNCF_COMPRESS,
 	KNCF_KEYINGTRIES,
 	KNCF_REPLAY_WINDOW,
@@ -330,7 +330,6 @@ enum keyword_type {
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
-	kt_percent,             /* a number representing percentage */
 	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
 	kt_range,               /* ip address range 1.2.3.4-1.2.3.10 */
 	kt_ipaddr,              /* an IP address */

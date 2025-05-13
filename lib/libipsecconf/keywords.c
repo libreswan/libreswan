@@ -413,7 +413,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "reauth",  kv_conn,  kt_sparse_name,  KNCF_REAUTH, &yn_option_names, NULL, },
   { "rekey",  kv_conn,  kt_sparse_name,  KNCF_REKEY, &yn_option_names, NULL, },
   { "rekeymargin",  kv_conn,  kt_seconds,  KNCF_REKEYMARGIN, NULL, NULL, },
-  { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
+  { "rekeyfuzz",  kv_conn,  kt_string,  KWS_REKEYFUZZ, NULL, NULL, },
   { "keyingtries",  kv_conn,  kt_unsigned,  KNCF_KEYINGTRIES, NULL, NULL, },
   { "replay-window",  kv_conn,  kt_unsigned,  KNCF_REPLAY_WINDOW, NULL, NULL, },
   { "ikelifetime",  kv_conn,  kt_seconds,  KNCF_IKELIFETIME, NULL, NULL, },

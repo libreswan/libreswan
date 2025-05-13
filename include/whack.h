@@ -310,7 +310,7 @@ struct whack_message {
 	deltatime_t ipsec_lifetime;
 
 	deltatime_t rekeymargin; /* which SA? */
-	uintmax_t sa_rekeyfuzz_percent;
+	char *rekeyfuzz;
 
 	struct {
 		bool set;
