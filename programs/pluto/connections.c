@@ -955,27 +955,27 @@ static unsigned extract_sparse_name(const char *leftright,
 static uintmax_t extract_uintmax(const char *leftright,
 				 const char *name,
 				 const char *value,
-				 uintmax_t min,
-				 uintmax_t max,
+				 uintmax_t value_when_unset,
+				 uintmax_t min, uintmax_t max,
 				 const struct whack_message *wm,
 				 diag_t *d,
 				 struct logger *logger)
 {
 	(*d) = NULL;
 	if (!can_extract_string(leftright, name, value, wm, logger)) {
-		return 0;
+		return value_when_unset;
 	}
 
 	uintmax_t uintmax;
 	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &uintmax);
 	if (err != NULL) {
 		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
-		return 0;
+		return value_when_unset;
 	}
 	if (uintmax < min || uintmax > max) {
 		(*d) = diag("%s%s=%ju invalid, must be in the range %ju-%ju",
 			    leftright, name, uintmax, min, max);
-		return 0;
+		return value_when_unset;
 	}
 	return uintmax;
 }
@@ -3452,14 +3452,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * resort (fixing the kernel will break less tests).
 	 */
 
-	if (wm->replay_window > kernel_ops->max_replay_window) {
-		return diag("replay-window=%ju exceeds %s kernel interface limit of %ju",
-			    wm->replay_window,
-			    kernel_ops->interface_name,
-			    kernel_ops->max_replay_window);
-	} else if (!never_negotiate_wm(wm)) {
-		config->child_sa.replay_window = wm->replay_window;
+	uintmax_t replay_window =
+		extract_uintmax("", "replay-window", wm->replay_window,
+				/*value_when_unset*/IPSEC_SA_DEFAULT_REPLAY_WINDOW,
+				0, kernel_ops->max_replay_window,
+				wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
 	}
+	config->child_sa.replay_window = replay_window;
 
 	if (never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
@@ -3468,7 +3469,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			     "warning: ignoring esn=%s as connection is never-negotiate",
 			     str_sparse(&yne_option_names, wm->esn, &nb));
 		}
-	} else if (wm->replay_window == 0) {
+	} else if (replay_window == 0) {
 		/*
 		 * RFC 4303 states:
 		 *
@@ -3772,7 +3773,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			}
 
 			/* limited replay windows supported for packet offload */
-			switch (wm->replay_window) {
+			switch (replay_window) {
 			case 32:
 			case 64:
 			case 128:
@@ -4104,6 +4105,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 #ifdef USE_NFLOG
 	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,
+					 /*value_when_unset*/0,
 					 1, 65535, wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
@@ -4143,7 +4145,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t reqid = extract_uintmax("", "reqid", wm->reqid,
-					  1, IPSEC_MANUAL_REQID_MAX, wm, &d, c->logger);
+					  /*value_when_unset*/0,
+					  1, IPSEC_MANUAL_REQID_MAX,
+					  wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
 	}

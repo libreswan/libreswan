@@ -1064,8 +1064,6 @@ int main(int argc, char **argv)
 		 */
 
 		.keyingtries.set = false,
-		/* whack cannot access kernel_ops->replay_window */
-		.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 
 		/* set defaults to ICMP PING request */
 		.oppo.ipproto = IPPROTO_ICMP,
@@ -1912,13 +1910,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
-			/*
-			 * Upper bound is determined by the kernel.
-			 * Pluto will check against this when
-			 * processing the message.  The value is
-			 * relatively small.
-			 */
-			msg.replay_window = optarg_uintmax(logger);
+			msg.replay_window = optarg;
 			continue;
 
 		case CD_SENDCA:	/* --sendca */
