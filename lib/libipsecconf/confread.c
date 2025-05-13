@@ -188,7 +188,6 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_unsigned:
 		case kt_percent:
 		case kt_binary:
-		case kt_byte:
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup));
 			cfg->setup[f].option = kw->number;
@@ -510,7 +509,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_unsigned:
 	case kt_percent:
 	case kt_binary:
-	case kt_byte:
 		/* all treated as a number for now */
 		if (values[field].set == k_set) {
 			llog(RC_LOG, logger,
