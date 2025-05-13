@@ -1,6 +1,7 @@
 /* scales, for libreswan
  *
- * Copyright (C) 2022-2024 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2022  Antony Antony
+ * Copyright (C) 2022-2025 Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -148,5 +149,35 @@ err_t scale_mixed_decimal(const struct scale *scale,
 		(*value) += (number.numerator * (scale->multiplier / number.denominator));
 	}
 
+	return NULL;
+}
+
+diag_t tto_scaled_uintmax(shunk_t t, uintmax_t *r, const struct scales *scales)
+{
+	*r = 0;
+	shunk_t cursor = t;
+
+	/* parse decimal.fraction */
+	struct mixed_decimal number;
+	err_t err = tto_mixed_decimal(cursor, &cursor, &number);
+	if (err != NULL) {
+		return diag("bad %s value \""PRI_SHUNK"\": %s",
+			    scales->name,  pri_shunk(t), err);
+	}
+
+	const struct scale *scale = ttoscale(cursor, scales, scales->default_scale);
+	if (scale == NULL) {
+		return diag("unrecognized %s multiplier \""PRI_SHUNK"\"",
+			    scales->name, pri_shunk(cursor));
+	}
+
+	uintmax_t binary;
+	err_t e = scale_mixed_decimal(scale, number, &binary);
+	if (e != NULL) {
+		return diag("invalid %s value \""PRI_SHUNK"\", %s",
+			    scales->name, pri_shunk(t), e);
+	}
+
+	*r = binary;
 	return NULL;
 }

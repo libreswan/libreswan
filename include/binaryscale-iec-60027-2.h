@@ -17,10 +17,9 @@
 #ifndef BINARYSCALE_H
 #define BINARYSCALE_H    /* seen it, no need to see it again */
 
-#include "scale.h"
 #include "shunk.h"
 
-const struct scale *ttobinaryscale(shunk_t s);
-const struct scale *ttobinarybytesscale(shunk_t s);
+extern const struct scales binary_scales;
+extern const struct scales binary_byte_scales;
 
 #endif

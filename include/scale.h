@@ -19,6 +19,7 @@
 
 #include <stdint.h>	/* for uintmax_t */
 
+#include "diag.h"
 #include "shunk.h"
 
 struct jambuf;
@@ -68,17 +69,22 @@ struct scale {
 
 struct scales {
 	uintmax_t base;
+	const char *name;
+	unsigned default_scale;
 	struct {
 		const struct scale *list;
 		unsigned len;
 	} scale;
 };
 
-const struct scale *ttoscale(shunk_t cursor, const struct scales *scales,
+const struct scale *ttoscale(shunk_t cursor,
+			     const struct scales *scales,
 			     unsigned default_scale);
 
 err_t scale_mixed_decimal(const struct scale *scale,
 			 struct mixed_decimal number,
 			 uintmax_t *value);
+
+diag_t tto_scaled_uintmax(shunk_t cursor, uintmax_t *value, const struct scales *scales);
 
 #endif
