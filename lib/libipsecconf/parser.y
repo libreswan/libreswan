@@ -598,34 +598,6 @@ static bool parse_kt_deltatime(struct keyword *key, shunk_t value,
 	return true;
 }
 
-static bool parse_kt_percent(struct keyword *key, shunk_t value,
-			     uintmax_t *number, struct parser *parser)
-{
-	shunk_t end;
-	err_t err = shunk_to_uintmax(value, &end, /*base*/10, number);
-	if (err != NULL) {
-		parser_key_value_warning(parser, key, value,
-					 "%s, percent keyword ignored", err);
-		return false;
-	}
-
-	if (!hunk_streq(end, "%")) {
-		parser_key_value_warning(parser, key, value,
-					 "bad percentage multiplier \""PRI_SHUNK"\", keyword ignored",
-					 pri_shunk(end));
-		return false;
-	}
-
-	if ((*number) > UINT_MAX) {
-		parser_key_value_warning(parser, key, value,
-					 "percentage way too large, keyword ignored");
-		return false;
-	}
-
-	return true;
-}
-
-
 static bool parse_kt_binary(struct keyword *key, shunk_t value,
 			    uintmax_t *number, struct parser *parser)
 {
@@ -896,10 +868,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 
 	case kt_bool:
 		ok = parse_kt_bool(kw, value, &number, parser);
-		break;
-
-	case kt_percent:
-		ok = parse_kt_percent(kw, value, &number, parser);
 		break;
 
 	case kt_binary:
