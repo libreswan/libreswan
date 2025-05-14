@@ -1125,7 +1125,7 @@ void build_connection_spds_from_proposals(struct connection *c);
 
 struct connection *alloc_connection(const char *name,
 				    struct connection *t,
-				    const struct config *config,
+				    struct config *root_config,
 				    lset_t debugging,
 				    struct logger *logger,
 				    where_t where);

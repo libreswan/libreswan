@@ -2618,11 +2618,9 @@ static char *alloc_connection_prefix(const char *name, const struct connection *
 	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
 }
 
-static struct config *alloc_config(enum ike_version ike_version)
+static struct config *alloc_config(void)
 {
 	struct config *config = alloc_thing(struct config, "root config");
-	/* stuff that can't fail! */
-	config->ike_version = ike_version;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		const char *leftright =
@@ -2641,12 +2639,13 @@ static struct config *alloc_config(enum ike_version ike_version)
 
 struct connection *alloc_connection(const char *name,
 				    struct connection *t,
-				    const struct config *config,
+				    struct config *root_config,
 				    lset_t debugging,
 				    struct logger *logger,
 				    where_t where)
 {
 	struct connection *c = refcnt_alloc(struct connection, where);
+	const struct config *config = (t != NULL ? t->config : root_config);
 
 	/* before alloc_logger(); can't use C */
 	c->name = clone_str(name, __func__);
@@ -2701,6 +2700,7 @@ struct connection *alloc_connection(const char *name,
 	 * Needed by the connection_db code when it tries to log.
 	 */
 	c->config = config;
+	c->root_config = root_config; /* possibly NULL */
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		struct connection_end *end = &c->end[lr];
@@ -2766,6 +2766,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 				 struct config *config)
 {
 	diag_t d;
+
+	config->ike_version = wm->ike_version;
 
 	const struct whack_end *whack_ends[] = {
 		[LEFT_END] = &wm->end[LEFT_END],
@@ -4524,11 +4526,10 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	 * connection; connection instances (clones) inherit these
 	 * pointers.
 	 */
-	struct config *root_config = alloc_config(wm->ike_version);
+	struct config *root_config = alloc_config();
 	struct connection *c = alloc_connection(wm->name, NULL, root_config,
 						debugging | wm->conn_debug,
 						logger, HERE);
-	c->root_config = root_config;
 
 	diag_t d = extract_connection(wm, c, root_config);
 	if (d != NULL) {
