@@ -4390,7 +4390,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	struct end_family {
 		bool used;
 		const char *field;
-		char *value;
+		const char *value;
 	} end_family[END_ROOF][IP_INDEX_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
