@@ -2122,53 +2122,61 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 }
 
 /* only used by add_connection() */
-static void mark_parse(/*const*/ char *wmmark,
-		       struct sa_mark *sa_mark,
-		       struct logger *logger/*connection "...":*/)
+
+static diag_t mark_parse(const char *leftright, const char *name, const char *mark,
+			 struct sa_mark *sa_mark)
 {
-	/*const*/ char *val_end;
+	(*sa_mark) = (struct sa_mark) {
+		.unique = false,
+		.val = UINT32_MAX,
+		.mask = UINT32_MAX,
+	};
 
-	sa_mark->unique = false;
-	sa_mark->val = 0xffffffff;
-	sa_mark->mask = 0xffffffff;
-	if (streq(wmmark, "-1") || startswith(wmmark, "-1/")) {
-		sa_mark->unique = true;
-		val_end = wmmark + strlen("-1");
-	} else {
-		errno = 0;
-		unsigned long v = strtoul(wmmark, &val_end, 0);
-		if (errno != 0 || v > 0xffffffff ||
-		    (*val_end != '\0' && *val_end != '/'))
-		{
-			/* ??? should be detected and reported by confread and whack */
-			/* XXX: don't trust whack */
-			llog(RC_LOG, logger,
-				    "bad mark value \"%s\"", wmmark);
-		} else {
-			sa_mark->val = v;
-		}
+	shunk_t cursor = shunk1(mark);
+	intmax_t value;
+	err_t e = shunk_to_intmax(cursor, &cursor, 0, &value);
+	if (e != NULL) {
+		return diag("%s%s=\"%s\" value invalid, %s",
+			    leftright, name, mark, e);
 	}
+	if (value > UINT32_MAX) {
+		return diag("%s%s=\"%s\" value invalid, %jd is larger than %#08"PRIx32,
+			    leftright, name, mark,
+			    value, UINT32_MAX);
+	}
+	if (value < -1) {
+		return diag("%s%s=\"%s\" value invalid, %jd is less than -1",
+			    leftright, name, mark, value);
+	}
+	if (cursor.len > 0 && hunk_char(cursor, 0) != '/') {
+		return diag("%s%s=\"%s\" value invalid, contains trailing junk \""PRI_SHUNK"\"",
+			    leftright, name, mark, pri_shunk(cursor));
+	}
+	sa_mark->val = value;
 
-	if (*val_end == '/') {
-		/*const*/ char *mask_end;
-		errno = 0;
-		unsigned long v = strtoul(val_end+1, &mask_end, 0);
-		if (errno != 0 || v > 0xffffffff || *mask_end != '\0') {
-			/* ??? should be detected and reported by confread and whack */
-			/* XXX: don't trust whack */
-			llog(RC_LOG, logger,
-				   "bad mark mask \"%s\"", mask_end);
-		} else {
-			sa_mark->mask = v;
+	if (hunk_streat(&cursor, "/")) {
+		uintmax_t mask;
+		err_t e = shunk_to_uintmax(cursor, &cursor, 0, &mask);
+		if (e != NULL) {
+			return diag("%s%s=\"%s\" mask invalid, %s",
+				    leftright, name, mark, e);
 		}
+		if (mask > UINT32_MAX) {
+			return diag("%s%s=\"%s\" mask invalid, %jd is larger than %#08"PRIx32,
+				    leftright, name, mark,
+				    mask, UINT32_MAX);
+		}
+		if (cursor.len > 0) {
+			return diag("%s%s=\"%s\" mask invalid, contains trailing junk \""PRI_SHUNK"\"",
+				    leftright, name, mark, pri_shunk(cursor));
+		}
+		sa_mark->mask = mask;
 	}
 	if ((sa_mark->val & ~sa_mark->mask) != 0) {
-		/* ??? should be detected and reported by confread and whack */
-		/* XXX: don't trust whack */
-		llog(RC_LOG, logger,
-			    "mark value %#08" PRIx32 " has bits outside mask %#08" PRIx32,
-			    sa_mark->val, sa_mark->mask);
+		return diag("%s%s=\"%s\" invalid, value %#08"PRIx32" has bits outside mask %#08"PRIx32,
+			    leftright, name, mark, sa_mark->val, sa_mark->mask);
 	}
+	return NULL;
 }
 
 /*
@@ -4063,8 +4071,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (can_extract_string("", "mark", wm->mark, wm, c->logger)) {
-		mark_parse(wm->mark, &c->sa_marks.in, c->logger);
-		mark_parse(wm->mark, &c->sa_marks.out, c->logger);
+		d = mark_parse("", "mark", wm->mark, &c->sa_marks.in);
+		if (d != NULL) {
+			return d;
+		}
+		d = mark_parse("", "mark", wm->mark, &c->sa_marks.out);
+		if (d != NULL) {
+			return d;
+		}
 	}
 
 	if (can_extract_string("", "mark-in", wm->mark_in, wm, c->logger)) {
@@ -4072,7 +4086,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 			llog(RC_LOG, c->logger, "warning: mark-in=%s overrides mark=%s",
 			     wm->mark_in, wm->mark);
 		}
-		mark_parse(wm->mark_in, &c->sa_marks.in, c->logger);
+		d = mark_parse("", "mark-in", wm->mark_in, &c->sa_marks.in);
+		if (d != NULL) {
+			return d;
+		}
 	}
 
 	if (can_extract_string("", "mark-out", wm->mark_out, wm, c->logger)) {
@@ -4080,7 +4097,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 			llog(RC_LOG, c->logger, "warning: mark-out=%s overrides mark=%s",
 			     wm->mark_out, wm->mark);
 		}
-		mark_parse(wm->mark_out, &c->sa_marks.out, c->logger);
+		d = mark_parse("", "mark-out", wm->mark_out, &c->sa_marks.out);
+		if (d != NULL) {
+			return d;
+		}
 	}
 
 	/*
