@@ -658,7 +658,7 @@ static void check_hunk_char_is(void)
 	}
 }
 
-static void check_shunk_to_uintmax(void)
+static void check__shunk_to_uintmax(void)
 {
 	static const struct test {
 		const char *s;
@@ -778,19 +778,112 @@ static void check_shunk_to_uintmax(void)
 
 		/* remainder left in O */
 		shunk_t o;
+		bool t_o_ok = (t->o != NULL);
 		err = shunk_to_uintmax(t_s, &o, t->base, &u);
-		bool t_o_ok = t->o != NULL;
-		if ((err == NULL) != t_o_ok) {
-			FAIL_S("shunk_to_uintmax(&cursor) returned '%s', expecting '%s'",
-			       err, bool_str(t_o_ok));
+		if (err != NULL) {
+			if (t_o_ok) {
+				FAIL_S("shunk_to_uintmax(cursor,&cursor) returned error '%s', expecting NULL", err);
+			}
+			/* error expected */
+		} else {
+			if (!t_o_ok) {
+				FAIL_S("shunk_to_uintmax(cursor,&cursor) returned NULL, expecting error");
+			}
+			if (u != t->u) {
+				FAIL_S("shunk_to_uintmax(cursor,&cursor) returned %ju (0x%jx), expecting %ju (0x%jx)",
+				       u, u, t->u, t->u);
+			}
+			if (!hunk_eq(o, t_o)) {
+				FAIL_S("shunk_to_uintmax(cursor,&cursor) returned cursor '"PRI_SHUNK"', expecting cursor '"PRI_SHUNK"'",
+				       pri_shunk(o), pri_shunk(t_o));
+			}
 		}
-		if (u != t->u) {
-			FAIL_S("shunk_to_uintmax(&cursor) returned %ju (0x%jx), expecting %ju (0x%jx)",
+	}
+}
+
+static void check__shunk_to_intmax(void)
+{
+	static const struct test {
+		const char *s;
+		unsigned base;
+		intmax_t u;
+		const char *o;
+	} tests[] = {
+
+		/* empty */
+		{ "",   0, 0, NULL, },
+		{ "-",  0, 0, NULL, },
+
+		/* 1 .. base */
+		{ "0",        0, INTMAX_C(0), "", },
+		{ "1",        0, INTMAX_C(1), "", },
+		{ "-0",        0, INTMAX_C(0), "", },
+		{ "-1",        0, INTMAX_C(-1), "", },
+
+		/* limit */
+		{ "-9223372036854775808",    0, INTMAX_MIN, "", },
+		{  "9223372036854775807",    0, INTMAX_MAX, "", },
+
+		/* overflow/underflow */
+		{ "-9223372036854775809",    0, 0, NULL, },
+		{  "9223372036854775808",    0, 0, NULL, },
+	};
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT_S(stdout, " base=%u unsigned=%ju out=%s",
+			t->base, t->u, t->o == NULL ? "<invalid>" : t->o);
+		intmax_t u;
+		err_t err;
+
+		shunk_t t_o = shunk1(t->o);
+		shunk_t t_s = shunk1(t->s);
+
+		/*
+		 * Consume entire buffer, OK when test expects nothing
+		 * at end of buffer.
+		 */
+		bool t_ok = (t->o != NULL && t->o[0] == '\0');
+		err = shunk_to_intmax(t_s, NULL, t->base, &u);
+		if (err != NULL) {
+			if (t_ok) {
+				FAIL("shunk_to_intmax(%s,NULL) unexpectedly failed: %s", t->s, err);
+			} else {
+				PRINT("shunk_to_intmax(%s,NULL) failed with: %s", t->s, err);
+			}
+		} else {
+			if (!t_ok) {
+				FAIL("shunk_to_intmax(%s,NULL) unexpectedly succeeded", t->s);
+			} else {
+				PRINT("shunk_to_intmax(%s,NULL) succeeded with %ju", t->s, u);
+			}
+		}
+		if (u != (t_ok ? t->u : 0)) {
+			FAIL_S("shunk_to_intmax(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
 			       u, u, t->u, t->u);
 		}
-		if (!hunk_eq(o, t_o)) {
-			FAIL_S("shunk_to_uintmax(&cursor) returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
-			       pri_shunk(o), pri_shunk(t_o));
+
+		/* remainder left in O */
+		shunk_t o;
+		bool t_o_ok = (t->o != NULL);
+		err = shunk_to_intmax(t_s, &o, t->base, &u);
+		if (err != NULL) {
+			if (t_o_ok) {
+				FAIL_S("shunk_to_intmax(cursor,&cursor) returned error '%s', expecting NULL", err);
+			}
+			/* error expected */
+		} else {
+			if (!t_o_ok) {
+				FAIL_S("shunk_to_intmax(cursor,&cursor) returned NULL, expecting error");
+			}
+			if (u != t->u) {
+				FAIL_S("shunk_to_intmax(cursor,&cursor) returned %jd (0x%jx), expecting %jd (0x%jx)",
+				       u, u, t->u, t->u);
+			}
+			if (!hunk_eq(o, t_o)) {
+				FAIL_S("shunk_to_intmax(cursor,&cursor) returned cursor '"PRI_SHUNK"', expecting cursor '"PRI_SHUNK"'",
+				       pri_shunk(o), pri_shunk(t_o));
+			}
 		}
 	}
 }
@@ -1009,7 +1102,8 @@ int main(int argc, char *argv[])
 	check_shunk_clone();
 	check__hunk_char__hunk_byte();
 	check_hunk_char_is();
-	check_shunk_to_uintmax();
+	check__shunk_to_uintmax();
+	check__shunk_to_intmax();
 	check_ntoh_hton_hunk();
 	check__hunk_get__hunk_put();
 	check_hunks();

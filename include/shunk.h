@@ -150,6 +150,7 @@ shunk_t shunk_span(shunk_t *input, const char *accept);
  * value.
  */
 err_t shunk_to_uintmax(shunk_t input, shunk_t *cursor, unsigned base, uintmax_t *value);
+err_t shunk_to_intmax(shunk_t input, shunk_t *cursor, unsigned base, intmax_t *value);
 
 /*
  * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));
