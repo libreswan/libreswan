@@ -138,7 +138,7 @@ Connection list:
 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear":   sec_label:unset;
-"clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%;
+"clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%;
 "clear":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
@@ -159,7 +159,7 @@ Connection list:
 "clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "clear#192.1.2.254/32":   sec_label:unset;
-"clear#192.1.2.254/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%;
+"clear#192.1.2.254/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%;
 "clear#192.1.2.254/32":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "clear#192.1.2.254/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "clear#192.1.2.254/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
