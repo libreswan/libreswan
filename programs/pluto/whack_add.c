@@ -132,7 +132,7 @@ static bool parse_subnets(struct subnets *sn,
  * add_connection() will fill in valid, presumably from host.
  */
 
-static const struct ip_info *next_subnet(struct whack_end *end,
+static const struct ip_info *next_subnet(char **subnetstr,
 					 const ip_subnets *subnets,
 					 unsigned i)
 {
@@ -141,7 +141,7 @@ static const struct ip_info *next_subnet(struct whack_end *end,
 		subnet_buf b;
 		str_subnet(&subnet, &b);
 		/* freed by free_wam() */
-		end->subnet = clone_str(str_subnet(&subnet, &b), "subnet name");
+		(*subnetstr) = clone_str(str_subnet(&subnet, &b), "subnet name");
 		return subnet_info(subnet);
 	}
 
@@ -149,15 +149,8 @@ static const struct ip_info *next_subnet(struct whack_end *end,
 	 * There's no subnet, clear things so that add_connection()
 	 * will fill it in using the host address.
 	 */
-	end->subnet = NULL;
+	(*subnetstr) = NULL;
 	return NULL; /* unknown */
-}
-
-static void free_wam(struct whack_message *wam)
-{
-	pfreeany(wam->name);
-	pfreeany(wam->end[LEFT_END].subnet);
-	pfreeany(wam->end[RIGHT_END].subnet);
 }
 
 /*
@@ -229,17 +222,22 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			 *
 			 * MUST FREE
 			 */
-			wam.name = alloc_printf("%s/%ux%u",
-						wm->name,
-						left->start+left_i,
-						right->start+right_i);
+			char *name = alloc_printf("%s/%ux%u",
+						  wm->name,
+						  left->start+left_i,
+						  right->start+right_i); /* must free */
+			wam.name = name;
 
 			/*
 			 * Either .subnet is !.is_set or is valid.
 			 * {left,right}_afi can be NULL.
 			 */
-			const struct ip_info *left_afi = next_subnet(&wam.end[LEFT_END], &left->subnets, left_i);
-			const struct ip_info *right_afi = next_subnet(&wam.end[RIGHT_END], &right->subnets, right_i);
+			char *left_subnet = NULL; /* must free */
+			char *right_subnet = NULL; /* must free */
+			const struct ip_info *left_afi = next_subnet(&left_subnet, &left->subnets, left_i);
+			const struct ip_info *right_afi = next_subnet(&right_subnet, &right->subnets, right_i);
+			wam.end[LEFT_END].subnet = left_subnet;
+			wam.end[RIGHT_END].subnet = right_subnet;
 
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
@@ -248,7 +246,9 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 				if (d != NULL) {
 					llog_add_connection_failed(&wam, logger, "%s", str_diag(d));
 					pfree_diag(&d);
-					free_wam(&wam);
+					pfreeany(name);
+					pfreeany(left_subnet);
+					pfreeany(right_subnet);
 					return;
 				}
 			} else {
@@ -259,7 +259,9 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 				     wm->name, wam.end[LEFT_END].subnet, wam.end[RIGHT_END].subnet);
 			}
 
-			free_wam(&wam);
+			pfreeany(name);
+			pfreeany(left_subnet);
+			pfreeany(right_subnet);
 		}
 	}
 
