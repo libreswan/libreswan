@@ -196,13 +196,13 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 		/* will multiplying U by BASE overflow? */
 		const uintmax_t rlimit = UINTMAX_MAX / base;
 		if (u > rlimit) {
-			return "unsigned-long overflow";
+			return "uintmax_t overflow";
 		}
 		u = u * base;
 		/* will adding D to U*BASE overflow? */
 		const uintmax_t dlimit = UINTMAX_MAX - u;
 		if (d > dlimit) {
-			return "unsigned-long overflow";
+			return "uintmax_t overflow";
 		}
 		u = u + d;
 		cursor = hunk_slice(cursor, 1, cursor.len);
@@ -246,6 +246,35 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 	if (output != NULL) {
 		*output = cursor;
 	}
+	return NULL;
+}
+
+err_t shunk_to_intmax(shunk_t input, shunk_t *output, unsigned draft_base, intmax_t *dest)
+{
+	(*dest) = 0;
+	bool negative = hunk_streat(&input, "-");
+	uintmax_t u;
+
+	err_t e = shunk_to_uintmax(input, output, draft_base, &u);
+	if (e != NULL) {
+		return e;
+	}
+
+	if (negative) {
+		/* how to use INTMAX_MIN? */
+		intmax_t s = -u;
+		if (s > 0) {
+			return "intmax_t underflow";
+		}
+		(*dest) = s;
+		return NULL;
+	}
+
+	if (u > INTMAX_MAX) {
+		return "intmax_t overflow";
+	}
+
+	(*dest) = u;
 	return NULL;
 }
 
