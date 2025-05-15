@@ -267,6 +267,7 @@ enum keywords {
 	KWS_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
 	KWS_CISCO_UNITY,	/* send cisco unity VID */
 	KWS_NM_CONFIGURED,	/* Network Manager support */
+	KWS_CISCO_SPLIT,	/* send cisco unity VID */
 
 	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
 	KNCF_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
