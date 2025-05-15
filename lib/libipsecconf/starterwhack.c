@@ -351,7 +351,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.fake_strongswan = conn->values[KNCF_FAKE_STRONGSWAN].option;
 
 	/* Active our Cisco interop code if set */
-	msg.remote_peer_type = conn->values[KNCF_REMOTE_PEER_TYPE].string;
+	msg.remote_peer_type = conn->values[KWS_REMOTE_PEER_TYPE].string;
 
 	/* Network Manager support */
 	msg.nm_configured = conn->values[KWS_NM_CONFIGURED].string;

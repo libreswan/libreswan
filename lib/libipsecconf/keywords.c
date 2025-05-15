@@ -380,9 +380,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "sec-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, },
 
   /* Cisco interop: remote peer type */
-  { "remote-peer-type",  kv_conn,  kt_string,  KNCF_REMOTE_PEER_TYPE, NULL, NULL, },
+  { "remote-peer-type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, NULL, },
   /* another alias used by NetworkManager-libreswan :/ */
-  { "remote_peer_type",  kv_conn,  kt_string,  KNCF_REMOTE_PEER_TYPE, NULL, NULL, },
+  { "remote_peer_type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, NULL, },
 
   /* Network Manager support */
   { "nm-configured",  kv_conn,  kt_string,  KWS_NM_CONFIGURED, NULL, NULL, },
