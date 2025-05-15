@@ -4395,30 +4395,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
 	/*
-	 * We cannot have unlimited keyingtries for Opportunistic, or
-	 * else we gain infinite partial IKE SA's. But also, more than
-	 * one makes no sense, since it will be installing a
-	 * failureshunt (not negotiationshunt) on the 2nd keyingtry,
-	 * and try to re-install another negotiation or failure shunt.
-	 */
-	if (wm->keyingtries.set) {
-		if (never_negotiate_wm(wm)) {
-			llog(RC_LOG, c->logger,
-			     "warning: keyingtries=%ju ignored, connection will never negotiate",
-			     wm->keyingtries.value);
-		} else if (is_opportunistic_wm(wm) &&
-			   wm->keyingtries.value != 1) {
-			llog(RC_LOG, c->logger,
-			     "warning: keyingtries=%ju ignored, Opportunistic connections do not retry",
-			     wm->keyingtries.value);
-		} else {
-			llog(RC_LOG, c->logger,
-			     "warning: keyingtries=%ju ignored, UP connection will attempt to establish until marked DOWN",
-			     wm->keyingtries.value);
-		}
-	}
-
-	/*
 	 * Extract the child configuration and save it.
 	 */
 

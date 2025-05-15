@@ -272,10 +272,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.ipsec_max_bytes = conn->values[KWS_IPSEC_MAX_BYTES].string;
 	msg.ipsec_max_packets = conn->values[KWS_IPSEC_MAX_PACKETS].string;
 	msg.rekeyfuzz = conn->values[KWS_REKEYFUZZ].string;
-	if (conn->values[KNCF_KEYINGTRIES].set) {
-		msg.keyingtries.set = true;
-		msg.keyingtries.value = conn->values[KNCF_KEYINGTRIES].option;
-	}
 	msg.replay_window = conn->values[KWS_REPLAY_WINDOW].string;
 	msg.ipsec_interface = conn->values[KWS_IPSEC_INTERFACE].string;
 

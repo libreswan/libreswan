@@ -378,7 +378,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "rekey",  kv_conn,  kt_sparse_name,  KNCF_REKEY, &yn_option_names, NULL, },
   { "rekeymargin",  kv_conn,  kt_seconds,  KNCF_REKEYMARGIN, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_string,  KWS_REKEYFUZZ, NULL, NULL, },
-  { "keyingtries",  kv_conn,  kt_unsigned,  KNCF_KEYINGTRIES, NULL, NULL, },
   { "replay-window",  kv_conn,  kt_string,  KWS_REPLAY_WINDOW, NULL, NULL, },
   { "ikelifetime",  kv_conn,  kt_seconds,  KNCF_IKELIFETIME, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_sparse_name,  KNCF_FAILURESHUNT, &failure_shunt_names, NULL, },
@@ -422,6 +421,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "aggressive",  kv_conn,  kt_sparse_name,  KNCF_AGGRESSIVE, &yn_option_names, NULL, },
   /* alias for compatibility - undocumented on purpose */
   { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KNCF_AGGRESSIVE, &yn_option_names, NULL, },
+
+  { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
 
   { NULL,  0,  0,  0, NULL, NULL, }
 };

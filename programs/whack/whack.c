@@ -545,7 +545,6 @@ enum opt {
 	CD_IPSEC_MAX_PACKETS,
 	CD_REKEYMARGIN,
 	CD_REKEYFUZZ,
-	CD_KTRIES,
 	CD_REPLAY_WINDOW,
 	CD_DPDDELAY,
 	CD_DPDTIMEOUT,
@@ -915,10 +914,9 @@ const struct option optarg_options[] = {
 	{ "retransmit-timeout\0", required_argument, NULL, CD_RETRANSMIT_TIMEOUT },
 	{ "retransmit-interval\0", required_argument, NULL, CD_RETRANSMIT_INTERVAL },
 	{ "rekeymargin\0", required_argument, NULL, CD_REKEYMARGIN },
-	/* OBSOLETE */
-	{ "rekeywindow\0", required_argument, NULL, CD_REKEYMARGIN },
+	{ "rekeywindow\0", required_argument, NULL, CD_REKEYMARGIN },/* backward compat */
 	{ "rekeyfuzz\0", required_argument, NULL, CD_REKEYFUZZ },
-	{ "keyingtries\0", required_argument, NULL, CD_KTRIES },
+	{ IGNORE_OPT("keyingtries", "5.0"), required_argument, NULL, 0 },
 	{ "replay-window\0", required_argument, NULL, CD_REPLAY_WINDOW },
 	{ "ike\0",    required_argument, NULL, CD_IKE },
 	{ "ikealg\0", required_argument, NULL, CD_IKE },
@@ -1057,13 +1055,6 @@ int main(int argc, char **argv)
 			[LEFT_END] = { .leftright = "left", },
 			[RIGHT_END] = { .leftright = "right", },
 		},
-
-		/*
-		 * XXX: none of these initializations should be
-		 * needed.
-		 */
-
-		.keyingtries.set = false,
 
 		/* set defaults to ICMP PING request */
 		.oppo.ipproto = IPPROTO_ICMP,
@@ -1904,11 +1895,6 @@ int main(int argc, char **argv)
 
 		case CD_REKEYFUZZ:	/* --rekeyfuzz <percentage> */
 			msg.rekeyfuzz = optarg;
-			continue;
-
-		case CD_KTRIES:	/* --keyingtries <count> */
-			msg.keyingtries.set = true;
-			msg.keyingtries.value = optarg_uintmax(logger);
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
