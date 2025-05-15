@@ -1144,6 +1144,8 @@ static diag_t extract_host_end(struct host_end *host,
 			       bool *same_ca,
 			       struct logger *logger/*connection "..."*/)
 {
+	enum ike_version ike_version = wm->ike_version;
+
 	err_t err;
 	diag_t d;
 	const char *leftright = host_config->leftright;
@@ -1458,8 +1460,9 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* value starting points */
 	struct authby authby = (never_negotiate_wm(wm) ? AUTHBY_NEVER :
-				!authby_is_set(wm->authby) ? AUTHBY_DEFAULTS :
-				wm->authby);
+				authby_is_set(wm->authby) ? wm->authby :
+				ike_version == IKEv1 ? AUTHBY_IKEv1_DEFAULTS :
+				AUTHBY_IKEv2_DEFAULTS);
 	enum keyword_auth auth = src->auth;
 
 	/*
@@ -1469,7 +1472,7 @@ static diag_t extract_host_end(struct host_end *host,
 	 * This logic still applies when NEVER_NEGOTIATE() - it turns
 	 * above AUTHBY_NEVER into AUTH_NEVER.
 	 */
-	if (wm->ike_version == IKEv1) {
+	if (ike_version == IKEv1) {
 		/* override auth= using above authby= */
 		if (auth != AUTH_UNSET) {
 			return diag("%sauth= is not supported by IKEv1", leftright);

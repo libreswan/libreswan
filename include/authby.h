@@ -41,7 +41,8 @@ struct authby {
 #define AUTHBY_NONE (struct authby) {0}
 #define AUTHBY_ALL (struct authby) { true, true, true, true, true, true }
 
-#define AUTHBY_DEFAULTS (struct authby) { .rsasig = true, .rsasig_v1_5 = true, .ecdsa = true }
+#define AUTHBY_IKEv1_DEFAULTS (struct authby) { .rsasig = true, }
+#define AUTHBY_IKEv2_DEFAULTS (struct authby) { .rsasig = true, .rsasig_v1_5 = true, .ecdsa = true, }
 
 struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
