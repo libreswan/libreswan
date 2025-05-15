@@ -338,15 +338,10 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		/* key-exchange= */
 
-		switch (conn->ike_version) {
-		case IKEv1:
-			cwf("key-exchange", "ikev1");
-			break;
-		case IKEv2:
-			cwf("key-exchange", "ikev2");
-			break;
-		default:
-			break;
+		if (conn->values[KWS_KEYEXCHANGE].string != NULL) {
+			cwf("keyexchange", conn->values[KWS_KEYEXCHANGE].string);
+		} else if (conn->values[KWS_IKEv2].string != NULL) {
+			cwf("ikev2", conn->values[KWS_IKEv2].string);
 		}
 
 		/* esn= */

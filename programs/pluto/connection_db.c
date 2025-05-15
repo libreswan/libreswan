@@ -275,7 +275,14 @@ bool next_connection(struct connection_filter *filter)
 			/* foodgroups searches for just CK_GROUP */
 			vexpect_where(filter->search.where, filter->kind == 0);
 #endif
+#if 0
+			/*
+			 * add_connection() can fail before
+			 * .ike_version has been determined.  Besides
+			 * it's redundant.
+			 */
 			vexpect_where(filter->search.where, filter->clonedfrom == NULL);
+#endif
 			vexpect_where(filter->search.where, filter->host_pair.local == NULL);
 			vexpect_where(filter->search.where, filter->host_pair.remote == NULL);
 			vexpect_where(filter->search.where, filter->this_id_eq == NULL);

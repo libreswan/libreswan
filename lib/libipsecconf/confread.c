@@ -131,8 +131,6 @@ static struct starter_config *alloc_starter_config(void)
 	d->end[LEFT_END].leftright = "left";
 	d->end[RIGHT_END].leftright = "right";
 
-	d->ike_version = IKEv2;
-
 	d->sighash_policy = POL_SIGHASH_DEFAULTS;
 
 	d->xfrm_if_id = UINT32_MAX;
@@ -687,29 +685,6 @@ static bool load_conn(struct starter_conn *conn,
 	}
 
 	/*
-	 * ??? sometimes (when? why?) the member is already set.
-	 *
-	 * When a conn sets it and then expands also=.
-	 */
-
-	if (conn->values[KNCF_KEYEXCHANGE].set) {
-		if (conn->values[KNCF_KEYEXCHANGE].option == IKE_VERSION_ROOF) {
-			/*
-			 * i.e., keyexchange=ike which was ignored.
-			 * Use ikev2= when specified.
-			 */
-			if (conn->values[KNCF_IKEv2].set) {
-				conn->ike_version = (conn->values[KNCF_IKEv2].option == YN_YES ? IKEv2 : IKEv1);
-			}
-		} else {
-			/* IKEv1, IKEv2, ... */
-			conn->ike_version = conn->values[KNCF_KEYEXCHANGE].option;
-		}
-	} else if (conn->values[KNCF_IKEv2].set) {
-		conn->ike_version = (conn->values[KNCF_IKEv2].option == YN_YES ? IKEv2 : IKEv1);
-	}
-
-	/*
 	 * Read in the authby= string and translate to policy bits.
 	 *
 	 * This is the symmetric (left+right) version.  There is also
@@ -754,11 +729,9 @@ static bool load_conn(struct starter_conn *conn,
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (hunk_streq(val, "never")) {
 				conn->authby.never = true;
+#if 0
 			/* everything else is only supported for IKEv2 */
-			} else if (conn->ike_version == IKEv1) {
-				llog(RC_LOG, logger,
-				     "ikev1 connection must use authby= of rsasig, secret or never");
-				return false;
+#endif
 			} else if (hunk_streq(val, "null")) {
 				conn->authby.null = true;
 			} else if (hunk_streq(val, "rsa-sha1")) {

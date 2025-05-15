@@ -240,8 +240,8 @@ enum keywords {
 	KNCF_AGGRESSIVE,
 	KNCF_MODECFGPULL,
 	KNCF_ENCAPSULATION,
-	KNCF_IKEv2,		/* obsolete, use KEYEXCHANGE */
-	KNCF_KEYEXCHANGE,
+	KWS_IKEv2,		/* obsolete, use KEYEXCHANGE */
+	KWS_KEYEXCHANGE,
 	KNCF_PPK,
 	KNCF_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KNCF_ESN,
