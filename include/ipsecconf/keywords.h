@@ -256,7 +256,7 @@ enum keywords {
 	KNCF_CLIENTADDRFAMILY,
 	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
-	KNCF_NM_CONFIGURED,	/* Network Manager support */
+	KWS_NM_CONFIGURED,	/* Network Manager support */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */

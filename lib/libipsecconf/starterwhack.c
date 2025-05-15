@@ -354,7 +354,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.remote_peer_type = conn->values[KNCF_REMOTE_PEER_TYPE].string;
 
 	/* Network Manager support */
-	msg.nm_configured = conn->values[KNCF_NM_CONFIGURED].option;
+	msg.nm_configured = conn->values[KWS_NM_CONFIGURED].string;
 
 	msg.sec_label = conn->values[KSCF_SEC_LABEL].string;
 	msg.conn_debug = conn->values[KW_DEBUG].option;

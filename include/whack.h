@@ -366,7 +366,7 @@ struct whack_message {
 	enum yn_options send_vendorid;
 
 	/* Checking if this connection is configured by Network Manager */
-	enum yn_options nm_configured;
+	const char *nm_configured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum xauthby xauthby;

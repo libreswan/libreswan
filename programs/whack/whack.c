@@ -1985,8 +1985,8 @@ int main(int argc, char **argv)
 			msg.remote_peer_type = optarg;
 			continue;
 
-		case CD_NM_CONFIGURED:		/* --nm-configured */
-			msg.nm_configured = optarg_sparse(logger, YN_YES, &yn_option_names);
+		case CD_NM_CONFIGURED:		/* --nm-configured[=yes|no] */
+			msg.nm_configured = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_TCP: /* --tcp */

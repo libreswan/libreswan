@@ -385,7 +385,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "remote_peer_type",  kv_conn,  kt_string,  KNCF_REMOTE_PEER_TYPE, NULL, NULL, },
 
   /* Network Manager support */
-  { "nm-configured",  kv_conn,  kt_sparse_name,  KNCF_NM_CONFIGURED, &yn_option_names, NULL, },
+  { "nm-configured",  kv_conn,  kt_string,  KWS_NM_CONFIGURED, NULL, NULL, },
 
   { "xauthby",  kv_conn,  kt_sparse_name,  KNCF_XAUTHBY, &xauthby_names, NULL, },
   { "xauthfail",  kv_conn,  kt_sparse_name,  KNCF_XAUTHFAIL, &xauthfail_names, NULL, },

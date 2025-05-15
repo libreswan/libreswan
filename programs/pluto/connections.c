@@ -4117,9 +4117,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->ipsec_interface = ipsec_interface;
 	}
 
-	config->nm_configured = extract_yn("", "nm-configured", wm->nm_configured,
-					   /*value_when_unset*/YN_NO,
-					   wm, c->logger);
+	enum yn_options nm_configured = extract_sparse_name("", "nm-configured", wm->nm_configured,
+							    /*value_when_unset*/YN_NO,
+							    &yn_option_names,
+							    wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+	config->nm_configured = (nm_configured == YN_YES);
 
 #ifdef USE_NFLOG
 	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,
