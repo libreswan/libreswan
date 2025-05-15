@@ -286,8 +286,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT].deltatime;
 	}
 
-	msg.ike_version = conn->ike_version;
-	msg.ikev2 = conn->values[KNCF_IKEv2].option;
+	msg.keyexchange = conn->values[KWS_KEYEXCHANGE].string;
+	msg.ikev2 = conn->values[KWS_IKEv2].string;
 	msg.pfs = conn->values[KNCF_PFS].option;
 	msg.compress = conn->values[KNCF_COMPRESS].option;
 	msg.type = conn->values[KNCF_TYPE].option;

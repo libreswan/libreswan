@@ -251,8 +251,8 @@ struct whack_message {
 					 * semantics */
 	bool whack_async;
 
-	enum ike_version ike_version;	/* from keyexchange= */
-	enum yn_options ikev2;
+	const char *keyexchange;
+	const char *ikev2;
 
 	struct authby authby;
 	lset_t sighash_policy;

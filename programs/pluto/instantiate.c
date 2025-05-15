@@ -67,7 +67,7 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 static struct connection *duplicate_connection(const char *name, struct connection *t,
 					       const struct id *peer_id, where_t where)
 {
-	struct connection *c = alloc_connection(name, t, t->config,
+	struct connection *c = alloc_connection(name, t, NULL,
 						t->logger->debugging,
 						t->logger,
 						where);

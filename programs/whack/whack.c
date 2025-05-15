@@ -1679,15 +1679,17 @@ int main(int argc, char **argv)
 
 		/* --ikev1 --ikev2 --ikev2-propose */
 		case CD_IKEv1:
-		case CD_IKEv2:
-		{
-			const enum ike_version ike_version = IKEv1 + c - CD_IKEv1;
-			if (msg.ike_version != 0 && msg.ike_version != ike_version) {
+			if (msg.keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.ike_version = ike_version;
+			msg.keyexchange = "IKEv1";
 			continue;
-		}
+		case CD_IKEv2:
+			if (msg.keyexchange != NULL) {
+				diagw("connection can no longer have --ikev1 and --ikev2");
+			}
+			msg.keyexchange = "IKEv2";
+			continue;
 
 		/* --allow-narrowing */
 		case CD_NARROWING:
@@ -2339,23 +2341,6 @@ int main(int argc, char **argv)
 		 * reaching here is BAD.
 		 */
 		bad_case(c);
-	}
-
-	if (msg.ike_version == 0) {
-		/* no ike version specified, default to IKEv2 */
-		msg.ike_version = IKEv2;
-	}
-
-	switch (msg.ike_version) {
-	case IKEv1:
-		if (msg.authby.ecdsa) {
-			diagw("connection cannot specify --ecdsa and --ikev1");
-		}
-		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
-		msg.sighash_policy = LEMPTY;
-		break;
-	case IKEv2:
-		break;
 	}
 
 	msg.child_afi = child_family.type;

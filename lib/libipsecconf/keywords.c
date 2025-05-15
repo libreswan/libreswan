@@ -61,42 +61,6 @@
 		SPARSE("y",          YES),	\
 		SPARSE("n",          NO)
 
-/*
- * Values for keyexchange= and ikev2=
- *
- * The ikev2= keyword, which was originally very flexible, has been
- * reduced to a boolean.  Retain original keywords for backwards
- * compatibility for now.
- */
-
-static const struct sparse_names kw_keyexchange_names = {
-	.list = {
-		SPARSE("ike",  IKE_VERSION_ROOF),
-		SPARSE("ikev1", IKEv1),
-		SPARSE("ikev2", IKEv2),
-		SPARSE_NULL
-	},
-};
-
-static const struct sparse_names kw_ikev2_names = {
-	.list = {
-		/* from fo_{never,permit,propose,insist} */
-		SPARSE("never",     YN_NO),
-		SPARSE("propose",   YN_YES),	/* originally: initiate IKEv2,
-						 * but allow downgrade to
-						 * IKEv1; accept IKEv1 or
-						 * IKEv2 */
-		SPARSE("permit",    YN_NO),		/* reverse of propose:
-						 * initiate IKEv1, but allow
-						 * upgrade to IKEv2; accept
-						 * IKEv1 or IKEv2? */
-		SPARSE("insist",    YN_YES),
-		YES_NO(YN_YES, YN_NO),
-		SPARSE("always",    YN_YES),
-		SPARSE_NULL
-	},
-};
-
 static const struct sparse_names kw_ddos_names = {
 	.list = {
 		SPARSE("auto",      DDOS_AUTO),
@@ -319,8 +283,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "clientaddrfamily",  kv_conn,  kt_sparse_name,  KNCF_CLIENTADDRFAMILY, &kw_addrfamily_names, NULL, },
   { "type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names, NULL, },
   { "authby",  kv_conn,  kt_string,  KSCF_AUTHBY, NULL, NULL, },
-  { "keyexchange",  kv_conn,  kt_sparse_name,  KNCF_KEYEXCHANGE, &kw_keyexchange_names, NULL, },
-  { "ikev2",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_IKEv2, &kw_ikev2_names, NULL, },
+  { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
+  { "ikev2",  kv_conn,  kt_string,  KWS_IKEv2, NULL, NULL, },
   { "ppk", kv_conn | kv_processed, kt_sparse_name, KNCF_PPK, &nppi_option_names, NULL, },
   { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPK_IDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_sparse_name, KNCF_INTERMEDIATE, &yn_option_names, NULL, },

@@ -385,6 +385,8 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->ipsec_max_packets) &&
 		PICKLE_STRING(&wm->rekeyfuzz) &&
 		PICKLE_STRING(&wm->replay_window) &&
+		PICKLE_STRING(&wm->keyexchange) &&
+		PICKLE_STRING(&wm->ikev2) &&
 		true);
 }
 

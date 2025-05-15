@@ -46,11 +46,11 @@ west #
 "keyexchange=ikev1-ikev2=n": added IKEv1 connection
 west #
  ipsec add keyexchange=ikev1-ikev2=y
-"keyexchange=ikev1-ikev2=y": ignoring ikev2=yes which conflicts with keyexchange=IKEv1
+"keyexchange=ikev1-ikev2=y": ignoring ikev2=yes which conflicts with keyexchange=ikev1
 "keyexchange=ikev1-ikev2=y": added IKEv1 connection
 west #
  ipsec add keyexchange=ikev2-ikev2=n
-"keyexchange=ikev2-ikev2=n": ignoring ikev2=no which conflicts with keyexchange=IKEv2
+"keyexchange=ikev2-ikev2=n": ignoring ikev2=no which conflicts with keyexchange=ikev2
 "keyexchange=ikev2-ikev2=n": added IKEv2 connection
 west #
  ipsec add keyexchange=ikev2-ikev2=y
