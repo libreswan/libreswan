@@ -3979,9 +3979,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_initial_contact = extract_yn("", "initial-contact", wm->initial_contact,
 							  /*value_when_unset*/YN_NO,
 							  wm, c->logger);
-		config->send_vid_cisco_unity = extract_yn("", "cisco-unity", wm->cisco_unity,
-							  /*value_when_unset*/YN_NO,
-							  wm, c->logger);
+		enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
+								  /*value_when_unset*/YN_NO,
+								  &yn_option_names,
+								  wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
+		config->send_vid_cisco_unity = (cisco_unity == YN_YES);
 		config->send_vid_fake_strongswan = extract_yn("", "fake-strongswan", wm->fake_strongswan,
 							      /*value_when_unset*/YN_NO,
 							      wm, c->logger);

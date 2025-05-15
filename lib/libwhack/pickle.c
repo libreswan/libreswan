@@ -386,6 +386,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->rekeyfuzz) &&
 		PICKLE_STRING(&wm->replay_window) &&
 		PICKLE_STRING(&wm->nm_configured) &&
+		PICKLE_STRING(&wm->cisco_unity) &&
 		true);
 }
 

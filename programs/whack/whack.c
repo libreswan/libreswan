@@ -1937,7 +1937,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
-			msg.cisco_unity = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.cisco_unity = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
