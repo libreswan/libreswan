@@ -134,7 +134,6 @@ kvmplutotest	addconn-22-authby-hash-algo			good
 kvmplutotest	addconn-23-fedora-crypto-policies		good
 kvmplutotest	addconn-24-conn-default-rsasigkey		good	github:833
 kvmplutotest	addconn-25-missing-cert				good
-kvmplutotest	addconn-26-keyingtries				good	github/1061
 kvmplutotest	addconn-27-keyexchange				good	github/1168
 kvmplutotest	addconn-28-fragmentation			good	github/1209
 kvmplutotest	addconn-29-nat-ikev1-method			good
