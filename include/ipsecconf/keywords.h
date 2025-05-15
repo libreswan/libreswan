@@ -255,8 +255,6 @@ enum keywords {
 	KNCF_HOSTADDRFAMILY,
 	KNCF_CLIENTADDRFAMILY,
 	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KWS_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
-	KWS_NM_CONFIGURED,	/* Network Manager support */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
@@ -264,7 +262,12 @@ enum keywords {
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
 	KWYN_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KWYN_INITIAL_CONTACT,	/* send initial contact VID */
+
+	/* cisco unity stuff */
+	KWS_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
 	KWS_CISCO_UNITY,	/* send cisco unity VID */
+	KWS_NM_CONFIGURED,	/* Network Manager support */
+
 	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
 	KNCF_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KNCF_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */

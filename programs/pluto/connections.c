@@ -920,7 +920,8 @@ static unsigned extract_enum_name(const char *leftright,
 
 static unsigned extract_sparse_name(const char *leftright,
 				    const char *name,
-				    const char *value, unsigned unset,
+				    const char *value,
+				    unsigned value_when_unset,
 				    const struct sparse_names *names,
 				    const struct whack_message *wm,
 				    diag_t *d,
@@ -934,11 +935,11 @@ static unsigned extract_sparse_name(const char *leftright,
 			     "warning: %s%s=%s ignored for never-negotiate connection",
 			     leftright, name, value);
 		}
-		return unset;
+		return value_when_unset;
 	}
 
 	if (value == NULL) {
-		return unset;
+		return value_when_unset;
 	}
 
 	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
@@ -1145,7 +1146,7 @@ static diag_t extract_host_end(struct host_end *host,
 			       struct logger *logger/*connection "..."*/)
 {
 	err_t err;
-	diag_t d;
+	diag_t d = NULL;
 	const char *leftright = host_config->leftright;
 
 	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
@@ -2727,6 +2728,44 @@ struct connection *alloc_connection(const char *name,
 	return c;
 }
 
+static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
+					const struct whack_message *wm,
+					struct logger *logger)
+{
+	diag_t d = NULL;
+
+	enum remote_peer_type remote_peer_type = extract_sparse_name("", "remote-peer-type",
+								     wm->remote_peer_type,
+								     REMOTE_PEER_IETF,
+								     &remote_peer_type_names,
+								     wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
+							  /*value_when_unset*/YN_NO,
+							  &yn_option_names,
+							  wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	enum yn_options nm_configured = extract_sparse_name("", "nm-configured", wm->nm_configured,
+							    /*value_when_unset*/YN_NO,
+							    &yn_option_names,
+							    wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	cisco->peer = (remote_peer_type == REMOTE_PEER_CISCO);
+	cisco->unity = (cisco_unity == YN_YES);
+	cisco->nm = (nm_configured == YN_YES);
+
+	return NULL;
+}
+
 const struct ike_info ikev1_info = {
 	.version = IKEv1,
 	.version_name = "IKEv1",
@@ -2762,7 +2801,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c,
 				 struct config *config)
 {
-	diag_t d;
+	diag_t d = NULL;
 
 	const struct whack_end *whack_ends[] = {
 		[LEFT_END] = &wm->end[LEFT_END],
@@ -3951,19 +3990,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 			break;
 		}
 
-		/* Cisco interop: remote peer type */
-		enum remote_peer_type remote_peer_type =
-			extract_sparse_name("", "remote-peer-type",
-					    wm->remote_peer_type,
-					    REMOTE_PEER_IETF,
-					    &remote_peer_type_names,
-					    wm, &d, c->logger);
+		/*
+		 * Cisco interop: remote peer type.
+		 */
+		d = extract_cisco_host_config(&config->host.cisco, wm, c->logger);
 		if (d != NULL) {
 			return d;
-		}
-		/* just blat both ends */
-		FOR_EACH_ELEMENT(end, config->end) {
-			end->host.xauth.cisco = (remote_peer_type == REMOTE_PEER_CISCO);
 		}
 
 		config->child_sa.metric = wm->metric;
@@ -3979,31 +4011,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->send_initial_contact = extract_yn("", "initial-contact", wm->initial_contact,
 							  /*value_when_unset*/YN_NO,
 							  wm, c->logger);
-		enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
-								  /*value_when_unset*/YN_NO,
-								  &yn_option_names,
-								  wm, &d, c->logger);
-		if (d != NULL) {
-			return d;
-		}
-		config->send_vid_cisco_unity = (cisco_unity == YN_YES);
 		config->send_vid_fake_strongswan = extract_yn("", "fake-strongswan", wm->fake_strongswan,
 							      /*value_when_unset*/YN_NO,
 							      wm, c->logger);
 		config->send_vendorid = extract_yn("", "send-vendorid", wm->send_vendorid,
 						   /*value_when_unset*/YN_NO,
 						   wm, c->logger);
-		if (d != NULL) {
-			return d;
-		}
 
 		config->send_ca = extract_enum_name("", "sendca", wm->sendca,
 						    CA_SEND_ALL,
 						    &send_ca_policy_names,
 						    wm, &d, c->logger);
-		if (d != NULL) {
-			return d;
-		}
 
 		config->xauthby = extract_sparse("", "xauthby", wm->xauthby,
 						 /*value_when_unset*/XAUTHBY_FILE,
@@ -4121,15 +4139,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		config->ipsec_interface = ipsec_interface;
 	}
-
-	enum yn_options nm_configured = extract_sparse_name("", "nm-configured", wm->nm_configured,
-							    /*value_when_unset*/YN_NO,
-							    &yn_option_names,
-							    wm, &d, c->logger);
-	if (d != NULL) {
-		return d;
-	}
-	config->nm_configured = (nm_configured == YN_YES);
 
 #ifdef USE_NFLOG
 	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,

@@ -199,13 +199,13 @@ static bool fmt_common_shell_out(char *buf,
 		}
 	}
 
-	JDuint("PLUTO_IS_PEER_CISCO", c->remote->host.config->xauth.cisco);
+	JDuint("PLUTO_IS_PEER_CISCO", c->config->host.cisco.peer);
 	JDstr("PLUTO_PEER_DNS_INFO", (child != NULL && child->sa.st_seen_cfg_dns != NULL ? child->sa.st_seen_cfg_dns : ""));
 	JDstr("PLUTO_PEER_DOMAIN_INFO", (child != NULL && child->sa.st_seen_cfg_domains != NULL ? child->sa.st_seen_cfg_domains : ""));
 	JDstr("PLUTO_PEER_BANNER", (child != NULL && child->sa.st_seen_cfg_banner != NULL ? child->sa.st_seen_cfg_banner : ""));
 	JDuint("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
 	JDuint("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
-	JDuint("PLUTO_NM_CONFIGURED", c->config->nm_configured);
+	JDuint("PLUTO_NM_CONFIGURED", c->config->host.cisco.nm);
 
 	struct ipsec_proto_info *const first_ipsec_proto =
 		(child == NULL ? NULL :

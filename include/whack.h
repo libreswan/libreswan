@@ -327,9 +327,6 @@ struct whack_message {
 	const char *dpddelay;		/* seconds */
 	const char *dpdtimeout;	/* seconds */
 
-	/* Cisco interop:  remote peer type */
-	const char *remote_peer_type;
-
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;
 
@@ -357,6 +354,7 @@ struct whack_message {
 	 * Option to just send the Cisco VID - the other end will behave
 	 * differently (ModeCFG + RSA?)
 	 */
+	const char *remote_peer_type;
 	const char *cisco_unity;
 
 	/* Option to send strongswan VID to allow better interop */

@@ -184,7 +184,7 @@ bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
 	}  \
 }
 
-	MAYBE_VID(c->config->send_vid_cisco_unity, VID_CISCO_UNITY);
+	MAYBE_VID(c->config->host.cisco.unity, VID_CISCO_UNITY);
 	MAYBE_VID(c->config->send_vid_fake_strongswan, VID_STRONGSWAN);
 	MAYBE_VID(c->config->ike_frag.allow, VID_IKE_FRAGMENTATION);
 	MAYBE_VID(c->local->host.config->xauth.client || c->local->host.config->xauth.server, VID_MISC_XAUTH);

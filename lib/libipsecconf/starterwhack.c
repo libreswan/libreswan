@@ -345,15 +345,13 @@ int starter_whack_add_conn(const char *ctlsocket,
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
 	msg.initial_contact = conn->values[KWYN_INITIAL_CONTACT].option;
 
-	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
-	msg.cisco_unity = conn->values[KWS_CISCO_UNITY].string;
-
 	msg.fake_strongswan = conn->values[KNCF_FAKE_STRONGSWAN].option;
 
-	/* Active our Cisco interop code if set */
+	/*
+	 * Cisco (UNITY).
+	 */
 	msg.remote_peer_type = conn->values[KWS_REMOTE_PEER_TYPE].string;
-
-	/* Network Manager support */
+	msg.cisco_unity = conn->values[KWS_CISCO_UNITY].string;
 	msg.nm_configured = conn->values[KWS_NM_CONFIGURED].string;
 
 	msg.sec_label = conn->values[KSCF_SEC_LABEL].string;

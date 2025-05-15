@@ -2578,8 +2578,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		remember_received_packet(st, md);
 		log_state(RC_FATAL, st, "encountered fatal error in state %s",
 			  st->st_state->name);
-		if (st->st_connection->remote->host.config->xauth.cisco &&
-		    st->st_connection->config->nm_configured) {
+		if (st->st_connection->config->host.cisco.peer &&
+		    st->st_connection->config->host.cisco.nm) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
 				       st->st_connection->child.spds.list,
@@ -2634,8 +2634,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		dbg("state transition function for %s failed: %s",
 		    st->st_state->name, notify_name.buf);
 
-		if (st->st_connection->remote->host.config->xauth.cisco &&
-		    st->st_connection->config->nm_configured) {
+		if (st->st_connection->config->host.cisco.peer &&
+		    st->st_connection->config->host.cisco.nm) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
 				       st->st_connection,
 				       st->st_connection->child.spds.list,

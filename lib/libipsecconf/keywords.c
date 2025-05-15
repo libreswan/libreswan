@@ -342,7 +342,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nat-keepalive",  kv_conn,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, &yn_option_names, NULL, },
 
   { "initial-contact",  kv_conn,  kt_sparse_name,  KWYN_INITIAL_CONTACT, &yn_option_names, NULL, },
-  { "cisco-unity",  kv_conn,  kt_string,  KWS_CISCO_UNITY, NULL, NULL, },
   { "send-esp-tfc-padding-not-supported",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, NULL, },
   { "send-no-esp-tfc",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, NULL, }, /*compat, but forever*/
 
@@ -383,9 +382,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "remote-peer-type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, NULL, },
   /* another alias used by NetworkManager-libreswan :/ */
   { "remote_peer_type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, NULL, },
-
   /* Network Manager support */
   { "nm-configured",  kv_conn,  kt_string,  KWS_NM_CONFIGURED, NULL, NULL, },
+  { "cisco-unity",  kv_conn,  kt_string,  KWS_CISCO_UNITY, NULL, NULL, },
 
   { "xauthby",  kv_conn,  kt_sparse_name,  KNCF_XAUTHBY, &xauthby_names, NULL, },
   { "xauthfail",  kv_conn,  kt_sparse_name,  KNCF_XAUTHFAIL, &xauthfail_names, NULL, },
