@@ -177,3 +177,40 @@ const struct sparse_names type_option_names = {
 		SPARSE_NULL
 	},
 };
+
+/*
+ * Values for keyexchange= and ikev2=
+ *
+ * The ikev2= keyword, which was originally very flexible, has been
+ * reduced to a boolean.  Retain original keywords for backwards
+ * compatibility for now.
+ */
+
+const struct sparse_names keyexchange_option_names = {
+	.list = {
+		SPARSE("ikev1", IKEv1),
+		SPARSE("ikev2", IKEv2),
+		SPARSE("ike",  IKE_VERSION_ROOF),
+		SPARSE_NULL
+	},
+};
+
+const struct sparse_names ikev2_option_names = {
+	.list = {
+		YES_NO(YN_YES, YN_NO),
+		/* from fo_{never,permit,propose,insist} */
+		SPARSE("never",     YN_NO),
+		SPARSE("propose",   YN_YES),	/* originally: initiate IKEv2,
+						 * but allow downgrade to
+						 * IKEv1; accept IKEv1 or
+						 * IKEv2 */
+		SPARSE("permit",    YN_NO),		/* reverse of propose:
+						 * initiate IKEv1, but allow
+						 * upgrade to IKEv2; accept
+						 * IKEv1 or IKEv2? */
+		SPARSE("insist",    YN_YES),
+		SPARSE("always",    YN_YES),
+		SPARSE_NULL
+	},
+};
+

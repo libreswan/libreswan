@@ -52,6 +52,9 @@ enum ike_version {
 #define IKE_VERSION_ROOF 3
 };
 
+extern const struct sparse_names keyexchange_option_names;
+extern const struct sparse_names ikev2_option_names;
+
 /*
  * IETF has no recommendations
  * FIPS SP800-77 sayas IKE max is 24h, IPsec max is 8h
