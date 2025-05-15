@@ -353,10 +353,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	/* Active our Cisco interop code if set */
 	msg.remote_peer_type = conn->values[KNCF_REMOTE_PEER_TYPE].string;
 
-#ifdef HAVE_NM
 	/* Network Manager support */
 	msg.nm_configured = conn->values[KNCF_NM_CONFIGURED].option;
-#endif
 
 	msg.sec_label = conn->values[KSCF_SEC_LABEL].string;
 	msg.conn_debug = conn->values[KW_DEBUG].option;

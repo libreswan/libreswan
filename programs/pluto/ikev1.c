@@ -174,10 +174,6 @@
 #include "ikev1_message.h"
 #include "ikev1_notification.h"
 
-#ifdef HAVE_NM
-#include "kernel.h"
-#endif
-
 #include "pluto_stats.h"
 
 static bool v1_state_busy(const struct state *st);
@@ -2582,7 +2578,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		remember_received_packet(st, md);
 		log_state(RC_FATAL, st, "encountered fatal error in state %s",
 			  st->st_state->name);
-#ifdef HAVE_NM
 		if (st->st_connection->remote->host.config->xauth.cisco &&
 		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
@@ -2592,7 +2587,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				       st->logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
-#endif
+
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
@@ -2639,7 +2634,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		dbg("state transition function for %s failed: %s",
 		    st->st_state->name, notify_name.buf);
 
-#ifdef HAVE_NM
 		if (st->st_connection->remote->host.config->xauth.cisco &&
 		    st->st_connection->config->nm_configured) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
@@ -2649,7 +2643,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				       st->logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
 		}
-#endif
+
 		if (IS_V1_QUICK(st->st_state->kind)) {
 			ldbg(st->logger, "quick delete");
 			connection_delete_v1_state(&st, HERE);

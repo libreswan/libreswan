@@ -4117,11 +4117,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->ipsec_interface = ipsec_interface;
 	}
 
-#ifdef HAVE_NM
 	config->nm_configured = extract_yn("", "nm-configured", wm->nm_configured,
 					   /*value_when_unset*/YN_NO,
 					   wm, c->logger);
-#endif
 
 #ifdef USE_NFLOG
 	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,

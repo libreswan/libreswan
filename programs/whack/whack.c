@@ -129,9 +129,7 @@ static void help(void)
 		"	[--esn ] [--no-esn] [--decap-dscp] [--encap-dscp] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 		"	[--session-resumption[={yes,no}]] \\\n"
-#ifdef HAVE_NM
 		"	[--nm-configured] \\\n"
-#endif
 #ifdef HAVE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
 #endif
@@ -968,10 +966,8 @@ const struct option optarg_options[] = {
 	{ "tcp\0", required_argument, NULL, CD_TCP },
 	{ "tcp-remote-port\0", required_argument, NULL, CD_TCP_REMOTE_PORT },
 
-#ifdef HAVE_NM
-	{ "nm_configured\0", optional_argument, NULL, CD_NM_CONFIGURED }, /* backwards compat */
-	{ "nm-configured\0", optional_argument, NULL, CD_NM_CONFIGURED },
-#endif
+	{ REPLACE_OPT("nm_configured", "nm-configured", "4.0"), optional_argument, NULL, CD_NM_CONFIGURED }, /* backwards compat */
+	{ OPT("nm-configured", "yes|NO"), optional_argument, NULL, CD_NM_CONFIGURED },
 
 	{ "policylabel\0", required_argument, NULL, CD_SEC_LABEL },
 
@@ -1989,11 +1985,9 @@ int main(int argc, char **argv)
 			msg.remote_peer_type = optarg;
 			continue;
 
-#ifdef HAVE_NM
 		case CD_NM_CONFIGURED:		/* --nm-configured */
 			msg.nm_configured = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
-#endif
 
 		case CD_TCP: /* --tcp */
 			if (streq(optarg, "yes"))

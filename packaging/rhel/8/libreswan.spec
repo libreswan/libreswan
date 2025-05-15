@@ -24,7 +24,6 @@
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
-    USE_NM=true \\\
     USE_NSS_KDF=true \\\
     USE_SECCOMP=true \\\
 %{nil}

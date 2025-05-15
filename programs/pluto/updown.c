@@ -205,9 +205,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDstr("PLUTO_PEER_BANNER", (child != NULL && child->sa.st_seen_cfg_banner != NULL ? child->sa.st_seen_cfg_banner : ""));
 	JDuint("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
 	JDuint("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
-#ifdef HAVE_NM
 	JDuint("PLUTO_NM_CONFIGURED", c->config->nm_configured);
-#endif
 
 	struct ipsec_proto_info *const first_ipsec_proto =
 		(child == NULL ? NULL :
@@ -405,9 +403,7 @@ static bool do_updown_1(enum updown updown_verb,
 		C(UPDOWN_UNROUTE, "unroute");
 		C(UPDOWN_UP, "up");
 		C(UPDOWN_DOWN, "down");
-#ifdef HAVE_NM
 		C(UPDOWN_DISCONNECT_NM, "disconnectNM");
-#endif
 #undef C
 	default:
 		bad_case(updown_verb);

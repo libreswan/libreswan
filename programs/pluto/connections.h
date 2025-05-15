@@ -333,9 +333,7 @@ struct config {
 						 * VIDs */
 	bool opportunistic;		/* is this opportunistic? */
 
-#ifdef HAVE_NM
 	bool nm_configured;		/* Network Manager support */
-#endif
 
 	enum yna_options encapsulation;	/* encapsulation mode of
 					 * auto/yes/no */

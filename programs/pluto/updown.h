@@ -44,9 +44,7 @@ enum updown {
 	UPDOWN_UNROUTE,
 	UPDOWN_UP,
 	UPDOWN_DOWN,
-#ifdef HAVE_NM
 	UPDOWN_DISCONNECT_NM,
-#endif
 };
 
 bool do_updown(enum updown updown_verb,
