@@ -210,9 +210,6 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_PAM_AUTH
 	" AUTH_PAM"
 #endif
-#ifdef HAVE_NM
-	" NETWORKMANAGER"
-#endif
 #ifdef USE_LIBCURL
 	" CURL(non-NSS)"
 #endif

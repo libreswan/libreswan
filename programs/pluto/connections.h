@@ -116,8 +116,6 @@ struct host_end_config {
 		bool server;
 		bool client;
 		char *username;
-		bool cisco;		/* Cisco interop: remote peer
-					 * type */
 	} xauth;
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
@@ -204,6 +202,20 @@ struct ike_info {
 extern const struct ike_info ikev1_info;
 extern const struct ike_info ikev2_info;
 
+struct host_config {
+	struct cisco_host_config {
+		bool unity;
+		bool peer;
+		bool nm;		/* Network Manager support */
+	} cisco;
+};
+
+struct child_config {
+	struct {
+		bool esp_tfc_padding_not_supported;	/* notification */
+	} send;
+};
+
 struct config {
 	enum ike_version ike_version;
 	const struct ike_info *ike_info;
@@ -283,7 +295,6 @@ struct config {
 	bool send_initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool send_vendorid;			/* Send our vendorid? Security vs Debugging help */
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
-	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
 	ip_port remote_tcpport;		/* TCP remote port to use -
 					 * local port will be
@@ -332,10 +343,6 @@ struct config {
 						 * draft/rfc NATT
 						 * VIDs */
 	bool opportunistic;		/* is this opportunistic? */
-
-#ifdef HAVE_NM
-	bool nm_configured;		/* Network Manager support */
-#endif
 
 	enum yna_options encapsulation;	/* encapsulation mode of
 					 * auto/yes/no */
@@ -398,11 +405,8 @@ struct config {
 		struct ikev2_proposals *v2_ike_auth_proposals;
 	} child_sa;
 
-	struct {
-		struct {
-			bool esp_tfc_padding_not_supported;	/* notification */
-		} send;
-	} child;
+	struct host_config host;
+	struct child_config child;
 
 	struct {
 		bool allow;

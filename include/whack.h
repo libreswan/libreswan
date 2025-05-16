@@ -327,9 +327,6 @@ struct whack_message {
 	const char *dpddelay;		/* seconds */
 	const char *dpdtimeout;	/* seconds */
 
-	/* Cisco interop:  remote peer type */
-	const char *remote_peer_type;
-
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;
 
@@ -357,7 +354,8 @@ struct whack_message {
 	 * Option to just send the Cisco VID - the other end will behave
 	 * differently (ModeCFG + RSA?)
 	 */
-	enum yn_options cisco_unity;
+	const char *remote_peer_type;
+	const char *cisco_unity;
 
 	/* Option to send strongswan VID to allow better interop */
 	enum yn_options fake_strongswan;
@@ -366,7 +364,7 @@ struct whack_message {
 	enum yn_options send_vendorid;
 
 	/* Checking if this connection is configured by Network Manager */
-	enum yn_options nm_configured;
+	const char *nm_configured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum xauthby xauthby;

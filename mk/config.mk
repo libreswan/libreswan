@@ -558,9 +558,6 @@ USE_LABELED_IPSEC ?= false
 # Enable seccomp support (whitelist allows syscalls)
 USE_SECCOMP ?= false
 
-# Support for Network Manager
-USE_NM ?= true
-
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP ?= false
 
@@ -740,10 +737,6 @@ endif
 ifeq ($(USE_LDAP),true)
 USERLAND_CFLAGS += -DUSE_LDAP
 LDAP_LDFLAGS ?= -lldap -llber
-endif
-
-ifeq ($(USE_NM),true)
-USERLAND_CFLAGS+=-DHAVE_NM
 endif
 
 #
