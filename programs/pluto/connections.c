@@ -225,7 +225,7 @@ void vdbg_connection(const struct connection *c,
 	}
 }
 
-static bool never_negotiate_wm(const struct whack_message *wm)
+static bool is_never_negotiate_wm(const struct whack_message *wm)
 {
 	/* with no never-negotiate shunt, things must negotiate */
 	return (wm->never_negotiate_shunt != SHUNT_UNSET);
@@ -750,7 +750,7 @@ static unsigned extract_sparse(const char *leftright, const char *name,
 			       const struct whack_message *wm,
 			       struct logger *logger)
 {
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
 			sparse_buf sb;
 			llog(RC_LOG, logger,
@@ -814,7 +814,7 @@ static bool extract_yn_p(const char *leftright, const char *name, enum yn_option
 	}
 
 	/* complain? */
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		name_buf sb;
 		llog(RC_LOG, logger,
 		     "warning: %s%s=%s ignored for never-negotiate connection",
@@ -861,7 +861,7 @@ static bool can_extract_string(const char *leftright,
 		return false;
 	}
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		llog(RC_LOG, logger,
 		     "warning: %s%s=%s ignored for never-negotiate connection",
 		     leftright, name, value);
@@ -893,7 +893,7 @@ static unsigned extract_enum_name(const char *leftright,
 {
 	(*d) = NULL;
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (value != NULL) {
 			llog(RC_LOG, logger,
 			     "warning: %s%s=%s ignored for never-negotiate connection",
@@ -928,7 +928,7 @@ static unsigned extract_sparse_name(const char *leftright,
 {
 	(*d) = NULL;
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (value != NULL) {
 			llog(RC_LOG, logger,
 			     "warning: %s%s=%s ignored for never-negotiate connection",
@@ -1439,7 +1439,7 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Determine the authentication from auth= and authby=.
 	 */
 
-	if (never_negotiate_wm(wm) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
+	if (is_never_negotiate_wm(wm) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
 		/* AUTH_UNSET is updated below */
 		enum_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
@@ -1458,7 +1458,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	/* value starting points */
-	struct authby authby = (never_negotiate_wm(wm) ? AUTHBY_NEVER :
+	struct authby authby = (is_never_negotiate_wm(wm) ? AUTHBY_NEVER :
 				authby_is_set(wm->authby) ? wm->authby :
 				ike_version == IKEv1 ? AUTHBY_IKEv1_DEFAULTS :
 				AUTHBY_IKEv2_DEFAULTS);
@@ -1767,7 +1767,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
 	 */
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (src->updown != NULL) {
 			llog(RC_LOG, logger,
 			     "warning: %supdown=%s ignored when never negotiate",
@@ -2562,7 +2562,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		return CK_TEMPLATE;
 	}
 	FOR_EACH_THING(we, this, that) {
-		if (!never_negotiate_wm(wm) &&
+		if (!is_never_negotiate_wm(wm) &&
 		    !address_is_specified(we->host_addr) &&
 		    we->host_type != KH_IPHOSTNAME) {
 			ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
@@ -2980,7 +2980,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* sanity check?  done below */
 	enum encap_proto encap_proto;
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->phase2 != ENCAP_PROTO_UNSET) {
 			enum_buf sb;
 			llog(RC_LOG, c->logger,
@@ -3002,7 +3002,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	} else if (wm->type == KS_TRANSPORT) {
 		encap_mode = ENCAP_MODE_TRANSPORT;
 	} else {
-		if (!never_negotiate_wm(wm)) {
+		if (!is_never_negotiate_wm(wm)) {
 			sparse_buf sb;
 			llog_pexpect(c->logger, HERE,
 				     "type=%s should be never-negotiate",
@@ -3302,7 +3302,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * some options are set as part of our default, but
 	 * some make no sense for shunts, so remove those again
 	 */
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->fragmentation != YNF_UNSET) {
 			name_buf fb;
 			llog(RC_LOG, c->logger,
@@ -3332,7 +3332,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/* RFC 8229 TCP encap*/
 
 	enum tcp_options iketcp;
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->enable_tcp != 0) {
 			sparse_buf eb;
 			llog(RC_LOG, c->logger,
@@ -3384,7 +3384,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* authentication (proof of identity) */
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		dbg("ignore sighash, never negotiate");
 	} else if (c->config->ike_version == IKEv1) {
 		dbg("ignore sighash, IKEv1");
@@ -3561,7 +3561,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->child_sa.replay_window = replay_window;
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->esn != YNE_UNSET) {
 			name_buf nb;
 			llog(RC_LOG, c->logger,
@@ -3680,7 +3680,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* IKE cipher suites */
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->ike != NULL) {
 			llog(RC_LOG, c->logger,
 			     "ignored ike= option for type=passthrough connection");
@@ -3730,7 +3730,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* ESP or AH cipher suites (but not both) */
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->esp != NULL) {
 			llog(RC_LOG, c->logger,
 			     "ignored esp= option for type=passthrough connection");
@@ -3824,7 +3824,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
 					       wm, c->logger);
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		if (wm->nic_offload != NIC_OFFLOAD_UNSET) {
 			name_buf nb;
 			llog(RC_LOG, c->logger, "nic-offload=%s ignored for never-negotiate connection",
@@ -3891,7 +3891,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 						      SA_REPLACEMENT_FUZZ_DEFAULT,
 						      wm, &d, c->logger);
 
-	if (never_negotiate_wm(wm)) {
+	if (is_never_negotiate_wm(wm)) {
 		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 
