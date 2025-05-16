@@ -18,11 +18,11 @@ west #
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--pfs=no
-"addconn--type=passthrough--pfs=no": warning: pfs=no ignored for never-negotiate connection
+"addconn--type=passthrough--pfs=no": warning: pfs=no ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--pfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--pfs=yes
-"addconn--type=passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate connection
+"addconn--type=passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--pfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                     --encrypt --host 1.2.3.4 --to --host 5.6.7.8
@@ -41,15 +41,15 @@ west #
 "whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--pfs      --pfs     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--pfs": warning: pfs=yes ignored for never-negotiate connection
+"whack--passthrough--pfs": warning: pfs=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--pfs": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--pfs=no   --pfs=no  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--pfs=no": warning: pfs=no ignored for never-negotiate connection
+"whack--passthrough--pfs=no": warning: pfs=no ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--pfs=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--pfs=yes  --pfs=yes --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate connection
+"whack--passthrough--pfs=yes": warning: pfs=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--pfs=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*PFS.*/\1 PFS/p' | sort

@@ -47,19 +47,19 @@ west #
 "whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=no      --nic-offload=no      --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--nic-offload=no": nic-offload=no ignored for never-negotiate connection
+"whack--passthrough--nic-offload=no": warning: nic-offload=no ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--nic-offload=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=yes     --nic-offload=yes     --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--nic-offload=yes": nic-offload=crypto ignored for never-negotiate connection
+"whack--passthrough--nic-offload=yes": warning: nic-offload=crypto ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--nic-offload=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=packet  --nic-offload=packet  --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--nic-offload=packet": nic-offload=packet ignored for never-negotiate connection
+"whack--passthrough--nic-offload=packet": warning: nic-offload=packet ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--nic-offload=packet": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=crypto  --nic-offload=crypto  --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--nic-offload=crypto": nic-offload=crypto ignored for never-negotiate connection
+"whack--passthrough--nic-offload=crypto": warning: nic-offload=crypto ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--nic-offload=crypto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(nic-offload:[^;]*\);.*/\1 \2/p' | sort
