@@ -202,6 +202,9 @@ static bool matches_connection_filter(struct connection *c,
 		if (!streq(filter->name, c->name)) {
 			return false;
 		}
+		if (c->root_config == NULL) {
+			return false;
+		}
 	}
 	if (filter->alias_root != NULL) {
 		if (c->root_config == NULL) {
