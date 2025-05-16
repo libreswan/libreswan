@@ -312,11 +312,6 @@ struct whack_message {
 	deltatime_t rekeymargin; /* which SA? */
 	const char *rekeyfuzz;
 
-	struct {
-		bool set;
-		uintmax_t value;
-	} keyingtries;
-
 	const char *replay_window;
 	deltatime_t retransmit_timeout;
 	deltatime_t retransmit_interval;

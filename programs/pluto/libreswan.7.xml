@@ -944,7 +944,7 @@
 
       <para>ipsec whack --name silly
       --host 127.0.0.1 --to --host 127.0.0.2 --ikelifetime 900
-      --ipseclifetime 800 --keyingtries 3</para>
+      --ipseclifetime 800</para>
 
       <!-- .ad -->
 
@@ -1178,11 +1178,7 @@
 
       <para>Although a Road Warrior connection must be initiated by the mobile
       side, the other side can and will rekey using the temporary connection
-      it has created. If the Road Warrior wishes to be able to disconnect, it
-      is probably wise to set <option>--keyingtries</option> to 1 in the
-      connection on the non-mobile side to prevent it trying to rekey the
-      connection. Unfortunately, there is no mechanism to unroute the
-      connection automatically.</para>
+      it has created.</para>
     </refsect2>
 
     <refsect2 id="debugging">
