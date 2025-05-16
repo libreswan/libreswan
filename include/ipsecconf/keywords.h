@@ -158,7 +158,8 @@ enum keywords {
 	KSCF_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
 
-	KSCF_AUTHBY,
+	KWS_AUTHBY,
+
 	KSCF_PPK_IDS,
 	KSCF_MODECFGDNS,
 	KSCF_MODECFGDOMAINS,

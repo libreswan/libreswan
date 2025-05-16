@@ -131,8 +131,6 @@ static struct starter_config *alloc_starter_config(void)
 	d->end[LEFT_END].leftright = "left";
 	d->end[RIGHT_END].leftright = "right";
 
-	d->sighash_policy = POL_SIGHASH_DEFAULTS;
-
 	d->xfrm_if_id = UINT32_MAX;
 
 	d->state = STATE_LOADED;
@@ -647,18 +645,15 @@ static bool load_conn(struct starter_conn *conn,
 			break;
 
 		case KS_PASSTHROUGH:
-			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_PASS;
 			break;
 
 		case KS_DROP:
-			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
 			llog(RC_LOG, logger, "warning: type=%%reject implemented as type=%%drop");
-			conn->authby = AUTHBY_NONE;
 			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 		}
@@ -682,97 +677,6 @@ static bool load_conn(struct starter_conn *conn,
 			conn->policy = (conn->policy & ~(fl)) |		\
 				(!conn->values[val].option ? (fl) : LEMPTY);	\
 		}							\
-	}
-
-	/*
-	 * Read in the authby= string and translate to policy bits.
-	 *
-	 * This is the symmetric (left+right) version.  There is also
-	 * leftauth=/rightauth= version stored in 'end'
-	 *
-	 * authby=secret|rsasig|null|never|rsa-HASH
-	 *
-	 * using authby=rsasig results in both RSASIG_v1_5 and RSA_PSS
-	 *
-	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
-	 * to avoid confusion with sha3_256
-	 */
-	if (conn->values[KSCF_AUTHBY].set) {
-
-		conn->sighash_policy = LEMPTY;
-		conn->authby = (struct authby) {0};
-
-		shunk_t curseby = shunk1(conn->values[KSCF_AUTHBY].string);
-		while (true) {
-
-			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
-
-			if (val.ptr == NULL) {
-				break;
-			}
-#if 0
-			if (val.len == 0) {
-				/* ignore empty fields? */
-				continue;
-			}
-#endif
-
-			/* Supported for IKEv1 and IKEv2 */
-			if (hunk_streq(val, "secret")) {
-				conn->authby.psk = true;;
-			} else if (hunk_streq(val, "rsasig") ||
-				   hunk_streq(val, "rsa")) {
-				conn->authby.rsasig = true;
-				conn->authby.rsasig_v1_5 = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "never")) {
-				conn->authby.never = true;
-#if 0
-			/* everything else is only supported for IKEv2 */
-#endif
-			} else if (hunk_streq(val, "null")) {
-				conn->authby.null = true;
-			} else if (hunk_streq(val, "rsa-sha1")) {
-				conn->authby.rsasig_v1_5 = true;
-			} else if (hunk_streq(val, "rsa-sha2")) {
-				conn->authby.rsasig = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "rsa-sha2_256")) {
-				conn->authby.rsasig = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-			} else if (hunk_streq(val, "rsa-sha2_384")) {
-				conn->authby.rsasig = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-			} else if (hunk_streq(val, "rsa-sha2_512")) {
-				conn->authby.rsasig = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa") ||
-				   hunk_streq(val, "ecdsa-sha2")) {
-				conn->authby.ecdsa = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
-				conn->authby.ecdsa = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
-				conn->authby.ecdsa = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
-				conn->authby.ecdsa = true;
-				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa-sha1")) {
-				llog(RC_LOG, logger, "authby=ecdsa cannot use sha1, only sha2");
-				return false;
-			} else {
-				llog(RC_LOG, logger, "connection authby= value is unknown");
-				return false;
-			}
-		}
 	}
 
 	/* Let this go through to pluto which will validate it. */

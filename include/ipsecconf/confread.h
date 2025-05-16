@@ -81,8 +81,6 @@ struct starter_conn {
 
 	keyword_values values;
 
-	struct authby authby;
-	lset_t sighash_policy;
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	struct starter_end end[END_ROOF];

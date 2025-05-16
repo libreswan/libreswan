@@ -282,7 +282,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "hostaddrfamily",  kv_conn,  kt_sparse_name,  KNCF_HOSTADDRFAMILY, &kw_addrfamily_names, NULL, },
   { "clientaddrfamily",  kv_conn,  kt_sparse_name,  KNCF_CLIENTADDRFAMILY, &kw_addrfamily_names, NULL, },
   { "type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names, NULL, },
-  { "authby",  kv_conn,  kt_string,  KSCF_AUTHBY, NULL, NULL, },
+  { "authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
   { "ikev2",  kv_conn,  kt_string,  KWS_IKEv2, NULL, NULL, },
   { "ppk", kv_conn | kv_processed, kt_sparse_name, KNCF_PPK, &nppi_option_names, NULL, },
