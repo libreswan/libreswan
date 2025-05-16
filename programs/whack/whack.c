@@ -1042,6 +1042,8 @@ int main(int argc, char **argv)
 	struct optarg_family host_family = { 0, };
 	struct optarg_family child_family = { 0, };
 
+	char *authby = clone_str("", "authby"); /* never-NULL */
+
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_WHACK,
 
@@ -2023,61 +2025,47 @@ int main(int argc, char **argv)
 
 		/* RSASIG/ECDSA need more than a single policy bit */
 		case OPT_AUTHBY_PSK:		/* --psk */
-			msg.authby.psk = true;
+		{
+			char *t = alloc_printf("%s%ssecret", authby,
+					       (strlen(authby) > 0 ? "," : ""));
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 		case OPT_AUTHBY_AUTH_NEVER:	/* --auth-never */
-			msg.authby.never = true;
+		{
+			char *t = alloc_printf("%s%snever", authby,
+					       (strlen(authby) > 0 ? "," : ""));
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 		case OPT_AUTHBY_AUTH_NULL:	/* --auth-null */
-			msg.authby.null = true;
+		{
+			char *t = alloc_printf("%s%snull", authby,
+					       (strlen(authby) > 0 ? "," : ""));
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 		case OPT_AUTHBY_RSASIG: /* --rsasig */
-			msg.authby.rsasig = true;
-			msg.authby.rsasig_v1_5 = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
 		case OPT_AUTHBY_RSA_SHA1: /* --rsa-sha1 */
-			msg.authby.rsasig_v1_5 = true;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2: /* --rsa-sha2 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2_256:	/* --rsa-sha2_256 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2_384:	/* --rsa-sha2_384 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2_512:	/* --rsa-sha2_512 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
-
 		case OPT_AUTHBY_ECDSA: /* --ecdsa and --ecdsa-sha2 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
 		case OPT_AUTHBY_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			continue;
 		case OPT_AUTHBY_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			continue;
 		case OPT_AUTHBY_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+		{
+			char *t = alloc_printf("%s%s%s", authby,
+					       (strlen(authby) > 0 ? "," : ""),
+					       optarg_options[optarg_index].name);
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
 			if (host_family.type == &ipv4_info) {
@@ -2343,21 +2331,6 @@ int main(int argc, char **argv)
 		bad_case(c);
 	}
 
-	msg.child_afi = child_family.type;
-	msg.host_afi = host_family.type;
-
-	if (!authby_is_set(msg.authby)) {
-		/*
-		 * Since any option potentially setting SIGHASH bits
-		 * always sets AUTHBY, check that.
-		 *
-		 * Mimic addconn's behaviour: specifying auth= (yes,
-		 * whack calls it --authby) does not clear the
-		 * policy_authby defaults.  That is left to pluto.
-		 */
-		msg.sighash_policy |= POL_SIGHASH_DEFAULTS;
-	}
-
 	if (optind != argc) {
 		/*
 		 * If you see this message unexpectedly, perhaps the
@@ -2366,6 +2339,97 @@ int main(int argc, char **argv)
 		 */
 		diagq("unexpected argument", argv[optind]);
 	}
+
+	msg.child_afi = child_family.type;
+	msg.host_afi = host_family.type;
+
+	/*
+	 * Read in the authby= string and translate to policy bits.
+	 *
+	 * This is the symmetric (left+right) version.  There is also
+	 * leftauth=/rightauth= version stored in 'end'
+	 *
+	 * authby=secret|rsasig|null|never|rsa-HASH
+	 *
+	 * using authby=rsasig results in both RSASIG_v1_5 and RSA_PSS
+	 *
+	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
+	 * to avoid confusion with sha3_256
+	 */
+	if (strlen(authby) > 0) {
+
+		msg.sighash_policy = LEMPTY;
+		msg.authby = (struct authby) {0};
+
+		shunk_t curseby = shunk1(authby);
+		while (true) {
+
+			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
+
+			if (val.ptr == NULL) {
+				break;
+			}
+
+			/* Supported for IKEv1 and IKEv2 */
+			if (hunk_streq(val, "secret")) {
+				msg.authby.psk = true;;
+			} else if (hunk_streq(val, "rsasig") ||
+				   hunk_streq(val, "rsa")) {
+				msg.authby.rsasig = true;
+				msg.authby.rsasig_v1_5 = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (hunk_streq(val, "never")) {
+				msg.authby.never = true;
+#if 0
+			/* everything else is only supported for IKEv2 */
+#endif
+			} else if (hunk_streq(val, "null")) {
+				msg.authby.null = true;
+			} else if (hunk_streq(val, "rsa-sha1")) {
+				msg.authby.rsasig_v1_5 = true;
+			} else if (hunk_streq(val, "rsa-sha2")) {
+				msg.authby.rsasig = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (hunk_streq(val, "rsa-sha2_256")) {
+				msg.authby.rsasig = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			} else if (hunk_streq(val, "rsa-sha2_384")) {
+				msg.authby.rsasig = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			} else if (hunk_streq(val, "rsa-sha2_512")) {
+				msg.authby.rsasig = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (hunk_streq(val, "ecdsa") ||
+				   hunk_streq(val, "ecdsa-sha2")) {
+				msg.authby.ecdsa = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
+				msg.authby.ecdsa = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
+			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
+				msg.authby.ecdsa = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
+			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
+				msg.authby.ecdsa = true;
+				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+			} else if (hunk_streq(val, "ecdsa-sha1")) {
+				llog(RC_LOG, logger, "authby=ecdsa cannot use sha1, only sha2");
+				return false;
+			} else {
+				llog(RC_LOG, logger, "connection authby= value is unknown");
+				return false;
+			}
+		}
+	} else {
+		msg.sighash_policy = POL_SIGHASH_DEFAULTS;
+	}
+	pfreeany(authby);
 
 	/*
 	 * For each possible form of the command, figure out if an argument
