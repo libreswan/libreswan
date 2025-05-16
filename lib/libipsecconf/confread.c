@@ -662,23 +662,6 @@ static bool load_conn(struct starter_conn *conn,
 	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
 	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
 
-	/* i.e., default is to have policy off */
-#define KW_POLICY_FLAG(val, fl)						\
-	{								\
-		if (conn->values[val].set)				\
-			conn->policy = (conn->policy & ~(fl)) |		\
-				(conn->values[val].option ? (fl) : LEMPTY);	\
-	}
-
-	/* i.e., confusion rains */
-#define KW_POLICY_NEGATIVE_FLAG(val, fl)				\
-	{								\
-		if (conn->values[val].set) {				\
-			conn->policy = (conn->policy & ~(fl)) |		\
-				(!conn->values[val].option ? (fl) : LEMPTY);	\
-		}							\
-	}
-
 	/* Let this go through to pluto which will validate it. */
 	conn->clientaddrfamily = aftoinfo(conn->values[KNCF_CLIENTADDRFAMILY].option);
 
