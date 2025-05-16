@@ -63,27 +63,27 @@ west #
 "whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-shared       --vti-shared       --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--vti-shared": warning: vti-shared=yes ignored for never-negotiate connection
+"whack--passthrough--vti-shared": warning: vti-shared=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--vti-shared": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-shared=no    --vti-shared=no    --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--vti-shared=no": warning: vti-shared=no ignored for never-negotiate connection
+"whack--passthrough--vti-shared=no": warning: vti-shared=no ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--vti-shared=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-shared=yes   --vti-shared=yes   --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--vti-shared=yes": warning: vti-shared=yes ignored for never-negotiate connection
+"whack--passthrough--vti-shared=yes": warning: vti-shared=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--vti-shared=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-routing      --vti-routing      --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--vti-routing": warning: vti-routing=yes ignored for never-negotiate connection
+"whack--passthrough--vti-routing": warning: vti-routing=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--vti-routing": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-routing=no   --vti-routing=no   --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--vti-routing=no": warning: vti-routing=no ignored for never-negotiate connection
+"whack--passthrough--vti-routing=no": warning: vti-routing=no ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--vti-routing=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--vti-routing=yes  --vti-routing=yes  --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--vti-routing=yes": warning: vti-routing=yes ignored for never-negotiate connection
+"whack--passthrough--vti-routing=yes": warning: vti-routing=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--vti-routing=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(vti-routing:[^;]*\);.*/\1 \2/p' | sort

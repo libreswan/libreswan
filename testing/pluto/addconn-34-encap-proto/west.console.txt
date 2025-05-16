@@ -18,11 +18,11 @@ west #
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--phase2=esp
-"addconn--type=passthrough--phase2=esp": warning: phase2=esp ignored for never-negotiate connection
+"addconn--type=passthrough--phase2=esp": warning: phase2=esp ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--phase2=esp": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--phase2=ah
-"addconn--type=passthrough--phase2=ah": warning: phase2=ah ignored for never-negotiate connection
+"addconn--type=passthrough--phase2=ah": warning: phase2=ah ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--phase2=ah": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                              --host 1.2.3.4 --to --host 5.6.7.8
@@ -38,11 +38,11 @@ west #
 "whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--encrypt      --encrypt      --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass--encrypt": warning: phase2=esp ignored for never-negotiate connection
+"whack--pass--encrypt": warning: phase2=esp ignored for never-negotiate (type=passthrough) connection
 "whack--pass--encrypt": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--authenticate --authenticate --pass --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass--authenticate": warning: phase2=ah ignored for never-negotiate connection
+"whack--pass--authenticate": warning: phase2=ah ignored for never-negotiate (type=passthrough) connection
 "whack--pass--authenticate": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*ENCRYPT.*/\1 ENCRYPT/p'
