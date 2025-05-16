@@ -232,14 +232,19 @@ static bool is_never_negotiate_wm(const struct whack_message *wm)
 }
 
 static void llog_never_negotiate_option(struct logger *logger,
+					const struct whack_message *wm,
 					const char *leftright,
 					const char *name,
 					const char *value)
 {
 	/* need to reverse engineer type= */
+	enum shunt_policy shunt = wm->never_negotiate_shunt;
 	llog(RC_LOG, logger,
-	     "warning: %s%s=%s ignored for never-negotiate connection",
-	     leftright, name, value);
+	     "warning: %s%s=%s ignored for never-negotiate (type=%s) connection",
+	     leftright, name, value,
+	     (shunt == SHUNT_PASS ? "passthrough" :
+	      shunt == SHUNT_DROP ? "drop" :
+	      "???"));
 }
 
 static bool never_negotiate_string_option(const char *leftright,
@@ -250,7 +255,7 @@ static bool never_negotiate_string_option(const char *leftright,
 {
 	if (is_never_negotiate_wm(wm)) {
 		if (value != NULL) {
-			llog_never_negotiate_option(logger, leftright, name, value);
+			llog_never_negotiate_option(logger, wm, leftright, name, value);
 		}
 		return true;
 	}
@@ -268,7 +273,7 @@ static bool never_negotiate_sparse_option(const char *leftright,
 	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
 			sparse_buf sb;
-			llog_never_negotiate_option(logger, leftright, name,
+			llog_never_negotiate_option(logger, wm, leftright, name,
 						    str_sparse(names, value, &sb));
 		}
 		return true;
@@ -286,7 +291,7 @@ static bool never_negotiate_enum_option(const char *leftright,
 	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
 			sparse_buf sb;
-			llog_never_negotiate_option(logger, leftright, name,
+			llog_never_negotiate_option(logger, wm, leftright, name,
 						    str_enum_short(names, value, &sb));
 		}
 		return true;
