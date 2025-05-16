@@ -2342,94 +2342,7 @@ int main(int argc, char **argv)
 
 	msg.child_afi = child_family.type;
 	msg.host_afi = host_family.type;
-
-	/*
-	 * Read in the authby= string and translate to policy bits.
-	 *
-	 * This is the symmetric (left+right) version.  There is also
-	 * leftauth=/rightauth= version stored in 'end'
-	 *
-	 * authby=secret|rsasig|null|never|rsa-HASH
-	 *
-	 * using authby=rsasig results in both RSASIG_v1_5 and RSA_PSS
-	 *
-	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
-	 * to avoid confusion with sha3_256
-	 */
-	if (strlen(authby) > 0) {
-
-		msg.sighash_policy = LEMPTY;
-		msg.authby = (struct authby) {0};
-
-		shunk_t curseby = shunk1(authby);
-		while (true) {
-
-			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
-
-			if (val.ptr == NULL) {
-				break;
-			}
-
-			/* Supported for IKEv1 and IKEv2 */
-			if (hunk_streq(val, "secret")) {
-				msg.authby.psk = true;;
-			} else if (hunk_streq(val, "rsasig") ||
-				   hunk_streq(val, "rsa")) {
-				msg.authby.rsasig = true;
-				msg.authby.rsasig_v1_5 = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "never")) {
-				msg.authby.never = true;
-#if 0
-			/* everything else is only supported for IKEv2 */
-#endif
-			} else if (hunk_streq(val, "null")) {
-				msg.authby.null = true;
-			} else if (hunk_streq(val, "rsa-sha1")) {
-				msg.authby.rsasig_v1_5 = true;
-			} else if (hunk_streq(val, "rsa-sha2")) {
-				msg.authby.rsasig = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "rsa-sha2_256")) {
-				msg.authby.rsasig = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			} else if (hunk_streq(val, "rsa-sha2_384")) {
-				msg.authby.rsasig = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			} else if (hunk_streq(val, "rsa-sha2_512")) {
-				msg.authby.rsasig = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa") ||
-				   hunk_streq(val, "ecdsa-sha2")) {
-				msg.authby.ecdsa = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
-				msg.authby.ecdsa = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
-				msg.authby.ecdsa = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
-				msg.authby.ecdsa = true;
-				msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (hunk_streq(val, "ecdsa-sha1")) {
-				llog(RC_LOG, logger, "authby=ecdsa cannot use sha1, only sha2");
-				return false;
-			} else {
-				llog(RC_LOG, logger, "connection authby= value is unknown");
-				return false;
-			}
-		}
-	} else {
-		msg.sighash_policy = POL_SIGHASH_DEFAULTS;
-	}
-	pfreeany(authby);
+	msg.authby = (strlen(authby) > 0 ? authby : NULL);
 
 	/*
 	 * For each possible form of the command, figure out if an argument
@@ -2481,26 +2394,6 @@ int main(int argc, char **argv)
 			diagw("connection missing --host after --to");
 		}
 
-		if (msg.authby.never) {
-			if (msg.never_negotiate_shunt == SHUNT_UNSET) {
-				diagw("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
-			}
-		} else {
-			/* not just a shunt: a real ipsec connection */
-			if (!authby_is_set(msg.authby) &&
-			    msg.end[LEFT_END].auth == AUTH_NEVER &&
-			    msg.end[RIGHT_END].auth == AUTH_NEVER)
-				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
-			/*
-			 * ??? this test can never fail:
-			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
-			 * These interlocking tests should be redone.
-			 */
-			if (msg.never_negotiate_shunt != SHUNT_UNSET &&
-			    (msg.end[LEFT_END].subnet != NULL ||
-			     msg.end[RIGHT_END].subnet != NULL))
-				diagw("must not specify clients for ISAKMP-only connection");
-		}
 	}
 
 	/*

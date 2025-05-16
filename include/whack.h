@@ -254,8 +254,8 @@ struct whack_message {
 	const char *keyexchange;
 	const char *ikev2;
 
-	struct authby authby;
-	lset_t sighash_policy;
+	const char *authby;
+
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 	enum yn_options mobike;		/* allow MOBIKE */
