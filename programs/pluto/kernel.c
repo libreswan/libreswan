@@ -1167,7 +1167,7 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 	switch (c->config->nic_offload) {
 	case NIC_OFFLOAD_UNSET:
 	case NIC_OFFLOAD_NO:
-		ldbg(logger, "kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
+		ldbg(logger, "kernel: NIC esp-hw-offload disabled for connection '%s'", c->base_name);
 		return;
 	case NIC_OFFLOAD_PACKET:
 		if (PBAD(logger, !c->iface->nic_offload)) {
@@ -1176,7 +1176,7 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = KERNEL_OFFLOAD_PACKET;
 		ldbg(logger, "kernel: NIC esp-hw-offload packet offload for connection '%s' enabled on interface %s",
-		     c->name, c->iface->real_device_name);
+		     c->base_name, c->iface->real_device_name);
 		return;
 	case NIC_OFFLOAD_CRYPTO:
 		if (PBAD(logger, !c->iface->nic_offload)) {
@@ -1185,7 +1185,7 @@ void setup_esp_nic_offload(struct nic_offload *nic_offload,
 		nic_offload->dev = c->iface->real_device_name;
 		nic_offload->type = KERNEL_OFFLOAD_CRYPTO;
 		ldbg(logger, "kernel: NIC esp-hw-offload crypto offload for connection '%s' enabled on interface %s",
-		     c->name, c->iface->real_device_name);
+		     c->base_name, c->iface->real_device_name);
 		return;
 	}
 }
@@ -1742,7 +1742,7 @@ static bool connection_has_policy_conflicts(const struct connection *c,
 					    enum routing new_routing,
 					    struct logger *logger, where_t where)
 {
-	ldbg(logger, "checking %s for conflicts", c->name);
+	ldbg(logger, "checking %s for conflicts", c->base_name);
 	/* sec-labels ignore conflicts */
 	if (c->config->sec_label.len > 0) {
 		return false;

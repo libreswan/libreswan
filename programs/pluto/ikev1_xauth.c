@@ -1073,7 +1073,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() ...", __func__);
 
 	dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
-	    addresspool, c->name, userid);
+	    addresspool, c->base_name, userid);
 
 	/* allows <address>, <address>-<address> and <address>/bits */
 
@@ -1082,7 +1082,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	if (err != NULL) {
 		llog(RC_LOG, logger,
 		     "XAUTH IP addresspool %s for the conn %s user %s is not valid: %s",
-		     addresspool, c->name, userid, err);
+		     addresspool, c->base_name, userid, err);
 		return false;
 	}
 
@@ -1090,14 +1090,14 @@ static bool add_xauth_addresspool(struct connection *c,
 		/* should have been rejected by ttorange() */
 		llog(RC_LOG, logger,
 		     "XAUTH IP addresspool %s for the conn %s user=%s is empty!?!",
-		     addresspool, c->name, userid);
+		     addresspool, c->base_name, userid);
 		return false;
 	}
 
 	if (!address_is_specified(range_start(pool_range))) {
 		llog(RC_LOG, logger,
 		     "XAUTH IP addresspool %s for the conn %s user=%s cannot start at address zero",
-		     addresspool, c->name, userid);
+		     addresspool, c->base_name, userid);
 		return false;
 	}
 
@@ -1115,7 +1115,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	diag_t d = install_addresspool(pool_range, c->pool, logger);
 	if (d != NULL) {
 		llog(RC_CLASH, logger, "XAUTH: invalid addresspool for the conn %s user %s: %s",
-		     c->name, userid, str_diag(d));
+		     c->base_name, userid, str_diag(d));
 		pfree_diag(&d);
 		return false;
 	}
@@ -1439,7 +1439,7 @@ static void xauth_launch_authent(struct ike_sa *ike,
 		     "XAUTH: password file authentication method requested to authenticate user '%s'",
 		     arg_name);
 		bool success = do_file_authentication(ike, arg_name, arg_password,
-						      ike->sa.st_connection->name);
+						      ike->sa.st_connection->base_name);
 		xauth_immediate(arg_name, ike, md, success);
 		break;
 

@@ -145,7 +145,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	struct jambuf buf = ARRAY_AS_JAMBUF(audit_str);
 	struct connection *const c = st->st_connection;
 	/* we need to free() this */
-	char *conn_encode = audit_encode_nv_string("conn-name", c->name, 0);
+	char *conn_encode = audit_encode_nv_string("conn-name", c->base_name, 0);
 
 	switch (op) {
 	case LAK_PARENT_START:

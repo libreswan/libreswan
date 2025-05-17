@@ -538,7 +538,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 * free before calling this code).
 	 */
 	ldbg(logger, "%s() %s "PRI_CO" [%p] cloned from "PRI_CO,
-	     __func__, c->name,
+	     __func__, c->base_name,
 	     pri_connection_co(c), c,
 	     pri_connection_co(c->clonedfrom));
 
@@ -647,8 +647,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		pfree(c->root_config);
 	}
 
-	/* connection's final gasp; need's c->name */
-	pfreeany(c->name);
+	/* connection's final gasp; need's c->base_name */
+	pfreeany(c->base_name);
 	pfreeany(c->prefix);
 	free_logger(&logger, where);
 	pfree(c);
@@ -2803,7 +2803,7 @@ struct connection *alloc_connection(const char *name,
 	const struct config *config = (t != NULL ? t->config : root_config);
 
 	/* before alloc_logger(); can't use C */
-	c->name = clone_str(name, __func__);
+	c->base_name = clone_str(name, __func__);
 
 	/* before alloc_logger(); can't use C */
 	c->prefix = alloc_connection_prefix(name, t);
@@ -3109,7 +3109,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 						    c->logger);
 	}
 
-	passert(c->name != NULL); /* see alloc_connection() */
+	passert(c->base_name != NULL); /* see alloc_connection() */
 
 	/*
 	 * Extract policy bits.
@@ -5353,7 +5353,7 @@ int connection_compare(const struct connection *cl,
 {
 	int ret;
 
-	ret = strcmp(cl->name, cr->name);
+	ret = strcmp(cl->base_name, cr->base_name);
 	if (ret != 0) {
 		return ret;
 	}

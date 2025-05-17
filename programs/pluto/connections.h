@@ -746,8 +746,22 @@ struct connection {
 	struct refcnt refcnt;
 	co_serial_t serialno;
 	struct connection *clonedfrom;
-	char *name;			/* switch with .prefix? */
-	char *prefix;			/* "name"[0][1]; longer than .name!!! */
+	/*
+	 * Connection names, as a connection is instantiated, are
+	 * constructed as:
+	 *
+	 *   ROOT NAME     BASE NAME         NAME
+	 *   permanent     permanent         "permanent"
+	 *   template      template          "template"[1]
+	 *   sec-label     sec-label         "sec-label"[1][2]
+	 *   oe-group      oe-group#1.2.3.4  "oe-group#1.2.3.4"[1]
+	 *
+	 * Until 5.2, the only choice was BASE NAME which is why debug
+	 * and log messages were using that.
+	 */
+	char *base_name;
+	char *prefix;
+
 	struct logger *logger;
 
 	struct {

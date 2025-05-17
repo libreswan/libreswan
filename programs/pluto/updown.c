@@ -93,7 +93,7 @@ static bool fmt_common_shell_out(char *buf,
 #	define JDemitter(name, emitter)  { jam_string(&jb, name "='"); emitter; jam_string(&jb, "' "); }
 #	define JDipaddr(name, addr)  JDemitter(name, { ip_address ta = addr; jam_address(&jb, &ta); } )
 
-	JDstr("PLUTO_CONNECTION", c->name);
+	JDstr("PLUTO_CONNECTION", c->base_name);
 	JDstr("PLUTO_CONNECTION_TYPE", (tunneling ? "tunnel" : "transport"));
 	JDstr("PLUTO_VIRT_INTERFACE", (c->ipsec_interface != NULL ? c->ipsec_interface->name : "NULL"));
 	JDstr("PLUTO_INTERFACE", c->iface == NULL ? "NULL" : c->iface->real_device_name);

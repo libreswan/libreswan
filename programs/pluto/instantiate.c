@@ -145,12 +145,12 @@ struct connection *group_instantiate(struct connection *group,
 		pexpect(local_port.hport == 0);
 		pexpect(remote_port.hport == 0);
 		subnet_buf tb;
-		namebuf = alloc_printf("%s#%s", group->name,
+		namebuf = alloc_printf("%s#%s", group->base_name,
 				       str_subnet(&remote_subnet, &tb));
 	} else {
 		subnet_buf tb;
 		namebuf = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")",
-				       group->name,
+				       group->base_name,
 				       str_subnet(&remote_subnet, &tb),
 				       pri_hport(local_port),
 				       protocol->ipproto,
@@ -166,7 +166,7 @@ struct connection *group_instantiate(struct connection *group,
 
 	struct connection *t = duplicate_connection(namebuf, group, NULL/*id*/, HERE);
 
-	passert(t->name != namebuf); /* see duplicate_connection() */
+	passert(t->base_name != namebuf); /* see duplicate_connection() */
 	pfreeany(namebuf);
 
 	/*
@@ -296,8 +296,8 @@ static struct connection *instantiate(struct connection *t,
 			match_id(peer_id, &t->remote->host.id, &wildcards, verbose));
 	}
 
-	struct connection *d = duplicate_connection(t->name, t, peer_id, where);
-	passert(t->name != d->name); /* see duplicate_connection() */
+	struct connection *d = duplicate_connection(t->base_name, t, peer_id, where);
+	passert(t->base_name != d->base_name); /* see duplicate_connection() */
 
 	d->local->kind = d->remote->kind =
 		(is_labeled_template(t) ? CK_LABELED_PARENT :

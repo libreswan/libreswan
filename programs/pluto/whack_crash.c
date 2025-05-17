@@ -71,7 +71,7 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 					whack_log(RC_LOG, s,
 						  "peer %s for connection %s crashed; replacing",
 						  peerstr,
-						  c->name);
+						  c->base_name);
 					switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 					case IKEv1:

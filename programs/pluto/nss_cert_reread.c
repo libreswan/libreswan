@@ -58,7 +58,7 @@ static void reread_end_cert(struct host_end_config *host_end_config,
 
 static void reread_cert(struct connection *c, struct logger *logger)
 {
-	dbg("rereading certificate(s) for connection '%s'", c->name);
+	dbg("rereading certificate(s) for connection '%s'", c->base_name);
 
 	connection_attach(c, logger);
 

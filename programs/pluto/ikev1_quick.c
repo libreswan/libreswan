@@ -2278,7 +2278,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	if (d != NULL) {
 		connection_buf cb;
 		vdbg("success! fc_try %s gives "PRI_CONNECTION,
-		     c->name, pri_connection(d, &cb));
+		     c->base_name, pri_connection(d, &cb));
 		return d;
 	}
 

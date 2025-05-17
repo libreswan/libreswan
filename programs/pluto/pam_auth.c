@@ -193,7 +193,7 @@ bool pam_auth_fork_request(struct ike_sa *ike,
 	pamauth->ptarg.name = clone_str(name, "pam name");
 
 	pamauth->ptarg.password = clone_str(password, "pam password");
-	pamauth->ptarg.c_name = clone_str(ike->sa.st_connection->name, "pam connection name");
+	pamauth->ptarg.c_name = clone_str(ike->sa.st_connection->base_name, "pam connection name");
 	pamauth->ptarg.rhost = endpoint_address(ike->sa.st_remote_endpoint);
 	pamauth->ptarg.st_serialno = serialno;
 	pamauth->ptarg.c_instance_serial = ike->sa.st_connection->instance_serial;
