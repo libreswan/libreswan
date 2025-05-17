@@ -760,7 +760,7 @@ struct connection {
 	 * and log messages were using that.
 	 */
 	char *base_name;
-	char *prefix;
+	char *name;
 
 	struct logger *logger;
 

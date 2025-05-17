@@ -2109,7 +2109,7 @@ static struct connection *fc_try(const struct connection *c,
 
 			selector_pair_buf sb;
 			vdbg("trying %s SPD %s virt=%s",
-			     d->prefix,
+			     d->name,
 			     str_selector_pair(&d_spd->local->client, &d_spd->remote->client, &sb),
 			     bool_str(is_virtual_spd_end(d_spd->remote, verbose)));
 

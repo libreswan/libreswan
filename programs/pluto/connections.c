@@ -649,7 +649,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	/* connection's final gasp; need's c->base_name */
 	pfreeany(c->base_name);
-	pfreeany(c->prefix);
+	pfreeany(c->name);
 	free_logger(&logger, where);
 	pfree(c);
 }
@@ -2769,7 +2769,7 @@ static char *alloc_connection_prefix(const char *name, const struct connection *
 	 * Form new prefix by appending next serial to existing
 	 * prefix.
 	 */
-	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
+	return alloc_printf("%s[%lu]", t->name, t->next_instance_serial);
 }
 
 static struct config *alloc_config(const char *name)
@@ -2806,7 +2806,7 @@ struct connection *alloc_connection(const char *name,
 	c->base_name = clone_str(name, __func__);
 
 	/* before alloc_logger(); can't use C */
-	c->prefix = alloc_connection_prefix(name, t);
+	c->name = alloc_connection_prefix(name, t);
 
 	/* after .name and .name_prefix are set; needed by logger */
 	c->logger = alloc_logger(c, &logger_connection_vec,
@@ -4858,12 +4858,12 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 
 size_t jam_connection_short(struct jambuf *buf, const struct connection *c)
 {
-	return jam_string(buf, c->prefix);
+	return jam_string(buf, c->name);
 }
 
 const char *str_connection_short(const struct connection *c)
 {
-	return c->prefix;
+	return c->name;
 }
 
 const char *str_connection_suffix(const struct connection *c, connection_buf *buf)
