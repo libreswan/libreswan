@@ -1816,41 +1816,20 @@ void show_globalstate_status(struct show *s)
 	}
 }
 
-static void append_word(char **sentence, const char *word)
-{
-	size_t sl = strlen(*sentence);
-	size_t wl = strlen(word);
-	char *ns = alloc_bytes(sl + 1 + wl + 1, "sentence");
-
-	memcpy(ns, *sentence, sl);
-	ns[sl] = ' ';
-	memcpy(&ns[sl + 1], word, wl+1);	/* includes NUL */
-	pfree(*sentence);
-	*sentence = ns;
-}
-
 /*
  * Moved from ikev1_xauth.c since IKEv2 code now also uses it
  * Converted to store ephemeral data in the state, not connection
  */
 void append_st_cfg_dns(struct state *st, const char *dnsip)
 {
-	if (st->st_seen_cfg_dns == NULL) {
-		st->st_seen_cfg_dns = clone_str(dnsip, "fresh append_st_cfg_dns");
-	} else {
-		append_word(&st->st_seen_cfg_dns, dnsip);
-	}
+	append_str(&st->st_seen_cfg_dns, " ", dnsip);
 }
 
 void append_st_cfg_domain(struct state *st, char *domain)
 {
 	/* note: we are responsible to ensure domain is freed */
-	if (st->st_seen_cfg_domains == NULL) {
-		st->st_seen_cfg_domains = domain;
-	} else {
-		append_word(&st->st_seen_cfg_domains, domain);
-		pfree(domain);
-	}
+	append_str(&st->st_seen_cfg_domains, " ", domain);
+	pfree(domain);
 }
 
 static void list_state_event(struct show *s, struct state *st,
