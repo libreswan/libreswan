@@ -851,7 +851,8 @@ extern void show_globalstate_status(struct show *s);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 
 extern void append_st_cfg_domain(struct state *st, char *dnsip);
-extern void append_st_cfg_dns(struct state *st, const char *dnsip);
+extern diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi,
+				struct state *st);
 
 extern bool uniqueIDs;  /* --uniqueids? */
 

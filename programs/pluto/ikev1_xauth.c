@@ -1850,8 +1850,17 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			break;
 		}
 
-		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+			d = append_st_cfg_dns(&strattr, &ipv4_info, &ike->sa);
+			if (d != NULL) {
+				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+				pfree_diag(&d);
+				return STF_FAIL_v1N;
+			}
+			recv.ikev1_internal_ip4_dns = true;
+			break;
+
+		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
 		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
@@ -1979,8 +1988,6 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			      struct pbs_in *attrs,
 			      struct attrs *received)
 {
-	struct connection *c = ike->sa.st_connection;
-
 	struct attrs resp = {0};
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -2035,25 +2042,12 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 		}
 
 		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-		{
-			ip_address a;
-			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
+			d = append_st_cfg_dns(&strattr, &ipv4_info, &ike->sa);
 			if (d != NULL) {
 				return d;
 			}
-
-			address_buf a_buf;
-			const char *a_str = str_address(&a, &a_buf);
-			bool ignore = c->config->ignore_peer_dns;
-			llog(RC_LOG, ike->sa.logger, "Received %sDNS server %s",
-			     ignore ? "and ignored " : "",
-			     a_str);
-
-			append_st_cfg_dns(&ike->sa, a_str);
-
 			resp.ikev1_internal_ip4_dns = true;
 			break;
-		}
 
 		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
