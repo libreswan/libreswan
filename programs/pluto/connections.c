@@ -643,6 +643,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 				addresspool_delref(pool, logger);
 			}
 		}
+		pfree(config->name);
 		pfree(c->root_config);
 	}
 
@@ -2771,9 +2772,10 @@ static char *alloc_connection_prefix(const char *name, const struct connection *
 	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
 }
 
-static struct config *alloc_config(void)
+static struct config *alloc_config(const char *name)
 {
 	struct config *config = alloc_thing(struct config, "root config");
+	config->name = clone_str(name, "config");
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		const char *leftright =
@@ -4687,8 +4689,8 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	 * pointers.
 	 */
 
-	struct config *root_config = alloc_config();
-	struct connection *c = alloc_connection(wm->name, NULL, root_config,
+	struct config *root_config = alloc_config(wm->name);
+	struct connection *c = alloc_connection(root_config->name, NULL, root_config,
 						debugging | wm->conn_debug,
 						logger, HERE);
 

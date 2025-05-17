@@ -217,6 +217,7 @@ struct child_config {
 };
 
 struct config {
+	char *name;
 	enum ike_version ike_version;
 	const struct ike_info *ike_info;
 
