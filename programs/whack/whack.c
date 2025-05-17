@@ -1036,6 +1036,8 @@ int main(int argc, char **argv)
 	struct optarg_family host_family = { 0, };
 	struct optarg_family child_family = { 0, };
 
+	char *authby = clone_str("", "authby"); /* never-NULL */
+
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_WHACK,
 
@@ -2003,61 +2005,47 @@ int main(int argc, char **argv)
 
 		/* RSASIG/ECDSA need more than a single policy bit */
 		case OPT_AUTHBY_PSK:		/* --psk */
-			msg.authby.psk = true;
+		{
+			char *t = alloc_printf("%s%ssecret", authby,
+					       (strlen(authby) > 0 ? "," : ""));
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 		case OPT_AUTHBY_AUTH_NEVER:	/* --auth-never */
-			msg.authby.never = true;
+		{
+			char *t = alloc_printf("%s%snever", authby,
+					       (strlen(authby) > 0 ? "," : ""));
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 		case OPT_AUTHBY_AUTH_NULL:	/* --auth-null */
-			msg.authby.null = true;
+		{
+			char *t = alloc_printf("%s%snull", authby,
+					       (strlen(authby) > 0 ? "," : ""));
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 		case OPT_AUTHBY_RSASIG: /* --rsasig */
-			msg.authby.rsasig = true;
-			msg.authby.rsasig_v1_5 = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
 		case OPT_AUTHBY_RSA_SHA1: /* --rsa-sha1 */
-			msg.authby.rsasig_v1_5 = true;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2: /* --rsa-sha2 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2_256:	/* --rsa-sha2_256 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2_384:	/* --rsa-sha2_384 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			continue;
 		case OPT_AUTHBY_RSA_SHA2_512:	/* --rsa-sha2_512 */
-			msg.authby.rsasig = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
-
 		case OPT_AUTHBY_ECDSA: /* --ecdsa and --ecdsa-sha2 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			continue;
 		case OPT_AUTHBY_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			continue;
 		case OPT_AUTHBY_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			continue;
 		case OPT_AUTHBY_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
-			msg.authby.ecdsa = true;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
+		{
+			char *t = alloc_printf("%s%s%s", authby,
+					       (strlen(authby) > 0 ? "," : ""),
+					       optarg_options[optarg_index].name);
+			pfreeany(authby);
+			authby = t;
 			continue;
+		}
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
 			if (host_family.type == &ipv4_info) {
@@ -2323,21 +2311,6 @@ int main(int argc, char **argv)
 		bad_case(c);
 	}
 
-	msg.child_afi = child_family.type;
-	msg.host_afi = host_family.type;
-
-	if (!authby_is_set(msg.authby)) {
-		/*
-		 * Since any option potentially setting SIGHASH bits
-		 * always sets AUTHBY, check that.
-		 *
-		 * Mimic addconn's behaviour: specifying auth= (yes,
-		 * whack calls it --authby) does not clear the
-		 * policy_authby defaults.  That is left to pluto.
-		 */
-		msg.sighash_policy |= POL_SIGHASH_DEFAULTS;
-	}
-
 	if (optind != argc) {
 		/*
 		 * If you see this message unexpectedly, perhaps the
@@ -2346,6 +2319,10 @@ int main(int argc, char **argv)
 		 */
 		diagq("unexpected argument", argv[optind]);
 	}
+
+	msg.child_afi = child_family.type;
+	msg.host_afi = host_family.type;
+	msg.authby = (strlen(authby) > 0 ? authby : NULL);
 
 	/*
 	 * For each possible form of the command, figure out if an argument
@@ -2397,26 +2374,6 @@ int main(int argc, char **argv)
 			diagw("connection missing --host after --to");
 		}
 
-		if (msg.authby.never) {
-			if (msg.never_negotiate_shunt == SHUNT_UNSET) {
-				diagw("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
-			}
-		} else {
-			/* not just a shunt: a real ipsec connection */
-			if (!authby_is_set(msg.authby) &&
-			    msg.end[LEFT_END].auth == AUTH_NEVER &&
-			    msg.end[RIGHT_END].auth == AUTH_NEVER)
-				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
-			/*
-			 * ??? this test can never fail:
-			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
-			 * These interlocking tests should be redone.
-			 */
-			if (msg.never_negotiate_shunt != SHUNT_UNSET &&
-			    (msg.end[LEFT_END].subnet != NULL ||
-			     msg.end[RIGHT_END].subnet != NULL))
-				diagw("must not specify clients for ISAKMP-only connection");
-		}
 	}
 
 	/*

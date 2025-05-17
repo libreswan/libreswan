@@ -84,22 +84,13 @@ west #
  echo "include /etc/ipsec.d/west-errors.conf" >> /etc/ipsec.conf
 west #
  ipsec auto --add ecdsa-sha1-should-fail
-ipsec addconn: authby=ecdsa cannot use sha1, only sha2
-ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
-ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
-conn ecdsa-sha1-should-fail: did not load properly
+"ecdsa-sha1-should-fail": failed to add connection: authby=ecdsa cannot use sha1, only sha2
 west #
  ipsec auto --add ikev1-rsa2-should-fail
-ipsec addconn: authby=ecdsa cannot use sha1, only sha2
-ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
-ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
-conn ikev1-rsa2-should-fail: did not load properly
+"ikev1-rsa2-should-fail": failed to add connection: authby=rsa-sha2 is not valid for IKEv1
 west #
  ipsec auto --add ikev1-ecdsa-should-fail
-ipsec addconn: authby=ecdsa cannot use sha1, only sha2
-ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
-ipsec addconn: ikev1 connection must use authby= of rsasig, secret or never
-conn ikev1-ecdsa-should-fail: did not load properly
+"ikev1-ecdsa-should-fail": failed to add connection: authby=ecdsa is not valid for IKEv1
 west #
  rm /etc/ipsec.d/west-errors.conf
 west #

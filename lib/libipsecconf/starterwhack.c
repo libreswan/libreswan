@@ -288,8 +288,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.compress = conn->values[KNCF_COMPRESS].option;
 	msg.type = conn->values[KNCF_TYPE].option;
 	msg.phase2 = conn->values[KNCF_PHASE2].option;
-	msg.authby = conn->authby;
-	msg.sighash_policy = conn->sighash_policy;
+	msg.authby = conn->values[KWS_AUTHBY].string;
+
 	msg.never_negotiate_shunt = conn->never_negotiate_shunt;
 	msg.negotiation_shunt = conn->negotiation_shunt;
 	msg.failure_shunt = conn->failure_shunt;

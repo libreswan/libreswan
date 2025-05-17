@@ -272,6 +272,14 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	 * (string-valued, indented, on its own line).
 	 */
 #define cwf(name, value)	{ fprintf(out, "\t" name "=%s\n", (value)); }
+	/* conn-keyword-string */
+#define ckws(NAME, INDEX)						\
+	{								\
+		const char *_s = conn->values[KWS_##INDEX].string;	\
+		if (_s != NULL) {					\
+			fprintf(out, "\t"NAME"=%s\n", _s);		\
+		}							\
+	}
 
 	if (verbose)
 		fprintf(out, "# begin conn %s\n", conn->name);
@@ -326,8 +334,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		if (conn->end[LEFT_END].values[KNCF_AUTH].option == k_unset ||
 		    conn->end[RIGHT_END].values[KNCF_AUTH].option == k_unset) {
-			authby_buf ab;
-			cwf("authby", str_authby(conn->authby, &ab));
+			ckws("authby", AUTHBY);
 		}
 
 		if (encap_proto != ENCAP_PROTO_UNSET) {
