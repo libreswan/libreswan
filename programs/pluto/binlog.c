@@ -176,7 +176,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		return;
 	}
 
-	dbg("log_state called for state update for connection %s ", conn->base_name);
+	dbg("log_state called for state update for connection %s ", conn->name);
 
 	struct log_conn_info lc = {
 		.conn = conn,
@@ -233,7 +233,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	default:	p2 = "down";	break;
 	}
 	dbg("log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
-	    pluto_stats_binary, conn->base_name, tun, p1, p2);
+	    pluto_stats_binary, conn->name, tun, p1, p2);
 
 	char buf[1024];
 
@@ -253,5 +253,5 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	if (system(buf) == -1) {
 		log_state(RC_LOG, st, "statsbin= failed to send status update notification");
 	}
-	dbg("log_state for connection %s completed", conn->base_name);
+	dbg("log_state for connection %s completed", conn->name);
 }

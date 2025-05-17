@@ -1256,17 +1256,17 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 		}
 		if (st == &child->sa) {
 			dbg_ts("ignoring ourselves #%lu sharing connection %s",
-			       st->st_serialno, c->base_name);
+			       st->st_serialno, c->name);
 			continue;
 		}
 		if (st == &ike->sa) {
 			dbg_ts("ignoring IKE SA #%lu sharing connection %s with #%lu",
-			       st->st_serialno, c->base_name, child->sa.st_serialno);
+			       st->st_serialno, c->name, child->sa.st_serialno);
 			continue;
 		}
 		dbg_ts("#%lu and #%lu share connection %s",
 		       child->sa.st_serialno, st->st_serialno,
-		       c->base_name);
+		       c->name);
 		return true;
 	}
 
@@ -1580,7 +1580,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 */
 		enum_buf kb;
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
-		       str_enum(&connection_kind_names, cc->local->kind, &kb), cc->base_name);
+		       str_enum(&connection_kind_names, cc->local->kind, &kb), cc->name);
 		llog_sa(RC_LOG, child, "no IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}
@@ -1637,8 +1637,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, TS_INDENT, ts_indent);
-				jam(buf, "investigating template \"%s\";",
-				    t->base_name);
+				jam(buf, "investigating template %s;",
+				    t->name);
 				jam(buf, " with policy <");
 				jam_connection_policies(buf, t);
 				jam(buf, ">");

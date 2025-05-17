@@ -538,7 +538,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 * free before calling this code).
 	 */
 	ldbg(logger, "%s() %s "PRI_CO" [%p] cloned from "PRI_CO,
-	     __func__, c->base_name,
+	     __func__, c->name,
 	     pri_connection_co(c), c,
 	     pri_connection_co(c->clonedfrom));
 

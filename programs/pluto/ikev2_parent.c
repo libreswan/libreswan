@@ -282,7 +282,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 		id_buf thatid;
 		endpoint_buf ra;
 		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
-			c->base_name, ike->sa.st_serialno,
+			c->name, ike->sa.st_serialno,
 			err1, err2,
 			str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 			str_id(&id, &thatid));

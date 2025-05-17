@@ -1073,7 +1073,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() ...", __func__);
 
 	dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
-	    addresspool, c->base_name, userid);
+	    addresspool, c->name, userid);
 
 	/* allows <address>, <address>-<address> and <address>/bits */
 
