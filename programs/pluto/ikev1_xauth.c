@@ -93,6 +93,8 @@ static diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				     struct pbs_in *attrs,
 				     struct attrs *attrs_received);
 
+static char *cisco_stringify(shunk_t str, bool *ok);
+
 /* see emit_mode_cfg_attrs() */
 
 struct attrs {
@@ -1858,10 +1860,25 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			recv.ikev1_internal_ip4_dns = true;
 			break;
 
+		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
+			append_st_cfg_domain(&ike->sa, &strattr, cisco_stringify);
+			recv.modecfg_domain = true;
+			break;
+
+		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
+		{
+			pfreeany(ike->sa.st_seen_cfg_banner);
+			bool ok = false;
+			ike->sa.st_seen_cfg_banner = cisco_stringify(pbs_in_left(&strattr), &ok);
+			llog(RC_LOG, ike->sa.logger, "%s MODECFG_BANNER: %s",
+			     (ok ? "received": "truncated"),
+			     ike->sa.st_seen_cfg_banner);
+			recv.modecfg_banner = true;
+			break;
+		}
+
 		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
-		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 			set_attr(&recv, attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 			break;
@@ -1910,12 +1927,11 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
  * Result is allocated on heap so caller must ensure it is freed.
  */
 
-static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
-			     struct logger *logger)
+static char *cisco_stringify(shunk_t str, bool *ok)
 {
-	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
+	char strbuf[500]; /* Cisco maximum unknown - arbitrary
+			   * choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
-	shunk_t str = pbs_in_left(input_pbs);
 
 	/*
 	 * detox string
@@ -1961,12 +1977,8 @@ static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
 			break;
 		}
 	}
-	llog(RC_LOG, logger,
-	     "Received %s%s: %s%s",
-	     jambuf_ok(&buf) ? "" : "overlong ",
-	     attr_name, strbuf,
-	     jambuf_ok(&buf) ? "" : " (truncated)");
-	return clone_str(strbuf, attr_name);
+	(*ok) = jambuf_ok(&buf);
+	return clone_str(strbuf, "cisco");
 }
 
 /*
@@ -2044,16 +2056,21 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			break;
 
 		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
-			append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
-								       ike->sa.logger));
+			append_st_cfg_domain(&ike->sa, &strattr, cisco_stringify);
 			resp.modecfg_domain = true;
 			break;
 
 		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
-			ike->sa.st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
-								     ike->sa.logger);
+		{
+			pfreeany(ike->sa.st_seen_cfg_banner);
+			bool ok = false;
+			ike->sa.st_seen_cfg_banner = cisco_stringify(pbs_in_left(&strattr), &ok);
+			llog(RC_LOG, ike->sa.logger, "%s MODECFG_BANNER: %s",
+			     (ok ? "received": "truncated"),
+			     ike->sa.st_seen_cfg_banner);
 			resp.modecfg_banner = true;
 			break;
+		}
 
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 		{

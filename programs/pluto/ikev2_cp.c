@@ -403,7 +403,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
  * from IKEv1.
  */
 
-static char *broken_dns_stringify(shunk_t str, struct logger *logger)
+static char *broken_dns_stringify(shunk_t str, bool *ok)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
@@ -452,9 +452,7 @@ static char *broken_dns_stringify(shunk_t str, struct logger *logger)
 			break;
 		}
 	}
-	llog(RC_LOG, logger,
-	     "received INTERNAL_DNS_DOMAIN: %s%s",
-	     strbuf, (jambuf_ok(&buf) ? "" : " (truncated)"));
+	(*ok) = jambuf_ok(&buf);
 	return clone_str(strbuf, "INTERNAL_DNS_NAME");
 }
 
@@ -466,20 +464,7 @@ static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 	}
 
 	/* must be initiator parsing CP response */
-
-	shunk_t str = pbs_in_left(cp_a_pbs);
-	if (child->sa.st_connection->config->ignore_peer_dns) {
-		LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
-			jam_string(buf, "received and ignored INTERNAL_DNS_DOMAIN: ");
-			jam_sanitized_hunk(buf, str);
-		}
-		return;
-	}
-
-	char *safestr = broken_dns_stringify(str, child->sa.logger);
-	if (safestr != NULL) {
-		append_st_cfg_domain(&child->sa, safestr);
-	}
+	append_st_cfg_domain(&child->sa, cp_a_pbs, broken_dns_stringify);
 }
 
 static diag_t ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,

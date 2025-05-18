@@ -850,7 +850,8 @@ extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(struct show *s);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 
-extern void append_st_cfg_domain(struct state *st, char *dnsip);
+void append_st_cfg_domain(struct state *st, struct pbs_in *pbs,
+			  char *(*stringify)(shunk_t str, bool *ok));
 extern diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi,
 				struct state *st);
 
