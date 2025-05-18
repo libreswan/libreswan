@@ -49,6 +49,39 @@ static connection_node_visitor_cb walk_connection_tree;
  * ugh).  WHACK_CONNECTIONS() will then visit it any any instances.
  */
 
+static bool whack_connection_by_base_name(const struct whack_message *m,
+					  struct show *s,
+					  enum chrono order,
+					  connection_node_visitor_cb *connection_node_visitor,
+					  connection_visitor_cb *connection_visitor,
+					  const struct each *each UNUSED)
+{
+#if 0
+	/*
+	 * While base names, such as 'conn', probably never start with
+	 * a quote, the scanner does seem to allow it!
+	 */
+	if (m->name[0] == '"') {
+		return false;
+	}
+#endif
+
+	struct connection_filter by_base_name = {
+		.base_name = m->name,
+		.search = {
+			.order = OLD2NEW, /* find template before
+					   * instance */
+			.verbose.logger = show_logger(s),
+			.where = HERE,
+		},
+	};
+	if (next_connection(&by_base_name)) {
+		connection_node_visitor(by_base_name.c, m, s, order, connection_visitor);
+		return true; /* found something, stop */
+	}
+	return false; /* keep looking */
+}
+
 static bool whack_connection_by_name(const struct whack_message *m,
 				     struct show *s,
 				     enum chrono order,
@@ -56,8 +89,17 @@ static bool whack_connection_by_name(const struct whack_message *m,
 				     connection_visitor_cb *connection_visitor,
 				     const struct each *each UNUSED)
 {
+	/*
+	 * Fully qualified names, such as '"conn#1.2.3.0/24"[1]',
+	 * always start with a quote, so no point searching when there
+	 * isn't one.
+	 */
+	if (m->name[0] != '"') {
+		return false;
+	}
+
 	struct connection_filter by_name = {
-		.base_name = m->name,
+		.name = m->name,
 		.search = {
 			.order = OLD2NEW, /* only one, order doesn't
 					   * matter! */
@@ -67,7 +109,7 @@ static bool whack_connection_by_name(const struct whack_message *m,
 	};
 	if (next_connection(&by_name)) {
 		connection_node_visitor(by_name.c, m, s, order, connection_visitor);
-		return true; /* found something, stop */
+		return true; /* only one, stop */
 	}
 	return false; /* keep looking */
 }
@@ -95,6 +137,16 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 				       connection_visitor_cb *connection_visitor,
 				       const struct each *each)
 {
+#if 0
+	/*
+	 * Aliases, such as 'aliasname', never start with a quote(?),
+	 * so no point searching when there is one.
+	 */
+	if (m->name[0] == '"') {
+		return false;
+	}
+#endif
+
 	struct logger *logger = show_logger(s);
 	struct connection_filter by_alias_root = {
 		.alias_root = m->name,
@@ -305,8 +357,15 @@ static void visit_connections(const struct whack_message *m,
 	struct logger *logger = show_logger(s);
 
 	/*
-	 * Try by name, alias, then serial no.
+	 * Try by base_name, name, alias, then serial no.
 	 */
+
+	if (whack_connection_by_base_name(m, s, order,
+					  connection_node_visitor,
+					  connection_visitor,
+					  each)) {
+		return;
+	}
 
 	if (whack_connection_by_name(m, s, order,
 				     connection_node_visitor,
@@ -314,7 +373,7 @@ static void visit_connections(const struct whack_message *m,
 				     each)) {
 		return;
 	}
- 
+
 	/*
 	 * Danger:
 	 *
