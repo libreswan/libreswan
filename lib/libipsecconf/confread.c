@@ -131,8 +131,6 @@ static struct starter_config *alloc_starter_config(void)
 	d->end[LEFT_END].leftright = "left";
 	d->end[RIGHT_END].leftright = "right";
 
-	d->xfrm_if_id = UINT32_MAX;
-
 	d->state = STATE_LOADED;
 	/* ==== end of conn %default ==== */
 

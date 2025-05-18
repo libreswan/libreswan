@@ -95,7 +95,6 @@ struct starter_conn {
 		STATE_FAILED,
 	} state;
 
-	uint32_t xfrm_if_id;
 };
 
 struct starter_config {
