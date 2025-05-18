@@ -1036,7 +1036,7 @@ int main(int argc, char **argv)
 	struct optarg_family host_family = { 0, };
 	struct optarg_family child_family = { 0, };
 
-	char *authby = clone_str("", "authby"); /* never-NULL */
+	char *authby = NULL;
 
 	struct whack_message msg = {
 		.whack_from = WHACK_FROM_WHACK,
@@ -2005,29 +2005,14 @@ int main(int argc, char **argv)
 
 		/* RSASIG/ECDSA need more than a single policy bit */
 		case OPT_AUTHBY_PSK:		/* --psk */
-		{
-			char *t = alloc_printf("%s%ssecret", authby,
-					       (strlen(authby) > 0 ? "," : ""));
-			pfreeany(authby);
-			authby = t;
+			append_str(&authby, ",", "secret");
 			continue;
-		}
 		case OPT_AUTHBY_AUTH_NEVER:	/* --auth-never */
-		{
-			char *t = alloc_printf("%s%snever", authby,
-					       (strlen(authby) > 0 ? "," : ""));
-			pfreeany(authby);
-			authby = t;
+			append_str(&authby, ",", "never");
 			continue;
-		}
 		case OPT_AUTHBY_AUTH_NULL:	/* --auth-null */
-		{
-			char *t = alloc_printf("%s%snull", authby,
-					       (strlen(authby) > 0 ? "," : ""));
-			pfreeany(authby);
-			authby = t;
+			append_str(&authby, ",", "null");
 			continue;
-		}
 		case OPT_AUTHBY_RSASIG: /* --rsasig */
 		case OPT_AUTHBY_RSA_SHA1: /* --rsa-sha1 */
 		case OPT_AUTHBY_RSA_SHA2: /* --rsa-sha2 */
@@ -2038,14 +2023,9 @@ int main(int argc, char **argv)
 		case OPT_AUTHBY_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
 		case OPT_AUTHBY_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
 		case OPT_AUTHBY_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
-		{
-			char *t = alloc_printf("%s%s%s", authby,
-					       (strlen(authby) > 0 ? "," : ""),
-					       optarg_options[optarg_index].name);
-			pfreeany(authby);
-			authby = t;
+			/* that's the option with "--" stripped */
+			append_str(&authby, ",", optarg_options[optarg_index].name);
 			continue;
-		}
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
 			if (host_family.type == &ipv4_info) {
@@ -2322,7 +2302,7 @@ int main(int argc, char **argv)
 
 	msg.child_afi = child_family.type;
 	msg.host_afi = host_family.type;
-	msg.authby = (strlen(authby) > 0 ? authby : NULL);
+	msg.authby = authby;
 
 	/*
 	 * For each possible form of the command, figure out if an argument

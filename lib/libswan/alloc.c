@@ -342,6 +342,26 @@ void *clone_bytes_bytes(const void *lhs_ptr, size_t lhs_len,
 	return new;
 }
 
+char *clone_str(const char *str, const char *name)
+{
+	if (str == NULL) {
+		return NULL;
+	}
+
+	return clone_bytes(str, strlen(str) + 1, name);
+}
+
+void append_str(char **sentence, const char *sep, const char *word)
+{
+	if (*sentence == NULL) {
+		(*sentence) = clone_str(word, __func__);
+	}
+
+	char *ns = alloc_printf("%s%s%s", (*sentence), sep, word);
+	pfree((*sentence));
+	(*sentence) = ns;
+}
+
 /*
  * Re-size something on the HEAP.
  */

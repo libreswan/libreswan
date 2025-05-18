@@ -20,8 +20,8 @@ north #
 "north-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP}
 "north-east" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "north-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.101
-"north-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
-"north-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
+"north-east" #2: received INTERNAL_IP4_DNS server address 1.2.3.4
+"north-east" #2: received INTERNAL_IP4_DNS server address 5.6.7.8
 "north-east" #2: up-client output: updating resolvconf
 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.101/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #

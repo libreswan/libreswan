@@ -138,8 +138,8 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define clone_const_things(ORIG, COUNT, NAME) \
 	clone_bytes((ORIG), (COUNT) * sizeof((ORIG)[0]), (NAME))
 
-#define clone_str(str, name) \
-	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
+char *clone_str(const char *str, const char *name);
+void append_str(char **sentence, const char *sep, const char *word);
 
 #define pfreeany(P) {				\
 		typeof(P) *pp_ = &(P);		\

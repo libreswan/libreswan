@@ -482,55 +482,27 @@ static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 	}
 }
 
-static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
-			  const struct ip_info *af)
+static diag_t ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
+			    const struct ip_info *af)
 {
 	struct connection *c = child->sa.st_connection;
-	bool ignore = c->config->ignore_peer_dns;
 
 	if (is_opportunistic(c)) {
 		llog_sa(RC_LOG, child,
 			  "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
 			  af->ip_version);
-		return true;
-	}
-
-	ip_address ip;
-	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_DNS CP payload");
-	if (d != NULL) {
-		llog(RC_LOG, child->sa.logger, "%s", str_diag(d));
-		pfree_diag(&d);
-		return false;
-	}
-
-	/* i.e. all zeros */
-	if (!address_is_specified(ip)) {
-		address_buf ip_str;
-		llog_sa(RC_LOG, child,
-			  "ERROR INTERNAL_IP%d_DNS %s is invalid",
-			  af->ip_version, str_address(&ip, &ip_str));
-		return false;
+		return NULL;
 	}
 
 	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
-	if (!responder) {
-		/* note: ip_buf and ip_str at same scope */
-		address_buf ip_buf;
-		const char *ip_str = str_address(&ip, &ip_buf);
-
+	if (responder) {
 		llog_sa(RC_LOG, child,
-			  "received %sINTERNAL_IP%d_DNS %s",
-			  ignore ? "and ignored " : "",
-			  af->ip_version, ip_str);
-		if (!ignore)
-			append_st_cfg_dns(&child->sa, ip_str);
-	} else {
-		llog_sa(RC_LOG, child,
-			  "initiator INTERNAL_IP%d_DNS CP ignored",
-			  af->ip_version);
+			"initiator INTERNAL_IP%d_DNS CP ignored",
+			af->ip_version);
+		return NULL;
 	}
 
-	return true;
+	return append_st_cfg_dns(cp_a_pbs, af, &child->sa);
 }
 
 static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
@@ -682,9 +654,10 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			break;
 
 		case IKEv2_INTERNAL_IP4_DNS:
-			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
-				llog_sa(RC_LOG, child,
-					  "ERROR malformed INTERNAL_IP4_DNS attribute");
+			d = ikev2_set_dns(&cp_a_pbs, child, &ipv4_info);
+			if (d != NULL) {
+				llog(RC_LOG, child->sa.logger, "ERROR %s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 			break;
@@ -698,9 +671,10 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			break;
 
 		case IKEv2_INTERNAL_IP6_DNS:
-			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
-				llog_sa(RC_LOG, child,
-					  "ERROR malformed INTERNAL_IP6_DNS attribute");
+			d = ikev2_set_dns(&cp_a_pbs, child, &ipv6_info);
+			if (d != NULL) {
+				llog(RC_LOG, child->sa.logger, "ERROR %s", str_diag(d));
+				pfree_diag(&d);
 				return false;
 			}
 			break;

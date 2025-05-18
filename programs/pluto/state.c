@@ -1816,41 +1816,47 @@ void show_globalstate_status(struct show *s)
 	}
 }
 
-static void append_word(char **sentence, const char *word)
-{
-	size_t sl = strlen(*sentence);
-	size_t wl = strlen(word);
-	char *ns = alloc_bytes(sl + 1 + wl + 1, "sentence");
-
-	memcpy(ns, *sentence, sl);
-	ns[sl] = ' ';
-	memcpy(&ns[sl + 1], word, wl+1);	/* includes NUL */
-	pfree(*sentence);
-	*sentence = ns;
-}
-
 /*
  * Moved from ikev1_xauth.c since IKEv2 code now also uses it
- * Converted to store ephemeral data in the state, not connection
+ * Converted to store ephemeral data in the state, not connection.
  */
-void append_st_cfg_dns(struct state *st, const char *dnsip)
+
+diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi, struct state *st)
 {
-	if (st->st_seen_cfg_dns == NULL) {
-		st->st_seen_cfg_dns = clone_str(dnsip, "fresh append_st_cfg_dns");
-	} else {
-		append_word(&st->st_seen_cfg_dns, dnsip);
+	/* XXX: before trying to extract! */
+	if (st->st_connection->config->ignore_peer_dns) {
+		llog(RC_LOG, st->logger, "ignoring INTERNAL_IP%d_DNS server address payload (ignore-peer-dns=yes)",
+		     afi->ip_version);
+		return NULL;
 	}
+
+	ip_address ip;
+	diag_t d = pbs_in_address(pbs, &ip, afi, "INTERNAL_IPn_DNS payload");
+	if (d != NULL) {
+		return diag_diag(&d, "invalid INTERNAL_IP%d_DNS server address payload, ",
+				 afi->ip_version);
+	}
+
+	/* i.e. not all zeros */
+	if (!address_is_specified(ip)) {
+		address_buf ip_str;
+		return diag("invalid INTERNAL_IP%d_DNS server address %s, unspecified",
+			    afi->ip_version, str_address(&ip, &ip_str));
+	}
+
+	address_buf dnsb;
+	llog(RC_LOG, st->logger, "received INTERNAL_IP%d_DNS server address %s",
+	     afi->ip_version, str_address(&ip, &dnsb));
+
+	append_str(&st->st_seen_cfg_dns, " ", dnsb.buf);
+	return NULL;
 }
 
 void append_st_cfg_domain(struct state *st, char *domain)
 {
 	/* note: we are responsible to ensure domain is freed */
-	if (st->st_seen_cfg_domains == NULL) {
-		st->st_seen_cfg_domains = domain;
-	} else {
-		append_word(&st->st_seen_cfg_domains, domain);
-		pfree(domain);
-	}
+	append_str(&st->st_seen_cfg_domains, " ", domain);
+	pfree(domain);
 }
 
 static void list_state_event(struct show *s, struct state *st,

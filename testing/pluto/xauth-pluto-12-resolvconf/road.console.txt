@@ -33,8 +33,8 @@ road #
 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
 "modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
-"modecfg-road-eastnet-psk" #1: Received DNS server 1.2.3.4
-"modecfg-road-eastnet-psk" #1: Received DNS server 5.6.7.8
+"modecfg-road-eastnet-psk" #1: received INTERNAL_IP4_DNS server address 1.2.3.4
+"modecfg-road-eastnet-psk" #1: received INTERNAL_IP4_DNS server address 5.6.7.8
 "modecfg-road-eastnet-psk" #1: Received Domain: libreswan.org
 "modecfg-road-eastnet-psk" #1: received and ignored CISCO_SPLIT_INC subnet 192.0.2.0/24
 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP2048}
