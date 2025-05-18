@@ -1072,32 +1072,30 @@ static bool add_xauth_addresspool(struct connection *c,
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() ...", __func__);
 
-	dbg("XAUTH: adding addresspool entry %s for the conn %s user %s",
-	    addresspool, c->name, userid);
+	vdbg("XAUTH: adding connection addresspool %s for user \"%s\"",
+	     addresspool, userid);
 
-	/* allows <address>, <address>-<address> and <address>/bits */
-
+	/*
+	 * Allows <address>, <address>-<address> and <address>/bits.
+	 */
 	ip_range pool_range;
 	err_t err = ttorange_num(shunk1(addresspool), &ipv4_info, &pool_range);
 	if (err != NULL) {
-		llog(RC_LOG, logger,
-		     "XAUTH IP addresspool %s for the conn %s user %s is not valid: %s",
-		     addresspool, c->base_name, userid, err);
+		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
+		     addresspool, userid, err);
 		return false;
 	}
 
 	if (range_size(pool_range) == 0) {
 		/* should have been rejected by ttorange() */
-		llog(RC_LOG, logger,
-		     "XAUTH IP addresspool %s for the conn %s user=%s is empty!?!",
-		     addresspool, c->base_name, userid);
+		vlog("XAUTH: connection addresspool %s for the user \"%s\" is empty!?!",
+		     addresspool, userid);
 		return false;
 	}
 
 	if (!address_is_specified(range_start(pool_range))) {
-		llog(RC_LOG, logger,
-		     "XAUTH IP addresspool %s for the conn %s user=%s cannot start at address zero",
-		     addresspool, c->base_name, userid);
+		vlog("XAUTH: connection addresspool %s for the user \"%s\" cannot start at address zero",
+		     addresspool, userid);
 		return false;
 	}
 
@@ -1114,8 +1112,8 @@ static bool add_xauth_addresspool(struct connection *c,
 
 	diag_t d = install_addresspool(pool_range, c->pool, logger);
 	if (d != NULL) {
-		llog(RC_CLASH, logger, "XAUTH: invalid addresspool for the conn %s user %s: %s",
-		     c->base_name, userid, str_diag(d));
+		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
+		     addresspool, userid, str_diag(d));
 		pfree_diag(&d);
 		return false;
 	}
