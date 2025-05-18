@@ -476,11 +476,10 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		},
 	};
 	while (next_connection(&instance)) {
-		connection_buf cb;
 		llog_pexpect(logger, where,
-			     "connection "PRI_CO" [%p] still instantiated as "PRI_CONNECTION" [%p]",
+			     "connection "PRI_CO" [%p] still instantiated as %s [%p]",
 			     pri_connection_co(c), c,
-			     pri_connection(instance.c, &cb),
+			     instance.c->name,
 			     instance.c);
 		connection_ok_to_delete(instance.c, where);
 		ok_to_delete = false;
@@ -3803,11 +3802,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	connection_buf cb;
 	policy_buf pb;
-	dbg("added new %s connection "PRI_CONNECTION" with policy %s",
+	dbg("added new %s connection %s with policy %s",
 	    c->config->ike_info->version_name,
-	    pri_connection(c, &cb), str_connection_policies(c, &pb));
+	    c->name, str_connection_policies(c, &pb));
 
 	/* IKE cipher suites */
 
@@ -3843,9 +3841,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		if (c->config->ike_version == IKEv2) {
-			connection_buf cb;
-			dbg("constructing local IKE proposals for "PRI_CONNECTION,
-			    pri_connection(c, &cb));
+			dbg("constructing local IKE proposals for %s",
+			    c->name);
 			config->v2_ike_proposals =
 				ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
 							       config->ike_proposals.p,
@@ -5102,16 +5099,14 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		struct connection *c = cq.c;
 
 		if (!oriented(c)) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; not oriented",
-			     pri_connection(c, &cb));
+			ldbg(logger, "    skipping %s; not oriented",
+			     c->name);
 			continue;
 		}
 
 		if (is_group(c)) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; a food group",
-			     pri_connection(c, &cb));
+			ldbg(logger, "    skipping %s; a food group",
+			     c->name);
 			continue;
 		}
 
@@ -5120,15 +5115,13 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * non-sec_label connections.
 		 */
 		if (sec_label.len == 0 && is_labeled(c)) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; has unwanted label",
-			     pri_connection(c, &cb));
+			ldbg(logger, "    skipping %s; has unwanted label",
+			     c->name);
 			continue;
 		}
 		if (sec_label.len > 0 && !is_labeled(c)) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; doesn't have label",
-			     pri_connection(c, &cb));
+			ldbg(logger, "    skipping %s; doesn't have label",
+			     c->name);
 			continue;
 		}
 
@@ -5138,9 +5131,8 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * send a duplicate child request.
 		 */
 		if (is_labeled_child(c)) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is a child",
-			     pri_connection(c, &cb));
+			ldbg(logger, "    skipping %s; IKEv2 sec_label connection is a child",
+			     c->name);
 			continue;
 		}
 
@@ -5151,9 +5143,9 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		if (sec_label.len > 0 /*implies c->config->sec_label > 0 */ &&
 		    !sec_label_within_range("acquire", sec_label,
 					    c->config->sec_label, logger)) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
-			     pri_connection(c, &cb), pri_shunk(sec_label),
+			ldbg(logger,
+			     "    skipping %s; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
+			     c->name, pri_shunk(sec_label),
 			     pri_shunk(c->config->sec_label));
 			continue;
 		}
@@ -5177,9 +5169,8 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		if (!kernel_route_installed(c) &&
 		    !instance_initiation_ok &&
 		    c->config->sec_label.len == 0) {
-			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; !routed,!instance_initiation_ok,!sec_label",
-			     pri_connection(c, &cb));
+			ldbg(logger, "    skipping %s; !routed,!instance_initiation_ok,!sec_label",
+			     c->name);
 			continue;
 		}
 
@@ -5262,30 +5253,27 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 
 		if (best_connection != NULL &&
 		    priority <= best_priority) {
-			connection_buf cb, bcb;
 			ldbg(logger,
-			     "    skipping "PRI_CONNECTION" priority %"PRIu32"; doesn't best "PRI_CONNECTION" priority %"PRIu32,
-			     pri_connection(c, &cb),
+			     "    skipping %s priority %"PRIu32"; doesn't best %s priority %"PRIu32,
+			     c->name,
 			     priority,
-			     pri_connection(best_connection, &bcb),
+			     best_connection->name,
 			     best_priority);
 			continue;
 		}
 
 		/* current is best; log why */
 		if (best_connection == NULL) {
-			connection_buf cb;
 			ldbg(logger,
-			     "    choosing "PRI_CONNECTION" priority %"PRIu32"; as first best",
-			     pri_connection(c, &cb),
+			     "    choosing %s priority %"PRIu32"; as first best",
+			     c->name,
 			     priority);
 		} else {
-			connection_buf cb, bcb;
 			ldbg(logger,
-			     "    choosing "PRI_CONNECTION" priority %"PRIu32"; as bests "PRI_CONNECTION" priority %"PRIu32,
-			     pri_connection(c, &cb),
+			     "    choosing %s priority %"PRIu32"; as bests %s priority %"PRIu32,
+			     c->name,
 			     priority,
-			     pri_connection(best_connection, &bcb),
+			     best_connection->name,
 			     best_priority);
 		}
 
@@ -5302,16 +5290,14 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	 * XXX: So that the best connection can prevent negotiation?
 	 */
 	if (never_negotiate(best_connection)) {
-		connection_buf cb;
-		ldbg(logger, "  concluding with empty; best connection "PRI_CONNECTION" was NEVER_NEGOTIATE",
-		     pri_connection(best_connection, &cb));
+		ldbg(logger, "  concluding with empty; best connection %s was NEVER_NEGOTIATE",
+		     best_connection->name);
 		return NULL;
 	}
 
-	connection_buf cib;
 	enum_buf kb;
-	dbg("  concluding with "PRI_CONNECTION" priority %" PRIu32 " kind=%s",
-	    pri_connection(best_connection, &cib),
+	dbg("  concluding with %s priority %" PRIu32 " kind=%s",
+	    best_connection->name,
 	    best_priority,
 	    str_enum_short(&connection_kind_names, best_connection->local->kind, &kb));
 	return best_connection;

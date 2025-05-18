@@ -60,9 +60,7 @@ static bool match_v1_connection(const struct connection *c,
 	PEXPECT(logger, !is_group(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", ID_NULL instance",
-		     pri_connection(c, &cb));
+		ldbg(logger, "  skipping %s, ID_NULL instance", c->name);
 		return false;
 	}
 
@@ -88,15 +86,12 @@ static bool match_v1_connection(const struct connection *c,
 		 * we are groupinstance.
 		 */
 		if (is_group_instance(c)) {
-			connection_buf cb;
-			ldbg(logger, "  choosing "PRI_CONNECTION", never negotiate + group instance",
-			     pri_connection(c, &cb));
+			ldbg(logger, "  choosing %s, never negotiate + group instance",
+			     c->name);
 			return true;
 		}
 
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", never negotiate",
-		     pri_connection(c, &cb));
+		ldbg(logger, "  skipping %s, never negotiate", c->name);
 		return false;
 	}
 
@@ -110,23 +105,20 @@ static bool match_v1_connection(const struct connection *c,
 	 * the policy_exact_mask.
 	 */
 	if (hpc->xauth != is_xauth(c)) {
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
-		     pri_connection(c, &cb));
+		ldbg(logger, "  skipping %s, exact match POLICY_XAUTH failed",
+		     c->name);
 		return false;
 	}
 	if (hpc->aggressive != c->config->aggressive) {
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", exact match POLICY_AGGRESSIVE failed",
-		     pri_connection(c, &cb));
+		ldbg(logger, "  skipping %s, exact match POLICY_AGGRESSIVE failed",
+		     c->name);
 		return false;
 	}
 
 	if (hpc->peer_id != NULL && !same_id(hpc->peer_id, &c->remote->host.id) &&
 	    (c->remote->host.id.kind != ID_FROMCERT && !id_is_any(&c->remote->host.id))) {
-		connection_buf cb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", peer_id failed",
-		     pri_connection(c, &cb));
+		ldbg(logger, "  skipping %s, peer_id failed",
+		     c->name);
 		return false; /* incompatible ID */
 	}
 
@@ -140,26 +132,23 @@ static bool match_v1_connection(const struct connection *c,
 	switch (c->remote->host.config->auth) {
 	case AUTH_RSASIG:
 		if (!hpc->authby.rsasig) {
-			connection_buf cb;
-			ldbg(logger, "  skipping "PRI_CONNECTION", RSASIG was not proposed",
-			     pri_connection(c, &cb));
+			ldbg(logger, "  skipping %s, RSASIG was not proposed",
+			     c->name);
 			return false;
 		}
 		break;
 	case AUTH_PSK:
 		if (!hpc->authby.psk) {
-			connection_buf cb;
-			ldbg(logger, "  skipping "PRI_CONNECTION", PSK was not proposed",
-			     pri_connection(c, &cb));
+			ldbg(logger, "  skipping %s, PSK was not proposed",
+			     c->name);
 			return false;
 		}
 		break;
 	default:
 	{
-		connection_buf cb;
 		enum_buf eb;
-		ldbg(logger, "  skipping "PRI_CONNECTION", %s is never proposed",
-		     pri_connection(c, &cb),
+		ldbg(logger, "  skipping %s, %s is never proposed",
+		     c->name,
 		     str_enum(&keyword_auth_names, c->remote->host.config->auth, &eb));
 		return false;
 	}
@@ -392,8 +381,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 *
 	 * The initiator's ID isn't yet known.
 	 */
-	connection_buf cib;
-	ldbg(md->logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
-	     pri_connection(c, &cib));
+	ldbg(md->logger, "instantiating %s for initial Main Mode message",
+	     c->name);
 	return rw_responder_instantiate(c, remote_address, HERE);
 }

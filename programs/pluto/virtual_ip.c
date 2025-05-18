@@ -515,11 +515,10 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				 * Since this has to be narrowed, any
 				 * comparison is pointless.
 				 */
-				connection_buf dcb;
 				enum_buf kb;
-				vdbg("skipping %s "PRI_CONNECTION" as remote's %ssubnet is wild (not set)",
+				vdbg("skipping %s %s as remote's %ssubnet is wild (not set)",
 				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
-				     pri_connection(d, &dcb),
+				     d->name,
 				     d->remote->config->leftright);
 				continue;
 			}
@@ -531,11 +530,10 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				 * be pretty much anything that
 				 * doesn't intersect).
 				 */
-				connection_buf dcb;
 				enum_buf kb;
-				vdbg("skipping %s "PRI_CONNECTION" as there is no overlap",
+				vdbg("skipping %s %s as there is no overlap",
 				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
-				     pri_connection(d, &dcb));
+				     d->name);
 				continue;
 			}
 
@@ -543,12 +541,11 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				/*
 				 * Assumed to be a replace?
 				 */
-				connection_buf dcb;
 				enum_buf kb;
 				id_buf idb;
-				vdbg("skipping %s "PRI_CONNECTION" as it has the same id: %s",
+				vdbg("skipping %s %s as it has the same id: %s",
 				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
-				     pri_connection(d, &dcb),
+				     d->name,
 				     str_id(&d->remote->host.id, &idb));
 				continue;
 			}

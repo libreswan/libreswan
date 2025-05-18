@@ -84,9 +84,8 @@ static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,
 					 bool background)
 {
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb),
+	dbg("%s() for %s in the %s with "PRI_LOGGER,
+	    __func__, c->name,
 	    background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
@@ -121,9 +120,8 @@ static bool initiate_connection_2_address(struct connection *c,
 					  bool background,
 					  const threadtime_t inception)
 {
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb),
+	dbg("%s() for %s in the %s with "PRI_LOGGER,
+	    __func__, c->name,
 	    background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
@@ -232,9 +230,8 @@ static bool initiate_connection_3_template(struct connection *c,
 					    bool background,
 					    const threadtime_t inception)
 {
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb),
+	dbg("%s() for %s in the %s with "PRI_LOGGER,
+	    __func__, c->name,
 	    background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
@@ -282,9 +279,9 @@ static bool initiate_connection_4_fab(struct connection *c,
 				      bool background,
 				      const threadtime_t inception)
 {
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
+	dbg("%s() for %s in the %s with "PRI_LOGGER,
+	    __func__, c->name,
+	    background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
 	add_policy(c, policy.up);

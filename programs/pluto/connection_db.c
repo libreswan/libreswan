@@ -315,8 +315,7 @@ bool next_connection(struct connection_filter *filter)
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			connection_buf cb;
-			vdbg("found "PRI_CONNECTION, pri_connection(c, &cb));
+			vdbg("found %s", c->name);
 			filter->c = c;
 			return true;
 		}

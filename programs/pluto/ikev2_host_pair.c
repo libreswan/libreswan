@@ -44,9 +44,7 @@ static bool match_v2_connection(const struct connection *c,
 	PEXPECT(verbose.logger, !is_group(c));
 
 	if (is_instance(c) && c->remote->host.id.kind == ID_NULL) {
-		connection_buf cb;
-		vdbg("skipping "PRI_CONNECTION", ID_NULL instance",
-		     pri_connection(c, &cb));
+		vdbg("skipping %s, ID_NULL instance", c->name);
 		return false;
 	}
 
@@ -55,9 +53,8 @@ static bool match_v2_connection(const struct connection *c,
 	 */
 	if (ix == ISAKMP_v2_IKE_SESSION_RESUME) {
 		if (!c->config->session_resumption) {
-			connection_buf cb;
-			vdbg("skipping "PRI_CONNECTION", does not allow IKE_SESSION_RESUME",
-			     pri_connection(c, &cb));
+			vdbg("skipping %s, does not allow IKE_SESSION_RESUME",
+			     c->name);
 			return false;
 		}
 	}
@@ -66,10 +63,9 @@ static bool match_v2_connection(const struct connection *c,
 	 * Require all the bits to match (there's actually only one).
 	 */
 	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
-		connection_buf cb;
 		authby_buf ab, cab;
-		vdbg("skipping "PRI_CONNECTION", %s missing required authby %s",
-		     pri_connection(c, &cb),
+		vdbg("skipping %s, %s missing required authby %s",
+		     c->name,
 		     str_authby(c->remote->host.config->authby, &cab),
 		     str_authby(remote_authby, &ab));
 		return false;
@@ -94,9 +90,7 @@ static bool match_v2_connection(const struct connection *c,
 			PEXPECT(verbose.logger, remote_authby.never);
 			(*send_reject_response) = false;
 		}
-		connection_buf cb;
-		vdbg("skipping "PRI_CONNECTION", never negotiate",
-		     pri_connection(c, &cb));
+		vdbg("skipping %s, never negotiate", c->name);
 		return false;
 	}
 
@@ -204,8 +198,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 		return rw_responder_instantiate(c, remote_address, HERE);
 	}
 
-	connection_buf cb;
-	vdbg("winner is "PRI_CONNECTION, pri_connection(c, &cb));
+	vdbg("winner is %s", c->name);
 	return connection_addref(c, md->logger);
 
 }
@@ -279,9 +272,8 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		 * Road Warrior: we have an instant winner.
 		 */
 		if (!is_opportunistic(d)) {
-			connection_buf cb;
-			vdbg("instant winner with non-opportunistic template "PRI_CONNECTION,
-			     pri_connection(d, &cb));
+			vdbg("instant winner with non-opportunistic template %s",
+			     d->name);
 			c = d;
 			break;
 		}
@@ -306,9 +298,8 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		if (!address_in_selector_range(remote_address, d->child.spds.list->remote->client)) {
 			address_buf ab;
 			selector_buf sb;
-			connection_buf cb;
-			vdbg("skipping "PRI_CONNECTION", as %s is-not in range %s",
-			     pri_connection(d, &cb),
+			vdbg("skipping %s, as %s is-not in range %s",
+			     d->name,
 			     str_address(&remote_address, &ab),
 			     str_selector(&d->child.spds.list->remote->client, &sb));
 			continue;
@@ -326,18 +317,16 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		    range_in_range(selector_range(c->child.spds.list->remote->client),
 				   selector_range(d->child.spds.list->remote->client))) {
 			selector_buf s1, s2;
-			connection_buf cb;
-			vdbg("skipping "PRI_CONNECTION", as best range of %s is narrower than %s",
-			     pri_connection(d, &cb),
+			vdbg("skipping %s, as best range of %s is narrower than %s",
+			     d->name,
 			     str_selector(&c->child.spds.list->remote->client, &s1),
 			     str_selector(&d->child.spds.list->remote->client, &s2));
 			continue;
 		}
 
 		selector_buf s1, s2;
-		connection_buf dc;
-		vdbg("saving "PRI_CONNECTION", opportunistic %s range better than %s",
-		     pri_connection(d, &dc),
+		vdbg("saving %s, opportunistic %s range better than %s",
+		     d->name,
 		     str_selector(&d->child.spds.list->remote->client, &s1),
 		     c == NULL ? "n/a" : str_selector(&c->child.spds.list->remote->client, &s2));
 		c = d;
@@ -363,21 +352,18 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	 */
 
 	if (is_opportunistic(c)) {
-		connection_buf cb;
-		vdbg("instantiating opportunistic winner "PRI_CONNECTION, pri_connection(c, &cb));
+		vdbg("instantiating opportunistic winner %s", c->name);
 		return oppo_responder_instantiate(c, remote_address, HERE);
 	}
 
 	if (is_labeled_template(c)) {
 		/* regular roadwarrior */
-		connection_buf cb;
-		vdbg("instantiating sec_label winner "PRI_CONNECTION, pri_connection(c, &cb));
+		vdbg("instantiating sec_label winner %s", c->name);
 		return labeled_template_instantiate(c, remote_address, HERE);
 	}
 
 	/* regular roadwarrior */
-	connection_buf cb;
-	vdbg("instantiating roadwarrior winner "PRI_CONNECTION, pri_connection(c, &cb));
+	vdbg("instantiating roadwarrior winner %s", c->name);
 	return rw_responder_instantiate(c, remote_address, HERE);
 }
 
@@ -473,10 +459,9 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 		return NULL;
 	}
 
-	connection_buf ci;
 	authby_buf pb;
-	vdbg("found connection: "PRI_CONNECTION" with remote authby %s",
-	     pri_connection(c, &ci),
+	vdbg("found connection %s with remote authby %s",
+	     c->name,
 	     str_authby(c->remote->host.config->authby, &pb));
 
 	return c;

@@ -1089,16 +1089,13 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * addref/delref juggling).
 	 */
 	if (p == c) {
-		connection_buf cib;
-		vdbg("sticking with existing "PRI_CONNECTION"", pri_connection(p, &cib));
+		vdbg("sticking with existing %s", p->name);
 		c = connection_addref(p, c->logger); /* must delref */
 	} else if (is_permanent(p)) {
-		connection_buf cib;
-		vdbg("switching to permanent "PRI_CONNECTION"", pri_connection(p, &cib));
+		vdbg("switching to permanent %s", p->name);
 		c = connection_addref(p, p->logger); /* must delref */
 	} else if (is_instance(p)) {
-		connection_buf cib;
-		vdbg("switching to instance "PRI_CONNECTION"", pri_connection(p, &cib));
+		vdbg("switching to instance %s", p->name);
 		c = connection_addref(p, p->logger); /* must delref */
 	} else if (is_template(p)) {
 		/*
@@ -1118,17 +1115,14 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		 * would overlap part of the lease_that_selector()
 		 * code.
 		 */
-		connection_buf cib;
-		vdbg("instantiating template "PRI_CONNECTION"", pri_connection(p, &cib));
+		vdbg("instantiating template %s", p->name);
 		c = rw_responder_v1_quick_n_dirty_instantiate(p, c->remote->host.addr,
 							      remote_client,
 							      &c->remote->host.id,
 							      verbose, HERE); /* must delref */
 	} else {
-		connection_buf cib;
-		llog_pexpect(verbose.logger, HERE,
-			     "unexpected connection type "PRI_CONNECTION"",
-			     pri_connection(p, &cib));
+		llog_pexpect(verbose.logger, HERE, "unexpected connection type %s",
+			     p->name);
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
@@ -2212,9 +2206,8 @@ static struct connection *fc_try(const struct connection *c,
 	}
 
 	if (best != NULL) {
-		connection_buf cb;
-		vdbg("concluding with "PRI_CONNECTION" with priority %d",
-		     pri_connection(best, &cb), best_prio);
+		vdbg("concluding with %s with priority %d",
+		     best->name, best_prio);
 		return best;
 	}
 
@@ -2235,10 +2228,9 @@ struct connection *find_v1_client_connection(struct connection *const c,
 					     struct verbose verbose)
 {
 	selector_pair_buf sb;
-	connection_buf cb;
-	vdbg("%s() looking for %s, starting with "PRI_CONNECTION,
+	vdbg("%s() looking for %s, starting with %s",
 	     __func__, str_selector_pair(local_client, remote_client, &sb),
-	     pri_connection(c, &cb));
+	     c->name);
 	verbose.level++;
 
 	/* weird things can happen to our interfaces */

@@ -1200,9 +1200,9 @@ static struct child_sa *duplicate_state(struct connection *c,
 					   ike->sa.st_ike_spis.responder,
 					   sa_kind, sa_role, HERE));
 
-	connection_buf cib;
-	ldbg(ike->sa.logger, "duplicating state object #%lu "PRI_CONNECTION" as #%lu for %s",
-	     ike->sa.st_serialno, pri_connection(ike->sa.st_connection, &cib),
+	ldbg(ike->sa.logger, "duplicating state object %s #%lu as #%lu for %s",
+	     ike->sa.st_connection->name,
+	     ike->sa.st_serialno,
 	     child->sa.st_serialno, sa_kind == CHILD_SA ? "IPSEC SA" : "IKE SA");
 
 	/*

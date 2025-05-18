@@ -361,10 +361,8 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 		return true;
 	}
 
-	connection_buf cb;
-	ldbg_sa(ike, "#%lu hasa a rekey request for "PRI_CONNECTION" #%lu TSi TSr",
-		ike->sa.st_serialno,
-		pri_connection(replaced_child->sa.st_connection, &cb),
+	ldbg_sa(ike, "#%lu hasa a rekey request for %s #%lu TSi TSr",
+		ike->sa.st_serialno, replaced_child->sa.st_connection->name,
 		replaced_child->sa.st_serialno);
 
 	*child = replaced_child;

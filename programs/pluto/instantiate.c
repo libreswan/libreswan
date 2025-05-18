@@ -245,10 +245,8 @@ struct connection *group_instantiate(struct connection *group,
 	/* fill in the SPDs */
 	build_connection_spds_from_proposals(t);
 
-	connection_buf gb;
-	vdbg_connection(t, verbose, HERE,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(group, &gb));
+	vdbg_connection(t, verbose, HERE, "%s: from %s",
+			__func__, group->name);
 	return t;
 }
 
@@ -366,10 +364,8 @@ struct connection *spd_instantiate(struct connection *t,
 	pexpect(d->negotiating_child_sa == SOS_NOBODY);
 	pexpect(d->routing.state == RT_UNROUTED);
 
-	connection_buf tb;
-	vdbg_connection(d, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(t, &tb));
+	vdbg_connection(d, verbose, where, "%s: from %s",
+			__func__, t->name);
 
 	return d;
 }
@@ -396,10 +392,8 @@ struct connection *labeled_template_instantiate(struct connection *t,
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
 	pexpect(p->routing.state == RT_UNROUTED);
 
-	connection_buf tb;
-	vdbg_connection(p, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(t, &tb));
+	vdbg_connection(p, verbose, where, "%s: from %s",
+			__func__, t->name);
 
 	return p;
 }
@@ -435,10 +429,8 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
 	pexpect(c->routing.state == RT_UNROUTED);
 
-	connection_buf tb;
-	vdbg_connection(c, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(p, &tb));
+	vdbg_connection(c, verbose, where, "%s: from %s",
+			__func__, p->name);
 
 	return c;
 }
@@ -459,10 +451,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(d);
 
-	connection_buf tb;
-	vdbg_connection(d, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(t, &tb));
+	vdbg_connection(d, verbose, where, "%s: from %s",
+			__func__, t->name);
 	return d;
 }
 
@@ -488,10 +478,8 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(d);
 
-	connection_buf tb;
-	vdbg_connection(d, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(t, &tb));
+	vdbg_connection(d, verbose, where, "%s: from %s",
+			__func__, t->name);
 	return d;
 
 }
@@ -642,10 +630,8 @@ struct connection *rw_responder_v1_quick_n_dirty_instantiate(struct connection *
 	update_v1_quick_n_dirty_selectors(d, remote_subnet, verbose);
 	build_connection_spds_from_proposals(d);
 
-	connection_buf tb;
-	vdbg_connection(d, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			__func__, pri_connection(t, &tb));
+	vdbg_connection(d, verbose, where, "%s: from %s",
+			__func__, t->name);
 	return d;
 }
 
@@ -696,10 +682,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 	PEXPECT(d->logger, oriented(d));
 	build_connection_spds_from_proposals(d);
 
-	connection_buf tb;
-	vdbg_connection(d, verbose, where,
-			"%s: from "PRI_CONNECTION,
-			func, pri_connection(t, &tb));
+	vdbg_connection(d, verbose, where, "%s: from %s",
+			func, t->name);
 	return d;
 }
 

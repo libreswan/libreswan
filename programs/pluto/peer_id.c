@@ -210,24 +210,18 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 */
 
 	if (c != d && is_instance(d) && d->remote->host.id.kind == ID_NULL) {
-		connection_buf cb;
-		vdbg("skipping ID_NULL instance "PRI_CONNECTION"",
-		     pri_connection(d, &cb));
+		vdbg("skipping ID_NULL instance %s", d->name);
 		return false;
 	}
 
 	if (ike->sa.st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
-		connection_buf cb;
-		vdbg("skipping non-groundhog instance "PRI_CONNECTION"",
-		     pri_connection(d, &cb));
+		vdbg("skipping non-groundhog instance %s", d->name);
 		return false;
 	}
 
 	if (ike->sa.st_v2_resume_session != NULL) {
 		if (!d->config->session_resumption) {
-			connection_buf cb;
-			vdbg("skipping non-IKE_SESSION_RESUME connection "PRI_CONNECTION"",
-			     pri_connection(d, &cb));
+			vdbg("skipping non-IKE_SESSION_RESUME connection %s", d->name);
 			return false;
 		}
 	}
@@ -240,9 +234,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 */
 
 	if (c != d && is_opportunistic(d)) {
-		connection_buf cb;
-		vdbg("skipping opportunistic connection "PRI_CONNECTION"",
-		     pri_connection(d, &cb));
+		vdbg("skipping opportunistic connection %s", d->name);
 		return false;
 	}
 
@@ -252,9 +244,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 */
 
 	if (is_labeled_child(d)) {
-		connection_buf cb;
-		vdbg("skipping labeled child "PRI_CONNECTION,
-		     pri_connection(d, &cb));
+		vdbg("skipping labeled child %s", d->name);
 		return false;
 	}
 
@@ -263,9 +253,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 */
 
 	if (is_group(d)) {
-		connection_buf cb;
-		vdbg("skipping group template connection "PRI_CONNECTION,
-		     pri_connection(d, &cb));
+		vdbg("skipping group template connection %s", d->name);
 		return false;
 	}
 
@@ -667,9 +655,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 				continue;
 			}
 
-			connection_buf b2;
 			verbose.level = 2;
-			vdbg("checking "PRI_CONNECTION, pri_connection(d, &b2));
+			vdbg("checking %s", d->name);
 			verbose.level++;
 
 			struct score score = {
@@ -690,9 +677,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 * match).
 			 */
 			if (exact_id_match(score)) {
-				connection_buf dcb;
-				vdbg("returning "PRI_CONNECTION" because exact (peer) ID match",
-				     pri_connection(d, &dcb));
+				vdbg("returning %s because exact (peer) ID match",
+				     d->name);
 				return d;
 			}
 
@@ -707,9 +693,8 @@ static struct connection *refine_host_connection_on_responder(const struct ike_s
 			 * or v1_requested_ca_pathlen minimization?
 			 */
 			if (better_score(best, score, ike->sa.logger)) {
-				connection_buf cib;
-				vdbg("picking new best "PRI_CONNECTION" (wild=%d, initiator_ca_pathlen=%d/our=%d)",
-				     pri_connection(d, &cib),
+				vdbg("picking new best %s (wild=%d, initiator_ca_pathlen=%d/our=%d)",
+				     d->name,
 				     score.wildcards, score.initiator_ca_pathlen,
 				     score.v1_requested_ca_pathlen);
 				best = score;
@@ -724,11 +709,10 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  const struct id *initiator_id,
 						  const struct id *responder_id)
 {
-	connection_buf cib;
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "rfc: ");
-	vdbg("looking for an %s connection more refined than "PRI_CONNECTION"",
+	vdbg("looking for an %s connection more refined than %s",
 	     ike->sa.st_connection->config->ike_info->version_name,
-	     pri_connection(ike->sa.st_connection, &cib));
+	     ike->sa.st_connection->name);
 	verbose.level++;
 
 	struct connection *r = refine_host_connection_on_responder(ike,
@@ -740,9 +724,7 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 		return false;
 	}
 
-	connection_buf bfb;
-	vdbg("returning TRUE as "PRI_CONNECTION" is most refined",
-	     pri_connection(r, &bfb));
+	vdbg("returning TRUE as %s is most refined", r->name);
 
 	if (r != ike->sa.st_connection) {
 		/*
@@ -787,9 +769,7 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 		connection_delref(&r, ike->sa.logger);
 	}
 
-	connection_buf bcb;
-	vdbg("most refined is "PRI_CONNECTION,
-	     pri_connection(ike->sa.st_connection, &bcb));
+	vdbg("most refined is %s", ike->sa.st_connection->name);
 	return true;
 }
 

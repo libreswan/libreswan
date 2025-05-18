@@ -290,9 +290,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 	};
 	while (next_connection(&instances)) {
 
-		connection_buf cqb;
-		ldbg(c->logger, "visiting instance "PRI_CONNECTION,
-		     pri_connection(instances.c, &cqb));
+		ldbg(c->logger, "visiting instance %s", c->name);
 		PEXPECT(c->logger, ((is_template(c) && is_instance(instances.c)) ||
 				    (is_labeled_template(c) && is_labeled_parent(instances.c)) ||
 				    (is_labeled_parent(c) && is_labeled_child(instances.c))));
@@ -472,10 +470,9 @@ void visit_connection_states(struct connection *c,
 			     struct visit_connection_state_context *context,
 			     where_t where)
 {
-	connection_buf cb;
 	VERBOSE_DBGP(DBG_BASE, c->logger,
-		     PRI_CONNECTION" .routing_ike_sa "PRI_SO" .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
-		     pri_connection(c, &cb),
+		     "%s .routing_ike_sa "PRI_SO" .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
+		     c->name,
 		     pri_so(c->routing_sa),
 		     pri_so(c->negotiating_ike_sa),
 		     pri_so(c->established_ike_sa),

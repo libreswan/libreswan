@@ -224,8 +224,7 @@ static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 bool orient(struct connection *c, struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
-		connection_buf cb;
-		LDBG_log(c->logger, "orienting "PRI_CONNECTION, pri_connection(c, &cb));
+		LDBG_log(c->logger, "orienting %s", c->name);
 		LDBG_orient_end(c, LEFT_END);
 		LDBG_orient_end(c, RIGHT_END);
 	}

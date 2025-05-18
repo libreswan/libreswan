@@ -434,9 +434,8 @@ bool replace_spd_kernel_policy(const struct spd *spd,
 	ldbg(logger, " replacing %s",
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
 	if (owner->policy != NULL) {
-		connection_buf cb;
-		ldbg(logger, "  no! owner is "PRI_CONNECTION,
-		     pri_connection(owner->policy->connection, &cb));
+		ldbg(logger, "  no! owner is %s",
+		     owner->policy->connection->name);
 		return true;
 	}
 

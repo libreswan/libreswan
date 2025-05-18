@@ -69,10 +69,9 @@ void append_pending(struct ike_sa *ike,
 {
 	if (c->pending != NULL) {
 		address_buf b;
-		connection_buf cib;
 		bool duplicate = (c->pending->ike == ike);
-		ldbg_sa(ike, "connection "PRI_CONNECTION" is already pending: waiting on IKE SA #%lu connecting to %s; %s",
-			pri_connection(c, &cib),
+		ldbg_sa(ike, "connection %s is already pending: waiting on IKE SA #%lu connecting to %s; %s",
+			c->name,
 			c->pending->ike->sa.st_serialno,
 			str_address(&c->remote->host.addr, &b),
 			duplicate ? "ignoring duplicate" : "this IKE SA is different");
@@ -252,11 +251,10 @@ static void delete_pending(struct pending **pp, const char *what)
 	struct connection *c = p->connection;
 	c->pending = NULL;
 
-	connection_buf cib;
 	ldbg(c->logger,
-	     "pending: %s pending [%p] %s connection "PRI_CONNECTION" [%p]",
+	     "pending: %s pending [%p] %s connection %s [%p]",
 	     what, p, (c->config->ike_version == IKEv2 ? "Child SA" : "Quick Mode"),
-	     pri_connection(c, &cib), c);
+	     c->name, c);
 
 	connection_delref(&p->connection, &global_logger);
 	free_logger(&p->logger, HERE);
@@ -281,9 +279,8 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 		ldbg_sa(ike, "pending: unpending state %p #%lu pending %p",
 			ike, ike->sa.st_serialno, ike->sa.st_pending);
 	} else {
-		connection_buf cib;
-		ldbg_sa(ike, "pending: unpending state #%lu connection "PRI_CONNECTION"",
-			ike->sa.st_serialno, pri_connection(cc, &cib));
+		ldbg_sa(ike, "pending: unpending state #%lu connection %s",
+			ike->sa.st_serialno, cc->name);
 	}
 
 	struct pending **pp = &ike->sa.st_pending;

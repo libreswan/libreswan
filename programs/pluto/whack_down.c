@@ -343,12 +343,8 @@ static unsigned whack_down_connection(const struct whack_message *m UNUSED,
 		return whack_connection_instance_new2old(m, s, c, whack_down_connection);
 
 	case CK_LABELED_CHILD:
-	{
-		connection_buf cb;
-		ldbg(show_logger(s), "skipping "PRI_CONNECTION,
-		     pri_connection(c, &cb));
+		ldbg(show_logger(s), "skipping %s", c->name);
 		return 0; /* the connection doesn't count */
-	}
 
 	case CK_INVALID:
 		break;

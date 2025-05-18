@@ -570,11 +570,10 @@ stf_status dpd_inI_outR(struct state *p1sa,
 	}
 
 	monotime_buf nwb;
-	connection_buf cib;
-	dbg("DPD: received R_U_THERE seq:%u monotime: %s (state=#%lu name="PRI_CONNECTION")",
+	dbg("DPD: received R_U_THERE seq:%u monotime: %s (state=#%lu name=%s)",
 	    seqno, str_monotime(now, &nwb),
 	    p1->sa.st_serialno,
-	    pri_connection(p1->sa.st_connection, &cib));
+	    p1->sa.st_connection->name);
 
 	p1->sa.st_dpd_peerseqno = seqno;
 

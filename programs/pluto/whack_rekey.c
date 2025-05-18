@@ -76,8 +76,8 @@ static unsigned whack_rekey_ike(const struct whack_message *m,
 	if (!can_have_sa(c, IKE_SA)) {
 		/* silently skip */
 		connection_buf cb;
-		ldbg(logger, "skipping non-parent connection "PRI_CONNECTION,
-		     pri_connection(c, &cb));
+		ldbg(logger, "skipping non-parent connection %s",
+		     c->name);
 		return 0; /* the connection doesn't count */
 	}
 
@@ -93,8 +93,8 @@ static unsigned whack_rekey_child(const struct whack_message *m,
 	if (!can_have_sa(c, CHILD_SA)) {
 		/* silently skip */
 		connection_buf cb;
-		ldbg(logger, "skipping non-child connection "PRI_CONNECTION,
-		     pri_connection(c, &cb));
+		ldbg(logger, "skipping non-child connection %s",
+		     c->name);
 		return 0; /* the connection doesn't count */
 	}
 

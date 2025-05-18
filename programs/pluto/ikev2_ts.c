@@ -251,15 +251,13 @@ static void scribble_ts_request_on_responder(struct child_sa *child,
 					     struct verbose verbose)
 {
 	if (c != child->sa.st_connection) {
-		connection_buf from, to;
-		dbg_ts("switching #%lu from "PRI_CONNECTION" to just-instantiated "PRI_CONNECTION,
+		dbg_ts("switching #%lu from %s to just-instantiated %s",
 		       child->sa.st_serialno,
-		       pri_connection(child->sa.st_connection, &from),
-		       pri_connection(c, &to));
+		       child->sa.st_connection->name,
+		       c->name);
 	} else {
-		connection_buf cib;
-		dbg_ts("overwrote #%lu connection "PRI_CONNECTION,
-		       child->sa.st_serialno, pri_connection(c, &cib));
+		dbg_ts("overwrote #%lu connection %s",
+		       child->sa.st_serialno, c->name);
 	}
 
 	/* end game; polarity reversed */
@@ -1371,11 +1369,10 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 	 * equality).
 	 */
 
-	connection_buf cb;
 	policy_buf pb;
 	struct connection *const cc = child->sa.st_connection;
-	dbg_ts("looking to best connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
-	       pri_connection(cc, &cb), pri_co(cc->serialno),
+	dbg_ts("looking to best connection %s "PRI_CO" with policy <%s>:",
+	       cc->name, pri_co(cc->serialno),
 	       str_connection_policies(cc, &pb));
 
 	const ip_address local = md->iface->ip_dev->local_address;
@@ -1403,12 +1400,11 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			verbose.level = 2;
 
 			/* XXX: sec_label connections all look a-like, include CO */
-			connection_buf cb;
 			policy_buf pb;
 			enum_buf kb;
-			dbg_ts("evaluating %s connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
+			dbg_ts("evaluating %s connection %s "PRI_CO" with policy <%s>:",
 			       str_enum_short(&connection_kind_names, cc->local->kind, &kb),
-			       pri_connection(d, &cb), pri_co(d->serialno),
+			       d->name, pri_co(d->serialno),
 			       str_connection_policies(d, &pb));
 
 			verbose.level = 3;
@@ -1421,9 +1417,8 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			if (is_instance(d) &&
 			    d->remote->host.id.kind == ID_NULL &&
 			    d != child->sa.st_connection) {
-				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION", ID_NULL instance (and not original)",
-				       pri_connection(d, &cb));
+				dbg_ts("skipping %s, ID_NULL instance (and not original)",
+				       d->name);
 				continue;
 			}
 
@@ -1437,9 +1432,8 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			 * instance.
 			 */
 			if (is_labeled(d)) {
-				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION", labeled",
-				       pri_connection(d, &cb));
+				dbg_ts("skipping %s, labeled",
+				       d->name);
 				continue;
 			}
 
@@ -1464,16 +1458,14 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 
 			struct narrowed_selector_payloads nsps = {0};
 			if (!fit_connection_for_v2TS_request(d, tsps, &nsps, verbose)) {
-				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION" does not score at all",
-				       pri_connection(d, &cb));
+				dbg_ts("skipping %s does not score at all",
+				       d->name);
 				continue;
 			}
 
 			if (score_gt_best(&nsps.score, &best.nsps.score)) {
-				connection_buf cb;
-				dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
-				       pri_connection(d, &cb));
+				dbg_ts("protocol fitness found better match %s",
+				       d->name);
 				best = (struct best) {
 					.connection = d,
 					.instantiated = false,
@@ -1526,14 +1518,12 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	verbose.level = 1;
 
 	if (best.connection == NULL) {
-		connection_buf cb;
-		dbg_ts("connection "PRI_CONNECTION" "PRI_CO" is as good as it gets",
-		       pri_connection(cc, &cb), pri_so(cc->serialno));
+		dbg_ts("connection %s "PRI_CO" is as good as it gets",
+		       cc->name, pri_so(cc->serialno));
 	} else {
-		connection_buf cb, bcb;
-		dbg_ts("connection "PRI_CONNECTION" "PRI_CO" best by "PRI_CONNECTION" "PRI_CO"%s%s",
-		       pri_connection(cc, &cb), pri_so(cc->serialno),
-		       pri_connection(best.connection, &bcb), pri_so(best.connection->serialno),
+		dbg_ts("connection %s "PRI_CO" best by %s "PRI_CO"%s%s",
+		       cc->name, pri_so(cc->serialno),
+		       best.connection->name, pri_so(best.connection->serialno),
 		       (is_template(best.connection) ? " needs instantiating!" : ""),
 		       (is_group_instance(best.connection) ? " group-instance!" : ""));
 	}

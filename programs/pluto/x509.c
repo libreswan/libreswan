@@ -287,9 +287,8 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 #if 0
 		/* REMOTE==%any so d can never be an instance */
 		if (instance(d) && d->remote->host.id.kind == ID_NULL) {
-			connection_buf cb;
-			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
-			    pri_connection(d, &cb));
+			dbg("skipping unauthenticated %s with ID_NULL",
+			    d->name);
 			continue;
 		}
 #endif

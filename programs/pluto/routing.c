@@ -600,14 +600,13 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 						  struct logger *logger,
 						  where_t where)
 {
-	connection_buf cb;
 	enum_buf rsb;
 	ldbg(logger,
-	     "kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
+	     "kernel: %s() "PRI_CO" "PRI_CO" %s routed %s sec_label="PRI_SHUNK,
 	     __func__,
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom),
-	     pri_connection(c, &cb),
+	     c->name,
 	     str_enum(&routing_names, c->routing.state, &rsb),
 	     pri_shunk(c->config->sec_label));
 

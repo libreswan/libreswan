@@ -798,10 +798,9 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 	}
 
-	connection_buf cb;
-	dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
+	dbg("unpending IKE SA #%lu CHILD SA #%lu connection %s",
 	    ike->sa.st_serialno, child->sa.st_serialno,
-	    pri_connection(child->sa.st_connection, &cb));
+	    child->sa.st_connection->name);
 	unpend(ike, child->sa.st_connection);
 }
 
@@ -1205,10 +1204,9 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			llog_sa(RC_LOG, child,
 				"IKE_AUTH response rejected Child SA with %s",
 				str_enum_short(&v2_notification_names, n, &esb));
-			connection_buf cb;
-			dbg("unpending IKE SA #%lu CHILD SA #%lu connection "PRI_CONNECTION,
+			dbg("unpending IKE SA #%lu CHILD SA #%lu connection %s",
 			    ike->sa.st_serialno, child->sa.st_serialno,
-			    pri_connection(child->sa.st_connection, &cb));
+			    child->sa.st_connection->name);
 			unpend(ike, child->sa.st_connection);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
