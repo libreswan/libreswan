@@ -57,7 +57,7 @@ static bool whack_connection_by_name(const struct whack_message *m,
 				     const struct each *each UNUSED)
 {
 	struct connection_filter by_name = {
-		.name = m->name,
+		.base_name = m->name,
 		.search = {
 			.order = OLD2NEW, /* only one, order doesn't
 					   * matter! */

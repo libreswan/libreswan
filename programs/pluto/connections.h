@@ -1025,7 +1025,7 @@ struct connection_filter {
 	 * Filters.
 	 */
 	const enum connection_kind kind;
-	const char *const name;
+	const char *const base_name;
 	const char *const alias_root;
 	const struct id *const this_id_eq; /* strict; not same_id() */
 	const struct id *const that_id_eq; /* strict; not same_id() */

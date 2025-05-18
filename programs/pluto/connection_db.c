@@ -198,8 +198,8 @@ static bool matches_connection_filter(struct connection *c,
 			return false;
 		}
 	}
-	if (filter->name != NULL) {
-		if (!streq(filter->name, c->base_name)) {
+	if (filter->base_name != NULL) {
+		if (!streq(filter->base_name, c->base_name)) {
 			return false;
 		}
 	}

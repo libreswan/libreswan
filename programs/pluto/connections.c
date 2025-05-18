@@ -330,7 +330,7 @@ static bool is_group_wm(const struct whack_message *wm)
 bool connection_with_name_exists(const char *name)
 {
 	struct connection_filter cq = {
-		.name = name,
+		.base_name = name,
 		.search = {
 			.order = NEW2OLD,
 			.verbose.logger = &global_logger,
