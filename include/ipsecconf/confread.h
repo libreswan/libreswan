@@ -85,8 +85,6 @@ struct starter_conn {
 
 	struct starter_end end[END_ROOF];
 
-	const struct ip_info *clientaddrfamily;
-
 	enum {
 		STATE_INVALID,
 		STATE_LOADED,

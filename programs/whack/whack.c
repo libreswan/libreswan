@@ -2300,7 +2300,6 @@ int main(int argc, char **argv)
 		diagq("unexpected argument", argv[optind]);
 	}
 
-	msg.child_afi = child_family.type;
 	msg.host_afi = host_family.type;
 	msg.authby = authby;
 
