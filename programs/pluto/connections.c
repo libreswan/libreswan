@@ -647,7 +647,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		pfree(c->root_config);
 	}
 
-	/* connection's final gasp; need's c->base_name */
+	/* connection's final gasp; need's c->name */
 	pfreeany(c->base_name);
 	pfreeany(c->name);
 	free_logger(&logger, where);

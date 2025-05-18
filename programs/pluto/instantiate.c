@@ -139,35 +139,36 @@ struct connection *group_instantiate(struct connection *group,
 	/*
 	 * Manufacture a unique name for this template.
 	 */
-	char *namebuf; /* must free */
+	char *base_name; /* must free */
 	if (protocol == &ip_protocol_all) {
 		/* all protocols implies all ports */
 		pexpect(local_port.hport == 0);
 		pexpect(remote_port.hport == 0);
 		subnet_buf tb;
-		namebuf = alloc_printf("%s#%s", group->base_name,
-				       str_subnet(&remote_subnet, &tb));
+		base_name = alloc_printf("%s#%s", group->config->name,
+					 str_subnet(&remote_subnet, &tb));
 	} else {
 		subnet_buf tb;
-		namebuf = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")",
-				       group->base_name,
-				       str_subnet(&remote_subnet, &tb),
-				       pri_hport(local_port),
-				       protocol->ipproto,
-				       pri_hport(remote_port));
+		base_name = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")",
+					 group->config->name,
+					 str_subnet(&remote_subnet, &tb),
+					 pri_hport(local_port),
+					 protocol->ipproto,
+					 pri_hport(remote_port));
 	}
 
-	if (connection_with_name_exists(namebuf)) {
+	if (connection_with_name_exists(base_name)) {
 		llog(RC_DUPNAME, group->logger,
-		     "group name + target yields duplicate name \"%s\"", namebuf);
-		pfreeany(namebuf);
+		     "group name + target yields duplicate name \"%s\"", base_name);
+		pfreeany(base_name);
 		return NULL;
 	}
 
-	struct connection *t = duplicate_connection(namebuf, group, NULL/*id*/, HERE);
-
-	passert(t->base_name != namebuf); /* see duplicate_connection() */
-	pfreeany(namebuf);
+	struct connection *t = duplicate_connection(base_name, group, NULL/*id*/, HERE);
+	PASSERT(t->logger, !streq(group->name, t->name));
+	PASSERT(t->logger, !streq(group->base_name, t->base_name));
+	PASSERT(t->logger, t->base_name != base_name); /* see duplicate_connection() */
+	pfreeany(base_name);
 
 	/*
 	 * Start the template counter so that further instantiating
@@ -297,7 +298,8 @@ static struct connection *instantiate(struct connection *t,
 	}
 
 	struct connection *d = duplicate_connection(t->base_name, t, peer_id, where);
-	passert(t->base_name != d->base_name); /* see duplicate_connection() */
+	PASSERT(d->logger, !streq(t->name, d->name));
+	PASSERT(d->logger, t->base_name != d->base_name); /* see duplicate_connection() */
 
 	d->local->kind = d->remote->kind =
 		(is_labeled_template(t) ? CK_LABELED_PARENT :
