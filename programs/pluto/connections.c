@@ -330,7 +330,7 @@ static bool is_group_wm(const struct whack_message *wm)
 bool connection_with_name_exists(const char *name)
 {
 	struct connection_filter cq = {
-		.name = name,
+		.base_name = name,
 		.search = {
 			.order = NEW2OLD,
 			.verbose.logger = &global_logger,
@@ -647,7 +647,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		pfree(c->root_config);
 	}
 
-	/* connection's final gasp; need's c->base_name */
+	/* connection's final gasp; need's c->name */
 	pfreeany(c->base_name);
 	pfreeany(c->name);
 	free_logger(&logger, where);

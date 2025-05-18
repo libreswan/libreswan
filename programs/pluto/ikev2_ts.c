@@ -1680,7 +1680,10 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * and t->name to be different.
 			 *
 			 * XXX: don't re-instantiate the same
-			 * connection template????
+			 * connection template?!?
+			 *
+			 * XXX: check is skipping connections that
+			 * share a common ancestry!?!
 			 */
 			if (streq(cc->base_name, t->base_name)) {
 				dbg_ts("skipping; name same as current connection");

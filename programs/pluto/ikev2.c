@@ -1951,7 +1951,17 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		if (!LHAS(pending_states, st->st_state->kind)) {
 			continue;
 		}
-		/* not an instance, but a connection? */
+		/*
+		 * not an instance, but a connection?
+		 *
+		 * XXX: what is this trying to do?
+		 *
+		 * The below skips all connections (templates and
+		 * instances) except those that share their ancestry
+		 * with the SA's connection.  The log message would
+		 * suggest it is instead trying to find an existing
+		 * larval state for the connection?
+		 */
 		if (!streq(st->st_connection->base_name, c->base_name)) {
 			continue;
 		}

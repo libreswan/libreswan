@@ -172,7 +172,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			   struct connection *g,
 			   struct fg_targets **new_targets)
 {
-	const char *fgn = g->base_name;
+	const char *fgn = g->config->name;
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
@@ -311,11 +311,11 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			range_buf source;
 			subnet_buf dest;
 			llog(RC_LOG, flp->logger,
-			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already \"%s\"",
+			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already %s",
 			     str_subnet(&sn, &dest),
 			     proto->ipproto, pri_hport(sport), pri_hport(dport),
 			     str_range(&lsn, &source),
-			     (*pp)->group->base_name);
+			     (*pp)->group->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
 							   "fg_target");
@@ -377,7 +377,7 @@ void load_groups(struct logger *logger)
 				str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				t->group->base_name);
+				t->group->name);
 		}
 		/* dump new food groups */
 		DBG_log("new food groups:");
@@ -388,7 +388,7 @@ void load_groups(struct logger *logger)
 				str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				t->group->base_name);
+				t->group->name);
 		}
 	}
 
