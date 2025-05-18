@@ -51,7 +51,7 @@ up
 west #
  # there should be 1 tunnel in each direction
 west #
- ipsec trafficstatus
+ ipsec trafficstatus '"labeled"[1][1]'
 #2: "labeled"[1][1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # there should be no bare shunts
