@@ -198,6 +198,11 @@ static bool matches_connection_filter(struct connection *c,
 			return false;
 		}
 	}
+	if (filter->name != NULL) {
+		if (!streq(filter->name, c->name)) {
+			return false;
+		}
+	}
 	if (filter->base_name != NULL) {
 		if (!streq(filter->base_name, c->base_name)) {
 			return false;
@@ -207,6 +212,7 @@ static bool matches_connection_filter(struct connection *c,
 		if (c->root_config == NULL) {
 			return false;
 		}
+		/* .connalias is string containing a list of aliases */
 		if (!lsw_alias_cmp(filter->alias_root, c->config->connalias)) {
 			return false;
 		}
