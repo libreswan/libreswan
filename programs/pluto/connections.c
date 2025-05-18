@@ -4849,21 +4849,11 @@ static size_t jam_connection_suffix(struct jambuf *buf, const struct connection 
 size_t jam_connection(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
-	s += jam_connection_short(buf, c);
+	s += jam_string(buf, c->name);
 	if (c->instance_serial > 0) {
 		s += jam_connection_suffix(buf, c);
 	}
 	return s;
-}
-
-size_t jam_connection_short(struct jambuf *buf, const struct connection *c)
-{
-	return jam_string(buf, c->name);
-}
-
-const char *str_connection_short(const struct connection *c)
-{
-	return c->name;
 }
 
 const char *str_connection_suffix(const struct connection *c, connection_buf *buf)

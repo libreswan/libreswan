@@ -148,7 +148,7 @@ void show_kernel_alg_connection(struct show *s,
 			 * The real PFS is displayed in the 'algorithm
 			 * newest' line further down.
 			 */
-			jam_connection_short(buf, c);
+			jam_string(buf, c->name);
 			jam_string(buf, ":  ");
 			/* algs */
 			jam(buf, " %s algorithms: ", satype);
@@ -160,7 +160,7 @@ void show_kernel_alg_connection(struct show *s,
 
 	if (st != NULL && st->st_esp.protocol == &ip_protocol_esp) {
 		SHOW_JAMBUF(s, buf) {
-			jam_connection_short(buf, c);
+			jam_string(buf, c->name);
 			jam_string(buf, ":  ");
 			jam(buf, " %s algorithm newest: %s_%03d-%s;",
 			    satype,
@@ -173,7 +173,7 @@ void show_kernel_alg_connection(struct show *s,
 
 	if (st != NULL && st->st_ah.protocol == &ip_protocol_ah) {
 		SHOW_JAMBUF(s, buf) {
-			jam_connection_short(buf, c);
+			jam_string(buf, c->name);
 			jam_string(buf, ":  ");
 			jam(buf, " %s algorithm newest: %s;",
 			    satype,

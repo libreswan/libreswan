@@ -957,10 +957,6 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 /* "name"[1]... OE-MAGIC */
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
 
-/* "name"[1]... */
-size_t jam_connection_short(struct jambuf *buf, const struct connection *c);
-const char *str_connection_short(const struct connection *c);
-
 typedef struct {
 	char buf[512];/*arbitrary*/
 } policy_buf;
@@ -988,7 +984,7 @@ const char *str_connection_suffix(const struct connection *c,
 				    connection_buf *buf);
 
 #define PRI_CONNECTION "%s%s"
-#define pri_connection(C,B) str_connection_short(C), str_connection_suffix(C, B)
+#define pri_connection(C,B) (C)->name, str_connection_suffix(C, B)
 
 struct connections {
 	unsigned len;

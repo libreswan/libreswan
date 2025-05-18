@@ -77,7 +77,7 @@ void show_ike_alg_connection(struct show *s,
 		 * impossible to parse)?
 		 */
 		SHOW_JAMBUF(s, buf) {
-			jam_connection_short(buf, c);
+			jam_string(buf, c->name);
 			jam_string(buf, ":  ");
 			/* algs */
 			jam_string(buf, " IKE algorithms: ");
@@ -89,7 +89,7 @@ void show_ike_alg_connection(struct show *s,
 
 	if (st != NULL) {
 		SHOW_JAMBUF(s, buf) {
-			jam_connection_short(buf, c);
+			jam_string(buf, c->name);
 			jam_string(buf, ":  ");
 			/* algs */
 			jam(buf, " %s algorithm newest: ",

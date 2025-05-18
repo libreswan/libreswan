@@ -143,7 +143,7 @@ static void show_one_client_brief(struct show *s,
 		jam_humber_uintmax(buf, " (", get_child_bytes(c, DIRECTION_INBOUND), "B");
 		jam_humber_uintmax(buf, "/", get_child_bytes(c, DIRECTION_OUTBOUND), "B)\t");
 
-		jam_connection_short(buf, c);
+		jam_string(buf, c->name);
 		jam(buf, ", reqid="PRI_REQID, pri_reqid(c->child.reqid));
 	}
 }
