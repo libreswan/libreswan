@@ -2042,7 +2042,7 @@ rsasig_common:
 					if (is_fips_mode()) {
 						llog(RC_LOG, ike->sa.logger,
 						     "FIPS Error: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-						     c->name,
+						     c->base_name,
 						     pss->len,
 						     ta.ta_prf->common.fqn,
 						     key_size_min);
@@ -2050,7 +2050,7 @@ rsasig_common:
 					} else {
 						llog(RC_LOG, ike->sa.logger,
 						     "WARNING: connection %s PSK length of %zu bytes is too short for %s PRF in FIPS mode (%zu bytes required)",
-						     c->name,
+						     c->base_name,
 						     pss->len,
 						     ta.ta_prf->common.fqn,
 						     key_size_min);

@@ -2023,7 +2023,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 	 * shared ike sa).
 	 */
 	struct connection_filter cf = {
-		.name = c->name,
+		.name = c->base_name,
 		.kind = c->local->kind,
 		.ike_version = c->config->ike_version,
 		.this_id_eq = &c->local->host.id,

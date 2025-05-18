@@ -742,7 +742,7 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 	struct secret *s = lsw_get_secret(c, type->private_key_kind, true);
 	if (s == NULL) {
 		llog(RC_LOG, logger, "connection %s's %s private key not found",
-		    c->name, type->name);
+		    c->base_name, type->name);
 		return NULL;
 	}
 

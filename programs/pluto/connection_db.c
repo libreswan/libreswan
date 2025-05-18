@@ -199,7 +199,7 @@ static bool matches_connection_filter(struct connection *c,
 		}
 	}
 	if (filter->name != NULL) {
-		if (!streq(filter->name, c->name)) {
+		if (!streq(filter->name, c->base_name)) {
 			return false;
 		}
 	}

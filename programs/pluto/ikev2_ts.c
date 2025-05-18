@@ -1637,7 +1637,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, TS_INDENT, ts_indent);
-				jam(buf, "investigating template \"%s\";",
+				jam(buf, "investigating template %s;",
 				    t->name);
 				jam(buf, " with policy <");
 				jam_connection_policies(buf, t);
@@ -1682,7 +1682,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * XXX: don't re-instantiate the same
 			 * connection template????
 			 */
-			if (streq(cc->name, t->name)) {
+			if (streq(cc->base_name, t->base_name)) {
 				dbg_ts("skipping; name same as current connection");
 				continue;
 			}

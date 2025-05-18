@@ -711,7 +711,7 @@ void find_and_active_redirect_states(const char *conn_name,
 	while (next_state(&sf)) {
 		struct state *st = sf.st;
 		if (IS_IKE_SA_ESTABLISHED(st) &&
-		    (conn_name == NULL || streq(conn_name, st->st_connection->name))) {
+		    (conn_name == NULL || streq(conn_name, st->st_connection->base_name))) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
 			/* cycle through the list of redirects */
 			shunk_t active_dest = next_redirect_dest(&active_dests);

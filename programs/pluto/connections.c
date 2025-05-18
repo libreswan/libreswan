@@ -643,12 +643,13 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 				addresspool_delref(pool, logger);
 			}
 		}
+		pfree(config->name);
 		pfree(c->root_config);
 	}
 
-	/* connection's final gasp; need's c->name */
+	/* connection's final gasp; need's c->base_name */
+	pfreeany(c->base_name);
 	pfreeany(c->name);
-	pfreeany(c->prefix);
 	free_logger(&logger, where);
 	pfree(c);
 }
@@ -2768,12 +2769,13 @@ static char *alloc_connection_prefix(const char *name, const struct connection *
 	 * Form new prefix by appending next serial to existing
 	 * prefix.
 	 */
-	return alloc_printf("%s[%lu]", t->prefix, t->next_instance_serial);
+	return alloc_printf("%s[%lu]", t->name, t->next_instance_serial);
 }
 
-static struct config *alloc_config(void)
+static struct config *alloc_config(const char *name)
 {
 	struct config *config = alloc_thing(struct config, "root config");
+	config->name = clone_str(name, "config");
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		const char *leftright =
@@ -2801,10 +2803,10 @@ struct connection *alloc_connection(const char *name,
 	const struct config *config = (t != NULL ? t->config : root_config);
 
 	/* before alloc_logger(); can't use C */
-	c->name = clone_str(name, __func__);
+	c->base_name = clone_str(name, __func__);
 
 	/* before alloc_logger(); can't use C */
-	c->prefix = alloc_connection_prefix(name, t);
+	c->name = alloc_connection_prefix(name, t);
 
 	/* after .name and .name_prefix are set; needed by logger */
 	c->logger = alloc_logger(c, &logger_connection_vec,
@@ -3107,7 +3109,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 						    c->logger);
 	}
 
-	passert(c->name != NULL); /* see alloc_connection() */
+	passert(c->base_name != NULL); /* see alloc_connection() */
 
 	/*
 	 * Extract policy bits.
@@ -4687,8 +4689,8 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	 * pointers.
 	 */
 
-	struct config *root_config = alloc_config();
-	struct connection *c = alloc_connection(wm->name, NULL, root_config,
+	struct config *root_config = alloc_config(wm->name);
+	struct connection *c = alloc_connection(root_config->name, NULL, root_config,
 						debugging | wm->conn_debug,
 						logger, HERE);
 
@@ -4856,12 +4858,12 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 
 size_t jam_connection_short(struct jambuf *buf, const struct connection *c)
 {
-	return jam_string(buf, c->prefix);
+	return jam_string(buf, c->name);
 }
 
 const char *str_connection_short(const struct connection *c)
 {
-	return c->prefix;
+	return c->name;
 }
 
 const char *str_connection_suffix(const struct connection *c, connection_buf *buf)
@@ -5351,7 +5353,7 @@ int connection_compare(const struct connection *cl,
 {
 	int ret;
 
-	ret = strcmp(cl->name, cr->name);
+	ret = strcmp(cl->base_name, cr->base_name);
 	if (ret != 0) {
 		return ret;
 	}

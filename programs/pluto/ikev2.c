@@ -1952,7 +1952,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 			continue;
 		}
 		/* not an instance, but a connection? */
-		if (!streq(st->st_connection->name, c->name)) {
+		if (!streq(st->st_connection->base_name, c->base_name)) {
 			continue;
 		}
 		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation #%lu using IKE SA #%lu",

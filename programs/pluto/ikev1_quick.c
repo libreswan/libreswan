@@ -2109,7 +2109,7 @@ static struct connection *fc_try(const struct connection *c,
 
 			selector_pair_buf sb;
 			vdbg("trying %s SPD %s virt=%s",
-			     d->prefix,
+			     d->name,
 			     str_selector_pair(&d_spd->local->client, &d_spd->remote->client, &sb),
 			     bool_str(is_virtual_spd_end(d_spd->remote, verbose)));
 
@@ -2276,9 +2276,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	d = fc_try(c, c->local->host.addr, c->remote->host.addr,
 		   local_client, remote_client, verbose);
 	if (d != NULL) {
-		connection_buf cb;
-		vdbg("success! fc_try %s gives "PRI_CONNECTION,
-		     c->name, pri_connection(d, &cb));
+		vdbg("success! fc_try %s gives %s", c->name, d->name);
 		return d;
 	}
 
@@ -2289,9 +2287,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	d = fc_try(c, c->local->host.addr, unset_address,
 		   local_client, remote_client, verbose);
 	if (d != NULL) {
-		connection_buf cb;
-		vdbg("success! template search found "PRI_CONNECTION,
-		     pri_connection(d, &cb));
+		vdbg("success! template search found %s", d->name);
 		return d;
 	}
 

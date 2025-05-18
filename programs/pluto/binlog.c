@@ -171,7 +171,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 
 	struct connection *conn = st->st_connection;
 
-	if (conn == NULL || st->st_connection->name == NULL) {
+	if (conn == NULL || st->st_connection->base_name == NULL) {
 		dbg("log_state() called without st->st_connection or without st->st_connection->name");
 		return;
 	}
@@ -245,11 +245,11 @@ void binlog_state(struct state *st, enum state_kind new_state)
 
 		 pluto_stats_binary,
 		 (conn->iface != NULL ? "push" : "drop"),
-		 conn->name,
+		 conn->base_name,
 		 (conn->ipsec_interface != NULL ? conn->ipsec_interface->name : ""),
-		 conn->name, tun,
-		 conn->name, p1,
-		 conn->name, p2);
+		 conn->base_name, tun,
+		 conn->base_name, p1,
+		 conn->base_name, p2);
 	if (system(buf) == -1) {
 		log_state(RC_LOG, st, "statsbin= failed to send status update notification");
 	}
