@@ -1911,7 +1911,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
  */
 
 static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
-			     bool ignore, struct logger *logger)
+			     struct logger *logger)
 {
 	char strbuf[500]; /* Cisco maximum unknown - arbitrary choice */
 	struct jambuf buf = ARRAY_AS_JAMBUF(strbuf); /* let jambuf deal with overflow */
@@ -1962,14 +1962,10 @@ static char *cisco_stringify(struct pbs_in *input_pbs, const char *attr_name,
 		}
 	}
 	llog(RC_LOG, logger,
-	     "Received %s%s%s: %s%s",
-	     ignore ? "and ignored " : "",
+	     "Received %s%s: %s%s",
 	     jambuf_ok(&buf) ? "" : "overlong ",
 	     attr_name, strbuf,
 	     jambuf_ok(&buf) ? "" : " (truncated)");
-	if (ignore) {
-		return NULL;
-	}
 	return clone_str(strbuf, attr_name);
 }
 
@@ -2049,14 +2045,12 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
 			append_st_cfg_domain(&ike->sa, cisco_stringify(&strattr, "Domain",
-								       false/*don't-ignore*/,
 								       ike->sa.logger));
 			resp.modecfg_domain = true;
 			break;
 
 		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
 			ike->sa.st_seen_cfg_banner = cisco_stringify(&strattr, "Banner",
-								     false/*don't-ignore*/,
 								     ike->sa.logger);
 			resp.modecfg_banner = true;
 			break;
