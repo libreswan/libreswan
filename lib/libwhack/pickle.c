@@ -374,7 +374,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
 		PICKLE_STRING(&wm->sec_label) &&
 		PICKLE_IP_INFO(&wm->host_afi) &&
-		PICKLE_IP_INFO(&wm->child_afi) &&
 		PICKLE_STRING(&wm->dpdtimeout) &&
 		PICKLE_STRING(&wm->dpddelay) &&
 		PICKLE_STRING(&wm->nflog_group) &&

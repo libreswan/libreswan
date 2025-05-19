@@ -280,7 +280,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "also",  kv_conn | kv_duplicateok,  kt_also,  KSCF_ALSO, NULL, NULL, },
   { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
   { "hostaddrfamily",  kv_conn,  kt_sparse_name,  KNCF_HOSTADDRFAMILY, &kw_addrfamily_names, NULL, },
-  { "clientaddrfamily",  kv_conn,  kt_sparse_name,  KNCF_CLIENTADDRFAMILY, &kw_addrfamily_names, NULL, },
   { "type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names, NULL, },
   { "authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
@@ -420,6 +419,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KNCF_AGGRESSIVE, &yn_option_names, NULL, },
 
   { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
+  { "clientaddrfamily",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
 
   { NULL,  0,  0,  0, NULL, NULL, }
 };

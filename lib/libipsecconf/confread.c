@@ -122,7 +122,6 @@ static struct starter_config *alloc_starter_config(void)
 	DOPT(KNCF_TYPE, KS_TUNNEL);
 
 	DOPT(KNCF_HOSTADDRFAMILY, AF_UNSPEC);
-	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
 	DOPT(KNCF_AUTO, AUTOSTART_IGNORE);
 
@@ -659,9 +658,6 @@ static bool load_conn(struct starter_conn *conn,
 
 	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
 	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
-
-	/* Let this go through to pluto which will validate it. */
-	conn->clientaddrfamily = aftoinfo(conn->values[KNCF_CLIENTADDRFAMILY].option);
 
 	/*
 	 * TODO:

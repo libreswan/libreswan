@@ -1,15 +1,16 @@
 <varlistentry>
   <term>
-    <option>clientaddrfamily</option>
+    <option>clientaddrfamily={ipv4,ipv6}</option>
   </term>
   <listitem>
     <para>
-      the address family of the clients (subnets); currently the
-      accepted values are <option>ipv4</option> and
-      <option>ipv6</option>. The default is to detect
-      this based on the network IP addresses specified or the network
-      IP addresses resolved, so this option is not needed, unless you
-      specify names that resolve to both IPv4 and IPv6.
+      This option was removed in &Libreswan; version 5.3.
+    </para>
+    <para>
+      Since &Libreswan; version 5.0, <option>subnet=</option>
+      <option>subnets=</option> have allowed a mixture of IKEv1 and
+      IKEv2 addresses, making <option>clientaddrfamily=</option>
+      redundant.
     </para>
   </listitem>
 </varlistentry>
