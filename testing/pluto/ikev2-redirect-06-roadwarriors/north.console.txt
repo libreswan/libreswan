@@ -31,8 +31,8 @@ north #
 "north-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "north-east" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "north-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.102
-"north-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
-"north-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
+"north-east" #2: received INTERNAL_IP4_DNS server address 1.2.3.4
+"north-east" #2: received INTERNAL_IP4_DNS server address 5.6.7.8
 "north-east" #2: up-client output: updating resolvconf
 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.102/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
@@ -58,8 +58,8 @@ north #
 "north-east" #3: sent IKE_AUTH request to 192.1.2.45:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org'; Child SA #4 {ESP <0xESPESP}
 "north-east" #3: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "north-east" #4: received INTERNAL_IP4_ADDRESS 192.0.2.102
-"north-east" #4: received INTERNAL_IP4_DNS 1.2.3.4
-"north-east" #4: received INTERNAL_IP4_DNS 5.6.7.8
+"north-east" #4: received INTERNAL_IP4_DNS server address 1.2.3.4
+"north-east" #4: received INTERNAL_IP4_DNS server address 5.6.7.8
 "north-east" #4: up-client output: updating resolvconf
 "north-east" #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.102/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #

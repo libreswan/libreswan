@@ -22,8 +22,8 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'; Child SA #2 {ESPinUDP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
@@ -55,8 +55,8 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'; Child SA #4 {ESPinUDP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_ADDRESS 192.0.2.1
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 1.2.3.4
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: up-client output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
@@ -78,8 +78,8 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'; Child SA #6 {ESPinUDP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_ADDRESS 192.0.2.1
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS 1.2.3.4
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: up-client output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: initiator established Child SA using #5; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
@@ -101,8 +101,8 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'; Child SA #8 {ESPinUDP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #7: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_ADDRESS 192.0.2.1
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS 1.2.3.4
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS server address 1.2.3.4
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: up-client output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: initiator established Child SA using #7; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
