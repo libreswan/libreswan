@@ -214,7 +214,7 @@ void unbound_sync_init(bool do_dnssec, const char *rootfile,
  * src_len == 0 means "apply strlen"
  * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */
-bool unbound_resolve(char *src, const struct ip_info *afi,
+bool unbound_resolve(const char *src, const struct ip_info *afi,
 		     ip_address *ipaddr, const struct logger *logger)
 {
 	/* 28 = AAAA record, 1 = A record */
