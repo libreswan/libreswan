@@ -1877,11 +1877,14 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			break;
 		}
 
+		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
+			llog(RC_LOG, ike->sa.logger,
+			     "received and ignored CISCO_SPLIT_INC in MODE_CFG SET payload");
+			recv.cisco_split_inc = true;
+			break;
+
 		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-			set_attr(&recv, attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-			break;
 		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			/* ignore */
 			break;
@@ -2073,50 +2076,11 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 		}
 
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-		{
-			struct connection *c = ike->sa.st_connection;
-
-			/* make sure that other side isn't an endpoint */
-			if (!c->remote->child.has_client) {
-				passert(c->child.spds.len == 1);
-				set_child_has_client(c, remote, true);
-				update_first_selector(c, remote, ipv4_info.selector.all);
-				spd_db_rehash_remote_client(c->child.spds.list);
-			}
-
-			while (pbs_left(&strattr) > 0) {
-				struct CISCO_split_item i;
-
-				diag_t d = pbs_in_struct(&strattr, &CISCO_split_desc,
-							 &i, sizeof(i), NULL);
-				if (d != NULL) {
-					llog(RC_LOG, ike->sa.logger,
-					     "ignoring malformed CISCO_SPLIT_INC in %s payload from server: %s",
-					     modecfg_payload, str_diag(d));
-					pfree_diag(&d);
-					break;
-				}
-
-				ip_address base = address_from_in_addr(&i.cs_addr);
-				ip_address mask = address_from_in_addr(&i.cs_mask);
-				ip_subnet wire_subnet;
-				err_t ugh = address_mask_to_subnet(base, mask, &wire_subnet);
-				if (ugh != NULL) {
-					llog(RC_LOG, ike->sa.logger,
-					     "ignoring malformed CISCO_SPLIT_INC subnet: %s",
-					     ugh);
-					break;
-				}
-
-				subnet_buf pretty_subnet;
-				llog(RC_LOG, ike->sa.logger,
-				     "received and ignored CISCO_SPLIT_INC subnet %s",
-				     str_subnet(&wire_subnet, &pretty_subnet));
-			}
-
+			llog(RC_LOG, ike->sa.logger,
+			     "received and ignored CISCO_SPLIT_INC in MODE_CFG %s payload",
+			     modecfg_payload);
 			resp.cisco_split_inc = true;
 			break;
-		}
 
 		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 		case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
