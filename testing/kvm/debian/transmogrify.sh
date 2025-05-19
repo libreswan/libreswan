@@ -23,6 +23,7 @@ sed -e '/:/d' /etc/fstab > /tmp/fstab
 cat <<EOF >> /tmp/fstab
 @@GATEWAY@@:@@SOURCEDIR@@   /source         nfs     rw
 @@GATEWAY@@:@@TESTINGDIR@@  /testing        nfs     rw
+@@GATEWAY@@:@@POOLDIR@@     /pool           nfs     rw
 EOF
 
 mv /tmp/fstab /etc/fstab

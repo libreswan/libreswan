@@ -16,6 +16,7 @@ sed -i -e '/source/d' -e '/testing/d' /etc/fstab
 cat <<EOF | tee -a /etc/fstab
 ${GATEWAY}:${SOURCEDIR}   /source   nfs  rw,tcp
 ${GATEWAY}:${TESTINGDIR}  /testing  nfs  rw,tcp
+${GATEWAY}:${POOLDIR}     /pool  nfs  rw,tcp
 EOF
 
 cp -v /bench/testing/kvm/openbsd/rc.conf.local /etc/rc.conf.local
