@@ -1852,9 +1852,41 @@ diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi, struct s
 	return NULL;
 }
 
-void append_st_cfg_domain(struct state *st, char *domain)
+void append_st_cfg_domain(struct state *st, struct pbs_in *pbs,
+			  char *(*stringify)(shunk_t str, bool *ok))
 {
-	/* note: we are responsible to ensure domain is freed */
+	shunk_t str = pbs_in_left(pbs);
+	if (st->st_connection->config->ignore_peer_dns) {
+		LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+			jam_string(buf, "ignoring INTERNAL_DNS_DOMAIN '");
+			jam_sanitized_hunk(buf, str);
+			jam_string(buf, "' (ignore-peer-dns=yes)");
+		}
+		return;
+	}
+
+	bool ok;
+	char *domain = stringify(str, &ok);
+	if (domain == NULL) {
+		LLOG_PEXPECT_JAMBUF(st->logger, HERE, buf) {
+			jam_string(buf, "ignoring INTERNAL_DNS_DOMAIN '");
+			jam_sanitized_hunk(buf, str);
+			jam_string(buf, "', invalid");
+		}
+		return;
+	}
+
+	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
+		if (ok) {
+			jam_string(buf, "received");
+		} else {
+			jam_string(buf, "truncated"); /* presumably */
+		}
+		jam_string(buf, " INTERNAL_DNS_DOMAIN '");
+		jam_sanitized_hunk(buf, str);
+		jam_string(buf, "'");
+	}
+
 	append_str(&st->st_seen_cfg_domains, " ", domain);
 	pfree(domain);
 }
