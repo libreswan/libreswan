@@ -31,6 +31,7 @@
 #include "authby.h"
 #include "shunt.h"		/* for SHUNT_KIND_ROOF */
 #include "end.h"
+#include "addr_lookup.h"
 
 struct logger;
 
@@ -61,11 +62,7 @@ typedef struct keyword_value keyword_values[KW_roof];
 
 struct starter_end {
 	const char *leftright;
-	enum keyword_host addrtype;
-	enum keyword_host nexttype;
-	ip_address addr;
-	ip_address nexthop;
-
+	struct resolve_end resolve;
 	keyword_values values;
 };
 

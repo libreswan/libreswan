@@ -75,17 +75,17 @@ static bool set_whack_end(struct whack_end *w,
 			}
 		}
 		w->id = value;
-	} else if (l->addrtype == KH_IPADDR) {
+	} else if (l->resolve.host.type == KH_IPADDR) {
 		address_buf b;
-		w->id = clone_str(str_address(&l->addr, &b), "if id");
+		w->id = clone_str(str_address(&l->resolve.host.addr, &b), "if id");
 	}
 
-	w->host_type = l->addrtype;
+	w->host_type = l->resolve.host.type;
 
-	switch (l->addrtype) {
+	switch (l->resolve.host.type) {
 	case KH_IPADDR:
 	case KH_IFACE:
-		w->host_addr = l->addr;
+		w->host_addr = l->resolve.host.addr;
 		break;
 
 	case KH_DEFAULTROUTE:
@@ -111,9 +111,9 @@ static bool set_whack_end(struct whack_end *w,
 	}
 	w->host_addr_name = l->values[KW_IP].string;
 
-	switch (l->nexttype) {
+	switch (l->resolve.nexthop.type) {
 	case KH_IPADDR:
-		w->nexthop = l->nexthop;
+		w->nexthop = l->resolve.nexthop.addr;
 		break;
 
 	case KH_DEFAULTROUTE: /* acceptable to set nexthop to %defaultroute */
@@ -129,7 +129,7 @@ static bool set_whack_end(struct whack_end *w,
 
 	default:
 		printf("%s: do something with nexthop case: %d\n", lr,
-			l->nexttype);
+			l->resolve.nexthop.type);
 		break;
 	}
 
@@ -256,7 +256,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.host_afi = conn->host_afi;
 
-	if (conn->end[RIGHT_END].addrtype == KH_IPHOSTNAME)
+	if (conn->end[RIGHT_END].resolve.host.type == KH_IPHOSTNAME)
 		msg.dnshostname = conn->end[RIGHT_END].values[KW_IP].string;
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;

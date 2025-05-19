@@ -241,10 +241,11 @@ static bool validate_end(struct starter_conn *conn_st,
 		conn_st->state = STATE_INCOMPLETE;
 
 	/* validate the KSCF_IP/KNCF_IP */
-	end->addrtype = end->values[KW_IP].option;
-	switch (end->addrtype) {
+	end->resolve.host.name = end->values[KW_IP].string;
+	end->resolve.host.type = end->values[KW_IP].option;
+	switch (end->resolve.host.type) {
 	case KH_ANY:
-		end->addr = unset_address;
+		end->resolve.host.addr = unset_address;
 		break;
 
 	case KH_IFACE:
@@ -256,23 +257,23 @@ static bool validate_end(struct starter_conn *conn_st,
 		assert(end->values[KW_IP].string != NULL);
 
 		if (end->values[KW_IP].string[0] == '%') {
-			const char *iface = end->values[KW_IP].string + 1;
+			const char *iface = end->resolve.host.name + 1;
 			if (!starter_iface_find(iface, host_afi,
-						&end->addr,
-						&end->nexthop))
+						&end->resolve.host.addr,
+						&end->resolve.nexthop.addr))
 				conn_st->state = STATE_INVALID;
 			/* not numeric, so set the type to the iface type */
-			end->addrtype = KH_IFACE;
+			end->resolve.host.type = KH_IFACE;
 			break;
 		}
 
-		err_t er = ttoaddress_num(shunk1(end->values[KW_IP].string),
-					  host_afi, &end->addr);
+		err_t er = ttoaddress_num(shunk1(end->resolve.host.name),
+					  host_afi, &end->resolve.host.addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
-			end->addrtype = KH_IPHOSTNAME;
+			end->resolve.host.type = KH_IPHOSTNAME;
 		} else {
-			pexpect(host_afi == address_info(end->addr));
+			pexpect(host_afi == address_info(end->resolve.host.addr));
 		}
 
 		break;
@@ -301,25 +302,26 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = host_afi->address.unspec;
-	if (end->values[KW_NEXTHOP].set) {
-		char *value = end->values[KW_NEXTHOP].string;
+	end->resolve.nexthop.addr = host_afi->address.unspec;
+	end->resolve.nexthop.name = end->values[KW_NEXTHOP].string;
+	if (end->resolve.nexthop.name != NULL) {
+		const char *value = end->resolve.nexthop.name;
 		if (strcaseeq(value, "%defaultroute")) {
-			end->nexttype = KH_DEFAULTROUTE;
+			end->resolve.nexthop.type = KH_DEFAULTROUTE;
 		} else {
 			err_t e = ttoaddress_num(shunk1(value), host_afi,
-						 &end->nexthop);
+						 &end->resolve.nexthop.addr);
 			if (e != NULL) {
 				ERR_FOUND("bad value for %snexthop=%s [%s]",
 					  leftright, value, e);
 			}
-			end->nexttype = KH_IPADDR;
+			end->resolve.nexthop.type = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = host_afi->address.unspec;
+		end->resolve.nexthop.addr = host_afi->address.unspec;
 
-		if (end->addrtype == KH_DEFAULTROUTE) {
-			end->nexttype = KH_DEFAULTROUTE;
+		if (end->resolve.host.type == KH_DEFAULTROUTE) {
+			end->resolve.nexthop.type = KH_DEFAULTROUTE;
 		}
 	}
 

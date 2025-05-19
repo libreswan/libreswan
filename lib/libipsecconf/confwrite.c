@@ -194,7 +194,7 @@ static void confwrite_value(FILE *out,
 static void confwrite_side(FILE *out, struct starter_end *end)
 {
 	const char *side = end->leftright;
-	switch (end->addrtype) {
+	switch (end->resolve.host.type) {
 	case KH_NOTSET:
 		/* nothing! */
 		break;
@@ -232,12 +232,12 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		{
 			address_buf as;
 			fprintf(out, "\t%s=%s\n",
-				side, str_address(&end->addr, &as));
+				side, str_address(&end->resolve.host.addr, &as));
 		}
 		break;
 	}
 
-	switch (end->nexttype) {
+	switch (end->resolve.nexthop.type) {
 	case KH_NOTSET:
 		/* nothing! */
 		break;
@@ -250,7 +250,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		{
 			address_buf as;
 			fprintf(out, "\t%snexthop=%s\n",
-				side, str_address(&end->nexthop, &as));
+				side, str_address(&end->resolve.nexthop.addr, &as));
 		}
 		break;
 
