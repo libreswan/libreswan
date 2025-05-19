@@ -61,6 +61,7 @@ static const struct sparse_names rta_names = {
 
 void resolve_default_route(struct starter_end *host,
 			   struct starter_end *peer,
+                           const struct ip_info *host_afi UNUSED,
 			   lset_t verbose_rc_flags UNUSED,
 			   struct logger *logger)
 {

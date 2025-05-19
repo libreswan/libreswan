@@ -50,6 +50,7 @@
 
 static bool set_whack_end(struct whack_end *w,
 			  const struct starter_end *l,
+			  const struct ip_info *host_afi,
 			  struct logger *logger)
 {
 	const char *lr = l->leftright;
@@ -123,7 +124,7 @@ static bool set_whack_end(struct whack_end *w,
 		 * XXX the nexthop type has to get into the whack
 		 * message!
 		 */
-		w->nexthop = l->host_family->address.unspec;
+		w->nexthop = host_afi->address.unspec;
 		break;
 
 	default:
@@ -253,7 +254,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		.name = conn->name,
 	};
 
-	msg.host_afi = conn->end[LEFT_END].host_family;
+	msg.host_afi = conn->host_afi;
 
 	if (conn->end[RIGHT_END].addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->end[RIGHT_END].values[KW_IP].string;
@@ -410,9 +411,11 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_XAUTHFAIL].set)
 		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
 
-	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END], logger))
+	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END],
+			   conn->host_afi, logger))
 		return -1;
-	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
+	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END],
+			   conn->host_afi, logger))
 		return -1;
 
 	msg.esp = conn->values[KSCF_ESP].string;

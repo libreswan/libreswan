@@ -26,6 +26,7 @@ struct logger;
 
 void resolve_default_route(struct starter_end *host,
 			   struct starter_end *peer,
+			   const struct ip_info *host_afi,
 			   lset_t verbose_rc_flags,
 			   struct logger *logger);
 
