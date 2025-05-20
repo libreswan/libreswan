@@ -306,3 +306,29 @@ const struct ip_info *ip_version_info(enum ip_version version)
 	passert(version < elemsof(ip_types));
 	return ip_types[version];
 }
+
+/*
+ * Values for addrfamily={ipv4,ipv6}
+ */
+
+const struct ip_info *ttoinfo(const char *name)
+{
+	struct {
+		const char *name;
+		const struct ip_info *afi;
+	} names[] = {
+		{ "ipv4",  &ipv4_info, },
+		{ "ipv6",  &ipv6_info, },
+		/* aliases - undocumented on purpose */
+		{ "v4",    &ipv4_info, },
+		{ "inet",  &ipv4_info, },
+		{ "v6",    &ipv6_info, },
+		{ "inet6", &ipv6_info, },
+	};
+	FOR_EACH_ELEMENT(n, names) {
+		if (strcaseeq(n->name, name)) {
+			return n->afi;
+		}
+	}
+	return NULL;
+};

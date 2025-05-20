@@ -390,8 +390,7 @@ struct whack_message {
 
 	struct whack_end end[END_ROOF];
 
-	/* names match field */
-	const struct ip_info *host_afi;
+	const char *hostaddrfamily;
 
 	const char *ike;			/* ike algo string (separated by commas) */
 	const char *pfsgroup;			/* pfsgroup will be "encapsulated" in esp string for pluto */

@@ -120,9 +120,6 @@ static struct starter_config *alloc_starter_config(void)
 # define DOPT(kbf, v)  { d->values[kbf].option = (v); }
 
 	DOPT(KNCF_TYPE, KS_TUNNEL);
-
-	DOPT(KNCF_HOSTADDRFAMILY, AF_UNSPEC);
-
 	DOPT(KNCF_AUTO, AUTOSTART_IGNORE);
 
 # undef DOPT
@@ -666,7 +663,16 @@ static bool load_conn(struct starter_conn *conn,
 	 * For now, %defaultroute and %any means IPv4 only
 	 */
 
-	const struct ip_info *host_afi = aftoinfo(conn->values[KNCF_HOSTADDRFAMILY].option);
+	const struct ip_info *host_afi = NULL;
+	const char *hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
+	if (hostaddrfamily != NULL) {
+		host_afi = ttoinfo(hostaddrfamily);
+		if (host_afi == NULL) {
+			llog(RC_LOG, logger, "hostaddrfamily=%s is not recognized",
+			     hostaddrfamily);
+			/* stumble on, pluto should reject it */
+		}
+	}
 	if (host_afi == NULL) {
 		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
 			FOR_EACH_THING(ips,

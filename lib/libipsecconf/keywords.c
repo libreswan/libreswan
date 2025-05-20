@@ -95,22 +95,6 @@ static const struct sparse_names kw_auth_names = {
 };
 
 /*
- * Values for addrfamily={ipv4,ipv6}
- */
-static const struct sparse_names kw_addrfamily_names = {
-	.list = {
-		SPARSE("ipv4",  AF_INET),
-		SPARSE("ipv6",  AF_INET6),
-		/* aliases - undocumented on purpose */
-		SPARSE("v4",    AF_INET),
-		SPARSE("inet",  AF_INET),
-		SPARSE("v6",    AF_INET6),
-		SPARSE("inet6", AF_INET6),
-		SPARSE_NULL
-	},
-};
-
-/*
  * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns, literal }
  */
 static const struct sparse_names kw_pubkey_names = {
@@ -279,7 +263,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "auto",  kv_conn,  kt_sparse_name,  KNCF_AUTO, &autostart_names, NULL, },
   { "also",  kv_conn | kv_duplicateok,  kt_also,  KSCF_ALSO, NULL, NULL, },
   { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
-  { "hostaddrfamily",  kv_conn,  kt_sparse_name,  KNCF_HOSTADDRFAMILY, &kw_addrfamily_names, NULL, },
+  { "hostaddrfamily",  kv_conn,  kt_string,  KWS_HOSTADDRFAMILY, NULL, NULL, },
   { "type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names, NULL, },
   { "authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
