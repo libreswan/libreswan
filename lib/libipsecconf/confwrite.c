@@ -94,8 +94,6 @@ static void confwrite_value(FILE *out,
 
 		case kt_string:
 		case kt_appendstring:
-		case kt_filename:
-		case kt_dirname:
 			/* these are strings */
 
 			if (values[k->field].set) {
@@ -115,7 +113,6 @@ static void confwrite_value(FILE *out,
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
-		case kt_bitstring:
 			/* none of these are valid number/string types */
 			break;
 

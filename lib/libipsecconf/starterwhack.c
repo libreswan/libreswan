@@ -161,7 +161,7 @@ static bool set_whack_end(struct whack_end *w,
 		}
 	}
 
-	w->cert = l->values[KSCF_CERT].string;
+	w->cert = l->values[KWS_CERT].string;
 	w->ckaid = l->values[KSCF_CKAID].string;
 
 	static const struct {
@@ -219,7 +219,7 @@ static bool set_whack_end(struct whack_end *w,
 	else
 		w->eap = IKE_EAP_NONE;
 
-	w->updown = l->values[KSCF_UPDOWN].string;
+	w->updown = l->values[KWS_UPDOWN].string;
 
 	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
 	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
