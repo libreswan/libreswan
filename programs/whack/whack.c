@@ -2044,6 +2044,7 @@ int main(int argc, char **argv)
 			}
 			host_family.used_by = optarg_options[optarg_index].name;
 			host_family.type = &ipv4_info;
+			msg.hostaddrfamily = "ipv4";
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
@@ -2063,6 +2064,7 @@ int main(int argc, char **argv)
 			}
 			host_family.used_by = optarg_options[optarg_index].name;
 			host_family.type = &ipv6_info;
+			msg.hostaddrfamily = "ipv6";
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
@@ -2300,7 +2302,6 @@ int main(int argc, char **argv)
 		diagq("unexpected argument", argv[optind]);
 	}
 
-	msg.host_afi = host_family.type;
 	msg.authby = authby;
 
 	/*

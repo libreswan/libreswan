@@ -254,7 +254,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		.name = conn->name,
 	};
 
-	msg.host_afi = conn->host_afi;
+	msg.hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
 
 	if (conn->end[RIGHT_END].resolve.host.type == KH_IPHOSTNAME)
 		msg.dnshostname = conn->end[RIGHT_END].values[KW_IP].string;

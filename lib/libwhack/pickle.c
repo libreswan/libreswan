@@ -20,7 +20,6 @@
 
 #include "whack.h"
 #include "lswlog.h"
-#include "ip_info.h"
 
 /*
  * Pack and unpack bytes
@@ -194,27 +193,6 @@ static bool unpack_string(struct whackpacker *wp, const char **p, const char *wh
  * IP pointers.
  */
 
-static bool pack_ip_info(struct whackpacker *wp UNUSED,
-			 const struct ip_info **info,
-			 const char *what UNUSED,
-			 struct logger *logger UNUSED)
-{
-	/* spell out conversions */
-	enum ip_version v = (*info == NULL ? 0 : (*info)->ip_version);
-	*info = (const void*)(uintptr_t)(unsigned)v;
-	return true;
-}
-
-static bool unpack_ip_info(struct whackpacker *wp UNUSED,
-			   const struct ip_info **info,
-			   const char *what UNUSED,
-			   struct logger *logger UNUSED)
-{
-	/* spell out conversions */
-	*info = ip_version_info((unsigned)(uintptr_t)(const void*)*info);
-	return true;
-}
-
 static bool pack_ip_protocol(struct whackpacker *wp UNUSED,
 			     const struct ip_protocol **protocol,
 			     const char *what UNUSED,
@@ -278,7 +256,6 @@ struct pickler {
 	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what, struct logger *logger);
 	bool (*chunk)(struct whackpacker *wp, chunk_t *s, const char *what, struct logger *logger);
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what, struct logger *logger);
-	bool (*ip_info)(struct whackpacker *wp, const struct ip_info **info, const char *what, struct logger *logger);
 	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what, struct logger *logger);
 	bool (*constant_string)(struct whackpacker *wp, const char **p, const char *leftright, const char *what, struct logger *logger);
 };
@@ -288,7 +265,6 @@ const struct pickler pickle_packer = {
 	.shunk = pack_shunk,
 	.chunk = pack_chunk,
 	.raw = pack_raw,
-	.ip_info = pack_ip_info,
 	.ip_protocol = pack_ip_protocol,
 	.constant_string = pack_constant_string,
 };
@@ -298,7 +274,6 @@ const struct pickler pickle_unpacker = {
 	.shunk = unpack_shunk,
 	.chunk = unpack_chunk,
 	.raw = unpack_raw,
-	.ip_info = unpack_ip_info,
 	.ip_protocol = unpack_ip_protocol,
 	.constant_string = unpack_constant_string,
 };
@@ -308,14 +283,6 @@ const struct pickler pickle_unpacker = {
 #define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD, logger)
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS, logger)
 #define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD, logger)
-#define PICKLE_IP_INFO(FIELD) pickle->ip_info(wp, FIELD, #FIELD, logger)
-
-#if 0
-#define PICKLE_CIDR(CIDR) \
-	((CIDR)->is_set ? pickle->ip_info(wp, &((CIDR)->info), #CIDR) : true)
-#else
-#define PICKLE_CIDR(CIDR) true
-#endif
 
 static bool pickle_whack_end(struct whackpacker *wp,
 			     const char *leftright,
@@ -373,7 +340,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->pubkey) &&
 		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
 		PICKLE_STRING(&wm->sec_label) &&
-		PICKLE_IP_INFO(&wm->host_afi) &&
+		PICKLE_STRING(&wm->hostaddrfamily) &&
 		PICKLE_STRING(&wm->dpdtimeout) &&
 		PICKLE_STRING(&wm->dpddelay) &&
 		PICKLE_STRING(&wm->nflog_group) &&

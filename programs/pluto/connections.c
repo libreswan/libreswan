@@ -779,18 +779,21 @@ void update_hosts_from_end_host_addr(struct connection *c,
 
 #define EXTRACT_AFI(NAME, FIELD)					\
 	{								\
-		const struct ip_info *wfi = address_info(FIELD);	\
-		if (*afi == NULL) {					\
-			*afi = wfi;					\
-			leftright = w->leftright;			\
-			name = NAME;					\
-			struct jambuf buf = ARRAY_AS_JAMBUF(value);	\
-			jam_address(&buf, &FIELD);			\
-		} else if (wfi != NULL && wfi != *afi) {		\
-			address_buf tb;					\
-			return diag("host address family %s from %s%s=%s conflicts with %s%s=%s", \
-				    (*afi)->ip_name, leftright, name, value, \
-				    w->leftright, NAME, str_address(&FIELD, &tb)); \
+		const struct ip_info *efi = address_info(FIELD);	\
+		if (efi != NULL) {					\
+			if ((*afi) == NULL) {				\
+				/* save the winner */			\
+				(*afi) = efi;				\
+				leftright = w->leftright;		\
+				name = NAME;				\
+				value = str_address(&FIELD, &ab);	\
+			} else if (efi != *afi) {			\
+				/* reject the conflict */		\
+				address_buf tb;				\
+				return diag("host address family %s from %s%s=%s conflicts with %s%s=%s", \
+					    (*afi)->ip_name, leftright, name, value, \
+					    w->leftright, NAME, str_address(&FIELD, &tb)); \
+			}						\
 		}							\
 	}
 
@@ -798,11 +801,23 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 			       const struct ip_info **afi)
 {
 	*afi = NULL;
-	const char *leftright;
-	const char *name;
-	char value[sizeof(selector_buf)];
+	const char *leftright = "";
+	const char *name = "";
+	address_buf ab = {0}; /* same scope as VALUE */
+	const char *value = ab.buf;
+	if (wm->hostaddrfamily != NULL) {
+		/* save the winner */
+		(*afi) = ttoinfo(wm->hostaddrfamily);
+		name = "hostaddrfamily";
+		value = wm->hostaddrfamily;
+		/* but was there one? */
+		if (*afi == NULL) {
+			return diag("hostaddrfamily=%s unrecognized", wm->hostaddrfamily);
+		}
+	}
 	FOR_EACH_THING(w, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-		EXTRACT_AFI(""/*left""=,right""=*/, w->host_addr);
+		/* left= and right= */
+		EXTRACT_AFI("", w->host_addr);
 		EXTRACT_AFI("nexthop", w->nexthop);
 	}
 	return NULL;

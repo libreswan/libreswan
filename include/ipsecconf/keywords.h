@@ -253,7 +253,7 @@ enum keywords {
 	KNCF_PAM_AUTHORIZE,
 	KNCF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
 	KNCF_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
-	KNCF_HOSTADDRFAMILY,
+	KWS_HOSTADDRFAMILY,
 	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
