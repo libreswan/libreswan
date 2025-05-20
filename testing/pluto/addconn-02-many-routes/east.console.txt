@@ -44,7 +44,7 @@ resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer <any>
 resolving family=IPv4 src=<defaultroute> gateway=178.62.192.1 peer <any>
   seeking PREFSRC
     query GETROUTE+REQUEST
-    add RTA_DST 178.62.192.1 (host->nexthop)
+    add RTA_DST 178.62.192.1 (host->nexthop.addr)
   opening non-blocking netlink socket
   sent 36 byte netlink message
   reading into 32768 byte buffer
