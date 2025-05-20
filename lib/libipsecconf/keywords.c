@@ -254,7 +254,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #if defined(USE_CAT)
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_CAT, &yn_option_names, NULL, },
 #endif
-  { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
+  { "protoport",  kv_conn | kv_leftright,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
   { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },
   { "groundhog",  kv_conn | kv_leftright,  kt_sparse_name,  KSCF_GROUNDHOG, &yn_option_names, NULL, },
 
@@ -269,7 +269,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
   { "ikev2",  kv_conn,  kt_string,  KWS_IKEv2, NULL, NULL, },
   { "ppk", kv_conn | kv_processed, kt_sparse_name, KNCF_PPK, &nppi_option_names, NULL, },
-  { "ppk-ids", kv_conn | kv_processed, kt_string, KSCF_PPK_IDS, NULL, NULL, },
+  { "ppk-ids", kv_conn, kt_string, KSCF_PPK_IDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_sparse_name, KNCF_INTERMEDIATE, &yn_option_names, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_ESN, &yne_option_names, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_DECAP_DSCP, &yn_option_names, NULL, },
