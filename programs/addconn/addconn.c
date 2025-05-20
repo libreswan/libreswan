@@ -65,8 +65,12 @@ static char *environlize(const char *str)
 static void resolve_default_routes(struct starter_conn *conn UNUSED, struct logger *logger)
 {
 	lset_t verbose_rc_flags = verbose ? (WHACK_STREAM|NO_PREFIX) : LEMPTY;
-	resolve_default_route(&conn->end[LEFT_END], &conn->end[RIGHT_END], verbose_rc_flags, logger);
-	resolve_default_route(&conn->end[RIGHT_END], &conn->end[LEFT_END], verbose_rc_flags, logger);
+	resolve_default_route(&conn->end[LEFT_END].resolve,
+			      &conn->end[RIGHT_END].resolve,
+			      conn->host_afi, verbose_rc_flags, logger);
+	resolve_default_route(&conn->end[RIGHT_END].resolve,
+			      &conn->end[LEFT_END].resolve,
+			      conn->host_afi, verbose_rc_flags, logger);
 }
 
 #ifdef USE_SECCOMP

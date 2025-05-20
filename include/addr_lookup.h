@@ -24,8 +24,21 @@
 struct starter_end;
 struct logger;
 
-void resolve_default_route(struct starter_end *host,
-			   struct starter_end *peer,
+struct resolve_host {
+	enum keyword_host type;
+	ip_address addr;
+	const char *name;
+};
+
+struct resolve_end {
+	const struct ip_info *family;
+	struct resolve_host host;
+	struct resolve_host nexthop; /* aka gateway */
+};
+
+void resolve_default_route(struct resolve_end *host,
+			   struct resolve_end *peer,
+			   const struct ip_info *host_afi,
 			   lset_t verbose_rc_flags,
 			   struct logger *logger);
 

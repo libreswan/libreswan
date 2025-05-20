@@ -180,19 +180,18 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 
-static const char *pa(enum keyword_host type, ip_address address,
-		      const char *hostname, address_buf *buf)
+static const char *pa(const struct resolve_host *host, address_buf *buf)
 {
-	switch (type) {
+	switch (host->type) {
 	case KH_NOTSET: return "<not-set>";
 	case KH_DEFAULTROUTE: return "<defaultroute>";
 	case KH_ANY: return "<any>";
-	case KH_IFACE: return hostname;
+	case KH_IFACE: return host->name;
 	case KH_OPPO: return "<oppo>";
 	case KH_OPPOGROUP: return "<oppogroup>";
 	case KH_GROUP: return "<group>";
-	case KH_IPHOSTNAME: return hostname;
-	case KH_IPADDR: return str_address(&address, buf);
+	case KH_IPHOSTNAME: return host->name;
+	case KH_IPADDR: return str_address(&host->addr, buf);
 	default: return "<other>";
 	}
 }
@@ -205,17 +204,17 @@ enum resolve_status {
 
 struct linux_netlink_context {
 	enum resolve_status status;
-	const struct ip_info *afi;
+	const struct ip_info *host_afi;
 	enum seeking { NOTHING, PREFSRC, GATEWAY, } seeking;
-	struct starter_end *host;
-	struct starter_end *peer;
+	struct resolve_end *host;
+	struct resolve_end *peer;
 };
 
 static bool process_netlink_route(struct nlmsghdr *nlmsg,
 				  struct linux_netlink_context *context,
 				  struct verbose verbose)
 {
-	const struct ip_info *const afi = context->afi;
+	const struct ip_info *const host_afi = context->host_afi;
 	if (context->status == RESOLVE_FAILURE) {
 
 		if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_DONE)) {
@@ -229,7 +228,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 
 		/* ignore all but IPv4 and IPv6 */
 		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
-		if (rtmsg->rtm_family != afi->af) {
+		if (rtmsg->rtm_family != host_afi->af) {
 			verbose("wrong family");
 			return true;
 		}
@@ -265,14 +264,17 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			case RTA_PREFSRC:
 #define PARSE_ADDRESS(OUT, WHAT)					\
 				{					\
-					diag_t diag = data_to_address(data, len, afi, OUT); \
+					diag_t diag =			\
+						data_to_address(data, len, \
+								host_afi, OUT); \
 					if (diag != NULL) {		\
 						verbose("invalid RTA_%s from kernel: %s", \
 							WHAT, str_diag(diag)); \
 						pfree_diag(&diag);	\
 					} else {			\
 						address_buf ab;		\
-						verbose("RTA_%s=%s", WHAT, str_address(OUT, &ab)); \
+						verbose("RTA_%s=%s",	\
+							WHAT, str_address(OUT, &ab)); \
 					}				\
 				}
 				PARSE_ADDRESS(&prefsrc, "PREFSRC");
@@ -380,11 +382,11 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		case PREFSRC:
 			if (!address_is_unset(&prefsrc)) {
 				context->status = RESOLVE_SUCCESS;
-				context->host->addrtype = KH_IPADDR;
-				context->host->addr = prefsrc;
+				context->host->host.type = KH_IPADDR;
+				context->host->host.addr = prefsrc;
 				address_buf ab;
 				verbose("found prefsrc(host_addr): %s",
-					str_address(&context->host->addr, &ab));
+					str_address(&context->host->host.addr, &ab));
 			}
 			break;
 		case GATEWAY:
@@ -396,7 +398,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 					 * as the IP address on the interface.
 					 */
 					resolve_point_to_point_peer(r_interface,
-								    context->host->host_family,
+								    context->host_afi,
 								    &gateway, verbose);
 				}
 				if (!address_is_unset(&gateway)) {
@@ -411,11 +413,11 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 					 * when it isn't.
 					 */
 					context->status = RESOLVE_PLEASE_CALL_AGAIN;
-					context->host->nexttype = KH_IPADDR;
-					context->host->nexthop = gateway;
+					context->host->nexthop.type = KH_IPADDR;
+					context->host->nexthop.addr = gateway;
 					address_buf ab;
 					verbose("found gateway(host_nexthop): %s",
-						str_address(&context->host->nexthop, &ab));
+						str_address(&context->host->nexthop.addr, &ab));
 				}
 			}
 			break;
@@ -426,22 +428,22 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 	return true;
 }
 
-static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
-						    struct starter_end *peer,
+static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
+						    struct resolve_end *peer,
+						    const struct ip_info *host_afi,
 						    struct verbose verbose)
 {
 	/*
-	 * "left="         == host->addrtype and host->addr
-	 * "leftnexthop="  == host->nexttype and host->nexthop
+	 * "left="         == host->host.type and host->host.addr
+	 * "leftnexthop="  == host->nexthop.type and host->nexthop.addr
 	 */
-	const struct ip_info *afi = host->host_family;
 
-	address_buf ab, gb, pb;
+	address_buf hb, gb, pb;
 	verbose("resolving family=%s src=%s gateway=%s peer %s",
-		(afi == NULL ? "<unset>" : afi->ip_name),
-		pa(host->addrtype, host->addr, host->values[KW_IP].string, &ab),
-		pa(host->nexttype, host->nexthop, host->values[KW_NEXTHOP].string, &gb),
-		pa(peer->addrtype, peer->addr, peer->values[KW_IP].string, &pb));
+		(host_afi == NULL ? "<unset>" : host_afi->ip_name),
+		pa(&host->host, &hb),
+		pa(&host->nexthop, &gb),
+		pa(&peer->host, &pb));
 	verbose.level++;
 
 	/*
@@ -461,8 +463,8 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	 * 2) find out src for that gateway
 	 * Doing both in one query returns src for dst.
 	 */
-	enum seeking seeking = (host->nexttype == KH_DEFAULTROUTE ? GATEWAY :
-				host->addrtype == KH_DEFAULTROUTE ? PREFSRC :
+	enum seeking seeking = (host->nexthop.type == KH_DEFAULTROUTE ? GATEWAY :
+				host->host.type == KH_DEFAULTROUTE ? PREFSRC :
 				NOTHING);
 	verbose("seeking %s", (seeking == NOTHING ? "NOTHING" :
 			    seeking == PREFSRC ? "PREFSRC" :
@@ -478,7 +480,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	 * to be grown.
 	 */
 	struct nlmsghdr *msgbuf =
-		netlink_query_init(afi, /*type*/RTM_GETROUTE,
+		netlink_query_init(host_afi, /*type*/RTM_GETROUTE,
 				   (/*flags*/NLM_F_REQUEST |
 				    (seeking == GATEWAY ? NLM_F_DUMP : 0)),
 				   verbose);
@@ -488,9 +490,9 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	 * the gateway.
 	 */
 
-	const bool has_peer = (peer->addrtype == KH_IPADDR || peer->addrtype == KH_IPHOSTNAME);
+	const bool has_peer = (peer->host.type == KH_IPADDR || peer->host.type == KH_IPHOSTNAME);
 	bool added_dst;
-	if (host->nexttype == KH_IPADDR && afi == &ipv4_info) {
+	if (host->nexthop.type == KH_IPADDR && host_afi == &ipv4_info) {
 		pexpect(seeking == PREFSRC);
 		/*
 		 * My nexthop (gateway) is specified.
@@ -498,67 +500,66 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 */
 
 		/*
-		 * AA_2019 Why use nexthop and not peer->addr to look up src address?
+		 * AA_2019 Why use nexthop and not peer->host.addr to look up src address?
 		 * The lore is that there is an (old) bug when looking up IPv4 src
 		 * IPv6 with gateway link local address will return link local
 		 * address and not the global address.
 		 */
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
-				  "host->nexthop", verbose);
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
+				  "host->nexthop.addr", verbose);
 	} else if (has_peer) {
 		/*
 		 * Peer IP is specified.
 		 * We may need to figure out source IP
 		 * and gateway IP to get there.
 		 *
-		 * XXX: should this also update peer->addrtype?
+		 * XXX: should this also update peer->host.type?
 		 */
-		pexpect(peer->host_family != NULL);
-		if (peer->addrtype == KH_IPHOSTNAME) {
+		pexpect(host_afi != NULL);
+		if (peer->host.type == KH_IPHOSTNAME) {
 #ifdef USE_DNSSEC
 			/* try numeric first */
-			err_t er = ttoaddress_num(shunk1(peer->values[KW_IP].string),
-						  peer->host_family, &peer->addr);
+			err_t er = ttoaddress_num(shunk1(peer->host.name),
+						  host_afi, &peer->host.addr);
 			if (er != NULL) {
 				/* not numeric, so resolve it */
-				if (!unbound_resolve(peer->values[KW_IP].string,
-						     peer->host_family,
-						     &peer->addr,
+				if (!unbound_resolve(peer->host.name,
+						     host_afi, &peer->host.addr,
 						     verbose.logger)) {
 					pfree(msgbuf);
 					return RESOLVE_FAILURE;
 				}
 			}
 #else
-			err_t er = ttoaddress_dns(shunk1(peer->values[KW_IP].string),
-						  peer->host_family, &peer->addr);
+			err_t er = ttoaddress_dns(shunk1(peer->host.name
+							 host_afi, &peer->addr);
 			if (er != NULL) {
 				pfree(msgbuf);
 				return RESOLVE_FAILURE;
 			}
 #endif
 		} else {
-			pexpect(peer->addrtype == KH_IPADDR);
+			pexpect(peer->host.type == KH_IPADDR);
 		}
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &peer->addr,
-				  "peer->addr", verbose);
-	} else if (host->nexttype == KH_IPADDR &&
-		   (peer->addrtype == KH_GROUP ||
-		    peer->addrtype == KH_OPPOGROUP)) {
+		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
+				  "peer->host.addr", verbose);
+	} else if (host->nexthop.type == KH_IPADDR &&
+		   (peer->host.type == KH_GROUP ||
+		    peer->host.type == KH_OPPOGROUP)) {
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
-				  "host->nexthop peer=group", verbose);
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
+				  "host->nexthop.addr peer=group", verbose);
 	} else {
 		added_dst = false;
 	}
 
-	if (added_dst && host->addrtype == KH_IPADDR) {
+	if (added_dst && host->host.type == KH_IPADDR) {
 		/* SRC works only with DST */
 		pexpect(seeking == GATEWAY);
-		netlink_query_add(msgbuf, RTA_SRC, &host->addr,
-				  "host->addr", verbose);
+		netlink_query_add(msgbuf, RTA_SRC, &host->host.addr,
+				  "host->host.addr", verbose);
 	}
 
 	/* Send netlink get_route request */
@@ -566,7 +567,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		.status = RESOLVE_FAILURE,
 		.host = host,
 		.peer = peer,
-		.afi = afi,
+		.host_afi = host_afi,
 		.seeking = seeking,
 	};
 
@@ -585,26 +586,27 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 context.status == RESOLVE_SUCCESS ? "success" :
 		 context.status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
 		 "???"),
-		pa(host->addrtype, host->addr, host->values[KW_IP].string, &ab),
-		pa(host->nexttype, host->nexthop, host->values[KW_NEXTHOP].string, &gb));
+		pa(&host->host, &hb),
+		pa(&host->nexthop, &gb));
 	pfree(msgbuf);
 	return context.status;
 }
 
-enum route_status get_route(ip_address dest, struct ip_route *route, struct logger *logger)
+enum route_status get_route(ip_address dest, struct ip_route *route,
+			    struct logger *logger)
 {
 	/* let's re-discover local address */
 
-	struct starter_end this = {
-		.addrtype = KH_DEFAULTROUTE,
-		.nexttype = KH_DEFAULTROUTE,
-		.host_family = address_info(dest),
+	const struct ip_info *host_afi = address_info(dest);
+
+	struct resolve_end this = {
+		.host.type = KH_DEFAULTROUTE,
+		.nexthop.type = KH_DEFAULTROUTE,
 	};
 
-	struct starter_end that = {
-		.addrtype = KH_IPADDR,
-		.host_family = this.host_family,
-		.addr = dest,
+	struct resolve_end that = {
+		.host.type = KH_IPADDR,
+		.family = this.family,
 	};
 
 	struct verbose verbose = {
@@ -618,7 +620,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route, struct logg
 	 * for the source address.
 	 */
 
-	switch (resolve_defaultroute_one(&this, &that, verbose)) {
+	switch (resolve_defaultroute_one(&this, &that, host_afi, verbose)) {
 	case RESOLVE_FAILURE:
 		return ROUTE_GATEWAY_FAILED;
 	case RESOLVE_SUCCESS:
@@ -633,7 +635,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route, struct logg
 		break;
 	}
 
-	switch (resolve_defaultroute_one(&this, &that, verbose)) {
+	switch (resolve_defaultroute_one(&this, &that, host_afi, verbose)) {
 	case RESOLVE_FAILURE:
 		return ROUTE_SOURCE_FAILED;
 	case RESOLVE_SUCCESS:
@@ -647,13 +649,14 @@ enum route_status get_route(ip_address dest, struct ip_route *route, struct logg
 		return ROUTE_FATAL;
 	}
 
-	route->source = this.addr;
-	route->gateway = this.nexthop;
+	route->source = this.host.addr;
+	route->gateway = this.nexthop.addr;
 	return ROUTE_SUCCESS;
 }
 
-void resolve_default_route(struct starter_end *host,
-			   struct starter_end *peer,
+void resolve_default_route(struct resolve_end *host,
+			   struct resolve_end *peer,
+			   const struct ip_info *host_afi,
 			   lset_t verbose_rc_flags,
 			   struct logger *logger)
 {
@@ -663,7 +666,7 @@ void resolve_default_route(struct starter_end *host,
 		.level = 0,
 	};
 
-	switch (resolve_defaultroute_one(host, peer, verbose)) {
+	switch (resolve_defaultroute_one(host, peer, host_afi, verbose)) {
 	case RESOLVE_FAILURE:
 		return;
 	case RESOLVE_SUCCESS:
@@ -672,5 +675,5 @@ void resolve_default_route(struct starter_end *host,
 		break;
 	}
 
-	resolve_defaultroute_one(host, peer, verbose);
+	resolve_defaultroute_one(host, peer, host_afi, verbose);
 }

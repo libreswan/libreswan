@@ -37,6 +37,7 @@
 # endif
 #endif
 
+#include "constants.h"
 #include "addr_lookup.h"
 #include "constants.h"
 #include "ipsecconf/confread.h"
@@ -59,16 +60,17 @@ static const struct sparse_names rta_names = {
 	},
 };
 
-void resolve_default_route(struct starter_end *host,
-			   struct starter_end *peer,
+void resolve_default_route(struct resolve_end *host,
+			   struct resolve_end *peer,
+                           const struct ip_info *host_afi UNUSED,
 			   lset_t verbose_rc_flags UNUSED,
 			   struct logger *logger)
 {
 	/* What kind of result are we seeking? */
-	bool seeking_src = (host->addrtype == KH_DEFAULTROUTE ||
-			    peer->addrtype == KH_DEFAULTROUTE);
-	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE ||
-				peer->nexttype == KH_DEFAULTROUTE);
+	bool seeking_src = (host->host.type == KH_DEFAULTROUTE ||
+			    peer->host.type == KH_DEFAULTROUTE);
+	bool seeking_gateway = (host->nexthop.type == KH_DEFAULTROUTE ||
+				peer->nexthop.type == KH_DEFAULTROUTE);
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 

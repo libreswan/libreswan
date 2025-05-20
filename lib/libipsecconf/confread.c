@@ -230,10 +230,10 @@ static bool validate_end(struct starter_conn *conn_st,
 {
 	bool ok = true;
 	const char *leftright = end->leftright;
+	const struct ip_info *host_afi = conn_st->host_afi;
 
-	passert(end->host_family != NULL);
-	pexpect(end->host_family == &ipv4_info ||
-		end->host_family == &ipv6_info); /* i.e., not NULL */
+	passert(host_afi != NULL);
+	pexpect(host_afi == &ipv4_info || host_afi == &ipv6_info); /* i.e., not NULL */
 
 #  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); ok = false; }
 
@@ -241,10 +241,11 @@ static bool validate_end(struct starter_conn *conn_st,
 		conn_st->state = STATE_INCOMPLETE;
 
 	/* validate the KSCF_IP/KNCF_IP */
-	end->addrtype = end->values[KW_IP].option;
-	switch (end->addrtype) {
+	end->resolve.host.name = end->values[KW_IP].string;
+	end->resolve.host.type = end->values[KW_IP].option;
+	switch (end->resolve.host.type) {
 	case KH_ANY:
-		end->addr = unset_address;
+		end->resolve.host.addr = unset_address;
 		break;
 
 	case KH_IFACE:
@@ -256,24 +257,23 @@ static bool validate_end(struct starter_conn *conn_st,
 		assert(end->values[KW_IP].string != NULL);
 
 		if (end->values[KW_IP].string[0] == '%') {
-			const char *iface = end->values[KW_IP].string + 1;
-			if (!starter_iface_find(iface,
-						end->host_family,
-						&end->addr,
-						&end->nexthop))
+			const char *iface = end->resolve.host.name + 1;
+			if (!starter_iface_find(iface, host_afi,
+						&end->resolve.host.addr,
+						&end->resolve.nexthop.addr))
 				conn_st->state = STATE_INVALID;
 			/* not numeric, so set the type to the iface type */
-			end->addrtype = KH_IFACE;
+			end->resolve.host.type = KH_IFACE;
 			break;
 		}
 
-		err_t er = ttoaddress_num(shunk1(end->values[KW_IP].string),
-					  end->host_family, &end->addr);
+		err_t er = ttoaddress_num(shunk1(end->resolve.host.name),
+					  host_afi, &end->resolve.host.addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
-			end->addrtype = KH_IPHOSTNAME;
+			end->resolve.host.type = KH_IPHOSTNAME;
 		} else {
-			pexpect(end->host_family == address_info(end->addr));
+			pexpect(host_afi == address_info(end->resolve.host.addr));
 		}
 
 		break;
@@ -302,26 +302,26 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = end->host_family->address.unspec;
-	if (end->values[KW_NEXTHOP].set) {
-		char *value = end->values[KW_NEXTHOP].string;
+	end->resolve.nexthop.addr = host_afi->address.unspec;
+	end->resolve.nexthop.name = end->values[KW_NEXTHOP].string;
+	if (end->resolve.nexthop.name != NULL) {
+		const char *value = end->resolve.nexthop.name;
 		if (strcaseeq(value, "%defaultroute")) {
-			end->nexttype = KH_DEFAULTROUTE;
+			end->resolve.nexthop.type = KH_DEFAULTROUTE;
 		} else {
-			err_t e = ttoaddress_num(shunk1(value),
-						 end->host_family,
-						 &end->nexthop);
+			err_t e = ttoaddress_num(shunk1(value), host_afi,
+						 &end->resolve.nexthop.addr);
 			if (e != NULL) {
 				ERR_FOUND("bad value for %snexthop=%s [%s]",
 					  leftright, value, e);
 			}
-			end->nexttype = KH_IPADDR;
+			end->resolve.nexthop.type = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = end->host_family->address.unspec;
+		end->resolve.nexthop.addr = host_afi->address.unspec;
 
-		if (end->addrtype == KH_DEFAULTROUTE) {
-			end->nexttype = KH_DEFAULTROUTE;
+		if (end->resolve.host.type == KH_DEFAULTROUTE) {
+			end->resolve.nexthop.type = KH_DEFAULTROUTE;
 		}
 	}
 
@@ -666,8 +666,8 @@ static bool load_conn(struct starter_conn *conn,
 	 * For now, %defaultroute and %any means IPv4 only
 	 */
 
-	const struct ip_info *afi = aftoinfo(conn->values[KNCF_HOSTADDRFAMILY].option);
-	if (afi == NULL) {
+	const struct ip_info *host_afi = aftoinfo(conn->values[KNCF_HOSTADDRFAMILY].option);
+	if (host_afi == NULL) {
 		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
 			FOR_EACH_THING(ips,
 				       end->values[KW_IP].string,
@@ -679,19 +679,19 @@ static bool load_conn(struct starter_conn *conn,
 				if (strchr(ips, ':') != NULL ||
 				    streq(ips, "%defaultroute6") ||
 				    streq(ips, "%any6")) {
-					afi = &ipv6_info;
+					host_afi = &ipv6_info;
 					break;
 				}
 			}
-			if (afi != NULL) {
+			if (host_afi != NULL) {
 				break;
 			}
 		}
 	}
-	if (afi == NULL) {
-		afi = &ipv4_info;
+	if (host_afi == NULL) {
+		host_afi = &ipv4_info;
 	}
-	conn->end[LEFT_END].host_family = conn->end[RIGHT_END].host_family = afi;
+	conn->host_afi = host_afi;
 
 	return true;
 }
