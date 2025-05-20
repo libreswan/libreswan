@@ -156,7 +156,6 @@ static bool load_setup(struct starter_config *cfg,
 
 		switch (kw->keyword.keydef->type) {
 		case kt_string:
-		case kt_dirname:
 		case kt_host:
 			/* all treated as strings for now */
 			assert(f < elemsof(cfg->setup));
@@ -393,7 +392,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 	case kt_string:
-	case kt_dirname:
 	case kt_ipaddr:
 	case kt_range:
 	case kt_subnet:

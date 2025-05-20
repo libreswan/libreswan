@@ -737,7 +737,6 @@ int main(int argc, char *argv[])
 
 			switch (kd->type) {
 			case kt_string:
-			case kt_dirname:
 			case kt_host:
 				if (cfg->setup[kd->field].string) {
 					printf("%s %s%s='%s'\n",

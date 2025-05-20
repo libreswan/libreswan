@@ -323,7 +323,6 @@ enum keyword_type {
 	kt_string,              /* value is some string */
 	kt_appendstring,        /* value is some string, append duplicates */
 	kt_appendlist,          /* value is some list, append duplicates */
-	kt_dirname,             /* value is a dir name string */
 	kt_bool,                /* value is an on/off type */
 	kt_sparse_name,         /* value is from .sparse_name table */
 	kt_lset,                /* a set of values from .sparse_name */
