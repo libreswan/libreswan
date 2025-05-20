@@ -105,7 +105,7 @@ static struct starter_config *alloc_starter_config(void)
 
 # undef SOPT
 
-	cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
+	cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
 	cfg->setup[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
 	cfg->setup[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
 	cfg->setup[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
@@ -156,7 +156,6 @@ static bool load_setup(struct starter_config *cfg,
 
 		switch (kw->keyword.keydef->type) {
 		case kt_string:
-		case kt_filename:
 		case kt_dirname:
 		case kt_host:
 			/* all treated as strings for now */
@@ -394,7 +393,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 	case kt_string:
-	case kt_filename:
 	case kt_dirname:
 	case kt_ipaddr:
 	case kt_range:

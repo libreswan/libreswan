@@ -509,8 +509,8 @@ int main(int argc, char *argv[])
 
 #ifdef USE_DNSSEC
 	unbound_sync_init(cfg->setup[KBF_DO_DNSSEC].option,
-			  cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string,
-			  cfg->setup[KSF_PLUTO_DNSSEC_ANCHORS].string,
+			  cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string,
+			  cfg->setup[KSF_DNSSEC_ANCHORS].string,
 			  logger);
 #endif
 
@@ -737,7 +737,6 @@ int main(int argc, char *argv[])
 
 			switch (kd->type) {
 			case kt_string:
-			case kt_filename:
 			case kt_dirname:
 			case kt_host:
 				if (cfg->setup[kd->field].string) {

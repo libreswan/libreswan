@@ -155,7 +155,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "plutodebug",  kv_config|kv_conn, kt_lset, KW_DEBUG, NULL, &debug_lmod_info, },
   { "debug",       kv_config|kv_conn, kt_lset, KW_DEBUG, NULL, &debug_lmod_info, },
 
-  { "logfile",  kv_config,  kt_filename,  KSF_LOGFILE, NULL, NULL, },
+  { "logfile",  kv_config,  kt_string,  KSF_LOGFILE, NULL, NULL, },
   { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete name, but very common :/ */
   { "logtime",  kv_config,  kt_bool,  KBF_LOGTIME, NULL, NULL, },
   { "logappend",  kv_config,  kt_bool,  KBF_LOGAPPEND, NULL, NULL, },
@@ -163,8 +163,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "audit-log",  kv_config,  kt_bool,  KBF_AUDIT_LOG, NULL, NULL, },
 #ifdef USE_DNSSEC
   { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC, NULL, NULL, },
-  { "dnssec-rootkey-file",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ROOTKEY_FILE, NULL, NULL, },
-  { "dnssec-anchors",  kv_config,  kt_filename, KSF_PLUTO_DNSSEC_ANCHORS, NULL, NULL, },
+  { "dnssec-rootkey-file",  kv_config,  kt_string, KSF_DNSSEC_ROOTKEY_FILE, NULL, NULL, },
+  { "dnssec-anchors",  kv_config,  kt_string, KSF_DNSSEC_ANCHORS, NULL, NULL, },
 #endif
   { "dumpdir",  kv_config,  kt_dirname,  KSF_DUMPDIR, NULL, NULL, },
   { "ipsecdir",  kv_config,  kt_dirname,  KSF_IPSECDIR, NULL, NULL, },
@@ -233,12 +233,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "interface-ip", kv_conn | kv_leftright,  kt_string, KSCF_INTERFACE_IP, NULL, NULL, },
   { "vti",  kv_conn | kv_leftright,  kt_string,  KSCF_VTI, NULL, NULL, },
   { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KW_NEXTHOP, NULL, NULL, },
-  { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN, NULL, NULL, },
+  { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
   { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &kw_pubkey_names, NULL, },
   { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &kw_pubkey_names, NULL, },
   { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &kw_pubkey_names, NULL, },
-  { "cert",  kv_conn | kv_leftright,  kt_filename,  KSCF_CERT, NULL, NULL, },
+  { "cert",  kv_conn | kv_leftright,  kt_string,  KWS_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_string,  KNCF_SENDCERT, NULL, NULL, },
   { "ca",  kv_conn | kv_leftright,  kt_string,  KSCF_CA, NULL, NULL, },

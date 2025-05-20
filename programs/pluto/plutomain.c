@@ -656,10 +656,10 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 	 * non empty.
 	 */
 	pfreeany(pluto_dnssec_rootkey_file);
-	if (cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string[0] != '\0') {
-		pluto_dnssec_rootkey_file = clone_str(cfg->setup[KSF_PLUTO_DNSSEC_ROOTKEY_FILE].string, __func__);
+	if (cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string[0] != '\0') {
+		pluto_dnssec_rootkey_file = clone_str(cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string, __func__);
 	}
-	replace_when_cfg_setup(&pluto_dnssec_trusted, cfg, KSF_PLUTO_DNSSEC_ANCHORS);
+	replace_when_cfg_setup(&pluto_dnssec_trusted, cfg, KSF_DNSSEC_ANCHORS);
 }
 #endif
 

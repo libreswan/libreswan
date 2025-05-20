@@ -94,7 +94,6 @@ static void confwrite_value(FILE *out,
 
 		case kt_string:
 		case kt_appendstring:
-		case kt_filename:
 		case kt_dirname:
 			/* these are strings */
 

@@ -86,8 +86,8 @@ enum keywords {
 	KSF_PERPEERDIR,
 	KSF_MYVENDORID,
 	KSF_LOGFILE,
-	KSF_PLUTO_DNSSEC_ROOTKEY_FILE,
-	KSF_PLUTO_DNSSEC_ANCHORS,
+	KSF_DNSSEC_ROOTKEY_FILE,
+	KSF_DNSSEC_ANCHORS,
 	KSF_PROTOSTACK,
 	KSF_GLOBAL_REDIRECT,
 	KSF_GLOBAL_REDIRECT_TO,
@@ -144,9 +144,9 @@ enum keywords {
 	 */
 
 	KSCF_GROUNDHOG,	/* left/right */
-	KSCF_UPDOWN,	/* left/right */
+	KWS_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */
-	KSCF_CERT,	/* left/right */
+	KWS_CERT,	/* left/right */
 	KSCF_CKAID,	/* left/right */
 	KSCF_CA,	/* left/right */
 	KSCF_PROTOPORT,	/* left/right */
@@ -323,7 +323,6 @@ enum keyword_type {
 	kt_string,              /* value is some string */
 	kt_appendstring,        /* value is some string, append duplicates */
 	kt_appendlist,          /* value is some list, append duplicates */
-	kt_filename,            /* value is a filename string */
 	kt_dirname,             /* value is a dir name string */
 	kt_bool,                /* value is an on/off type */
 	kt_sparse_name,         /* value is from .sparse_name table */
