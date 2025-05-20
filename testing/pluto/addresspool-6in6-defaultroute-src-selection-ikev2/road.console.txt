@@ -41,7 +41,7 @@ loading conns matching road:
 resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:2::23
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
-    add RTA_DST 2001:db8:1:2::23 (peer->addr)
+    add RTA_DST 2001:db8:1:2::23 (peer->host.addr)
   opening non-blocking netlink socket
   sent 48 byte netlink message
   reading into 32768 byte buffer
@@ -72,7 +72,7 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
 resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 2001:db8:1:2::23
   seeking PREFSRC
     query GETROUTE+REQUEST
-    add RTA_DST 2001:db8:1:2::23 (peer->addr)
+    add RTA_DST 2001:db8:1:2::23 (peer->host.addr)
   opening non-blocking netlink socket
   sent 48 byte netlink message
   reading into 32768 byte buffer
@@ -144,7 +144,7 @@ loading conns matching road:
 resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:2::23
   seeking GATEWAY
     query GETROUTE+REQUEST+ROOT+MATCH
-    add RTA_DST 2001:db8:1:2::23 (peer->addr)
+    add RTA_DST 2001:db8:1:2::23 (peer->host.addr)
   opening non-blocking netlink socket
   sent 48 byte netlink message
   reading into 32768 byte buffer
@@ -197,7 +197,7 @@ resolving family=IPv6 src=<defaultroute> gateway=<defaultroute> peer 2001:db8:1:
 resolving family=IPv6 src=<defaultroute> gateway=fe80::1000:ff:fe32:64ba peer 2001:db8:1:2::23
   seeking PREFSRC
     query GETROUTE+REQUEST
-    add RTA_DST 2001:db8:1:2::23 (peer->addr)
+    add RTA_DST 2001:db8:1:2::23 (peer->host.addr)
   opening non-blocking netlink socket
   sent 48 byte netlink message
   reading into 32768 byte buffer
