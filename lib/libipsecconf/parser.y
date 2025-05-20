@@ -846,7 +846,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	case kt_filename:
 	case kt_dirname:
 	case kt_ipaddr:
-	case kt_bitstring:
 	case kt_idtype:
 	case kt_range:
 	case kt_subnet:

@@ -115,7 +115,6 @@ static void confwrite_value(FILE *out,
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
-		case kt_bitstring:
 			/* none of these are valid number/string types */
 			break;
 

@@ -186,7 +186,6 @@ static bool load_setup(struct starter_config *cfg,
 			cfg->setup[f].set = true;
 			break;
 
-		case kt_bitstring:
 		case kt_pubkey:
 		case kt_ipaddr:
 		case kt_subnet:
@@ -397,7 +396,6 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_string:
 	case kt_filename:
 	case kt_dirname:
-	case kt_bitstring:
 	case kt_ipaddr:
 	case kt_range:
 	case kt_subnet:
