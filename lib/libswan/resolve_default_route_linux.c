@@ -606,7 +606,6 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 
 	struct resolve_end that = {
 		.host.type = KH_IPADDR,
-		.family = this.family,
 	};
 
 	struct verbose verbose = {

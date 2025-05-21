@@ -117,13 +117,6 @@ static struct starter_config *alloc_starter_config(void)
 
 	struct starter_conn *d = &cfg->conn_default;
 
-# define DOPT(kbf, v)  { d->values[kbf].option = (v); }
-
-	DOPT(KNCF_TYPE, KS_TUNNEL);
-	DOPT(KNCF_AUTO, AUTOSTART_IGNORE);
-
-# undef DOPT
-
 	d->end[LEFT_END].leftright = "left";
 	d->end[RIGHT_END].leftright = "right";
 

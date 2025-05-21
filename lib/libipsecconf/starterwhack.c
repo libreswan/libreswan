@@ -133,7 +133,7 @@ static bool set_whack_end(struct whack_end *w,
 		break;
 	}
 
-	w->sourceip = l->values[KSCF_SOURCEIP].string; /* could be NULL */
+	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
 	w->vti = l->values[KSCF_VTI].string; /* could be NULL */
 	w->interface_ip = l->values[KSCF_INTERFACE_IP].string; /* could be NULL */
 
@@ -260,27 +260,17 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.dnshostname = conn->end[RIGHT_END].values[KW_IP].string;
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
-	if (conn->values[KNCF_IKELIFETIME].set) {
-		msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
-	}
-	if (conn->values[KNCF_IPSEC_LIFETIME].set) {
-		msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;
-	}
-	if (conn->values[KNCF_REKEYMARGIN].set) {
-		msg.rekeymargin = conn->values[KNCF_REKEYMARGIN].deltatime;
-	}
+	msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
+	msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;
+	msg.rekeymargin = conn->values[KNCF_REKEYMARGIN].deltatime;
 	msg.ipsec_max_bytes = conn->values[KWS_IPSEC_MAX_BYTES].string;
 	msg.ipsec_max_packets = conn->values[KWS_IPSEC_MAX_PACKETS].string;
 	msg.rekeyfuzz = conn->values[KWS_REKEYFUZZ].string;
 	msg.replay_window = conn->values[KWS_REPLAY_WINDOW].string;
 	msg.ipsec_interface = conn->values[KWS_IPSEC_INTERFACE].string;
 
-	if (conn->values[KNCF_RETRANSMIT_INTERVAL].set) {
-		msg.retransmit_interval = conn->values[KNCF_RETRANSMIT_INTERVAL].deltatime;
-	}
-	if (conn->values[KNCF_RETRANSMIT_TIMEOUT].set) {
-		msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT].deltatime;
-	}
+	msg.retransmit_interval = conn->values[KNCF_RETRANSMIT_INTERVAL].deltatime;
+	msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT].deltatime;
 
 	msg.keyexchange = conn->values[KWS_KEYEXCHANGE].string;
 	msg.ikev2 = conn->values[KWS_IKEv2].string;

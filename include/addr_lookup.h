@@ -31,7 +31,6 @@ struct resolve_host {
 };
 
 struct resolve_end {
-	const struct ip_info *family;
 	struct resolve_host host;
 	struct resolve_host nexthop; /* aka gateway */
 };
