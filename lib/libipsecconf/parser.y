@@ -540,9 +540,15 @@ void new_parser_key_value(struct parser *parser,
 		.deltatime = deltatime,
 	};
 
-	ldbgf(DBG_TMI, parser->logger, "  %s%s=%s number=%ju field=%u", key->keydef->keyname,
-	      leftright(key), new->string, new->number,
-	      key->keydef->field);
+	if (LDBGP(DBG_TMI, parser->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, parser->logger, buf) {
+			jam(buf, "  %s%s=%s", leftright(key), key->keydef->keyname, new->string);
+			jam(buf, " number=%ju", new->number);
+			jam(buf, " field=%u", key->keydef->field);
+			jam_string(buf, " deltatime=");
+			jam_deltatime(buf, new->deltatime);
+		}
+	}
 
 	/* append the new kw_list to the list */
 	(*end) = new;
