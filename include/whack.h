@@ -158,6 +158,7 @@ struct whack_end {
 	ip_address host_addr;
 	const char *ikeport;			/* host */
 	ip_address nexthop;		/* host */
+	const char *nexthop_name;
 	const char *sourceip;
 	const char *vti;			/* host */
 	const char *interface_ip;		/* for ipsec-interface */
