@@ -84,7 +84,7 @@ struct connection *connection_by_serialno(co_serial_t serialno);
 struct host_end_config {
 	const char *leftright;
 
-	char *addr_name;	/* string version from whack */
+	char *name;	/* string version from whack */
 
 	ip_address nexthop;
 	ip_port ikeport;

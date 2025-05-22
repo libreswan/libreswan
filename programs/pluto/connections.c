@@ -630,7 +630,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
-			pfreeany(end->host.addr_name);
+			pfreeany(end->host.name);
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown);
@@ -1591,7 +1591,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = src->host_type;
-	host_config->addr_name = clone_str(src->host_addr_name, "host ip");
+	host_config->name = clone_str(src->host_addr_name, "host ip");
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
 					       YN_NO, wm, logger);
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
