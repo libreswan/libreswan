@@ -324,7 +324,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->ike) &&
 		PICKLE_STRING(&wm->esp) &&
 		PICKLE_STRING(&wm->connalias) &&
-		PICKLE_STRING(&wm->dnshostname) &&
 		PICKLE_STRING(&wm->modecfgdns) &&
 		PICKLE_STRING(&wm->modecfgdomains) &&
 		PICKLE_STRING(&wm->modecfgbanner) &&

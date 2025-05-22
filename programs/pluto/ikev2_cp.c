@@ -48,7 +48,7 @@ void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-			const struct config_end *end = cc->end[lr].config;
+			const struct end_config *end = cc->end[lr].config;
 			jam_string(buf, "; ");
 			jam_string(buf, end->leftright);
 			jam_string(buf, ":");

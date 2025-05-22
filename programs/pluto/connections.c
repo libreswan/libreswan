@@ -612,7 +612,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->child_sa.v2_ike_auth_proposals);
 		pfreeany(config->connalias);
-		pfreeany(config->dnshostname);
 		pfree_list(&config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
@@ -630,7 +629,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
-			pfreeany(end->host.addr_name);
+			pfreeany(end->host.name);
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown);
@@ -1591,7 +1590,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = src->host_type;
-	host_config->addr_name = clone_str(src->host_addr_name, "host ip");
+	host_config->name = clone_str(src->host_addr_name, "host ip");
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
 					       YN_NO, wm, logger);
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
@@ -2797,7 +2796,7 @@ static struct config *alloc_config(const char *name)
 			 lr == RIGHT_END ? "right" :
 			 NULL);
 		passert(leftright != NULL);
-		struct config_end *end_config = &config->end[lr];
+		struct end_config *end_config = &config->end[lr];
 		end_config->leftright = leftright;
 		end_config->index = lr;
 		end_config->host.leftright = leftright;
@@ -2873,7 +2872,7 @@ struct connection *alloc_connection(const char *name,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		struct connection_end *end = &c->end[lr];
-		const struct config_end *end_config = &c->config->end[lr];
+		const struct end_config *end_config = &c->config->end[lr];
 		end->config = end_config;
 		end->host.config = &end_config->host;
 		end->child.config = &end_config->child;
@@ -3561,8 +3560,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* duplicate any alias, adding spaces to the beginning and end */
 	config->connalias = clone_str(wm->connalias, "connection alias");
-
-	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
 	/*
 	 * narrowing=?

@@ -982,41 +982,6 @@ const struct option optarg_options[] = {
 
 static char *ctlsocket = NULL;
 
-/*
- * If the numeric address is valid, accept it.  Otherwise try to parse
- * it using DNS, and regardless throw the name at pluto.
- *
- * This is pretty bespoke.
- */
-
-static void msg_host_name(struct optarg_family *family, ip_address *address, const char **dns_name)
-{
-	if (ttoaddress_num(shunk1(optarg), family->type, address) == NULL) {
-		/*
-		 * we have a proper numeric IP address.  Update the
-		 * host's family.
-		 */
-		optarg_family(family, address_type(address));
-		return;
-	}
-
-	/*
-	 * We assume that we have a DNS name.
-	 *
-	 * This logic matches confread.c.  ??? it would be kind to
-	 * check the syntax.
-	 *
-	 * we don't fail here.  Pluto will re-check the DNS later
-	 * (begging the question of why bother here!).
-	 *
-	 * Shouldn't this be per-end.
-	 */
-	(*dns_name) = optarg;
-	if (ttoaddress_dns(shunk1(optarg), family->type, address) == NULL) {
-		optarg_family(family, address_type(address));
-	}
-}
-
 /* This is a hack for initiating ISAKMP exchanges. */
 
 int main(int argc, char **argv)
@@ -1520,18 +1485,19 @@ int main(int argc, char **argv)
 				end->host_type = KH_OPPOGROUP;
 				end->host_addr = optarg_any(&host_family);
 				end->key_from_DNS_on_demand = true;
-			} else if (msg.end[LEFT_END].id != NULL && !streq(optarg, "%null")) {
+			} else if (ttoaddress_num(shunk1(optarg), host_family.type, &end->host_addr) == NULL) {
 				/*
-				 * This is pretty bespoke.
-				 *
-				 * If the numeric address is valid,
-				 * accept it.  Otherwise try to parse
-				 * it using DNS, and regardless throw
-				 * the name at pluto.
+				 * we have a proper numeric IP address.  Update the
+				 * host's family.
 				 */
-				msg_host_name(&host_family, &end->host_addr, &msg.dnshostname);
+				optarg_family(&host_family, address_info(end->host_addr));
+				end->host_type = KH_IPADDR;
 			} else {
-				end->host_addr = optarg_address_dns(logger, &host_family);
+				/*
+				 * Just assume DNS.
+				 */
+				end->host_addr_name = optarg;
+				end->host_type = KH_IPHOSTNAME;
 			}
 
 			if (end->host_type == KH_GROUP ||

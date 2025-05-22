@@ -256,10 +256,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	};
 
 	msg.hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
-
-	if (conn->end[RIGHT_END].resolve.host.type == KH_IPHOSTNAME)
-		msg.dnshostname = conn->end[RIGHT_END].values[KW_IP].string;
-
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
 	msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
 	msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;
