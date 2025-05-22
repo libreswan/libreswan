@@ -184,13 +184,13 @@ static bool initiate_connection_2_address(struct connection *c,
 	if (!address_is_specified(c->remote->host.addr)) {
 
 		/*
-		 * Can't proceed; there's no peer address!  However, if
-		 * there's a DNS hostname flip things to up so that
+		 * Can't proceed; there's no peer address!  However,
+		 * if there's a DNS hostname flip things to up so that
 		 * the DNS code, below, will kick in.  Try to provide
 		 * a really detailed message!!!
 		 */
 
-		if (c->config->dnshostname != NULL) {
+		if (c->remote->config->host.name != NULL) {
 			if (c->config->narrowing) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,

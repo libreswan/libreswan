@@ -274,7 +274,6 @@ struct config {
 	struct ikev2_proposals *v2_ike_proposals;
 
 	enum nic_offload_options nic_offload;
-	char *dnshostname;
 
 	struct {
 		bool pull;		/* is modecfg pulled by client? */

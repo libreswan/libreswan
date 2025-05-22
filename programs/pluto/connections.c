@@ -612,7 +612,6 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->child_sa.v2_ike_auth_proposals);
 		pfreeany(config->connalias);
-		pfreeany(config->dnshostname);
 		pfree_list(&config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
@@ -3561,8 +3560,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* duplicate any alias, adding spaces to the beginning and end */
 	config->connalias = clone_str(wm->connalias, "connection alias");
-
-	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 
 	/*
 	 * narrowing=?
