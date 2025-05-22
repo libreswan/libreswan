@@ -1546,6 +1546,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
+			end->nexthop_name = optarg;
 			if (streq(optarg, "%direct")) {
 				end->nexthop = optarg_any(&host_family);
 			} else {
