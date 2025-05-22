@@ -305,8 +305,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->resolve.nexthop.type = KH_IPADDR;
 		}
 	} else {
-		end->resolve.nexthop.addr = host_afi->address.unspec;
-
 		if (end->resolve.host.type == KH_DEFAULTROUTE) {
 			end->resolve.nexthop.type = KH_DEFAULTROUTE;
 		}
