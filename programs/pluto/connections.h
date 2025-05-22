@@ -180,7 +180,7 @@ struct child_end_config {
 	struct virtual_ip *virt;
 };
 
-struct config_end {
+struct end_config {
 	enum end index;
 	const char *leftright;
 	struct host_end_config host;
@@ -429,7 +429,7 @@ struct config {
 		uint32_t id;
 	} ipsec_interface;
 
-	struct config_end end[END_ROOF];
+	struct end_config end[END_ROOF];
 };
 
 /* There are two kinds of connections:
@@ -614,7 +614,7 @@ err_t connection_requires_tss(const struct connection *c);
 
 struct connection_end {
 	enum connection_kind kind;
-	const struct config_end *config;
+	const struct end_config *config;
 	struct host_end host;
 	struct child_end child;
 };
@@ -642,7 +642,7 @@ struct spd_end {
 	 * Danger: for a connection instance, this point into the
 	 * parent connection.
 	 */
-	const struct config_end *config;
+	const struct end_config *config;
 	struct host_end *host;
 	struct child_end *child;
 

@@ -2797,7 +2797,7 @@ static struct config *alloc_config(const char *name)
 			 lr == RIGHT_END ? "right" :
 			 NULL);
 		passert(leftright != NULL);
-		struct config_end *end_config = &config->end[lr];
+		struct end_config *end_config = &config->end[lr];
 		end_config->leftright = leftright;
 		end_config->index = lr;
 		end_config->host.leftright = leftright;
@@ -2873,7 +2873,7 @@ struct connection *alloc_connection(const char *name,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		struct connection_end *end = &c->end[lr];
-		const struct config_end *end_config = &c->config->end[lr];
+		const struct end_config *end_config = &c->config->end[lr];
 		end->config = end_config;
 		end->host.config = &end_config->host;
 		end->child.config = &end_config->child;
