@@ -1768,8 +1768,8 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 static stf_status modecfg_inI2(struct ike_sa *ike,
 			       struct msg_digest *md)
 {
+	diag_t d;
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
-	struct connection *c = ike->sa.st_connection;
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -1781,118 +1781,21 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 
 	/* CHECK that SET has been received. */
 
-	switch (ma->isama_type) {
-
-	case ISAKMP_CFG_SET:
-		break;
-
-	default:
-	{
+	if (ma->isama_type != ISAKMP_CFG_SET) {
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting MODE_CFG_SET, got %s instead; message ignored.",
 		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
+
+	d = process_mode_cfg_attrs(ike, "SET", attrs, &recv);
+	if (d != NULL) {
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
+		/* reject malformed */
+		return STF_FAIL_v1N;
 	}
-
-	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
-		struct isakmp_attribute attr;
-		struct pbs_in strattr;
-
-		diag_t d = pbs_in_struct(attrs, &isakmp_xauth_attribute_desc,
-					 &attr, sizeof(attr), &strattr);
-		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			/* reject malformed */
-			return STF_FAIL_v1N;
-		}
-
-		switch (attr.isaat_af_type) {
-		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-		{
-			ip_address a;
-			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
-			if (d != NULL) {
-				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-				pfree_diag(&d);
-				return STF_FATAL;
-			}
-
-			const struct ip_info *afi = address_info(a);
-			c->local->child.lease[afi->ip_index] = a;
-
-			update_first_selector(c, local, selector_from_address(a));
-			set_child_has_client(c, local, true);
-
-			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-				jam_string(buf, "received ");
-				jam_string(buf, afi->ip_name);
-				jam_string(buf, " lease ");
-				jam_address(buf, &a);
-
-				/*
-				 * When there's no sourceip= in the
-				 * config file, the lease will be
-				 * used.
-				 */
-				if (c->local->config->child.sourceip.len == 0) {
-					ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
-					pexpect(address_eq_address(a, sourceip));
-					jam_string(buf, ", updating source IP address");
-				}
-			}
-
-			recv.ikev1_internal_ip4_address = true;
-			break;
-		}
-
-		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			d = append_st_cfg_dns(&strattr, &ipv4_info, &ike->sa);
-			if (d != NULL) {
-				llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-				pfree_diag(&d);
-				return STF_FAIL_v1N;
-			}
-			recv.ikev1_internal_ip4_dns = true;
-			break;
-
-		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
-			append_st_cfg_domain(&ike->sa, &strattr, cisco_stringify);
-			recv.modecfg_domain = true;
-			break;
-
-		case MODECFG_BANNER | ISAKMP_ATTR_AF_TLV:
-		{
-			pfreeany(ike->sa.st_seen_cfg_banner);
-			bool ok = false;
-			ike->sa.st_seen_cfg_banner = cisco_stringify(pbs_in_left(&strattr), &ok);
-			llog(RC_LOG, ike->sa.logger, "%s MODECFG_BANNER: %s",
-			     (ok ? "received": "truncated"),
-			     ike->sa.st_seen_cfg_banner);
-			recv.modecfg_banner = true;
-			break;
-		}
-
-		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
-			llog(RC_LOG, ike->sa.logger,
-			     "received and ignored CISCO_SPLIT_INC in MODE_CFG SET payload");
-			recv.cisco_split_inc = true;
-			break;
-
-		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
-		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-			/* ignore */
-			break;
-
-		default:
-			log_bad_attr("modecfg (inR2)", &modecfg_attr_names, attr.isaat_af_type);
-			break;
-		}
-	}
-	/* log_state(LOG_DEBUG, st, "ModeCfg ACK: 0x%" PRIxLSET, recv); */
 
 	/*
 	 * Build the response.
@@ -2199,21 +2102,7 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	struct attrs recv = {0};
 
-	switch (ma->isama_type) {
-
-	case ISAKMP_CFG_SET:
-	{
-		diag_t d = process_mode_cfg_attrs(ike, "SET", attrs, &recv);
-		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			return STF_FATAL;
-		}
-		break;
-	}
-
-	default:
-	{
+	if (ma->isama_type != ISAKMP_CFG_SET) {
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_SET, got %s instead; message ignored",
@@ -2221,6 +2110,11 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
+	diag_t d = process_mode_cfg_attrs(ike, "SET", attrs, &recv);
+	if (d != NULL) {
+		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
+		pfree_diag(&d);
+		return STF_FATAL;
 	}
 
 	/*
