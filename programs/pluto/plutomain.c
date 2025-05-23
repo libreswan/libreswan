@@ -342,6 +342,24 @@ static void replace_when_cfg_setup(char **target, const struct starter_config *c
 	replace_value(target, value);
 }
 
+static bool update_deltatime(deltatime_t *target,
+			      deltatime_t value)
+{
+	/* Do nothing if value is unset. */
+	if (value.is_set) {
+		(*target) = value;
+		return true;
+	}
+	return false;
+}
+
+static bool extract_config_deltatime(deltatime_t *target,
+				     const struct starter_config *cfg,
+				     enum keywords field)
+{
+	return update_deltatime(target, cfg->setup[field].deltatime);
+}
+
 /*
  * This function MUST NOT be used for anything else!
  * It is used to seed the NSS PRNG based on --seedbits pluto argument
@@ -1163,26 +1181,21 @@ int main(int argc, char **argv)
 
 			x509_crl.strict = cfg->setup[KBF_CRL_STRICT].option;
 
-			if (cfg->setup[KBF_SHUNTLIFETIME].set) {
-				pluto_shunt_lifetime = cfg->setup[KBF_SHUNTLIFETIME].deltatime;
-			}
+			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
 			x509_ocsp.enable = cfg->setup[KBF_OCSP_ENABLE].option;
 			x509_ocsp.strict = cfg->setup[KBF_OCSP_STRICT].option;
-			if (cfg->setup[KBF_OCSP_TIMEOUT_SECONDS].set) {
-				x509_ocsp.timeout = cfg->setup[KBF_OCSP_TIMEOUT_SECONDS].deltatime;
+			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
 			if (cfg->setup[KBF_OCSP_METHOD].set) {
 				x509_ocsp.method = cfg->setup[KBF_OCSP_METHOD].option;
 			}
 			x509_ocsp.cache_size = cfg->setup[KBF_OCSP_CACHE_SIZE].option;
-			if (cfg->setup[KBF_OCSP_CACHE_MIN_AGE_SECONDS].set) {
-				x509_ocsp.cache_min_age = cfg->setup[KBF_OCSP_CACHE_MIN_AGE_SECONDS].deltatime;
+			if (extract_config_deltatime(&x509_ocsp.cache_min_age, cfg, KBF_OCSP_CACHE_MIN_AGE_SECONDS)) {
 				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
 			}
-			if (cfg->setup[KBF_OCSP_CACHE_MAX_AGE_SECONDS].set) {
-				x509_ocsp.cache_max_age = cfg->setup[KBF_OCSP_CACHE_MAX_AGE_SECONDS].deltatime;
+			if (extract_config_deltatime(&x509_ocsp.cache_max_age, cfg, KBF_OCSP_CACHE_MAX_AGE_SECONDS)) {
 				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
 			}
 
@@ -1202,7 +1215,7 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			x509_crl.check_interval = cfg->setup[KBF_CRL_CHECKINTERVAL].deltatime;
+			extract_config_deltatime(&x509_crl.check_interval, cfg, KBF_CRL_CHECKINTERVAL);
 			uniqueIDs = cfg->setup[KBF_UNIQUEIDS].option;
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->setup[KBF_DO_DNSSEC].option;
@@ -1229,9 +1242,7 @@ int main(int argc, char **argv)
 			pluto_nflog_group = cfg->setup[KBF_NFLOG_ALL].option;
 #endif
 
-			if (cfg->setup[KBF_EXPIRE_LIFETIME].deltatime.is_set) {
-				pluto_expire_lifetime = cfg->setup[KBF_EXPIRE_LIFETIME].deltatime;
-			}
+			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			/* no config option: rundir */
 			/* secretsfile= */
@@ -1255,8 +1266,7 @@ int main(int argc, char **argv)
 				replace_value(&x509_crl.curl_iface, cfg->setup[KSF_CURLIFACE].string);
 			}
 
-			if (cfg->setup[KBF_CRL_TIMEOUT_SECONDS].set) {
-				x509_crl.timeout = cfg->setup[KBF_CRL_TIMEOUT_SECONDS].deltatime;
+			if (extract_config_deltatime(&x509_crl.timeout, cfg, KBF_CRL_TIMEOUT_SECONDS)) {
 				check_conf(CRL_TIMEOUT_OK, "crl-timeout", logger);
 				/* checked below */
 			}
@@ -1287,7 +1297,7 @@ int main(int argc, char **argv)
 			}
 
 			pluto_nss_seedbits = cfg->setup[KBF_SEEDBITS].option;
-			keep_alive = cfg->setup[KBF_KEEP_ALIVE].deltatime;
+			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
@@ -1322,8 +1332,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if (cfg->setup[KSF_EXPIRE_SHUNT_INTERVAL].set) {
-				bare_shunt_interval = cfg->setup[KSF_EXPIRE_SHUNT_INTERVAL].deltatime;
+			if (extract_config_deltatime(&bare_shunt_interval, cfg, KSF_EXPIRE_SHUNT_INTERVAL)) {
 				check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
 			}
 
