@@ -109,9 +109,10 @@ static bool set_whack_end(struct whack_end *w,
 		printf("Failed to load connection %s= is not set\n", lr);
 		return false;
 	}
-	w->host_addr_name = l->values[KW_IP].string;
 
+	w->host_addr_name = l->values[KW_IP].string;
 	w->nexthop_name = l->values[KW_NEXTHOP].string;
+
 	switch (l->resolve.nexthop.type) {
 	case KH_IPADDR:
 		w->nexthop = l->resolve.nexthop.addr;

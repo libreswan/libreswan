@@ -126,11 +126,19 @@ void jam_end_host(struct jambuf *buf,
 			/* ADDRESS */
 			jam_address(buf, &end->addr);
 		}
-		/* [<HOSTNAME>] */
+		/*
+		 * [<HOSTNAME>] or [<DIFFERENT-IP>]
+		 *
+		 * For instance, the connection was redirected.  Also
+		 * need to avoid showing %defaultroute, which for some
+		 * reason ends up with .type KH_IPADDR and not
+		 * KH_DEFAULTROUTE, ligh!
+		 */
 		address_buf ab;
-		if (end->config->name != NULL &&
-		    !streq(str_address(&end->addr, &ab),
-			   end->config->name)) {
+		if (end->config->type == KH_IPHOSTNAME ||
+		    (end->config->type == KH_IPADDR &&
+		     end->config->name[0] != '%' &&
+		     !streq(str_address(&end->addr, &ab), end->config->name))) {
 			jam(buf, "<%s>", end->config->name);
 		}
 	}

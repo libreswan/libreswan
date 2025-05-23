@@ -335,7 +335,8 @@ bool confread_validate_conns(struct starter_config *config, struct logger *logge
 }
 
 /**
- * Take keywords from ipsec.conf syntax and load into a conn struct
+ * Take the list of key-value pairs, from ipsec.conf and in KW, and
+ * turn them into an array in starter_conn.
  *
  * @param conn a connection definition
  * @param sl a section_list
@@ -449,26 +450,26 @@ static bool translate_field(struct starter_conn *conn,
 
 			/* only fatal if we try to change values */
 			if (values[field].option != (int)kw->number ||
-			    !(values[field].option ==
-			      LOOSE_ENUM_OTHER &&
+			    !(values[field].option == LOOSE_ENUM_OTHER &&
 			      kw->number == LOOSE_ENUM_OTHER &&
 			      kw->keyword.string != NULL &&
 			      values[field].string != NULL &&
-			      streq(kw->keyword.string,
-				    values[field].string)))
-			{
+			      streq(kw->keyword.string, values[field].string))) {
 				ok = false;
 				break;
 			}
 		}
 
-		values[field].option = kw->number;
-		if (kw->number == LOOSE_ENUM_OTHER) {
-			assert(kw->string != NULL);
-			pfreeany(values[field].string);
-			values[field].string = clone_str(
-				kw->string, "kt_loose_enum kw->keyword.string");
+		if (kw->string == NULL) {
+			llog_pexpect(logger, HERE, "missing %s string value",
+				     kw->keyword.keydef->keyname);
+			ok = false;
+			break;
 		}
+
+		pfreeany(values[field].string);
+		values[field].option = kw->number;
+		values[field].string = clone_str(kw->string, "kt_loose_enum kw->keyword.string");
 		values[field].set = assigned_value;
 		break;
 

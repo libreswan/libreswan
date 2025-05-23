@@ -1465,6 +1465,7 @@ int main(int argc, char **argv)
 
 		case END_HOST:	/* --host <ip-address> */
 		{
+			end->host_addr_name = optarg;
 			if (streq(optarg, "%any")) {
 				end->host_addr = optarg_any(&host_family);
 				end->host_type = KH_ANY;
@@ -1496,7 +1497,6 @@ int main(int argc, char **argv)
 				/*
 				 * Just assume DNS.
 				 */
-				end->host_addr_name = optarg;
 				end->host_type = KH_IPHOSTNAME;
 			}
 
