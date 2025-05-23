@@ -25,7 +25,7 @@ resolving family=IPv4 src=%bogus1 gateway=<not-set> peer 192.1.2.23
 resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %bogus1
   seeking NOTHING
   sending to pluto
-"west-bogus": added unoriented IKEv2 connection (neither left=%bogus1 nor right=192.1.2.23 match an interface)
+"west-bogus": failed to add connection: left=%bogus1 does not appear to be an interface
 west #
  echo "initdone"
 initdone
