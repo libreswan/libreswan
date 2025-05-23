@@ -2971,10 +2971,12 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 }
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
-							const struct whack_end *this,
-							const struct whack_end *that,
+							enum end end,
 							struct logger *logger)
 {
+	const struct whack_end *this = &wm->end[end];
+	const struct whack_end *that = &wm->end[!end];
+
 	if (is_group_wm(wm)) {
 		ldbg(logger, "%s connection is CK_GROUP: by is_group_wm()",
 		     this->leftright);
@@ -3479,13 +3481,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * forced to only use value after it's been determined).  Yea,
 	 * hack.
 	 */
-	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		enum end that = (this + 1) % END_ROOF;
-		c->end[this].kind =
-			extract_connection_end_kind(wm,
-						    whack_ends[this],
-						    whack_ends[that],
-						    c->logger);
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		c->end[end].kind = extract_connection_end_kind(wm, end, c->logger);
 	}
 
 	passert(c->base_name != NULL); /* see alloc_connection() */
