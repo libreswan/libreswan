@@ -7,6 +7,7 @@ v5.3 (unreleased)
   - warn when END-option= has no END [Andrew #663]
   - nflog= made an alias to nflog-group= [Andrew]
   - default whack --sendcert to "always" like addconn [Andrew #2176]
+  - rename `pluto --dnssec-trusted` to `--dnssec-achors` [Andrew #2240]
 * PKIX (Public Key Infrastructure X.509)
   - moved cURL and LDAP CRL download code out of pluto [Andrew]
   - replaced CRL thread with libevent [Andrew]
