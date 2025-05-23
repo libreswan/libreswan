@@ -1769,6 +1769,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 			       struct msg_digest *md)
 {
 	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
+	struct connection *c = ike->sa.st_connection;
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
@@ -1811,8 +1812,6 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 		switch (attr.isaat_af_type) {
 		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 		{
-			struct connection *c = ike->sa.st_connection;
-
 			ip_address a;
 			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 			if (d != NULL) {
@@ -1820,33 +1819,32 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 				pfree_diag(&d);
 				return STF_FATAL;
 			}
-			update_first_selector(c, local, selector_from_address(a));
-			set_child_has_client(c, local, true);
+
 			const struct ip_info *afi = address_info(a);
 			c->local->child.lease[afi->ip_index] = a;
 
-			subnet_buf caddr;
-			str_selector_range(&c->child.spds.list->local->client, &caddr);
-			llog(RC_LOG, ike->sa.logger, "Received IP address %s", caddr.buf);
+			update_first_selector(c, local, selector_from_address(a));
+			set_child_has_client(c, local, true);
 
-			/*
-			 * When the sourceip set in the config file,
-			 * log the generated value.
-			 *
-			 * XXX: actually the opposite!  When sourceip=
-			 * is absent from the config file, log that
-			 * that the MODE_CFG address is being used as
-			 * the SOURCEIP.  This is because sourceip=
-			 * overrides the MODE_CFG address.
-			 */
-			if (c->local->config->child.sourceip.len == 0) {
-				ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
-				pexpect(address_eq_address(a, sourceip));
-				llog(RC_LOG, ike->sa.logger, "setting ip source address to %s",
-				     caddr.buf);
+			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+				jam_string(buf, "received ");
+				jam_string(buf, afi->ip_name);
+				jam_string(buf, " lease ");
+				jam_address(buf, &a);
+
+				/*
+				 * When there's no sourceip= in the
+				 * config file, the lease will be
+				 * used.
+				 */
+				if (c->local->config->child.sourceip.len == 0) {
+					ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
+					pexpect(address_eq_address(a, sourceip));
+					jam_string(buf, ", updating source IP address");
+				}
 			}
 
-			set_attr(&recv, attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+			recv.ikev1_internal_ip4_address = true;
 			break;
 		}
 
@@ -1997,6 +1995,8 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			      struct pbs_in *attrs,
 			      struct attrs *received)
 {
+	struct connection *c = ike->sa.st_connection;
+
 	struct attrs resp = {0};
 
 	while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
@@ -2012,25 +2012,35 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 		switch (attr.isaat_af_type) {
 		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 		{
-			struct connection *c = ike->sa.st_connection;
-
 			ip_address a;
 			diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
 			if (d != NULL) {
 				return d;
 			}
-			set_child_has_client(c, local, true);
+
 			const struct ip_info *afi = address_info(a);
 			c->local->child.lease[afi->ip_index] = a;
-			update_end_selector(c, c->local->config->index,
-					    selector_from_address(a),
-					    "^*(&^(* IKEv1 doing something with the address it received");
 
-			subnet_buf caddr;
-			str_selector_range(&c->child.spds.list->local->client, &caddr);
-			llog(RC_LOG, ike->sa.logger,
-			     "Received IPv4 address: %s",
-			     caddr.buf);
+			update_first_selector(c, local, selector_from_address(a));
+			set_child_has_client(c, local, true);
+
+			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+				jam_string(buf, "received ");
+				jam_string(buf, afi->ip_name);
+				jam_string(buf, " lease ");
+				jam_address(buf, &a);
+
+				/*
+				 * When there's no sourceip= in the
+				 * config file, the lease will be
+				 * used.
+				 */
+				if (c->local->config->child.sourceip.len == 0) {
+					ip_address sourceip = spd_end_sourceip(c->child.spds.list->local);
+					pexpect(address_eq_address(a, sourceip));
+					jam_string(buf, ", updating source IP address");
+				}
+			}
 
 			resp.ikev1_internal_ip4_address = true;
 			break;
