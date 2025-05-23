@@ -80,35 +80,6 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->host_type = l->resolve.host.type;
-
-	switch (l->resolve.host.type) {
-	case KH_IPADDR:
-	case KH_IFACE:
-		w->host_addr = l->resolve.host.addr;
-		break;
-
-	case KH_DEFAULTROUTE:
-	case KH_IPHOSTNAME:
-		/* note: we always copy the name string below */
-		w->host_addr = unset_address;
-		break;
-
-	case KH_OPPO:
-	case KH_GROUP:
-	case KH_OPPOGROUP:
-		/* policy should have been set to OPPO */
-		w->host_addr = unset_address;
-		break;
-
-	case KH_ANY:
-		w->host_addr = unset_address;
-		break;
-
-	default:
-		printf("Failed to load connection %s= is not set\n", lr);
-		return false;
-	}
-
 	w->host_addr_name = l->values[KW_IP].string;
 	w->nexthop_name = l->values[KW_NEXTHOP].string;
 	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
