@@ -79,5 +79,5 @@ FATAL ERROR: ipsec addconn: bad-conn-key.conf:9: unrecognized 'conn' keyword 'un
 west #
  ipsec addconn --config bad-conn-value.conf  bad-conn-value
 ipsec addconn: bad-conn-value.conf:9: warning: invalid, keyword ignored: debug=asdlfasdfj
-"bad-conn-value": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=0.0.0.0 match an interface)
+"bad-conn-value": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=%any match an interface)
 west #

@@ -33,7 +33,7 @@ west #
  # --up will fail because of right=%any
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": cannot initiate connection (serial $1) without knowing peer IP address (kind=CK_TEMPLATE)
+"westnet-eastnet-ipv4-psk-ikev2": cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=CK_TEMPLATE)
 west #
  # Now we specify the remote ip, so the connection knows how to initiate
 west #
