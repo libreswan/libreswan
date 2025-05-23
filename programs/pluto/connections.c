@@ -55,6 +55,7 @@
 #include "secrets.h"
 #include "lswnss.h"
 #include "authby.h"
+#include "ipsecconf/interfaces.h"
 
 #include "kernel_info.h"
 #include "defs.h"
@@ -106,6 +107,7 @@
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
 #include "whack_pubkey.h"
 #include "binaryscale-iec-60027-2.h"
+#include "addr_lookup.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -767,6 +769,304 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	    other_host->config->leftright,
 	    str_address(&other_host->config->nexthop, &old),
 	    str_address(&other_host->nexthop, &new));
+}
+
+/*
+ * addconn takes multiple stabs at resolving host addresses:
+ */
+
+static diag_t extract_host(const struct whack_message *wm,
+			   struct resolve_end resolve[END_ROOF],
+			   const struct ip_info **host_afi,
+			   struct logger *logger UNUSED)
+{
+	/* source of AFI */
+	struct {
+		const char *name;
+		const char *value;
+		const char *leftright;
+		const struct ip_info *afi;
+	} winner = {0};
+
+	/*
+	 * Mimic addconn's kt_host and kt_ipaddr parsing, aka
+	 * translate_conn().
+	 *
+	 * This doesn't do much except make a first stab at
+	 * .host.type's value.
+	 */
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		const char *value;
+		struct resolve_end *end = &resolve[lr];
+
+		/*
+		 * {left,right}: when the value '%...' a keywords,
+		 * .type is set accordingly; else .type is KH_IPADDR.
+		 */
+		value = wm->end[lr].host_addr_name;
+		if (value != NULL) {
+			end->host.name = value;
+			const struct sparse_name *sn =
+				sparse_lookup_by_name(&keyword_host_names, shunk1(value));
+			end->host.type = (sn != NULL ? sn->value :
+					  KH_IPADDR/* aka LOOSE_ENUM_OTHER */);
+		}
+
+		/*
+		 * {left,right}nexthop: just save the string
+		 */
+		value = wm->end[lr].nexthop_name;
+		if (value != NULL) {
+			end->nexthop.name = value;
+		}
+	}
+
+	/*
+	 * Mimic the tail end load_conn() which uses some heuristics
+	 * to guess the address family.
+	 *
+	 * When the heuristic fails, IPv4 is assumed.
+	 *
+	 * OLD COMMENT FROM confread.c:
+	 *
+	 * TODO:
+	 *
+	 * The address family default should come in either via a
+	 * config setup option, or via gai.conf / RFC3484 For now,
+	 * %defaultroute and %any means IPv4 only
+	 */
+
+	if (wm->hostaddrfamily != NULL) {
+		/* save the winner */
+		const struct ip_info *afi = ttoinfo(wm->hostaddrfamily);
+		if (afi == NULL) {
+			return diag("hostaddrfamily=%s is not unrecognized", wm->hostaddrfamily);
+		}
+		/* save source */
+		winner.afi = afi;
+		winner.name = "hostaddrfamily";
+		winner.value = wm->hostaddrfamily;
+		winner.leftright = "";
+	}
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+ 		struct resolve_end *end = &resolve[lr];
+ 		const char *leftright = wm->end[lr].leftright;
+
+		struct {
+			const char *name;
+			const char *value;
+		} guesses[] = {
+			{ .name = "", .value = end->host.name, },
+			{ .name = "nexthop", .value = end->nexthop.name, },
+		};
+
+		FOR_EACH_ELEMENT(guess, guesses) {
+			const char *value = guess->value;
+			const char *name = guess->name;
+			if (value == NULL) {
+				continue;
+			}
+			if (strchr(value, ':') != NULL ||
+			    streq(value, "%defaultroute6")  ||
+			    streq(value, "%any6")) {
+				const struct ip_info *afi = &ipv6_info;
+				if (winner.afi == NULL) {
+					winner.afi = afi;
+					winner.leftright = leftright;
+					winner.name = name;
+					winner.value = value;
+				} else if (winner.afi != afi) {
+					return diag("host address family %s from %s%s=%s conflicts with %s%s=%s",
+						    winner.afi->ip_name,
+						    winner.leftright, winner.name, winner.value,
+						    leftright, name, value);
+				}
+			}
+		}
+	}
+
+	if (winner.afi == NULL) {
+		winner.afi = &ipv4_info;
+	}
+
+	/*
+	 * Mimic validate_end() which refines host/nexthop a little.
+	 */
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+ 		struct resolve_end *end = &resolve[lr];
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name;
+		const char *value;
+
+		/* validate the KSCF_IP/KNCF_IP */
+
+		name = "";
+		value = end->host.name;
+		switch (end->host.type) {
+		case KH_ANY:
+			end->host.addr = unset_address;
+			break;
+
+		case KH_IPADDR:
+			PASSERT(logger, value != NULL);
+			if (value[0] == '%') {
+				const char *iface = value + 1;
+				if (!starter_iface_find(iface, winner.afi,
+							&end->host.addr,
+							&end->nexthop.addr)) {
+					return diag("%s%s=%s does not appear to be an interface",
+						    leftright, name, value);
+				}
+				/* not numeric, so set the type to the iface type */
+				end->host.type = KH_IFACE;
+				break;
+			}
+
+			err_t er = ttoaddress_num(shunk1(value), winner.afi, &end->host.addr);
+			if (er != NULL) {
+				/* not an IP address, so set the type to the string */
+				end->host.type = KH_IPHOSTNAME;
+			} else {
+				PEXPECT(logger, winner.afi == address_info(end->host.addr));
+			}
+
+			break;
+
+		case KH_DEFAULTROUTE:
+		case KH_OPPO:
+		case KH_OPPOGROUP:
+		case KH_GROUP:
+		case KH_NOTSET:
+		{
+			/* handled by pluto using .host_type */
+			name_buf nb;
+			ldbg(logger, "%s%s=%s handled as %s later",
+			     leftright, name, (value == NULL ? "<null>" : value),
+			     str_sparse_short(&keyword_host_names, end->host.type, &nb));
+			break;
+		}
+
+		case KH_IFACE:
+		case KH_IPHOSTNAME:
+		{
+			/* generally, this doesn't show up at this stage */
+			name_buf nb;
+			llog_pexpect(logger, HERE,
+				     "%s%s=%s as %s isn't expected",
+				     leftright, name, value,
+				     str_sparse_short(&keyword_host_names, end->host.type, &nb));
+			return diag("confused");
+		}
+
+		}
+
+		/*
+		 * validate the KSCF_NEXTHOP; set nexthop address to
+		 * something consistent, by default
+		 */
+		name = "nexthop";
+		value = end->nexthop.name;
+		if (value != NULL) {
+			if (strcaseeq(value, "%defaultroute")) {
+				end->nexthop.type = KH_DEFAULTROUTE;
+				end->nexthop.addr = winner.afi->address.unspec;
+			} else if (strcaseeq(value, "%direct")) {
+				end->nexthop.type = KH_NOTSET;
+				end->nexthop.addr = winner.afi->address.unspec;
+			} else {
+				err_t e = ttoaddress_num(shunk1(value), winner.afi,
+							 &end->nexthop.addr);
+				if (e != NULL) {
+					return diag("%s%s=%s invalid, %s",
+						    leftright, name, value, e);
+				}
+				end->nexthop.type = KH_IPADDR;
+			}
+		} else {
+			end->nexthop.addr = winner.afi->address.unspec;
+			if (end->host.type == KH_DEFAULTROUTE) {
+				end->nexthop.type = KH_DEFAULTROUTE;
+			}
+		}
+	}
+
+	lset_t verbose_rc_flags = LDBGP(DBG_BASE, logger) ? DEBUG_STREAM|ADD_PREFIX : LEMPTY;
+	resolve_default_route(&resolve[LEFT_END],
+			      &resolve[RIGHT_END],
+			      winner.afi, verbose_rc_flags, logger);
+	resolve_default_route(&resolve[RIGHT_END],
+			      &resolve[LEFT_END],
+			      winner.afi, verbose_rc_flags, logger);
+
+	/*
+	 * Finally, there's starter_whack_add_conn() /
+	 * set_whack_end().
+	 */
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+ 		struct resolve_end *end = &resolve[lr];
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name;
+		const char *value;
+
+		name = "";
+		value = end->host.name;
+		switch (end->host.type) {
+		case KH_IPADDR:
+		case KH_IFACE:
+			break;
+
+		case KH_DEFAULTROUTE:
+		case KH_IPHOSTNAME:
+			/* note: we always copy the name string
+			 * below */
+			end->host.addr = unset_address;
+			break;
+
+		case KH_OPPO:
+		case KH_GROUP:
+		case KH_OPPOGROUP:
+			/* policy should have been set to OPPO */
+			end->host.addr = (wm->whack_from == WHACK_FROM_ADDCONN ? unset_address :
+					  winner.afi->address.unspec);
+			break;
+
+		case KH_ANY:
+			end->host.addr = (wm->whack_from == WHACK_FROM_ADDCONN ? unset_address :
+					  winner.afi->address.unspec);
+			break;
+
+		default:
+			return diag("%s%s=%s is not set", leftright, name, value);
+		}
+
+		name = "nexthop";
+		value = end->nexthop.name;
+		switch (end->nexthop.type) {
+		case KH_IPADDR:
+			break;
+
+		case KH_DEFAULTROUTE: /* acceptable to set nexthop to %defaultroute */
+		case KH_NOTSET:	/* acceptable to not set nexthop */
+			/*
+			 * but, get the family set up right
+			 *
+			 * XXX the nexthop type has to get into the whack
+			 * message!
+			 */
+			end->nexthop.addr = winner.afi->address.unspec;
+			break;
+
+		default:
+			return diag("do something with %s%s=%s",
+				    leftright, name, value);
+			break;
+		}
+	}
+
+	(*host_afi) = winner.afi;
+	return NULL;
 }
 
 /*
@@ -3033,6 +3333,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Determine the Host's address family.
 	 */
+	struct resolve_end resolve[END_ROOF] = {0};
+	const struct ip_info *extracted_afi = NULL;
+	d = extract_host(wm, resolve, &extracted_afi, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+
 	const struct ip_info *host_afi = NULL;
 	d = extract_host_afi(wm, &host_afi);
 	if (d != NULL) {
@@ -3041,6 +3348,65 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (host_afi == NULL) {
 		return diag("host address family unknown");
+	}
+
+	if (extracted_afi != host_afi) {
+		llog_pexpect(c->logger, HERE,
+			     "extracted_afi=%s does not match host_afi=%s",
+			     (extracted_afi == NULL ? "<null>" : extracted_afi->ip_name),
+			     (host_afi == NULL ? "<null>" : host_afi->ip_name));
+		return diag("confused");
+	}
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		const char *leftright = wm->end[lr].leftright;
+		const struct whack_end *we = &wm->end[lr];
+		const struct resolve_end *re = &resolve[lr];
+		if (we->host_type != re->host.type) {
+			name_buf wb, rb;
+			llog_pexpect(c->logger, HERE,
+				     "wm.%s.host_type %s == resolve.%s.host.type %s",
+				     leftright,
+				     str_sparse_short(&keyword_host_names, we->host_type, &wb),
+				     leftright,
+				     str_sparse_short(&keyword_host_names, re->host.type, &rb));
+		} else {
+			name_buf wb;
+			ldbg(c->logger, "%s.host.type=%s",
+			     leftright, str_sparse_short(&keyword_host_names, we->host_type, &wb));
+		}
+		if (!address_eq_address(we->host_addr, re->host.addr)) {
+			address_buf wb, rb;
+			llog_pexpect(c->logger, HERE,
+				     "wm.%s.host_addr %s == resolve.%s.host.addr %s",
+				     leftright,
+				     str_address(&we->host_addr, &wb),
+				     leftright,
+				     str_address(&re->host.addr, &rb));
+		} else {
+			address_buf ab;
+			ldbg(c->logger, "%s.host.addr=%s",
+			     leftright, str_address(&we->host_addr, &ab));
+		}
+		ip_address nexthop = we->nexthop;
+		if (!nexthop.is_set) {
+			/* whack sends .unspec by default, addconn
+			 * sends .unset */
+			nexthop = host_afi->address.unspec;
+		}
+		if (!address_eq_address(nexthop, re->nexthop.addr)) {
+			address_buf wb, rb;
+			llog_pexpect(c->logger, HERE,
+				     "wm.%s.nexthop %s == resolve.%s.nexthop.addr %s",
+				     leftright,
+				     str_address(&nexthop, &wb),
+				     leftright,
+				     str_address(&re->nexthop.addr, &rb));
+		} else {
+			address_buf ab;
+			ldbg(c->logger, "%s.nexthop.addr=%s",
+			     leftright, str_address(&nexthop, &ab));
+		}
 	}
 
 	/*
