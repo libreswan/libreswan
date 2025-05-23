@@ -2125,6 +2125,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
+				       const struct resolve_end *resolve,
 				       enum ike_version ike_version,
 				       struct connection *c,
 				       struct child_end_config *child_config,
@@ -2402,14 +2403,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						    str_address(sourceip, &sipb),
 						    leftright, src->subnet);
 				}
-			} else if (src->host_addr.is_set) {
-				if (!address_eq_address(*sourceip, src->host_addr)) {
+			} else if (resolve->host.addr.is_set) {
+				if (!address_eq_address(*sourceip, resolve->host.addr)) {
 					address_buf sipb;
 					address_buf hab;
 					return diag("%ssourceip=%s invalid, address %s does not match %s=%s and %ssubnet= was not specified",
 						    leftright, src->sourceip,
 						    str_address(sourceip, &sipb),
-						    leftright, str_address(&src->host_addr, &hab),
+						    leftright, str_address(&resolve->host.addr, &hab),
 						    leftright);
 				}
 			} else {
@@ -2924,6 +2925,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
 							enum end end,
+							const struct resolve_end resolve[END_ROOF],
 							struct logger *logger)
 {
 	const struct whack_end *this = &wm->end[end];
@@ -2964,13 +2966,15 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	FOR_EACH_THING(we, this, that) {
-		if (!is_never_negotiate_wm(wm) &&
-		    !address_is_specified(we->host_addr) &&
-		    we->host_type != KH_IPHOSTNAME) {
-			ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
-			     this->leftright, we->leftright);
-			return CK_TEMPLATE;
+	if (!is_never_negotiate_wm(wm)) {
+		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+			const struct resolve_end *re = &resolve[lr];
+			if (!address_is_specified(re->host.addr) &&
+			    re->host.type != KH_IPHOSTNAME) {
+				ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
+				     this->leftright, wm->end[lr].leftright);
+				return CK_TEMPLATE;
+			}
 		}
 	}
 	ldbg(logger, "%s connection is CK_PERMANENT: by default",
@@ -3313,20 +3317,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 			ldbg(c->logger, "%s.host.type=%s",
 			     leftright, str_sparse_short(&keyword_host_names, we->host_type, &wb));
 		}
-		if (!address_eq_address(we->host_addr, re->host.addr)) {
-			address_buf wb, rb;
-			llog_pexpect(c->logger, HERE,
-				     "wm.%s.host_addr %s == resolve.%s.host.addr %s",
-				     leftright,
-				     str_address(&we->host_addr, &wb),
-				     leftright,
-				     str_address(&re->host.addr, &rb));
-		} else {
-			address_buf ab;
-			ldbg(c->logger, "%s.host.addr=%s",
-			     leftright, str_address(&we->host_addr, &ab));
-		}
 		address_buf ab;
+		ldbg(c->logger, "%s.host.addr=%s",
+		     leftright, str_address(&re->host.addr, &ab));
 		ldbg(c->logger, "%s.nexthop.addr=%s",
 		     leftright, str_address(&re->nexthop.addr, &ab));
 	}
@@ -3344,9 +3337,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	ip_address host_addr[END_ROOF];
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[end];
+		const struct resolve_end *re = &resolve[end];
 		host_addr[end] = host_afi->address.unspec;
-		if (address_is_specified(we->host_addr)) {
-			host_addr[end] = we->host_addr;
+		if (address_is_specified(re->host.addr)) {
+			host_addr[end] = re->host.addr;
 		} else if (we->host_type == KH_IPHOSTNAME) {
 			ip_address addr;
 			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
@@ -3403,7 +3397,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * hack.
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		c->end[end].kind = extract_connection_end_kind(wm, end, c->logger);
+		c->end[end].kind = extract_connection_end_kind(wm, end, resolve, c->logger);
 	}
 
 	passert(c->base_name != NULL); /* see alloc_connection() */
@@ -3837,8 +3831,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * MAKE this more sane in the face of unresolved IP
 	 * addresses.
 	 */
-	if (wm->end[LEFT_END].host_type != KH_IPHOSTNAME && !address_is_specified(wm->end[LEFT_END].host_addr) &&
-	    wm->end[RIGHT_END].host_type != KH_IPHOSTNAME && !address_is_specified(wm->end[RIGHT_END].host_addr)) {
+	if (wm->end[LEFT_END].host_type != KH_IPHOSTNAME && !address_is_specified(resolve[LEFT_END].host.addr) &&
+	    wm->end[RIGHT_END].host_type != KH_IPHOSTNAME && !address_is_specified(resolve[RIGHT_END].host.addr)) {
 		return diag("must specify host IP address for our side");
 	}
 
@@ -4830,7 +4824,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		d = extract_child_end_config(wm, whack_ends[end], ike_version,
+		d = extract_child_end_config(wm, whack_ends[end],
+					     &resolve[end],
+					     ike_version,
 					     c, &config->end[end].child,
 					     c->logger);
 		if (d != NULL) {
