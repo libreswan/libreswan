@@ -998,7 +998,6 @@ int main(int argc, char **argv)
 	int xauthpasslen = 0;	/* includes '\0' */
 	bool ignore_errors = false;
 
-	struct optarg_family host_family = { 0, };
 	struct optarg_family child_family = { 0, };
 
 	char *authby = NULL;
@@ -1246,8 +1245,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
+		{
+			struct optarg_family any_family = { 0, };
 			whack_command(&msg, WHACK_CRASH);
-			msg.whack_crash_peer = optarg_address_dns(logger, &host_family);
+			msg.whack_crash_peer = optarg_address_dns(logger, &any_family);
 			if (!address_is_specified(msg.whack_crash_peer)) {
 				/* either :: or 0.0.0.0; unset already
 				 * rejected */
@@ -1256,6 +1257,7 @@ int main(int argc, char **argv)
 					     str_address(&msg.whack_crash_peer, &ab));
 			}
 			continue;
+		}
 
 		/* --deleteuser --name <xauthusername> */
 		case OPT_DELETEUSER:
@@ -1464,58 +1466,8 @@ int main(int argc, char **argv)
 		/* Connection Description options */
 
 		case END_HOST:	/* --host <ip-address> */
-		{
 			end->host_addr_name = optarg;
-			if (streq(optarg, "%any")) {
-				end->host_addr = optarg_any(&host_family);
-				end->host_type = KH_ANY;
-			} else if (streq(optarg, "%opportunistic")) {
-				/* always use tunnel mode; mark as opportunistic */
-				msg.type = KS_TUNNEL;
-				end->host_type = KH_OPPO;
-				end->host_addr = optarg_any(&host_family);
-				end->key_from_DNS_on_demand = true;
-			} else if (streq(optarg, "%group")) {
-				/* always use tunnel mode; mark as group */
-				msg.type = KS_TUNNEL;
-				end->host_type = KH_GROUP;
-				end->host_addr = optarg_any(&host_family);
-			} else if (streq(optarg, "%opportunisticgroup")) {
-				/* always use tunnel mode; mark as opportunistic */
-				msg.type = KS_TUNNEL;
-				end->host_type = KH_OPPOGROUP;
-				end->host_addr = optarg_any(&host_family);
-				end->key_from_DNS_on_demand = true;
-			} else if (ttoaddress_num(shunk1(optarg), host_family.type, &end->host_addr) == NULL) {
-				/*
-				 * we have a proper numeric IP address.  Update the
-				 * host's family.
-				 */
-				optarg_family(&host_family, address_info(end->host_addr));
-				end->host_type = KH_IPADDR;
-			} else {
-				/*
-				 * Just assume DNS.
-				 */
-				end->host_type = KH_IPHOSTNAME;
-			}
-
-			if (end->host_type == KH_GROUP ||
-			    end->host_type == KH_OPPOGROUP) {
-				/*
-				 * client subnet must not be specified
-				 * by user: it will come from the
-				 * group's file.
-				 *
-				 * Hence, for --host, pretend --subnet
-				 * has also been seen.
-				 */
-				if (seen[END_SUBNET])
-					diagw("--host %group clashes with --client");
-				seen[END_SUBNET] = true;
-			}
 			continue;
-		}
 
 		case END_ID:	/* --id <identity> */
 			end->id = optarg;	/* decoded by Pluto */
@@ -1547,11 +1499,6 @@ int main(int argc, char **argv)
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			end->nexthop_name = optarg;
-			if (streq(optarg, "%direct")) {
-				end->nexthop = optarg_any(&host_family);
-			} else {
-				end->nexthop = optarg_address_dns(logger, &host_family);
-			}
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */
@@ -1995,42 +1942,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
-			if (host_family.type == &ipv4_info) {
-				/* ignore redundant options */
-				continue;
-			}
-
-			if (seen[CD_CONNIPV6]) {
-				/* i.e., --ipv6 ... --ipv4 */
-				diagw("--ipv4 conflicts with --ipv6");
-			}
-
-			if (host_family.used_by != NULL) {
-				/* i.e., --host ::1 --ipv4; useful? wrong message? */
-				optarg_fatal(logger, "must precede %s", host_family.used_by);
-			}
-			host_family.used_by = optarg_options[optarg_index].name;
-			host_family.type = &ipv4_info;
 			msg.hostaddrfamily = "ipv4";
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
-			if (host_family.type == &ipv6_info) {
-				/* ignore redundant options */
-				continue;
-			}
-
-			if (seen[CD_CONNIPV4]) {
-				/* i.e., --ipv4 ... --ipv6 */
-				diagw("--ipv6 conflicts with --ipv4");
-			}
-
-			if (host_family.used_by != NULL) {
-				/* i.e., --host 0.0.0.1 --ipv6; useful? wrong message? */
-				optarg_fatal(logger, "must precede %s", host_family.used_by);
-			}
-			host_family.used_by = optarg_options[optarg_index].name;
-			host_family.type = &ipv6_info;
 			msg.hostaddrfamily = "ipv6";
 			continue;
 

@@ -9,7 +9,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add east
-Failed to load connection left= is not set
+"east": failed to add connection: left= is not set
 east #
  ipsec status |grep redirect
 global-redirect=yes, global-redirect-to=192.1.3.33
