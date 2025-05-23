@@ -360,6 +360,42 @@ static bool extract_config_deltatime(deltatime_t *target,
 	return update_deltatime(target, cfg->setup[field].deltatime);
 }
 
+static bool update_yn(bool *target, enum yn_options yn)
+{
+	/* Do nothing if value is unset. */
+	switch (yn) {
+	case YN_YES:
+		(*target) = true;
+		return true;
+	case YN_NO:
+		(*target) = false;
+		return true;
+	default:
+		return false;
+	}
+}
+
+static bool extract_config_yn(bool *target,
+			      const struct starter_config *cfg,
+			      enum keywords field)
+{
+	return update_yn(target, cfg->setup[field].option);
+}
+
+#if 0
+static bool extract_config_bool(bool *target,
+				const struct starter_config *cfg,
+				enum keywords field)
+{
+	/* Do nothing if value is unset. */
+	if (cfg->setup[field].set) {
+		(*target) = cfg->setup[field].option;
+		return true;
+	}
+	return false;
+}
+#endif
+
 /*
  * This function MUST NOT be used for anything else!
  * It is used to seed the NSS PRNG based on --seedbits pluto argument
@@ -1155,7 +1191,7 @@ int main(int argc, char **argv)
 #endif
 
 			/* plutofork= no longer supported via config file */
-			log_param.log_with_timestamp = cfg->setup[KBF_LOGTIME].option;
+			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
 			log_param.append = cfg->setup[KBF_LOGAPPEND].option;
 			log_ip = cfg->setup[KBF_LOGIP].option;
 			log_to_audit = cfg->setup[KBF_AUDIT_LOG].option;

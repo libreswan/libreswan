@@ -81,7 +81,6 @@ static struct starter_config *alloc_starter_config(void)
 
 # define SOPT(kbf, v)  { cfg->setup[kbf].option = (v) ; }
 
-	SOPT(KBF_LOGTIME, true);
 	SOPT(KBF_LOGAPPEND, true);
 	SOPT(KBF_LOGIP, true);
 	SOPT(KBF_AUDIT_LOG, true);
