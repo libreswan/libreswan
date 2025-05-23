@@ -154,7 +154,6 @@ struct whack_end {
 
 	enum keyword_auth auth;
 
-	enum keyword_host host_type;
 	const char *ikeport;			/* host */
 	const char *nexthop_name;
 	const char *sourceip;

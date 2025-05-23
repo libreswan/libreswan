@@ -79,7 +79,6 @@ static bool set_whack_end(struct whack_end *w,
 		w->id = clone_str(str_address(&l->resolve.host.addr, &b), "if id");
 	}
 
-	w->host_type = l->resolve.host.type;
 	w->host_addr_name = l->values[KW_IP].string;
 	w->nexthop_name = l->values[KW_NEXTHOP].string;
 	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
