@@ -1560,6 +1560,7 @@ static diag_t extract_host_end(struct host_end *host,
 			       const struct whack_message *wm,
 			       const struct whack_end *src,
 			       const struct whack_end *other_src,
+			       const struct resolve_end *resolve,
 			       enum ike_version ike_version,
 			       struct authby whack_authby,
 			       bool *same_ca,
@@ -1589,7 +1590,7 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Either now, during extraction, or later, during
 	 * instantiation.
 	 */
-	host_config->nexthop = src->nexthop;
+	host_config->nexthop = resolve->nexthop.addr;
 
 	/*
 	 * Decode id, if any.
@@ -3325,25 +3326,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 			ldbg(c->logger, "%s.host.addr=%s",
 			     leftright, str_address(&we->host_addr, &ab));
 		}
-		ip_address nexthop = we->nexthop;
-		if (!nexthop.is_set) {
-			/* whack sends .unspec by default, addconn
-			 * sends .unset */
-			nexthop = host_afi->address.unspec;
-		}
-		if (!address_eq_address(nexthop, re->nexthop.addr)) {
-			address_buf wb, rb;
-			llog_pexpect(c->logger, HERE,
-				     "wm.%s.nexthop %s == resolve.%s.nexthop.addr %s",
-				     leftright,
-				     str_address(&nexthop, &wb),
-				     leftright,
-				     str_address(&re->nexthop.addr, &rb));
-		} else {
-			address_buf ab;
-			ldbg(c->logger, "%s.nexthop.addr=%s",
-			     leftright, str_address(&nexthop, &ab));
-		}
+		address_buf ab;
+		ldbg(c->logger, "%s.nexthop.addr=%s",
+		     leftright, str_address(&re->nexthop.addr, &ab));
 	}
 
 	/*
@@ -3401,6 +3386,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     wm,
 				     whack_ends[this],
 				     whack_ends[that],
+				     &resolve[this],
 				     ike_version, whack_authby,
 				     &same_ca[this],
 				     c->logger);
