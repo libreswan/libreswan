@@ -772,7 +772,10 @@ void update_hosts_from_end_host_addr(struct connection *c,
 }
 
 /*
- * addconn takes multiple stabs at resolving host addresses:
+ * Figure out the host / nexthop / client addresses.
+ *
+ * Returns diag() when there's a conflict.  leaves *AFI NULL if could
+ * not be determined.
  */
 
 static diag_t extract_host(const struct whack_message *wm,
@@ -1038,7 +1041,8 @@ static diag_t extract_host(const struct whack_message *wm,
 			break;
 
 		default:
-			return diag("%s%s=%s is not set", leftright, name, value);
+			return diag("%s%s=%s is not set",
+				    leftright, name, (value == NULL ? "" : value));
 		}
 
 		name = "nexthop";
@@ -1066,59 +1070,6 @@ static diag_t extract_host(const struct whack_message *wm,
 	}
 
 	(*host_afi) = winner.afi;
-	return NULL;
-}
-
-/*
- * Figure out the host / client address family.
- *
- * Returns diag() when there's a conflict.  leaves *AFI NULL if could
- * not be determined.
- */
-
-#define EXTRACT_AFI(NAME, FIELD)					\
-	{								\
-		const struct ip_info *efi = address_info(FIELD);	\
-		if (efi != NULL) {					\
-			if ((*afi) == NULL) {				\
-				/* save the winner */			\
-				(*afi) = efi;				\
-				leftright = w->leftright;		\
-				name = NAME;				\
-				value = str_address(&FIELD, &ab);	\
-			} else if (efi != *afi) {			\
-				/* reject the conflict */		\
-				address_buf tb;				\
-				return diag("host address family %s from %s%s=%s conflicts with %s%s=%s", \
-					    (*afi)->ip_name, leftright, name, value, \
-					    w->leftright, NAME, str_address(&FIELD, &tb)); \
-			}						\
-		}							\
-	}
-
-static diag_t extract_host_afi(const struct whack_message *wm,
-			       const struct ip_info **afi)
-{
-	*afi = NULL;
-	const char *leftright = "";
-	const char *name = "";
-	address_buf ab = {0}; /* same scope as VALUE */
-	const char *value = ab.buf;
-	if (wm->hostaddrfamily != NULL) {
-		/* save the winner */
-		(*afi) = ttoinfo(wm->hostaddrfamily);
-		name = "hostaddrfamily";
-		value = wm->hostaddrfamily;
-		/* but was there one? */
-		if (*afi == NULL) {
-			return diag("hostaddrfamily=%s unrecognized", wm->hostaddrfamily);
-		}
-	}
-	FOR_EACH_THING(w, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-		/* left= and right= */
-		EXTRACT_AFI("", w->host_addr);
-		EXTRACT_AFI("nexthop", w->nexthop);
-	}
 	return NULL;
 }
 
@@ -3336,29 +3287,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * Determine the Host's address family.
 	 */
 	struct resolve_end resolve[END_ROOF] = {0};
-	const struct ip_info *extracted_afi = NULL;
-	d = extract_host(wm, resolve, &extracted_afi, c->logger);
-	if (d != NULL) {
-		return d;
-	}
-
 	const struct ip_info *host_afi = NULL;
-	d = extract_host_afi(wm, &host_afi);
+	d = extract_host(wm, resolve, &host_afi, c->logger);
 	if (d != NULL) {
 		return d;
 	}
 
-	if (host_afi == NULL) {
-		return diag("host address family unknown");
-	}
-
-	if (extracted_afi != host_afi) {
-		llog_pexpect(c->logger, HERE,
-			     "extracted_afi=%s does not match host_afi=%s",
-			     (extracted_afi == NULL ? "<null>" : extracted_afi->ip_name),
-			     (host_afi == NULL ? "<null>" : host_afi->ip_name));
-		return diag("confused");
-	}
+	PASSERT(c->logger, host_afi != NULL);
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const char *leftright = wm->end[lr].leftright;
