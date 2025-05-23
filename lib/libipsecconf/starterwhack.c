@@ -50,7 +50,6 @@
 
 static bool set_whack_end(struct whack_end *w,
 			  const struct starter_end *l,
-			  const struct ip_info *host_afi,
 			  struct logger *logger)
 {
 	const char *lr = l->leftright;
@@ -112,29 +111,6 @@ static bool set_whack_end(struct whack_end *w,
 
 	w->host_addr_name = l->values[KW_IP].string;
 	w->nexthop_name = l->values[KW_NEXTHOP].string;
-
-	switch (l->resolve.nexthop.type) {
-	case KH_IPADDR:
-		w->nexthop = l->resolve.nexthop.addr;
-		break;
-
-	case KH_DEFAULTROUTE: /* acceptable to set nexthop to %defaultroute */
-	case KH_NOTSET:	/* acceptable to not set nexthop */
-		/*
-		 * but, get the family set up right
-		 *
-		 * XXX the nexthop type has to get into the whack
-		 * message!
-		 */
-		w->nexthop = host_afi->address.unspec;
-		break;
-
-	default:
-		printf("%s: do something with nexthop case: %d\n", lr,
-			l->resolve.nexthop.type);
-		break;
-	}
-
 	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
 	w->vti = l->values[KSCF_VTI].string; /* could be NULL */
 	w->interface_ip = l->values[KSCF_INTERFACE_IP].string; /* could be NULL */
@@ -399,11 +375,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_XAUTHFAIL].set)
 		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
 
-	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END],
-			   conn->host_afi, logger))
+	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END], logger))
 		return -1;
-	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END],
-			   conn->host_afi, logger))
+	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
 		return -1;
 
 	msg.esp = conn->values[KSCF_ESP].string;
