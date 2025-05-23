@@ -30,8 +30,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
-"westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
+"westnet-eastnet-ipv4-psk-ikev1" #1: received IPv4 lease 192.0.2.1, updating source IP address
 "westnet-eastnet-ipv4-psk-ikev1" #1: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev1" #1: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored CISCO_SPLIT_INC in MODE_CFG SET payload
@@ -82,8 +81,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH: Successfully Authenticated
 "westnet-eastnet-ipv4-psk-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-ipv4-psk-ikev1" #1: Received IP address 192.0.2.1/32
-"westnet-eastnet-ipv4-psk-ikev1" #1: setting ip source address to 192.0.2.1/32
+"westnet-eastnet-ipv4-psk-ikev1" #1: received IPv4 lease 192.0.2.1, updating source IP address
 "westnet-eastnet-ipv4-psk-ikev1" #1: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev1" #1: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev1" #1: received and ignored CISCO_SPLIT_INC in MODE_CFG SET payload

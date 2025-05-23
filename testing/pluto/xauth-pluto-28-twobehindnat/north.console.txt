@@ -25,7 +25,7 @@ north #
 "north-east" #1: XAUTH: Successfully Authenticated
 "north-east" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "north-east" #1: modecfg: Sending IP request (MODECFG_I1)
-"north-east" #1: Received IPv4 address: 192.0.2.101/32
+"north-east" #1: received IPv4 lease 192.0.2.101, updating source IP address
 "north-east" #1: received INTERNAL_IP4_DNS server address 1.2.3.4
 "north-east" #1: received INTERNAL_IP4_DNS server address 5.6.7.8
 "north-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
