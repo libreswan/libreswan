@@ -301,28 +301,28 @@ static bool never_negotiate_enum_option(const char *leftright,
 	return false;
 }
 
-static bool is_opportunistic_wm_end(const struct whack_end *end)
+static bool is_opportunistic_wm_end(const struct resolve_end *end)
 {
-	return (end->host_type == KH_OPPO ||
-		end->host_type == KH_OPPOGROUP);
+	return (end->host.type == KH_OPPO ||
+		end->host.type == KH_OPPOGROUP);
 }
 
-static bool is_opportunistic_wm(const struct whack_message *wm)
+static bool is_opportunistic_wm(const struct resolve_end resolve[END_ROOF])
 {
-	return (is_opportunistic_wm_end(&wm->end[LEFT_END]) ||
-		is_opportunistic_wm_end(&wm->end[RIGHT_END]));
+	return (is_opportunistic_wm_end(&resolve[LEFT_END]) ||
+		is_opportunistic_wm_end(&resolve[RIGHT_END]));
 }
 
-static bool is_group_wm_end(const struct whack_end *end)
+static bool is_group_wm_end(const struct resolve_end *end)
 {
-	return (end->host_type == KH_GROUP ||
-		end->host_type == KH_OPPOGROUP);
+	return (end->host.type == KH_GROUP ||
+		end->host.type == KH_OPPOGROUP);
 }
 
-static bool is_group_wm(const struct whack_message *wm)
+static bool is_group_wm(const struct resolve_end resolve[END_ROOF])
 {
-	return (is_group_wm_end(&wm->end[LEFT_END]) ||
-		is_group_wm_end(&wm->end[RIGHT_END]));
+	return (is_group_wm_end(&resolve[LEFT_END]) ||
+		is_group_wm_end(&resolve[RIGHT_END]));
 }
 
 /*
@@ -1841,7 +1841,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	/* the rest is simple copying of corresponding fields */
-	host_config->type = src->host_type;
+	host_config->type = resolve->host.type;
 	host_config->name = clone_str(src->host_addr_name, "host ip");
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
 					       YN_NO, wm, logger);
@@ -2017,7 +2017,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgserver == YN_YES && src->modecfgclient == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2027,7 +2027,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgserver == YN_YES && src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2037,7 +2037,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgclient == YN_YES && other_src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2047,7 +2047,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgserver == YN_YES && src->addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
 				leftright, src->leftright);
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2075,7 +2075,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgclient == YN_YES && other_src->addresspool != NULL) {
 		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
 				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2085,7 +2085,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->cat == YN_YES && other_src->addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2931,7 +2931,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	const struct whack_end *this = &wm->end[end];
 	const struct whack_end *that = &wm->end[!end];
 
-	if (is_group_wm(wm)) {
+	if (is_group_wm(resolve)) {
 		ldbg(logger, "%s connection is CK_GROUP: by is_group_wm()",
 		     this->leftright);
 		return CK_GROUP;
@@ -3301,22 +3301,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	PASSERT(c->logger, host_afi != NULL);
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const char *leftright = wm->end[lr].leftright;
 		const struct whack_end *we = &wm->end[lr];
+		const char *leftright = we->leftright;
 		const struct resolve_end *re = &resolve[lr];
-		if (we->host_type != re->host.type) {
-			name_buf wb, rb;
-			llog_pexpect(c->logger, HERE,
-				     "wm.%s.host_type %s == resolve.%s.host.type %s",
-				     leftright,
-				     str_sparse_short(&keyword_host_names, we->host_type, &wb),
-				     leftright,
-				     str_sparse_short(&keyword_host_names, re->host.type, &rb));
-		} else {
-			name_buf wb;
-			ldbg(c->logger, "%s.host.type=%s",
-			     leftright, str_sparse_short(&keyword_host_names, we->host_type, &wb));
-		}
+		name_buf wb;
+		ldbg(c->logger, "%s.host.type=%s",
+		     leftright, str_sparse_short(&keyword_host_names, re->host.type, &wb));
 		address_buf ab;
 		ldbg(c->logger, "%s.host.addr=%s",
 		     leftright, str_address(&re->host.addr, &ab));
@@ -3341,7 +3331,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		host_addr[end] = host_afi->address.unspec;
 		if (address_is_specified(re->host.addr)) {
 			host_addr[end] = re->host.addr;
-		} else if (we->host_type == KH_IPHOSTNAME) {
+		} else if (re->host.type == KH_IPHOSTNAME) {
 			ip_address addr;
 			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
 						  host_afi, &addr);
@@ -3485,17 +3475,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 #if 0
 	PASSERT(c->logger,
-		is_opportunistic_wm(wm) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
-	PASSERT(c->logger, is_group_wm(wm) == wm->is_connection_group);
+		is_opportunistic_wm(resolve) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
+	PASSERT(c->logger, is_group_wm(resolve) == wm->is_connection_group);
 #endif
 
-	if (is_opportunistic_wm(wm) && c->config->ike_version < IKEv2) {
+	if (is_opportunistic_wm(resolve) && c->config->ike_version < IKEv2) {
 		return diag("opportunistic connection MUST have IKEv2");
 	}
-	config->opportunistic = is_opportunistic_wm(wm);
+	config->opportunistic = is_opportunistic_wm(resolve);
 
 #if 0
-	if (is_opportunistic_wm(wm)) {
+	if (is_opportunistic_wm(resolve)) {
 		if (whack_authby.psk) {
 			return diag("PSK is not supported for opportunism");
 		}
@@ -3831,8 +3821,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * MAKE this more sane in the face of unresolved IP
 	 * addresses.
 	 */
-	if (wm->end[LEFT_END].host_type != KH_IPHOSTNAME && !address_is_specified(resolve[LEFT_END].host.addr) &&
-	    wm->end[RIGHT_END].host_type != KH_IPHOSTNAME && !address_is_specified(resolve[RIGHT_END].host.addr)) {
+	if (resolve[LEFT_END].host.type != KH_IPHOSTNAME && !address_is_specified(resolve[LEFT_END].host.addr) &&
+	    resolve[RIGHT_END].host.type != KH_IPHOSTNAME && !address_is_specified(resolve[RIGHT_END].host.addr)) {
 		return diag("must specify host IP address for our side");
 	}
 
@@ -4691,7 +4681,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (wm->end[LEFT_END].modecfgserver == YN_YES &&
 	    wm->end[RIGHT_END].modecfgserver == YN_YES) {
 		diag_t d = diag("both leftmodecfgserver=yes and rightmodecfgserver=yes defined");
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -4701,7 +4691,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (wm->end[LEFT_END].modecfgclient == YN_YES &&
 	    wm->end[RIGHT_END].modecfgclient == YN_YES) {
 		diag_t d = diag("both leftmodecfgclient=yes and rightmodecfgclient=yes defined");
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -4710,7 +4700,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->end[LEFT_END].cat == YN_YES && wm->end[RIGHT_END].cat == YN_YES) {
 		diag_t d = diag("both leftcat=yes and rightcat=yes defined");
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -4721,7 +4711,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("both leftvirt= and rightvirt= defined");
 	}
 
-	if (is_group_wm(wm) && (wm->end[LEFT_END].virt != NULL ||
+	if (is_group_wm(resolve) && (wm->end[LEFT_END].virt != NULL ||
 				wm->end[RIGHT_END].virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
 	}
@@ -4749,7 +4739,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (config->end[LEFT_END].host.modecfg.server &&
 	    config->end[RIGHT_END].host.modecfg.server) {
 		diag_t d = diag("both left and right are configured as a server");
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -4759,7 +4749,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (config->end[LEFT_END].host.modecfg.client &&
 	    config->end[RIGHT_END].host.modecfg.client) {
 		diag_t d = diag("both left and right are configured as a client");
-		if (!is_opportunistic_wm(wm)) {
+		if (!is_opportunistic_wm(resolve)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
