@@ -32,7 +32,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#include "addr_lookup.h"	/* for resolve_default_route() */
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
@@ -54,23 +53,6 @@ static char *environlize(const char *str)
 		*cur++ = '_';
 	}
 	return cpy;
-}
-
-/*
- * See if conn's left or right is %defaultroute and resolve it.
- *
- * XXX: why not let pluto resolve all this like it is already doing?
- * because of MOBIKE.
- */
-static void resolve_default_routes(struct starter_conn *conn UNUSED, struct logger *logger)
-{
-	lset_t verbose_rc_flags = verbose ? (WHACK_STREAM|NO_PREFIX) : LEMPTY;
-	resolve_default_route(&conn->end[LEFT_END].resolve,
-			      &conn->end[RIGHT_END].resolve,
-			      conn->host_afi, verbose_rc_flags, logger);
-	resolve_default_route(&conn->end[RIGHT_END].resolve,
-			      &conn->end[LEFT_END].resolve,
-			      conn->host_afi, verbose_rc_flags, logger);
 }
 
 #ifdef USE_SECCOMP
@@ -221,8 +203,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		fprintf(stdout, "  resolving default routes");
 		fprintf(stdout, "\n");
 	}
-
-	resolve_default_routes(conn, logger);
 
 	if (verbose) {
 		fprintf(stdout, "  sending to pluto");
@@ -559,7 +539,6 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			resolve_default_routes(conn, logger);
 			starter_whack_add_conn(ctlsocket, conn, logger);
 		}
 
@@ -591,7 +570,6 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		resolve_default_routes(conn, logger);
 		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
 
 	} else {
