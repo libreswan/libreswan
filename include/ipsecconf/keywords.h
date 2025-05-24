@@ -62,7 +62,7 @@ enum keywords {
 	 */
 	KW_DEBUG,
 	KW_IP,
-	KW_NEXTHOP,
+	KWS_NEXTHOP,
 	KW_RSASIGKEY,
 	KW_ECDSAKEY,
 	KW_PUBKEY,
@@ -333,7 +333,6 @@ enum keyword_type {
 	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
 	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
 	kt_range,               /* ip address range 1.2.3.4-1.2.3.10 */
-	kt_ipaddr,              /* an IP address */
 	kt_subnet,              /* an IP address subnet */
 	kt_idtype,              /* an ID type */
 	kt_also,		/* i.e., #include */

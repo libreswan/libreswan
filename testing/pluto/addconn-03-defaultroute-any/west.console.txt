@@ -11,42 +11,6 @@ west #
  ipsec addconn --verbose test
 opening file: /etc/ipsec.conf
 loading conns matching test:
-  resolving default routes
-resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer <any>
-  seeking GATEWAY
-    query GETROUTE+REQUEST+ROOT+MATCH
-  opening non-blocking netlink socket
-  sent 28 byte netlink message
-  reading into 32768 byte buffer
-  processing 3772 byte response
-    parsing route entry (RTA payloads)
-      RTA_TABLE=254
-      RTA_GATEWAY=192.1.2.254
-      using src=<unset-address> prefsrc=<unset-address> gateway=192.1.2.254 dst=<unset-address> dev='eth1' priority=-1 pref=-1 table=254
-      found gateway(host_nexthop): 192.1.2.254
-  reading into 32768 byte buffer
-  processing 31080 byte response
-  reading into 32768 byte buffer
-  processing 20 byte response
-    DONE
-  please-call-again: src=<defaultroute> gateway=192.1.2.254
-resolving family=IPv4 src=<defaultroute> gateway=192.1.2.254 peer <any>
-  seeking PREFSRC
-    query GETROUTE+REQUEST
-    add RTA_DST 192.1.2.254 (host->nexthop.addr)
-  opening non-blocking netlink socket
-  sent 36 byte netlink message
-  reading into 32768 byte buffer
-  processing 104 byte response
-    parsing route entry (RTA payloads)
-      RTA_TABLE=254
-      RTA_DST=192.1.2.254
-      RTA_PREFSRC=192.1.2.45
-      using src=<unset-address> prefsrc=192.1.2.45 gateway=<unset-address> dst=192.1.2.254 dev='eth1' priority=-1 pref=-1 table=254 +cacheinfo +uid
-      found prefsrc(host_addr): 192.1.2.45
-  success: src=192.1.2.45 gateway=192.1.2.254
-resolving family=IPv4 src=<any> gateway=<not-set> peer 192.1.2.45
-  seeking NOTHING
   sending to pluto
 "test": added IKEv2 connection
 west #

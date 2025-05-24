@@ -177,7 +177,6 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_pubkey:
-		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
@@ -284,31 +283,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		break;
 	}
 
-	/*
-	 * validate the KSCF_NEXTHOP; set nexthop address to
-	 * something consistent, by default
-	 */
-	end->resolve.nexthop.addr = host_afi->address.unspec;
-	end->resolve.nexthop.name = end->values[KW_NEXTHOP].string;
-	if (end->resolve.nexthop.name != NULL) {
-		const char *value = end->resolve.nexthop.name;
-		if (strcaseeq(value, "%defaultroute")) {
-			end->resolve.nexthop.type = KH_DEFAULTROUTE;
-		} else {
-			err_t e = ttoaddress_num(shunk1(value), host_afi,
-						 &end->resolve.nexthop.addr);
-			if (e != NULL) {
-				ERR_FOUND("bad value for %snexthop=%s [%s]",
-					  leftright, value, e);
-			}
-			end->resolve.nexthop.type = KH_IPADDR;
-		}
-	} else {
-		if (end->resolve.host.type == KH_DEFAULTROUTE) {
-			end->resolve.nexthop.type = KH_DEFAULTROUTE;
-		}
-	}
-
 	return ok;
 #  undef ERR_FOUND
 }
@@ -383,7 +357,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 	case kt_string:
-	case kt_ipaddr:
 	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
@@ -662,7 +635,7 @@ static bool load_conn(struct starter_conn *conn,
 		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
 			FOR_EACH_THING(ips,
 				       end->values[KW_IP].string,
-				       end->values[KW_NEXTHOP].string) {
+				       end->values[KWS_NEXTHOP].string) {
 				if (ips == NULL) {
 					continue;
 				}

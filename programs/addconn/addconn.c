@@ -32,7 +32,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#include "addr_lookup.h"	/* for resolve_default_route() */
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
@@ -54,23 +53,6 @@ static char *environlize(const char *str)
 		*cur++ = '_';
 	}
 	return cpy;
-}
-
-/*
- * See if conn's left or right is %defaultroute and resolve it.
- *
- * XXX: why not let pluto resolve all this like it is already doing?
- * because of MOBIKE.
- */
-static void resolve_default_routes(struct starter_conn *conn UNUSED, struct logger *logger)
-{
-	lset_t verbose_rc_flags = verbose ? (WHACK_STREAM|NO_PREFIX) : LEMPTY;
-	resolve_default_route(&conn->end[LEFT_END].resolve,
-			      &conn->end[RIGHT_END].resolve,
-			      conn->host_afi, verbose_rc_flags, logger);
-	resolve_default_route(&conn->end[RIGHT_END].resolve,
-			      &conn->end[LEFT_END].resolve,
-			      conn->host_afi, verbose_rc_flags, logger);
 }
 
 #ifdef USE_SECCOMP
@@ -216,13 +198,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	}
 
 	}
-
-	if (verbose) {
-		fprintf(stdout, "  resolving default routes");
-		fprintf(stdout, "\n");
-	}
-
-	resolve_default_routes(conn, logger);
 
 	if (verbose) {
 		fprintf(stdout, "  sending to pluto");
@@ -507,13 +482,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-#ifdef USE_DNSSEC
-	unbound_sync_init(cfg->setup[KBF_DO_DNSSEC].option,
-			  cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string,
-			  cfg->setup[KSF_DNSSEC_ANCHORS].string,
-			  logger);
-#endif
-
 	if (autoall) {
 		if (verbose > 0)
 			printf("loading all conns according to their auto= settings\n");
@@ -559,7 +527,6 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			resolve_default_routes(conn, logger);
 			starter_whack_add_conn(ctlsocket, conn, logger);
 		}
 
@@ -591,7 +558,6 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		resolve_default_routes(conn, logger);
 		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
 
 	} else {
@@ -770,9 +736,7 @@ int main(int argc, char *argv[])
 	}
 
 	confread_free(cfg);
-#ifdef USE_DNSSEC
-	unbound_ctx_free();
-#endif
+
 	/*
 	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
 	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code

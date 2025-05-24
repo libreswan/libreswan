@@ -818,7 +818,7 @@ static diag_t extract_host(const struct whack_message *wm,
 		/*
 		 * {left,right}nexthop: just save the string
 		 */
-		value = wm->end[lr].nexthop_name;
+		value = wm->end[lr].nexthop;
 		if (value != NULL) {
 			end->nexthop.name = value;
 		}

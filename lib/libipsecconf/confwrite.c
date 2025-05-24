@@ -109,7 +109,6 @@ static void confwrite_value(FILE *out,
 			break;
 
 		case kt_pubkey:
-		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
@@ -191,73 +190,19 @@ static void confwrite_value(FILE *out,
 static void confwrite_side(FILE *out, struct starter_end *end)
 {
 	const char *side = end->leftright;
-	switch (end->resolve.host.type) {
-	case KH_NOTSET:
-		/* nothing! */
-		break;
 
-	case KH_DEFAULTROUTE:
-		fprintf(out, "\t%s=%%defaultroute\n", side);
-		break;
-
-	case KH_ANY:
-		fprintf(out, "\t%s=%%any\n", side);
-		break;
-
-	case KH_IFACE:
-		if (end->values[KW_IP].set)
-			fprintf(out, "\t%s=%s\n", side, end->values[KW_IP].string);
-		break;
-
-	case KH_OPPO:
-		fprintf(out, "\t%s=%%opportunistic\n", side);
-		break;
-
-	case KH_OPPOGROUP:
-		fprintf(out, "\t%s=%%opportunisticgroup\n", side);
-		break;
-
-	case KH_GROUP:
-		fprintf(out, "\t%s=%%group\n", side);
-		break;
-
-	case KH_IPHOSTNAME:
+	if (end->values[KW_IP].string != NULL) {
 		fprintf(out, "\t%s=%s\n", side, end->values[KW_IP].string);
-		break;
-
-	case KH_IPADDR:
-		{
-			address_buf as;
-			fprintf(out, "\t%s=%s\n",
-				side, str_address(&end->resolve.host.addr, &as));
-		}
-		break;
 	}
 
-	switch (end->resolve.nexthop.type) {
-	case KH_NOTSET:
-		/* nothing! */
-		break;
-
-	case KH_DEFAULTROUTE:
-		fprintf(out, "\t%snexthop=%%defaultroute\n", side);
-		break;
-
-	case KH_IPADDR:
-		{
-			address_buf as;
-			fprintf(out, "\t%snexthop=%s\n",
-				side, str_address(&end->resolve.nexthop.addr, &as));
-		}
-		break;
-
-	default:
-		break;
+	if (end->values[KWS_NEXTHOP].string != NULL) {
+		fprintf(out, "\t%s=%s\n", side, end->values[KWS_NEXTHOP].string);
 	}
 
-	if (end->values[KSCF_PROTOPORT].set)
+	if (end->values[KSCF_PROTOPORT].string != NULL) {
 		fprintf(out, "\t%sprotoport=%s\n", side,
 			end->values[KSCF_PROTOPORT].string);
+	}
 
 	confwrite_value(out, side, kv_conn, end->values);
 }

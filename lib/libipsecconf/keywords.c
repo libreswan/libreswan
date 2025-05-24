@@ -232,7 +232,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikeport",  kv_conn | kv_leftright,  kt_string,  KNCF_IKEPORT, NULL, NULL, },
   { "interface-ip", kv_conn | kv_leftright,  kt_string, KSCF_INTERFACE_IP, NULL, NULL, },
   { "vti",  kv_conn | kv_leftright,  kt_string,  KSCF_VTI, NULL, NULL, },
-  { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KW_NEXTHOP, NULL, NULL, },
+  { "nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
   { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &kw_pubkey_names, NULL, },
