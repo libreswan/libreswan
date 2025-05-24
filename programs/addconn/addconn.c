@@ -200,11 +200,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	}
 
 	if (verbose) {
-		fprintf(stdout, "  resolving default routes");
-		fprintf(stdout, "\n");
-	}
-
-	if (verbose) {
 		fprintf(stdout, "  sending to pluto");
 		fprintf(stdout, "\n");
 	}
