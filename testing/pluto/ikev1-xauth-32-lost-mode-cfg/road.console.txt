@@ -34,7 +34,7 @@ road #
 "road-east-modecfg-yes" #1: XAUTH: Successfully Authenticated
 "road-east-modecfg-yes" #1: XAUTH client - possibly awaiting CFG_set {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "road-east-modecfg-yes" #1: modecfg: Sending IP request (MODECFG_I1)
-"road-east-modecfg-yes" #1: Received IPv4 address: 192.0.2.101/32
+"road-east-modecfg-yes" #1: received IPv4 lease 192.0.2.101, updating source IP address
 "road-east-modecfg-yes" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "road-east-modecfg-yes" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.2.101/32===0.0.0.0/0}
 "road-east-modecfg-yes" #2: sent Quick Mode request
