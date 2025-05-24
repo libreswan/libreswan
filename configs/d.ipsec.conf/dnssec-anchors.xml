@@ -1,12 +1,15 @@
 <varlistentry>
   <term>
-  <option>dnssec-anchors</option></term>
+    <option>dnssec-anchors=<filename>file</filename></option>
+  </term>
   <listitem>
     <para>
       The location of a file containing additional DNSSEC Trust
-      Anchors. This can be used when a network is using split-DNS and
-      the internal hierarchy is using DNSSEC trust anchors.  There is
-      no default value.
+      Anchors.  This can be used when a network is using split-DNS and
+      the internal hierarchy is using DNSSEC trust anchors.
+    </para>
+    <para>
+      There is no default value.
     </para>
   </listitem>
 </varlistentry>

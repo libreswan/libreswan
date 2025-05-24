@@ -118,8 +118,8 @@ static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
 static bool do_dnssec = false;
-static char *pluto_dnssec_rootkey_file = NULL;
-static char *pluto_dnssec_trusted = NULL;
+static char *pluto_dnssec_rootkey_file;	/* see main() */
+static char *pluto_dnssec_anchors = NULL;
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
@@ -141,7 +141,7 @@ void free_pluto_main(void)
 	pfreeany(x509_ocsp.trust_name);
 	pfreeany(x509_crl.curl_iface);
 	pfreeany(pluto_dnssec_rootkey_file);
-	pfreeany(pluto_dnssec_trusted);
+	pfreeany(pluto_dnssec_anchors);
 	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
@@ -360,6 +360,26 @@ static bool extract_config_deltatime(deltatime_t *target,
 	return update_deltatime(target, cfg->setup[field].deltatime);
 }
 
+static bool update_string(char **target, const char *value)
+{
+	/* Do nothing if value is unset; convert '' into NULL. */
+	if (value != NULL) {
+		pfreeany(*target);
+		if (strlen(value) > 0) {
+			(*target) = clone_str(value, __func__);
+		}
+		return true;
+	}
+	return false;
+}
+
+static bool extract_config_string(char **target,
+				  const struct starter_config *cfg,
+				  enum keywords field)
+{
+	return update_string(target, cfg->setup[field].string);
+}
+
 static bool update_yn(bool *target, enum yn_options yn)
 {
 	/* Do nothing if value is unset. */
@@ -487,7 +507,7 @@ enum opt {
 	OPT_DEBUG_ALL,
 	OPT_IMPAIR,
 	OPT_DNSSEC_ROOTKEY_FILE,
-	OPT_DNSSEC_TRUSTED,
+	OPT_DNSSEC_ANCHORS,
 	OPT_HELP,
 	OPT_CONFIG,
 	OPT_VERSION,
@@ -572,7 +592,8 @@ const struct option optarg_options[] = {
 
 #ifdef USE_DNSSEC
 	{ OPT("dnssec-rootkey-file", "<filename>"), required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
-	{ OPT("dnssec-trusted", "<filename>"), required_argument, NULL, OPT_DNSSEC_TRUSTED },
+	{ OPT("dnssec-anchors", "<filename>"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
+	{ REPLACE_OPT("dnssec-trusted", "dnssec-anchors", "5.3"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
 #endif
 	{ OPT("force-busy"), no_argument, NULL, OPT_FORCE_BUSY },
 	{ OPT("force-unlimited"), no_argument, NULL, OPT_FORCE_UNLIMITED },
@@ -700,22 +721,6 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 	}
 	return NULL;
 }
-
-#ifdef USE_DNSSEC
-static void set_dnssec_file_names (struct starter_config *cfg)
-{
-	/*
-	 * The default config value is DEFAULT_DNSSEC_ROOTKEY_FILE,
-	 * and not NULL, so always replace; but only with something
-	 * non empty.
-	 */
-	pfreeany(pluto_dnssec_rootkey_file);
-	if (cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string[0] != '\0') {
-		pluto_dnssec_rootkey_file = clone_str(cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string, __func__);
-	}
-	replace_when_cfg_setup(&pluto_dnssec_trusted, cfg, KSF_DNSSEC_ANCHORS);
-}
-#endif
 
 #ifdef USE_EFENCE
 extern int EF_PROTECT_BELOW;
@@ -906,16 +911,13 @@ int main(int argc, char **argv)
 			 * so always replace; but only with something
 			 * non empty.
 			 */
-			pfreeany(pluto_dnssec_rootkey_file);
-			if (optarg[0] != '\0') {
-				pluto_dnssec_rootkey_file = clone_str(optarg, "dnssec-rootkey-file");
-			}
+			update_string(&pluto_dnssec_rootkey_file, optarg);
 			continue;
 #endif  /* USE_DNSSEC */
 
 #ifdef USE_DNSSEC
-		case OPT_DNSSEC_TRUSTED:	/* --dnssec-trusted */
-			replace_value(&pluto_dnssec_trusted, optarg);
+		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
+			update_string(&pluto_dnssec_anchors, optarg);
 			continue;
 #endif  /* USE_DNSSEC */
 
@@ -1187,7 +1189,14 @@ int main(int argc, char **argv)
 
 			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
 #ifdef USE_DNSSEC
-			set_dnssec_file_names(cfg);
+			/*
+			 * The default value is
+			 * DEFAULT_DNSSEC_ROOTKEY_FILE, and not NULL,
+			 * so always replace; but when
+			 * dnssec-rootkey-file= leave it NULL.
+			 */
+			extract_config_string(&pluto_dnssec_rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
+			extract_config_string(&pluto_dnssec_anchors, cfg, KSF_DNSSEC_ANCHORS);
 #endif
 
 			/* plutofork= no longer supported via config file */
@@ -1836,7 +1845,8 @@ int main(int argc, char **argv)
 #ifdef USE_DNSSEC
 	{
 		diag_t d = unbound_event_init(get_pluto_event_base(), do_dnssec,
-					      pluto_dnssec_rootkey_file, pluto_dnssec_trusted,
+					      pluto_dnssec_rootkey_file,
+					      pluto_dnssec_anchors,
 					      logger/*for-warnings*/);
 		if (d != NULL) {
 			fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, "%s", str_diag(d));
@@ -1887,9 +1897,9 @@ void show_setup_plutomain(struct show *s)
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
 #ifdef USE_DNSSEC
-	show(s, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
-		     pluto_dnssec_rootkey_file == NULL ? "<unset>" : pluto_dnssec_rootkey_file,
-		     pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
+	show(s, "dnssec-rootkey-file=%s, dnssec-anchors=%s",
+	     (pluto_dnssec_rootkey_file == NULL ? "<unset>" : pluto_dnssec_rootkey_file),
+	     (pluto_dnssec_anchors == NULL ? "<unset>" : pluto_dnssec_anchors));
 #endif
 
 	show(s, "sbindir=%s, libexecdir=%s",
