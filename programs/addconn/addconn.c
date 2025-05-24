@@ -482,13 +482,6 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-#ifdef USE_DNSSEC
-	unbound_sync_init(cfg->setup[KBF_DO_DNSSEC].option,
-			  cfg->setup[KSF_DNSSEC_ROOTKEY_FILE].string,
-			  cfg->setup[KSF_DNSSEC_ANCHORS].string,
-			  logger);
-#endif
-
 	if (autoall) {
 		if (verbose > 0)
 			printf("loading all conns according to their auto= settings\n");
@@ -743,9 +736,7 @@ int main(int argc, char *argv[])
 	}
 
 	confread_free(cfg);
-#ifdef USE_DNSSEC
-	unbound_ctx_free();
-#endif
+
 	/*
 	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and
 	 * RC_EXIT_ROOF (RC_NEW_V1_STATE) are errors Some starter code
