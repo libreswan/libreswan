@@ -638,7 +638,7 @@ static bool load_conn(struct starter_conn *conn,
 		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
 			FOR_EACH_THING(ips,
 				       end->values[KW_IP].string,
-				       end->values[KW_NEXTHOP].string) {
+				       end->values[KWS_NEXTHOP].string) {
 				if (ips == NULL) {
 					continue;
 				}

@@ -80,7 +80,7 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->host_addr_name = l->values[KW_IP].string;
-	w->nexthop_name = l->values[KW_NEXTHOP].string;
+	w->nexthop = l->values[KWS_NEXTHOP].string;
 	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
 	w->vti = l->values[KSCF_VTI].string; /* could be NULL */
 	w->interface_ip = l->values[KSCF_INTERFACE_IP].string; /* could be NULL */

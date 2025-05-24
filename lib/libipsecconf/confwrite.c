@@ -196,8 +196,8 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		fprintf(out, "\t%s=%s\n", side, end->values[KW_IP].string);
 	}
 
-	if (end->values[KW_NEXTHOP].string != NULL) {
-		fprintf(out, "\t%s=%s\n", side, end->values[KW_NEXTHOP].string);
+	if (end->values[KWS_NEXTHOP].string != NULL) {
+		fprintf(out, "\t%s=%s\n", side, end->values[KWS_NEXTHOP].string);
 	}
 
 	if (end->values[KSCF_PROTOPORT].string != NULL) {

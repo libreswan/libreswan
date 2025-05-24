@@ -62,7 +62,7 @@ enum keywords {
 	 */
 	KW_DEBUG,
 	KW_IP,
-	KW_NEXTHOP,
+	KWS_NEXTHOP,
 	KW_RSASIGKEY,
 	KW_ECDSAKEY,
 	KW_PUBKEY,
