@@ -178,7 +178,6 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_pubkey:
-		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
 		case kt_idtype:
@@ -359,7 +358,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 	case kt_string:
-	case kt_ipaddr:
 	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
