@@ -1924,7 +1924,35 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			const struct ip_info *afi = address_info(a);
 			c->local->child.lease[afi->ip_index] = a;
 
+#if 0
+/*
+ * XXX: see interop-ikev1-strongswan-01-xauth:
+ *
+ * leftsubnet=0.0.0.0/0
+ * rightsubnet=0.0.0.0/0
+ *
+ * "westnet-eastnet-ikev1" #1: initiating IKEv1 Main Mode connection
+ * "westnet-eastnet-ikev1" #1: sent Main Mode request
+ * "westnet-eastnet-ikev1" #1: sent Main Mode I2
+ * "westnet-eastnet-ikev1" #1: sent Main Mode I3
+ * "westnet-eastnet-ikev1" #1: Peer ID is FQDN: '@east'
+ * "westnet-eastnet-ikev1" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+ * "westnet-eastnet-ikev1" #1: XAUTH: Answering XAUTH challenge with user='use3'
+ * "westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+ * "westnet-eastnet-ikev1" #1: XAUTH: Successfully Authenticated
+ * "westnet-eastnet-ikev1" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
+ * "westnet-eastnet-ikev1" #1: modecfg: Sending IP request (MODECFG_I1)
+ * | update_end_selector_where() update left.child.selector 0.0.0.0/0 -> 192.0.1.254/32 (process_mode_cfg_attrs() +1927 programs/pluto/ikev1_xauth.c)
+ * | append_end_selector() left.child.selectors.proposed[0] 192.0.1.254/32 (process_mode_cfg_attrs() +1927 programs/pluto/ikev1_xauth.c)
+ * EXPECTATION FAILED: "westnet-eastnet-ikev1": update_end_selector_where() left.child.selector 192.0.1.254/32 does not match left.selectors[0] 0.0.0.0/0 (process_mode_cfg_attrs()
+ * "westnet-eastnet-ikev1" #1: received IPv4 lease 192.0.1.254, updating source IP address
+ */
 			update_first_selector(c, local, selector_from_address(a));
+#else
+			update_end_selector(c, c->local->config->index,
+					    selector_from_address(a),
+					    "^*(&^(* IKEv1 doing something with the lease it received");
+#endif
 			set_child_has_client(c, local, true);
 
 			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
