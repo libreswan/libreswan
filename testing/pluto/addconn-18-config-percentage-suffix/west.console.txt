@@ -21,11 +21,6 @@ west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
 loading conns matching percentage-wip:
-  resolving default routes
-resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
-  seeking NOTHING
-resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
-  seeking NOTHING
   sending to pluto
 "percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
 west #
@@ -35,11 +30,6 @@ west #
  ipsec addconn --verbose percentage-wip
 opening file: /etc/ipsec.conf
 loading conns matching percentage-wip:
-  resolving default routes
-resolving family=IPv4 src=192.1.2.45 gateway=<not-set> peer 192.1.2.23
-  seeking NOTHING
-resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.2.45
-  seeking NOTHING
   sending to pluto
 "percentage-wip": failed to add connection: rekeyfuzz=10foo invalid, expecting % character
 west #
