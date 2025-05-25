@@ -1602,8 +1602,9 @@ static diag_t extract_host_end(struct host_end *host,
 	 *
 	 * Else it remains unset and acts like a wildcard.
 	 */
-	pexpect(host_config->id.kind == ID_NONE);
-	if (src->id != NULL) { /*can_extract_str()*/
+	struct id id = { .kind = ID_NONE, };
+	PEXPECT(logger, host_config->id.kind == ID_NONE);
+	if (can_extract_string(leftright, "id", src->id, wm, logger)) {
 		/*
 		 * Treat any atoid() failure as fatal.  One wart is
 		 * something like id=foo.  ttoaddress_dns() fails
@@ -1612,11 +1613,37 @@ static diag_t extract_host_end(struct host_end *host,
 		 * In 4.x the error was ignored and ID=<HOST_IP> was
 		 * used.
 		 */
-		err_t e = atoid(src->id, &host_config->id);
+		err_t e = atoid(src->id, &id);
+		if (e != NULL) {
+			return diag("%sid=%s invalid, %s", leftright, src->id, e);
+		}
+
+		id_buf idb;
+		ldbg(logger, "setting %s-id='%s' as wm->%s->id=%s",
+		     leftright, str_id(&host_config->id, &idb),
+		     leftright, (src->id != NULL ? src->id : "NULL"));
+
+		/* danger, copying pointers */
+		host_config->id = id;
+
+	} else if (!is_never_negotiate_wm(wm) &&
+		   resolve->host.type == KH_IPADDR) {
+
+		address_buf ab;
+		err_t e = atoid(str_address(&resolve->host.addr, &ab), &id);
 		if (e != NULL) {
 			return diag("%sid=%s invalid: %s",
-				    leftright, src->id, e);
+				    leftright, resolve->host.name, e);
 		}
+
+		id_buf idb;
+		ldbg(logger, "setting %s-id='%s' as resolve.%s.host.kind=KH_IPADDR",
+		     leftright, str_id(&host_config->id, &idb),
+		     leftright);
+
+		/* danger, copying pointers */
+		host_config->id = id;
+
 	}
 
 	/* decode CA distinguished name, if any */
@@ -1731,7 +1758,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 		/* must-free keyspace */
 
-		if (src->id == NULL) {
+		if (id.kind == ID_NONE) {
 
 			struct pubkey_content pubkey_content; /* must free_pubkey_content() */
 			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(keyspace),
@@ -1762,18 +1789,9 @@ static diag_t extract_host_end(struct host_end *host,
 
 			/* must-free keyspace */
 
-			struct id keyid; /* must free_id_content() */
-			err = atoid(src->id, &keyid);
-			if (err != NULL) {
-				free_chunk_content(&keyspace);
-				return diag("%sid=\"%s\": %s", leftright, src->id, err);
-			}
-
-			/* must-free keyspace keyid */
-
 			/* add the public key */
 			struct pubkey *pubkey = NULL; /* must pubkey_delref() */
-			diag_t d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL,
+			diag_t d = unpack_dns_pubkey(&id, PUBKEY_LOCAL,
 						     src->pubkey_alg,
 						     /*install_time*/realnow(),
 						     /*until_time*/realtime_epoch,
@@ -1782,7 +1800,6 @@ static diag_t extract_host_end(struct host_end *host,
 						     &pubkey, logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
-				free_id_content(&keyid);
 				return d;
 			}
 
@@ -1792,7 +1809,6 @@ static diag_t extract_host_end(struct host_end *host,
 			const ckaid_t *ckaid = pubkey_ckaid(pubkey);
 			host_config->ckaid = clone_const_thing(*ckaid, "pubkey ckaid");
 			pubkey_delref(&pubkey);
-			free_id_content(&keyid);
 
 			/* must-free keyspace */
 		}
@@ -1831,11 +1847,11 @@ static diag_t extract_host_end(struct host_end *host,
 	    host_config->cert.nss_cert != NULL) {
 		host->id = id_from_cert(&host_config->cert);
 		id_buf idb;
-		ldbg(logger, "setting %s-id to '%s' as host->config->id=%%fromcert",
+		ldbg(logger, "setting %s-id='%s' as host->config->id=%%fromcert",
 		     leftright, str_id(&host->id, &idb));
 	} else {
 		id_buf idb;
-		ldbg(logger, "setting %s-id to '%s' as host->config->id)",
+		ldbg(logger, "setting %s-id='%s' as host->config->id)",
 		     leftright, str_id(&host_config->id, &idb));
 		host->id = clone_id(&host_config->id, __func__);
 	}
