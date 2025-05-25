@@ -1625,6 +1625,25 @@ static diag_t extract_host_end(struct host_end *host,
 
 		/* danger, copying pointers */
 		host_config->id = id;
+
+	} else if (!is_never_negotiate_wm(wm) &&
+		   resolve->host.type == KH_IPADDR) {
+
+		address_buf ab;
+		err_t e = atoid(str_address(&resolve->host.addr, &ab), &id);
+		if (e != NULL) {
+			return diag("%sid=%s invalid: %s",
+				    leftright, resolve->host.name, e);
+		}
+
+		id_buf idb;
+		ldbg(logger, "setting %s-id='%s' as resolve.%s.host.kind=KH_IPADDR",
+		     leftright, str_id(&host_config->id, &idb),
+		     leftright);
+
+		/* danger, copying pointers */
+		host_config->id = id;
+
 	}
 
 	/* decode CA distinguished name, if any */

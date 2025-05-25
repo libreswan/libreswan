@@ -74,9 +74,6 @@ static bool set_whack_end(struct whack_end *w,
 			}
 		}
 		w->id = value;
-	} else if (l->resolve.host.type == KH_IPADDR) {
-		address_buf b;
-		w->id = clone_str(str_address(&l->resolve.host.addr, &b), "if id");
 	}
 
 	w->host_addr_name = l->values[KW_IP].string;
