@@ -170,11 +170,11 @@ static bool set_whack_end(struct whack_end *w,
 	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
 	w->xauthusername = l->values[KSCF_USERNAME].string;
 
-	w->groundhog = l->values[KSCF_GROUNDHOG].option;
+	w->groundhog = l->values[KWYN_GROUNDHOG].option;
 
-	w->modecfgserver = l->values[KNCF_MODECONFIGSERVER].option;
-	w->modecfgclient = l->values[KNCF_MODECONFIGCLIENT].option;
-	w->cat = l->values[KNCF_CAT].option;		/* yn_options */
+	w->modecfgserver = l->values[KWYN_MODECONFIGSERVER].option;
+	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
+	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
 
 	w->addresspool = l->values[KSCF_ADDRESSPOOL].string;
 	return true;
@@ -215,8 +215,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.keyexchange = conn->values[KWS_KEYEXCHANGE].string;
 	msg.ikev2 = conn->values[KWS_IKEv2].string;
-	msg.pfs = conn->values[KNCF_PFS].option;
-	msg.compress = conn->values[KNCF_COMPRESS].option;
+	msg.pfs = conn->values[KWYN_PFS].option;
+	msg.compress = conn->values[KWYN_COMPRESS].option;
 	msg.type = conn->values[KNCF_TYPE].option;
 	msg.phase2 = conn->values[KNCF_PHASE2].option;
 	msg.authby = conn->values[KWS_AUTHBY].string;
@@ -230,9 +230,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.metric = conn->values[KNCF_METRIC].option;
 
-	msg.narrowing = conn->values[KNCF_NARROWING].option;
-	msg.rekey = conn->values[KNCF_REKEY].option;
-	msg.reauth = conn->values[KNCF_REAUTH].option;
+	msg.narrowing = conn->values[KWYN_NARROWING].option;
+	msg.rekey = conn->values[KWYN_REKEY].option;
+	msg.reauth = conn->values[KWYN_REAUTH].option;
 
 	if (conn->values[KNCF_MTU].set)
 		msg.mtu = conn->values[KNCF_MTU].option;
@@ -267,12 +267,12 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
 
 	/* Activate sending out own vendorid */
-	msg.send_vendorid = conn->values[KNCF_SEND_VENDORID].option;
+	msg.send_vendorid = conn->values[KWYN_SEND_VENDORID].option;
 
 	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
 	msg.initial_contact = conn->values[KWYN_INITIAL_CONTACT].option;
 
-	msg.fake_strongswan = conn->values[KNCF_FAKE_STRONGSWAN].option;
+	msg.fake_strongswan = conn->values[KWYN_FAKE_STRONGSWAN].option;
 
 	/*
 	 * Cisco (UNITY).
@@ -294,8 +294,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.vti_interface = conn->values[KSCF_VTI_INTERFACE].string;
 	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);
-	msg.vti_routing = conn->values[KNCF_VTI_ROUTING].option;
-	msg.vti_shared = conn->values[KNCF_VTI_SHARED].option;
+	msg.vti_routing = conn->values[KWYN_VTI_ROUTING].option;
+	msg.vti_shared = conn->values[KWYN_VTI_SHARED].option;
 
 	msg.ppk_ids = conn->values[KSCF_PPK_IDS].string;
 
@@ -305,34 +305,34 @@ int starter_whack_add_conn(const char *ctlsocket,
 	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
 	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
 
-	msg.session_resumption = conn->values[KNCF_SESSION_RESUMPTION].option;
+	msg.session_resumption = conn->values[KWYN_SESSION_RESUMPTION].option;
 
-	msg.mobike = conn->values[KNCF_MOBIKE].option; /*yn_options*/
-	msg.intermediate = conn->values[KNCF_INTERMEDIATE].option; /*yn_options*/
-	msg.sha2_truncbug = conn->values[KNCF_SHA2_TRUNCBUG].option; /*yn_options*/
-	msg.overlapip = conn->values[KNCF_OVERLAPIP].option; /*yn_options*/
-	msg.ms_dh_downgrade = conn->values[KNCF_MS_DH_DOWNGRADE].option; /*yn_options*/
-	msg.pfs_rekey_workaround = conn->values[KNCF_PFS_REKEY_WORKAROUND].option;
-	msg.dns_match_id = conn->values[KNCF_DNS_MATCH_ID].option; /* yn_options */
-	msg.pam_authorize = conn->values[KNCF_PAM_AUTHORIZE].option; /* yn_options */
-	msg.ignore_peer_dns = conn->values[KNCF_IGNORE_PEER_DNS].option; /* yn_options */
+	msg.mobike = conn->values[KWYN_MOBIKE].option; /*yn_options*/
+	msg.intermediate = conn->values[KWYN_INTERMEDIATE].option; /*yn_options*/
+	msg.sha2_truncbug = conn->values[KWYN_SHA2_TRUNCBUG].option; /*yn_options*/
+	msg.overlapip = conn->values[KWYN_OVERLAPIP].option; /*yn_options*/
+	msg.ms_dh_downgrade = conn->values[KWYN_MS_DH_DOWNGRADE].option; /*yn_options*/
+	msg.pfs_rekey_workaround = conn->values[KWYN_PFS_REKEY_WORKAROUND].option;
+	msg.dns_match_id = conn->values[KWYN_DNS_MATCH_ID].option; /* yn_options */
+	msg.pam_authorize = conn->values[KWYN_PAM_AUTHORIZE].option; /* yn_options */
+	msg.ignore_peer_dns = conn->values[KWYN_IGNORE_PEER_DNS].option; /* yn_options */
 	msg.ikepad = conn->values[KNCF_IKEPAD].option; /* yna_options */
-	msg.require_id_on_certificate = conn->values[KNCF_REQUIRE_ID_ON_CERTIFICATE].option; /* yn_options */
-	msg.modecfgpull = conn->values[KNCF_MODECFGPULL].option; /* yn_options */
-	msg.aggressive = conn->values[KNCF_AGGRESSIVE].option; /* yn_options */
+	msg.require_id_on_certificate = conn->values[KWYN_REQUIRE_ID_ON_CERTIFICATE].option; /* yn_options */
+	msg.modecfgpull = conn->values[KWYN_MODECFGPULL].option; /* yn_options */
+	msg.aggressive = conn->values[KWYN_AGGRESSIVE].option; /* yn_options */
 
-	msg.iptfs = conn->values[KNCF_IPTFS].option; /* yn_options */
-	msg.iptfs_fragmentation = conn->values[KNCF_IPTFS_FRAGMENTATION].option; /* yn_options */
+	msg.iptfs = conn->values[KWYN_IPTFS].option; /* yn_options */
+	msg.iptfs_fragmentation = conn->values[KWYN_IPTFS_FRAGMENTATION].option; /* yn_options */
 	msg.iptfs_packet_size = conn->values[KNCF_IPTFS_PACKET_SIZE].option;
 	msg.iptfs_max_queue_size = conn->values[KNCF_IPTFS_MAX_QUEUE_SIZE].option;
 	msg.iptfs_reorder_window = conn->values[KNCF_IPTFS_REORDER_WINDOW].option;
 	msg.iptfs_init_delay = conn->values[KNCF_IPTFS_INIT_DELAY].deltatime;
 	msg.iptfs_drop_time = conn->values[KNCF_IPTFS_DROP_TIME].deltatime;
 
-	msg.decap_dscp = conn->values[KNCF_DECAP_DSCP].option; /* yn_options */
-	msg.encap_dscp = conn->values[KNCF_ENCAP_DSCP].option; /* yn_options */
-	msg.nopmtudisc = conn->values[KNCF_NOPMTUDISC].option; /* yn_options */
-	msg.accept_redirect = conn->values[KNCF_ACCEPT_REDIRECT].option; /* yn_options */
+	msg.decap_dscp = conn->values[KWYN_DECAP_DSCP].option; /* yn_options */
+	msg.encap_dscp = conn->values[KWYN_ENCAP_DSCP].option; /* yn_options */
+	msg.nopmtudisc = conn->values[KWYN_NOPMTUDISC].option; /* yn_options */
+	msg.accept_redirect = conn->values[KWYN_ACCEPT_REDIRECT].option; /* yn_options */
 	msg.fragmentation = conn->values[KNCF_FRAGMENTATION].option; /* yna_options */
 	msg.esn = conn->values[KNCF_ESN].option; /* yne_options */
 	msg.ppk = conn->values[KNCF_PPK].option; /* nppi_options */

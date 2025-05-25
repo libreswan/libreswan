@@ -143,7 +143,7 @@ enum keywords {
 	 * left/right variants.
 	 */
 
-	KSCF_GROUNDHOG,	/* left/right */
+	KWYN_GROUNDHOG,	/* left/right */
 	KWS_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */
 	KWS_CERT,	/* left/right */
@@ -186,15 +186,15 @@ enum keywords {
 
 	KWYN_XAUTHSERVER,	/* left/right */
 	KWYN_XAUTHCLIENT,	/* left/right */
-	KNCF_MODECONFIGSERVER,	/* left/right */
-	KNCF_MODECONFIGCLIENT,	/* left/right */
-	KNCF_CAT,	/* left/right */
+	KWYN_MODECONFIGSERVER,	/* left/right */
+	KWYN_MODECONFIGCLIENT,	/* left/right */
+	KWYN_CAT,	/* left/right */
 	KNCF_SENDCERT,	/* left/right */
 	KNCF_IKEPORT,		/* left/right: IKE Port that must be used */
 	KNCF_AUTH,	/* left/right */
 	KNCF_EAP,	/* left/right */
 
-	KNCF_PFS_REKEY_WORKAROUND,
+	KWYN_PFS_REKEY_WORKAROUND,
 	KNCF_FIREWALL,
 	KNCF_IDTYPE,
 	KNCF_SPIBASE,
@@ -204,12 +204,12 @@ enum keywords {
 	KNCF_FAILURESHUNT,
 	KNCF_NEGOTIATIONSHUNT,
 	KNCF_TYPE,
-	KNCF_MOBIKE,
+	KWYN_MOBIKE,
 	KNCF_MTU,
 	KNCF_PRIORITY,
 	KNCF_TFC,
-	KNCF_IPTFS,
-	KNCF_IPTFS_FRAGMENTATION,
+	KWYN_IPTFS,
+	KWYN_IPTFS_FRAGMENTATION,
 	KNCF_IPTFS_PACKET_SIZE,
 	KNCF_IPTFS_MAX_QUEUE_SIZE,
 	KNCF_IPTFS_INIT_DELAY,
@@ -220,41 +220,41 @@ enum keywords {
 	KNCF_METRIC,
 	KNCF_PHASE2,
 	KNCF_AUTO,
-	KNCF_PFS,
-	KNCF_SHA2_TRUNCBUG,
-	KNCF_MS_DH_DOWNGRADE,
-	KNCF_REQUIRE_ID_ON_CERTIFICATE,
-	KNCF_DNS_MATCH_ID,
+	KWYN_PFS,
+	KWYN_SHA2_TRUNCBUG,
+	KWYN_MS_DH_DOWNGRADE,
+	KWYN_REQUIRE_ID_ON_CERTIFICATE,
+	KWYN_DNS_MATCH_ID,
 	KNCF_IPSEC_LIFETIME,
 	KWS_IPSEC_MAX_BYTES,
 	KWS_IPSEC_MAX_PACKETS,
-	KNCF_REKEY,
-	KNCF_REAUTH,
+	KWYN_REKEY,
+	KWYN_REAUTH,
 	KNCF_REKEYMARGIN,
 	KWS_REKEYFUZZ,
-	KNCF_COMPRESS,
+	KWYN_COMPRESS,
 	KNCF_KEYINGTRIES,
 	KWS_REPLAY_WINDOW,
 	KNCF_IKELIFETIME,
 	KNCF_RETRANSMIT_TIMEOUT,
 	KNCF_RETRANSMIT_INTERVAL,
-	KNCF_AGGRESSIVE,
-	KNCF_MODECFGPULL,
+	KWYN_AGGRESSIVE,
+	KWYN_MODECFGPULL,
 	KNCF_ENCAPSULATION,
 	KWS_IKEv2,		/* obsolete, use KEYEXCHANGE */
 	KWS_KEYEXCHANGE,
 	KNCF_PPK,
-	KNCF_INTERMEDIATE,	/* enable support for Intermediate Exchange */
+	KWYN_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KNCF_ESN,
-	KNCF_DECAP_DSCP,
-	KNCF_ENCAP_DSCP,
-	KNCF_NOPMTUDISC,
-	KNCF_NARROWING,
-	KNCF_PAM_AUTHORIZE,
+	KWYN_DECAP_DSCP,
+	KWYN_ENCAP_DSCP,
+	KWYN_NOPMTUDISC,
+	KWYN_NARROWING,
+	KWYN_PAM_AUTHORIZE,
 	KNCF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
-	KNCF_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
+	KWYN_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
-	KNCF_OVERLAPIP,		/* Allow overlapping IPsec policies */
+	KWYN_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
@@ -269,18 +269,18 @@ enum keywords {
 	KWS_NM_CONFIGURED,	/* Network Manager support */
 
 	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
-	KNCF_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
-	KNCF_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
+	KWYN_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
+	KWYN_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KNCF_NFLOG_GROUP,	/* Enable per-conn nflog device */
-	KNCF_VTI_ROUTING,	/* let updown do routing into VTI device */
-	KNCF_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
+	KWYN_VTI_ROUTING,	/* let updown do routing into VTI device */
+	KWYN_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
-	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
-	KNCF_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
+	KWYN_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
+	KWYN_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
 	KW_roof,
 };

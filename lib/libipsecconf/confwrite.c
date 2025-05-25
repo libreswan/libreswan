@@ -270,8 +270,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			break;
 		}
 
-		cwyn("compress", KNCF_COMPRESS);
-		cwyn("pfs", KNCF_PFS);
+		cwyn("compress", KWYN_COMPRESS);
+		cwyn("pfs", KWYN_PFS);
 		cwyn("ikepad", KNCF_IKEPAD);
 
 		if (conn->end[LEFT_END].values[KNCF_AUTH].option == k_unset ||
