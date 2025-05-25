@@ -79,8 +79,8 @@ static bool set_whack_end(struct whack_end *w,
 	w->host_addr_name = l->values[KW_IP].string;
 	w->nexthop = l->values[KWS_NEXTHOP].string;
 	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
-	w->vti = l->values[KSCF_VTI].string; /* could be NULL */
-	w->interface_ip = l->values[KSCF_INTERFACE_IP].string; /* could be NULL */
+	w->vti = l->values[KWS_VTI].string; /* could be NULL */
+	w->interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
 
 	/* validate the KSCF_SUBNET */
 	if (l->values[KSCF_SUBNET].string != NULL) {
@@ -93,10 +93,10 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->subnets = l->values[KSCF_SUBNETS].string;
-	w->ikeport = l->values[KNCF_IKEPORT].string;
+	w->ikeport = l->values[KWS_IKEPORT].string;
 
-	if (l->values[KSCF_PROTOPORT].set) {
-		char *value = l->values[KSCF_PROTOPORT].string;
+	if (l->values[KWS_PROTOPORT].set) {
+		char *value = l->values[KWS_PROTOPORT].string;
 		err_t ugh = ttoprotoport(shunk1(value), &w->protoport);
 
 		if (ugh != NULL) {
@@ -107,7 +107,7 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->cert = l->values[KWS_CERT].string;
-	w->ckaid = l->values[KSCF_CKAID].string;
+	w->ckaid = l->values[KWS_CKAID].string;
 
 	static const struct {
 		enum ipseckey_algorithm_type alg;
@@ -153,8 +153,8 @@ static bool set_whack_end(struct whack_end *w,
 		break;
 	}
 
-	w->ca = l->values[KSCF_CA].string;
-	w->sendcert = l->values[KNCF_SENDCERT].string;
+	w->ca = l->values[KWS_CA].string;
+	w->sendcert = l->values[KWS_SENDCERT].string;
 
 	if (l->values[KNCF_AUTH].set)
 		w->auth = l->values[KNCF_AUTH].option;
@@ -168,7 +168,7 @@ static bool set_whack_end(struct whack_end *w,
 
 	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
 	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
-	w->xauthusername = l->values[KSCF_USERNAME].string;
+	w->xauthusername = l->values[KWS_USERNAME].string;
 
 	w->groundhog = l->values[KWYN_GROUNDHOG].option;
 
@@ -242,8 +242,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.tfc = conn->values[KNCF_TFC].option;
 	msg.send_esp_tfc_padding_not_supported =
 		conn->values[KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED].option;
-	msg.nflog_group = conn->values[KNCF_NFLOG_GROUP].string;
-	msg.reqid = conn->values[KNCF_REQID].string;
+	msg.nflog_group = conn->values[KWS_NFLOG_GROUP].string;
+	msg.reqid = conn->values[KWS_REQID].string;
 
 	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
 		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;
@@ -254,10 +254,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	/* default to HOLD */
-	msg.dpddelay = conn->values[KSCF_DPDDELAY].string;
-	msg.dpdtimeout = conn->values[KSCF_DPDTIMEOUT].string;
+	msg.dpddelay = conn->values[KWS_DPDDELAY].string;
+	msg.dpdtimeout = conn->values[KWS_DPDTIMEOUT].string;
 
-	msg.sendca = conn->values[KNCF_SENDCA].string;
+	msg.sendca = conn->values[KWS_SENDCA].string;
 
 	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
 
@@ -281,27 +281,27 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.cisco_unity = conn->values[KWS_CISCO_UNITY].string;
 	msg.nm_configured = conn->values[KWS_NM_CONFIGURED].string;
 
-	msg.sec_label = conn->values[KSCF_SEC_LABEL].string;
+	msg.sec_label = conn->values[KWS_SEC_LABEL].string;
 	msg.conn_debug = conn->values[KW_DEBUG].option;
 
-	msg.modecfgdns = conn->values[KSCF_MODECFGDNS].string;
-	msg.modecfgdomains = conn->values[KSCF_MODECFGDOMAINS].string;
-	msg.modecfgbanner = conn->values[KSCF_MODECFGBANNER].string;
+	msg.modecfgdns = conn->values[KWS_MODECFGDNS].string;
+	msg.modecfgdomains = conn->values[KWS_MODECFGDOMAINS].string;
+	msg.modecfgbanner = conn->values[KWS_MODECFGBANNER].string;
 
-	msg.mark = conn->values[KSCF_MARK].string;
-	msg.mark_in = conn->values[KSCF_MARK_IN].string;
-	msg.mark_out = conn->values[KSCF_MARK_OUT].string;
+	msg.mark = conn->values[KWS_MARK].string;
+	msg.mark_in = conn->values[KWS_MARK_IN].string;
+	msg.mark_out = conn->values[KWS_MARK_OUT].string;
 
-	msg.vti_interface = conn->values[KSCF_VTI_INTERFACE].string;
+	msg.vti_interface = conn->values[KWS_VTI_INTERFACE].string;
 	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);
 	msg.vti_routing = conn->values[KWYN_VTI_ROUTING].option;
 	msg.vti_shared = conn->values[KWYN_VTI_SHARED].option;
 
-	msg.ppk_ids = conn->values[KSCF_PPK_IDS].string;
+	msg.ppk_ids = conn->values[KWS_PPK_IDS].string;
 
-	msg.redirect_to = conn->values[KSCF_REDIRECT_TO].string;
+	msg.redirect_to = conn->values[KWS_REDIRECT_TO].string;
 	conn_log_val(logger, conn, "redirect-to", msg.redirect_to);
-	msg.accept_redirect_to = conn->values[KSCF_ACCEPT_REDIRECT_TO].string;
+	msg.accept_redirect_to = conn->values[KWS_ACCEPT_REDIRECT_TO].string;
 	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
 	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
 
@@ -347,8 +347,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
 		return -1;
 
-	msg.esp = conn->values[KSCF_ESP].string;
-	msg.ike = conn->values[KSCF_IKE].string;
+	msg.esp = conn->values[KWS_ESP].string;
+	msg.ike = conn->values[KWS_IKE].string;
 
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)

@@ -199,9 +199,9 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		fprintf(out, "\t%s=%s\n", side, end->values[KWS_NEXTHOP].string);
 	}
 
-	if (end->values[KSCF_PROTOPORT].string != NULL) {
+	if (end->values[KWS_PROTOPORT].string != NULL) {
 		fprintf(out, "\t%sprotoport=%s\n", side,
-			end->values[KSCF_PROTOPORT].string);
+			end->values[KWS_PROTOPORT].string);
 	}
 
 	confwrite_value(out, side, kv_conn, end->values);

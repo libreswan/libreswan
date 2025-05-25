@@ -229,9 +229,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
   { "sourceip",  kv_conn | kv_leftright,  kt_string,  KWS_SOURCEIP, NULL, NULL, },
-  { "ikeport",  kv_conn | kv_leftright,  kt_string,  KNCF_IKEPORT, NULL, NULL, },
-  { "interface-ip", kv_conn | kv_leftright,  kt_string, KSCF_INTERFACE_IP, NULL, NULL, },
-  { "vti",  kv_conn | kv_leftright,  kt_string,  KSCF_VTI, NULL, NULL, },
+  { "ikeport",  kv_conn | kv_leftright,  kt_string,  KWS_IKEPORT, NULL, NULL, },
+  { "interface-ip", kv_conn | kv_leftright,  kt_string, KWS_INTERFACE_IP, NULL, NULL, },
+  { "vti",  kv_conn | kv_leftright,  kt_string,  KWS_VTI, NULL, NULL, },
   { "nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
@@ -239,22 +239,22 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &kw_pubkey_names, NULL, },
   { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &kw_pubkey_names, NULL, },
   { "cert",  kv_conn | kv_leftright,  kt_string,  KWS_CERT, NULL, NULL, },
-  { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID, NULL, NULL, },
-  { "sendcert",  kv_conn | kv_leftright,  kt_string,  KNCF_SENDCERT, NULL, NULL, },
-  { "ca",  kv_conn | kv_leftright,  kt_string,  KSCF_CA, NULL, NULL, },
+  { "ckaid",  kv_conn | kv_leftright,  kt_string,  KWS_CKAID, NULL, NULL, },
+  { "sendcert",  kv_conn | kv_leftright,  kt_string,  KWS_SENDCERT, NULL, NULL, },
+  { "ca",  kv_conn | kv_leftright,  kt_string,  KWS_CA, NULL, NULL, },
   { "xauthserver",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_XAUTHSERVER, &yn_option_names, NULL, },
   { "xauthclient",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_XAUTHCLIENT, &yn_option_names, NULL, },
   { "modecfgserver",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGSERVER, &yn_option_names, NULL, },
   { "modecfgclient",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGCLIENT, &yn_option_names, NULL, },
-  { "username",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME, NULL, NULL, },
+  { "username",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, },
   /* xauthusername is still used in NetworkManager-libreswan :/ */
-  { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME, NULL, NULL, }, /* old alias */
+  { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
 #if defined(USE_CAT)
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names, NULL, },
 #endif
-  { "protoport",  kv_conn | kv_leftright,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
+  { "protoport",  kv_conn | kv_leftright,  kt_string,  KWS_PROTOPORT, NULL, NULL, },
   { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },
   { "groundhog",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, &yn_option_names, NULL, },
 
@@ -262,14 +262,14 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "auto",  kv_conn,  kt_sparse_name,  KNCF_AUTO, &autostart_names, NULL, },
   { "also",  kv_conn | kv_duplicateok,  kt_also,  KSCF_ALSO, NULL, NULL, },
-  { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },
+  { "ike",  kv_conn,  kt_string,  KWS_IKE, NULL, NULL, },
   { "hostaddrfamily",  kv_conn,  kt_string,  KWS_HOSTADDRFAMILY, NULL, NULL, },
   { "type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names, NULL, },
   { "authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
   { "ikev2",  kv_conn,  kt_string,  KWS_IKEv2, NULL, NULL, },
   { "ppk", kv_conn | kv_processed, kt_sparse_name, KNCF_PPK, &nppi_option_names, NULL, },
-  { "ppk-ids", kv_conn, kt_string, KSCF_PPK_IDS, NULL, NULL, },
+  { "ppk-ids", kv_conn, kt_string, KWS_PPK_IDS, NULL, NULL, },
   { "intermediate",  kv_conn | kv_processed, kt_sparse_name, KWYN_INTERMEDIATE, &yn_option_names, NULL, },
   { "esn",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_ESN, &yne_option_names, NULL, },
   { "decap-dscp",  kv_conn | kv_processed,  kt_sparse_name,  KWYN_DECAP_DSCP, &yn_option_names, NULL, },
@@ -280,9 +280,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "narrowing",  kv_conn,  kt_sparse_name,  KWYN_NARROWING, &yn_option_names, NULL, },
   { "pam-authorize",  kv_conn,  kt_sparse_name,  KWYN_PAM_AUTHORIZE, &yn_option_names, NULL, },
   { "send-redirect",  kv_conn,  kt_sparse_name,  KNCF_SEND_REDIRECT, &yna_option_names, NULL, },
-  { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
+  { "redirect-to",  kv_conn,  kt_string,  KWS_REDIRECT_TO, NULL, NULL, },
   { "accept-redirect",  kv_conn,  kt_sparse_name, KWYN_ACCEPT_REDIRECT, &yn_option_names, NULL, },
-  { "accept-redirect-to",  kv_conn,  kt_string, KSCF_ACCEPT_REDIRECT_TO, NULL, NULL, },
+  { "accept-redirect-to",  kv_conn,  kt_string, KWS_ACCEPT_REDIRECT_TO, NULL, NULL, },
   { "pfs",  kv_conn,  kt_sparse_name,  KWYN_PFS, &yn_option_names, NULL, },
   { "session-resumption",  kv_conn,  kt_sparse_name,  KWYN_SESSION_RESUMPTION, &yn_option_names, NULL, },
 
@@ -322,8 +322,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },  /* obsolete: not a value, a type */
   { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
-  { "policy-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
-  { "sec-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, },
+  { "policy-label",  kv_conn,  kt_string,  KWS_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
+  { "sec-label",  kv_conn,  kt_string,  KWS_SEC_LABEL, NULL, NULL, },
 
   /* Cisco interop: remote peer type */
   { "remote-peer-type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, NULL, },
@@ -336,14 +336,14 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "xauthby",  kv_conn,  kt_sparse_name,  KNCF_XAUTHBY, &xauthby_names, NULL, },
   { "xauthfail",  kv_conn,  kt_sparse_name,  KNCF_XAUTHFAIL, &xauthfail_names, NULL, },
   { "modecfgpull",  kv_conn,  kt_sparse_name,  KWYN_MODECFGPULL, &yn_option_names, NULL, },
-  { "modecfgdns",  kv_conn,  kt_string,  KSCF_MODECFGDNS, NULL, NULL, },
-  { "modecfgdomains",  kv_conn,  kt_string,  KSCF_MODECFGDOMAINS, NULL, NULL, },
-  { "modecfgbanner",  kv_conn,  kt_string,  KSCF_MODECFGBANNER, NULL, NULL, },
+  { "modecfgdns",  kv_conn,  kt_string,  KWS_MODECFGDNS, NULL, NULL, },
+  { "modecfgdomains",  kv_conn,  kt_string,  KWS_MODECFGDOMAINS, NULL, NULL, },
+  { "modecfgbanner",  kv_conn,  kt_string,  KWS_MODECFGBANNER, NULL, NULL, },
   { "ignore-peer-dns",  kv_conn,  kt_sparse_name,  KWYN_IGNORE_PEER_DNS, &yn_option_names, NULL, },
-  { "mark",  kv_conn,  kt_string,  KSCF_MARK, NULL, NULL, },
-  { "mark-in",  kv_conn,  kt_string,  KSCF_MARK_IN, NULL, NULL, },
-  { "mark-out",  kv_conn,  kt_string,  KSCF_MARK_OUT, NULL, NULL, },
-  { "vti-interface",  kv_conn,  kt_string,  KSCF_VTI_INTERFACE, NULL, NULL, },
+  { "mark",  kv_conn,  kt_string,  KWS_MARK, NULL, NULL, },
+  { "mark-in",  kv_conn,  kt_string,  KWS_MARK_IN, NULL, NULL, },
+  { "mark-out",  kv_conn,  kt_string,  KWS_MARK_OUT, NULL, NULL, },
+  { "vti-interface",  kv_conn,  kt_string,  KWS_VTI_INTERFACE, NULL, NULL, },
   { "vti-routing",  kv_conn,  kt_sparse_name,  KWYN_VTI_ROUTING, &yn_option_names, NULL, },
   { "vti-shared",  kv_conn,  kt_sparse_name,  KWYN_VTI_SHARED, &yn_option_names, NULL, },
   { "ipsec-interface-managed", kv_config, kt_sparse_name, KWYN_IPSEC_INTERFACE_MANAGED, &yn_option_names, NULL, },
@@ -369,9 +369,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 
   /* attributes of the phase2 policy */
-  { "esp",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },
-  { "ah",  kv_conn,  kt_string,  KSCF_ESP, NULL, NULL, },
-  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KSCF_ESP, NULL, NULL, },	/* obsolete */
+  { "esp",  kv_conn,  kt_string,  KWS_ESP, NULL, NULL, },
+  { "ah",  kv_conn,  kt_string,  KWS_ESP, NULL, NULL, },
+  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, NULL, },	/* obsolete */
 
   { "phase2",  kv_conn,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names, NULL, },
 
@@ -381,21 +381,21 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "metric",  kv_conn,  kt_unsigned,  KNCF_METRIC, NULL, NULL, },
 
   /* DPD */
-  { "dpddelay",  kv_conn,  kt_string,  KSCF_DPDDELAY, NULL, NULL, },
-  { "ikev1-dpdtimeout",  kv_conn,  kt_string,  KSCF_DPDTIMEOUT, NULL, NULL, },
-  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KSCF_DPDTIMEOUT, NULL, NULL, }, /* old name */
+  { "dpddelay",  kv_conn,  kt_string,  KWS_DPDDELAY, NULL, NULL, },
+  { "ikev1-dpdtimeout",  kv_conn,  kt_string,  KWS_DPDTIMEOUT, NULL, NULL, },
+  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KWS_DPDTIMEOUT, NULL, NULL, }, /* old name */
   { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, NULL, },
 
-  { "sendca",      kv_conn,  kt_string,  KNCF_SENDCA, NULL, NULL, },
+  { "sendca",      kv_conn,  kt_string,  KWS_SENDCA, NULL, NULL, },
 
   { "mtu",  kv_conn,  kt_unsigned,  KNCF_MTU, NULL, NULL, },
   { "priority",  kv_conn,  kt_unsigned,  KNCF_PRIORITY, NULL, NULL, },
   { "tfc",  kv_conn,  kt_unsigned,  KNCF_TFC, NULL, NULL, },
-  { "reqid",  kv_conn,  kt_string,  KNCF_REQID, NULL, NULL, },
+  { "reqid",  kv_conn,  kt_string,  KWS_REQID, NULL, NULL, },
 #if defined(USE_NFLOG)
   { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, NULL, },
-  { "nflog-group",  kv_conn,  kt_string,  KNCF_NFLOG_GROUP, NULL, NULL, },
-  { "nflog",  kv_conn|kv_alias,  kt_string,  KNCF_NFLOG_GROUP, NULL, NULL, }, /* old-name */
+  { "nflog-group",  kv_conn,  kt_string,  KWS_NFLOG_GROUP, NULL, NULL, },
+  { "nflog",  kv_conn|kv_alias,  kt_string,  KWS_NFLOG_GROUP, NULL, NULL, }, /* old-name */
 #endif
 
   { "aggressive",  kv_conn,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, NULL, },

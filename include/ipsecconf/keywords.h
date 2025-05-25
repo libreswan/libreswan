@@ -147,36 +147,36 @@ enum keywords {
 	KWS_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */
 	KWS_CERT,	/* left/right */
-	KSCF_CKAID,	/* left/right */
-	KSCF_CA,	/* left/right */
-	KSCF_PROTOPORT,	/* left/right */
+	KWS_CKAID,	/* left/right */
+	KWS_CA,	/* left/right */
+	KWS_PROTOPORT,	/* left/right */
 	KWS_SOURCEIP,	/* left/right */
-	KSCF_VTI,	/* left/right */
-	KSCF_INTERFACE_IP,  /* left/right */
-	KSCF_USERNAME,	/* left/right */
+	KWS_VTI,	/* left/right */
+	KWS_INTERFACE_IP,  /* left/right */
+	KWS_USERNAME,	/* left/right */
 	KSCF_ADDRESSPOOL,	/* left/right */
 	KSCF_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
 
 	KWS_AUTHBY,
 
-	KSCF_PPK_IDS,
-	KSCF_MODECFGDNS,
-	KSCF_MODECFGDOMAINS,
-	KSCF_IKE,
-	KSCF_MODECFGBANNER,
-	KSCF_ESP,
+	KWS_PPK_IDS,
+	KWS_MODECFGDNS,
+	KWS_MODECFGDOMAINS,
+	KWS_IKE,
+	KWS_MODECFGBANNER,
+	KWS_ESP,
 	KSCF_ALSO,
-	KSCF_REDIRECT_TO,
-	KSCF_ACCEPT_REDIRECT_TO,
+	KWS_REDIRECT_TO,
+	KWS_ACCEPT_REDIRECT_TO,
 	KSCF_CONNALIAS,
-	KSCF_SEC_LABEL,
-	KSCF_MARK,
-	KSCF_MARK_IN,
-	KSCF_MARK_OUT,
-	KSCF_VTI_INTERFACE,
-	KSCF_DPDDELAY,
-	KSCF_DPDTIMEOUT,
+	KWS_SEC_LABEL,
+	KWS_MARK,
+	KWS_MARK_IN,
+	KWS_MARK_OUT,
+	KWS_VTI_INTERFACE,
+	KWS_DPDDELAY,
+	KWS_DPDTIMEOUT,
 
 	/*
 	 * By convention, these are connection numeric (or boolean)
@@ -189,8 +189,8 @@ enum keywords {
 	KWYN_MODECONFIGSERVER,	/* left/right */
 	KWYN_MODECONFIGCLIENT,	/* left/right */
 	KWYN_CAT,	/* left/right */
-	KNCF_SENDCERT,	/* left/right */
-	KNCF_IKEPORT,		/* left/right: IKE Port that must be used */
+	KWS_SENDCERT,	/* left/right */
+	KWS_IKEPORT,		/* left/right: IKE Port that must be used */
 	KNCF_AUTH,	/* left/right */
 	KNCF_EAP,	/* left/right */
 
@@ -215,8 +215,8 @@ enum keywords {
 	KNCF_IPTFS_INIT_DELAY,
 	KNCF_IPTFS_REORDER_WINDOW,
 	KNCF_IPTFS_DROP_TIME,
-	KNCF_REQID,
-	KNCF_SENDCA,
+	KWS_REQID,
+	KWS_SENDCA,
 	KNCF_METRIC,
 	KNCF_PHASE2,
 	KNCF_AUTO,
@@ -273,7 +273,7 @@ enum keywords {
 	KWYN_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
-	KNCF_NFLOG_GROUP,	/* Enable per-conn nflog device */
+	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
 	KWYN_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KWYN_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
