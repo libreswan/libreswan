@@ -209,11 +209,9 @@ static bool load_setup(struct starter_config *cfg,
  */
 
 static bool validate_end(struct starter_conn *conn_st,
-			 struct starter_end *end,
-			 struct logger *logger)
+			 struct starter_end *end)
 {
 	bool ok = true;
-	const char *leftright = end->leftright;
 	const struct ip_info *host_afi = conn_st->host_afi;
 
 	passert(host_afi != NULL);
@@ -223,74 +221,14 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (!end->values[KW_IP].set)
 		conn_st->state = STATE_INCOMPLETE;
-
-	/* validate the KSCF_IP/KNCF_IP */
-	end->resolve.host.name = end->values[KW_IP].string;
-	end->resolve.host.type = end->values[KW_IP].option;
-	switch (end->resolve.host.type) {
-	case KH_ANY:
-		end->resolve.host.addr = unset_address;
-		break;
-
-	case KH_IFACE:
-		/* generally, this doesn't show up at this stage */
-		ldbg(logger, "starter: %s is KH_IFACE", leftright);
-		break;
-
-	case KH_IPADDR:
-		assert(end->values[KW_IP].string != NULL);
-
-		if (end->values[KW_IP].string[0] == '%') {
-			const char *iface = end->resolve.host.name + 1;
-			if (!starter_iface_find(iface, host_afi,
-						&end->resolve.host.addr,
-						&end->resolve.nexthop.addr))
-				conn_st->state = STATE_INVALID;
-			/* not numeric, so set the type to the iface type */
-			end->resolve.host.type = KH_IFACE;
-			break;
-		}
-
-		err_t er = ttoaddress_num(shunk1(end->resolve.host.name),
-					  host_afi, &end->resolve.host.addr);
-		if (er != NULL) {
-			/* not an IP address, so set the type to the string */
-			end->resolve.host.type = KH_IPHOSTNAME;
-		} else {
-			pexpect(host_afi == address_info(end->resolve.host.addr));
-		}
-
-		break;
-
-	case KH_OPPO:
-	case KH_OPPOGROUP:
-	case KH_GROUP:
-		/* handled by pluto using .host_type */
-		break;
-
-	case KH_IPHOSTNAME:
-		/* generally, this doesn't show up at this stage */
-		ldbg(logger, "starter: %s is KH_IPHOSTNAME", leftright);
-		break;
-
-	case KH_DEFAULTROUTE:
-		ldbg(logger, "starter: %s is KH_DEFAULTROUTE", leftright);
-		break;
-
-	case KH_NOTSET:
-		/* cannot error out here, it might be a partial also= conn */
-		break;
-	}
-
 	return ok;
-#  undef ERR_FOUND
 }
 
-bool confread_validate_conn(struct starter_conn *conn, struct logger *logger)
+bool confread_validate_conn(struct starter_conn *conn, struct logger *logger UNUSED)
 {
 	bool ok = true;
-	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
-	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
+	ok &= validate_end(conn, &conn->end[LEFT_END]);
+	ok &= validate_end(conn, &conn->end[RIGHT_END]);
 	return ok;
 }
 
