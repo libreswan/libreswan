@@ -209,88 +209,19 @@ static bool load_setup(struct starter_config *cfg,
  */
 
 static bool validate_end(struct starter_conn *conn_st,
-			 struct starter_end *end,
-			 struct logger *logger)
+			 struct starter_end *end)
 {
 	bool ok = true;
-	const char *leftright = end->leftright;
-	const struct ip_info *host_afi = conn_st->host_afi;
-
-	passert(host_afi != NULL);
-	pexpect(host_afi == &ipv4_info || host_afi == &ipv6_info); /* i.e., not NULL */
-
-#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); ok = false; }
-
 	if (!end->values[KW_IP].set)
 		conn_st->state = STATE_INCOMPLETE;
-
-	/* validate the KSCF_IP/KNCF_IP */
-	end->resolve.host.name = end->values[KW_IP].string;
-	end->resolve.host.type = end->values[KW_IP].option;
-	switch (end->resolve.host.type) {
-	case KH_ANY:
-		end->resolve.host.addr = unset_address;
-		break;
-
-	case KH_IFACE:
-		/* generally, this doesn't show up at this stage */
-		ldbg(logger, "starter: %s is KH_IFACE", leftright);
-		break;
-
-	case KH_IPADDR:
-		assert(end->values[KW_IP].string != NULL);
-
-		if (end->values[KW_IP].string[0] == '%') {
-			const char *iface = end->resolve.host.name + 1;
-			if (!starter_iface_find(iface, host_afi,
-						&end->resolve.host.addr,
-						&end->resolve.nexthop.addr))
-				conn_st->state = STATE_INVALID;
-			/* not numeric, so set the type to the iface type */
-			end->resolve.host.type = KH_IFACE;
-			break;
-		}
-
-		err_t er = ttoaddress_num(shunk1(end->resolve.host.name),
-					  host_afi, &end->resolve.host.addr);
-		if (er != NULL) {
-			/* not an IP address, so set the type to the string */
-			end->resolve.host.type = KH_IPHOSTNAME;
-		} else {
-			pexpect(host_afi == address_info(end->resolve.host.addr));
-		}
-
-		break;
-
-	case KH_OPPO:
-	case KH_OPPOGROUP:
-	case KH_GROUP:
-		/* handled by pluto using .host_type */
-		break;
-
-	case KH_IPHOSTNAME:
-		/* generally, this doesn't show up at this stage */
-		ldbg(logger, "starter: %s is KH_IPHOSTNAME", leftright);
-		break;
-
-	case KH_DEFAULTROUTE:
-		ldbg(logger, "starter: %s is KH_DEFAULTROUTE", leftright);
-		break;
-
-	case KH_NOTSET:
-		/* cannot error out here, it might be a partial also= conn */
-		break;
-	}
-
 	return ok;
-#  undef ERR_FOUND
 }
 
-bool confread_validate_conn(struct starter_conn *conn, struct logger *logger)
+bool confread_validate_conn(struct starter_conn *conn, struct logger *logger UNUSED)
 {
 	bool ok = true;
-	ok &= validate_end(conn, &conn->end[LEFT_END], logger);
-	ok &= validate_end(conn, &conn->end[RIGHT_END], logger);
+	ok &= validate_end(conn, &conn->end[LEFT_END]);
+	ok &= validate_end(conn, &conn->end[RIGHT_END]);
 	return ok;
 }
 
@@ -612,49 +543,6 @@ static bool load_conn(struct starter_conn *conn,
 
 	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
 	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
-
-	/*
-	 * TODO:
-	 * The address family default should come in either via
-	 * a config setup option, or via gai.conf / RFC3484
-	 * For now, %defaultroute and %any means IPv4 only
-	 */
-
-	const struct ip_info *host_afi = NULL;
-	const char *hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
-	if (hostaddrfamily != NULL) {
-		host_afi = ttoinfo(hostaddrfamily);
-		if (host_afi == NULL) {
-			llog(RC_LOG, logger, "hostaddrfamily=%s is not recognized",
-			     hostaddrfamily);
-			/* stumble on, pluto should reject it */
-		}
-	}
-	if (host_afi == NULL) {
-		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
-			FOR_EACH_THING(ips,
-				       end->values[KW_IP].string,
-				       end->values[KWS_NEXTHOP].string) {
-				if (ips == NULL) {
-					continue;
-				}
-				/* IPv6 like address */
-				if (strchr(ips, ':') != NULL ||
-				    streq(ips, "%defaultroute6") ||
-				    streq(ips, "%any6")) {
-					host_afi = &ipv6_info;
-					break;
-				}
-			}
-			if (host_afi != NULL) {
-				break;
-			}
-		}
-	}
-	if (host_afi == NULL) {
-		host_afi = &ipv4_info;
-	}
-	conn->host_afi = host_afi;
 
 	return true;
 }
