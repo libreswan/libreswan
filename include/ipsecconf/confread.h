@@ -75,8 +75,6 @@ struct starter_conn {
 
 	keyword_values values;
 
-	const struct ip_info *host_afi;
-
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	struct starter_end end[END_ROOF];

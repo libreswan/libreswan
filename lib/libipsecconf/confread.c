@@ -212,13 +212,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end)
 {
 	bool ok = true;
-	const struct ip_info *host_afi = conn_st->host_afi;
-
-	passert(host_afi != NULL);
-	pexpect(host_afi == &ipv4_info || host_afi == &ipv6_info); /* i.e., not NULL */
-
-#  define ERR_FOUND(...) { llog(RC_LOG, logger, __VA_ARGS__); ok = false; }
-
 	if (!end->values[KW_IP].set)
 		conn_st->state = STATE_INCOMPLETE;
 	return ok;
@@ -550,49 +543,6 @@ static bool load_conn(struct starter_conn *conn,
 
 	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
 	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
-
-	/*
-	 * TODO:
-	 * The address family default should come in either via
-	 * a config setup option, or via gai.conf / RFC3484
-	 * For now, %defaultroute and %any means IPv4 only
-	 */
-
-	const struct ip_info *host_afi = NULL;
-	const char *hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
-	if (hostaddrfamily != NULL) {
-		host_afi = ttoinfo(hostaddrfamily);
-		if (host_afi == NULL) {
-			llog(RC_LOG, logger, "hostaddrfamily=%s is not recognized",
-			     hostaddrfamily);
-			/* stumble on, pluto should reject it */
-		}
-	}
-	if (host_afi == NULL) {
-		FOR_EACH_THING(end, &conn->end[LEFT_END], &conn->end[RIGHT_END]) {
-			FOR_EACH_THING(ips,
-				       end->values[KW_IP].string,
-				       end->values[KWS_NEXTHOP].string) {
-				if (ips == NULL) {
-					continue;
-				}
-				/* IPv6 like address */
-				if (strchr(ips, ':') != NULL ||
-				    streq(ips, "%defaultroute6") ||
-				    streq(ips, "%any6")) {
-					host_afi = &ipv6_info;
-					break;
-				}
-			}
-			if (host_afi != NULL) {
-				break;
-			}
-		}
-	}
-	if (host_afi == NULL) {
-		host_afi = &ipv4_info;
-	}
-	conn->host_afi = host_afi;
 
 	return true;
 }
