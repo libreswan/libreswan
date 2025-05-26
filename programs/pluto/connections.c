@@ -2142,6 +2142,7 @@ static diag_t extract_host_end(struct host_end *host,
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
 				       const struct resolve_end *resolve,
+				       ip_protoport protoport,
 				       enum ike_version ike_version,
 				       struct connection *c,
 				       struct child_end_config *child_config,
@@ -2180,8 +2181,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		return d;
 	}
 
-	/* save some defaults */
-	child_config->protoport = src->protoport;
+	child_config->protoport = protoport;
 
 	/*
 	 * Support for skipping updown, eg leftupdown="" or %disabled.
@@ -2294,7 +2294,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			}
 		}
 
-		if (src->protoport.is_set) {
+		if (protoport.is_set) {
 			if (child_config->selectors.len > 1) {
 				return diag("%ssubnet= must be a single subnet when combined with %sprotoport=",
 					    leftright, leftright);
@@ -2307,7 +2307,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 			     leftright, leftright, leftright, leftright);
 			child_selectors->list[0] =
-				selector_from_subnet_protoport(subnet, src->protoport);
+				selector_from_subnet_protoport(subnet, protoport);
 		}
 
 		if (nonzero_host.is_set) {
@@ -2940,12 +2940,14 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 }
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
-							enum end end,
+							enum end this_end,
 							const struct resolve_end resolve[END_ROOF],
+							const ip_protoport protoport[END_ROOF],
 							struct logger *logger)
 {
-	const struct whack_end *this = &wm->end[end];
-	const struct whack_end *that = &wm->end[!end];
+	const struct whack_end *this = &wm->end[this_end];
+	enum end that_end = !this_end;
+	const struct whack_end *that = &wm->end[that_end];
 
 	if (is_group_wm(resolve)) {
 		ldbg(logger, "%s connection is CK_GROUP: by is_group_wm()",
@@ -2976,8 +2978,8 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	if (that->protoport.is_set /*technically-redundant*/ &&
-	    that->protoport.has_port_wildcard) {
+	if (protoport[that_end].is_set /*technically redundant but good form*/ &&
+	    protoport[that_end].has_port_wildcard) {
 		ldbg(logger, "%s connection is CK_TEMPLATE: %s child has protoport wildcard port",
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
@@ -3405,6 +3407,32 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * Pre-extract the protoport.  It's merged into the subnet
+	 * forming selectors.  Valid both with never-negotiate and
+	 * normal connections.
+	 */
+
+	ip_protoport protoport[END_ROOF] = {0};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const char *pp = wm->end[end].protoport;
+		const char *leftright = wm->end[end].leftright;
+		if (pp != NULL) {
+			err_t ugh = ttoprotoport(shunk1(pp), &protoport[end]);
+			if (ugh != NULL) {
+				return diag("%sprotoport=%s invalid, %s",
+					    leftright, pp, ugh);
+			}
+		}
+	}
+
+	/* some port stuff */
+
+	if (protoport[LEFT_END].is_set && protoport[LEFT_END].has_port_wildcard &&
+	    protoport[RIGHT_END].is_set && protoport[RIGHT_END].has_port_wildcard) {
+		return diag("cannot have protoports with wildcard (%%any) ports on both sides");
+	}
+
+	/*
 	 * Determine the connection KIND from the wm.
 	 *
 	 * Save it in a local variable so code can use that (and be
@@ -3412,7 +3440,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * hack.
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		c->end[end].kind = extract_connection_end_kind(wm, end, resolve, c->logger);
+		c->end[end].kind = extract_connection_end_kind(wm, end,
+							       resolve, protoport,
+							       c->logger);
 	}
 
 	passert(c->base_name != NULL); /* see alloc_connection() */
@@ -3831,12 +3861,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		dbg("ignore sighash, IKEv1");
 	} else {
 		config->sighash_policy = sighash_policy;
-	}
-
-	/* some port stuff */
-
-	if (wm->end[RIGHT_END].protoport.has_port_wildcard && wm->end[LEFT_END].protoport.has_port_wildcard) {
-		return diag("cannot have protoports with wildcard (%%any) ports on both sides");
 	}
 
 	/*
@@ -4841,6 +4865,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		d = extract_child_end_config(wm, whack_ends[end],
 					     &resolve[end],
+					     protoport[end],
 					     ike_version,
 					     c, &config->end[end].child,
 					     c->logger);
