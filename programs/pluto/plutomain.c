@@ -1203,7 +1203,7 @@ int main(int argc, char **argv)
 			/* plutofork= no longer supported via config file */
 			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
 			extract_config_yn(&log_param.append, cfg, KYN_LOGAPPEND);
-			log_ip = cfg->setup[KBF_LOGIP].option;
+			extract_config_yn(&log_ip, cfg, KYN_LOGIP);
 			log_to_audit = cfg->setup[KBF_AUDIT_LOG].option;
 			pluto_drop_oppo_null = cfg->setup[KBF_DROP_OPPO_NULL].option;
 			pluto_ddos_mode = cfg->setup[KBF_DDOS_MODE].option;

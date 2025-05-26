@@ -100,12 +100,14 @@ enum keywords {
 	 * By convention, these are global configuration numeric (and
 	 * boolean) values and only appear in the "config setup"
 	 * section (KBF == Keyword Boolean Flag?).
+	 *
+	 * KYN implies yn_options.
 	 */
 	KBF_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KYN_LOGTIME,
 	KYN_LOGAPPEND,
-	KBF_LOGIP,
+	KYN_LOGIP,
 	KBF_AUDIT_LOG,
 	KBF_IKEBUF,
 	KBF_IKE_ERRQUEUE,

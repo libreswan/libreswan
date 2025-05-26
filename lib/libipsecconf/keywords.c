@@ -159,7 +159,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete name, but very common :/ */
   { "logtime",  kv_config,  kt_sparse_name,  KYN_LOGTIME, &yn_option_names, NULL, },
   { "logappend",  kv_config,  kt_sparse_name,  KYN_LOGAPPEND, &yn_option_names, NULL, },
-  { "logip",  kv_config,  kt_bool,  KBF_LOGIP, NULL, NULL, },
+  { "logip",  kv_config,  kt_sparse_name,  KYN_LOGIP, &yn_option_names, NULL, },
   { "audit-log",  kv_config,  kt_bool,  KBF_AUDIT_LOG, NULL, NULL, },
 #ifdef USE_DNSSEC
   { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC, NULL, NULL, },
