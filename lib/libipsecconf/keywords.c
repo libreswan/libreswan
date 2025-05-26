@@ -162,7 +162,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "logip",  kv_config,  kt_sparse_name,  KYN_LOGIP, &yn_option_names, NULL, },
   { "audit-log",  kv_config,  kt_sparse_name,  KYN_AUDIT_LOG, &yn_option_names, NULL, },
 #ifdef USE_DNSSEC
-  { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC, NULL, NULL, },
+  { "dnssec-enable",  kv_config,  kt_sparse_name,  KYN_DNSSEC_ENABLE, &yn_option_names, NULL, },
   { "dnssec-rootkey-file",  kv_config,  kt_string, KSF_DNSSEC_ROOTKEY_FILE, NULL, NULL, },
   { "dnssec-anchors",  kv_config,  kt_string, KSF_DNSSEC_ANCHORS, NULL, NULL, },
 #endif

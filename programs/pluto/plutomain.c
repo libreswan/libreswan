@@ -1192,7 +1192,7 @@ int main(int argc, char **argv)
 
 			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
 
-			pluto_dnssec.enable = cfg->setup[KBF_DO_DNSSEC].option;
+			extract_config_yn(&pluto_dnssec.enable, cfg, KYN_DNSSEC_ENABLE);
 			extract_config_string(&pluto_dnssec.rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
 			extract_config_string(&pluto_dnssec.anchors, cfg, KSF_DNSSEC_ANCHORS);
 

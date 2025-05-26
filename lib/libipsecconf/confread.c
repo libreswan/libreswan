@@ -81,7 +81,6 @@ static struct starter_config *alloc_starter_config(void)
 
 # define SOPT(kbf, v)  { cfg->setup[kbf].option = (v) ; }
 
-	SOPT(KBF_DO_DNSSEC, true);
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
 	SOPT(KBF_IKE_ERRQUEUE, true);
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
