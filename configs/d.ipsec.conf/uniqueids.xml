@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>uniqueids</option>
+    <option>uniqueids</option>=&Yn_options;
   </term>
   <listitem>
     <para>
@@ -22,6 +22,11 @@
       This option may disappear in the near future. People using
       identical X.509 certificates on multiple devices are urged to
       upgrade to use separate certificates per client and device.
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.3, when <command>pluto</command>
+      was started directly and without a configuration file, this
+      option was set to <option>no</option>.
     </para>
   </listitem>
 </varlistentry>
