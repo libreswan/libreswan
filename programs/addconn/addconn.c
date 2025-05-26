@@ -690,12 +690,6 @@ int main(int argc, char *argv[])
 				}
 				break;
 
-			case kt_bool:
-				printf("%s %s%s='%s'\n", export, varprefix,
-					safe_kwname,
-					bool_str(cfg->setup[kd->field].option));
-				break;
-
 			case kt_obsolete:
 				break;
 

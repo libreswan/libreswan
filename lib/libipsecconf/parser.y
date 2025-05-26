@@ -566,29 +566,6 @@ static bool parse_kt_unsigned(struct keyword *key, shunk_t value,
 	return true;
 }
 
-static bool parse_kt_bool(struct keyword *key, shunk_t value,
-			  uintmax_t *number, struct parser *parser)
-{
-	const struct sparse_name *name = sparse_lookup_by_name(&yn_option_names, value);
-	if (name == NULL) {
-		parser_key_value_warning(parser, key, value,
-					 "invalid boolean, keyword ignored");
-		return false;
-	}
-	enum yn_options yn = name->value;
-	switch (yn) {
-	case YN_YES:
-		(*number) = true;
-		return true;
-	case YN_NO:
-		(*number) = false;
-		return true;
-	case YN_UNSET:
-		break;
-	}
-	bad_case(yn);
-}
-
 static bool parse_kt_deltatime(struct keyword *key, shunk_t value,
 			       enum timescale default_timescale,
 			       deltatime_t *deltatime,
@@ -864,10 +841,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	case kt_milliseconds:
 		ok = parse_kt_deltatime(kw, value, TIMESCALE_MILLISECONDS,
 					&deltatime, parser);
-		break;
-
-	case kt_bool:
-		ok = parse_kt_bool(kw, value, &number, parser);
 		break;
 
 	case kt_binary:

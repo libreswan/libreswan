@@ -149,7 +149,6 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_lset:
-		case kt_bool:
 		case kt_sparse_name:
 		case kt_unsigned:
 		case kt_binary:
@@ -324,7 +323,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_lset:
-	case kt_bool:
 	case kt_sparse_name:
 	case kt_unsigned:
 	case kt_binary:
