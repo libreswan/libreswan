@@ -48,7 +48,7 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
 static struct log_param log_param;	/* set during startup */
 
-bool log_to_audit = false;
+bool log_to_audit = true;
 
 static FILE *pluto_log_file = NULL;	/* either a real file or stderr */
 
