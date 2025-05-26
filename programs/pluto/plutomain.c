@@ -1229,7 +1229,7 @@ int main(int argc, char **argv)
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
-			x509_ocsp.enable = cfg->setup[KBF_OCSP_ENABLE].option;
+			extract_config_yn(&x509_ocsp.enable, cfg, KYN_OCSP_ENABLE);
 			x509_ocsp.strict = cfg->setup[KBF_OCSP_STRICT].option;
 			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
