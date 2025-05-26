@@ -155,6 +155,7 @@ struct whack_end {
 	enum keyword_auth auth;
 
 	const char *ikeport;			/* host */
+	const char *host;
 	const char *nexthop;
 	const char *sourceip;
 	const char *vti;			/* host */
@@ -180,11 +181,6 @@ struct whack_end {
 
 	enum yn_options modecfgserver;	/* for MODECFG */
 	enum yn_options modecfgclient;
-
-	const char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME
-				 * pluto will convert to IP address again,
-				 * if this is non-NULL when conn fails.
-				 */
 	enum yn_options groundhog;	/* Is this end a groundhog? */
 };
 

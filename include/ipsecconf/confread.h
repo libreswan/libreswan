@@ -107,11 +107,6 @@ struct starter_config *confread_load(const char *file,
 
 struct starter_config *confread_argv(const char *name, char *argv[], int start, struct logger *logger);
 
-bool confread_validate_conn(struct starter_conn *conn,
-			    struct logger *logger);
-bool confread_validate_conns(struct starter_config *config,
-			     struct logger *logger);
-
 void confread_free(struct starter_config *cfg);
 
 #endif /* _IPSEC_CONFREAD_H_ */

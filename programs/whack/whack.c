@@ -1466,7 +1466,7 @@ int main(int argc, char **argv)
 		/* Connection Description options */
 
 		case END_HOST:	/* --host <ip-address> */
-			end->host_addr_name = optarg;
+			end->host = optarg;
 			continue;
 
 		case END_ID:	/* --id <identity> */

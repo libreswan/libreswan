@@ -170,11 +170,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		return;
 	}
 
-	if (!confread_validate_conn(conn, logger)) {
-		fprint_conn(stderr, conn, alias, "did not validate");
-		return;
-	}
-
 	/*
 	 * Scrub AUTOSTART; conns will need to be
 	 * started manually.
@@ -458,11 +453,6 @@ int main(int argc, char *argv[])
 
 	if (checkconfig) {
 		/* call is NO-OP when CONFIGSETUP */
-		if (!confread_validate_conns(cfg, logger)) {
-			/* already logged? */
-			llog(RC_LOG, logger, "cannot validate config file '%s'", configfile);
-			exit(3);
-		}
 		confread_free(cfg);
 		exit(0);
 	}
@@ -517,12 +507,6 @@ int main(int argc, char *argv[])
 				break;
 			}
 
-			if (!confread_validate_conn(conn, logger)) {
-				llog(ERROR_STREAM, logger, "conn %s did not validaten",
-				     conn->name);
-				continue;
-			}
-
 			if (verbose > 0) {
 				printf("    %s\n", conn->name);
 			}
@@ -551,10 +535,6 @@ int main(int argc, char *argv[])
 		struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
 		if (conn == NULL) {
 			llog(ERROR_STREAM, logger, "no conn %s to load", name);
-			exit(1);
-		}
-		if (!confread_validate_conn(conn, logger)) {
-			llog(ERROR_STREAM, logger, "%s did not validate", conn->name);
 			exit(1);
 		}
 
@@ -703,7 +683,6 @@ int main(int argc, char *argv[])
 
 			switch (kd->type) {
 			case kt_string:
-			case kt_host:
 				if (cfg->setup[kd->field].string) {
 					printf("%s %s%s='%s'\n",
 						export, varprefix, safe_kwname,

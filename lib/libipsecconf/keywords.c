@@ -224,7 +224,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /*
    * This is "left=" and "right="
    */
-  { "",  kv_conn | kv_leftright| kv_processed,  kt_host,  KW_IP, &keyword_host_names, NULL, },
+  { "",  kv_conn | kv_leftright,  kt_string,  KWS_HOST, NULL, NULL, },
 
   { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },

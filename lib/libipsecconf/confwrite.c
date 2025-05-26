@@ -124,14 +124,6 @@ static void confwrite_value(FILE *out,
 			}
 			break;
 
-		case kt_host:
-			/* special enumeration */
-			if (values[k->field].set) {
-				fprintf(out, "\t%s%s=%s\n", side,
-					k->keyname, values[k->field].string);
-			}
-			break;
-
 		case kt_sparse_name:
 			/* special enumeration */
 			if (values[k->field].set) {
@@ -191,8 +183,8 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 {
 	const char *side = end->leftright;
 
-	if (end->values[KW_IP].string != NULL) {
-		fprintf(out, "\t%s=%s\n", side, end->values[KW_IP].string);
+	if (end->values[KWS_HOST].string != NULL) {
+		fprintf(out, "\t%s=%s\n", side, end->values[KWS_HOST].string);
 	}
 
 	if (end->values[KWS_NEXTHOP].string != NULL) {

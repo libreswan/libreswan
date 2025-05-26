@@ -806,7 +806,7 @@ static diag_t extract_host(const struct whack_message *wm,
 		 * {left,right}: when the value '%...' a keywords,
 		 * .type is set accordingly; else .type is KH_IPADDR.
 		 */
-		value = wm->end[lr].host_addr_name;
+		value = wm->end[lr].host;
 		if (value != NULL) {
 			end->host.name = value;
 			const struct sparse_name *sn =
@@ -1858,7 +1858,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = resolve->host.type;
-	host_config->name = clone_str(src->host_addr_name, "host ip");
+	host_config->name = clone_str(src->host, "host ip");
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
 					       YN_NO, wm, logger);
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
@@ -3360,12 +3360,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 			host_addr[end] = re->host.addr;
 		} else if (re->host.type == KH_IPHOSTNAME) {
 			ip_address addr;
-			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
+			err_t er = ttoaddress_dns(shunk1(we->host),
 						  host_afi, &addr);
 			if (er != NULL) {
 				llog(RC_LOG, c->logger,
 				     "failed to resolve '%s=%s' at load time: %s",
-				     we->leftright, we->host_addr_name, er);
+				     we->leftright, we->host, er);
 			} else {
 				host_addr[end] = addr;
 			}
@@ -4915,7 +4915,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			struct end_family *family = &end_family[end][host_afi->ip_index];
 			family->used = true;
 			family->field = "";
-			family->value = whack_ends[end]->host_addr_name;
+			family->value = whack_ends[end]->host;
 		}
 	}
 
