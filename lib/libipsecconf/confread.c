@@ -193,50 +193,6 @@ static bool load_setup(struct starter_config *cfg,
 }
 
 /**
- * Validate that yes in fact we are one side of the tunnel
- *
- * The function checks that IP addresses are valid, nexthops are
- * present (if needed) as well as policies, and sets the leftID from
- * the left= if it isn't set.
- *
- * @param conn_st a connection definition
- * @param end a connection end
- * @param leftright const char * "left" or "right"
- * @param perrl pointer to starter_errors_t
- * @return bool TRUE if failed
- */
-
-static bool validate_end(struct starter_conn *conn_st,
-			 struct starter_end *end)
-{
-	bool ok = true;
-	if (end->values[KWS_HOST].string == NULL) {
-		conn_st->state = STATE_INCOMPLETE;
-	}
-	return ok;
-}
-
-bool confread_validate_conn(struct starter_conn *conn, struct logger *logger UNUSED)
-{
-	bool ok = true;
-	ok &= validate_end(conn, &conn->end[LEFT_END]);
-	ok &= validate_end(conn, &conn->end[RIGHT_END]);
-	return ok;
-}
-
-bool confread_validate_conns(struct starter_config *config, struct logger *logger)
-{
-	bool ok = true;
-	struct starter_conn *conn;
-	TAILQ_FOREACH(conn, &config->conns, link) {
-		if (conn->state == STATE_LOADED) {
-			ok &= confread_validate_conn(conn, logger);
-		}
-	}
-	return ok;
-}
-
-/**
  * Take the list of key-value pairs, from ipsec.conf and in KW, and
  * turn them into an array in starter_conn.
  *
@@ -641,10 +597,6 @@ struct starter_config *confread_load(const char *file,
 					       /*also=*/false,
 					       /*default conn*/true,
 					       logger)) {
-					break;
-				}
-				/* validate each update?!? */
-				if (!confread_validate_conn(&cfg->conn_default, logger)) {
 					break;
 				}
 			}
