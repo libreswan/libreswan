@@ -349,6 +349,7 @@ struct whack_message {
 	 */
 	const char *remote_peer_type;
 	const char *cisco_unity;
+	const char *cisco_split;
 
 	/* Option to send strongswan VID to allow better interop */
 	enum yn_options fake_strongswan;

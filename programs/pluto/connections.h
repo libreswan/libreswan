@@ -207,6 +207,7 @@ struct host_config {
 		bool unity;
 		bool peer;
 		bool nm;		/* Network Manager support */
+		bool split;
 	} cisco;
 };
 

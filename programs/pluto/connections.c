@@ -3203,9 +3203,18 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
+	enum yn_options cisco_split = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
+							  /*value_when_unset*/YN_NO,
+							  &yn_option_names,
+							  wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
+
 	cisco->peer = (remote_peer_type == REMOTE_PEER_CISCO);
 	cisco->unity = (cisco_unity == YN_YES);
 	cisco->nm = (nm_configured == YN_YES);
+	cisco->split = (cisco_split == YN_YES);
 
 	return NULL;
 }

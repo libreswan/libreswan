@@ -1,0 +1,19 @@
+<varlistentry>
+  <term>
+    <option>cisco-split</option>=&yN_options;
+  </term>
+  <listitem>
+    <para>
+      Use the IKEv1 MODE_CFG CISCO_SPLIT_INCLUDE payload to transfer
+      the server's <option>subnet=</option> list to the client.
+      During the Quick Mode exchange, the client and server will then
+      install kernel policy that includes all the subnets.  Acceptable
+      values are: <option>no</option> (the default) and
+      <option>yes</option>.
+    </para>
+    <para>
+      The <option>cisco-split</option> option was added in &Libreswan;
+      version 5.3.
+    </para>
+  </listitem>
+</varlistentry>

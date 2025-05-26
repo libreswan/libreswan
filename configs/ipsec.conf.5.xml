@@ -28,6 +28,7 @@
 <!ENTITY bugs SYSTEM "d.ipsec.conf/bugs.xml">
 <!ENTITY choosing_a_connection SYSTEM "d.ipsec.conf/choosing_a_connection.xml">
 <!ENTITY cisco-unity SYSTEM "d.ipsec.conf/cisco-unity.xml">
+<!ENTITY cisco-split SYSTEM "d.ipsec.conf/cisco-split.xml">
 <!ENTITY clientaddrfamily SYSTEM "d.ipsec.conf/clientaddrfamily.xml">
 <!ENTITY compress SYSTEM "d.ipsec.conf/compress.xml">
 <!ENTITY connsections SYSTEM "d.ipsec.conf/connsections.xml">
@@ -333,6 +334,7 @@
 	&nat-keepalive;
 	&initial-contact;
 	&cisco-unity;
+	&cisco-split;
 	&ignore-peer-dns;
 	&accept-redirect-to;
 	&accept-redirect;
