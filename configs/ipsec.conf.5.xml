@@ -198,8 +198,8 @@
 <!ENTITY OpenBSD '<application>OpenBSD</application>'>
 
 <!-- definitely wrong but nothing better? -->
-<!ENTITY yN_options 'yes|<emphasis>no</emphasis>'>
-<!-- <!ENTITY Yn_options '<replaceable><default>yes</default>|no</replaceable>'> -->
+<!ENTITY yN_options '{yes,<emphasis>no</emphasis>}'>
+<!ENTITY Yn_options '{<emphasis>yes</emphasis>,no}'>
 
 ]>
 
