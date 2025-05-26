@@ -1225,7 +1225,7 @@ int main(int argc, char **argv)
 			pluto_ddos_threshold = cfg->setup[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->setup[KBF_MAX_HALFOPEN_IKE].option;
 
-			x509_crl.strict = cfg->setup[KBF_CRL_STRICT].option;
+			extract_config_yn(&x509_crl.strict, cfg, KYN_CRL_STRICT);
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
