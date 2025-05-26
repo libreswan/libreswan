@@ -1279,7 +1279,7 @@ int main(int argc, char **argv)
 			pluto_sock_errqueue = cfg->setup[KBF_IKE_ERRQUEUE].option;
 
 			/* listen-tcp= / listen-udp= */
-			pluto_listen_tcp = cfg->setup[KBF_LISTEN_TCP].option;
+			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
 			pluto_listen_udp = cfg->setup[KBF_LISTEN_UDP].option;
 
 #ifdef USE_NFLOG

@@ -208,7 +208,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, NULL, },
   { "keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL, NULL, },
 
-  { "listen-tcp", kv_config, kt_bool, KBF_LISTEN_TCP, NULL, NULL },
+  { "listen-tcp", kv_config, kt_sparse_name, KYN_LISTEN_TCP, &yn_option_names, NULL },
   { "listen-udp", kv_config, kt_bool, KBF_LISTEN_UDP, NULL, NULL },
 
   { "listen",  kv_config,  kt_string,  KSF_LISTEN, NULL, NULL, },
