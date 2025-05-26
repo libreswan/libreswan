@@ -181,7 +181,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "crl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, NULL, },
   { "curl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, NULL, }, /* legacy */
 
-  { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
+  { "ocsp-strict",  kv_config,  kt_sparse_name,  KYN_OCSP_STRICT, &yn_option_names, NULL, },
   { "ocsp-enable",  kv_config,  kt_sparse_name,  KYN_OCSP_ENABLE, &yn_option_names, NULL, },
   { "ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI, NULL, NULL, },
   { "ocsp-timeout",  kv_config,  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS, NULL, NULL, },
