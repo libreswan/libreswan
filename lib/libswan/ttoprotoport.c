@@ -23,8 +23,6 @@
 #include "chunk.h"		/* for clone_bytes_as_string() */
 #include "lswlog.h"		/* for pexpect() */
 
-const ip_protoport unset_protoport;
-
 /*
  * ttoprotoport() - converts from protocol/port string to protocol and
  * port
