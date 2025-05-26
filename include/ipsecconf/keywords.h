@@ -327,7 +327,6 @@ enum keyword_type {
 	kt_bool,                /* value is an on/off type */
 	kt_sparse_name,         /* value is from .sparse_name table */
 	kt_lset,                /* a set of values from .sparse_name */
-	kt_host,	        /* %-prefixed .sparse_name, or a hostname string */
 	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */

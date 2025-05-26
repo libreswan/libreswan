@@ -687,8 +687,7 @@ static bool parse_kt_sparse_name(struct keyword *key, shunk_t value,
 static bool parse_kt_loose_sparse_name(struct keyword *key, shunk_t value,
 				       uintmax_t *number, struct parser *parser)
 {
-	PASSERT(parser->logger, (key->keydef->type == kt_host ||
-				 key->keydef->type == kt_pubkey));
+	PASSERT(parser->logger, (key->keydef->type == kt_pubkey));
 	PASSERT(parser->logger, key->keydef->sparse_names != NULL);
 
 	const struct sparse_name *sn = sparse_lookup_by_name(key->keydef->sparse_names, value);
@@ -842,7 +841,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 		ok = parse_kt_sparse_name(kw, value, &number, parser);
 		break;
 	case kt_pubkey:
-	case kt_host:
 		ok = parse_kt_loose_sparse_name(kw, value, &number, parser);
 		break;
 	case kt_string:

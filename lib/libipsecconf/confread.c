@@ -146,7 +146,6 @@ static bool load_setup(struct starter_config *cfg,
 
 		switch (kw->keyword.keydef->type) {
 		case kt_string:
-		case kt_host:
 			/* all treated as strings for now */
 			assert(f < elemsof(cfg->setup));
 			pfreeany(cfg->setup[f].string);
@@ -342,7 +341,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_pubkey:
-	case kt_host:
 		if (values[field].set == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",

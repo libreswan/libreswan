@@ -124,14 +124,6 @@ static void confwrite_value(FILE *out,
 			}
 			break;
 
-		case kt_host:
-			/* special enumeration */
-			if (values[k->field].set) {
-				fprintf(out, "\t%s%s=%s\n", side,
-					k->keyname, values[k->field].string);
-			}
-			break;
-
 		case kt_sparse_name:
 			/* special enumeration */
 			if (values[k->field].set) {
