@@ -211,8 +211,9 @@ static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end)
 {
 	bool ok = true;
-	if (!end->values[KW_IP].set)
+	if (end->values[KWS_HOST].string == NULL) {
 		conn_st->state = STATE_INCOMPLETE;
+	}
 	return ok;
 }
 

@@ -61,7 +61,7 @@ enum keywords {
 	 * Generic keywords, add more here.
 	 */
 	KW_DEBUG,
-	KW_IP,
+	KWS_HOST,
 	KWS_NEXTHOP,
 	KW_RSASIGKEY,
 	KW_ECDSAKEY,
