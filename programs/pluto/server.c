@@ -184,7 +184,7 @@ unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 
 unsigned int pluto_sock_bufsize = IKE_BUF_AUTO; /* use system values */
-bool pluto_sock_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */
+bool pluto_ike_socket_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */
 
 /*
  * Embedded events.

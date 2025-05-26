@@ -66,7 +66,7 @@ extern enum global_ikev1_policy pluto_ikev1_pol; /* accept, drop or reject */
 extern unsigned int pluto_max_halfopen; /* Max allowed half-open IKE SA's before refusing */
 extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating DCOOKIES */
 extern unsigned int pluto_sock_bufsize; /* pluto IKE socket buffer */
-extern bool pluto_sock_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
+extern bool pluto_ike_socket_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
 
 extern enum pluto_ddos_mode ddos_mode;
 extern bool pluto_drop_oppo_null;

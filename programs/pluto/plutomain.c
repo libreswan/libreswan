@@ -907,7 +907,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_LOGFILE:	/* --logfile */
-			replace_value(&log_param.log_to_file, optarg);
+			update_string(&log_param.log_to_file, optarg);
 			continue;
 
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
@@ -1093,7 +1093,7 @@ int main(int argc, char **argv)
 #endif
 
 		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
-			pluto_sock_errqueue = false;
+			pluto_ike_socket_errqueue = false;
 			continue;
 
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
@@ -1190,7 +1190,7 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
+			extract_config_string(&log_param.log_to_file, cfg, KSF_LOGFILE);
 
 			extract_config_yn(&pluto_dnssec.enable, cfg, KYN_DNSSEC_ENABLE);
 			extract_config_string(&pluto_dnssec.rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
@@ -1226,7 +1226,7 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
 			extract_config_yn(&x509_ocsp.enable, cfg, KYN_OCSP_ENABLE);
-			x509_ocsp.strict = cfg->setup[KBF_OCSP_STRICT].option;
+			extract_config_yn(&x509_ocsp.strict, cfg, KYN_OCSP_STRICT);
 			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
@@ -1268,7 +1268,7 @@ int main(int argc, char **argv)
 
 			/* ike-socket-bufsize= */
 			pluto_sock_bufsize = cfg->setup[KBF_IKEBUF].option;
-			pluto_sock_errqueue = cfg->setup[KBF_IKE_ERRQUEUE].option;
+			extract_config_yn(&pluto_ike_socket_errqueue, cfg, KYN_IKE_SOCKET_ERRQUEUE);
 
 			/* listen-tcp= / listen-udp= */
 			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
@@ -1931,7 +1931,7 @@ void show_setup_plutomain(struct show *s)
 	show(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_sock_bufsize,
-		bool_str(pluto_sock_errqueue),
+		bool_str(pluto_ike_socket_errqueue),
 		bool_str(x509_crl.strict),
 		deltasecs(x509_crl.check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
