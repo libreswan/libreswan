@@ -159,8 +159,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete name, but very common :/ */
   { "logtime",  kv_config,  kt_sparse_name,  KYN_LOGTIME, &yn_option_names, NULL, },
   { "logappend",  kv_config,  kt_sparse_name,  KYN_LOGAPPEND, &yn_option_names, NULL, },
-  { "logip",  kv_config,  kt_bool,  KBF_LOGIP, NULL, NULL, },
-  { "audit-log",  kv_config,  kt_bool,  KBF_AUDIT_LOG, NULL, NULL, },
+  { "logip",  kv_config,  kt_sparse_name,  KYN_LOGIP, &yn_option_names, NULL, },
+  { "audit-log",  kv_config,  kt_sparse_name,  KYN_AUDIT_LOG, &yn_option_names, NULL, },
 #ifdef USE_DNSSEC
   { "dnssec-enable",  kv_config,  kt_bool,  KBF_DO_DNSSEC, NULL, NULL, },
   { "dnssec-rootkey-file",  kv_config,  kt_string, KSF_DNSSEC_ROOTKEY_FILE, NULL, NULL, },
@@ -171,18 +171,18 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nssdir", kv_config, kt_string, KSF_NSSDIR, NULL, NULL, },
   { "secretsfile",  kv_config,  kt_string,  KSF_SECRETSFILE, NULL, NULL, },
   { "statsbin",  kv_config,  kt_string,  KSF_STATSBINARY, NULL, NULL, },
-  { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
+  { "uniqueids",  kv_config,  kt_sparse_name,  KYN_UNIQUEIDS, &yn_option_names, NULL, },
   { "shuntlifetime",  kv_config,  kt_seconds,  KBF_SHUNTLIFETIME, NULL, NULL, },
   { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },
   { "global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL, NULL, },
 
-  { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
+  { "crl-strict",  kv_config,  kt_sparse_name,  KYN_CRL_STRICT, &yn_option_names, NULL, },
   { "crlcheckinterval",  kv_config,  kt_seconds,  KBF_CRL_CHECKINTERVAL, NULL, NULL, },
   { "crl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, NULL, },
   { "curl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, NULL, }, /* legacy */
 
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
-  { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE, NULL, NULL, },
+  { "ocsp-enable",  kv_config,  kt_sparse_name,  KYN_OCSP_ENABLE, &yn_option_names, NULL, },
   { "ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI, NULL, NULL, },
   { "ocsp-timeout",  kv_config,  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS, NULL, NULL, },
   { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL, NULL, },
@@ -208,13 +208,13 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, NULL, },
   { "keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL, NULL, },
 
-  { "listen-tcp", kv_config, kt_bool, KBF_LISTEN_TCP, NULL, NULL },
-  { "listen-udp", kv_config, kt_bool, KBF_LISTEN_UDP, NULL, NULL },
+  { "listen-tcp", kv_config, kt_sparse_name, KYN_LISTEN_TCP, &yn_option_names, NULL },
+  { "listen-udp", kv_config, kt_sparse_name, KYN_LISTEN_UDP, &yn_option_names, NULL },
 
   { "listen",  kv_config,  kt_string,  KSF_LISTEN, NULL, NULL, },
   { "protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL, NULL, },
   { "nhelpers",  kv_config,  kt_unsigned,  KBF_NHELPERS, NULL, NULL, },
-  { "drop-oppo-null",  kv_config,  kt_bool,  KBF_DROP_OPPO_NULL, NULL, NULL, },
+  { "drop-oppo-null",  kv_config,  kt_sparse_name,  KYN_DROP_OPPO_NULL, &yn_option_names, NULL, },
   { "expire-shunt-interval", kv_config, kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL, NULL, NULL, },
 
   { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, NULL, }, /* obsoleted but often present keyword */

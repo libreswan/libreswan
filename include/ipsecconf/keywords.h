@@ -100,29 +100,31 @@ enum keywords {
 	 * By convention, these are global configuration numeric (and
 	 * boolean) values and only appear in the "config setup"
 	 * section (KBF == Keyword Boolean Flag?).
+	 *
+	 * KYN implies yn_options.
 	 */
-	KBF_UNIQUEIDS,
+	KYN_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KYN_LOGTIME,
 	KYN_LOGAPPEND,
-	KBF_LOGIP,
-	KBF_AUDIT_LOG,
+	KYN_LOGIP,
+	KYN_AUDIT_LOG,
 	KBF_IKEBUF,
 	KBF_IKE_ERRQUEUE,
 	KBF_PERPEERLOG,
 	KBF_EXPIRE_LIFETIME,
-	KBF_CRL_STRICT,
+	KYN_CRL_STRICT,
 	KBF_CRL_CHECKINTERVAL,
 	KBF_CRL_TIMEOUT_SECONDS,
 	KBF_OCSP_STRICT,
-	KBF_OCSP_ENABLE,
+	KYN_OCSP_ENABLE,
 	KBF_OCSP_TIMEOUT_SECONDS,
 	KBF_OCSP_CACHE_SIZE,
 	KBF_OCSP_CACHE_MIN_AGE_SECONDS,
 	KBF_OCSP_CACHE_MAX_AGE_SECONDS,
 	KBF_OCSP_METHOD,
 	KBF_SEEDBITS,
-	KBF_DROP_OPPO_NULL,
+	KYN_DROP_OPPO_NULL,
 	KBF_KEEP_ALIVE,
 	KBF_NHELPERS,
 	KBF_SHUNTLIFETIME,
@@ -133,8 +135,8 @@ enum keywords {
 	KBF_DDOS_MODE,		/* set DDOS mode */
 	KBF_SECCOMP,		/* set SECCOMP mode */
 
-	KBF_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
-	KBF_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
+	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
+	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
 
 	/*

@@ -1203,9 +1203,9 @@ int main(int argc, char **argv)
 			/* plutofork= no longer supported via config file */
 			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
 			extract_config_yn(&log_param.append, cfg, KYN_LOGAPPEND);
-			log_ip = cfg->setup[KBF_LOGIP].option;
-			log_to_audit = cfg->setup[KBF_AUDIT_LOG].option;
-			pluto_drop_oppo_null = cfg->setup[KBF_DROP_OPPO_NULL].option;
+			extract_config_yn(&log_ip, cfg, KYN_LOGIP);
+			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
+			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup[KBF_DDOS_MODE].option;
 			pluto_ikev1_pol = cfg->setup[KBF_GLOBAL_IKEv1].option;
 #ifndef USE_IKEv1
@@ -1225,11 +1225,11 @@ int main(int argc, char **argv)
 			pluto_ddos_threshold = cfg->setup[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->setup[KBF_MAX_HALFOPEN_IKE].option;
 
-			x509_crl.strict = cfg->setup[KBF_CRL_STRICT].option;
+			extract_config_yn(&x509_crl.strict, cfg, KYN_CRL_STRICT);
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
-			x509_ocsp.enable = cfg->setup[KBF_OCSP_ENABLE].option;
+			extract_config_yn(&x509_ocsp.enable, cfg, KYN_OCSP_ENABLE);
 			x509_ocsp.strict = cfg->setup[KBF_OCSP_STRICT].option;
 			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
@@ -1262,7 +1262,7 @@ int main(int argc, char **argv)
 			}
 
 			extract_config_deltatime(&x509_crl.check_interval, cfg, KBF_CRL_CHECKINTERVAL);
-			uniqueIDs = cfg->setup[KBF_UNIQUEIDS].option;
+			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->setup[KBF_DO_DNSSEC].option;
 #else
@@ -1279,8 +1279,8 @@ int main(int argc, char **argv)
 			pluto_sock_errqueue = cfg->setup[KBF_IKE_ERRQUEUE].option;
 
 			/* listen-tcp= / listen-udp= */
-			pluto_listen_tcp = cfg->setup[KBF_LISTEN_TCP].option;
-			pluto_listen_udp = cfg->setup[KBF_LISTEN_UDP].option;
+			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
+			extract_config_yn(&pluto_listen_udp, cfg, KYN_LISTEN_UDP);
 
 #ifdef USE_NFLOG
 			/* nflog-all= */

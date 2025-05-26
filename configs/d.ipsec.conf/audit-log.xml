@@ -1,21 +1,27 @@
 <varlistentry>
   <term>
-    <option>audit-log</option>
+    <option>audit-log</option>=&Yn_options;
   </term>
   <listitem>
     <para>
-      Whether pluto should produce Linux Auditing System log
-      messages. If enabled, pluto will log <option>start</option>,
+      Whether pluto should produce Linux Auditing System log messages.
+      If enabled, pluto will log <option>start</option>,
       <command>stop</command> and <option>fail</option> for the
-      negotiation of IKE and IPsec SA's. The kernel will also log success
-      and failures for actually adding and removing IPsec SA's from the
-      kernel's SADB.  Valid options are <option>yes</option>(the default)
-      and <option>no</option>.  On non-Linux systems, this option is
-      ignored. If enabled but the kernel is lacking audit support,
-      audit messages are not sent. If the kernel has audit support and
-      using it fails, pluto will abort.  Note that for compliance
-      reasons, audit log messages contain the relevant IP addresses,
-      even if <option>logip=no</option>.
+      negotiation of IKE and IPsec SA's.  The kernel will also log
+      success and failures for actually adding and removing IPsec SA's
+      from the kernel's SADB.  Valid options are
+      <option>yes</option>(the default) and <option>no</option>.  On
+      non-Linux systems, this option is ignored.  If enabled but the
+      kernel is lacking audit support, audit messages are not sent.
+      If the kernel has audit support and using it fails, pluto will
+      abort.  Note that for compliance reasons, audit log messages
+      contain the relevant IP addresses, even if
+      <option>logip=no</option>.
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.3, when <command>pluto</command>
+      was invoked directly and without a configuration file, this
+      option was set to <option>no</option>.
     </para>
   </listitem>
 </varlistentry>
