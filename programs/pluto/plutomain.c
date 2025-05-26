@@ -901,7 +901,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_LOGFILE:	/* --logfile */
-			replace_value(&log_param.log_to_file, optarg);
+			update_string(&log_param.log_to_file, optarg);
 			continue;
 
 #ifdef USE_DNSSEC
@@ -1188,7 +1188,8 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
+			extract_config_string(&log_param.log_to_file, cfg, KSF_LOGFILE);
+
 #ifdef USE_DNSSEC
 			/*
 			 * The default value is
