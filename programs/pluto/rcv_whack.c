@@ -188,11 +188,11 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 	 * listen.
 	 */
 	if (wm->ike_sock_err_toggle) {
-		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_sock_errqueue));
-		pluto_sock_errqueue = !pluto_sock_errqueue;
+		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_ike_socket_errqueue));
+		pluto_ike_socket_errqueue = !pluto_ike_socket_errqueue;
 		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
-		     pluto_sock_errqueue ? "enabling" : "disabling");
-		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_sock_errqueue));
+		     pluto_ike_socket_errqueue ? "enabling" : "disabling");
+		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_ike_socket_errqueue));
 	}
 
 	fflush(stderr);

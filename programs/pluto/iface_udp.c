@@ -114,7 +114,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	 * This is early enough that teardown isn't required:
 	 * just return on failure.
 	 */
-	if (pluto_sock_errqueue) {
+	if (pluto_ike_socket_errqueue) {
 		threadtime_t errqueue_start = threadtime_start();
 		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__,
 						      logger);
@@ -276,7 +276,7 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 				struct logger *logger /*possibly*/UNUSED)
 {
 #ifdef MSG_ERRQUEUE
-	if (pluto_sock_errqueue) {
+	if (pluto_ike_socket_errqueue) {
 		check_msg_errqueue(ifp, POLLOUT, __func__, logger);
 	}
 #endif

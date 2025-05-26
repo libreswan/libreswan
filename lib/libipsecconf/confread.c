@@ -83,7 +83,6 @@ static struct starter_config *alloc_starter_config(void)
 
 	SOPT(KBF_DO_DNSSEC, true);
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
-	SOPT(KBF_IKE_ERRQUEUE, true);
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
 
 	SOPT(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);

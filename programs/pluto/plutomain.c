@@ -1091,7 +1091,7 @@ int main(int argc, char **argv)
 #endif
 
 		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
-			pluto_sock_errqueue = false;
+			pluto_ike_socket_errqueue = false;
 			continue;
 
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
@@ -1276,7 +1276,7 @@ int main(int argc, char **argv)
 
 			/* ike-socket-bufsize= */
 			pluto_sock_bufsize = cfg->setup[KBF_IKEBUF].option;
-			pluto_sock_errqueue = cfg->setup[KBF_IKE_ERRQUEUE].option;
+			extract_config_yn(&pluto_ike_socket_errqueue, cfg, KYN_IKE_SOCKET_ERRQUEUE);
 
 			/* listen-tcp= / listen-udp= */
 			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
@@ -1933,7 +1933,7 @@ void show_setup_plutomain(struct show *s)
 	show(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
 		pluto_sock_bufsize,
-		bool_str(pluto_sock_errqueue),
+		bool_str(pluto_ike_socket_errqueue),
 		bool_str(x509_crl.strict),
 		deltasecs(x509_crl.check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",

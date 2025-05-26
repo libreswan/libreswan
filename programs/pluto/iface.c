@@ -455,7 +455,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 
 	/* To improve error reporting.  See ip(7). */
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
-	if (pluto_sock_errqueue) {
+	if (pluto_ike_socket_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
 			BIND_ERROR(errno, "setsockopt(SOL_IP, IP_RECVERR)");
 			close(fd);
