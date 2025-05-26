@@ -2026,14 +2026,8 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 		case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 		{
 			if (!c->config->host.cisco.split) {
-#if 1
-				llog(RC_LOG, logger, "received and ignored CISCO_SPLIT_INC in MODE_CFG %s payload",
-				     modecfg_payload);
-
-#else
 				llog(RC_LOG, logger, "ignoring CISCO_SPLITs in MODE_CFG %s payload, cisco-split=no",
 				     modecfg_payload);
-#endif
 				break;
 			}
 
