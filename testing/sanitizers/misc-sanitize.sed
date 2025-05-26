@@ -20,7 +20,6 @@ s/ip_vti0@NONE: <NOARP> mtu [0-9]* /ip_vti0@NONE: <NOARP> mtu XXXX /
 /^Relabeled \/testing.*$/d
 # some things are different on Debian/Ubuntu, and we dont really need to see those for testing
 /^nssdir=.*$/d
-/^dnssec-rootkey-file=.*$/d
 
 # timing info from the log
 s/last_contact=0->[0-9]*\.[0-9]*/last_contact=0->XX.XXX/g

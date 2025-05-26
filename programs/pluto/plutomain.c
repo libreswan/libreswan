@@ -117,9 +117,11 @@ static char *coredir;
 static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
-static bool do_dnssec = false;
-static char *pluto_dnssec_rootkey_file;	/* see main() */
-static char *pluto_dnssec_anchors = NULL;
+static struct {
+	bool enable;
+	char *rootkey_file;
+	char *anchors;
+} pluto_dnssec = {0}; /* see main() */
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
@@ -140,8 +142,8 @@ void free_pluto_main(void)
 	pfreeany(x509_ocsp.uri);
 	pfreeany(x509_ocsp.trust_name);
 	pfreeany(x509_crl.curl_iface);
-	pfreeany(pluto_dnssec_rootkey_file);
-	pfreeany(pluto_dnssec_anchors);
+	pfreeany(pluto_dnssec.rootkey_file);
+	pfreeany(pluto_dnssec.anchors);
 	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
@@ -729,6 +731,7 @@ extern int EF_PROTECT_FREE;
 
 int main(int argc, char **argv)
 {
+	diag_t d = NULL;
 	/*
 	 * DANGER!
 	 *
@@ -800,9 +803,12 @@ int main(int argc, char **argv)
 	coredir = clone_str(IPSEC_RUNDIR, "coredir in main()");
 	rundir = clone_str(IPSEC_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
+
 #ifdef USE_DNSSEC
-	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
+	pluto_dnssec.enable = true;
+	pluto_dnssec.rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
+
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
 	lset_t new_debugging = LEMPTY;
@@ -904,7 +910,6 @@ int main(int argc, char **argv)
 			replace_value(&log_param.log_to_file, optarg);
 			continue;
 
-#ifdef USE_DNSSEC
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
 			/*
 			 * The default config value is
@@ -912,15 +917,12 @@ int main(int argc, char **argv)
 			 * so always replace; but only with something
 			 * non empty.
 			 */
-			update_string(&pluto_dnssec_rootkey_file, optarg);
+			update_string(&pluto_dnssec.rootkey_file, optarg);
 			continue;
-#endif  /* USE_DNSSEC */
 
-#ifdef USE_DNSSEC
 		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
-			update_string(&pluto_dnssec_anchors, optarg);
+			update_string(&pluto_dnssec.anchors, optarg);
 			continue;
-#endif  /* USE_DNSSEC */
 
 		case OPT_LOG_NO_TIME:	/* --log-no-time */
 			log_param.log_with_timestamp = false;
@@ -1078,7 +1080,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_NO_DNSSEC:	/* --no-dnssec */
-			do_dnssec = false;
+			pluto_dnssec.enable = false;
 			continue;
 
 		case OPT_INTERFACE:	/* --interface <ifname|ifaddr> */
@@ -1189,16 +1191,10 @@ int main(int argc, char **argv)
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			replace_when_cfg_setup(&log_param.log_to_file, cfg, KSF_LOGFILE);
-#ifdef USE_DNSSEC
-			/*
-			 * The default value is
-			 * DEFAULT_DNSSEC_ROOTKEY_FILE, and not NULL,
-			 * so always replace; but when
-			 * dnssec-rootkey-file= leave it NULL.
-			 */
-			extract_config_string(&pluto_dnssec_rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
-			extract_config_string(&pluto_dnssec_anchors, cfg, KSF_DNSSEC_ANCHORS);
-#endif
+
+			extract_config_yn(&pluto_dnssec.enable, cfg, KYN_DNSSEC_ENABLE);
+			extract_config_string(&pluto_dnssec.rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
+			extract_config_string(&pluto_dnssec.anchors, cfg, KSF_DNSSEC_ANCHORS);
 
 			/* plutofork= no longer supported via config file */
 			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
@@ -1263,11 +1259,7 @@ int main(int argc, char **argv)
 
 			extract_config_deltatime(&x509_crl.check_interval, cfg, KBF_CRL_CHECKINTERVAL);
 			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
-#ifdef USE_DNSSEC
-			do_dnssec = cfg->setup[KBF_DO_DNSSEC].option;
-#else
-			do_dnssec = false;
-#endif
+
 			/*
 			 * We don't check interfaces= here, should we?
 			 * This was hack because we had _stackmanager?
@@ -1844,15 +1836,18 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
-	{
-		diag_t d = unbound_event_init(get_pluto_event_base(), do_dnssec,
-					      pluto_dnssec_rootkey_file,
-					      pluto_dnssec_anchors,
-					      logger/*for-warnings*/);
-		if (d != NULL) {
-			fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, "%s", str_diag(d));
-		}
+	d = unbound_event_init(get_pluto_event_base(),
+			       pluto_dnssec.enable,
+			       pluto_dnssec.rootkey_file,
+			       pluto_dnssec.anchors,
+			       logger/*for-warnings*/);
+	if (d != NULL) {
+		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, "%s", str_diag(d));
 	}
+	llog(RC_LOG, logger, "DNSSEC support [%s]",
+	     (pluto_dnssec.enable ? "enabled" : "disabled"));
+#else
+	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");
 #endif
 
 	/*
@@ -1897,11 +1892,15 @@ void show_setup_plutomain(struct show *s)
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
-#ifdef USE_DNSSEC
-	show(s, "dnssec-rootkey-file=%s, dnssec-anchors=%s",
-	     (pluto_dnssec_rootkey_file == NULL ? "<unset>" : pluto_dnssec_rootkey_file),
-	     (pluto_dnssec_anchors == NULL ? "<unset>" : pluto_dnssec_anchors));
-#endif
+	SHOW_JAMBUF(s, buf) {
+		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));
+		jam_string(buf, ", ");
+		jam(buf, "dnssec-rootkey-file=%s",
+		    (pluto_dnssec.rootkey_file == NULL ? "<unset>" : pluto_dnssec.rootkey_file));
+		jam_string(buf, ", ");
+		jam(buf, "dnssec-anchors=%s",
+		    (pluto_dnssec.anchors == NULL ? "<unset>" : pluto_dnssec.anchors));
+	}
 
 	show(s, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
@@ -1914,7 +1913,6 @@ void show_setup_plutomain(struct show *s)
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);
 		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
-		jam(buf, ", dnssec-enable=%s", bool_str(do_dnssec));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
 		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
 	}
