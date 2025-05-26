@@ -29,6 +29,7 @@ seccomp=OFF
 config setup options:
  
 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, nssdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
+dnssec-enable=yes, dnssec-rootkey-file=/var/lib/unbound/root.key, dnssec-anchors=<unset>
 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes

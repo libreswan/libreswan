@@ -26,8 +26,9 @@ seccomp=OFF
 config setup options:
  
 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+dnssec-enable=yes, dnssec-rootkey-file=/var/lib/unbound/root.key, dnssec-anchors=<unset>
 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-nhelpers=-1, uniqueids=yes, dnssec-enable=yes, shuntlifetime=900s, expire-lifetime=30s
+nhelpers=-1, uniqueids=yes, shuntlifetime=900s, expire-lifetime=30s
 logfile='/tmp/pluto.log', logappend=no, logip=yes, audit-log=yes
 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
