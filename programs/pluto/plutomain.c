@@ -1205,7 +1205,7 @@ int main(int argc, char **argv)
 			extract_config_yn(&log_param.append, cfg, KYN_LOGAPPEND);
 			extract_config_yn(&log_ip, cfg, KYN_LOGIP);
 			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
-			pluto_drop_oppo_null = cfg->setup[KBF_DROP_OPPO_NULL].option;
+			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup[KBF_DDOS_MODE].option;
 			pluto_ikev1_pol = cfg->setup[KBF_GLOBAL_IKEv1].option;
 #ifndef USE_IKEv1
