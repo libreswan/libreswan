@@ -77,7 +77,7 @@
 
 static void delete_state(struct state *st);
 
-bool uniqueIDs = false;
+bool uniqueIDs = true;
 
 /*
  * Default global NFLOG group - 0 means no logging

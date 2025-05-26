@@ -103,7 +103,7 @@ enum keywords {
 	 *
 	 * KYN implies yn_options.
 	 */
-	KBF_UNIQUEIDS,
+	KYN_UNIQUEIDS,
 	KBF_DO_DNSSEC,
 	KYN_LOGTIME,
 	KYN_LOGAPPEND,

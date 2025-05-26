@@ -1262,7 +1262,7 @@ int main(int argc, char **argv)
 			}
 
 			extract_config_deltatime(&x509_crl.check_interval, cfg, KBF_CRL_CHECKINTERVAL);
-			uniqueIDs = cfg->setup[KBF_UNIQUEIDS].option;
+			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->setup[KBF_DO_DNSSEC].option;
 #else
