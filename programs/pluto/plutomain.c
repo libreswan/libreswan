@@ -1280,7 +1280,7 @@ int main(int argc, char **argv)
 
 			/* listen-tcp= / listen-udp= */
 			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
-			pluto_listen_udp = cfg->setup[KBF_LISTEN_UDP].option;
+			extract_config_yn(&pluto_listen_udp, cfg, KYN_LISTEN_UDP);
 
 #ifdef USE_NFLOG
 			/* nflog-all= */

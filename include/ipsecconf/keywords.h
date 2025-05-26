@@ -136,7 +136,7 @@ enum keywords {
 	KBF_SECCOMP,		/* set SECCOMP mode */
 
 	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
-	KBF_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
+	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
 
 	/*
