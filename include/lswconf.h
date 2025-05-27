@@ -29,7 +29,6 @@ struct lsw_conf_options {
 	char *conffile;			/* "/etc/ipsec.conf" */
 	char *secretsfile;		/* "/etc/ipsec.secrets" */
 	char *ppkdir;			/* "/etc/ipsec.d" , for now */
-	char *vardir;			/* "/var/run/pluto" */
 	char *confddir;			/* "/etc/ipsec.d" */
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */

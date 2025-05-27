@@ -53,8 +53,6 @@ static bool lsw_conf_setdefault(void)
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
 	global_oco.secretsfile = clone_str(IPSEC_SECRETS, "default ipsec.secrets");
 
-	global_oco.vardir = clone_str(IPSEC_VARDIR, "default vardir");
-
 	global_oco.confddir = clone_str(IPSEC_CONFDDIR, "default conf ipsecd_dir");
 
 	global_oco.nssdir = clone_str(IPSEC_NSSDIR, "default nssdir");
@@ -96,8 +94,6 @@ void lsw_conf_free_oco(void)
 	pfreeany(global_oco.confdir);
 	pfreeany(global_oco.conffile);
 	pfreeany(global_oco.secretsfile);
-
-	pfreeany(global_oco.vardir);
 
 	pfreeany(global_oco.confddir);
 	pfreeany(global_oco.policies_dir);
