@@ -158,7 +158,6 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_seconds:
-		case kt_milliseconds:
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup));
 			cfg->setup[f].deltatime = kw->deltatime;
@@ -338,7 +337,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_seconds:
-	case kt_milliseconds:
 		/* all treated as a number for now */
 		if (values[field].set == k_set) {
 			llog(RC_LOG, logger,

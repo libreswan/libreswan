@@ -821,11 +821,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 					&deltatime, parser);
 		break;
 
-	case kt_milliseconds:
-		ok = parse_kt_deltatime(kw, value, TIMESCALE_MILLISECONDS,
-					&deltatime, parser);
-		break;
-
 	case kt_obsolete:
 		/* drop it on the floor */
 		parser_key_value_warning(parser, kw, value,

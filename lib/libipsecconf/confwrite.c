@@ -153,7 +153,6 @@ static void confwrite_value(FILE *out,
 			break;
 
 		case kt_seconds:
-		case kt_milliseconds:
 			if (values[k->field].set) {
 				deltatime_buf d;
 				fprintf(out, "\t%s%s=%s\n", side, k->keyname,
