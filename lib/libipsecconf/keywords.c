@@ -295,7 +295,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "iptfs",  kv_conn,  kt_sparse_name,  KWYN_IPTFS, &yn_option_names, NULL, },
   { "iptfs-fragmentation",  kv_conn,  kt_sparse_name,  KWYN_IPTFS_FRAGMENTATION, &yn_option_names, NULL, },
   { "iptfs-packet-size",  kv_conn,  kt_string,  KWS_IPTFS_PACKET_SIZE, NULL, NULL, },
-  { "iptfs-max-queue-size",  kv_conn,  kt_binary,  KNCF_IPTFS_MAX_QUEUE_SIZE, NULL, NULL, },
+  { "iptfs-max-queue-size",  kv_conn,  kt_string,  KWS_IPTFS_MAX_QUEUE_SIZE, NULL, NULL, },
   { "iptfs-reorder-window",  kv_conn,  kt_string,  KWS_IPTFS_REORDER_WINDOW, NULL, NULL, },
   { "iptfs-init-delay",  kv_conn,  kt_seconds,  KNCF_IPTFS_INIT_DELAY, NULL, NULL, },
   { "iptfs-drop-time",  kv_conn,  kt_seconds,  KNCF_IPTFS_DROP_TIME, NULL, NULL, },

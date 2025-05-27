@@ -1619,7 +1619,7 @@ int main(int argc, char **argv)
 			msg.iptfs_packet_size = optarg;
 			continue;
 		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
-			msg.iptfs_max_queue_size = optarg_uintmax(logger);
+			msg.iptfs_max_queue_size = optarg;
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
 			msg.iptfs_drop_time = optarg_deltatime(logger, TIMESCALE_SECONDS);

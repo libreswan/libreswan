@@ -359,6 +359,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->authby) &&
 		PICKLE_STRING(&wm->iptfs_reorder_window) &&
 		PICKLE_STRING(&wm->iptfs_packet_size) &&
+		PICKLE_STRING(&wm->iptfs_max_queue_size) &&
 		true);
 }
 
