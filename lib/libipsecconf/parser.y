@@ -824,7 +824,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	case kt_also:
 	case kt_appendstring:
 	case kt_appendlist:
-	case kt_idtype:
 		break;
 
 	case kt_unsigned:

@@ -55,9 +55,16 @@ static bool set_whack_end(struct whack_end *w,
 	const char *lr = l->leftright;
 	w->leftright = lr;
 
-	/* validate the KSCF_ID */
-	if (l->values[KSCF_ID].string != NULL) {
-		char *value = l->values[KSCF_ID].string;
+	/*
+	 * Deal with ADDCONN's legacy ID syntax where, instead of
+	 * "\,", ",," was used to escape commas!
+	 *
+	 * Don't move to pluto, so that when ADDCONN dies, this hack
+	 * goes with it.
+	 */
+
+	if (l->values[KWS_ID].set) {
+		char *value = l->values[KWS_ID].string;
 		/*
 		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
 		 * backslash comma.

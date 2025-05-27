@@ -147,7 +147,7 @@ enum keywords {
 
 	KWYN_GROUNDHOG,	/* left/right */
 	KWS_UPDOWN,	/* left/right */
-	KSCF_ID,	/* left/right */
+	KWS_ID,		/* left/right */
 	KWS_CERT,	/* left/right */
 	KWS_CKAID,	/* left/right */
 	KWS_CA,	/* left/right */
@@ -333,7 +333,6 @@ enum keyword_type {
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
 	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
-	kt_idtype,              /* an ID type */
 	kt_also,		/* i.e., #include */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
 };

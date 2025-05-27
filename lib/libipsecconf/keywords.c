@@ -234,7 +234,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti",  kv_conn | kv_leftright,  kt_string,  KWS_VTI, NULL, NULL, },
   { "nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
-  { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
+  { "id",  kv_conn | kv_leftright,  kt_string,  KWS_ID, NULL, NULL, },
   { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &kw_pubkey_names, NULL, },
   { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &kw_pubkey_names, NULL, },
   { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &kw_pubkey_names, NULL, },
