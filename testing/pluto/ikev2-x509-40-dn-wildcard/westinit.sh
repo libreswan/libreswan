@@ -2,5 +2,8 @@
 ipsec certutil -D -n east
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add san
+
+ipsec add san-openssl
+ipsec add san-nss
+
 echo "initdone"

@@ -8,8 +8,11 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add san
-"san": added IKEv2 connection
+ ipsec add san-openssl
+"san-openssl": added IKEv2 connection
+west #
+ ipsec add san-nss
+"san-nss": added IKEv2 connection
 west #
  echo "initdone"
 initdone
@@ -18,13 +21,35 @@ west #
 west #
  # this should succeed
 west #
- ipsec auto --up san
-"san" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"san" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"san" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"san" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
-"san" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"san" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec up san-openssl
+"san-openssl" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"san-openssl" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"san-openssl" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"san-openssl" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"san-openssl" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"san-openssl" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ipsec down san-openssl
+"san-openssl": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"san-openssl" #1: sent INFORMATIONAL request to delete IKE SA
+"san-openssl" #2: ESP traffic information: in=0B out=0B
+"san-openssl" #1: deleting IKE SA (established IKE SA)
+west #
+ # this should succeed
+west #
+ ipsec up san-nss
+"san-nss" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"san-nss" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"san-nss" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"san-nss" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'E=user-west@testing.libreswan.org, CN=west.testing.libreswan.org, OU=Test Department, O=Libreswan, L=Toronto, ST=Ontario, C=CA'; Child SA #4 {ESP <0xESPESP}
+"san-nss" #3: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"san-nss" #4: initiator established Child SA using #3; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ipsec down san-nss
+"san-nss": initiating delete of connection's IKE SA #3 (and Child SA #4)
+"san-nss" #3: sent INFORMATIONAL request to delete IKE SA
+"san-nss" #4: ESP traffic information: in=0B out=0B
+"san-nss" #3: deleting IKE SA (established IKE SA)
 west #
  echo "done"
 done
