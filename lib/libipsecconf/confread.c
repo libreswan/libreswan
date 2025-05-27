@@ -168,7 +168,6 @@ static bool load_setup(struct starter_config *cfg,
 
 		case kt_pubkey:
 		case kt_subnet:
-		case kt_range:
 		case kt_idtype:
 			ok = false;
 			break;
@@ -235,7 +234,6 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 	}
 	case kt_string:
-	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
 		/* all treated as strings for now, even loose enums */

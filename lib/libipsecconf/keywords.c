@@ -249,7 +249,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "username",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, },
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, }, /* old alias */
-  { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
+  { "addresspool",  kv_conn | kv_leftright,  kt_string,  KWS_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
 #if defined(USE_CAT)
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names, NULL, },

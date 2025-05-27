@@ -165,7 +165,7 @@ static bool set_whack_end(struct whack_end *w,
 	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
 	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
 
-	w->addresspool = l->values[KSCF_ADDRESSPOOL].string;
+	w->addresspool = l->values[KWS_ADDRESSPOOL].string;
 	return true;
 }
 
