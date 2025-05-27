@@ -33,7 +33,6 @@ struct lsw_conf_options {
 	char *confddir;			/* "/etc/ipsec.d" */
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *cacerts_dir;		/* "/etc/ipsec.d/cacerts" */
-	char *crls_dir;			/* "/etc/ipsec.d/crls" */
 	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */
 	char *nsspassword;		/* <password> overrides ^ */
 	char *nssdir;			/* "/var/lib/ipsec" */

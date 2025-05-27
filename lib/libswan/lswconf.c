@@ -80,9 +80,6 @@ static void lsw_conf_calculate(void)
 	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/cacerts"), global_oco.confddir);
 	subst(&global_oco.cacerts_dir, buf, "cacert path");
 
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/crls"), global_oco.confddir);
-	subst(&global_oco.crls_dir, buf, "crls path");
-
 	/* old OE policies - might get reused in the near future */
 	snprintf(buf, sizeof(buf), "%s/policies", global_oco.confddir);
 	subst(&global_oco.policies_dir, buf, "policies path");
@@ -109,7 +106,6 @@ void lsw_conf_free_oco(void)
 	pfreeany(global_oco.confddir);
 	pfreeany(global_oco.policies_dir);
 	pfreeany(global_oco.cacerts_dir);
-	pfreeany(global_oco.crls_dir);
 	pfreeany(global_oco.nsspassword_file);
 	pfreeany(global_oco.nsspassword);
 
