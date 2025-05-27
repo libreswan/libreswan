@@ -76,10 +76,6 @@ static void lsw_conf_calculate(void)
 {
 	char buf[PATH_MAX];
 
-	/* will be phased out for NSS in the near future */
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/cacerts"), global_oco.confddir);
-	subst(&global_oco.cacerts_dir, buf, "cacert path");
-
 	/* old OE policies - might get reused in the near future */
 	snprintf(buf, sizeof(buf), "%s/policies", global_oco.confddir);
 	subst(&global_oco.policies_dir, buf, "policies path");
@@ -105,7 +101,6 @@ void lsw_conf_free_oco(void)
 
 	pfreeany(global_oco.confddir);
 	pfreeany(global_oco.policies_dir);
-	pfreeany(global_oco.cacerts_dir);
 	pfreeany(global_oco.nsspassword_file);
 	pfreeany(global_oco.nsspassword);
 
