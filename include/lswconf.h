@@ -21,19 +21,18 @@
 #ifndef LSW_CONF_H
 #define LSW_CONF_H
 
+#include <stdbool.h>
+
 struct logger;
 
 struct lsw_conf_options {
-	char *rootdir;			/* default is "" --- used for testing */
+	bool is_set;			/* public never see false */
 	char *confdir;			/* "/etc" */
 	char *conffile;			/* "/etc/ipsec.conf" */
 	char *secretsfile;		/* "/etc/ipsec.secrets" */
 	char *ppkdir;			/* "/etc/ipsec.d" , for now */
-	char *vardir;			/* "/var/run/pluto" */
 	char *confddir;			/* "/etc/ipsec.d" */
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
-	char *cacerts_dir;		/* "/etc/ipsec.d/cacerts" */
-	char *crls_dir;			/* "/etc/ipsec.d/crls" */
 	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */
 	char *nsspassword;		/* <password> overrides ^ */
 	char *nssdir;			/* "/var/lib/ipsec" */
@@ -41,7 +40,7 @@ struct lsw_conf_options {
 
 const struct lsw_conf_options *lsw_init_options(void);
 void lsw_conf_free_oco(void);
-void lsw_conf_rootdir(const char *root_dir);
+
 void lsw_conf_secretsfile(const char *secretsfile);
 void lsw_conf_confddir(const char *confddir, struct logger *logger);
 void lsw_conf_nssdir(const char *nssdir, struct logger *logger);
