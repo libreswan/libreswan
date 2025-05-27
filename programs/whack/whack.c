@@ -1782,7 +1782,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			msg.retransmit_interval = optarg_deltatime(logger, TIMESCALE_MILLISECONDS);
+			msg.retransmit_interval = optarg;
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
