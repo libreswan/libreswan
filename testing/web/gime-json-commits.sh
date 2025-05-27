@@ -24,7 +24,6 @@ branch=$(${bindir}/gime-git-branch.sh ${rutdir}) # main master ...
 remote=$(git -C ${rutdir} config --get branch.${branch}.remote) # origin/ libreswan/ ...
 latest_commit=${remote}/${branch}
 
-
 rank=0
 
 {
@@ -65,7 +64,7 @@ rank=0
 	done
 	printf ' ]'
 	printf ', '
-	printf ' "subject": "%s"' "$(echo ${subject} | sed -e 's;";\\";g')"
+	printf ' "subject": "%s"' "$(printf '%s\n' "${subject}" | sed -e 's;";\\";g')"
 	printf ' '
 	printf '}\n'
 	rank=$((rank + 1))
