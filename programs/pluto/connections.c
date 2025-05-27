@@ -3771,10 +3771,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		config->child_sa.iptfs.init_delay = wm->iptfs_init_delay;
 
-		if (wm->iptfs_reorder_window > 65535) {
-			return diag("iptfs reorder window cannot be larger than 65535");
+		config->child_sa.iptfs.reorder_window =
+			extract_scaled_uintmax("", "", "iptfs-reorder-window",
+					       wm->iptfs_reorder_window,
+					       &binary_scales,
+					       (struct range) {
+						       .value_when_unset = 0/*i.e., disable*/,
+						       .limit.max = 65535,
+					       },
+					       wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
 		}
-		config->child_sa.iptfs.reorder_window = wm->iptfs_reorder_window;
 	}
 
 	/*

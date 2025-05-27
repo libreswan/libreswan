@@ -1628,7 +1628,7 @@ int main(int argc, char **argv)
 			msg.iptfs_init_delay = optarg_deltatime(logger, TIMESCALE_SECONDS);
 			continue;
 		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
-			msg.iptfs_reorder_window = optarg_uintmax(logger);
+			msg.iptfs_reorder_window = optarg;
 			continue;
 
 		case CD_COMPRESS:	/* --compress */

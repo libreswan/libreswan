@@ -357,6 +357,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->nm_configured) &&
 		PICKLE_STRING(&wm->cisco_unity) &&
 		PICKLE_STRING(&wm->authby) &&
+		PICKLE_STRING(&wm->iptfs_reorder_window) &&
 		true);
 }
 
