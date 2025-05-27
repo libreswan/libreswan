@@ -84,6 +84,9 @@ pass2help()
     failed [ <test-directory> ... ]
 	list failed and unresolved test results (for the specified tests)
         subsequent commands are applied to the resulting list
+    passed [ <test-directory> ... ]
+	list passed test results (for the specified tests)
+        subsequent commands are applied to the resulting list
     unresolved [ <test-directory> ... ]
 	list unresolved test results (for the specified tests)
         subsequent commands are applied to the resulting list
@@ -323,6 +326,7 @@ while test $# -gt 0 ; do
 	diff )       ops[${#ops[@]}]=diffs ;;
 	result )     ops[${#ops[@]}]=results ;;
 	failed )     ops[${#ops[@]}]=failed ;;
+	passed )     ops[${#ops[@]}]=passed ;;
 	unresolved ) ops[${#ops[@]}]=unresolved ;;
 	test   )     ops[${#ops[@]}]=check ;;
 	retest )     ops[${#ops[@]}]=recheck ;;
@@ -561,9 +565,10 @@ while test $i -lt ${#ops[@]} ; do
 	results )
 	    run results_command "${directories[@]}"
 	    ;;
-	failed | unresolved )
+	passed | failed | unresolved )
 	    # should leave: failed and/or unresolved
 	    case ${op} in
+		passed )     match="--skip failed --skip unsupported --skip untested" ;;
 		failed )     match="--skip passed --skip unsupported --skip untested" ;;
 		unresolved ) match="--result unresolved" ;;
 	    esac
