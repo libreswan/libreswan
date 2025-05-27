@@ -55,9 +55,16 @@ static bool set_whack_end(struct whack_end *w,
 	const char *lr = l->leftright;
 	w->leftright = lr;
 
-	/* validate the KSCF_ID */
-	if (l->values[KSCF_ID].string != NULL) {
-		char *value = l->values[KSCF_ID].string;
+	/*
+	 * Deal with ADDCONN's legacy ID syntax where, instead of
+	 * "\,", ",," was used to escape commas!
+	 *
+	 * Don't move to pluto, so that when ADDCONN dies, this hack
+	 * goes with it.
+	 */
+
+	if (l->values[KWS_ID].set) {
+		char *value = l->values[KWS_ID].string;
 		/*
 		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
 		 * backslash comma.
@@ -83,8 +90,8 @@ static bool set_whack_end(struct whack_end *w,
 	w->interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
 
 	/* validate the KSCF_SUBNET */
-	if (l->values[KSCF_SUBNET].string != NULL) {
-		char *value = l->values[KSCF_SUBNET].string;
+	if (l->values[KWS_SUBNET].set) {
+		char *value = l->values[KWS_SUBNET].string;
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			w->virt = value;
 		} else {
@@ -165,7 +172,7 @@ static bool set_whack_end(struct whack_end *w,
 	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
 	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
 
-	w->addresspool = l->values[KSCF_ADDRESSPOOL].string;
+	w->addresspool = l->values[KWS_ADDRESSPOOL].string;
 	return true;
 }
 

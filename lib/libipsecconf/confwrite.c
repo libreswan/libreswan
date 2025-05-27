@@ -109,9 +109,6 @@ static void confwrite_value(FILE *out,
 			break;
 
 		case kt_pubkey:
-		case kt_subnet:
-		case kt_range:
-		case kt_idtype:
 			/* none of these are valid number/string types */
 			break;
 

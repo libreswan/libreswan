@@ -226,7 +226,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
    */
   { "",  kv_conn | kv_leftright,  kt_string,  KWS_HOST, NULL, NULL, },
 
-  { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
+  { "subnet",  kv_conn | kv_leftright,  kt_string,  KWS_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
   { "sourceip",  kv_conn | kv_leftright,  kt_string,  KWS_SOURCEIP, NULL, NULL, },
   { "ikeport",  kv_conn | kv_leftright,  kt_string,  KWS_IKEPORT, NULL, NULL, },
@@ -234,7 +234,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "vti",  kv_conn | kv_leftright,  kt_string,  KWS_VTI, NULL, NULL, },
   { "nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
-  { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
+  { "id",  kv_conn | kv_leftright,  kt_string,  KWS_ID, NULL, NULL, },
   { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &kw_pubkey_names, NULL, },
   { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &kw_pubkey_names, NULL, },
   { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &kw_pubkey_names, NULL, },
@@ -249,7 +249,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "username",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, },
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, }, /* old alias */
-  { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
+  { "addresspool",  kv_conn | kv_leftright,  kt_string,  KWS_ADDRESSPOOL, NULL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
 #if defined(USE_CAT)
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names, NULL, },
