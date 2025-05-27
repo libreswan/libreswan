@@ -42,12 +42,13 @@ static struct lsw_conf_options global_oco;
  */
 static bool lsw_conf_setdefault(void)
 {
-	if (global_oco.rootdir != NULL) {
+	if (global_oco.is_set) {
 		return false;
 	}
 
+	global_oco.is_set = true;
+
 	/* copy everything to the heap for consistency. */
-	global_oco.rootdir = clone_str("", "rootdir");
 
 	global_oco.confdir = clone_str(IPSEC_SYSCONFDIR, "default conf ipsec_conf_dir");
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
@@ -89,7 +90,6 @@ void lsw_conf_free_oco(void)
 	 *
 	 * for (char *p = (char*)&global_oco; p < (char*)(&global_oco + 1); p++)
 	 */
-	pfreeany(global_oco.rootdir);
 
 	pfreeany(global_oco.confdir);
 	pfreeany(global_oco.conffile);
@@ -111,14 +111,6 @@ const struct lsw_conf_options *lsw_init_options(void)
 		lsw_conf_calculate();
 	}
 	return &global_oco;
-}
-
-/* This is only used in testing/crypto (and formerly in testing/lib/libpluto) */
-void lsw_conf_rootdir(const char *root_dir)
-{
-	lsw_conf_setdefault();
-	subst(&global_oco.rootdir, root_dir, "override /");
-	lsw_conf_calculate();
 }
 
 void lsw_conf_confddir(const char *confddir, struct logger *logger)
