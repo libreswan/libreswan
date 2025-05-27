@@ -1267,6 +1267,72 @@ static unsigned extract_sparse_name(const char *leftright,
 	return sparse->value;
 }
 
+struct range {
+	uintmax_t value_when_unset;
+	struct {
+		uintmax_t min;
+		uintmax_t max;
+	} limit;
+	struct {
+		uintmax_t min;
+		uintmax_t max;
+	} clamp;
+};
+
+static uintmax_t check_range(const char *story,
+			     const char *leftright,
+			     const char *name,
+			     uintmax_t value,
+			     struct range range,
+			     diag_t *d,
+			     struct logger *logger)
+{
+
+	if (range.clamp.min != 0 && value < range.clamp.min) {
+		humber_buf hb;
+		llog(RC_LOG, logger, "%s%s%s%s=%ju clamped to the minimum %s",
+		     story, (strlen(story) > 0 ? " " : ""),
+		     leftright, name, value,
+		     str_humber(range.clamp.min, &hb));
+		return range.clamp.min;
+	}
+
+	if (range.clamp.max != 0 && value > range.clamp.max) {
+		humber_buf hb;
+		llog(RC_LOG, logger, "%s%s%s%s=%ju clamped to the maximum %s",
+		     story, (strlen(story) > 0 ? " " : ""),
+		     leftright, name, value,
+		     str_humber(range.clamp.min, &hb));
+		return range.clamp.max;
+	}
+
+	if (range.limit.min != 0 && range.limit.max != 0 &&
+	    (value < range.limit.min || value > range.limit.max)) {
+		(*d) = diag("%s%s%s%s=%ju invalid, must be in the range %ju-%ju",
+			    story, (strlen(story) > 0 ? " " : ""),
+			    leftright, name, value,
+			    range.limit.min, range.limit.max);
+		return range.value_when_unset;
+	}
+
+	if (range.limit.min != 0 && value < range.limit.min) {
+		(*d) = diag("%s%s%s%s=%ju invalid, minimum is %ju",
+			    story, (strlen(story) > 0 ? " " : ""),
+			    leftright, name, value,
+			    range.limit.min);
+		return range.value_when_unset;
+	}
+
+	if (range.limit.max != 0 && value > range.limit.max) {
+		(*d) = diag("%s%s=%ju invalid, maximum is %ju",
+			    leftright, name, value,
+			    range.limit.max);
+		return range.value_when_unset;
+	}
+
+	return value;
+}
+
 static uintmax_t extract_uintmax(const char *leftright,
 				 const char *name,
 				 const char *value,
@@ -1295,12 +1361,12 @@ static uintmax_t extract_uintmax(const char *leftright,
 	return uintmax;
 }
 
-static uintmax_t extract_scaled_uintmax(const char *leftright,
+static uintmax_t extract_scaled_uintmax(const char *story,
+					const char *leftright,
 					const char *name,
 					const char *value,
 					const struct scales *scales,
-					uintmax_t max,
-					const char *what,
+					struct range range,
 					const struct whack_message *wm,
 					diag_t *d,
 					struct logger *logger)
@@ -1308,22 +1374,17 @@ static uintmax_t extract_scaled_uintmax(const char *leftright,
 	(*d) = NULL;
 
 	if (!can_extract_string(leftright, name, value, wm, logger)) {
-		return max;
+		return range.value_when_unset;
 	}
 
 	uintmax_t number;
 	diag_t diag = tto_scaled_uintmax(shunk1(value), &number, scales);
 	if ((*d) != NULL) {
 		(*d) = diag_diag(&diag, "%s%s=%s invalid, ", leftright, name, value);
-		return max;
+		return range.value_when_unset;
 	}
-	if (number > max) {
-		humber_buf hb;
-		llog(RC_LOG, logger, "%s limited to the max allowed %s",
-		     what, str_humber(max, &hb));
-		return max;
-	}
-	return number;
+
+	return check_range(story, leftright, name, number, range, d, logger);
 }
 
 static uintmax_t extract_percent(const char *leftright, const char *name, const char *value,
@@ -4409,20 +4470,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 */
 
 		config->sa_ipsec_max_bytes =
-			extract_scaled_uintmax("", "ipsec-max-bytes", wm->ipsec_max_bytes,
+			extract_scaled_uintmax("IPsec max bytes",
+					       "", "ipsec-max-bytes", wm->ipsec_max_bytes,
 					       &binary_byte_scales,
-					       IPSEC_SA_MAX_OPERATIONS,
-					       "IPsec max bytes",
+					       (struct range) {
+						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
+						       .clamp.max = IPSEC_SA_MAX_OPERATIONS,
+					       },
 					       wm, &d, c->logger);
 		if (d != NULL) {
 			return d;
 		}
 
 		config->sa_ipsec_max_packets =
-			extract_scaled_uintmax("", "ipsec-max-packets", wm->ipsec_max_packets,
+			extract_scaled_uintmax("IPsec max packets",
+					       "", "ipsec-max-packets", wm->ipsec_max_packets,
 					       &binary_scales,
-					       IPSEC_SA_MAX_OPERATIONS,
-					       "IPsec max packets",
+					       (struct range) {
+						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
+						       .clamp.max = IPSEC_SA_MAX_OPERATIONS,
+					       },
 					       wm, &d, c->logger);
 		if (d != NULL) {
 			return d;
