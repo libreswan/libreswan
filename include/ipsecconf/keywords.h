@@ -157,7 +157,7 @@ enum keywords {
 	KWS_INTERFACE_IP,  /* left/right */
 	KWS_USERNAME,	/* left/right */
 	KWS_ADDRESSPOOL,	/* left/right */
-	KSCF_SUBNET,	/* left/right */
+	KWS_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
 
 	KWS_AUTHBY,
@@ -333,7 +333,6 @@ enum keyword_type {
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
 	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
-	kt_subnet,              /* an IP address subnet */
 	kt_idtype,              /* an ID type */
 	kt_also,		/* i.e., #include */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */

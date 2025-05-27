@@ -83,8 +83,8 @@ static bool set_whack_end(struct whack_end *w,
 	w->interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
 
 	/* validate the KSCF_SUBNET */
-	if (l->values[KSCF_SUBNET].string != NULL) {
-		char *value = l->values[KSCF_SUBNET].string;
+	if (l->values[KWS_SUBNET].set) {
+		char *value = l->values[KWS_SUBNET].string;
 		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			w->virt = value;
 		} else {

@@ -226,7 +226,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
    */
   { "",  kv_conn | kv_leftright,  kt_string,  KWS_HOST, NULL, NULL, },
 
-  { "subnet",  kv_conn | kv_leftright | kv_processed,  kt_subnet,  KSCF_SUBNET, NULL, NULL, },
+  { "subnet",  kv_conn | kv_leftright,  kt_string,  KWS_SUBNET, NULL, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, NULL, },
   { "sourceip",  kv_conn | kv_leftright,  kt_string,  KWS_SOURCEIP, NULL, NULL, },
   { "ikeport",  kv_conn | kv_leftright,  kt_string,  KWS_IKEPORT, NULL, NULL, },
