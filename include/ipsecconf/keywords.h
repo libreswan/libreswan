@@ -212,10 +212,10 @@ enum keywords {
 	KNCF_TFC,
 	KWYN_IPTFS,
 	KWYN_IPTFS_FRAGMENTATION,
-	KNCF_IPTFS_PACKET_SIZE,
-	KNCF_IPTFS_MAX_QUEUE_SIZE,
+	KWS_IPTFS_PACKET_SIZE,
+	KWS_IPTFS_MAX_QUEUE_SIZE,
 	KNCF_IPTFS_INIT_DELAY,
-	KNCF_IPTFS_REORDER_WINDOW,
+	KWS_IPTFS_REORDER_WINDOW,
 	KNCF_IPTFS_DROP_TIME,
 	KWS_REQID,
 	KWS_SENDCA,
@@ -332,7 +332,6 @@ enum keyword_type {
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
-	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
 	kt_also,		/* i.e., #include */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
 };
