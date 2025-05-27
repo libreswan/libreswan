@@ -1115,10 +1115,14 @@ static bool match_dn_unordered(asn1_t a, asn1_t b, int *const wildcards,
 
 	CERT_DestroyName(a_name);
 	CERT_DestroyName(b_name);
-	vdbg("%s() matched: %d, rdn_num: %d, wc %d",
-	     __func__, matched, rdn_num, wildcards ? *wildcards : 0);
 
-	return matched > 0 && rdn_num > 0 && matched == rdn_num;
+	bool ok = (matched > 0 && rdn_num > 0 && matched == rdn_num);
+	vdbg("%s() matched: %d, rdn_num: %d, wildcards: %d; %s",
+	     __func__, matched, rdn_num,
+	     (wildcards ? *wildcards : -1),
+	     bool_str(ok));
+
+	return ok;
 }
 
 bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
