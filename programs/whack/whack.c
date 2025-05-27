@@ -1616,7 +1616,7 @@ int main(int argc, char **argv)
 			msg.iptfs_fragmentation = optarg_sparse(logger, YN_YES, &yn_option_names);
 			continue;
 		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
-			msg.iptfs_packet_size = optarg_uintmax(logger);
+			msg.iptfs_packet_size = optarg;
 			continue;
 		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
 			msg.iptfs_max_queue_size = optarg_uintmax(logger);
