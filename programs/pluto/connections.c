@@ -3754,7 +3754,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		deltatime_t uint32_max = deltatime_from_microseconds(UINT32_MAX);
 
 		config->child_sa.iptfs.enabled = true;
-		config->child_sa.iptfs.packet_size = wm->iptfs_packet_size;
+		config->child_sa.iptfs.packet_size =
+			extract_scaled_uintmax("", "", "iptfs-packet-size",
+					       wm->iptfs_packet_size,
+					       &binary_scales,
+					       (struct range) {
+						       .value_when_unset = 0/*i.e., disable*/,
+					       },
+					       wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
+
 		config->child_sa.iptfs.max_queue_size = wm->iptfs_max_queue_size;
 
 		if (deltatime_cmp(wm->iptfs_drop_time, >=, uint32_max)) {
