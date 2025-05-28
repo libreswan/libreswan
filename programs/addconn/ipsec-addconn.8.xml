@@ -153,10 +153,10 @@
     </para>
 
     <para>
-      When <option>--checkconfig</option> is specified,
-      the configuration file is parsed and all sections are checked
-      for correct syntax. If an error is found, information about it
-      is printed to the terminal.
+      When <option>--checkconfig</option> is specified, the
+      configuration file is parsed and all sections are checked for
+      correct syntax.  If an error is found, information about it is
+      printed to the terminal.
     </para>
 
     <para>
