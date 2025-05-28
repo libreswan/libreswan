@@ -32,7 +32,7 @@
       Whether or not to fragment IP-TFS.
     </para>
     <para>
-      On <application>Linux</application> and
+      On &Linux; and
       <option>iptfs-fragmentation=no</option>, this passes
       <option>XFRMA_IPTFS_DONT_FRAG</option> to the kernel.  (Unclear
       to at least one author if this means regular ICMP Dont Fragment

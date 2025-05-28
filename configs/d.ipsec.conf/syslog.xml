@@ -4,10 +4,8 @@
   </term>
   <listitem>
     <para>
-      the
-      <citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>
-      &ldquo;facility&rdquo; name and priority to use for
-      startup/shutdown log messages, default
+      the &syslog.2; <replaceable>facility</replaceable> name and
+      priority to use for startup/shutdown log messages, default
       <option>daemon.error</option>.
     </para>
   </listitem>

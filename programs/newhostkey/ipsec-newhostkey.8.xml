@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry>
   <refmeta>
     <refentrytitle>IPSEC-NEWHOSTKEY</refentrytitle>
@@ -42,7 +43,7 @@
     </para>
 
     <para>
-      See <citerefentry><refentrytitle>ipsec-showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      See &ipsec-showhostkey.8;
       for how to extract the public key from the NSS database.
     </para>
 
@@ -110,7 +111,7 @@
 	    <para>
 	      The <option>--curve</option> option specifies the named curve
 	      used in the ECDSA key; the current default is secp256r1.
-	      See <citerefentry><refentrytitle>ipsec-ecdsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	      See &ipsec-ecdsasigkey.8;
 	      for the available curve names.
 	    </para>
 	  </listitem>
@@ -154,9 +155,9 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>ipsec-rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      &ipsec-rsasigkey.8;,
+      &ipsec-showhostkey.8;,
+      &ipsec.secrets.5;
     </para>
   </refsect1>
 
@@ -175,7 +176,7 @@
       can cause arbitrarily long waits for random bits for seeding the NSS
       library, and the prime-number searches can also take unpredictable
       (and potentially large) amounts of CPU time.
-      See <citerefentry><refentrytitle>ipsec-rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+      See &ipsec-rsasigkey.8;.
     </para>
   </refsect1>
 

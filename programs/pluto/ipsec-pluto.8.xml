@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry id="pluto8">
   <refmeta>
     <refentrytitle>IPSEC-PLUTO</refentrytitle>
@@ -68,37 +69,26 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <command>pluto</command> is
-      <application>Libreswan's</application> Internet Key Exchange
+      <command>pluto</command> is &Libreswan;'s Internet Key Exchange
       (IKE) daemon.
     </para>
 
     <para>
       <command>pluto</command> is not normally run directly.  Instead
-      the daemon is controlled the hosts <citerefentry>
-      <refentrytitle>init</refentrytitle> <manvolnum>8</manvolnum>
-      </citerefentry> system (such as
-      <citerefentry> <refentrytitle>systemd</refentrytitle>
-      <manvolnum>1</manvolnum> </citerefentry> or <citerefentry>
-      <refentrytitle>rc</refentrytitle> <manvolnum>8</manvolnum>
-      </citerefentry>) or the command <command>ipsec</command> (see
-      <citerefentry> <refentrytitle>ipsec</refentrytitle>
-      <manvolnum>8</manvolnum> </citerefentry>).
+      the daemon is controlled the hosts &init.8; system (such as
+      &systemd.8; or &rc.8;) or the command <command>ipsec</command>
+      (see &ipsec.8;).
     </para>
 
     <para>
-      For more general information on <application>Libreswan</application>
-      see <citerefentry> <refentrytitle>libreswan</refentrytitle>
-      <manvolnum>7</manvolnum> </citerefentry>.
+      For more general information on
+      &Libreswan; see &libreswan.7;.
     </para>
 
     <para>
       For information on how to configure
-      <application>Libreswan</application> and the
-      <command>pluto</command> daemon see <citerefentry>
-      <refentrytitle>ipsec.conf</refentrytitle>
-      <manvolnum>5</manvolnum>
-      </citerefentry>.
+      &Libreswan; and the
+      <command>pluto</command> daemon see &ipsec.conf.5;.
     </para>
 
     <refsect2>
@@ -123,7 +113,7 @@
 	  </term>
           <listitem>
             <para>
-	      show <application>Libreswan's</application> version details
+	      show &Libreswan;'s version details
 	    </para>
           </listitem>
 	</varlistentry>
@@ -237,11 +227,9 @@
       </title>
 
       <para>
-	All logging, including diagnostics, are sent to <citerefentry>
-	<refentrytitle>syslog</refentrytitle>
-	<manvolnum>3</manvolnum> </citerefentry> with
-	<property>facility=authpriv</property>; it decides where to
-	put these messages.  The following options alter this
+	All logging, including diagnostics, are sent to &syslog.3;
+	with <property>facility=authpriv</property>; it decides where
+	to put these messages.  The following options alter this
 	behaviour:
       </para>
 
@@ -266,15 +254,12 @@
 	  </term>
           <listitem>
             <para>
-	      direct logging to <filename><replaceable>filename</replaceable></filename>
-	      instead of  <citerefentry>
-	      <refentrytitle>syslog</refentrytitle>
-	      <manvolnum>3</manvolnum> </citerefentry>
+	      direct logging to
+	      <filename><replaceable>filename</replaceable></filename>
+	      instead of &syslog.3;
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
+	      See &ipsec.conf.5; and
 	      <property>logfile=<filename><replaceable>filename</replaceable></filename></property>.
 	    </para>
 	  </listitem>
@@ -288,10 +273,7 @@
 	      do not include a timestamp prefix when logging to a file
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
-	      <property>logtime=no</property>.
+	      See &ipsec.conf.5; and <property>logtime=no</property>.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -304,9 +286,7 @@
 	      do not append to the end of an existing log file
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
+	      See &ipsec.conf.5; and
 	      <property>logappend=no</property>.
 	    </para>
 	  </listitem>
@@ -320,10 +300,7 @@
 	      do not include IP addresses when logging
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
-	      <property>logip=no</property>.
+	      See &ipsec.conf.5; and <property>logip=no</property>.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -337,9 +314,7 @@
 	      Linux Auditing)
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
+	      See &ipsec.conf.5; and
 	      <property>audit-log=no</property>.
 	    </para>
 	  </listitem>
@@ -365,11 +340,8 @@
 	  </term>
 	  <listitem>
 	    <para>
-	      specify a
-	      <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> file containing
-	      additional configuration parameters
+	      specify a &ipsec.conf.5; file containing additional
+	      configuration parameters
 	    </para>
 	    <para>
 	      The "config" section of
@@ -393,17 +365,14 @@
 	      specify the file for authentication secrets
 	    </para>
 	    <para>
-	      This name is
-	      subject to "globbing" as in <citerefentry>
-	      <refentrytitle>sh</refentrytitle>
-	      <manvolnum>1</manvolnum> </citerefentry>, so every file
-	      with a matching name is processed.  Quoting is generally
-	      needed to prevent the shell from doing the globbing.
+	      This name is subject to "globbing" as in &sh.1;, so
+	      every file with a matching name is processed.  Quoting
+	      is generally needed to prevent the shell from doing the
+	      globbing.
 	    </para>
 	    <para>
-	      Default is <filename>@@IPSEC_SECRETS@@</filename>.  See <citerefentry>
-	      <refentrytitle>ipsec.secrets</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry>.
+	      Default is <filename>@@IPSEC_SECRETS@@</filename>.  See
+	      &ipsec.secrets.5;.
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -500,9 +469,7 @@
 	      <option>--virtual-private</option> option.
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> for the syntax
+	      See &ipsec.conf.5; for the syntax
 	    </para>
 	  </listitem>
 	</varlistentry>
@@ -586,9 +553,7 @@
 	      value forces the number to that amount.
 	    </para>
 	    <para>
-	      See <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
+	      See &ipsec.conf.5; and
 	      <property>nhelpers=<filename><replaceable>number</replaceable></filename></property>.
 	    </para>
 	  </listitem>
@@ -615,9 +580,7 @@
 	      and seeded into the NSS RNG.
 	    </para>
 	    <para>
-	      See  <citerefentry>
-	      <refentrytitle>ipsec.conf</refentrytitle>
-	      <manvolnum>5</manvolnum> </citerefentry> and
+	      See &ipsec.conf.5; and
 	      <property>seedbits=<filename><replaceable>number</replaceable></filename></property>.
 	    </para>
 	    <para>
@@ -699,9 +662,7 @@
       </para>
 
       <para>
-	See <citerefentry>
-	<refentrytitle>ipsec.conf</refentrytitle>
-	<manvolnum>5</manvolnum> </citerefentry> and
+	See &ipsec.conf.5; and
 	<property>plutodebug=<replaceable>options</replaceable></property>.
       </para>
 
@@ -857,11 +818,8 @@
     <title>SEE ALSO</title>
 
     <para>
-      The rest of the Libreswan distribution, in particular
-      <citerefentry>
-	<refentrytitle>libreswan</refentrytitle>
-	<manvolnum>7</manvolnum>
-	</citerefentry>.
+      The rest of the &Libreswan; distribution, in particular
+      &libreswan.7;.
     </para>
   </refsect1>
 

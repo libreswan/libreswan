@@ -3,7 +3,6 @@
     SEE ALSO
   </title>
   <para>
-    <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-    <citerefentry><refentrytitle>ipsec-rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+    &ipsec.8;, &ipsec-rsasigkey.8;
   </para>
 </refsect1>

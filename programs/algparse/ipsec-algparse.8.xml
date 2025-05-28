@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 
 <refentry id='algparse8'>
 
@@ -75,10 +76,10 @@
       the same syntax as used in the file
       <filename>ipsec.conf</filename> (see the description of
       <command>ike=</command> and <command>esp=</command> in
-      <citerefentry><refentrytitle><filename>ipsec.conf</filename></refentrytitle>
-      <manvolnum>5</manvolnum></citerefentry> for details).  In
-      addition, <command>ipsec algparse</command> can be used to run
-      the proposal parser or the cryptographic algorithm testsuites.
+      <filename>ipsec.conf</filename> (see &ipsec.conf.5; for
+      details).  In addition, <command>ipsec algparse</command> can be
+      used to run the proposal parser or the cryptographic algorithm
+      testsuites.
     </para>
 
     <para>
@@ -284,7 +285,7 @@
   <refsect1 id='history'>
     <title>HISTORY</title>
     <para>
-      Written for the <application>Libreswan</application> project by
+      Written for the &Libreswan; project by
       <author><personname><firstname>Andrew</firstname><surname>Cagney</surname></personname></author>.
     </para>
   </refsect1>

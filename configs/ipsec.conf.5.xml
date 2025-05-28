@@ -10,13 +10,17 @@
 
    <?xml version="1.0" encoding="UTF-8"?>
    <!DOCTYPE refsect1 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 
    at the head of each file; sigh.
 -->
 
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">%entities;
+
 <!ENTITY accept-redirect SYSTEM "d.ipsec.conf/accept-redirect.xml">
 <!ENTITY accept-redirect-to SYSTEM "d.ipsec.conf/accept-redirect-to.xml">
 <!ENTITY aggressive SYSTEM "d.ipsec.conf/aggressive.xml">
@@ -192,12 +196,6 @@
 <!ENTITY xauthfail SYSTEM "d.ipsec.conf/xauthfail.xml">
 <!ENTITY expire-lifetime SYSTEM "d.ipsec.conf/expire-lifetime.xml">
 
-<!ENTITY Libreswan '<application>Libreswan</application>'>
-<!ENTITY Linux '<application>Linux</application>'>
-<!ENTITY NetBSD '<application>NetBSD</application>'>
-<!ENTITY FreeBSD '<application>FreeBSD</application>'>
-<!ENTITY OpenBSD '<application>OpenBSD</application>'>
-
 <!-- definitely wrong but nothing better? -->
 <!ENTITY yN_options '{yes,<emphasis>no</emphasis>}'>
 <!ENTITY Yn_options '{<emphasis>yes</emphasis>,no}'>
@@ -260,8 +258,7 @@
 	unchanged through the tunnels.  (This means that all subnets
 	connected in this manner must have distinct, non-overlapping
 	subnet address blocks.)  This is done by the default
-	<option>updown</option> script (see
-	<citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
+	<option>updown</option> script (see &ipsec-pluto.8;).
       </para>
       <para>
 	The implementation of this makes certain assumptions about

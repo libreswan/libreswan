@@ -18,12 +18,8 @@
       </simplelist>
     </para>
     <para>
-      During startup,
-      <citerefentry>
-	<refentrytitle>ipsec-pluto</refentrytitle>
-	<manvolnum>8</manvolnum>
-      </citerefentry>
-      will log all supported ESP algorithms.
+      During startup, &ipsec-pluto.8; will log all supported ESP
+      algorithms.
     </para>
     <para>
       Specifying the DH algorithms explicitly is
@@ -56,10 +52,7 @@
       If not specified, a secure set of defaults will be used.  The
       program <command>ipsec algparse</command> can be used to query
       these defaults for instance: <command>ipsec algparse
-      esp=</command> (see
-      <citerefentry>
-	<refentrytitle>ipsec-algparse</refentrytitle>
-	<manvolnum>8</manvolnum> </citerefentry>).
+      esp=</command> (see &ipsec-algparse.8;).
     </para>
     <para>
       This option replaces phase2alg= option for esp.

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry id="whack8">
   <refmeta>
     <refentrytitle>IPSEC-WHACK</refentrytitle>
@@ -837,10 +838,8 @@
           <para>
 	    The friendly_name (or nickname) of the X.509 certificate
 	    that was used when imported the certificate into the NSS
-	    database. See <citerefentry>
-	    <refentrytitle>ipsec.conf</refentrytitle>
-	    <manvolnum>5</manvolnum> </citerefentry> on how to
-	    extract this from the PKCS#12 file.
+	    database. See &ipsec.conf.5; on how to extract this from
+	    the PKCS#12 file.
 	  </para>
         </listitem>
       </varlistentry>
@@ -1022,9 +1021,8 @@
         <listitem>
           <para>
 	    IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing
-	    options.  See <option>narrowing</option> in <citerefentry>
-	    <refentrytitle>ipsec.conf</refentrytitle>
-	    <manvolnum>5</manvolnum></citerefentry>.
+	    options.  See <option>narrowing</option> in
+	    &ipsec.conf.5;.
 	  </para>
         </listitem>
       </varlistentry>
@@ -1083,9 +1081,7 @@
         <listitem>
           <para>
 	    The username for the xauth authentication.This option is
-	    normally passed along by <citerefentry>
-	    <refentrytitle>ipsec-up</refentrytitle>
-	    <manvolnum>8</manvolnum> </citerefentry> when an xauth
+	    normally passed along by &ipsec-up.8; when an xauth
 	    connection is started using <command>ipsec up
 	    <replaceable>connection</replaceable></command>.
 	  </para>
@@ -1098,10 +1094,8 @@
 	</term>
         <listitem>
           <para>
-	    The password for the xauth authentication. This option
-	    is normally passed along by <citerefentry>
-	    <refentrytitle>ipsec-up</refentrytitle>
-	    <manvolnum>8</manvolnum> </citerefentry> when an xauth
+	    The password for the xauth authentication. This option is
+	    normally passed along by &ipsec-up.8; when an xauth
 	    connection is started using <command>ipsec up
 	    <replaceable>connection</replaceable></command>.
 	  </para>
@@ -1391,14 +1385,10 @@
 	</term>
         <listitem>
           <para>
-	    ESP encryption/authentication algorithm to be used for
-	    the connection (phase2 aka IPsec SA). The options must
-	    be suitable as a value of <citerefentry>
-	    <refentrytitle>ipsec-spi</refentrytitle>
-	    <manvolnum>8</manvolnum> </citerefentry>.  See
-	    <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
-	    <manvolnum>5</manvolnum> </citerefentry> for a detailed
-	    description of the algorithm format.
+	    ESP encryption/authentication algorithm to be used for the
+	    connection (phase2 aka IPsec SA). The options must be
+	    suitable as a value of &ipsec-spi.8;.  See &ipsec.conf.5;
+	    for a detailed description of the algorithm format.
 	  </para>
         </listitem>
       </varlistentry>
@@ -2141,10 +2131,8 @@
 
     <para>
       The public key for informs <emphasis>pluto</emphasis> of the RSA
-      public key for a potential peer. Private keys must be kept secret,
-      so they are kept in <citerefentry>
-      <refentrytitle>ipsec.secrets</refentrytitle>
-      <manvolnum>5</manvolnum> </citerefentry>.
+      public key for a potential peer. Private keys must be kept
+      secret, so they are kept in &ipsec.secrets.5;.
     </para>
 
     <variablelist>
@@ -2924,11 +2912,9 @@
             <para>
 	      Specifies the file for authentication secrets (default:
 	      <filename>@@IPSEC_SECRETS@@</filename>). This name is
-	      subject to "globbing" as in <citerefentry>
-	      <refentrytitle>sh</refentrytitle>
-	      <manvolnum>1</manvolnum> </citerefentry>, so every file
-	      with a matching name is processed. Quoting is generally
-	      needed to prevent the shell from doing the globbing.
+	      subject to "globbing" as in &sh.1;, so every file with a
+	      matching name is processed. Quoting is generally needed
+	      to prevent the shell from doing the globbing.
 	    </para>
           </listitem>
         </varlistentry>
@@ -2987,9 +2973,7 @@
 	  </term>
           <listitem>
             <para>
-	      Log goes to standard out (default is to use
-	      <citerefentry> <refentrytitle>syslogd</refentrytitle>
-	      <manvolnum>8</manvolnum> </citerefentry>).
+	      Log goes to standard out (default is to use &syslogd.8;.
 	    </para>
           </listitem>
         </varlistentry>
@@ -3406,23 +3390,15 @@
     <title>SEE ALSO</title>
 
     <para>The rest of the Libreswan distribution, in particular
-    <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+    &ipsec.8;.</para>
 
     <para>
-      <citerefentry>
-        <refentrytitle>ipsec</refentrytitle>
-        <manvolnum>8</manvolnum>
-      </citerefentry>
-      is designed to make using <command>pluto</command>
+      &ipsec.8; is designed to make using <command>pluto</command>
       more pleasant. Use it!
     </para>
 
     <para>
-      <citerefentry>
-        <refentrytitle>ipsec.secrets</refentrytitle>
-        <manvolnum>5</manvolnum>
-      </citerefentry>
-      describes the format of the secrets file.
+      &ipsec.secrets.5; describes the format of the secrets file.
     </para>
 
     <para>

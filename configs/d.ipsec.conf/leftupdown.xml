@@ -25,9 +25,7 @@
       <option>drop</option> never run <command>ipsec _updown</command>.
     </para>
     <para>
-      See
-      <citerefentry><refentrytitle>libreswan</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-      for details.
+      See &libreswan.7; for details.
     </para>
     <para>
       Relevant only locally, other end need not agree on it.

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry>
   <refmeta>
     <refentrytitle>IPSEC-SETUP</refentrytitle>
@@ -11,8 +12,8 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec-setup</refname>
-    <refpurpose>wrapper routine to the Libreswan init system</refpurpose>
+    <refname>ipsec-setup</refname> <refpurpose>wrapper routine to the
+    &Libreswan; init system</refpurpose>
   </refnamediv>
   <!-- body begins here -->
 
@@ -38,10 +39,10 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-_plutorun</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      &systemd.8;,
+      &systemd.service.5;,
+      &ipsec.8;,
+      &ipsec-_plutorun.8;
     .</para>
   </refsect1>
 

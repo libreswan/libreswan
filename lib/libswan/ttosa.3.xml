@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry id='ttosa3'>
 <refentryinfo>
   <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
@@ -126,7 +127,7 @@ signify special &ldquo;magic&rdquo; SAs used to indicate that packets should be
 passed, dropped, rejected (dropped with ICMP notification),
 held,
 and trapped (sent up to
-<citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+&ipsec-pluto.8;,
 with either of two forms of
 <emphasis>%hold</emphasis>
 automatically installed)

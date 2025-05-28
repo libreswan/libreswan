@@ -5,20 +5,15 @@
   </title>
 
   <para>
-    The <filename>ipsec.conf</filename> file specifies most configuration and
-    control information for the <application>Libreswan</application>
-    IPsec subsystem  (the major
-    exception is secrets for authentication; see <citerefentry>
-    <refentrytitle>ipsec.secrets</refentrytitle>
-    <manvolnum>5</manvolnum> </citerefentry>).
-    <application>Libreswan</application> reads this file during start
-    up (technically, if <application>Libreswan's</application> daemon
-    <citerefentry> <refentrytitle>ipsec-pluto</refentrytitle>
-    <manvolnum>8</manvolnum> </citerefentry> is invoked directly then
-    the file <filename>ipsec.conf</filename> is not needed; however,
-    this is not recommended).  Configurations can be added using eithe
-    this configuration file or by using <command>ipsec whack</command>
-    directly.
+    The <filename>ipsec.conf</filename> file specifies most
+    configuration and control information for the &Libreswan; IPsec
+    subsystem (the major exception is secrets for authentication; see
+    &ipsec.secrets.5;).  &Libreswan; reads this file during start up
+    (technically, if &Libreswan;'s daemon &ipsec-pluto.8; is invoked
+    directly then the file <filename>ipsec.conf</filename> is not
+    needed; however, this is not recommended).  Configurations can be
+    added using eithe this configuration file or by using
+    <command>ipsec whack</command> directly.
   </para>
 
   <para>
@@ -39,9 +34,7 @@
     to be relative to the directory that contains the including file.
     Such inclusions can be nested.  Only a single filename may be
     supplied, and it may not contain white space, but it may include
-    shell wildcards (see <citerefentry>
-    <refentrytitle>glob</refentrytitle> <manvolnum>3</manvolnum>
-    </citerefentry>); for example:
+    shell wildcards (see &glob.3;); for example:
   </para>
 
   <para>
@@ -94,7 +87,7 @@
   <para>
     There are two types of section: a <option>config</option>
     section specifies general configuration information for
-    <application>libreswan</application>, and a
+    &Libreswan;, and a
     <option>conn</option> section specifies an IPsec connection.
   </para>
 

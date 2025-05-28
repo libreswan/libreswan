@@ -8,14 +8,13 @@
   </para>
 
   <para>
-    When <option>type</option> or
-    <option>failureshunt</option> is set to
-    <option>drop</option> or <option>reject,</option>
-    Libreswan blocks outbound packets using eroutes, but assumes
-    inbound blocking is handled by the firewall. Libreswan offers
-    firewall hooks via an &ldquo;updown&rdquo; script.  However, the
-    default <command>ipsec _updown</command> provides no help in
-    controlling a modern firewall.
+    When <option>type</option> or <option>failureshunt</option> is set
+    to <option>drop</option> or <option>reject,</option> &Libreswan;
+    blocks outbound packets using eroutes, but assumes inbound
+    blocking is handled by the firewall.  &Libreswan; offers firewall
+    hooks via an &ldquo;updown&rdquo; script.  However, the default
+    <command>ipsec _updown</command> provides no help in controlling a
+    modern firewall.
   </para>
 
   <para>
@@ -55,7 +54,7 @@
     If conns are to be added before DNS is available, <option>left=</option>
     <option>FQDN</option>, <option>leftnextop=</option><option>FQDN</option>,
     and <option>leftrsasigkey=%dnsonload</option> will fail.
-    <citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+    &ipsec-pluto.8;
     does not actually use the public key for our side of a conn but it
     isn't generally known at a add-time which side is ours (Road
     Warrior and Opportunistic conns are currently exceptions).

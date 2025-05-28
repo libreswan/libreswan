@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry>
   <refmeta>
     <refentrytitle>IPSEC-_UPDOWN</refentrytitle>
@@ -262,8 +263,8 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      &ipsec.8;,
+      &ipsec-pluto.8;
     </para>
   </refsect1>
 

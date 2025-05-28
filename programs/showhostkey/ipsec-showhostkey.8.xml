@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry>
   <refmeta>
     <refentrytitle>IPSEC-SHOWHOSTKEY</refentrytitle>
@@ -196,7 +197,7 @@
 	  <listitem>
 	    <para>
 	      Print the selected public key in
-	      <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+	      &ipsec.conf.5;
 	      format, as a <emphasis>leftrsasigkey</emphasis>
 	      or <emphasis>rightrsasigkey</emphasis> parameter
 	      respectively.  For example, <option>--left</option> might
@@ -289,9 +290,9 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-newhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      &ipsec.conf.5;,
+      &ipsec-rsasigkey.8;,
+      &ipsec-newhostkey.8;
     </para>
   </refsect1>
 

@@ -4,14 +4,12 @@
   </term>
   <listitem>
     <para>
-      Enable debug logging.  For more information see <citerefentry>
-      <refentrytitle>ipsec-whack</refentrytitle>
-      <manvolnum>8</manvolnum> </citerefentry> and the
-      <option>--debug</option> option.
+      Enable debug logging.  For more information see &ipsec-whack.8;
+      and the <option>--debug</option> option.
     </para>
     <note>
       <para>
-	This feature is used by <application>Libreswan</application>
+	This feature is used by &Libreswan;
 	developers.  The default logs should provide sufficient
 	information to diagnose configuration and connection problems.
       </para>

@@ -13,11 +13,10 @@
       signifying that packets should be discarded.
     </para>
     <para>
-      Historic Note: <application>KLIPS</application> supported the
-      option <option>reject</option> signifying that packets should be
-      discarded and a diagnostic ICMP returned.  Support for
-      <application>KLIPS</application>, and this option, have been
-      removed.
+      Historic Note: &KLIPS; supported the option
+      <option>reject</option> signifying that packets should be
+      discarded and a diagnostic ICMP returned.  Support for &KLIPS;,
+      and this option, have been removed.
     </para>
   </listitem>
 </varlistentry>

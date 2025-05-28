@@ -8,7 +8,7 @@
       IKE daemons.
     </para>
     <para>
-      By default, <application>Libreswan</application> pads messages
+      By default, &Libreswan; pads messages
       to a minimum of 4-bytes.  While this is allowed it may cause
       interoperability issues.  To remove this padding, specify
       <option>ikepad=no</option> (note that this does not affect
@@ -16,9 +16,9 @@
       always added).
     </para>
     <para>
-      Prior to <application>Libreswan 5.2</application>, some MODECFG
-      payloads were incorrectly padded to 4-bytes which caused
-      interoperability issues.  To restore this behaviour, specify
+      Prior to &Libreswan; version 5.2, some MODECFG payloads were
+      incorrectly padded to 4-bytes which caused interoperability
+      issues.  To restore this behaviour, specify
       <option>ikepad=yes</option>.
     </para>
     <para>
@@ -31,15 +31,14 @@
       <para>
 	It was thought that padding messages by 4-bytes was causing
 	interoperability issues with
-	<application>Checkpoint</application>
+	&Checkpoint;
 	(<option>ikepad=no</option> was added as a workaround).
-	However, it's since been determined that
-	<application>Racoon</application> also had interoperability
-	issues and the cause was the padding of some XAUTH and MODECFG
-	payloads.  Setting <option>ikepad=no</option> fixed
-	interoperability because it was also disabling that padding.
-	The padding of XAUTH and MODECFG was removed in
-	<application>Libreswan 5.2</application>.
+	However, it's since been determined that &Racoon; also had
+	interoperability issues and the cause was the padding of some
+	XAUTH and MODECFG payloads.  Setting
+	<option>ikepad=no</option> fixed interoperability because it
+	was also disabling that padding.  The padding of XAUTH and
+	MODECFG was removed in &Libreswan; version 5.2.
       </para>
       <para>
 	Further details can be found in the RFCs, see: RFC-2409

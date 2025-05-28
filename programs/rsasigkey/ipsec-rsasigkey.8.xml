@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
 <refentry>
   <refmeta>
     <refentrytitle>IPSEC-RSASIGKEY</refentrytitle>
@@ -57,7 +58,7 @@
       The <option>--seeddev</option> option specifies a
       source for random bits used to seed the crypto library's
       RNG. The default is <filename>/dev/random</filename> (see
-      <citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
+      &random.4;).
       FreeS/WAN and Openswan without NSS support used this option to specify
       the random source used to directly create keys. Libreswan only uses
       it to seed the NSS crypto libraries RNG. Under Linux with hardware random
@@ -107,7 +108,7 @@
 	<para>
 	  generates a 4096-bit signature key  and stores this key in the NSS database.
 	  The public key can then be extracted and edited into the <filename>ipsec.conf</filename> (see
-	  <citerefentry><refentrytitle>ipsec-showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
+	  &ipsec-showhostkey.8;).
 	</para>
       </listitem>
     </varlistentry>
@@ -124,9 +125,9 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>rngd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      &random.4;,
+      &rngd.8;,
+      &ipsec-showhostkey.8;,
       <emphasis>Applied Cryptography, 2nd. ed., by Bruce Schneier, Wiley 1996</emphasis>,
       <emphasis>RFCs 2537, 2313</emphasis>,
       <emphasis>GNU  MP, the GNU multiple precision arithmetic library, edition 2.0.2, by Torbj Granlund</emphasis>

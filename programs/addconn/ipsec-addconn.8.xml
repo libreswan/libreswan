@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
+
 <refentry>
   <refmeta>
     <refentrytitle>IPSEC-ADDCONN</refentrytitle>
@@ -153,10 +155,10 @@
     </para>
 
     <para>
-      When <option>--checkconfig</option> is specified,
-      the configuration file is parsed and all sections are checked
-      for correct syntax. If an error is found, information about it
-      is printed to the terminal.
+      When <option>--checkconfig</option> is specified, the
+      configuration file is parsed and all sections are checked for
+      correct syntax.  If an error is found, information about it is
+      printed to the terminal.
     </para>
 
     <para>
@@ -165,6 +167,13 @@
       no connections are added or replaced, only shown. This command
       can be used to verify which connections the addcon command would
       act upon, without actually performing any action.
+    </para>
+  </refsect1>
+
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      &ipsec.conf.5;, &ipsec.8;, &libreswan.7;
     </para>
   </refsect1>
 

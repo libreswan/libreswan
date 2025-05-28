@@ -8,7 +8,7 @@
       be randomly increased to randomize rekeying intervals (important
       for hosts with many connections); acceptable values are an
       integer, which may exceed 100, followed by a `%' (default set by
-      <citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      &ipsec-pluto.8;,
       currently <option>100%</option>).  The value of
       <option>rekeymargin</option>, after this random increase, must
       not exceed <option>salifetime</option>.  The value

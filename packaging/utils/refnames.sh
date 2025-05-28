@@ -5,10 +5,10 @@ BEGIN {
     debug = 0
 }
 
-/<manvolnum>/ && !manvolnum {
+/<manvolnum>[0-9]+<\/manvolnum>$/ && !manvolnum {
     manvolnum = $0
     gsub(/[^0-9]*/, "", manvolnum)
-    if (debug) print "manvolnum:", manvolnum >> "/dev/stderr"
+    print "manvolnum:", manvolnum >> "/dev/stderr"
 }
 
 /<refname>/ {

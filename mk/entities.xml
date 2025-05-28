@@ -1,0 +1,115 @@
+<!-- common applications -->
+
+<!ENTITY FreeBSD '<application>FreeBSD</application>'>
+<!ENTITY Libreswan '<application>Libreswan</application>'>
+<!ENTITY Linux '<application>Linux</application>'>
+<!ENTITY NetBSD '<application>NetBSD</application>'>
+<!ENTITY OpenBSD '<application>OpenBSD</application>'>
+
+<!ENTITY Linux.XFRM '<application>Linux XFRM</application>'>
+<!ENTITY BSD.KAME '<application>BSD KAME</application>'>
+<!ENTITY NSS '<application>NSS</application>'>
+<!ENTITY Cisco '<application>Cisco</application>'>
+<!ENTITY KLIPS '<application>KLIPS</application>'>
+<!ENTITY IKE '<application>IKE</application>'>
+<!ENTITY Racoon '<application>Racoon</application>'>
+<!ENTITY letsencrypt '<application>letsencrypt</application>'>
+<!ENTITY Checkpoint '<application>Checkpoint</application>'>
+<!ENTITY X.509 '<application>X.509</application>'>
+
+<!-- libreswan manpages -->
+
+<!ENTITY ipsec.conf '<filename>ipsec.conf</filename>'>
+<!ENTITY ipsec.secrets '<filename>ipsec.secrets</filename>'>
+
+<!ENTITY ipsec.conf.5     '<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+<!ENTITY ipsec.secrets.5  '<citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+
+<!ENTITY libreswan.7      '<citerefentry><refentrytitle>libreswan</refentrytitle><manvolnum>7</manvolnum></citerefentry>'>
+
+<!ENTITY ipsec-_plutorun.8 '<citerefentry><refentrytitle>ipsec-_plutorun</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-add.8 '<citerefentry><refentrytitle>ipsec-add</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-algparse.8 '<citerefentry><refentrytitle>ipsec-algparse</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-briefconnectionstatus.8 '<citerefentry><refentrytitle>ipsec-briefconnectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-briefstatus.8 '<citerefentry><refentrytitle>ipsec-briefstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-cavp.8 '<citerefentry><refentrytitle>ipsec-cavp</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-certutil.8 '<citerefentry><refentrytitle>ipsec-certutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-checkconfig.8 '<citerefentry><refentrytitle>ipsec-checkconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-checknflog.8 '<citerefentry><refentrytitle>ipsec-checknflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-checknss.8 '<citerefentry><refentrytitle>ipsec-checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-connectionstatus.8 '<citerefentry><refentrytitle>ipsec-connectionstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-crlutil.8 '<citerefentry><refentrytitle>ipsec-crlutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-delete.8 '<citerefentry><refentrytitle>ipsec-delete</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-down.8 '<citerefentry><refentrytitle>ipsec-down</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-ecdsasigkey.8 '<citerefentry><refentrytitle>ipsec-ecdsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-fetchcrls.8 '<citerefentry><refentrytitle>ipsec-fetchcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-fips.8 '<citerefentry><refentrytitle>ipsec-fips</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-fipsstatus.8 '<citerefentry><refentrytitle>ipsec-fipsstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-globalstatus.8 '<citerefentry><refentrytitle>ipsec-globalstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-import.8 '<citerefentry><refentrytitle>ipsec-import</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-initnss.8 '<citerefentry><refentrytitle>ipsec-initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-letsencrypt.8 '<citerefentry><refentrytitle>ipsec-letsencrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-listall.8 '<citerefentry><refentrytitle>ipsec-listall</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-listcacerts.8 '<citerefentry><refentrytitle>ipsec-listcacerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-listcerts.8 '<citerefentry><refentrytitle>ipsec-listcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-listcrls.8 '<citerefentry><refentrytitle>ipsec-listcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-listen.8 '<citerefentry><refentrytitle>ipsec-listen</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-listpubkeys.8 '<citerefentry><refentrytitle>ipsec-listpubkeys</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-modutil.8 '<citerefentry><refentrytitle>ipsec-modutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-newhostkey.8 '<citerefentry><refentrytitle>ipsec-newhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-ondemand.8 '<citerefentry><refentrytitle>ipsec-ondemand</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-pk12status.8 '<citerefentry><refentrytitle>ipsec-pk12status</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-pk12util.8 '<citerefentry><refentrytitle>ipsec-pk12util</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-pluto.8 '<citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-purgeocsp.8 '<citerefentry><refentrytitle>ipsec-purgeocsp</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-readwriteconf.8 '<citerefentry><refentrytitle>ipsec-readwriteconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-redirect.8 '<citerefentry><refentrytitle>ipsec-redirect</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-replace.8 '<citerefentry><refentrytitle>ipsec-replace</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-rereadall.8 '<citerefentry><refentrytitle>ipsec-rereadall</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-rereadcerts.8 '<citerefentry><refentrytitle>ipsec-rereadcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-rereadsecrets.8 '<citerefentry><refentrytitle>ipsec-rereadsecrets</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-restart.8 '<citerefentry><refentrytitle>ipsec-restart</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-route.8 '<citerefentry><refentrytitle>ipsec-route</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-rsasigkey.8 '<citerefentry><refentrytitle>ipsec-rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-setup.8 '<citerefentry><refentrytitle>ipsec-setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-showhostkey.8 '<citerefentry><refentrytitle>ipsec-showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-showroute.8 '<citerefentry><refentrytitle>ipsec-showroute</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-showstates.8 '<citerefentry><refentrytitle>ipsec-showstates</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-shuntstatus.8 '<citerefentry><refentrytitle>ipsec-shuntstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-spi.8 '<citerefentry><refentrytitle>ipsec-spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-start.8 '<citerefentry><refentrytitle>ipsec-start</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-status.8 '<citerefentry><refentrytitle>ipsec-status</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-stop.8 '<citerefentry><refentrytitle>ipsec-stop</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-stopnflog.8 '<citerefentry><refentrytitle>ipsec-stopnflog</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-trafficstatus.8 '<citerefentry><refentrytitle>ipsec-trafficstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-unroute.8 '<citerefentry><refentrytitle>ipsec-unroute</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-up.8 '<citerefentry><refentrytitle>ipsec-up</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-updown.8 '<citerefentry><refentrytitle>ipsec-updown</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-vfychain.8 '<citerefentry><refentrytitle>ipsec-vfychain</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec-whack.8 '<citerefentry><refentrytitle>ipsec-whack</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ipsec.8 '<citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY pluto.8 '<citerefentry><refentrytitle>pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+
+<!-- system stuff -->
+
+<!ENTITY certutil.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY crlutil.1 '<citerefentry><refentrytitle>crlutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY modutil.1 '<citerefentry><refentrytitle>modutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY pk12util.1 '<citerefentry><refentrytitle>pk12util</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY vfychain.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+
+<!ENTITY sh.1 '<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+
+<!ENTITY crypt.3 '<citerefentry><refentrytitle>crypt</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY efence.2 '<citerefentry><refentrytitle>efence</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
+<!ENTITY glob.3 '<citerefentry><refentrytitle>glob</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY init.8 '<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ip.8 '<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY random.4 '<citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>'>
+<!ENTITY rc.8 '<citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY rngd.8 '<citerefentry><refentrytitle>rngd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY syslog.2 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
+<!ENTITY syslog.3 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY syslogd.8 '<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY systemd.8 '<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY systemd.service.5 '<citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>

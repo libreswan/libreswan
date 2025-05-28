@@ -17,12 +17,8 @@
       </simplelist>
     </para>
     <para>
-      During startup,
-      <citerefentry>
-	<refentrytitle>ipsec-pluto</refentrytitle>
-	<manvolnum>8</manvolnum>
-      </citerefentry>
-      will log all supported AH algorithms.
+      During startup, &ipsec-pluto.8; will log all supported AH
+      algorithms.
     </para>
     <para>
       Specifying the DH algorithms explicitly is
