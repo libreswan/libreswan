@@ -18,7 +18,6 @@
 #include "config_setup.h"
 #include "ipsecconf/confread.h"
 #include "passert.h"
-#include "pexpect.h"
 #include "lswalloc.h"
 
 /**

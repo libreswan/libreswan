@@ -29,6 +29,7 @@
 #include "lswtool.h"
 #include "whack.h"
 #include "sparse_names.h"
+#include "config_setup.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
@@ -454,6 +455,7 @@ int main(int argc, char *argv[])
 	if (checkconfig) {
 		/* call is NO-OP when CONFIGSETUP */
 		confread_free(cfg);
+		free_config_setup();
 		exit(0);
 	}
 
@@ -662,6 +664,7 @@ int main(int argc, char *argv[])
 			}
 		}
 		confread_free(cfg);
+		free_config_setup();
 		exit(0);
 	}
 
@@ -705,10 +708,12 @@ int main(int argc, char *argv[])
 			free(safe_kwname);
 		}
 		confread_free(cfg);
+		free_config_setup();
 		exit(0);
 	}
 
 	confread_free(cfg);
+	free_config_setup();
 
 	/*
 	 * Only RC_ codes between RC_EXIT_FLOOR (RC_DUPNAME) and

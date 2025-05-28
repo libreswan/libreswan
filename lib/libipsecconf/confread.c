@@ -642,7 +642,6 @@ static void confread_free_conn_content(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	free_config_setup();
 	confread_free_conn_content(&cfg->conn_default);
 
 	struct starter_conn *conn;

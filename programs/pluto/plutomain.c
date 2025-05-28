@@ -56,6 +56,7 @@
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "hourly.h"
+#include "config_setup.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendorid.h"
@@ -147,6 +148,7 @@ void free_pluto_main(void)
 	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
+	free_config_setup();
 }
 
 /* string naming compile-time options that have interop implications */
@@ -1125,14 +1127,17 @@ int main(int argc, char **argv)
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
 			lsw_conf_secretsfile(optarg);
+			config_setup_string(KSF_SECRETSFILE, optarg);
 			continue;
 
 		case OPT_IPSECDIR:	/* --ipsecdir <ipsec-dir> */
 			lsw_conf_confddir(optarg, logger);
+			config_setup_string(KSF_IPSECDIR, optarg);
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
 			lsw_conf_nssdir(optarg, logger);
+			config_setup_string(KSF_NSSDIR, optarg);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
