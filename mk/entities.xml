@@ -1,0 +1,10 @@
+
+<!ENTITY Libreswan '<application>Libreswan</application>'>
+<!ENTITY Linux '<application>Linux</application>'>
+<!ENTITY NetBSD '<application>NetBSD</application>'>
+<!ENTITY FreeBSD '<application>FreeBSD</application>'>
+<!ENTITY OpenBSD '<application>OpenBSD</application>'>
+
+<!ENTITY ipsec.conf.5 '<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+<!ENTITY ipsec.8      '<citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY libreswan.7  '<citerefentry><refentrytitle>libreswan</refentrytitle><manvolnum>7</manvolnum></citerefentry>'>

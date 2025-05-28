@@ -15,7 +15,9 @@
 # NOTE: libreswan includes custom makefile configuration first, hence
 # need a weak assign
 
-XMLTO ?= xmlto
+XMLTO ?= xmlto --searchpath $(XMLTO_SEARCHPATH)
+
+XMLTO_SEARCHPATH ?= $(abs_srcdir):$(abs_top_srcdir)/mk
 
 # $(MANDIR$(suffix $(MANPAGE))) will expand one of the below, roughly:
 # 3 is libraries; 5 is file formats; 7 is overviews; 8 is system
@@ -70,13 +72,13 @@ define transform-doc
 
 endef
 
-$(builddir)/%.man: $(srcdir)/%.xml | $(builddir)
+$(builddir)/%.man: $(srcdir)/%.xml $(top_srcdir)/mk/entities.xml | $(builddir)
 	$(XMLTO) $(XMLTO_FLAGS) man $< -o $(builddir)
 	set -e $(foreach r, $(shell $(top_srcdir)/packaging/utils/refnames.sh $<), \
 		; echo Transform: $(builddir)/$(r) ; $(TRANSFORM_VARIABLES) -i $(builddir)/$(r))
 	touch $@
 
-$(builddir)/%.html: $(srcdir)/%.xml | $(builddir)
+$(builddir)/%.html: $(srcdir)/%.xml $(top_srcdir)/mk/entities.xml | $(builddir)
 	$(XMLTO) $(XMLTO_FLAGS) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(top_builddir)/html
 	$(TRANSFORM_VARIABLES) -i $(top_builddir)/html/$*.html
 	touch $@
