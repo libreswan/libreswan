@@ -1,0 +1,8 @@
+One host connects and gets a lease IP on first connection.
+subsequent connections sharing the IKE SA should use the
+lease IP and not the left= as its leftsubnet policy
+
+This test cannot easilly be expanded to show that north having
+a conn with a subnet would work, as this will cause connection
+switching issues on east as we don't have full responder code
+for this. (if you try, you will find other conns start failing)

@@ -1,0 +1,33 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add east-pool
+"east-pool": added IKEv1 connection
+east #
+ ipsec auto --add east-subnet1
+"east-subnet1": added IKEv1 connection
+east #
+ ipsec auto --add east-subnet2
+"east-subnet2": added IKEv1 connection
+east #
+ echo initdone
+initdone
+east #
+ hostname | grep east > /dev/null && ipsec whack --trafficstatus
+#2: "east-pool"[1] 192.1.3.33, username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, lease=192.0.2.100/32
+#3: "east-subnet1"[1] 192.1.3.33, username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
+#4: "east-subnet2"[1] 192.1.3.33, username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
+east #
+ ipsec status | grep routed-tunnel
+"east-pool"[1]: 192.1.2.23[@east]...192.1.3.33[@GroupID]==={192.0.2.100/32}; routed-tunnel; my_ip=unset; their_ip=192.0.2.100;
+"east-pool"[1]:   routing: routed-tunnel; owner: IPsec SA #2; established ISAKMP SA: #1; established IPsec SA: #2;
+"east-subnet1"[1]: 10.0.1.0/24===192.1.2.23[@east]...192.1.3.33[@GroupID]===192.0.2.100/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"east-subnet1"[1]:   routing: routed-tunnel; owner: IPsec SA #3; established IPsec SA: #3;
+"east-subnet2"[1]: 10.0.2.0/24===192.1.2.23[@east]...192.1.3.33[@GroupID]===192.0.2.100/32; routed-tunnel; my_ip=unset; their_ip=unset;
+"east-subnet2"[1]:   routing: routed-tunnel; owner: IPsec SA #4; established IPsec SA: #4;
+east #
