@@ -55,7 +55,7 @@
     If conns are to be added before DNS is available, <option>left=</option>
     <option>FQDN</option>, <option>leftnextop=</option><option>FQDN</option>,
     and <option>leftrsasigkey=%dnsonload</option> will fail.
-    <citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+    &ipsec-pluto.8;
     does not actually use the public key for our side of a conn but it
     isn't generally known at a add-time which side is ours (Road
     Warrior and Opportunistic conns are currently exceptions).

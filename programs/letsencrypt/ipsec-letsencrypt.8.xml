@@ -94,7 +94,7 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      &ipsec.conf.5;
     </para>
   </refsect1>
   <refsect1 id='history'>

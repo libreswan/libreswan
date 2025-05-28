@@ -39,10 +39,10 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec-_plutorun</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      &systemd.8;,
+      &systemd.service.5;,
+      &ipsec.8;,
+      &ipsec-_plutorun.8;
     .</para>
   </refsect1>
 

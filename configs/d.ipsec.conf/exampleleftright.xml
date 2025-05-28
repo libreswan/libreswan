@@ -1,11 +1,11 @@
 
   <title>CONN SECTIONS</title>
   <para>
-    A <option>conn</option> section contains a <option>connection specification</option>,
-    defining a network connection to be made using IPsec.  The name given is arbitrary,
-    and is used to identify the connection to
-    <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-    Here's a simple example:
+    A <option>conn</option> section contains a <option>connection
+    specification</option>, defining a network connection to be made
+    using IPsec.  The name given is arbitrary, and is used to identify
+    the connection to &ipsec.8; sub-commands.  Here's a simple
+    example:
   </para>
 
   <programlisting><xi:include  href="exampleleftright.example"  parse="text"

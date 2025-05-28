@@ -17,12 +17,10 @@
       <option>username:password:conname:ipaddress</option>
     </para>
     <para>
-      For supported password hashing methods, see
-      <citerefentry><refentrytitle>crypt</refentrytitle>
-      <manvolnum>3</manvolnum></citerefentry>. If pluto is running in
-      FIPS mode, some hash methods, such as MD5, might not be
-      available. Threads are used to launch an xauth authentication
-      helper for file as well as PAM methods.
+      For supported password hashing methods, see &crypt.3;.  If pluto
+      is running in FIPS mode, some hash methods, such as MD5, might
+      not be available. Threads are used to launch an xauth
+      authentication helper for file as well as PAM methods.
     </para>
     <para>
       The <option>alwaysok</option> should only be used if the XAUTH

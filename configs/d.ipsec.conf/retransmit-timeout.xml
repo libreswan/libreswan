@@ -7,8 +7,7 @@
       how long a single packet, including retransmits of that packet,
       may take before the IKE attempt is aborted. If rekeying is
       enabled, a new IKE attempt is started.  The default set by
-      <citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      currently is <option>60s</option>.
+      &ipsec-pluto.8;, currently is <option>60s</option>.
     </para>
     <para>
       See also: <option>retransmit-interval</option> and

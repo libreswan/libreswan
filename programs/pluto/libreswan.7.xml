@@ -31,23 +31,17 @@
       (IKE) manager.
 
       It consists of the Internet Key Exchange Daemon
-      <command>pluto</command> (see
-      <citerefentry> <refentrytitle>ipsec-pluto</refentrytitle>
-      <manvolnum>8</manvolnum> </citerefentry>), the auxiliary command
-      <command>ipsec</command> that provides a way to
-      manipulate <command>pluto</command> (see
-      <citerefentry> <refentrytitle>ipsec</refentrytitle>
-      <manvolnum>8</manvolnum> </citerefentry>), and the configuration
-      file <filename>ipsec.conf</filename> (see 
-      <citerefentry> <refentrytitle>ipsec.conf</refentrytitle>
-      <manvolnum>5</manvolnum> </citerefentry>).
+      <command>pluto</command> (see &ipsec-pluto.8;), the auxiliary
+      command <command>ipsec</command> that provides a way to
+      manipulate <command>pluto</command> (see &ipsec.8;), and the
+      configuration file <filename>ipsec.conf</filename> (see
+      &ipsec.conf.5;).
 
-      For authentication, <application>Libreswan</application> uses
-      an <application>NSS</application> trust store containing
-      <application>X.509</application> certificates and raw private keys, or a
-      separate file containing preshared secrets (see <citerefentry>
-      <refentrytitle>ipsec.secrets</refentrytitle>
-      <manvolnum>5</manvolnum> </citerefentry>).
+      For authentication, <application>Libreswan</application> uses an
+      <application>NSS</application> trust store containing
+      <application>X.509</application> certificates and raw private
+      keys, or a separate file containing preshared secrets (see
+      &ipsec.secrets.5;).
     </para>
 
     <para>
@@ -178,21 +172,16 @@
       <para>
 	The policy for acceptable characteristics for Security
 	Associations are specified using the configuration file
-	<filename>ipsec.conf</filename> (see <citerefentry>
-	<refentrytitle>ipsec.conf</refentrytitle>
-        <manvolnum>5</manvolnum> </citerefentry>).
+	<filename>ipsec.conf</filename> (see &ipsec.conf.5;).
       </para>
 
       <para>
 	<application>Libreswan</application> can be configured to
 	authenticate its peer using shared secrets or using public and
-	private keys (see <citerefentry>
-	<refentrytitle>ipsec.conf</refentrytitle>
-	<manvolnum>5</manvolnum> </citerefentry>).  Shared secrets are
-	stored in the file <filename>ipsec.secrets</filename> (see
-	<citerefentry> <refentrytitle>ipsec.secrets</refentrytitle>
-	<manvolnum>5</manvolnum> </citerefentry>).  Public keys (for
-	instance, X.509 certificates) are stored in either
+	private keys (see &ipsec.conf.5;).  Shared secrets are stored
+	in the file <filename>ipsec.secrets</filename> (see
+	&ipsec.secrets.5;).  Public keys (for instance, X.509
+	certificates) are stored in either
 	<application>Libreswan's</application>
 	<application>NSS</application> trust store, obtained from the
 	peer, or using DNS(SEC).  Corresponding Private keys are
@@ -208,25 +197,19 @@
       <itemizedlist>
 	<listitem>
 	  <para>
-	    it is manually prodded (see <citerefentry>
-	    <refentrytitle>ipsec-up</refentrytitle>
-            <manvolnum>8</manvolnum> </citerefentry>)
+	    it is manually prodded (see &ipsec-up.8;)
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    it is configured to negotiate on-demand and traffic
-	    flow (see <citerefentry>
-	    <refentrytitle>ipsec-route</refentrytitle>
-            <manvolnum>8</manvolnum> </citerefentry>)
+	    it is configured to negotiate on-demand and traffic flow
+	    (see &ipsec-route.8;)
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
 	    it is configured to negotiate from startup (see
-	    <computeroutput>auto=up</computeroutput> in <citerefentry>
-	    <refentrytitle>ipsec.conf</refentrytitle>
-            <manvolnum>5</manvolnum> </citerefentry>)
+	    <option>auto=up</option> in &ipsec.conf.5;)
 	  </para>
 	</listitem>
       </itemizedlist>
@@ -237,8 +220,7 @@
 	SA), it directs the <application>kernel</application> to
 	install the association.  If necessary, it also invokes a
 	script to adjust any firewall or routing rules (see
-	<citerefentry> <refentrytitle>ipsec-updown</refentrytitle>
-	<manvolnum>5</manvolnum> </citerefentry>).
+	&ipsec-updown.8;).
       </para>
 
       <para>
@@ -614,31 +596,29 @@
       </para>
 
       <para>
-	<command>pluto</command> supports multiple public
-	networks (that is, networks that are considered insecure and thus
-	need to have their traffic encrypted or authenticated). It discovers
-	the public interfaces to use by looking at all interfaces that are
-	configured (the <option>--interface</option> option can be used to limit
-	the interfaces considered). It does this only when
-	<emphasis>whack</emphasis> tells it to --listen, so the interfaces must
-	be configured by then. The <option>--listen</option> can be used to
-	limit listening on only 1 IP address of a certain interface.
-	<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum>
-        </citerefentry> with the <option>addr</option> option will show the name
-	and status of each network interface.
+	<command>pluto</command> supports multiple public networks
+	(that is, networks that are considered insecure and thus need
+	to have their traffic encrypted or authenticated). It
+	discovers the public interfaces to use by looking at all
+	interfaces that are configured (the
+	<option>--interface</option> option can be used to limit the
+	interfaces considered). It does this only when
+	<emphasis>whack</emphasis> tells it to --listen, so the
+	interfaces must be configured by then. The
+	<option>--listen</option> can be used to limit listening on
+	only 1 IP address of a certain interface.  &ip.8; with the
+	<option>addr</option> option will show the name and status of
+	each network interface.
       </para>
 
       <para>
-	<command>pluto</command> requires a database of
-	preshared secrets and RSA private keys. This is described in the
-	<citerefentry>
-          <refentrytitle>ipsec.secrets</refentrytitle>
-          <manvolnum>5</manvolnum>
-        </citerefentry>. <command>pluto</command> is told of RSA
+	<command>pluto</command> requires a database of preshared
+	secrets and RSA private keys. This is described in the
+	&ipsec.secrets.5;. <command>pluto</command> is told of RSA
 	public keys via <command>whack</command> commands. If the
 	connection is Opportunistic, and no RSA public key is known,
-	<emphasis>pluto</emphasis> will attempt to fetch RSA keys using the
-	Domain Name System.
+	<emphasis>pluto</emphasis> will attempt to fetch RSA keys
+	using the Domain Name System.
       </para>
     </refsect2>
 
@@ -672,11 +652,8 @@
 	keep preshared secret keys and XAUTH passwords. RSA private
 	keys, X.509 certificates, CRLs, OCSP and smartcards are
 	handled via NSS. For debugging, there is an argument to the
-	<emphasis>pluto</emphasis> command to use a
-	different file. This file is described in
-	<citerefentry>
-	  <refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum>
-	</citerefentry>.
+	<emphasis>pluto</emphasis> command to use a different
+	file. This file is described in &ipsec.secrets.5;.
       </para>
     </refsect2>
 
@@ -709,17 +686,15 @@
       <para>
 	Pluto supports RFC 3947 NAT-Traversal.  The allowed range
 	behind the NAT routers is submitted using the
-	<option>--virtual-private</option> option. See <citerefentry>
-        <refentrytitle>ipsec.conf</refentrytitle>
-        <manvolnum>5</manvolnum>
-        </citerefentry> for the syntax. The option
-	<option>--force-keepalive</option> forces the sending of the
-	<emphasis>keep-alive packets</emphasis>, which are send to prevent the
-	NAT router from closing its port when there is not enough traffic on the
-	IPsec connection. The <option>--keep-alive</option> sets the delay (in
-	seconds) of these keep-alive packets. The newer NAT-T standards support
-	<emphasis>port floating</emphasis>, and Libreswan enables this
-	per default.
+	<option>--virtual-private</option> option. See &ipsec.conf.5;
+	for the syntax.  The option <option>--force-keepalive</option>
+	forces the sending of the <emphasis>keep-alive
+	packets</emphasis>, which are send to prevent the NAT router
+	from closing its port when there is not enough traffic on the
+	IPsec connection. The <option>--keep-alive</option> sets the
+	delay (in seconds) of these keep-alive packets. The newer
+	NAT-T standards support <emphasis>port floating</emphasis>,
+	and Libreswan enables this per default.
       </para>
 
       <para>
@@ -783,13 +758,14 @@
       </para>
 
       <para>
-	All logging, including diagnostics, is sent to <citerefentry>
-	<refentrytitle>syslog</refentrytitle> <manvolnum>3</manvolnum>
-	</citerefentry> with facility=authpriv; it decides where to
-	put these messages (possibly in /var/log/secure or
-	/var/log/auth.log). Since this too can make debugging awkward,
-	the option <option>--stderrlog</option> is used to steer
-	logging to stderr.
+	All logging, including diagnostics, is sent to &syslog.3; with
+	<option>facility=authpriv</option>; it decides where to put
+	these messages (possibly in
+	<filename>/var/log/secure</filename> or
+	<filename>/var/log/auth.log</filename>). Since this too can
+	make debugging awkward, the option
+	<option>--stderrlog</option> is used to steer logging to
+	stderr.
       </para>
 
       <para>
@@ -842,11 +818,11 @@
 
       <para>
 	If you are investigating a potential use-after-free or
-	double-free in pluto, first build pluto with USE_EFENCE=true
-	and then start pluto with --efence-protect.  See
-	<citerefentry> <refentrytitle>efence</refentrytitle>
-	<manvolnum>2</manvolnum> </citerefentry> and EF_PROTECT_BELOW
-	and EF_PROTECT_FREE.
+	double-free in pluto, first build pluto with
+	<envar>USE_EFENCE=true</envar> and then start pluto with
+	--efence-protect.  See &efence.2; and
+	<envar>EF_PROTECT_BELOW</envar> and
+	<envar>EF_PROTECT_FREE</envar>.
       </para>
 
       <para>
@@ -1247,11 +1223,9 @@
             <para>
 	      Specifies the file for authentication secrets (default:
 	      <filename>@@IPSEC_SECRETS@@</filename>). This name is
-	      subject to "globbing" as in <citerefentry>
-	      <refentrytitle>sh</refentrytitle>
-	      <manvolnum>1</manvolnum> </citerefentry>, so every file
-	      with a matching name is processed. Quoting is generally
-	      needed to prevent the shell from doing the globbing.
+	      subject to "globbing" as in &sh.1;, so every file with a
+	      matching name is processed. Quoting is generally needed
+	      to prevent the shell from doing the globbing.
 	    </para>
           </listitem>
         </varlistentry>
@@ -1311,8 +1285,7 @@
           <listitem>
             <para>
 	      Log goes to standard out (default is to use
-	      <citerefentry> <refentrytitle>syslogd</refentrytitle>
-	      <manvolnum>8</manvolnum> </citerefentry>).
+	      &syslogd.8;).
 	    </para>
           </listitem>
         </varlistentry>
@@ -1768,23 +1741,15 @@
     <title>SEE ALSO</title>
 
     <para>The rest of the Libreswan distribution, in particular
-    <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+    &ipsec.8;.</para>
 
     <para>
-      <citerefentry>
-        <refentrytitle>ipsec</refentrytitle>
-        <manvolnum>8</manvolnum>
-      </citerefentry>
-      is designed to make using <command>pluto</command>
+      &ipsec.8; is designed to make using <command>pluto</command>
       more pleasant. Use it!
     </para>
 
     <para>
-      <citerefentry>
-        <refentrytitle>ipsec.secrets</refentrytitle>
-        <manvolnum>5</manvolnum>
-      </citerefentry>
-      describes the format of the secrets file.
+      &ipsec.secrets.5; describes the format of the secrets file.
     </para>
 
     <para>

@@ -258,8 +258,7 @@
 	unchanged through the tunnels.  (This means that all subnets
 	connected in this manner must have distinct, non-overlapping
 	subnet address blocks.)  This is done by the default
-	<option>updown</option> script (see
-	<citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>).
+	<option>updown</option> script (see &ipsec-pluto.8;).
       </para>
       <para>
 	The implementation of this makes certain assumptions about

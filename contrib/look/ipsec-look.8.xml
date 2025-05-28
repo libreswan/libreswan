@@ -33,7 +33,7 @@
   <refsect1 id='see_also'>
     <title>SEE ALSO</title>
     <para>
-      <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      &ipsec.8;,
       <citerefentry><refentrytitle>ipsec-tncfg</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec-spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec-spigrp</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

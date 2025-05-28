@@ -4,10 +4,8 @@
   </term>
   <listitem>
     <para>
-      Enable debug logging.  For more information see <citerefentry>
-      <refentrytitle>ipsec-whack</refentrytitle>
-      <manvolnum>8</manvolnum> </citerefentry> and the
-      <option>--debug</option> option.
+      Enable debug logging.  For more information see &ipsec-whack.8;
+      and the <option>--debug</option> option.
     </para>
     <note>
       <para>

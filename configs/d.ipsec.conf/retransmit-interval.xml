@@ -8,7 +8,7 @@
       waits before retransmitting an IKE packet. This interval is
       doubled for each attempt (exponential back-off).  The default
       set by
-      <citerefentry><refentrytitle>ipsec-pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      &ipsec-pluto.8;,
       currently is <option>500</option>.
     </para>
     <para>
