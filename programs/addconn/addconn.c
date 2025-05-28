@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef USE_SECCOMP
-	switch (cfg->setup[KBF_SECCOMP].option) {
+	switch (cfg->setup->values[KBF_SECCOMP].option) {
 		case SECCOMP_ENABLED:
 			init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
@@ -468,7 +468,7 @@ int main(int argc, char *argv[])
 	case SECCOMP_DISABLED:
 		break;
 	default:
-		bad_case(cfg->setup[KBF_SECCOMP].option);
+		bad_case(cfg->setup->values[KBF_SECCOMP].option);
 	}
 #endif
 
@@ -652,9 +652,9 @@ int main(int argc, char *argv[])
 		const struct keyword_def *kd;
 		for (kd = ipsec_conf_keywords; kd->keyname != NULL; kd++) {
 			if (strstr(kd->keyname, "protostack")) {
-				if (cfg->setup[kd->field].string) {
+				if (cfg->setup->values[kd->field].string) {
 					printf("%s\n",
-						cfg->setup[kd->field].string);
+						cfg->setup->values[kd->field].string);
 				} else {
 					/* implicit default */
 					printf("xfrm\n");
@@ -683,10 +683,10 @@ int main(int argc, char *argv[])
 
 			switch (kd->type) {
 			case kt_string:
-				if (cfg->setup[kd->field].string) {
+				if (cfg->setup->values[kd->field].string) {
 					printf("%s %s%s='%s'\n",
 						export, varprefix, safe_kwname,
-						cfg->setup[kd->field].string);
+						cfg->setup->values[kd->field].string);
 				}
 				break;
 
@@ -694,11 +694,11 @@ int main(int argc, char *argv[])
 				break;
 
 			default:
-				if (cfg->setup[kd->field].option ||
-					cfg->setup[kd->field].set) {
+				if (cfg->setup->values[kd->field].option ||
+					cfg->setup->values[kd->field].set) {
 					printf("%s %s%s='%jd'\n",
 						export, varprefix, safe_kwname,
-						cfg->setup[kd->field].option);
+						cfg->setup->values[kd->field].option);
 				}
 				break;
 			}

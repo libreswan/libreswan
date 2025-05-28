@@ -72,14 +72,12 @@ static struct starter_config *alloc_starter_config(void)
 {
 	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
 
-	static const struct starter_config empty_starter_config;	/* zero or null everywhere */
-	*cfg = empty_starter_config;
-
 	TAILQ_INIT(&cfg->conns);
+	cfg->setup = alloc_thing(struct config_setup, "config setup");
 
 	/* ==== config setup ==== */
 
-# define SOPT(kbf, v)  { cfg->setup[kbf].option = (v) ; }
+# define SOPT(kbf, v)  { cfg->setup->values[kbf].option = (v) ; }
 
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
@@ -97,10 +95,10 @@ static struct starter_config *alloc_starter_config(void)
 
 # undef SOPT
 
-	cfg->setup[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
-	cfg->setup[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
-	cfg->setup[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
-	cfg->setup[KSF_IPSECDIR].string = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
+	cfg->setup->values[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
+	cfg->setup->values[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
+	cfg->setup->values[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
+	cfg->setup->values[KSF_IPSECDIR].string = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
 
 	/* ==== end of config setup ==== */
 
@@ -141,27 +139,27 @@ static bool load_setup(struct starter_config *cfg,
 		switch (kw->keyword.keydef->type) {
 		case kt_string:
 			/* all treated as strings for now */
-			assert(f < elemsof(cfg->setup));
-			pfreeany(cfg->setup[f].string);
-			cfg->setup[f].string =
+			assert(f < elemsof(cfg->setup->values));
+			pfreeany(cfg->setup->values[f].string);
+			cfg->setup->values[f].string =
 				clone_str(kw->string, "kt_loose_enum kw->string");
-			cfg->setup[f].set = true;
+			cfg->setup->values[f].set = true;
 			break;
 
 		case kt_lset:
 		case kt_sparse_name:
 		case kt_unsigned:
 			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup));
-			cfg->setup[f].option = kw->number;
-			cfg->setup[f].set = true;
+			assert(f < elemsof(cfg->setup->values));
+			cfg->setup->values[f].option = kw->number;
+			cfg->setup->values[f].set = true;
 			break;
 
 		case kt_seconds:
 			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup));
-			cfg->setup[f].deltatime = kw->deltatime;
-			cfg->setup[f].set = true;
+			assert(f < elemsof(cfg->setup->values));
+			cfg->setup->values[f].deltatime = kw->deltatime;
+			cfg->setup->values[f].set = true;
 			break;
 
 		case kt_pubkey:
@@ -677,10 +675,11 @@ static void confread_free_conn_content(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	for (unsigned i = 0; i < elemsof(cfg->setup); i++) {
-		pfreeany(cfg->setup[i].string);
+	for (unsigned i = 0; i < elemsof(cfg->setup->values); i++) {
+		pfreeany(cfg->setup->values[i].string);
 	}
 
+	pfreeany(cfg->setup);
 	confread_free_conn_content(&cfg->conn_default);
 
 	struct starter_conn *conn;
