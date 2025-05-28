@@ -308,7 +308,8 @@ struct whack_message {
 
 	const char *replay_window;
 	deltatime_t retransmit_timeout;
-	deltatime_t retransmit_interval;
+	const char *retransmit_interval;	/* milliseconds, not
+						 * seconds!*/
 	enum nic_offload_options nic_offload;
 	const char *ipsec_interface;
 

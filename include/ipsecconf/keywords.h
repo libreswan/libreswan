@@ -239,7 +239,7 @@ enum keywords {
 	KWS_REPLAY_WINDOW,
 	KNCF_IKELIFETIME,
 	KNCF_RETRANSMIT_TIMEOUT,
-	KNCF_RETRANSMIT_INTERVAL,
+	KWS_RETRANSMIT_INTERVAL,
 	KWYN_AGGRESSIVE,
 	KWYN_MODECFGPULL,
 	KNCF_ENCAPSULATION,
@@ -331,7 +331,6 @@ enum keyword_type {
 	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
-	kt_milliseconds,        /* deltatime, default in milliseconds (1/1000s) */
 	kt_also,		/* i.e., #include */
 	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
 };

@@ -315,7 +315,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "salifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, NULL, }, /* old name */
 
   { "retransmit-timeout",  kv_conn,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT, NULL, NULL, },
-  { "retransmit-interval",  kv_conn,  kt_milliseconds,  KNCF_RETRANSMIT_INTERVAL, NULL, NULL, },
+  { "retransmit-interval",  kv_conn,  kt_string,  KWS_RETRANSMIT_INTERVAL, NULL, NULL, },
 
   { "ikepad",  kv_conn,  kt_sparse_name,  KNCF_IKEPAD, &yna_option_names, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, &nat_ikev1_method_option_names, NULL, },

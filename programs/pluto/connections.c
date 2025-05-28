@@ -1208,6 +1208,29 @@ static char *extract_string(const char *leftright, const char *name,
 	return clone_str(string, name);
 }
 
+static deltatime_t extract_deltatime(const char *leftright,
+				     const char *name,
+				     const char *value,
+				     enum timescale default_timescale,
+				     deltatime_t value_when_unset,
+				     const struct whack_message *wm,
+				     diag_t *d, struct logger *logger)
+{
+	if (!can_extract_string(leftright, name, value, wm, logger)) {
+		return value_when_unset;
+	}
+
+	deltatime_t deltatime;
+	diag_t diag = ttodeltatime(shunk1(value), &deltatime, default_timescale);
+	if (diag != NULL) {
+		(*d) = diag_diag(&diag, "%s%s=%s invalid, ",
+				 leftright, name, value);
+		return value_when_unset;
+	}
+
+	return deltatime;
+}
+
 static unsigned extract_enum_name(const char *leftright,
 				  const char *name,
 				  const char *value, unsigned unset,
@@ -4476,8 +4499,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 			(wm->retransmit_timeout.is_set ? wm->retransmit_timeout :
 			 deltatime_from_milliseconds(RETRANSMIT_TIMEOUT_DEFAULT * 1000));
 		config->retransmit_interval =
-			(wm->retransmit_interval.is_set ? wm->retransmit_interval :
-			 deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS));
+			extract_deltatime("", "retransmit-interval", wm->retransmit_interval,
+					  TIMESCALE_MILLISECONDS,
+					  /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
+					  wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
 
 		/*
 		 * A 1500 mtu packet requires 1500/16 ~= 90 crypto

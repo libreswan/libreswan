@@ -206,7 +206,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.replay_window = conn->values[KWS_REPLAY_WINDOW].string;
 	msg.ipsec_interface = conn->values[KWS_IPSEC_INTERFACE].string;
 
-	msg.retransmit_interval = conn->values[KNCF_RETRANSMIT_INTERVAL].deltatime;
+	msg.retransmit_interval = conn->values[KWS_RETRANSMIT_INTERVAL].string;
 	msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT].deltatime;
 
 	msg.keyexchange = conn->values[KWS_KEYEXCHANGE].string;
