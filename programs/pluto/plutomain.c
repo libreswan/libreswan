@@ -1126,7 +1126,6 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
-			lsw_conf_secretsfile(optarg);
 			config_setup_string(KSF_SECRETSFILE, optarg);
 			continue;
 
@@ -1288,11 +1287,7 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			/* no config option: rundir */
-			/* secretsfile= */
-			if (cfg->setup->values[KSF_SECRETSFILE].string &&
-			    *cfg->setup->values[KSF_SECRETSFILE].string) {
-				lsw_conf_secretsfile(cfg->setup->values[KSF_SECRETSFILE].string);
-			}
+
 			if (cfg->setup->values[KSF_IPSECDIR].string != NULL &&
 			    *cfg->setup->values[KSF_IPSECDIR].string != 0) {
 				/* ipsecdir= */
@@ -1618,9 +1613,9 @@ int main(int argc, char **argv)
 		     coredir, e, strerror(e));
 	}
 
-	const struct lsw_conf_options *oco = lsw_init_options();
-	if (oco->secretsfile && *oco->secretsfile) {
-		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
+	const char *secretsfile = config_setup_secretsfile();
+	if (secretsfile != NULL && strlen(secretsfile) > 0) {
+		llog(RC_LOG, logger, "secrets file: %s", secretsfile);
 	}
 
 	init_enum_names();
@@ -1635,6 +1630,7 @@ int main(int argc, char **argv)
 	connection_db_init(logger);
 	spd_db_init(logger);
 
+	const struct lsw_conf_options *oco = lsw_init_options();
 	pluto_init_nss(oco->nssdir, logger);
 	if (is_fips_mode()) {
 		/*
@@ -1890,7 +1886,7 @@ void show_setup_plutomain(struct show *s)
 	show(s, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
 	     IPSEC_SYSCONFDIR,
 		conffile, /* oco contains only a copy of hardcoded default */
-		oco->secretsfile,
+	     config_setup_secretsfile(),
 		oco->confddir);
 
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",

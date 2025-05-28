@@ -36,7 +36,6 @@ struct lsw_conf_options {
 const struct lsw_conf_options *lsw_init_options(void);
 void lsw_conf_free_oco(void);
 
-void lsw_conf_secretsfile(const char *secretsfile);
 void lsw_conf_confddir(const char *confddir, struct logger *logger);
 void lsw_conf_nssdir(const char *nssdir, struct logger *logger);
 

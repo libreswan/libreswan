@@ -48,7 +48,6 @@ static void lsw_conf_setdefault(void)
 
 	/* copy everything to the heap for consistency. */
 
-	lsw_conf_secretsfile(IPSEC_SECRETS);
 	lsw_conf_confddir(IPSEC_CONFDDIR, NULL);
 	lsw_conf_nssdir(IPSEC_NSSDIR, NULL);
 }
@@ -71,7 +70,6 @@ void lsw_conf_free_oco(void)
 	 * for (char *p = (char*)&global_oco; p < (char*)(&global_oco + 1); p++)
 	 */
 
-	pfreeany(global_oco.secretsfile);
 	pfreeany(global_oco.confddir);
 	pfreeany(global_oco.nsspassword_file);
 	pfreeany(global_oco.nssdir);
@@ -104,10 +102,4 @@ void lsw_conf_nssdir(const char *nssdir, struct logger *logger)
 	if (logger != NULL &&
 	    !streq(global_oco.nssdir, IPSEC_NSSDIR))
 		llog(RC_LOG, logger, " adjusting nssdir to %s", global_oco.nssdir);
-}
-
-void lsw_conf_secretsfile(const char *secretsfile)
-{
-	lsw_conf_setdefault();
-	subst(&global_oco.secretsfile, "%s", secretsfile);
 }
