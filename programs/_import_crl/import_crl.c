@@ -26,7 +26,7 @@
 
 #include "import_crl.h"
 
-#include "lswconf.h"
+#include "config_setup.h"
 #include "lswnss.h"
 #include "lswtool.h"
 #include "lswalloc.h"
@@ -113,8 +113,7 @@ int main(int argc, char *argv[])
 		fatal(PLUTO_EXIT_FAIL, logger, "fetch invalid: %s", err);
 	}
 
-	const struct lsw_conf_options *oco = lsw_init_options();
-	init_nss(oco->nssdir, (struct nss_flags){0}, logger);
+	init_nss(config_setup_nssdir(), (struct nss_flags){0}, logger);
 
 	/* should never fail */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();

@@ -1135,7 +1135,6 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
-			lsw_conf_nssdir(optarg, logger);
 			config_setup_string(KSF_NSSDIR, optarg);
 			continue;
 
@@ -1292,12 +1291,6 @@ int main(int argc, char **argv)
 			    *cfg->setup->values[KSF_IPSECDIR].string != 0) {
 				/* ipsecdir= */
 				lsw_conf_confddir(cfg->setup->values[KSF_IPSECDIR].string, logger);
-			}
-
-			if (cfg->setup->values[KSF_NSSDIR].string != NULL &&
-			    *cfg->setup->values[KSF_NSSDIR].string != 0) {
-				/* nssdir= */
-				lsw_conf_nssdir(cfg->setup->values[KSF_NSSDIR].string, logger);
 			}
 
 			if (cfg->setup->values[KSF_CURLIFACE].string) {
@@ -1630,8 +1623,8 @@ int main(int argc, char **argv)
 	connection_db_init(logger);
 	spd_db_init(logger);
 
-	const struct lsw_conf_options *oco = lsw_init_options();
-	pluto_init_nss(oco->nssdir, logger);
+	pluto_init_nss(config_setup_nssdir(), logger);
+
 	if (is_fips_mode()) {
 		/*
 		 * clear out --debug-crypt if set
@@ -1890,7 +1883,7 @@ void show_setup_plutomain(struct show *s)
 		oco->confddir);
 
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
-		oco->nssdir,
+	     config_setup_nssdir(),
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 

@@ -57,6 +57,9 @@
 #include "ip_info.h"
 #include "optarg.h"
 
+#include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
+#include "config_setup.h"
+
 #include <keyhi.h>
 #include <prerror.h>
 #include <prinit.h>
@@ -526,7 +529,7 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case OPT_NSSDIR:
-			lsw_conf_nssdir(optarg, logger);
+			config_setup_string(KSF_NSSDIR, optarg);
 			continue;
 
 		case OPT_PASSWORD:
@@ -577,14 +580,14 @@ int main(int argc, char *argv[])
 	 * Don't fetch the config options until after they have been
 	 * processed, and really are "constant".
 	 */
-	const struct lsw_conf_options *oco = lsw_init_options();
-	llog(RC_LOG, logger, "using nss directory \"%s\"", oco->nssdir);
+
+	llog(RC_LOG, logger, "using nss directory \"%s\"", config_setup_nssdir());
 
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
 
-	init_nss(oco->nssdir, nss, logger);
+	init_nss(config_setup_nssdir(), nss, logger);
 
 	int status = 0;
 

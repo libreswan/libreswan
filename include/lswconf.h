@@ -30,13 +30,11 @@ struct lsw_conf_options {
 	char *secretsfile;		/* "/etc/ipsec.secrets" */
 	char *confddir;			/* "/etc/ipsec.d" */
 	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */
-	char *nssdir;			/* "/var/lib/ipsec" */
 };
 
 const struct lsw_conf_options *lsw_init_options(void);
 void lsw_conf_free_oco(void);
 
 void lsw_conf_confddir(const char *confddir, struct logger *logger);
-void lsw_conf_nssdir(const char *nssdir, struct logger *logger);
 
 #endif
