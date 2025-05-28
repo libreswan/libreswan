@@ -34,7 +34,7 @@
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "kernel.h"             /* needs connections.h */
-#include "lswconf.h"
+#include "config_setup.h"
 #include "lex.h"
 #include "log.h"
 #include "whack.h"
@@ -173,8 +173,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->config->name;
-	const struct lsw_conf_options *oco = lsw_init_options();
-	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
+	char *fg_path = alloc_printf("%s/policies/%s", config_setup_ipsecdir(), fgn); /* must free */
 
 	struct file_lex_position *flp;
 	if (!lexopen(&flp, fg_path, true, oflp)) {
