@@ -27,8 +27,7 @@
     <title>DESCRIPTION</title>
     <para>
       <command>ipsec listcrls</command> lists all X.509 certificate
-      revocation lists from <application>Libreswan's</application>
-      <application>NSS</application> database.
+      revocation lists from &Libreswan;'s &NSS; database.
     </para>
   </refsect1>
 

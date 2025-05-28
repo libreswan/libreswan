@@ -6,7 +6,7 @@
     <para>
       NAT Traversal in IKEv1 is negotiated via Vendor ID options as
       specified in RFC 3947.  However, many implementations only
-      support the draft version of the RFC. Libreswan sends both the
+      support the draft version of the RFC. &Libreswan; sends both the
       RFC and the most common draft versions (02, 02_n and 03) to
       maximize interoperability.  Unfortunately, there are known
       broken implementations of RFC 3947, notably Cisco routers that

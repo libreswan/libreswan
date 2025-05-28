@@ -207,12 +207,10 @@
 	<term><command>ipsec vfychain</command></term>
 	<listitem>
 	  <para>
-	    Wrappers around the <application>NSS</application>
-	    <command>pk12util</command>, <command>modutil</command>,
-	    <command>certutil</command>, and
-	    <command>crlutil</command> that can be used to directly
-	    manipulate <application>Libreswan's</application>
-	    <application>NSS</application> database.
+	    Wrappers around the &NSS; <command>pk12util</command>,
+	    <command>modutil</command>, <command>certutil</command>,
+	    and <command>crlutil</command> that can be used to
+	    directly manipulate &Libreswan;'s &NSS; database.
 	  </para>
 	  <para>
 	    See
@@ -265,8 +263,7 @@
 	<term><command>ipsec whack</command></term>
 	<listitem>
 	  <para>
-	    Low-level utility for manipulating
-	    <application>Libreswan's</application> daemon
+	    Low-level utility for manipulating &Libreswan;'s daemon
 	    <command>pluto</command>.
 	  </para>
 	  <para>
@@ -280,8 +277,8 @@
 	<term><command>ipsec pluto</command></term>
 	<listitem>
 	  <para>
-	    <application>Libreswan's</application> daemon that
-	    implements the Internet Key Exchange protocols.
+	    &Libreswan;'s daemon that implements the Internet Key
+	    Exchange protocols.
 	  </para>
 	  <para>
 	    See
@@ -298,7 +295,7 @@
 	<listitem>
 	  <para>
 	    Generate and display raw host keys stored in the
-	    <application>NSS</application> database.
+	    &NSS; database.
 	  </para>
 	  <para>
 	    See:
@@ -341,7 +338,7 @@
 	<listitem>
 	  <para>
 	    Utility for generating
-	    <application>letsencrypt</application> keys.
+	    &letsencrypt; keys.
 	  </para>
 	  <para>
 	    See:

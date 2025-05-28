@@ -29,7 +29,7 @@
     <note>
       <para>
 	Support for specifying multiple selectors and the protocol and
-	port was added in Libreswan version 5.
+	port was added in &Libreswan; version 5.
       </para>
     </note>
 

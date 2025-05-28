@@ -69,8 +69,7 @@
     <title>DESCRIPTION</title>
 
     <para>
-      <command>pluto</command> is
-      <application>Libreswan's</application> Internet Key Exchange
+      <command>pluto</command> is &Libreswan;'s Internet Key Exchange
       (IKE) daemon.
     </para>
 
@@ -83,12 +82,12 @@
 
     <para>
       For more general information on
-      <application>Libreswan</application> see &libreswan.7;.
+      &Libreswan; see &libreswan.7;.
     </para>
 
     <para>
       For information on how to configure
-      <application>Libreswan</application> and the
+      &Libreswan; and the
       <command>pluto</command> daemon see &ipsec.conf.5;.
     </para>
 
@@ -114,7 +113,7 @@
 	  </term>
           <listitem>
             <para>
-	      show <application>Libreswan's</application> version details
+	      show &Libreswan;'s version details
 	    </para>
           </listitem>
 	</varlistentry>
@@ -819,7 +818,7 @@
     <title>SEE ALSO</title>
 
     <para>
-      The rest of the Libreswan distribution, in particular
+      The rest of the &Libreswan; distribution, in particular
       &libreswan.7;.
     </para>
   </refsect1>

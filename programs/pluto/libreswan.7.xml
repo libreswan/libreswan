@@ -27,7 +27,7 @@
     </title>
 
     <para>
-      <application>Libreswan</application> is an Internet Key Exchange
+      &Libreswan; is an Internet Key Exchange
       (IKE) manager.
 
       It consists of the Internet Key Exchange Daemon
@@ -37,26 +37,24 @@
       configuration file <filename>ipsec.conf</filename> (see
       &ipsec.conf.5;).
 
-      For authentication, <application>Libreswan</application> uses an
-      <application>NSS</application> trust store containing
-      <application>X.509</application> certificates and raw private
+      For authentication, &Libreswan; uses an
+      &NSS;o trust store containing
+      &X.509; certificates and raw private
       keys, or a separate file containing preshared secrets (see
       &ipsec.secrets.5;).
     </para>
 
     <para>
-      <application>Libreswan</application> is used to negotiate and create
-      shared Security Associations (SA) on a system that has IPsec,
-      the secure IP protocol using the IKE protocol. The actual transmission
-      of IPsec packets is the responsibility of the kernel.
-      <application>Libreswan</application> can talk to various IPsec kernel
-      implementations, such as the <application>Linux
-      XFRM</application> and <application>BSD KAME</application> IPsec
-      stacks.
+      &Libreswan; is used to negotiate and create shared Security
+      Associations (SA) on a system that has IPsec, the secure IP
+      protocol using the IKE protocol. The actual transmission of
+      IPsec packets is the responsibility of the kernel.  &Libreswan;
+      can talk to various IPsec kernel implementations, such as the
+      &Linux.XFRM; and &BSD.KAME; IPsec stacks.
     </para>
 
     <para>
-      <application>Libreswan</application> implements IKE version 1 (RFC 2409)
+      &Libreswan; implements IKE version 1 (RFC 2409)
       and IKE version 2 (RFC 7296). IKEv1 is considered Deprecated (RFC 9395) and
       it is strongly recommended to migrate all existing IKEv1 configurations to
       IKEv2.  Currently, to enable IKEv1 at all, the <emphasis>ipsec.conf</emphasis>
@@ -79,27 +77,27 @@
 	(<emphasis>SA</emphasis>) is an agreement between two network
 	nodes on how to process certain traffic between them. This
 	processing may involve encapsulation, authentication,
-	encryption, and compression.  The <application>Internet
-	Key Exchange Protocol</application> (<application>IKE</application>)
-	provides a standardized way to establish these associations dynamically.
+	encryption, and compression.  The Internet Key Exchange
+	Protocol (&IKE;) provides a standardized way to establish
+	these associations dynamically.
       </para>
 
       <para>
-	<application>IKE</application> can be deployed on a network
+	&IKE; can be deployed on a network
 	node to negotiate Security Associations for that node.  These
-	<application>IKE</application> implementations can only
-	negotiate with other <application>IKE</application>
-	implementations, so <application>IKE</application> must be on
+	&IKE; implementations can only
+	negotiate with other &IKE;
+	implementations, so &IKE; must be on
 	each node that is to be an endpoint of an
-	<application>IKE</application>-negotiated Security
+	&IKE;-negotiated Security
 	Association.  No other nodes need to be running
-	<application>IKE</application>.
+	&IKE;.
       </para>
 
       <para>
-	An <application>IKE</application> instance (i.e. an IKE
+	An &IKE; instance (i.e. an IKE
 	implementation on a particular network node) communicates with
-	other <application>IKE</application> instance using either UDP
+	other &IKE; instance using either UDP
 	or TCP packets, so there must be a route between the nodes
 	in each direction.
       </para>
@@ -113,7 +111,7 @@
       </para>
 
       <para>
-	<application>IKE</application> deals with two kinds of
+	&IKE; deals with two kinds of
 	Security Associations.  The first part of a negotiation
 	between IKE instances is to build an IKE SA.  An IKE SA is
 	used to establish an authenticated and private communication
@@ -159,14 +157,14 @@
       <title>Libreswan</title>
 
       <para>
-	<application>Libreswan</application> implements the Internet
+	&Libreswan; implements the Internet
 	Key Exchange (both versions 1 and 2).  It runs as a daemon
 	(called <command>pluto</command>) on a network node.
 	Currently, this network node must be a
-	<application>Linux</application>,
-	<application>NetBSD</application>,
-	<application>FreeBSD</application>, or
-	<application>OpenBSD</application> system.
+	&Linux;,
+	&NetBSD;,
+	&FreeBSD;, or
+	&OpenBSD; system.
       </para>
 
       <para>
@@ -176,21 +174,18 @@
       </para>
 
       <para>
-	<application>Libreswan</application> can be configured to
-	authenticate its peer using shared secrets or using public and
-	private keys (see &ipsec.conf.5;).  Shared secrets are stored
-	in the file <filename>ipsec.secrets</filename> (see
-	&ipsec.secrets.5;).  Public keys (for instance, X.509
-	certificates) are stored in either
-	<application>Libreswan's</application>
-	<application>NSS</application> trust store, obtained from the
+	&Libreswan; can be configured to authenticate its peer using
+	shared secrets or using public and private keys (see
+	&ipsec.conf.5;).  Shared secrets are stored in the file
+	<filename>ipsec.secrets</filename> (see &ipsec.secrets.5;).
+	Public keys (for instance, X.509 certificates) are stored in
+	either &Libreswan;'s &NSS; trust store, obtained from the
 	peer, or using DNS(SEC).  Corresponding Private keys are
-	always stored in the <application>Libreswan's</application>
-	<application>NSS</application> trust store.
+	always stored in the &Libreswan;'s &NSS; trust store.
       </para>
 
       <para>
-	<application>Libreswan</application> initiates negotiation of a
+	&Libreswan; initiates negotiation of a
 	Security Association when:
       </para>
 
@@ -217,14 +212,13 @@
       <para>
 	<command>Libreswan</command> implements IKE SAs itself.  After
 	it has negotiated the characteristics for a Child SA (IPsec
-	SA), it directs the <application>kernel</application> to
-	install the association.  If necessary, it also invokes a
-	script to adjust any firewall or routing rules (see
-	&ipsec-updown.8;).
+	SA), it directs the kernel to install the association.  If
+	necessary, it also invokes a script to adjust any firewall or
+	routing rules (see &ipsec-updown.8;).
       </para>
 
       <para>
-	When <application>Libreswan</application> shuts down, it
+	When &Libreswan; shuts down, it
 	closes all Security Associations.
       </para>
     </refsect2>
@@ -235,7 +229,7 @@
       </title>
 
       <para>
-	Whenever <application>libreswan</application> brings a
+	Whenever &Libreswan; brings a
 	connection up or down, it invokes the
 	<command>updown</command> command.  This command is specified
 	either using <filename>ipsec.conf</filename> configuration
@@ -264,9 +258,9 @@
 	      is run before bringing up a new connection if no other
 	      connection with the same clients is up.  Generally, this
 	      is useful for deleting a route that might have been set
-	      up before <application>libreswan</application> was
+	      up before &Libreswan; was
 	      started or perhaps by some agent not known to
-	      <application>libreswan</application>.
+	      &Libreswan;.
 	    </para>
           </listitem>
         </varlistentry>

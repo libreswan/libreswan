@@ -3,7 +3,7 @@
     DEFAULT POLICY GROUPS
   </title>
   <para>
-    The standard Libreswan install includes several policy groups
+    The standard &Libreswan; install includes several policy groups
     which provide a way of classifying possible peers into IPsec
     security classes: <option>private</option> (talk encrypted only),
     <option>private-or-clear</option> (prefer encryption),

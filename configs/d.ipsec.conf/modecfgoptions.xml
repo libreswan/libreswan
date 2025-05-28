@@ -12,8 +12,8 @@
     <para>
       When configured as IKEv1 ModeCFG or IKEv2 server, specifying any
       of these options will cause those options and values to be sent
-      to the connecting client. Libreswan as a client will use these
-      received options to either update /etc/resolv.conf or the
+      to the connecting client.  &Libreswan; as a client will use
+      these received options to either update /etc/resolv.conf or the
       running unbound DNS server. When the connection is brought down,
       the previous DNS resolving state is restored.
     </para>

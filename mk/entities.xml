@@ -6,7 +6,21 @@
 <!ENTITY NetBSD '<application>NetBSD</application>'>
 <!ENTITY OpenBSD '<application>OpenBSD</application>'>
 
+<!ENTITY Linux.XFRM '<application>Linux XFRM</application>'>
+<!ENTITY BSD.KAME '<application>BSD KAME</application>'>
+<!ENTITY NSS '<application>NSS</application>'>
+<!ENTITY Cisco '<application>Cisco</application>'>
+<!ENTITY KLIPS '<application>KLIPS</application>'>
+<!ENTITY IKE '<application>IKE</application>'>
+<!ENTITY Racoon '<application>Racoon</application>'>
+<!ENTITY letsencrypt '<application>letsencrypt</application>'>
+<!ENTITY Checkpoint '<application>Checkpoint</application>'>
+<!ENTITY X.509 '<application>X.509</application>'>
+
 <!-- libreswan manpages -->
+
+<!ENTITY ipsec.conf '<filename>ipsec.conf</filename>'>
+<!ENTITY ipsec.secrets '<filename>ipsec.secrets</filename>'>
 
 <!ENTITY ipsec.conf.5     '<citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 <!ENTITY ipsec.secrets.5  '<citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>

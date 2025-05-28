@@ -9,7 +9,7 @@
     </para>
     <note>
       <para>
-	This feature is used by <application>Libreswan</application>
+	This feature is used by &Libreswan;
 	developers.  The default logs should provide sufficient
 	information to diagnose configuration and connection problems.
       </para>

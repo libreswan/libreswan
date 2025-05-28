@@ -25,10 +25,10 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <command>ipsec modutil</command> is a helper that runs
-      <application>NSS's</application> <command>modutil</command>
-      command against <application>Libreswan's</application> NSS
-      database by adding the option <option>-d
+      <command>ipsec modutil</command> is a helper that runs &NSS;'s
+      <command>modutil</command> command against
+      &Libreswan;'s NSS database by adding
+      the option <option>-d
       <filename>@@IPSEC_NSSDIR@@</filename></option> to the parameter
       list.
     </para>

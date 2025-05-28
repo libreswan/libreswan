@@ -11,8 +11,12 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec-look</refname>
-    <refpurpose>get a quick summary of Libreswan status</refpurpose>
+    <refname>
+      ipsec-look
+    </refname>
+    <refpurpose>
+      get a quick summary of &Libreswan; status
+    </refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
@@ -22,10 +26,11 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsect1 id='description'><title>DESCRIPTION</title>
-  <para><emphasis>Look</emphasis>
-  is used to get a quick overview of what the status of Libreswan is.
-  the equivalent to running the commands
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para><emphasis>Look</emphasis> is used to get a quick overview of
+    what the status of &Libreswan; is.  the equivalent to running the
+    commands
   </para>
   </refsect1>
 

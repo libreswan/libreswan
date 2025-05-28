@@ -12,8 +12,8 @@
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec-setup</refname>
-    <refpurpose>wrapper routine to the Libreswan init system</refpurpose>
+    <refname>ipsec-setup</refname> <refpurpose>wrapper routine to the
+    &Libreswan; init system</refpurpose>
   </refnamediv>
   <!-- body begins here -->
 

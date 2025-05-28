@@ -8,14 +8,13 @@
   </para>
 
   <para>
-    When <option>type</option> or
-    <option>failureshunt</option> is set to
-    <option>drop</option> or <option>reject,</option>
-    Libreswan blocks outbound packets using eroutes, but assumes
-    inbound blocking is handled by the firewall. Libreswan offers
-    firewall hooks via an &ldquo;updown&rdquo; script.  However, the
-    default <command>ipsec _updown</command> provides no help in
-    controlling a modern firewall.
+    When <option>type</option> or <option>failureshunt</option> is set
+    to <option>drop</option> or <option>reject,</option> &Libreswan;
+    blocks outbound packets using eroutes, but assumes inbound
+    blocking is handled by the firewall.  &Libreswan; offers firewall
+    hooks via an &ldquo;updown&rdquo; script.  However, the default
+    <command>ipsec _updown</command> provides no help in controlling a
+    modern firewall.
   </para>
 
   <para>
