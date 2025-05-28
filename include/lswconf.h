@@ -46,7 +46,4 @@ void lsw_conf_confddir(const char *confddir, struct logger *logger);
 void lsw_conf_nssdir(const char *nssdir, struct logger *logger);
 void lsw_conf_nsspassword(const char *nsspassword);
 
-extern int libreswan_selinux(struct logger *logger);
-
 #endif
-
