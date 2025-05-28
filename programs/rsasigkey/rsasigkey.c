@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	int seedbits = DEFAULT_SEED_BITS;
+	struct nss_flags nss = {0};
 
 	while (true) {
 
@@ -173,7 +174,7 @@ int main(int argc, char *argv[])
 			lsw_conf_nssdir(optarg, logger);
 			continue;
 		case OPT_PASSWORD:       /* token authentication password */
-			lsw_conf_nsspassword(optarg);
+			nss.password = optarg;
 			continue;
 		case OPT_SEEDBITS: /* seed bits */
 			seedbits = atoi(optarg);
@@ -196,7 +197,7 @@ int main(int argc, char *argv[])
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
 
-	init_nss(oco->nssdir, (struct nss_flags){0}, logger);
+	init_nss(oco->nssdir, nss, logger);
 
 	/*
 	 * RSA-PSS requires keysize to be a multiple of 8 bits

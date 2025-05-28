@@ -105,8 +105,7 @@ char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
 /* forwards */
-static void ecdsasigkey(SECOidTag curve, int seedbits,
-		 const struct lsw_conf_options *oco, struct logger *logger);
+static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger);
 static void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
@@ -143,6 +142,7 @@ int main(int argc, char *argv[])
 
 	int seedbits = DEFAULT_SEED_BITS;
 	SECOidTag curve = SEC_OID_UNKNOWN;
+	struct nss_flags nss = {0};
 
 	while (true) {
 
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 			lsw_conf_nssdir(optarg, logger);
 			continue;
 		case OPT_PASSWORD:       /* token authentication password */
-			lsw_conf_nsspassword(optarg);
+			nss.password = optarg;
 			continue;
 		case OPT_SEEDBITS: /* seed bits */
 			seedbits = atoi(optarg);
@@ -214,21 +214,19 @@ int main(int argc, char *argv[])
 	 * processed, and really are "constant".
 	 */
 	const struct lsw_conf_options *oco = lsw_init_options();
+	init_nss(oco->nssdir, nss, logger);
 
-	ecdsasigkey(curve, seedbits, oco, logger);
+	ecdsasigkey(curve, seedbits, logger);
 	exit(0);
 }
 
 /*
  * generate an ECDSA signature key
  */
-static void ecdsasigkey(SECOidTag curve, int seedbits,
-			const struct lsw_conf_options *oco, struct logger *logger)
+static void ecdsasigkey(SECOidTag curve, int seedbits, struct logger *logger)
 {
-	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
-
 
 	/*
 	 * Wrap the raw OID in ASN.1.  Must double free ecdsaparams.
@@ -237,9 +235,7 @@ static void ecdsasigkey(SECOidTag curve, int seedbits,
 	SECItem *ecdsaparams = SEC_ASN1EncodeItem(NULL, NULL, &oiddata->oid,
 						  SEC_ObjectIDTemplate);
 
-	init_nss(oco->nssdir, (struct nss_flags){0}, logger);
-
-	slot = lsw_nss_get_authenticated_slot(logger);
+	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
 		/* already logged */
 		shutdown_nss();

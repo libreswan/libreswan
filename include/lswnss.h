@@ -27,6 +27,8 @@
 #include "diag.h"
 
 struct nss_flags {
+	const char *password;
+
 	bool open_readonly;
 	/*
 	 * Should shutdown call PR_CLEANUP.

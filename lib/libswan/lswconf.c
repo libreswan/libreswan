@@ -75,8 +75,6 @@ void lsw_conf_free_oco(void)
 	pfreeany(global_oco.confddir);
 	pfreeany(global_oco.policies_dir);
 	pfreeany(global_oco.nsspassword_file);
-	pfreeany(global_oco.nsspassword);
-
 	pfreeany(global_oco.nssdir);
 
 	messup(&global_oco);
@@ -114,10 +112,4 @@ void lsw_conf_secretsfile(const char *secretsfile)
 {
 	lsw_conf_setdefault();
 	subst(&global_oco.secretsfile, "%s", secretsfile);
-}
-
-void lsw_conf_nsspassword(const char *nsspassword)
-{
-	lsw_conf_setdefault();
-	subst(&global_oco.nsspassword, "%s", nsspassword);
 }

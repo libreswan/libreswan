@@ -448,6 +448,9 @@ int main(int argc, char *argv[])
 	int precedence = 10;
 	char *ckaid = NULL;
 	char *rsaid = NULL;
+	struct nss_flags nss = {
+		.open_readonly = true,
+	};
 
 	while (true) {
 
@@ -527,7 +530,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_PASSWORD:
-			lsw_conf_nsspassword(optarg);
+			nss.password = optarg;
 			continue;
 
 		case OPT_VERBOSE:
@@ -580,7 +583,8 @@ int main(int argc, char *argv[])
 	/*
 	 * Set up for NSS - contains key pairs.
 	 */
-	init_nss(oco->nssdir, (struct nss_flags){.open_readonly = true}, logger);
+
+	init_nss(oco->nssdir, nss, logger);
 
 	int status = 0;
 

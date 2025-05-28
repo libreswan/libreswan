@@ -31,7 +31,6 @@ struct lsw_conf_options {
 	char *confddir;			/* "/etc/ipsec.d" */
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */
-	char *nsspassword;		/* <password> overrides ^ */
 	char *nssdir;			/* "/var/lib/ipsec" */
 };
 
@@ -41,6 +40,5 @@ void lsw_conf_free_oco(void);
 void lsw_conf_secretsfile(const char *secretsfile);
 void lsw_conf_confddir(const char *confddir, struct logger *logger);
 void lsw_conf_nssdir(const char *nssdir, struct logger *logger);
-void lsw_conf_nsspassword(const char *nsspassword);
 
 #endif

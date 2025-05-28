@@ -611,6 +611,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	struct nss_flags nss = {
+		.open_readonly = true,
+	};
+
 	char **argp = argv + 1;
 	for (; *argp != NULL; argp++) {
 		const char *arg = *argp;
@@ -649,12 +653,11 @@ int main(int argc, char *argv[])
 		} else if (streq(arg, "impair")) {
 			impaired = true;
 		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
-			char *nsspw = *++argp;
-			if (nsspw == NULL) {
+			nss.password = *++argp;
+			if (nss.password == NULL) {
 				fprintf(stderr, "missing nss password\n");
 				exit(ERROR);
 			}
-			lsw_conf_nsspassword(nsspw);
 		} else {
 			fprintf(stderr, "unknown option: %s\n", *argp);
 			exit(ERROR);
@@ -666,7 +669,7 @@ int main(int argc, char *argv[])
 	 * ike_alg_init().  Sanity checks and algorithm testing
 	 * require a working NSS.
 	 */
-	init_nss(NULL, (struct nss_flags) { .open_readonly = true}, logger);
+	init_nss(NULL, nss, logger);
 	init_crypt_symkey(logger);
 	fips = is_fips_mode();
 
