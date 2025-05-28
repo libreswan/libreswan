@@ -27,10 +27,7 @@ struct logger;
 
 struct lsw_conf_options {
 	bool is_set;			/* public never see false */
-	char *confdir;			/* "/etc" */
-	char *conffile;			/* "/etc/ipsec.conf" */
 	char *secretsfile;		/* "/etc/ipsec.secrets" */
-	char *ppkdir;			/* "/etc/ipsec.d" , for now */
 	char *confddir;			/* "/etc/ipsec.d" */
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */

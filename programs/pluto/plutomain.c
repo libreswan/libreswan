@@ -1883,7 +1883,7 @@ void show_setup_plutomain(struct show *s)
 	show(s, "config setup options:");
 	show_separator(s);
 	show(s, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
-		oco->confdir,
+	     IPSEC_SYSCONFDIR,
 		conffile, /* oco contains only a copy of hardcoded default */
 		oco->secretsfile,
 		oco->confddir);
