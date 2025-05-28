@@ -56,7 +56,6 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "lswtool.h"
-#include "lswconf.h"
 #include "lswnss.h"
 #include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
 #include "config_setup.h"

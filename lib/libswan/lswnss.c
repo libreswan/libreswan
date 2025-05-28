@@ -20,7 +20,6 @@
 #include <keyhi.h>
 #include <nss.h>	/* for NSS_Initialize() */
 
-#include "lswconf.h"
 #include "config_setup.h"
 #include "lswnss.h"
 #include "lswalloc.h"

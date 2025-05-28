@@ -6,7 +6,6 @@
 #include "lswalloc.h"
 #include "lswnss.h"
 #include "fips_mode.h"
-#include "lswconf.h"
 #include "crypt_symkey.h"		/* for init_crypt_symkey() */
 #include "ike_alg.h"
 #include "proposals.h"

@@ -33,7 +33,6 @@
 #include "whack_shutdown.h"
 
 #include "constants.h"
-#include "lswconf.h"		/* for lsw_conf_free_oco() */
 #include "lswnss.h"		/* for lsw_nss_shutdown() */
 #include "lswalloc.h"		/* for report_leaks() et.al. */
 
@@ -193,8 +192,6 @@ void exit_epilogue(void)
 	 */
 	shutdown_x509_crl_queue(logger);
 #endif
-
-	lsw_conf_free_oco();	/* free global_oco containing path names */
 
 	/*
 	 * The impair_message code has pointers to to msg_digest

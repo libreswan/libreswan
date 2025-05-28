@@ -24,7 +24,6 @@
 #include "err.h"
 #include "lswtool.h"
 #include "lswalloc.h"
-#include "lswconf.h"
 #include "lswlog.h"
 #include "config_setup.h"
 #include "ipsecconf/confread.h"

@@ -43,7 +43,6 @@
 #include "deltatime.h"
 #include "timescale.h"
 #include "lswversion.h"
-#include "lswconf.h"
 #include "fips_mode.h"
 #include "lswnss.h"
 #include "defs.h"
