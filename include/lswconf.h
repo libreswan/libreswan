@@ -29,7 +29,6 @@ struct lsw_conf_options {
 	bool is_set;			/* public never see false */
 	char *secretsfile;		/* "/etc/ipsec.secrets" */
 	char *confddir;			/* "/etc/ipsec.d" */
-	char *nsspassword_file;		/* "/etc/ipsec.d/nsspassword" */
 };
 
 const struct lsw_conf_options *lsw_init_options(void);

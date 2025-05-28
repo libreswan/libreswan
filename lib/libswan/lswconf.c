@@ -70,7 +70,6 @@ void lsw_conf_free_oco(void)
 	 */
 
 	pfreeany(global_oco.confddir);
-	pfreeany(global_oco.nsspassword_file);
 
 	messup(&global_oco);
 }
@@ -85,7 +84,6 @@ void lsw_conf_confddir(const char *confddir, struct logger *logger)
 {
 	lsw_conf_setdefault();
 	subst(&global_oco.confddir, "%s", confddir);
-	subst(&global_oco.nsspassword_file, "%s/nsspassword", confddir);
 
 	if (logger != NULL &&
 	    !streq(global_oco.confddir, IPSEC_CONFDDIR))
