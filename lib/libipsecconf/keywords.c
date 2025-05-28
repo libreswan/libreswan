@@ -258,6 +258,7 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   K("fake-strongswan",  kv_conn,  kt_sparse_name,  KWYN_FAKE_STRONGSWAN, &yn_option_names),
   K("send-vendorid",  kv_conn,  kt_sparse_name,  KWYN_SEND_VENDORID, &yn_option_names),
   K("sha2-truncbug",  kv_conn,  kt_sparse_name,  KWYN_SHA2_TRUNCBUG, &yn_option_names),
+  K("share-lease",  kv_conn,  kt_sparse_name,  KWYN_SHARE_LEASE, &yn_option_names),
   K("ms-dh-downgrade",  kv_conn,  kt_sparse_name,  KWYN_MS_DH_DOWNGRADE, &yn_option_names),
   K("pfs-rekey-workaround",  kv_conn,  kt_sparse_name,  KWYN_PFS_REKEY_WORKAROUND, &yn_option_names),
   K("require-id-on-certificate",  kv_conn,  kt_sparse_name,  KWYN_REQUIRE_ID_ON_CERTIFICATE, &yn_option_names),

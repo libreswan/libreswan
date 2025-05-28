@@ -279,6 +279,7 @@ struct whack_message {
 	enum yn_options mobike;		/* allow MOBIKE */
 	enum yn_options intermediate;	/* allow Intermediate Exchange */
 	enum yn_options sha2_truncbug;	/* allow Intermediate Exchange */
+	enum yn_options share_lease;	/* allow further connections to use lease IP */
 	enum yn_options overlapip;	/* can two conns that have
 					 * subnet=vhost: declare the
 					 * same IP? */

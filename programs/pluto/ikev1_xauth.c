@@ -1928,6 +1928,9 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 				return d;
 			}
 
+			set_child_has_client(c, local, true);
+			ike->sa.hidden_variables.st_lease_ip = a;
+
 			const struct ip_info *afi = address_info(a);
 			c->local->child.lease[afi->ip_index] = a;
 

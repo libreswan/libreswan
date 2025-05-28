@@ -3677,6 +3677,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug,
 					   /*value_when_unset*/YN_NO,
 					   wm, c->logger);
+	config->share_lease = extract_yn("", "share_lease", wm->share_lease,
+					   /*value_when_unset*/YN_YES,
+					   wm, c->logger);
 	config->overlapip = extract_yn("", "overlapip", wm->overlapip,
 				       /*value_when_unset*/YN_NO, wm, c->logger);
 
@@ -5466,6 +5469,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	/* note reversed logic */
 	CF(rekey, DONT_REKEY);
+	CF(share_lease, DONT_SHARE_LEASE);
 
 	CT(reauth, REAUTH);
 

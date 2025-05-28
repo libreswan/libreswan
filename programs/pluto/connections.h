@@ -124,6 +124,7 @@ struct host_end_config {
 					 * Groundhog effectively
 					 * ignores the expiry on the
 					 * root certificate. */
+	bool share_lease;		/* if given a lease, should further connections re-use the lease IP */
 };
 
 /*
@@ -304,6 +305,7 @@ struct config {
 	bool mobike;			/* Allow MOBIKE */
 	bool intermediate;		/* allow Intermediate Exchange */
 	bool sha2_truncbug;		/* workaround old Linux kernel (android 4.x) */
+	bool share_lease;		/* Allow further connections of IKE SA to use lease IP */
 	bool overlapip;			/* can two conns that have
 					 * subnet=vhost: declare the
 					 * same IP? */

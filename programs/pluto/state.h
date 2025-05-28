@@ -172,6 +172,7 @@ struct hidden_variables {
 						 * should be used. */
 	ip_address st_nat_oa;
 	ip_address st_natd;
+	ip_address st_lease_ip;
 };
 
 /*

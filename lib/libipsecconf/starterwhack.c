@@ -300,6 +300,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.mobike = conn->values[KWYN_MOBIKE].option; /*yn_options*/
 	msg.intermediate = conn->values[KWYN_INTERMEDIATE].option; /*yn_options*/
 	msg.sha2_truncbug = conn->values[KWYN_SHA2_TRUNCBUG].option; /*yn_options*/
+	msg.share_lease = conn->values[KWYN_SHARE_LEASE].option; /*yn_options*/
 	msg.overlapip = conn->values[KWYN_OVERLAPIP].option; /*yn_options*/
 	msg.ms_dh_downgrade = conn->values[KWYN_MS_DH_DOWNGRADE].option; /*yn_options*/
 	msg.pfs_rekey_workaround = conn->values[KWYN_PFS_REKEY_WORKAROUND].option;

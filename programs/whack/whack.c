@@ -133,7 +133,7 @@ static void help(void)
 #ifdef HAVE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
 #endif
-		"	[--dontrekey] [--aggressive] \\\n"
+		"	[--dontrekey] [--dont-share-lease] [--aggressive] \\\n"
 		"	[--initial-contact[={yes,no}]] [--cisco-unity[={yes,no}]] [--fake-strongswan] \\\n"
 		"	[--encapsulation[={auto,yes,no}] [--nat-keepalive {yes,no}] \\\n"
 		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
@@ -568,6 +568,7 @@ enum opt {
 	CD_PFSGROUP,
 	CD_REMOTE_PEER_TYPE,
 	CD_SHA2_TRUNCBUG,
+	CD_DONT_SHARE_LEASE,
 	CD_NM_CONFIGURED,
 	CD_LABELED_IPSEC,
 	CD_SEC_LABEL,
@@ -817,6 +818,7 @@ const struct option optarg_options[] = {
 	{ "allow-cert-without-san-id\0", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
 	{ "sha2-truncbug\0", optional_argument, NULL, CD_SHA2_TRUNCBUG },
 	{ "sha2_truncbug\0", no_argument, NULL, CD_SHA2_TRUNCBUG }, /* backwards compatibility */
+	{ "dont-share-lease\0", optional_argument, NULL, CD_DONT_SHARE_LEASE },
 	{ "aggressive\0", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode\0", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
 
@@ -1735,6 +1737,11 @@ int main(int argc, char **argv)
 		/* --sha2-truncbug or --sha2_truncbug */
 		case CD_SHA2_TRUNCBUG:
 			msg.sha2_truncbug = optarg_yn(logger, YN_YES);
+			continue;
+
+		/* --donot-share-lease */
+		case CD_DONT_SHARE_LEASE:
+			msg.share_lease = YN_NO;
 			continue;
 
 		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
