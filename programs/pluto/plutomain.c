@@ -112,7 +112,7 @@ static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
 
 /* pulled from main for show_setup_plutomain() */
-static const struct lsw_conf_options *oco;
+
 static char *coredir;
 static char *conffile;
 static int pluto_nss_seedbits;
@@ -1613,7 +1613,7 @@ int main(int argc, char **argv)
 		     coredir, e, strerror(e));
 	}
 
-	oco = lsw_init_options();
+	const struct lsw_conf_options *oco = lsw_init_options();
 	if (oco->secretsfile && *oco->secretsfile) {
 		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
 	}
@@ -1878,6 +1878,7 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
+	const struct lsw_conf_options *oco = lsw_init_options();
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
