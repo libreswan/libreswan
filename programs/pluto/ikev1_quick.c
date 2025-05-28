@@ -1177,16 +1177,17 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	} else {
 		ip_address preferred_address = selector_prefix(remote_client);
 		ip_address assigned_address;
-		err_t e = assign_remote_lease(c, ike->sa.st_xauth_username,
-					      address_info(preferred_address),
-					      preferred_address,
-					      &assigned_address,
-					      ike->sa.logger);
-		if (e != NULL) {
+		diag_t d = assign_remote_lease(c, ike->sa.st_xauth_username,
+					       address_info(preferred_address),
+					       preferred_address,
+					       &assigned_address,
+					       ike->sa.logger);
+		if (d != NULL) {
 			selector_buf cb;
 			llog(RC_LOG, ike->sa.logger,
 			     "Quick Mode request rejected, peer requested lease of %s but it is unavailable, %s; deleting ISAKMP SA",
-			     str_selector(&remote_client, &cb), e);
+			     str_selector(&remote_client, &cb), str_diag(d));
+			pfree_diag(&d);
 			connection_delref(&c, ike->sa.logger);
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}

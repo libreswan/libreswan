@@ -663,12 +663,13 @@ static bool unfree_lease(struct addresspool *pool,
  *
  * Returns NULL and NEW_LEASE!=NULL when lease can be assigned.
  */
-static err_t assign_requested_lease(struct connection *c,
-				    struct addresspool *pool,
-				    char **reusable_id,
-				    const ip_address *lease_address,
-				    struct lease **new_lease,
-				    struct verbose verbose)
+
+static diag_t assign_requested_lease(struct connection *c,
+				     struct addresspool *pool,
+				     char **reusable_id,
+				     const ip_address *lease_address,
+				     struct lease **new_lease,
+				     struct verbose verbose)
 {
 	address_buf lab;
 	vdbg("assigning the requested lease %s",
@@ -685,7 +686,7 @@ static err_t assign_requested_lease(struct connection *c,
 	err_t err = address_to_range_offset(pool->r, (*lease_address), &offset);
 	if (err != NULL) {
 		llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
-		return "confused, address should be within addresspool";
+		return diag("confused, address should be within addresspool");
 	}
 
 	vassert(pool->nr_leases <= pool->size);
@@ -704,24 +705,34 @@ static err_t assign_requested_lease(struct connection *c,
 		 * Later.
 		 */
 		struct lease *lease = &pool->leases[offset];
+
 		if (lease->assigned_to != COS_NOBODY) {
 			vdbg_lease(verbose, pool, lease, c, "owned by "PRI_CO,
 				   pri_co(lease->assigned_to));
-			return "lease address is in use";
+			struct connection *owner = connection_by_serialno(lease->assigned_to);
+			if (owner != NULL) {
+				return diag("lease is in use by %s", owner->name);
+			}
+			return diag("lease is in use by "PRI_CO,
+				    pri_co(lease->assigned_to));
 		}
 
 		if (lease->reusable_name != NULL) {
-			vdbg_lease(verbose, pool, lease, c, "owned by "PRI_CO,
-				   pri_co(lease->assigned_to));
-			return "lease address is reserved";
+			vdbg_lease(verbose, pool, lease, c, "reserved by %s",
+				   lease->reusable_name);
+			return diag("lease is reserved by %s", lease->reusable_name);
 		}
 
 		/*
-		 * This returns true when the lease had a previous
-		 * owner and the story needs to be updated.
+		 * unfree_lease() returns true when the lease had a
+		 * previous owner, and the story needs to be updated.
+		 *
+		 * But here, the above checks have eliminate that
+		 * possibility, so unfree_lease() should never return
+		 * true.
 		 */
 		if (vbad(unfree_lease(pool, reusable_id, lease, verbose))) {
-			return "confused, unreserved lease was stolen";
+			return diag("confused, unreserved lease was stolen");
 		}
 
 		vassert((*reusable_id) == NULL); /* ownership transferred to lease */
@@ -747,12 +758,12 @@ static err_t assign_requested_lease(struct connection *c,
 
 	struct lease *lease = &pool->leases[offset];
 	if (!pexpect(lease->assigned_to == COS_NOBODY)) {
-		return "confused, just allocated lease in use";
+		return diag("confused, just allocated lease in use");
 	}
 
 	/* fresh lease can't have previous owner */
 	if (vbad(unfree_lease(pool, reusable_id, lease, verbose))) {
-		return "confused, just allocated lease was stolen";
+		return diag("confused, just allocated lease was stolen");
 	}
 
 	vassert((*reusable_id) == NULL); /* ownership transferred to lease */
@@ -760,12 +771,12 @@ static err_t assign_requested_lease(struct connection *c,
 	return NULL;
 }
 
-err_t assign_remote_lease(struct connection *c,
-			  const char *xauth_username,
-			  const struct ip_info *afi,
-			  const ip_address preferred_address,
-			  ip_address *assigned_address,
-			  struct logger *logger)
+diag_t assign_remote_lease(struct connection *c,
+			   const char *xauth_username,
+			   const struct ip_info *afi,
+			   const ip_address preferred_address,
+			   ip_address *assigned_address,
+			   struct logger *logger)
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() xauth=%s family=%s",
 		     __func__, (xauth_username == NULL ? "n/a" : xauth_username),
@@ -782,7 +793,7 @@ err_t assign_remote_lease(struct connection *c,
 
 	struct addresspool *pool = c->pool[afi->ip_index];
 	if (PBAD(logger, pool == NULL)) {
-		return "confused, no address pool";
+		return diag("confused, no address pool");
 	}
 
 	unsigned next_lease_nr = nr_child_leases(c->remote);
@@ -825,12 +836,12 @@ err_t assign_remote_lease(struct connection *c,
 	 * If the peer's given a preferred address try to assign that.
 	 */
 	if (new_lease == NULL && preferred_address.is_set) {
-		err_t e = assign_requested_lease(c, pool, &reusable_id,
-						 &preferred_address,
-						 &new_lease, verbose);
-		if (e != NULL) {
+		diag_t d = assign_requested_lease(c, pool, &reusable_id,
+						  &preferred_address,
+						  &new_lease, verbose);
+		if (d != NULL) {
 			pfreeany(reusable_id);
-			return e;
+			return d;
 		}
 		if (new_lease != NULL) {
 			story = "requested";
@@ -846,7 +857,7 @@ err_t assign_remote_lease(struct connection *c,
 			err_t e = grow_addresspool(pool, verbose);
 			if (e != NULL) {
 				pfreeany(reusable_id);
-				return e;
+				return diag("%s", e);
 			}
 		}
 
@@ -866,15 +877,15 @@ err_t assign_remote_lease(struct connection *c,
 
 	if (vbad(new_lease == NULL)) {
 		pfreeany(reusable_id);
-		return "confused, no lease";
+		return diag("confused, no lease");
 	}
 
 	if (vbad(story == NULL)) {
-		return "confused, no story";
+		return diag("confused, no story");
 	}
 
 	if (vbad(reusable_id != NULL)) {
-		return "confused, leaking memory";
+		return diag("confused, leaking memory");
 	}
 
 	/*
@@ -884,7 +895,7 @@ err_t assign_remote_lease(struct connection *c,
 	err_t err = pool_lease_to_address(pool, new_lease, assigned_address);
 	if (err != NULL) {
 		llog_pexpect(logger, HERE, "%s", err);
-		return "confused, bad address";
+		return diag("confused, bad address");
 	}
 
 	/* assign and back link */

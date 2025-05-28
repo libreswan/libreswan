@@ -301,13 +301,14 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 	}
 
 	ip_address assigned_address; /* ignore */
-	err_t e = assign_remote_lease(cc, /*xauth-username*/NULL, afi,
-				      /*preferred-address*/unset_address,
-				      &assigned_address,
-				      child->sa.logger);
-	if (e != NULL) {
+	diag_t d = assign_remote_lease(cc, /*xauth-username*/NULL, afi,
+				       /*preferred-address*/unset_address,
+				       &assigned_address,
+				       child->sa.logger);
+	if (d != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
-			afi->ip_name, e);
+			afi->ip_name, str_diag(d));
+		pfree_diag(&d);
 		return false; /*fatal*/
 	}
 	PASSERT(cc->logger, nr_child_leases(cc->remote) > 0); /* used below */
