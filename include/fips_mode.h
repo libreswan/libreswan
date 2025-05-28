@@ -40,5 +40,6 @@ enum fips_mode get_fips_mode(struct logger *logger);
 
 bool is_fips_mode(void);
 
-#endif
+extern int libreswan_selinux(struct logger *logger);
 
+#endif

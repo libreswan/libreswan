@@ -29,6 +29,7 @@
 static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg);
 
 static struct nss_flags shutdown_flags;
+static const char *nss_password;
 
 static diag_t setup(const char *configdir, struct nss_flags flags, struct logger *logger)
 {
@@ -139,6 +140,7 @@ static diag_t setup(const char *configdir, struct nss_flags flags, struct logger
 
 void init_nss(const char *configdir, struct nss_flags flags, struct logger *logger)
 {
+	nss_password = flags.password;
 	diag_t d = setup(configdir, flags, logger);
 	if (d != NULL) {
 		LLOG_FATAL_JAMBUF(PLUTO_EXIT_FAIL, logger, buf) {
@@ -219,8 +221,8 @@ static char *lsw_nss_get_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 	/*
 	 * Easy case, password specified on the command line.
 	 */
-	if (oco->nsspassword != NULL) {
-		char *password = PORT_Strdup(oco->nsspassword);
+	if (nss_password != NULL) {
+		char *password = PORT_Strdup(nss_password);
 		llog(RC_LOG, logger,
 			    "NSS Password for token \"%s\" with length %zu passed to NSS",
 			    token, strlen(password));

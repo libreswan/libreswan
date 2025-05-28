@@ -48,9 +48,6 @@ static void lsw_conf_setdefault(void)
 
 	/* copy everything to the heap for consistency. */
 
-	global_oco.confdir = clone_str(IPSEC_SYSCONFDIR, "default conf ipsec_conf_dir");
-	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
-
 	lsw_conf_secretsfile(IPSEC_SECRETS);
 	lsw_conf_confddir(IPSEC_CONFDDIR, NULL);
 	lsw_conf_nssdir(IPSEC_NSSDIR, NULL);
@@ -74,15 +71,10 @@ void lsw_conf_free_oco(void)
 	 * for (char *p = (char*)&global_oco; p < (char*)(&global_oco + 1); p++)
 	 */
 
-	pfreeany(global_oco.confdir);
-	pfreeany(global_oco.conffile);
 	pfreeany(global_oco.secretsfile);
-
 	pfreeany(global_oco.confddir);
 	pfreeany(global_oco.policies_dir);
 	pfreeany(global_oco.nsspassword_file);
-	pfreeany(global_oco.nsspassword);
-
 	pfreeany(global_oco.nssdir);
 
 	messup(&global_oco);
@@ -120,42 +112,4 @@ void lsw_conf_secretsfile(const char *secretsfile)
 {
 	lsw_conf_setdefault();
 	subst(&global_oco.secretsfile, "%s", secretsfile);
-}
-
-void lsw_conf_nsspassword(const char *nsspassword)
-{
-	lsw_conf_setdefault();
-	subst(&global_oco.nsspassword, "%s", nsspassword);
-}
-
-/*
- * 0 disabled
- * 1 enabled
- * 2 indeterminate
- */
-int libreswan_selinux(struct logger *logger)
-{
-	char selinux_flag[1];
-	int n;
-	FILE *fd = fopen("/sys/fs/selinux/enforce", "r");
-
-	if (fd == NULL) {
-		/* try new location first, then old location */
-		fd = fopen("/selinux/enforce", "r");
-		if (fd == NULL) {
-			dbg("SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
-			return 0;
-		}
-	}
-
-	n = fread((void *)selinux_flag, 1, 1, fd);
-	fclose(fd);
-	if (n != 1) {
-		llog(RC_LOG, logger, "SElinux: could not read 1 byte from the selinux enforce file");
-		return 2;
-	}
-	if (selinux_flag[0] == '1')
-		return 1;
-	else
-		return 0;
 }
