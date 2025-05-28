@@ -26,4 +26,8 @@ void free_config_setup(void);
 void config_setup_string(enum keywords kw, const char *string);
 void config_setup_option(enum keywords kw, uintmax_t option);
 
+const char *config_setup_ipsecdir(void);
+const char *config_setup_secretsfile(void);
+const char *config_setup_nssdir(void);
+
 #endif

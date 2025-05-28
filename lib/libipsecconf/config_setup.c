@@ -77,3 +77,21 @@ void free_config_setup(void)
 	}
 	config_setup_is_set = false;
 }
+
+const char *config_setup_ipsecdir(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_IPSECDIR].string;
+}
+
+const char *config_setup_secretsfile(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_SECRETSFILE].string;
+}
+
+const char *config_setup_nssdir(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_NSSDIR].string;
+}
