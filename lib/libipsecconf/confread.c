@@ -41,6 +41,7 @@
 #include "hunk.h"		/* for char_is_space() */
 #include "ip_cidr.h"
 #include "ttodata.h"
+#include "config_setup.h"
 
 #include "ipsecconf/parser.h"
 #include "ipsecconf/confread.h"
@@ -61,46 +62,12 @@ static bool translate_conn(struct starter_conn *conn,
 			   enum keyword_set assigned_value,
 			   struct logger *logger);
 
-/**
- * Set up hardcoded defaults, from data in programs/pluto/constants.h
- *
- * @param cfg starter_config struct
- * @return void
- */
-
 static struct starter_config *alloc_starter_config(void)
 {
 	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
 
 	TAILQ_INIT(&cfg->conns);
-	cfg->setup = alloc_thing(struct config_setup, "config setup");
-
-	/* ==== config setup ==== */
-
-# define SOPT(kbf, v)  { cfg->setup->values[kbf].option = (v) ; }
-
-	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
-	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
-
-	SOPT(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
-	SOPT(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
-	/* Don't inflict BSI requirements on everyone */
-	SOPT(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
-
-	SOPT(KBF_DDOS_MODE, DDOS_AUTO);
-
-	SOPT(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-
-	SOPT(KBF_SECCOMP, SECCOMP_DISABLED); /* will be enabled in the future */
-
-# undef SOPT
-
-	cfg->setup->values[KSF_NSSDIR].string = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
-	cfg->setup->values[KSF_SECRETSFILE].string = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
-	cfg->setup->values[KSF_DUMPDIR].string = clone_str(IPSEC_RUNDIR, "default dumpdir");
-	cfg->setup->values[KSF_IPSECDIR].string = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
-
-	/* ==== end of config setup ==== */
+	cfg->setup = config_setup_singleton();
 
 	/* ==== conn %default ==== */
 
@@ -675,11 +642,7 @@ static void confread_free_conn_content(struct starter_conn *conn)
 
 void confread_free(struct starter_config *cfg)
 {
-	for (unsigned i = 0; i < elemsof(cfg->setup->values); i++) {
-		pfreeany(cfg->setup->values[i].string);
-	}
-
-	pfreeany(cfg->setup);
+	free_config_setup();
 	confread_free_conn_content(&cfg->conn_default);
 
 	struct starter_conn *conn;
