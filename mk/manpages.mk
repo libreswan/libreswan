@@ -72,8 +72,8 @@ endef
 
 $(builddir)/%.man: $(srcdir)/%.xml | $(builddir)
 	$(XMLTO) $(XMLTO_FLAGS) man $< -o $(builddir)
-	$(foreach r, $(shell $(top_srcdir)/packaging/utils/refnames.sh $<), \
-		$(call transform-doc, $(builddir)/$(r)))
+	set -e $(foreach r, $(shell $(top_srcdir)/packaging/utils/refnames.sh $<), \
+		; echo Transform: $(builddir)/$(r) ; $(TRANSFORM_VARIABLES) -i $(builddir)/$(r))
 	touch $@
 
 $(builddir)/%.html: $(srcdir)/%.xml | $(builddir)
