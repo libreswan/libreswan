@@ -46,7 +46,7 @@
 #include "lswalloc.h"
 
 #include "sysdep.h"
-#include "lswconf.h"
+#include "config_setup.h"
 #include "constants.h"
 
 #include "defs.h"
@@ -1169,12 +1169,11 @@ static bool add_xauth_addresspool(struct connection *c,
 static bool do_file_authentication(struct ike_sa *ike, const char *name,
 				   const char *password, const char *connname)
 {
-	char pswdpath[PATH_MAX];
 	char line[1024]; /* we hope that this is more than enough */
 	int lineno = 0;
 	bool win = false;
 
-	snprintf(pswdpath, sizeof(pswdpath), "%s/passwd", lsw_init_options()->confddir);
+	char *pswdpath = alloc_printf("%s/passwd", config_setup_ipsecdir()); /* must free */
 
 	FILE *fp = fopen(pswdpath, "r");
 	if (fp == NULL) {
@@ -1182,6 +1181,7 @@ static bool do_file_authentication(struct ike_sa *ike, const char *name,
 		llog(RC_LOG, ike->sa.logger,
 		     "XAUTH: unable to open password file (%s) for verification",
 		     pswdpath);
+		pfreeany(pswdpath);
 		return false;
 	}
 
@@ -1289,6 +1289,7 @@ static bool do_file_authentication(struct ike_sa *ike, const char *name,
 	}
 
 	fclose(fp);
+	pfreeany(pswdpath);
 	return win;
 }
 

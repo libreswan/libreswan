@@ -27,13 +27,9 @@ struct logger;
 
 struct lsw_conf_options {
 	bool is_set;			/* public never see false */
-	char *secretsfile;		/* "/etc/ipsec.secrets" */
-	char *confddir;			/* "/etc/ipsec.d" */
 };
 
 const struct lsw_conf_options *lsw_init_options(void);
 void lsw_conf_free_oco(void);
-
-void lsw_conf_confddir(const char *confddir, struct logger *logger);
 
 #endif

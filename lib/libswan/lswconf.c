@@ -45,20 +45,6 @@ static void lsw_conf_setdefault(void)
 	}
 
 	global_oco.is_set = true;
-
-	/* copy everything to the heap for consistency. */
-
-	lsw_conf_confddir(IPSEC_CONFDDIR, NULL);
-}
-
-PRINTF_LIKE(2)
-static void subst(char **field, const char *value, ...)
-{
-	pfreeany(*field);
-	va_list ap;
-	va_start(ap, value);
-	*field = alloc_vprintf(value, ap);
-	va_end(ap);
 }
 
 void lsw_conf_free_oco(void)
@@ -69,8 +55,6 @@ void lsw_conf_free_oco(void)
 	 * for (char *p = (char*)&global_oco; p < (char*)(&global_oco + 1); p++)
 	 */
 
-	pfreeany(global_oco.confddir);
-
 	messup(&global_oco);
 }
 
@@ -78,14 +62,4 @@ const struct lsw_conf_options *lsw_init_options(void)
 {
 	lsw_conf_setdefault();
 	return &global_oco;
-}
-
-void lsw_conf_confddir(const char *confddir, struct logger *logger)
-{
-	lsw_conf_setdefault();
-	subst(&global_oco.confddir, "%s", confddir);
-
-	if (logger != NULL &&
-	    !streq(global_oco.confddir, IPSEC_CONFDDIR))
-		llog(RC_LOG, logger, " adjusting ipsec.d to %s", global_oco.confddir);
 }

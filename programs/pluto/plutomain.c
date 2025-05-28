@@ -1130,7 +1130,6 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_IPSECDIR:	/* --ipsecdir <ipsec-dir> */
-			lsw_conf_confddir(optarg, logger);
 			config_setup_string(KSF_IPSECDIR, optarg);
 			continue;
 
@@ -1286,12 +1285,6 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			/* no config option: rundir */
-
-			if (cfg->setup->values[KSF_IPSECDIR].string != NULL &&
-			    *cfg->setup->values[KSF_IPSECDIR].string != 0) {
-				/* ipsecdir= */
-				lsw_conf_confddir(cfg->setup->values[KSF_IPSECDIR].string, logger);
-			}
 
 			if (cfg->setup->values[KSF_CURLIFACE].string) {
 				replace_value(&x509_crl.curl_iface, cfg->setup->values[KSF_CURLIFACE].string);
@@ -1872,7 +1865,6 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
@@ -1880,7 +1872,7 @@ void show_setup_plutomain(struct show *s)
 	     IPSEC_SYSCONFDIR,
 		conffile, /* oco contains only a copy of hardcoded default */
 	     config_setup_secretsfile(),
-		oco->confddir);
+	     config_setup_ipsecdir());
 
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
