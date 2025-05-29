@@ -18,7 +18,10 @@
 
 #include <stdint.h>
 
+#include "lset.h"
+
 enum keywords;
+struct logger;
 
 struct config_setup *config_setup_singleton(void);
 void free_config_setup(void);
@@ -29,5 +32,6 @@ void config_setup_option(enum keywords kw, uintmax_t option);
 const char *config_setup_ipsecdir(void);
 const char *config_setup_secretsfile(void);
 const char *config_setup_nssdir(void);
+lset_t config_setup_debugging(struct logger *logger);
 
 #endif

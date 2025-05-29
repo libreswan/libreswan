@@ -152,7 +152,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
 
-  { "plutodebug",  kv_config, kt_lset, KBF_PLUTODEBUG, NULL, &debug_lmod_info, },
+  { "plutodebug",  kv_config, kt_string, KSF_PLUTODEBUG, NULL, NULL, },
 
   { "debug",       kv_conn, kt_string, KWS_DEBUG, NULL, NULL, },
 
