@@ -1344,7 +1344,7 @@ int main(int argc, char **argv)
 			config_ipsec_interface(cfg->setup[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			nhelpers = cfg->setup[KBF_NHELPERS].option;
-			new_debugging = cfg->setup[KW_DEBUG].option;
+			new_debugging = cfg->setup[KBF_PLUTODEBUG].option;
 
 			char *protostack = cfg->setup[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
