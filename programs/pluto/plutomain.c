@@ -732,7 +732,7 @@ extern int EF_PROTECT_FREE;
 
 int main(int argc, char **argv)
 {
-	diag_t d = NULL;
+	UNUSED diag_t d = NULL;
 	/*
 	 * DANGER!
 	 *
