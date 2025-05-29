@@ -5118,7 +5118,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 {
 	/* will inherit defaults */
-	lset_t debugging = lmod(LEMPTY, wm->debugging);
+	lset_t debugging = lmod(LEMPTY, wm->whack_debugging);
 
 	/*
 	 * Allocate the configuration - only allocated on root

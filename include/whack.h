@@ -227,11 +227,14 @@ struct whack_message {
 	/* name is used in connection and initiate */
 	const char *name;
 
-	/* for debugging! */
-	lmod_t debugging;
 	lset_t conn_debug;
 
+	/* debugging updates to apply */
+
+	lmod_t whack_debugging;
+
 	/* what to impair and how; a list like structure */
+
 	struct {
 		unsigned len;
 		struct whack_impair *list;

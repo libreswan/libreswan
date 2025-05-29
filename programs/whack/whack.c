@@ -2103,7 +2103,7 @@ int main(int argc, char **argv)
 			 * force all debug/impair options to values
 			 * defined by whack.
 			 */
-			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
+			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_MASK);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all (obsolete) */
@@ -2121,15 +2121,15 @@ int main(int argc, char **argv)
 			 * force all debug/impair options to values
 			 * defined by whack.
 			 */
-			msg.debugging = lmod_clr(msg.debugging, DBG_MASK);
-			msg.debugging = lmod_set(msg.debugging, DBG_ALL);
+			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_MASK);
+			msg.whack_debugging = lmod_set(msg.whack_debugging, DBG_ALL);
 			continue;
 
 		case DBGOPT_DEBUG:	/* --debug */
-			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.debugging);
+			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack_debugging);
 			continue;
 		case DBGOPT_NO_DEBUG:	/* --no-debug */
-			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.debugging);
+			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.whack_debugging);
 			continue;
 
 		case DBGOPT_IMPAIR:	/* --impair */
@@ -2303,7 +2303,7 @@ int main(int argc, char **argv)
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
 	      msg.whack_key ||
-	      !lmod_empty(msg.debugging) ||
+	      !lmod_empty(msg.whack_debugging) ||
 	      msg.impairments.len > 0)) {
 		diagw("no action specified; try --help for hints");
 	}
