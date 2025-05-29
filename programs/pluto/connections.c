@@ -5144,7 +5144,7 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 						logger, HERE);
 
 	if (wm->debug != NULL && debug.set == LEMPTY) {
-		ldbg(c->logger, "warning: debug=%s invalid, ignored", wm->debug);
+		llog(RC_LOG, c->logger, "warning: debug=%s invalid, ignored", wm->debug);
 	}
 
 	diag_t d = extract_connection(wm, c, root_config);
