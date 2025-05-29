@@ -4630,7 +4630,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		config->child_sa.metric = wm->metric;
-		config->child_sa.mtu = wm->mtu;
+
+		config->child_sa.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
+							      "", "mtu", wm->mtu,
+							      &binary_byte_scales,
+							      (struct range) {
+								      .value_when_unset = 0,
+							      },
+							      wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
+
 		config->nat_keepalive = extract_yn("", "nat-keepalive", wm->nat_keepalive,
 						   /*value_when_unset*/YN_YES,
 						   wm, c->logger);

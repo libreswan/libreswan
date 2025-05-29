@@ -366,7 +366,7 @@ struct whack_message {
 	const char *sendca;
 
 	/* Force the MTU for this connection */
-	int mtu;
+	const char *mtu;
 
 	uintmax_t priority;
 	uintmax_t tfc;

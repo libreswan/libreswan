@@ -236,8 +236,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.rekey = conn->values[KWYN_REKEY].option;
 	msg.reauth = conn->values[KWYN_REAUTH].option;
 
-	if (conn->values[KNCF_MTU].set)
-		msg.mtu = conn->values[KNCF_MTU].option;
+	msg.mtu = conn->values[KWS_MTU].string;
 	if (conn->values[KNCF_PRIORITY].set)
 		msg.priority = conn->values[KNCF_PRIORITY].option;
 	if (conn->values[KNCF_TFC].set)

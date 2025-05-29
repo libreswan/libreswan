@@ -2058,7 +2058,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_MTU:	/* --mtu */
-			msg.mtu = optarg_uintmax(logger);
+			msg.mtu = optarg;
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
