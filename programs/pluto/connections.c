@@ -1955,7 +1955,15 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->eap = autheap;
 
-	if (autheap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
+	enum keyword_auth auth = extract_enum_name(leftright, "auth", src->auth,
+						   /*value_when_unset*/AUTH_UNSET,
+						   &keyword_auth_names,
+						   wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (autheap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
 		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
 	}
 
@@ -1963,26 +1971,14 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Determine the authentication from auth= and authby=.
 	 */
 
-	if (is_never_negotiate_wm(wm) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
+	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
 		/* AUTH_UNSET is updated below */
 		enum_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&keyword_auth_names, src->auth, &ab));
-	}
-
-	/*
-	 * Note: this checks the whack message (WM), and not the
-	 * connection (C) being construct - it could be done before
-	 * extract_end(), but do it here.
-	 *
-	 * XXX: why not allow this?
-	 */
-	if ((src->auth == AUTH_UNSET) != (other_src->auth == AUTH_UNSET)) {
-		return diag("leftauth= and rightauth= must both be set or both be unset");
+			    leftright, str_enum_short(&keyword_auth_names, auth, &ab));
 	}
 
 	struct authby authby = whack_authby;
-	enum keyword_auth auth = src->auth;
 
 	/*
 	 * IKEv1 only allows symetric authentication using authby=
@@ -5031,6 +5027,19 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 	}
+
+	/*
+	 * Note: this checks the whack message (WM), and not the
+	 * connection (C) being construct - it could be done before
+	 * extract_end(), but do it here.
+	 *
+	 * XXX: why not allow this?
+	 */
+	if ((config->end[LEFT_END].host.auth == AUTH_UNSET) !=
+	    (config->end[RIGHT_END].host.auth == AUTH_UNSET)) {
+		    return diag("leftauth= and rightauth= must both be set or both be unset");
+	}
+
 
 	/*
 	 * Now cross check the configuration looking for IP version

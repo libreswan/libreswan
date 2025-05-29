@@ -236,11 +236,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwyn("compress", KWYN_COMPRESS);
 		cwyn("pfs", KWYN_PFS);
 		cwyn("ikepad", KNCF_IKEPAD);
-
-		if (conn->end[LEFT_END].values[KNCF_AUTH].option == k_unset ||
-		    conn->end[RIGHT_END].values[KNCF_AUTH].option == k_unset) {
-			ckws("authby", AUTHBY);
-		}
+		ckws("auth", AUTH);
 
 		if (encap_proto != ENCAP_PROTO_UNSET) {
 			/* story is lower-case */

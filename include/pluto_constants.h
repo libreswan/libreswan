@@ -120,6 +120,8 @@ enum keyword_auth {
 	AUTH_EAPONLY,
 };
 
+extern const struct enum_names keyword_auth_names;
+
 /* OCSP related constants - defaults picked from NSS defaults */
 #define OCSP_DEFAULT_CACHE_SIZE 1000
 #define OCSP_DEFAULT_CACHE_MIN_AGE 3600

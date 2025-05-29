@@ -312,6 +312,7 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_STRING(&end->sendcert) &&
 		PICKLE_STRING(&end->protoport) &&
 		PICKLE_STRING(&end->autheap) &&
+		PICKLE_STRING(&end->auth) &&
 		true);
 }
 

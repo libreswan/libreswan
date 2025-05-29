@@ -151,7 +151,7 @@ struct whack_end {
 	const char *pubkey;
 	enum ipseckey_algorithm_type pubkey_alg;
 
-	enum keyword_auth auth;
+	const char *auth;
 
 	const char *ikeport;			/* host */
 	const char *host;

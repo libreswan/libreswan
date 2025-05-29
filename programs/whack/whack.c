@@ -481,7 +481,7 @@ enum opt {
 	END_SOURCEIP,
         END_INTERFACE_IP,
 	END_VTI,
-	END_AUTHBY,
+	END_AUTH,
 	END_AUTHEAP,
 	END_CAT,
 	END_UPDOWN,
@@ -787,7 +787,8 @@ const struct option optarg_options[] = {
 	{ "srcip\0",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
 	{ "interface-ip\0", required_argument, NULL, END_INTERFACE_IP },	/* match config */
 	{ "interfaceip\0", required_argument, NULL, END_INTERFACE_IP },	/* alias / backward compat */
-	{ "authby\0",  required_argument, NULL, END_AUTHBY },
+	{ OPT("auth", "{psk,null,rsasig,rsa,ecdsa,eaponly}"),  required_argument, NULL, END_AUTH },
+	{ REPLACE_OPT("authby", "auth", "5.3"),  required_argument, NULL, END_AUTH },
 	{ "autheap\0",  required_argument, NULL, END_AUTHEAP },
 	{ "updown\0", required_argument, NULL, END_UPDOWN },
 
@@ -1517,19 +1518,8 @@ int main(int argc, char **argv)
 		 * --authby secret | rsasig | rsa | ecdsa | null | eaponly
 		 *  Note: auth-never cannot be asymmetrical
 		 */
-		case END_AUTHBY:
-			if (streq(optarg, "psk"))
-				end->auth = AUTH_PSK;
-			else if (streq(optarg, "null"))
-				end->auth = AUTH_NULL;
-			else if (streq(optarg, "rsasig") || streq(optarg, "rsa"))
-				end->auth = AUTH_RSASIG;
-			else if (streq(optarg, "ecdsa"))
-				end->auth = AUTH_ECDSA;
-			else if (streq(optarg, "eaponly"))
-				end->auth = AUTH_EAPONLY;
-			else
-				diagw("authby option is not one of psk, ecdsa, rsasig, rsa, null or eaponly");
+		case END_AUTH:
+			end->auth = optarg;
 			continue;
 
 		case END_AUTHEAP:

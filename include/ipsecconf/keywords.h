@@ -194,7 +194,7 @@ enum keywords {
 	KWYN_CAT,	/* left/right */
 	KWS_SENDCERT,	/* left/right */
 	KWS_IKEPORT,		/* left/right: IKE Port that must be used */
-	KNCF_AUTH,	/* left/right */
+	KWS_AUTH,	/* left/right */
 	KWS_AUTHEAP,	/* left/right */
 
 	KWYN_PFS_REKEY_WORKAROUND,

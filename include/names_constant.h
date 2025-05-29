@@ -13,7 +13,6 @@ extern enum_names xfrm_policy_names;	/* #ifdef KERNEL_XFRM */
 #endif
 extern enum_names sd_action_names;
 extern enum_names stf_status_names;
-extern enum_names keyword_auth_names;
 
 extern const enum_names debug_names;
 extern const enum_names debug_help;

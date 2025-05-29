@@ -81,19 +81,6 @@ static const struct sparse_names kw_seccomp_names = {
 };
 #endif
 
-static const struct sparse_names kw_auth_names = {
-	.list = {
-		SPARSE("never",     AUTH_NEVER),
-		SPARSE("secret",    AUTH_PSK),
-		SPARSE("rsasig",    AUTH_RSASIG),
-		SPARSE("rsa",       AUTH_RSASIG), /* alias */
-		SPARSE("ecdsa",     AUTH_ECDSA),
-		SPARSE("null",      AUTH_NULL),
-		SPARSE("eaponly",   AUTH_EAPONLY),
-		SPARSE_NULL
-	},
-};
-
 /*
  * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns, literal }
  */
@@ -243,7 +230,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_string,  KWS_ADDRESSPOOL, NULL, NULL, },
-  { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
+  { "auth",  kv_conn | kv_leftright, kt_string,  KWS_AUTH, NULL, NULL, },
 #if defined(USE_CAT)
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names, NULL, },
 #endif
