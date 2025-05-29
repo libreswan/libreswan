@@ -23,16 +23,24 @@ run()
     "$@"
 }
 
-title mount /source and /testing
 
-# /source and /testing are only pinned down during transmogrify.
+:
+: mount /source and /testing and /pool
+:
+
+# /source and /testing are only pinned down during transmogrify; /pool
+# is where the packages live.
+
+sed -e '/9p/d' /etc/fstab > /etc/fstab.tmp
 
 for mount in source testing pool ; do
-    cat <<EOF >>/etc/fstab
+    mkdir -p /${mount}
+    cat <<EOF >> /etc/fstab.tmp
 ${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
-    mkdir -p /${mount}
 done
+
+mv /etc/fstab.tmp /etc/fstab
 
 
 :
