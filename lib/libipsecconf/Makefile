@@ -20,6 +20,7 @@ LIB=lib${LIBRARY}.a
 SRCS=confread.c confwrite.c starterwhack.c
 SRCS+=parser.tab.c lex.yy.c keywords.c
 SRCS+=interfaces.c
+SRCS+=config_setup.c
 
 OBJS=${SRCS:.c=.o}
 

@@ -308,7 +308,7 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	/* output config setup section */
 	if (setup) {
 		fprintf(out, "config setup\n");
-		confwrite_value(out, "", kv_config, cfg->setup);
+		confwrite_value(out, "", kv_config, cfg->setup->values);
 		fprintf(out, "\n");
 	}
 

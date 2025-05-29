@@ -68,7 +68,6 @@ OBJS += terminate_reason_names.o
 OBJS += constants.o \
 	id.o \
 	lex.o \
-	lswconf.o \
 	sameaddr.o \
 	ttodata.o \
 	ttosaid.o \

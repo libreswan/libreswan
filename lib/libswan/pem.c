@@ -48,7 +48,6 @@
 #include <prmem.h>
 #include <prerror.h>
 
-#include "lswconf.h"
 #include "lswlog.h"
 
 /*

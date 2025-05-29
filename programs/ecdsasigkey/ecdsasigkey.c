@@ -56,8 +56,9 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "lswtool.h"
-#include "lswconf.h"
 #include "lswnss.h"
+#include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
+#include "config_setup.h"
 
 #ifndef DEVICE
 # define DEVICE  "/dev/random"
@@ -172,7 +173,7 @@ int main(int argc, char *argv[])
 			exit(0);
 			continue;
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
-			lsw_conf_nssdir(optarg, logger);
+			config_setup_string(KSF_NSSDIR, optarg);
 			continue;
 		case OPT_PASSWORD:       /* token authentication password */
 			nss.password = optarg;
@@ -213,8 +214,7 @@ int main(int argc, char *argv[])
 	 * Don't fetch the config options until after they have been
 	 * processed, and really are "constant".
 	 */
-	const struct lsw_conf_options *oco = lsw_init_options();
-	init_nss(oco->nssdir, nss, logger);
+	init_nss(config_setup_nssdir(), nss, logger);
 
 	ecdsasigkey(curve, seedbits, logger);
 	exit(0);

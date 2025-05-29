@@ -20,6 +20,7 @@ PROGRAM = _vendoridcheck
 OBJS += vendoridcheck.o
 
 OBJS += $(LIBRESWANLIB)
+OBJS += $(IPSECCONFLIB)
 OBJS += $(LSWTOOLLIBS)
 
 # BROKEN

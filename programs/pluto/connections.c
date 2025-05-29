@@ -48,7 +48,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswconf.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"

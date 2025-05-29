@@ -38,7 +38,6 @@
 #include <sys/types.h>
 
 #include "sysdep.h"
-#include "lswconf.h"
 #include "lswnss.h"
 #include "constants.h"
 #include "ttodata.h"

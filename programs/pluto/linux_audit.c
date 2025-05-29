@@ -38,7 +38,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lswconf.h"
 #include "fips_mode.h"
 
 #include "defs.h"

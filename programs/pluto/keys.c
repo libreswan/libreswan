@@ -60,7 +60,7 @@
 #include <secerr.h>
 #include <secport.h>
 #include <time.h>
-#include "lswconf.h"
+#include "config_setup.h"
 #include "lswnss.h"
 #include "secrets.h"
 #include "ike_alg_hash.h"
@@ -71,8 +71,7 @@ static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets(struct logger *logger)
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
-	lsw_load_preshared_secrets(&pluto_secrets, oco->secretsfile, logger);
+	lsw_load_preshared_secrets(&pluto_secrets, config_setup_secretsfile(), logger);
 }
 
 void free_preshared_secrets(struct logger *logger)
@@ -143,10 +142,8 @@ static int print_secrets(struct secret *secret,
 
 void list_psks(struct show *s)
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
 	show_blank(s);
-	show(s, "List of Pre-shared secrets (from %s)",
-	     oco->secretsfile);
+	show(s, "List of Pre-shared secrets (from %s)", config_setup_secretsfile());
 	show_blank(s);
 	struct secret_context context = {
 		.s = s,

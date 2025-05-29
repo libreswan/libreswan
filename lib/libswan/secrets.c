@@ -55,7 +55,6 @@
 #include "certs.h"
 #include "lex.h"
 
-#include "lswconf.h"
 #include "lswnss.h"
 #include "ip_info.h"
 #include "nss_cert_load.h"

@@ -43,7 +43,6 @@
 #include "deltatime.h"
 #include "timescale.h"
 #include "lswversion.h"
-#include "lswconf.h"
 #include "fips_mode.h"
 #include "lswnss.h"
 #include "defs.h"
@@ -56,6 +55,7 @@
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "hourly.h"
+#include "config_setup.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendorid.h"
@@ -147,6 +147,7 @@ void free_pluto_main(void)
 	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
+	free_config_setup();
 }
 
 /* string naming compile-time options that have interop implications */
@@ -338,7 +339,7 @@ static void replace_when_cfg_setup(char **target, const struct starter_config *c
 				   enum keywords field)
 {
 	/* Do nothing if value is unset. */
-	const char *value = cfg->setup[field].string;
+	const char *value = cfg->setup->values[field].string;
 	if (value == NULL || *value == '\0')
 		return;
 	replace_value(target, value);
@@ -359,7 +360,7 @@ static bool extract_config_deltatime(deltatime_t *target,
 				     const struct starter_config *cfg,
 				     enum keywords field)
 {
-	return update_deltatime(target, cfg->setup[field].deltatime);
+	return update_deltatime(target, cfg->setup->values[field].deltatime);
 }
 
 static bool update_string(char **target, const char *value)
@@ -379,7 +380,7 @@ static bool extract_config_string(char **target,
 				  const struct starter_config *cfg,
 				  enum keywords field)
 {
-	return update_string(target, cfg->setup[field].string);
+	return update_string(target, cfg->setup->values[field].string);
 }
 
 static bool update_yn(bool *target, enum yn_options yn)
@@ -401,7 +402,7 @@ static bool extract_config_yn(bool *target,
 			      const struct starter_config *cfg,
 			      enum keywords field)
 {
-	return update_yn(target, cfg->setup[field].option);
+	return update_yn(target, cfg->setup->values[field].option);
 }
 
 #if 0
@@ -410,8 +411,8 @@ static bool extract_config_bool(bool *target,
 				enum keywords field)
 {
 	/* Do nothing if value is unset. */
-	if (cfg->setup[field].set) {
-		(*target) = cfg->setup[field].option;
+	if (cfg->setup->values[field].set) {
+		(*target) = cfg->setup->values[field].option;
 		return true;
 	}
 	return false;
@@ -1124,15 +1125,15 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
-			lsw_conf_secretsfile(optarg);
+			config_setup_string(KSF_SECRETSFILE, optarg);
 			continue;
 
 		case OPT_IPSECDIR:	/* --ipsecdir <ipsec-dir> */
-			lsw_conf_confddir(optarg, logger);
+			config_setup_string(KSF_IPSECDIR, optarg);
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
-			lsw_conf_nssdir(optarg, logger);
+			config_setup_string(KSF_NSSDIR, optarg);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
@@ -1202,8 +1203,8 @@ int main(int argc, char **argv)
 			extract_config_yn(&log_ip, cfg, KYN_LOGIP);
 			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
 			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
-			pluto_ddos_mode = cfg->setup[KBF_DDOS_MODE].option;
-			pluto_ikev1_pol = cfg->setup[KBF_GLOBAL_IKEv1].option;
+			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
+			pluto_ikev1_pol = cfg->setup->values[KBF_GLOBAL_IKEv1].option;
 #ifndef USE_IKEv1
 			if (pluto_ikev1_pol != GLOBAL_IKEv1_DROP) {
 				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
@@ -1211,15 +1212,15 @@ int main(int argc, char **argv)
 			}
 #endif
 #ifdef USE_SECCOMP
-			pluto_seccomp_mode = cfg->setup[KBF_SECCOMP].option;
+			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
 #endif
-			if (cfg->setup[KBF_FORCEBUSY].option) {
+			if (cfg->setup->values[KBF_FORCEBUSY].option) {
 				/* force-busy is obsoleted, translate to ddos-mode= */
-				pluto_ddos_mode = cfg->setup[KBF_DDOS_MODE].option = DDOS_FORCE_BUSY;
+				pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option = DDOS_FORCE_BUSY;
 			}
 			/* ddos-ike-threshold and max-halfopen-ike */
-			pluto_ddos_threshold = cfg->setup[KBF_DDOS_IKE_THRESHOLD].option;
-			pluto_max_halfopen = cfg->setup[KBF_MAX_HALFOPEN_IKE].option;
+			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
+			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
 
 			extract_config_yn(&x509_crl.strict, cfg, KYN_CRL_STRICT);
 
@@ -1230,10 +1231,10 @@ int main(int argc, char **argv)
 			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
 				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
 			}
-			if (cfg->setup[KBF_OCSP_METHOD].set) {
-				x509_ocsp.method = cfg->setup[KBF_OCSP_METHOD].option;
+			if (cfg->setup->values[KBF_OCSP_METHOD].set) {
+				x509_ocsp.method = cfg->setup->values[KBF_OCSP_METHOD].option;
 			}
-			x509_ocsp.cache_size = cfg->setup[KBF_OCSP_CACHE_SIZE].option;
+			x509_ocsp.cache_size = cfg->setup->values[KBF_OCSP_CACHE_SIZE].option;
 			if (extract_config_deltatime(&x509_ocsp.cache_min_age, cfg, KBF_OCSP_CACHE_MIN_AGE_SECONDS)) {
 				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
 			}
@@ -1244,7 +1245,7 @@ int main(int argc, char **argv)
 			replace_when_cfg_setup(&x509_ocsp.uri, cfg, KSF_OCSP_URI);
 			replace_when_cfg_setup(&x509_ocsp.trust_name, cfg, KSF_OCSP_TRUSTNAME);
 
-			char *tmp_global_redirect = cfg->setup[KSF_GLOBAL_REDIRECT].string;
+			char *tmp_global_redirect = cfg->setup->values[KSF_GLOBAL_REDIRECT].string;
 			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
 				/* NULL means it is not specified so default is no */
 				global_redirect = GLOBAL_REDIRECT_NO;
@@ -1267,7 +1268,7 @@ int main(int argc, char **argv)
 			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
 
 			/* ike-socket-bufsize= */
-			pluto_sock_bufsize = cfg->setup[KBF_IKEBUF].option;
+			pluto_sock_bufsize = cfg->setup->values[KBF_IKEBUF].option;
 			extract_config_yn(&pluto_ike_socket_errqueue, cfg, KYN_IKE_SOCKET_ERRQUEUE);
 
 			/* listen-tcp= / listen-udp= */
@@ -1277,31 +1278,15 @@ int main(int argc, char **argv)
 #ifdef USE_NFLOG
 			/* nflog-all= */
 			/* only causes nflog number to show in ipsec status */
-			pluto_nflog_group = cfg->setup[KBF_NFLOG_ALL].option;
+			pluto_nflog_group = cfg->setup->values[KBF_NFLOG_ALL].option;
 #endif
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			/* no config option: rundir */
-			/* secretsfile= */
-			if (cfg->setup[KSF_SECRETSFILE].string &&
-			    *cfg->setup[KSF_SECRETSFILE].string) {
-				lsw_conf_secretsfile(cfg->setup[KSF_SECRETSFILE].string);
-			}
-			if (cfg->setup[KSF_IPSECDIR].string != NULL &&
-			    *cfg->setup[KSF_IPSECDIR].string != 0) {
-				/* ipsecdir= */
-				lsw_conf_confddir(cfg->setup[KSF_IPSECDIR].string, logger);
-			}
 
-			if (cfg->setup[KSF_NSSDIR].string != NULL &&
-			    *cfg->setup[KSF_NSSDIR].string != 0) {
-				/* nssdir= */
-				lsw_conf_nssdir(cfg->setup[KSF_NSSDIR].string, logger);
-			}
-
-			if (cfg->setup[KSF_CURLIFACE].string) {
-				replace_value(&x509_crl.curl_iface, cfg->setup[KSF_CURLIFACE].string);
+			if (cfg->setup->values[KSF_CURLIFACE].string) {
+				replace_value(&x509_crl.curl_iface, cfg->setup->values[KSF_CURLIFACE].string);
 			}
 
 			if (extract_config_deltatime(&x509_crl.timeout, cfg, KBF_CRL_TIMEOUT_SECONDS)) {
@@ -1309,24 +1294,24 @@ int main(int argc, char **argv)
 				/* checked below */
 			}
 
-			if (cfg->setup[KSF_DUMPDIR].string) {
+			if (cfg->setup->values[KSF_DUMPDIR].string) {
 				pfree(coredir);
 				/* dumpdir= */
-				coredir = clone_str(cfg->setup[KSF_DUMPDIR].string,
+				coredir = clone_str(cfg->setup->values[KSF_DUMPDIR].string,
 						    "coredir via --config");
 			}
 			/* vendorid= */
-			if (cfg->setup[KSF_MYVENDORID].string) {
+			if (cfg->setup->values[KSF_MYVENDORID].string) {
 				pfree(pluto_vendorid);
-				pluto_vendorid = clone_str(cfg->setup[KSF_MYVENDORID].string,
+				pluto_vendorid = clone_str(cfg->setup->values[KSF_MYVENDORID].string,
 							   "pluto_vendorid via --config");
 			}
 
-			if (cfg->setup[KSF_STATSBINARY].string != NULL) {
-				if (access(cfg->setup[KSF_STATSBINARY].string, X_OK) == 0) {
+			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
+				if (access(cfg->setup->values[KSF_STATSBINARY].string, X_OK) == 0) {
 					pfreeany(pluto_stats_binary);
 					/* statsbin= */
-					pluto_stats_binary = clone_str(cfg->setup[KSF_STATSBINARY].string, "statsbin via --config");
+					pluto_stats_binary = clone_str(cfg->setup->values[KSF_STATSBINARY].string, "statsbin via --config");
 					llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
 				} else {
 					llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
@@ -1334,19 +1319,19 @@ int main(int argc, char **argv)
 				}
 			}
 
-			pluto_nss_seedbits = cfg->setup[KBF_SEEDBITS].option;
+			pluto_nss_seedbits = cfg->setup->values[KBF_SEEDBITS].option;
 			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
-			set_global_redirect_dests(cfg->setup[KSF_GLOBAL_REDIRECT_TO].string);
+			set_global_redirect_dests(cfg->setup->values[KSF_GLOBAL_REDIRECT_TO].string);
 
-			config_ipsec_interface(cfg->setup[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
+			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
-			nhelpers = cfg->setup[KBF_NHELPERS].option;
-			new_debugging = cfg->setup[KW_DEBUG].option;
+			nhelpers = cfg->setup->values[KBF_NHELPERS].option;
+			new_debugging = cfg->setup->values[KW_DEBUG].option;
 
-			char *protostack = cfg->setup[KSF_PROTOSTACK].string;
+			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
 
 			if (protostack != NULL && protostack[0] != '\0') {
@@ -1613,9 +1598,9 @@ int main(int argc, char **argv)
 		     coredir, e, strerror(e));
 	}
 
-	const struct lsw_conf_options *oco = lsw_init_options();
-	if (oco->secretsfile && *oco->secretsfile) {
-		llog(RC_LOG, logger, "secrets file: %s", oco->secretsfile);
+	const char *secretsfile = config_setup_secretsfile();
+	if (secretsfile != NULL && strlen(secretsfile) > 0) {
+		llog(RC_LOG, logger, "secrets file: %s", secretsfile);
 	}
 
 	init_enum_names();
@@ -1630,7 +1615,8 @@ int main(int argc, char **argv)
 	connection_db_init(logger);
 	spd_db_init(logger);
 
-	pluto_init_nss(oco->nssdir, logger);
+	pluto_init_nss(config_setup_nssdir(), logger);
+
 	if (is_fips_mode()) {
 		/*
 		 * clear out --debug-crypt if set
@@ -1878,18 +1864,17 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
 	show(s, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s",
 	     IPSEC_SYSCONFDIR,
 		conffile, /* oco contains only a copy of hardcoded default */
-		oco->secretsfile,
-		oco->confddir);
+	     config_setup_secretsfile(),
+	     config_setup_ipsecdir());
 
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
-		oco->nssdir,
+	     config_setup_nssdir(),
 		coredir,
 		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 

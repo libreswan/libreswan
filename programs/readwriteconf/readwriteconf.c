@@ -24,8 +24,8 @@
 #include "err.h"
 #include "lswtool.h"
 #include "lswalloc.h"
-#include "lswconf.h"
 #include "lswlog.h"
+#include "config_setup.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "optarg.h"
@@ -131,6 +131,7 @@ int main(int argc, char *argv[])
 
 	confwrite(cfg, stdout, setup, name, verbose);
 	confread_free(cfg);
+	free_config_setup();
 	pfreeany(configfile);
 	exit(0);
 }

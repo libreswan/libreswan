@@ -89,9 +89,13 @@ struct starter_conn {
 
 };
 
+struct config_setup {
+	keyword_values values;
+};
+
 struct starter_config {
 	/* config setup */
-	keyword_values setup;
+	struct config_setup *setup;
 
 	/* conn %default */
 	struct starter_conn conn_default;
