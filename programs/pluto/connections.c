@@ -3743,6 +3743,27 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->tfc,
+					(struct range) {
+						.value_when_unset = 0,
+						.limit.max = UINT32_MAX,
+					},
+					wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (tfc > 0) {
+		if (encap_mode == ENCAP_MODE_TRANSPORT) {
+			return diag("connection with type=transport cannot specify tfc=");
+		}
+		if (encap_proto == ENCAP_PROTO_AH) {
+			return diag("connection with encap_proto=ah cannot specify tfc=");
+		}
+		config->child_sa.tfcpad = tfc;
+	}
+
+
 	/* this warns when never_negotiate() */
 	bool iptfs = extract_yn("", "iptfs", wm->iptfs,
 				/*value_when_unset*/YN_NO,
@@ -3757,8 +3778,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("type=%s must be transport",
 				    str_sparse(&type_option_names, wm->type, &sb));
 		}
-		if (wm->tfc > 0) {
-			return diag("IPTFS is not compatible with tfc=%ju", wm->tfc);
+		if (tfc > 0) {
+			return diag("IPTFS is not compatible with tfc=%ju", tfc);
 		}
 		if (compress) {
 			return diag("IPTFS is not compatible with compress=yes");
@@ -4801,20 +4822,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 						    wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
-	}
-
-	if (wm->tfc != 0) {
-		if (encap_mode == ENCAP_MODE_TRANSPORT) {
-			return diag("connection with type=transport cannot specify tfc=");
-		}
-		if (encap_proto == ENCAP_PROTO_AH) {
-			return diag("connection with encap_proto=ah cannot specify tfc=");
-		}
-		if (wm->tfc > UINT32_MAX) {
-			return diag("tfc=%ju exceeds upper bound of %"PRIu32,
-				    wm->tfc, UINT32_MAX);
-		}
-		config->child_sa.tfcpad = wm->tfc;
 	}
 
 	config->child.send.esp_tfc_padding_not_supported =

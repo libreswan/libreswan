@@ -368,7 +368,7 @@ struct whack_message {
 	/* Force the MTU for this connection */
 	const char *mtu;
 	const char *priority;
-	uintmax_t tfc;
+	const char *tfc;
 	enum yn_options send_esp_tfc_padding_not_supported;
 
 	enum yn_options iptfs;

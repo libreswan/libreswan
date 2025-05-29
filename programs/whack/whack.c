@@ -2066,7 +2066,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TFC:	/* --tfc */
-			msg.tfc = optarg_uintmax(logger);
+			msg.tfc = optarg;
 			continue;
 
 		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */
