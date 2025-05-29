@@ -113,7 +113,6 @@ static bool load_setup(struct starter_config *cfg,
 			cfg->setup->values[f].set = true;
 			break;
 
-		case kt_lset:
 		case kt_sparse_name:
 		case kt_unsigned:
 			/* all treated as a number for now */
@@ -279,7 +278,6 @@ static bool translate_field(struct starter_conn *conn,
 		values[field].set = assigned_value;
 		break;
 
-	case kt_lset:
 	case kt_sparse_name:
 	case kt_unsigned:
 		/* all treated as a number for now */

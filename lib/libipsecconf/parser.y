@@ -581,34 +581,6 @@ static bool parse_kt_deltatime(struct keyword *key, shunk_t value,
 	return true;
 }
 
-static bool parse_kt_lset(struct keyword *key, shunk_t value,
-			  uintmax_t *number, struct parser *parser)
-{
-	lmod_t result = {0};
-
-	/*
-	 * Use lmod_args() since it both knows how to parse a comma
-	 * separated list and can handle no-XXX (ex: all,no-xauth).
-	 * The final set of enabled bits is returned in .set.
-	 */
-	if (!ttolmod(value, &result, key->keydef->info, true/*enable*/)) {
-		/*
-		 * If the lookup failed, complain.
-		 *
-		 * XXX: the error diagnostic is a little vague -
-		 * should lmod_arg() instead return the error?
-		 */
-		parser_key_value_warning(parser, key, value,
-					 "invalid, keyword ignored");
-		return false;
-	}
-
-	/* no truncation */
-	PEXPECT(parser->logger, sizeof(*number) == sizeof(result.set));
-	(*number) = result.set;
-	return true;
-}
-
 static bool parse_kt_sparse_name(struct keyword *key, shunk_t value,
 				 uintmax_t *number, struct parser *parser)
 {
@@ -797,9 +769,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	bool ok = true;
 
 	switch (kw->keydef->type) {
-	case kt_lset:
-		ok = parse_kt_lset(kw, value, &number, parser);
-		break;
 	case kt_sparse_name:
 		ok = parse_kt_sparse_name(kw, value, &number, parser);
 		break;

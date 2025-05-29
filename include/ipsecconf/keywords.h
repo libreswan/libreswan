@@ -328,7 +328,6 @@ enum keyword_type {
 	kt_appendstring,        /* value is some string, append duplicates */
 	kt_appendlist,          /* value is some list, append duplicates */
 	kt_sparse_name,         /* value is from .sparse_name table */
-	kt_lset,                /* a set of values from .sparse_name */
 	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */

@@ -127,21 +127,6 @@ static void confwrite_value(FILE *out,
 			}
 			break;
 
-		case kt_lset:
-			if (values[k->field].set) {
-				unsigned long val = values[k->field].option;
-
-				if (val != 0) {
-					JAMBUF(buf) {
-						jam_lset_short(buf, k->info->names, ",", val);
-						fprintf(out, "\t%s%s=\""PRI_SHUNK"\"\n",
-							side, k->keyname,
-							pri_shunk(jambuf_as_shunk(buf)));
-					}
-				}
-			}
-			break;
-
 		case kt_obsolete:
 			break;
 
