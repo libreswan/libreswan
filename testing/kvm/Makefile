@@ -250,11 +250,6 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 #
 #      the root names without any additions
 #
-#  KVM_*_DOMAIN_NAME KVM_*_DOMAIN_NAME
-#
-#      the host names with domain specific prefixes added; this is
-#      what is fed to KVM but note ...
-#
 #  KVM_*_DOMAIN KVM_*_DOMAINS
 #
 #      the path/domain-name that is used as the make target
@@ -273,30 +268,27 @@ KVM_OS_TEST_HOST_NAMES = e w rise set
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_PREFIX)
 KVM_LOCALDIR_PREFIX = $(KVM_LOCALDIR)/$(KVM_PREFIX)
 
+KVM_BASE_PREFIX    = $(KVM_POOLDIR_PREFIX)
+KVM_UPGRADE_PREFIX = $(KVM_POOLDIR_PREFIX)
+KVM_BUILD_PREFIX   = $(KVM_LOCALDIR_PREFIX)
+
 define domains
 
-KVM_$($(strip $1))_BASE_HOST_NAME    = $(strip $1)-base
-KVM_$($(strip $1))_UPGRADE_HOST_NAME = $(strip $1)-upgrade
-KVM_$($(strip $1))_BUILD_HOST_NAME   = $(strip $1)
-KVM_$($(strip $1))_HOST_NAME         = $(strip $1)
+KVM_$($(strip $1))_BASE_DOMAIN    = $$(addprefix $$(KVM_BASE_PREFIX),    $$(addsuffix -base, $1))
+KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_UPGRADE_PREFIX), $$(addsuffix -upgrade, $1))
+KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_BUILD_PREFIX),   $$(addsuffix , $1))
 
-KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_BASE_HOST_NAME))
-KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_UPGRADE_HOST_NAME))
-KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_BUILD_HOST_NAME))
-KVM_$($(strip $1))_DOMAIN_NAME         = $$(addprefix $$(KVM_PREFIX), $$(KVM_$($(strip $1))_HOST_NAME))
+KVM_BASE_DOMAINS     += $$(KVM_$($(strip $1))_BASE_DOMAIN)
+KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
+KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
 
-KVM_$($(strip $1))_BASE_DOMAIN    = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BASE_DOMAIN_NAME))
-KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME))
-KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_LOCALDIR)/, $$(KVM_$($(strip $1))_BUILD_DOMAIN_NAME))
-KVM_$($(strip $1))_DOMAIN         = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_DOMAIN_NAME))
-
+# don't override KVM_LINUX_TEST_HOST_NAMES above
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(KVM_$($(strip $1))_TEST_HOST_NAMES)))
 
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
-KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_TEST_DOMAINS)
 
 endef
@@ -304,30 +296,8 @@ endef
 $(foreach platform, $(KVM_PLATFORMS), \
 	$(eval $(call domains, $(platform))))
 
-KVM_BASE_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_BASE_HOST_NAME))
-KVM_BASE_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_BASE_DOMAIN_NAME))
-KVM_BASE_DOMAINS      = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_BASE_DOMAIN))
-
-KVM_UPGRADE_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_UPGRADE_HOST_NAME))
-KVM_UPGRADE_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_UPGRADE_DOMAIN_NAME))
-KVM_UPGRADE_DOMAINS      = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_UPGRADE_DOMAIN))
-
-KVM_BUILD_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_BUILD_HOST_NAME))
-KVM_BUILD_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_BUILD_DOMAIN_NAME))
-KVM_BUILD_DOMAINS      = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_BUILD_DOMAIN))
-
 KVM_TEST_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_TEST_HOST_NAMES))
 KVM_TEST_DOMAINS      = $(foreach platform, $(KVM_PLATFORMS), $(KVM_$($(platform))_TEST_DOMAINS))
-
-KVM_HOST_NAMES += $(KVM_BASE_HOST_NAMES)
-KVM_HOST_NAMES += $(KVM_UPGRADE_HOST_NAMES)
-KVM_HOST_NAMES += $(KVM_BUILD_HOST_NAMES)
-KVM_HOST_NAMES += $(KVM_TEST_HOST_NAMES)
-
-KVM_DOMAIN_NAMES += $(KVM_BASE_DOMAIN_NAMES)
-KVM_DOMAIN_NAMES += $(KVM_UPGRADE_DOMAIN_NAMES)
-KVM_DOMAIN_NAMES += $(KVM_BUILD_DOMAIN_NAMES)
-KVM_DOMAIN_NAMES += $(notdir $(KVM_TEST_DOMAINS))
 
 KVM_DOMAINS += $(KVM_BASE_DOMAINS)
 KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
@@ -574,7 +544,7 @@ kvm-ready: kvm-keys-ok
 kvm-ready: $(KVM_HOST_OK)
 kvm-ready:
 	: shutdown all the build domains, kvmrunner shuts down the test domains
-	true $(foreach domain, $(KVM_BUILD_DOMAIN_NAMES), && $(KVMSH) --shutdown $(domain))
+	true $(foreach domain, $(KVM_BUILD_DOMAINS), && $(KVMSH) --shutdown $(notdir $(domain)))
 
 kvm-test kvm-check kvm-retest kvm-recheck: \
 kvm-%: kvm-ready kvm-web
@@ -813,18 +783,18 @@ kvm-purge: $(patsubst %, kvm-purge-%, $(KVM_OS))
 $(patsubst %, kvm-base-%, $(KVM_PLATFORMS)): \
 kvm-base-%: kvm-purge-%
 	: $@ build a-new
-	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
+	$(MAKE) $(KVM_$($*)_BASE_DOMAIN)
 
 $(patsubst %, kvm-purge-%, $(KVM_PLATFORMS)): \
 kvm-purge-%: kvm-downgrade-%
 	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
 	: delete generated dependencies missed by above
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
+	rm -f $(KVM_$($*)_BASE_DOMAIN).*
+	rm -f $(KVM_$($*)_BASE_DOMAIN)
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-base, $(KVM_PLATFORMS)): \
-$(KVM_POOLDIR_PREFIX)%-base: \
+$(KVM_BASE_DOMAINS): \
+$(KVM_BASE_PREFIX)%-base: \
 		| \
 		./kvm-install-base.py \
 		$(KVM_POOLDIR) \
@@ -920,7 +890,7 @@ $(KVM_ALPINE_ISO): | $(KVM_POOLDIR)
 KVM_ALPINE_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_ALPINE_ISO)
 
-$(KVM_ALPINE_DOMAIN)-base: $(KVM_ALPINE_ISO)
+$(KVM_ALPINE_BASE_DOMAIN): $(KVM_ALPINE_ISO)
 
 
 #
@@ -954,22 +924,22 @@ KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/$(notdir $(KVM_DEBIAN_ISO))
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_DEBIAN_ISO_URL) $(KVM_DEBIAN_ISO_HASH) $(KVM_DEBIAN_ISO_CKSUM)
 
-$(KVM_DEBIAN_DOMAIN)-base.iso: $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_DOMAIN)-base.iso: | debian/base.sh
+$(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
+$(KVM_DEBIAN_BASE_DOMAIN).iso: | debian/base.sh
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		debian/base.sh \
-		> $(KVM_DEBIAN_DOMAIN)-base.sh
+		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.sh=$(KVM_DEBIAN_DOMAIN)-base.sh
+		/base.sh=$(KVM_DEBIAN_BASE_DOMAIN).sh
 	mv $@.tmp $@
 
-$(KVM_DEBIAN_DOMAIN)-base: $(KVM_DEBIAN_DOMAIN)-base.iso
+$(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
-	--location=$(KVM_DEBIAN_DOMAIN)-base.iso \
+	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso \
 	--initrd-inject=debian/preseed.cfg \
 	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
@@ -1001,14 +971,14 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
-	--initrd-inject=$(KVM_FEDORA_DOMAIN)-base.ks \
-	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_DOMAIN)-base.ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
+	--initrd-inject=$(KVM_FEDORA_BASE_DOMAIN).ks \
+	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
 
-$(KVM_FEDORA_DOMAIN)-base: $(KVM_FEDORA_ISO)
-$(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_KICKSTART_FILE)
-$(KVM_FEDORA_DOMAIN)-base: | $(KVM_FEDORA_DOMAIN)-base.ks
+$(KVM_FEDORA_BASE_DOMAIN): $(KVM_FEDORA_ISO)
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_BASE_DOMAIN).ks
 
-$(KVM_FEDORA_DOMAIN)-base.ks: | $(KVM_FEDORA_KICKSTART_FILE)
+$(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
 		$(KVM_FEDORA_KICKSTART_FILE) \
 		> $@.tmp
@@ -1040,22 +1010,22 @@ $(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_FREEBSD_ISO_URL) $(KVM_FREEBSD_ISO_HASH) $(KVM_FREEBSD_ISO_CKSUM)
 
 KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
-       --cdrom=$(KVM_FREEBSD_DOMAIN)-base.iso
+       --cdrom=$(KVM_FREEBSD_BASE_DOMAIN).iso
 
-$(KVM_FREEBSD_DOMAIN)-base: $(KVM_FREEBSD_DOMAIN)-base.iso
+$(KVM_FREEBSD_BASE_DOMAIN): $(KVM_FREEBSD_BASE_DOMAIN).iso
 
-$(KVM_FREEBSD_DOMAIN)-base.iso: $(KVM_FREEBSD_ISO)
-$(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/loader.conf
-$(KVM_FREEBSD_DOMAIN)-base.iso: | freebsd/base.conf
+$(KVM_FREEBSD_BASE_DOMAIN).iso: $(KVM_FREEBSD_ISO)
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | freebsd/loader.conf
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | freebsd/base.conf
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		freebsd/base.conf \
-		> $(KVM_FREEBSD_DOMAIN)-base.conf
+		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
 		/boot/loader.conf=freebsd/loader.conf \
-		/etc/installerconfig=$(KVM_FREEBSD_DOMAIN)-base.conf
+		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).conf
 	mv $@.tmp $@
 
 
@@ -1089,14 +1059,14 @@ endif
 
 KVM_LINUX_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_LINUX_ISO) \
-	--initrd-inject=$(KVM_LINUX_DOMAIN)-base.ks \
-	--extra-args="inst.ks=file:/$(notdir $(KVM_LINUX_DOMAIN)-base.ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
+	--initrd-inject=$(KVM_LINUX_BASE_DOMAIN).ks \
+	--extra-args="inst.ks=file:/$(notdir $(KVM_LINUX_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
 
-$(KVM_LINUX_DOMAIN)-base: $(KVM_LINUX_ISO)
-$(KVM_LINUX_DOMAIN)-base: | $(KVM_LINUX_KICKSTART_FILE)
-$(KVM_LINUX_DOMAIN)-base: | $(KVM_LINUX_DOMAIN)-base.ks
+$(KVM_LINUX_BASE_DOMAIN): $(KVM_LINUX_ISO)
+$(KVM_LINUX_BASE_DOMAIN): | $(KVM_LINUX_KICKSTART_FILE)
+$(KVM_LINUX_BASE_DOMAIN): | $(KVM_LINUX_BASE_DOMAIN).ks
 
-$(KVM_LINUX_DOMAIN)-base.ks: | $(KVM_LINUX_KICKSTART_FILE)
+$(KVM_LINUX_BASE_DOMAIN).ks: | $(KVM_LINUX_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
 		$(KVM_LINUX_KICKSTART_FILE) \
 		> $@.tmp
@@ -1137,22 +1107,22 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 
 KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
-	--disk=path=$(KVM_NETBSD_DOMAIN)-base.iso,readonly=on,device=cdrom
+	--disk=path=$(KVM_NETBSD_BASE_DOMAIN).iso,readonly=on,device=cdrom
 
-$(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_BOOT_ISO)
-$(KVM_NETBSD_DOMAIN)-base: $(KVM_NETBSD_DOMAIN)-base.iso
+$(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BOOT_ISO)
+$(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BASE_DOMAIN).iso
 
-$(KVM_NETBSD_DOMAIN)-base.iso: $(KVM_NETBSD_INSTALL_ISO)
-$(KVM_NETBSD_DOMAIN)-base.iso: | netbsd/base.sh
+$(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
+$(KVM_NETBSD_BASE_DOMAIN).iso: | netbsd/base.sh
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		netbsd/base.sh \
-		> $(KVM_NETBSD_DOMAIN)-base.sh
+		> $(KVM_NETBSD_BASE_DOMAIN).sh
 	: this mangles file/directory names
 	growisofs -M $@.tmp -l \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.sh=$(KVM_NETBSD_DOMAIN)-base.sh
+		/base.sh=$(KVM_NETBSD_BASE_DOMAIN).sh
 	mv $@.tmp $@
 
 
@@ -1186,20 +1156,20 @@ $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_OPENBSD_ISO_URL) $(KVM_OPENBSD_ISO_HASH) $(KVM_OPENBSD_ISO_CKSUM)
 
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
-	--disk path=$(KVM_OPENBSD_DOMAIN)-base.iso,readonly=on,device=cdrom,target.bus=sata \
+	--disk path=$(KVM_OPENBSD_BASE_DOMAIN).iso,readonly=on,device=cdrom,target.bus=sata \
 	--install bootdev=cdrom
 
-$(KVM_OPENBSD_DOMAIN)-base: $(KVM_OPENBSD_DOMAIN)-base.iso
+$(KVM_OPENBSD_BASE_DOMAIN): $(KVM_OPENBSD_BASE_DOMAIN).iso
 
-$(KVM_OPENBSD_DOMAIN)-base.iso: $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.conf
-$(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/boot.conf
-$(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.sh
-$(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.disk
+$(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_OPENBSD_ISO)
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.conf
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/boot.conf
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.sh
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.disk
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		openbsd/base.sh \
-		> $(KVM_OPENBSD_DOMAIN)-base.sh
+		> $(KVM_OPENBSD_BASE_DOMAIN).sh
 	: boot.conf sets up a serial console
 	: base.conf configures the installer
 	: base.sh gets run by base.py after boot
@@ -1208,7 +1178,7 @@ $(KVM_OPENBSD_DOMAIN)-base.iso: | openbsd/base.disk
 		-graft-points \
 		/base.conf=openbsd/base.conf \
 		/etc/boot.conf=openbsd/boot.conf \
-		/base.sh=$(KVM_OPENBSD_DOMAIN)-base.sh \
+		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).sh \
 		/base.disk=openbsd/base.disk
 	mv $@.tmp $@
 
@@ -1232,19 +1202,19 @@ kvm-downgrade: $(patsubst %, kvm-downgrade-%, $(KVM_OS))
 $(patsubst %, kvm-upgrade-%, $(KVM_PLATFORMS)): \
 kvm-upgrade-%: kvm-downgrade-%
 	: $@ build a-new
-	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+	$(MAKE) $(KVM_$($*)_UPGRADE_DOMAIN)
 
 $(patsubst %, kvm-downgrade-%, $(KVM_PLATFORMS)): \
 kvm-downgrade-%: kvm-uninstall-%
 	: $@=$*
 	./kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
 	: delete generated dependencies missed by above
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+	rm -f $(KVM_$($*)_UPGRADE_DOMAIN).*
+	rm -f $(KVM_$($*)_UPGRADE_DOMAIN)
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORMS)): \
-$(KVM_POOLDIR_PREFIX)%-upgrade: \
-		$(KVM_POOLDIR_PREFIX)%-base \
+$(KVM_UPGRADE_DOMAINS): \
+$(KVM_UPGRADE_PREFIX)%-upgrade: \
+		$(KVM_BASE_PREFIX)%-base \
 		| \
 		%/upgrade.sh \
 		$(KVM_HOST_OK)
@@ -1295,7 +1265,7 @@ kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORMS)): \
 kvm-transmogrify-%: kvm-uninstall-%
 	: $@
-	$(MAKE) $(KVM_LOCALDIR_PREFIX)$(*)
+	$(MAKE) $(KVM_$($*)_BUILD_DOMAIN)
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS)): \
 kvm-uninstall-%:
@@ -1303,8 +1273,8 @@ kvm-uninstall-%:
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	: delete generated dependencies missed by above
-	rm -f $(KVM_LOCALDIR_PREFIX)$(*).*
-	rm -f $(KVM_LOCALDIR_PREFIX)$(*)
+	rm -f $(KVM_$($*)_BUILD_DOMAIN).*
+	rm -f $(KVM_$($*)_BUILD_DOMAIN)
 	: transmogrify.sh is in /pool
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 
@@ -1312,9 +1282,9 @@ kvm-uninstall-%:
 KVM_BUILD_CPUS = $(KVM_WORKERS)
 KVM_BUILD_MEMORY ?= $(shell expr 1792 + $(KVM_BUILD_CPUS) \* 256 )
 
-$(patsubst %, $(KVM_LOCALDIR_PREFIX)%, $(KVM_PLATFORMS)): \
-$(KVM_LOCALDIR_PREFIX)%: \
-		$(KVM_POOLDIR_PREFIX)%-upgrade \
+$(KVM_BUILD_DOMAINS): \
+$(KVM_BUILD_PREFIX)%: \
+		$(KVM_UPGRADE_PREFIX)%-upgrade \
 		| \
 		%/transmogrify.sh \
 		$(KVM_HOST_OK)
@@ -1610,32 +1580,6 @@ kvm-fedora-install: $(KVM_LOCALDIR_PREFIX)fedora
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 endif
 
-#
-# kvmsh-HOST
-#
-# Map this onto the first domain group.  Logging into the other
-# domains can be done by invoking kvmsh.py directly.
-#
-
-$(patsubst %, kvmsh-%, $(filter-out $(KVM_DOMAIN_NAMES), $(KVM_HOST_NAMES))): \
-kvmsh-%: kvmsh-$(KVM_PREFIX)%
-
-$(patsubst %, kvmsh-%, $(KVM_BASE_DOMAIN_NAMES)) : \
-kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
-	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
-
-$(patsubst %, kvmsh-%, $(KVM_UPGRADE_DOMAIN_NAMES)) : \
-kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
-	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
-
-$(patsubst %, kvmsh-%, $(KVM_BUILD_DOMAIN_NAMES)) : \
-kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
-	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
-
-$(patsubst %, kvmsh-%, $(notdir $(KVM_TEST_DOMAINS))) : \
-kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
-	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
-
 
 #
 # Some hints
@@ -1690,34 +1634,15 @@ $(call kvm-var-value,KVM_MAKEFLAGS)
 
  $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_OSINFO)$(crlf))
 
-$(call kvm-var-value,KVM_BASE_HOST_NAMES)
-
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_BASE_HOST_NAME)$(crlf))
-
-$(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
-
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_UPGRADE_HOST_NAME)$(crlf))
-
-$(call kvm-var-value,KVM_BUILD_HOST_NAMES)
-
- $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_BUILD_HOST_NAME)$(crlf))
-
 $(call kvm-var-value,KVM_TEST_HOST_NAMES)
+$(call kvm-var-value,KVM_LINUX_TEST_HOST_NAMES)
 $(call kvm-var-value,KVM_OS_TEST_HOST_NAMES)
 
  $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_HOST_NAMES)$(crlf))
 
-$(call kvm-var-value,KVM_HOST_NAMES)
-
 $(call kvm-var-value,KVM_TEST_DOMAINS)
 
  $(foreach platform,$(KVM_PLATFORMS),$(call kvm-var-value,KVM_$($(platform))_TEST_DOMAINS)$(crlf))
-
-$(call kvm-var-value,KVM_BASE_DOMAIN_NAMES)
-$(call kvm-var-value,KVM_UPGRADE_DOMAIN_NAMES)
-$(call kvm-var-value,KVM_BUILD_DOMAIN_NAMES)
-
-$(call kvm-var-value,KVM_DOMAIN_NAMES)
 
 $(call kvm-var-value,KVM_BASE_DOMAINS)
 $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
@@ -1823,15 +1748,6 @@ Standard targets and operations:
         - delete the gateway
 
   Manipulating and accessing (logging into) domains:
-
-    kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOST_NAMES)))
-        - use 'virsh console' to login to the given domain
-	- for HOST login to the first domain vis:
-          $(addprefix $(KVM_PREFIX), HOST)
-        - if necessary, create and boot the host
-    $(addprefix kvmsh-, $(notdir $(KVM_TEST_DOMAINS)))
-        - login to the specific domain
-        - if necessary, create and boot the domain
 
     kvm-shutdown
         - shutdown all domains
