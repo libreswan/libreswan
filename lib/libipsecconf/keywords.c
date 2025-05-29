@@ -133,14 +133,6 @@ static const struct sparse_names kw_global_ikev1_names = {
 	},
 };
 
-static const struct sparse_names kw_eap_names = {
-	.list = {
-		SPARSE("none", IKE_EAP_NONE), /* default */
-		SPARSE("tls", IKE_EAP_TLS),
-		SPARSE_NULL
-	},
-};
-
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
@@ -256,7 +248,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names, NULL, },
 #endif
   { "protoport",  kv_conn | kv_leftright,  kt_string,  KWS_PROTOPORT, NULL, NULL, },
-  { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },
+  { "autheap",  kv_conn | kv_leftright,  kt_string,  KWS_AUTHEAP, NULL, NULL, },
   { "groundhog",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, &yn_option_names, NULL, },
 
   /* these are conn statements which are not left/right */

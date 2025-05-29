@@ -783,6 +783,8 @@ enum eap_options {
 	IKE_EAP_TLS = 1,
 };
 
+extern const struct sparse_names eap_option_names;
+
 enum nic_offload_options {
 	NIC_OFFLOAD_UNSET = 0,
 	NIC_OFFLOAD_NO, /* default */

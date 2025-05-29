@@ -1949,9 +1949,17 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->xauthusername,
 						     wm, logger);
-	host_config->eap = src->eap;
+	enum eap_options autheap = extract_sparse_name(leftright, "autheap", src->autheap,
+						       /*value_when_unset*/IKE_EAP_NONE,
+						       &eap_option_names,
+						       wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
 
-	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
+	host_config->eap = autheap;
+
+	if (autheap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
 		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
 	}
 

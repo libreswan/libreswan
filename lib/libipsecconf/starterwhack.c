@@ -164,10 +164,7 @@ static bool set_whack_end(struct whack_end *w,
 	if (l->values[KNCF_AUTH].set)
 		w->auth = l->values[KNCF_AUTH].option;
 
-	if (l->values[KNCF_EAP].set)
-		w->eap = l->values[KNCF_EAP].option;
-	else
-		w->eap = IKE_EAP_NONE;
+	w->autheap = l->values[KWS_AUTHEAP].string;
 
 	w->updown = l->values[KWS_UPDOWN].string;
 

@@ -1533,11 +1533,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_AUTHEAP:
-			if (streq(optarg, "tls"))
-				end->eap = IKE_EAP_TLS;
-			else if (streq(optarg, "none"))
-				end->eap = IKE_EAP_NONE;
-			else diagw("--autheap option is not one of none, tls");
+			end->autheap = optarg;
 			continue;
 
 		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */
