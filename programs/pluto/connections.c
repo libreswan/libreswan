@@ -4793,11 +4793,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	if (wm->priority > UINT32_MAX) {
-		return diag("priority=%ju exceeds upper bound of %"PRIu32,
-			    wm->priority, UINT32_MAX);
+	config->child_sa.priority = extract_uintmax("", "", "priority", wm->priority,
+						    (struct range) {
+							    .value_when_unset = 0,
+							    .limit.max = UINT32_MAX,
+						    },
+						    wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
 	}
-	config->child_sa.priority = wm->priority;
 
 	if (wm->tfc != 0) {
 		if (encap_mode == ENCAP_MODE_TRANSPORT) {

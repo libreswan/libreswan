@@ -2062,7 +2062,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
-			msg.priority = optarg_uintmax(logger);
+			msg.priority = optarg;
 			continue;
 
 		case CD_TFC:	/* --tfc */
