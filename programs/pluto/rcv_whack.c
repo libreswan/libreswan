@@ -670,11 +670,11 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 * XXX: why?
 	 */
 
-	if (!lmod_empty(m->debugging)) {
+	if (!lmod_empty(m->whack_debugging)) {
 		lmod_buf lb;
-		dbg_whack(s, "debugging: start: %s", str_lmod(&debug_names, m->debugging, &lb));
+		dbg_whack(s, "debugging: start: %s", str_lmod(&debug_names, m->whack_debugging, &lb));
 		whack_debug(m, s);
-		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->debugging, &lb));
+		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->whack_debugging, &lb));
 	}
 
 	if (m->impairments.len > 0) {

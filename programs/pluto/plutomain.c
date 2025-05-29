@@ -1329,7 +1329,7 @@ int main(int argc, char **argv)
 			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			nhelpers = cfg->setup->values[KBF_NHELPERS].option;
-			new_debugging = cfg->setup->values[KW_DEBUG].option;
+			new_debugging = cfg->setup->values[KBF_PLUTODEBUG].option;
 
 			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/

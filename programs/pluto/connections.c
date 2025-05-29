@@ -5116,8 +5116,21 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 {
-	/* will inherit defaults */
-	lset_t debugging = lmod(LEMPTY, wm->debugging);
+	/*
+	 * For instance ipsec add --debug.
+	 */
+	lset_t debugging = lmod(LEMPTY, wm->whack_debugging);
+
+	/*
+	 * Use lmod_args() since it both knows how to parse a comma
+	 * separated list and can handle no-XXX (ex: all,no-xauth).
+	 * The final set of enabled bits is returned in .set.
+	 */
+	lmod_t debug = {0};
+	if (wm->debug != NULL) {
+		/* failure handled below */
+		ttolmod(shunk1(wm->debug), &debug, &debug_lmod_info, true/*enable*/);
+	}
 
 	/*
 	 * Allocate the configuration - only allocated on root
@@ -5127,8 +5140,12 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 
 	struct config *root_config = alloc_config(wm->name);
 	struct connection *c = alloc_connection(root_config->name, NULL, root_config,
-						debugging | wm->conn_debug,
+						debugging | debug.set,
 						logger, HERE);
+
+	if (wm->debug != NULL && debug.set == LEMPTY) {
+		ldbg(c->logger, "warning: debug=%s invalid, ignored", wm->debug);
+	}
 
 	diag_t d = extract_connection(wm, c, root_config);
 	if (d != NULL) {

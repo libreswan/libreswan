@@ -279,7 +279,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.cisco_split = conn->values[KWS_CISCO_SPLIT].string;
 
 	msg.sec_label = conn->values[KWS_SEC_LABEL].string;
-	msg.conn_debug = conn->values[KW_DEBUG].option;
+	msg.debug = conn->values[KWS_DEBUG].string;
 
 	msg.modecfgdns = conn->values[KWS_MODECFGDNS].string;
 	msg.modecfgdomains = conn->values[KWS_MODECFGDOMAINS].string;
