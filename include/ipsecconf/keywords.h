@@ -138,7 +138,7 @@ enum keywords {
 	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
 	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
-	KBF_PLUTODEBUG,
+	KSF_PLUTODEBUG,
 
 	/*
 	 * By convention, these are connection strings (KSCF is
@@ -328,7 +328,6 @@ enum keyword_type {
 	kt_appendstring,        /* value is some string, append duplicates */
 	kt_appendlist,          /* value is some list, append duplicates */
 	kt_sparse_name,         /* value is from .sparse_name table */
-	kt_lset,                /* a set of values from .sparse_name */
 	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */

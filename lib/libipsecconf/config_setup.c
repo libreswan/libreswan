@@ -16,9 +16,13 @@
 #include <stdbool.h>
 
 #include "config_setup.h"
+
 #include "ipsecconf/confread.h"
 #include "passert.h"
 #include "lswalloc.h"
+#include "lset.h"
+#include "lmod.h"
+#include "lswlog.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -94,4 +98,29 @@ const char *config_setup_nssdir(void)
 {
 	config_setup_singleton();
 	return config_setup.values[KSF_NSSDIR].string;
+}
+
+lset_t config_setup_debugging(struct logger *logger)
+{
+	config_setup_singleton();
+	/*
+	 * Use ttolmod() since it both knows how to parse a comma
+	 * separated list and can handle no-XXX (ex: all,no-xauth).
+	 * The final set of enabled bits is returned in .set.
+	 */
+	lmod_t result = {0};
+	const char *plutodebug = config_setup.values[KSF_PLUTODEBUG].string;
+	if (!ttolmod(shunk1(plutodebug), &result, &debug_lmod_info, true/*enable*/)) {
+		/*
+		 * If the lookup failed, complain.
+		 *
+		 * XXX: the error diagnostic is a little vague -
+		 * should lmod_arg() instead return the error?
+		 */
+		llog(RC_LOG, logger, "plutodebug='%s' invalid, keyword ignored",
+			plutodebug);
+		return LEMPTY;
+	}
+
+	return result.set;
 }

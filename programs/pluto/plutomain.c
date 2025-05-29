@@ -812,7 +812,6 @@ int main(int argc, char **argv)
 
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
-	lset_t new_debugging = LEMPTY;
 
 	/* handle arguments */
 	for (;; ) {
@@ -1329,7 +1328,6 @@ int main(int argc, char **argv)
 			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			nhelpers = cfg->setup->values[KBF_NHELPERS].option;
-			new_debugging = cfg->setup->values[KBF_PLUTODEBUG].option;
 
 			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
@@ -1538,6 +1536,7 @@ int main(int argc, char **argv)
 	PASSERT(logger, open("/dev/null", O_RDONLY) == STDIN_FILENO);
 	PASSERT(logger, dup2(0, STDOUT_FILENO) == STDOUT_FILENO);
 
+	lset_t new_debugging = config_setup_debugging(logger);
 	if (cur_debugging || new_debugging) {
 		for (int fd = getdtablesize() - 1; fd >= 0; fd--) {
 			if (fd == ctl_fd ||
