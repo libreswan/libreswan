@@ -23,7 +23,7 @@ You can load this machine definition into libvirt using:
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='writeback'/>
-      <source file='@@POOLDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
+      <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>

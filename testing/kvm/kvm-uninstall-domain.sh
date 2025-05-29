@@ -24,6 +24,6 @@ for file in "$@" ; do
     else
 	echo "No domain ${domain}"
     fi
-    rm -vf ${file}.qcow2
+    rm -vf ${file}.*
     rm -vf ${file}
 done
