@@ -1355,32 +1355,28 @@ static uintmax_t check_range(const char *story,
 	return value;
 }
 
-static uintmax_t extract_uintmax(const char *leftright,
+static uintmax_t extract_uintmax(const char *story,
+				 const char *leftright,
 				 const char *name,
 				 const char *value,
-				 uintmax_t value_when_unset,
-				 uintmax_t min, uintmax_t max,
+				 struct range range,
 				 const struct whack_message *wm,
 				 diag_t *d,
 				 struct logger *logger)
 {
 	(*d) = NULL;
 	if (!can_extract_string(leftright, name, value, wm, logger)) {
-		return value_when_unset;
+		return range.value_when_unset;
 	}
 
-	uintmax_t uintmax;
-	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &uintmax);
+	uintmax_t number;
+	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &number);
 	if (err != NULL) {
 		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
-		return value_when_unset;
+		return range.value_when_unset;
 	}
-	if (uintmax < min || uintmax > max) {
-		(*d) = diag("%s%s=%ju invalid, must be in the range %ju-%ju",
-			    leftright, name, uintmax, min, max);
-		return value_when_unset;
-	}
-	return uintmax;
+
+	return check_range(story, leftright, name, number, range, d, logger);
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
@@ -4135,9 +4131,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "replay-window", wm->replay_window,
-				/*value_when_unset*/IPSEC_SA_DEFAULT_REPLAY_WINDOW,
-				0, kernel_ops->max_replay_window,
+		extract_uintmax("", "", "replay-window", wm->replay_window,
+				(struct range) {
+					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
+					.limit.max = kernel_ops->max_replay_window,
+				},
 				wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
@@ -4783,9 +4781,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,
-					 /*value_when_unset*/0,
-					 1, 65535, wm, &d, c->logger);
+	c->nflog_group = extract_uintmax("", "", "nflog-group", wm->nflog_group,
+					 (struct range) {
+						 .value_when_unset = 0,
+						 .limit.min = 1,
+						 .limit.max = 65535,
+					 },
+					 wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
 	}
@@ -4823,9 +4825,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "reqid", wm->reqid,
-					  /*value_when_unset*/0,
-					  1, IPSEC_MANUAL_REQID_MAX,
+	uintmax_t reqid = extract_uintmax("", "", "reqid", wm->reqid,
+					  (struct range) {
+						  .value_when_unset = 0,
+						  .limit.min = 1,
+						  .limit.max = IPSEC_MANUAL_REQID_MAX,
+					  },
 					  wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
