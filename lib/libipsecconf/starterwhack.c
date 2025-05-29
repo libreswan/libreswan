@@ -63,7 +63,7 @@ static bool set_whack_end(struct whack_end *w,
 	 * goes with it.
 	 */
 
-	if (l->values[KWS_ID].set) {
+	if (l->values[KWS_ID].string != NULL) {
 		char *value = l->values[KWS_ID].string;
 		/*
 		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
@@ -89,13 +89,22 @@ static bool set_whack_end(struct whack_end *w,
 	w->vti = l->values[KWS_VTI].string; /* could be NULL */
 	w->interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
 
-	/* validate the KSCF_SUBNET */
-	if (l->values[KWS_SUBNET].set) {
-		char *value = l->values[KWS_SUBNET].string;
-		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
-			w->virt = value;
+	/*
+	 * Deal with legacy subnet=vhost:... and subnet=vnet:....
+	 * (although there's no alternative).
+	 *
+	 * Can't simply send {vhost,vnet}:... to pluto in .subnet
+	 * without a lot of work here and the extract code is the
+	 * subnets= expansion and that expects subnet= to be empty.
+	 */
+
+	const char *subnet = l->values[KWS_SUBNET].string;
+	if (subnet != NULL) {
+		if (startswith(subnet, "vhost:") ||
+		    startswith(subnet, "vnet:")) {
+			w->virt = subnet;
 		} else {
-			w->subnet = value;
+			w->subnet = subnet;
 		}
 	}
 
