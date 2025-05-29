@@ -40,7 +40,7 @@ west #
  # should fail but doesn't, hence shutdown
 west #
  ipsec pluto --config bad-config-setup-value.conf
-ipsec pluto: bad-config-setup-value.conf:6: warning: invalid, keyword ignored: plutodebug=aksdfjasd;fklj
+ipsec pluto: plutodebug='aksdfjasd;fklj' invalid, keyword ignored
 west #
  ipsec whack --shutdown
 Pluto is shutting down
@@ -58,7 +58,6 @@ west #
  cp /tmp/pluto.log OUTPUT/bad-conn-key.log
 west #
  ipsec pluto --config bad-conn-value.conf
-ipsec pluto: bad-conn-value.conf:9: warning: invalid, keyword ignored: debug=asdlfasdfj
 west #
  ipsec whack --shutdown
 Pluto is shutting down
@@ -78,6 +77,6 @@ west #
 FATAL ERROR: ipsec addconn: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
 west #
  ipsec addconn --config bad-conn-value.conf  bad-conn-value
-ipsec addconn: bad-conn-value.conf:9: warning: invalid, keyword ignored: debug=asdlfasdfj
+"bad-conn-value": warning: debug=asdlfasdfj invalid, ignored
 "bad-conn-value": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=%any match an interface)
 west #
