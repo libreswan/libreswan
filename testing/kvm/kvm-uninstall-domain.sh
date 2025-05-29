@@ -24,6 +24,8 @@ for file in "$@" ; do
     else
 	echo "No domain ${domain}"
     fi
-    rm -vf ${file}.*
+    # only delete domain stuff; other stuff like .ks files needs to
+    # stay around
+    rm -vf ${file}.qcow2
     rm -vf ${file}
 done

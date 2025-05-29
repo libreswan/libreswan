@@ -629,7 +629,7 @@ kvm-diffs:
 KVM_KEYS = $(KVM_TESTINGDIR)/x509/up-to-date
 KVM_KEYS_EXPIRATION_DAY = 7
 KVM_KEYS_EXPIRED = find $(KVM_TESTINGDIR)/x509/*/ -type f -mtime +$(KVM_KEYS_EXPIRATION_DAY) -ls
-KVM_KEYS_DOMAIN = $(addprefix $(KVM_PREFIX), linux)
+KVM_KEYS_DOMAIN = $(KVM_LINUX_BUILD_DOMAIN)
 
 .PHONY: kvm-keys
 kvm-keys:
@@ -641,12 +641,12 @@ kvm-keys:
 $(KVM_KEYS): $(KVM_TESTINGDIR)/x509/selfsigned.sh
 $(KVM_KEYS): $(KVM_TESTINGDIR)/x509/generate.sh
 $(KVM_KEYS): $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh
-$(KVM_KEYS): | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
+$(KVM_KEYS): | $(KVM_KEYS_DOMAIN)
 $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: generate the keys using $(KVM_KEYS_DOMAIN)
 	:
-	$(KVMSH) $(KVM_KEYS_DOMAIN) /testing/guestbin/keys.sh
+	$(KVMSH) $(notdir $(KVM_KEYS_DOMAIN)) /testing/guestbin/keys.sh
 	:
 	: extract the tarball containing the keys
 	:
@@ -654,7 +654,7 @@ $(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: Also regenerate the DNSSEC keys
 	:
-	$(KVMSH) --chdir /testing $(KVM_KEYS_DOMAIN) ./baseconfigs/all/etc/bind/generate-dnssec.sh
+	$(KVMSH) --chdir /testing $(notdir $(KVM_KEYS_DOMAIN)) ./baseconfigs/all/etc/bind/generate-dnssec.sh
 	:
 	: All done.
 	:
