@@ -60,7 +60,7 @@ enum keywords {
 	/*
 	 * Generic keywords, add more here.
 	 */
-	KW_DEBUG,
+	KWS_DEBUG,
 	KWS_HOST,
 	KWS_NEXTHOP,
 	KW_RSASIGKEY,

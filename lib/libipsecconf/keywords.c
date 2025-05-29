@@ -154,7 +154,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "plutodebug",  kv_config, kt_lset, KBF_PLUTODEBUG, NULL, &debug_lmod_info, },
 
-  { "debug",       kv_conn, kt_lset, KW_DEBUG, NULL, &debug_lmod_info, },
+  { "debug",       kv_conn, kt_string, KWS_DEBUG, NULL, NULL, },
 
   { "logfile",  kv_config,  kt_string,  KSF_LOGFILE, NULL, NULL, },
   { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete name, but very common :/ */

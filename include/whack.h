@@ -19,7 +19,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #ifndef WHACK_H
@@ -227,8 +226,6 @@ struct whack_message {
 	/* name is used in connection and initiate */
 	const char *name;
 
-	lset_t conn_debug;
-
 	/* debugging updates to apply */
 
 	lmod_t whack_debugging;
@@ -252,6 +249,7 @@ struct whack_message {
 	const char *ikev2;
 
 	const char *authby;
+	const char *debug;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
