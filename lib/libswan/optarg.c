@@ -115,7 +115,7 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 			}
 			break;
 		}
-		jam_string(buf, " invalid: ");
+		jam_string(buf, " invalid, ");
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
@@ -337,7 +337,7 @@ uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const st
 	const struct sparse_name *name = sparse_lookup_by_name(names, shunk1(optarg));
 	if (name == NULL) {
 		JAMBUF(buf) {
-			jam(buf, "'%s' is not recognised, valid arguments are: ", optarg);
+			jam(buf, "'%s' is not recognised; valid arguments are: ", optarg);
 			jam_sparse_names(buf, names, ", ");
 			optarg_fatal(logger, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
