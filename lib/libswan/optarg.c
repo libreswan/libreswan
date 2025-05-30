@@ -88,13 +88,34 @@ void optarg_fatal(const struct logger *logger, const char *fmt, ...)
 	 * running?
 	 */
 	passert(optarg_index >= 0);
-	const char *optname = optarg_options[optarg_index].name;
+	const struct option *option = &optarg_options[optarg_index];
 	LLOG_JAMBUF(ERROR_STREAM, logger, buf) {
-		if (optarg == NULL) {
-			jam(buf, "option --%s invalid: ", optname);
-		} else {
-			jam(buf, "option --%s '%s' invalid: ", optname, optarg);
+		jam_string(buf, "option --");
+		jam_string(buf, option->name);
+		switch (option->has_arg) {
+		case required_argument:
+			if (pexpect(optarg != NULL)) {
+				jam_string(buf, " '");
+				jam_string(buf, optarg);
+				jam_string(buf, "'");
+			}
+			break;
+		case optional_argument:
+			if (optarg != NULL) {
+				jam_string(buf, "='");
+				jam_string(buf, optarg);
+				jam_string(buf, "'");
+			}
+			break;
+		case no_argument:
+			if (pbad(optarg != NULL)) {
+				jam_string(buf, " '");
+				jam_string(buf, optarg);
+				jam_string(buf, "'");
+			}
+			break;
 		}
+		jam_string(buf, " invalid: ");
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
@@ -218,6 +239,37 @@ void optarg_usage(const char *progname, const char *arguments,
 
 	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
 	exit(0);
+}
+
+/* return a non-empty string */
+const char *optarg_nonempty(const struct logger *logger)
+{
+	const struct option *opt = &optarg_options[optarg_index];
+	PEXPECT(logger, opt->has_arg == required_argument);
+	if (optarg == NULL) {
+		/* should not happen! */
+		PEXPECT(logger, opt->has_arg == optional_argument);
+		optarg_fatal(logger, "argument is missing");
+	}
+	if (strlen(optarg) == 0) {
+		/* can't magic up a non-empty string so reject */
+		optarg_fatal(logger, "must be non-empty");
+	}
+	return optarg; /* can't be empty, can't be NULL */
+}
+
+/* return a non-NULL string */
+const char *optarg_empty(const struct logger *logger)
+{
+	const struct option *opt = &optarg_options[optarg_index];
+	if (optarg == NULL) {
+		/* turn missing argument into empty string */
+		PEXPECT(logger, opt->has_arg == optional_argument);
+		return "";
+	}
+	PEXPECT(logger, (opt->has_arg == optional_argument ||
+			 opt->has_arg == required_argument));
+	return optarg; /* could be empty, can't be NULL */
 }
 
 deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale)
