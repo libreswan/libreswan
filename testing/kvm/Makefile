@@ -131,6 +131,9 @@ KVM_LINUX_USE_EFENCE ?= true
 KVM_LINUX_USE_LABELED_IPSEC ?= true
 KVM_LINUX_USE_SECCOMP ?= true
 
+# On Alpine, do a cutdown build
+KVM_ALPINE_USE_DNSSEC ?= false
+
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
 	$(firstword \
@@ -157,6 +160,7 @@ KVM_MAKEFLAGS ?= $(strip \
 	$(call KVM-MAKEFLAG, KVM_USE_LTO) \
 	$(call KVM-MAKEFLAG, KVM_USE_NSS_KDF) \
 	$(call KVM-MAKEFLAG, KVM_USE_SECCOMP) \
+	$(call KVM-MAKEFLAG, KVM_USE_DNSSEC) \
 	$(call KVM-MAKEFLAG, KVM_CC) \
 	)
 
