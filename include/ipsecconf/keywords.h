@@ -63,9 +63,10 @@ enum keywords {
 	KWS_DEBUG,
 	KWS_HOST,
 	KWS_NEXTHOP,
-	KW_RSASIGKEY,
-	KW_ECDSAKEY,
-	KW_PUBKEY,
+
+	KWS_RSASIGKEY,
+	KWS_ECDSAKEY,
+	KWS_PUBKEY,
 
 	KWYN_IPSEC_INTERFACE_MANAGED,
 	KWS_IPSEC_INTERFACE,
@@ -314,7 +315,6 @@ enum keyword_type {
 	kt_appendstring,        /* value is some string, append duplicates */
 	kt_appendlist,          /* value is some list, append duplicates */
 	kt_sparse_name,         /* value is from .sparse_name table */
-	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_also,		/* i.e., #include */

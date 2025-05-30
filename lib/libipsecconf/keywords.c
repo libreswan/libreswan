@@ -200,9 +200,15 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_string,  KWS_ID, NULL, NULL, },
-  { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &keyword_pubkey_names, NULL, },
-  { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &keyword_pubkey_names, NULL, },
-  { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &keyword_pubkey_names, NULL, },
+
+  /*
+   * Note: these are merged into .pubkey + .pubkey_alg before sending
+   * to pluto.
+   */
+  { "rsasigkey",  kv_conn | kv_leftright,  kt_string,  KWS_RSASIGKEY, NULL, NULL, },
+  { "ecdsakey",  kv_conn | kv_leftright,  kt_string,  KWS_ECDSAKEY, NULL, NULL, },
+  { "pubkey",  kv_conn | kv_leftright,  kt_string,  KWS_PUBKEY, NULL, NULL, },
+
   { "cert",  kv_conn | kv_leftright,  kt_string,  KWS_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KWS_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_string,  KWS_SENDCERT, NULL, NULL, },

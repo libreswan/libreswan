@@ -128,10 +128,6 @@ static bool load_setup(struct starter_config *cfg,
 			cfg->setup->values[f].set = true;
 			break;
 
-		case kt_pubkey:
-			ok = false;
-			break;
-
 		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
@@ -243,39 +239,6 @@ static bool translate_field(struct starter_conn *conn,
 			pfree(s);
 		}
 		values[field].set = true;
-		break;
-
-	case kt_pubkey:
-		if (values[field].set == k_set) {
-			llog(RC_LOG, logger,
-			     "duplicate key '%s%s' in conn %s while processing def %s",
-			     leftright, kw->keyword.keydef->keyname,
-			     conn->name,
-			     sl->name);
-
-			/* only fatal if we try to change values */
-			if (values[field].option != (int)kw->number ||
-			    !(values[field].option == LOOSE_ENUM_OTHER &&
-			      kw->number == LOOSE_ENUM_OTHER &&
-			      kw->keyword.string != NULL &&
-			      values[field].string != NULL &&
-			      streq(kw->keyword.string, values[field].string))) {
-				ok = false;
-				break;
-			}
-		}
-
-		if (kw->string == NULL) {
-			llog_pexpect(logger, HERE, "missing %s string value",
-				     kw->keyword.keydef->keyname);
-			ok = false;
-			break;
-		}
-
-		pfreeany(values[field].string);
-		values[field].option = kw->number;
-		values[field].string = clone_str(kw->string, "kt_loose_enum kw->keyword.string");
-		values[field].set = assigned_value;
 		break;
 
 	case kt_sparse_name:

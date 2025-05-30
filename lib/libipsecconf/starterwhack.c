@@ -114,21 +114,38 @@ static bool set_whack_end(struct whack_end *w,
 	w->cert = l->values[KWS_CERT].string;
 	w->ckaid = l->values[KWS_CKAID].string;
 
-	static const struct {
+	/*
+	 * Map one of rsasigkey=, ecdsa=, or pubkey=, onto .pubkey +
+	 * .pubkey_alg.
+	 */
+
+	static const struct key {
 		enum ipseckey_algorithm_type alg;
-		enum keywords kscf;
+		enum keywords kws;
 		const char *name;
 	} keys[] = {
-		{ .alg = IPSECKEY_ALGORITHM_RSA, KW_RSASIGKEY, "rsasigkey", },
-		{ .alg = IPSECKEY_ALGORITHM_ECDSA, KW_ECDSAKEY, "ecdsakey", },
-		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KW_PUBKEY, "pubkey", },
+		{ IPSECKEY_ALGORITHM_RSA, KWS_RSASIGKEY, "rsasigkey", },
+		{ IPSECKEY_ALGORITHM_ECDSA, KWS_ECDSAKEY, "ecdsakey", },
+		{ IPSECKEY_ALGORITHM_X_PUBKEY, KWS_PUBKEY, "pubkey", },
 	};
+	const struct key *found_key = NULL;
 	FOR_EACH_ELEMENT(key, keys) {
-		if (!l->values[key->kscf].set) {
+
+		/* find the first of above that is set */
+		const char *value = l->values[key->kws].string;
+		if (value == NULL) {
 			continue;
 		}
 
-		w->pubkey = l->values[key->kscf].string;
+		if (found_key != NULL) {
+			pexpect(w->pubkey != NULL);
+			llog(RC_LOG, logger,
+			     "duplicate key fields %s= and %s=", found_key->name, key->name);
+			return false;
+		}
+
+		found_key = key;
+		w->pubkey = value;
 		w->pubkey_alg = key->alg;
 		break;
 	}
