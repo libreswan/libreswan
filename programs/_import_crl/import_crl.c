@@ -33,7 +33,7 @@
 #include "lswlog.h"		/* for fatal() */
 #include "pem.h"
 
-static err_t fetch_blob(const char *url, time_t timeout, chunk_t *blob,
+static err_t fetch_blob(const char *url, time_t timeout, chunk_t *blob UNUSED,
 			struct verbose verbose)
 {
 	vdbg("fetching %s with timeout %ld", url, (long)timeout);
