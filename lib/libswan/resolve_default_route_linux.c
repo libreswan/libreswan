@@ -532,8 +532,8 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 				}
 			}
 #else
-			err_t er = ttoaddress_dns(shunk1(peer->host.name
-							 host_afi, &peer->addr);
+			err_t er = ttoaddress_dns(shunk1(peer->host.name),
+				 		  host_afi, &peer->host.addr);
 			if (er != NULL) {
 				pfree(msgbuf);
 				return RESOLVE_FAILURE;
