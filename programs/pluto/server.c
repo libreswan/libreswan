@@ -91,8 +91,6 @@
  *  Server main loop and socket initialization routines.
  */
 
-char *pluto_vendorid;
-
 /* pluto's main Libevent event_base */
 static struct event_base *pluto_eb =  NULL;
 

@@ -27,6 +27,7 @@
 #include "ikev1_vendorid.h"
 #include "demux.h"
 #include "connections.h"
+#include "config_setup.h"
 
 /*
  * Handle IKEv1 Known VendorID's.  This function parses what the remote peer
@@ -170,8 +171,10 @@ bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
 {
 	/* cusomizeable Vendor ID */
 	if (c->config->send_vendorid) {
+		const char *vendorid = config_setup_vendorid();
 		if (!ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
-					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
+					   vendorid, strlen(vendorid),
+					   "Pluto Vendor ID")) {
 			return false;
 		}
 	}

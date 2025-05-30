@@ -23,6 +23,7 @@
 #include "lset.h"
 #include "lmod.h"
 #include "lswlog.h"
+#include "lswversion.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -34,7 +35,7 @@
 static bool config_setup_is_set;
 static struct config_setup config_setup;
 
-void config_setup_string(enum keywords kw, const char *string)
+void update_setup_string(enum keywords kw, const char *string)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -43,7 +44,23 @@ void config_setup_string(enum keywords kw, const char *string)
 	kv->string = clone_str(string, "kv");
 }
 
-void config_setup_option(enum keywords kw, uintmax_t option)
+void update_setup_yn(enum keywords kw, enum yn_options yn)
+{
+	config_setup_singleton();
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->option = yn;
+}
+
+void update_setup_deltatime(enum keywords kw, deltatime_t deltatime)
+{
+	config_setup_singleton();
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->deltatime = deltatime;
+}
+
+static void update_setup_option(enum keywords kw, uintmax_t option)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -56,20 +73,23 @@ struct config_setup *config_setup_singleton(void)
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
 
-		config_setup_option(KBF_IKEBUF, IKE_BUF_AUTO);
-		config_setup_option(KBF_NHELPERS, -1);
-		config_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
-		config_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
-		config_setup_option(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
-		config_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
-		config_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-		config_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
+		update_setup_option(KBF_IKEBUF, IKE_BUF_AUTO);
+		update_setup_option(KBF_NHELPERS, -1);
+		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
+		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
+		update_setup_option(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
+		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
+		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
+		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
 
-		config_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
-		config_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
-		config_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
-		config_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
+		update_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
+		update_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
+		update_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
+		update_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
+		update_setup_string(KSF_MYVENDORID, ipsec_version_vendorid());
 
+		update_setup_string(KSF_DNSSEC_ROOTKEY_FILE, DEFAULT_DNSSEC_ROOTKEY_FILE);
+		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
 	}
 	return &config_setup;
 }
@@ -100,6 +120,18 @@ const char *config_setup_nssdir(void)
 	return config_setup.values[KSF_NSSDIR].string;
 }
 
+const char *config_setup_dumpdir(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_DUMPDIR].string;
+}
+
+const char *config_setup_vendorid(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_MYVENDORID].string;
+}
+
 lset_t config_setup_debugging(struct logger *logger)
 {
 	config_setup_singleton();
@@ -123,4 +155,51 @@ lset_t config_setup_debugging(struct logger *logger)
 	}
 
 	return result.set;
+}
+
+bool extract_setup_string(const char **target,
+			  const struct config_setup *setup,
+			  enum keywords field)
+{
+	pexpect((*target) == NULL); /* i.e., unset */
+	const char *value = setup->values[field].string;
+	/* Do nothing if value is unset; convert '' into NULL. */
+	if (value != NULL && strlen(value) > 0) {
+		(*target) = value;
+		return true;
+	}
+	return false;
+}
+
+bool extract_setup_deltatime(deltatime_t *target,
+			     const struct config_setup *setup,
+			     enum keywords field)
+{
+	pexpect(target->is_set == false); /* i.e., unset */
+	deltatime_t value = setup->values[field].deltatime;
+	/* Do nothing if value is unset. */
+	if (value.is_set) {
+		(*target) = value;
+		return true;
+	}
+	return false;
+}
+
+bool extract_setup_yn(bool *target,
+		      const struct config_setup *setup,
+		      enum keywords field)
+{
+	pexpect((*target) == false); /* i.e., unset */
+	enum yn_options yn = setup->values[field].option;
+	/* Do nothing if value is unset. */
+	switch (yn) {
+	case YN_YES:
+		(*target) = true;
+		return true;
+	case YN_NO:
+		(*target) = false;
+		return true;
+	default:
+		return false;
+	}
 }

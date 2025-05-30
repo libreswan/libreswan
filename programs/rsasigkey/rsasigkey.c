@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 			exit(0);
 			continue;
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
-			config_setup_string(KSF_NSSDIR, optarg);
+			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;
 		case OPT_PASSWORD:       /* token authentication password */
 			nss.password = optarg;

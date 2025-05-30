@@ -65,6 +65,7 @@
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
+#include "config_setup.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -507,7 +508,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->config->send_vendorid) {
-		if (!emit_v2V(request.pbs, pluto_vendorid))
+		if (!emit_v2V(request.pbs, config_setup_vendorid()))
 			return false;
 	}
 
@@ -881,7 +882,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	if (c->config->send_vendorid) {
-		if (!emit_v2V(response.pbs, pluto_vendorid))
+		if (!emit_v2V(response.pbs, config_setup_vendorid()))
 			return STF_INTERNAL_ERROR;
 	}
 

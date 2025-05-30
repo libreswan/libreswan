@@ -113,15 +113,15 @@ static bool selftest_only = false;
 
 /* pulled from main for show_setup_plutomain() */
 
-static char *coredir;
 static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
+
 static struct {
 	bool enable;
-	char *rootkey_file;
-	char *anchors;
-} pluto_dnssec = {0}; /* see main() */
+	const char *rootkey_file;
+	const char *anchors;
+} pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
@@ -134,16 +134,12 @@ void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(pluto_lock_filename);
-	pfree(coredir);
 	pfree(conffile);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
-	pfree(pluto_vendorid);
 	pfreeany(x509_ocsp.uri);
 	pfreeany(x509_ocsp.trust_name);
 	pfreeany(x509_crl.curl_iface);
-	pfreeany(pluto_dnssec.rootkey_file);
-	pfreeany(pluto_dnssec.anchors);
 	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
@@ -801,14 +797,7 @@ int main(int argc, char **argv)
 	 * the globals.
 	 */
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
-	coredir = clone_str(IPSEC_RUNDIR, "coredir in main()");
 	rundir = clone_str(IPSEC_RUNDIR, "rundir");
-	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
-
-#ifdef USE_DNSSEC
-	pluto_dnssec.enable = true;
-	pluto_dnssec.rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
-#endif
 
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
@@ -845,13 +834,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DUMPDIR:	/* --dumpdir */
-			pfree(coredir);
-			coredir = clone_str(optarg, "coredir via getopt");
+			update_setup_string(KSF_DUMPDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_VENDORID:	/* --vendorid */
-			pfree(pluto_vendorid);
-			pluto_vendorid = clone_str(optarg, "pluto_vendorid via getopt");
+			update_setup_string(KSF_MYVENDORID, optarg_nonempty(logger));
 			continue;
 
 		case OPT_STATSBIN:	/* --statsdir */
@@ -911,17 +898,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
-			/*
-			 * The default config value is
-			 * DEFAULT_DNSSEC_ROOTKEY_FILE, and not NULL,
-			 * so always replace; but only with something
-			 * non empty.
-			 */
-			update_string(&pluto_dnssec.rootkey_file, optarg);
+			/* reject '' */
+			update_setup_string(KSF_DNSSEC_ROOTKEY_FILE,
+					    optarg_nonempty(logger));
 			continue;
 
 		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
-			update_string(&pluto_dnssec.anchors, optarg);
+			/* allow '', become NULL */
+			update_setup_string(KSF_DNSSEC_ANCHORS,
+					    optarg_empty(logger));
 			continue;
 
 		case OPT_LOG_NO_TIME:	/* --log-no-time */
@@ -1080,7 +1065,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_NO_DNSSEC:	/* --no-dnssec */
-			pluto_dnssec.enable = false;
+			update_setup_yn(KYN_DNSSEC_ENABLE, YN_NO);
 			continue;
 
 		case OPT_INTERFACE:	/* --interface <ifname|ifaddr> */
@@ -1124,15 +1109,16 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
-			config_setup_string(KSF_SECRETSFILE, optarg);
+			/* allow empty */
+			update_setup_string(KSF_SECRETSFILE, optarg_empty(logger));
 			continue;
 
 		case OPT_IPSECDIR:	/* --ipsecdir <ipsec-dir> */
-			config_setup_string(KSF_IPSECDIR, optarg);
+			update_setup_string(KSF_IPSECDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
-			config_setup_string(KSF_NSSDIR, optarg);
+			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
@@ -1191,10 +1177,6 @@ int main(int argc, char **argv)
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			extract_config_string(&log_param.log_to_file, cfg, KSF_LOGFILE);
-
-			extract_config_yn(&pluto_dnssec.enable, cfg, KYN_DNSSEC_ENABLE);
-			extract_config_string(&pluto_dnssec.rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
-			extract_config_string(&pluto_dnssec.anchors, cfg, KSF_DNSSEC_ANCHORS);
 
 			/* plutofork= no longer supported via config file */
 			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
@@ -1291,19 +1273,6 @@ int main(int argc, char **argv)
 			if (extract_config_deltatime(&x509_crl.timeout, cfg, KBF_CRL_TIMEOUT_SECONDS)) {
 				check_conf(CRL_TIMEOUT_OK, "crl-timeout", logger);
 				/* checked below */
-			}
-
-			if (cfg->setup->values[KSF_DUMPDIR].string) {
-				pfree(coredir);
-				/* dumpdir= */
-				coredir = clone_str(cfg->setup->values[KSF_DUMPDIR].string,
-						    "coredir via --config");
-			}
-			/* vendorid= */
-			if (cfg->setup->values[KSF_MYVENDORID].string) {
-				pfree(pluto_vendorid);
-				pluto_vendorid = clone_str(cfg->setup->values[KSF_MYVENDORID].string,
-							   "pluto_vendorid via --config");
 			}
 
 			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
@@ -1433,6 +1402,13 @@ int main(int argc, char **argv)
 	} else {
 		lockfd = create_lock(logger);
 	}
+
+#ifdef USE_DNSSEC
+	const struct config_setup *oco = config_setup_singleton();
+	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
+	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
+	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
+#endif
 
 	/*
 	 * Create control socket before things fork.
@@ -1590,6 +1566,7 @@ int main(int argc, char **argv)
 
 	init_kernel_info(logger);
 
+	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
 		int e = errno;
@@ -1874,8 +1851,8 @@ void show_setup_plutomain(struct show *s)
 
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
-		coredir,
-		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
+	     config_setup_dumpdir(),
+	     pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));
@@ -1892,8 +1869,8 @@ void show_setup_plutomain(struct show *s)
 		IPSEC_EXECDIR);
 
 	show(s, "pluto_version=%s, pluto_vendorid=%s",
-		ipsec_version_code(),
-		pluto_vendorid);
+	     ipsec_version_code(),
+	     config_setup_vendorid());
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);
