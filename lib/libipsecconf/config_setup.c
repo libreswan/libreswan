@@ -94,6 +94,7 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_yn(KYN_LOGTIME, YN_YES);
 		update_setup_yn(KYN_LOGAPPEND, YN_YES);
 
+		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
 	}
 	return &config_setup;
 }

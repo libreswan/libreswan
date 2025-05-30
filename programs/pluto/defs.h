@@ -81,7 +81,6 @@ extern bool all_zero(const unsigned char *m, size_t len);
 
 extern bool in_main_thread(void);	/* in plutomain.c */
 
-void delete_lock(void);		/* XXX: better home? */
 void free_pluto_main(void);	/* XXX: better home? */
 
 #endif /* _DEFS_H */

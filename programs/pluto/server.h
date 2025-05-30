@@ -41,15 +41,11 @@ struct show;
 struct fd_read_listener;
 struct fd_accept_listener;
 struct timeout;
+struct config_setup;
 
-extern int ctl_fd;                      /* file descriptor of control (whack) socket */
-extern struct sockaddr_un ctl_addr;     /* address of control (whack) socket */
-
-extern int info_fd;                     /* file descriptor of control (info) socket */
-extern struct sockaddr_un info_addr;    /* address of control (info) socket */
-
-diag_t init_ctl_socket(struct logger *logger);
-extern void delete_ctl_socket(void);
+void check_open_fds(struct logger *logger);
+void init_ctl_socket(const struct config_setup *oco, struct logger *logger);
+void delete_ctl_socket(void);
 
 struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 					       ip_endpoint remote_endpoint,

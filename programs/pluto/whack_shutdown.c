@@ -39,6 +39,7 @@
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"		/* for close_log() et.al. */
 
+#include "lock_file.h"		/* for delete_lock_file() */
 #include "server_pool.h"	/* for stop_crypto_helpers() */
 #include "pluto_sd.h"		/* for pluto_sd() */
 #include "root_certs.h"		/* for free_root_certs() */
@@ -153,7 +154,7 @@ void exit_epilogue(void)
 	if (pluto_leave_state) {
 		shutdown_nss();
 		free_preshared_secrets(logger);
-		delete_lock();	/* delete any lock files */
+		delete_lock_file();	/* delete any lock files */
 		close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
 		pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
@@ -204,7 +205,7 @@ void exit_epilogue(void)
 	shutdown_kernel(logger);
 	shutdown_ike_session_resume(logger); /* before NSS! */
 	shutdown_nss();
-	delete_lock();	/* delete any lock files */
+	delete_lock_file();	/* delete any lock files */
 #ifdef USE_DNSSEC
 	unbound_ctx_free();	/* needs event-loop aka server */
 #endif

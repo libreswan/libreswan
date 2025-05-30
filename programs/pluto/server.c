@@ -53,6 +53,8 @@
 #include "lsw_socket.h"
 
 #include "constants.h"
+#include "config_setup.h"
+#include "ipsecconf/keywords.h"		/* for KSF_RUNDIR; grr */
 #include "defs.h"
 #include "state.h"
 #include "id.h"
@@ -107,18 +109,51 @@ struct sockaddr_un ctl_addr = {
 	.sun_path = DEFAULT_CTL_SOCKET
 };
 
-/* Initialize the control socket.
- * Note: this is called very early, so little infrastructure is available.
- * It is important that the socket is created before the original
- * Pluto process returns.
+void check_open_fds(struct logger *logger)
+{
+	for (int fd = getdtablesize() - 1; fd >= 0; fd--) {
+		if (fd == ctl_fd ||
+		    fd == STDIN_FILENO ||
+		    fd == STDOUT_FILENO ||
+		    fd == STDERR_FILENO) {
+			continue;
+		}
+		struct stat s;
+		if (fstat(fd, &s) == 0) {
+			/*
+			 * Not a pexpect(), this happens when
+			 * running under FAKETIME.
+			 */
+			llog(RC_LOG, logger, "unexpected open file descriptor %d", fd);
+		}
+	}
+}
+
+/*
+ * Initialize the control socket.
+ *
+ * Note: this is called very early, so little infrastructure is
+ * available.  Like the lock file, the socket needs to be created
+ * before the original (parent) Pluto process exits.  This is to stop
+ * a race between the detached child trying to create the socket while
+ * the shell that started pluto runs Whack which then tries to open
+ * it.
  */
 
-diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
+void init_ctl_socket(const struct config_setup *oco,
+		       struct logger *logger)
 {
+	const char *rundir = config_setup_string(oco, KSF_RUNDIR);
+	int n = snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
+			 "%s/pluto.ctl", rundir);
+	if (n < 0 || n >= (ssize_t)sizeof(ctl_addr.sun_path)) {
+		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, "rundir argument is too long for control socket path");
+	}
+
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
-		return diag_errno(errno, "could not create control socket: ");
+		fatal_errno(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not create control socket: ");
 	}
 
 	/* to keep control socket secure, use umask */
@@ -131,7 +166,7 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
 		 strlen(ctl_addr.sun_path)) < 0) {
-		return diag_errno(errno, "could not bind control socket: ");
+		fatal_errno(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not bind control socket: ");
 	}
 	umask(ou);
 
@@ -154,10 +189,9 @@ diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 	 * Rumour has it that this is the max on BSD systems.
 	 */
 	if (listen(ctl_fd, 5) < 0) {
-		return diag_errno(errno, "could not listen on control socket: ");
+		fatal_errno(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not listen on control socket: ");
 	}
 
-	return NULL;
 }
 
 void delete_ctl_socket(void)
