@@ -90,6 +90,10 @@ struct config_setup *config_setup_singleton(void)
 
 		update_setup_string(KSF_DNSSEC_ROOTKEY_FILE, DEFAULT_DNSSEC_ROOTKEY_FILE);
 		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
+
+		update_setup_yn(KYN_LOGTIME, YN_YES);
+		update_setup_yn(KYN_LOGAPPEND, YN_YES);
+
 	}
 	return &config_setup;
 }
@@ -102,46 +106,67 @@ void free_config_setup(void)
 	config_setup_is_set = false;
 }
 
+const char *config_setup_string(const struct config_setup *setup,
+				enum keywords field)
+{
+	passert(field < elemsof(setup->values));
+	return setup->values[field].string;
+}
+
+bool config_setup_yn(const struct config_setup *setup,
+		     enum keywords field)
+{
+	passert(field < elemsof(setup->values));
+	enum yn_options yn = setup->values[field].option;
+	switch (yn) {
+	case 0: return false;
+	case YN_NO: return false;
+	case YN_YES: return true;
+	}
+	bad_case(yn);
+}
+
+deltatime_t config_setup_deltatime(const struct config_setup *setup,
+				   enum keywords field)
+{
+	passert(field < elemsof(setup->values));
+	return setup->values[field].deltatime;
+}
+
 const char *config_setup_ipsecdir(void)
 {
-	config_setup_singleton();
-	return config_setup.values[KSF_IPSECDIR].string;
+	return config_setup_string(config_setup_singleton(), KSF_IPSECDIR);
 }
 
 const char *config_setup_secretsfile(void)
 {
-	config_setup_singleton();
-	return config_setup.values[KSF_SECRETSFILE].string;
+	return config_setup_string(config_setup_singleton(), KSF_SECRETSFILE);
 }
 
 const char *config_setup_nssdir(void)
 {
-	config_setup_singleton();
-	return config_setup.values[KSF_NSSDIR].string;
+	return config_setup_string(config_setup_singleton(), KSF_NSSDIR);
 }
 
 const char *config_setup_dumpdir(void)
 {
-	config_setup_singleton();
-	return config_setup.values[KSF_DUMPDIR].string;
+	return config_setup_string(config_setup_singleton(), KSF_DUMPDIR);
 }
 
 const char *config_setup_vendorid(void)
 {
-	config_setup_singleton();
-	return config_setup.values[KSF_MYVENDORID].string;
+	return config_setup_string(config_setup_singleton(), KSF_MYVENDORID);
 }
 
 lset_t config_setup_debugging(struct logger *logger)
 {
-	config_setup_singleton();
 	/*
 	 * Use ttolmod() since it both knows how to parse a comma
 	 * separated list and can handle no-XXX (ex: all,no-xauth).
 	 * The final set of enabled bits is returned in .set.
 	 */
 	lmod_t result = {0};
-	const char *plutodebug = config_setup.values[KSF_PLUTODEBUG].string;
+	const char *plutodebug = config_setup_string(config_setup_singleton(), KSF_PLUTODEBUG);
 	if (!ttolmod(shunk1(plutodebug), &result, &debug_lmod_info, true/*enable*/)) {
 		/*
 		 * If the lookup failed, complain.

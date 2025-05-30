@@ -359,26 +359,6 @@ static bool extract_config_deltatime(deltatime_t *target,
 	return update_deltatime(target, cfg->setup->values[field].deltatime);
 }
 
-static bool update_string(char **target, const char *value)
-{
-	/* Do nothing if value is unset; convert '' into NULL. */
-	if (value != NULL) {
-		pfreeany(*target);
-		if (strlen(value) > 0) {
-			(*target) = clone_str(value, __func__);
-		}
-		return true;
-	}
-	return false;
-}
-
-static bool extract_config_string(char **target,
-				  const struct starter_config *cfg,
-				  enum keywords field)
-{
-	return update_string(target, cfg->setup->values[field].string);
-}
-
 static bool update_yn(bool *target, enum yn_options yn)
 {
 	/* Do nothing if value is unset. */
@@ -773,11 +753,6 @@ int main(int argc, char **argv)
 	argv[0] = "ipsec pluto";
 	struct logger *logger = init_log(argv[0]);	/* must free */
 
-	struct log_param log_param = {
-		.log_with_timestamp = true,
-		.append = true,
-	};
-
 	/*
 	 * More sanity checks.
 	 */
@@ -890,11 +865,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_STDERRLOG:	/* --stderrlog */
-			log_param.log_to_stderr = true;
+			update_setup_yn(KYN_LOGSTDERR, YN_YES);
 			continue;
 
 		case OPT_LOGFILE:	/* --logfile */
-			update_string(&log_param.log_to_file, optarg);
+			update_setup_string(KSF_LOGFILE, optarg_nonempty(logger));
 			continue;
 
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
@@ -910,11 +885,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_LOG_NO_TIME:	/* --log-no-time */
-			log_param.log_with_timestamp = false;
+			update_setup_yn(KYN_LOGTIME, YN_NO);
 			continue;
 
 		case OPT_LOG_NO_APPEND:	/* --log-no-append */
-			log_param.append = false;
+			update_setup_yn(KYN_LOGAPPEND, YN_NO);
 			continue;
 
 		case OPT_LOG_NO_IP:	/* --log-no-ip */
@@ -1153,9 +1128,9 @@ int main(int argc, char **argv)
 
 		case OPT_SELFTEST:	/* --selftest */
 			selftest_only = true;
-			log_param.log_to_stderr = true;
-			log_param.log_with_timestamp = false;
 			fork_desired = false;
+			update_setup_yn(KYN_LOGSTDERR, YN_YES);
+			update_setup_yn(KYN_LOGTIME, YN_NO);
 			continue;
 
 		case OPT_VIRTUAL_PRIVATE:	/* --virtual-private */
@@ -1176,11 +1151,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			extract_config_string(&log_param.log_to_file, cfg, KSF_LOGFILE);
-
-			/* plutofork= no longer supported via config file */
-			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
-			extract_config_yn(&log_param.append, cfg, KYN_LOGAPPEND);
 			extract_config_yn(&log_ip, cfg, KYN_LOGIP);
 			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
 			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
@@ -1379,6 +1349,9 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/* options processed save to obtain the setup */
+	UNUSED const struct config_setup *oco = config_setup_singleton();
+
 	/*
 	 * Anything (aka an argument) after all options consumed?
 	 */
@@ -1402,13 +1375,6 @@ int main(int argc, char **argv)
 	} else {
 		lockfd = create_lock(logger);
 	}
-
-#ifdef USE_DNSSEC
-	const struct config_setup *oco = config_setup_singleton();
-	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
-	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
-	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
-#endif
 
 	/*
 	 * Create control socket before things fork.
@@ -1485,7 +1451,7 @@ int main(int argc, char **argv)
 		/* no daemon fork: we have to fill in lock file */
 		(void) fill_lock(lockfd, getpid());
 
-		if (isatty(fileno(stdout)) && !log_param.log_to_stderr) {
+		if (isatty(fileno(stdout)) && !config_setup_yn(oco, KYN_LOGSTDERR)) {
 			/*
 			 * Last gasp; from now on everything goes to
 			 * the file/syslog.
@@ -1537,7 +1503,7 @@ int main(int argc, char **argv)
 	 * switch debugging flags when specified).
 	 */
 
-	switch_log(log_param, &logger);
+	switch_log(oco, &logger);
 
 	/*
 	 * Forking done; logging enabled.  Time to announce things to
@@ -1798,6 +1764,9 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
+	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
+	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
+	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
 	d = unbound_event_init(get_pluto_event_base(),
 			       pluto_dnssec.enable,
 			       pluto_dnssec.rootkey_file,
