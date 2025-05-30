@@ -82,21 +82,6 @@ static const struct sparse_names kw_seccomp_names = {
 #endif
 
 /*
- * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns, literal }
- */
-static const struct sparse_names kw_pubkey_names = {
-	.list = {
-		SPARSE("",             PUBKEY_PREEXCHANGED),
-		SPARSE("%cert",        PUBKEY_CERTIFICATE),
-#ifdef USE_DNSSEC
-		SPARSE("%dns",         PUBKEY_DNSONDEMAND),
-		SPARSE("%dnsondemand", PUBKEY_DNSONDEMAND),
-#endif
-		SPARSE_NULL
-	},
-};
-
-/*
  * Values for right= and left=
  */
 
@@ -215,9 +200,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_string,  KWS_ID, NULL, NULL, },
-  { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &kw_pubkey_names, NULL, },
-  { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &kw_pubkey_names, NULL, },
-  { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &kw_pubkey_names, NULL, },
+  { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_RSASIGKEY, &keyword_pubkey_names, NULL, },
+  { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KW_ECDSAKEY, &keyword_pubkey_names, NULL, },
+  { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KW_PUBKEY, &keyword_pubkey_names, NULL, },
   { "cert",  kv_conn | kv_leftright,  kt_string,  KWS_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KWS_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_string,  KWS_SENDCERT, NULL, NULL, },

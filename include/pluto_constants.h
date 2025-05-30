@@ -110,6 +110,20 @@ enum remote_peer_type {
 
 extern const struct sparse_names remote_peer_type_names;
 
+/*
+ * Potential keyword values for fields like {left,right}rsasigkey=.
+ *
+ * This is internal to the config parser and doesn't belong in whack
+ * or on the wire.
+ */
+
+enum keyword_pubkey {
+	PUBKEY_DNSONDEMAND  = 1,
+	PUBKEY_CERTIFICATE  = 2,
+};
+
+extern const struct sparse_names keyword_pubkey_names;
+
 enum keyword_auth {
 	AUTH_UNSET = 0,
 	AUTH_NEVER,

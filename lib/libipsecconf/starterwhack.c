@@ -128,33 +128,8 @@ static bool set_whack_end(struct whack_end *w,
 			continue;
 		}
 
-		switch (l->values[key->kscf].option) {
-
-		case PUBKEY_DNSONDEMAND:
-			w->key_from_DNS_on_demand = true;
-			break;
-
-		case PUBKEY_PREEXCHANGED:
-			/*
-			 * Only send over raw (prexchanged) rsapubkeys
-			 * (i.e., not %cert et.a.)
-			 *
-			 * XXX: but what is with the two rsasigkeys?
-			 * Whack seems to be willing to send pluto two
-			 * raw pubkeys under the same ID.  Just assume
-			 * that the first key should be used for the
-			 * CKAID.
-			 */
-			w->key_from_DNS_on_demand = false;
-			w->pubkey = l->values[key->kscf].string;
-			w->pubkey_alg = key->alg;
-			break;
-
-		default:
-			w->key_from_DNS_on_demand = false;
-			break;
-		}
-
+		w->pubkey = l->values[key->kscf].string;
+		w->pubkey_alg = key->alg;
 		break;
 	}
 

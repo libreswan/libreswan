@@ -1754,6 +1754,21 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	/*
+	 * Handle %dnsondemand and %cert.  Only set PUBKEY when it's a
+	 * rawkey.
+	 */
+	const char *pubkey = NULL;
+	if (src->pubkey != NULL) {
+		const struct sparse_name *sparse = sparse_lookup_by_name(&keyword_pubkey_names,
+									 shunk1(src->pubkey));
+		if (sparse == NULL) {
+			pubkey = src->pubkey;
+		} else if (sparse->value == PUBKEY_DNSONDEMAND) {
+			host_config->key_from_DNS_on_demand = true;
+		} /* else, ignore %cert! */
+	}
+
+	/*
 	 * Try to find the cert / private key.
 	 *
 	 * XXX: Be lazy and simply warn about combinations such as
@@ -1770,13 +1785,13 @@ static diag_t extract_host_end(struct host_end *host,
 				    leftright, src->cert);
 		}
 
-		if (src->pubkey != NULL) {
+		if (pubkey != NULL) {
 			enum_buf pkb;
 			llog(RC_LOG, logger,
 			     "warning: ignoring %s %s '%s' and using %s certificate '%s'",
 			     leftright,
 			     str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-			     src->pubkey,
+			     pubkey,
 			     leftright, src->cert);
 		}
 
@@ -1793,7 +1808,7 @@ static diag_t extract_host_end(struct host_end *host,
 			return diag;
 		}
 
-	} else if (src->pubkey != NULL) {
+	} else if (pubkey != NULL) {
 
 		/*
 		 * Extract the CKAID from the PUBKEY.  When there's an
@@ -1827,7 +1842,7 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
-		err = whack_pubkey_to_chunk(src->pubkey_alg, src->pubkey, &keyspace);
+		err = whack_pubkey_to_chunk(src->pubkey_alg, pubkey, &keyspace);
 		if (err != NULL) {
 			enum_buf pkb;
 			return diag("%s%s invalid: %s",
@@ -2075,8 +2090,6 @@ static diag_t extract_host_end(struct host_end *host,
 			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
-
-	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 
 	host_config->sendcert = extract_sparse_name(leftright, "sendcert", src->sendcert,
 						    cert_defaultcertpolicy, &sendcert_policy_names,

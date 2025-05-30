@@ -309,20 +309,6 @@ enum keyword_valid {
 #endif
 };
 
-/*
- * Potential keyword values for fields like {left,right}rsasigkey=.
- *
- * This is internal to the config parser and doesn't belong in whack
- * or on the wire.
- */
-
-enum keyword_pubkey {
-	PUBKEY_NOTSET       = 0,
-	PUBKEY_DNSONDEMAND  = 1,
-	PUBKEY_CERTIFICATE  = 2,
-	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
-};
-
 enum keyword_type {
 	kt_string,              /* value is some string */
 	kt_appendstring,        /* value is some string, append duplicates */

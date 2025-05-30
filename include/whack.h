@@ -164,7 +164,6 @@ struct whack_end {
 	const char *subnets;	/* alias subnet expansion */
 	const char *protoport;
 
-	bool key_from_DNS_on_demand;
 	const char *updown;		/* string */
 	const char *virt;
 	const char *addresspool;
