@@ -35,12 +35,18 @@ void update_setup_deltatime(enum keywords kw, deltatime_t deltatime);
 void update_setup_option(enum keywords kw, uintmax_t option);
 #endif
 
+const char *config_setup_string(const struct config_setup *setup,
+				enum keywords field);
+bool config_setup_yn(const struct config_setup *setup,
+		     enum keywords field);
+deltatime_t config_setup_deltatime(const struct config_setup *setup,
+				   enum keywords field);
+
 const char *config_setup_ipsecdir(void);
 const char *config_setup_secretsfile(void);
 const char *config_setup_nssdir(void);
 const char *config_setup_dumpdir(void);
 const char *config_setup_vendorid(void);
-
 lset_t config_setup_debugging(struct logger *logger);
 
 /*
