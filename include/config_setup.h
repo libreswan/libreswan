@@ -32,6 +32,8 @@ void config_setup_option(enum keywords kw, uintmax_t option);
 const char *config_setup_ipsecdir(void);
 const char *config_setup_secretsfile(void);
 const char *config_setup_nssdir(void);
+const char *config_setup_dumpdir(void);
+
 lset_t config_setup_debugging(struct logger *logger);
 
 #endif

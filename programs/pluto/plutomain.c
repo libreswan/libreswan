@@ -113,7 +113,6 @@ static bool selftest_only = false;
 
 /* pulled from main for show_setup_plutomain() */
 
-static char *coredir;
 static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
@@ -134,7 +133,6 @@ void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(pluto_lock_filename);
-	pfree(coredir);
 	pfree(conffile);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
@@ -801,7 +799,6 @@ int main(int argc, char **argv)
 	 * the globals.
 	 */
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
-	coredir = clone_str(IPSEC_RUNDIR, "coredir in main()");
 	rundir = clone_str(IPSEC_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
@@ -845,8 +842,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DUMPDIR:	/* --dumpdir */
-			pfree(coredir);
-			coredir = clone_str(optarg, "coredir via getopt");
+			config_setup_string(KSF_DUMPDIR, optarg);
 			continue;
 
 		case OPT_VENDORID:	/* --vendorid */
@@ -1293,12 +1289,6 @@ int main(int argc, char **argv)
 				/* checked below */
 			}
 
-			if (cfg->setup->values[KSF_DUMPDIR].string) {
-				pfree(coredir);
-				/* dumpdir= */
-				coredir = clone_str(cfg->setup->values[KSF_DUMPDIR].string,
-						    "coredir via --config");
-			}
 			/* vendorid= */
 			if (cfg->setup->values[KSF_MYVENDORID].string) {
 				pfree(pluto_vendorid);
@@ -1590,6 +1580,7 @@ int main(int argc, char **argv)
 
 	init_kernel_info(logger);
 
+	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
 		int e = errno;
@@ -1874,8 +1865,8 @@ void show_setup_plutomain(struct show *s)
 
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
-		coredir,
-		pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
+	     config_setup_dumpdir(),
+	     pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));

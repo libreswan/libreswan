@@ -100,6 +100,12 @@ const char *config_setup_nssdir(void)
 	return config_setup.values[KSF_NSSDIR].string;
 }
 
+const char *config_setup_dumpdir(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_DUMPDIR].string;
+}
+
 lset_t config_setup_debugging(struct logger *logger)
 {
 	config_setup_singleton();
