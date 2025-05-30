@@ -42,11 +42,18 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
 #include "show.h"
+#include "config_setup.h"
+#include "ipsecconf/keywords.h" /* for KW_* */
 
 static struct fd *logger_fd(const struct logger *logger);
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
-static struct log_param log_param;	/* set during startup */
+static struct log_param {
+	bool log_to_stderr;
+	const char *log_to_file;
+	bool log_with_timestamp;	/* testsuite requires no timestamps */
+	bool append;
+} log_param;
 
 bool log_to_audit = true;
 
@@ -66,10 +73,12 @@ struct logger *init_log(const char *progname)
 	return string_logger(HERE, "%s", progname);
 }
 
-void switch_log(struct log_param param, struct logger **logger)
+void switch_log(const struct config_setup *oco, struct logger **logger)
 {
-	/* save parameters */
-	log_param = param;
+	log_param.log_to_stderr = config_setup_yn(oco, KYN_LOGSTDERR);
+	log_param.log_to_file = config_setup_string(oco, KSF_LOGFILE);
+	log_param.log_with_timestamp = config_setup_yn(oco, KYN_LOGTIME);
+	log_param.append = config_setup_yn(oco, KYN_LOGAPPEND);
 
 	/*
 	 * NOTE: Can't touch global PLUTO_LOG_FILE as it is in use.
@@ -79,15 +88,15 @@ void switch_log(struct log_param param, struct logger **logger)
 	PASSERT((*logger), pluto_log_file == stderr);
 	FILE *log_file = NULL;
 
-	if (param.log_to_file != NULL) {
-		log_file = fopen(param.log_to_file, param.append ? "a" : "w");
+	if (log_param.log_to_file != NULL) {
+		log_file = fopen(log_param.log_to_file, (log_param.append ? "a" : "w"));
 		if (log_file == NULL) {
 			llog_errno(RC_LOG, (*logger), errno,
-				   "cannot open logfile '%s':", param.log_to_file);
+				   "cannot open logfile '%s':",
+				   log_param.log_to_file);
 			/* keep logging but to stdout! */
-			pfree(param.log_to_file);
-			param.log_to_file = NULL;
-			param.log_to_stderr = true;
+			log_param.log_to_file = NULL;
+			log_param.log_to_stderr = true;
 		} else {
 			/*
 			 * buffer by line: should be faster that no
@@ -98,7 +107,7 @@ void switch_log(struct log_param param, struct logger **logger)
 		}
 	}
 
-	if (log_file == NULL && param.log_to_stderr) {
+	if (log_file == NULL && log_param.log_to_stderr) {
 		log_file = stderr;
 		setbuf(log_file, NULL);
 	}
@@ -235,11 +244,6 @@ static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 		syslog(severity, "%s%s", prefix, buf->array);
 	}
 	/* not whack */
-}
-
-void free_log(void)
-{
-	pfreeany(log_param.log_to_file);
 }
 
 void close_log(void)

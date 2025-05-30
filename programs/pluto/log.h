@@ -32,24 +32,17 @@ struct connection;
 struct msg_digest;
 struct pending;
 struct show;
+struct config_setup;
 
 /* moved common code to library file */
 #include "passert.h"
-
-struct log_param {
-	bool log_to_stderr;
-	char *log_to_file;
-	bool log_with_timestamp;	/* testsuite requires no timestamps */
-	bool append;
-};
 
 /*
  * Log 'cur' directly (without setting it first).
  */
 
 struct logger *init_log(const char *progname);
-void switch_log(struct log_param, struct logger **logger);
-void free_log(void);	/* call before report_leaks() */
+void switch_log(const struct config_setup *oco, struct logger **logger);
 void close_log(void);	/* call after report_leaks() */
 void show_log(struct show *s);
 
