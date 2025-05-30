@@ -528,7 +528,7 @@ int main(int argc, char *argv[])
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
 		case OPT_NSSDIR:
-			config_setup_string(KSF_NSSDIR, optarg);
+			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_PASSWORD:

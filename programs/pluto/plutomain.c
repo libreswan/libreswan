@@ -840,11 +840,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DUMPDIR:	/* --dumpdir */
-			config_setup_string(KSF_DUMPDIR, optarg);
+			update_setup_string(KSF_DUMPDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_VENDORID:	/* --vendorid */
-			config_setup_string(KSF_MYVENDORID, optarg);
+			update_setup_string(KSF_MYVENDORID, optarg_nonempty(logger));
 			continue;
 
 		case OPT_STATSBIN:	/* --statsdir */
@@ -1117,15 +1117,16 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
-			config_setup_string(KSF_SECRETSFILE, optarg);
+			/* allow empty */
+			update_setup_string(KSF_SECRETSFILE, optarg_empty(logger));
 			continue;
 
 		case OPT_IPSECDIR:	/* --ipsecdir <ipsec-dir> */
-			config_setup_string(KSF_IPSECDIR, optarg);
+			update_setup_string(KSF_IPSECDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_NSSDIR:	/* --nssdir <path> */
-			config_setup_string(KSF_NSSDIR, optarg);
+			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */

@@ -35,7 +35,7 @@
 static bool config_setup_is_set;
 static struct config_setup config_setup;
 
-void config_setup_string(enum keywords kw, const char *string)
+void update_setup_string(enum keywords kw, const char *string)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -44,7 +44,23 @@ void config_setup_string(enum keywords kw, const char *string)
 	kv->string = clone_str(string, "kv");
 }
 
-void config_setup_option(enum keywords kw, uintmax_t option)
+void update_setup_yn(enum keywords kw, enum yn_options yn)
+{
+	config_setup_singleton();
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->option = yn;
+}
+
+void update_setup_deltatime(enum keywords kw, deltatime_t deltatime)
+{
+	config_setup_singleton();
+	passert(kw < elemsof(config_setup.values));
+	struct keyword_value *kv = &config_setup.values[kw];
+	kv->deltatime = deltatime;
+}
+
+static void update_setup_option(enum keywords kw, uintmax_t option)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -57,20 +73,21 @@ struct config_setup *config_setup_singleton(void)
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
 
-		config_setup_option(KBF_IKEBUF, IKE_BUF_AUTO);
-		config_setup_option(KBF_NHELPERS, -1);
-		config_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
-		config_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
-		config_setup_option(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
-		config_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
-		config_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-		config_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
+		update_setup_option(KBF_IKEBUF, IKE_BUF_AUTO);
+		update_setup_option(KBF_NHELPERS, -1);
+		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
+		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
+		update_setup_option(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
+		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
+		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
+		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
 
-		config_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
-		config_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
-		config_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
-		config_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
-		config_setup_string(KSF_MYVENDORID, ipsec_version_vendorid());
+		update_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
+		update_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
+		update_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
+		update_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
+		update_setup_string(KSF_MYVENDORID, ipsec_version_vendorid());
+
 	}
 	return &config_setup;
 }

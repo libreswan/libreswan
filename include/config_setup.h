@@ -19,15 +19,21 @@
 #include <stdint.h>
 
 #include "lset.h"
+#include "deltatime.h"
 
+enum yn_options;
 enum keywords;
 struct logger;
 
 struct config_setup *config_setup_singleton(void);
 void free_config_setup(void);
 
-void config_setup_string(enum keywords kw, const char *string);
-void config_setup_option(enum keywords kw, uintmax_t option);
+void update_setup_string(enum keywords kw, const char *string);
+void update_setup_yn(enum keywords kw, enum yn_options yn);
+void update_setup_deltatime(enum keywords kw, deltatime_t deltatime);
+#if 0
+void update_setup_option(enum keywords kw, uintmax_t option);
+#endif
 
 const char *config_setup_ipsecdir(void);
 const char *config_setup_secretsfile(void);
