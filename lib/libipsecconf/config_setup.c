@@ -95,6 +95,9 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_yn(KYN_LOGAPPEND, YN_YES);
 
 		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
+
+		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime(5/*seconds*/));
+
 	}
 	return &config_setup;
 }

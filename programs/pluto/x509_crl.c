@@ -36,6 +36,8 @@
 #include "timer.h"
 #include "keys.h"		/* for pluto_pubkeys; */
 #include "server_fork.h"
+#include "config_setup.h"
+#include "ipsecconf/keywords.h"		/* for *CRL*; grr */
 
 struct crl_distribution_point;
 
@@ -322,8 +324,8 @@ void fetch_crl(struct crl_distribution_point *wip, int wstatus, shunk_t output,
 	char *argv[] = {
 		IPSEC_EXECDIR "/_import_crl",
 		(*current)->url,
-		(char*)str_deltatime(x509_crl.timeout, &td),
-		(x509_crl.curl_iface == NULL ? "" : x509_crl.curl_iface),
+		(x509_crl.timeout.is_set ? (char*)str_deltatime(x509_crl.timeout, &td) : "0"),
+		(x509_crl.curl_iface != NULL ? (char*)x509_crl.curl_iface : ""),
 		NULL,
 	};
 
@@ -539,10 +541,4 @@ void shutdown_x509_crl_queue(struct logger *logger)
 	}
 }
 
-struct x509_crl_config x509_crl = {
-	.curl_iface = NULL,
-	.strict = false,
-	.timeout = DELTATIME_INIT(5/*seconds*/),
-	/* 0 is special and default: do not check crls dynamically */
-	.check_interval = DELTATIME_INIT(0),
-};
+struct x509_crl_config x509_crl = {0}; /* see config_setup.[hc] */

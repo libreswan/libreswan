@@ -134,7 +134,6 @@ void free_pluto_main(void)
 	pfreeany(pluto_listen);
 	pfreeany(x509_ocsp.uri);
 	pfreeany(x509_ocsp.trust_name);
-	pfreeany(x509_crl.curl_iface);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
 	free_config_setup();
@@ -623,6 +622,25 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 	return NULL;
 }
 
+static void update_optarg_deltatime(enum keywords kw, struct logger *logger,
+				   enum timescale timescale, int lower, int upper)
+{
+	deltatime_t time = optarg_deltatime(logger, timescale);
+	check_diag(logger, deltatime_ok(time, lower, upper));
+	update_setup_deltatime(kw, time);
+}
+
+static deltatime_t check_config_deltatime(const struct config_setup *oco, enum keywords kw,
+					  struct logger *logger,
+					  int lower, int upper, const char *name)
+{
+	deltatime_t time = config_setup_deltatime(oco, kw);
+	if (time.is_set) {
+		check_conf(deltatime_ok(time, lower, upper), name, logger);
+	}
+	return time;
+}
+
 #ifdef USE_EFENCE
 extern int EF_PROTECT_BELOW;
 extern int EF_PROTECT_FREE;
@@ -882,21 +900,19 @@ int main(int argc, char **argv)
 #endif
 
 		case OPT_CURL_IFACE:	/* --curl-iface */
-			replace_value(&x509_crl.curl_iface, optarg);
+			update_setup_string(KSF_CURLIFACE, optarg_nonempty(logger));
 			continue;
-
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
-			x509_crl.timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define CRL_TIMEOUT_OK deltatime_ok(x509_crl.timeout, 1, 1000)
-			check_diag(logger, CRL_TIMEOUT_OK);
+#define CRL_TIMEOUT_RANGE 1, 1000
+			update_optarg_deltatime(KBF_CRL_TIMEOUT_SECONDS, logger,
+						TIMESCALE_SECONDS, CRL_TIMEOUT_RANGE);
 			continue;
-
 		case OPT_CRL_STRICT:	/* --crl-strict */
-			x509_crl.strict = true;
+			update_setup_yn(KYN_CRL_STRICT, YN_YES);
 			continue;
-
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
-			x509_crl.check_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			update_setup_deltatime(KBF_CRL_CHECKINTERVAL,
+					       optarg_deltatime(logger, TIMESCALE_SECONDS));
 			continue;
 
 		case OPT_OCSP_STRICT:
@@ -1082,8 +1098,6 @@ int main(int argc, char **argv)
 			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
 
-			extract_config_yn(&x509_crl.strict, cfg, KYN_CRL_STRICT);
-
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
 			extract_config_yn(&x509_ocsp.enable, cfg, KYN_OCSP_ENABLE);
@@ -1118,7 +1132,6 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			extract_config_deltatime(&x509_crl.check_interval, cfg, KBF_CRL_CHECKINTERVAL);
 			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
 
 			/*
@@ -1142,15 +1155,6 @@ int main(int argc, char **argv)
 #endif
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
-
-			if (cfg->setup->values[KSF_CURLIFACE].string) {
-				replace_value(&x509_crl.curl_iface, cfg->setup->values[KSF_CURLIFACE].string);
-			}
-
-			if (extract_config_deltatime(&x509_crl.timeout, cfg, KBF_CRL_TIMEOUT_SECONDS)) {
-				check_conf(CRL_TIMEOUT_OK, "crl-timeout", logger);
-				/* checked below */
-			}
 
 			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
 				if (access(cfg->setup->values[KSF_STATSBINARY].string, X_OK) == 0) {
@@ -1258,6 +1262,16 @@ int main(int argc, char **argv)
 
 	/* options processed save to obtain the setup */
 	UNUSED const struct config_setup *oco = config_setup_singleton();
+
+	/*
+	 * Extract/check x509 crl configuration before forking.
+	 */
+
+	x509_crl.curl_iface = config_setup_string(oco, KSF_CURLIFACE);
+	x509_crl.strict = config_setup_yn(oco, KYN_CRL_STRICT);
+	x509_crl.check_interval = config_setup_deltatime(oco, KBF_CRL_CHECKINTERVAL);
+	x509_crl.timeout = check_config_deltatime(oco, KBF_CRL_TIMEOUT_SECONDS, logger,
+						  CRL_TIMEOUT_RANGE, "crl-timeout");
 
 	/*
 	 * Anything (aka an argument) after all options consumed?

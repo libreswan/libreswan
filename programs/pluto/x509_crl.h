@@ -37,7 +37,7 @@ void shutdown_x509_crl_queue(struct logger *logger);
 
 struct x509_crl_config {
 	deltatime_t timeout;
-	char *curl_iface;
+	const char *curl_iface;
 	bool strict;
 	deltatime_t check_interval;
 };

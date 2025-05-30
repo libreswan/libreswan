@@ -83,4 +83,6 @@ extern bool in_main_thread(void);	/* in plutomain.c */
 
 void free_pluto_main(void);	/* XXX: better home? */
 
+void check_deltatime(deltatime_t timeout, int lower, int upper, const char *conf, struct logger *logger);
+
 #endif /* _DEFS_H */
