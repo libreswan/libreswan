@@ -1379,6 +1379,9 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/* options processed save to obtain the setup */
+	UNUSED const struct config_setup *oco = config_setup_singleton();
+
 	/*
 	 * Anything (aka an argument) after all options consumed?
 	 */
@@ -1402,13 +1405,6 @@ int main(int argc, char **argv)
 	} else {
 		lockfd = create_lock(logger);
 	}
-
-#ifdef USE_DNSSEC
-	const struct config_setup *oco = config_setup_singleton();
-	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
-	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
-	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
-#endif
 
 	/*
 	 * Create control socket before things fork.
@@ -1798,6 +1794,9 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
+	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
+	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
+	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
 	d = unbound_event_init(get_pluto_event_base(),
 			       pluto_dnssec.enable,
 			       pluto_dnssec.rootkey_file,
