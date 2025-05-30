@@ -63,7 +63,7 @@ road #
 "modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
 "modecfg-road-eastnet-psk" #1: XAUTH client - possibly awaiting CFG_set {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "modecfg-road-eastnet-psk" #1: received IPv4 lease 192.0.2.209, updating source IP address
-"modecfg-road-eastnet-psk" #1: received and ignored CISCO_SPLIT_INC in MODE_CFG SET payload
+"modecfg-road-eastnet-psk" #1: ignoring CISCO_SPLITs in MODE_CFG SET payload, cisco-split=no
 "modecfg-road-eastnet-psk" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=3DES_CBC_192 integ=HMAC_SHA1 group=MODP1536}
 "modecfg-road-eastnet-psk" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP1536 192.0.2.209/32===192.0.2.0/24}
 "modecfg-road-eastnet-psk" #2: sent Quick Mode request
