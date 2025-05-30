@@ -161,13 +161,8 @@ static bool set_whack_end(struct whack_end *w,
 	w->ca = l->values[KWS_CA].string;
 	w->sendcert = l->values[KWS_SENDCERT].string;
 
-	if (l->values[KNCF_AUTH].set)
-		w->auth = l->values[KNCF_AUTH].option;
-
-	if (l->values[KNCF_EAP].set)
-		w->eap = l->values[KNCF_EAP].option;
-	else
-		w->eap = IKE_EAP_NONE;
+	w->auth = l->values[KWS_AUTH].string;
+	w->autheap = l->values[KWS_AUTHEAP].string;
 
 	w->updown = l->values[KWS_UPDOWN].string;
 
@@ -239,12 +234,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.rekey = conn->values[KWYN_REKEY].option;
 	msg.reauth = conn->values[KWYN_REAUTH].option;
 
-	if (conn->values[KNCF_MTU].set)
-		msg.mtu = conn->values[KNCF_MTU].option;
-	if (conn->values[KNCF_PRIORITY].set)
-		msg.priority = conn->values[KNCF_PRIORITY].option;
-	if (conn->values[KNCF_TFC].set)
-		msg.tfc = conn->values[KNCF_TFC].option;
+	msg.mtu = conn->values[KWS_MTU].string;
+	msg.priority = conn->values[KWS_PRIORITY].string;
+	msg.tfc = conn->values[KWS_TFC].string;
 	msg.send_esp_tfc_padding_not_supported =
 		conn->values[KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED].option;
 	msg.nflog_group = conn->values[KWS_NFLOG_GROUP].string;

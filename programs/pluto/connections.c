@@ -1355,32 +1355,28 @@ static uintmax_t check_range(const char *story,
 	return value;
 }
 
-static uintmax_t extract_uintmax(const char *leftright,
+static uintmax_t extract_uintmax(const char *story,
+				 const char *leftright,
 				 const char *name,
 				 const char *value,
-				 uintmax_t value_when_unset,
-				 uintmax_t min, uintmax_t max,
+				 struct range range,
 				 const struct whack_message *wm,
 				 diag_t *d,
 				 struct logger *logger)
 {
 	(*d) = NULL;
 	if (!can_extract_string(leftright, name, value, wm, logger)) {
-		return value_when_unset;
+		return range.value_when_unset;
 	}
 
-	uintmax_t uintmax;
-	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &uintmax);
+	uintmax_t number;
+	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &number);
 	if (err != NULL) {
 		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
-		return value_when_unset;
+		return range.value_when_unset;
 	}
-	if (uintmax < min || uintmax > max) {
-		(*d) = diag("%s%s=%ju invalid, must be in the range %ju-%ju",
-			    leftright, name, uintmax, min, max);
-		return value_when_unset;
-	}
-	return uintmax;
+
+	return check_range(story, leftright, name, number, range, d, logger);
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
@@ -1949,9 +1945,25 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->xauthusername,
 						     wm, logger);
-	host_config->eap = src->eap;
+	enum eap_options autheap = extract_sparse_name(leftright, "autheap", src->autheap,
+						       /*value_when_unset*/IKE_EAP_NONE,
+						       &eap_option_names,
+						       wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
 
-	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
+	host_config->eap = autheap;
+
+	enum keyword_auth auth = extract_enum_name(leftright, "auth", src->auth,
+						   /*value_when_unset*/AUTH_UNSET,
+						   &keyword_auth_names,
+						   wm, &d, logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (autheap == IKE_EAP_NONE && auth == AUTH_EAPONLY) {
 		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
 	}
 
@@ -1959,26 +1971,14 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Determine the authentication from auth= and authby=.
 	 */
 
-	if (is_never_negotiate_wm(wm) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
+	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
 		/* AUTH_UNSET is updated below */
 		enum_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&keyword_auth_names, src->auth, &ab));
-	}
-
-	/*
-	 * Note: this checks the whack message (WM), and not the
-	 * connection (C) being construct - it could be done before
-	 * extract_end(), but do it here.
-	 *
-	 * XXX: why not allow this?
-	 */
-	if ((src->auth == AUTH_UNSET) != (other_src->auth == AUTH_UNSET)) {
-		return diag("leftauth= and rightauth= must both be set or both be unset");
+			    leftright, str_enum_short(&keyword_auth_names, auth, &ab));
 	}
 
 	struct authby authby = whack_authby;
-	enum keyword_auth auth = src->auth;
 
 	/*
 	 * IKEv1 only allows symetric authentication using authby=
@@ -3739,6 +3739,27 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->tfc,
+					(struct range) {
+						.value_when_unset = 0,
+						.limit.max = UINT32_MAX,
+					},
+					wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (tfc > 0) {
+		if (encap_mode == ENCAP_MODE_TRANSPORT) {
+			return diag("connection with type=transport cannot specify tfc=");
+		}
+		if (encap_proto == ENCAP_PROTO_AH) {
+			return diag("connection with encap_proto=ah cannot specify tfc=");
+		}
+		config->child_sa.tfcpad = tfc;
+	}
+
+
 	/* this warns when never_negotiate() */
 	bool iptfs = extract_yn("", "iptfs", wm->iptfs,
 				/*value_when_unset*/YN_NO,
@@ -3753,8 +3774,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("type=%s must be transport",
 				    str_sparse(&type_option_names, wm->type, &sb));
 		}
-		if (wm->tfc > 0) {
-			return diag("IPTFS is not compatible with tfc=%ju", wm->tfc);
+		if (tfc > 0) {
+			return diag("IPTFS is not compatible with tfc=%ju", tfc);
 		}
 		if (compress) {
 			return diag("IPTFS is not compatible with compress=yes");
@@ -4127,9 +4148,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "replay-window", wm->replay_window,
-				/*value_when_unset*/IPSEC_SA_DEFAULT_REPLAY_WINDOW,
-				0, kernel_ops->max_replay_window,
+		extract_uintmax("", "", "replay-window", wm->replay_window,
+				(struct range) {
+					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
+					.limit.max = kernel_ops->max_replay_window,
+				},
 				wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
@@ -4622,7 +4645,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 
 		config->child_sa.metric = wm->metric;
-		config->child_sa.mtu = wm->mtu;
+
+		config->child_sa.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
+							      "", "mtu", wm->mtu,
+							      &binary_byte_scales,
+							      (struct range) {
+								      .value_when_unset = 0,
+							      },
+							      wm, &d, c->logger);
+		if (d != NULL) {
+			return d;
+		}
+
 		config->nat_keepalive = extract_yn("", "nat-keepalive", wm->nat_keepalive,
 						   /*value_when_unset*/YN_YES,
 						   wm, c->logger);
@@ -4764,32 +4798,26 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "nflog-group", wm->nflog_group,
-					 /*value_when_unset*/0,
-					 1, 65535, wm, &d, c->logger);
+	c->nflog_group = extract_uintmax("", "", "nflog-group", wm->nflog_group,
+					 (struct range) {
+						 .value_when_unset = 0,
+						 .limit.min = 1,
+						 .limit.max = 65535,
+					 },
+					 wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
 	}
 #endif
 
-	if (wm->priority > UINT32_MAX) {
-		return diag("priority=%ju exceeds upper bound of %"PRIu32,
-			    wm->priority, UINT32_MAX);
-	}
-	config->child_sa.priority = wm->priority;
-
-	if (wm->tfc != 0) {
-		if (encap_mode == ENCAP_MODE_TRANSPORT) {
-			return diag("connection with type=transport cannot specify tfc=");
-		}
-		if (encap_proto == ENCAP_PROTO_AH) {
-			return diag("connection with encap_proto=ah cannot specify tfc=");
-		}
-		if (wm->tfc > UINT32_MAX) {
-			return diag("tfc=%ju exceeds upper bound of %"PRIu32,
-				    wm->tfc, UINT32_MAX);
-		}
-		config->child_sa.tfcpad = wm->tfc;
+	config->child_sa.priority = extract_uintmax("", "", "priority", wm->priority,
+						    (struct range) {
+							    .value_when_unset = 0,
+							    .limit.max = UINT32_MAX,
+						    },
+						    wm, &d, c->logger);
+	if (d != NULL) {
+		return d;
 	}
 
 	config->child.send.esp_tfc_padding_not_supported =
@@ -4804,9 +4832,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "reqid", wm->reqid,
-					  /*value_when_unset*/0,
-					  1, IPSEC_MANUAL_REQID_MAX,
+	uintmax_t reqid = extract_uintmax("", "", "reqid", wm->reqid,
+					  (struct range) {
+						  .value_when_unset = 0,
+						  .limit.min = 1,
+						  .limit.max = IPSEC_MANUAL_REQID_MAX,
+					  },
 					  wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
@@ -4996,6 +5027,19 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 	}
+
+	/*
+	 * Note: this checks the whack message (WM), and not the
+	 * connection (C) being construct - it could be done before
+	 * extract_end(), but do it here.
+	 *
+	 * XXX: why not allow this?
+	 */
+	if ((config->end[LEFT_END].host.auth == AUTH_UNSET) !=
+	    (config->end[RIGHT_END].host.auth == AUTH_UNSET)) {
+		    return diag("leftauth= and rightauth= must both be set or both be unset");
+	}
+
 
 	/*
 	 * Now cross check the configuration looking for IP version

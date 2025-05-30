@@ -81,19 +81,6 @@ static const struct sparse_names kw_seccomp_names = {
 };
 #endif
 
-static const struct sparse_names kw_auth_names = {
-	.list = {
-		SPARSE("never",     AUTH_NEVER),
-		SPARSE("secret",    AUTH_PSK),
-		SPARSE("rsasig",    AUTH_RSASIG),
-		SPARSE("rsa",       AUTH_RSASIG), /* alias */
-		SPARSE("ecdsa",     AUTH_ECDSA),
-		SPARSE("null",      AUTH_NULL),
-		SPARSE("eaponly",   AUTH_EAPONLY),
-		SPARSE_NULL
-	},
-};
-
 /*
  * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns, literal }
  */
@@ -129,14 +116,6 @@ static const struct sparse_names kw_global_ikev1_names = {
 		SPARSE("accept",   GLOBAL_IKEv1_ACCEPT),
 		SPARSE("reject",   GLOBAL_IKEv1_REJECT),
 		SPARSE("drop",     GLOBAL_IKEv1_DROP),
-		SPARSE_NULL
-	},
-};
-
-static const struct sparse_names kw_eap_names = {
-	.list = {
-		SPARSE("none", IKE_EAP_NONE), /* default */
-		SPARSE("tls", IKE_EAP_TLS),
 		SPARSE_NULL
 	},
 };
@@ -251,12 +230,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_string,  KWS_ADDRESSPOOL, NULL, NULL, },
-  { "auth",  kv_conn | kv_leftright, kt_sparse_name,  KNCF_AUTH, &kw_auth_names, NULL, },
+  { "auth",  kv_conn | kv_leftright, kt_string,  KWS_AUTH, NULL, NULL, },
 #if defined(USE_CAT)
   { "cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names, NULL, },
 #endif
   { "protoport",  kv_conn | kv_leftright,  kt_string,  KWS_PROTOPORT, NULL, NULL, },
-  { "autheap",  kv_conn | kv_leftright,  kt_sparse_name,  KNCF_EAP, &kw_eap_names, NULL, },
+  { "autheap",  kv_conn | kv_leftright,  kt_string,  KWS_AUTHEAP, NULL, NULL, },
   { "groundhog",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, &yn_option_names, NULL, },
 
   /* these are conn statements which are not left/right */
@@ -390,9 +369,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "sendca",      kv_conn,  kt_string,  KWS_SENDCA, NULL, NULL, },
 
-  { "mtu",  kv_conn,  kt_unsigned,  KNCF_MTU, NULL, NULL, },
-  { "priority",  kv_conn,  kt_unsigned,  KNCF_PRIORITY, NULL, NULL, },
-  { "tfc",  kv_conn,  kt_unsigned,  KNCF_TFC, NULL, NULL, },
+  { "mtu",  kv_conn,  kt_string,  KWS_MTU, NULL, NULL, },
+  { "priority",  kv_conn,  kt_string,  KWS_PRIORITY, NULL, NULL, },
+  { "tfc",  kv_conn,  kt_string,  KWS_TFC, NULL, NULL, },
   { "reqid",  kv_conn,  kt_string,  KWS_REQID, NULL, NULL, },
 #if defined(USE_NFLOG)
   { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, NULL, },

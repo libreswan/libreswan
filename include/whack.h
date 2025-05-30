@@ -151,7 +151,7 @@ struct whack_end {
 	const char *pubkey;
 	enum ipseckey_algorithm_type pubkey_alg;
 
-	enum keyword_auth auth;
+	const char *auth;
 
 	const char *ikeport;			/* host */
 	const char *host;
@@ -175,7 +175,7 @@ struct whack_end {
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 	const char *sendcert;
-	enum eap_options eap;
+	const char *autheap;
 	enum ike_cert_type certtype;
 
 	enum yn_options modecfgserver;	/* for MODECFG */
@@ -366,10 +366,9 @@ struct whack_message {
 	const char *sendca;
 
 	/* Force the MTU for this connection */
-	int mtu;
-
-	uintmax_t priority;
-	uintmax_t tfc;
+	const char *mtu;
+	const char *priority;
+	const char *tfc;
 	enum yn_options send_esp_tfc_padding_not_supported;
 
 	enum yn_options iptfs;

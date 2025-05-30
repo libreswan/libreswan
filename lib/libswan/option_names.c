@@ -214,3 +214,10 @@ const struct sparse_names ikev2_option_names = {
 	},
 };
 
+const struct sparse_names eap_option_names = {
+	.list = {
+		SPARSE("none", IKE_EAP_NONE), /* default */
+		SPARSE("tls", IKE_EAP_TLS),
+		SPARSE_NULL
+	},
+};

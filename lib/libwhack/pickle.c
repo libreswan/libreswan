@@ -311,6 +311,8 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_STRING(&end->sourceip) &&
 		PICKLE_STRING(&end->sendcert) &&
 		PICKLE_STRING(&end->protoport) &&
+		PICKLE_STRING(&end->autheap) &&
+		PICKLE_STRING(&end->auth) &&
 		true);
 }
 
@@ -362,6 +364,9 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->iptfs_max_queue_size) &&
 		PICKLE_STRING(&wm->retransmit_interval) &&
 		PICKLE_STRING(&wm->debug) &&
+		PICKLE_STRING(&wm->mtu) &&
+		PICKLE_STRING(&wm->priority) &&
+		PICKLE_STRING(&wm->tfc) &&
 		true);
 }
 

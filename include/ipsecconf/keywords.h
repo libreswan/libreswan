@@ -194,8 +194,8 @@ enum keywords {
 	KWYN_CAT,	/* left/right */
 	KWS_SENDCERT,	/* left/right */
 	KWS_IKEPORT,		/* left/right: IKE Port that must be used */
-	KNCF_AUTH,	/* left/right */
-	KNCF_EAP,	/* left/right */
+	KWS_AUTH,	/* left/right */
+	KWS_AUTHEAP,	/* left/right */
 
 	KWYN_PFS_REKEY_WORKAROUND,
 	KNCF_FIREWALL,
@@ -208,9 +208,9 @@ enum keywords {
 	KNCF_NEGOTIATIONSHUNT,
 	KNCF_TYPE,
 	KWYN_MOBIKE,
-	KNCF_MTU,
-	KNCF_PRIORITY,
-	KNCF_TFC,
+	KWS_MTU,
+	KWS_PRIORITY,
+	KWS_TFC,
 	KWYN_IPTFS,
 	KWYN_IPTFS_FRAGMENTATION,
 	KWS_IPTFS_PACKET_SIZE,
