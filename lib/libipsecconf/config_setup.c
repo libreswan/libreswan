@@ -24,6 +24,7 @@
 #include "lmod.h"
 #include "lswlog.h"
 #include "lswversion.h"
+#include "ocsp_method.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -60,12 +61,13 @@ void update_setup_deltatime(enum keywords kw, deltatime_t deltatime)
 	kv->deltatime = deltatime;
 }
 
-static void update_setup_option(enum keywords kw, uintmax_t option)
+void update_setup_option(enum keywords kw, uintmax_t option)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = option;
+	kv->set = true;
 }
 
 struct config_setup *config_setup_singleton(void)
@@ -97,6 +99,13 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
 
 		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime(5/*seconds*/));
+
+		/* x509_ocsp */
+		update_setup_deltatime(KBF_OCSP_TIMEOUT_SECONDS, deltatime(OCSP_DEFAULT_TIMEOUT));
+		update_setup_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MIN_AGE));
+		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MAX_AGE));
+		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
+		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 
 	}
 	return &config_setup;
@@ -135,6 +144,14 @@ deltatime_t config_setup_deltatime(const struct config_setup *setup,
 {
 	passert(field < elemsof(setup->values));
 	return setup->values[field].deltatime;
+}
+
+uintmax_t config_setup_option(const struct config_setup *setup,
+			      enum keywords field)
+{
+	passert(field < elemsof(setup->values));
+	/* being .set doesn't matter, as default is zero */
+	return setup->values[field].option;
 }
 
 const char *config_setup_ipsecdir(void)

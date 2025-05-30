@@ -132,8 +132,6 @@ void free_pluto_main(void)
 	pfree(conffile);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
-	pfreeany(x509_ocsp.uri);
-	pfreeany(x509_ocsp.trust_name);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
 	free_config_setup();
@@ -916,27 +914,22 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OCSP_STRICT:
-			x509_ocsp.strict = true;
+			update_setup_yn(KYN_OCSP_STRICT, YN_YES);
 			continue;
-
 		case OPT_OCSP_ENABLE:
-			x509_ocsp.enable = true;
+			update_setup_yn(KYN_OCSP_ENABLE, YN_YES);
 			continue;
-
 		case OPT_OCSP_URI:
-			replace_value(&x509_ocsp.uri, optarg);
+			update_setup_string(KSF_OCSP_URI, optarg_nonempty(logger));
 			continue;
-
 		case OPT_OCSP_TRUSTNAME:
-			replace_value(&x509_ocsp.trust_name, optarg);
+			update_setup_string(KSF_OCSP_TRUSTNAME, optarg_nonempty(logger));
 			continue;
-
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
-			x509_ocsp.timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_TIMEOUT_OK deltatime_ok(x509_ocsp.timeout, 1, 1000)
-			check_diag(logger, OCSP_TIMEOUT_OK);
+#define OCSP_TIMEOUT_RANGE 1, 1000
+			update_optarg_deltatime(KBF_OCSP_TIMEOUT_SECONDS, logger,
+						TIMESCALE_SECONDS, OCSP_TIMEOUT_RANGE);
 			continue;
-
 		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
 		{
 			uintmax_t u;
@@ -946,29 +939,26 @@ int main(int argc, char **argv)
 			if (u > 0xffff) {
 				optarg_fatal(logger, "too big, more than 0xffff");
 			}
-			x509_ocsp.cache_size = u; /* no loss; within INT_MAX */
+			update_setup_option(KBF_OCSP_CACHE_SIZE, u);
 			continue;
 		}
-
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
-			x509_ocsp.cache_min_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_CACHE_MIN_AGE_OK deltatime_ok(x509_ocsp.cache_min_age, 1, -1)
-			check_diag(logger, OCSP_CACHE_MIN_AGE_OK);
+#define OCSP_CACHE_MIN_AGE_RANGE 1, -1
+			update_optarg_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
+						TIMESCALE_SECONDS, OCSP_CACHE_MIN_AGE_RANGE);
 			continue;
-
 		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
 			/*
 			 * NSS uses 0 for unlimited and -1 for
 			 * disabled.  We use 0 for disabled, and a
 			 * large number for unlimited.
 			 */
-			x509_ocsp.cache_max_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_CACHE_MAX_AGE_OK deltatime_ok(x509_ocsp.cache_max_age, 0, -1)
-			check_diag(logger, OCSP_CACHE_MAX_AGE_OK);
+#define OCSP_CACHE_MAX_AGE_RANGE 0, -1
+			update_optarg_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
+						TIMESCALE_SECONDS, OCSP_CACHE_MAX_AGE_RANGE);
 			continue;
-
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
-			x509_ocsp.method = optarg_sparse(logger, 0, &ocsp_method_names);
+			update_setup_option(KBF_OCSP_METHOD, optarg_sparse(logger, 0, &ocsp_method_names));
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
@@ -1099,25 +1089,6 @@ int main(int argc, char **argv)
 			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
-
-			extract_config_yn(&x509_ocsp.enable, cfg, KYN_OCSP_ENABLE);
-			extract_config_yn(&x509_ocsp.strict, cfg, KYN_OCSP_STRICT);
-			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
-				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
-			}
-			if (cfg->setup->values[KBF_OCSP_METHOD].set) {
-				x509_ocsp.method = cfg->setup->values[KBF_OCSP_METHOD].option;
-			}
-			x509_ocsp.cache_size = cfg->setup->values[KBF_OCSP_CACHE_SIZE].option;
-			if (extract_config_deltatime(&x509_ocsp.cache_min_age, cfg, KBF_OCSP_CACHE_MIN_AGE_SECONDS)) {
-				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
-			}
-			if (extract_config_deltatime(&x509_ocsp.cache_max_age, cfg, KBF_OCSP_CACHE_MAX_AGE_SECONDS)) {
-				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
-			}
-
-			replace_when_cfg_setup(&x509_ocsp.uri, cfg, KSF_OCSP_URI);
-			replace_when_cfg_setup(&x509_ocsp.trust_name, cfg, KSF_OCSP_TRUSTNAME);
 
 			char *tmp_global_redirect = cfg->setup->values[KSF_GLOBAL_REDIRECT].string;
 			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
@@ -1272,6 +1243,23 @@ int main(int argc, char **argv)
 	x509_crl.check_interval = config_setup_deltatime(oco, KBF_CRL_CHECKINTERVAL);
 	x509_crl.timeout = check_config_deltatime(oco, KBF_CRL_TIMEOUT_SECONDS, logger,
 						  CRL_TIMEOUT_RANGE, "crl-timeout");
+
+	/*
+	 * Extract/check X509 OCSP.
+	 */
+
+	x509_ocsp.enable = config_setup_yn(oco, KYN_OCSP_ENABLE);
+	x509_ocsp.strict = config_setup_yn(oco, KYN_OCSP_STRICT);
+	x509_ocsp.uri = config_setup_string(oco, KSF_OCSP_URI);
+	x509_ocsp.trust_name = config_setup_string(oco, KSF_OCSP_TRUSTNAME);
+	x509_ocsp.timeout = check_config_deltatime(oco, KBF_OCSP_TIMEOUT_SECONDS, logger,
+						   OCSP_TIMEOUT_RANGE, "ocsp-timeout");
+	x509_ocsp.cache_min_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
+							 OCSP_CACHE_MIN_AGE_RANGE, "ocsp-cache-min-age");
+	x509_ocsp.cache_max_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
+							 OCSP_CACHE_MAX_AGE_RANGE, "ocsp-cache-max-age");
+	x509_ocsp.method = config_setup_option(oco, KBF_OCSP_METHOD);
+	x509_ocsp.cache_size = config_setup_option(oco, KBF_OCSP_CACHE_SIZE);
 
 	/*
 	 * Anything (aka an argument) after all options consumed?
