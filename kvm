@@ -16,9 +16,6 @@ print-kvm-variable() {
 kvm_platforms=$(print-kvm-variable KVM_PLATFORMS)
 
 kvm_test_host_names=$(print-kvm-variable KVM_TEST_HOST_NAMES)
-kvm_base_host_names=$(print-kvm-variable KVM_BASE_HOST_NAMES)
-kvm_build_host_names=$(print-kvm-variable KVM_BUILD_HOST_NAMES)
-kvm_upgrade_host_names=$(print-kvm-variable KVM_UPGRADE_HOST_NAMES)
 
 kvm_testingdir=$(print-kvm-variable KVM_TESTINGDIR)
 kvm_prefix=($(print-kvm-variable KVM_PREFIX))
@@ -31,7 +28,10 @@ rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 
 # eat newlines
 
-hosts="${kvm_test_host_names} ${kvm_build_host_names} ${kvm_base_host_names} ${kvm_upgrade_host_names}"
+hosts="${kvm_test_host_names}"
+for platform in ${kvm_platforms} ; do
+    hosts="${hosts} ${platform} ${platform}-base ${platform}-upgrade"
+done
 
 # Note: pass1help() is fed into AWK.  Anything that matches
 # '^____[-a-z]' is considered a Pass 1 command ('_' denotes a space).
