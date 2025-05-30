@@ -116,11 +116,12 @@ static bool selftest_only = false;
 static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
+
 static struct {
 	bool enable;
-	char *rootkey_file;
-	char *anchors;
-} pluto_dnssec = {0}; /* see main() */
+	const char *rootkey_file;
+	const char *anchors;
+} pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
 
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
@@ -139,8 +140,6 @@ void free_pluto_main(void)
 	pfreeany(x509_ocsp.uri);
 	pfreeany(x509_ocsp.trust_name);
 	pfreeany(x509_crl.curl_iface);
-	pfreeany(pluto_dnssec.rootkey_file);
-	pfreeany(pluto_dnssec.anchors);
 	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
@@ -800,11 +799,6 @@ int main(int argc, char **argv)
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	rundir = clone_str(IPSEC_RUNDIR, "rundir");
 
-#ifdef USE_DNSSEC
-	pluto_dnssec.enable = true;
-	pluto_dnssec.rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
-#endif
-
 	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
 
@@ -904,17 +898,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
-			/*
-			 * The default config value is
-			 * DEFAULT_DNSSEC_ROOTKEY_FILE, and not NULL,
-			 * so always replace; but only with something
-			 * non empty.
-			 */
-			update_string(&pluto_dnssec.rootkey_file, optarg);
+			/* reject '' */
+			update_setup_string(KSF_DNSSEC_ROOTKEY_FILE,
+					    optarg_nonempty(logger));
 			continue;
 
 		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
-			update_string(&pluto_dnssec.anchors, optarg);
+			/* allow '', become NULL */
+			update_setup_string(KSF_DNSSEC_ANCHORS,
+					    optarg_empty(logger));
 			continue;
 
 		case OPT_LOG_NO_TIME:	/* --log-no-time */
@@ -1073,7 +1065,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_NO_DNSSEC:	/* --no-dnssec */
-			pluto_dnssec.enable = false;
+			update_setup_yn(KYN_DNSSEC_ENABLE, YN_NO);
 			continue;
 
 		case OPT_INTERFACE:	/* --interface <ifname|ifaddr> */
@@ -1185,10 +1177,6 @@ int main(int argc, char **argv)
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			extract_config_string(&log_param.log_to_file, cfg, KSF_LOGFILE);
-
-			extract_config_yn(&pluto_dnssec.enable, cfg, KYN_DNSSEC_ENABLE);
-			extract_config_string(&pluto_dnssec.rootkey_file, cfg, KSF_DNSSEC_ROOTKEY_FILE);
-			extract_config_string(&pluto_dnssec.anchors, cfg, KSF_DNSSEC_ANCHORS);
 
 			/* plutofork= no longer supported via config file */
 			extract_config_yn(&log_param.log_with_timestamp, cfg, KYN_LOGTIME);
@@ -1414,6 +1402,13 @@ int main(int argc, char **argv)
 	} else {
 		lockfd = create_lock(logger);
 	}
+
+#ifdef USE_DNSSEC
+	const struct config_setup *oco = config_setup_singleton();
+	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
+	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
+	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
+#endif
 
 	/*
 	 * Create control socket before things fork.
