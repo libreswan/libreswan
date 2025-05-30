@@ -136,7 +136,6 @@ void free_pluto_main(void)
 	pfree(conffile);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
-	pfree(pluto_vendorid);
 	pfreeany(x509_ocsp.uri);
 	pfreeany(x509_ocsp.trust_name);
 	pfreeany(x509_crl.curl_iface);
@@ -800,7 +799,6 @@ int main(int argc, char **argv)
 	 */
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 	rundir = clone_str(IPSEC_RUNDIR, "rundir");
-	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
 #ifdef USE_DNSSEC
 	pluto_dnssec.enable = true;
@@ -846,8 +844,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_VENDORID:	/* --vendorid */
-			pfree(pluto_vendorid);
-			pluto_vendorid = clone_str(optarg, "pluto_vendorid via getopt");
+			config_setup_string(KSF_MYVENDORID, optarg);
 			continue;
 
 		case OPT_STATSBIN:	/* --statsdir */
@@ -1287,13 +1284,6 @@ int main(int argc, char **argv)
 			if (extract_config_deltatime(&x509_crl.timeout, cfg, KBF_CRL_TIMEOUT_SECONDS)) {
 				check_conf(CRL_TIMEOUT_OK, "crl-timeout", logger);
 				/* checked below */
-			}
-
-			/* vendorid= */
-			if (cfg->setup->values[KSF_MYVENDORID].string) {
-				pfree(pluto_vendorid);
-				pluto_vendorid = clone_str(cfg->setup->values[KSF_MYVENDORID].string,
-							   "pluto_vendorid via --config");
 			}
 
 			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
@@ -1883,8 +1873,8 @@ void show_setup_plutomain(struct show *s)
 		IPSEC_EXECDIR);
 
 	show(s, "pluto_version=%s, pluto_vendorid=%s",
-		ipsec_version_code(),
-		pluto_vendorid);
+	     ipsec_version_code(),
+	     config_setup_vendorid());
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);

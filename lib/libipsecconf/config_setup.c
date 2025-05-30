@@ -23,6 +23,7 @@
 #include "lset.h"
 #include "lmod.h"
 #include "lswlog.h"
+#include "lswversion.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -69,7 +70,7 @@ struct config_setup *config_setup_singleton(void)
 		config_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
 		config_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
 		config_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
-
+		config_setup_string(KSF_MYVENDORID, ipsec_version_vendorid());
 	}
 	return &config_setup;
 }
@@ -104,6 +105,12 @@ const char *config_setup_dumpdir(void)
 {
 	config_setup_singleton();
 	return config_setup.values[KSF_DUMPDIR].string;
+}
+
+const char *config_setup_vendorid(void)
+{
+	config_setup_singleton();
+	return config_setup.values[KSF_MYVENDORID].string;
 }
 
 lset_t config_setup_debugging(struct logger *logger)

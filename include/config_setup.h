@@ -33,6 +33,7 @@ const char *config_setup_ipsecdir(void);
 const char *config_setup_secretsfile(void);
 const char *config_setup_nssdir(void);
 const char *config_setup_dumpdir(void);
+const char *config_setup_vendorid(void);
 
 lset_t config_setup_debugging(struct logger *logger);
 
