@@ -269,18 +269,16 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 KVM_LINUX_TEST_HOST_NAMES = east west north road nic
 KVM_OS_TEST_HOST_NAMES = e w rise set
 
-KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_PREFIX)
-KVM_LOCALDIR_PREFIX = $(KVM_LOCALDIR)/$(KVM_PREFIX)
-
-KVM_BASE_PREFIX    = $(KVM_POOLDIR_PREFIX)
-KVM_UPGRADE_PREFIX = $(KVM_POOLDIR_PREFIX)
-KVM_BUILD_PREFIX   = $(KVM_LOCALDIR_PREFIX)
+KVM_BASEDIR ?= $(KVM_POOLDIR)
+KVM_UPGRADEDIR ?= $(KVM_POOLDIR)
+KVM_BUILDDIR ?= $(KVM_LOCALDIR)
+KVM_TESTDIR ?= $(KVM_LOCALDIR)
 
 define domains
 
-KVM_$($(strip $1))_BASE_DOMAIN    = $$(addprefix $$(KVM_BASE_PREFIX),    $$(addsuffix -base, $1))
-KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_UPGRADE_PREFIX), $$(addsuffix -upgrade, $1))
-KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_BUILD_PREFIX),   $$(addsuffix , $1))
+KVM_$($(strip $1))_BASE_DOMAIN    = $$(KVM_BASEDIR)/$$(KVM_PREFIX)$(strip $1)-base
+KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(KVM_UPGRADEDIR)/$$(KVM_PREFIX)$(strip $1)-upgrade
+KVM_$($(strip $1))_BUILD_DOMAIN   = $$(KVM_BUILDDIR)/$$(KVM_PREFIX)$(strip $1)
 
 KVM_BASE_DOMAINS     += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
@@ -344,7 +342,7 @@ RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
 # any further rules leave the file alone.
 #
 
-KVM_FRESH_BOOT_FILE = $(KVM_POOLDIR_PREFIX)boot.ok
+KVM_FRESH_BOOT_FILE = $(KVM_POOLDIR)/$(KVM_PREFIX)boot.ok
 $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log))
 $(KVM_FRESH_BOOT_FILE): | $(KVM_POOLDIR)
 	touch $@
@@ -358,7 +356,7 @@ KVM_HOST_OK += $(KVM_FRESH_BOOT_FILE)
 #
 
 KVM_HOST_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
-KVM_HOST_ENTROPY_OK = $(KVM_POOLDIR_PREFIX)entropy.ok
+KVM_HOST_ENTROPY_OK = $(KVM_POOLDIR)/$(KVM_PREFIX)entropy.ok
 $(KVM_HOST_ENTROPY_OK): $(KVM_FRESH_BOOT_FILE)
 $(KVM_HOST_ENTROPY_OK): | $(KVM_POOLDIR)
 	@if test ! -r $(KVM_HOST_ENTROPY_FILE); then			\
@@ -389,7 +387,7 @@ KVM_HOST_OK += $(KVM_HOST_ENTROPY_OK)
 
 
 KVM_HOST_QEMUDIR ?= /var/lib/libvirt/qemu
-KVM_HOST_QEMUDIR_OK = $(KVM_POOLDIR_PREFIX)qemudir.ok
+KVM_HOST_QEMUDIR_OK = $(KVM_POOLDIR)/$(KVM_PREFIX)qemudir.ok
 $(KVM_HOST_QEMUDIR_OK): $(KVM_FRESH_BOOT_FILE)
 $(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
 	@if ! test -w $(KVM_HOST_QEMUDIR) ; then			\
@@ -419,7 +417,7 @@ KVM_HOST_OK += $(KVM_HOST_QEMUDIR_OK)
 # ensure that NFS is running and everything is exported
 #
 
-KVM_HOST_NFS_OK = $(KVM_POOLDIR_PREFIX)nfs.ok
+KVM_HOST_NFS_OK = $(KVM_POOLDIR)/$(KVM_PREFIX)nfs.ok
 $(KVM_HOST_NFS_OK): kvm-exportfs.sh
 $(KVM_HOST_NFS_OK): $(KVM_FRESH_BOOT_FILE)
 $(KVM_HOST_NFS_OK): | $(KVM_POOLDIR)
@@ -467,12 +465,12 @@ define kvm-pooldir-info
 
 endef
 
-$(KVM_POOLDIR):
+$(KVM_POOLDIR) $(KVM_POOLDIR)/:
 	$(info $(kvm-pooldir-info))
 	false
 
 ifneq ($(KVM_POOLDIR),$(KVM_LOCALDIR))
-$(KVM_LOCALDIR):
+$(KVM_LOCALDIR)/:
 	: not -p
 	mkdir $(KVM_LOCALDIR)
 endif
@@ -644,7 +642,7 @@ kvm-clean-keys kvm-keys-clean:
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.key
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/keys/*.private
 	rm -f $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/dsset/dsset-*
-	rm -f $(KVM_POOLDIR_PREFIX)kvm-keys.tar
+	rm -f $(KVM_POOLDIR)/$(KVM_PREFIX)kvm-keys.tar
 
 # For moment don't force keys to be re-built.
 .PHONY: kvm-keys-ok
@@ -746,7 +744,7 @@ KVM_TEST_NETWORKS = \
 			$(test_prefix)$(test_network)))
 
 $(KVM_TEST_NETWORKS): \
-$(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)
+$(KVM_LOCALDIR)/%: $(KVM_FRESH_BOOT_FILE) | $(KVM_LOCALDIR)/
 	: @=$@
 	: *=$*
 	-sudo ip link set $* down
@@ -798,10 +796,10 @@ kvm-purge-%: kvm-downgrade-%
 	rm -f $(KVM_$($*)_BASE_DOMAIN)
 
 $(KVM_BASE_DOMAINS): \
-$(KVM_BASE_PREFIX)%-base: \
+$(KVM_BASEDIR)/$(KVM_PREFIX)%-base: \
 		| \
 		./kvm-install-base.py \
-		$(KVM_POOLDIR) \
+		$(KVM_BASEDIR)/ \
 		$(KVM_HOST_OK) \
 		$(KVM_GATEWAY)
 	: @=$@ *=$*
@@ -1217,9 +1215,10 @@ kvm-downgrade-%: kvm-uninstall-%
 	rm -f $(KVM_$($*)_UPGRADE_DOMAIN)
 
 $(KVM_UPGRADE_DOMAINS): \
-$(KVM_UPGRADE_PREFIX)%-upgrade: \
-		$(KVM_BASE_PREFIX)%-base \
+$(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
+		$(KVM_BASEDIR)/$(KVM_PREFIX)%-base \
 		| \
+		$(KVM_UPGRADEDIR)/ \
 		%/upgrade.sh \
 		$(KVM_HOST_OK)
 	: @=$@ *=$*
@@ -1280,17 +1279,18 @@ kvm-uninstall-%:
 	rm -f $(KVM_$($*)_BUILD_DOMAIN).*
 	rm -f $(KVM_$($*)_BUILD_DOMAIN)
 	: transmogrify.sh is in /pool
-	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
+	rm -f $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).*
 
 # start at 2gb and go up
 KVM_BUILD_CPUS = $(KVM_WORKERS)
 KVM_BUILD_MEMORY ?= $(shell expr 1792 + $(KVM_BUILD_CPUS) \* 256 )
 
 $(KVM_BUILD_DOMAINS): \
-$(KVM_BUILD_PREFIX)%: \
-		$(KVM_UPGRADE_PREFIX)%-upgrade \
+$(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
+		$(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade \
 		| \
 		%/transmogrify.sh \
+		$(KVM_BUILDDIR)/ \
 		$(KVM_HOST_OK)
 	: @=$@ *=$*
 	./kvm-uninstall-domain.sh $@
@@ -1321,7 +1321,7 @@ $(KVM_BUILD_PREFIX)%: \
 		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 		-e 's;@@PLATFORM@@;$*;' \
 		$*/transmogrify.sh \
-		> $(KVM_POOLDIR_PREFIX)$(*).transmogrify.sh
+		> $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
 	: only shutdown after transmogrify succeeds
@@ -1360,7 +1360,7 @@ endif
 kvm-build: $(foreach os, $(KVM_OS), kvm-make-install-base-$(os))
 
 $(patsubst %, kvm-make-install-base-%, $(KVM_INSTALL_PLATFORM)): \
-kvm-make-install-base-%: $(KVM_LOCALDIR_PREFIX)%
+kvm-make-install-base-%: $(KVM_BUILDDIR)/$(KVM_PREFIX)%
 	: $@ $<
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
@@ -1371,7 +1371,7 @@ kvm-make-install-base-%: $(KVM_LOCALDIR_PREFIX)%
 		sync \&\& sync \&\& sync
 
 $(patsubst %, kvm-make-install-all-%, $(KVM_INSTALL_PLATFORM)): \
-kvm-make-install-all-%: $(KVM_LOCALDIR_PREFIX)%
+kvm-make-install-all-%: $(KVM_BUILDDIR)/$(KVM_PREFIX)%
 	: $@ $<
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
@@ -1433,7 +1433,7 @@ KVM_TEST_MEMORY ?= 512
 
 define define-test-domain
   $(addprefix $(1), $(2)): \
-		$(KVM_LOCALDIR_PREFIX)$(strip $(3)) \
+		$(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(3)) \
 		| \
 		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
 		vm/$(strip $(4)).xml
@@ -1448,7 +1448,7 @@ define define-test-domain
 	:  KVM_OS_TEST_MEMORY=$$(KVM_$($(strip $(3)))_TEST_MEMORY)
 	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
-	rm -f $(KVM_LOCALDIR_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
+	rm -f $(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
 	$$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
 		-e 's;@@SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
@@ -1547,7 +1547,7 @@ kvm-demolish-%: kvm-purge-%
 #
 
 .PHONY: kvm-rpm
-kvm-rpm: $(KVM_LOCALDIR_PREFIX)fedora
+kvm-rpm: $(KVM_BUILDDIR)/$(KVM_PREFIX)fedora
 	@echo building rpm for libreswan testing
 	mkdir -p rpmbuild/SPECS/
 	: NOTE: testing/packaging/// and NOT packaging/...
@@ -1576,7 +1576,7 @@ kvm-rpm: $(KVM_LOCALDIR_PREFIX)fedora
 
 ifeq ($(KVM_INSTALL_RPM), true)
 .PHONY: kvm-fedora-install
-kvm-fedora-install: $(KVM_LOCALDIR_PREFIX)fedora
+kvm-fedora-install: $(KVM_BUILDDIR)/$(KVM_PREFIX)fedora
 	rm -fr rpmbuild/*RPMS
 	$(MAKE) kvm-rpm
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
@@ -1607,15 +1607,17 @@ $(call kvm-var-value,KVM_LOCALDIR)
 	directory for storing the VMs local to this build tree;
 	can be temporary storage (for instance /tmp)
 
+$(call kvm-var-value,KVM_BASEDIR)
+$(call kvm-var-value,KVM_UPGRADEDIR)
+$(call kvm-var-value,KVM_BUILDDIR)
+$(call kvm-var-value,KVM_TESTDIR)
+
 $(call kvm-var-value,KVM_SOURCEDIR)
 $(call kvm-var-value,KVM_TESTINGDIR)
 $(call kvm-var-value,KVM_WORKERS)
 
 $(call kvm-var-value,KVM_PREFIX)
-$(call kvm-var-value,KVM_PREFIX)
 $(call kvm-var-value,KVM_TEST_PREFIXES)
-$(call kvm-var-value,KVM_POOLDIR_PREFIX)
-$(call kvm-var-value,KVM_LOCALDIR_PREFIX)
 
 $(call kvm-var-value,KVM_GROUP)
 $(call kvm-var-value,KVM_PIDFILE)
