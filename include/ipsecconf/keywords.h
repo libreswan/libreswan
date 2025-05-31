@@ -63,9 +63,10 @@ enum keywords {
 	KWS_DEBUG,
 	KWS_HOST,
 	KWS_NEXTHOP,
-	KW_RSASIGKEY,
-	KW_ECDSAKEY,
-	KW_PUBKEY,
+
+	KWS_RSASIGKEY,
+	KWS_ECDSAKEY,
+	KWS_PUBKEY,
 
 	KWYN_IPSEC_INTERFACE_MANAGED,
 	KWS_IPSEC_INTERFACE,
@@ -310,26 +311,11 @@ enum keyword_valid {
 #endif
 };
 
-/*
- * Potential keyword values for fields like {left,right}rsasigkey=.
- *
- * This is internal to the config parser and doesn't belong in whack
- * or on the wire.
- */
-
-enum keyword_pubkey {
-	PUBKEY_NOTSET       = 0,
-	PUBKEY_DNSONDEMAND  = 1,
-	PUBKEY_CERTIFICATE  = 2,
-	PUBKEY_PREEXCHANGED = LOOSE_ENUM_OTHER,
-};
-
 enum keyword_type {
 	kt_string,              /* value is some string */
 	kt_appendstring,        /* value is some string, append duplicates */
 	kt_appendlist,          /* value is some list, append duplicates */
 	kt_sparse_name,         /* value is from .sparse_name table */
-	kt_pubkey,	        /* %-prefixed .sparse_name, or a pubkey string */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_also,		/* i.e., #include */

@@ -108,10 +108,6 @@ static void confwrite_value(FILE *out,
 			}
 			break;
 
-		case kt_pubkey:
-			/* none of these are valid number/string types */
-			break;
-
 		case kt_sparse_name:
 			/* special enumeration */
 			if (values[k->field].set) {

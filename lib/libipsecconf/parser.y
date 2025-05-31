@@ -619,24 +619,6 @@ static bool parse_kt_sparse_name(struct keyword *key, shunk_t value,
 	return true;
 }
 
-static bool parse_kt_loose_sparse_name(struct keyword *key, shunk_t value,
-				       uintmax_t *number, struct parser *parser)
-{
-	PASSERT(parser->logger, (key->keydef->type == kt_pubkey));
-	PASSERT(parser->logger, key->keydef->sparse_names != NULL);
-
-	const struct sparse_name *sn = sparse_lookup_by_name(key->keydef->sparse_names, value);
-	if (sn == NULL) {
-		(*number) = LOOSE_ENUM_OTHER; /* i.e., use string value */
-		return true;
-	}
-
-	PASSERT(parser->logger, sn->value != LOOSE_ENUM_OTHER);
-	(*number) = sn->value;
-	return true;
-
-}
-
 /*
  * Look for one of the tokens, and set the value up right.
  */
@@ -771,9 +753,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	switch (kw->keydef->type) {
 	case kt_sparse_name:
 		ok = parse_kt_sparse_name(kw, value, &number, parser);
-		break;
-	case kt_pubkey:
-		ok = parse_kt_loose_sparse_name(kw, value, &number, parser);
 		break;
 	case kt_string:
 	case kt_also:

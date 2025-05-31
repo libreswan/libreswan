@@ -1542,8 +1542,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
-			end->key_from_DNS_on_demand = true;
+		{
+			name_buf sb;
+			passert(sparse_short(&keyword_pubkey_names, PUBKEY_DNSONDEMAND, &sb));
+			passert(sb.buf != sb.tmp);
+			end->pubkey = sb.buf; /* points into keyword_pubkey_names */
 			continue;
+		}
 
 		case END_UPDOWN:	/* --updown <updown> */
 			end->updown = optarg;

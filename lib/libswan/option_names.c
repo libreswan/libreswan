@@ -221,3 +221,19 @@ const struct sparse_names eap_option_names = {
 		SPARSE_NULL
 	},
 };
+
+/*
+ * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns,
+ * literal }
+ */
+
+const struct sparse_names keyword_pubkey_names = {
+	.list = {
+		SPARSE("%cert",        PUBKEY_CERTIFICATE),
+#ifdef USE_DNSSEC
+		SPARSE("%dns",         PUBKEY_DNSONDEMAND),
+		SPARSE("%dnsondemand", PUBKEY_DNSONDEMAND),
+#endif
+		SPARSE_NULL
+	},
+};
