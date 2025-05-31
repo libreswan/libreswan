@@ -208,14 +208,4 @@ void show_x509_ocsp(struct show *s)
 	}
 }
 
-struct x509_ocsp_config x509_ocsp = {
-	.uri = NULL,
-	.trust_name = NULL,
-	.timeout = DELTATIME_INIT(OCSP_DEFAULT_TIMEOUT),
-	.method = OCSP_METHOD_GET,
-	.cache_size = OCSP_DEFAULT_CACHE_SIZE,
-	.cache_min_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MIN_AGE),
-	.cache_max_age = DELTATIME_INIT(OCSP_DEFAULT_CACHE_MAX_AGE),
-	.strict = false,
-	.enable = false,
-};
+struct x509_ocsp_config x509_ocsp = {0};

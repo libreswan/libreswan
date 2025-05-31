@@ -79,6 +79,7 @@
 #include "show.h"
 #include "enum_names.h"		/* for init_enum_names() */
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
+#include "lock_file.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -107,7 +108,6 @@ bool in_main_thread(void)
 	return pthread_equal(pthread_self(), main_thread);
 }
 
-static char *rundir = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
 
@@ -123,24 +123,15 @@ static struct {
 	const char *anchors;
 } pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
 
-static char *pluto_lock_filename = NULL;
-static bool pluto_lock_created = false;
-
-
 /* Overridden by virtual_private= in ipsec.conf */
 static char *virtual_private = NULL;
 
 void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
-	pfree(pluto_lock_filename);
 	pfree(conffile);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
-	pfreeany(x509_ocsp.uri);
-	pfreeany(x509_ocsp.trust_name);
-	pfreeany(x509_crl.curl_iface);
-	pfreeany(rundir);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
 	free_config_setup();
@@ -231,78 +222,6 @@ static const char compile_time_interop_options[] = ""
 	" NFLOG"
 #endif
 ;
-
-/* create lockfile, or die in the attempt */
-static int create_lock(struct logger *logger)
-{
-	if (mkdir(rundir, 0755) != 0) {
-		if (errno != EEXIST) {
-			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "unable to create lock dir: \"%s\"", rundir);
-		}
-	}
-
-	unsigned attempt;
-	for (attempt = 0; attempt < 2; attempt++) {
-		int fd = open(pluto_lock_filename, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC,
-			      S_IRUSR | S_IRGRP | S_IROTH);
-		if (fd >= 0) {
-			pluto_lock_created = true;
-			return fd;
-		}
-		if (errno != EEXIST) {
-			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "unable to create lock file \"%s\"", pluto_lock_filename);
-		}
-		if (fork_desired) {
-			fatal(PLUTO_EXIT_LOCK_FAIL, logger,
-			      "lock file \"%s\" already exists", pluto_lock_filename);
-		}
-		/*
-		 * if we did not fork, then we don't really need the pid to
-		 * control, so wipe it
-		 */
-		if (unlink(pluto_lock_filename) == -1) {
-			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "lock file \"%s\" already exists and could not be removed",
-				    pluto_lock_filename);
-		}
-		/*
-		 * lock file removed, try creating it
-		 * again ...
-		 */
-	}
-	fatal(PLUTO_EXIT_LOCK_FAIL, logger, "lock file \"%s\" could not be created after %u attempts",
-	      pluto_lock_filename, attempt);
-}
-
-/*
- * fill_lock - Populate the lock file with pluto's PID
- *
- * @param lockfd File Descriptor for the lock file
- * @param pid PID (pid_t struct) to be put into the lock file
- * @return bool True if successful
- */
-static bool fill_lock(int lockfd, pid_t pid)
-{
-	char buf[30];	/* holds "<pid>\n" */
-	int len = snprintf(buf, sizeof(buf), "%u\n", (unsigned int) pid);
-	bool ok = len > 0 && write(lockfd, buf, len) == len;
-
-	close(lockfd);
-	return ok;
-}
-
-/*
- * delete_lock - Delete the lock file
- */
-void delete_lock(void)
-{
-	if (pluto_lock_created) {
-		delete_ctl_socket();
-		unlink(pluto_lock_filename);	/* is noting failure useful? */
-	}
-}
 
 /* Read config file. exit() on error. */
 static struct starter_config *read_cfg_file(char *configfile, struct logger *logger)
@@ -701,6 +620,25 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 	return NULL;
 }
 
+static void update_optarg_deltatime(enum keywords kw, struct logger *logger,
+				   enum timescale timescale, int lower, int upper)
+{
+	deltatime_t time = optarg_deltatime(logger, timescale);
+	check_diag(logger, deltatime_ok(time, lower, upper));
+	update_setup_deltatime(kw, time);
+}
+
+static deltatime_t check_config_deltatime(const struct config_setup *oco, enum keywords kw,
+					  struct logger *logger,
+					  int lower, int upper, const char *name)
+{
+	deltatime_t time = config_setup_deltatime(oco, kw);
+	if (time.is_set) {
+		check_conf(deltatime_ok(time, lower, upper), name, logger);
+	}
+	return time;
+}
+
 #ifdef USE_EFENCE
 extern int EF_PROTECT_BELOW;
 extern int EF_PROTECT_FREE;
@@ -772,9 +710,7 @@ int main(int argc, char **argv)
 	 * the globals.
 	 */
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
-	rundir = clone_str(IPSEC_RUNDIR, "rundir");
 
-	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 	deltatime_t keep_alive = {0}; /* aka unset */
 
 	/* handle arguments */
@@ -962,45 +898,38 @@ int main(int argc, char **argv)
 #endif
 
 		case OPT_CURL_IFACE:	/* --curl-iface */
-			replace_value(&x509_crl.curl_iface, optarg);
+			update_setup_string(KSF_CURLIFACE, optarg_nonempty(logger));
 			continue;
-
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
-			x509_crl.timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define CRL_TIMEOUT_OK deltatime_ok(x509_crl.timeout, 1, 1000)
-			check_diag(logger, CRL_TIMEOUT_OK);
+#define CRL_TIMEOUT_RANGE 1, 1000
+			update_optarg_deltatime(KBF_CRL_TIMEOUT_SECONDS, logger,
+						TIMESCALE_SECONDS, CRL_TIMEOUT_RANGE);
 			continue;
-
 		case OPT_CRL_STRICT:	/* --crl-strict */
-			x509_crl.strict = true;
+			update_setup_yn(KYN_CRL_STRICT, YN_YES);
 			continue;
-
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
-			x509_crl.check_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			update_setup_deltatime(KBF_CRL_CHECKINTERVAL,
+					       optarg_deltatime(logger, TIMESCALE_SECONDS));
 			continue;
 
 		case OPT_OCSP_STRICT:
-			x509_ocsp.strict = true;
+			update_setup_yn(KYN_OCSP_STRICT, YN_YES);
 			continue;
-
 		case OPT_OCSP_ENABLE:
-			x509_ocsp.enable = true;
+			update_setup_yn(KYN_OCSP_ENABLE, YN_YES);
 			continue;
-
 		case OPT_OCSP_URI:
-			replace_value(&x509_ocsp.uri, optarg);
+			update_setup_string(KSF_OCSP_URI, optarg_nonempty(logger));
 			continue;
-
 		case OPT_OCSP_TRUSTNAME:
-			replace_value(&x509_ocsp.trust_name, optarg);
+			update_setup_string(KSF_OCSP_TRUSTNAME, optarg_nonempty(logger));
 			continue;
-
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
-			x509_ocsp.timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_TIMEOUT_OK deltatime_ok(x509_ocsp.timeout, 1, 1000)
-			check_diag(logger, OCSP_TIMEOUT_OK);
+#define OCSP_TIMEOUT_RANGE 1, 1000
+			update_optarg_deltatime(KBF_OCSP_TIMEOUT_SECONDS, logger,
+						TIMESCALE_SECONDS, OCSP_TIMEOUT_RANGE);
 			continue;
-
 		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
 		{
 			uintmax_t u;
@@ -1010,29 +939,26 @@ int main(int argc, char **argv)
 			if (u > 0xffff) {
 				optarg_fatal(logger, "too big, more than 0xffff");
 			}
-			x509_ocsp.cache_size = u; /* no loss; within INT_MAX */
+			update_setup_option(KBF_OCSP_CACHE_SIZE, u);
 			continue;
 		}
-
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
-			x509_ocsp.cache_min_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_CACHE_MIN_AGE_OK deltatime_ok(x509_ocsp.cache_min_age, 1, -1)
-			check_diag(logger, OCSP_CACHE_MIN_AGE_OK);
+#define OCSP_CACHE_MIN_AGE_RANGE 1, -1
+			update_optarg_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
+						TIMESCALE_SECONDS, OCSP_CACHE_MIN_AGE_RANGE);
 			continue;
-
 		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
 			/*
 			 * NSS uses 0 for unlimited and -1 for
 			 * disabled.  We use 0 for disabled, and a
 			 * large number for unlimited.
 			 */
-			x509_ocsp.cache_max_age = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define OCSP_CACHE_MAX_AGE_OK deltatime_ok(x509_ocsp.cache_max_age, 0, -1)
-			check_diag(logger, OCSP_CACHE_MAX_AGE_OK);
+#define OCSP_CACHE_MAX_AGE_RANGE 0, -1
+			update_optarg_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
+						TIMESCALE_SECONDS, OCSP_CACHE_MAX_AGE_RANGE);
 			continue;
-
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
-			x509_ocsp.method = optarg_sparse(logger, 0, &ocsp_method_names);
+			update_setup_option(KBF_OCSP_METHOD, optarg_sparse(logger, 0, &ocsp_method_names));
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
@@ -1069,19 +995,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_RUNDIR:	/* --rundir <path> */
-		{
-			int n = snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
-					 "%s/pluto.ctl", optarg);
-			if (n < 0 || n >= (ssize_t)sizeof(ctl_addr.sun_path)) {
-				optarg_fatal(logger, "argument is invalid for sun_path socket");
-			}
-
-			pfree(pluto_lock_filename);
-			pluto_lock_filename = alloc_printf("%s/pluto.pid", optarg);
-			pfreeany(rundir);
-			rundir = clone_str(optarg, "rundir");
+			update_setup_string(KSF_RUNDIR, optarg_nonempty(logger));
 			continue;
-		}
 
 		case OPT_SECRETSFILE:	/* --secretsfile <secrets-file> */
 			/* allow empty */
@@ -1173,28 +1088,7 @@ int main(int argc, char **argv)
 			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
 
-			extract_config_yn(&x509_crl.strict, cfg, KYN_CRL_STRICT);
-
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
-
-			extract_config_yn(&x509_ocsp.enable, cfg, KYN_OCSP_ENABLE);
-			extract_config_yn(&x509_ocsp.strict, cfg, KYN_OCSP_STRICT);
-			if (extract_config_deltatime(&x509_ocsp.timeout, cfg, KBF_OCSP_TIMEOUT_SECONDS)) {
-				check_conf(OCSP_TIMEOUT_OK, "ocsp-timeout", logger);
-			}
-			if (cfg->setup->values[KBF_OCSP_METHOD].set) {
-				x509_ocsp.method = cfg->setup->values[KBF_OCSP_METHOD].option;
-			}
-			x509_ocsp.cache_size = cfg->setup->values[KBF_OCSP_CACHE_SIZE].option;
-			if (extract_config_deltatime(&x509_ocsp.cache_min_age, cfg, KBF_OCSP_CACHE_MIN_AGE_SECONDS)) {
-				check_conf(OCSP_CACHE_MIN_AGE_OK, "ocsp-cache-min-age", logger);
-			}
-			if (extract_config_deltatime(&x509_ocsp.cache_max_age, cfg, KBF_OCSP_CACHE_MAX_AGE_SECONDS)) {
-				check_conf(OCSP_CACHE_MAX_AGE_OK, "ocsp-cache-max-age", logger);
-			}
-
-			replace_when_cfg_setup(&x509_ocsp.uri, cfg, KSF_OCSP_URI);
-			replace_when_cfg_setup(&x509_ocsp.trust_name, cfg, KSF_OCSP_TRUSTNAME);
 
 			char *tmp_global_redirect = cfg->setup->values[KSF_GLOBAL_REDIRECT].string;
 			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
@@ -1209,7 +1103,6 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			extract_config_deltatime(&x509_crl.check_interval, cfg, KBF_CRL_CHECKINTERVAL);
 			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
 
 			/*
@@ -1233,17 +1126,6 @@ int main(int argc, char **argv)
 #endif
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
-
-			/* no config option: rundir */
-
-			if (cfg->setup->values[KSF_CURLIFACE].string) {
-				replace_value(&x509_crl.curl_iface, cfg->setup->values[KSF_CURLIFACE].string);
-			}
-
-			if (extract_config_deltatime(&x509_crl.timeout, cfg, KBF_CRL_TIMEOUT_SECONDS)) {
-				check_conf(CRL_TIMEOUT_OK, "crl-timeout", logger);
-				/* checked below */
-			}
 
 			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
 				if (access(cfg->setup->values[KSF_STATSBINARY].string, X_OK) == 0) {
@@ -1353,6 +1235,33 @@ int main(int argc, char **argv)
 	UNUSED const struct config_setup *oco = config_setup_singleton();
 
 	/*
+	 * Extract/check x509 crl configuration before forking.
+	 */
+
+	x509_crl.curl_iface = config_setup_string(oco, KSF_CURLIFACE);
+	x509_crl.strict = config_setup_yn(oco, KYN_CRL_STRICT);
+	x509_crl.check_interval = config_setup_deltatime(oco, KBF_CRL_CHECKINTERVAL);
+	x509_crl.timeout = check_config_deltatime(oco, KBF_CRL_TIMEOUT_SECONDS, logger,
+						  CRL_TIMEOUT_RANGE, "crl-timeout");
+
+	/*
+	 * Extract/check X509 OCSP.
+	 */
+
+	x509_ocsp.enable = config_setup_yn(oco, KYN_OCSP_ENABLE);
+	x509_ocsp.strict = config_setup_yn(oco, KYN_OCSP_STRICT);
+	x509_ocsp.uri = config_setup_string(oco, KSF_OCSP_URI);
+	x509_ocsp.trust_name = config_setup_string(oco, KSF_OCSP_TRUSTNAME);
+	x509_ocsp.timeout = check_config_deltatime(oco, KBF_OCSP_TIMEOUT_SECONDS, logger,
+						   OCSP_TIMEOUT_RANGE, "ocsp-timeout");
+	x509_ocsp.cache_min_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
+							 OCSP_CACHE_MIN_AGE_RANGE, "ocsp-cache-min-age");
+	x509_ocsp.cache_max_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
+							 OCSP_CACHE_MAX_AGE_RANGE, "ocsp-cache-max-age");
+	x509_ocsp.method = config_setup_option(oco, KBF_OCSP_METHOD);
+	x509_ocsp.cache_size = config_setup_option(oco, KBF_OCSP_CACHE_SIZE);
+
+	/*
 	 * Anything (aka an argument) after all options consumed?
 	 */
 	if (optind != argc) {
@@ -1371,9 +1280,9 @@ int main(int argc, char **argv)
 	int lockfd;
 	if (selftest_only) {
 		llog(RC_LOG, logger, "selftest: skipping lock");
-		lockfd = 0;
+		lockfd = -1;
 	} else {
-		lockfd = create_lock(logger);
+		lockfd = create_lock_file(oco, fork_desired, logger);
 	}
 
 	/*
@@ -1389,10 +1298,8 @@ int main(int argc, char **argv)
 	if (selftest_only) {
 		llog(RC_LOG, logger, "selftest: skipping control socket");
 	} else {
-		diag_t d = init_ctl_socket(logger);
-		if (d != NULL) {
-			fatal(PLUTO_EXIT_SOCKET_FAIL, logger, "%s", str_diag(d));
-		}
+		/* may never return */
+		init_ctl_socket(oco, logger);
 	}
 
 	/*
@@ -1416,7 +1323,7 @@ int main(int argc, char **argv)
 		 * is probably safer to leave this feature disabled
 		 * then implement it using the daemon call.
 		 */
-		(void) fill_lock(lockfd, getpid());
+		fill_and_close_lock_file(&lockfd, getpid());
 #elif USE_FORK
 		{
 			pid_t pid = fork();
@@ -1437,7 +1344,8 @@ int main(int argc, char **argv)
 				 * must not use exit_pluto: lock would be
 				 * removed!
 				 */
-				exit(fill_lock(lockfd, pid) ? 0 : 1);
+				bool ok = fill_and_close_lock_file(&lockfd, pid);
+				exit(ok ? 0 : 1);
 			}
 		}
 #else
@@ -1449,7 +1357,7 @@ int main(int argc, char **argv)
 		}
 	} else {
 		/* no daemon fork: we have to fill in lock file */
-		(void) fill_lock(lockfd, getpid());
+		fill_and_close_lock_file(&lockfd, getpid());
 
 		if (isatty(fileno(stdout)) && !config_setup_yn(oco, KYN_LOGSTDERR)) {
 			/*
@@ -1480,22 +1388,7 @@ int main(int argc, char **argv)
 
 	lset_t new_debugging = config_setup_debugging(logger);
 	if (cur_debugging || new_debugging) {
-		for (int fd = getdtablesize() - 1; fd >= 0; fd--) {
-			if (fd == ctl_fd ||
-			    fd == STDIN_FILENO ||
-			    fd == STDOUT_FILENO ||
-			    fd == STDERR_FILENO) {
-				continue;
-			}
-			struct stat s;
-			if (fstat(fd, &s) == 0) {
-				/*
-				 * Not a pexpect(), this happens when
-				 * running under FAKETIME.
-				 */
-				llog(RC_LOG, logger, "unexpected open file descriptor %d", fd);
-			}
-		}
+		check_open_fds(logger);
 	}
 
 	/*

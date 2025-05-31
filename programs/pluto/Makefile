@@ -262,6 +262,7 @@ OBJS += foodgroups.o
 OBJS += log.o
 OBJS += log_limiter.o
 OBJS += state.o plutomain.o plutoalg.o
+OBJS += lock_file.o
 OBJS += revival.o
 OBJS += orient.o
 OBJS += server.o

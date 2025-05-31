@@ -31,8 +31,8 @@ diag_t init_x509_ocsp(struct logger *logger);
 struct x509_ocsp_config {
 	bool enable;
 	bool strict;
-	char *uri;
-	char *trust_name;
+	const char *uri;
+	const char *trust_name;
 	deltatime_t timeout;
 	enum ocsp_method method;
 	int cache_size;
