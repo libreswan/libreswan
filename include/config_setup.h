@@ -46,25 +46,4 @@ const char *config_setup_dumpdir(void);
 const char *config_setup_vendorid(void);
 lset_t config_setup_debugging(struct logger *logger);
 
-/*
- * When FIELD in SETUP is set, extract the value saving it in TARGET.
- *
- * Return TRUE when value was extracted (caller may then proceed to do
- * further validation).
- *
- * Note: An empty string, such as dnssec-anchors=, is turned into
- * NULL.
- */
-
-bool extract_setup_string(const char **target,
-			  const struct config_setup *setup,
-			  enum keywords field);
-
-bool extract_setup_yn(bool *target,
-		      const struct config_setup *setup,
-		      enum keywords field);
-bool extract_setup_deltatime(deltatime_t *target,
-			     const struct config_setup *setup,
-			     enum keywords field);
-
 #endif

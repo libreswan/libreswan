@@ -1652,9 +1652,9 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
-	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
-	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
-	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
+	pluto_dnssec.enable = config_setup_yn(oco, KYN_DNSSEC_ENABLE);
+	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
+	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
 	d = unbound_event_init(get_pluto_event_base(),
 			       pluto_dnssec.enable,
 			       pluto_dnssec.rootkey_file,
