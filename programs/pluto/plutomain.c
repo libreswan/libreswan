@@ -130,7 +130,6 @@ void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(conffile);
-	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
@@ -752,9 +751,8 @@ int main(int argc, char **argv)
 			update_setup_string(KSF_MYVENDORID, optarg_nonempty(logger));
 			continue;
 
-		case OPT_STATSBIN:	/* --statsdir */
-			pfreeany(pluto_stats_binary);
-			pluto_stats_binary = clone_str(optarg, "statsbin");
+		case OPT_STATSBIN:	/* --statsbin */
+			update_setup_string(KSF_STATSBIN, optarg_empty(logger));
 			continue;
 
 		case OPT_VERSION:	/* --version */
@@ -1127,18 +1125,6 @@ int main(int argc, char **argv)
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
-			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
-				if (access(cfg->setup->values[KSF_STATSBINARY].string, X_OK) == 0) {
-					pfreeany(pluto_stats_binary);
-					/* statsbin= */
-					pluto_stats_binary = clone_str(cfg->setup->values[KSF_STATSBINARY].string, "statsbin via --config");
-					llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
-				} else {
-					llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
-						    pluto_stats_binary);
-				}
-			}
-
 			pluto_nss_seedbits = cfg->setup->values[KBF_SEEDBITS].option;
 			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
 
@@ -1424,6 +1410,7 @@ int main(int argc, char **argv)
 	}
 
 	init_kernel_info(logger);
+	init_binlog(oco, logger);
 
 	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
@@ -1702,6 +1689,8 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
+	const struct config_setup *oco = config_setup_singleton();
+
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
@@ -1714,7 +1703,7 @@ void show_setup_plutomain(struct show *s)
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
 	     config_setup_dumpdir(),
-	     pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
+	     config_setup_string_or_unset(oco, KSF_STATSBIN, "unset"));
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));

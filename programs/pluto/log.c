@@ -59,8 +59,6 @@ bool log_to_audit = true;
 
 static FILE *pluto_log_file = NULL;	/* either a real file or stderr */
 
-char *pluto_stats_binary = NULL;
-
 /*
  * Initialization of the real logger.
  *

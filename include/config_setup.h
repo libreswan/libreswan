@@ -34,6 +34,7 @@ void update_setup_deltatime(enum keywords kw, deltatime_t deltatime);
 void update_setup_option(enum keywords kw, uintmax_t option);
 
 const char *config_setup_string(const struct config_setup *setup, enum keywords field);
+const char *config_setup_string_or_unset(const struct config_setup *setup, enum keywords field, const char *unset);
 bool config_setup_yn(const struct config_setup *setup, enum keywords field);
 deltatime_t config_setup_deltatime(const struct config_setup *setup, enum keywords field);
 uintmax_t config_setup_option(const struct config_setup *setup, enum keywords field);

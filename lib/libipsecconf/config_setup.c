@@ -126,6 +126,17 @@ const char *config_setup_string(const struct config_setup *setup,
 	return setup->values[field].string;
 }
 
+const char *config_setup_string_or_unset(const struct config_setup *setup,
+					 enum keywords field,
+					 const char *unset)
+{
+	const char *string = config_setup_string(setup, field);
+	if (string == NULL) {
+		return unset;
+	}
+	return string;
+}
+
 bool config_setup_yn(const struct config_setup *setup,
 		     enum keywords field)
 {
