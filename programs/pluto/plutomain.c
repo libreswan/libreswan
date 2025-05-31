@@ -795,11 +795,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_IKEV1_REJECT:	/* --ikev1-reject */
-			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
+			update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_REJECT);
 			continue;
 
 		case OPT_IKEV1_DROP:	/* --ikev1-drop */
-			pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
+			update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
 			continue;
 
 		case OPT_NOFORK:	/* --nofork*/
@@ -1076,13 +1076,6 @@ int main(int argc, char **argv)
 			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
 			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
-			pluto_ikev1_pol = cfg->setup->values[KBF_GLOBAL_IKEv1].option;
-#ifndef USE_IKEv1
-			if (pluto_ikev1_pol != GLOBAL_IKEv1_DROP) {
-				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
-				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
-			}
-#endif
 #ifdef USE_SECCOMP
 			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
 #endif
@@ -1446,6 +1439,7 @@ int main(int argc, char **argv)
 
 	pluto_init_nss(config_setup_nssdir(), logger);
 	init_seedbits(oco, logger);
+	init_demux(oco, logger);
 
 	if (is_fips_mode()) {
 		/*
@@ -1740,14 +1734,16 @@ void show_setup_plutomain(struct show *s)
 
 	show_log(s);
 
+	enum global_ikev1_policy ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+	name_buf pb;
+
 	show(s,
-		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
-		pluto_ddos_threshold,
-		pluto_max_halfopen,
-		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
-			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
-		pluto_ikev1_pol == GLOBAL_IKEv1_ACCEPT ? "accept" :
-			pluto_ikev1_pol == GLOBAL_IKEv1_REJECT ? "reject" : "drop");
+	     "ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
+	     pluto_ddos_threshold,
+	     pluto_max_halfopen,
+	     (pluto_ddos_mode == DDOS_AUTO) ? "auto" :
+	     (pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
+	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
 	show(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",

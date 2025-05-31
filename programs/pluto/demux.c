@@ -75,7 +75,10 @@
 #include "log_limiter.h"
 #include "ikev1_notification.h"
 #include "ikev2_notification.h"
+#include "config_setup.h"
+#include "ipsecconf/keywords.h"		/* for KBF_IKEv1_POLICY */
 
+static enum global_ikev1_policy global_ikev1_policy; /* see init_demux() */
 static callback_cb handle_md_event;		/* type assertion */
 
 /*
@@ -148,13 +151,13 @@ void process_md(struct msg_digest *md)
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 	{
-		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
+		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
 			llog_md(md,
 			     "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
-		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
+		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
 			llog_md(md,
 			     "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
@@ -468,4 +471,17 @@ void llog_md(const struct msg_digest *md,
 		llog_va_list(rc_flags, md->logger, message, ap);
 		va_end(ap);
 	}
+}
+
+void init_demux(const struct config_setup *oco, struct logger *logger UNUSED)
+{
+	global_ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+#ifndef USE_IKEv1
+	if (global_ikev1_policy != GLOBAL_IKEv1_DROP) {
+		name_buf pb;
+		llog(RC_LOG, logger, "ignoring ikev1-policy=%s as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped",
+		     str_sparse_long(&global_ikev1_policy_names, global_ikev1_policy, &pb));
+		global_ikev1_policy = GLOBAL_IKEv1_DROP;
+	}
+#endif
 }

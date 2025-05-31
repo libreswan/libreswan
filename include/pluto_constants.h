@@ -148,6 +148,8 @@ enum global_ikev1_policy {
 	GLOBAL_IKEv1_DROP = 2,
 };
 
+extern const struct sparse_names global_ikev1_policy_names;
+
 /* corresponding name table is sd_action_names */
 enum sd_actions {
 	PLUTO_SD_EXIT = 1,

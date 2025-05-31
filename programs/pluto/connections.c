@@ -107,6 +107,8 @@
 #include "whack_pubkey.h"
 #include "binaryscale-iec-60027-2.h"
 #include "addr_lookup.h"
+#include "config_setup.h"
+#include "ipsecconf/keywords.h"		/* for KBF_IKEv1_POLICY; grr */
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
@@ -3611,8 +3613,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (ike_version == IKEv1) {
 #ifdef USE_IKEv1
-		if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
-			return diag("global ikev1-policy does not allow IKEv1 connections");
+		/* avoid using global */
+		enum global_ikev1_policy ikev1_policy =
+			config_setup_option(config_setup_singleton(), KBF_IKEv1_POLICY);
+		if (ikev1_policy != GLOBAL_IKEv1_ACCEPT) {
+			name_buf pb;
+			return diag("global ikev1-policy=%s does not allow IKEv1 connections",
+				    str_sparse_long(&global_ikev1_policy_names,
+						    ikev1_policy, &pb));
 		}
 #else
 		return diag("IKEv1 support not compiled in");

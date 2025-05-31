@@ -79,7 +79,7 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_NHELPERS, -1);
 		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
 		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
-		update_setup_option(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
+		update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
 		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
@@ -106,7 +106,6 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MAX_AGE));
 		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-
 	}
 	return &config_setup;
 }
