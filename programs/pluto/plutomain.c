@@ -114,7 +114,6 @@ static bool selftest_only = false;
 /* pulled from main for show_setup_plutomain() */
 
 static char *conffile;
-static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
 static struct {
@@ -356,13 +355,18 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
 	init_nss(nssdir, (struct nss_flags) { .open_readonly = true}, logger);
 	llog(RC_LOG, logger, "NSS crypto library initialized");
+}
 
-	/*
-	 * This exists purely to make the BSI happy.
-	 * We do not inflict this on other users
-	 */
-	if (pluto_nss_seedbits != 0) {
-		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
+/*
+ * This exists purely to make the BSI happy.  We do not inflict this
+ * on other users
+ */
+
+static void init_seedbits(const struct config_setup *oco, struct logger *logger)
+{
+	uintmax_t seedbits = config_setup_option(oco, KBF_SEEDBITS);
+	if (seedbits != 0) {
+		int seedbytes = BYTES_FOR_BITS(seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
@@ -776,11 +780,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_SEEDBITS:	/* --seedbits */
-			pluto_nss_seedbits = optarg_uintmax(logger);
-			if (pluto_nss_seedbits == 0) {
+		{
+			/* Why not allow zero aka disable? */
+			uintmax_t seedbits = optarg_uintmax(logger);
+			if (seedbits == 0) {
 				optarg_fatal(logger, "seedbits must be an integer > 0");
 			}
+			update_setup_option(KBF_SEEDBITS, seedbits);
 			continue;
+		}
 
 		case OPT_IKEV1_SECCTX_ATTR_TYPE:	/* --secctx-attr-type */
 			llog(RC_LOG, logger, "--secctx-attr-type not supported");
@@ -1125,7 +1133,6 @@ int main(int argc, char **argv)
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
-			pluto_nss_seedbits = cfg->setup->values[KBF_SEEDBITS].option;
 			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
@@ -1438,6 +1445,7 @@ int main(int argc, char **argv)
 	spd_db_init(logger);
 
 	pluto_init_nss(config_setup_nssdir(), logger);
+	init_seedbits(oco, logger);
 
 	if (is_fips_mode()) {
 		/*
