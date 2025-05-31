@@ -32,6 +32,7 @@
 
 #include "lset.h"	/* for LELEM() */
 #include "constants.h"	/* for LOOSE_ENUM_OTHER ULGH! */
+#include "config_setup.h"	/* for config_setup_keyword */
 
 /*
  * Keyword value indexes.  The value is stored in:
@@ -54,84 +55,6 @@
  *   in "config setup" so if the same option used between multiple
  *   sections the prefix should be changed.
  */
-
-enum config_setup_keyword {
-
-	/*
-	 * By convention, these are global configuration strings and
-	 * only appear in the "config setup" section (KSF == Keyword
-	 * String Flag?).
-	 */
-	KSF_CURLIFACE,
-	KSF_VIRTUALPRIVATE,
-	KSF_SYSLOG,
-	KSF_DUMPDIR,
-	KSF_STATSBIN,
-	KSF_IPSECDIR,
-	KSF_NSSDIR,
-	KSF_SECRETSFILE,
-	KSF_PERPEERDIR,
-	KSF_MYVENDORID,
-	KSF_LOGFILE,
-	KSF_RUNDIR,		/* placeholder, no option */
-	KSF_DNSSEC_ROOTKEY_FILE,
-	KSF_DNSSEC_ANCHORS,
-	KYN_DNSSEC_ENABLE,
-	KSF_PROTOSTACK,
-	KSF_GLOBAL_REDIRECT,
-	KSF_GLOBAL_REDIRECT_TO,
-	KSF_LISTEN,
-	KSF_OCSP_URI,
-	KSF_OCSP_TRUSTNAME,
-	KSF_EXPIRE_SHUNT_INTERVAL,
-
-	/*
-	 * By convention, these are global configuration numeric (and
-	 * boolean) values and only appear in the "config setup"
-	 * section (KBF == Keyword Boolean Flag?).
-	 *
-	 * KYN implies yn_options.
-	 */
-	KYN_UNIQUEIDS,
-	KYN_LOGTIME,
-	KYN_LOGAPPEND,
-	KYN_LOGIP,
-	KYN_LOGSTDERR, /*no matching option*/
-	KYN_AUDIT_LOG,
-	KBF_IKEBUF,
-	KYN_IKE_SOCKET_ERRQUEUE,
-	KBF_PERPEERLOG,
-	KBF_EXPIRE_LIFETIME,
-	KYN_CRL_STRICT,
-	KBF_CRL_CHECKINTERVAL,
-	KBF_CRL_TIMEOUT_SECONDS,
-	KYN_OCSP_STRICT,
-	KYN_OCSP_ENABLE,
-	KBF_OCSP_TIMEOUT_SECONDS,
-	KBF_OCSP_CACHE_SIZE,
-	KBF_OCSP_CACHE_MIN_AGE_SECONDS,
-	KBF_OCSP_CACHE_MAX_AGE_SECONDS,
-	KBF_OCSP_METHOD,
-	KBF_SEEDBITS,
-	KYN_DROP_OPPO_NULL,
-	KBF_KEEP_ALIVE,
-	KBF_NHELPERS,
-	KBF_SHUNTLIFETIME,
-	KBF_FORCEBUSY, 		/* obsoleted for KBF_DDOS_MODE */
-	KBF_DDOS_IKE_THRESHOLD,
-	KBF_MAX_HALFOPEN_IKE,
-	KBF_NFLOG_ALL,		/* Enable global nflog device */
-	KBF_DDOS_MODE,		/* set DDOS mode */
-	KBF_SECCOMP,		/* set SECCOMP mode */
-
-	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
-	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
-	KBF_IKEv1_POLICY,
-	KSF_PLUTODEBUG,
-	KWYN_IPSEC_INTERFACE_MANAGED,
-
-	CONFIG_SETUP_KEYWORD_ROOF,
-};
 
 enum config_conn_keyword {
 
