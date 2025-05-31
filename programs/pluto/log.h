@@ -47,7 +47,6 @@ void close_log(void);	/* call after report_leaks() */
 void show_log(struct show *s);
 
 extern bool log_to_audit;
-extern char *pluto_stats_binary;
 
 extern bool whack_prompt_for(struct ike_sa *ike,
 			     const char *prompt,
@@ -87,6 +86,7 @@ void state_detach_where(struct state *st, const struct logger *src, where_t wher
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
 #define binlog_fake_state(st, new_state) binlog_state((st), (new_state))
 extern void binlog_state(struct state *st, enum state_kind state);
+void init_binlog(const struct config_setup *oco, struct logger *logger);
 
 extern void set_debugging(lset_t deb);
 

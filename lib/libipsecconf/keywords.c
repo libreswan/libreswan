@@ -96,21 +96,12 @@ static const struct sparse_names kw_phase2types_names = {
 	},
 };
 
-static const struct sparse_names kw_global_ikev1_names = {
-	.list = {
-		SPARSE("accept",   GLOBAL_IKEv1_ACCEPT),
-		SPARSE("reject",   GLOBAL_IKEv1_REJECT),
-		SPARSE("drop",     GLOBAL_IKEv1_DROP),
-		SPARSE_NULL
-	},
-};
-
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
  */
 
 const struct keyword_def ipsec_conf_keywords[] = {
-  { "ikev1-policy",  kv_config,  kt_sparse_name,  KBF_GLOBAL_IKEv1, &kw_global_ikev1_names, NULL, },
+  { "ikev1-policy",  kv_config,  kt_sparse_name,  KBF_IKEv1_POLICY, &global_ikev1_policy_names, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
 
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
@@ -135,7 +126,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ipsecdir",  kv_config,  kt_string,  KSF_IPSECDIR, NULL, NULL, },
   { "nssdir", kv_config, kt_string, KSF_NSSDIR, NULL, NULL, },
   { "secretsfile",  kv_config,  kt_string,  KSF_SECRETSFILE, NULL, NULL, },
-  { "statsbin",  kv_config,  kt_string,  KSF_STATSBINARY, NULL, NULL, },
+  { "statsbin",  kv_config,  kt_string,  KSF_STATSBIN, NULL, NULL, },
   { "uniqueids",  kv_config,  kt_sparse_name,  KYN_UNIQUEIDS, &yn_option_names, NULL, },
   { "shuntlifetime",  kv_config,  kt_seconds,  KBF_SHUNTLIFETIME, NULL, NULL, },
   { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },

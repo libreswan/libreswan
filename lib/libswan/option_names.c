@@ -237,3 +237,12 @@ const struct sparse_names keyword_pubkey_names = {
 		SPARSE_NULL
 	},
 };
+
+const struct sparse_names global_ikev1_policy_names = {
+	.list = {
+		SPARSE("accept",   GLOBAL_IKEv1_ACCEPT),
+		SPARSE("reject",   GLOBAL_IKEv1_REJECT),
+		SPARSE("drop",     GLOBAL_IKEv1_DROP),
+		SPARSE_NULL
+	},
+};

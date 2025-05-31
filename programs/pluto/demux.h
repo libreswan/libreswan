@@ -262,4 +262,6 @@ void llog_md(const struct msg_digest *md, const char *message, ...) PRINTF_LIKE(
 
 void process_md(struct msg_digest *md);
 
+void init_demux(const struct config_setup *oco, struct logger *logger);
+
 #endif /* _DEMUX_H */

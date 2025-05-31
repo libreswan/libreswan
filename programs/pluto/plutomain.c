@@ -114,7 +114,6 @@ static bool selftest_only = false;
 /* pulled from main for show_setup_plutomain() */
 
 static char *conffile;
-static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
 static struct {
@@ -130,7 +129,6 @@ void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(conffile);
-	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
 	free_global_redirect_dests();
 	pfreeany(virtual_private);
@@ -357,13 +355,18 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
 {
 	init_nss(nssdir, (struct nss_flags) { .open_readonly = true}, logger);
 	llog(RC_LOG, logger, "NSS crypto library initialized");
+}
 
-	/*
-	 * This exists purely to make the BSI happy.
-	 * We do not inflict this on other users
-	 */
-	if (pluto_nss_seedbits != 0) {
-		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
+/*
+ * This exists purely to make the BSI happy.  We do not inflict this
+ * on other users
+ */
+
+static void init_seedbits(const struct config_setup *oco, struct logger *logger)
+{
+	uintmax_t seedbits = config_setup_option(oco, KBF_SEEDBITS);
+	if (seedbits != 0) {
+		int seedbytes = BYTES_FOR_BITS(seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
 
 		get_bsi_random(seedbytes, buf, logger); /* much TLA, very blocking */
@@ -752,9 +755,8 @@ int main(int argc, char **argv)
 			update_setup_string(KSF_MYVENDORID, optarg_nonempty(logger));
 			continue;
 
-		case OPT_STATSBIN:	/* --statsdir */
-			pfreeany(pluto_stats_binary);
-			pluto_stats_binary = clone_str(optarg, "statsbin");
+		case OPT_STATSBIN:	/* --statsbin */
+			update_setup_string(KSF_STATSBIN, optarg_empty(logger));
 			continue;
 
 		case OPT_VERSION:	/* --version */
@@ -778,22 +780,26 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_SEEDBITS:	/* --seedbits */
-			pluto_nss_seedbits = optarg_uintmax(logger);
-			if (pluto_nss_seedbits == 0) {
+		{
+			/* Why not allow zero aka disable? */
+			uintmax_t seedbits = optarg_uintmax(logger);
+			if (seedbits == 0) {
 				optarg_fatal(logger, "seedbits must be an integer > 0");
 			}
+			update_setup_option(KBF_SEEDBITS, seedbits);
 			continue;
+		}
 
 		case OPT_IKEV1_SECCTX_ATTR_TYPE:	/* --secctx-attr-type */
 			llog(RC_LOG, logger, "--secctx-attr-type not supported");
 			continue;
 
 		case OPT_IKEV1_REJECT:	/* --ikev1-reject */
-			pluto_ikev1_pol = GLOBAL_IKEv1_REJECT;
+			update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_REJECT);
 			continue;
 
 		case OPT_IKEV1_DROP:	/* --ikev1-drop */
-			pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
+			update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
 			continue;
 
 		case OPT_NOFORK:	/* --nofork*/
@@ -1070,13 +1076,6 @@ int main(int argc, char **argv)
 			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
 			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
-			pluto_ikev1_pol = cfg->setup->values[KBF_GLOBAL_IKEv1].option;
-#ifndef USE_IKEv1
-			if (pluto_ikev1_pol != GLOBAL_IKEv1_DROP) {
-				llog(RC_LOG, logger, "ignoring ikev1-policy= as IKEv1 support is not compiled in. Incoming IKEv1 packets will be dropped");
-				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
-			}
-#endif
 #ifdef USE_SECCOMP
 			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
 #endif
@@ -1127,19 +1126,6 @@ int main(int argc, char **argv)
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
-			if (cfg->setup->values[KSF_STATSBINARY].string != NULL) {
-				if (access(cfg->setup->values[KSF_STATSBINARY].string, X_OK) == 0) {
-					pfreeany(pluto_stats_binary);
-					/* statsbin= */
-					pluto_stats_binary = clone_str(cfg->setup->values[KSF_STATSBINARY].string, "statsbin via --config");
-					llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
-				} else {
-					llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
-						    pluto_stats_binary);
-				}
-			}
-
-			pluto_nss_seedbits = cfg->setup->values[KBF_SEEDBITS].option;
 			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
 
 			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
@@ -1424,6 +1410,7 @@ int main(int argc, char **argv)
 	}
 
 	init_kernel_info(logger);
+	init_binlog(oco, logger);
 
 	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
@@ -1451,6 +1438,8 @@ int main(int argc, char **argv)
 	spd_db_init(logger);
 
 	pluto_init_nss(config_setup_nssdir(), logger);
+	init_seedbits(oco, logger);
+	init_demux(oco, logger);
 
 	if (is_fips_mode()) {
 		/*
@@ -1657,9 +1646,9 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_DNSSEC
-	extract_setup_yn(&pluto_dnssec.enable, oco, KYN_DNSSEC_ENABLE);
-	extract_setup_string(&pluto_dnssec.rootkey_file, oco, KSF_DNSSEC_ROOTKEY_FILE);
-	extract_setup_string(&pluto_dnssec.anchors, oco, KSF_DNSSEC_ANCHORS);
+	pluto_dnssec.enable = config_setup_yn(oco, KYN_DNSSEC_ENABLE);
+	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
+	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
 	d = unbound_event_init(get_pluto_event_base(),
 			       pluto_dnssec.enable,
 			       pluto_dnssec.rootkey_file,
@@ -1702,6 +1691,8 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
+	const struct config_setup *oco = config_setup_singleton();
+
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
@@ -1714,7 +1705,7 @@ void show_setup_plutomain(struct show *s)
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
 	     config_setup_dumpdir(),
-	     pluto_stats_binary == NULL ? "unset" :  pluto_stats_binary);
+	     config_setup_string_or_unset(oco, KSF_STATSBIN, "unset"));
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));
@@ -1743,14 +1734,16 @@ void show_setup_plutomain(struct show *s)
 
 	show_log(s);
 
+	enum global_ikev1_policy ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+	name_buf pb;
+
 	show(s,
-		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
-		pluto_ddos_threshold,
-		pluto_max_halfopen,
-		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
-			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
-		pluto_ikev1_pol == GLOBAL_IKEv1_ACCEPT ? "accept" :
-			pluto_ikev1_pol == GLOBAL_IKEv1_REJECT ? "reject" : "drop");
+	     "ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
+	     pluto_ddos_threshold,
+	     pluto_max_halfopen,
+	     (pluto_ddos_mode == DDOS_AUTO) ? "auto" :
+	     (pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
+	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
 	show(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",

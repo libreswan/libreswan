@@ -80,7 +80,7 @@ enum keywords {
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
-	KSF_STATSBINARY,
+	KSF_STATSBIN,
 	KSF_IPSECDIR,
 	KSF_NSSDIR,
 	KSF_SECRETSFILE,
@@ -140,7 +140,7 @@ enum keywords {
 
 	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
 	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
-	KBF_GLOBAL_IKEv1,	/* global ikev1 policy - default drop */
+	KBF_IKEv1_POLICY,
 	KSF_PLUTODEBUG,
 
 	/*

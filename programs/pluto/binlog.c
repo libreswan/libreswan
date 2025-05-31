@@ -23,6 +23,8 @@
  *
  */
 
+#include <unistd.h>		/* for access() */
+
 #include "sysdep.h"
 #include "constants.h"
 #include "fips_mode.h"
@@ -45,6 +47,10 @@
 #ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
+#include "config_setup.h"
+#include "ipsecconf/keywords.h"		/* grr for KWS_*; */
+
+const char *pluto_stats_binary; /* see init_binlog() */
 
 /*
  * We store runtime info for stats/status this way.
@@ -253,4 +259,20 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		log_state(RC_LOG, st, "statsbin= failed to send status update notification");
 	}
 	dbg("log_state for connection %s completed", conn->name);
+}
+
+void init_binlog(const struct config_setup *oco, struct logger *logger)
+{
+	const char *binary = config_setup_string(oco, KSF_STATSBIN);
+	if (binary != NULL) {
+		if (access(binary, X_OK) == 0) {
+			/* statsbin= */
+			pluto_stats_binary = binary;
+			llog(RC_LOG, logger, "statsbinary set to %s", pluto_stats_binary);
+			return;
+		}
+
+		llog(RC_LOG, logger, "statsbinary= '%s' ignored - file does not exist or is not executable",
+		     binary);
+	}
 }

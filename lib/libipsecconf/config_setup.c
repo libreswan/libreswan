@@ -79,7 +79,7 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_NHELPERS, -1);
 		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
 		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
-		update_setup_option(KBF_GLOBAL_IKEv1, GLOBAL_IKEv1_DROP);
+		update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
 		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
@@ -106,7 +106,6 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MAX_AGE));
 		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-
 	}
 	return &config_setup;
 }
@@ -124,6 +123,17 @@ const char *config_setup_string(const struct config_setup *setup,
 {
 	passert(field < elemsof(setup->values));
 	return setup->values[field].string;
+}
+
+const char *config_setup_string_or_unset(const struct config_setup *setup,
+					 enum keywords field,
+					 const char *unset)
+{
+	const char *string = config_setup_string(setup, field);
+	if (string == NULL) {
+		return unset;
+	}
+	return string;
 }
 
 bool config_setup_yn(const struct config_setup *setup,
@@ -201,51 +211,4 @@ lset_t config_setup_debugging(struct logger *logger)
 	}
 
 	return result.set;
-}
-
-bool extract_setup_string(const char **target,
-			  const struct config_setup *setup,
-			  enum keywords field)
-{
-	pexpect((*target) == NULL); /* i.e., unset */
-	const char *value = setup->values[field].string;
-	/* Do nothing if value is unset; convert '' into NULL. */
-	if (value != NULL && strlen(value) > 0) {
-		(*target) = value;
-		return true;
-	}
-	return false;
-}
-
-bool extract_setup_deltatime(deltatime_t *target,
-			     const struct config_setup *setup,
-			     enum keywords field)
-{
-	pexpect(target->is_set == false); /* i.e., unset */
-	deltatime_t value = setup->values[field].deltatime;
-	/* Do nothing if value is unset. */
-	if (value.is_set) {
-		(*target) = value;
-		return true;
-	}
-	return false;
-}
-
-bool extract_setup_yn(bool *target,
-		      const struct config_setup *setup,
-		      enum keywords field)
-{
-	pexpect((*target) == false); /* i.e., unset */
-	enum yn_options yn = setup->values[field].option;
-	/* Do nothing if value is unset. */
-	switch (yn) {
-	case YN_YES:
-		(*target) = true;
-		return true;
-	case YN_NO:
-		(*target) = false;
-		return true;
-	default:
-		return false;
-	}
 }
