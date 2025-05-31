@@ -13,7 +13,7 @@ east #
 east #
  ipsec auto --add ikev1
 ipsec addconn: /etc/ipsec.conf:13: warning: overriding earlier 'config setup' keyword with new value: ikev1-policy=reject
-"ikev1": failed to add connection: global ikev1-policy does not allow IKEv1 connections
+"ikev1": failed to add connection: global ikev1-policy=reject does not allow IKEv1 connections
 east #
  # should work but unused
 east #
