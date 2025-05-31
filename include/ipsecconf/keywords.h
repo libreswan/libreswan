@@ -55,21 +55,7 @@
  *   sections the prefix should be changed.
  */
 
-enum keywords {
-
-	/*
-	 * Generic keywords, add more here.
-	 */
-	KWS_DEBUG,
-	KWS_HOST,
-	KWS_NEXTHOP,
-
-	KWS_RSASIGKEY,
-	KWS_ECDSAKEY,
-	KWS_PUBKEY,
-
-	KWYN_IPSEC_INTERFACE_MANAGED,
-	KWS_IPSEC_INTERFACE,
+enum config_setup_keyword {
 
 	/*
 	 * By convention, these are global configuration strings and
@@ -142,6 +128,27 @@ enum keywords {
 	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
 	KBF_IKEv1_POLICY,
 	KSF_PLUTODEBUG,
+	KWYN_IPSEC_INTERFACE_MANAGED,
+
+	CONFIG_SETUP_KEYWORD_ROOF,
+};
+
+enum config_conn_keyword {
+
+	CONFIG_CONN_KEYWORD_BASEMENT = CONFIG_SETUP_KEYWORD_ROOF,
+
+	/*
+	 * Generic keywords, add more here.
+	 */
+	KWS_DEBUG,
+	KWS_HOST,
+	KWS_NEXTHOP,
+
+	KWS_RSASIGKEY,
+	KWS_ECDSAKEY,
+	KWS_PUBKEY,
+
+	KWS_IPSEC_INTERFACE,
 
 	/*
 	 * By convention, these are connection strings (KSCF is

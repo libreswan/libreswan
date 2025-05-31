@@ -36,7 +36,7 @@
 static bool config_setup_is_set;
 static struct config_setup config_setup;
 
-void update_setup_string(enum keywords kw, const char *string)
+void update_setup_string(enum config_setup_keyword kw, const char *string)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -45,7 +45,7 @@ void update_setup_string(enum keywords kw, const char *string)
 	kv->string = clone_str(string, "kv");
 }
 
-void update_setup_yn(enum keywords kw, enum yn_options yn)
+void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -53,7 +53,7 @@ void update_setup_yn(enum keywords kw, enum yn_options yn)
 	kv->option = yn;
 }
 
-void update_setup_deltatime(enum keywords kw, deltatime_t deltatime)
+void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -61,7 +61,7 @@ void update_setup_deltatime(enum keywords kw, deltatime_t deltatime)
 	kv->deltatime = deltatime;
 }
 
-void update_setup_option(enum keywords kw, uintmax_t option)
+void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 {
 	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
@@ -119,14 +119,14 @@ void free_config_setup(void)
 }
 
 const char *config_setup_string(const struct config_setup *setup,
-				enum keywords field)
+				enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
 	return setup->values[field].string;
 }
 
 const char *config_setup_string_or_unset(const struct config_setup *setup,
-					 enum keywords field,
+					 enum config_setup_keyword field,
 					 const char *unset)
 {
 	const char *string = config_setup_string(setup, field);
@@ -137,7 +137,7 @@ const char *config_setup_string_or_unset(const struct config_setup *setup,
 }
 
 bool config_setup_yn(const struct config_setup *setup,
-		     enum keywords field)
+		     enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
 	enum yn_options yn = setup->values[field].option;
@@ -150,14 +150,14 @@ bool config_setup_yn(const struct config_setup *setup,
 }
 
 deltatime_t config_setup_deltatime(const struct config_setup *setup,
-				   enum keywords field)
+				   enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
 	return setup->values[field].deltatime;
 }
 
 uintmax_t config_setup_option(const struct config_setup *setup,
-			      enum keywords field)
+			      enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
 	/* being .set doesn't matter, as default is zero */

@@ -22,22 +22,22 @@
 #include "deltatime.h"
 
 enum yn_options;
-enum keywords;
+enum config_setup_keyword;
 struct logger;
 
 struct config_setup *config_setup_singleton(void);
 void free_config_setup(void);
 
-void update_setup_string(enum keywords kw, const char *string);
-void update_setup_yn(enum keywords kw, enum yn_options yn);
-void update_setup_deltatime(enum keywords kw, deltatime_t deltatime);
-void update_setup_option(enum keywords kw, uintmax_t option);
+void update_setup_string(enum config_setup_keyword kw, const char *string);
+void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn);
+void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime);
+void update_setup_option(enum config_setup_keyword kw, uintmax_t option);
 
-const char *config_setup_string(const struct config_setup *setup, enum keywords field);
-const char *config_setup_string_or_unset(const struct config_setup *setup, enum keywords field, const char *unset);
-bool config_setup_yn(const struct config_setup *setup, enum keywords field);
-deltatime_t config_setup_deltatime(const struct config_setup *setup, enum keywords field);
-uintmax_t config_setup_option(const struct config_setup *setup, enum keywords field);
+const char *config_setup_string(const struct config_setup *setup, enum config_setup_keyword field);
+const char *config_setup_string_or_unset(const struct config_setup *setup, enum config_setup_keyword field, const char *unset);
+bool config_setup_yn(const struct config_setup *setup, enum config_setup_keyword field);
+deltatime_t config_setup_deltatime(const struct config_setup *setup, enum config_setup_keyword field);
+uintmax_t config_setup_option(const struct config_setup *setup, enum config_setup_keyword field);
 
 const char *config_setup_ipsecdir(void);
 const char *config_setup_secretsfile(void);
