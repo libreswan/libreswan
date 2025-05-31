@@ -2229,7 +2229,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 
 	case ISAKMP_CFG_REPLY:
 	{
-		diag_t d = process_mode_cfg_attrs(ike, "RESPONSE", attrs, &recv);
+		diag_t d = process_mode_cfg_attrs(ike, "REPLY", attrs, &recv);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
