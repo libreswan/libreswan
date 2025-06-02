@@ -975,7 +975,7 @@ int main(int argc, char **argv)
 
 #ifdef USE_NFLOG
 		case OPT_NFLOG_ALL:	/* --nflog-all <group-number> */
-			pluto_nflog_group = optarg_uintmax(logger);
+			update_setup_option(KBF_NFLOG_ALL, optarg_uintmax(logger));
 			continue;
 #endif
 
@@ -1112,12 +1112,6 @@ int main(int argc, char **argv)
 			/* listen-tcp= / listen-udp= */
 			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
 			extract_config_yn(&pluto_listen_udp, cfg, KYN_LISTEN_UDP);
-
-#ifdef USE_NFLOG
-			/* nflog-all= */
-			/* only causes nflog number to show in ipsec status */
-			pluto_nflog_group = cfg->setup->values[KBF_NFLOG_ALL].option;
-#endif
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
@@ -1738,14 +1732,26 @@ void show_setup_plutomain(struct show *s)
 	     (pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
+	/*
+	 * Default global NFLOG group - 0 means no logging
+	 *
+	 * Note: variable is only used to display in `ipsec status`
+	 * actual work is done outside pluto, by `ipsec checknflog`
+	 * where it uses addconn to extract the value.  Look for
+	 * NFGROUP= in ipsec.in.
+	 *
+	 * NFLOG group - 0 means no logging.
+	 */
+	uintmax_t nflog_all = config_setup_option(oco, KBF_NFLOG_ALL);
+
 	show(s,
-		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
+		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju",
 		pluto_sock_bufsize,
 		bool_str(pluto_ike_socket_errqueue),
 		bool_str(x509_crl.strict),
 		deltasecs(x509_crl.check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
-		pluto_nflog_group
+		nflog_all
 		);
 
 	show_x509_ocsp(s);
