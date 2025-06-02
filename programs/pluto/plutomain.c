@@ -711,8 +711,6 @@ int main(int argc, char **argv)
 	 */
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 
-	deltatime_t keep_alive = {0}; /* aka unset */
-
 	/* handle arguments */
 	for (;; ) {
 
@@ -1041,7 +1039,7 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
-			keep_alive = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger, TIMESCALE_SECONDS));
 			continue;
 
 		case OPT_SELFTEST:	/* --selftest */
@@ -1122,8 +1120,6 @@ int main(int argc, char **argv)
 #endif
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
-
-			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
 
 			set_global_redirect_dests(cfg->setup->values[KSF_GLOBAL_REDIRECT_TO].string);
 
@@ -1597,6 +1593,7 @@ int main(int argc, char **argv)
 
 	/* server initialized; timers can follow */
 	init_log_limiter(logger);
+	deltatime_t keep_alive = config_setup_deltatime(oco, KBF_KEEP_ALIVE);
 	init_nat_traversal_timer(keep_alive, logger);
 	init_ddns();
 
