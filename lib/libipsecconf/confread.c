@@ -464,9 +464,11 @@ struct starter_config *confread_load(const char *file,
 				     unsigned verbosity)
 {
 	/* sanity check */
-	for (const struct keyword_def *k = ipsec_conf_keywords;
-	     k->keyname != NULL; k++) {
+	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
+
 		bool ok = true;
+		ok &= pexpect(k->keyname != NULL);
+
 		if (k->validity & kv_config) {
 			ok &= pexpect(k->field < CONFIG_SETUP_KEYWORD_ROOF ||
 				      k->field == KNCF_OBSOLETE);

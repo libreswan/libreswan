@@ -262,6 +262,11 @@ struct keyword_def {
 	const struct lmod_info *info;
 };
 
-extern const struct keyword_def ipsec_conf_keywords[]; /*NULL terminated*/
+struct keywords_def {
+	unsigned len;
+	const struct keyword_def *item;
+};
+
+extern const struct keywords_def ipsec_conf_keywords;
 
 #endif /* _KEYWORDS_H_ */

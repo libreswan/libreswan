@@ -655,8 +655,8 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 
 	zero(kw);
 
-	const struct keyword_def *k;
-	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
+	const struct keyword_def *found = NULL;
+	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
 		if (hunk_strcaseeq(s, k->keyname)) {
 
@@ -677,6 +677,7 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 			if (k->validity & kv_both) {
 				left = true;
 				right = true;
+				found = k;
 				break;
 			}
 
@@ -686,10 +687,12 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 			if (k->validity & kv_leftright) {
 				if (default_end == LEFT_END) {
 					left = true;
+					found = k;
 					break;
 				}
 				if (default_end == RIGHT_END) {
 					right = true;
+					found = k;
 					break;
 				}
 
@@ -701,23 +704,26 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 				right = true;
 #endif
 			}
+			found = k;
 			break;
 		}
 
 		if (k->validity & kv_leftright) {
 			left = parse_leftright(s, k, "left");
 			if (left) {
+				found = k;
 				break;
 			}
 			right = parse_leftright(s, k, "right");
 			if (right) {
+				found = k;
 				break;
 			}
 		}
 	}
 
 	/* if we still found nothing */
-	if (k->keyname == NULL) {
+	if (found == NULL) {
 #define FAIL(FUNC) FUNC(parser, /*errno*/0, "unrecognized '%s' keyword '"PRI_SHUNK"'", \
 			str_parser_section(parser), pri_shunk(s))
 		if (parser->section == SECTION_CONFIG_SETUP ||
@@ -732,7 +738,7 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 	}
 
 	/* else, set up llval.k to point, and return KEYWORD */
-	kw->keydef = k;
+	kw->keydef = found;
 	kw->keyleft = left;
 	kw->keyright = right;
 	return true;

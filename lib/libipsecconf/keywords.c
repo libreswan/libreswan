@@ -96,11 +96,12 @@ static const struct sparse_names kw_phase2types_names = {
 	},
 };
 
-/* MASTER KEYWORD LIST
- * Note: this table is terminated by an entry with keyname == NULL.
+/*
+ * MASTER KEYWORD LIST
  */
 
-const struct keyword_def ipsec_conf_keywords[] = {
+static const struct keyword_def ipsec_conf_keyword[] = {
+
   { "ikev1-policy",  kv_config,  kt_sparse_name,  KBF_IKEv1_POLICY, &global_ikev1_policy_names, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
 
@@ -368,5 +369,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
   { "clientaddrfamily",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
 
-  { NULL,  0,  0,  0, NULL, NULL, }
+};
+
+const struct keywords_def ipsec_conf_keywords = {
+	.len = elemsof(ipsec_conf_keyword),
+	.item = ipsec_conf_keyword,
 };
