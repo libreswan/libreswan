@@ -126,6 +126,8 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "dumpdir",  kv_config,  kt_string,  KSF_DUMPDIR, NULL, NULL, },
   { "ipsecdir",  kv_config,  kt_string,  KSF_IPSECDIR, NULL, NULL, },
   { "nssdir", kv_config, kt_string, KSF_NSSDIR, NULL, NULL, },
+  { "rundir", kv_config|kv_ignore, kt_string, KSF_RUNDIR, NULL, NULL, },
+  { "logstderr", kv_config|kv_ignore, kt_string, KYN_LOGSTDERR, NULL, NULL, },
   { "secretsfile",  kv_config,  kt_string,  KSF_SECRETSFILE, NULL, NULL, },
   { "statsbin",  kv_config,  kt_string,  KSF_STATSBIN, NULL, NULL, },
   { "uniqueids",  kv_config,  kt_sparse_name,  KYN_UNIQUEIDS, &yn_option_names, NULL, },

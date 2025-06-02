@@ -464,6 +464,7 @@ struct starter_config *confread_load(const char *file,
 				     unsigned verbosity)
 {
 	/* sanity check */
+
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
 		bool ok = true;
@@ -484,6 +485,35 @@ struct starter_config *confread_load(const char *file,
 		}
 	}
 
+	/* sanity check for missing entries */
+
+	if (cur_debugging) {
+		struct kw_range {
+			const char *what;
+			unsigned floor, roof;
+		} kw_range[] = {
+			{ "setup", 0, CONFIG_SETUP_KEYWORD_ROOF, },
+			{ "conn", CONFIG_CONN_KEYWORD_BASEMENT+1, KW_roof, }
+		};
+
+		FOR_EACH_ELEMENT(r, kw_range) {
+			const char *follows = "???";
+			for (unsigned kw = r->floor; kw < r->roof; kw++) {
+				bool found = false;
+				ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
+					if (k->field == kw) {
+						follows = k->keyname;
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					llog_pexpect(logger, HERE, "config-conn keyword %u missing; follows %s",
+						     kw, follows);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Load file

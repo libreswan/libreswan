@@ -39,7 +39,6 @@ enum config_setup_keyword {
 	KSF_IPSECDIR,
 	KSF_NSSDIR,
 	KSF_SECRETSFILE,
-	KSF_PERPEERDIR,
 	KSF_MYVENDORID,
 	KSF_LOGFILE,
 	KSF_RUNDIR,		/* placeholder, no option */
@@ -69,7 +68,6 @@ enum config_setup_keyword {
 	KYN_AUDIT_LOG,
 	KBF_IKEBUF,
 	KYN_IKE_SOCKET_ERRQUEUE,
-	KBF_PERPEERLOG,
 	KBF_EXPIRE_LIFETIME,
 	KYN_CRL_STRICT,
 	KBF_CRL_CHECKINTERVAL,
@@ -86,7 +84,6 @@ enum config_setup_keyword {
 	KBF_KEEP_ALIVE,
 	KBF_NHELPERS,
 	KBF_SHUNTLIFETIME,
-	KBF_FORCEBUSY, 		/* obsoleted for KBF_DDOS_MODE */
 	KBF_DDOS_IKE_THRESHOLD,
 	KBF_MAX_HALFOPEN_IKE,
 	KBF_NFLOG_ALL,		/* Enable global nflog device */
