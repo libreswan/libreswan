@@ -159,7 +159,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "expire-lifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, NULL, },
   { "xfrmlifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, NULL, }, /* legacy */
 #endif
-  { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
+  { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUAL_PRIVATE, NULL, NULL, },
   { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, }, /* obsolete variant, very common */
   { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, NULL, },
   { "keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL, NULL, },

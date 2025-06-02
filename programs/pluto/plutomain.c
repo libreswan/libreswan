@@ -122,16 +122,12 @@ static struct {
 	const char *anchors;
 } pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
 
-/* Overridden by virtual_private= in ipsec.conf */
-static char *virtual_private = NULL;
-
 void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(conffile);
 	pfreeany(pluto_listen);
 	free_global_redirect_dests();
-	pfreeany(virtual_private);
 	free_config_setup();
 }
 
@@ -1056,7 +1052,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_VIRTUAL_PRIVATE:	/* --virtual-private */
-			replace_value(&virtual_private, optarg);
+			update_setup_string(KSF_VIRTUAL_PRIVATE, optarg);
 			continue;
 
 		case OPT_CONFIG:	/* --config */
@@ -1128,8 +1124,6 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
-
-			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
 			set_global_redirect_dests(cfg->setup->values[KSF_GLOBAL_REDIRECT_TO].string);
 
@@ -1218,6 +1212,15 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/*
+	 * Anything (aka an argument) after all options consumed?
+	 */
+	if (optind != argc) {
+		llog(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
+		/* not exit_pluto because we are not initialized yet */
+		exit(PLUTO_EXIT_FAIL);
+	}
+
 	/* options processed save to obtain the setup */
 	UNUSED const struct config_setup *oco = config_setup_singleton();
 
@@ -1247,15 +1250,6 @@ int main(int argc, char **argv)
 							 OCSP_CACHE_MAX_AGE_RANGE, "ocsp-cache-max-age");
 	x509_ocsp.method = config_setup_option(oco, KBF_OCSP_METHOD);
 	x509_ocsp.cache_size = config_setup_option(oco, KBF_OCSP_CACHE_SIZE);
-
-	/*
-	 * Anything (aka an argument) after all options consumed?
-	 */
-	if (optind != argc) {
-		llog(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
-		/* not exit_pluto because we are not initialized yet */
-		exit(PLUTO_EXIT_FAIL);
-	}
 
 	/*
 	 * Create the lock file before things fork.
@@ -1606,6 +1600,7 @@ int main(int argc, char **argv)
 	init_nat_traversal_timer(keep_alive, logger);
 	init_ddns();
 
+	const char *virtual_private = config_setup_string(oco, KSF_VIRTUAL_PRIVATE);
 	init_virtual_ip(virtual_private, logger);
 
 	enum yn_options ipsec_interface_managed = init_ipsec_interface(logger);
