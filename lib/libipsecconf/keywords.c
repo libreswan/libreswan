@@ -110,10 +110,7 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 
   { "plutodebug",  kv_config, kt_string, KSF_PLUTODEBUG, NULL, },
 
-  { "debug",       kv_conn, kt_string, KWS_DEBUG, NULL, },
-
   { "logfile",  kv_config,  kt_string,  KSF_LOGFILE, NULL, },
-  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
   { "logtime",  kv_config,  kt_sparse_name,  KYN_LOGTIME, &yn_option_names, },
   { "logappend",  kv_config,  kt_sparse_name,  KYN_LOGAPPEND, &yn_option_names, },
   { "logip",  kv_config,  kt_sparse_name,  KYN_LOGIP, &yn_option_names, },
@@ -138,7 +135,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "crl-strict",  kv_config,  kt_sparse_name,  KYN_CRL_STRICT, &yn_option_names, },
   { "crlcheckinterval",  kv_config,  kt_seconds,  KBF_CRL_CHECKINTERVAL, NULL, },
   { "crl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, },
-  { "curl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, }, /* legacy */
 
   { "ocsp-strict",  kv_config,  kt_sparse_name,  KYN_OCSP_STRICT, &yn_option_names, },
   { "ocsp-enable",  kv_config,  kt_sparse_name,  KYN_OCSP_ENABLE, &yn_option_names, },
@@ -160,10 +156,8 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "ike-socket-errqueue",  kv_config,  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, &yn_option_names, },
 #ifdef XFRM_LIFETIME_DEFAULT
   { "expire-lifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, },
-  { "xfrmlifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, }, /* legacy */
 #endif
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUAL_PRIVATE, NULL, },
-  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
   { "seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL, },
   { "keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL, },
 
@@ -176,14 +170,18 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "drop-oppo-null",  kv_config,  kt_sparse_name,  KYN_DROP_OPPO_NULL, &yn_option_names, },
   { "expire-shunt-interval", kv_config, kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL, NULL, },
 
-  { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
+  { "ipsec-interface-managed", kv_config, kt_sparse_name, KWYN_IPSEC_INTERFACE_MANAGED, &yn_option_names, },
 
-  /* these options are obsoleted (and not old aliases) */
+#if defined(USE_NFLOG)
+  { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, },
+#endif
 
   /*
    * This is "left=" and "right="
    */
   { "",  kv_conn | kv_leftright,  kt_string,  KWS_HOST, NULL, },
+
+  { "debug",       kv_conn, kt_string, KWS_DEBUG, NULL, },
 
   { "subnet",  kv_conn | kv_leftright,  kt_string,  KWS_SUBNET, NULL, },
   { "subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL, },
@@ -212,8 +210,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "modecfgserver",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGSERVER, &yn_option_names, },
   { "modecfgclient",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGCLIENT, &yn_option_names, },
   { "username",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, },
-  /* xauthusername is still used in NetworkManager-libreswan :/ */
-  { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_string,  KWS_ADDRESSPOOL, NULL, },
   { "auth",  kv_conn | kv_leftright, kt_string,  KWS_AUTH, NULL, },
 #if defined(USE_CAT)
@@ -255,7 +251,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 
   { "initial-contact",  kv_conn,  kt_sparse_name,  KWYN_INITIAL_CONTACT, &yn_option_names, },
   { "send-esp-tfc-padding-not-supported",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, },
-  { "send-no-esp-tfc",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, }, /*compat, but forever*/
 
   { "iptfs",  kv_conn,  kt_sparse_name,  KWYN_IPTFS, &yn_option_names, },
   { "iptfs-fragmentation",  kv_conn,  kt_sparse_name,  KWYN_IPTFS_FRAGMENTATION, &yn_option_names, },
@@ -275,9 +270,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "ipsec-max-bytes",  kv_conn,  kt_string,  KWS_IPSEC_MAX_BYTES, NULL, },
   { "ipsec-max-packets",  kv_conn,  kt_string,  KWS_IPSEC_MAX_PACKETS, NULL, },
   { "ipsec-lifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, },
-  { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
-  { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
-  { "salifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
 
   { "retransmit-timeout",  kv_conn,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT, NULL, },
   { "retransmit-interval",  kv_conn,  kt_string,  KWS_RETRANSMIT_INTERVAL, NULL, },
@@ -285,15 +277,10 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "ikepad",  kv_conn,  kt_sparse_name,  KNCF_IKEPAD, &yna_option_names, },
   { "nat-ikev1-method",  kv_conn,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, &nat_ikev1_method_option_names, },
 
-  { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },  /* obsolete: not a value, a type */
-  { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
-  { "policy-label",  kv_conn,  kt_string,  KWS_SEC_LABEL, NULL, }, /* obsolete variant */
   { "sec-label",  kv_conn,  kt_string,  KWS_SEC_LABEL, NULL, },
 
   /* Cisco interop: remote peer type */
   { "remote-peer-type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, },
-  /* another alias used by NetworkManager-libreswan :/ */
-  { "remote_peer_type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, },
   /* Network Manager support */
   { "nm-configured",  kv_conn,  kt_string,  KWS_NM_CONFIGURED, NULL, },
   { "cisco-unity",  kv_conn,  kt_string,  KWS_CISCO_UNITY, NULL, },
@@ -312,7 +299,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "vti-interface",  kv_conn,  kt_string,  KWS_VTI_INTERFACE, NULL, },
   { "vti-routing",  kv_conn,  kt_sparse_name,  KWYN_VTI_ROUTING, &yn_option_names, },
   { "vti-shared",  kv_conn,  kt_sparse_name,  KWYN_VTI_SHARED, &yn_option_names, },
-  { "ipsec-interface-managed", kv_config, kt_sparse_name, KWYN_IPSEC_INTERFACE_MANAGED, &yn_option_names, },
   { "ipsec-interface", kv_conn, kt_string, KWS_IPSEC_INTERFACE, NULL, },
 
   { "nic-offload",  kv_conn,  kt_sparse_name,  KNCF_NIC_OFFLOAD, &nic_offload_option_names, },
@@ -336,8 +322,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 
   /* attributes of the phase2 policy */
   { "esp",  kv_conn,  kt_string,  KWS_ESP, NULL, },
-  { "ah",  kv_conn,  kt_string,  KWS_ESP, NULL, },
-  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },	/* obsolete */
 
   { "phase2",  kv_conn,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names, },
 
@@ -349,8 +333,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   /* DPD */
   { "dpddelay",  kv_conn,  kt_string,  KWS_DPDDELAY, NULL, },
   { "ikev1-dpdtimeout",  kv_conn,  kt_string,  KWS_DPDTIMEOUT, NULL, },
-  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KWS_DPDTIMEOUT, NULL, }, /* old name */
-  { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, },
 
   { "sendca",      kv_conn,  kt_string,  KWS_SENDCA, NULL, },
 
@@ -359,17 +341,54 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "tfc",  kv_conn,  kt_string,  KWS_TFC, NULL, },
   { "reqid",  kv_conn,  kt_string,  KWS_REQID, NULL, },
 #if defined(USE_NFLOG)
-  { "nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL, },
   { "nflog-group",  kv_conn,  kt_string,  KWS_NFLOG_GROUP, NULL, },
-  { "nflog",  kv_conn|kv_alias,  kt_string,  KWS_NFLOG_GROUP, NULL, }, /* old-name */
 #endif
 
   { "aggressive",  kv_conn,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, },
-  /* alias for compatibility - undocumented on purpose */
-  { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, },
 
-  { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
+  /*
+   * Force first alias/obsolete keyword into slot following all
+   * defined keywords.  Else compiler tries to store it into above
+   * keyword's slot + 1, which is likely occupied by another keyword.
+   * The result is a nonsensical error.
+   */
+  [CONFIG_CONN_KEYWORD_ROOF] =
+
+  /* alias for compatibility - undocumented on purpose */
+
+  { "curl-timeout",  kv_config | kv_alias,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, }, /* legacy */
+#ifdef XFRM_LIFETIME_DEFAULT
+  { "xfrmlifetime",  kv_config | kv_alias,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, }, /* legacy */
+#endif
+
+  { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, },
+  { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
+  { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
+  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },	/* obsolete */
+  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KWS_DPDTIMEOUT, NULL, }, /* old name */
+#if defined(USE_NFLOG)
+  { "nflog",  kv_conn | kv_alias,  kt_string,  KWS_NFLOG_GROUP, NULL, }, /* old-name */
+#endif
+  { "salifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
+  /* xauthusername is still used in NetworkManager-libreswan :/ */
+  { "xauthusername",  kv_conn | kv_leftright | kv_alias,  kt_string,  KWS_USERNAME, NULL, }, /* old alias */
+  { "ah",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },
+  { "policy-label",  kv_conn | kv_alias,  kt_string,  KWS_SEC_LABEL, NULL, }, /* obsolete variant */
+  /* another alias used by NetworkManager-libreswan :/ */
+  { "remote_peer_type",  kv_conn | kv_alias,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, },
+  { "send-no-esp-tfc",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, }, /*compat, but forever*/
+
+  /* obsolete config setup options */
+
+  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
+  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
+  { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
+
+  { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },  /* obsolete: not a value, a type */
+  { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
+  { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, },
   { "clientaddrfamily",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
+  { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
 
 };
 
