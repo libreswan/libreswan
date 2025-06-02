@@ -54,7 +54,6 @@
 
 #include "constants.h"
 #include "config_setup.h"
-#include "ipsecconf/keywords.h"		/* for KSF_RUNDIR; grr */
 #include "defs.h"
 #include "state.h"
 #include "id.h"

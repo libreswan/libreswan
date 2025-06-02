@@ -108,7 +108,6 @@
 #include "binaryscale-iec-60027-2.h"
 #include "addr_lookup.h"
 #include "config_setup.h"
-#include "ipsecconf/keywords.h"		/* for KBF_IKEv1_POLICY; grr */
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);
 
