@@ -37,7 +37,6 @@
 #include "keys.h"		/* for pluto_pubkeys; */
 #include "server_fork.h"
 #include "config_setup.h"
-#include "ipsecconf/keywords.h"		/* for *CRL*; grr */
 
 struct crl_distribution_point;
 

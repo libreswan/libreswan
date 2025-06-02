@@ -249,7 +249,7 @@ static void replace_value(char **target, const char *value)
 }
 
 static void replace_when_cfg_setup(char **target, const struct starter_config *cfg,
-				   enum keywords field)
+				   enum config_setup_keyword field)
 {
 	/* Do nothing if value is unset. */
 	const char *value = cfg->setup->values[field].string;
@@ -271,7 +271,7 @@ static bool update_deltatime(deltatime_t *target,
 
 static bool extract_config_deltatime(deltatime_t *target,
 				     const struct starter_config *cfg,
-				     enum keywords field)
+				     enum config_setup_keyword field)
 {
 	return update_deltatime(target, cfg->setup->values[field].deltatime);
 }
@@ -293,7 +293,7 @@ static bool update_yn(bool *target, enum yn_options yn)
 
 static bool extract_config_yn(bool *target,
 			      const struct starter_config *cfg,
-			      enum keywords field)
+			      enum config_setup_keyword field)
 {
 	return update_yn(target, cfg->setup->values[field].option);
 }
@@ -623,7 +623,7 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 	return NULL;
 }
 
-static void update_optarg_deltatime(enum keywords kw, struct logger *logger,
+static void update_optarg_deltatime(enum config_setup_keyword kw, struct logger *logger,
 				   enum timescale timescale, int lower, int upper)
 {
 	deltatime_t time = optarg_deltatime(logger, timescale);
@@ -631,7 +631,8 @@ static void update_optarg_deltatime(enum keywords kw, struct logger *logger,
 	update_setup_deltatime(kw, time);
 }
 
-static deltatime_t check_config_deltatime(const struct config_setup *oco, enum keywords kw,
+static deltatime_t check_config_deltatime(const struct config_setup *oco,
+					  enum config_setup_keyword kw,
 					  struct logger *logger,
 					  int lower, int upper, const char *name)
 {

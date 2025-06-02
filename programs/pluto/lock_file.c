@@ -36,7 +36,6 @@
 #include "lock_file.h"
 #include "lswalloc.h"
 #include "config_setup.h"
-#include "ipsecconf/keywords.h"		/* for KSF_RUNDIR; ulgh */
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"

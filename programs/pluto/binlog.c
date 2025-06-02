@@ -48,7 +48,6 @@
 #include "pluto_seccomp.h"
 #endif
 #include "config_setup.h"
-#include "ipsecconf/keywords.h"		/* grr for KWS_*; */
 
 const char *pluto_stats_binary; /* see init_binlog() */
 

@@ -463,6 +463,26 @@ struct starter_config *confread_load(const char *file,
 				     struct logger *logger,
 				     unsigned verbosity)
 {
+	/* sanity check */
+	for (const struct keyword_def *k = ipsec_conf_keywords;
+	     k->keyname != NULL; k++) {
+		bool ok = true;
+		if (k->validity & kv_config) {
+			ok &= pexpect(k->field < CONFIG_SETUP_KEYWORD_ROOF ||
+				      k->field == KNCF_OBSOLETE);
+			ok &= pexpect((k->validity & (kv_conn | kv_leftright | kv_both)) == LEMPTY);
+		}
+		if (k->validity & kv_conn) {
+			ok &= pexpect(k->field > CONFIG_CONN_KEYWORD_BASEMENT ||
+				      k->field == KNCF_OBSOLETE);
+			ok &= pexpect((k->validity & (kv_config)) == LEMPTY);
+		}
+		if (!ok) {
+			printf("name=%s\n", k->keyname);
+		}
+	}
+
+
 	/**
 	 * Load file
 	 */
