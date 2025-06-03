@@ -59,6 +59,10 @@ static void confwrite_value(FILE *out,
 {
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
+		if (k->keyname == NULL) {
+			continue;
+		}
+
 		/* exact match */
 		if ((k->validity & (kv_config|kv_conn)) != type) {
 			continue;

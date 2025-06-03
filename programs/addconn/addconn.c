@@ -652,6 +652,10 @@ int main(int argc, char *argv[])
 
 	if (liststack) {
 		ITEMS_FOR_EACH(kd, &ipsec_conf_keywords) {
+			if (kd->keyname == NULL) {
+				continue;
+			}
+
 			if (strstr(kd->keyname, "protostack")) {
 				if (cfg->setup->values[kd->field].string) {
 					printf("%s\n",
@@ -672,6 +676,10 @@ int main(int argc, char *argv[])
 		printf("%s configfile='%s'\n", export, configfile);
 		printf("%s ctlsocket='%s'\n", export, ctlsocket);
 		ITEMS_FOR_EACH(kd, &ipsec_conf_keywords) {
+
+			if (kd->keyname == NULL) {
+				continue;
+			}
 
 			if ((kd->validity & kv_config) == 0)
 				continue;

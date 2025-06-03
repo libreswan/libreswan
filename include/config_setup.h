@@ -25,13 +25,16 @@ enum yn_options;
 struct logger;
 
 enum config_setup_keyword {
+	/* zero is reserved */
+
+#define CONFIG_SETUP_KEYWORD_FLOOR KSF_CURLIFACE
 
 	/*
 	 * By convention, these are global configuration strings and
 	 * only appear in the "config setup" section (KSF == Keyword
 	 * String Flag?).
 	 */
-	KSF_CURLIFACE,
+	KSF_CURLIFACE = 1,
 	KSF_VIRTUAL_PRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
@@ -96,7 +99,7 @@ enum config_setup_keyword {
 	KSF_PLUTODEBUG,
 	KWYN_IPSEC_INTERFACE_MANAGED,
 
-	CONFIG_SETUP_KEYWORD_ROOF,
+#define CONFIG_SETUP_KEYWORD_ROOF (KWYN_IPSEC_INTERFACE_MANAGED+1)
 };
 
 struct config_setup *config_setup_singleton(void);

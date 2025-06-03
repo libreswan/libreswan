@@ -467,19 +467,30 @@ struct starter_config *confread_load(const char *file,
 
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
+		/*
+		 * Ignore gaps, happens when #ifdefs are at play.
+		 */
+
+		if (k->keyname == NULL) {
+			continue;
+		}
+
 		bool ok = true;
-		ok &= pexpect(k->keyname != NULL);
 
 		if (k->validity & kv_config) {
-			ok &= pexpect(k->field < CONFIG_SETUP_KEYWORD_ROOF ||
+			ok &= pexpect((k->field >= CONFIG_SETUP_KEYWORD_FLOOR &&
+				       k->field < CONFIG_SETUP_KEYWORD_ROOF) ||
 				      k->field == KNCF_OBSOLETE);
 			ok &= pexpect((k->validity & (kv_conn | kv_leftright | kv_both)) == LEMPTY);
 		}
+
 		if (k->validity & kv_conn) {
-			ok &= pexpect(k->field > CONFIG_CONN_KEYWORD_BASEMENT ||
+			ok &= pexpect((k->field >= CONFIG_CONN_KEYWORD_FLOOR &&
+				       k->field < CONFIG_CONN_KEYWORD_ROOF) ||
 				      k->field == KNCF_OBSOLETE);
 			ok &= pexpect((k->validity & (kv_config)) == LEMPTY);
 		}
+
 		if (!ok) {
 			printf("name=%s\n", k->keyname);
 		}
@@ -492,8 +503,8 @@ struct starter_config *confread_load(const char *file,
 			const char *what;
 			unsigned floor, roof;
 		} kw_range[] = {
-			{ "setup", 0, CONFIG_SETUP_KEYWORD_ROOF, },
-			{ "conn", CONFIG_CONN_KEYWORD_BASEMENT+1, KW_roof, }
+			{ "setup", CONFIG_SETUP_KEYWORD_FLOOR, CONFIG_SETUP_KEYWORD_ROOF, },
+			{ "conn", CONFIG_CONN_KEYWORD_FLOOR, CONFIG_SETUP_KEYWORD_ROOF, }
 		};
 
 		FOR_EACH_ELEMENT(r, kw_range) {

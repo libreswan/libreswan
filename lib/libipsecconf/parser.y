@@ -658,6 +658,10 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 	const struct keyword_def *found = NULL;
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
+		if (k->keyname == NULL) {
+			continue;
+		}
+
 		if (k->validity & kv_ignore) {
 			continue;
 		}
