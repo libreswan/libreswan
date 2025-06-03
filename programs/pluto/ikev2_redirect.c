@@ -50,10 +50,11 @@ static enum global_redirect global_redirect; /* see config_setup.[hc] and init_g
 
 struct redirect_dests {
 	char *whole;
-	const char *next;	/* points into whole */
+	unsigned next;	/* points into whole */
+	struct shunks *splits;
 };
 
-static struct redirect_dests global_dests = { NULL, NULL };
+static struct redirect_dests global_dests = {0};
 
 static const char *global_redirect_to(void)
 {
@@ -65,7 +66,8 @@ static const char *global_redirect_to(void)
 static void free_redirect_dests(struct redirect_dests *dests)
 {
 	pfreeany(dests->whole);
-	dests->next = NULL;
+	dests->next = 0;
+	pfreeany(dests->splits);
 }
 
 void free_global_redirect_dests(void)
@@ -73,14 +75,21 @@ void free_global_redirect_dests(void)
 	free_redirect_dests(&global_dests);
 }
 
-static void set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
+static bool set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
 {
 	free_redirect_dests(dests);
 
-	/* strip any leading delimiters */
-	const char *c = rd_str == NULL ? "" : rd_str + strspn(rd_str, ", \t");
-	dests->whole = clone_str(c, "redirect dests");
-	dests->next = dests->whole;
+	/* hope for the best */
+	dests->whole = clone_str(rd_str, "redirect dests");
+	dests->next = 0;
+	dests->splits = ttoshunks(shunk1(dests->whole), ", ", EAT_EMPTY_SHUNKS);
+
+	if (dests->splits->len == 0) {
+		free_redirect_dests(dests);
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -91,13 +100,14 @@ static void set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
  *  If it is not specified in conf file, gdr_str will be NULL.
  */
 
-static void set_global_redirect_dests(const char *grd_str)
+static bool set_global_redirect_dests(const char *grd_str)
 {
-	set_redirect_dests(grd_str, &global_dests);
+	return set_redirect_dests(grd_str, &global_dests);
 }
 
 /*
- * Returns a string (shunk) destination to be shipped in REDIRECT payload.
+ * Returns a string (shunk) destination to be shipped in REDIRECT
+ * payload.
  *
  * @param rl struct containing redirect destinations
  * @return shunk_t string to be shipped.
@@ -105,10 +115,10 @@ static void set_global_redirect_dests(const char *grd_str)
 
 static shunk_t next_redirect_dest(struct redirect_dests *rl)
 {
-	const char *r = *rl->next == '\0' ? rl->whole : rl->next;
-	size_t len = strcspn(r, ", \t");
-	rl->next = r + len + strspn(r + len, ", \t");
-	return (shunk_t) { .ptr = r, .len = len };
+	if (rl->next >= rl->splits->len) {
+		rl->next = 0;
+	}
+	return rl->splits->item[rl->next++];
 }
 
 /*
@@ -707,8 +717,11 @@ void find_and_active_redirect_states(const char *conn_name,
 				     struct logger *logger)
 {
 	passert(active_redirect_dests != NULL);
-	struct redirect_dests active_dests = { NULL, NULL };
-	set_redirect_dests(active_redirect_dests, &active_dests);
+	struct redirect_dests active_dests = {0};
+	if (!set_redirect_dests(active_redirect_dests, &active_dests)) {
+		llog(RC_LOG, logger, "redirect-to='%s' is empty", active_redirect_dests);
+		return;
+	}
 
 	int cnt = 0;
 
@@ -803,14 +816,12 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	if (wm->redirect_to != NULL) {
-		if (wm->redirect_to == NULL || strlen(wm->redirect_to) == 0) {
-			set_global_redirect_dests("");
+		if (set_global_redirect_dests(wm->redirect_to)) {
+			llog(RC_LOG, logger, "set global redirect target to %s", wm->redirect_to);
+		} else {
 			global_redirect = GLOBAL_REDIRECT_NO;
 			llog(RC_LOG, logger,
 			     "cleared global redirect targets and disabled global redirects");
-		} else {
-			set_global_redirect_dests(wm->redirect_to);
-			llog(RC_LOG, logger, "set global redirect target to %s", wm->redirect_to);
 		}
 	}
 
@@ -852,18 +863,19 @@ void init_global_redirect(enum global_redirect redirect, const char *redirect_to
 		return;
 	case GLOBAL_REDIRECT_YES:
 	case GLOBAL_REDIRECT_AUTO:
-		if (redirect_to == NULL) {
+		/* redirect_to could be NULL */
+		if (redirect_to == NULL ||
+		    !set_global_redirect_dests(redirect_to)) {
 			name_buf rb;
 			llog(RC_LOG, logger, "warning: ignoring global-redirect=%s as global-redirect-to= is empty",
 			     str_sparse_short(&global_redirect_names, redirect, &rb));
 			global_redirect = GLOBAL_REDIRECT_NO;
 			return;
 		}
-		global_redirect = redirect;
-		set_global_redirect_dests(redirect_to);
 		llog(RC_LOG, logger,
 		     "all IKE_SA_INIT requests will from now on be redirected to: %s",
 		     redirect_to);
+		global_redirect = redirect;
 		return;
 	}
 	bad_case(redirect);
