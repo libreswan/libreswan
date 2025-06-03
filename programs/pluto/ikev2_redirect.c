@@ -18,6 +18,8 @@
 #include <unistd.h>
 
 #include "constants.h"
+#include "sparse_names.h"
+
 #include "defs.h"
 
 #include "id.h"
@@ -40,10 +42,11 @@
 #include "orient.h"
 #include "ikev2_message.h"
 #include "ikev2_notification.h"
+#include "show.h"
 
 static emit_v2_INFORMATIONAL_request_payload_fn add_redirect_payload; /* type check */
 
-enum global_redirect global_redirect = GLOBAL_REDIRECT_NO;
+static enum global_redirect global_redirect; /* see config_setup.[hc] and init_global_redirect() */
 
 struct redirect_dests {
 	char *whole;
@@ -52,7 +55,7 @@ struct redirect_dests {
 
 static struct redirect_dests global_dests = { NULL, NULL };
 
-const char *global_redirect_to(void)
+static const char *global_redirect_to(void)
 {
 	if (global_dests.whole == NULL)
 		return ""; /* allows caller to strlen() */
@@ -80,7 +83,15 @@ static void set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
 	dests->next = dests->whole;
 }
 
-void set_global_redirect_dests(const char *grd_str)
+/*
+ * Initialize the static struct redirect_dests variable.
+ *
+ * @param grd_str comma-separated string containing the destinations
+ *  (a copy will be made so caller need not preserve the string).
+ *  If it is not specified in conf file, gdr_str will be NULL.
+ */
+
+static void set_global_redirect_dests(const char *grd_str)
 {
 	set_redirect_dests(grd_str, &global_dests);
 }
@@ -774,4 +785,86 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 
 	save_redirect(ike, md, redirect_ip);
 	return STF_OK_INITIATOR_DELETE_IKE;
+}
+
+void show_global_redirect(struct show *s)
+{
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "global-redirect=");
+		jam_sparse(buf, &global_redirect_names, global_redirect);
+		jam_string(buf, ", ");
+		jam_string(buf, "global-redirect-to=");
+		jam_string(buf, (strlen(global_redirect_to()) > 0 ? global_redirect_to() :
+				 "<unset>"));
+	}
+}
+
+void whack_global_redirect(const struct whack_message *wm, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	if (wm->redirect_to != NULL) {
+		if (wm->redirect_to == NULL || strlen(wm->redirect_to) == 0) {
+			set_global_redirect_dests("");
+			global_redirect = GLOBAL_REDIRECT_NO;
+			llog(RC_LOG, logger,
+			     "cleared global redirect targets and disabled global redirects");
+		} else {
+			set_global_redirect_dests(wm->redirect_to);
+			llog(RC_LOG, logger, "set global redirect target to %s", wm->redirect_to);
+		}
+	}
+
+	switch (wm->global_redirect) {
+	case GLOBAL_REDIRECT_NO:
+		global_redirect = GLOBAL_REDIRECT_NO;
+		llog(RC_LOG, logger, "set global redirect to 'no'");
+		break;
+	case GLOBAL_REDIRECT_YES:
+	case GLOBAL_REDIRECT_AUTO:
+		if (strlen(global_redirect_to()) == 0) {
+			llog(RC_LOG, logger,
+			     "ipsec whack: --global-redirect set to no as there are no active redirect targets");
+			global_redirect = GLOBAL_REDIRECT_NO;
+		} else {
+			global_redirect = wm->global_redirect;
+			enum_buf rn;
+			llog(RC_LOG, logger,
+			     "set global redirect to %s",
+			     str_sparse(&global_redirect_names, global_redirect, &rn));
+		}
+		break;
+	}
+}
+
+/*
+ * Hopefully better than old code in plutomain.c.
+ */
+
+void init_global_redirect(enum global_redirect redirect, const char *redirect_to, struct logger *logger)
+{
+	global_redirect = redirect;
+	switch (redirect) {
+	case GLOBAL_REDIRECT_NO:
+		if (redirect_to != NULL) {
+			llog(RC_LOG, logger, "warning: ignoring global-redirect-to='%s' as global-redirect=no",
+			     redirect_to);
+		}
+		return;
+	case GLOBAL_REDIRECT_YES:
+	case GLOBAL_REDIRECT_AUTO:
+		if (redirect_to == NULL) {
+			name_buf rb;
+			llog(RC_LOG, logger, "warning: ignoring global-redirect=%s as global-redirect-to= is empty",
+			     str_sparse_short(&global_redirect_names, redirect, &rb));
+			global_redirect = GLOBAL_REDIRECT_NO;
+			return;
+		}
+		global_redirect = redirect;
+		set_global_redirect_dests(redirect_to);
+		llog(RC_LOG, logger,
+		     "all IKE_SA_INIT requests will from now on be redirected to: %s",
+		     redirect_to);
+		return;
+	}
+	bad_case(redirect);
 }

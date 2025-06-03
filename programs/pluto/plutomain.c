@@ -537,7 +537,7 @@ const struct option optarg_options[] = {
 	{ REPLACE_OPT("log-no-audit", "audit-log", "5.3"), no_argument, NULL, OPT_LOG_NO_AUDIT },
 
 	HEADING_OPT("  Redirection:"),
-	{ OPT("global-redirect", "yes|no|auto"), required_argument, NULL, OPT_GLOBAL_REDIRECT},
+	{ OPT("global-redirect", "{yes,no,auto}"), required_argument, NULL, OPT_GLOBAL_REDIRECT},
 	{ OPT("global-redirect-to", "<destination>"), required_argument, NULL, OPT_GLOBAL_REDIRECT_TO},
 
 #ifdef USE_SECCOMP
@@ -1027,31 +1027,15 @@ int main(int argc, char **argv)
 			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;
 
-		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
-		{
-			ip_address rip;
-			check_err(logger, ttoaddress_dns(shunk1(optarg), NULL/*UNSPEC*/, &rip));
-			set_global_redirect_dests(optarg);
-			llog(RC_LOG, logger,
-			     "all IKE_SA_INIT requests will from now on be redirected to: %s\n",
-			     optarg);
-			continue;
-		}
-
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
-		{
-			if (streq(optarg, "yes")) {
-				global_redirect = GLOBAL_REDIRECT_YES;
-			} else if (streq(optarg, "no")) {
-				global_redirect = GLOBAL_REDIRECT_NO;
-			} else if (streq(optarg, "auto")) {
-				global_redirect = GLOBAL_REDIRECT_AUTO;
-			} else {
-				llog(RC_LOG, logger,
-				     "invalid option argument for global-redirect (allowed arguments: yes, no, auto)");
-			}
+			update_setup_option(KBF_GLOBAL_REDIRECT, optarg_sparse(logger, 0, &global_redirect_names));
 			continue;
-		}
+		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
+			/* force check; only allow one address ... */
+			optarg_address_dns(logger, NULL/*unspec*/);
+			/* then save string */
+			update_setup_string(KSF_GLOBAL_REDIRECT_TO, optarg);
+			continue;
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
 			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger, TIMESCALE_SECONDS));
@@ -1092,19 +1076,6 @@ int main(int argc, char **argv)
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
-			char *tmp_global_redirect = cfg->setup->values[KSF_GLOBAL_REDIRECT].string;
-			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
-				/* NULL means it is not specified so default is no */
-				global_redirect = GLOBAL_REDIRECT_NO;
-			} else if (streq(tmp_global_redirect, "yes")) {
-				global_redirect = GLOBAL_REDIRECT_YES;
-			} else if (streq(tmp_global_redirect, "auto")) {
-				global_redirect = GLOBAL_REDIRECT_AUTO;
-			} else {
-				global_redirect = GLOBAL_REDIRECT_NO;
-				llog(RC_LOG, logger, "unknown argument for global-redirect option");
-			}
-
 			/*
 			 * We don't check interfaces= here, should we?
 			 * This was hack because we had _stackmanager?
@@ -1120,8 +1091,6 @@ int main(int argc, char **argv)
 			extract_config_yn(&pluto_listen_udp, cfg, KYN_LISTEN_UDP);
 
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
-
-			set_global_redirect_dests(cfg->setup->values[KSF_GLOBAL_REDIRECT_TO].string);
 
 			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
@@ -1229,6 +1198,12 @@ int main(int argc, char **argv)
 
 	/* IKEv2 ignoring OPPO? */
 	pluto_drop_oppo_null = config_setup_yn(oco, KYN_DROP_OPPO_NULL);
+
+	/* redirect|to */
+
+	init_global_redirect(config_setup_option(oco, KBF_GLOBAL_REDIRECT),
+			     config_setup_string(oco, KSF_GLOBAL_REDIRECT_TO),
+			     logger);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
@@ -1775,12 +1750,5 @@ void show_setup_plutomain(struct show *s)
 
 	show_x509_ocsp(s);
 
-	SHOW_JAMBUF(s, buf) {
-		jam_string(buf, "global-redirect=");
-		jam_sparse(buf, &global_redirect_names, global_redirect);
-		jam_string(buf, ", ");
-		jam_string(buf, "global-redirect-to=");
-		jam_string(buf, (strlen(global_redirect_to()) > 0 ? global_redirect_to() :
-				 "<unset>"));
-	}
+	show_global_redirect(s);
 }

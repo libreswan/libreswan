@@ -235,44 +235,6 @@ static void whack_active_redirect(const struct whack_message *wm, struct show *s
 	find_and_active_redirect_states(wm->name, wm->redirect_to, logger);
 }
 
-static void whack_global_redirect(const struct whack_message *wm, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	if (wm->redirect_to != NULL) {
-		if (streq(wm->redirect_to, "")) {
-			set_global_redirect_dests("");
-			global_redirect = GLOBAL_REDIRECT_NO;
-			llog(RC_LOG, logger,
-			     "cleared global redirect targets and disabled global redirects");
-		} else {
-			set_global_redirect_dests(wm->redirect_to);
-			llog(RC_LOG, logger,
-			     "set global redirect target to %s", global_redirect_to());
-		}
-	}
-
-	switch (wm->global_redirect) {
-	case GLOBAL_REDIRECT_NO:
-		global_redirect = GLOBAL_REDIRECT_NO;
-		llog(RC_LOG, logger, "set global redirect to 'no'");
-		break;
-	case GLOBAL_REDIRECT_YES:
-	case GLOBAL_REDIRECT_AUTO:
-		if (strlen(global_redirect_to()) == 0) {
-			llog(RC_LOG, logger,
-			     "ipsec whack: --global-redirect set to no as there are no active redirect targets");
-			global_redirect = GLOBAL_REDIRECT_NO;
-		} else {
-			global_redirect = wm->global_redirect;
-			enum_buf rn;
-			llog(RC_LOG, logger,
-			     "set global redirect to %s",
-			     str_sparse(&global_redirect_names, global_redirect, &rn));
-		}
-		break;
-	}
-}
-
 #ifdef USE_SECCOMP
 static void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show *s)
 {
