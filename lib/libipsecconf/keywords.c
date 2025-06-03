@@ -148,11 +148,11 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
   { "ocsp-cache-min-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS, NULL, NULL, },
   { "ocsp-cache-max-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS, NULL, NULL, },
-  { "ocsp-method",  kv_config | kv_processed,  kt_sparse_name,  KBF_OCSP_METHOD, &ocsp_method_names, NULL, },
+  { "ocsp-method",  kv_config,  kt_sparse_name,  KBF_OCSP_METHOD, &ocsp_method_names, NULL, },
 
-  { "ddos-mode",  kv_config | kv_processed ,  kt_sparse_name,  KBF_DDOS_MODE, &kw_ddos_names, NULL, },
+  { "ddos-mode",  kv_config,  kt_sparse_name,  KBF_DDOS_MODE, &kw_ddos_names, NULL, },
 #ifdef USE_SECCOMP
-  { "seccomp",  kv_config | kv_processed ,  kt_sparse_name,  KBF_SECCOMP,  &kw_seccomp_names, NULL, },
+  { "seccomp",  kv_config,  kt_sparse_name,  KBF_SECCOMP,  &kw_seccomp_names, NULL, },
 #endif
   { "ddos-ike-threshold",  kv_config,  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD, NULL, NULL, },
   { "max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL, NULL, },
@@ -233,14 +233,14 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL, NULL, },
   { "keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL, NULL, },
   { "ikev2",  kv_conn,  kt_string,  KWS_IKEv2, NULL, NULL, },
-  { "ppk", kv_conn | kv_processed, kt_sparse_name, KNCF_PPK, &nppi_option_names, NULL, },
+  { "ppk", kv_conn, kt_sparse_name, KNCF_PPK, &nppi_option_names, NULL, },
   { "ppk-ids", kv_conn, kt_string, KWS_PPK_IDS, NULL, NULL, },
-  { "intermediate",  kv_conn | kv_processed, kt_sparse_name, KWYN_INTERMEDIATE, &yn_option_names, NULL, },
-  { "esn",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_ESN, &yne_option_names, NULL, },
-  { "decap-dscp",  kv_conn | kv_processed,  kt_sparse_name,  KWYN_DECAP_DSCP, &yn_option_names, NULL, },
-  { "encap-dscp",  kv_conn | kv_processed,  kt_sparse_name,  KWYN_ENCAP_DSCP, &yn_option_names, NULL, },
-  { "nopmtudisc",  kv_conn | kv_processed,  kt_sparse_name,  KWYN_NOPMTUDISC, &yn_option_names, NULL, },
-  { "fragmentation",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_FRAGMENTATION, &ynf_option_names, NULL, },
+  { "intermediate",  kv_conn, kt_sparse_name, KWYN_INTERMEDIATE, &yn_option_names, NULL, },
+  { "esn",  kv_conn,  kt_sparse_name,  KNCF_ESN, &yne_option_names, NULL, },
+  { "decap-dscp",  kv_conn,  kt_sparse_name,  KWYN_DECAP_DSCP, &yn_option_names, NULL, },
+  { "encap-dscp",  kv_conn,  kt_sparse_name,  KWYN_ENCAP_DSCP, &yn_option_names, NULL, },
+  { "nopmtudisc",  kv_conn,  kt_sparse_name,  KWYN_NOPMTUDISC, &yn_option_names, NULL, },
+  { "fragmentation",  kv_conn,  kt_sparse_name,  KNCF_FRAGMENTATION, &ynf_option_names, NULL, },
   { "mobike",  kv_conn,  kt_sparse_name,  KWYN_MOBIKE, &yn_option_names, NULL, },
   { "narrowing",  kv_conn,  kt_sparse_name,  KWYN_NARROWING, &yn_option_names, NULL, },
   { "pam-authorize",  kv_conn,  kt_sparse_name,  KWYN_PAM_AUTHORIZE, &yn_option_names, NULL, },
@@ -283,7 +283,7 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "retransmit-interval",  kv_conn,  kt_string,  KWS_RETRANSMIT_INTERVAL, NULL, NULL, },
 
   { "ikepad",  kv_conn,  kt_sparse_name,  KNCF_IKEPAD, &yna_option_names, NULL, },
-  { "nat-ikev1-method",  kv_conn | kv_processed,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, &nat_ikev1_method_option_names, NULL, },
+  { "nat-ikev1-method",  kv_conn,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, &nat_ikev1_method_option_names, NULL, },
 
   { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },  /* obsolete: not a value, a type */
   { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, NULL, },
@@ -332,7 +332,7 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   { "enable-tcp",  kv_conn, kt_sparse_name, KNCF_ENABLE_TCP, &tcp_option_names, NULL },
   { "tcp-remoteport",  kv_conn, kt_unsigned, KNCF_TCP_REMOTEPORT, NULL, NULL },
 
-  { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
+  { "connalias",  kv_conn,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 
   /* attributes of the phase2 policy */
   { "esp",  kv_conn,  kt_string,  KWS_ESP, NULL, NULL, },

@@ -73,8 +73,11 @@ static void confwrite_value(FILE *out,
 			continue;
 		}
 
-		/* do not output aliases or things handled elsewhere */
-		if (k->validity & (kv_alias | kv_processed))
+		/*
+		 * Do not output aliases; the real option will display
+		 * value.
+		 */
+		if (k->validity & kv_alias)
 			continue;
 
 #if 0

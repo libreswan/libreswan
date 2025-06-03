@@ -223,8 +223,6 @@ enum keyword_valid {
 	kv_both = LELEM(3),		/* FOO means left-FOO and
 					 * right-FOO */
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
-	kv_processed = LELEM(7),        /* is processed, do not output
-					 * literal string */
 	kv_duplicateok = LELEM(8),	/* within a connection, the
 					 * item can be duplicated
 					 * (notably also=) */
