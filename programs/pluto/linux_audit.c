@@ -71,31 +71,46 @@ void linux_audit_conn(const struct state *st UNUSED, enum linux_audit_kind op UN
 
 #include <libaudit.h>
 
-void linux_audit_init(int do_audit, struct logger *logger)
+static bool log_to_audit; /* see config_setup.[hc] */
+
+bool linux_audit_enabled(void)
+{
+	return log_to_audit;
+}
+
+bool linux_audit_init(bool do_audit, struct logger *logger)
 {
 	llog(RC_LOG, logger, "Linux audit support [enabled]");
-	/* test and log if audit is enabled on the system */
+	/*
+	 * Always probe for audit support!  Just don't always log
+	 * records.
+	 */
 	int audit_fd;
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
 			errno == EAFNOSUPPORT) {
-			llog(RC_LOG, logger,
-				    "Warning: kernel has no audit support");
-			close(audit_fd);
+			llog(RC_LOG, logger, "warning: kernel has no audit support");
 			log_to_audit = false;
-			return;
-		} else {
-			fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
-				    "audit_open() failed");
+			return false;
 		}
-	} else {
-		if (do_audit)
-			log_to_audit = true;
+		/*
+		 * XXX: Even when audit-log is disabled, this code path still fails?!?
+		 */
+#if 0
+		if (!do_audit) {
+			llog_errno(RC_LOG, logger, errno, "warning: audit_open() failed");
+			log_to_audit = false;
+			return false;
+		}
+#endif
+		fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
+			    "audit_open() failed");
 	}
+
+	log_to_audit = do_audit;
 	close(audit_fd);
-	if (do_audit)
-		llog(RC_LOG, logger, "Linux audit activated");
+	return do_audit;
 }
 
 static void linux_audit(const int type, const char *message, const char *laddr, const int result,

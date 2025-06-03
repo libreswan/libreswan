@@ -414,7 +414,9 @@ enum opt {
 	OPT_LOG_NO_TIME,
 	OPT_LOG_NO_APPEND,
 	OPT_LOG_NO_IP,
+	OPT_LOGIP,
 	OPT_LOG_NO_AUDIT,
+	OPT_AUDIT_LOG,
 	OPT_DROP_OPPO_NULL,
 	OPT_FORCE_BUSY,
 	OPT_FORCE_UNLIMITED,
@@ -528,8 +530,10 @@ const struct option optarg_options[] = {
 	{ OPT("stderrlog"), no_argument, NULL, OPT_STDERRLOG },
 	{ OPT("log-no-time"), no_argument, NULL, OPT_LOG_NO_TIME }, /* was --plutostderrlogtime */
 	{ OPT("log-no-append"), no_argument, NULL, OPT_LOG_NO_APPEND },
-	{ OPT("log-no-ip"), no_argument, NULL, OPT_LOG_NO_IP },
-	{ OPT("log-no-audit"), no_argument, NULL, OPT_LOG_NO_AUDIT },
+	{ OPT("logip", "{YES,no}"), optional_argument, NULL, OPT_LOGIP },
+	{ REPLACE_OPT("log-no-ip", "logip=no", "5.3"), no_argument, NULL, OPT_LOG_NO_IP },
+	{ OPT("audit-log"), optional_argument, NULL, OPT_AUDIT_LOG },
+	{ REPLACE_OPT("log-no-audit", "audit-log", "5.3"), no_argument, NULL, OPT_LOG_NO_AUDIT },
 
 	HEADING_OPT("  Redirection:"),
 	{ OPT("global-redirect", "yes|no|auto"), required_argument, NULL, OPT_GLOBAL_REDIRECT},
@@ -830,11 +834,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_LOG_NO_IP:	/* --log-no-ip */
-			log_ip = false;
+			update_setup_yn(KYN_LOGIP, YN_NO);
+			continue;
+		case OPT_LOGIP:
+			update_setup_yn(KYN_LOGIP, optarg_yn(logger, YN_YES));
 			continue;
 
 		case OPT_LOG_NO_AUDIT:	/* --log-no-audit */
-			log_to_audit = false;
+			update_setup_yn(KYN_AUDIT_LOG, YN_NO);
+			continue;
+		case OPT_AUDIT_LOG:
+			update_setup_yn(KYN_AUDIT_LOG, optarg_yn(logger, YN_YES));
 			continue;
 
 		case OPT_DROP_OPPO_NULL:	/* --drop-oppo-null */
@@ -1067,8 +1077,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			extract_config_yn(&log_ip, cfg, KYN_LOGIP);
-			extract_config_yn(&log_to_audit, cfg, KYN_AUDIT_LOG);
 			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
 #ifdef USE_SECCOMP
@@ -1209,6 +1217,9 @@ int main(int argc, char **argv)
 
 	/* options processed save to obtain the setup */
 	UNUSED const struct config_setup *oco = config_setup_singleton();
+
+	/* trash default; which is true */
+	log_ip = config_setup_yn(oco, KYN_LOGIP);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
@@ -1489,7 +1500,7 @@ int main(int argc, char **argv)
 #ifdef USE_NSS_KDF
 	llog(RC_LOG, logger, "FIPS HMAC integrity support [not required]");
 #else
-	llog(RC_LOG, logger, "FIPS HMAC integrity support [not compiled in]");
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [DISABLED]");
 #endif
 
 #ifdef HAVE_LIBCAP_NG
@@ -1550,9 +1561,11 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	linux_audit_init(log_to_audit, logger);
+	bool audit_ok = linux_audit_init(config_setup_yn(oco, KYN_AUDIT_LOG), logger);
+	llog(RC_LOG, logger, "Linux audit support [%s]",
+	     (audit_ok ? "enabled" : "disabled"));
 #else
-	llog(RC_LOG, logger, "Linux audit support [disabled]");
+	llog(RC_LOG, logger, "Linux audit support [DISABLED]");
 #endif
 
 	llog(RC_LOG, logger, leak_detective ?

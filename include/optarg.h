@@ -89,6 +89,10 @@ uintmax_t optarg_udp_bufsize(const struct logger *logger);
 /* non-zero OPTIONAL provides default */
 uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const struct sparse_names *names);
 
+enum yn_options optarg_yn(const struct logger *logger, enum yn_options optional);
+enum yna_options optarg_yna(const struct logger *logger, enum yna_options optional);
+enum yne_options optarg_yne(const struct logger *logger, enum yne_options optional);
+
 /*
  * Adddres family dependent options.
  *

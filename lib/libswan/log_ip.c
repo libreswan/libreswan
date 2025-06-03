@@ -15,4 +15,4 @@
 
 #include "ip_address.h"	/* for log_ip */
 
-bool log_ip = true;
+bool log_ip; /* gets flipped to true in plutomain() */
