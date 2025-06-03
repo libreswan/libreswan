@@ -122,16 +122,12 @@ static struct {
 	const char *anchors;
 } pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
 
-/* Overridden by virtual_private= in ipsec.conf */
-static char *virtual_private = NULL;
-
 void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(conffile);
 	pfreeany(pluto_listen);
 	free_global_redirect_dests();
-	pfreeany(virtual_private);
 	free_config_setup();
 }
 
@@ -715,8 +711,6 @@ int main(int argc, char **argv)
 	 */
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 
-	deltatime_t keep_alive = {0}; /* aka unset */
-
 	/* handle arguments */
 	for (;; ) {
 
@@ -981,7 +975,7 @@ int main(int argc, char **argv)
 
 #ifdef USE_NFLOG
 		case OPT_NFLOG_ALL:	/* --nflog-all <group-number> */
-			pluto_nflog_group = optarg_uintmax(logger);
+			update_setup_option(KBF_NFLOG_ALL, optarg_uintmax(logger));
 			continue;
 #endif
 
@@ -1045,7 +1039,7 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
-			keep_alive = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger, TIMESCALE_SECONDS));
 			continue;
 
 		case OPT_SELFTEST:	/* --selftest */
@@ -1056,7 +1050,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_VIRTUAL_PRIVATE:	/* --virtual-private */
-			replace_value(&virtual_private, optarg);
+			update_setup_string(KSF_VIRTUAL_PRIVATE, optarg);
 			continue;
 
 		case OPT_CONFIG:	/* --config */
@@ -1115,17 +1109,7 @@ int main(int argc, char **argv)
 			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
 			extract_config_yn(&pluto_listen_udp, cfg, KYN_LISTEN_UDP);
 
-#ifdef USE_NFLOG
-			/* nflog-all= */
-			/* only causes nflog number to show in ipsec status */
-			pluto_nflog_group = cfg->setup->values[KBF_NFLOG_ALL].option;
-#endif
-
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
-
-			extract_config_deltatime(&keep_alive, cfg, KBF_KEEP_ALIVE);
-
-			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
 			set_global_redirect_dests(cfg->setup->values[KSF_GLOBAL_REDIRECT_TO].string);
 
@@ -1214,6 +1198,15 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/*
+	 * Anything (aka an argument) after all options consumed?
+	 */
+	if (optind != argc) {
+		llog(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
+		/* not exit_pluto because we are not initialized yet */
+		exit(PLUTO_EXIT_FAIL);
+	}
+
 	/* options processed save to obtain the setup */
 	UNUSED const struct config_setup *oco = config_setup_singleton();
 
@@ -1243,15 +1236,6 @@ int main(int argc, char **argv)
 							 OCSP_CACHE_MAX_AGE_RANGE, "ocsp-cache-max-age");
 	x509_ocsp.method = config_setup_option(oco, KBF_OCSP_METHOD);
 	x509_ocsp.cache_size = config_setup_option(oco, KBF_OCSP_CACHE_SIZE);
-
-	/*
-	 * Anything (aka an argument) after all options consumed?
-	 */
-	if (optind != argc) {
-		llog(RC_LOG, logger, "unexpected trailing argument: %s", argv[optind]);
-		/* not exit_pluto because we are not initialized yet */
-		exit(PLUTO_EXIT_FAIL);
-	}
 
 	/*
 	 * Create the lock file before things fork.
@@ -1599,9 +1583,11 @@ int main(int argc, char **argv)
 
 	/* server initialized; timers can follow */
 	init_log_limiter(logger);
+	deltatime_t keep_alive = config_setup_deltatime(oco, KBF_KEEP_ALIVE);
 	init_nat_traversal_timer(keep_alive, logger);
 	init_ddns();
 
+	const char *virtual_private = config_setup_string(oco, KSF_VIRTUAL_PRIVATE);
 	init_virtual_ip(virtual_private, logger);
 
 	enum yn_options ipsec_interface_managed = init_ipsec_interface(logger);
@@ -1742,14 +1728,26 @@ void show_setup_plutomain(struct show *s)
 	     (pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
+	/*
+	 * Default global NFLOG group - 0 means no logging
+	 *
+	 * Note: variable is only used to display in `ipsec status`
+	 * actual work is done outside pluto, by `ipsec checknflog`
+	 * where it uses addconn to extract the value.  Look for
+	 * NFGROUP= in ipsec.in.
+	 *
+	 * NFLOG group - 0 means no logging.
+	 */
+	uintmax_t nflog_all = config_setup_option(oco, KBF_NFLOG_ALL);
+
 	show(s,
-		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%d",
+		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju",
 		pluto_sock_bufsize,
 		bool_str(pluto_ike_socket_errqueue),
 		bool_str(x509_crl.strict),
 		deltasecs(x509_crl.check_interval),
 		pluto_listen != NULL ? pluto_listen : "<any>",
-		pluto_nflog_group
+		nflog_all
 		);
 
 	show_x509_ocsp(s);

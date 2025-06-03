@@ -757,7 +757,6 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where);
 
 /* global variables */
 
-extern uint16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging */
 extern deltatime_t pluto_expire_lifetime;
 
 extern bool states_use_connection(const struct connection *c);

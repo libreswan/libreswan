@@ -32,7 +32,7 @@ enum config_setup_keyword {
 	 * String Flag?).
 	 */
 	KSF_CURLIFACE,
-	KSF_VIRTUALPRIVATE,
+	KSF_VIRTUAL_PRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
 	KSF_STATSBIN,
