@@ -287,6 +287,8 @@ struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 	/*
 	 * Allocate a minimal buffer.  Will grow it as more tokens are
 	 * found.
+	 *
+	 * This means that NULL is never returned!
 	 */
 	struct shunks *tokens = alloc_items(struct shunks, 0);
 
