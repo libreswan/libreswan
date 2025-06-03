@@ -29,6 +29,7 @@
 #include "ip_address.h"
 #include "sparse_names.h"
 #include "encap_proto.h"
+#include "lswalloc.h"		/* for ITEMS_FOR_EACH() */
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
@@ -56,9 +57,8 @@ static void confwrite_value(FILE *out,
 			    enum keyword_valid type,
 			    keyword_values values)
 {
-	const struct keyword_def *k;
+	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
-	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
 		/* exact match */
 		if ((k->validity & (kv_config|kv_conn)) != type) {
 			continue;

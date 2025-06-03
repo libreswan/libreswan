@@ -1080,10 +1080,6 @@ int main(int argc, char **argv)
 #ifdef USE_SECCOMP
 			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
 #endif
-			if (cfg->setup->values[KBF_FORCEBUSY].option) {
-				/* force-busy is obsoleted, translate to ddos-mode= */
-				pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option = DDOS_FORCE_BUSY;
-			}
 			/* ddos-ike-threshold and max-halfopen-ike */
 			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;

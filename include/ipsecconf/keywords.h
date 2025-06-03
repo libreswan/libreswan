@@ -131,11 +131,6 @@ enum config_conn_keyword {
 	KWS_AUTHEAP,	/* left/right */
 
 	KWYN_PFS_REKEY_WORKAROUND,
-	KNCF_FIREWALL,
-	KNCF_IDTYPE,
-	KNCF_SPIBASE,
-	KNCF_SPI,
-	KNCF_ESPREPLAYWINDOW,
 
 	KNCF_FAILURESHUNT,
 	KNCF_NEGOTIATIONSHUNT,
@@ -169,7 +164,6 @@ enum config_conn_keyword {
 	KNCF_REKEYMARGIN,
 	KWS_REKEYFUZZ,
 	KWYN_COMPRESS,
-	KNCF_KEYINGTRIES,
 	KWS_REPLAY_WINDOW,
 	KNCF_IKELIFETIME,
 	KNCF_RETRANSMIT_TIMEOUT,
@@ -191,7 +185,6 @@ enum config_conn_keyword {
 	KWYN_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
 	KWYN_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KNCF_SAREFTRACK,	/* saref tracking parameter for _updown */
 	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
@@ -235,6 +228,8 @@ enum keyword_valid {
 	kv_duplicateok = LELEM(8),	/* within a connection, the
 					 * item can be duplicated
 					 * (notably also=) */
+	kv_ignore = LELEM(9),		/* pretend entry does not
+					 * exist */
 #if 0
 	kv_overrideok = LELEM(?),	/* between merged connections
 					 * (also=), the item can be
@@ -262,6 +257,11 @@ struct keyword_def {
 	const struct lmod_info *info;
 };
 
-extern const struct keyword_def ipsec_conf_keywords[]; /*NULL terminated*/
+struct keywords_def {
+	unsigned len;
+	const struct keyword_def *item;
+};
+
+extern const struct keywords_def ipsec_conf_keywords;
 
 #endif /* _KEYWORDS_H_ */
