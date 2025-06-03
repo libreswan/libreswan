@@ -252,7 +252,6 @@ struct keyword_def {
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct sparse_names *sparse_names;
-	const struct lmod_info *info;
 };
 
 struct keywords_def {
