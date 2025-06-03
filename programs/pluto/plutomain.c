@@ -80,6 +80,7 @@
 #include "enum_names.h"		/* for init_enum_names() */
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 #include "lock_file.h"
+#include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -523,7 +524,7 @@ const struct option optarg_options[] = {
 	{ OPT("ikev1-reject"), no_argument, NULL, OPT_IKEV1_REJECT },
 	{ OPT("ikev1-drop"), no_argument, NULL, OPT_IKEV1_DROP },
 	{ OPT("vendorid", "vendorid>"), required_argument, NULL, OPT_VENDORID },
-	{ OPT("drop-oppo-null"), no_argument, NULL, OPT_DROP_OPPO_NULL, },
+	{ OPT("drop-oppo-null"), optional_argument, NULL, OPT_DROP_OPPO_NULL, },
 
 	HEADING_OPT("  Logging:"),
 	{ OPT("logfile", "<filename>"), required_argument, NULL, OPT_LOGFILE },
@@ -848,7 +849,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DROP_OPPO_NULL:	/* --drop-oppo-null */
-			pluto_drop_oppo_null = true;
+			update_setup_yn(KYN_DROP_OPPO_NULL, optarg_yn(logger, YN_YES));
 			continue;
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
@@ -1081,7 +1082,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
 #ifdef USE_SECCOMP
 			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
@@ -1226,6 +1226,9 @@ int main(int argc, char **argv)
 	deltatime_t expire_shunt_interval = check_config_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL, logger,
 							     EXPIRE_SHUNT_INTERVAL_RANGE,
 							     "expire-shunt-interval");
+
+	/* IKEv2 ignoring OPPO? */
+	pluto_drop_oppo_null = config_setup_yn(oco, KYN_DROP_OPPO_NULL);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.

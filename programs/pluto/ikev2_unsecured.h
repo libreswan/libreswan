@@ -10,6 +10,10 @@
 
 struct msg_digest;
 
+extern bool pluto_drop_oppo_null;	/* drop opportunistic
+					 * AUTH-NULL on first IKE
+					 * msg? */
+
 void process_v2_UNSECURED_message(struct msg_digest *md);
 
 #endif

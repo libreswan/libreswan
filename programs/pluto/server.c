@@ -200,7 +200,6 @@ void delete_ctl_socket(void)
 }
 
 bool listening = false;  /* should we pay attention to IKE messages? */
-bool pluto_drop_oppo_null = false; /* drop opportunistic AUTH-NULL on first IKE msg? */
 bool pluto_listen_udp = true;
 bool pluto_listen_tcp = false;
 
