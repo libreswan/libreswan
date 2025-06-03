@@ -1229,7 +1229,7 @@ int main(int argc, char **argv)
 			whack_command(&msg, WHACK_SUSPEND);
 			continue;
 		case CD_SESSION_RESUMPTION:
-			msg.session_resumption = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.session_resumption = optarg_yn(logger, YN_YES);
 			break;
 
 		case OPT_DELETE:	/* --delete */
@@ -1587,7 +1587,7 @@ int main(int argc, char **argv)
 
 		/* --allow-narrowing */
 		case CD_NARROWING:
-			msg.narrowing = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.narrowing = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --donotrekey */
@@ -1601,10 +1601,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPTFS: /* --iptfs[={yes,no}] */
-			msg.iptfs = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.iptfs = optarg_yn(logger, YN_YES);
 			continue;
 		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
-			msg.iptfs_fragmentation = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.iptfs_fragmentation = optarg_yn(logger, YN_YES);
 			continue;
 		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
 			msg.iptfs_packet_size = optarg;
@@ -1623,7 +1623,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
-			msg.compress = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.compress = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
@@ -1649,9 +1649,9 @@ int main(int argc, char **argv)
 			continue;
 		/* --esn */
 		case CD_ESN:
-			msg.esn = optarg_sparse(logger, (msg.esn == YNE_EITHER ? YNE_EITHER :
-						 msg.esn == YNE_NO ? YNE_EITHER : YNE_YES),
-						&yne_option_names);
+			msg.esn = optarg_yne(logger, (msg.esn == YNE_EITHER ? YNE_EITHER :
+						      msg.esn == YNE_NO ? YNE_EITHER :
+						      YNE_YES));
 			continue;
 
 		/* --ikefrag-allow */
@@ -1674,22 +1674,22 @@ int main(int argc, char **argv)
 
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
-			msg.nopmtudisc = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.nopmtudisc = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --decap-dscp */
 		case CD_DECAP_DSCP:
-			msg.decap_dscp = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.decap_dscp = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --encap-dscp */
 		case CD_ENCAP_DSCP:
-			msg.encap_dscp = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.encap_dscp = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --aggressive | --aggrmode */
 		case CD_AGGRESSIVE:
-			msg.aggressive = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.aggressive = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --allow-cert-without-san-id */
@@ -1699,45 +1699,45 @@ int main(int argc, char **argv)
 
 		/* --no-ikepad */
 		case CD_IKEPAD:
-			msg.ikepad = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.ikepad = optarg_yna(logger, YNA_YES);
 			continue;
 
 		/* --ignore-peer-dns */
 		case CD_IGNORE_PEER_DNS:
-			msg.ignore_peer_dns = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.ignore_peer_dns = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --dns-match-id */
 		case CD_DNS_MATCH_ID:
-			msg.dns_match_id = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.dns_match_id = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --ms-dh-downgrade */
 		case CD_MS_DH_DOWNGRADE:
-			msg.ms_dh_downgrade = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.ms_dh_downgrade = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[=yes] */
-			msg.pfs_rekey_workaround = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.pfs_rekey_workaround = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --overlapip */
 		case CD_OVERLAPIP:
-			msg.overlapip = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.overlapip = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --sha2-truncbug or --sha2_truncbug */
 		case CD_SHA2_TRUNCBUG:
-			msg.sha2_truncbug = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.sha2_truncbug = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
-			msg.intermediate = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.intermediate = optarg_yn(logger, YN_YES);
 			continue;
 
 		/* --mobike */
 		case CD_MOBIKE:
-			msg.mobike = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.mobike = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
@@ -1809,7 +1809,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */
-			msg.encapsulation = optarg_sparse(logger, YNA_YES, &yna_option_names);
+			msg.encapsulation = optarg_yna(logger, YNA_YES);
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
@@ -1820,7 +1820,7 @@ int main(int argc, char **argv)
 			msg.nat_keepalive = YN_NO;
 			continue;
 		case CD_NAT_KEEPALIVE:	/* --nat-keepalive {yes,no} */
-			msg.nat_keepalive = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.nat_keepalive = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
@@ -1828,7 +1828,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initial-contact */
-			msg.initial_contact = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.initial_contact = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
@@ -1836,7 +1836,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
-			msg.fake_strongswan = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.fake_strongswan = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
@@ -1853,11 +1853,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
-			msg.send_redirect = optarg_sparse(logger, 0, &yna_option_names);
+			msg.send_redirect = optarg_yna(logger, 0/*no-default*/);
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
-			msg.accept_redirect = optarg_sparse(logger, 0, &yn_option_names);
+			msg.accept_redirect = optarg_yn(logger, 0/*no-default*/);
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
@@ -1963,11 +1963,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver[={yes,no}] */
-			end->xauthserver = optarg_sparse(logger, YN_YES, &yn_option_names);
+			end->xauthserver = optarg_yn(logger, YN_YES);
 			continue;
 
 		case END_XAUTHCLIENT:	/* --xauthclient[={yes,no}] */
-			end->xauthclient =  optarg_sparse(logger, YN_YES, &yn_option_names);
+			end->xauthclient =  optarg_yn(logger, YN_YES);
 			continue;
 
 		case OPT_USERNAME:	/* --username, was --xauthname */
@@ -1989,7 +1989,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CAT:		/* --cat */
-			end->cat = optarg_sparse(logger, YN_YES, &yn_option_names);
+			end->cat = optarg_yn(logger, YN_YES);
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
@@ -1997,13 +1997,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			end->modecfgclient = optarg_sparse(logger, YN_YES, &yn_option_names);
+			end->modecfgclient = optarg_yn(logger, YN_YES);
 			continue;
 		case END_MODECFGSERVER:	/* --modeconfigserver */
-			end->modecfgserver = optarg_sparse(logger, YN_YES, &yn_option_names);
+			end->modecfgserver = optarg_yn(logger, YN_YES);
 			continue;
 		case CD_MODECFGPULL:	/* --modecfgpull */
-			msg.modecfgpull = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.modecfgpull = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
@@ -2030,10 +2030,10 @@ int main(int argc, char **argv)
 			msg.vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
-			msg.vti_routing = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.vti_routing = optarg_yn(logger, YN_YES);
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
-			msg.vti_shared = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.vti_shared = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
@@ -2066,11 +2066,11 @@ int main(int argc, char **argv)
 
 		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */
 			msg.send_esp_tfc_padding_not_supported =
-				optarg_sparse(logger, YN_YES, &yn_option_names);
+				optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_PFS:	/* --pfs */
-			msg.pfs = optarg_sparse(logger, YN_YES, &yn_option_names);
+			msg.pfs = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */

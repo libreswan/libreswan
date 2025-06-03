@@ -345,6 +345,21 @@ uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const st
 	return name->value;
 }
 
+enum yn_options optarg_yn(const struct logger *logger, enum yn_options optional)
+{
+	return optarg_sparse(logger, optional, &yn_option_names);
+}
+
+enum yne_options optarg_yne(const struct logger *logger, enum yne_options optional)
+{
+	return optarg_sparse(logger, optional, &yne_option_names);
+}
+
+enum yna_options optarg_yna(const struct logger *logger, enum yna_options optional)
+{
+	return optarg_sparse(logger, optional, &yna_option_names);
+}
+
 /*
  * Addresses.
  */
