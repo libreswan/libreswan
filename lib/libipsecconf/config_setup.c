@@ -108,6 +108,7 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 
 		update_setup_yn(KYN_LOGIP, YN_YES);
+		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
 	}
 	return &config_setup;
 }

@@ -54,8 +54,6 @@ static struct log_param {
 	bool append;
 } log_param;
 
-bool log_to_audit = true;
-
 static FILE *pluto_log_file = NULL;	/* either a real file or stderr */
 
 /*
@@ -269,11 +267,14 @@ void show_log(struct show *s)
 		jam(buf, "logappend=%s", bool_str(log_param.append));
 		jam_string(buf, ", ");
 		jam(buf, "logip=%s", bool_str(log_ip));
-		jam_string(buf, ", ");
-		jam(buf, "audit-log=%s", bool_str(log_to_audit));
+		jam_string(buf, ", audit-log=");
+#ifdef USE_LINUX_AUDIT
+		jam_string(buf, bool_str(linux_audit_enabled()));
+#else
+		jam_string(buf, "no");
+#endif
 	}
 }
-
 
 void set_debugging(lset_t deb)
 {

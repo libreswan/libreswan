@@ -46,8 +46,6 @@ void switch_log(const struct config_setup *oco, struct logger **logger);
 void close_log(void);	/* call after report_leaks() */
 void show_log(struct show *s);
 
-extern bool log_to_audit;
-
 extern bool whack_prompt_for(struct ike_sa *ike,
 			     const char *prompt,
 			     bool echo,
@@ -147,7 +145,8 @@ enum linux_audit_kind {
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 
 #ifdef USE_LINUX_AUDIT
-extern void linux_audit_init(int do_audit, struct logger *logger);
+extern bool linux_audit_init(bool do_audit, struct logger *logger);
+extern bool linux_audit_enabled(void);
 # include <libaudit.h>			/* from rpm:audit-libs-devel */
 # define AUDIT_LOG_SIZE 256
 /* should really be in libaudit.h */
