@@ -50,6 +50,8 @@
 #include "ikev2_ike_session_resume.h"
 #include "ikev2_notification.h"
 
+bool pluto_drop_oppo_null;	/* set by plutomain.c and config_setup.[hc] */
+
 static void process_v2_UNSECURED_request(struct msg_digest *md)
 {
 
@@ -292,8 +294,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 
 	/*
 	 * Check if we would drop the packet based on VID before we
-	 * create a state. Move this to ikev2_oppo.c:
-	 * drop_oppo_requests()?
+	 * create a state.
 	 */
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
 		if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {

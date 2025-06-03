@@ -854,7 +854,7 @@ void append_st_cfg_domain(struct state *st, struct pbs_in *pbs,
 extern diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi,
 				struct state *st);
 
-extern bool uniqueIDs;  /* --uniqueids? */
+extern bool pluto_uniqueIDs;  /* --uniqueids? */
 
 void list_state_events(struct show *s, const monotime_t now);
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,

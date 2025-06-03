@@ -999,7 +999,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 			 * IKEv2 CP
 			 */
 			dbg("ignoring initial contact: we are a server using PSK and clients are using a group ID");
-		} else if (!uniqueIDs) {
+		} else if (!pluto_uniqueIDs) {
 			dbg("ignoring initial contact: uniqueIDs disabled");
 		} else {
 			struct state *old_p2 = state_by_serialno(c->established_child_sa);

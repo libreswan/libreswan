@@ -326,30 +326,15 @@ extern const struct kernel_ops pfkeyv2_kernel_ops;
 
 extern const struct kernel_ops *const kernel_stacks[];
 
-/* bare (connectionless) shunt (eroute) table
- *
- * Bare shunts are those that don't "belong" to a connection.
- * This happens because some %trapped traffic hasn't yet or cannot be
- * assigned to a connection.  The usual reason is that we cannot discover
- * the peer SG.  Another is that even when the peer has been discovered,
- * it may be that no connection matches all the particulars.
- * We record them so that, with scanning, we can discover
- * which %holds are news and which others should expire.
- */
-
-#define SHUNT_SCAN_INTERVAL_SECONDS (2*10)
-#define SHUNT_SCAN_INTERVAL     DELTATIME_INIT(SHUNT_SCAN_INTERVAL_SECONDS)   /* time between scans of eroutes */
-
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
  * By making SHUNT_PATIENCE an odd multiple of half of SHUNT_SCAN_INTERVAL,
  * we minimize the effects of jitter.
  */
-#define SHUNT_PATIENCE  deltatime(SHUNT_SCAN_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
+#define SHUNT_PATIENCE  deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT DELTATIME_INIT(15 * secs_per_minute)
 
-extern deltatime_t bare_shunt_interval;
 extern deltatime_t pluto_shunt_lifetime;
 
 void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s);
@@ -368,7 +353,7 @@ void free_bare_shunt(struct bare_shunt **pp, struct logger *logger);
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
-extern void init_kernel(struct logger *logger);
+extern void init_kernel(struct logger *logger, deltatime_t expire_shunt_interval);
 
 extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const struct ip_protocol *transport_proto,

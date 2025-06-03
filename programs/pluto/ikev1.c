@@ -2727,9 +2727,9 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
  * the freshly established connection needs is replacing an
  * established version of itself.
  *
- * The use of uniqueIDs is mostly historic and might be removed
- * in a future version. It is ignored for PSK based connections,
- * which only act based on being a "server using PSK".
+ * The use of pluto_uniqueIDs is mostly historic and might be removed
+ * in a future version. It is ignored for PSK based connections, which
+ * only act based on being a "server using PSK".
  */
 
 void ISAKMP_SA_established(struct ike_sa *ike)

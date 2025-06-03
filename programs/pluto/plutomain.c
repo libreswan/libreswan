@@ -80,6 +80,7 @@
 #include "enum_names.h"		/* for init_enum_names() */
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 #include "lock_file.h"
+#include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -496,7 +497,7 @@ const struct option optarg_options[] = {
 #endif
 	{ OPT("force-busy"), no_argument, NULL, OPT_FORCE_BUSY },
 	{ OPT("force-unlimited"), no_argument, NULL, OPT_FORCE_UNLIMITED },
-	{ OPT("uniqueids"), no_argument, NULL, OPT_UNIQUEIDS },
+	{ OPT("uniqueids", "{YES,no}"), optional_argument, NULL, OPT_UNIQUEIDS },
 	{ OPT("no-dnssec"), no_argument, NULL, OPT_NO_DNSSEC },
 #ifdef KERNEL_PFKEYV2
 	{ OPT("use-pfkeyv2"),   no_argument, NULL, OPT_USE_PFKEYV2 },
@@ -523,7 +524,7 @@ const struct option optarg_options[] = {
 	{ OPT("ikev1-reject"), no_argument, NULL, OPT_IKEV1_REJECT },
 	{ OPT("ikev1-drop"), no_argument, NULL, OPT_IKEV1_DROP },
 	{ OPT("vendorid", "vendorid>"), required_argument, NULL, OPT_VENDORID },
-	{ OPT("drop-oppo-null"), no_argument, NULL, OPT_DROP_OPPO_NULL, },
+	{ OPT("drop-oppo-null"), optional_argument, NULL, OPT_DROP_OPPO_NULL, },
 
 	HEADING_OPT("  Logging:"),
 	{ OPT("logfile", "<filename>"), required_argument, NULL, OPT_LOGFILE },
@@ -848,13 +849,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_DROP_OPPO_NULL:	/* --drop-oppo-null */
-			pluto_drop_oppo_null = true;
+			update_setup_yn(KYN_DROP_OPPO_NULL, optarg_yn(logger, YN_YES));
 			continue;
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
-			bare_shunt_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
-			check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
+		{
+			deltatime_t interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define EXPIRE_SHUNT_INTERVAL_RANGE 1, 1000
+			check_diag(logger, deltatime_ok(interval, EXPIRE_SHUNT_INTERVAL_RANGE));
+			update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, interval);
 			continue;
+		}
 
 		case OPT_LISTEN:	/* --listen ip_addr */
 		{
@@ -973,7 +978,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
-			uniqueIDs = true;
+			update_setup_yn(KYN_UNIQUEIDS, optarg_yn(logger, YN_YES));
 			continue;
 
 		case OPT_NO_DNSSEC:	/* --no-dnssec */
@@ -1077,7 +1082,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			extract_config_yn(&pluto_drop_oppo_null, cfg, KYN_DROP_OPPO_NULL);
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
 #ifdef USE_SECCOMP
 			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
@@ -1100,8 +1104,6 @@ int main(int argc, char **argv)
 				global_redirect = GLOBAL_REDIRECT_NO;
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
-
-			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
 
 			/*
 			 * We don't check interfaces= here, should we?
@@ -1147,10 +1149,6 @@ int main(int argc, char **argv)
 					     "protostack=%s ignored, using protostack=%s",
 					     protostack, kernel_ops->protostack_names[0]);
 				}
-			}
-
-			if (extract_config_deltatime(&bare_shunt_interval, cfg, KSF_EXPIRE_SHUNT_INTERVAL)) {
-				check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
 			}
 
 			confread_free(cfg);
@@ -1220,6 +1218,17 @@ int main(int argc, char **argv)
 
 	/* trash default; which is true */
 	log_ip = config_setup_yn(oco, KYN_LOGIP);
+
+	/* there's a rumor this is going away */
+	pluto_uniqueIDs = config_setup_yn(oco, KYN_UNIQUEIDS);
+
+	/* needs to be within range */
+	deltatime_t expire_shunt_interval = check_config_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL, logger,
+							     EXPIRE_SHUNT_INTERVAL_RANGE,
+							     "expire-shunt-interval");
+
+	/* IKEv2 ignoring OPPO? */
+	pluto_drop_oppo_null = config_setup_yn(oco, KYN_DROP_OPPO_NULL);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
@@ -1630,7 +1639,8 @@ int main(int argc, char **argv)
 	}
 
 	start_server_helpers(nhelpers, logger);
-	init_kernel(logger);
+
+	init_kernel(logger, expire_shunt_interval);
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
 	llog(RC_LOG, logger, "CRL fetch support [%s]",
@@ -1723,7 +1733,7 @@ void show_setup_plutomain(struct show *s)
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);
-		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
+		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
 		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
 	}

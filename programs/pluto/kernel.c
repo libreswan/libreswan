@@ -2376,7 +2376,7 @@ const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
 
 static bool kernel_initialized = false;
 
-deltatime_t bare_shunt_interval = SHUNT_SCAN_INTERVAL;
+deltatime_t pluto_expire_shunt_interval; /* see plutomain.c & config_setup.[hc] */
 deltatime_t pluto_shunt_lifetime = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
 
 static global_timer_cb kernel_scan_shunts;
@@ -2386,7 +2386,7 @@ static void kernel_scan_shunts(struct logger *logger)
 	expire_bare_shunts(logger);
 }
 
-void init_kernel(struct logger *logger)
+void init_kernel(struct logger *logger, deltatime_t expire_shunt_interval)
 {
 	/*
 	 * Hack to stop early startup failure cascading into kernel
@@ -2413,7 +2413,7 @@ void init_kernel(struct logger *logger)
 	kernel_ops->poke_holes(logger);
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
-			      bare_shunt_interval);
+			      expire_shunt_interval);
 }
 
 void show_kernel_interface(struct show *s)

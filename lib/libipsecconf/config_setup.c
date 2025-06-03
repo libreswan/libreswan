@@ -109,6 +109,9 @@ struct config_setup *config_setup_singleton(void)
 
 		update_setup_yn(KYN_LOGIP, YN_YES);
 		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
+		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
+
+		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
 	}
 	return &config_setup;
 }

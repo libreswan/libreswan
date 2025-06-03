@@ -396,8 +396,9 @@ static bool client_can_reuse_lease(const struct connection *c)
 		return false;
 
 	/* If uniqueids=false - this can mean multiple clients on the same ID & CERT */
-	if (!uniqueIDs)
+	if (!pluto_uniqueIDs) {
 		return false;
+	}
 
 	return true;
 }
@@ -469,8 +470,9 @@ static struct lease *connection_lease(struct connection *c,
  * by lease_an_address/find_lingering_lease to the same thatid when uniqueid is
  * set.
  *
- * If uniqueIDs is set or thatid is ID_NONE, we don't know how to share.
- * In that case, we do free the lease since that ID isn't distinctive.
+ * If PLUTO_UNIQUEIDS is set or thatid is ID_NONE, we don't know how
+ * to share.  In that case, we do free the lease since that ID isn't
+ * distinctive.
  */
 
 void free_that_address_lease(struct connection *c,
