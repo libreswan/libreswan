@@ -77,7 +77,7 @@
 
 static void delete_state(struct state *st);
 
-bool uniqueIDs = true;
+bool pluto_uniqueIDs; /* see plutomain and config_setup.[hc] */
 
 deltatime_t pluto_expire_lifetime;
 
@@ -2014,9 +2014,9 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
  * Note the serial number, and release any connections with the same
  * peer ID but different peer IP address.
  *
- * The use of uniqueIDs is mostly historic and might be removed
- * in a future version. It is ignored for PSK based connections,
- * which only act based on being a "server using PSK".
+ * The use of pluto_uniqueIDs is mostly historic and might be removed
+ * in a future version.  It is ignored for PSK based connections, which
+ * only act based on being a "server using PSK".
  */
 
 void wipe_old_connections(const struct ike_sa *ike)
@@ -2038,7 +2038,7 @@ void wipe_old_connections(const struct ike_sa *ike)
 		return;
 	}
 
-	if (!uniqueIDs) {
+	if (!pluto_uniqueIDs) {
 		ldbg_sa(ike, "%s() skipped, uniqueIDs disabled", __func__);
 		return;
 	}

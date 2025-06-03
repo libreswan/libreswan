@@ -496,7 +496,7 @@ const struct option optarg_options[] = {
 #endif
 	{ OPT("force-busy"), no_argument, NULL, OPT_FORCE_BUSY },
 	{ OPT("force-unlimited"), no_argument, NULL, OPT_FORCE_UNLIMITED },
-	{ OPT("uniqueids"), no_argument, NULL, OPT_UNIQUEIDS },
+	{ OPT("uniqueids", "{YES,no}"), optional_argument, NULL, OPT_UNIQUEIDS },
 	{ OPT("no-dnssec"), no_argument, NULL, OPT_NO_DNSSEC },
 #ifdef KERNEL_PFKEYV2
 	{ OPT("use-pfkeyv2"),   no_argument, NULL, OPT_USE_PFKEYV2 },
@@ -973,7 +973,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_UNIQUEIDS:	/* --uniqueids */
-			uniqueIDs = true;
+			update_setup_yn(KYN_UNIQUEIDS, optarg_yn(logger, YN_YES));
 			continue;
 
 		case OPT_NO_DNSSEC:	/* --no-dnssec */
@@ -1101,8 +1101,6 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			extract_config_yn(&uniqueIDs, cfg, KYN_UNIQUEIDS);
-
 			/*
 			 * We don't check interfaces= here, should we?
 			 * This was hack because we had _stackmanager?
@@ -1220,6 +1218,9 @@ int main(int argc, char **argv)
 
 	/* trash default; which is true */
 	log_ip = config_setup_yn(oco, KYN_LOGIP);
+
+	/* there's a rumor this is going away */
+	pluto_uniqueIDs = config_setup_yn(oco, KYN_UNIQUEIDS);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
@@ -1723,7 +1724,7 @@ void show_setup_plutomain(struct show *s)
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "nhelpers=%d", nhelpers);
-		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
+		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
 		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
 	}
