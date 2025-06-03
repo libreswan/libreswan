@@ -852,9 +852,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
-			bare_shunt_interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
-			check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
+		{
+			deltatime_t interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+#define EXPIRE_SHUNT_INTERVAL_RANGE 1, 1000
+			check_diag(logger, deltatime_ok(interval, EXPIRE_SHUNT_INTERVAL_RANGE));
+			update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, interval);
 			continue;
+		}
 
 		case OPT_LISTEN:	/* --listen ip_addr */
 		{
@@ -1147,10 +1151,6 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if (extract_config_deltatime(&bare_shunt_interval, cfg, KSF_EXPIRE_SHUNT_INTERVAL)) {
-				check_diag(logger, deltatime_ok(bare_shunt_interval, 1, 1000));
-			}
-
 			confread_free(cfg);
 			continue;
 		}
@@ -1221,6 +1221,11 @@ int main(int argc, char **argv)
 
 	/* there's a rumor this is going away */
 	pluto_uniqueIDs = config_setup_yn(oco, KYN_UNIQUEIDS);
+
+	/* needs to be within range */
+	deltatime_t expire_shunt_interval = check_config_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL, logger,
+							     EXPIRE_SHUNT_INTERVAL_RANGE,
+							     "expire-shunt-interval");
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
@@ -1631,7 +1636,8 @@ int main(int argc, char **argv)
 	}
 
 	start_server_helpers(nhelpers, logger);
-	init_kernel(logger);
+
+	init_kernel(logger, expire_shunt_interval);
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
 	llog(RC_LOG, logger, "CRL fetch support [%s]",

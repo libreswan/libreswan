@@ -969,4 +969,14 @@ extern void init_pluto_constants(void);
 #define ISAKMP_V2_FRAG_OVERHEAD_IPv6	40	/* ??? !!! */
 #define ISAKMP_V2_FRAG_MAXLEN_IPv6	(MIN_MAX_UDP_DATA_v6 - ISAKMP_V1_FRAG_OVERHEAD_IPv6)
 
+/* bare (connectionless) shunt (eroute) table
+ *
+ * Bare shunts are those that don't "belong" to a connection.  This
+ * happens because the OE connection instance has been deleted but the
+ * block needs to say around.
+ */
+
+/* time between scans of eroutes */
+#define DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS (2*10)
+
 #endif
