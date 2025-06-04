@@ -465,6 +465,16 @@ struct starter_config *confread_load(const char *file,
 {
 	/* sanity checks */
 
+	if (LDBGP(DBG_TMI, logger)) {
+		ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
+			if (k->keyname == NULL) {
+				continue;
+			}
+			unsigned i = (k - ipsec_conf_keywords.item);
+			LDBG_log(logger, "[%u] %s", i, k->keyname);
+		}
+	}
+
 	enum { SETUP, CONN } config = SETUP;
 	enum { NAME, ALIAS, OBSOLETE } group = NAME;
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
@@ -506,16 +516,15 @@ struct starter_config *confread_load(const char *file,
 			break;
 		}
 
-
-#if 0
-		ok &= pexpect(group == NAME ? i-base == k->field : true);
-#endif
-		ok &= pexpect(group == OBSOLETE ? (k->field == KNCF_OBSOLETE &&
-						   k->type == kt_obsolete &&
-						   k->sparse_names == NULL) : true);
 		ok &= pexpect(k->validity & kv_alias ? group == ALIAS :
-			      k->field == KNCF_OBSOLETE ? group == OBSOLETE :
-			      group == NAME);
+			      group == NAME || group == OBSOLETE);
+		ok &= pexpect(k->field == KNCF_OBSOLETE ? group == OBSOLETE :
+			      group == NAME || group == ALIAS);
+		ok &= pexpect(k->type == kt_obsolete ? group == OBSOLETE :
+			      group == NAME || group == ALIAS);
+
+		ok &= pexpect(group == NAME ? i == k->field : i > k->field);
+		ok &= pexpect(group == OBSOLETE ? k->sparse_names == NULL : true);
 
 		if (k->validity & kv_config) {
 			ok &= pexpect(config == SETUP);
@@ -533,6 +542,16 @@ struct starter_config *confread_load(const char *file,
 			ok &= pexpect((k->validity & (kv_config)) == LEMPTY);
 		}
 
+		/* above checked k->field in range; check things,
+		 * notably aliases, point back to a real NAME */
+		ok &= pexpect(k->field < ipsec_conf_keywords.len);
+		ok &= pexpect(group == OBSOLETE ? ipsec_conf_keywords.item[k->field].keyname == NULL/*entry 0*/ :
+			      ipsec_conf_keywords.item[k->field].keyname != NULL);
+		ok &= pexpect(group == OBSOLETE ? ipsec_conf_keywords.item[k->field].field == 0/*entry 0*/ :
+			      ipsec_conf_keywords.item[k->field].field == k->field);
+		ok &= pexpect(group == OBSOLETE ? ipsec_conf_keywords.item[k->field].validity == 0/*entry 0*/ :
+			      ipsec_conf_keywords.item[k->field].validity == (k->validity & ~kv_alias));
+
 		if (!ok) {
 			llog_pexpect(logger, HERE, "[%u:%u] '%s' (follows '%s') expecting %s-%s",
 				     i, k->field,
@@ -546,50 +565,6 @@ struct starter_config *confread_load(const char *file,
 				      group == OBSOLETE ? "obsolete" :
 				      "???"));
 			break;
-		}
-	}
-
-	/*
-	 * Sanity check for missing and duplicate entries.
-	 *
-	 * This is order N^2 so only when debugging.  Once table is
-	 * properly ordered this can go away.
-	 */
-
-	if (cur_debugging) {
-		struct kw_range {
-			const char *what;
-			unsigned floor, roof;
-		} kw_range[] = {
-			{ "setup", CONFIG_SETUP_KEYWORD_FLOOR, CONFIG_SETUP_KEYWORD_ROOF, },
-			{ "conn", CONFIG_CONN_KEYWORD_FLOOR, CONFIG_SETUP_KEYWORD_ROOF, }
-		};
-
-		FOR_EACH_ELEMENT(r, kw_range) {
-			const char *follows = "???";
-			for (unsigned kw = r->floor; kw < r->roof; kw++) {
-				const struct keyword_def *found = NULL;
-				bool ok = true;
-				ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
-					if (k->field == kw) {
-						if (found == NULL) {
-							found = k;
-							ok &= pexpect((k->validity & kv_alias) == LEMPTY);
-						} else {
-							ok &= pexpect(k->validity & kv_alias);
-						}
-					}
-				}
-				ok &= pexpect(found != NULL);
-				if (!ok) {
-					llog_pexpect(logger, HERE,
-						     "%s keyword %u '%s'; follows '%s'",
-						     r->what, kw,
-						     (found != NULL ? found->keyname : "???"),
-						     follows);
-				}
-				follows = (found != NULL ? found->keyname : follows);
-			}
 		}
 	}
 
