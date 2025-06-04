@@ -289,17 +289,6 @@ enum ddos_mode {
 };
 
 /*
- * seccomp mode
- * on syscall violation, enabled kills pluto, tolerant ignores syscall
- */
-enum seccomp_mode {
-	SECCOMP_undefined,
-	SECCOMP_ENABLED,
-	SECCOMP_TOLERANT,
-	SECCOMP_DISABLED
-};
-
-/*
  * status for state-transition-function
  *
  * Note: STF_FAIL_v1N + <notification> (<notification> is either

@@ -26,6 +26,9 @@
 #include "lswversion.h"
 #include "ocsp_method.h"
 #include "global_redirect.h"
+#ifdef USE_SECCOMP
+#include "seccomp_mode.h"
+#endif
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -82,7 +85,9 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
 		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
+#ifdef USE_SECCOMP
 		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
+#endif
 
 		update_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
 		update_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);

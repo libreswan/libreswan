@@ -41,9 +41,6 @@
 #include "ikev1_db_ops.h"
 #include "iface.h"
 #include "show.h"
-#ifdef USE_SECCOMP
-#include "pluto_seccomp.h"
-#endif
 
 struct show {
 	/*

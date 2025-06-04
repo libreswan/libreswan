@@ -464,8 +464,11 @@ enum opt {
 	OPT_IKEV1_SECCTX_ATTR_TYPE,
 	OPT_IKEV1_REJECT,
 	OPT_IKEV1_DROP,
+
+	OPT_SECCOMP,
 	OPT_SECCOMP_ENABLED,
 	OPT_SECCOMP_TOLERANT,
+
 	OPT_VENDORID,
 	OPT_SELFTEST,
 	OPT_LEAK_DETECTIVE,
@@ -544,8 +547,9 @@ const struct option optarg_options[] = {
 
 #ifdef USE_SECCOMP
 	HEADING_OPT("  Secure Computing:"),
-	{ OPT("seccomp-enabled"), no_argument, NULL, OPT_SECCOMP_ENABLED },
-	{ OPT("seccomp-tolerant"), no_argument, NULL, OPT_SECCOMP_TOLERANT },
+	{ OPT("seccomp", "{enabled,disabled,tolerant}"), required_argument, NULL, OPT_SECCOMP },
+	{ REPLACE_OPT("seccomp-enabled", "seccomp", "5.3"), no_argument, NULL, OPT_SECCOMP_ENABLED },
+	{ REPLACE_OPT("seccomp-tolerant", "seccomp", "5.3"), no_argument, NULL, OPT_SECCOMP_TOLERANT },
 #endif
 
 	HEADING_OPT("  PKI X.509:"),
@@ -907,11 +911,14 @@ int main(int argc, char **argv)
 			continue;
 
 #ifdef USE_SECCOMP
+		case OPT_SECCOMP:		/* --seccomp={enabled,disabled,tolerant} */
+			update_setup_option(KBF_SECCOMP, optarg_sparse(logger, SECCOMP_ENABLED, &seccomp_mode_names));
+			continue;
 		case OPT_SECCOMP_ENABLED:	/* --seccomp-enabled */
-			pluto_seccomp_mode = SECCOMP_ENABLED;
+			update_setup_option(KBF_SECCOMP, SECCOMP_ENABLED);
 			continue;
 		case OPT_SECCOMP_TOLERANT:	/* --seccomp-tolerant */
-			pluto_seccomp_mode = SECCOMP_TOLERANT;
+			update_setup_option(KBF_SECCOMP, SECCOMP_TOLERANT);
 			continue;
 #endif
 
@@ -1071,9 +1078,6 @@ int main(int argc, char **argv)
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
-#ifdef USE_SECCOMP
-			pluto_seccomp_mode = cfg->setup->values[KBF_SECCOMP].option;
-#endif
 			/* ddos-ike-threshold and max-halfopen-ike */
 			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
 			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;

@@ -57,7 +57,6 @@
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
 #include "sparse_names.h"
-
 #include "visit_connection.h"
 #include "whack_add.h"
 #include "whack_briefconnectionstatus.h"
@@ -268,69 +267,6 @@ static void whack_active_redirect(const struct whack_message *wm, struct show *s
 	 */
 	find_and_active_redirect_states(wm->name, wm->redirect_to, logger);
 }
-
-#ifdef USE_SECCOMP
-static void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	/*
-	 * This is a SECCOMP test, it CAN KILL pluto if successful!
-	 *
-	 * Basically, we call a syscall that pluto does not use and
-	 * that is not on the whitelist. Currently we use getsid()
-	 *
-	 * With seccomp=enabled, pluto will be killed by the kernel
-	 * With seccomp=tolerant or seccomp=disabled, pluto will
-	 * report the test results.
-	 */
-	if (pluto_seccomp_mode == SECCOMP_ENABLED)
-		llog(RC_LOG, logger,
-		     "pluto is running with seccomp=enabled! pluto is expected to die!");
-	llog(RC_LOG, logger, "Performing seccomp security test using getsid() syscall");
-	pid_t testpid = getsid(0);
-
-	/* We did not get shot by the kernel seccomp protection */
-	if (testpid == -1) {
-		llog(RC_LOG, logger,
-		     "pluto: seccomp test syscall was blocked");
-		switch (pluto_seccomp_mode) {
-		case SECCOMP_TOLERANT:
-			llog(RC_LOG, logger,
-			     "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
-			break;
-		case SECCOMP_DISABLED:
-			llog(RC_LOG, logger,
-			     "OK: seccomp security was not enabled and the rogue syscall was blocked");
-			break;
-		case SECCOMP_ENABLED:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
-			break;
-		default:
-			bad_case(pluto_seccomp_mode);
-		}
-	} else {
-		llog(RC_LOG, logger,
-		     "pluto: seccomp test syscall was not blocked");
-		switch (pluto_seccomp_mode) {
-		case SECCOMP_TOLERANT:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was tolerant but the rogue syscall was not blocked!");
-			break;
-		case SECCOMP_DISABLED:
-			llog(RC_LOG, logger,
-			     "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
-			break;
-		case SECCOMP_ENABLED:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was enabled but the rogue syscall was not blocked!");
-			break;
-		default:
-			bad_case(pluto_seccomp_mode);
-		}
-	}
-}
-#endif
 
 static void whack_checkpubkeys(const struct whack_message *wm, struct show *s)
 {
