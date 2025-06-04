@@ -155,7 +155,7 @@ static void help(void)
 		"       [--pass | --drop]\\\n"
 		"	[--failnone | --failpass | --faildrop]\\\n"
 		"	[--negopass | --negohold]\\\n"
-		"	[--donotrekey ] [--reauth ] \\\n"
+		"	[--reauth ] \\\n"
 		"	[--nic-offload <packet|crypto|no>] \\\n"
 		"	--to\n"
 		"\n"
@@ -1605,7 +1605,7 @@ int main(int argc, char **argv)
 			msg.narrowing = optarg_yn(logger, YN_YES);
 			continue;
 
-		/* --donotrekey */
+		/* --dontrekey */
 		case CD_DONT_REKEY:
 			msg.rekey = YN_NO;
 			continue;
@@ -1746,7 +1746,7 @@ int main(int argc, char **argv)
 			msg.sha2_truncbug = optarg_yn(logger, YN_YES);
 			continue;
 
-		/* --donot-share-lease */
+		/* --dont-share-lease */
 		case CD_DONT_SHARE_LEASE:
 			msg.share_lease = YN_NO;
 			continue;
