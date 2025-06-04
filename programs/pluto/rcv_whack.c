@@ -185,16 +185,30 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 	struct logger *logger = show_logger(s);
 	const struct whack_listen *wl = &wm->whack.listen;
 
-	/*
-	 * Update MSG_ERRQUEUE setting before size before calling
-	 * listen.
-	 */
+	/* Update MSG_ERRQUEUE settings before listen. */
+
+	bool errqueue_set = false;
 	if (wl->ike_socket_errqueue_toggle) {
-		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_ike_socket_errqueue));
+		errqueue_set = true;
 		pluto_ike_socket_errqueue = !pluto_ike_socket_errqueue;
+	}
+
+	switch (wl->ike_socket_errqueue) {
+	case YN_YES:
+		errqueue_set = true;
+		pluto_ike_socket_errqueue = true;
+		break;
+	case YN_NO:
+		errqueue_set = true;
+		pluto_ike_socket_errqueue = false;
+		break;
+	case YN_UNSET:
+		break;
+	}
+
+	if (errqueue_set) {
 		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
-		     pluto_ike_socket_errqueue ? "enabling" : "disabling");
-		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_ike_socket_errqueue));
+		     (pluto_ike_socket_errqueue ? "enabling" : "disabling"));
 	}
 
 	/* Update MSG buffer size before listen */
@@ -203,6 +217,8 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 		pluto_ike_socket_bufsize = wl->ike_socket_bufsize;
 		llog(RC_LOG, logger, "set IKE socket buffer to %u", pluto_ike_socket_bufsize);
 	}
+
+	/* do the deed */
 
 	fflush(stderr);
 	fflush(stdout);

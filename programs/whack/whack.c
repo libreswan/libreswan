@@ -388,6 +388,7 @@ enum opt {
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 	OPT_IKE_SOCKET_BUFSIZE,
+	OPT_IKE_SOCKET_ERRQUEUE,
 	OPT_IKE_SOCKET_ERRQUEUE_TOGGLE,
 
 	OPT_REKEY_IKE,
@@ -694,6 +695,7 @@ const struct option optarg_options[] = {
 	{ OPT("listen"), no_argument, NULL, OPT_LISTEN },
 	{ OPT("unlisten"), no_argument, NULL, OPT_UNLISTEN },
 	{ OPT("ike-socket-bufsize", "<bytes>"), required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE},
+	{ OPT("ike-socket-errqueue", "{yes,no}"), required_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE },
 	{ OPT("ike-socket-errqueue-toggle"), no_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE_TOGGLE },
 
 	{ "redirect-to\0", required_argument, NULL, OPT_REDIRECT_TO },
@@ -1298,6 +1300,10 @@ int main(int argc, char **argv)
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bytes> */
 			whack_command(&msg, WHACK_LISTEN); /*implied*/
 			msg.whack.listen.ike_socket_bufsize = optarg_udp_bufsize(logger);
+			continue;
+		case OPT_IKE_SOCKET_ERRQUEUE:	/* --ike-socket-errqueue yes|no */
+			whack_command(&msg, WHACK_LISTEN); /*implied*/
+			msg.whack.listen.ike_socket_errqueue = optarg_yn(logger, YN_YES);
 			continue;
 		case OPT_IKE_SOCKET_ERRQUEUE_TOGGLE:	/* --ike-socket-errqueue-toggle */
 			whack_command(&msg, WHACK_LISTEN); /*implied*/

@@ -189,6 +189,7 @@ struct whack_end {
 struct whack_listen {
 	unsigned ike_socket_bufsize;		/* IKE socket recv/snd buffer size */
 	bool ike_socket_errqueue_toggle;	/* toggle MSG_ERRQUEUE on IKE socket */
+	enum yn_options ike_socket_errqueue;
 };
 
 /*
