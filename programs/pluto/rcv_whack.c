@@ -197,6 +197,13 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_ike_socket_errqueue));
 	}
 
+	/* Update MSG buffer size before listen */
+
+	if (wl->ike_socket_bufsize != 0) {
+		pluto_ike_socket_bufsize = wl->ike_socket_bufsize;
+		llog(RC_LOG, logger, "set IKE socket buffer to %u", pluto_ike_socket_bufsize);
+	}
+
 	fflush(stderr);
 	fflush(stdout);
 #ifdef USE_SYSTEMD_WATCHDOG
