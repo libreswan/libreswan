@@ -384,10 +384,11 @@ enum opt {
 	OPT_DELETEID,
 	OPT_DELETESTATE,
 	OPT_DELETEUSER,
+
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 	OPT_IKE_SOCKET_BUFSIZE,
-	OPT_IKE_MSGERR,
+	OPT_IKE_SOCKET_ERRQUEUE_TOGGLE,
 
 	OPT_REKEY_IKE,
 	OPT_REKEY_CHILD,
@@ -689,10 +690,11 @@ const struct option optarg_options[] = {
 	{ "deletestate\0", required_argument, NULL, OPT_DELETESTATE },
 	{ "deleteuser\0", no_argument, NULL, OPT_DELETEUSER },
 	{ "crash\0", required_argument, NULL, OPT_DELETECRASH },
-	{ "listen\0", no_argument, NULL, OPT_LISTEN },
-	{ "unlisten\0", no_argument, NULL, OPT_UNLISTEN },
-	{ "ike-socket-bufsize\0<bytes>", required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE},
-	{ "ike-socket-errqueue-toggle\0", no_argument, NULL, OPT_IKE_MSGERR },
+
+	{ OPT("listen"), no_argument, NULL, OPT_LISTEN },
+	{ OPT("unlisten"), no_argument, NULL, OPT_UNLISTEN },
+	{ OPT("ike-socket-bufsize", "<bytes>"), required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE},
+	{ OPT("ike-socket-errqueue-toggle"), no_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE_TOGGLE },
 
 	{ "redirect-to\0", required_argument, NULL, OPT_REDIRECT_TO },
 	{ "global-redirect\0", required_argument, NULL, OPT_GLOBAL_REDIRECT },
@@ -1158,16 +1160,6 @@ int main(int argc, char **argv)
 			msg.keyid = optarg;	/* decoded by Pluto */
 			continue;
 
-		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bytes> */
-			whack_command(&msg, WHACK_LISTEN);
-			msg.whack.listen.ike_socket_bufsize = optarg_udp_bufsize(logger);
-			continue;
-
-		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
-			whack_command(&msg, WHACK_LISTEN);
-			msg.whack.listen.ike_socket_errqueue_toggle = true;
-			continue;
-
 		case OPT_ADDKEY:	/* --addkey */
 			msg.whack_addkey = true;
 			continue;
@@ -1302,6 +1294,14 @@ int main(int argc, char **argv)
 
 		case OPT_LISTEN:	/* --listen */
 			whack_command(&msg, WHACK_LISTEN);
+			continue;
+		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bytes> */
+			whack_command(&msg, WHACK_LISTEN); /*implied*/
+			msg.whack.listen.ike_socket_bufsize = optarg_udp_bufsize(logger);
+			continue;
+		case OPT_IKE_SOCKET_ERRQUEUE_TOGGLE:	/* --ike-socket-errqueue-toggle */
+			whack_command(&msg, WHACK_LISTEN); /*implied*/
+			msg.whack.listen.ike_socket_errqueue_toggle = true;
 			continue;
 
 		case OPT_UNLISTEN:	/* --unlisten */
