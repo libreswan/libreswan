@@ -180,6 +180,7 @@
 <!ENTITY send-vendorid SYSTEM "d.ipsec.conf/send-vendorid.xml">
 <!ENTITY sendca SYSTEM "d.ipsec.conf/sendca.xml">
 <!ENTITY sha2-truncbug SYSTEM "d.ipsec.conf/sha2-truncbug.xml">
+<!ENTITY share-lease SYSTEM "d.ipsec.conf/share-lease.xml">
 <!ENTITY shuntlifetime SYSTEM "d.ipsec.conf/shuntlifetime.xml">
 <!ENTITY statsbin SYSTEM "d.ipsec.conf/statsbin.xml">
 <!ENTITY syslog SYSTEM "d.ipsec.conf/syslog.xml">
@@ -292,6 +293,7 @@
 	&ppk;
 	&ppk-ids;
 	&nat-ikev1-method;
+	&share-lease;
 	&esp;
 	&ah;
 	&fragmentation;

@@ -1,0 +1,14 @@
+<varlistentry>
+  <term>
+    <option>share-lease</option>
+  </term>
+  <listitem>
+    <para>
+      Whether multiple outoging IKEv1 connections that are not
+      specifying a local subnet should use the lease IP given by
+      the server of the first connection. The default and expected
+      behaviour (of emulating a Cisco client) is <option>yes</option>.
+      It can be disabled by setting it to <option>no</option>.
+    </para>
+  </listitem>
+</varlistentry>
