@@ -90,7 +90,8 @@ static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s
 
 static void whack_ddos(const struct whack_message *wm, struct show *s)
 {
-	set_whack_pluto_ddos(wm->whack_ddos, show_logger(s));
+	const struct whack_ddos *wd = &wm->whack.ddos;
+	set_whack_pluto_ddos(wd->mode, show_logger(s));
 }
 
 static void whack_rereadsecrets(const struct whack_message *wm UNUSED, struct show *s)

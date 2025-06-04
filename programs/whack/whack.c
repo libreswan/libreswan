@@ -402,6 +402,7 @@ enum opt {
 	OPT_GLOBAL_REDIRECT,
 	OPT_GLOBAL_REDIRECT_TO,
 
+	OPT_DDOS_MODE,
 	OPT_DDOS_BUSY,
 	OPT_DDOS_UNLIMITED,
 	OPT_DDOS_AUTO,
@@ -702,9 +703,10 @@ const struct option optarg_options[] = {
 	{ "global-redirect\0", required_argument, NULL, OPT_GLOBAL_REDIRECT },
 	{ "global-redirect-to\0", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO },
 
-	{ "ddos-busy\0", no_argument, NULL, OPT_DDOS_BUSY },
-	{ "ddos-unlimited\0", no_argument, NULL, OPT_DDOS_UNLIMITED },
-	{ "ddos-auto\0", no_argument, NULL, OPT_DDOS_AUTO },
+	{ OPT("ddos-mode", "{busy,unlimited,auto}"), required_argument, NULL, OPT_DDOS_MODE },
+	{ REPLACE_OPT("ddos-busy", "ddos-mode", "5.3"), no_argument, NULL, OPT_DDOS_BUSY },
+	{ REPLACE_OPT("ddos-unlimited", "ddos-mode", "5.3"), no_argument, NULL, OPT_DDOS_UNLIMITED },
+	{ REPLACE_OPT("ddos-auto", "ddos-mode", "5.3"), no_argument, NULL, OPT_DDOS_AUTO },
 
 	{ "ddns\0", no_argument, NULL, OPT_DDNS },
 
@@ -1275,19 +1277,21 @@ int main(int argc, char **argv)
 			msg.redirect_to = optarg; /* could be empty string */
 			continue;
 
+		case OPT_DDOS_MODE:
+			whack_command(&msg, WHACK_DDOS);
+			msg.whack.ddos.mode = optarg_sparse(logger, 0, &ddos_mode_names);
+			continue;
 		case OPT_DDOS_BUSY:	/* --ddos-busy */
 			whack_command(&msg, WHACK_DDOS);
-			msg.whack_ddos = DDOS_FORCE_BUSY;
+			msg.whack.ddos.mode = DDOS_FORCE_BUSY;
 			continue;
-
 		case OPT_DDOS_UNLIMITED:	/* --ddos-unlimited */
 			whack_command(&msg, WHACK_DDOS);
-			msg.whack_ddos = DDOS_FORCE_UNLIMITED;
+			msg.whack.ddos.mode = DDOS_FORCE_UNLIMITED;
 			continue;
-
 		case OPT_DDOS_AUTO:	/* --ddos-auto */
 			whack_command(&msg, WHACK_DDOS);
-			msg.whack_ddos = DDOS_AUTO;
+			msg.whack.ddos.mode = DDOS_AUTO;
 			continue;
 
 		case OPT_DDNS:	/* --ddns */

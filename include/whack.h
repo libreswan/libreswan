@@ -193,6 +193,10 @@ struct whack_listen {
 	enum yn_options ike_socket_errqueue;
 };
 
+struct whack_ddos {
+	enum ddos_mode mode;	/* for DDOS modes */
+};
+
 /*
  * Impairments.
  */
@@ -267,6 +271,7 @@ struct whack_message {
 
 	struct {
 		struct whack_listen listen;
+		struct whack_ddos ddos;
 	} whack;
 
 	const char *keyexchange;
@@ -439,9 +444,6 @@ struct whack_message {
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
-
-	/* for DDOS modes */
-	enum ddos_mode whack_ddos;
 
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
 	ip_address whack_crash_peer;
