@@ -114,6 +114,9 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
 
 		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
+
+		update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, YN_YES);
+		update_setup_option(KBF_IKE_SOCKET_BUFSIZE, 0); /*redundant*/
 	}
 	return &config_setup;
 }

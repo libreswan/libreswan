@@ -80,6 +80,7 @@
 #include "whack_suspend.h"
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
+#include "config_setup.h"
 
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
@@ -185,6 +186,12 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 	struct logger *logger = show_logger(s);
 	const struct whack_listen *wl = &wm->whack.listen;
 
+	/* first extract current values from config */
+
+	const struct config_setup *oco = config_setup_singleton();
+	pluto_ike_socket_errqueue = config_setup_yn(oco, KYN_IKE_SOCKET_ERRQUEUE);
+	pluto_ike_socket_bufsize = config_setup_option(oco, KBF_IKE_SOCKET_BUFSIZE);
+
 	/* Update MSG_ERRQUEUE settings before listen. */
 
 	bool errqueue_set = false;
@@ -217,6 +224,10 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 		pluto_ike_socket_bufsize = wl->ike_socket_bufsize;
 		llog(RC_LOG, logger, "set IKE socket buffer to %u", pluto_ike_socket_bufsize);
 	}
+
+	/* now put values back into config_setup */
+	update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, (pluto_ike_socket_errqueue ? YN_YES : YN_NO));
+	update_setup_option(KBF_IKE_SOCKET_BUFSIZE, pluto_ike_socket_bufsize);
 
 	/* do the deed */
 

@@ -55,6 +55,8 @@
 
 char *pluto_listen = NULL;		/* from --listen flag */
 static struct iface_endpoint *interfaces = NULL;  /* public interfaces */
+unsigned pluto_ike_socket_bufsize;	/* see whack_listen() */
+bool pluto_ike_socket_errqueue;		/* see whack_listen() */
 
 unsigned int pluto_ike_socket_bufsize = 0; /*i.e., ignore */
 bool pluto_ike_socket_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */

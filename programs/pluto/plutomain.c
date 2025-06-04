@@ -443,6 +443,7 @@ enum opt {
 	OPT_LISTEN_TCP,
 	OPT_NO_LISTEN_UDP,
 	OPT_IKE_SOCKET_BUFSIZE,
+	OPT_IKE_SOCKET_ERRQUEUE,
 	OPT_IKE_SOCKET_NO_ERRQUEUE,
 #ifdef USE_NFLOG
 	OPT_NFLOG_ALL,
@@ -510,6 +511,7 @@ const struct option optarg_options[] = {
 	{ OPT("listen-tcp"), no_argument, NULL, OPT_LISTEN_TCP },
 	{ OPT("no-listen-udp"), no_argument, NULL, OPT_NO_LISTEN_UDP },
 	{ OPT("ike-socket-bufsize", "<bytes>"), required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
+	{ OPT("ike-socket-errqueue", "{yes,no}"), required_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE },
 	{ OPT("ike-socket-no-errqueue"), no_argument, NULL, OPT_IKE_SOCKET_NO_ERRQUEUE },
 #ifdef USE_NFLOG
 	{ OPT("nflog-all", "<group-number>"), required_argument, NULL, OPT_NFLOG_ALL },
@@ -994,12 +996,14 @@ int main(int argc, char **argv)
 			continue;
 #endif
 
-		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
-			pluto_ike_socket_errqueue = false;
+		case OPT_IKE_SOCKET_ERRQUEUE:	/* --ike-socket-errqueue=... */
+			update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, optarg_yn(logger, YN_YES));
 			continue;
-
+		case OPT_IKE_SOCKET_NO_ERRQUEUE:	/* --ike-socket-no-errqueue */
+			update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, YN_YES);
+			continue;
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
-			pluto_ike_socket_bufsize = optarg_udp_bufsize(logger);
+			update_setup_option(KBF_IKE_SOCKET_BUFSIZE, optarg_udp_bufsize(logger));
 			continue;
 
 		case OPT_NO_LISTEN_UDP:	/* --no-listen-udp */
@@ -1081,10 +1085,6 @@ int main(int argc, char **argv)
 			 * This was hack because we had _stackmanager?
 			 */
 			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
-
-			/* ike-socket-bufsize= */
-			pluto_ike_socket_bufsize = cfg->setup->values[KBF_IKEBUF].option;
-			extract_config_yn(&pluto_ike_socket_errqueue, cfg, KYN_IKE_SOCKET_ERRQUEUE);
 
 			/* listen-tcp= / listen-udp= */
 			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);

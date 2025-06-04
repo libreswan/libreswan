@@ -155,7 +155,7 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 #endif
   K("ddos-ike-threshold",  kv_config,  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD, NULL),
   K("max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL),
-  K("ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKEBUF, NULL),
+  K("ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKE_SOCKET_BUFSIZE, NULL),
   K("ike-socket-errqueue",  kv_config,  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, &yn_option_names),
 #ifdef XFRM_LIFETIME_DEFAULT
   K("expire-lifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL),

@@ -696,7 +696,7 @@ const struct option optarg_options[] = {
 	{ OPT("unlisten"), no_argument, NULL, OPT_UNLISTEN },
 	{ OPT("ike-socket-bufsize", "<bytes>"), required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE},
 	{ OPT("ike-socket-errqueue", "{yes,no}"), required_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE },
-	{ OPT("ike-socket-errqueue-toggle"), no_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE_TOGGLE },
+	{ REPLACE_OPT("ike-socket-errqueue-toggle","ike-socket-errqueue","5.3"), no_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE_TOGGLE },
 
 	{ "redirect-to\0", required_argument, NULL, OPT_REDIRECT_TO },
 	{ "global-redirect\0", required_argument, NULL, OPT_GLOBAL_REDIRECT },
