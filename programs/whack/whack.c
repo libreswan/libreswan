@@ -1160,12 +1160,12 @@ int main(int argc, char **argv)
 
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bytes> */
 			whack_command(&msg, WHACK_LISTEN);
-			msg.ike_socket_bufsize = optarg_udp_bufsize(logger);
+			msg.whack.listen.ike_socket_bufsize = optarg_udp_bufsize(logger);
 			continue;
 
 		case OPT_IKE_MSGERR:	/* --ike-socket-errqueue-toggle */
 			whack_command(&msg, WHACK_LISTEN);
-			msg.ike_sock_err_toggle = true;
+			msg.whack.listen.ike_socket_errqueue_toggle = true;
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */

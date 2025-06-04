@@ -183,11 +183,13 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 static void whack_listen(const struct whack_message *wm, struct show *s)
 {
 	struct logger *logger = show_logger(s);
+	const struct whack_listen *wl = &wm->whack.listen;
+
 	/*
 	 * Update MSG_ERRQUEUE setting before size before calling
 	 * listen.
 	 */
-	if (wm->ike_sock_err_toggle) {
+	if (wl->ike_socket_errqueue_toggle) {
 		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_ike_socket_errqueue));
 		pluto_ike_socket_errqueue = !pluto_ike_socket_errqueue;
 		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
