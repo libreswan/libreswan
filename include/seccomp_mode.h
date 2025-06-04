@@ -1,7 +1,6 @@
-/*
- * seccomp support for Linux kernel using seccomp
+/* seccomp_mode, for libreswan
  *
- * Copyright (c) 2016 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2016 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -12,18 +11,24 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
+ *
  */
 
-#ifndef PLUTO_SECCOMP_H
-#define PLUTO_SECCOMP_H
+#ifndef SECCOMP_MODE_H
+#define SECCOMP_MODE_H
 
-#include "seccomp_mode.h"
+/*
+ * seccomp mode
+ *
+ * on syscall violation, enabled kills pluto, tolerant ignores syscall
+ */
 
-struct logger;
+enum seccomp_mode {
+	SECCOMP_ENABLED = 1,
+	SECCOMP_TOLERANT,
+	SECCOMP_DISABLED
+};
 
-extern enum seccomp_mode pluto_seccomp_mode;
-
-void init_seccomp_main(struct logger *logger);
-void init_seccomp_cryptohelper(int helpernum, struct logger *logger);
+extern const struct sparse_names seccomp_mode_names;
 
 #endif

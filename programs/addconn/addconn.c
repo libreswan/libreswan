@@ -38,6 +38,7 @@
 #endif
 
 #ifdef USE_SECCOMP
+#include "seccomp_mode.h"
 #include "lswseccomp.h"
 #endif
 

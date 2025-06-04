@@ -311,6 +311,9 @@ OBJS += autostart_names.o
 
 OBJS += $(abs_builddir)/version.o
 
+# always compile, won't be linked
+OBJS += seccomp_mode_names.o
+
 #
 # Build version.c using version number from git repo or mk/version.mk
 #
