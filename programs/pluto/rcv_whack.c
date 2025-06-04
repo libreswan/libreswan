@@ -220,8 +220,6 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 
 	/* do the deed */
 
-	fflush(stderr);
-	fflush(stdout);
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif
