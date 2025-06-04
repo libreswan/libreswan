@@ -205,9 +205,6 @@ bool pluto_listen_tcp = false;
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 
-#ifdef USE_SECCOMP
-enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
-#endif
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
 
@@ -422,16 +419,13 @@ struct signal_handler {
 
 static signal_handler_cb termhandler_cb;
 static signal_handler_cb huphandler_cb;
-#ifdef USE_SECCOMP
-static signal_handler_cb syshandler_cb;
-#endif
 
 static struct signal_handler signal_handlers[] = {
 	{ .signal = SIGCHLD, .cb = server_fork_sigchld_handler, .persist = true, .name = "PLUTO_SIGCHLD", },
 	{ .signal = SIGTERM, .cb = termhandler_cb, .persist = false, .name = "PLUTO_SIGTERM", },
 	{ .signal = SIGHUP, .cb = huphandler_cb, .persist = true, .name = "PLUTO_SIGHUP", },
 #ifdef USE_SECCOMP
-	{ .signal = SIGSYS, .cb = syshandler_cb, .persist = true, .name = "PLUTO_SIGSYS", },
+	{ .signal = SIGSYS, .cb = seccomp_sigsys_handler, .persist = true, .name = "PLUTO_SIGSYS", },
 #endif
 };
 
@@ -959,16 +953,6 @@ static void termhandler_cb(struct logger *logger)
 {
 	whack_shutdown(logger, PLUTO_EXIT_OK);
 }
-
-#ifdef USE_SECCOMP
-static void syshandler_cb(struct logger *logger)
-{
-	llog(RC_LOG, logger, "pluto received SIGSYS - possible SECCOMP violation!");
-	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp=enabled mandates daemon restart");
-	}
-}
-#endif
 
 static server_fork_cb addconn_exited; /* type assertion */
 

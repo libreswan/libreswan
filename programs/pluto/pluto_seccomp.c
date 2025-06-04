@@ -20,10 +20,16 @@
 #include <unistd.h>
 
 #include "lswseccomp.h"
+#include "sparse_names.h"
 
 #include "defs.h"
 #include "log.h"
 #include "pluto_seccomp.h"
+#include "show.h"
+
+#ifdef USE_SECCOMP
+enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
+#endif
 
 /* helper rules must be a sub-set of main rules */
 
@@ -222,5 +228,82 @@ void init_seccomp_cryptohelper(int helpernum, struct logger *logger)
 		break;
 	default:
 		bad_case(pluto_seccomp_mode);
+	}
+}
+
+void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	/*
+	 * This is a SECCOMP test, it CAN KILL pluto if successful!
+	 *
+	 * Basically, we call a syscall that pluto does not use and
+	 * that is not on the whitelist. Currently we use getsid()
+	 *
+	 * With seccomp=enabled, pluto will be killed by the kernel
+	 * With seccomp=tolerant or seccomp=disabled, pluto will
+	 * report the test results.
+	 */
+	if (pluto_seccomp_mode == SECCOMP_ENABLED)
+		llog(RC_LOG, logger,
+		     "pluto is running with seccomp=enabled! pluto is expected to die!");
+	llog(RC_LOG, logger, "Performing seccomp security test using getsid() syscall");
+	pid_t testpid = getsid(0);
+
+	/* We did not get shot by the kernel seccomp protection */
+	if (testpid == -1) {
+		llog(RC_LOG, logger,
+		     "pluto: seccomp test syscall was blocked");
+		switch (pluto_seccomp_mode) {
+		case SECCOMP_TOLERANT:
+			llog(RC_LOG, logger,
+			     "OK: seccomp security was tolerant; the rogue syscall was blocked and pluto was not terminated");
+			break;
+		case SECCOMP_DISABLED:
+			llog(RC_LOG, logger,
+			     "OK: seccomp security was not enabled and the rogue syscall was blocked");
+			break;
+		case SECCOMP_ENABLED:
+			llog_error(logger, 0/*no-errno*/,
+				   "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
+			break;
+		default:
+			bad_case(pluto_seccomp_mode);
+		}
+	} else {
+		llog(RC_LOG, logger,
+		     "pluto: seccomp test syscall was not blocked");
+		switch (pluto_seccomp_mode) {
+		case SECCOMP_TOLERANT:
+			llog_error(logger, 0/*no-errno*/,
+				   "pluto seccomp was tolerant but the rogue syscall was not blocked!");
+			break;
+		case SECCOMP_DISABLED:
+			llog(RC_LOG, logger,
+			     "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
+			break;
+		case SECCOMP_ENABLED:
+			llog_error(logger, 0/*no-errno*/,
+				   "pluto seccomp was enabled but the rogue syscall was not blocked!");
+			break;
+		default:
+			bad_case(pluto_seccomp_mode);
+		}
+	}
+}
+
+void show_seccomp(struct show *s)
+{
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "seccomp=");
+		jam_sparse_short(buf, &seccomp_mode_names, pluto_seccomp_mode);
+	}
+}
+
+void seccomp_sigsys_handler(struct logger *logger)
+{
+	llog(RC_LOG, logger, "pluto received SIGSYS - possible SECCOMP violation!");
+	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp=enabled mandates daemon restart");
 	}
 }

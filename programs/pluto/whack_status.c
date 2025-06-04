@@ -58,9 +58,7 @@ static void show_system_security(struct show *s)
 	show(s, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef USE_SECCOMP
-	show(s, "seccomp=%s",
-		     pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
-		     pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");
+	show_seccomp(s);
 #else
 	show(s, "seccomp=unsupported");
 #endif
