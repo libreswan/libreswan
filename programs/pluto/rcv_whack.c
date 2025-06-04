@@ -80,6 +80,7 @@
 #include "whack_suspend.h"
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
+#include "config_setup.h"
 
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
@@ -183,20 +184,53 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 static void whack_listen(const struct whack_message *wm, struct show *s)
 {
 	struct logger *logger = show_logger(s);
-	/*
-	 * Update MSG_ERRQUEUE setting before size before calling
-	 * listen.
-	 */
-	if (wm->ike_sock_err_toggle) {
-		dbg_whack(s, "ike_sock_err_toggle: start: !%s", bool_str(pluto_ike_socket_errqueue));
+	const struct whack_listen *wl = &wm->whack.listen;
+
+	/* first extract current values from config */
+
+	const struct config_setup *oco = config_setup_singleton();
+	pluto_ike_socket_errqueue = config_setup_yn(oco, KYN_IKE_SOCKET_ERRQUEUE);
+	pluto_ike_socket_bufsize = config_setup_option(oco, KBF_IKE_SOCKET_BUFSIZE);
+
+	/* Update MSG_ERRQUEUE settings before listen. */
+
+	bool errqueue_set = false;
+	if (wl->ike_socket_errqueue_toggle) {
+		errqueue_set = true;
 		pluto_ike_socket_errqueue = !pluto_ike_socket_errqueue;
-		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
-		     pluto_ike_socket_errqueue ? "enabling" : "disabling");
-		dbg_whack(s, "ike_sock_err_toggle: stop: !%s", bool_str(pluto_ike_socket_errqueue));
 	}
 
-	fflush(stderr);
-	fflush(stdout);
+	switch (wl->ike_socket_errqueue) {
+	case YN_YES:
+		errqueue_set = true;
+		pluto_ike_socket_errqueue = true;
+		break;
+	case YN_NO:
+		errqueue_set = true;
+		pluto_ike_socket_errqueue = false;
+		break;
+	case YN_UNSET:
+		break;
+	}
+
+	if (errqueue_set) {
+		llog(RC_LOG, logger, "%s IKE socket MSG_ERRQUEUEs",
+		     (pluto_ike_socket_errqueue ? "enabling" : "disabling"));
+	}
+
+	/* Update MSG buffer size before listen */
+
+	if (wl->ike_socket_bufsize != 0) {
+		pluto_ike_socket_bufsize = wl->ike_socket_bufsize;
+		llog(RC_LOG, logger, "set IKE socket buffer to %u", pluto_ike_socket_bufsize);
+	}
+
+	/* now put values back into config_setup */
+	update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, (pluto_ike_socket_errqueue ? YN_YES : YN_NO));
+	update_setup_option(KBF_IKE_SOCKET_BUFSIZE, pluto_ike_socket_bufsize);
+
+	/* do the deed */
+
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
 #endif

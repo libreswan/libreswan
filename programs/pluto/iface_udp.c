@@ -40,7 +40,6 @@
 
 #include "defs.h"
 #include "kernel.h"
-#include "server.h"		/* for pluto_sock_bufsize */
 #include "iface.h"
 #include "demux.h"
 #include "state_db.h"		/* for state_by_ike_spis() */

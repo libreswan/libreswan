@@ -76,7 +76,6 @@ struct config_setup *config_setup_singleton(void)
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
 
-		update_setup_option(KBF_IKEBUF, IKE_BUF_AUTO);
 		update_setup_option(KBF_NHELPERS, -1);
 		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
 		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
@@ -115,6 +114,9 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
 
 		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
+
+		update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, YN_YES);
+		update_setup_option(KBF_IKE_SOCKET_BUFSIZE, 0); /*redundant*/
 	}
 	return &config_setup;
 }

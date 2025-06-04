@@ -183,6 +183,16 @@ struct whack_end {
 };
 
 /*
+ * annex to different messages.
+ */
+
+struct whack_listen {
+	unsigned ike_socket_bufsize;		/* IKE socket recv/snd buffer size */
+	bool ike_socket_errqueue_toggle;	/* toggle MSG_ERRQUEUE on IKE socket */
+	enum yn_options ike_socket_errqueue;
+};
+
+/*
  * Impairments.
  */
 
@@ -243,6 +253,20 @@ struct whack_message {
 					 * different .whack_add
 					 * semantics */
 	bool whack_async;
+
+	/*
+	 * Command specific parameters.  Commands also share some
+	 * options such as .name. above.
+	 *
+	 * THIS IS NOT A UNION (XXX: but it should be).
+	 *
+	 * The pickler can't handle conditionally pickling strings
+	 * based on .whack_command above.
+	 */
+
+	struct {
+		struct whack_listen listen;
+	} whack;
 
 	const char *keyexchange;
 	const char *ikev2;
@@ -414,10 +438,6 @@ struct whack_message {
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
-
-	/* for WHACK_LISTEN: */
-	long unsigned int ike_socket_bufsize;	/* IKE socket recv/snd buffer size */
-	bool ike_sock_err_toggle; /* toggle MSG_ERRQUEUE on IKE socket */
 
 	/* for DDOS modes */
 	enum ddos_mode whack_ddos;

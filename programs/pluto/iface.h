@@ -32,6 +32,9 @@ struct show;
 struct iface_device;
 struct logger;
 
+extern unsigned pluto_ike_socket_bufsize; /* pluto IKE socket buffer */
+extern bool pluto_ike_socket_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
+
 struct iface_packet {
 	ssize_t len;
 	ip_endpoint sender;

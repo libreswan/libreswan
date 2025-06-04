@@ -304,7 +304,11 @@ uintmax_t optarg_udp_bufsize(const struct logger *logger)
 		/* leaks D; oops */
 		optarg_fatal(logger, "%s", str_diag(d));
 	}
-	/* 64k is max size for UDP */
+	/* allow zero as "disable" */
+	if (u == 0) {
+		return 0;
+	}
+	/* 64k is max size for UDP (ignoring huge IPv6 packets) */
 	if (u > 0xffff) {
 		optarg_fatal(logger, "too big, more than 64KiB");
 	}
