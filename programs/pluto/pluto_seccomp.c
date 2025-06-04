@@ -302,8 +302,14 @@ void show_seccomp(struct show *s)
 
 void seccomp_sigsys_handler(struct logger *logger)
 {
-	llog(RC_LOG, logger, "pluto received SIGSYS - possible SECCOMP violation!");
-	if (pluto_seccomp_mode == SECCOMP_ENABLED) {
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp=enabled mandates daemon restart");
+	switch (pluto_seccomp_mode) {
+	case SECCOMP_ENABLED:
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
+	case SECCOMP_TOLERANT:
+		llog(RC_LOG, logger, "pluto received SIGSYS - seccomp=tolerant - possible SECCOMP violation!");
+		return;
+	case SECCOMP_DISABLED:
+		fatal(PLUTO_EXIT_FAIL, logger, "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
 	}
+	bad_case(pluto_seccomp_mode);
 }
