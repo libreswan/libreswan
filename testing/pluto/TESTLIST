@@ -1427,7 +1427,7 @@ kvmplutotest	ikev2-leak-02-no-psk		good
 # seccomp
 kvmplutotest	seccomp-01-enabled		good	github/795
 kvmplutotest	seccomp-02-tolerant		good	github/795
-kvmplutotest	seccomp-03-updown		wip
+kvmplutotest	seccomp-03-updown		wip	github/492
 
 #################################################################
 # Whack/IPSEC UI tests
