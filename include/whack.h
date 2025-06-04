@@ -46,6 +46,7 @@
 #include "global_redirect.h"
 #include "xauthby.h"
 #include "xauthfail.h"
+#include "ddos_mode.h"
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"

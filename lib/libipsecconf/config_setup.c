@@ -29,6 +29,7 @@
 #ifdef USE_SECCOMP
 #include "seccomp_mode.h"
 #endif
+#include "ddos_mode.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
