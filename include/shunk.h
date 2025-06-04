@@ -71,6 +71,8 @@ shunk_t shunk2(const void *ptr, size_t len);
  *   delims=", ", opts=EAT_EMPTY_SHUNKS.
  *
  * See also alloc_items() and ITEMS_FOR_EACH().
+ *
+ * Can return an empty list of ITEMS; never returns NULL!
  */
 
 struct shunks {
@@ -84,7 +86,7 @@ enum shunks_opt {
 	EAT_EMPTY_SHUNKS,
 };
 
-struct shunks *ttoshunks(shunk_t input, const char *delim, enum shunks_opt opt);
+struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt);
 
 /*
  * A shunk version of strsep() / strtok(): split off from INPUT a

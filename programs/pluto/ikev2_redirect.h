@@ -17,20 +17,7 @@
 #ifndef _IKEV2_REDIRECT_H
 #define _IKEV2_REDIRECT_H
 
-extern enum global_redirect global_redirect;
-
-extern const char *global_redirect_to(void);
-
 extern void free_global_redirect_dests(void);
-
-/*
- * Initialize the static struct redirect_dests variable.
- *
- * @param grd_str comma-separated string containing the destinations
- *  (a copy will be made so caller need not preserve the string).
- *  If it is not specified in conf file, gdr_str will be NULL.
- */
-extern void set_global_redirect_dests(const char *gdr_str);
 
 /*
  * Check whether we received v2N_REDIRECT_SUPPORTED (in IKE_SA_INIT request),
@@ -81,5 +68,9 @@ extern stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ik
 /* redirect by established IKE SA */
 
 extern const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange;
+
+void init_global_redirect(enum global_redirect redirect, const char *redirect_to, struct logger *logger);
+void show_global_redirect(struct show *s);
+void whack_global_redirect(const struct whack_message *wm, struct show *s);
 
 #endif
