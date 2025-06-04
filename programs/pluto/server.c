@@ -1036,6 +1036,8 @@ static server_stopped_cb server_stopped;
 
 void run_server(char *conffile, struct logger *logger)
 {
+	const struct config_setup *oco = config_setup_singleton(); /*param?*/
+
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
@@ -1074,7 +1076,7 @@ void run_server(char *conffile, struct logger *logger)
 	/* parent continues */
 
 #ifdef USE_SECCOMP
-	init_seccomp_main(logger);
+	init_seccomp_main(oco, logger);
 #else
 	llog(RC_LOG, logger, "seccomp security not supported");
 #endif
