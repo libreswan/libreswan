@@ -57,13 +57,12 @@
  */
 
 enum config_conn_keyword {
-
-	CONFIG_CONN_KEYWORD_BASEMENT = CONFIG_SETUP_KEYWORD_ROOF,
+#define CONFIG_CONN_KEYWORD_FLOOR KWS_DEBUG
 
 	/*
 	 * Generic keywords, add more here.
 	 */
-	KWS_DEBUG,
+	KWS_DEBUG = CONFIG_SETUP_KEYWORD_ROOF,
 	KWS_HOST,
 	KWS_NEXTHOP,
 
@@ -185,7 +184,6 @@ enum config_conn_keyword {
 	KWYN_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
 	KWYN_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KNCF_OBSOLETE,		/* to ignore but warn obsoleted keywords */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
@@ -212,7 +210,11 @@ enum config_conn_keyword {
 	KWYN_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 	KWYN_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
+#define CONFIG_CONN_KEYWORD_ROOF (KWYN_SESSION_RESUMPTION + 1)
+
 	KW_roof,
+
+	KNCF_OBSOLETE = 0,		/* to ignore but warn obsoleted keywords */
 };
 
 /* these are bits set in a word */
@@ -223,8 +225,6 @@ enum keyword_valid {
 	kv_both = LELEM(3),		/* FOO means left-FOO and
 					 * right-FOO */
 	kv_alias  = LELEM(5),           /* is an alias for another keyword */
-	kv_processed = LELEM(7),        /* is processed, do not output
-					 * literal string */
 	kv_duplicateok = LELEM(8),	/* within a connection, the
 					 * item can be duplicated
 					 * (notably also=) */
@@ -254,8 +254,11 @@ struct keyword_def {
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
 	const struct sparse_names *sparse_names;
-	const struct lmod_info *info;
 };
+
+/*
+ * may contain gaps due to #ifdefs
+ */
 
 struct keywords_def {
 	unsigned len;
