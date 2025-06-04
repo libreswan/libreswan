@@ -83,8 +83,6 @@ extern const struct sparse_names ikev2_option_names;
 #define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
 #define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
 
-#define IKE_BUF_AUTO 0 /* use system values for IKE socket buffer size */
-
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
 
 /* values for auto={add,start,{route,ondemand},ignore} */

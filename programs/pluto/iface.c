@@ -56,6 +56,9 @@
 char *pluto_listen = NULL;		/* from --listen flag */
 static struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
+unsigned int pluto_ike_socket_bufsize = 0; /*i.e., ignore */
+bool pluto_ike_socket_errqueue = true; /* Enable MSG_ERRQUEUE on IKE socket */
+
 static size_t jam_iface_endpoint_sep(struct jambuf *buf, bool *first)
 {
 	size_t s = 0;
@@ -429,7 +432,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	}
 #endif
 
-	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
+	if (pluto_ike_socket_bufsize > 0) {
 #if defined(linux)
 		/*
 		 * Override system maximum
@@ -441,13 +444,13 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 		int so_rcv = SO_RCVBUF;
 		int so_snd = SO_SNDBUF;
 #endif
-		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_sock_bufsize,
-			       sizeof(pluto_sock_bufsize)) < 0) {
+		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_ike_socket_bufsize,
+			       sizeof(pluto_ike_socket_bufsize)) < 0) {
 			BIND_ERROR(errno, "setsockopt(SOL_SOCKET, SO_RCVBUFFORCE)");
 			/* non-fatal; stumble on */
 		}
-		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_sock_bufsize,
-			       sizeof(pluto_sock_bufsize)) < 0) {
+		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_ike_socket_bufsize,
+			       sizeof(pluto_ike_socket_bufsize)) < 0) {
 			BIND_ERROR(errno, "setsockopt(SOL_SOCKET, SO_SNDBUFFORCE)");
 			/* non-fatal; stumble on */
 		}

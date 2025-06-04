@@ -999,7 +999,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_IKE_SOCKET_BUFSIZE:	/* --ike-socket-bufsize <bufsize> */
-			pluto_sock_bufsize = optarg_udp_bufsize(logger);
+			pluto_ike_socket_bufsize = optarg_udp_bufsize(logger);
 			continue;
 
 		case OPT_NO_LISTEN_UDP:	/* --no-listen-udp */
@@ -1083,7 +1083,7 @@ int main(int argc, char **argv)
 			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
 
 			/* ike-socket-bufsize= */
-			pluto_sock_bufsize = cfg->setup->values[KBF_IKEBUF].option;
+			pluto_ike_socket_bufsize = cfg->setup->values[KBF_IKEBUF].option;
 			extract_config_yn(&pluto_ike_socket_errqueue, cfg, KYN_IKE_SOCKET_ERRQUEUE);
 
 			/* listen-tcp= / listen-udp= */
@@ -1740,7 +1740,7 @@ void show_setup_plutomain(struct show *s)
 
 	show(s,
 		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju",
-		pluto_sock_bufsize,
+		pluto_ike_socket_bufsize,
 		bool_str(pluto_ike_socket_errqueue),
 		bool_str(x509_crl.strict),
 		deltasecs(x509_crl.check_interval),

@@ -76,7 +76,6 @@ struct config_setup *config_setup_singleton(void)
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
 
-		update_setup_option(KBF_IKEBUF, IKE_BUF_AUTO);
 		update_setup_option(KBF_NHELPERS, -1);
 		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
 		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
