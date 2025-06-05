@@ -1032,7 +1032,7 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
-			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
+			config_ipsec_interface(cfg->setup->values[KYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
