@@ -1105,10 +1105,11 @@ int main(int argc, char **argv)
 			}
 			continue;
 		}
-
-		default:
-			bad_case(c);
+		/* no default: instead ... */
 		}
+
+		/* ... assume all above use CONTINUE and not BREAK */
+		bad_case(c);
 	}
 
 	/*
