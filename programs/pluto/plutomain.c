@@ -128,7 +128,6 @@ void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
 	pfree(conffile);
-	pfreeany(pluto_listen);
 	free_global_redirect_dests();
 	free_config_setup();
 }
@@ -240,22 +239,6 @@ static struct starter_config *read_cfg_file(char *configfile, struct logger *log
  * own functions.
  */
 
-static void replace_value(char **target, const char *value)
-{
-	pfreeany(*target);
-	*target = clone_str(value, __func__);
-}
-
-static void replace_when_cfg_setup(char **target, const struct starter_config *cfg,
-				   enum config_setup_keyword field)
-{
-	/* Do nothing if value is unset. */
-	const char *value = cfg->setup->values[field].string;
-	if (value == NULL || *value == '\0')
-		return;
-	replace_value(target, value);
-}
-
 static bool update_deltatime(deltatime_t *target,
 			      deltatime_t value)
 {
@@ -273,42 +256,6 @@ static bool extract_config_deltatime(deltatime_t *target,
 {
 	return update_deltatime(target, cfg->setup->values[field].deltatime);
 }
-
-static bool update_yn(bool *target, enum yn_options yn)
-{
-	/* Do nothing if value is unset. */
-	switch (yn) {
-	case YN_YES:
-		(*target) = true;
-		return true;
-	case YN_NO:
-		(*target) = false;
-		return true;
-	default:
-		return false;
-	}
-}
-
-static bool extract_config_yn(bool *target,
-			      const struct starter_config *cfg,
-			      enum config_setup_keyword field)
-{
-	return update_yn(target, cfg->setup->values[field].option);
-}
-
-#if 0
-static bool extract_config_bool(bool *target,
-				const struct starter_config *cfg,
-				enum keywords field)
-{
-	/* Do nothing if value is unset. */
-	if (cfg->setup->values[field].set) {
-		(*target) = cfg->setup->values[field].option;
-		return true;
-	}
-	return false;
-}
-#endif
 
 /*
  * This function MUST NOT be used for anything else!
@@ -445,9 +392,12 @@ enum opt {
 	OPT_INTERFACE,
 	OPT_CURL_IFACE,
 	OPT_CURL_TIMEOUT, /* legacy, don't replace */
+
 	OPT_LISTEN,
 	OPT_LISTEN_TCP,
+	OPT_LISTEN_UDP,
 	OPT_NO_LISTEN_UDP,
+
 	OPT_IKE_SOCKET_BUFSIZE,
 	OPT_IKE_SOCKET_ERRQUEUE,
 	OPT_IKE_SOCKET_NO_ERRQUEUE,
@@ -521,9 +471,12 @@ const struct option optarg_options[] = {
 	{ OPT("use-xfrm"), no_argument, NULL, OPT_USE_XFRM },
 #endif
 	{ IGNORE_OPT("interface", "not-implemented", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
+
 	{ OPT("listen", "<ifaddr>"), required_argument, NULL, OPT_LISTEN },
-	{ OPT("listen-tcp"), no_argument, NULL, OPT_LISTEN_TCP },
-	{ OPT("no-listen-udp"), no_argument, NULL, OPT_NO_LISTEN_UDP },
+	{ OPT("listen-tcp", "{yes,no}"), optional_argument, NULL, OPT_LISTEN_TCP },
+	{ OPT("listen-udp", "{yes,no}"), optional_argument, NULL, OPT_LISTEN_UDP },
+	{ REPLACE_OPT("no-listen-udp", "listen-udp", "5.3"), no_argument, NULL, OPT_NO_LISTEN_UDP },
+
 	{ OPT("ike-socket-bufsize", "<bytes>"), required_argument, NULL, OPT_IKE_SOCKET_BUFSIZE },
 	{ OPT("ike-socket-errqueue", "{yes,no}"), required_argument, NULL, OPT_IKE_SOCKET_ERRQUEUE },
 	{ OPT("ike-socket-no-errqueue"), no_argument, NULL, OPT_IKE_SOCKET_NO_ERRQUEUE },
@@ -879,24 +832,19 @@ int main(int argc, char **argv)
 		}
 
 		case OPT_LISTEN:	/* --listen ip_addr */
-		{
-			ip_address lip;
-			err_t e = ttoaddress_num(shunk1(optarg), NULL/*UNSPEC*/, &lip);
-
-			if (e != NULL) {
-				/*
-				 * ??? should we continue on failure?
-				 */
-				llog(RC_LOG, logger,
-					    "invalid listen argument ignored: %s\n", e);
-				continue;
-			}
-
-			replace_value(&pluto_listen, optarg);
-			llog(RC_LOG, logger,
-			     "bind() will be filtered for %s", pluto_listen);
+			/* Check syntax, so feedback is immediate. */
+			optarg_address_num(logger, NULL);
+			update_setup_string(KSF_LISTEN, optarg);
 			continue;
-		}
+		case OPT_LISTEN_TCP:	/* --listen-tcp */
+			update_setup_yn(KYN_LISTEN_TCP, optarg_yn(logger, YN_YES));
+			continue;
+		case OPT_LISTEN_UDP:	/* --listen-udp */
+			update_setup_yn(KYN_LISTEN_UDP, optarg_yn(logger, YN_YES));
+			continue;
+		case OPT_NO_LISTEN_UDP:	/* --no-listen-udp */
+			update_setup_yn(KYN_LISTEN_UDP, YN_NO);
+			continue;
 
 		case OPT_USE_PFKEYV2:	/* --use-pfkeyv2 */
 #ifdef KERNEL_PFKEYV2
@@ -1036,14 +984,6 @@ int main(int argc, char **argv)
 			update_setup_option(KBF_IKE_SOCKET_BUFSIZE, optarg_udp_bufsize(logger));
 			continue;
 
-		case OPT_NO_LISTEN_UDP:	/* --no-listen-udp */
-			pluto_listen_udp = false;
-			continue;
-
-		case OPT_LISTEN_TCP:	/* --listen-tcp */
-			pluto_listen_tcp = true;
-			continue;
-
 		case OPT_RUNDIR:	/* --rundir <path> */
 			update_setup_string(KSF_RUNDIR, optarg_nonempty(logger));
 			continue;
@@ -1101,17 +1041,6 @@ int main(int argc, char **argv)
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
-
-			/*
-			 * We don't check interfaces= here, should we?
-			 * This was hack because we had _stackmanager?
-			 */
-			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
-
-			/* listen-tcp= / listen-udp= */
-			extract_config_yn(&pluto_listen_tcp, cfg, KYN_LISTEN_TCP);
-			extract_config_yn(&pluto_listen_udp, cfg, KYN_LISTEN_UDP);
-
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
@@ -1205,7 +1134,7 @@ int main(int argc, char **argv)
 	}
 
 	/* options processed save to obtain the setup */
-	UNUSED const struct config_setup *oco = config_setup_singleton();
+	const struct config_setup *oco = config_setup_singleton();
 
 	/* trash default; which is true */
 	log_ip = config_setup_yn(oco, KYN_LOGIP);
@@ -1229,6 +1158,9 @@ int main(int argc, char **argv)
 
 	/* ddos */
 	init_ddos(oco, logger);
+
+	/* listening et.al.? */
+	init_ifaces(oco, logger);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.

@@ -125,6 +125,9 @@ struct config_setup *config_setup_singleton(void)
 
 		update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, YN_YES);
 		update_setup_option(KBF_IKE_SOCKET_BUFSIZE, 0); /*redundant*/
+
+		update_setup_yn(KYN_LISTEN_UDP, YN_YES);
+		update_setup_yn(KYN_LISTEN_TCP, YN_NO);
 	}
 	return &config_setup;
 }

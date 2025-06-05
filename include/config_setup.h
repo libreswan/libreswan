@@ -51,7 +51,6 @@ enum config_setup_keyword {
 	KSF_PROTOSTACK,
 	KBF_GLOBAL_REDIRECT,
 	KSF_GLOBAL_REDIRECT_TO,
-	KSF_LISTEN,
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
 	KSF_EXPIRE_SHUNT_INTERVAL,
@@ -93,8 +92,10 @@ enum config_setup_keyword {
 	KBF_DDOS_MODE,		/* set DDOS mode */
 	KBF_SECCOMP,		/* set SECCOMP mode */
 
+	KSF_LISTEN,		/* address(s) to listen on */
 	KYN_LISTEN_TCP,		/* listen on TCP port 4500 - default no */
 	KYN_LISTEN_UDP,		/* listen on UDP port 500/4500 - default yes */
+
 	KBF_IKEv1_POLICY,	/* global ikev1 policy - default drop */
 	KSF_PLUTODEBUG,
 	KWYN_IPSEC_INTERFACE_MANAGED,

@@ -106,6 +106,7 @@ struct optarg_family {
 };
 
 ip_address optarg_address_dns(const struct logger *logger, struct optarg_family *);
+ip_address optarg_address_num(const struct logger *logger, struct optarg_family *);
 ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *);
 void optarg_family(struct optarg_family *family, const struct ip_info *info);
 ip_address optarg_any(struct optarg_family *family);

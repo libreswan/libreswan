@@ -37,6 +37,7 @@
 #endif
 
 #include "lsw_socket.h"
+#include "config_setup.h"
 
 #include "defs.h"
 
@@ -53,9 +54,9 @@
 #include "orient.h"			/* for check_orientations() */
 #include "terminate.h"
 
-char *pluto_listen = NULL;		/* from --listen flag */
-bool pluto_listen_udp = true;
-bool pluto_listen_tcp = false;
+const char *pluto_listen;		/* from --listen flag */
+bool pluto_listen_udp;
+bool pluto_listen_tcp;
 
 static struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 unsigned pluto_ike_socket_bufsize;	/* see whack_listen() */
@@ -747,6 +748,13 @@ void show_ifaces_status(struct show *s)
 			jam_iface_endpoint(buf, p);
 		}
 	}
+}
+
+void init_ifaces(const struct config_setup *oco, struct logger *logger UNUSED)
+{
+	pluto_listen = config_setup_string(oco, KSF_LISTEN);
+	pluto_listen_tcp = config_setup_yn(oco, KYN_LISTEN_TCP);
+	pluto_listen_udp = config_setup_yn(oco, KYN_LISTEN_UDP);
 }
 
 void shutdown_ifaces(struct logger *logger)
