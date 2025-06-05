@@ -29,12 +29,7 @@ struct show;
 struct whack_message;
 struct logger;
 struct jambuf;
-
-extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual */
-extern unsigned pluto_max_halfopen_ike; /* Max allowed half-open IKE SA's before refusing */
-extern unsigned pluto_ddos_ike_threshold; /* Max incoming IKE before activating DCOOKIES */
-
-extern enum pluto_ddos_mode ddos_mode;
+struct config_setup;
 
 extern void set_ddos_mode(enum ddos_mode mode, struct logger *logger);
 
@@ -45,6 +40,8 @@ void show_ddos(struct show *s);
 
 bool require_ddos_cookies(void);
 err_t drop_new_exchanges(struct logger *logger);
+
+void init_ddos(const struct config_setup *oco, struct logger *logger);
 
 #endif
 

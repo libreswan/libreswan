@@ -133,12 +133,14 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   K("ocsp-cache-max-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS, NULL),
   K("ocsp-method",  kv_config,  kt_sparse_name,  KBF_OCSP_METHOD, &ocsp_method_names),
 
-  K("ddos-mode",  kv_config,  kt_sparse_name,  KBF_DDOS_MODE, &ddos_mode_names),
 #ifdef USE_SECCOMP
   K("seccomp",  kv_config,  kt_sparse_name,  KBF_SECCOMP,  &seccomp_mode_names),
 #endif
+
+  K("ddos-mode",  kv_config,  kt_sparse_name,  KBF_DDOS_MODE, &ddos_mode_names),
   K("ddos-ike-threshold",  kv_config,  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD, NULL),
   K("max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL),
+
   K("ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKE_SOCKET_BUFSIZE, NULL),
   K("ike-socket-errqueue",  kv_config,  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, &yn_option_names),
 #ifdef XFRM_LIFETIME_DEFAULT

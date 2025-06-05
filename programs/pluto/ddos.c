@@ -28,6 +28,7 @@
 #include "ddos.h"
 
 #include "constants.h"
+#include "config_setup.h"
 
 #include "defs.h"
 #include "log.h"
@@ -37,10 +38,9 @@
 #include "state.h"		/* for total_halfopen_ike() */
 #include "whack_shutdown.h"	/* for whack_shutdown() and exiting_pluto; */
 
-enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
-
-unsigned int pluto_max_halfopen_ike = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
-unsigned int pluto_ddos_ike_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
+static enum ddos_mode pluto_ddos_mode; /* set below */
+static unsigned int pluto_max_halfopen_ike; /* set below */
+static unsigned int pluto_ddos_ike_threshold; /* set below */
 
 void set_ddos_mode(enum ddos_mode mode, struct logger *logger)
 {
@@ -62,6 +62,8 @@ void whack_ddos(const struct whack_message *wm, struct show *s)
 {
 	const struct whack_ddos *wd = &wm->whack.ddos;
 	set_ddos_mode(wd->mode, show_logger(s));
+	/* keep things in sync */
+	update_setup_option(KBF_DDOS_MODE, pluto_ddos_mode);
 }
 
 bool require_ddos_cookies(void)
@@ -87,4 +89,11 @@ err_t drop_new_exchanges(struct logger *logger)
 		return "too many half open IKE SAs";
 	}
 	return false;
+}
+
+void init_ddos(const struct config_setup *oco, struct logger *logger UNUSED)
+{
+	pluto_ddos_mode = config_setup_option(oco, KBF_DDOS_MODE);
+	pluto_ddos_ike_threshold = config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD);
+	pluto_max_halfopen_ike = config_setup_option(oco, KBF_MAX_HALFOPEN_IKE);
 }
