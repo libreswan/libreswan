@@ -2377,7 +2377,7 @@ const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
 static bool kernel_initialized = false;
 
 deltatime_t pluto_expire_shunt_interval; /* see plutomain.c & config_setup.[hc] */
-deltatime_t pluto_shunt_lifetime = DELTATIME_INIT(DEFAULT_SHUNT_LIFETIME_SECONDS);
+deltatime_t pluto_shunt_lifetime; /* see plutomain.c and config_setup.[hc] */
 
 static global_timer_cb kernel_scan_shunts;
 
