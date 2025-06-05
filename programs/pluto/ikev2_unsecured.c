@@ -49,6 +49,7 @@
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_ike_session_resume.h"
 #include "ikev2_notification.h"
+#include "ddos.h"
 
 bool pluto_drop_oppo_null;	/* set by plutomain.c and config_setup.[hc] */
 

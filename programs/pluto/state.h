@@ -845,8 +845,7 @@ extern void delete_cryptographic_continuation(struct state *st);
 extern void change_v1_state(struct state *st, enum state_kind new_state);
 extern void change_v2_state(struct state *st);
 
-err_t drop_new_exchanges(struct logger *logger);
-extern bool require_ddos_cookies(void);
+extern unsigned long total_halfopen_ike(void);
 extern void show_globalstate_status(struct show *s);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 

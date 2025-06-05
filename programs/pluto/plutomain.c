@@ -81,6 +81,7 @@
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 #include "lock_file.h"
 #include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
+#include "ddos.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -419,8 +420,13 @@ enum opt {
 	OPT_LOG_NO_AUDIT,
 	OPT_AUDIT_LOG,
 	OPT_DROP_OPPO_NULL,
+
+	OPT_DDOS_MODE,
+	OPT_DDOS_IKE_THRESHOLD,
+	OPT_MAX_HALFOPEN_IKE,
 	OPT_FORCE_BUSY,
 	OPT_FORCE_UNLIMITED,
+
 	OPT_CRL_STRICT,
 	OPT_OCSP_STRICT,
 	OPT_OCSP_ENABLE,
@@ -499,8 +505,13 @@ const struct option optarg_options[] = {
 	{ OPT("dnssec-anchors", "<filename>"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
 	{ REPLACE_OPT("dnssec-trusted", "dnssec-anchors", "5.3"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
 #endif
-	{ OPT("force-busy"), no_argument, NULL, OPT_FORCE_BUSY },
-	{ OPT("force-unlimited"), no_argument, NULL, OPT_FORCE_UNLIMITED },
+
+	{ OPT("ddos-mode", "{auto,busy,unlimited}"), required_argument, NULL, OPT_DDOS_MODE },
+	{ OPT("ddos-ike-threshold", "<count>"), required_argument, NULL, OPT_DDOS_IKE_THRESHOLD },
+	{ OPT("max-halfopen-ike", "<count>"), required_argument, NULL, OPT_MAX_HALFOPEN_IKE },
+	{ REPLACE_OPT("force-busy", "ddos-mode", "5.3"), no_argument, NULL, OPT_FORCE_BUSY },
+	{ REPLACE_OPT("force-unlimited", "ddos-mode", "5.3"), no_argument, NULL, OPT_FORCE_UNLIMITED },
+
 	{ OPT("uniqueids", "{YES,no}"), optional_argument, NULL, OPT_UNIQUEIDS },
 	{ OPT("no-dnssec"), no_argument, NULL, OPT_NO_DNSSEC },
 #ifdef KERNEL_PFKEYV2
@@ -903,11 +914,23 @@ int main(int argc, char **argv)
 #endif
 			continue;
 
+		case OPT_DDOS_MODE:
+			update_setup_option(KBF_DDOS_MODE,
+					    optarg_sparse(logger, 0, &ddos_mode_names));
+			continue;
+		case OPT_DDOS_IKE_THRESHOLD:
+			update_setup_option(KBF_DDOS_IKE_THRESHOLD,
+					    optarg_uintmax(logger));
+			continue;
+		case OPT_MAX_HALFOPEN_IKE:
+			update_setup_option(KBF_MAX_HALFOPEN_IKE,
+					    optarg_uintmax(logger));
+			continue;
 		case OPT_FORCE_BUSY:	/* --force-busy */
-			pluto_ddos_mode = DDOS_FORCE_BUSY;
+			update_setup_option(KBF_DDOS_MODE, DDOS_FORCE_BUSY);
 			continue;
 		case OPT_FORCE_UNLIMITED:	/* --force-unlimited */
-			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
+			update_setup_option(KBF_DDOS_MODE, DDOS_FORCE_UNLIMITED);
 			continue;
 
 #ifdef USE_SECCOMP
@@ -1077,11 +1100,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
-			/* ddos-ike-threshold and max-halfopen-ike */
-			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
-			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
-
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
 			/*
@@ -1208,6 +1226,9 @@ int main(int argc, char **argv)
 	init_global_redirect(config_setup_option(oco, KBF_GLOBAL_REDIRECT),
 			     config_setup_string(oco, KSF_GLOBAL_REDIRECT_TO),
 			     logger);
+
+	/* ddos */
+	init_ddos(oco, logger);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
@@ -1720,14 +1741,15 @@ void show_setup_plutomain(struct show *s)
 	show_log(s);
 
 	enum global_ikev1_policy ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+
 	name_buf pb;
+	name_buf mb;
 
 	show(s,
-	     "ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
-	     pluto_ddos_threshold,
-	     pluto_max_halfopen,
-	     (pluto_ddos_mode == DDOS_AUTO) ? "auto" :
-	     (pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
+	     "ddos-cookies-threshold=%ju, ddos-max-halfopen=%ju, ddos-mode=%s, ikev1-policy=%s",
+	     config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD),
+	     config_setup_option(oco, KBF_MAX_HALFOPEN_IKE),
+	     str_sparse_long(&ddos_mode_names, config_setup_option(oco, KBF_DDOS_MODE), &mb),
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
 	/*

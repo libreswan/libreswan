@@ -203,11 +203,6 @@ bool listening = false;  /* should we pay attention to IKE messages? */
 bool pluto_listen_udp = true;
 bool pluto_listen_tcp = false;
 
-enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
-
-unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
-unsigned int pluto_ddos_threshold = DEFAULT_IKE_SA_DDOS_THRESHOLD;
-
 /*
  * Embedded events.
  *
@@ -1091,21 +1086,6 @@ void stop_server(server_stopped_cb cb)
 {
 	server_stopped = cb;
 	event_base_loopbreak(pluto_eb);
-}
-
-void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger)
-{
-	const char *modestr = (mode == DDOS_AUTO ? "auto-detect" :
-			       mode == DDOS_FORCE_BUSY ? "active" :
-			       "unlimited");
-	if (mode == pluto_ddos_mode) {
-		llog(RC_LOG, logger,
-			    "pluto DDoS protection remains in %s mode", modestr);
-		return;
-	}
-
-	pluto_ddos_mode = mode;
-	llog(RC_LOG, logger, "pluto DDoS protection mode set to %s", modestr);
 }
 
 struct event_base *get_pluto_event_base(void)

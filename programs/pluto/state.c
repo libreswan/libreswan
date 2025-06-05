@@ -74,6 +74,8 @@
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "ikev2_states.h"
 #include "crypt_cipher.h"		/* for cipher_context_destroy() */
+#include "ddos.h"
+#include "config_setup.h"
 
 static void delete_state(struct state *st);
 
@@ -165,6 +167,11 @@ static cat_t cat_count[CAT_ROOF] = { 0 };
 static cat_t cat_count_ike_sa[2];
 static cat_t cat_count_child_sa[2];
 static cat_t state_count[STATE_IKE_ROOF];
+
+cat_t total_halfopen_ike(void)
+{
+	return cat_count[CAT_HALF_OPEN_IKE_SA];
+}
 
 static cat_t total_ike_sa(void)
 {
@@ -1759,32 +1766,13 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 	terminate_ike_family(ike, REASON_DELETED, where);
 }
 
-bool require_ddos_cookies(void)
-{
-	return pluto_ddos_mode == DDOS_FORCE_BUSY ||
-		(pluto_ddos_mode == DDOS_AUTO &&
-		 cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_ddos_threshold);
-}
-
-err_t drop_new_exchanges(struct logger *logger)
-{
-	if (exiting_pluto) {
-		ldbg(logger, "%s() exiting_pluto!", __func__);
-		return "exiting pluto";
-	}
-	if (cat_count[CAT_HALF_OPEN_IKE_SA] >= pluto_max_halfopen) {
-		ldbg(logger, "%s() half open count >= %u", __func__, pluto_max_halfopen);
-		return "too many half open IKE SAs";
-	}
-	return false;
-}
-
 void show_globalstate_status(struct show *s)
 {
+	const struct config_setup *oco = config_setup_singleton();
 	unsigned shunts = shunt_count();
 
-	show(s, "config.setup.ike.ddos_threshold=%u", pluto_ddos_threshold);
-	show(s, "config.setup.ike.max_halfopen=%u", pluto_max_halfopen);
+	show(s, "config.setup.ike.ddos_threshold=%ju", config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD));
+	show(s, "config.setup.ike.max_halfopen=%ju", config_setup_option(oco, KBF_MAX_HALFOPEN_IKE));
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
 	show(s, "current.states.all="PRI_CAT, shunts + total_sa());

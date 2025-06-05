@@ -66,6 +66,7 @@ endif
 
 OBJS += unpack.o
 OBJS += impair_message.o
+OBJS += ddos.o
 
 # exchanges
 OBJS += ikev2_unsecured.o

@@ -43,6 +43,7 @@
 #include "instantiate.h"
 #include "terminate.h"
 #include "ikev2_ike_session_resume.h"
+#include "ddos.h"
 
 static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,

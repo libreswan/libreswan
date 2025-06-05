@@ -75,6 +75,7 @@
 #include "ikev2_ike_session_resume.h"
 #include "ikev2_notification.h"
 #include "peer_id.h"
+#include "ddos.h"
 
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 

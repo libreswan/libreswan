@@ -95,6 +95,7 @@
 #include "ikev1_vendorid.h"
 #include "ikev1_cert.h"
 #include "terminate.h"
+#include "ddos.h"
 
 static dh_shared_secret_cb main_inR2_outI3_continue;	/* type assertion */
 static ke_and_nonce_cb main_inR1_outI2_continue;	/* type assertion */

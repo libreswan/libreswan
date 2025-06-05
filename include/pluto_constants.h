@@ -280,14 +280,6 @@ enum event_type {
 #define REVIVE_CONN_DELAY	deltatime(5) /* seconds */
 #define REVIVE_CONN_DELAY_MAX   deltatime(300) /* Do not delay more than 5 minutes per attempt */
 
-/* is pluto automatically switching busy state or set manually */
-enum ddos_mode {
-	DDOS_undefined,
-	DDOS_AUTO,
-	DDOS_FORCE_BUSY,
-	DDOS_FORCE_UNLIMITED
-};
-
 /*
  * status for state-transition-function
  *

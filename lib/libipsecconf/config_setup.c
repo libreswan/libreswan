@@ -29,6 +29,7 @@
 #ifdef USE_SECCOMP
 #include "seccomp_mode.h"
 #endif
+#include "ddos_mode.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -80,10 +81,12 @@ struct config_setup *config_setup_singleton(void)
 		config_setup_is_set = true;
 
 		update_setup_option(KBF_NHELPERS, -1);
+
+		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
 		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
 		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
+
 		update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
-		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 #ifdef USE_SECCOMP
 		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);

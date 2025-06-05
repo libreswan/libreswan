@@ -42,6 +42,7 @@ OBJS += x509dn.o asn1.o oid.o
 OBJS += authby.o
 OBJS += rnd.o
 
+OBJS += ddos_mode_names.o
 OBJS += connection_kind_names.o
 OBJS += option_names.o
 OBJS += encap_type_names.o

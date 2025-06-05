@@ -52,6 +52,7 @@
 #include "peer_id.h"	/* for update_peer_id_cert() */
 #include "ikev1_vendorid.h"
 #include "ikev1_cert.h"
+#include "ddos.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
