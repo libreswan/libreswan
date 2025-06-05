@@ -1032,8 +1032,6 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
-			config_ipsec_interface(cfg->setup->values[KYN_IPSEC_INTERFACE_MANAGED].option, logger);
-
 			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
 
@@ -1123,6 +1121,9 @@ int main(int argc, char **argv)
 
 	/* options processed save to obtain the setup */
 	const struct config_setup *oco = config_setup_singleton();
+
+	enum yn_options managed = config_setup_option(oco, KYN_IPSEC_INTERFACE_MANAGED);
+	config_ipsec_interface(managed, logger);
 
 	/* trash default; which is true */
 	log_ip = config_setup_yn(oco, KYN_LOGIP);
