@@ -85,31 +85,31 @@
 <!ENTITY iptfs SYSTEM "d.ipsec.conf/iptfs.xml">
 <!ENTITY keep-alive SYSTEM "d.ipsec.conf/keep-alive.xml">
 <!ENTITY keyexchange SYSTEM "d.ipsec.conf/keyexchange.xml">
-<!ENTITY left SYSTEM "d.ipsec.conf/left.xml">
-<!ENTITY leftaddresspool SYSTEM "d.ipsec.conf/leftaddresspool.xml">
-<!ENTITY leftauth SYSTEM "d.ipsec.conf/leftauth.xml">
-<!ENTITY leftautheap SYSTEM "d.ipsec.conf/leftautheap.xml">
-<!ENTITY leftca SYSTEM "d.ipsec.conf/leftca.xml">
-<!ENTITY leftcat SYSTEM "d.ipsec.conf/leftcat.xml">
-<!ENTITY leftcert SYSTEM "d.ipsec.conf/leftcert.xml">
-<!ENTITY leftckaid SYSTEM "d.ipsec.conf/leftckaid.xml">
-<!ENTITY leftfirewall SYSTEM "d.ipsec.conf/leftfirewall.xml">
-<!ENTITY leftid SYSTEM "d.ipsec.conf/leftid.xml">
-<!ENTITY leftikeport SYSTEM "d.ipsec.conf/leftikeport.xml">
-<!ENTITY leftmodecfgclient SYSTEM "d.ipsec.conf/leftmodecfgclient.xml">
-<!ENTITY leftmodecfgserver SYSTEM "d.ipsec.conf/leftmodecfgserver.xml">
-<!ENTITY leftnexthop SYSTEM "d.ipsec.conf/leftnexthop.xml">
-<!ENTITY leftprotoport SYSTEM "d.ipsec.conf/leftprotoport.xml">
-<!ENTITY leftrsasigkey SYSTEM "d.ipsec.conf/leftrsasigkey.xml">
-<!ENTITY leftsendcert SYSTEM "d.ipsec.conf/leftsendcert.xml">
-<!ENTITY leftsourceip SYSTEM "d.ipsec.conf/leftsourceip.xml">
-<!ENTITY leftsubnet SYSTEM "d.ipsec.conf/leftsubnet.xml">
-<!ENTITY leftsubnets SYSTEM "d.ipsec.conf/leftsubnets.xml">
-<!ENTITY leftupdown SYSTEM "d.ipsec.conf/leftupdown.xml">
-<!ENTITY leftusername SYSTEM "d.ipsec.conf/leftusername.xml">
-<!ENTITY leftvti SYSTEM "d.ipsec.conf/leftvti.xml">
-<!ENTITY leftxauthclient SYSTEM "d.ipsec.conf/leftxauthclient.xml">
-<!ENTITY leftxauthserver SYSTEM "d.ipsec.conf/leftxauthserver.xml">
+<!ENTITY host SYSTEM "d.ipsec.conf/host.xml">
+<!ENTITY addresspool SYSTEM "d.ipsec.conf/addresspool.xml">
+<!ENTITY auth SYSTEM "d.ipsec.conf/auth.xml">
+<!ENTITY autheap SYSTEM "d.ipsec.conf/autheap.xml">
+<!ENTITY ca SYSTEM "d.ipsec.conf/ca.xml">
+<!ENTITY cat SYSTEM "d.ipsec.conf/cat.xml">
+<!ENTITY cert SYSTEM "d.ipsec.conf/cert.xml">
+<!ENTITY ckaid SYSTEM "d.ipsec.conf/ckaid.xml">
+<!ENTITY firewall SYSTEM "d.ipsec.conf/firewall.xml">
+<!ENTITY id SYSTEM "d.ipsec.conf/id.xml">
+<!ENTITY ikeport SYSTEM "d.ipsec.conf/ikeport.xml">
+<!ENTITY modecfgclient SYSTEM "d.ipsec.conf/modecfgclient.xml">
+<!ENTITY modecfgserver SYSTEM "d.ipsec.conf/modecfgserver.xml">
+<!ENTITY nexthop SYSTEM "d.ipsec.conf/nexthop.xml">
+<!ENTITY protoport SYSTEM "d.ipsec.conf/protoport.xml">
+<!ENTITY rsasigkey SYSTEM "d.ipsec.conf/rsasigkey.xml">
+<!ENTITY sendcert SYSTEM "d.ipsec.conf/sendcert.xml">
+<!ENTITY sourceip SYSTEM "d.ipsec.conf/sourceip.xml">
+<!ENTITY subnet SYSTEM "d.ipsec.conf/subnet.xml">
+<!ENTITY subnets SYSTEM "d.ipsec.conf/subnets.xml">
+<!ENTITY updown SYSTEM "d.ipsec.conf/updown.xml">
+<!ENTITY username SYSTEM "d.ipsec.conf/username.xml">
+<!ENTITY vti SYSTEM "d.ipsec.conf/vti.xml">
+<!ENTITY xauthclient SYSTEM "d.ipsec.conf/xauthclient.xml">
+<!ENTITY xauthserver SYSTEM "d.ipsec.conf/xauthserver.xml">
 <!ENTITY listen SYSTEM "d.ipsec.conf/listen.xml">
 <!ENTITY listen-tcp SYSTEM "d.ipsec.conf/listen-tcp.xml">
 <!ENTITY listen-udp SYSTEM "d.ipsec.conf/listen-udp.xml">
@@ -239,17 +239,17 @@
 	&clientaddrfamily;
 	&type;
 	&iptfs;
-	&left;
-	&leftsubnet;
-	&leftsubnets;
-	&leftvti;
-	&leftaddresspool;
-	&leftprotoport;
-	&leftnexthop;
-	&leftsourceip;
-	&leftupdown;
-	&leftcat;
-	&leftfirewall;
+	&host;
+	&subnet;
+	&subnets;
+	&vti;
+	&addresspool;
+	&protoport;
+	&nexthop;
+	&sourceip;
+	&updown;
+	&cat;
+	&firewall;
       </variablelist>
       <para>
 	If one or both security gateways are doing forwarding
@@ -306,20 +306,20 @@
 	&nopmtudisc;
 	&narrowing;
 	&nic-offload;
-	&leftid;
-	&leftrsasigkey;
-	&leftcert;
-	&leftckaid;
-	&leftauth;
-	&leftautheap;
-	&leftca;
-	&leftikeport;
-	&leftsendcert;
-	&leftxauthserver;
-	&leftxauthclient;
-	&leftusername;
-	&leftmodecfgserver;
-	&leftmodecfgclient;
+	&id;
+	&rsasigkey;
+	&cert;
+	&ckaid;
+	&auth;
+	&autheap;
+	&ca;
+	&ikeport;
+	&sendcert;
+	&xauthserver;
+	&xauthclient;
+	&username;
+	&modecfgserver;
+	&modecfgclient;
 	&xauthby;
 	&xauthfail;
 	&pam-authorize;
