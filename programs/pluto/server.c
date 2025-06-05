@@ -200,8 +200,6 @@ void delete_ctl_socket(void)
 }
 
 bool listening = false;  /* should we pay attention to IKE messages? */
-bool pluto_listen_udp = true;
-bool pluto_listen_tcp = false;
 
 /*
  * Embedded events.

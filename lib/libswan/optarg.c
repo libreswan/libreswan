@@ -387,6 +387,17 @@ ip_address optarg_address_dns(const struct logger *logger, struct optarg_family 
 	return address;
 }
 
+ip_address optarg_address_num(const struct logger *logger, struct optarg_family *family)
+{
+	ip_address address;
+	err_t err = ttoaddress_num(shunk1(optarg), family->type, &address);
+	if (err != NULL) {
+		optarg_fatal(logger, "%s", err);
+	}
+	optarg_family(family, address_info(address));
+	return address;
+}
+
 ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *family)
 {
 	ip_cidr cidr;

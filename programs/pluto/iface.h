@@ -31,9 +31,14 @@ struct iface_endpoint;
 struct show;
 struct iface_device;
 struct logger;
+struct config_setup;
 
 extern unsigned pluto_ike_socket_bufsize; /* pluto IKE socket buffer */
 extern bool pluto_ike_socket_errqueue; /* Enable MSG_ERRQUEUE on IKE socket */
+
+extern const char *pluto_listen;	/* from --listen flag */
+extern bool pluto_listen_udp;
+extern bool pluto_listen_tcp;
 
 struct iface_packet {
 	ssize_t len;
@@ -220,8 +225,8 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    ip_endpoint local_endpoint,
 					    where_t where);
 
-extern char *pluto_listen;	/* from --listen flag */
 
-extern void shutdown_ifaces(struct logger *logger);
+void init_ifaces(const struct config_setup *oco, struct logger *logger);
+void shutdown_ifaces(struct logger *logger);
 
 #endif
