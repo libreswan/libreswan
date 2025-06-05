@@ -54,6 +54,9 @@
 #include "terminate.h"
 
 char *pluto_listen = NULL;		/* from --listen flag */
+bool pluto_listen_udp = true;
+bool pluto_listen_tcp = false;
+
 static struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 unsigned pluto_ike_socket_bufsize;	/* see whack_listen() */
 bool pluto_ike_socket_errqueue;		/* see whack_listen() */
