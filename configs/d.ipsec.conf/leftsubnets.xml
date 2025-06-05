@@ -2,6 +2,9 @@
   <term>
     <option>leftsubnets</option>
   </term>
+  <term>
+    <option>rightsubnets</option>
+  </term>
   <listitem>
     <para>
       specify multiple private subnets behind the left participant,

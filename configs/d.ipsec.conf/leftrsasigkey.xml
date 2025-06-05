@@ -2,6 +2,9 @@
   <term>
     <option>leftrsasigkey</option>
   </term>
+  <term>
+    <option>rightrsasigkey</option>
+  </term>
   <listitem>
     <para>
       the left participant's public key for RSA signature

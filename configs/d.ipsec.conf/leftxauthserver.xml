@@ -2,6 +2,9 @@
   <term>
     <option>leftxauthserver</option>
   </term>
+  <term>
+    <option>rightxauthserver</option>
+  </term>
   <listitem>
     <para>
       Left is an XAUTH server. This can use PAM for authentication or

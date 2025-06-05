@@ -2,6 +2,9 @@
   <term>
     <option>leftauth</option>
   </term>
+  <term>
+    <option>rightauth</option>
+  </term>
   <listitem>
     <para>
       How the security gateways will authenticate to the other side in

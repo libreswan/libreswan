@@ -2,6 +2,9 @@
   <term>
     <option>leftsendcert</option>
   </term>
+  <term>
+    <option>rightsendcert</option>
+  </term>
   <listitem>
     <para>
       This option configures when &Libreswan; will send &X.509;

@@ -2,6 +2,9 @@
   <term>
     <option>leftxauthclient</option>
   </term>
+  <term>
+    <option>rightxauthclient</option>
+  </term>
   <listitem>
     <para>
       Left is an XAUTH client. The xauth connection will have to be

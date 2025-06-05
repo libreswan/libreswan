@@ -2,6 +2,9 @@
   <term>
     <option>leftvti</option>
   </term>
+  <term>
+    <option>rightvti</option>
+  </term>
   <listitem>
     <para>
       the address/mask to configure on the VTI interface when

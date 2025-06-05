@@ -2,6 +2,9 @@
   <term>
     <option>leftikeport</option>
   </term>
+  <term>
+    <option>rightikeport</option>
+  </term>
   <listitem>
     <para>
       The UDP IKE port to listen on or send data to. This port cannot

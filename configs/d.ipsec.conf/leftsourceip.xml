@@ -2,6 +2,9 @@
   <term>
     <option>leftsourceip</option>
   </term>
+  <term>
+    <option>rightsourceip</option>
+  </term>
   <listitem>
     <para>
       the IP address for this host to use when transmitting a packet

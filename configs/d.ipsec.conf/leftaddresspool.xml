@@ -2,6 +2,9 @@
   <term>
     <option>leftaddresspool</option>
   </term>
+  <term>
+    <option>rightaddresspool</option>
+  </term>
   <listitem>
     <para>
       address pool from where the IKEv1 ModeCFG or IKEv2 server can

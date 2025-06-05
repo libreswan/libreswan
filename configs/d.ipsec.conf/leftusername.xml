@@ -2,6 +2,9 @@
   <term>
     <option>leftusername</option>
   </term>
+  <term>
+    <option>rightusername</option>
+  </term>
   <listitem>
     <para>
       The username associated with this connection. The username can

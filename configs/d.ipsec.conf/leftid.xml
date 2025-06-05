@@ -2,6 +2,9 @@
   <term>
     <option>leftid</option>
   </term>
+  <term>
+    <option>rightid</option>
+  </term>
   <listitem>
     <para>
       how the left participant should be identified for

@@ -2,6 +2,9 @@
   <term>
     <option>leftmodecfgclient</option>
   </term>
+  <term>
+    <option>rightmodecfgclient</option>
+  </term>
   <listitem>
     <para>Left is a Mode Config client. It can receive network
     configuration from the server.  Acceptable values are

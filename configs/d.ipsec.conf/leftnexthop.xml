@@ -2,6 +2,9 @@
   <term>
     <option>leftnexthop</option>
   </term>
+  <term>
+    <option>rightnexthop</option>
+  </term>
   <listitem>
     <para>
       next-hop gateway IP address for the left participant's

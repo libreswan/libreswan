@@ -2,6 +2,9 @@
   <term>
     <option>leftckaid</option>
   </term>
+  <term>
+    <option>rightckaid</option>
+  </term>
   <listitem>
     <para>
       The CKAID of the X.509 certificate or host key.

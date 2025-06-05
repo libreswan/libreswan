@@ -2,6 +2,9 @@
   <term>
     <option>leftautheap</option>
   </term>
+  <term>
+    <option>rightautheap</option>
+  </term>
   <listitem>
     <para>
       Whether the security gateways will authenticate uing an EAP

@@ -2,6 +2,9 @@
   <term>
     <option>leftcat</option>
   </term>
+  <term>
+    <option>rightcat</option>
+  </term>
   <listitem>
     <para>
       Whether to perform Client Address Translation ("CAT") when using

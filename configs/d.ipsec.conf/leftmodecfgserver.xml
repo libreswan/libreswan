@@ -2,6 +2,9 @@
   <term>
     <option>leftmodecfgserver</option>
   </term>
+  <term>
+    <option>rightmodecfgserver</option>
+  </term>
   <listitem>
     <para>
       Left is a Mode Config server. It can push network configuration

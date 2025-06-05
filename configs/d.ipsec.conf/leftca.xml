@@ -2,6 +2,9 @@
   <term>
     <option>leftca</option>
   </term>
+  <term>
+    <option>rightca</option>
+  </term>
   <listitem>
     <para>
       specifies the authorized Certificate Authority (CA) that signed

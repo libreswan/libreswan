@@ -2,6 +2,9 @@
   <term>
     <option>leftprotoport</option>
   </term>
+  <term>
+    <option>rightprotoport</option>
+  </term>
   <listitem>
     <para>
       allowed protocols and ports over connection, also called Port

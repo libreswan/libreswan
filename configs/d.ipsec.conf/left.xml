@@ -2,6 +2,9 @@
   <term>
     <option>left</option>
   </term>
+  <term>
+    <option>right</option>
+  </term>
   <listitem>
     <para>
       (required) the IP address or DNS hostname of the left

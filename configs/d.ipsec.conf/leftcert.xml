@@ -2,6 +2,9 @@
   <term>
     <option>leftcert</option>
   </term>
+  <term>
+    <option>rightcert</option>
+  </term>
   <listitem>
     <para>
       If you are using <option>leftrsasigkey=%cert</option>

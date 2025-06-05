@@ -2,6 +2,9 @@
   <term>
     <option>leftsubnet</option>
   </term>
+  <term>
+    <option>rightsubnet</option>
+  </term>
   <listitem>
     <para>
       A comma separated list of traffic selectors behind the left
