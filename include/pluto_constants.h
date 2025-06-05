@@ -957,5 +957,6 @@ extern void init_pluto_constants(void);
 
 /* time between scans of eroutes */
 #define DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS (2*10)
+#define DEFAULT_SHUNT_LIFETIME_SECONDS (15 * secs_per_minute)
 
 #endif
