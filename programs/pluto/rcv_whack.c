@@ -80,18 +80,13 @@
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
 #include "config_setup.h"
+#include "ddos.h"
 
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	llog(RC_LOG, logger, "no longer listening for IKE messages");
 	listening = false;
-}
-
-static void whack_ddos(const struct whack_message *wm, struct show *s)
-{
-	const struct whack_ddos *wd = &wm->whack.ddos;
-	set_whack_pluto_ddos(wd->mode, show_logger(s));
 }
 
 static void whack_rereadsecrets(const struct whack_message *wm UNUSED, struct show *s)

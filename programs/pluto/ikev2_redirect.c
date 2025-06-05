@@ -43,6 +43,7 @@
 #include "ikev2_message.h"
 #include "ikev2_notification.h"
 #include "show.h"
+#include "ddos.h"
 
 static emit_v2_INFORMATIONAL_request_payload_fn add_redirect_payload; /* type check */
 

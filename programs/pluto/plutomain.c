@@ -81,6 +81,7 @@
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 #include "lock_file.h"
 #include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
+#include "ddos.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1079,8 +1080,8 @@ int main(int argc, char **argv)
 
 			pluto_ddos_mode = cfg->setup->values[KBF_DDOS_MODE].option;
 			/* ddos-ike-threshold and max-halfopen-ike */
-			pluto_ddos_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
-			pluto_max_halfopen = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
+			pluto_ddos_ike_threshold = cfg->setup->values[KBF_DDOS_IKE_THRESHOLD].option;
+			pluto_max_halfopen_ike = cfg->setup->values[KBF_MAX_HALFOPEN_IKE].option;
 
 			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
 
@@ -1720,14 +1721,15 @@ void show_setup_plutomain(struct show *s)
 	show_log(s);
 
 	enum global_ikev1_policy ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+
 	name_buf pb;
+	name_buf mb;
 
 	show(s,
 	     "ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",
-	     pluto_ddos_threshold,
-	     pluto_max_halfopen,
-	     (pluto_ddos_mode == DDOS_AUTO) ? "auto" :
-	     (pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited",
+	     pluto_ddos_ike_threshold,
+	     pluto_max_halfopen_ike,
+	     str_sparse_long(&ddos_mode_names, pluto_ddos_mode, &mb),
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
 	/*

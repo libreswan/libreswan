@@ -55,12 +55,6 @@ extern bool listening;  /* should we pay attention to IKE messages? */
 extern bool pluto_listen_udp;
 extern bool pluto_listen_tcp;
 
-extern enum ddos_mode pluto_ddos_mode; /* auto-detect or manual */
-extern unsigned int pluto_max_halfopen; /* Max allowed half-open IKE SA's before refusing */
-extern unsigned int pluto_ddos_threshold; /* Max incoming IKE before activating DCOOKIES */
-
-extern enum pluto_ddos_mode ddos_mode;
-
 extern void show_debug_status(struct show *s);
 extern void run_server(char *conffile, struct logger *logger) NEVER_RETURNS;
 
@@ -95,9 +89,6 @@ void detach_fd_read_listener(struct fd_read_listener **fdl);
 
 void add_fd_read_listener(int fd, const char *name,
 			  fd_read_listener_cb *cb, void *arg);
-
-extern void set_pluto_busy(bool busy);
-extern void set_whack_pluto_ddos(enum ddos_mode mode, struct logger *logger);
 
 extern void init_server(struct logger *logger);
 extern void free_server(void);
