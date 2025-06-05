@@ -173,6 +173,11 @@ static struct helper_thread *helper_threads = NULL;
 static unsigned helper_threads_started = 0;
 static unsigned helper_threads_stopped = 0;
 
+unsigned server_nhelpers(void)
+{
+	return (helper_threads_started - helper_threads_stopped);
+}
+
 /*
  * If there are any helper threads, this code is always executed IN A HELPER
  * THREAD. Otherwise it is executed in the main (only) thread.
@@ -512,16 +517,25 @@ static stf_status handle_helper_answer(struct state *callback_sa,
  * more requests than average.
  *
  */
-void start_server_helpers(int nhelpers, struct logger *logger)
+void start_server_helpers(uintmax_t nhelpers, struct logger *logger)
 {
 	/* redundant */
 	helper_threads = NULL;
 	helper_threads_started = 0;
 	helper_threads_stopped = 0;
 
-	/* find out how many CPUs there are, if nhelpers is -1 */
-	/* if nhelpers == 0, then we do all the work ourselves */
-	if (nhelpers == -1) {
+	/*
+	 * When nhelpers==-1 (aka MAX), find out how many CPUs there
+	 * are.  When nhelpers=0, everything is done on the main
+	 * thread.
+	 */
+
+	if (nhelpers > 1000/*arbitrary*/ && nhelpers < UINTMAX_MAX) {
+		llog(RC_LOG, logger, "warning: nhelpers=%ju is huge, limiting to number of CPUs", nhelpers);
+		nhelpers = UINTMAX_MAX;
+	}
+
+	if (nhelpers == UINTMAX_MAX) {
 		int ncpu_online;
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 		ncpu_online = sysconf(_SC_NPROCESSORS_ONLN);
@@ -534,6 +548,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 		len = sizeof(numcpu);
 		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
 #endif
+		/* The theory is reserve one CPU for the event loop */
 		llog(RC_LOG, logger, "%d CPU cores online", ncpu_online);
 		if (ncpu_online < 4)
 			nhelpers = ncpu_online;
@@ -542,7 +557,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 	}
 
 	if (nhelpers > 0) {
-		llog(RC_LOG, logger, "starting up %d helper threads", nhelpers);
+		llog(RC_LOG, logger, "starting up %ju helper threads", nhelpers);
 
 		/*
 		 * create the threads.  Set nr_helpers_started after
@@ -551,7 +566,7 @@ void start_server_helpers(int nhelpers, struct logger *logger)
 		 */
 		helper_threads = alloc_things(struct helper_thread, nhelpers,
 					      "pluto helpers");
-		for (int n = 0; n < nhelpers; n++) {
+		for (unsigned n = 0; n < nhelpers; n++) {
 			struct helper_thread *w = &helper_threads[n];
 			w->helper_id = n + 1; /* i.e., not 0 */
 			w->logger = string_logger(HERE, "helper(%d)", w->helper_id);

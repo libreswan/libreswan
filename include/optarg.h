@@ -81,6 +81,7 @@ const char *optarg_empty(const struct logger *logger);
 
 deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale);
 
+/* -1==MAX */
 uintmax_t optarg_uintmax(const struct logger *logger);
 
 /* 0 or [1500..64k) */
