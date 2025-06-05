@@ -557,13 +557,20 @@ void new_parser_key_value(struct parser *parser,
 static bool parse_kt_unsigned(struct keyword *key, shunk_t value,
 			      uintmax_t *number, struct parser *parser)
 {
-	err_t err = shunk_to_uintmax(value, NULL, /*base*/10, number);
-	if (err != NULL) {
-		parser_key_value_warning(parser, key, value,
-					 "%s, keyword ignored", err);
-		return false;
+	/* treat -1 as special, turning it into max */
+	if (hunk_streq(value, "-1")) {
+		(*number) = UINTMAX_MAX;
+		return true;
 	}
-	return true;
+
+	err_t err = shunk_to_uintmax(value, NULL, /*base*/10, number);
+	if (err == NULL) {
+		return true;
+	}
+
+	parser_key_value_warning(parser, key, value,
+				 "%s, keyword ignored", err);
+	return false;
 }
 
 static bool parse_kt_deltatime(struct keyword *key, shunk_t value,
