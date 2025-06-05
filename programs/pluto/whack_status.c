@@ -50,7 +50,7 @@
 
 static void show_system_security(struct show *s)
 {
-	const struct config_setup *oco = config_setup_singleton();
+	UNUSED const struct config_setup *oco = config_setup_singleton();
 	int selinux = libreswan_selinux(show_logger(s));
 	bool fips = is_fips_mode();
 
