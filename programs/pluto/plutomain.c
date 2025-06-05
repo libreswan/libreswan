@@ -116,7 +116,6 @@ static bool selftest_only = false;
 /* pulled from main for show_setup_plutomain() */
 
 static char *conffile;
-static int nhelpers = -1;
 
 static struct {
 	bool enable;
@@ -783,17 +782,7 @@ int main(int argc, char **argv)
 			exit(PLUTO_EXIT_OK);
 
 		case OPT_NHELPERS:	/* --nhelpers */
-			if (streq(optarg, "-1")) {
-				/* use number of CPUs */
-				nhelpers = -1;
-			} else {
-				uintmax_t u = optarg_uintmax(logger);
-				/* arbitrary */
-				if (u > 1000) {
-					optarg_fatal(logger, "too big, more than 1000");
-				}
-				nhelpers = u; /* no loss; within INT_MAX */
-			}
+			update_setup_option(KBF_NHELPERS, optarg_uintmax(logger));
 			continue;
 
 		case OPT_SEEDBITS:	/* --seedbits */
@@ -1115,8 +1104,6 @@ int main(int argc, char **argv)
 			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
 
 			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
-
-			nhelpers = cfg->setup->values[KBF_NHELPERS].option;
 
 			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
 			passert(kernel_ops == kernel_stacks[0]); /*default*/
@@ -1638,7 +1625,7 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	start_server_helpers(nhelpers, logger);
+	start_server_helpers(config_setup_option(oco, KBF_NHELPERS), logger);
 
 	init_kernel(logger, expire_shunt_interval);
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
@@ -1732,7 +1719,13 @@ void show_setup_plutomain(struct show *s)
 	     config_setup_vendorid());
 
 	SHOW_JAMBUF(s, buf) {
-		jam(buf, "nhelpers=%d", nhelpers);
+		jam_string(buf, "nhelpers=");
+		uintmax_t nhelpers = config_setup_option(oco, KBF_NHELPERS);
+		if (nhelpers == UINTMAX_MAX) {
+			jam_string(buf, "-1");
+		} else {
+			jam(buf, "%ju", nhelpers);
+		}
 		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
 		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
