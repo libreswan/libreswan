@@ -1028,7 +1028,7 @@ static server_stopped_cb server_stopped;
 
 void run_server(char *conffile, struct logger *logger)
 {
-	const struct config_setup *oco = config_setup_singleton(); /*param?*/
+	UNUSED const struct config_setup *oco = config_setup_singleton(); /*param?*/
 
 	/*
 	 * setup basic events, CTL and SIGNALs
