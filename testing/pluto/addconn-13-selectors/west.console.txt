@@ -48,7 +48,7 @@ west #
 west #
  ./host4.sh s1-s2 leftsubnet=2.2.2.1/32            rightsubnet=1.1.1.1/32,1.1.1.2/32 keyexchange=ikev1
  ipsec addconn --name s1-s2 leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=2.2.2.1/32 rightsubnet=1.1.1.1/32,1.1.1.2/32 keyexchange=ikev1
-"s1-s2": failed to add connection: IKEv1 does not support rightsubnet= with multiple selectors
+"s1-s2": failed to add connection: IKEv1 does not support rightsubnet= with multiple selectors without cisco-split=yes and rightmodecfgserver=yes
  ipsec connectionstatus s1-s2
 west #
  # right is expanded to multiple connections

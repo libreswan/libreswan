@@ -2141,6 +2141,13 @@ static struct connection *fc_try(const struct connection *c,
 		 * peer itself.
 		 */
 
+		bool cisco_split = (d->local->host.config->modecfg.server &&
+				    d->config->host.cisco.split &&
+				    selector_is_all(*local_client));
+		if (cisco_split) {
+			vdbg("initiator's local client selector is %%any cisco-split");
+		}
+
 		unsigned level = verbose.level;
 		FOR_EACH_ITEM(d_spd, &d->child.spds) {
 			verbose.level = level;
@@ -2162,30 +2169,40 @@ static struct connection *fc_try(const struct connection *c,
 			 * the exception.
 			 */
 
-			if (!selector_in_selector(*local_client, d_spd->local->client)) {
+			if (cisco_split) {
 				selector_buf s1, s2;
-				vdbg("skipping SPD, initiator's local client select %s must be within %s",
+				vdbg("allowing initiator's local client %s, cisco-split overides need to compare with SPD's local client %s",
 				     str_selector(local_client, &s2),
 				     str_selector(&d_spd->local->client, &s1));
-				continue;
-			}
+			} else if (selector_is_all(d_spd->local->client)) {
+				selector_buf s1, s2;
+				vdbg("allowing initiator's local client %s, SPD's local client being all/%%any overides need to compare with %s",
+				     str_selector(local_client, &s2),
+				     str_selector(&d_spd->local->client, &s1));
+			} else {
+				/* case when SPD includes a port;
+				 * almost redudnant */
+				if (!selector_in_selector(*local_client, d_spd->local->client)) {
+					selector_buf s1, s2;
+					vdbg("skipping SPD, initiator's local client select %s must be within %s",
+					     str_selector(local_client, &s2),
+					     str_selector(&d_spd->local->client, &s1));
+					continue;
+				}
 
-			if (selector_is_all(d_spd->local->client)) {
-				selector_buf s1;
-				vdbg("allowing SPD, local client is %s aka all or %%any",
-				     str_selector(&d_spd->local->client, &s1));
-			} else if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
-				selector_buf s1, s2;
-				vdbg("skipping SPD, initiator's local client range %s must match %s",
-				     str_selector(local_client, &s2),
-				     str_selector(&d_spd->local->client, &s1));
-				continue;
+				if (!selector_range_eq_selector_range(*local_client, d_spd->local->client)) {
+					selector_buf s1, s2;
+					vdbg("skipping SPD, initiator's local client range %s must match %s",
+					     str_selector(local_client, &s2),
+					     str_selector(&d_spd->local->client, &s1));
+					continue;
+				}
 			}
 
 			/*
 			 * Compare remote selectors.
 			 *
-			 * Now things get weird.
+			 * If things weren't already weird!
 			 */
 
 			if (!selector_in_selector(*remote_client, d_spd->remote->client)) {

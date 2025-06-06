@@ -1,0 +1,12 @@
+../../guestbin/prep.sh
+east.racoon.conf -> /etc/racoon/racoon.conf
+east.psk.txt -> /etc/racoon/psk.txt
+east #
+ ../../guestbin/ifconfig.sh vioif1 add 192.0.20.254/24
+	inet 192.0.20.254/24 broadcast 192.0.20.255 flags 0
+east #
+ ../../guestbin/start-racoon.sh
+east #
+ echo "initdone"
+initdone
+east #

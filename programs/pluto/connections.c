@@ -2385,12 +2385,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					 leftright, src->subnet);
 		}
 
-		if (ike_version == IKEv1) {
-			if (child_config->selectors.len > 1) {
-				return diag("IKEv1 does not support %ssubnet= with multiple selectors", leftright);
-			}
-		}
-
 		if (protoport.is_set) {
 			if (child_config->selectors.len > 1) {
 				return diag("%ssubnet= must be a single subnet when combined with %sprotoport=",
@@ -3302,7 +3296,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options cisco_split = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
+	enum yn_options cisco_split = extract_sparse_name("", "cisco-split", wm->cisco_split,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
 							  wm, &d, logger);
@@ -4493,6 +4487,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	}
 
+	/*
+	 * Cisco interop: remote peer type.
+	 */
+	d = extract_cisco_host_config(&config->host.cisco, wm, c->logger);
+	if (d != NULL) {
+		return d;
+	}
+
 	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz", wm->rekeyfuzz,
 						      SA_REPLACEMENT_FUZZ_DEFAULT,
 						      wm, &d, c->logger);
@@ -4657,14 +4659,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     "warning: IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
 			}
 			break;
-		}
-
-		/*
-		 * Cisco interop: remote peer type.
-		 */
-		d = extract_cisco_host_config(&config->host.cisco, wm, c->logger);
-		if (d != NULL) {
-			return d;
 		}
 
 		config->child_sa.metric = wm->metric;
@@ -5063,6 +5057,27 @@ static diag_t extract_connection(const struct whack_message *wm,
 		    return diag("leftauth= and rightauth= must both be set or both be unset");
 	}
 
+
+	/*
+	 * Limit IKEv1 with selectors
+	 */
+	if (ike_version == IKEv1) {
+		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+			const char *leftright = config->end[lr].leftright;
+			if (config->end[lr].child.selectors.len <= 1) {
+				continue;
+			}
+			if (config->host.cisco.split &&
+			    config->end[lr].host.modecfg.server) {
+				llog(RC_LOG, c->logger,
+				     "allowing IKEv1 %ssubnet= with multiple selectors as cisco-split=yes and %smodecfgserver=yes",
+				     leftright, leftright);
+				continue;
+			}
+			return diag("IKEv1 does not support %ssubnet= with multiple selectors without cisco-split=yes and %smodecfgserver=yes",
+				    leftright, leftright);
+		}
+	}
 
 	/*
 	 * Now cross check the configuration looking for IP version

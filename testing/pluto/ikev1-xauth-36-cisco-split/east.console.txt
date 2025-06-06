@@ -1,0 +1,66 @@
+../../guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add any-east
+"any-east": allowing IKEv1 rightsubnet= with multiple selectors as cisco-split=yes and rightmodecfgserver=yes
+"any-east": added IKEv1 connection
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ echo initdone
+initdone
+east #
+ ipsec _kernel state
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+east #
+ ipsec _kernel policy
+src 192.0.2.0/24 dst 192.0.2.101/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 192.0.20.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.101/32 dst 192.0.20.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.20.0/24 dst 192.0.2.101/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+east #
