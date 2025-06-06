@@ -18,6 +18,7 @@
 #include "config_setup.h"
 
 #include "ipsecconf/confread.h"
+#include "ipsecconf/parser.h"
 #include "passert.h"
 #include "lswalloc.h"
 #include "lset.h"
@@ -236,14 +237,87 @@ lset_t config_setup_debugging(struct logger *logger)
 	return result.set;
 }
 
+/**
+ * Load a parsed config
+ *
+ * @param cfg starter_config structure
+ * @param cfgp config_parsed (ie: valid) struct
+ * @param perr pointer to store errors in
+ */
+
+bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
+				   struct logger *logger)
+{
+	config_setup_singleton();
+
+	bool ok = true;
+	const struct kw_list *kw;
+
+	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
+		/**
+		 * the parser already made sure that only config keywords were used,
+		 * but we double check!
+		 */
+		passert(kw->keyword.keydef->validity & kv_config);
+		unsigned f = kw->keyword.keydef->field;
+
+		switch (kw->keyword.keydef->type) {
+		case kt_string:
+			/* all treated as strings for now */
+			PASSERT(logger, f < elemsof(config_setup.values));
+			pfreeany(config_setup.values[f].string);
+			config_setup.values[f].string =
+				clone_str(kw->string, "kt_loose_enum kw->string");
+			config_setup.values[f].set = true;
+			break;
+
+		case kt_sparse_name:
+		case kt_unsigned:
+			/* all treated as a number for now */
+			PASSERT(logger, f < elemsof(config_setup.values));
+			config_setup.values[f].option = kw->number;
+			config_setup.values[f].set = true;
+			break;
+
+		case kt_seconds:
+			/* all treated as a number for now */
+			PASSERT(logger, f < elemsof(config_setup.values));
+			config_setup.values[f].deltatime = kw->deltatime;
+			config_setup.values[f].set = true;
+			break;
+
+		case kt_also:
+		case kt_appendstring:
+		case kt_appendlist:
+		case kt_obsolete:
+			break;
+
+		}
+	}
+
+	return ok;
+}
+
 bool load_config_setup(const char *file,
 		       struct logger *logger,
 		       unsigned verbosity)
 {
-	struct starter_config *cfg =
-		confread_load(file, /*config-setup-only*/true,
-			      logger, verbosity);
-	bool ok = (cfg != NULL);
-	confread_free(cfg);
-	return ok;
+	/**
+	 * Load file
+	 */
+	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, /*setuponly*/true, verbosity);
+	if (cfgp == NULL) {
+		return false;
+	}
+
+	/**
+	 * Load setup
+	 */
+	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
+		pfree_ipsec_conf(&cfgp);
+		return false;
+	}
+
+	pfree_ipsec_conf(&cfgp);
+	return true;
 }

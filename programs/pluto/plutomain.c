@@ -112,10 +112,7 @@ bool in_main_thread(void)
 
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
-
-/* pulled from main for show_setup_plutomain() */
-
-static const char *conffile;
+static const char *conffile = IPSEC_CONF;
 
 static struct {
 	bool enable;
@@ -632,12 +629,6 @@ int main(int argc, char **argv)
 	 * determine if it is running on an aux thread.
 	 */
 	main_thread = pthread_self();
-
-	/*
-	 * Make memory management easier by always allocating some of
-	 * the globals.
-	 */
-	conffile = clone_str(IPSEC_CONF, "conffile in main()");
 
 	/* handle arguments */
 	for (;; ) {

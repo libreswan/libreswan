@@ -88,65 +88,6 @@ static struct starter_config *alloc_starter_config(void)
 }
 
 /**
- * Load a parsed config
- *
- * @param cfg starter_config structure
- * @param cfgp config_parsed (ie: valid) struct
- * @param perr pointer to store errors in
- */
-
-static bool load_setup(struct starter_config *cfg,
-		       const struct ipsec_conf *cfgp)
-{
-	bool ok = true;
-	const struct kw_list *kw;
-
-	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
-		/**
-		 * the parser already made sure that only config keywords were used,
-		 * but we double check!
-		 */
-		assert(kw->keyword.keydef->validity & kv_config);
-		unsigned f = kw->keyword.keydef->field;
-
-		switch (kw->keyword.keydef->type) {
-		case kt_string:
-			/* all treated as strings for now */
-			assert(f < elemsof(cfg->setup->values));
-			pfreeany(cfg->setup->values[f].string);
-			cfg->setup->values[f].string =
-				clone_str(kw->string, "kt_loose_enum kw->string");
-			cfg->setup->values[f].set = true;
-			break;
-
-		case kt_sparse_name:
-		case kt_unsigned:
-			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup->values));
-			cfg->setup->values[f].option = kw->number;
-			cfg->setup->values[f].set = true;
-			break;
-
-		case kt_seconds:
-			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup->values));
-			cfg->setup->values[f].deltatime = kw->deltatime;
-			cfg->setup->values[f].set = true;
-			break;
-
-		case kt_also:
-		case kt_appendstring:
-		case kt_appendlist:
-		case kt_obsolete:
-			break;
-
-		}
-	}
-
-	return ok;
-}
-
-/**
  * Take the list of key-value pairs, from ipsec.conf and in KW, and
  * turn them into an array in starter_conn.
  *
@@ -595,9 +536,8 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load setup
 	 */
-	if (!load_setup(cfg, cfgp)) {
+	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
 		pfree_ipsec_conf(&cfgp);
-		confread_free(cfg);
 		return NULL;
 	}
 
