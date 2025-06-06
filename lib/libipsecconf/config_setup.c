@@ -120,6 +120,7 @@ struct config_setup *config_setup_singleton(void)
 		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
 
 		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
+		update_setup_deltatime(KBF_SHUNTLIFETIME, deltatime(DEFAULT_SHUNT_LIFETIME_SECONDS));
 
 		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
 

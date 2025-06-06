@@ -333,8 +333,6 @@ extern const struct kernel_ops *const kernel_stacks[];
  */
 #define SHUNT_PATIENCE  deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
 
-#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT DELTATIME_INIT(15 * secs_per_minute)
-
 extern deltatime_t pluto_shunt_lifetime;
 
 void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s);

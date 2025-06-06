@@ -233,30 +233,6 @@ static struct starter_config *read_cfg_file(char *configfile, struct logger *log
 }
 
 /*
- * Helper function for config file mapper: set string option value.
- * Values passed in are expected to have been allocated using our
- * own functions.
- */
-
-static bool update_deltatime(deltatime_t *target,
-			      deltatime_t value)
-{
-	/* Do nothing if value is unset. */
-	if (value.is_set) {
-		(*target) = value;
-		return true;
-	}
-	return false;
-}
-
-static bool extract_config_deltatime(deltatime_t *target,
-				     const struct starter_config *cfg,
-				     enum config_setup_keyword field)
-{
-	return update_deltatime(target, cfg->setup->values[field].deltatime);
-}
-
-/*
  * This function MUST NOT be used for anything else!
  * It is used to seed the NSS PRNG based on --seedbits pluto argument
  * or the seedbits= * config setup option in ipsec.conf.
@@ -1029,9 +1005,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			extract_config_deltatime(&pluto_shunt_lifetime, cfg, KBF_SHUNTLIFETIME);
-			extract_config_deltatime(&pluto_expire_lifetime, cfg, KBF_EXPIRE_LIFETIME);
-
 			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
 
 			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
@@ -1122,6 +1095,9 @@ int main(int argc, char **argv)
 
 	/* options processed save to obtain the setup */
 	const struct config_setup *oco = config_setup_singleton();
+
+	pluto_expire_lifetime = config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME);
+	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
 
 	/* trash default; which is true */
 	log_ip = config_setup_yn(oco, KYN_LOGIP);
