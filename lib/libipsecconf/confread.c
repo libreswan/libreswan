@@ -458,12 +458,13 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
-struct starter_config *confread_load(const char *file,
-				     bool setuponly,
-				     struct logger *logger,
-				     unsigned verbosity)
+static void check_ipsec_conf_keywords(struct logger *logger)
 {
-	/* sanity checks */
+	static bool checked;
+	if (checked) {
+		return;
+	}
+	checked = true;
 
 	if (LDBGP(DBG_TMI, logger)) {
 		ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
@@ -567,6 +568,14 @@ struct starter_config *confread_load(const char *file,
 			break;
 		}
 	}
+}
+
+struct starter_config *confread_load(const char *file,
+				     bool setuponly,
+				     struct logger *logger,
+				     unsigned verbosity)
+{
+	check_ipsec_conf_keywords(logger);
 
 	/**
 	 * Load file
@@ -646,6 +655,8 @@ struct starter_config *confread_argv(const char *name,
 				     char *argv[], int start,
 				     struct logger *logger)
 {
+	check_ipsec_conf_keywords(logger);
+
 	/**
 	 * Load file
 	 */
