@@ -56,6 +56,11 @@
 const char *rootdir;	/* when evaluating paths, prefix this to them */
 const char *rootdir2;	/* or... try this one too */
 
+
+static bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
+					 struct ipsec_conf *cfgp,
+					 struct logger *logger);
+
 static bool translate_conn(struct starter_conn *conn,
 			   const struct ipsec_conf *cfgp,
 			   struct section_list *sl,
@@ -89,6 +94,7 @@ static struct starter_config *alloc_starter_config(void)
  * @param cfgp config_parsed (ie: valid) struct
  * @param perr pointer to store errors in
  */
+
 static bool load_setup(struct starter_config *cfg,
 		       const struct ipsec_conf *cfgp)
 {
@@ -588,8 +594,6 @@ struct starter_config *confread_load(const char *file,
 
 	/**
 	 * Load setup
-	 *
-	 * Danger: reverse fail.
 	 */
 	if (!load_setup(cfg, cfgp)) {
 		pfree_ipsec_conf(&cfgp);
@@ -598,57 +602,69 @@ struct starter_config *confread_load(const char *file,
 	}
 
 	if (!setuponly) {
-		struct section_list *sconn;
-
-		/*
-		 * Load %default conn
-		 *
-		 * ??? is it correct to accept multiple %default conns?
-		 *
-		 * XXX: yes, apparently it's a feature
-		 */
-		TAILQ_FOREACH(sconn, &cfgp->sections, link) {
-			if (streq(sconn->name, "%default")) {
-				/*
-				 * Is failing to load default conn
-				 * fatal?
-				 */
-				ldbg(logger, "loading default conn");
-				if (!load_conn(&cfg->conn_default,
-					       cfgp, sconn,
-					       /*also=*/false,
-					       /*default conn*/true,
-					       logger)) {
-					break;
-				}
-			}
-		}
-
-		/*
-		 * Load other conns
-		 */
-		TAILQ_FOREACH(sconn, &cfgp->sections, link) {
-			if (streq(sconn->name, "%default")) {
-				/* %default processed above */
-				continue;
-			}
-
-			ldbg(logger, "loading conn %s", sconn->name);
-			struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
-			if (!load_conn(conn, cfgp, sconn,
-				       /*also*/true,
-				       /*default-conn*/false,
-				       logger)) {
-				/* ??? should caller not log perrl? */
-				continue;
-			}
-
-			conn->state = STATE_LOADED;
+		if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
+			pfree_ipsec_conf(&cfgp);
+			confread_free(cfg);
+			return NULL;
 		}
 	}
 
 	pfree_ipsec_conf(&cfgp);
 	return cfg;
+}
+
+bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
+				  struct ipsec_conf *cfgp,
+				  struct logger *logger)
+{
+	struct section_list *sconn;
+
+	/*
+	 * Load %default conn
+	 *
+	 * ??? is it correct to accept multiple %default conns?
+	 *
+	 * XXX: yes, apparently it's a feature
+	 */
+	TAILQ_FOREACH(sconn, &cfgp->sections, link) {
+		if (streq(sconn->name, "%default")) {
+			/*
+			 * Is failing to load default conn
+			 * fatal?
+			 */
+			ldbg(logger, "loading default conn");
+			if (!load_conn(&cfg->conn_default,
+				       cfgp, sconn,
+				       /*also=*/false,
+				       /*default conn*/true,
+				       logger)) {
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Load other conns
+	 */
+	TAILQ_FOREACH(sconn, &cfgp->sections, link) {
+		if (streq(sconn->name, "%default")) {
+			/* %default processed above */
+			continue;
+		}
+
+		ldbg(logger, "loading conn %s", sconn->name);
+		struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
+		if (!load_conn(conn, cfgp, sconn,
+			       /*also*/true,
+			       /*default-conn*/false,
+			       logger)) {
+			/* ??? should caller not log perrl? */
+			continue;
+		}
+
+		conn->state = STATE_LOADED;
+	}
+	return true;
 }
 
 struct starter_config *confread_argv(const char *name,
@@ -674,15 +690,9 @@ struct starter_config *confread_argv(const char *name,
 	 * Load other conns
 	 */
 
-	struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
-	if (!load_conn(conn, cfgp, sconn,
-		       /*also*/true,
-		       /*default conn*/false,
-		       logger)) {
-	    pfree_ipsec_conf(&cfgp);
-	    /* XXX: leak! */
-	    return NULL;
+	if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
+		pfree_ipsec_conf(&cfgp);
+		confread_free(cfg);
 	}
 
 	pfree_ipsec_conf(&cfgp);
