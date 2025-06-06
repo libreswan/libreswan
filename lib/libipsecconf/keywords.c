@@ -159,7 +159,7 @@ static const struct keyword_def ipsec_conf_keyword[] = {
   K("drop-oppo-null",  kv_config,  kt_sparse_name,  KYN_DROP_OPPO_NULL, &yn_option_names),
   K("expire-shunt-interval", kv_config, kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL, NULL),
 
-  K("ipsec-interface-managed", kv_config, kt_sparse_name, KWYN_IPSEC_INTERFACE_MANAGED, &yn_option_names),
+  K("ipsec-interface-managed", kv_config, kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, &yn_option_names),
 
 #ifdef USE_NFLOG
   K("nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL),

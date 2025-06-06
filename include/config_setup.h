@@ -98,9 +98,9 @@ enum config_setup_keyword {
 
 	KBF_IKEv1_POLICY,	/* global ikev1 policy - default drop */
 	KSF_PLUTODEBUG,
-	KWYN_IPSEC_INTERFACE_MANAGED,
+	KYN_IPSEC_INTERFACE_MANAGED,
 
-#define CONFIG_SETUP_KEYWORD_ROOF (KWYN_IPSEC_INTERFACE_MANAGED+1)
+#define CONFIG_SETUP_KEYWORD_ROOF (KYN_IPSEC_INTERFACE_MANAGED+1)
 };
 
 struct config_setup *config_setup_singleton(void);

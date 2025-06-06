@@ -642,12 +642,6 @@ int main(int argc, char **argv)
 	struct logger *logger = init_log(argv[0]);	/* must free */
 
 	/*
-	 * More sanity checks.
-	 */
-	kernel_ops = kernel_stacks[0];
-	PASSERT(logger, kernel_ops != NULL);
-
-	/*
 	 * Identify the main thread.
 	 *
 	 * Also used as a reserved thread for code wanting to
@@ -813,7 +807,7 @@ int main(int argc, char **argv)
 
 		case OPT_USE_PFKEYV2:	/* --use-pfkeyv2 */
 #ifdef KERNEL_PFKEYV2
-			kernel_ops = &pfkeyv2_kernel_ops;
+			update_setup_string(KSF_PROTOSTACK, &pfkeyv2_kernel_ops.protostack_names[0]);
 #else
 			llog(RC_LOG, logger, "--use-pfkeyv2 not supported");
 #endif
@@ -821,7 +815,7 @@ int main(int argc, char **argv)
 
 		case OPT_USE_XFRM:	/* --use-netkey */
 #ifdef KERNEL_XFRM
-			kernel_ops = &xfrm_kernel_ops;
+			update_setup_string(KSF_PROTOSTACK, xfrm_kernel_ops.protostack_names[0]);
 #else
 			llog(RC_LOG, logger, "--use-xfrm not supported");
 #endif
@@ -1005,32 +999,6 @@ int main(int argc, char **argv)
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, logger);
 
-			config_ipsec_interface(cfg->setup->values[KWYN_IPSEC_INTERFACE_MANAGED].option, logger);
-
-			char *protostack = cfg->setup->values[KSF_PROTOSTACK].string;
-			passert(kernel_ops == kernel_stacks[0]); /*default*/
-
-			if (protostack != NULL && protostack[0] != '\0') {
-				kernel_ops = NULL;
-				for (const struct kernel_ops *const *stack = kernel_stacks;
-				     *stack != NULL; stack++) {
-					const struct kernel_ops *ops = *stack;
-					for (const char **name =ops->protostack_names;
-					     *name != NULL; name++) {
-						if (strcaseeq((*name), protostack)) {
-							kernel_ops = ops;
-							break;
-						}
-					}
-				}
-				if (kernel_ops == NULL) {
-					kernel_ops = kernel_stacks[0];
-					llog(RC_LOG, logger,
-					     "protostack=%s ignored, using protostack=%s",
-					     protostack, kernel_ops->protostack_names[0]);
-				}
-			}
-
 			confread_free(cfg);
 			continue;
 		}
@@ -1078,10 +1046,11 @@ int main(int argc, char **argv)
 			}
 			continue;
 		}
-
-		default:
-			bad_case(c);
+		/* no default: instead ... */
 		}
+
+		/* ... assume all above use CONTINUE and not BREAK */
+		bad_case(c);
 	}
 
 	/*
@@ -1098,6 +1067,34 @@ int main(int argc, char **argv)
 
 	pluto_expire_lifetime = config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME);
 	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
+
+	const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
+	if (protostack == NULL) {
+		kernel_ops = kernel_stacks[0]; /*default*/
+	} else {
+		kernel_ops = NULL;
+
+		for (const struct kernel_ops *const *stack = kernel_stacks;
+		     *stack != NULL; stack++) {
+			const struct kernel_ops *ops = *stack;
+			for (const char **name =ops->protostack_names;
+			     *name != NULL; name++) {
+				if (strcaseeq((*name), protostack)) {
+					kernel_ops = ops;
+					break;
+				}
+			}
+		}
+		if (kernel_ops == NULL) {
+			kernel_ops = kernel_stacks[0];
+			llog(RC_LOG, logger,
+			     "protostack=%s ignored, using protostack=%s",
+			     protostack, kernel_ops->protostack_names[0]);
+		}
+	}
+
+	enum yn_options managed = config_setup_option(oco, KYN_IPSEC_INTERFACE_MANAGED);
+	config_ipsec_interface(managed, logger);
 
 	/* trash default; which is true */
 	log_ip = config_setup_yn(oco, KYN_LOGIP);
@@ -1536,6 +1533,7 @@ int main(int argc, char **argv)
 	start_server_helpers(config_setup_option(oco, KBF_NHELPERS), logger);
 
 	init_kernel(logger, expire_shunt_interval);
+
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
 	llog(RC_LOG, logger, "CRL fetch support [%s]",
