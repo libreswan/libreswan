@@ -115,7 +115,7 @@ static bool selftest_only = false;
 
 /* pulled from main for show_setup_plutomain() */
 
-static char *conffile;
+static const char *conffile;
 
 static struct {
 	bool enable;
@@ -126,7 +126,6 @@ static struct {
 void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
-	pfree(conffile);
 	free_global_redirect_dests();
 	free_config_setup();
 }
@@ -216,21 +215,6 @@ static const char compile_time_interop_options[] = ""
 	" NFLOG"
 #endif
 ;
-
-/* Read config file. exit() on error. */
-static struct starter_config *read_cfg_file(char *configfile, struct logger *logger)
-{
-	struct starter_config *cfg = NULL;
-
-	/* "config setup" only */
-	cfg = confread_load(configfile, true, logger, 0/*no-verbosity*/);
-	if (cfg == NULL) {
-		/* details already logged */
-		optarg_fatal(logger, "cannot load config file '%s'\n", configfile);
-	}
-
-	return cfg;
-}
 
 /*
  * This function MUST NOT be used for anything else!
@@ -986,22 +970,16 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CONFIG:	/* --config */
-		{
 			/*
 			 * Config struct to variables mapper.  This
-			 * will overwrite all previously set options.
-			 *
-			 * Keep this in the same order as
-			 * optarg_options[] is.
+			 * will update previously set options.
 			 */
-			pfree(conffile);
-			conffile = clone_str(optarg, "conffile via getopt");
-			/* may not return */
-			struct starter_config *cfg = read_cfg_file(conffile, logger);
-
-			confread_free(cfg);
+			conffile = optarg_nonempty(logger);
+			if (!load_config_setup(optarg, logger, 0/*no-verbosity*/)) {
+				/* details already logged */
+				optarg_fatal(logger, "cannot load config file '%s'", optarg);
+			}
 			continue;
-		}
 
 		case OPT_EFENCE_PROTECT:
 #ifdef USE_EFENCE

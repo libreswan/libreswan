@@ -103,6 +103,10 @@ enum config_setup_keyword {
 #define CONFIG_SETUP_KEYWORD_ROOF (KYN_IPSEC_INTERFACE_MANAGED+1)
 };
 
+bool load_config_setup(const char *file,
+		       struct logger *logger,
+		       unsigned verbosity);
+
 struct config_setup *config_setup_singleton(void);
 void free_config_setup(void);
 

@@ -1024,7 +1024,7 @@ void init_server(struct logger *logger)
 
 static server_stopped_cb server_stopped;
 
-void run_server(char *conffile, struct logger *logger)
+void run_server(const char *conffile, struct logger *logger)
 {
 	UNUSED const struct config_setup *oco = config_setup_singleton(); /*param?*/
 
@@ -1057,7 +1057,9 @@ void run_server(char *conffile, struct logger *logger)
 		DISCARD_CONST(char *, ctl_addr.sun_path),
 		DISCARD_CONST(char *, "--config"),
 		DISCARD_CONST(char *, conffile),
-		DISCARD_CONST(char *, "--autoall"), NULL };
+		DISCARD_CONST(char *, "--autoall"),
+		NULL,
+	};
 	char *newenv[] = { NULL };
 	server_fork_exec(addconn_path, newargv, newenv,
 			 null_shunk, LOG_STREAM/*not-whack!*/,

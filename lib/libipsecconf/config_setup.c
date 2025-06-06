@@ -235,3 +235,15 @@ lset_t config_setup_debugging(struct logger *logger)
 
 	return result.set;
 }
+
+bool load_config_setup(const char *file,
+		       struct logger *logger,
+		       unsigned verbosity)
+{
+	struct starter_config *cfg =
+		confread_load(file, /*config-setup-only*/true,
+			      logger, verbosity);
+	bool ok = (cfg != NULL);
+	confread_free(cfg);
+	return ok;
+}
