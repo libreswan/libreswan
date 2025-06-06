@@ -809,7 +809,7 @@ int main(int argc, char **argv)
 
 		case OPT_USE_PFKEYV2:	/* --use-pfkeyv2 */
 #ifdef KERNEL_PFKEYV2
-			update_setup_string(KSF_PROTOSTACK, &pfkeyv2_kernel_ops.protostack_names[0]);
+			update_setup_string(KSF_PROTOSTACK, pfkeyv2_kernel_ops.protostack_names[0]);
 #else
 			llog(RC_LOG, logger, "--use-pfkeyv2 not supported");
 #endif
