@@ -88,11 +88,11 @@ void parser_warning(struct parser *parser, int eerror/*can be 0*/,
 void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 		  const char *s, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
-struct ipsec_conf *parser_load_conf(const char *file, struct logger *logger,
-				    bool setuponly, unsigned verbosity);
-struct ipsec_conf *parser_argv_conf(const char *name, char *argv[], int start, struct logger *logger);
+struct ipsec_conf *load_ipsec_conf(const char *file, struct logger *logger,
+				   bool setuponly, unsigned verbosity);
+struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start, struct logger *logger);
 
-void parser_freeany_config_parsed(struct ipsec_conf **cfg);
+void pfree_ipsec_conf(struct ipsec_conf **cfg);
 
 #define THIS_IPSEC_CONF_VERSION 2
 

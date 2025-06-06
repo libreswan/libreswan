@@ -571,7 +571,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = parser_load_conf(file, logger, setuponly, verbosity);
+	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, setuponly, verbosity);
 	if (cfgp == NULL)
 		return NULL;
 
@@ -583,7 +583,7 @@ struct starter_config *confread_load(const char *file,
 	 * Danger: reverse fail.
 	 */
 	if (!load_setup(cfg, cfgp)) {
-		parser_freeany_config_parsed(&cfgp);
+		pfree_ipsec_conf(&cfgp);
 		confread_free(cfg);
 		return NULL;
 	}
@@ -638,7 +638,7 @@ struct starter_config *confread_load(const char *file,
 		}
 	}
 
-	parser_freeany_config_parsed(&cfgp);
+	pfree_ipsec_conf(&cfgp);
 	return cfg;
 }
 
@@ -649,13 +649,13 @@ struct starter_config *confread_argv(const char *name,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = parser_argv_conf(name, argv, start, logger);
+	struct ipsec_conf *cfgp = argv_ipsec_conf(name, argv, start, logger);
 	if (cfgp == NULL)
 		return NULL;
 
 	struct starter_config *cfg = alloc_starter_config();
 	if (cfg == NULL) {
-		parser_freeany_config_parsed(&cfgp);
+		pfree_ipsec_conf(&cfgp);
 		return NULL;
 	}
 
@@ -669,12 +669,12 @@ struct starter_config *confread_argv(const char *name,
 		       /*also*/true,
 		       /*default conn*/false,
 		       logger)) {
-	    parser_freeany_config_parsed(&cfgp);
+	    pfree_ipsec_conf(&cfgp);
 	    /* XXX: leak! */
 	    return NULL;
 	}
 
-	parser_freeany_config_parsed(&cfgp);
+	pfree_ipsec_conf(&cfgp);
 	return cfg;
 }
 
