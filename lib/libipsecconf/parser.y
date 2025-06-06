@@ -264,14 +264,14 @@ void yyerror(struct parser *parser, const char *s)
 	}
 }
 
-static struct config_parsed *alloc_config_parsed(void)
+static struct ipsec_conf *alloc_config_parsed(void)
 {
-	struct config_parsed *cfgp = alloc_thing(struct config_parsed, __func__);
+	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
 	TAILQ_INIT(&cfgp->sections);
 	return cfgp;
 }
 
-struct config_parsed *parser_load_conf(const char *file,
+struct ipsec_conf *parser_load_conf(const char *file,
 				       struct logger *logger,
 				       bool setuponly,
 				       unsigned verbosity)
@@ -313,10 +313,10 @@ err:
 	return NULL;
 }
 
-struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start,
+struct ipsec_conf *parser_argv_conf(const char *name, char *argv[], int start,
 				       struct logger *logger)
 {
-	struct config_parsed *cfgp = alloc_config_parsed();
+	struct ipsec_conf *cfgp = alloc_config_parsed();
 
 	/* there's only one */
 	struct section_list *section = alloc_thing(struct section_list, __func__);
@@ -441,10 +441,10 @@ static void parser_free_kwlist(struct kw_list *list)
 	}
 }
 
-void parser_freeany_config_parsed(struct config_parsed **cfgp)
+void parser_freeany_config_parsed(struct ipsec_conf **cfgp)
 {
 	if ((*cfgp) != NULL) {
-		struct config_parsed *cfg = (*cfgp);
+		struct ipsec_conf *cfg = (*cfgp);
 		parser_free_kwlist(cfg->config_setup);
 
 		/* keep deleting the first entry */

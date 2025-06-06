@@ -57,7 +57,7 @@ const char *rootdir;	/* when evaluating paths, prefix this to them */
 const char *rootdir2;	/* or... try this one too */
 
 static bool translate_conn(struct starter_conn *conn,
-			   const struct config_parsed *cfgp,
+			   const struct ipsec_conf *cfgp,
 			   struct section_list *sl,
 			   enum keyword_set assigned_value,
 			   struct logger *logger);
@@ -90,7 +90,7 @@ static struct starter_config *alloc_starter_config(void)
  * @param perr pointer to store errors in
  */
 static bool load_setup(struct starter_config *cfg,
-		       const struct config_parsed *cfgp)
+		       const struct ipsec_conf *cfgp)
 {
 	bool ok = true;
 	const struct kw_list *kw;
@@ -154,7 +154,7 @@ static bool load_setup(struct starter_config *cfg,
  */
 
 static bool translate_field(struct starter_conn *conn,
-			    const struct config_parsed *cfgp,
+			    const struct ipsec_conf *cfgp,
 			    const struct section_list *sl,
 			    enum keyword_set assigned_value,
 			    const struct kw_list *kw,
@@ -290,7 +290,7 @@ static bool translate_field(struct starter_conn *conn,
 }
 
 static bool translate_leftright(struct starter_conn *conn,
-				const struct config_parsed *cfgp,
+				const struct ipsec_conf *cfgp,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
 				const struct kw_list *kw,
@@ -304,7 +304,7 @@ static bool translate_leftright(struct starter_conn *conn,
 }
 
 static bool translate_conn(struct starter_conn *conn,
-			   const struct config_parsed *cfgp,
+			   const struct ipsec_conf *cfgp,
 			   struct section_list *sl,
 			   enum keyword_set assigned_value,
 			   struct logger *logger)
@@ -346,7 +346,7 @@ static bool translate_conn(struct starter_conn *conn,
 }
 
 static bool load_conn(struct starter_conn *conn,
-		      const struct config_parsed *cfgp,
+		      const struct ipsec_conf *cfgp,
 		      struct section_list *sl,
 		      bool alsoprocessing,
 		      bool defaultconn,
@@ -571,7 +571,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, logger, setuponly, verbosity);
+	struct ipsec_conf *cfgp = parser_load_conf(file, logger, setuponly, verbosity);
 	if (cfgp == NULL)
 		return NULL;
 
@@ -649,7 +649,7 @@ struct starter_config *confread_argv(const char *name,
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_argv_conf(name, argv, start, logger);
+	struct ipsec_conf *cfgp = parser_argv_conf(name, argv, start, logger);
 	if (cfgp == NULL)
 		return NULL;
 
