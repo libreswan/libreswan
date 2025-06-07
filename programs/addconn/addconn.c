@@ -247,6 +247,38 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	return found; /* not-found */
 }
 
+struct print_option {
+	const char *name;
+	const char *export;
+	const char *varprefix;
+};
+
+static void print_option(const struct print_option po,
+			 const char *kwname,
+			 const char *fmt,
+			 ...)
+{
+	if (strlen(po.name) > 0) {
+		va_list ap;
+		va_start(ap, fmt);
+		vprintf(fmt, ap);
+		va_end(ap);
+		printf("\n");
+		return;
+	}
+	if (strlen(po.export) > 0) {
+		printf("%s ", po.export);
+	}
+	char *safe_kwname = environlize(kwname);
+	printf("%s%s='", po.varprefix, safe_kwname);
+	pfreeany(safe_kwname);
+	va_list ap;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("'\n");
+}
+
 enum opt {
 	OPT_HELP = 'h',
 	OPT_CONFIG = 256,
@@ -282,7 +314,7 @@ const struct option optarg_options[] =
 	{ "varprefix\0<prefix>", required_argument, NULL, OPT_VARPREFIX, },
 	{ "ctlsocket\0<socketfile>", required_argument, NULL, OPT_CTLSOCKET, },
 	{ "ctlbase\0>ctlsocket", required_argument, NULL, OPT_CTLSOCKET, }, /* backwards compatibility */
-	{ "configsetup\0", no_argument, NULL, OPT_CONFIGSETUP, },
+	{ OPT("configsetup", "option"), optional_argument, NULL, OPT_CONFIGSETUP, },
 	{ "liststack\0", no_argument, NULL, OPT_LISTSTACK, },
 	{ "checkconfig\0", no_argument, NULL, OPT_CHECKCONFIG, },
 	{ "noexport\0", no_argument, NULL, OPT_NOEXPORT, },
@@ -299,9 +331,14 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	bool autoall = false;
-	bool configsetup = false;
+
+	struct print_option po = {
+		.name = NULL,
+		.export = "export",
+		.varprefix = "",
+	};
+
 	bool checkconfig = false;
-	const char *export = "export"; /* display export before the foo=bar or not */
 	bool
 		dolist = false,
 		listadd = false,
@@ -311,7 +348,6 @@ int main(int argc, char *argv[])
 		listall = false,
 		liststack = false;
 	const char *configfile = NULL;
-	const char *varprefix = "";
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 	const char *name = NULL;
@@ -353,7 +389,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_CONFIGSETUP:
-			configsetup = true;
+			po.name = (optarg == NULL ? "" : optarg);
 			continue;
 
 		case OPT_CHECKCONFIG:
@@ -361,7 +397,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_NOEXPORT:
-			export = "";
+			po.export = "";
 			continue;
 
 		case OPT_CONFIG:
@@ -403,7 +439,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_VARPREFIX:
-			varprefix = optarg;
+			po.varprefix = optarg;
 			continue;
 
 		case OPT_NAME:
@@ -415,7 +451,8 @@ int main(int argc, char *argv[])
 	}
 
 	/* if nothing to add, then complain */
-	if (optind == argc && !autoall && !dolist && !configsetup &&
+	if (optind == argc && !autoall && !dolist &&
+	    po.name == NULL &&
 	    !checkconfig) {
 		llog(RC_LOG, logger, "nothing to do, see --help");
 		exit(1);
@@ -430,8 +467,9 @@ int main(int argc, char *argv[])
 
 	struct starter_config *cfg;
 	if (name != NULL) {
-		if (configsetup) {
-			llog(ERROR_STREAM, logger, "--conn %s conflicts with --configsetup", name);
+		if (po.name != NULL) {
+			llog(ERROR_STREAM, logger, "--conn %s conflicts with --configsetup=%s",
+			     name, po.name);
 			exit(1);
 		}
 		if (autoall) {
@@ -444,7 +482,7 @@ int main(int argc, char *argv[])
 			exit(3);
 		}
 	} else {
-		cfg = confread_load(configfile, configsetup, logger, verbose);
+		cfg = confread_load(configfile, (po.name != NULL), logger, verbose);
 		if (cfg == NULL) {
 			llog(RC_LOG, logger, "loading config file '%s' failed", configfile);
 			exit(3);
@@ -454,7 +492,7 @@ int main(int argc, char *argv[])
 	PASSERT(logger, cfg != NULL);
 
 	if (checkconfig) {
-		/* call is NO-OP when CONFIGSETUP */
+		/* call is NO-OP when checkconfig */
 		confread_free(cfg);
 		free_config_setup();
 		exit(0);
@@ -672,11 +710,21 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (configsetup) {
-		printf("%s %sconfreadstatus=''\n", export, varprefix);
-		printf("%s configfile='%s'\n", export, configfile);
-		printf("%s ctlsocket='%s'\n", export, ctlsocket);
-		ITEMS_FOR_EACH(kd, &ipsec_conf_keywords) {
+	const struct config_setup *oco = config_setup_singleton();
+
+	if (po.name != NULL) {
+
+		if (strlen(po.name) == 0) {
+			print_option(po, "confreadstatus", "");
+			print_option(po, "configfile", "%s", configfile);
+			print_option(po, "ctlsocket", "%s", ctlsocket);
+		}
+
+		for (enum config_setup_keyword kw = CONFIG_SETUP_KEYWORD_FLOOR;
+		     kw < CONFIG_SETUP_KEYWORD_ROOF; kw++) {
+
+			PASSERT(logger, kw < ipsec_conf_keywords.len);
+			const struct keyword_def *kd = &ipsec_conf_keywords.item[kw];
 
 			if (kd->keyname == NULL) {
 				continue;
@@ -689,30 +737,55 @@ int main(int argc, char *argv[])
 			if ((kd->validity & kv_alias) != 0)
 				continue;
 
-			char *safe_kwname = environlize(kd->keyname);
+			if (strlen(po.name) > 0 &&
+			    !strheq(po.name, kd->keyname)) {
+				continue;
+			}
 
 			switch (kd->type) {
 			case kt_string:
-				if (cfg->setup->values[kd->field].string) {
-					printf("%s %s%s='%s'\n",
-						export, varprefix, safe_kwname,
-						cfg->setup->values[kd->field].string);
+			{
+				const char *string = config_setup_string(oco, kd->field);
+				if (string != NULL) {
+					print_option(po, kd->keyname, "%s", string);
 				}
 				break;
+			}
+
+			case kt_sparse_name:
+			{
+				uintmax_t option = config_setup_option(oco, kd->field);
+				if (option != 0) {
+					name_buf nb;
+					print_option(po, kd->keyname, "%s",
+						     str_sparse_short(kd->sparse_names, option, &nb));
+				}
+				break;
+			}
+
+			case kt_seconds:
+			{
+				deltatime_t deltatime = config_setup_deltatime(oco, kd->field);
+				if (deltatime.is_set) {
+					print_option(po, kd->keyname, "%jd", deltasecs(deltatime));
+				}
+				break;
+			}
 
 			case kt_obsolete:
 				break;
 
 			default:
-				if (cfg->setup->values[kd->field].option ||
-					cfg->setup->values[kd->field].set) {
-					printf("%s %s%s='%jd'\n",
-						export, varprefix, safe_kwname,
-						cfg->setup->values[kd->field].option);
+			{
+				uintmax_t option = config_setup_option(oco, kd->field);
+				if (option != 0 ||
+				    oco->values[kd->field].set) {
+					print_option(po, kd->keyname, "%jd", option);
 				}
 				break;
 			}
-			free(safe_kwname);
+			}
+
 		}
 		confread_free(cfg);
 		free_config_setup();
