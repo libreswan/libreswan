@@ -55,7 +55,7 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 static void confwrite_value(FILE *out,
 			    const char *side, /* never NULL! */
 			    enum keyword_valid type,
-			    keyword_values values)
+			    const keyword_values values)
 {
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
@@ -291,8 +291,9 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 
 	/* output config setup section */
 	if (setup) {
+		const struct config_setup *setup = config_setup_singleton();
 		fprintf(out, "config setup\n");
-		confwrite_value(out, "", kv_config, cfg->setup->values);
+		confwrite_value(out, "", kv_config, setup->values);
 		fprintf(out, "\n");
 	}
 
