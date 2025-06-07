@@ -695,7 +695,8 @@ ipsec_stopnflog() {
 	shift
     done
 
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
+
     if [ -z "${NFGROUP}" ]; then
 	exit 0
     fi
@@ -796,7 +797,7 @@ ipsec_checknflog() {
 	shift
     done
 
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
 
     firewall_cmd
 
@@ -834,7 +835,8 @@ ipsec_sniff() {
 	shift
     done
 
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup=nflog-all)
+
     tcpdump -n -i nflog:${NFGROUP}
     exit 0
 }
