@@ -20,7 +20,9 @@
   <refsynopsisdiv id="synopsis">
     <cmdsynopsis>
       <command>ipsec addconn</command>
-      <arg choice="opt">--configsetup</arg>
+      <arg choice="opt">
+	--configsetup <group choice="opt"><replaceable>=option</replaceable></group>
+      </arg>
       <arg choice="opt">--config <replaceable>@@IPSEC_CONF@@</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <arg choice="opt">--verbose</arg>
@@ -148,10 +150,12 @@
 
     <para>
       When <option>--configsetup</option> is specified, the
-      configuration file is parsed for the <emphasis>config setup</emphasis>
-      section and printed to the terminal usable as a shell script.
-      These are prefaced with <emphasis>export </emphasis>
-      unless  <option>--noexport</option> is specified.
+      configuration file is parsed for the <emphasis>config
+      setup</emphasis> section and printed to the terminal usable as a
+      shell script.  These are prefaced with
+      <emphasis>export</emphasis> unless <option>--noexport</option>
+      is specified.  When an <replaceable>option</replaceable> is
+      specified, just the value of that option is printed.
     </para>
 
     <para>
