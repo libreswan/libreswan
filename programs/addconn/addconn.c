@@ -498,10 +498,13 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
+	const struct config_setup *oco = config_setup_singleton();
+
 #ifdef USE_SECCOMP
-	switch (cfg->setup->values[KBF_SECCOMP].option) {
-		case SECCOMP_ENABLED:
-			init_seccomp_addconn(SCMP_ACT_KILL, logger);
+	enum seccomp_mode seccomp = config_setup_option(oco, KBF_SECCOMP);
+	switch (seccomp) {
+	case SECCOMP_ENABLED:
+		init_seccomp_addconn(SCMP_ACT_KILL, logger);
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), logger);
@@ -509,7 +512,7 @@ int main(int argc, char *argv[])
 	case SECCOMP_DISABLED:
 		break;
 	default:
-		bad_case(cfg->setup->values[KBF_SECCOMP].option);
+		bad_case(seccomp);
 	}
 #endif
 
@@ -688,8 +691,6 @@ int main(int argc, char *argv[])
 			printf("\n");
 		}
 	}
-
-	const struct config_setup *oco = config_setup_singleton();
 
 	if (opt_liststack) {
 		const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);

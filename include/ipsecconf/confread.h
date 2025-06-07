@@ -94,9 +94,6 @@ struct config_setup {
 };
 
 struct starter_config {
-	/* config setup */
-	struct config_setup *setup;
-
 	/* conn %default */
 	struct starter_conn conn_default;
 

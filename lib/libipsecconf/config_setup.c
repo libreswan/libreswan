@@ -76,7 +76,7 @@ void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 	kv->set = true;
 }
 
-struct config_setup *config_setup_singleton(void)
+const struct config_setup *config_setup_singleton(void)
 {
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
