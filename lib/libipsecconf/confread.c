@@ -72,7 +72,6 @@ static struct starter_config *alloc_starter_config(void)
 	struct starter_config *cfg = alloc_thing(struct starter_config, "starter_config cfg");
 
 	TAILQ_INIT(&cfg->conns);
-	cfg->setup = config_setup_singleton();
 
 	/* ==== conn %default ==== */
 
