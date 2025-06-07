@@ -124,7 +124,7 @@ void whack_sa(const struct whack_message *m, struct show *s)
 		llog(RC_FATAL, logger,
 		     "received command to %s connection %s, but did not receive the connection name",
 		     whack_sa_name(m->whack_command),
-		     str_enum(&sa_kind_names, whack_sa_kind(m->whack_command), &stb));
+		     str_enum_long(&sa_kind_names, whack_sa_kind(m->whack_command), &stb));
 		return;
 	}
 

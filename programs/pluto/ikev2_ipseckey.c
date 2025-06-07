@@ -99,14 +99,14 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 			name_buf ab;
 			ldbg(st->logger, "add IPSECKEY pluto as publickey %s %s %s",
 			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
-			     ttl_buf, str_enum(&dns_auth_level_names, al, &ab));
+			     ttl_buf, str_enum_long(&dns_auth_level_names, al, &ab));
 		} else {
 			id_buf thatidbuf;
 			name_buf ab;
 			ldbg(st->logger, "add IPSECKEY pluto as publickey %s dns query is %s %s %s",
 			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
 			     dnsr->qname, ttl_buf,
-			     str_enum(&dns_auth_level_names, al, &ab));
+			     str_enum_long(&dns_auth_level_names, al, &ab));
 		}
 
 		struct pubkey *pubkey = NULL; /*must-delref*/

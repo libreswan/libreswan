@@ -276,7 +276,7 @@ static bool never_negotiate_sparse_option(const char *leftright,
 		if (value != 0) {
 			name_buf sb;
 			llog_never_negotiate_option(logger, wm, leftright, name,
-						    str_sparse(names, value, &sb));
+						    str_sparse_long(names, value, &sb));
 		}
 		return true;
 	}
@@ -1151,13 +1151,13 @@ static bool extract_yn_p(const char *leftright, const char *name, enum yn_option
 		name_buf sb;
 		llog(RC_LOG, logger,
 		     "warning: %s%s=%s ignored without %s%s=yes",
-		     leftright, name, str_sparse(names, value, &sb),
+		     leftright, name, str_sparse_long(names, value, &sb),
 		     p_leftright, p_name);
 	} else if (p == YN_NO) {
 		name_buf sb;
 		llog(RC_LOG, logger,
 		     "warning: %s%s=%s ignored when %s%s=no",
-		     leftright, name, str_sparse(names, value, &sb),
+		     leftright, name, str_sparse_long(names, value, &sb),
 		     p_leftright, p_name);
 	}
 
@@ -1791,7 +1791,7 @@ static diag_t extract_host_end(struct host_end *host,
 			llog(RC_LOG, logger,
 			     "warning: ignoring %s %s '%s' and using %s certificate '%s'",
 			     leftright,
-			     str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+			     str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     pubkey,
 			     leftright, src->cert);
 		}
@@ -1839,7 +1839,7 @@ static diag_t extract_host_end(struct host_end *host,
 			llog(RC_LOG, logger,
 			     "warning: ignoring %sckaid=%s and using %s%s",
 			     leftright, src->ckaid,
-			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
@@ -1847,7 +1847,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (err != NULL) {
 			name_buf pkb;
 			return diag("%s%s invalid: %s",
-				    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+				    leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 				    err);
 		}
 
@@ -1862,7 +1862,7 @@ static diag_t extract_host_end(struct host_end *host,
 				free_chunk_content(&keyspace);
 				name_buf pkb;
 				return diag_diag(&d, "%s%s invalid, ",
-						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+						 leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 			}
 
 			/* must free keyspace pubkey_content */
@@ -1872,7 +1872,7 @@ static diag_t extract_host_end(struct host_end *host,
 			name_buf pkb;
 			ldbg(logger, "saving CKAID %s extracted from %s%s",
 			     str_ckaid(&pubkey_content.ckaid, &ckb),
-			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 			host_config->ckaid = clone_const_thing(pubkey_content.ckaid, "raw pubkey's ckaid");
 
 			free_chunk_content(&keyspace);
@@ -1925,7 +1925,7 @@ static diag_t extract_host_end(struct host_end *host,
 			name_buf pkb;
 			llog(LOG_STREAM/*not-whack-for-now*/, logger,
 			     "loaded private key matching %s%s CKAID %s",
-			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     str_ckaid(host_config->ckaid, &ckb));
 		}
 
@@ -2259,7 +2259,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			name_buf nb;
 			llog(RC_LOG, logger,
 			     "warning: IKEv1, ignoring %scat=%s (client address translation)",
-			     leftright, str_sparse(&yn_option_names, src->cat, &nb));
+			     leftright, str_sparse_long(&yn_option_names, src->cat, &nb));
 		}
 		break;
 	default:
@@ -3576,7 +3576,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			name_buf sb;
 			llog_pexpect(c->logger, HERE,
 				     "type=%s should be never-negotiate",
-				     str_sparse(&type_option_names, wm->type, &sb));
+				     str_sparse_long(&type_option_names, wm->type, &sb));
 		}
 		encap_mode = ENCAP_MODE_UNSET;
 	}
@@ -3697,8 +3697,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (wm->ikepad != YNA_UNSET) {
 			name_buf vn, pn;
 			llog(RC_LOG, c->logger, "warning: %s connection ignores ikepad=%s",
-			     str_enum(&ike_version_names, ike_version, &vn),
-			     str_sparse(&yna_option_names, wm->ikepad, &pn));
+			     str_enum_long(&ike_version_names, ike_version, &vn),
+			     str_sparse_long(&yna_option_names, wm->ikepad, &pn));
 		}
 		/* default */
 		config->v1_ikepad.message = true;
@@ -3789,7 +3789,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (encap_mode != ENCAP_MODE_TUNNEL) {
 			name_buf sb;
 			return diag("type=%s must be transport",
-				    str_sparse(&type_option_names, wm->type, &sb));
+				    str_sparse_long(&type_option_names, wm->type, &sb));
 		}
 		if (tfc > 0) {
 			return diag("IPTFS is not compatible with tfc=%ju", tfc);
@@ -3803,7 +3803,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (encap_proto != ENCAP_PROTO_ESP) {
 			name_buf sb;
 			return diag("IPTFS is not compatible with phase2=%s",
-				    str_enum(&encap_proto_story, wm->phase2, &sb));
+				    str_enum_long(&encap_proto_story, wm->phase2, &sb));
 		}
 
 		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(c->logger);
@@ -3938,7 +3938,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		name_buf fb;
 		llog(RC_LOG, c->logger,
 		     "warning: IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
-		     str_sparse(&ynf_option_names, wm->fragmentation, &fb));
+		     str_sparse_long(&ynf_option_names, wm->fragmentation, &fb));
 		config->ike_frag.allow = true;
 	} else {
 		switch (wm->fragmentation) {
@@ -4082,7 +4082,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	{
 		name_buf nb;
 		ldbg(c->logger, "autostart=%s implies +UP",
-		     str_sparse(&autostart_names, wm->autostart, &nb));
+		     str_sparse_long(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.up);
 		break;
 	}
@@ -4091,7 +4091,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	{
 		name_buf nb;
 		ldbg(c->logger, "autostart=%s implies +ROUTE",
-		     str_sparse(&autostart_names, wm->autostart, &nb));
+		     str_sparse_long(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.route);
 		break;
 	}
@@ -4099,7 +4099,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	{
 		name_buf nb;
 		ldbg(c->logger, "autostart=%s implies +KEEP",
-		     str_sparse(&autostart_names, wm->autostart, &nb));
+		     str_sparse_long(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.keep);
 		break;
 	}
@@ -4210,7 +4210,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			llog(RC_LOG, c->logger,
 			     "warning: %s kernel interface does not support ESN, ignoring esn=%s",
 			     kernel_ops->interface_name,
-			     str_sparse(&yne_option_names, wm->esn, &nb));
+			     str_sparse_long(&yne_option_names, wm->esn, &nb));
 		}
 		config->esn.no = true;
 #ifdef USE_IKEv1
@@ -4227,7 +4227,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			name_buf nb;
 			llog(RC_LOG, c->logger,
 			     "warning: ignoring esn=%s as not implemented with IKEv1",
-			     str_sparse(yne_option_names, wm->esn, &nb));
+			     str_sparse_long(yne_option_names, wm->esn, &nb));
 		}
 #endif
 		switch (wm->esn) {
@@ -4265,7 +4265,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			name_buf sb;
 			llog(RC_LOG, c->logger,
 			     "warning: ignoring ppk=%s as IKEv1",
-			     str_sparse(&nppi_option_names, wm->ppk, &sb));
+			     str_sparse_long(&nppi_option_names, wm->ppk, &sb));
 		}
 	} else {
 		switch (wm->ppk) {
@@ -4443,7 +4443,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			if (kernel_ops->detect_nic_offload == NULL) {
 				name_buf nb;
 				return diag("no kernel support for nic-offload[=%s]",
-					    str_sparse(&nic_offload_option_names, wm->nic_offload, &nb));
+					    str_sparse_long(&nic_offload_option_names, wm->nic_offload, &nb));
 			}
 			config->nic_offload = wm->nic_offload;
 		}
@@ -5007,9 +5007,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 			name_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,
-				    str_enum(&keyword_auth_names, c->local->host.config->auth, &lab),
+				    str_enum_long(&keyword_auth_names, c->local->host.config->auth, &lab),
 				    c->remote->config->leftright,
-				    str_enum(&keyword_auth_names, c->remote->host.config->auth, &rab));
+				    str_enum_long(&keyword_auth_names, c->remote->host.config->auth, &rab));
 		}
 	}
 

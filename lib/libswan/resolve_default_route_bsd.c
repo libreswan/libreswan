@@ -158,7 +158,7 @@ static enum route_status get_route_1(int s, ip_address dst,
 		unsigned m = 1 << b;
 		if (a & m) {
 			name_buf eb;
-			dbg("found %s", str_sparse(&rta_names, m, &eb));
+			dbg("found %s", str_sparse_long(&rta_names, m, &eb));
 			a &= ~m;
 			struct sockaddr *sa = (void*)ap;
 			RT_ADVANCE(ap, sa);

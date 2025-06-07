@@ -160,7 +160,7 @@ void pstat_sa_failed(struct state *st, enum terminate_reason r)
 	enum sa_kind sa_kind = st->st_sa_kind_when_established;
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
-	const char *reason = str_enum(&terminate_reason_names, r, &rb);
+	const char *reason = str_enum_long(&terminate_reason_names, r, &rb);
 	if (st->st_pstats.terminate_reason == REASON_UNKNOWN) {
 		ldbg(st->logger, "pstats #%lu %s failed %s", st->st_serialno, name, reason);
 		st->st_pstats.terminate_reason = r;
@@ -174,7 +174,7 @@ void pstat_sa_deleted(struct state *st)
 	enum sa_kind sa_kind = st->st_sa_kind_when_established;
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
-	const char *reason = str_enum(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
+	const char *reason = str_enum_long(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
 	ldbg(st->logger, "pstats #%lu %s deleted %s", st->st_serialno, name, reason);
 
 	pstats_sa_finished[st->st_ike_version][sa_kind][st->st_pstats.terminate_reason]++;
@@ -327,7 +327,7 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 	for (unsigned long n = 0; n < stat->count_ceiling; n++) {
 		unsigned long count = stat->count[n];
 		name_buf nm;
-		if (enum_name_short(stat->names, n + stat->floor, &nm)) {
+		if (enum_short(stat->names, n + stat->floor, &nm)) {
 			show(s, "total.%s.%s=%lu",
 				 stat->what, nm.buf, count);
 		} else {
@@ -337,7 +337,7 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 	/* prefer enum's name */
 	name_buf nm;
 	show(s, "total.%s.%s=%lu", stat->what,
-		 (enum_name_short(stat->names, stat->count_ceiling + stat->floor, &nm) ? nm.buf : "other"),
+		 (enum_short(stat->names, stat->count_ceiling + stat->floor, &nm) ? nm.buf : "other"),
 		 other);
 }
 
@@ -359,7 +359,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 * that include UNUSED.  Skip them.
 		 */
 		name_buf nm;
-		if (enum_name_short(names, e, &nm)) {
+		if (enum_short(names, e, &nm)) {
 			show(s, "total.%s.%s=%lu",
 				 what, nm.buf, count[e]);
 		}
@@ -429,7 +429,7 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 			unsigned long finished = 0;
 			for (enum terminate_reason r = TERMINATE_REASON_FLOOR; r < TERMINATE_REASON_ROOF; r++) {
 				name_buf reason;
-				PEXPECT(show_logger(s), enum_name(&terminate_reason_names, r, &reason));
+				PEXPECT(show_logger(s), enum_long(&terminate_reason_names, r, &reason));
 				unsigned long count = pstats_sa_finished[v][t][r];
 				finished += count;
 				if (count > 0) {

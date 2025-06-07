@@ -72,7 +72,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	ldbg(logger, "%s() called for %s to %s PSK with authby=%s resume=%s",
 	     __func__, ike->sa.st_state->name,
 	     str_enum_short(&perspective_names, perspective, &pb),
-	     str_enum(&keyword_auth_names, authby, &an),
+	     str_enum_long(&keyword_auth_names, authby, &an),
 	     bool_str(ike->sa.st_v2_resume_session != NULL));
 
 	/* this is the IKE_AUTH exchange, so a given */
@@ -360,7 +360,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			/* XXX: log prf(prf(hash based on null or secret)) how? */
 			/* now it was authenticated */
 			jam_string(buf, "using authby=");
-			jam_enum(buf, &keyword_auth_names, authby);
+			jam_enum_long(buf, &keyword_auth_names, authby);
 			jam_string(buf, " and ");
 			jam_enum_short(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
 			jam_string(buf, " '");

@@ -490,7 +490,7 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 {
 	struct connection *c = ike->sa.st_connection;
 	name_buf xchg;
-	enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xchg);
+	enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xchg);
 
 	ike->sa.st_viable_parent = false; /* just to be sure */
 
@@ -804,7 +804,7 @@ void show_global_redirect(struct show *s)
 {
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, "global-redirect=");
-		jam_sparse(buf, &global_redirect_names, global_redirect);
+		jam_sparse_long(buf, &global_redirect_names, global_redirect);
 		jam_string(buf, ", ");
 		jam_string(buf, "global-redirect-to=");
 		jam_string(buf, (strlen(global_redirect_to()) > 0 ? global_redirect_to() :
@@ -841,7 +841,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 			name_buf rn;
 			llog(RC_LOG, logger,
 			     "set global redirect to %s",
-			     str_sparse(&global_redirect_names, global_redirect, &rn));
+			     str_sparse_long(&global_redirect_names, global_redirect, &rn));
 		}
 		break;
 	}

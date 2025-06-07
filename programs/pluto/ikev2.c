@@ -230,7 +230,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 	while (np != ISAKMP_NEXT_v2NONE) {
 		name_buf b;
 		dbg("Now let's proceed with payload (%s)",
-		    str_enum(&ikev2_payload_names, np, &b));
+		    str_enum_long(&ikev2_payload_names, np, &b));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
 			llog(RC_LOG, log,
@@ -290,7 +290,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 				name_buf b;
 				llog(RC_LOG, log,
 				     "message %s contained an unknown critical payload type (%s)",
-				     role, str_enum(&ikev2_payload_names, np, &b));
+				     role, str_enum_long(&ikev2_payload_names, np, &b));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				summary.data[0] = np;
 				summary.data_size = 1;
@@ -299,7 +299,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			name_buf eb;
 			llog(RC_LOG, log,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
-			     str_enum(&ikev2_payload_names, np, &eb));
+			     str_enum_long(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
@@ -328,7 +328,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 		}
 
 		dbg("processing payload: %s (len=%zu)",
-		    str_enum(&ikev2_payload_names, np, &b),
+		    str_enum_long(&ikev2_payload_names, np, &b),
 		    pbs_left(&pd->pbs));
 
 		/*
@@ -521,7 +521,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			name_buf xb;
 			llog_pexpect_v2_msgid(ike,
 					      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
-					      str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+					      str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					      msgid);
 			return true;
 		}
@@ -740,7 +740,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		name_buf xb;
 		llog_sa(RC_LOG, ike,
 			"unexpected %s response with Message ID %jd (last sent was %jd); dropping packet",
-			str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+			str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
 		return true;
 	}
@@ -753,7 +753,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		name_buf xb;
 		dbg_v2_msgid(ike,
 			     "%s response with Message ID %jd is work-in-progress; dropping packet",
-			     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+			     str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			     msgid);
 		return true;
 	}
@@ -766,7 +766,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		name_buf xb;
 		llog_sa(RC_LOG, ike,
 			"unexpected %s response with Message ID %jd (processing %jd); dropping packet",
-			str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+			str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			msgid, ike->sa.st_v2_msgid_windows.initiator.wip);
 		return true;
 	}
@@ -1536,7 +1536,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 			name_buf tb;
 			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
 			     ike->sa.st_serialno,
-			     str_enum(&event_type_names, lifetime_event->ev_type, &tb));
+			     str_enum_long(&event_type_names, lifetime_event->ev_type, &tb));
 		}
 		break;
 	}
@@ -1688,7 +1688,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam(buf, "#%lu complete_v2_state_transition() status ", ike->sa.st_serialno);
-		jam_enum(buf, &stf_status_names, result);
+		jam_enum_long(buf, &stf_status_names, result);
 		jam(buf, " transitioning from state %s to ",
 		    ike->sa.st_state->short_name);
 		jam_v2_transition(buf, transition);
@@ -1844,7 +1844,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	llog_pexpect(ike->sa.logger, HERE,
 		     "state transition '%s' failed with %s",
 		     transition->story,
-		     str_enum(&v2_notification_names, notification, &nb));
+		     str_enum_long(&v2_notification_names, notification, &nb));
 	on_delete(&ike->sa, skip_send_delete);
 	terminate_ike_family(&ike, REASON_DELETED, HERE);
 }
@@ -2013,9 +2013,9 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 	}
 	jam_string(buf, transition->to->short_name);
 	jam_string(buf, " (");
-	jam_enum(buf, &ikev2_exchange_names, transition->exchange);
+	jam_enum_long(buf, &ikev2_exchange_names, transition->exchange);
 	jam_string(buf, " ");
-	jam_enum(buf, &message_role_names, transition->recv_role);
+	jam_enum_long(buf, &message_role_names, transition->recv_role);
 	jam_string(buf, ": ");
 	jam_string(buf, transition->story);
 	jam_string(buf, ")");

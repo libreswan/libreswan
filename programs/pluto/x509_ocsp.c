@@ -151,7 +151,7 @@ diag_t init_x509_ocsp(struct logger *logger)
 		/* don't shoot pluto over this */
 		name_buf b;
 		llog_nss_error(RC_LOG, logger, "OCSP: WARNING: could not set ocsp-method=%s",
-			       str_sparse(&ocsp_method_names, x509_ocsp.method, &b));
+			       str_sparse_long(&ocsp_method_names, x509_ocsp.method, &b));
 	}
 
 	/*
@@ -203,7 +203,7 @@ void show_x509_ocsp(struct show *s)
 		jam_string(buf, ", ocsp-cache-max-age=");
 		jam_deltatime(buf, x509_ocsp.cache_max_age);
 		jam_string(buf, ", ocsp-method=");
-		jam_sparse(buf, &ocsp_method_names, x509_ocsp.method);
+		jam_sparse_long(buf, &ocsp_method_names, x509_ocsp.method);
 	}
 }
 

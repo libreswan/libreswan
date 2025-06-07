@@ -196,13 +196,13 @@ static bool initiate_connection_2_address(struct connection *c,
 				name_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-				     str_enum(&connection_kind_names, c->local->kind, &b),
+				     str_enum_long(&connection_kind_names, c->local->kind, &b),
 				     bool_str(c->config->narrowing));
 			} else {
 				name_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-				     str_enum(&connection_kind_names, c->local->kind, &b));
+				     str_enum_long(&connection_kind_names, c->local->kind, &b));
 			}
 			add_policy(c, policy.up);
 			return true;
@@ -212,14 +212,14 @@ static bool initiate_connection_2_address(struct connection *c,
 			name_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			     str_enum(&connection_kind_names, c->local->kind, &b),
+			     str_enum_long(&connection_kind_names, c->local->kind, &b),
 			     bool_str(c->config->narrowing));
 		} else {
 			name_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
 			     pri_co(c->serialno),
-			     str_enum(&connection_kind_names, c->local->kind, &b));
+			     str_enum_long(&connection_kind_names, c->local->kind, &b));
 		}
 		return false;
 	}

@@ -174,7 +174,7 @@ void delete_state_event(struct state_event **evp, where_t where)
 	name_buf tb;
 	dbg("#%lu deleting %s",
 	    e->ev_state->st_serialno,
-	    str_enum(&event_type_names, e->ev_type, &tb));
+	    str_enum_long(&event_type_names, e->ev_type, &tb));
 
 	/* first the event */
 	destroy_timeout(&e->timeout);
@@ -207,7 +207,7 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 		struct state_event *ev = arg;
 		passert(ev != NULL);
 		event_type = ev->ev_type;
-		PASSERT(event->logger, enum_name(&event_type_names, event_type, &event_name));
+		PASSERT(event->logger, enum_long(&event_type_names, event_type, &event_name));
 		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
 		passert(st != NULL);
@@ -602,7 +602,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	pexpect(deltasecs(delay) < secs_per_day * 31);
 
 	name_buf event_name;
-	enum_name(&event_type_names, type, &event_name);
+	enum_long(&event_type_names, type, &event_name);
 
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
@@ -618,7 +618,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 		llog_pexpect(st->logger, where,
 			     "#%lu already has %s scheduled; forcing %s",
 			     st->st_serialno,
-			     str_enum(&event_type_names, (*evp)->ev_type, &tb),
+			     str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
 			     event_name.buf);
 		delete_state_event(evp, where);
 	}
@@ -649,13 +649,13 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 		name_buf tb;
 		llog_pexpect(st->logger, where,
 			     "#%lu has no .st_event field for %s",
-			     st->st_serialno, str_enum(&event_type_names, type, &tb));
+			     st->st_serialno, str_enum_long(&event_type_names, type, &tb));
 		return;
 	}
 	if (*evp != NULL) {
 		name_buf tb;
 		ldbg(st->logger, "#%lu requesting %s-event@%p be deleted "PRI_WHERE,
-		     st->st_serialno, str_enum(&event_type_names, (*evp)->ev_type, &tb),
+		     st->st_serialno, str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
 		     *evp, pri_where(where));
 		pexpect(st == (*evp)->ev_state);
 		delete_state_event(evp, where);
@@ -674,7 +674,7 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 					   enum event_type event_type, bool detach_whack)
 {
 	name_buf event_name;
-	if (!enum_name_short(&event_type_names, event_type, &event_name)) {
+	if (!enum_short(&event_type_names, event_type, &event_name)) {
 		llog(RC_LOG, logger, "%d is not a valid event", event_type);
 		return;
 	}
@@ -700,7 +700,7 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 		name_buf tb;
 		llog(RC_LOG, logger,
 		     "IMPAIR: deleting existing %s event occupying the slot shared with %s",
-		     str_enum(&event_type_names, (*evp)->ev_type, &tb),
+		     str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
 		     event_name.buf);
 		delete_state_event(evp, HERE);
 	} else {

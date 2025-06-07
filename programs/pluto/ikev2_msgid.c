@@ -578,7 +578,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			name_buf xb;
 			dbg_v2_msgid(ike,
 				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
-				     str_enum(&ikev2_exchange_names,
+				     str_enum_long(&ikev2_exchange_names,
 					      pending.exchange->initiate.transition->exchange, &xb),
 				     pri_so(pending.child), unack);
 			continue;

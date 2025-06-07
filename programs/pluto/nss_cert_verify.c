@@ -153,7 +153,7 @@ static void set_rev_params(CERTRevocationFlags *rev)
 	    bool_str(x509_crl.strict),
 	    bool_str(x509_ocsp.enable),
 	    bool_str(x509_ocsp.strict),
-	    str_sparse(&ocsp_method_names, x509_ocsp.method, &omb));
+	    str_sparse_long(&ocsp_method_names, x509_ocsp.method, &omb));
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -459,7 +459,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 			bad_case(ike_version);
 		}
 		name_buf cert_name;
-		if (!enum_name_short(cert_names, cert_type, &cert_name)) {
+		if (!enum_short(cert_names, cert_type, &cert_name)) {
 			llog(RC_LOG, logger,
 				    "ignoring certificate with unknown type %d",
 				    cert_type);

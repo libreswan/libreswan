@@ -30,7 +30,7 @@ bool test_lset(const struct enum_names *en, lset_t val)
 		lset_t bit = LELEM(e);
 		if (val & bit) {
 			name_buf b;
-			if (!enum_name(en, e, &b)) {
+			if (!enum_long(en, e, &b)) {
 				return false;
 			}
 		}

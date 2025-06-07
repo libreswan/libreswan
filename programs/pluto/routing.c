@@ -151,7 +151,7 @@ static void jam_so_update(struct jambuf *buf,
 {
 	if (old != SOS_NOBODY || new != SOS_NOBODY) {
 		jam_string(buf, (*prefix)); (*prefix) = " ";
-		jam_enum(buf, &connection_owner_names, owner);
+		jam_enum_long(buf, &connection_owner_names, owner);
 		jam_string(buf, " ");
 		jam_so(buf, old);
 		if (old != new) {
@@ -554,7 +554,7 @@ static void set_established_outbound(struct connection *c,
 					llog(RC_LOG, child->sa.logger,
 					     "Child SA with IKE SA "PRI_SO" share their connection, .%s "PRI_SO" should be the IKE SA, updating "PRI_WHERE,
 					     pri_so(ike->sa.st_serialno),
-					     str_enum(&connection_owner_names, owner, &ob),
+					     str_enum_long(&connection_owner_names, owner, &ob),
 					     pri_so(c->routing.owner[owner]),
 					     pri_where(e->where));
 					c->routing.owner[owner] = ike->sa.st_serialno;
@@ -566,7 +566,7 @@ static void set_established_outbound(struct connection *c,
 					llog_pexpect(child->sa.logger, HERE,
 						     "Child SA with IKE SA "PRI_SO" do not share their connection, .%s "PRI_SO" should be unset, clearing "PRI_WHERE,
 						     pri_so(ike->sa.st_serialno),
-						     str_enum(&connection_owner_names, owner, &ob),
+						     str_enum_long(&connection_owner_names, owner, &ob),
 						     pri_so(c->routing.owner[owner]),
 						     pri_where(e->where));
 					c->routing.owner[owner] = SOS_NOBODY;
@@ -607,7 +607,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom),
 	     c->name,
-	     str_enum(&routing_names, c->routing.state, &rsb),
+	     str_enum_long(&routing_names, c->routing.state, &rsb),
 	     pri_shunk(c->config->sec_label));
 
 	if (!PEXPECT(logger, is_labeled_template(c) || is_labeled_parent(c))) {
@@ -1144,7 +1144,7 @@ void connection_teardown_child(struct child_sa **child,
 		.post_op = teardown_child_post_op,
 		.story = (reason == REASON_DELETED ? "delete Child SA" : /* logging compat hack */
 			  reason == REASON_TOO_MANY_RETRANSMITS ? "timeout Child SA" : /* logging compat hack */
-			  str_enum(&terminate_reason_names, reason, &rb)),
+			  str_enum_long(&terminate_reason_names, reason, &rb)),
 	};
 
 	/*
@@ -1192,7 +1192,7 @@ void connection_teardown_ike(struct ike_sa **ike,
 	struct routing_annex annex = {
 		.story = (reason == REASON_DELETED ? "delete IKE SA" : /* logging compat hack */
 			  reason == REASON_TOO_MANY_RETRANSMITS ? "timeout IKE SA" : /* logging compat hack */
-			  str_enum(&terminate_reason_names, reason, &rb)),
+			  str_enum_long(&terminate_reason_names, reason, &rb)),
 		.ike = ike,
 		.where = where,
 		.dispatch_ok = teardown_ike_dispatch_ok,
@@ -1230,7 +1230,7 @@ void state_disowns_connection(struct state *st)
 			name_buf ob;
 			pdbgf(DBG_ROUTING, st->logger,
 			      "routing: disown .%s",
-			      str_enum(&connection_owner_names, i, &ob));
+			      str_enum_long(&connection_owner_names, i, &ob));
 #endif
 			c->routing.owner[i] = SOS_NOBODY;
 		}
@@ -1264,7 +1264,7 @@ bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger,
 			llog_pexpect(logger, where,
 				     "connection "PRI_CO" [%p] is owned by .%s "PRI_SO,
 				     pri_connection_co(c), c,
-				     str_enum(&connection_owner_names, i, &ob),
+				     str_enum_long(&connection_owner_names, i, &ob),
 				     pri_so(c->routing.owner[i]));
 			ok_to_delete = false;
 		}
@@ -1401,7 +1401,7 @@ static bool reschedule_dispatch_ok(struct connection *c,
 		if (c->routing.owner[i] != SOS_NOBODY) {
 			name_buf ob;
 			ldbg_routing(logger, "connection owned by %s "PRI_SO,
-				     str_enum(&connection_owner_names, i, &ob),
+				     str_enum_long(&connection_owner_names, i, &ob),
 				     pri_so(c->routing.owner[i]));
 			return false;
 		}
@@ -2498,7 +2498,7 @@ void jam_routing_sa(struct jambuf *buf, const struct connection *c)
 	for (enum connection_owner owner = CONNECTION_OWNER_ROOF-1;
 	     owner >= CONNECTION_OWNER_FLOOR; owner--) {
 		if (c->routing_sa == c->routing.owner[owner]) {
-			jam_enum(buf, &connection_owner_stories, owner);
+			jam_enum_long(buf, &connection_owner_stories, owner);
 			jam_string(buf, " ");
 			break;
 		}

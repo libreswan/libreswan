@@ -144,7 +144,7 @@ void show_ike_alg_status(struct show *s)
 				jam_string(buf, "algorithm IKE encrypt:");
 				jam(buf, " v1id=%d, v1name=", alg->common.ikev1_oakley_id);
 				if (alg->common.id[IKEv1_OAKLEY_ID] >= 0) {
-					jam_enum(buf, &oakley_enc_names, alg->common.ikev1_oakley_id);
+					jam_enum_long(buf, &oakley_enc_names, alg->common.ikev1_oakley_id);
 				} else {
 					jam_string(buf, "n/a");
 				}

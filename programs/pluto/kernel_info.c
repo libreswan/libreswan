@@ -90,7 +90,7 @@ void init_kernel_info(struct logger *logger)
 
 	name_buf osn;
 	llog(RC_LOG, logger, "operating system: %s %u.%u.%u [%s %s %s %s]",
-	     str_sparse(&kinfo_os_names, kinfo.os, &osn),
+	     str_sparse_long(&kinfo_os_names, kinfo.os, &osn),
 	     kinfo.major, kinfo.minor, kinfo.patch,
 	     uts.sysname, uts.release, uts.version, uts.machine);
 }

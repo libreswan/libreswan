@@ -504,7 +504,7 @@ static stf_status handle_helper_answer(struct state *callback_sa,
 	}
 	name_buf buf;
 	ldbg(job->logger, PRI_JOB": final status %s; cleaning up",
-	     pri_job(job), str_enum(&stf_status_names, status, &buf));
+	     pri_job(job), str_enum_long(&stf_status_names, status, &buf));
 	free_job(&job);
 	return status;
 }

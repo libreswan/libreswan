@@ -1022,7 +1022,7 @@ void process_v1_packet(struct msg_digest *md)
 		pdbg(ike->sa.logger,
 		     " %s processing received isakmp_xchg_type %s; xauthserver=%s xauthclient=%s modecfgserver=%s modecfgclient=%s modecfgpull=%s",
 		     ike->sa.st_state->name,
-		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+		     str_enum_long(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 		     bool_str(this->host->config->xauth.server),
 		     bool_str(this->host->config->xauth.client),
 		     bool_str(this->host->config->modecfg.server),
@@ -1078,7 +1078,7 @@ void process_v1_packet(struct msg_digest *md)
 			name_buf b;
 			ldbg(ike->sa.logger,
 			     "received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
-			     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
+			     str_enum_long(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 			     ike->sa.st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
 			     ike->sa.st_connection->local->host.config->xauth.client ? " xauthclient" : "",
 			     ike->sa.st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
@@ -1102,7 +1102,7 @@ void process_v1_packet(struct msg_digest *md)
 	{
 		name_buf b;
 		ldbg(md->logger, "unsupported exchange type %s in message",
-		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
+		     str_enum_long(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
 		send_v1_notification_from_md(md, v1N_UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
@@ -1691,7 +1691,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					llog(RC_LOG, LOGGER,
 					     "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					     excuse,
-					     str_enum(&ikev1_payload_names, np, &b));
+					     str_enum_long(&ikev1_payload_names, np, &b));
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
 					}
@@ -1717,7 +1717,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					llog(RC_LOG, LOGGER,
 					     "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 					     excuse,
-					     str_enum(&ikev1_payload_names, np, &b),
+					     str_enum_long(&ikev1_payload_names, np, &b),
 					     finite_states[smc->state]->name);
 					if (!md->encrypted) {
 						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
@@ -1727,7 +1727,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 				name_buf b;
 				ldbg(LOGGER, "got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
-				     s, str_enum(&ikev1_payload_names, np, &b),
+				     s, str_enum_long(&ikev1_payload_names, np, &b),
 				     needed, smc->opt_payloads);
 				needed &= ~s;
 			}
@@ -2049,7 +2049,7 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 static void jam_v1_ipsec_details(struct jambuf *buf, struct state *st)
 {
 	struct connection *const c = st->st_connection;
-	jam_enum(buf, &encap_mode_story, c->config->child_sa.encap_mode);
+	jam_enum_long(buf, &encap_mode_story, c->config->child_sa.encap_mode);
 	jam_string(buf, " mode ");
 	jam_child_sa_details(buf, st);
 }
@@ -2096,7 +2096,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	name_buf rb;
 	dbg("complete v1 state transition with %s",
 	    (result > STF_FAIL_v1N ? str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
-	     str_enum(&stf_status_names, result, &rb)));
+	     str_enum_long(&stf_status_names, result, &rb)));
 
 	switch (result) {
 	case STF_SUSPEND:
@@ -2691,12 +2691,12 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 		name_buf oan;
 		name_buf ictn;
 		LDBG_log(logger, "  I have RSA key: %s cert.type: %s ",
-			 str_enum(&oakley_auth_names, ike->sa.st_oakley.auth, &oan),
-			 str_enum(&ike_cert_type_names, certtype, &ictn));
+			 str_enum_long(&oakley_auth_names, ike->sa.st_oakley.auth, &oan),
+			 str_enum_long(&ike_cert_type_names, certtype, &ictn));
 
 		name_buf cptn;
 		LDBG_log(logger, "  sendcert: %s and I did%s get a certificate request ",
-			 str_sparse(&sendcert_policy_names, c->local->host.config->sendcert, &cptn),
+			 str_sparse_long(&sendcert_policy_names, c->local->host.config->sendcert, &cptn),
 			 gotcertrequest ? "" : " not");
 
 		LDBG_log(logger, "  so %ssend cert.", send_cert ? "" : "do not ");

@@ -192,7 +192,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 	}
 	name_buf vb;
 	dbg("State DB: %s state not found (%s)",
-	    str_enum(&ike_version_names, ike_version, &vb), name);
+	    str_enum_long(&ike_version_names, ike_version, &vb), name);
 	return NULL;
 }
 
@@ -258,7 +258,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 	}
 	name_buf vb;
 	dbg("State DB: %s state not found (%s)",
-	    str_enum(&ike_version_names, ike_version, &vb), name);
+	    str_enum_long(&ike_version_names, ike_version, &vb), name);
 	return NULL;
 }
 

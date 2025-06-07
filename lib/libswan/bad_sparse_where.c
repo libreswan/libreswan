@@ -28,5 +28,5 @@ void bad_sparse_where(const struct logger *logger,
 	name_buf sb;
 	llog_passert(logger, where,
 		     "sparse %s (%ld) unexpected",
-		     str_sparse(sn, value, &sb), value);
+		     str_sparse_long(sn, value, &sb), value);
 }

@@ -1068,7 +1068,7 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	name_buf xb;
 	ldbg(ike->sa.logger, PRI_SO" ikev2 %s decrypt %s",
 	     pri_so(ike->sa.st_serialno),
-	     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+	     str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 	     ok ? "success" : "failed");
 
 	return ok;

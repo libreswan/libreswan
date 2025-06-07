@@ -149,7 +149,7 @@ static bool match_v1_connection(const struct connection *c,
 		name_buf eb;
 		ldbg(logger, "  skipping %s, %s is never proposed",
 		     c->name,
-		     str_enum(&keyword_auth_names, c->remote->host.config->auth, &eb));
+		     str_enum_long(&keyword_auth_names, c->remote->host.config->auth, &eb));
 		return false;
 	}
 	}

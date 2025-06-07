@@ -521,7 +521,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		name_buf sb;
 		llog_error(logger, errno,
 			   "netlink write() of %s message for %s %s failed",
-			   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			   description, story);
 		return false;
 	}
@@ -530,7 +530,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		name_buf sb;
 		llog_error(logger, 0/*no-errno*/,
 			   "netlink write() of %s message for %s %s truncated: %zd instead of %zu",
-			   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			   description, story, r, len);
 		return false;
 	}
@@ -549,7 +549,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			name_buf sb;
 			llog_error(logger, errno,
 				   "netlink recvfrom() of response to our %s message for %s %s failed",
-				   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+				   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 				   description, story);
 			return false;
 		}
@@ -571,7 +571,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			name_buf sb;
 			ldbg(logger, "%s() ignoring %s message from process %u",
 			     __func__,
-			     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb),
+			     str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb),
 			     addr.nl_pid);
 			continue;
 		}
@@ -580,7 +580,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			name_buf sb;
 			ldbg(logger, "%s() ignoring out of sequence (%u/%u) message %s",
 			     __func__, rsp.n.nlmsg_seq, seq,
-			     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb));
+			     str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb));
 			continue;
 		}
 		break;
@@ -590,7 +590,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		name_buf sb;
 		llog(RC_LOG, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was truncated: %zd instead of %zu",
-		     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+		     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 		     description, story,
 		     len, (size_t) rsp.n.nlmsg_len);
 		return false;
@@ -641,18 +641,18 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			name_buf sb1, sb2;
 			ldbg(logger,
 			     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s); discarded",
-			     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb1),
+			     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb1),
 			     description, story,
-			     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
+			     str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
 			return true;
 		}
 
 		name_buf sb1, sb2;
 		llog(RC_LOG, logger,
 		     "netlink recvfrom() of response to our %s message for %s %s was of wrong type (%s)",
-		     str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb1),
+		     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb1),
 		     description, story,
-		     str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
+		     str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb2));
 		return false;
 	}
 
@@ -696,7 +696,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			name_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had A policy",
-			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -705,7 +705,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			name_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had NO policy",
-			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -716,7 +716,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			name_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had A policy",
-			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -727,7 +727,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			name_buf sb;
 			ldbg(logger,
 			     "%s()   %s for flow %s %s had NO policy",
-			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -737,7 +737,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			name_buf sb;
 			llog(RC_LOG, logger,
 			     "%s()   %s for flow %s %s encountered unexpected policy",
-			     func, str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+			     func, str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			     story, adstory);
 			return true;
 		}
@@ -748,7 +748,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	name_buf sb;
 	llog_error(logger, error,
 		   "kernel: xfrm %s %s response for flow %s",
-		   str_sparse(&xfrm_type_names, hdr->nlmsg_type, &sb),
+		   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 		   story, adstory);
 	return false;
 }
@@ -903,9 +903,9 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   struct logger *logger, const char *func)
 {
 	name_buf op_str;
-	enum_name_short(&kernel_policy_op_names, op, &op_str);
+	enum_short(&kernel_policy_op_names, op, &op_str);
 	name_buf dir_str;
-	enum_name_short(&direction_names, dir, &dir_str);
+	enum_short(&direction_names, dir, &dir_str);
 
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
@@ -1354,7 +1354,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	    str_endpoint(&old_ei->endpoint, &ra_old),
 	    str_endpoint(&new_ep, &ra_new),
 	    migrate->reqid);
-	jam_enum(&story_jb, &xfrm_policy_names, xfrm_policy_dir);
+	jam_enum_long(&story_jb, &xfrm_policy_names, xfrm_policy_dir);
 
 	ldbg_sa(child, "%s", migrate->story);
 	return true;
@@ -2159,7 +2159,7 @@ static const void *nlmsg_data(struct nlmsghdr *n, size_t size, struct logger *lo
 		llog(RC_LOG, logger,
 		     "%s() got %s message with length %"PRIu32" < %zu bytes; ignore message",
 		     where->func,
-		     str_sparse(&xfrm_type_names, n->nlmsg_type, &sb),
+		     str_sparse_long(&xfrm_type_names, n->nlmsg_type, &sb),
 		     n->nlmsg_len, size);
 		return NULL;
 	}
@@ -2403,7 +2403,7 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 
 	name_buf sb;
 	ldbg(logger, "%s() xfrm netlink address change %s msg len %zu",
-	     __func__, str_sparse(&rtm_type_names, n->nlmsg_type, &sb),
+	     __func__, str_sparse_long(&rtm_type_names, n->nlmsg_type, &sb),
 	     (size_t) n->nlmsg_len);
 
 	while (RTA_OK(rta, msg_size)) {
@@ -2444,7 +2444,7 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 		{
 			name_buf sb;
 			ldbg(logger, "%s() IKEv2 received address %s type %u",
-			     __func__, str_sparse(&rtm_type_names, n->nlmsg_type, &sb),
+			     __func__, str_sparse_long(&rtm_type_names, n->nlmsg_type, &sb),
 			     rta->rta_type);
 			break;
 		}
@@ -2653,7 +2653,7 @@ static bool netlink_get(int fd,
 		/* not for us: ignore */
 		name_buf sb;
 		ldbg(logger, "%s() ignoring %s message from process %u",
-		     __func__, str_sparse(&xfrm_type_names, rsp.n.nlmsg_type, &sb),
+		     __func__, str_sparse_long(&xfrm_type_names, rsp.n.nlmsg_type, &sb),
 		     addr.nl_pid);
 		return true;
 	}
@@ -2674,7 +2674,7 @@ static void netlink_xfrm_message_processor(struct nlm_resp *rsp, struct logger *
 	name_buf xfrmb;
 	ldbg(logger, "%s() got %s message with length %zu",
 	     __func__,
-	     str_sparse(&xfrm_type_names, rsp->n.nlmsg_type, &xfrmb),
+	     str_sparse_long(&xfrm_type_names, rsp->n.nlmsg_type, &xfrmb),
 	     (size_t) rsp->n.nlmsg_len);
 
 	switch (rsp->n.nlmsg_type) {
@@ -2703,7 +2703,7 @@ static void netlink_rtm_message_processor(struct nlm_resp *rsp, struct logger *l
 	name_buf rtmb;
 	ldbg(logger, "%s() got %s message with length %zu",
 	     __func__,
-	     str_sparse(&rtm_type_names, rsp->n.nlmsg_type, &rtmb),
+	     str_sparse_long(&rtm_type_names, rsp->n.nlmsg_type, &rtmb),
 	     (size_t) rsp->n.nlmsg_len);
 
 	switch (rsp->n.nlmsg_type) {

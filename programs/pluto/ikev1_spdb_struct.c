@@ -691,9 +691,9 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				name_buf eb, hb;
 				llog(RC_LOG, logger,
 				     "transform (%s,%s,%s keylen %d) ignored.",
-				     str_enum(&oakley_enc_names,
+				     str_enum_long(&oakley_enc_names,
 					      algs.encrypt->common.ikev1_oakley_id, &eb),
-				     str_enum(&oakley_hash_names,
+				     str_enum_long(&oakley_hash_names,
 					      algs.prf->common.ikev1_oakley_id, &hb),
 				     algs.dh->common.fqn,
 				     algs.enckeylen);
@@ -1327,7 +1327,7 @@ static diag_t decode_attr_value(const struct isakmp_attribute *a,
 	{
 		shunk_t sval;
 		name_buf tb;
-		diag_t d = pbs_in_shunk(pbs, a->isaat_lv, &sval, str_enum(type_names, type, &tb));
+		diag_t d = pbs_in_shunk(pbs, a->isaat_lv, &sval, str_enum_long(type_names, type, &tb));
 		if (d != NULL) {
 			return d;
 		}
@@ -1556,7 +1556,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
 		name_buf b;
 		llog(RC_LOG, ike->sa.logger, "Unknown/unsupported DOI %s",
-		     str_enum(&doi_names, sa->isasa_doi, &b));
+		     str_enum_long(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
 		return v1N_DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -1600,7 +1600,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-		     str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
+		     str_enum_long(&ikev1_payload_names, proposal.isap_pnp, &b));
 		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
@@ -1608,7 +1608,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "unexpected Protocol ID (%s) found in Oakley Proposal",
-		     str_enum(&ikev1_protocol_names, proposal.isap_protoid, &b));
+		     str_enum_long(&ikev1_protocol_names, proposal.isap_protoid, &b));
 		return v1N_INVALID_PROTOCOL_ID;	/* reject whole SA */
 	}
 
@@ -1701,7 +1701,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			name_buf b;
 			llog(RC_LOG, ike->sa.logger,
 			     "expected KEY_IKE but found %s in Oakley Transform",
-			     str_enum(&isakmp_transformid_names,
+			     str_enum_long(&isakmp_transformid_names,
 				      trans.isat_transid, &b));
 			return v1N_INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
@@ -1721,7 +1721,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			llog(RC_LOG, ike->sa.logger,			\
 			     FMT".  Attribute %s",			\
 			     ##__VA_ARGS__,				\
-			     str_enum(&oakley_attr_names,		\
+			     str_enum_long(&oakley_attr_names,		\
 				      a.isaat_af_type, &typeesb_));	\
 		}
 
@@ -1752,7 +1752,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 				name_buf b;
 				llog(RC_LOG, ike->sa.logger,
 				     "repeated %s(%s) attribute in Oakley Transform %u",
-				     str_enum(&oakley_attr_names, type, &b), af,
+				     str_enum_long(&oakley_attr_names, type, &b), af,
 				     trans.isat_transnum);
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
@@ -1923,7 +1923,7 @@ rsasig_common:
 				{
 					name_buf b;
 					UGH("Pluto does not support %s authentication",
-					    str_enum(&oakley_auth_names, value, &b));
+					    str_enum_long(&oakley_auth_names, value, &b));
 					break;
 				}
 				}
@@ -1949,7 +1949,7 @@ rsasig_common:
 						name_buf b;
 						llog(RC_LOG, ike->sa.logger,
 						     "attribute OAKLEY_LIFE_TYPE value %s repeated",
-						     str_enum(&oakley_lifetime_names, value, &b));
+						     str_enum_long(&oakley_lifetime_names, value, &b));
 						return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 					}
 					seen_durations |= LELEM(value);
@@ -1959,7 +1959,7 @@ rsasig_common:
 				{
 					name_buf b;
 					UGH("unknown value %s",
-					    str_enum(&oakley_lifetime_names, value, &b));
+					    str_enum_long(&oakley_lifetime_names, value, &b));
 					break;
 				}
 				}
@@ -2146,7 +2146,7 @@ rsasig_common:
 			name_buf b;
 			llog(RC_LOG, ike->sa.logger,
 			     "unexpected %s payload in Oakley Proposal",
-			     str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
+			     str_enum_long(&ikev1_payload_names, proposal.isap_pnp, &b));
 			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 	}
@@ -2315,7 +2315,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		name_buf b;
 		llog(RC_LOG, child->sa.logger,
 		     "expecting Transform Payload, but found %s in Proposal",
-		     str_enum(&ikev1_payload_names, trans->isat_tnp, &b));
+		     str_enum_long(&ikev1_payload_names, trans->isat_tnp, &b));
 		return false;
 	}
 	}
@@ -2389,7 +2389,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			name_buf b;
 			llog(RC_LOG, child->sa.logger,
 			     "repeated %s(%s) attribute in IPsec Transform %u",
-			     str_enum(&ikev1_ipsec_attr_names, type, &b), af,
+			     str_enum_long(&ikev1_ipsec_attr_names, type, &b), af,
 			     trans->isat_transnum);
 			return false;
 		}
@@ -2441,7 +2441,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "IPsec attribute SA_LIFE_TYPE with value %s was repeated in message",
-				     str_enum(&sa_lifetime_names, value, &b));
+				     str_enum_long(&sa_lifetime_names, value, &b));
 				return false;
 			}
 			seen_durations |= LELEM(value);
@@ -2550,7 +2550,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			lset_buf lb;
 			name_buf mb;
 			ldbg(child->sa.logger, "NAT-T: IPsec SA has %s, child->sa.hidden_variables.st_nat_traversal is %s",
-			     str_enum(&encapsulation_mode_names, value, &mb),
+			     str_enum_long(&encapsulation_mode_names, value, &mb),
 			     str_lset(&natt_method_names, child->sa.hidden_variables.st_nat_traversal, &lb));
 
 			/* normalize the actual attribute value */
@@ -2615,7 +2615,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			name_buf b;
 			llog(RC_LOG, child->sa.logger,
 				  "unsupported IPsec attribute %s+%s",
-				  str_enum(&ikev1_ipsec_attr_names, type, &b), af);
+				  str_enum_long(&ikev1_ipsec_attr_names, type, &b), af);
 			return false;
 		}
 		}
@@ -2624,7 +2624,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			name_buf b;
 			llog(RC_LOG, child->sa.logger,
 				  "IPsec attribute %s+%s inappropriate for IPCOMP",
-				  str_enum(&ikev1_ipsec_attr_names, type, &b), af);
+				  str_enum_long(&ikev1_ipsec_attr_names, type, &b), af);
 			return false;
 		}
 	}
@@ -2800,7 +2800,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		name_buf b;
 		llog(RC_LOG, child->sa.logger,
 		     "Unknown or unsupported DOI %s",
-		     str_enum(&doi_names, sa->isasa_doi, &b));
+		     str_enum_long(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
 		return v1N_DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
@@ -3025,7 +3025,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "unexpected Protocol ID (%s) in IPsec Proposal",
-				     str_enum(&ikev1_protocol_names,
+				     str_enum_long(&ikev1_protocol_names,
 					      next_proposal.isap_protoid, &b));
 				return v1N_INVALID_PROTOCOL_ID;	/* reject whole SA */
 			}
@@ -3039,7 +3039,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "unexpected in Proposal: %s",
-				     str_enum(&ikev1_payload_names, next_proposal.isap_pnp, &b));
+				     str_enum_long(&ikev1_payload_names, next_proposal.isap_pnp, &b));
 				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
@@ -3128,7 +3128,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					llog(RC_LOG, child->sa.logger,
 						  "%s attribute inappropriate in %s Transform",
 						  ah_attrs.transattrs.ta_integ->common.fqn,
-						  str_enum(&ah_transformid_names,
+						  str_enum_long(&ah_transformid_names,
 							    ah_trans.isat_transid, &b));
 					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}

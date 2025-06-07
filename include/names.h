@@ -90,11 +90,6 @@ size_t jam_enum_short(struct jambuf *, const struct enum_names *en, unsigned lon
 size_t jam_sparse_long(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
 size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
 
-#define jam_enum jam_enum_long /* legacy */
-#define str_enum str_enum_long /* legacy */
-#define jam_sparse jam_sparse_long /* legacy */
-#define str_sparse str_sparse_long /* legacy */
-
 /* drop prefix + transform [_A-Z]->[-a-z] */
 size_t jam_enum_human(struct jambuf *, const struct enum_names *en, unsigned long val);
 
@@ -120,9 +115,6 @@ bool enum_short(const struct enum_names *en, unsigned long val, name_buf *b);
 
 bool sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *b);
 bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b);
-
-#define enum_name enum_long /* legacy */
-#define enum_name_short enum_short
 
 /*
  * iterator

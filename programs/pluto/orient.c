@@ -210,7 +210,7 @@ static void LDBG_orient_end(struct connection *c, enum end end)
 		 pri_hport(end_host_port(this, that)),
 		 pri_hport(this->config->ikeport),
 		 bool_str(this->encap),
-		 str_sparse(&tcp_option_names, c->local->config->host.iketcp, &tcpb));
+		 str_sparse_long(&tcp_option_names, c->local->config->host.iketcp, &tcpb));
 }
 
 static void jam_iface(struct jambuf *buf, const struct iface_device *iface)

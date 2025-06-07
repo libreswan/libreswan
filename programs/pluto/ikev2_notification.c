@@ -129,7 +129,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 	}
 
 	name_buf name;
-	if (!enum_name(&v2_notification_names, n, &name)) {
+	if (!enum_long(&v2_notification_names, n, &name)) {
 		dbg("%s notification %d is unknown", type, n);
 		return;
 	}
@@ -300,11 +300,11 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 				  shunk_t ndata /*optional*/)
 {
 	name_buf notify_name;
-	enum_name_short(&v2_notification_names, ntype, &notify_name);
+	enum_short(&v2_notification_names, ntype, &notify_name);
 
 	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
 	name_buf exchange_name;
-	enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name);
+	enum_short(&ikev2_exchange_names, exchange_type, &exchange_name);
 
 	/*
 	 * XXX: this will prefix with cur_state.  For this code path
@@ -444,11 +444,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	passert(md != NULL); /* always a response */
 
 	name_buf notify_name;
-	PASSERT(md->logger, enum_name_short(&v2_notification_names, ntype, &notify_name));
+	PASSERT(md->logger, enum_short(&v2_notification_names, ntype, &notify_name));
 
 	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
 	name_buf exchange_name;
-	if (!enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
+	if (!enum_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
 		/* when responding to crud, name may not be known */
 		exchange_name.buf = "UNKNOWN";
 		dbg("message request contains unknown exchange type %d",

@@ -246,7 +246,7 @@ static void jam_redirect(struct jambuf *buf, const struct whack_message *wm)
 	}
 	if (wm->global_redirect != 0) {
 		jam_string(buf, " redirect_to=");
-		jam_sparse(buf, &yna_option_names, wm->global_redirect);
+		jam_sparse_long(buf, &yna_option_names, wm->global_redirect);
 	}
 }
 

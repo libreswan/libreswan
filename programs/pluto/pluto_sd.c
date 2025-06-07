@@ -60,7 +60,7 @@ void pluto_sd(int action, int status)
 {
 	name_buf ab;
 	dbg("pluto_sd: executing action %s(%d), status %d",
-	    str_enum(&sd_action_names, action, &ab), action, status);
+	    str_enum_long(&sd_action_names, action, &ab), action, status);
 
 	switch (action) {
 	case PLUTO_SD_WATCHDOG:

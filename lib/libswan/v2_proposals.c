@@ -45,7 +45,7 @@ static bool warning_or_false(struct proposal_parser *parser,
 		name_buf vb;
 		llog(RC_LOG, logger,
 		     "ignoring %s %s %s algorithm '"PRI_SHUNK"'",
-		     str_enum(&ike_version_names, parser->policy->version, &vb),
+		     str_enum_long(&ike_version_names, parser->policy->version, &vb),
 		     parser->protocol->name, /* ESP|IKE|AH */
 		     what, pri_shunk(print));
 		result = true;

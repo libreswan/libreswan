@@ -1075,7 +1075,7 @@ void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s)
 			jam(buf, " -%d-> ", bs->transport_proto->ipproto);
 			jam_selector_range_port(buf, &(bs)->peer_client);
 			jam_string(buf, " => %");
-			jam_sparse(buf, &failure_shunt_names, bs->shunt_policy);
+			jam_sparse_long(buf, &failure_shunt_names, bs->shunt_policy);
 			jam_string(buf, "    ");
 			jam_string(buf, bs->why);
 			if (bs->template_serialno != COS_NOBODY) {

@@ -1570,7 +1570,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 */
 		name_buf kb;
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
-		       str_enum(&connection_kind_names, cc->local->kind, &kb), cc->name);
+		       str_enum_long(&connection_kind_names, cc->local->kind, &kb), cc->name);
 		llog_sa(RC_LOG, child, "no IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}

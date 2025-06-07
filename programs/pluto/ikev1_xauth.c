@@ -466,7 +466,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "attempt to send unsupported mode cfg attribute %s.",
-		     str_enum(&modecfg_attr_names, attr_type, &b));
+		     str_enum_long(&modecfg_attr_names, attr_type, &b));
 		break;
 	}
 	}
@@ -1474,7 +1474,7 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 	dbg("Unsupported %s %s attribute %s received.",
 	    kind,
 	    (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-	    str_enum(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
+	    str_enum_long(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
 }
 
 /*
@@ -1520,7 +1520,7 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting MODE_CFG_REPLY or ISAKMP_CFG_ACK; got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 	}
@@ -1546,7 +1546,7 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
 				name_buf b;
 				ldbg(ike->sa.logger, "unsupported XAUTH_TYPE value %s received",
-				     str_enum(&ikev1_xauth_type_names, attr.isaat_lv, &b));
+				     str_enum_long(&ikev1_xauth_type_names, attr.isaat_lv, &b));
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			break;
@@ -1752,7 +1752,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 		name_buf tb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_REQUEST, got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &tb));
 		/* ??? what should we do here?  Pretend all is well? */
 		break;
 	}
@@ -1791,7 +1791,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting MODE_CFG_SET, got %s instead; message ignored.",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 
@@ -2246,7 +2246,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_ACK or ISAKMP_CFG_REPLY, got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 
@@ -2277,7 +2277,7 @@ stf_status modecfg_client_inSET(struct state *ike_sa, struct msg_digest *md)
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_SET, got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 
@@ -2340,7 +2340,7 @@ stf_status modecfg_server_inACK(struct state *ike_sa, struct msg_digest *md)
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_ACK, got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 
@@ -2542,7 +2542,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 					name_buf b;
 					llog(RC_LOG, ike->sa.logger,
 					     "trying to send XAUTH reply, sending %s instead.",
-					     str_enum(&modecfg_attr_names, attr_type, &b));
+					     str_enum_long(&modecfg_attr_names, attr_type, &b));
 					break;
 				}
 				}
@@ -2628,7 +2628,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 		name_buf tb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &tb));
 		/* ??? what are we supposed to do here?  Original code fell through to next case! */
 		return STF_FAIL_v1N;
 	}
@@ -2743,7 +2743,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 
 		name_buf sb;
 		llog(RC_LOG, ike->sa.logger, "xauth: xauth_client_ackstatus() returned %s",
-		     str_enum(&stf_status_names, stat, &sb));
+		     str_enum_long(&stf_status_names, stat, &sb));
 		llog(RC_LOG, ike->sa.logger, "XAUTH: aborting entire IKE Exchange");
 		return STF_FATAL;
 	}
@@ -2914,7 +2914,7 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 				llog(RC_LOG, ike->sa.logger,
 				     "while waiting for XAUTH_STATUS, got %s %s instead.",
 				     (attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-				     str_enum(&modecfg_attr_names,
+				     str_enum_long(&modecfg_attr_names,
 					      attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK, &b));
 				break;
 			}
@@ -2926,7 +2926,7 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 	{
 		name_buf mb;
 		llog(RC_LOG, ike->sa.logger, "expecting MODE_CFG_SET, got %s instead; message ignored",
-		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
+		     str_enum_long(&attr_msg_type_names, ma->isama_type, &mb));
 		return STF_IGNORE;
 	}
 	}

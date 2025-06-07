@@ -241,7 +241,7 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 		id_buf idb;
 		name_buf kb;
 		dbg("trying secret %s:%s",
-		    str_enum(&secret_kind_names, s->kind, &kb),
+		    str_enum_long(&secret_kind_names, s->kind, &kb),
 		    (pexpect(s->ids != NULL) ? str_id(&s->ids->id, &idb) : "<NULL-ID-LIST>"));
 		const struct secret_pubkey_stuff *pki = secret_pubkey_stuff(s);
 		if (pki == NULL) {
@@ -310,9 +310,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 		name_buf kb, skb;
 		ldbg(logger, "line %d: key type %s(%s) to type %s",
 		     s->line,
-		     str_enum(&secret_kind_names, kind, &kb),
+		     str_enum_long(&secret_kind_names, kind, &kb),
 		     str_id(local_id, &idl),
-		     str_enum(&secret_kind_names, s->kind, &skb));
+		     str_enum_long(&secret_kind_names, s->kind, &skb));
 
 		if (s->kind != kind) {
 			dbg("  wrong kind");
@@ -866,7 +866,7 @@ static void process_secret_records(struct file_lex_position *flp,
 					id_buf b;
 					name_buf skb;
 					dbg("id type added to secret(%p) %s: %s",
-					    s, str_enum(&secret_kind_names, s->kind, &skb),
+					    s, str_enum_long(&secret_kind_names, s->kind, &skb),
 					    str_id(&id, &b));
 				}
 				if (!shift(flp)) {

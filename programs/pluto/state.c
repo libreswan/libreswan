@@ -239,9 +239,9 @@ static void update_state_stats(struct state *st,
 			 (IS_IKE_SA(st) ? "parent" : "child"),
 			 pri_so(st->st_serialno),
 			 old_state->short_name,
-			 str_enum(&state_category_names, old_state->category, &ocb),
+			 str_enum_long(&state_category_names, old_state->category, &ocb),
 			 new_state->short_name,
-			 str_enum(&state_category_names, new_state->category, &ncb));
+			 str_enum_long(&state_category_names, new_state->category, &ncb));
 
 		cat_t category_states = 0;
 		for (unsigned cat = 0; cat < elemsof(cat_count); cat++) {

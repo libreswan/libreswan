@@ -199,12 +199,12 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 	if (conn->values[KNCF_AUTO].option != 0) {
 		name_buf sb;
-		cwf("auto", str_sparse(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
+		cwf("auto", str_sparse_long(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
 	}
 
 	if (conn->values[KNCF_PPK].option != NPPI_UNSET) {
 		name_buf sb;
-		cwf("ppk", str_sparse(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
+		cwf("ppk", str_sparse_long(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
 	}
 
 	if (conn->never_negotiate_shunt != SHUNT_UNSET) {
@@ -258,7 +258,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		/* esn= */
 		if (conn->values[KNCF_ESN].option != YNE_UNSET) {
 			name_buf nb;
-			cwf("esn", str_sparse(&yne_option_names,
+			cwf("esn", str_sparse_long(&yne_option_names,
 					      conn->values[KNCF_ESN].option, &nb));
 		}
 

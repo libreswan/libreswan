@@ -1943,7 +1943,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 {
 	name_buf protocol;
 	if (proposal->protoid == 0 ||
-	    !enum_name_short(&ikev2_proposal_protocol_id_names, proposal->protoid, &protocol)) {
+	    !enum_short(&ikev2_proposal_protocol_id_names, proposal->protoid, &protocol)) {
 		llog_pexpect(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
 		return false;
 	}
@@ -2154,7 +2154,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 						       struct logger *logger)
 {
 	name_buf name;
-	PASSERT(logger, enum_name_short(&ikev2_proposal_protocol_id_names, protoid, &name));
+	PASSERT(logger, enum_short(&ikev2_proposal_protocol_id_names, protoid, &name));
 	ldbg(logger, "generating IKEv2 %s proposals", name.buf);
 	PASSERT(logger, proposals != NULL);
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals, "v2 proposals");

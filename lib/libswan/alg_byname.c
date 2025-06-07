@@ -32,7 +32,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by %s",
 			       protocol->name, ike_alg_type_name(alg->algo_type),
 			       pri_shunk(print_name),
-			       str_enum(&ike_version_names, policy->version, &vb));
+			       str_enum_long(&ike_version_names, policy->version, &vb));
 		return false;
 	}
 	/*

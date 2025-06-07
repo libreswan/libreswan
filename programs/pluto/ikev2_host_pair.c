@@ -179,7 +179,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 		     str_endpoint(local_endpoint, &b),
 		     str_endpoint(remote_endpoint, &b),
 		     str_authby(remote_authby, &pb),
-		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}
@@ -341,7 +341,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 		     str_endpoint(local_endpoint, &b),
 		     str_endpoint(remote_endpoint, &b),
 		     str_authby(remote_authby, &pb),
-		     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
+		     str_enum_long(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}

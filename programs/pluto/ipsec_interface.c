@@ -693,7 +693,7 @@ void config_ipsec_interface(enum yn_options managed, struct logger *logger)
 		     (kernel_ops->ipsec_interface == NULL ? "?!?" :
 		      kernel_ops->ipsec_interface->name),
 		     __func__,
-		     str_sparse(&yn_option_names, managed, &nb));
+		     str_sparse_long(&yn_option_names, managed, &nb));
 	switch (managed) {
 	case YN_UNSET:
 		return;
@@ -709,7 +709,7 @@ enum yn_options init_ipsec_interface(struct logger *logger)
 {
 	name_buf nb;
 	VERBOSE_DBGP(DBG_BASE, logger, "%s() managed=%s",
-		     __func__, str_sparse(&yn_option_names, ipsec_interface_managed, &nb));
+		     __func__, str_sparse_long(&yn_option_names, ipsec_interface_managed, &nb));
 
 	if (kernel_ops->ipsec_interface == NULL) {
 		ipsec_interface_managed = YN_UNSET;

@@ -333,7 +333,7 @@ bool enum_enum_name(enum_enum_names *een, unsigned long table,
 		return false;
 	}
 
-	return enum_name(en, val, b);
+	return enum_long(en, val, b);
 }
 
 const char *str_enum_enum(enum_enum_names *een, unsigned long table,
@@ -365,7 +365,7 @@ size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,
 		/* XXX: dump something more meaningful */
 		return jam(buf, "%lu.%lu", table, val);
 	}
-	return jam_enum(buf, en, val);
+	return jam_enum_long(buf, en, val);
 }
 
 size_t jam_enum_enum_short(struct jambuf *buf, enum_enum_names *een,
@@ -390,7 +390,7 @@ void check_enum_names(const struct enum_names_check *checklist)
 		 * covered.
 		 */
 		name_buf b;
-		enum_name(c->enum_names, -42UL, &b);
+		enum_long(c->enum_names, -42UL, &b);
 	}
 }
 

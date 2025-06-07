@@ -349,7 +349,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	if (required_mode == requested_mode) {
 		name_buf mb;
 		ldbg_sa(larval_child, "local policy is %s and received matching notify",
-			str_enum(&kernel_mode_stories, required_mode, &mb));
+			str_enum_long(&kernel_mode_stories, required_mode, &mb));
 	} else if (required_mode == KERNEL_MODE_TUNNEL) {
 		/*
 		 * RFC allows us to ignore their (wrong) request for
@@ -358,15 +358,15 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		name_buf dmb, rmb;
 		llog_sa(RC_LOG, larval_child,
 			"policy dictates %s, ignoring peer's request for %s",
-			str_enum(&kernel_mode_stories, required_mode, &dmb),
-			str_enum(&kernel_mode_stories, requested_mode, &rmb));
+			str_enum_long(&kernel_mode_stories, required_mode, &dmb),
+			str_enum_long(&kernel_mode_stories, requested_mode, &rmb));
 	} else {
 		/* we should have received a matching mode request */
 		name_buf dmb, rmb;
 		llog_sa(RC_LOG, larval_child,
 			"policy dictates %s, but peer requested %s",
-			str_enum(&kernel_mode_stories, required_mode, &dmb),
-			str_enum(&kernel_mode_stories, requested_mode, &rmb));
+			str_enum_long(&kernel_mode_stories, required_mode, &dmb),
+			str_enum_long(&kernel_mode_stories, requested_mode, &rmb));
 		return v2N_NO_PROPOSAL_CHOSEN;
 	}
 
@@ -832,7 +832,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		name_buf esb;
 		llog_sa(RC_LOG, child, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
-			  str_enum(&v2_notification_names, md->v2N_error, &esb));
+			  str_enum_long(&v2_notification_names, md->v2N_error, &esb));
 		return md->v2N_error;
 	}
 
@@ -854,8 +854,8 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		name_buf amb, rmb;
 		llog_sa(RC_LOG, child,
 			"policy dictates %s, but peer requested %s",
-			str_enum(&kernel_mode_stories, required_mode, &rmb),
-			str_enum(&kernel_mode_stories, accepted_mode, &amb));
+			str_enum_long(&kernel_mode_stories, required_mode, &rmb),
+			str_enum_long(&kernel_mode_stories, accepted_mode, &amb));
  		return v2N_NO_PROPOSAL_CHOSEN;
  	}
 
@@ -865,7 +865,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 	name_buf rmb;
 	ldbg_sa(child, "local policy is %s and received matching notify",
-		str_enum(&kernel_mode_stories, required_mode, &rmb));
+		str_enum_long(&kernel_mode_stories, required_mode, &rmb));
 	child->sa.st_kernel_mode = required_mode;
 
 	/* not negotiated */
@@ -1036,7 +1036,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 					/*expect-accepted-proposal?*/false);
 	name_buf nb;
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
-	     str_enum(&v2_notification_names, n, &nb));
+	     str_enum_long(&v2_notification_names, n, &nb));
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged; caller, below, cleans up */
 		return n;
@@ -1044,7 +1044,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 
 	n = process_v2_child_request_payloads(ike, child, md, sk_pbs);
 	ldbg(child->sa.logger, "process_v2_child_request_payloads() returned %s",
-	     str_enum(&v2_notification_names, n, &nb));
+	     str_enum_long(&v2_notification_names, n, &nb));
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged; caller, below, cleans up */
 		return n;

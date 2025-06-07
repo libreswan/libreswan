@@ -145,7 +145,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
 		llog_sa(RC_LOG, ike, "IMPAIR: forcing auth method %s",
-			str_enum(&ikev2_auth_method_names,
+			str_enum_long(&ikev2_auth_method_names,
 				 impair.force_v2_auth_method.value, &eb));
 		return impair.force_v2_auth_method.value;
 	}
@@ -460,7 +460,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		if (that_auth != AUTH_PSK) {
 			name_buf an;
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    str_enum(&keyword_auth_names, that_auth, &an));
+				    str_enum_long(&keyword_auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
@@ -484,7 +484,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		    !ike->sa.st_connection->remote->host.config->authby.null) {
 			name_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    str_enum(&keyword_auth_names, that_auth, &an));
+				    str_enum_long(&keyword_auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
@@ -504,7 +504,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		    that_auth != AUTH_RSASIG) {
 			name_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    str_enum(&keyword_auth_names, that_auth, &an));
+				    str_enum_long(&keyword_auth_names, that_auth, &an));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -585,14 +585,14 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		dbg("digsig:   no match");
 		name_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    str_enum(&keyword_auth_names, that_auth, &an));
+			    str_enum_long(&keyword_auth_names, that_auth, &an));
 
 	}
 	default:
 	{
 		name_buf eb;
 		return diag("authentication failed: method %s not supported",
-			    str_enum(&ikev2_auth_method_names, recv_auth, &eb));
+			    str_enum_long(&ikev2_auth_method_names, recv_auth, &eb));
 	}
 	}
 }
@@ -747,7 +747,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		name_buf eb;
 		llog_sa(RC_LOG, ike,
 			"authentication method %s not supported",
-			str_enum(&ikev2_auth_method_names, auth_method, &eb));
+			str_enum_long(&ikev2_auth_method_names, auth_method, &eb));
 		return STF_FATAL;
 	}
 	}
@@ -829,7 +829,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		}
 		name_buf ana;
 		dbg("digsig:   authby %s selects signer %s",
-		    str_enum(&keyword_auth_names, authby, &ana),
+		    str_enum_long(&keyword_auth_names, authby, &ana),
 		    signer->name);
 		ike->sa.st_v2_digsig.signer = signer;
 
@@ -873,7 +873,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		name_buf eb;
 		llog_sa(RC_LOG, ike,
 			"authentication method %s not supported",
-			str_enum(&ikev2_auth_method_names, auth_method, &eb));
+			str_enum_long(&ikev2_auth_method_names, auth_method, &eb));
 		return STF_FATAL;
 	}
 	}

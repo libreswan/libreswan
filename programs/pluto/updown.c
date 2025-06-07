@@ -182,7 +182,7 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
-	JDemitter("PLUTO_CONN_KIND", jam_enum(&jb, &connection_kind_names, c->local->kind));
+	JDemitter("PLUTO_CONN_KIND", jam_enum_long(&jb, &connection_kind_names, c->local->kind));
 	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_info(sr->local->host->addr)->ip_version);
 	JDuint("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 

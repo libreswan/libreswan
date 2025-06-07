@@ -372,7 +372,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 
 				name_buf b;
 				ldbg_sa(ike, "delete %s Child SA with outbound SPI "PRI_IPSEC_SPI,
-					str_enum(&ikev2_delete_protocol_id_names,
+					str_enum_long(&ikev2_delete_protocol_id_names,
 						  v2del->isad_protoid, &b),
 					pri_ipsec_spi(outbound_spi));
 
@@ -383,7 +383,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 					name_buf b;
 					llog_sa(RC_LOG, ike,
 						"received delete request for %s Child SA with outbound SPI "PRI_IPSEC_SPI" but corresponding state not found",
-						str_enum(&ikev2_delete_protocol_id_names,
+						str_enum_long(&ikev2_delete_protocol_id_names,
 							  v2del->isad_protoid, &b),
 						pri_ipsec_spi(outbound_spi));
 					continue;
@@ -403,7 +403,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 				ipsec_spi_t inbound_spi = pr->inbound.spi;
 
 				ldbg_sa(ike, "%s Child SA with outbound SPI "PRI_IPSEC_SPI" has inbound SPI "PRI_IPSEC_SPI,
-					str_enum(&ikev2_delete_protocol_id_names, v2del->isad_protoid, &b),
+					str_enum_long(&ikev2_delete_protocol_id_names, v2del->isad_protoid, &b),
 					pri_ipsec_spi(outbound_spi),
 					pri_ipsec_spi(inbound_spi));
 
