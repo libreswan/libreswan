@@ -362,8 +362,11 @@ enum opt {
 	OPT_CRLCHECKINTERVAL,
 	OPT_UNIQUEIDS,
 	OPT_NO_DNSSEC,
+
+	OPT_PROTOSTACK,
 	OPT_USE_PFKEYV2,
 	OPT_USE_XFRM,
+
 	OPT_INTERFACE,
 	OPT_CURL_IFACE,
 	OPT_CURL_TIMEOUT, /* legacy, don't replace */
@@ -441,12 +444,15 @@ const struct option optarg_options[] = {
 
 	{ OPT("uniqueids", "{YES,no}"), optional_argument, NULL, OPT_UNIQUEIDS },
 	{ OPT("no-dnssec"), no_argument, NULL, OPT_NO_DNSSEC },
+
+	{ OPT("protostack"), required_argument, NULL, OPT_PROTOSTACK },
 #ifdef KERNEL_PFKEYV2
-	{ OPT("use-pfkeyv2"),   no_argument, NULL, OPT_USE_PFKEYV2 },
+	{ OPT("use-pfkeyv2"), no_argument, NULL, OPT_USE_PFKEYV2 },
 #endif
 #ifdef KERNEL_XFRM
 	{ OPT("use-xfrm"), no_argument, NULL, OPT_USE_XFRM },
 #endif
+
 	{ IGNORE_OPT("interface", "not-implemented", "<ifname|ifaddr>"), required_argument, NULL, OPT_INTERFACE }, /* reserved; not implemented */
 
 	{ OPT("listen", "<ifaddr>"), required_argument, NULL, OPT_LISTEN },
@@ -807,14 +813,16 @@ int main(int argc, char **argv)
 			update_setup_yn(KYN_LISTEN_UDP, YN_NO);
 			continue;
 
+		case OPT_PROTOSTACK:	/* --protstack=... */
+			update_setup_string(KSF_PROTOSTACK, optarg);
+			continue;
 		case OPT_USE_PFKEYV2:	/* --use-pfkeyv2 */
 #ifdef KERNEL_PFKEYV2
-			update_setup_string(KSF_PROTOSTACK, &pfkeyv2_kernel_ops.protostack_names[0]);
+			update_setup_string(KSF_PROTOSTACK, pfkeyv2_kernel_ops.protostack_names[0]);
 #else
 			llog(RC_LOG, logger, "--use-pfkeyv2 not supported");
 #endif
 			continue;
-
 		case OPT_USE_XFRM:	/* --use-netkey */
 #ifdef KERNEL_XFRM
 			update_setup_string(KSF_PROTOSTACK, xfrm_kernel_ops.protostack_names[0]);
@@ -1071,11 +1079,7 @@ int main(int argc, char **argv)
 	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
 
 	const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
-	if (protostack == NULL) {
-		kernel_ops = kernel_stacks[0]; /*default*/
-	} else {
-		kernel_ops = NULL;
-
+	if (protostack != NULL) {
 		for (const struct kernel_ops *const *stack = kernel_stacks;
 		     *stack != NULL; stack++) {
 			const struct kernel_ops *ops = *stack;
@@ -1088,11 +1092,15 @@ int main(int argc, char **argv)
 			}
 		}
 		if (kernel_ops == NULL) {
-			kernel_ops = kernel_stacks[0];
-			llog(RC_LOG, logger,
-			     "protostack=%s ignored, using protostack=%s",
-			     protostack, kernel_ops->protostack_names[0]);
+			llog(RC_LOG, logger, "protostack=%s unrecognized", protostack);
+			/* not exit_pluto because we are not initialized yet */
+			exit(PLUTO_EXIT_FAIL);
 		}
+	} else {
+		/* for instance protostack= to get default */
+		kernel_ops = kernel_stacks[0];
+		llog(RC_LOG, logger, "using protostack=%s",
+		     kernel_ops->protostack_names[0]);
 	}
 
 	enum yn_options managed = config_setup_option(oco, KYN_IPSEC_INTERFACE_MANAGED);
