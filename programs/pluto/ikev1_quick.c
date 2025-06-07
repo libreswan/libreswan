@@ -344,7 +344,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 
 	/* IDB and IDTYPENAME must have same scope. */
 	enum ike_id_type id_type = id->isaiid_idtype;
-	esb_buf idb;
+	name_buf idb;
 	const char *idtypename = str_enum_short(&ike_id_type_names, id_type, &idb);
 
 	switch (id_type) {

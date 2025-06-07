@@ -171,7 +171,7 @@ void delete_state_event(struct state_event **evp, where_t where)
 
 	passert(e->ev_state != NULL);
 
-	enum_buf tb;
+	name_buf tb;
 	dbg("#%lu deleting %s",
 	    e->ev_state->st_serialno,
 	    str_enum(&event_type_names, e->ev_type, &tb));
@@ -200,7 +200,7 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 	 */
 	struct state *st;
 	enum event_type event_type;
-	enum_buf event_name;
+	name_buf event_name;
 	deltatime_t event_delay;
 
 	{
@@ -601,7 +601,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	 */
 	pexpect(deltasecs(delay) < secs_per_day * 31);
 
-	enum_buf event_name;
+	name_buf event_name;
 	enum_name(&event_type_names, type, &event_name);
 
 	struct state_event **evp = state_event_slot(st, type);
@@ -614,7 +614,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
-		enum_buf tb;
+		name_buf tb;
 		llog_pexpect(st->logger, where,
 			     "#%lu already has %s scheduled; forcing %s",
 			     st->st_serialno,
@@ -646,14 +646,14 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 {
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
-		enum_buf tb;
+		name_buf tb;
 		llog_pexpect(st->logger, where,
 			     "#%lu has no .st_event field for %s",
 			     st->st_serialno, str_enum(&event_type_names, type, &tb));
 		return;
 	}
 	if (*evp != NULL) {
-		enum_buf tb;
+		name_buf tb;
 		ldbg(st->logger, "#%lu requesting %s-event@%p be deleted "PRI_WHERE,
 		     st->st_serialno, str_enum(&event_type_names, (*evp)->ev_type, &tb),
 		     *evp, pri_where(where));
@@ -673,7 +673,7 @@ void event_force(enum event_type type, struct state *st)
 void whack_impair_call_state_event_handler(struct logger *logger, struct state *st,
 					   enum event_type event_type, bool detach_whack)
 {
-	enum_buf event_name;
+	name_buf event_name;
 	if (!enum_name_short(&event_type_names, event_type, &event_name)) {
 		llog(RC_LOG, logger, "%d is not a valid event", event_type);
 		return;
@@ -697,7 +697,7 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 		     "IMPAIR: no existing %s event to delete",
 		     event_name.buf);
 	} else if ((*evp)->ev_type != event_type) {
-		enum_buf tb;
+		name_buf tb;
 		llog(RC_LOG, logger,
 		     "IMPAIR: deleting existing %s event occupying the slot shared with %s",
 		     str_enum(&event_type_names, (*evp)->ev_type, &tb),

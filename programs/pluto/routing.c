@@ -550,7 +550,7 @@ static void set_established_outbound(struct connection *c,
 			if (ike->sa.st_connection == c) {
 				if (ike->sa.st_serialno != c->routing.owner[owner]) {
 					/* child/ike have crossed streams */
-					enum_buf ob;
+					name_buf ob;
 					llog(RC_LOG, child->sa.logger,
 					     "Child SA with IKE SA "PRI_SO" share their connection, .%s "PRI_SO" should be the IKE SA, updating "PRI_WHERE,
 					     pri_so(ike->sa.st_serialno),
@@ -562,7 +562,7 @@ static void set_established_outbound(struct connection *c,
 			} else {
 				if (c->routing.owner[owner] != SOS_NOBODY) {
 					/* child is a cuckoo */
-					enum_buf ob;
+					name_buf ob;
 					llog_pexpect(child->sa.logger, HERE,
 						     "Child SA with IKE SA "PRI_SO" do not share their connection, .%s "PRI_SO" should be unset, clearing "PRI_WHERE,
 						     pri_so(ike->sa.st_serialno),
@@ -600,7 +600,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 						  struct logger *logger,
 						  where_t where)
 {
-	enum_buf rsb;
+	name_buf rsb;
 	ldbg(logger,
 	     "kernel: %s() "PRI_CO" "PRI_CO" %s routed %s sec_label="PRI_SHUNK,
 	     __func__,
@@ -1227,7 +1227,7 @@ void state_disowns_connection(struct state *st)
 			llog_pexpect(st->logger, HERE,
 				     connection_owner_names[i]);
 #else
-			enum_buf ob;
+			name_buf ob;
 			pdbgf(DBG_ROUTING, st->logger,
 			      "routing: disown .%s",
 			      str_enum(&connection_owner_names, i, &ob));
@@ -1242,7 +1242,7 @@ bool pexpect_connection_is_unrouted(struct connection *c, struct logger *logger,
 {
 	bool ok_to_delete = true;
 	if (c->routing.state != RT_UNROUTED) {
-		enum_buf rn;
+		name_buf rn;
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still in %s",
 			     pri_connection_co(c), c,
@@ -1260,7 +1260,7 @@ bool pexpect_connection_is_disowned(struct connection *c, struct logger *logger,
 	bool ok_to_delete = true;
 	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
 		if (c->routing.owner[i] != SOS_NOBODY) {
-			enum_buf ob;
+			name_buf ob;
 			llog_pexpect(logger, where,
 				     "connection "PRI_CO" [%p] is owned by .%s "PRI_SO,
 				     pri_connection_co(c), c,
@@ -1399,7 +1399,7 @@ static bool reschedule_dispatch_ok(struct connection *c,
 	/* skip when any hint of an owner */
 	for (unsigned i = 0; i < elemsof(c->routing.owner); i++) {
 		if (c->routing.owner[i] != SOS_NOBODY) {
-			enum_buf ob;
+			name_buf ob;
 			ldbg_routing(logger, "connection owned by %s "PRI_SO,
 				     str_enum(&connection_owner_names, i, &ob),
 				     pri_so(c->routing.owner[i]));

@@ -275,7 +275,7 @@ static struct connection *instantiate(struct connection *t,
 {
 	address_buf ab;
 	id_buf idb;
-	enum_buf kb;
+	name_buf kb;
 	vdbg_connection(t, verbose, where,
 			"%s: remote=%s id=%s kind=%s sec_label="PRI_SHUNK,
 			func, str_address(&remote_addr, &ab),

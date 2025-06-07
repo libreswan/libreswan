@@ -67,8 +67,8 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	*sighash = empty_mac;
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
-	enum_buf pb;
-	enum_buf an;
+	name_buf pb;
+	name_buf an;
 	ldbg(logger, "%s() called for %s to %s PSK with authby=%s resume=%s",
 	     __func__, ike->sa.st_state->name,
 	     str_enum_short(&perspective_names, perspective, &pb),
@@ -315,7 +315,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 
 	size_t hash_len = ike->sa.st_oakley.ta_prf->prf_output_size;
 	if (sig.len != hash_len) {
-		esb_buf kb;
+		name_buf kb;
 		id_buf idb;
 		return diag("authentication failed: %zu byte hash received from peer %s '%s' does not match %zu byte hash of negotiated PRF %s",
 			    sig.len,
@@ -340,7 +340,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 
 	if (!hunk_eq(sig, calc_hash)) {
 		id_buf idb;
-		esb_buf kb;
+		name_buf kb;
 		return diag("authentication failed: computed hash does not match hash received from peer %s '%s'",
 			    str_enum_short(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
 			    str_id(&ike->sa.st_connection->remote->host.id, &idb));

@@ -340,7 +340,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 
 	default:
 	{
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, (*ike)->sa.logger,
 		     "ignoring Delete SA payload: unknown Protocol ID (%s)",
 		     str_enum(&ikev1_protocol_names, d->isad_protoid, &b));
@@ -349,7 +349,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 	}
 
 	if (d->isad_spisize != sizespi) {
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, (*ike)->sa.logger,
 		     "ignoring Delete SA payload: bad SPI size (%d) for %s",
 		     d->isad_spisize,
@@ -446,7 +446,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 									   spi,
 									   &bogus);
 			if (p2d == NULL) {
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, (*ike)->sa.logger,
 				     "ignoring Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" not found (maybe expired)",
 				     str_enum(&ikev1_protocol_names, d->isad_protoid, &b),
@@ -456,7 +456,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 
 			passert(&(*ike)->sa != &p2d->sa);	/* st is an IKE SA */
 			if (bogus) {
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, (*ike)->sa.logger,
 				     "warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
 				     str_enum(&ikev1_protocol_names, d->isad_protoid, &b),

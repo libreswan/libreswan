@@ -1401,7 +1401,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 
 			/* XXX: sec_label connections all look a-like, include CO */
 			policy_buf pb;
-			enum_buf kb;
+			name_buf kb;
 			dbg_ts("evaluating %s connection %s "PRI_CO" with policy <%s>:",
 			       str_enum_short(&connection_kind_names, cc->local->kind, &kb),
 			       d->name, pri_co(d->serialno),
@@ -1568,7 +1568,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 * XXX: For SEC_LABEL, best should have been set back
 		 * to CC?!?
 		 */
-		enum_buf kb;
+		name_buf kb;
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		       str_enum(&connection_kind_names, cc->local->kind, &kb), cc->name);
 		llog_sa(RC_LOG, child, "no IKEv2 connection found with compatible Traffic Selectors");

@@ -93,7 +93,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 
 	if (impair.ignore_v2_notification.enabled &&
 	    impair.ignore_v2_notification.value == n) {
-		enum_buf eb;
+		name_buf eb;
 		llog(RC_LOG, logger, "IMPAIR: ignoring %s notification",
 		     str_enum_short(&v2_notification_names, n, &eb));
 		return;
@@ -128,7 +128,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		type = "status";
 	}
 
-	enum_buf name;
+	name_buf name;
 	if (!enum_name(&v2_notification_names, n, &name)) {
 		dbg("%s notification %d is unknown", type, n);
 		return;
@@ -249,7 +249,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 {
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
-		enum_buf eb;
+		name_buf eb;
 		llog(RC_LOG, outs->logger,
 		     "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
@@ -299,11 +299,11 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 				  v2_notification_t ntype,
 				  shunk_t ndata /*optional*/)
 {
-	enum_buf notify_name;
+	name_buf notify_name;
 	enum_name_short(&v2_notification_names, ntype, &notify_name);
 
 	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
-	enum_buf exchange_name;
+	name_buf exchange_name;
 	enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name);
 
 	/*
@@ -443,11 +443,11 @@ void send_v2N_response_from_md(struct msg_digest *md,
 {
 	passert(md != NULL); /* always a response */
 
-	enum_buf notify_name;
+	name_buf notify_name;
 	PASSERT(md->logger, enum_name_short(&v2_notification_names, ntype, &notify_name));
 
 	enum ikev2_exchange exchange_type = md->hdr.isa_xchg;
-	enum_buf exchange_name;
+	name_buf exchange_name;
 	if (!enum_name_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
 		/* when responding to crud, name may not be known */
 		exchange_name.buf = "UNKNOWN";

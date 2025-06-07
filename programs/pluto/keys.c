@@ -488,7 +488,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	}
 
 	id_buf this_buf, that_buf;
-	enum_buf kb;
+	name_buf kb;
 	ldbg(c->logger, "%s() using IDs for %s->%s of kind %s",
 	     __func__,
 	     str_id(this_id, &this_buf),
@@ -838,7 +838,7 @@ static void show_pubkey(struct show *s, struct pubkey *pubkey, bool utc, const c
 	}
 
 	id_buf idb;
-	esb_buf b;
+	name_buf b;
 	show(s, "       %s '%s'",
 		     str_enum_short(&ike_id_type_names, pubkey->id.kind, &b),
 		     str_id(&pubkey->id, &idb));

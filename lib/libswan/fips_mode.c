@@ -63,7 +63,7 @@ enum fips_mode get_fips_mode(struct logger *logger)
 
 	fips_mode = (PK11_IsFIPS() ? FIPS_MODE_ON : FIPS_MODE_OFF);
 
-	enum_buf eb;
+	name_buf eb;
 	llog(RC_LOG, logger, "FIPS Mode: %s",
 	     str_enum_short(&fips_mode_names, fips_mode, &eb));
 

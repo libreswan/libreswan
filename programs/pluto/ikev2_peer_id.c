@@ -56,7 +56,7 @@ static diag_t decode_v2ID(const char *peer,
 	}
 
 	id_buf idb;
-	esb_buf esb;
+	name_buf esb;
 	ldbg(logger, "%s ID is %s: '%s'", peer,
 	     str_enum_short(&ike_id_type_names, id->kind, &esb),
 	     str_id(id, &idb));

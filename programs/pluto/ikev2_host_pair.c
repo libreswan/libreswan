@@ -173,7 +173,7 @@ static struct connection *find_v2_exact_peer_connection(const struct msg_digest 
 
 	if (c == NULL) {
 		endpoint_buf b;
-		enum_buf xb;
+		name_buf xb;
 		authby_buf pb;
 		vdbg("no exact peer connection matching inbound %s<-%s with policy %s for %s message, %s",
 		     str_endpoint(local_endpoint, &b),
@@ -336,7 +336,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 	if (c == NULL) {
 		endpoint_buf b;
 		authby_buf pb;
-		enum_buf xb;
+		name_buf xb;
 		vdbg("no unset peer connection matching inbound %s<-[%s] with policy %s for %s message, %s",
 		     str_endpoint(local_endpoint, &b),
 		     str_endpoint(remote_endpoint, &b),

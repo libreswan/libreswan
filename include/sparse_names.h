@@ -68,7 +68,6 @@ const char *str_sparse_short(const struct sparse_names *sd, unsigned long val, n
 
 size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
 
-#define sparse_buf name_buf
 #define jam_sparse jam_sparse_long
 #define str_sparse str_sparse_long
 

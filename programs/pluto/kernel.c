@@ -543,7 +543,7 @@ static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
 		enum shunt_kind shunt_kind = routing_shunt_kind(routing);
 
 		selector_pair_buf spb;
-		enum_buf rb, sb;
+		name_buf rb, sb;
 		LDBG_log(logger,
 			 "%s: owners of %s routing >= %s[%s]",
 			 who, str_selector_pair(local, remote, &spb),
@@ -585,7 +585,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 	unsigned indent = 0;
 
 	selector_pair_buf spb;
-	enum_buf rb, sb;
+	name_buf rb, sb;
 	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s[%s]",
 	     indent, "", __func__,
 	     str_selector_pair(c_local, c_remote, &spb),
@@ -735,13 +735,13 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 						  d_spd->local->client)) {
 				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
 			} else if (d_shunt_kind < c_shunt_kind) {
-				enum_buf rb, sb;
+				name_buf rb, sb;
 				ldbg_spd(logger, indent, d_spd, "skipped %s; < %s[%s]",
 					 checking,
 					 str_enum_short(&routing_names, c_routing, &rb),
 					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
 			} else if (d_shunt_kind == c_shunt_kind && c->clonedfrom == d) {
-				enum_buf rb, sb;
+				name_buf rb, sb;
 				ldbg_spd(logger, indent, d_spd,
 					 "skipped %s; is connection parent with routing = %s[%s] %s",
 					 checking,
@@ -1252,7 +1252,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 
 	address_buf sab, dab;
 	selector_buf scb, dcb;
-	enum_buf dnb, rmb;
+	name_buf dnb, rmb;
 	ldbg(c->logger, "kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	     __func__,
 	     str_enum_short(&direction_names, said_boilerplate.direction, &dnb),
@@ -1688,7 +1688,7 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 static bool uninstall_kernel_state(struct child_sa *child, enum direction direction)
 {
 	struct connection *const c = child->sa.st_connection;
-	enum_buf db;
+	name_buf db;
 	ldbg_sa(child, "kernel: %s() deleting %s",
 		__func__, str_enum_short(&direction_names, direction, &db));
 
@@ -2041,7 +2041,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 	}
 
 	if (flow->expired[SA_HARD_EXPIRED]) {
-		enum_buf db;
+		name_buf db;
 		ldbg_sa(child,
 			"kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
 			__func__, str_enum_short(&direction_names, direction, &db),

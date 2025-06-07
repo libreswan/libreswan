@@ -291,14 +291,14 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 
 	if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
 	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
-		esb_buf b;
+		name_buf b;
 		llog_sa(RC_LOG, ike,
 			"CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 			str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		return false;
 	}
 
-	esb_buf b;
+	name_buf b;
 	ldbg_sa(ike, "CREATE_CHILD_SA IPsec SA rekey Protocol %s",
 		str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 
@@ -332,7 +332,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 		return false;
 	}
 
-	esb_buf protoesb;
+	name_buf protoesb;
 	ldbg_sa(ike, "CREATE_CHILD_SA to rekey IPsec SA("PRI_IPSEC_SPI") Protocol %s",
 		pri_ipsec_spi(spi),
 		str_enum(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &protoesb));
@@ -349,7 +349,7 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 
 	struct child_sa *replaced_child = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
 	if (replaced_child == NULL) {
-		esb_buf b;
+		name_buf b;
 		llog_sa(RC_LOG, ike,
 			"CREATE_CHILD_SA no such IPsec SA to rekey SA("PRI_IPSEC_SPI") Protocol %s",
 			pri_ipsec_spi(spi),
@@ -785,7 +785,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		}
 
 		if (impair.v2n_rekey_sa_protoid.enabled) {
-			enum_buf ebo, ebn;
+			name_buf ebo, ebn;
 			enum ikev2_sec_proto_id protoid = impair.v2n_rekey_sa_protoid.value;
 			llog_sa(RC_LOG, prev, "IMPAIR: changing REKEY SA notify Protocol ID from %s to %s (%u)",
 				str_enum_short(&ikev2_notify_protocol_id_names, rekey_protoid, &ebo),
@@ -2130,7 +2130,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			case v2N_INVALID_KE_PAYLOAD:
 			{
 				if (ike->sa.st_oakley.ta_dh == NULL) {
-					enum_buf nb;
+					name_buf nb;
 					llog_sa(RC_LOG, (*larval_child),
 						"CREATE_CHILD_SA failed with error notification %s response but no KE was sent",
 						str_enum_short(&v2_notification_names, n, &nb));
@@ -2148,7 +2148,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
 							 &sg, sizeof(sg), NULL);
 				if (d != NULL) {
-					enum_buf nb;
+					name_buf nb;
 					llog(RC_LOG, (*larval_child)->sa.logger,
 					     "CREATE_CHILD_SA failed with error notification %s response: %s",
 					     str_enum_short(&v2_notification_names, n, &nb),
@@ -2161,7 +2161,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				pstats(invalidke_recv_s, sg.sg_group);
 				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
 
-				enum_buf nb, sgb;
+				name_buf nb, sgb;
 				llog_sa(RC_LOG, (*larval_child),
 					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
 					str_enum_short(&v2_notification_names, n, &nb),
@@ -2172,7 +2172,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			}
 			default:
 			{
-				enum_buf esb;
+				name_buf esb;
 				llog_sa(RC_LOG, (*larval_child),
 					"CREATE_CHILD_SA failed with error notification %s",
 					str_enum_short(&v2_notification_names, n, &esb));

@@ -79,7 +79,7 @@ void schedule_connection_event(struct connection *c,
 {
 	struct connection_event *d = alloc_thing(struct connection_event, "data");
 	connection_buf cb;
-	enum_buf kb;
+	name_buf kb;
 	d->logger = string_logger(HERE, "event %s for "PRI_CONNECTION,
 				  str_enum(&connection_event_kind_names, event_kind, &kb),
 				  pri_connection(c, &cb));
@@ -155,7 +155,7 @@ void whack_impair_call_connection_event_handler(struct connection *c,
 		dispatch_connection_event(event, &inception);
 		return;
 	}
-	enum_buf eb;
+	name_buf eb;
 	llog(RC_LOG, logger, "IMPAIR: no %s event for connection found",
 	     str_enum_short(&connection_event_kind_names, event_kind, &eb));
 }

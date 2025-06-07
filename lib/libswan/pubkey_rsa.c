@@ -510,7 +510,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 				 &signature_result, &digest);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
-		enum_buf tb;
+		name_buf tb;
 		llog_nss_error(RC_LOG, logger,
 			       "SGN_Digest(%s) function failed",
 			       str_nss_oid(hash_algo->nss.oid_tag, &tb));

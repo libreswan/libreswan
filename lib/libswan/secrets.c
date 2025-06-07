@@ -239,7 +239,7 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 {
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		id_buf idb;
-		enum_buf kb;
+		name_buf kb;
 		dbg("trying secret %s:%s",
 		    str_enum(&secret_kind_names, s->kind, &kb),
 		    (pexpect(s->ids != NULL) ? str_id(&s->ids->id, &idb) : "<NULL-ID-LIST>"));
@@ -307,7 +307,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		id_buf idl;
-		enum_buf kb, skb;
+		name_buf kb, skb;
 		ldbg(logger, "line %d: key type %s(%s) to type %s",
 		     s->line,
 		     str_enum(&secret_kind_names, kind, &kb),
@@ -864,7 +864,7 @@ static void process_secret_records(struct file_lex_position *flp,
 					i->next = s->ids;
 					s->ids = i;
 					id_buf b;
-					enum_buf skb;
+					name_buf skb;
 					dbg("id type added to secret(%p) %s: %s",
 					    s, str_enum(&secret_kind_names, s->kind, &skb),
 					    str_id(&id, &b));

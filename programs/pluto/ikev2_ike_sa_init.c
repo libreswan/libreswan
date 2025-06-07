@@ -352,7 +352,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
-		enum_buf eb;
+		name_buf eb;
 		llog(RC_LOG, outs->logger,
 		     "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
@@ -983,7 +983,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
-		enum_buf esb;
+		name_buf esb;
 		llog_sa(RC_LOG, ike,
 			"Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
 			ike->sa.st_oakley.ta_dh->common.fqn,
@@ -998,7 +998,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * proposal, and sg.sg_group matches one of the local proposal
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
-	enum_buf ignore;
+	name_buf ignore;
 	const struct dh_desc *new_group = ikev2_dh_desc(sg.sg_group, &ignore);
 	passert(new_group != NULL);
 	llog_sa(RC_LOG, ike,

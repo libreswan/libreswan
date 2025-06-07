@@ -274,7 +274,7 @@ static bool never_negotiate_sparse_option(const char *leftright,
 {
 	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
-			sparse_buf sb;
+			name_buf sb;
 			llog_never_negotiate_option(logger, wm, leftright, name,
 						    str_sparse(names, value, &sb));
 		}
@@ -292,7 +292,7 @@ static bool never_negotiate_enum_option(const char *leftright,
 {
 	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
-			sparse_buf sb;
+			name_buf sb;
 			llog_never_negotiate_option(logger, wm, leftright, name,
 						    str_enum_short(names, value, &sb));
 		}
@@ -1787,7 +1787,7 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		if (pubkey != NULL) {
-			enum_buf pkb;
+			name_buf pkb;
 			llog(RC_LOG, logger,
 			     "warning: ignoring %s %s '%s' and using %s certificate '%s'",
 			     leftright,
@@ -1835,7 +1835,7 @@ static diag_t extract_host_end(struct host_end *host,
 		 */
 
 		if (src->ckaid != NULL) {
-			enum_buf pkb;
+			name_buf pkb;
 			llog(RC_LOG, logger,
 			     "warning: ignoring %sckaid=%s and using %s%s",
 			     leftright, src->ckaid,
@@ -1845,7 +1845,7 @@ static diag_t extract_host_end(struct host_end *host,
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
 		err = whack_pubkey_to_chunk(src->pubkey_alg, pubkey, &keyspace);
 		if (err != NULL) {
-			enum_buf pkb;
+			name_buf pkb;
 			return diag("%s%s invalid: %s",
 				    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 				    err);
@@ -1860,7 +1860,7 @@ static diag_t extract_host_end(struct host_end *host,
 						      &pubkey_content, logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
-				enum_buf pkb;
+				name_buf pkb;
 				return diag_diag(&d, "%s%s invalid, ",
 						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 			}
@@ -1869,7 +1869,7 @@ static diag_t extract_host_end(struct host_end *host,
 			passert(pubkey_content.type != NULL);
 
 			ckaid_buf ckb;
-			enum_buf pkb;
+			name_buf pkb;
 			ldbg(logger, "saving CKAID %s extracted from %s%s",
 			     str_ckaid(&pubkey_content.ckaid, &ckb),
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
@@ -1922,7 +1922,7 @@ static diag_t extract_host_end(struct host_end *host,
 			    leftright, str_ckaid(host_config->ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
-			enum_buf pkb;
+			name_buf pkb;
 			llog(LOG_STREAM/*not-whack-for-now*/, logger,
 			     "loaded private key matching %s%s CKAID %s",
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
@@ -1989,7 +1989,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 	if (is_never_negotiate_wm(wm) && auth != AUTH_UNSET && auth != AUTH_NEVER) {
 		/* AUTH_UNSET is updated below */
-		enum_buf ab;
+		name_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
 			    leftright, str_enum_short(&keyword_auth_names, auth, &ab));
 	}
@@ -2067,7 +2067,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (authby_is_set(authby_mask)) {
 		authby = authby_and(authby, authby_mask);
 		if (!authby_is_set(authby)) {
-			enum_buf ab;
+			name_buf ab;
 			authby_buf pb;
 			return diag("%sauth=%s expects authby=%s",
 				    leftright,
@@ -2076,7 +2076,7 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 	}
 
-	enum_buf eab;
+	name_buf eab;
 	authby_buf wabb;
 	authby_buf eabb;
 	dbg("fake %sauth=%s %sauthby=%s from whack authby %s",
@@ -3573,7 +3573,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		encap_mode = ENCAP_MODE_TRANSPORT;
 	} else {
 		if (!is_never_negotiate_wm(wm)) {
-			sparse_buf sb;
+			name_buf sb;
 			llog_pexpect(c->logger, HERE,
 				     "type=%s should be never-negotiate",
 				     str_sparse(&type_option_names, wm->type, &sb));
@@ -3597,7 +3597,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		if (!authby_eq(whack_authby, AUTHBY_NONE) &&
 		    !authby_eq(whack_authby, AUTHBY_NEVER)) {
 			authby_buf ab;
-			enum_buf sb;
+			name_buf sb;
 			return diag("kind=%s shunt connection cannot have authby=%s authentication",
 				    str_sparse_short(&never_negotiate_shunt_names, wm->never_negotiate_shunt, &sb),
 				    str_authby(whack_authby, &ab));
@@ -4126,7 +4126,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	if (is_fips_mode() && config->negotiation_shunt == SHUNT_PASS) {
-		enum_buf sb;
+		name_buf sb;
 		llog(RC_LOG, c->logger,
 		     "FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_sparse_short(&negotiation_shunt_names, config->negotiation_shunt, &sb));
@@ -4145,7 +4145,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->shunt[SHUNT_KIND_IPSEC] = SHUNT_IPSEC;
 
 	if (is_fips_mode() && config->failure_shunt != SHUNT_NONE) {
-		enum_buf eb;
+		name_buf eb;
 		llog(RC_LOG, c->logger,
 		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_sparse_short(&failure_shunt_names, config->failure_shunt, &eb));
@@ -4262,7 +4262,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (ike_version == IKEv1) {
 		if (wm->ppk != NPPI_UNSET) {
-			sparse_buf sb;
+			name_buf sb;
 			llog(RC_LOG, c->logger,
 			     "warning: ignoring ppk=%s as IKEv1",
 			     str_sparse(&nppi_option_names, wm->ppk, &sb));
@@ -5004,7 +5004,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 		if ((c->local->host.config->auth == AUTH_PSK && c->remote->host.config->auth == AUTH_NULL) ||
 		    (c->local->host.config->auth == AUTH_NULL && c->remote->host.config->auth == AUTH_PSK)) {
-			enum_buf lab, rab;
+			name_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,
 				    str_enum(&keyword_auth_names, c->local->host.config->auth, &lab),
@@ -5466,7 +5466,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(child_sa.ipcomp, COMPRESS);
 	if (!never_negotiate(c) &&
 	    c->config->child_sa.encap_mode != ENCAP_MODE_UNSET) {
-		enum_buf eb;
+		name_buf eb;
 		CS(str_enum_short(&encap_mode_names, c->config->child_sa.encap_mode, &eb));
 	}
 	CT(child_sa.pfs, PFS);
@@ -5834,7 +5834,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		return NULL;
 	}
 
-	enum_buf kb;
+	name_buf kb;
 	dbg("  concluding with %s priority %" PRIu32 " kind=%s",
 	    best_connection->name,
 	    best_priority,

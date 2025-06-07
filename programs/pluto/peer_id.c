@@ -283,12 +283,12 @@ static bool score_host_connection(const struct ike_sa *ike,
 	 */
 	if (responder_id != NULL && responder_id->kind != ID_NONE) {
 		id_buf tzb;
-		esb_buf tzesb;
+		name_buf tzesb;
 		vdbg("peer expects us to be %s (%s) according to its IDr (tarzan) payload",
 		     str_id(responder_id, &tzb),
 		     str_enum_short(&ike_id_type_names, responder_id->kind, &tzesb));
 		id_buf usb;
-		esb_buf usesb;
+		name_buf usesb;
 		vdbg("this connection's local id is %s (%s)",
 		     str_id(&d->local->host.id, &usb),
 		     str_enum_short(&ike_id_type_names, d->local->host.id.kind, &usesb));
@@ -949,7 +949,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		}
 #endif
 		if (memchr(name.ptr, '\0', name.len) != NULL) {
-			esb_buf b;
+			name_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
 				    str_enum_short(&ike_id_type_names, kind, &b));
 		}
@@ -959,7 +959,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 
 	case ID_FQDN:
 		if (memchr(name.ptr, '\0', name.len) != NULL) {
-			esb_buf b;
+			name_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
 				    str_enum_short(&ike_id_type_names, kind, &b));
 		}
@@ -994,7 +994,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 
 	default:
 	{
-		esb_buf b;
+		name_buf b;
 		return diag("Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
 			    str_enum_short(&ike_id_type_names, kind, &b));
 	}

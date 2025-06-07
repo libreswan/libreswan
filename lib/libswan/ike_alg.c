@@ -220,7 +220,7 @@ bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc)
 
 static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 					  enum ike_alg_key key,
-					  int id, enum_buf *b,
+					  int id, name_buf *b,
 					  lset_t debug)
 {
 	struct logger *logger = &global_logger;
@@ -260,12 +260,12 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 const struct ike_alg *ike_alg_by_sadb_alg_id(const struct ike_alg_type *algorithms,
 					     unsigned id)
 {
-	enum_buf b;
+	name_buf b;
 	return lookup_by_id(algorithms, SADB_ALG_ID, id, &b, DBG_CRYPT);
 }
 
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,
-						 unsigned id, enum_buf *b)
+						 unsigned id, name_buf *b)
 {
 	const struct ike_alg *alg = lookup_by_id(algorithms, IKEv1_OAKLEY_ID,
 						 id, b, DBG_CRYPT);
@@ -276,92 +276,92 @@ static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algo
 	return alg;
 }
 
-const struct encrypt_desc *ikev1_ike_encrypt_desc(enum ikev1_encr_attribute id, enum_buf *b)
+const struct encrypt_desc *ikev1_ike_encrypt_desc(enum ikev1_encr_attribute id, name_buf *b)
 {
 	return encrypt_desc(ikev1_oakley_lookup(&ike_alg_encrypt, id, b));
 }
 
-const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, enum_buf *b)
+const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, name_buf *b)
 {
 	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id, b));
 }
 
-const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh id, enum_buf *b)
+const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh id, name_buf *b)
 {
 	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id, b));
 }
 
-const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo id, enum_buf *b)
+const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo id, name_buf *b)
 {
 	return ipcomp_desc(ikev1_oakley_lookup(&ike_alg_ipcomp, id, b));
 }
 
-const struct encrypt_desc *ikev1_kernel_encrypt_desc(enum ikev1_esp_transform id, enum_buf *b)
+const struct encrypt_desc *ikev1_kernel_encrypt_desc(enum ikev1_esp_transform id, name_buf *b)
 {
 	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
-const struct integ_desc *ikev1_kernel_integ_desc(enum ikev1_auth_attribute id, enum_buf *b)
+const struct integ_desc *ikev1_kernel_integ_desc(enum ikev1_auth_attribute id, name_buf *b)
 {
 	return integ_desc(lookup_by_id(&ike_alg_integ, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
-const struct ipcomp_desc *ikev1_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id, enum_buf *b)
+const struct ipcomp_desc *ikev1_kernel_ipcomp_desc(enum ipsec_ipcomp_algo id, name_buf *b)
 {
 	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
 }
 
 static const struct ike_alg *ikev2_lookup(const struct ike_alg_type *algorithms, int id,
-					  struct enum_buf *b)
+					  struct name_buf *b)
 {
 	return lookup_by_id(algorithms, IKEv2_ALG_ID, id, b, DBG_CRYPT);
 }
 
-const struct encrypt_desc *ikev2_encrypt_desc(enum ikev2_trans_type_encr id, struct enum_buf *b)
+const struct encrypt_desc *ikev2_encrypt_desc(enum ikev2_trans_type_encr id, struct name_buf *b)
 {
 	return encrypt_desc(ikev2_lookup(&ike_alg_encrypt, id, b));
 }
 
-const struct hash_desc *ikev2_hash_desc(enum ikev2_hash_algorithm id, struct enum_buf *b)
+const struct hash_desc *ikev2_hash_desc(enum ikev2_hash_algorithm id, struct name_buf *b)
 {
 	return hash_desc(ikev2_lookup(&ike_alg_hash, id, b));
 }
 
-const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf id, struct enum_buf *b)
+const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf id, struct name_buf *b)
 {
 	return prf_desc(ikev2_lookup(&ike_alg_prf, id, b));
 }
 
-const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct enum_buf *b)
+const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct name_buf *b)
 {
 	return integ_desc(ikev2_lookup(&ike_alg_integ, id, b));
 }
 
-const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh id, struct enum_buf *b)
+const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh id, struct name_buf *b)
 {
 	return dh_desc(ikev2_lookup(&ike_alg_dh, id, b));
 }
 
-const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo id, struct enum_buf *b)
+const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo id, struct name_buf *b)
 {
 	return ipcomp_desc(ikev2_lookup(&ike_alg_ipcomp, id, b));
 }
 
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)
 {
-	enum_buf b;
+	name_buf b;
 	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, &b, DBG_CRYPT));
 }
 
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id)
 {
-	enum_buf b;
+	name_buf b;
 	return integ_desc(lookup_by_id(&ike_alg_integ, SADB_ALG_ID, id, &b, DBG_CRYPT));
 }
 
 const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id)
 {
-	enum_buf b;
+	name_buf b;
 	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, SADB_ALG_ID, id, &b, DBG_CRYPT));
 }
 
@@ -647,7 +647,7 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
 	if (integ->common.id[IKEv1_IPSEC_ID] >= 0) {
-		enum_buf esb;
+		name_buf esb;
 		pexpect_ike_alg_streq(logger, alg, integ->integ_kernel_audit_name,
 				      str_enum_short(&auth_alg_names,
 						     integ->common.id[IKEv1_IPSEC_ID],
@@ -976,7 +976,7 @@ static void check_enum_name(const char *what,
 				     alg->algo_type->name,
 				     alg->fqn, what);
 		}
-		enum_buf enum_name;
+		name_buf enum_name;
 		bool ok = enum_short(enum_names, id, &enum_name);
 		ldbgf(DBG_CRYPT, logger, "%s id: %d enum name: %s",
 		      what, id, enum_name.buf);
@@ -1106,7 +1106,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 				if (id < 0) continue;
 				break;
 			}
-			enum_buf b;
+			name_buf b;
 			pexpect_ike_alg_key(logger, alg, key,
 					    lookup_by_id(&scratch, key, id, &b, LEMPTY) == NULL);
 		}

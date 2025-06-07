@@ -2003,7 +2003,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
 					     ISAKMP_ATTR_AF_TV);
 				last_enum = n & ~ISAKMP_ATTR_AF_MASK;
-				esb_buf nb;
+				name_buf nb;
 				if (!enum_name(fp->desc, last_enum, &nb)) {
 					enum_name(fp->desc, n, &nb);
 				}
@@ -2021,7 +2021,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 			case ft_lss:
 			{
 				last_enum = n;
-				esb_buf nb;
+				name_buf nb;
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name,
 					str_enum(fp->desc, n, &nb),
@@ -2031,7 +2031,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 
 			case ft_loose_enum_enum:
 			{
-				enum_buf buf;
+				name_buf buf;
 				const char *name = str_enum_enum(fp->desc, last_enum, n, &buf);
 				DBG_log("   %s: %s (0x%jx)",
 					fp->name, name, n);
@@ -2223,7 +2223,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 				 * (value or AF+value) is
 				 * found is it acceptable.
 				 */
-				enum_buf b;
+				name_buf b;
 				if (fp->field_type == ft_af_enum &&
 				    !enum_name(fp->desc, n, &b)) {
 					return diag("%s of %s has an unknown value: %s%ju (0x%jx)",
@@ -2236,7 +2236,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 
 			case ft_enum:   /* value from an enumeration */
 			{
-				enum_buf b;
+				name_buf b;
 				if (!enum_name(fp->desc, n, &b)) {
 					return diag("%s of %s has an unknown value: %ju (0x%jx)",
 						    fp->name, sd->name,
@@ -2383,8 +2383,8 @@ static void update_last_substructure(struct pbs_out *outs,
 	 * last.  Check/set its last substructure field to its type.
 	 */
 	if (outs->last_substructure.loc != NULL) {
-		esb_buf locb;
-		esb_buf nsstb;
+		name_buf locb;
+		name_buf nsstb;
 		dbg("last substructure: checking '%s'.'%s'.'%s' containing %s (0x%x) is %s (0x%x)",
 		    /* '%s'.'%s'.'%s' */
 		    outs->desc->name,
@@ -2443,7 +2443,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	outs->next_payload_chain.fp = fp;
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
-		esb_buf npb;
+		name_buf npb;
 		llog_pexpect(outs->logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
@@ -2466,7 +2466,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	 * just the "Identification Payload".
 	 */
 	if (outs->container == NULL) {
-		esb_buf npb;
+		name_buf npb;
 		dbg("next payload chain: no previous for current %s (%d:%s); assumed to be fake",
 		    sd->name, sd->pt, str_enum(fp->desc, sd->pt, &npb));
 		return;
@@ -2507,12 +2507,12 @@ static void update_next_payload_chain(struct pbs_out *outs,
 		 * This works because v2SKF messages never have more
 		 * than one payload.
 		 */
-		esb_buf npb;
+		name_buf npb;
 		dbg("next payload chain: using supplied v2SKF '%s'.'%s' value %d:%s",
 		     sd->name, fp->name, n,
 		     str_enum(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
-		esb_buf npb;
+		name_buf npb;
 		llog_pexpect(outs->logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
@@ -2522,7 +2522,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 
 	/* update previous struct's next payload type field */
-	esb_buf npb;
+	name_buf npb;
 	dbg("next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
 	     message->next_payload_chain.sd->name,
 	     message->next_payload_chain.fp->name,
@@ -2584,7 +2584,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	case ft_af_enum: /* Attribute Format + value from an enumeration */
 	{
 		*immediate = ((n & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV);
-		enum_buf b;
+		name_buf b;
 		if (fp->field_type == ft_af_enum &&
 		    !enum_name(fp->desc, n, &b)) {
 #define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", \
@@ -2604,7 +2604,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_enum:   /* value from an enumeration */
 	{
-		enum_buf b;
+		name_buf b;
 		if (!enum_name(fp->desc, n, &b)) {
 			if (!impair.emitting) {
 				llog_pexpect(outs->logger, HERE,

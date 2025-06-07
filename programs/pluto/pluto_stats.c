@@ -326,7 +326,7 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 	unsigned long other = stat->count[stat->count_ceiling];
 	for (unsigned long n = 0; n < stat->count_ceiling; n++) {
 		unsigned long count = stat->count[n];
-		enum_buf nm;
+		name_buf nm;
 		if (enum_name_short(stat->names, n + stat->floor, &nm)) {
 			show(s, "total.%s.%s=%lu",
 				 stat->what, nm.buf, count);
@@ -335,7 +335,7 @@ static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 		}
 	}
 	/* prefer enum's name */
-	enum_buf nm;
+	name_buf nm;
 	show(s, "total.%s.%s=%lu", stat->what,
 		 (enum_name_short(stat->names, stat->count_ceiling + stat->floor, &nm) ? nm.buf : "other"),
 		 other);
@@ -358,7 +358,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		 * XXX: the bug is that the enum table contains names
 		 * that include UNUSED.  Skip them.
 		 */
-		enum_buf nm;
+		name_buf nm;
 		if (enum_name_short(names, e, &nm)) {
 			show(s, "total.%s.%s=%lu",
 				 what, nm.buf, count[e]);

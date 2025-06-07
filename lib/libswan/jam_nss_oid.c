@@ -20,7 +20,7 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-const char *str_nss_oid(SECOidTag oidtag, enum_buf *b)
+const char *str_nss_oid(SECOidTag oidtag, name_buf *b)
 {
 	SECOidData *data = SECOID_FindOIDByTag(oidtag);
 	if (data != NULL) {

@@ -459,7 +459,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 		default:
 			bad_case(ike_version);
 		}
-		enum_buf cert_name;
+		name_buf cert_name;
 		if (!enum_name_short(cert_names, cert_type, &cert_name)) {
 			llog(RC_LOG, logger,
 				    "ignoring certificate with unknown type %d",
@@ -673,7 +673,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 					      &subAltName);
 	if (rv != SECSuccess) {
 		id_buf idb;
-		enum_buf kb;
+		name_buf kb;
 		return diag("%s certificate contains no subjectAltName extension to match %s '%s'",
 			    who, str_enum_short(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
@@ -689,7 +689,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	if (nameList == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
 		id_buf idb;
-		enum_buf kb;
+		name_buf kb;
 		return diag("%s certificate subjectAltName extension failed to decode while looking for %s '%s'",
 			    who, str_enum_short(&ike_id_type_names, id->kind, &kb),
 			    str_id(id, &idb));
@@ -820,7 +820,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	 * Don't need to free nameList, it's part of the arena.
 	 */
 	PORT_FreeArena(arena, PR_FALSE);
-	esb_buf esb;
+	name_buf esb;
 	return diag("%s certificate subjectAltName extension does not match %s '%s'",
 		    who, str_enum_short(&ike_id_type_names, id->kind, &esb),
 		    ascii_id);

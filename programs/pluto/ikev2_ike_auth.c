@@ -276,7 +276,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 		default:
 		{
-			esb_buf b;
+			name_buf b;
 			ldbg(ike->sa.logger, "not sending IDr payload for remote ID type %s",
 			     str_enum_short(&ike_id_type_names, pc->remote->host.id.kind, &b));
 			break;
@@ -1417,7 +1417,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		if (md->pd[pd] != NULL) {
 			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
 			pstat(ikev2_recv_notifies_e, n);
-			enum_buf wb;
+			name_buf wb;
 			llog_sa(RC_LOG, ike,
 				"IKE SA authentication request rejected by peer: %s",
 				str_enum_short(&v2_notification_names, n, &wb));
@@ -1434,7 +1434,7 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 		     ntfy != NULL; ntfy = ntfy->next) {
 			v2_notification_t n = ntfy->payload.v2n.isan_type;
 			/* same scope */
-			enum_buf esb;
+			name_buf esb;
 			const char *name = str_enum_short(&v2_notification_names, n, &esb);
 
 			if (ntfy->payload.v2n.isan_spisize != 0) {

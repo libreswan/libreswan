@@ -42,7 +42,7 @@ static bool warning_or_false(struct proposal_parser *parser,
 		 * XXX: the algorithm might be unknown, or might be
 		 * known but not enabled due to FIPS, or ...?
 		 */
-		enum_buf vb;
+		name_buf vb;
 		llog(RC_LOG, logger,
 		     "ignoring %s %s %s algorithm '"PRI_SHUNK"'",
 		     str_enum(&ike_version_names, parser->policy->version, &vb),

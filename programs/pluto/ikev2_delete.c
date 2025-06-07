@@ -46,7 +46,7 @@ bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *p
 	}
 
 	if (impair.v2_delete_protoid.enabled) {
-		enum_buf ebo, ebn;
+		name_buf ebo, ebn;
 		enum ikev2_sec_proto_id new_protoid = impair.v2_delete_protoid.value;
 		llog(RC_LOG, ike->sa.logger,
 		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
@@ -370,7 +370,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 					return false;
 				}
 
-				esb_buf b;
+				name_buf b;
 				ldbg_sa(ike, "delete %s Child SA with outbound SPI "PRI_IPSEC_SPI,
 					str_enum(&ikev2_delete_protocol_id_names,
 						  v2del->isad_protoid, &b),
@@ -380,7 +380,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 											  v2del->isad_protoid,
 											  outbound_spi);
 				if (child == NULL) {
-					esb_buf b;
+					name_buf b;
 					llog_sa(RC_LOG, ike,
 						"received delete request for %s Child SA with outbound SPI "PRI_IPSEC_SPI" but corresponding state not found",
 						str_enum(&ikev2_delete_protocol_id_names,

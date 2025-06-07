@@ -463,7 +463,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	default:
 	{
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "attempt to send unsupported mode cfg attribute %s.",
 		     str_enum(&modecfg_attr_names, attr_type, &b));
@@ -1470,7 +1470,7 @@ static void xauth_launch_authent(struct ike_sa *ike,
 /* log a nice description of an unsupported attribute */
 static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 {
-	esb_buf b;
+	name_buf b;
 	dbg("Unsupported %s %s attribute %s received.",
 	    kind,
 	    (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
@@ -1517,7 +1517,7 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 		break;	/* OK */
 	default:
 	{
-		enum_buf mb;
+		name_buf mb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting MODE_CFG_REPLY or ISAKMP_CFG_ACK; got %s instead; message ignored",
 		     str_enum(&attr_msg_type_names, ma->isama_type, &mb));
@@ -1544,7 +1544,7 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 			/* since we only accept XAUTH_TYPE_GENERIC we
 			 * don't need to record this attribute */
 			if (attr.isaat_lv != IKEv1_XAUTH_TYPE_GENERIC) {
-				enum_buf b;
+				name_buf b;
 				ldbg(ike->sa.logger, "unsupported XAUTH_TYPE value %s received",
 				     str_enum(&ikev1_xauth_type_names, attr.isaat_lv, &b));
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
@@ -1749,7 +1749,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 
 	default:
 	{
-		enum_buf tb;
+		name_buf tb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_REQUEST, got %s instead; message ignored",
 		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
@@ -2539,7 +2539,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 				default:
 				{
-					esb_buf b;
+					name_buf b;
 					llog(RC_LOG, ike->sa.logger,
 					     "trying to send XAUTH reply, sending %s instead.",
 					     str_enum(&modecfg_attr_names, attr_type, &b));
@@ -2625,7 +2625,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 
 	default:
 	{
-		enum_buf tb;
+		name_buf tb;
 		llog(RC_LOG, ike->sa.logger,
 		     "expecting ISAKMP_CFG_REQUEST or ISAKMP_CFG_SET, got %s instead; message ignored",
 		     str_enum(&attr_msg_type_names, ma->isama_type, &tb));
@@ -2741,7 +2741,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 			return STF_OK;
 		}
 
-		enum_buf sb;
+		name_buf sb;
 		llog(RC_LOG, ike->sa.logger, "xauth: xauth_client_ackstatus() returned %s",
 		     str_enum(&stf_status_names, stat, &sb));
 		llog(RC_LOG, ike->sa.logger, "XAUTH: aborting entire IKE Exchange");
@@ -2910,7 +2910,7 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 
 			default:
 			{
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, ike->sa.logger,
 				     "while waiting for XAUTH_STATUS, got %s %s instead.",
 				     (attr.isaat_af_type & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",

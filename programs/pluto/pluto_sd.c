@@ -58,7 +58,7 @@ void pluto_sd_init(struct logger *logger)
  */
 void pluto_sd(int action, int status)
 {
-	enum_buf ab;
+	name_buf ab;
 	dbg("pluto_sd: executing action %s(%d), status %d",
 	    str_enum(&sd_action_names, action, &ab), action, status);
 

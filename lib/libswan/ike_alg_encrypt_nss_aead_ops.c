@@ -49,7 +49,7 @@ static struct cipher_op_context *cipher_op_context_create_aead_nss(const struct 
 							  CKA_NSS_MESSAGE|mode,
 							  symkey, &dummy);
 	if (context == NULL) {
-		enum_buf ckm;
+		name_buf ckm;
 		passert_nss_error(logger, HERE,
 				  "%s: PKCS11_CreateContextBySymKey(%s,%s) failed",
 				  cipher->common.fqn,

@@ -1392,10 +1392,10 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
 
-			enum_buf esb_type; /* same scope */
+			name_buf esb_type; /* same scope */
 			const char *transform_type_name =
 				str_enum_short(&ikev2_trans_type_names, transform_type, &esb_type);
-			enum_buf esb_id; /* same scope */
+			name_buf esb_id; /* same scope */
 			const char *transform_id_name =
 				str_enum_enum_short(&v2_transform_ID_enums,
 						    transform_type, transform->id, &esb_id);
@@ -1492,7 +1492,7 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			unsigned type_id = add_impaired_transform->value;
 			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
 			unsigned transform_id = (type_id & 0xffff);
-			enum_buf typeb, idb;
+			name_buf typeb, idb;
 			llog(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
 			     str_enum_short(&ikev2_trans_type_names, transform_type, &typeb),
 			     transform_type,
@@ -1524,7 +1524,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 
 	enum ikev2_sec_proto_id proposal_protoid = proposal->protoid;
 	if (impair.v2_proposal_protoid.enabled) {
-		enum_buf ebo, ebn;
+		name_buf ebo, ebn;
 		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid.value;
 		llog(RC_LOG, sa_pbs->logger, "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_proposal_protocol_id_names, proposal_protoid, &ebo),
@@ -1657,7 +1657,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR:
 			{
-				enum_buf b;
+				name_buf b;
 				const struct encrypt_desc *encrypt =
 					ikev2_encrypt_desc(transform->id, &b);
 				if (encrypt == NULL) {
@@ -1674,7 +1674,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			}
 			case IKEv2_TRANS_TYPE_PRF:
 			{
-				enum_buf b;
+				name_buf b;
 				const struct prf_desc *prf = ikev2_prf_desc(transform->id, &b);
 				if (prf == NULL) {
 					/*
@@ -1693,7 +1693,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			}
 			case IKEv2_TRANS_TYPE_INTEG:
 			{
-				enum_buf b;
+				name_buf b;
 				const struct integ_desc *integ = ikev2_integ_desc(transform->id, &b);
 				if (integ == NULL) {
 					/*
@@ -1712,7 +1712,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			}
 			case IKEv2_TRANS_TYPE_DH:
 			{
-				enum_buf b;
+				name_buf b;
 				const struct dh_desc *group = ikev2_dh_desc(transform->id, &b);
 				if (group == NULL) {
 					/*
@@ -1941,7 +1941,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				     unsigned keylen,
 				     struct logger *logger)
 {
-	enum_buf protocol;
+	name_buf protocol;
 	if (proposal->protoid == 0 ||
 	    !enum_name_short(&ikev2_proposal_protocol_id_names, proposal->protoid, &protocol)) {
 		llog_pexpect(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
@@ -2153,7 +2153,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 						       const struct proposals *proposals,
 						       struct logger *logger)
 {
-	enum_buf name;
+	name_buf name;
 	PASSERT(logger, enum_name_short(&ikev2_proposal_protocol_id_names, protoid, &name));
 	ldbg(logger, "generating IKEv2 %s proposals", name.buf);
 	PASSERT(logger, proposals != NULL);
@@ -2320,7 +2320,7 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
 		int groupnum = transforms->transform[t].id;
-		enum_buf b;
+		name_buf b;
 		const struct dh_desc *group = ikev2_dh_desc(groupnum, &b);
 		if (pbad(group == NULL)) {
 			/*

@@ -151,7 +151,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 		}
 		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
 
-		enum_buf b;
+		name_buf b;
 		const struct hash_desc *hash = ikev2_hash_desc(h_value, &b);
 		if (hash == NULL) {
 			llog_sa(RC_LOG, ike, "received and ignored unknown hash algorithm %s", b.buf);
@@ -211,7 +211,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 
 	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
-		enum_buf ke_esb;
+		name_buf ke_esb;
 		llog(RC_LOG, st->logger,
 		     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
@@ -262,7 +262,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 
 	if (DBGP(DBG_BASE)) {
 		/* eb2 and err2 must have same scope */
-		esb_buf eb2;
+		name_buf eb2;
 		const char *err1 = "%dnsondemand";
 		const char *err2 = "";
 
@@ -591,7 +591,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
-		enum_buf xb;
+		name_buf xb;
 		llog(RC_LOG, ike->sa.logger,
 		     "received %s request, computing DH in the background",
 		     str_enum_short(&ikev2_exchange_names, ix, &xb));
@@ -605,7 +605,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		case FRAGMENTS_COMPLETE:
 			break;
 		}
-		enum_buf xb;
+		name_buf xb;
 		llog(RC_LOG, ike->sa.logger,
 		     "received %s request fragment %u (1 of %u), computing DH in the background",
 		     str_enum_short(&ikev2_exchange_names, ix, &xb),

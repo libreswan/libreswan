@@ -223,7 +223,7 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 	}
 	default:
 	{
-		enum_buf b;
+		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "ignoring CERTREQ payload of unsupported type %s",
 		     str_enum(&ikev2_cert_type_names, cert_type, &b));

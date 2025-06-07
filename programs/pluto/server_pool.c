@@ -502,7 +502,7 @@ static stf_status handle_helper_answer(struct state *callback_sa,
 		PASSERT(job->logger, job->handler->completed_cb != NULL);
 		status = job->handler->completed_cb(callback_sa, md, job->task);
 	}
-	esb_buf buf;
+	name_buf buf;
 	ldbg(job->logger, PRI_JOB": final status %s; cleaning up",
 	     pri_job(job), str_enum(&stf_status_names, status, &buf));
 	free_job(&job);

@@ -24,7 +24,7 @@
 #include "lswlog.h"
 #include "lswnss.h"
 
-const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
+const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, name_buf *buf)
 {
 	switch (mechanism) {
 		/* Not using #T + strlen("CKM_") because of clang's -Wstring-plus-int */
@@ -101,6 +101,6 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
 
 size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)
 {
-	enum_buf b;
+	name_buf b;
 	return jam_string(buf, str_nss_ckm(mechanism, &b));
 }

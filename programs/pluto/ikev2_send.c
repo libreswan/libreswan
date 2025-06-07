@@ -112,7 +112,7 @@ bool emit_v2UNKNOWN(const char *victim,
 		return true;
 	}
 
-	enum_buf xb;
+	name_buf xb;
 	llog(RC_LOG, outs->logger,
 	     "IMPAIR: adding an unknown%s payload of type %d to %s %s message",
 	     impair.unknown_v2_payload_critical ? " critical" : "",

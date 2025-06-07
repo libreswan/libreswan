@@ -409,7 +409,7 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 
 		/* message type? */
 		if (transition->exchange != md->hdr.isa_xchg) {
-			enum_buf xb;
+			name_buf xb;
 			vdbg_ft("exchange type does not match %s",
 				str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
 			continue;
@@ -417,7 +417,7 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 
 		/* role? */
 		if (transition->recv_role != role) {
-			enum_buf rb;
+			name_buf rb;
 			vdbg_ft("message role does not match %s",
 				str_enum_short(&message_role_names, transition->recv_role, &rb));
 			continue;
@@ -538,7 +538,7 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 {
 	enum message_role role = v2_msg_role(md);
 
-	enum_buf xb, rb;
+	name_buf xb, rb;
 	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
 		     "looking for secured transition matching exchange %s %s ...",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -620,7 +620,7 @@ diag_t find_v2_unsecured_request_transition(struct logger *logger,
 {
 	enum message_role role = v2_msg_role(md);
 
-	enum_buf xb, rb;
+	name_buf xb, rb;
 	VERBOSE_DBGP(DBG_BASE, logger,
 		     "looking for an unsecured transition matching exchange %s %s ...",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -651,7 +651,7 @@ diag_t find_v2_unsecured_response_transition(struct ike_sa *ike,
 					     const struct msg_digest *md,
 					     const struct v2_transition **transition)
 {
-	enum_buf xb, rb;
+	name_buf xb, rb;
 	enum message_role role = v2_msg_role(md);
 	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
 		     "looking for an unsecured transition matching exchange %s %s ...",
@@ -686,7 +686,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 {
 	enum message_role role = v2_msg_role(md);
 
-	enum_buf xb, rb;
+	name_buf xb, rb;
 	VERBOSE_DBGP(DBG_BASE, ike->sa.logger,
 		     "looking for plausible secured exchange matching %s %s ...",
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -720,7 +720,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			}
 		}
 		if (exchange == NULL) {
-			enum_buf xb;
+			name_buf xb;
 			llog(RC_LOG, ike->sa.logger, "unexpected %s request; message dropped",
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb));
 			return false;
@@ -734,7 +734,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			return false;
 		}
 		if (exchange->type != md->hdr.isa_xchg) {
-			enum_buf xb, eb;
+			name_buf xb, eb;
 			llog(RC_LOG, ike->sa.logger, "unexpected %s response, expecting %s (%s); message dropped",
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			     str_enum_short(&ikev2_exchange_names, exchange->type, &eb),
@@ -750,8 +750,8 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	 * Double check that the matching exchange is secured.
 	 */
 	if (!exchange->secured) {
-		enum_buf rb;
-		enum_buf xb;
+		name_buf rb;
+		name_buf xb;
 		llog_pexpect(ike->sa.logger, HERE, "%s %s (%s) exchange should be secured",
 			     str_enum_short(&ikev2_exchange_names, exchange->type, &xb),
 			     str_enum_short(&message_role_names, role, &rb),
@@ -952,7 +952,7 @@ static void validate_state_exchange(struct verbose verbose,
 				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
 {
-	enum_buf ixb;
+	name_buf ixb;
 	vdbg("=>%s (%s); secured: %s",
 	     str_enum_short(&ikev2_exchange_names, exchange->type, &ixb),
 	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),

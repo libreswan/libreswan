@@ -183,7 +183,7 @@ void process_md(struct msg_digest *md)
 			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
 			return;
 		}
-		enum_buf xb;
+		name_buf xb;
 		ldbg(md->logger,
 		     " processing version=%u.%u packet with exchange type=%s (%d)",
 		     vmaj, vmin,
@@ -206,7 +206,7 @@ void process_md(struct msg_digest *md)
 			llog_md(md,
 			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
-		enum_buf xb;
+		name_buf xb;
 		pdbg(md->logger,
 		     " processing version=%u.%u packet with exchange type=%s (%d)",
 		     vmaj, vmin,
@@ -440,7 +440,7 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 		switch (pd->payload_type) {
 		case ISAKMP_NEXT_v2N:
 		{
-			enum_buf name;
+			name_buf name;
 			if (enum_short(&v2_notification_names,
 				       pd->payload.v2n.isan_type,
 				       &name)) {

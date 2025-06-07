@@ -886,7 +886,7 @@ enum known_vendorid vendorid_by_shunk(shunk_t vid)
 	return VID_none;
 }
 
-const char *str_vendorid(enum known_vendorid id, enum_buf *eb)
+const char *str_vendorid(enum known_vendorid id, name_buf *eb)
 {
 	if (id > 0 && id < elemsof(vid_tab)) {
 		return vid_tab[id].descr;
@@ -910,14 +910,14 @@ void llog_vendorids(lset_t rc_flags, struct logger *logger)
 	FOR_EACH_ELEMENT(v, vid_sorted) {
 		enum known_vendorid id = v->entry->id;
 		shunk_t vid = shunk_from_vendorid(id);
-		enum_buf idb;
+		name_buf idb;
 		llog(rc_flags, logger, "[%s]%s", str_vendorid(id, &idb),
 		     (v->entry->kind == VID_SUBSTRING ? " (prefix match)" : ""));
 		llog_hunk(rc_flags, logger, vid);
 		enum known_vendorid r = vendorid_by_shunk(vid);
 		passert(r != VID_none);
 		if (r != id) {
-			enum_buf idb, rb;
+			name_buf idb, rb;
 			llog_passert(logger, HERE,
 				     "lookup for %d [%s] returned %d [%s]",
 				     id, str_vendorid(id, &idb),

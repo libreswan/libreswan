@@ -876,7 +876,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		selector_buf sb, db;
-		enum_buf eb;
+		name_buf eb;
 		pdbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
 		     __func__,
 		     /* inbound */
@@ -923,7 +923,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		selector_buf sb, db;
-		enum_buf eb;
+		name_buf eb;
 		pdbg(logger,
 		     "kernel: %s() installing SPD for %s=>%s %s route=%s up=%s",
 		     __func__,

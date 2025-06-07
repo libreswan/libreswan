@@ -150,7 +150,7 @@ static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_o
 	v2_notification_t ntype = v2N_IPCOMP_SUPPORTED;
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
-		enum_buf eb;
+		name_buf eb;
 		llog(RC_LOG, outs->logger,
 		     "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
@@ -347,7 +347,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode == requested_mode) {
-		enum_buf mb;
+		name_buf mb;
 		ldbg_sa(larval_child, "local policy is %s and received matching notify",
 			str_enum(&kernel_mode_stories, required_mode, &mb));
 	} else if (required_mode == KERNEL_MODE_TUNNEL) {
@@ -355,14 +355,14 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		 * RFC allows us to ignore their (wrong) request for
 		 * transport mode.
 		 */
-		enum_buf dmb, rmb;
+		name_buf dmb, rmb;
 		llog_sa(RC_LOG, larval_child,
 			"policy dictates %s, ignoring peer's request for %s",
 			str_enum(&kernel_mode_stories, required_mode, &dmb),
 			str_enum(&kernel_mode_stories, requested_mode, &rmb));
 	} else {
 		/* we should have received a matching mode request */
-		enum_buf dmb, rmb;
+		name_buf dmb, rmb;
 		llog_sa(RC_LOG, larval_child,
 			"policy dictates %s, but peer requested %s",
 			str_enum(&kernel_mode_stories, required_mode, &dmb),
@@ -415,7 +415,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 
 			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
 			//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
-			enum_buf ignore;
+			name_buf ignore;
 			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			larval_child->sa.st_ipcomp.trans_attrs.ta_ipcomp =
 				ikev2_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans, &ignore);
@@ -592,7 +592,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 &child->sa.st_v2_accepted_proposal,
 				 child_proposals, child->sa.logger);
 	if (n != v2N_NOTHING_WRONG) {
-		enum_buf nb;
+		name_buf nb;
 		llog_sa(RC_LOG, child,
 			"%s failed, responder SA processing returned %s",
 			what, str_enum_short(&v2_notification_names, n, &nb));
@@ -829,7 +829,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	 *   ignored, and they should be logged.
 	 */
 	if (md->v2N_error != v2N_NOTHING_WRONG) {
-		esb_buf esb;
+		name_buf esb;
 		llog_sa(RC_LOG, child, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
 			  str_enum(&v2_notification_names, md->v2N_error, &esb));
@@ -851,7 +851,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		 KERNEL_MODE_TUNNEL);
 	if (required_mode != accepted_mode) {
 		/* we should have accepted a matching response */
-		enum_buf amb, rmb;
+		name_buf amb, rmb;
 		llog_sa(RC_LOG, child,
 			"policy dictates %s, but peer requested %s",
 			str_enum(&kernel_mode_stories, required_mode, &rmb),
@@ -863,7 +863,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		accept_v2_notification(v2N_USE_AGGFRAG, child->sa.logger, md,
 				       c->config->child_sa.iptfs.enabled);
 
-	enum_buf rmb;
+	name_buf rmb;
 	ldbg_sa(child, "local policy is %s and received matching notify",
 		str_enum(&kernel_mode_stories, required_mode, &rmb));
 	child->sa.st_kernel_mode = required_mode;
@@ -910,7 +910,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 		//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 		child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
-		enum_buf ignore;
+		name_buf ignore;
 		child->sa.st_ipcomp.trans_attrs.ta_ipcomp =
 			ikev2_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans, &ignore);
 		child->sa.st_ipcomp.inbound.last_used =
@@ -1034,7 +1034,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 					ike, child, md,
 					child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
 					/*expect-accepted-proposal?*/false);
-	enum_buf nb;
+	name_buf nb;
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
 	     str_enum(&v2_notification_names, n, &nb));
 	if (n != v2N_NOTHING_WRONG) {
@@ -1200,7 +1200,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			 * now.  It provides an anchor when looking at
 			 * test changes.
 			 */
-			enum_buf esb;
+			name_buf esb;
 			llog_sa(RC_LOG, child,
 				"IKE_AUTH response rejected Child SA with %s",
 				str_enum_short(&v2_notification_names, n, &esb));
@@ -1264,12 +1264,12 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	n = process_v2_child_response_payloads(ike, child, response_md);
 	if (n != v2N_NOTHING_WRONG) {
 		if (v2_notification_fatal(n)) {
-			enum_buf nb;
+			name_buf nb;
 			llog_sa(RC_LOG, child,
 				"CHILD SA encountered fatal error: %s",
 				str_enum_short(&v2_notification_names, n, &nb));
 		} else {
-			enum_buf nb;
+			name_buf nb;
 			llog_sa(RC_LOG, child,
 				"CHILD SA failed: %s",
 				str_enum_short(&v2_notification_names, n, &nb));

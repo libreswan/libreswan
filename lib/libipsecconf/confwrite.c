@@ -198,12 +198,12 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	confwrite_value(out, "", kv_conn, conn->values);
 
 	if (conn->values[KNCF_AUTO].option != 0) {
-		sparse_buf sb;
+		name_buf sb;
 		cwf("auto", str_sparse(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
 	}
 
 	if (conn->values[KNCF_PPK].option != NPPI_UNSET) {
-		sparse_buf sb;
+		name_buf sb;
 		cwf("ppk", str_sparse(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
 	}
 
@@ -243,7 +243,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		if (encap_proto != ENCAP_PROTO_UNSET) {
 			/* story is lower-case */
-			enum_buf eb;
+			name_buf eb;
 			cwf("phase2", str_enum_short(&encap_proto_story, encap_proto, &eb));
 		}
 

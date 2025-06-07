@@ -234,7 +234,7 @@ static void update_state_stats(struct state *st,
 	 * XXX: It's an assertion check only executed when debugging.
 	 */
 	if (DBGP(DBG_BASE)) {
-		enum_buf ocb, ncb;
+		name_buf ocb, ncb;
 		LDBG_log(st->logger, "%s state "PRI_SO": %s(%s) => %s(%s)",
 			 (IS_IKE_SA(st) ? "parent" : "child"),
 			 pri_so(st->st_serialno),

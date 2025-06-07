@@ -713,7 +713,7 @@ void init_ikev1_states(struct logger *logger)
 					jam_string(buf, ":");
 				}
 			}
-			enum_buf eb;
+			name_buf eb;
 			LDBG_log(logger, "    -> %s %s (%s)", to->short_name,
 				 str_enum_short(&event_type_names, t->timeout_event, &eb),
 				 t->message);

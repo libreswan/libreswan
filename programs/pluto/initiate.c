@@ -193,13 +193,13 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		if (c->remote->config->host.name != NULL) {
 			if (c->config->narrowing) {
-				esb_buf b;
+				name_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				     str_enum(&connection_kind_names, c->local->kind, &b),
 				     bool_str(c->config->narrowing));
 			} else {
-				esb_buf b;
+				name_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				     str_enum(&connection_kind_names, c->local->kind, &b));
@@ -209,13 +209,13 @@ static bool initiate_connection_2_address(struct connection *c,
 		}
 
 		if (c->config->narrowing) {
-			esb_buf b;
+			name_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
 			     str_enum(&connection_kind_names, c->local->kind, &b),
 			     bool_str(c->config->narrowing));
 		} else {
-			esb_buf b;
+			name_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
 			     pri_co(c->serialno),
@@ -316,9 +316,9 @@ void initiate(struct connection *c,
 	      where_t where)
 {
 	VERBOSE_DBGP(DBG_BASE, c->logger, "%s()", __func__);
-	enum_buf ifnb;
+	name_buf ifnb;
 	child_policy_buf pb;
-	enum_buf epb;
+	name_buf epb;
 	vdbg_connection(c, verbose, where,
 			"%s() by %s policy=%s proto=%s sec_label="PRI_SHUNK,
 			__func__,

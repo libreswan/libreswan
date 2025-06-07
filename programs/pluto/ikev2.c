@@ -228,7 +228,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 	 */
 
 	while (np != ISAKMP_NEXT_v2NONE) {
-		esb_buf b;
+		name_buf b;
 		dbg("Now let's proceed with payload (%s)",
 		    str_enum(&ikev2_payload_names, np, &b));
 
@@ -287,7 +287,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 				default:
 					bad_case(v2_msg_role(md));
 				}
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, log,
 				     "message %s contained an unknown critical payload type (%s)",
 				     role, str_enum(&ikev2_payload_names, np, &b));
@@ -296,7 +296,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 				summary.data_size = 1;
 				break;
 			}
-			esb_buf eb;
+			name_buf eb;
 			llog(RC_LOG, log,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 			     str_enum(&ikev2_payload_names, np, &eb));
@@ -441,7 +441,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 * must have received up to SENT-1 responses.
 	 */
 	if (msgid < ike->sa.st_v2_msgid_windows.responder.sent) {
-		enum_buf xb;
+		name_buf xb;
 		llog_sa(RC_LOG, ike,
 			"%s request has duplicate Message ID %jd but it is older than last response (%jd); message dropped",
 			str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -518,7 +518,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 *   timeout of several minutes.
 		 */
 		if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments == NULL) {
-			enum_buf xb;
+			name_buf xb;
 			llog_pexpect_v2_msgid(ike,
 					      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
 					      str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -548,14 +548,14 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		case ISAKMP_NEXT_v2SK:
 			if (ike->sa.st_v2_msgid_windows.responder.recv_frags > 0 &&
 			    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
-				enum_buf xb;
+				name_buf xb;
 				llog_sa(RC_LOG, ike,
 					"%s request has duplicate Message ID %jd but original was fragmented; message dropped",
 					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					msgid);
 				return true;
 			}
-			enum_buf xb;
+			name_buf xb;
 			llog_sa(RC_LOG, ike,
 				"%s request has duplicate Message ID %jd; retransmitting response",
 				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -563,7 +563,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			break;
 		case ISAKMP_NEXT_v2SKF:
 			if (ike->sa.st_v2_msgid_windows.responder.recv_frags == 0) {
-				enum_buf xb;
+				name_buf xb;
 				llog_sa(RC_LOG, ike,
 					"%s request fragment has duplicate Message ID %jd but original was not fragmented; message dropped",
 					str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -582,7 +582,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				return true;
 			}
 			if (skf.isaskf_total != ike->sa.st_v2_msgid_windows.responder.recv_frags) {
-				enum_buf xb;
+				name_buf xb;
 				dbg_v2_msgid(ike,
 					     "%s request fragment %u of %u has duplicate Message ID %jd but should have fragment total %u; message dropped",
 					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -591,14 +591,14 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				return true;
 			}
 			if (skf.isaskf_number != 1) {
-				enum_buf xb;
+				name_buf xb;
 				dbg_v2_msgid(ike,
 					     "%s request fragment %u of %u has duplicate Message ID %jd but is not fragment 1; message dropped",
 					     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 					     skf.isaskf_number, skf.isaskf_total, msgid);
 				return true;
 			}
-			enum_buf fxb;
+			name_buf fxb;
 			llog_sa(RC_LOG, ike,
 				"%s request fragment %u of %u has duplicate Message ID %jd; retransmitting response",
 				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &fxb),
@@ -607,7 +607,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		default:
 		{
 			/* until there's evidence that this is valid */
-			enum_buf xb;
+			name_buf xb;
 			llog_sa(RC_LOG, ike,
 				"%s request has duplicate Message ID %jd but does not start with SK or SKF payload; message dropped",
 				str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -725,7 +725,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * to-old so doesn't expect there to be a matching
 		 * initiator, arrg
 		 */
-		enum_buf xb;
+		name_buf xb;
 		dbg_v2_msgid(ike, "unexpected %s response with Message ID %ju (last received was %jd); dropping packet",
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
 			     msgid, ike->sa.st_v2_msgid_windows.initiator.recv);
@@ -737,7 +737,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
 		 */
-		enum_buf xb;
+		name_buf xb;
 		llog_sa(RC_LOG, ike,
 			"unexpected %s response with Message ID %jd (last sent was %jd); dropping packet",
 			str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -750,7 +750,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * Initiator is already working on this response.
 		 * Presumably a re-transmit so quietly drop it.
 		 */
-		enum_buf xb;
+		name_buf xb;
 		dbg_v2_msgid(ike,
 			     "%s response with Message ID %jd is work-in-progress; dropping packet",
 			     str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -763,7 +763,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
 		 */
-		enum_buf xb;
+		name_buf xb;
 		llog_sa(RC_LOG, ike,
 			"unexpected %s response with Message ID %jd (processing %jd); dropping packet",
 			str_enum(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
@@ -878,7 +878,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	struct ike_sa *ike = find_v2_ike_sa(&md->hdr.isa_ike_spis,
 					    expected_local_ike_role);
 	if (ike == NULL) {
-		enum_buf ixb;
+		name_buf ixb;
 		llog_md(md, "%s %s has no corresponding IKE SA; message dropped",
 			str_enum_short(&ikev2_exchange_names, ix, &ixb),
 			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
@@ -908,7 +908,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 * path.
 	 */
 	if (!ike->sa.st_state->v2.secured) {
-		enum_buf ixb;
+		name_buf ixb;
 		/* there's no rate_llog() */
 		llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
 			ike->sa.st_serialno,
@@ -1533,7 +1533,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retained */
 		const struct state_event *lifetime_event = st_v2_lifetime_event(&ike->sa);
 		if (PEXPECT(ike->sa.logger, lifetime_event != NULL)) {
-			enum_buf tb;
+			name_buf tb;
 			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
 			     ike->sa.st_serialno,
 			     str_enum(&event_type_names, lifetime_event->ev_type, &tb));
@@ -1840,7 +1840,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	/* default */
 	passert(result >= STF_FAIL_v1N);
 	v2_notification_t notification = result - STF_FAIL_v1N;
-	enum_buf nb;
+	name_buf nb;
 	llog_pexpect(ike->sa.logger, HERE,
 		     "state transition '%s' failed with %s",
 		     transition->story,
@@ -1981,25 +1981,25 @@ bool accept_v2_notification(v2_notification_t n,
 	enum v2_pd pd = v2_pd_from_notification(n);
 	if (md->pd[pd] != NULL) {
 		if (enabled) {
-			enum_buf eb, rb;
+			name_buf eb, rb;
 			ldbg(logger, "accepted %s notification %s",
 			     str_enum_short(&v2_notification_names, n, &eb),
 			     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
 			return true;
 		}
 		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
-			enum_buf eb;
+			name_buf eb;
 			llog(RC_LOG, logger,
 			     "unsolicited %s notification response ignored",
 			     str_enum_short(&v2_notification_names, n, &eb));
 		} else {
-			enum_buf eb;
+			name_buf eb;
 			ldbg(logger, "%s notification request ignored",
 			     str_enum_short(&v2_notification_names, n, &eb));
 		}
 		return false;
 	}
-	enum_buf eb;
+	name_buf eb;
 	ldbg(logger, "%s neither requested nor accepted",
 	     str_enum_short(&v2_notification_names, n, &eb));
 	return false;

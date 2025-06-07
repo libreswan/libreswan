@@ -490,7 +490,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address to)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum_buf xchg;
+	name_buf xchg;
 	enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xchg);
 
 	ike->sa.st_viable_parent = false; /* just to be sure */
@@ -839,7 +839,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
 			global_redirect = wm->global_redirect;
-			enum_buf rn;
+			name_buf rn;
 			llog(RC_LOG, logger,
 			     "set global redirect to %s",
 			     str_sparse(&global_redirect_names, global_redirect, &rn));

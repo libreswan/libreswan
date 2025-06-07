@@ -97,7 +97,7 @@ static bool out_attr(int type,
 		close_output_pbs(&val_pbs);
 	}
 	if (LDBGP(DBG_BASE, pbs->logger)) {
-		enum_buf b;
+		name_buf b;
 		if (enum_enum_name(attr_value_names, type, val, &b)) {
 			LDBG_log(pbs->logger, "    [%lu is %s]", val, b.buf);
 		}
@@ -688,7 +688,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 						    "multiple DH groups were set in aggressive mode. Only first one used.");
 				}
 
-				enum_buf eb, hb;
+				name_buf eb, hb;
 				llog(RC_LOG, logger,
 				     "transform (%s,%s,%s keylen %d) ignored.",
 				     str_enum(&oakley_enc_names,
@@ -1326,7 +1326,7 @@ static diag_t decode_attr_value(const struct isakmp_attribute *a,
 	case ISAKMP_ATTR_AF_TLV:
 	{
 		shunk_t sval;
-		enum_buf tb;
+		name_buf tb;
 		diag_t d = pbs_in_shunk(pbs, a->isaat_lv, &sval, str_enum(type_names, type, &tb));
 		if (d != NULL) {
 			return d;
@@ -1554,7 +1554,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, ike->sa.logger, "Unknown/unsupported DOI %s",
 		     str_enum(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
@@ -1597,7 +1597,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	}
 
 	if (proposal.isap_pnp != ISAKMP_NEXT_NONE) {
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
 		     str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
@@ -1605,7 +1605,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	}
 
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, ike->sa.logger,
 		     "unexpected Protocol ID (%s) found in Oakley Proposal",
 		     str_enum(&ikev1_protocol_names, proposal.isap_protoid, &b));
@@ -1698,7 +1698,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		last_transnum = trans.isat_transnum;
 
 		if (trans.isat_transid != KEY_IKE) {
-			esb_buf b;
+			name_buf b;
 			llog(RC_LOG, ike->sa.logger,
 			     "expected KEY_IKE but found %s in Oakley Transform",
 			     str_enum(&isakmp_transformid_names,
@@ -1716,7 +1716,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		bool ok = true;
 #define UGH(FMT, ...)							\
 		{							\
-			esb_buf typeesb_;				\
+			name_buf typeesb_;				\
 			ok = false;					\
 			llog(RC_LOG, ike->sa.logger,			\
 			     FMT".  Attribute %s",			\
@@ -1749,7 +1749,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 			PASSERT(ike->sa.logger, type < LELEM_ROOF);
 			if (LHAS(seen_attrs, type)) {
-				enum_buf b;
+				name_buf b;
 				llog(RC_LOG, ike->sa.logger,
 				     "repeated %s(%s) attribute in Oakley Transform %u",
 				     str_enum(&oakley_attr_names, type, &b), af,
@@ -1775,7 +1775,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			}
 
 			if (DBGP(DBG_BASE)) {
-				enum_buf b;
+				name_buf b;
 				if (enum_enum_name(&ikev1_oakley_attr_value_names, type, value, &b)) {
 					LDBG_log(ike->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 				} else if (tlv) {
@@ -1786,7 +1786,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			switch (type) {
 			case OAKLEY_ENCRYPTION_ALGORITHM:
 			{
-				enum_buf b;
+				name_buf b;
 				const struct encrypt_desc *encrypter = ikev1_ike_encrypt_desc(value, &b);
 				if (encrypter == NULL) {
 					UGH("%s is not supported", b.buf);
@@ -1799,7 +1799,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 			case OAKLEY_HASH_ALGORITHM:
 			{
-				enum_buf b;
+				name_buf b;
 				ta.ta_prf = ikev1_ike_prf_desc(value, &b);
 				if (ta.ta_prf == NULL) {
 					UGH("%s is not supported", b.buf);
@@ -1921,7 +1921,7 @@ rsasig_common:
 
 				default:
 				{
-					esb_buf b;
+					name_buf b;
 					UGH("Pluto does not support %s authentication",
 					    str_enum(&oakley_auth_names, value, &b));
 					break;
@@ -1932,7 +1932,7 @@ rsasig_common:
 
 			case OAKLEY_GROUP_DESCRIPTION:
 			{
-				enum_buf b;
+				name_buf b;
 				ta.ta_dh = ikev1_ike_dh_desc(value, &b);
 				if (ta.ta_dh == NULL) {
 					UGH("OAKLEY_GROUP %s not supported", b.buf);
@@ -1946,7 +1946,7 @@ rsasig_common:
 				case OAKLEY_LIFE_SECONDS:
 				case OAKLEY_LIFE_KILOBYTES:
 					if (LHAS(seen_durations, value)) {
-						esb_buf b;
+						name_buf b;
 						llog(RC_LOG, ike->sa.logger,
 						     "attribute OAKLEY_LIFE_TYPE value %s repeated",
 						     str_enum(&oakley_lifetime_names, value, &b));
@@ -1957,7 +1957,7 @@ rsasig_common:
 					break;
 				default:
 				{
-					esb_buf b;
+					name_buf b;
 					UGH("unknown value %s",
 					    str_enum(&oakley_lifetime_names, value, &b));
 					break;
@@ -2143,7 +2143,7 @@ rsasig_common:
 			break;
 		}
 		if (trans.isat_tnp != ISAKMP_NEXT_T) {
-			esb_buf b;
+			name_buf b;
 			llog(RC_LOG, ike->sa.logger,
 			     "unexpected %s payload in Oakley Proposal",
 			     str_enum(&ikev1_payload_names, proposal.isap_pnp, &b));
@@ -2203,7 +2203,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 
-	enum_buf ignore;
+	name_buf ignore;
 	struct trans_attrs ta = {
 		/* When this SA expires (seconds) */
 		.life_seconds = c->config->sa_ike_max_lifetime,
@@ -2312,7 +2312,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		break;
 	default:
 	{
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, child->sa.logger,
 		     "expecting Transform Payload, but found %s in Proposal",
 		     str_enum(&ikev1_payload_names, trans->isat_tnp, &b));
@@ -2329,7 +2329,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	case PROTO_IPCOMP:
 	{
 		/* could be NULL */
-		enum_buf b;
+		name_buf b;
 		attrs->transattrs.ta_ipcomp = ikev1_kernel_ipcomp_desc(trans->isat_transid, &b);
 		if (attrs->transattrs.ta_ipcomp == NULL) {
 			llog(RC_LOG, child->sa.logger, "unsupported IPsec IPcomp algorithm %s", b.buf);
@@ -2341,7 +2341,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	case PROTO_IPSEC_ESP:
 	{
 		/* could be NULL */
-		enum_buf b;
+		name_buf b;
 		attrs->transattrs.ta_encrypt = ikev1_kernel_encrypt_desc(trans->isat_transid, &b);
 		if (attrs->transattrs.ta_encrypt == NULL) {
 			llog(RC_LOG, child->sa.logger, "unsupported IPsec encryption algorithm %s", b.buf);
@@ -2386,7 +2386,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		PASSERT(child->sa.logger, type < LELEM_ROOF);
 		if (LHAS(seen_attrs, type)) {
-			enum_buf b;
+			name_buf b;
 			llog(RC_LOG, child->sa.logger,
 			     "repeated %s(%s) attribute in IPsec Transform %u",
 			     str_enum(&ikev1_ipsec_attr_names, type, &b), af,
@@ -2421,7 +2421,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		 */
 		if (DBGP(DBG_BASE)) {
 			/* i.e., VALUE is real value */
-			enum_buf b;
+			name_buf b;
 			if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {
 				LDBG_log(child->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 			} else if (tlv) {
@@ -2438,7 +2438,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			 * SA_LIFE_TYPE_KBYTES.
 			 */
 			if (LHAS(seen_durations, value)) {
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "IPsec attribute SA_LIFE_TYPE with value %s was repeated in message",
 				     str_enum(&sa_lifetime_names, value, &b));
@@ -2451,7 +2451,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			 * cleared after processing SA_LIFE_DURATION.
 			 */
 			if (life_type != 0) {
-				enum_buf b;
+				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "IPsec attribute SA_LIFE_TYPE with value %s was not followed by SA_LIFE_DURATION attribute",
 				     str_enum_short(&sa_lifetime_names, life_type, &b));
@@ -2533,7 +2533,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				llog(RC_LOG, child->sa.logger,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
-			enum_buf b;
+			name_buf b;
 			pfs_group = ikev1_ike_dh_desc(value, &b);
 			if (pfs_group == NULL) {
 				llog(RC_LOG, child->sa.logger,
@@ -2548,7 +2548,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			ipcomp_inappropriate = false;
 
 			lset_buf lb;
-			enum_buf mb;
+			name_buf mb;
 			ldbg(child->sa.logger, "NAT-T: IPsec SA has %s, child->sa.hidden_variables.st_nat_traversal is %s",
 			     str_enum(&encapsulation_mode_names, value, &mb),
 			     str_lset(&natt_method_names, child->sa.hidden_variables.st_nat_traversal, &lb));
@@ -2576,7 +2576,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case AUTH_ALGORITHM:
 		{
-			enum_buf b;
+			name_buf b;
 			attrs->transattrs.ta_integ = ikev1_kernel_integ_desc(value, &b);
 			if (attrs->transattrs.ta_integ == NULL) {
 				/*
@@ -2612,7 +2612,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		default:
 		{
-			enum_buf b;
+			name_buf b;
 			llog(RC_LOG, child->sa.logger,
 				  "unsupported IPsec attribute %s+%s",
 				  str_enum(&ikev1_ipsec_attr_names, type, &b), af);
@@ -2621,7 +2621,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		if (ipcomp_inappropriate) {
-			esb_buf b;
+			name_buf b;
 			llog(RC_LOG, child->sa.logger,
 				  "IPsec attribute %s+%s inappropriate for IPCOMP",
 				  str_enum(&ikev1_ipsec_attr_names, type, &b), af);
@@ -2647,7 +2647,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	if (life_type != 0) {
 		/* left hanging */
-		enum_buf b;
+		name_buf b;
 		llog(RC_LOG, child->sa.logger,
 		     "IPsec attribute SA_LIFE_TYPE with value %s was not followed by SA_LIFE_DURATION attribute",
 		     str_enum_short(&sa_lifetime_names, life_type, &b));
@@ -2797,7 +2797,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 	/* DOI */
 	if (sa->isasa_doi != ISAKMP_DOI_IPSEC) {
-		esb_buf b;
+		name_buf b;
 		llog(RC_LOG, child->sa.logger,
 		     "Unknown or unsupported DOI %s",
 		     str_enum(&doi_names, sa->isasa_doi, &b));
@@ -3022,7 +3022,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 			default:
 			{
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "unexpected Protocol ID (%s) in IPsec Proposal",
 				     str_enum(&ikev1_protocol_names,
@@ -3036,7 +3036,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				next_full = false;
 				break;
 			} else if (next_proposal.isap_pnp != ISAKMP_NEXT_P) {
-				esb_buf b;
+				name_buf b;
 				llog(RC_LOG, child->sa.logger,
 				     "unexpected in Proposal: %s",
 				     str_enum(&ikev1_payload_names, next_proposal.isap_pnp, &b));
@@ -3124,7 +3124,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
 				if (ah_trans.isat_transid != ah_attrs.transattrs.ta_integ->integ_ikev1_ah_transform) {
-					esb_buf b;
+					name_buf b;
 					llog(RC_LOG, child->sa.logger,
 						  "%s attribute inappropriate in %s Transform",
 						  ah_attrs.transattrs.ta_integ->common.fqn,

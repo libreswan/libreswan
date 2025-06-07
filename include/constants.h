@@ -213,7 +213,6 @@ extern char *add_str(char *buf, size_t size, const char *src);
  */
 
 #define enum_buf name_buf
-#define esb_buf  name_buf /* XXX: TBD */
 
 typedef const struct enum_names enum_names; /*TBD?*/
 

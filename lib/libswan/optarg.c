@@ -467,7 +467,7 @@ void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 			JAMBUF(buf) {
 				jam(buf, "  ");
 				jam_enum_short(buf, &debug_names, e);
-				enum_buf help;
+				name_buf help;
 				if (enum_name(&debug_help, e, &help)) {
 					jam(buf, ": ");
 					jam_string(buf, help.buf);

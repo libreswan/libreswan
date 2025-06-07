@@ -71,7 +71,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 {
 	err_t err;
 
-	enum_buf pkb;
+	name_buf pkb;
 	ldbg(logger, "processing key=%s addkey=%s keyid=%s pubkey_alg=%s(%d) pubkey=%s",
 	     bool_str(wm->whack_key),
 	     bool_str(wm->whack_addkey),
@@ -137,7 +137,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	chunk_t rawkey = NULL_HUNK;
 	err = whack_pubkey_to_chunk(wm->pubkey_alg, wm->pubkey, &rawkey);
 	if (err != NULL) {
-		enum_buf pkb;
+		name_buf pkb;
 		llog_error(logger, 0, "malformed %s pubkey %s: %s",
 			   str_enum(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
 			   wm->pubkey,

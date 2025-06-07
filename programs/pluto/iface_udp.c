@@ -451,7 +451,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		return NULL;
 	}
 	if (st == NULL) {
-		enum_buf ib;
+		name_buf ib;
 		dbg("MSG_ERRQUEUE packet has no matching %s SA",
 		    str_enum(&ike_version_names, ike_version, &ib));
 		return NULL;

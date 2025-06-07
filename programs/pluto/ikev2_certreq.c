@@ -116,7 +116,7 @@ void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 	}
 	default:
 	{
-		enum_buf b;
+		name_buf b;
 		llog_sa(RC_LOG, ike,
 			"ignoring CERTREQ payload of unsupported type %s",
 			str_enum(&ikev2_cert_type_names, cr->isacertreq_enc, &b));

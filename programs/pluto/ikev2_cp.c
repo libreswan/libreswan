@@ -198,7 +198,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REPLY,
 	};
 
-	enum_buf cpb;
+	name_buf cpb;
 	ldbg_cp(child->sa.logger, c,
 		"send %s Configuration Payload",
 		str_enum(&ikev2_cp_type_names, cp.isacp_type, &cpb));
@@ -247,7 +247,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REQUEST,
 	};
 
-	enum_buf cpb;
+	name_buf cpb;
 	ldbg_cp(child->sa.logger, child->sa.st_connection,
 		"emit %s Configuration Payload",
 		str_enum(&ikev2_cp_type_names, cp.isacp_type, &cpb));
@@ -328,7 +328,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	ldbg_sa(child, "parsing ISAKMP_NEXT_v2CP payload");
 
 	if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
-		enum_buf cpb;
+		name_buf cpb;
 		llog_sa(RC_LOG, child,
 			"ERROR: expected IKEv2_CP_CFG_REQUEST got a %s",
 			str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
@@ -362,7 +362,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 
 		default:
 		{
-			enum_buf eb;
+			name_buf eb;
 			ldbg_sa(child, "ignoring attribute %s length %u",
 				str_enum_short(&ikev2_cp_attribute_type_names, type, &eb),
 				cp_attr.len);
@@ -585,7 +585,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		if (cp->isacp_type != IKEv2_CP_CFG_REPLY) {
-			enum_buf cpb;
+			name_buf cpb;
 			llog_sa(RC_LOG, child,
 				"ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 				str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
@@ -594,7 +594,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		break;
 	case SA_RESPONDER:
 		if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
-			enum_buf cpb;
+			name_buf cpb;
 			llog_sa(RC_LOG, child,
 				"ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 				str_enum(&ikev2_cp_type_names, cp->isacp_type, &cpb));
@@ -671,7 +671,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 
 		default:
 		{
-			enum_buf tb;
+			name_buf tb;
 			llog_sa(RC_LOG, child,
 				"unknown attribute %s length %u",
 				str_enum(&ikev2_cp_attribute_type_names, cp_a.type, &tb),

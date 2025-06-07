@@ -515,7 +515,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				 * Since this has to be narrowed, any
 				 * comparison is pointless.
 				 */
-				enum_buf kb;
+				name_buf kb;
 				vdbg("skipping %s %s as remote's %ssubnet is wild (not set)",
 				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
 				     d->name,
@@ -530,7 +530,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				 * be pretty much anything that
 				 * doesn't intersect).
 				 */
-				enum_buf kb;
+				name_buf kb;
 				vdbg("skipping %s %s as there is no overlap",
 				     str_enum_short(&connection_kind_names, d->local->kind, &kb),
 				     d->name);
@@ -541,7 +541,7 @@ static err_t is_virtual_net_used(const ip_selector remote_client,
 				/*
 				 * Assumed to be a replace?
 				 */
-				enum_buf kb;
+				name_buf kb;
 				id_buf idb;
 				vdbg("skipping %s %s as it has the same id: %s",
 				     str_enum_short(&connection_kind_names, d->local->kind, &kb),

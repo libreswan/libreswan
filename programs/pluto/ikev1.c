@@ -1019,7 +1019,7 @@ void process_v1_packet(struct msg_digest *md)
 		 */
 
 		const struct spd_end *this = ike->sa.st_connection->child.spds.list->local;
-		esb_buf b;
+		name_buf b;
 		pdbg(ike->sa.logger,
 		     " %s processing received isakmp_xchg_type %s; xauthserver=%s xauthclient=%s modecfgserver=%s modecfgclient=%s modecfgpull=%s",
 		     ike->sa.st_state->name,
@@ -1076,7 +1076,7 @@ void process_v1_packet(struct msg_digest *md)
 			     "switch from_state %s to %s this is modecfgclient and IS_PHASE1() is TRUE",
 			     ike->sa.st_state->name, old_state->name);
 		} else {
-			esb_buf b;
+			name_buf b;
 			ldbg(ike->sa.logger,
 			     "received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
 			     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
@@ -1101,7 +1101,7 @@ void process_v1_packet(struct msg_digest *md)
 	case ISAKMP_XCHG_NGRP:
 	default:
 	{
-		esb_buf b;
+		name_buf b;
 		ldbg(md->logger, "unsupported exchange type %s in message",
 		     str_enum(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
 		send_v1_notification_from_md(md, v1N_UNSUPPORTED_EXCHANGE_TYPE);
@@ -1688,7 +1688,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 
 				default:
 				{
-					esb_buf b;
+					name_buf b;
 					llog(RC_LOG, LOGGER,
 					     "%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					     excuse,
@@ -1714,7 +1714,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					      LELEM(ISAKMP_NEXT_D) |
 					      LELEM(ISAKMP_NEXT_CR) |
 					      LELEM(ISAKMP_NEXT_CERT))) {
-					esb_buf b;
+					name_buf b;
 					llog(RC_LOG, LOGGER,
 					     "%smessage ignored because it contains a payload type (%s) unexpected by state %s",
 					     excuse,
@@ -1726,7 +1726,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 					return;
 				}
 
-				esb_buf b;
+				name_buf b;
 				ldbg(LOGGER, "got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
 				     s, str_enum(&ikev1_payload_names, np, &b),
 				     needed, smc->opt_payloads);
@@ -2093,8 +2093,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	pstat(stf_status, result);
 
 	/* DANGER: MD might be NULL; ST might be NULL */
-	enum_buf neb;
-	enum_buf rb;
+	name_buf neb;
+	name_buf rb;
 	dbg("complete v1 state transition with %s",
 	    (result > STF_FAIL_v1N ? str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
 	     str_enum(&stf_status_names, result, &rb)));
@@ -2611,7 +2611,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * NOTHING_WRONG, and even if it did "nothing wrong"
 		 * wouldn't exactly help here :-).
 		 */
-		enum_buf notify_name;
+		name_buf notify_name;
 		if (md->v1_note == v1N_NOTHING_WRONG) {
 			notify_name.buf = "failed";
 		} else {
@@ -2689,8 +2689,8 @@ void ldbg_doi_cert_thinking(struct ike_sa *ike,
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "thinking about whether to send my certificate:");
 
-		esb_buf oan;
-		esb_buf ictn;
+		name_buf oan;
+		name_buf ictn;
 		LDBG_log(logger, "  I have RSA key: %s cert.type: %s ",
 			 str_enum(&oakley_auth_names, ike->sa.st_oakley.auth, &oan),
 			 str_enum(&ike_cert_type_names, certtype, &ictn));

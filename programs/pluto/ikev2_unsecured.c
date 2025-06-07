@@ -346,7 +346,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 		}
 
 		endpoint_buf lb, rb;
-		enum_buf xb;
+		name_buf xb;
 		limited_llog(md->logger, UNSECURED_LOG_LIMITER,
 			     "dropping %s request from %s received on %s, no suitable connection found with IKEv2 policy",
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),

@@ -219,7 +219,7 @@ static bool decode_peer_id(struct ike_sa *ike, struct msg_digest *md, struct id 
 	ike->sa.st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
 
 	id_buf buf;
-	enum_buf b;
+	name_buf b;
 	llog(RC_LOG, ike->sa.logger, "Peer ID is %s: '%s'",
 	     str_enum_short(&ike_id_type_names, id->isaid_idtype, &b),
 	     str_id(peer, &buf));

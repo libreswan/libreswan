@@ -103,7 +103,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	case PPK_ID_OPAQUE:
 	default:
 	{
-		enum_buf eb;
+		name_buf eb;
 		llog_sa(RC_LOG, ike, "PPK_ID type %d (%s) not supported",
 			id_type, str_enum_short(&ikev2_ppk_id_type_names, id_type, &eb));
 		return false;
@@ -174,7 +174,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	case PPK_ID_OPAQUE:
 	default:
 	{
-		enum_buf eb;
+		name_buf eb;
 		llog_sa(RC_LOG, ike, "PPK_ID type %d (%s) not supported",
 			id_type, str_enum_short(&ikev2_ppk_id_type_names, id_type, &eb));
 		return false;

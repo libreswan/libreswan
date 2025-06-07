@@ -28,7 +28,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct proposal_policy *policy = parser->policy;
 	if (alg->id[protocol->alg_id] < 0) {
-		enum_buf vb;
+		name_buf vb;
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by %s",
 			       protocol->name, ike_alg_type_name(alg->algo_type),
 			       pri_shunk(print_name),

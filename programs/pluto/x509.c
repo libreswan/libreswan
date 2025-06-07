@@ -732,7 +732,7 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 
 	default:
 	{
-		esb_buf b;
+		name_buf b;
 		return diag("unhandled ID type %s; cannot match peer's certificate with expected peer ID",
 			    str_enum_short(&ike_id_type_names, peer_id->kind, &b));
 	}

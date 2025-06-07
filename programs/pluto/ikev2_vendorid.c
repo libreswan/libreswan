@@ -86,7 +86,7 @@ bool emit_v2V(struct pbs_out *outs, const char * vid)
 bool emit_v2VID(struct pbs_out *outs, enum known_vendorid id)
 {
 	shunk_t vid = shunk_from_vendorid(id);
-	enum_buf eb;
+	name_buf eb;
 	const char *descr = str_vendorid(id, &eb);
 	dbg("%s(): sending [%s]", __func__, descr);
 	return emit_v2V_raw(outs, vid, descr);
