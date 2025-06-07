@@ -110,7 +110,7 @@ bool load_config_setup(const char *file,
 bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 				   struct logger *logger);
 
-struct config_setup *config_setup_singleton(void);
+const struct config_setup *config_setup_singleton(void);
 void free_config_setup(void);
 
 void update_setup_string(enum config_setup_keyword kw, const char *string);
