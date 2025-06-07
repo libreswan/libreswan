@@ -129,6 +129,16 @@ struct config_setup *config_setup_singleton(void)
 
 		update_setup_yn(KYN_LISTEN_UDP, YN_YES);
 		update_setup_yn(KYN_LISTEN_TCP, YN_NO);
+
+		update_setup_string(KSF_PROTOSTACK,
+#ifdef KERNEL_XFRM
+				    "xfrm"
+#endif
+#ifdef KERNEL_PFKEYV2
+				    "pfkeyv2"
+#endif
+			);
+
 	}
 	return &config_setup;
 }
