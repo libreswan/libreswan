@@ -283,7 +283,7 @@ const struct option optarg_options[] =
 	{ "ctlsocket\0<socketfile>", required_argument, NULL, OPT_CTLSOCKET, },
 	{ "ctlbase\0>ctlsocket", required_argument, NULL, OPT_CTLSOCKET, }, /* backwards compatibility */
 	{ "configsetup\0", no_argument, NULL, OPT_CONFIGSETUP, },
-	{ "liststack\0", no_argument, NULL, OPT_LISTSTACK, },
+	{ OPT("liststack"), no_argument, NULL, OPT_LISTSTACK, },
 	{ "checkconfig\0", no_argument, NULL, OPT_CHECKCONFIG, },
 	{ "noexport\0", no_argument, NULL, OPT_NOEXPORT, },
 	{ "help\0", no_argument, NULL, OPT_HELP, },
@@ -308,8 +308,8 @@ int main(int argc, char *argv[])
 		listroute = false,
 		liststart = false,
 		listignore = false,
-		listall = false,
-		liststack = false;
+		listall = false;
+	bool opt_liststack = false;
 	const char *configfile = NULL;
 	const char *varprefix = "";
 	int exit_status = 0;
@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_LISTSTACK:
-			liststack = true;
+			opt_liststack = true;
 			dolist = true;
 			continue;
 
@@ -651,21 +651,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (liststack) {
-		ITEMS_FOR_EACH(kd, &ipsec_conf_keywords) {
-			if (kd->keyname == NULL) {
-				continue;
-			}
+	const struct config_setup *oco = config_setup_singleton();
 
-			if (strstr(kd->keyname, "protostack")) {
-				if (cfg->setup->values[kd->field].string) {
-					printf("%s\n",
-						cfg->setup->values[kd->field].string);
-				} else {
-					/* implicit default */
-					printf("xfrm\n");
-				}
-			}
+	if (opt_liststack) {
+		const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
+		if (pexpect(protostack != NULL)) {
+			printf("%s\n", protostack);
 		}
 		confread_free(cfg);
 		free_config_setup();
