@@ -2,7 +2,7 @@ See also https://libreswan.org/
 
 v5.3 (unreleased)
 * config:
-  - Obsoleted virtual_private and plutostderrlog keywords [Tuomo]
+  - obsoleted virtual_private and plutostderrlog keywords [Tuomo]
   - drop undocumented --rootdir{,2} option to `ipsec readwriteconf` [Andrew, #2152]
   - warn when END-option= has no END [Andrew #663]
   - nflog= made an alias to nflog-group= [Andrew]
@@ -16,6 +16,7 @@ v5.3 (unreleased)
   - verify using NSS's IPsec profile aka certificateUsageIPsec [Andrew]
   - only verify using certificateUsageSSL{Client,Server} when USE_NSS_TLS_SECURITY_PROFILE [Andrew]
 * IKEv1:
+  - fix CISCO's split support (requires cisco-split=yes) [Andrew, Amirreza #2230 Erikas #633]
   - share-lease=yes|no (default yes) to share XAUTH/ModeCfg lease IP on multiple connections [Paul]
 * ipsec commands:
   - support qualified names, such as '"labeled"[1][2]' [Andrew #1308]
