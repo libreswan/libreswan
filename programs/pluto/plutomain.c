@@ -1043,7 +1043,6 @@ int main(int argc, char **argv)
 	/* options processed save to obtain the setup */
 	const struct config_setup *oco = config_setup_singleton();
 
-	pluto_expire_lifetime = config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME);
 	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
 
 	const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
@@ -1612,7 +1611,8 @@ void show_setup_plutomain(struct show *s)
 		}
 		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
 		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
-		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
+		jam(buf, ", expire-lifetime=%jds",
+		    deltasecs(config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME)));
 	}
 
 	show_log(s);

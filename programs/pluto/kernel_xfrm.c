@@ -80,6 +80,8 @@
 
 #include "lsw_socket.h"
 #include "constants.h"
+#include "config_setup.h"
+
 #include "defs.h"
 #include "id.h"
 #include "state.h"
@@ -321,14 +323,17 @@ static void update_xfrm_acq_expires(struct logger *logger)
 		return;
 	}
 
-	if (!pluto_expire_lifetime.is_set || deltasecs(pluto_expire_lifetime) < 1/*second*/) {
-		pluto_expire_lifetime = deltatime(lifetime);
+	const struct config_setup *oco = config_setup_singleton();
+	deltatime_t expire_lifetime = config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME);
+	if (!expire_lifetime.is_set || deltasecs(expire_lifetime) < 1/*second*/) {
+		expire_lifetime = deltatime(lifetime);
 		llog(RC_LOG, logger, "setting expire-lifetime= to %jd from '"XFRM_ACQ_EXPIRES"'",
-		     deltasecs(pluto_expire_lifetime));
+		     deltasecs(expire_lifetime));
+		update_setup_deltatime(KBF_EXPIRE_LIFETIME, expire_lifetime);
 		return;
 	}
 
-	if (lifetime == deltasecs(pluto_expire_lifetime)) {
+	if (lifetime == deltasecs(expire_lifetime)) {
 		/* nothing to do */
 		return;
 	}
@@ -336,9 +341,9 @@ static void update_xfrm_acq_expires(struct logger *logger)
 	/* re-open so can write configured value; should just work */
 
 	char numstr[255];
-	sprintf(numstr,"%ju", deltasecs(pluto_expire_lifetime));
+	sprintf(numstr,"%ju", deltasecs(expire_lifetime));
 	llog(RC_LOG, logger, "setting '"XFRM_ACQ_EXPIRES"' to '%s' from expire-lifetime=%jd",
-	     numstr, deltasecs(pluto_expire_lifetime));
+	     numstr, deltasecs(expire_lifetime));
 
 	int w = open(XFRM_ACQ_EXPIRES, O_WRONLY);
 	if (w < 0) {
