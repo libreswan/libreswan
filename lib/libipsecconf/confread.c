@@ -56,8 +56,13 @@
 const char *rootdir;	/* when evaluating paths, prefix this to them */
 const char *rootdir2;	/* or... try this one too */
 
+
+static bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
+					 struct ipsec_conf *cfgp,
+					 struct logger *logger);
+
 static bool translate_conn(struct starter_conn *conn,
-			   const struct config_parsed *cfgp,
+			   const struct ipsec_conf *cfgp,
 			   struct section_list *sl,
 			   enum keyword_set assigned_value,
 			   struct logger *logger);
@@ -83,64 +88,6 @@ static struct starter_config *alloc_starter_config(void)
 }
 
 /**
- * Load a parsed config
- *
- * @param cfg starter_config structure
- * @param cfgp config_parsed (ie: valid) struct
- * @param perr pointer to store errors in
- */
-static bool load_setup(struct starter_config *cfg,
-		       const struct config_parsed *cfgp)
-{
-	bool ok = true;
-	const struct kw_list *kw;
-
-	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
-		/**
-		 * the parser already made sure that only config keywords were used,
-		 * but we double check!
-		 */
-		assert(kw->keyword.keydef->validity & kv_config);
-		unsigned f = kw->keyword.keydef->field;
-
-		switch (kw->keyword.keydef->type) {
-		case kt_string:
-			/* all treated as strings for now */
-			assert(f < elemsof(cfg->setup->values));
-			pfreeany(cfg->setup->values[f].string);
-			cfg->setup->values[f].string =
-				clone_str(kw->string, "kt_loose_enum kw->string");
-			cfg->setup->values[f].set = true;
-			break;
-
-		case kt_sparse_name:
-		case kt_unsigned:
-			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup->values));
-			cfg->setup->values[f].option = kw->number;
-			cfg->setup->values[f].set = true;
-			break;
-
-		case kt_seconds:
-			/* all treated as a number for now */
-			assert(f < elemsof(cfg->setup->values));
-			cfg->setup->values[f].deltatime = kw->deltatime;
-			cfg->setup->values[f].set = true;
-			break;
-
-		case kt_also:
-		case kt_appendstring:
-		case kt_appendlist:
-		case kt_obsolete:
-			break;
-
-		}
-	}
-
-	return ok;
-}
-
-/**
  * Take the list of key-value pairs, from ipsec.conf and in KW, and
  * turn them into an array in starter_conn.
  *
@@ -154,7 +101,7 @@ static bool load_setup(struct starter_config *cfg,
  */
 
 static bool translate_field(struct starter_conn *conn,
-			    const struct config_parsed *cfgp,
+			    const struct ipsec_conf *cfgp,
 			    const struct section_list *sl,
 			    enum keyword_set assigned_value,
 			    const struct kw_list *kw,
@@ -290,7 +237,7 @@ static bool translate_field(struct starter_conn *conn,
 }
 
 static bool translate_leftright(struct starter_conn *conn,
-				const struct config_parsed *cfgp,
+				const struct ipsec_conf *cfgp,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
 				const struct kw_list *kw,
@@ -304,7 +251,7 @@ static bool translate_leftright(struct starter_conn *conn,
 }
 
 static bool translate_conn(struct starter_conn *conn,
-			   const struct config_parsed *cfgp,
+			   const struct ipsec_conf *cfgp,
 			   struct section_list *sl,
 			   enum keyword_set assigned_value,
 			   struct logger *logger)
@@ -346,7 +293,7 @@ static bool translate_conn(struct starter_conn *conn,
 }
 
 static bool load_conn(struct starter_conn *conn,
-		      const struct config_parsed *cfgp,
+		      const struct ipsec_conf *cfgp,
 		      struct section_list *sl,
 		      bool alsoprocessing,
 		      bool defaultconn,
@@ -458,12 +405,13 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
-struct starter_config *confread_load(const char *file,
-				     bool setuponly,
-				     struct logger *logger,
-				     unsigned verbosity)
+static void check_ipsec_conf_keywords(struct logger *logger)
 {
-	/* sanity checks */
+	static bool checked;
+	if (checked) {
+		return;
+	}
+	checked = true;
 
 	if (LDBGP(DBG_TMI, logger)) {
 		ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
@@ -567,11 +515,19 @@ struct starter_config *confread_load(const char *file,
 			break;
 		}
 	}
+}
+
+struct starter_config *confread_load(const char *file,
+				     bool setuponly,
+				     struct logger *logger,
+				     unsigned verbosity)
+{
+	check_ipsec_conf_keywords(logger);
 
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_load_conf(file, logger, setuponly, verbosity);
+	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, setuponly, verbosity);
 	if (cfgp == NULL)
 		return NULL;
 
@@ -579,83 +535,94 @@ struct starter_config *confread_load(const char *file,
 
 	/**
 	 * Load setup
-	 *
-	 * Danger: reverse fail.
 	 */
-	if (!load_setup(cfg, cfgp)) {
-		parser_freeany_config_parsed(&cfgp);
-		confread_free(cfg);
+	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
+		pfree_ipsec_conf(&cfgp);
 		return NULL;
 	}
 
 	if (!setuponly) {
-		struct section_list *sconn;
-
-		/*
-		 * Load %default conn
-		 *
-		 * ??? is it correct to accept multiple %default conns?
-		 *
-		 * XXX: yes, apparently it's a feature
-		 */
-		TAILQ_FOREACH(sconn, &cfgp->sections, link) {
-			if (streq(sconn->name, "%default")) {
-				/*
-				 * Is failing to load default conn
-				 * fatal?
-				 */
-				ldbg(logger, "loading default conn");
-				if (!load_conn(&cfg->conn_default,
-					       cfgp, sconn,
-					       /*also=*/false,
-					       /*default conn*/true,
-					       logger)) {
-					break;
-				}
-			}
-		}
-
-		/*
-		 * Load other conns
-		 */
-		TAILQ_FOREACH(sconn, &cfgp->sections, link) {
-			if (streq(sconn->name, "%default")) {
-				/* %default processed above */
-				continue;
-			}
-
-			ldbg(logger, "loading conn %s", sconn->name);
-			struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
-			if (!load_conn(conn, cfgp, sconn,
-				       /*also*/true,
-				       /*default-conn*/false,
-				       logger)) {
-				/* ??? should caller not log perrl? */
-				continue;
-			}
-
-			conn->state = STATE_LOADED;
+		if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
+			pfree_ipsec_conf(&cfgp);
+			confread_free(cfg);
+			return NULL;
 		}
 	}
 
-	parser_freeany_config_parsed(&cfgp);
+	pfree_ipsec_conf(&cfgp);
 	return cfg;
+}
+
+bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
+				  struct ipsec_conf *cfgp,
+				  struct logger *logger)
+{
+	struct section_list *sconn;
+
+	/*
+	 * Load %default conn
+	 *
+	 * ??? is it correct to accept multiple %default conns?
+	 *
+	 * XXX: yes, apparently it's a feature
+	 */
+	TAILQ_FOREACH(sconn, &cfgp->sections, link) {
+		if (streq(sconn->name, "%default")) {
+			/*
+			 * Is failing to load default conn
+			 * fatal?
+			 */
+			ldbg(logger, "loading default conn");
+			if (!load_conn(&cfg->conn_default,
+				       cfgp, sconn,
+				       /*also=*/false,
+				       /*default conn*/true,
+				       logger)) {
+				break;
+			}
+		}
+	}
+
+	/*
+	 * Load other conns
+	 */
+	TAILQ_FOREACH(sconn, &cfgp->sections, link) {
+		if (streq(sconn->name, "%default")) {
+			/* %default processed above */
+			continue;
+		}
+
+		ldbg(logger, "loading conn %s", sconn->name);
+		struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
+		if (!load_conn(conn, cfgp, sconn,
+			       /*also*/true,
+			       /*default-conn*/false,
+			       logger)) {
+			/* ??? should caller not log perrl? */
+			continue;
+		}
+
+		conn->state = STATE_LOADED;
+	}
+	return true;
 }
 
 struct starter_config *confread_argv(const char *name,
 				     char *argv[], int start,
 				     struct logger *logger)
 {
+	check_ipsec_conf_keywords(logger);
+
 	/**
 	 * Load file
 	 */
-	struct config_parsed *cfgp = parser_argv_conf(name, argv, start, logger);
+	struct ipsec_conf *cfgp = argv_ipsec_conf(name, argv, start, logger);
 	if (cfgp == NULL)
 		return NULL;
 
 	struct starter_config *cfg = alloc_starter_config();
 	if (cfg == NULL) {
-		parser_freeany_config_parsed(&cfgp);
+		pfree_ipsec_conf(&cfgp);
 		return NULL;
 	}
 
@@ -663,18 +630,12 @@ struct starter_config *confread_argv(const char *name,
 	 * Load other conns
 	 */
 
-	struct section_list *sconn = TAILQ_FIRST(&cfgp->sections);
-	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
-	if (!load_conn(conn, cfgp, sconn,
-		       /*also*/true,
-		       /*default conn*/false,
-		       logger)) {
-	    parser_freeany_config_parsed(&cfgp);
-	    /* XXX: leak! */
-	    return NULL;
+	if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
+		pfree_ipsec_conf(&cfgp);
+		confread_free(cfg);
 	}
 
-	parser_freeany_config_parsed(&cfgp);
+	pfree_ipsec_conf(&cfgp);
 	return cfg;
 }
 

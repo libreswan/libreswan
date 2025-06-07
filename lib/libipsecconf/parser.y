@@ -264,17 +264,17 @@ void yyerror(struct parser *parser, const char *s)
 	}
 }
 
-static struct config_parsed *alloc_config_parsed(void)
+static struct ipsec_conf *alloc_config_parsed(void)
 {
-	struct config_parsed *cfgp = alloc_thing(struct config_parsed, __func__);
+	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
 	TAILQ_INIT(&cfgp->sections);
 	return cfgp;
 }
 
-struct config_parsed *parser_load_conf(const char *file,
-				       struct logger *logger,
-				       bool setuponly,
-				       unsigned verbosity)
+struct ipsec_conf *load_ipsec_conf(const char *file,
+				   struct logger *logger,
+				   bool setuponly,
+				   unsigned verbosity)
 {
 	struct parser parser = {
 		.logger = logger,
@@ -307,16 +307,16 @@ struct config_parsed *parser_load_conf(const char *file,
 	return parser.cfg;
 
 err:
-	parser_freeany_config_parsed(&parser.cfg);
+	pfree_ipsec_conf(&parser.cfg);
 	scanner_close(&parser);
 
 	return NULL;
 }
 
-struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start,
-				       struct logger *logger)
+struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
+				   struct logger *logger)
 {
-	struct config_parsed *cfgp = alloc_config_parsed();
+	struct ipsec_conf *cfgp = alloc_config_parsed();
 
 	/* there's only one */
 	struct section_list *section = alloc_thing(struct section_list, __func__);
@@ -354,7 +354,7 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 			default_end++;
 			if (default_end >= END_ROOF) {
 				llog(ERROR_STREAM, logger, "too many '--to's");
-				parser_freeany_config_parsed(&cfgp);
+				pfree_ipsec_conf(&cfgp);
 				exit(1);
 			}
 			scanner_next_line(&parser);
@@ -391,7 +391,7 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 			/* only allow --KEY VALUE when whack compat */
 			if (argp[1] == NULL) {
 				llog(ERROR_STREAM, logger, "missing argument for %s", arg);
-				parser_freeany_config_parsed(&cfgp);
+				pfree_ipsec_conf(&cfgp);
 				return NULL;
 			}
 			/* skip/use next arg */
@@ -400,7 +400,7 @@ struct config_parsed *parser_argv_conf(const char *name, char *argv[], int start
 			scanner_next_line(&parser);
 		} else {
 			llog(ERROR_STREAM, logger, "missing '=' in %s", arg);
-			parser_freeany_config_parsed(&cfgp);
+			pfree_ipsec_conf(&cfgp);
 			exit(1);
 		}
 
@@ -441,10 +441,10 @@ static void parser_free_kwlist(struct kw_list *list)
 	}
 }
 
-void parser_freeany_config_parsed(struct config_parsed **cfgp)
+void pfree_ipsec_conf(struct ipsec_conf **cfgp)
 {
 	if ((*cfgp) != NULL) {
-		struct config_parsed *cfg = (*cfgp);
+		struct ipsec_conf *cfg = (*cfgp);
 		parser_free_kwlist(cfg->config_setup);
 
 		/* keep deleting the first entry */
