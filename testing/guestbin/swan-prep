@@ -181,13 +181,13 @@ def choose_config_file(hostname, testpath, config_path, strict, default=None):
     # dump all the paths?
     return None
 
-def get_configsetup(key=None):
-    # without --config /dev/null most tests would pass.
-    # However, the test that follows a test with broken config will fail
-    # And during a testrun the worker that hit error may not recover.
-    cmd = '$(ipsec addconn --configsetup --config /dev/null | grep ' + key + ') && echo $' + key
-    o = subprocess.run(cmd, shell=True, capture_output=True, encoding="ascii", check=True,)
-    return o.stdout.strip().replace("'", '')
+def get_configsetup(key):
+    # without --config /dev/null most tests would pass.  However, the
+    # test that follows a test with broken config will fail And during
+    # a testrun the worker that hit error may not recover.
+    o = subprocess.run(["ipsec", "addconn", f"--configsetup={key}", "--config", "/dev/null"],
+                       capture_output=True, encoding="ascii", check=True,)
+    return o.stdout.strip()
 
 def copy_config_file(hostname, testpath, config_path,
                      strict=False, optional=False, nsprefix="", default=None):
