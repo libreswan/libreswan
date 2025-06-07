@@ -70,7 +70,6 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
-#include "sparse_names.h"
 #include "nat_traversal.h"
 #include "ip_address.h"
 #include "ip_info.h"

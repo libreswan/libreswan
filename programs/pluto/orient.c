@@ -33,7 +33,6 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 #include "terminate.h"
-#include "sparse_names.h"
 #include "initiate.h"
 #include "ipsec_interface.h"
 #include "addresspool.h"

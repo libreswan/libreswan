@@ -22,7 +22,6 @@
 #include <secerr.h>
 #include <ocsp.h>
 
-#include "sparse_names.h"
 #include "lswnss.h"
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"

@@ -27,7 +27,6 @@
 #include <limits.h>
 #include <sys/types.h>
 
-#include "sparse_names.h"
 #include "sysdep.h"
 #include "lswnss.h"
 #include "constants.h"

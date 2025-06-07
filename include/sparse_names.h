@@ -57,20 +57,6 @@ struct sparse_names {
 
 const struct sparse_name *sparse_lookup_by_name(const struct sparse_names *, shunk_t);
 
-bool sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *b);
-bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b);
-
-size_t jam_sparse_long(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
-const char *str_sparse_long(const struct sparse_names *sd, unsigned long val, name_buf *buf);
-
-size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsigned long val);
-const char *str_sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *buf);
-
-size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
-
-#define jam_sparse jam_sparse_long
-#define str_sparse str_sparse_long
-
 /*
  * sparse_sparse_names is much like enum_enum_names, except, again the
  * values are neither assumed to be contingious or ordered.
@@ -87,7 +73,5 @@ struct sparse_sparse_names {
 	size_t ignore_for_now;
 	const struct sparse_sparse_name list[];
 };
-
-extern const char *sparse_sparse_name(const struct sparse_sparse_names *sd, unsigned long v1, unsigned long v2);
 
 #endif /* _CONSTANTS_H_ */

@@ -36,7 +36,6 @@
 #include "pluto_seccomp.h"
 #endif
 
-#include "sparse_names.h"
 #include "initiate.h"			/* for initiate_connection() */
 #include "acquire.h"			/* for initiate_ondemand() */
 #include "keys.h"			/* for load_preshared_secrets() */
@@ -56,7 +55,6 @@
 #include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
-#include "sparse_names.h"
 #include "visit_connection.h"
 #include "whack_add.h"
 #include "whack_briefconnectionstatus.h"

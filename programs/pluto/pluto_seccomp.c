@@ -20,7 +20,6 @@
 #include <unistd.h>
 
 #include "lswseccomp.h"
-#include "sparse_names.h"
 #include "config_setup.h"
 
 #include "defs.h"

@@ -18,7 +18,6 @@
 #include <unistd.h>
 
 #include "constants.h"
-#include "sparse_names.h"
 
 #include "defs.h"
 

@@ -6,6 +6,8 @@
  */
 #include <sys/types.h>
 
+#include "names.h"
+
 extern enum_names ip_protocol_id_names;	/* aka ipproto_*; in ip_protocol.c */
 
 #ifdef KERNEL_XFRM

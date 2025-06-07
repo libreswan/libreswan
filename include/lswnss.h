@@ -96,8 +96,8 @@ size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism);
 size_t jam_nss_oid(struct jambuf *buf, SECOidTag oidtag);
 size_t jam_nss_secitem(struct jambuf *buf, const SECItem *secitem);
 
-const char *str_nss_oid(SECOidTag oid, enum_buf *buf);
-const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf);
+const char *str_nss_oid(SECOidTag oid, name_buf *buf);
+const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, name_buf *buf);
 
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);

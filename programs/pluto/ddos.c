@@ -34,7 +34,6 @@
 #include "log.h"
 #include "whack.h"
 #include "show.h"
-#include "sparse_names.h"
 #include "state.h"		/* for total_halfopen_ike() */
 #include "whack_shutdown.h"	/* for whack_shutdown() and exiting_pluto; */
 

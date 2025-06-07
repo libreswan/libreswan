@@ -79,7 +79,6 @@
 #include "server.h" /* for struct iface_endpoint */
 #include "iface.h"
 #include "log.h"
-#include "sparse_names.h"
 #include "kernel.h"
 
 #define IPSEC1_XFRM_IF_ID (1U)

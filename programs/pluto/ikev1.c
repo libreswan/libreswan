@@ -127,7 +127,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "crypt_hash.h"
-#include "sparse_names.h"
 
 #include "defs.h"
 #include "ike_spi.h"

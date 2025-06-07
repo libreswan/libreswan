@@ -50,7 +50,6 @@
 
 #include "lswcdefs.h"
 #include "shunk.h"
-#include "sparse_names.h"
 #include "ip_address.h"
 #include "ip_port.h"
 

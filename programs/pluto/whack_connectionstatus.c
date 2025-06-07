@@ -50,7 +50,6 @@
 #include "crypto.h"		/* for show_ike_alg_connection() */
 #include "plutoalg.h"	/* for show_kernel_alg_connection() */
 #include "kernel.h"		/* for enum direction */
-#include "sparse_names.h"
 #include "monotime.h"
 #include "ikev2_ike_session_resume.h"	/* for show_session_resume() */
 #include "kernel_info.h"

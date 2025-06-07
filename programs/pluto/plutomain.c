@@ -39,7 +39,6 @@
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
 #include "optarg.h"
-#include "sparse_names.h"
 #include "deltatime.h"
 #include "timescale.h"
 #include "lswversion.h"
