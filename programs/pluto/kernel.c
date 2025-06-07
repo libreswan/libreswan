@@ -48,6 +48,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
+#include "config_setup.h"
 
 #include "defs.h"
 #include "rnd.h"
@@ -85,6 +86,10 @@
 #include "updown.h"
 #include "pending.h"
 #include "terminate.h"
+
+static deltatime_t pluto_expire_shunt_interval; /* see plutomain.c & config_setup.[hc] */
+static deltatime_t pluto_shunt_lifetime; /* see plutomain.c and config_setup.[hc] */
+
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -2375,9 +2380,6 @@ const struct kernel_ops *kernel_ops = NULL/*kernel_stacks[0]*/;
 
 static bool kernel_initialized = false;
 
-deltatime_t pluto_expire_shunt_interval; /* see plutomain.c & config_setup.[hc] */
-deltatime_t pluto_shunt_lifetime; /* see plutomain.c and config_setup.[hc] */
-
 static global_timer_cb kernel_scan_shunts;
 
 static void kernel_scan_shunts(struct logger *logger)
@@ -2385,7 +2387,7 @@ static void kernel_scan_shunts(struct logger *logger)
 	expire_bare_shunts(logger);
 }
 
-void init_kernel(struct logger *logger, deltatime_t expire_shunt_interval)
+void init_kernel(const struct config_setup *oco, struct logger *logger)
 {
 	/*
 	 * Hack to stop early startup failure cascading into kernel
@@ -2394,9 +2396,21 @@ void init_kernel(struct logger *logger, deltatime_t expire_shunt_interval)
 	 */
 	kernel_initialized = true;
 
-	struct utsname un;
+	/* needs to be within range */
+
+	pluto_expire_shunt_interval = config_setup_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL);
+	if (deltasecs(pluto_expire_shunt_interval) < 0 ||
+	    deltasecs(pluto_expire_shunt_interval) > MAX_EXPIRE_SHUNT_INTERVAL_SECONDS) {
+		fatal(PLUTO_EXIT_FAIL, logger,
+		      "expire-shunt-interval must be between 1 and %u",
+		      MAX_EXPIRE_SHUNT_INTERVAL_SECONDS);
+	}
+
+	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
 
 	/* get kernel version */
+
+	struct utsname un;
 	uname(&un);
 	llog(RC_LOG, logger,
 	     "using %s %s kernel support code on %s",
@@ -2412,7 +2426,7 @@ void init_kernel(struct logger *logger, deltatime_t expire_shunt_interval)
 	kernel_ops->poke_holes(logger);
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
-			      expire_shunt_interval);
+			      pluto_expire_shunt_interval);
 }
 
 void show_kernel_interface(struct show *s)

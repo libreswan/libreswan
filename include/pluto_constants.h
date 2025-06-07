@@ -953,10 +953,17 @@ extern void init_pluto_constants(void);
  * Bare shunts are those that don't "belong" to a connection.  This
  * happens because the OE connection instance has been deleted but the
  * block needs to say around.
+ *
+ * These shunts hang around for DEFAULT_SHUNT_LIFETIME_SECONDS.
+ *
+ * Every DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS, a timer is run that
+ * evicts anything that is expired.
  */
 
 /* time between scans of eroutes */
 #define DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS (2*10)
+#define MAX_EXPIRE_SHUNT_INTERVAL_SECONDS 1000
+
 #define DEFAULT_SHUNT_LIFETIME_SECONDS (15 * secs_per_minute)
 
 #endif
