@@ -109,6 +109,7 @@ enum binary {
 
 /* clearer shorthand for *cmp functions */
 #define streq(a, b) (strcmp((a), (b)) == 0)
+#define strheq(a, b) hunk_heq(shunk1(a), shunk1(b))
 #define strneq(a, b, c) (strncmp((a), (b), (c)) == 0)
 #define startswith(a, b) strneq((a), (b), strlen(b))
 #define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), true : false)

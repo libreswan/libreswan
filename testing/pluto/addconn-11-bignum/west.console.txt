@@ -1,11 +1,11 @@
 /testing/guestbin/swan-prep
 west #
- ipsec addconn --config 2.32-1.conf --configsetup | grep nhelpers
-export nhelpers='4294967295'
+ ipsec addconn --config 2.32-1.conf --configsetup=nhelpers
+4294967295
 west #
- ipsec addconn --config 2.32.conf --configsetup | grep nhelpers
-export nhelpers='4294967296'
+ ipsec addconn --config 2.32.conf --configsetup=nhelpers
+4294967296
 west #
- ipsec addconn --config 2.32+1.conf --configsetup | grep nhelpers
-export nhelpers='4294967297'
+ ipsec addconn --config 2.32+1.conf --configsetup=nhelpers
+4294967297
 west #
