@@ -247,13 +247,13 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	return found; /* not-found */
 }
 
-struct print_option {
+struct configsetup_options {
 	const char *name;
 	const char *export;
 	const char *varprefix;
 };
 
-static void print_option(const struct print_option po,
+static void print_option(const struct configsetup_options po,
 			 const char *kwname,
 			 const char *fmt,
 			 ...)
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 
 	bool autoall = false;
 
-	struct print_option po = {
+	struct configsetup_options configsetup = {
 		.name = NULL,
 		.export = "export",
 		.varprefix = "",
@@ -389,7 +389,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_CONFIGSETUP:
-			po.name = (optarg == NULL ? "" : optarg);
+			configsetup.name = (optarg == NULL ? "" : optarg);
 			continue;
 
 		case OPT_CHECKCONFIG:
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_NOEXPORT:
-			po.export = "";
+			configsetup.export = "";
 			continue;
 
 		case OPT_CONFIG:
@@ -439,7 +439,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_VARPREFIX:
-			po.varprefix = optarg;
+			configsetup.varprefix = optarg;
 			continue;
 
 		case OPT_NAME:
@@ -452,7 +452,7 @@ int main(int argc, char *argv[])
 
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist &&
-	    po.name == NULL &&
+	    configsetup.name == NULL &&
 	    !checkconfig) {
 		llog(RC_LOG, logger, "nothing to do, see --help");
 		exit(1);
@@ -467,9 +467,9 @@ int main(int argc, char *argv[])
 
 	struct starter_config *cfg;
 	if (name != NULL) {
-		if (po.name != NULL) {
+		if (configsetup.name != NULL) {
 			llog(ERROR_STREAM, logger, "--conn %s conflicts with --configsetup=%s",
-			     name, po.name);
+			     name, configsetup.name);
 			exit(1);
 		}
 		if (autoall) {
@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 			exit(3);
 		}
 	} else {
-		cfg = confread_load(configfile, (po.name != NULL), logger, verbose);
+		cfg = confread_load(configfile, (configsetup.name != NULL), logger, verbose);
 		if (cfg == NULL) {
 			llog(RC_LOG, logger, "loading config file '%s' failed", configfile);
 			exit(3);
@@ -701,12 +701,12 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	if (po.name != NULL) {
+	if (configsetup.name != NULL) {
 
-		if (strlen(po.name) == 0) {
-			print_option(po, "confreadstatus", "");
-			print_option(po, "configfile", "%s", configfile);
-			print_option(po, "ctlsocket", "%s", ctlsocket);
+		if (strlen(configsetup.name) == 0) {
+			print_option(configsetup, "confreadstatus", "");
+			print_option(configsetup, "configfile", "%s", configfile);
+			print_option(configsetup, "ctlsocket", "%s", ctlsocket);
 		}
 
 		for (enum config_setup_keyword kw = CONFIG_SETUP_KEYWORD_FLOOR;
@@ -726,8 +726,8 @@ int main(int argc, char *argv[])
 			if ((kd->validity & kv_alias) != 0)
 				continue;
 
-			if (strlen(po.name) > 0 &&
-			    !strheq(po.name, kd->keyname)) {
+			if (strlen(configsetup.name) > 0 &&
+			    !strheq(configsetup.name, kd->keyname)) {
 				continue;
 			}
 
@@ -736,7 +736,7 @@ int main(int argc, char *argv[])
 			{
 				const char *string = config_setup_string(oco, kd->field);
 				if (string != NULL) {
-					print_option(po, kd->keyname, "%s", string);
+					print_option(configsetup, kd->keyname, "%s", string);
 				}
 				break;
 			}
@@ -746,7 +746,7 @@ int main(int argc, char *argv[])
 				uintmax_t option = config_setup_option(oco, kd->field);
 				if (option != 0) {
 					name_buf nb;
-					print_option(po, kd->keyname, "%s",
+					print_option(configsetup, kd->keyname, "%s",
 						     str_sparse_short(kd->sparse_names, option, &nb));
 				}
 				break;
@@ -756,7 +756,7 @@ int main(int argc, char *argv[])
 			{
 				deltatime_t deltatime = config_setup_deltatime(oco, kd->field);
 				if (deltatime.is_set) {
-					print_option(po, kd->keyname, "%jd", deltasecs(deltatime));
+					print_option(configsetup, kd->keyname, "%jd", deltasecs(deltatime));
 				}
 				break;
 			}
@@ -769,7 +769,7 @@ int main(int argc, char *argv[])
 				uintmax_t option = config_setup_option(oco, kd->field);
 				if (option != 0 ||
 				    oco->values[kd->field].set) {
-					print_option(po, kd->keyname, "%jd", option);
+					print_option(configsetup, kd->keyname, "%jd", option);
 				}
 				break;
 			}
