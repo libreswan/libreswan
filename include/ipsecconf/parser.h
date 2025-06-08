@@ -28,17 +28,18 @@ struct logger;
 struct parser;
 enum end;
 
-struct keyword {
-	const struct keyword_def *keydef;
-	bool keyleft;
-	bool keyright;
-	char *string;
+struct ipsec_conf_keyval {
+	const struct keyword_def *key;
+	char *val;
+	/* for "conn" keywords which like to take sides */
+	bool left;
+	bool right;
 };
 
 /* note: these lists are dynamic */
 struct kw_list {
 	struct kw_list *next;
-	struct keyword keyword;
+	struct ipsec_conf_keyval keyval;
 	char *string;
 	uintmax_t number;
 	deltatime_t deltatime;
