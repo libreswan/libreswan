@@ -766,8 +766,7 @@ int main(int argc, char **argv)
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
 		{
 			deltatime_t interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
-#define EXPIRE_SHUNT_INTERVAL_RANGE 1, 1000
-			check_diag(logger, deltatime_ok(interval, EXPIRE_SHUNT_INTERVAL_RANGE));
+			check_diag(logger, deltatime_ok(interval, 1, MAX_EXPIRE_SHUNT_INTERVAL_SECONDS));
 			update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, interval);
 			continue;
 		}
@@ -1043,9 +1042,6 @@ int main(int argc, char **argv)
 	/* options processed save to obtain the setup */
 	const struct config_setup *oco = config_setup_singleton();
 
-	pluto_expire_lifetime = config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME);
-	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
-
 	const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
 	if (protostack != NULL) {
 		for (const struct kernel_ops *const *stack = kernel_stacks;
@@ -1079,11 +1075,6 @@ int main(int argc, char **argv)
 
 	/* there's a rumor this is going away */
 	pluto_uniqueIDs = config_setup_yn(oco, KYN_UNIQUEIDS);
-
-	/* needs to be within range */
-	deltatime_t expire_shunt_interval = check_config_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL, logger,
-							     EXPIRE_SHUNT_INTERVAL_RANGE,
-							     "expire-shunt-interval");
 
 	/* IKEv2 ignoring OPPO? */
 	pluto_drop_oppo_null = config_setup_yn(oco, KYN_DROP_OPPO_NULL);
@@ -1510,7 +1501,7 @@ int main(int argc, char **argv)
 
 	start_server_helpers(config_setup_option(oco, KBF_NHELPERS), logger);
 
-	init_kernel(logger, expire_shunt_interval);
+	init_kernel(oco, logger);
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
@@ -1611,8 +1602,10 @@ void show_setup_plutomain(struct show *s)
 			jam(buf, "%ju", nhelpers);
 		}
 		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
-		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
-		jam(buf, ", expire-lifetime=%jds", deltasecs(pluto_expire_lifetime));
+		jam(buf, ", shuntlifetime=%jds",
+		    deltasecs(config_setup_deltatime(oco, KBF_SHUNTLIFETIME)));
+		jam(buf, ", expire-lifetime=%jds",
+		    deltasecs(config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME)));
 	}
 
 	show_log(s);

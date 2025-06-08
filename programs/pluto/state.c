@@ -81,8 +81,6 @@ static void delete_state(struct state *st);
 
 bool pluto_uniqueIDs; /* see plutomain and config_setup.[hc] */
 
-deltatime_t pluto_expire_lifetime;
-
 /*
  * Handle for each and every state.
  *

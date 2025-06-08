@@ -769,6 +769,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,
 				enum shunt_policy shunt_policy,
+				deltatime_t shunt_patience,
 				const struct nic_offload *nic_offload,
 				struct logger *logger, where_t where)
 {
@@ -791,7 +792,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     &kernel_policy.src.client,
 				     &kernel_policy.dst.client,
 				     &kernel_policy,
-				     SHUNT_PATIENCE,
+				     shunt_patience,
 				     logger, where, "install bare policy");
 }
 

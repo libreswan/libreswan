@@ -33,6 +33,7 @@
 #include "ip_packet.h"
 #include "kernel_mode.h"
 
+struct config_setup;
 struct sa_marks;
 struct spd;
 struct iface_device;
@@ -326,15 +327,6 @@ extern const struct kernel_ops pfkeyv2_kernel_ops;
 
 extern const struct kernel_ops *const kernel_stacks[];
 
-/* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
- * SHUNT_SCAN_INTERVAL.
- * By making SHUNT_PATIENCE an odd multiple of half of SHUNT_SCAN_INTERVAL,
- * we minimize the effects of jitter.
- */
-#define SHUNT_PATIENCE  deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
-
-extern deltatime_t pluto_shunt_lifetime;
-
 void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s);
 extern unsigned shunt_count(void);
 
@@ -351,7 +343,7 @@ void free_bare_shunt(struct bare_shunt **pp, struct logger *logger);
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
-extern void init_kernel(struct logger *logger, deltatime_t expire_shunt_interval);
+extern void init_kernel(const struct config_setup *oco, struct logger *logger);
 
 extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const struct ip_protocol *transport_proto,
