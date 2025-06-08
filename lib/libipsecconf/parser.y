@@ -467,38 +467,7 @@ void new_parser_key_value(struct parser *parser,
 			  deltatime_t deltatime)
 {
 	/* both means no prefix */
-	const char *section = "???";
-	switch (parser->section) {
-	case SECTION_CONFIG_SETUP:
-		section = "'config setup'";
-		if ((key->keydef->validity & kv_config) == LEMPTY) {
-			parser_key_value_warning(parser, key, value,
-						 "invalid %s keyword ignored",
-						 section);
-			/* drop it on the floor */
-			return;
-		}
-		break;
-	case SECTION_CONN:
-		section = "conn";
-		if ((key->keydef->validity & kv_conn) == LEMPTY) {
-			parser_key_value_warning(parser, key, value,
-						 "invalid %s keyword ignored", section);
-			/* drop it on the floor */
-			return;
-		}
-		break;
-	case SECTION_CONN_DEFAULT:
-		section = "'conn %%default'";
-		if ((key->keydef->validity & kv_conn) == LEMPTY ||
-		    key->keydef->field == KSCF_ALSO) {
-			parser_key_value_warning(parser, key, value,
-						 "invalid %s keyword ignored", section);
-			/* drop it on the floor */
-			return;
-		}
-		break;
-	}
+	const char *section = str_parser_section(parser);
 
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
@@ -516,7 +485,7 @@ void new_parser_key_value(struct parser *parser,
 		/* note the weird behaviour! */
 		if (parser->section == SECTION_CONFIG_SETUP) {
 			parser_key_value_warning(parser, key, value,
-						 "overriding earlier %s keyword with new value", section);
+						 "overriding earlier '%s' keyword with new value", section);
 			pfreeany((*end)->string);
 			(*end)->string = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
 			(*end)->number = number;
@@ -655,12 +624,15 @@ static bool parse_leftright(shunk_t s,
 
 /* type is really "token" type, which is actually int */
 static bool parser_find_keyword(shunk_t s, enum end default_end,
-				struct keyword *kw, struct parser *parser)
+				struct keyword *kw,
+				struct parser *parser)
 {
 	bool left = false;
 	bool right = false;
 
 	zero(kw);
+
+	lset_t section = (parser->section == SECTION_CONFIG_SETUP ? kv_config : kv_conn);
 
 	const struct keyword_def *found = NULL;
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
@@ -670,6 +642,15 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 		}
 
 		if (k->validity & kv_ignore) {
+			continue;
+		}
+
+		if ((k->validity & section) == LEMPTY) {
+			continue;
+		}
+
+		if (parser->section == SECTION_CONN_DEFAULT &&
+		    k->field == KSCF_ALSO) {
 			continue;
 		}
 
@@ -739,17 +720,10 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 
 	/* if we still found nothing */
 	if (found == NULL) {
-#define FAIL(FUNC) FUNC(parser, /*errno*/0, "unrecognized '%s' keyword '"PRI_SHUNK"'", \
-			str_parser_section(parser), pri_shunk(s))
-		if (parser->section == SECTION_CONFIG_SETUP ||
-		    !parser->setuponly) {
-			FAIL(parser_fatal);
-			/* never returns */
-		}
-		FAIL(parser_warning);
+		parser_fatal(parser, /*errno*/0, "unrecognized '%s' keyword '"PRI_SHUNK"'",
+			     str_parser_section(parser), pri_shunk(s));
 		/* never returns */
 		return false;
-#undef FAIL
 	}
 
 	/* else, set up llval.k to point, and return KEYWORD */
