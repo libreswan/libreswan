@@ -47,15 +47,24 @@ Pluto is shutting down
 west #
  cp /tmp/pluto.log OUTPUT/bad-config-setup-value.log
 west #
- # broken conn section; should be grumpy but ignored
+ # will be ignored
 west #
- ipsec pluto --config bad-conn-key.conf
-ipsec pluto: bad-conn-key.conf:9: warning: unrecognized 'conn' keyword 'unknown'
+ ipsec pluto --config obsolete-config-setup-key.conf
+ipsec pluto: obsolete-config-setup-key.conf:7: warning: obsolete keyword ignored: virtual_private=1.2.3.4
 west #
  ipsec whack --shutdown
 Pluto is shutting down
 west #
- cp /tmp/pluto.log OUTPUT/bad-conn-key.log
+ cp /tmp/pluto.log OUTPUT/obsolete-config-setup-key.log
+west #
+ # broken conn section; should be grumpy but ignored
+west #
+ # will fail
+west #
+ ipsec pluto --config bad-conn-key.conf
+FATAL ERROR: ipsec pluto: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
+west #
+ # should fail?
 west #
  ipsec pluto --config bad-conn-value.conf
 west #
@@ -63,6 +72,16 @@ west #
 Pluto is shutting down
 west #
  cp /tmp/pluto.log OUTPUT/bad-conn-value.log
+west #
+ # will be ignored
+west #
+ ipsec pluto --config obsolete-conn-key.conf
+ipsec pluto: obsolete-conn-key.conf:9: warning: obsolete keyword ignored: dpdaction=drop
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
+ cp /tmp/pluto.log OUTPUT/obsolete-conn-key.log
 west #
  # now try to add the corresponding conn
 west #
