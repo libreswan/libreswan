@@ -21,16 +21,23 @@ ipsec pluto --config bad-config-setup-key.conf
 ipsec pluto --config bad-config-setup-value.conf
 ipsec whack --shutdown
 cp /tmp/pluto.log OUTPUT/bad-config-setup-value.log
+# will be ignored
+ipsec pluto --config obsolete-config-setup-key.conf
+ipsec whack --shutdown
+cp /tmp/pluto.log OUTPUT/obsolete-config-setup-key.log
 
 # broken conn section; should be grumpy but ignored
 
+# will fail
 ipsec pluto --config bad-conn-key.conf
-ipsec whack --shutdown
-cp /tmp/pluto.log OUTPUT/bad-conn-key.log
-
+# should fail?
 ipsec pluto --config bad-conn-value.conf
 ipsec whack --shutdown
 cp /tmp/pluto.log OUTPUT/bad-conn-value.log
+# will be ignored
+ipsec pluto --config obsolete-conn-key.conf
+ipsec whack --shutdown
+cp /tmp/pluto.log OUTPUT/obsolete-conn-key.log
 
 # now try to add the corresponding conn
 
