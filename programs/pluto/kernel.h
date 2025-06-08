@@ -327,13 +327,6 @@ extern const struct kernel_ops pfkeyv2_kernel_ops;
 
 extern const struct kernel_ops *const kernel_stacks[];
 
-/* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
- * SHUNT_SCAN_INTERVAL.
- * By making SHUNT_PATIENCE an odd multiple of half of SHUNT_SCAN_INTERVAL,
- * we minimize the effects of jitter.
- */
-#define SHUNT_PATIENCE  deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS * 15 / 2)  /* inactivity timeout */
-
 void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s);
 extern unsigned shunt_count(void);
 

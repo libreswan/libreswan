@@ -243,6 +243,7 @@ void delete_cat_kernel_policies(const struct spd *spd,
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,
 				enum shunt_policy shunt_policy,
+				deltatime_t shunt_patience,
 				const struct nic_offload *nic_offload,
 				struct logger *logger, where_t where);
 

@@ -89,7 +89,7 @@
 
 static deltatime_t pluto_expire_shunt_interval; /* see plutomain.c & config_setup.[hc] */
 static deltatime_t pluto_shunt_lifetime; /* see plutomain.c and config_setup.[hc] */
-
+static deltatime_t pluto_shunt_patience; /* see kernel_init() */
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -912,6 +912,7 @@ void revert_kernel_policy(struct spd *spd,
 	setup_esp_nic_offload(&nic_offload, c, logger);
 	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
 					bs->shunt_kind, bs->shunt_policy,
+					pluto_shunt_patience,
 					&nic_offload, logger, HERE)) {
 		llog(RC_LOG, child->sa.logger,
 		     "%s() failed to restore/replace SA",
@@ -2139,7 +2140,9 @@ void orphan_holdpass(struct connection *c,
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, logger);
 	if (install_bare_kernel_policy(src, dst,
-				       SHUNT_KIND_FAILURE, c->config->shunt[SHUNT_KIND_FAILURE],
+				       SHUNT_KIND_FAILURE,
+				       c->config->shunt[SHUNT_KIND_FAILURE],
+				       pluto_shunt_patience,
 				       &nic_offload,
 				       logger, HERE)) {
 		/*
@@ -2396,7 +2399,10 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	 */
 	kernel_initialized = true;
 
-	/* needs to be within range */
+	/*
+	 * How often to run the scanner that evicts old bare (orphan)
+	 * kernel policy.
+	 */
 
 	pluto_expire_shunt_interval = config_setup_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL);
 	if (deltasecs(pluto_expire_shunt_interval) < 0 ||
@@ -2406,7 +2412,28 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 		      MAX_EXPIRE_SHUNT_INTERVAL_SECONDS);
 	}
 
+	/*
+	 * How long a bare (orphan) shunt should stay around before it
+	 * gets evicted.
+	 *
+	 * The shunt evictor compares the age of a shunt against this.
+	 */
 	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
+
+	/*
+	 * Expiration to put on bare (orphan) shunt (kernel policy).
+	 *
+	 * This is is larger than both EXPIRE_SHUNT_INTERVAL and
+	 * SHUNT_LIFETIME so that the shunt sweeper, and not the
+	 * kernel is the one eficting the expired bare (naked) shunts
+	 * (kernel policies).
+	 *
+	 * Why? Because it's always been done this way (and a history
+	 * of problems with co-ordinating this code with the kernel).
+	 */
+	pluto_shunt_patience = deltatime_scale(pluto_expire_shunt_interval, 15, 2);
+	pluto_shunt_patience = deltatime_max(pluto_shunt_patience,
+					     deltatime_scale(pluto_shunt_lifetime, 3, 2));
 
 	/* get kernel version */
 
