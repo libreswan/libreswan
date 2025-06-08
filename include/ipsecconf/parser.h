@@ -28,13 +28,23 @@ struct logger;
 struct parser;
 enum end;
 
+/* Source-And-Line */
+struct ipsec_conf_sal {
+	const char *source;
+	unsigned line;
+};
+
 struct ipsec_conf_keyval {
 	const struct keyword_def *key;
 	char *val;
 	/* for "conn" keywords which like to take sides */
 	bool left;
 	bool right;
+	struct ipsec_conf_sal sal;
 };
+
+#define PRI_KEYVAL_SAL "%s:%u"
+#define pri_keyval_sal(KV) (KV)->sal.source, (KV)->sal.line
 
 /* note: these lists are dynamic */
 struct kw_list {
@@ -52,6 +62,13 @@ struct section_list {
 	bool beenhere;
 };
 
+struct ipsec_conf_sources {
+	char *name;
+	struct ipsec_conf_sources *next;
+};
+
+const char *add_ipsec_conf_source(struct ipsec_conf *cfg, const char *name);
+
 struct ipsec_conf {
 	struct kw_list *config_setup;
 
@@ -59,6 +76,8 @@ struct ipsec_conf {
 	int ipsec_conf_version;
 
 	struct section_list conn_default;
+
+	struct ipsec_conf_sources *sources;
 };
 
 struct parser {

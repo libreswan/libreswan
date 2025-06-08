@@ -59,18 +59,27 @@ static bool scanner_next_file(struct parser *parser);
 struct input_source {
 	YY_BUFFER_STATE saved_buffer;
 	FILE *file;
-	char *filename;
+	const char *filename;
 	unsigned int line;
 	bool once;
 	unsigned current;
-	char **includes;
+	const char **includes;
 	unsigned level;
 	struct input_source *next;
 };
 
 void jam_scanner_file_line(struct jambuf *buf, struct parser *parser)
 {
-	jam(buf, "%s:%u: ", parser->input->filename, parser->input->line);
+	jam(buf, "%s:%u: ", parser->input->filename,
+	    parser->input->line);
+}
+
+struct ipsec_conf_sal scanner_sal(struct parser *parser)
+{
+	return (struct ipsec_conf_sal) {
+		parser->input->filename,
+		parser->input->line,
+	};
 }
 
 void scanner_init(struct parser *parser, const char *name, int start)
@@ -79,7 +88,8 @@ void scanner_init(struct parser *parser, const char *name, int start)
 	parser->input->line = start;
 	parser->input->once = true;
 	parser->input->level = 1;
-	parser->input->filename = clone_str(name, "filename");
+	parser->input->filename =
+		add_ipsec_conf_source(parser->cfg, name);
 }
 
 bool scanner_open(struct parser *parser, const char *file)
@@ -102,7 +112,6 @@ void scanner_close(struct parser *parser)
 	if (parser->input->file != NULL) {
 		fclose(parser->input->file);
 	}
-	pfree(parser->input->filename);
 	pfree(parser->input);
 	parser->input = NULL;
 }
@@ -115,7 +124,8 @@ void scanner_next_line(struct parser *parser)
 static bool scanner_next_include_file(struct parser *parser)
 {
 	if (parser->verbosity > 0) {
-		ldbg(parser->logger, "including next file after '%s' for %s:%u level %u",
+		ldbg(parser->logger,
+		     "including next file after '%s' for %s:%u level %u",
 		     parser->input->filename,
 		     parser->input->next->filename,
 		     parser->input->next->line,
@@ -207,9 +217,9 @@ static void glob_include_callback(unsigned count, char **files,
 	 * the list of expanded files needing to be included.
 	 */
 	struct input_source *iis = alloc_thing(struct input_source, __func__);
-	iis->includes = alloc_things(char *, count + 1, "includes"); /* NULL terminated */
+	iis->includes = alloc_things(const char *, count + 1, "includes"); /* NULL terminated */
 	for (unsigned i = 0; i < count; i++) {
-		iis->includes[i] = clone_str(files[i], "include");
+		iis->includes[i] = add_ipsec_conf_source(context->parser->cfg, files[i]);
 	}
 	iis->line = 1;
 	iis->includes[count] = NULL;
@@ -278,9 +288,6 @@ static bool scanner_next_file(struct parser *parser)
 	yy_switch_to_buffer(parser->input->saved_buffer);
 
 	/* Cleanup */
-	for (char **p = parser->input->includes; *p; p++) {
-		pfree(*p);
-	}
 	pfreeany(parser->input->includes);
 
 	/* pop the stack */

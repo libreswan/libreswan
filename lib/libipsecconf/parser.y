@@ -243,7 +243,7 @@ void parser_key_value_warning(struct parser *parser,
 {
 	if (parser->error_stream != NO_STREAM) {
 		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
-			jam_scanner_file_line(buf, parser);
+			jam(buf, PRI_KEYVAL_SAL": ", pri_keyval_sal(key));
 			jam_string(buf, "warning: ");
 			/* message */
 			va_list ap;
@@ -444,6 +444,15 @@ static void parser_free_kwlist(struct kw_list *list)
 	}
 }
 
+const char *add_ipsec_conf_source(struct ipsec_conf *cfg, const char *name)
+{
+	struct ipsec_conf_sources *source = alloc_thing(struct ipsec_conf_sources, __func__);
+	source->next = cfg->sources;
+	cfg->sources = source;
+	source->name = clone_str(name, __func__);
+	return source->name;
+}
+
 void pfree_ipsec_conf(struct ipsec_conf **cfgp)
 {
 	if ((*cfgp) != NULL) {
@@ -457,6 +466,14 @@ void pfree_ipsec_conf(struct ipsec_conf **cfgp)
 			pfreeany(sec->name);
 			parser_free_kwlist(sec->kw);
 			pfree(sec);
+		}
+
+		/* keep deleting the first entry */
+		struct ipsec_conf_sources *source;
+		while ((source = cfg->sources) != NULL) {
+			cfg->sources = source->next;
+			pfreeany(source->name);
+			pfreeany(source);
 		}
 
 		pfreeany(*cfgp);
@@ -738,6 +755,7 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 	key->left = left;
 	key->right = right;
 	key->val = NULL; /* later */
+	key->sal = scanner_sal(parser);
 	return true;
 }
 
