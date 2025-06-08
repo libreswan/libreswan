@@ -252,6 +252,7 @@ struct configsetup_options {
 	const char *varprefix;
 };
 
+PRINTF_LIKE(3)
 static void print_option(const struct configsetup_options po,
 			 const char *kwname,
 			 const char *fmt,
@@ -704,7 +705,7 @@ int main(int argc, char *argv[])
 	if (configsetup.name != NULL) {
 
 		if (strlen(configsetup.name) == 0) {
-			print_option(configsetup, "confreadstatus", "");
+			print_option(configsetup, "confreadstatus", "%s", "");
 			print_option(configsetup, "configfile", "%s", configfile);
 			print_option(configsetup, "ctlsocket", "%s", ctlsocket);
 		}

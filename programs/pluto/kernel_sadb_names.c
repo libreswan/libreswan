@@ -15,6 +15,8 @@
 
 #include "kernel_sadb.h"
 
+#include "sparse_names.h"
+
 #define S(E) { .name = #E, .value = E, }
 
 const struct sparse_names sadb_type_names = {
