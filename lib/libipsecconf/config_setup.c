@@ -49,6 +49,7 @@ void update_setup_string(enum config_setup_keyword kw, const char *string)
 	struct keyword_value *kv = &config_setup.values[kw];
 	pfreeany(kv->string);
 	kv->string = clone_str(string, "kv");
+	kv->set = k_set;
 }
 
 void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
@@ -57,6 +58,7 @@ void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = yn;
+	kv->set = k_set;
 }
 
 void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
@@ -65,6 +67,7 @@ void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->deltatime = deltatime;
+	kv->set = k_set;
 }
 
 void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
@@ -73,13 +76,18 @@ void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = option;
-	kv->set = true;
+	kv->set = k_set;
 }
 
 const struct config_setup *config_setup_singleton(void)
 {
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
+
+		/*
+		 * Note: these calls .set=k_set.  The damage is undone
+		 * at the end.
+		 */
 
 		update_setup_option(KBF_NHELPERS, -1);
 
@@ -139,6 +147,15 @@ const struct config_setup *config_setup_singleton(void)
 				    "pfkeyv2"
 #endif
 			);
+		/*
+		 * Clear .set, which is set by update_setup*().  Don't
+		 * use k_default as that is intended for 'conn
+		 * %default' section and seems to make for general
+		 * confusion.
+		 */
+		FOR_EACH_ELEMENT(kv, config_setup.values) {
+			kv->set = k_unset;
+		}
 
 	}
 	return &config_setup;
@@ -256,7 +273,7 @@ lset_t config_setup_debugging(struct logger *logger)
  */
 
 bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
-				   struct logger *logger)
+				   struct logger *logger UNUSED)
 {
 	config_setup_singleton();
 
@@ -274,27 +291,19 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		switch (kw->keyval.key->type) {
 		case kt_string:
 			/* all treated as strings for now */
-			PASSERT(logger, f < elemsof(config_setup.values));
-			pfreeany(config_setup.values[f].string);
-			config_setup.values[f].string = clone_str(kw->keyval.val,
-								  "kt_loose_enum kw->string");
-			config_setup.values[f].set = true;
-			break;
+			update_setup_string(f, kw->keyval.val);
+			continue;
 
 		case kt_sparse_name:
 		case kt_unsigned:
 			/* all treated as a number for now */
-			PASSERT(logger, f < elemsof(config_setup.values));
-			config_setup.values[f].option = kw->number;
-			config_setup.values[f].set = true;
-			break;
+			update_setup_option(f, kw->number);
+			continue;
 
 		case kt_seconds:
 			/* all treated as a number for now */
-			PASSERT(logger, f < elemsof(config_setup.values));
-			config_setup.values[f].deltatime = kw->deltatime;
-			config_setup.values[f].set = true;
-			break;
+			update_setup_deltatime(f, kw->deltatime);
+			continue;
 
 		case kt_also:
 		case kt_appendstring:
@@ -303,6 +312,7 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 			break;
 
 		}
+		bad_case(kw->keyval.key->type);
 	}
 
 	return ok;
