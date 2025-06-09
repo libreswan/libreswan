@@ -103,7 +103,7 @@ static bool translate_field(struct starter_conn *conn,
 			    const struct ipsec_conf *cfgp,
 			    const struct section_list *sl,
 			    enum keyword_set assigned_value,
-			    const struct kw_list *kw,
+			    const struct keyval_entry *kw,
 			    const char *leftright,
 			    keyword_values values,
 			    struct logger *logger)
@@ -119,7 +119,7 @@ static bool translate_field(struct starter_conn *conn,
 	{
 		struct section_list *addin;
 		const char *seeking = kw->keyval.val;
-		TAILQ_FOREACH(addin, &cfgp->sections, link) {
+		TAILQ_FOREACH(addin, &cfgp->sections, next) {
 			if (streq(seeking, addin->name)) {
 				break;
 			}
@@ -239,7 +239,7 @@ static bool translate_leftright(struct starter_conn *conn,
 				const struct ipsec_conf *cfgp,
 				const struct section_list *sl,
 				enum keyword_set assigned_value,
-				const struct kw_list *kw,
+				const struct keyval_entry *kw,
 				struct starter_end *this,
 				struct logger *logger)
 {
@@ -267,7 +267,8 @@ static bool translate_conn(struct starter_conn *conn,
 	 */
 	bool ok = true;
 
-	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
+	const struct keyval_entry *kw;
+	TAILQ_FOREACH(kw, &sl->keyvals, next) {
 		if ((kw->keyval.key->validity & kv_leftright) ||
 		    (kw->keyval.key->validity & kv_both)) {
 			if (kw->keyval.left) {
@@ -300,7 +301,7 @@ static bool load_conn(struct starter_conn *conn,
 {
 	/* reset all of the "beenhere" flags */
 	struct section_list *s;
-	TAILQ_FOREACH(s, &cfgp->sections, link) {
+	TAILQ_FOREACH(s, &cfgp->sections, next) {
 		s->beenhere = false;
 	}
 
@@ -566,7 +567,7 @@ bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
 	 *
 	 * XXX: yes, apparently it's a feature
 	 */
-	TAILQ_FOREACH(sconn, &cfgp->sections, link) {
+	TAILQ_FOREACH(sconn, &cfgp->sections, next) {
 		if (streq(sconn->name, "%default")) {
 			/*
 			 * Is failing to load default conn
@@ -586,7 +587,7 @@ bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
 	/*
 	 * Load other conns
 	 */
-	TAILQ_FOREACH(sconn, &cfgp->sections, link) {
+	TAILQ_FOREACH(sconn, &cfgp->sections, next) {
 		if (streq(sconn->name, "%default")) {
 			/* %default processed above */
 			continue;

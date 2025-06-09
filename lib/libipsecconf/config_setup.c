@@ -278,9 +278,9 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 	config_setup_singleton();
 
 	bool ok = true;
-	const struct kw_list *kw;
+	const struct keyval_entry *kw;
 
-	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
+	TAILQ_FOREACH(kw, &cfgp->config_setup, next) {
 		/**
 		 * the parser already made sure that only config keywords were used,
 		 * but we double check!
