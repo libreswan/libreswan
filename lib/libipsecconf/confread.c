@@ -118,7 +118,7 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_also:
 	{
 		struct section_list *addin;
-		const char *seeking = kw->string;
+		const char *seeking = kw->keyval.val;
 		TAILQ_FOREACH(addin, &cfgp->sections, link) {
 			if (streq(seeking, addin->name)) {
 				break;
@@ -154,14 +154,15 @@ static bool translate_field(struct starter_conn *conn,
 		}
 		pfreeany(values[field].string);
 
-		if (kw->string == NULL) {
+		if (kw->keyval.val == NULL) {
 			llog(RC_LOG, logger, "invalid %s value",
 			     kw->keyval.key->keyname);
 			ok = false;
 			break;
 		}
 
-		values[field].string = clone_str(kw->string, "kt_idtype kw->string");
+		values[field].string = clone_str(kw->keyval.val,
+						 "kt_idtype kw->keyval.val");
 		values[field].set = assigned_value;
 		break;
 
@@ -169,16 +170,17 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_appendlist:
 		/* implicitly, this field can have multiple values */
 		if (values[field].string == NULL) {
-			values[field].string = clone_str(kw->string, "kt_appendlist kw->string");
+			values[field].string = clone_str(kw->keyval.val,
+							 "kt_appendlist kw->keyval.val");
 		} else {
 			char *s = values[field].string;
 			size_t old_len = strlen(s);	/* excludes '\0' */
-			size_t new_len = strlen(kw->string);
+			size_t new_len = strlen(kw->keyval.val);
 			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
 
 			memcpy(n, s, old_len);
 			n[old_len] = ' ';
-			memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
+			memcpy(n + old_len + 1, kw->keyval.val, new_len + 1);	/* includes '\0' */
 			values[field].string = n;
 			pfree(s);
 		}

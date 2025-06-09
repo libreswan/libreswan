@@ -439,7 +439,7 @@ static void parser_free_kwlist(struct kw_list *list)
 		struct kw_list *elt = list;
 		list = list->next;
 		/* free */
-		pfreeany(elt->string);
+		pfreeany(elt->keyval.val);
 		pfree(elt);
 	}
 }
@@ -489,8 +489,8 @@ void add_parser_key_value(struct parser *parser,
 		if (parser->section == SECTION_CONFIG_SETUP) {
 			parser_key_value_warning(parser, key, value,
 						 "overriding earlier '%s' keyword with new value", section);
-			pfreeany((*end)->string);
-			(*end)->string = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
+			pfreeany((*end)->keyval.val);
+			(*end)->keyval.val = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
 			(*end)->number = number;
 			(*end)->deltatime = deltatime;
 			return;
@@ -507,15 +507,18 @@ void add_parser_key_value(struct parser *parser,
 	struct kw_list *new = alloc_thing(struct kw_list, "kw_list");
 	(*new) = (struct kw_list) {
 		.keyval = *key,
-		.string = clone_hunk_as_string(value, "keyword.list"), /*handles NULL*/
 		.number = number,
 		.deltatime = deltatime,
 	};
 
+	/* add the value */
+	new->keyval.val = clone_hunk_as_string(value, /*handles NULL*/
+					       "keyword.list");
+
 	if (LDBGP(DBG_TMI, parser->logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, parser->logger, buf) {
 			jam(buf, "  %s%s=%s", leftright(key),
-			    key->key->keyname, new->string);
+			    key->key->keyname, new->keyval.val);
 			jam(buf, " number=%ju", new->number);
 			jam(buf, " field=%u", key->key->field);
 			jam_string(buf, " deltatime=");
@@ -745,6 +748,9 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	if (!parser_find_key(skey, default_end, &key, parser)) {
 		return;
 	}
+
+	/* fill in once look succeeds */
+	PEXPECT(parser->logger, key.val == NULL);
 
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };

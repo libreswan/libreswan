@@ -40,7 +40,6 @@ struct ipsec_conf_keyval {
 struct kw_list {
 	struct kw_list *next;
 	struct ipsec_conf_keyval keyval;
-	char *string;
 	uintmax_t number;
 	deltatime_t deltatime;
 };
