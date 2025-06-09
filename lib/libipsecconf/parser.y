@@ -264,7 +264,7 @@ void yyerror(struct parser *parser, const char *s)
 	}
 }
 
-static struct ipsec_conf *alloc_config_parsed(void)
+static struct ipsec_conf *alloc_ipsec_conf(void)
 {
 	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
 	TAILQ_INIT(&cfgp->sections);
@@ -281,21 +281,21 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 		.error_stream = ERROR_STREAM,
 		.verbosity = verbosity,
 		.setuponly = setuponly,
+		.cfg = alloc_ipsec_conf(),
 	};
 
 	if (!scanner_open(&parser, file)) {
+		pfree_ipsec_conf(&parser.cfg);
 		return NULL;
 	}
-
-	/* i.e., parser_init() */
-	parser.cfg = alloc_config_parsed(),
-	ldbg(logger, "allocated config %p", parser.cfg);
 
 	if (yyparse(&parser) != 0) {
 		/* suppress errors */
 		parser.error_stream = (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
 		do {} while (yyparse(&parser) != 0);
-		goto err;
+		pfree_ipsec_conf(&parser.cfg);
+		scanner_close(&parser);
+		return NULL;
 	}
 
 	scanner_close(&parser);
@@ -305,31 +305,28 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	 */
 	ldbg(logger, "allocated config %p", parser.cfg->conn_default.kw);
 	return parser.cfg;
-
-err:
-	pfree_ipsec_conf(&parser.cfg);
-	scanner_close(&parser);
-
-	return NULL;
 }
 
 struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 				   struct logger *logger)
 {
-	struct ipsec_conf *cfgp = alloc_config_parsed();
-
-	/* there's only one */
-	struct section_list *section = alloc_thing(struct section_list, __func__);
-	TAILQ_INSERT_TAIL(&cfgp->sections, section, link);
-	section->name = clone_str(name, __func__);
-
 	struct parser parser = {
-		.cfg = cfgp,
-		.section = SECTION_CONN,
-		.kw = &section->kw,
+		.cfg = alloc_ipsec_conf(),
 		.logger = logger,
 		.setuponly = false,
 	};
+
+	/*
+	 * There's only section and it's a conn; fudge things up so
+	 * that processing just started.
+	 */
+
+	struct section_list *section = alloc_thing(struct section_list, __func__);
+	TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
+	section->name = clone_str(name, __func__);
+
+	parser.section = SECTION_CONN;
+	parser.kw = &section->kw,
 
 	scanner_init(&parser, "argv", start);
 
@@ -354,7 +351,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			default_end++;
 			if (default_end >= END_ROOF) {
 				llog(ERROR_STREAM, logger, "too many '--to's");
-				pfree_ipsec_conf(&cfgp);
+				pfree_ipsec_conf(&parser.cfg);
 				exit(1);
 			}
 			scanner_next_line(&parser);
@@ -391,7 +388,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			/* only allow --KEY VALUE when whack compat */
 			if (argp[1] == NULL) {
 				llog(ERROR_STREAM, logger, "missing argument for %s", arg);
-				pfree_ipsec_conf(&cfgp);
+				pfree_ipsec_conf(&parser.cfg);
 				return NULL;
 			}
 			/* skip/use next arg */
@@ -400,7 +397,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			scanner_next_line(&parser);
 		} else {
 			llog(ERROR_STREAM, logger, "missing '=' in %s", arg);
-			pfree_ipsec_conf(&cfgp);
+			pfree_ipsec_conf(&parser.cfg);
 			exit(1);
 		}
 
@@ -426,7 +423,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 
 	scanner_close(&parser);
 
-	return cfgp;
+	return parser.cfg;
 }
 
 static void parser_free_kwlist(struct kw_list *list)

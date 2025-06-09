@@ -537,6 +537,7 @@ struct starter_config *confread_load(const char *file,
 	 */
 	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
 		pfree_ipsec_conf(&cfgp);
+		confread_free(cfg);
 		return NULL;
 	}
 
