@@ -503,8 +503,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 	/*
-	 * Both should not be set, but if they are, we want
-	 * to know.
+	 * XXX: With OE both ends can initiate which means either end
+	 * can end up being the client and/or server.
 	 *
 	 * XXX: better way to do this would be to PBAD() the first
 	 * check! Then we'd really know.
@@ -634,6 +634,19 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	}
 
 #undef COMBO
+
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, c->name);
+		jam_string(buf, ":  ");
+		/* mode config */
+		jam(buf, " cisco-split:%s", bool_str(c->config->host.cisco.split));
+		jam(buf, " cisco-unity:%s", bool_str(c->config->host.cisco.unity));
+		if (c->config->host.cisco.peer) {
+			jam(buf, " remote-peer-type:cisco");
+		}
+		jam(buf, " cisco-peer:%s", bool_str(c->config->host.cisco.peer));
+		jam(buf, " nm-configured:%s", bool_str(c->config->host.cisco.nm));
+	}
 
 	/* the banner */
 	if (c->config->modecfg.banner != NULL) {

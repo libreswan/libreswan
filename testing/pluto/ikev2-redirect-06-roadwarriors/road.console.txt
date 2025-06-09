@@ -78,6 +78,7 @@ Connection list:
 "road-east":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-east":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "road-east":   modecfg info: us:client, them:server, modecfg policy:pull, dns:1.2.3.4, 5.6.7.8, domains:unset, cat:unset;
+"road-east":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "road-east":   sec_label:unset;
 "road-east":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "road-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

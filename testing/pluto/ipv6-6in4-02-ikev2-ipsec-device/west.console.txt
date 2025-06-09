@@ -38,6 +38,7 @@ west #
 "westnet-eastnet-6in4":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-6in4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-6in4":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "westnet-eastnet-6in4":   sec_label:unset;
 "westnet-eastnet-6in4":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-6in4":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

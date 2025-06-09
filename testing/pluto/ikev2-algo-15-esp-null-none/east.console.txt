@@ -18,6 +18,7 @@ east #
 "esp=null-none":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "esp=null-none":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "esp=null-none":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"esp=null-none":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "esp=null-none":   sec_label:unset;
 "esp=null-none":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "esp=null-none":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

@@ -131,6 +131,7 @@ west #
 "TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"TUNNEL-A":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "TUNNEL-A":   sec_label:unset;
 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -153,6 +154,7 @@ west #
 "TUNNEL-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"TUNNEL-B":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "TUNNEL-B":   sec_label:unset;
 "TUNNEL-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -174,6 +176,7 @@ west #
 "TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"TUNNEL-C":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "TUNNEL-C":   sec_label:unset;
 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -207,6 +210,7 @@ west #
 "TUNNEL-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"TUNNEL-A":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "TUNNEL-A":   sec_label:unset;
 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -229,6 +233,7 @@ west #
 "TUNNEL-C":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "TUNNEL-C":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"TUNNEL-C":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "TUNNEL-C":   sec_label:unset;
 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
