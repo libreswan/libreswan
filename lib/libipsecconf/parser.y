@@ -614,14 +614,16 @@ diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 
 		switch (flags) {
 		case NAME_IMPLEMENTED_AS:
-			llog(stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" implemented as %s",
+			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
-			     pri_shunk(value), str_sparse_short(names, (*number), &new_name));
+			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
+			     key->key->keyname, pri_shunk(value));
 			return NULL;
 		case NAME_RENAMED_TO:
-			llog(stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" renamed to %s",
+			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
-			     pri_shunk(value), str_sparse_short(names, (*number), &new_name));
+			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
+			     key->key->keyname, pri_shunk(value));
 			return NULL;
 		}
 	}
@@ -779,6 +781,18 @@ void parse_keyval(struct parser *parser, enum end default_end,
 
 	/* fill in once look succeeds */
 	PEXPECT(parser->logger, key.val == NULL);
+
+	if (key.key->validity & kv_config) {
+		/*
+		 * Throw everything onto the end of the list:
+		 *
+		 * Note: this includes kt_obsolete keyvalues.
+		 * Note: this includes duplicate keywords.
+		 */
+		append_parser_key_value(parser, &key, value, 0, (deltatime_t){0});
+		return;
+	}
+
 
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };

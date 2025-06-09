@@ -31,6 +31,7 @@
 #include "seccomp_mode.h"
 #endif
 #include "ddos_mode.h"
+#include "timescale.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -272,12 +273,18 @@ lset_t config_setup_debugging(struct logger *logger)
  * @param perr pointer to store errors in
  */
 
+static void llog_bad(struct logger *logger, const struct ipsec_conf_keyval *kv, diag_t d)
+{
+	llog(ERROR_STREAM, logger,
+	     PRI_KEYVAL_SAL": error: %s",
+	     pri_keyval_sal(kv), str_diag(d));
+}
+
 bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
-				   struct logger *logger UNUSED)
+				   struct logger *logger)
 {
 	config_setup_singleton();
 
-	bool ok = true;
 	const struct keyval_entry *kw;
 
 	TAILQ_FOREACH(kw, &cfgp->config_setup, next) {
@@ -285,37 +292,89 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		 * the parser already made sure that only config keywords were used,
 		 * but we double check!
 		 */
-		passert(kw->keyval.key->validity & kv_config);
-		unsigned f = kw->keyval.key->field;
+		const struct ipsec_conf_keyval *kv = &kw->keyval;
+		PASSERT(logger, kv->key->validity & kv_config);
+		enum config_setup_keyword f = kv->key->field;
+		shunk_t value = shunk1(kv->val);
+		diag_t d = NULL;
 
-		switch (kw->keyval.key->type) {
+		PASSERT(logger, f < elemsof(config_setup.values));
+		if (config_setup.values[f].set) {
+			llog(RC_LOG, logger, PRI_KEYVAL_SAL": warning: overriding earlier 'config setup' keyword with new value: %s=%s",
+			     pri_keyval_sal(kv),
+			     kv->key->keyname, kv->val);
+		}
+
+		switch (kv->key->type) {
 		case kt_string:
+		{
 			/* all treated as strings for now */
-			update_setup_string(f, kw->keyval.val);
+			update_setup_string(f, kv->val);
 			continue;
+		}
 
 		case kt_sparse_name:
-		case kt_unsigned:
-			/* all treated as a number for now */
-			update_setup_option(f, kw->number);
+		{
+			uintmax_t number;
+			d = parse_kt_sparse_name(kv, value, &number,
+						 ERROR_STREAM, logger);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_option(f, number);
 			continue;
+		}
+
+		case kt_unsigned:
+		{
+			uintmax_t number;
+			d = parse_kt_unsigned(kv, value, &number);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_option(f, number);
+			continue;
+		}
 
 		case kt_seconds:
-			/* all treated as a number for now */
-			update_setup_deltatime(f, kw->deltatime);
+		{
+			deltatime_t deltatime;
+			d = parse_kt_deltatime(kv, value, TIMESCALE_SECONDS, &deltatime);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_deltatime(f, deltatime);
 			continue;
+		}
+
+		case kt_obsolete:
+		{
+			llog(ERROR_STREAM, logger,
+			     PRI_KEYVAL_SAL": warning: obsolete keyword ignored: %s=%s",
+			     pri_keyval_sal(kv), kv->key->keyname, kv->val);
+			continue;
+		}
 
 		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
-		case kt_obsolete:
 			break;
 
 		}
-		bad_case(kw->keyval.key->type);
+
+		bad_case(kv->key->type);
 	}
 
-	return ok;
+	return true;
 }
 
 bool load_config_setup(const char *file,
