@@ -54,6 +54,13 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		  shunk_t key, shunk_t value);
 
 static void yyerror(struct parser *parser, const char *msg);
+
+static void append_parser_key_value(struct parser *parser,
+				    struct ipsec_conf_keyval *key,
+				    shunk_t value,
+				    uintmax_t number,
+				    deltatime_t deltatime);
+
 static void add_parser_key_value(struct parser *parser,
 				 struct ipsec_conf_keyval *key,
 				 shunk_t value,
@@ -515,6 +522,15 @@ void add_parser_key_value(struct parser *parser,
 		return;
 	}
 
+	append_parser_key_value(parser, key, value, number, deltatime);
+}
+
+static void append_parser_key_value(struct parser *parser,
+				    struct ipsec_conf_keyval *key,
+				    shunk_t value,
+				    uintmax_t number,
+				    deltatime_t deltatime)
+{
 	/*
 	 * fill the values into new
 	 * (either string or number might have a placeholder value
