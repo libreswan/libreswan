@@ -52,6 +52,10 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 			     "warning: ignoring option \"--%s\" that was removed in Libreswan %s", optname, release);
 			continue;	/* ignore it! */
 		}
+		if (memeq(optmeta, METAOPT_FATAL, 2)) {
+			const char *release = optmeta + 2;
+			optarg_fatal(logger, "option \"--%s\" was removed in Libreswan %s", optname, release);
+		}
 		if (memeq(optmeta, METAOPT_REPLACE, 2)) {
 			/* NEWNAME\nVERSION */
 			shunk_t cursor = shunk1(optmeta + 2);

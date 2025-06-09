@@ -61,10 +61,12 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 
 #define METAOPT_REPLACE   "\0>"		/* warn that option was replaced */
 #define METAOPT_IGNORE "\0!"		/* warn, and ignore, option */
+#define METAOPT_FATAL "\0*"		/* fatal, use when can't be ignored */
 #define METAOPT_HEADING  "\r\a\n\t"	/* new line with heading */
 
 #define REPLACE_OPT(OLD, NEW, RELEASE, ...)	OLD METAOPT_REPLACE NEW "\n" RELEASE
 #define IGNORE_OPT(OLD, RELEASE, ...)		OLD METAOPT_IGNORE "\n" RELEASE
+#define FATAL_OPT(OLD, RELEASE, ...)		OLD METAOPT_FATAL "\n" RELEASE
 #define HEADING_OPT(HEADING)		{ METAOPT_HEADING HEADING, no_argument, NULL, 0, }
 #define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__
 
