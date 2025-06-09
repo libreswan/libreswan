@@ -46,17 +46,19 @@
 #define ERRSTRING_LEN	256
 
 static void parser_key_value_warning(struct parser *parser,
-				     struct keyword *key,
+				     struct ipsec_conf_keyval *key,
 				     shunk_t value,
 				     const char *s, ...) PRINTF_LIKE(4);
 
-void parse_key_value(struct parser *parser, enum end default_end,
-		     shunk_t key, shunk_t value);
+void parse_keyval(struct parser *parser, enum end default_end,
+		  shunk_t key, shunk_t value);
 
 static void yyerror(struct parser *parser, const char *msg);
-static void new_parser_key_value(struct parser *parser,
-				 struct keyword *key, shunk_t value,
-				 uintmax_t number, deltatime_t time);
+static void add_parser_key_value(struct parser *parser,
+				 struct ipsec_conf_keyval *key,
+				 shunk_t value,
+				 uintmax_t number,
+				 deltatime_t time);
 
 /**
  * Functions
@@ -150,21 +152,21 @@ statement_kw:
 		 */
 		char *key = $1; /* must free? */
 		char *value = $3; /* must free */
-		parse_key_value(parser, END_ROOF, shunk1(key), shunk1(value));
+		parse_keyval(parser, END_ROOF, shunk1(key), shunk1(value));
 		pfreeany(key);
 		pfreeany(value);
 	}
 	| KEYWORD EQUAL STRING {
 		char *key = $1;
 		char *value = $3;
-		parse_key_value(parser, END_ROOF, shunk1(key), shunk1(value));
+		parse_keyval(parser, END_ROOF, shunk1(key), shunk1(value));
 		/* free strings allocated by lexer */
 		pfreeany(key);
 		pfreeany(value);
 	}
 	| KEYWORD EQUAL {
 		char *key = $1;
-		parse_key_value(parser, END_ROOF, shunk1(key), shunk1(""));
+		parse_keyval(parser, END_ROOF, shunk1(key), shunk1(""));
 		pfreeany(key);
 	}
 
@@ -219,25 +221,29 @@ void parser_fatal(struct parser *parser, int error, const char *s, ...)
 	abort(); /* gcc doesn't believe above always exits */
 }
 
-static const char *leftright(struct keyword *kw)
+static const char *leftright(struct ipsec_conf_keyval *keyval)
 {
-	if (kw->keyleft && !kw->keyright) {
+	if (keyval->left && !keyval->right) {
 		return "left";
 	}
-	if (!kw->keyleft && kw->keyright) {
+	if (!keyval->left && keyval->right) {
 		return "right";
 	}
 	return "";
 }
 
+/*
+ * Note: VALUE hasn't yet been copied into KEY.
+ */
+
 void parser_key_value_warning(struct parser *parser,
-			      struct keyword *key,
+			      struct ipsec_conf_keyval *key,
 			      shunk_t value,
 			      const char *s, ...)
 {
 	if (parser->error_stream != NO_STREAM) {
 		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
-			jam_scanner_file_line(buf, parser);
+			jam(buf, PRI_KEYVAL_SAL": ", pri_keyval_sal(key));
 			jam_string(buf, "warning: ");
 			/* message */
 			va_list ap;
@@ -247,7 +253,7 @@ void parser_key_value_warning(struct parser *parser,
 			/* what was specified */
 			jam_string(buf, ": ");
 			jam_string(buf, leftright(key));
-			jam_string(buf, key->keydef->keyname);
+			jam_string(buf, key->key->keyname);
 			jam_string(buf, "=");
 			jam_shunk(buf, value);
 		}
@@ -264,7 +270,7 @@ void yyerror(struct parser *parser, const char *s)
 	}
 }
 
-static struct ipsec_conf *alloc_config_parsed(void)
+static struct ipsec_conf *alloc_ipsec_conf(void)
 {
 	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
 	TAILQ_INIT(&cfgp->sections);
@@ -281,21 +287,21 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 		.error_stream = ERROR_STREAM,
 		.verbosity = verbosity,
 		.setuponly = setuponly,
+		.cfg = alloc_ipsec_conf(),
 	};
 
 	if (!scanner_open(&parser, file)) {
+		pfree_ipsec_conf(&parser.cfg);
 		return NULL;
 	}
-
-	/* i.e., parser_init() */
-	parser.cfg = alloc_config_parsed(),
-	ldbg(logger, "allocated config %p", parser.cfg);
 
 	if (yyparse(&parser) != 0) {
 		/* suppress errors */
 		parser.error_stream = (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
 		do {} while (yyparse(&parser) != 0);
-		goto err;
+		pfree_ipsec_conf(&parser.cfg);
+		scanner_close(&parser);
+		return NULL;
 	}
 
 	scanner_close(&parser);
@@ -305,31 +311,28 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	 */
 	ldbg(logger, "allocated config %p", parser.cfg->conn_default.kw);
 	return parser.cfg;
-
-err:
-	pfree_ipsec_conf(&parser.cfg);
-	scanner_close(&parser);
-
-	return NULL;
 }
 
 struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 				   struct logger *logger)
 {
-	struct ipsec_conf *cfgp = alloc_config_parsed();
-
-	/* there's only one */
-	struct section_list *section = alloc_thing(struct section_list, __func__);
-	TAILQ_INSERT_TAIL(&cfgp->sections, section, link);
-	section->name = clone_str(name, __func__);
-
 	struct parser parser = {
-		.cfg = cfgp,
-		.section = SECTION_CONN,
-		.kw = &section->kw,
+		.cfg = alloc_ipsec_conf(),
 		.logger = logger,
 		.setuponly = false,
 	};
+
+	/*
+	 * There's only section and it's a conn; fudge things up so
+	 * that processing just started.
+	 */
+
+	struct section_list *section = alloc_thing(struct section_list, __func__);
+	TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
+	section->name = clone_str(name, __func__);
+
+	parser.section = SECTION_CONN;
+	parser.kw = &section->kw,
 
 	scanner_init(&parser, "argv", start);
 
@@ -354,7 +357,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			default_end++;
 			if (default_end >= END_ROOF) {
 				llog(ERROR_STREAM, logger, "too many '--to's");
-				pfree_ipsec_conf(&cfgp);
+				pfree_ipsec_conf(&parser.cfg);
 				exit(1);
 			}
 			scanner_next_line(&parser);
@@ -362,17 +365,17 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 		}
 
 		if (whack && hunk_streat(&cursor, "nego")) {
-			parse_key_value(&parser, default_end,
-					shunk1("negotiationshunt"),
-					cursor);
+			parse_keyval(&parser, default_end,
+				     shunk1("negotiationshunt"),
+				     cursor);
 			scanner_next_line(&parser);
 			continue;
 		}
 
 		if (whack && hunk_streat(&cursor, "fail")) {
-			parse_key_value(&parser, default_end,
-					shunk1("failureshunt"),
-					cursor);
+			parse_keyval(&parser, default_end,
+				     shunk1("failureshunt"),
+				     cursor);
 			scanner_next_line(&parser);
 			continue;
 		}
@@ -391,7 +394,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			/* only allow --KEY VALUE when whack compat */
 			if (argp[1] == NULL) {
 				llog(ERROR_STREAM, logger, "missing argument for %s", arg);
-				pfree_ipsec_conf(&cfgp);
+				pfree_ipsec_conf(&parser.cfg);
 				return NULL;
 			}
 			/* skip/use next arg */
@@ -400,7 +403,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			scanner_next_line(&parser);
 		} else {
 			llog(ERROR_STREAM, logger, "missing '=' in %s", arg);
-			pfree_ipsec_conf(&cfgp);
+			pfree_ipsec_conf(&parser.cfg);
 			exit(1);
 		}
 
@@ -420,13 +423,13 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			key = shunk1("auth");
 		}
 
-		parse_key_value(&parser, default_end, key, value);
+		parse_keyval(&parser, default_end, key, value);
 		scanner_next_line(&parser);
 	}
 
 	scanner_close(&parser);
 
-	return cfgp;
+	return parser.cfg;
 }
 
 static void parser_free_kwlist(struct kw_list *list)
@@ -436,9 +439,18 @@ static void parser_free_kwlist(struct kw_list *list)
 		struct kw_list *elt = list;
 		list = list->next;
 		/* free */
-		pfreeany(elt->string);
+		pfreeany(elt->keyval.val);
 		pfree(elt);
 	}
+}
+
+const char *add_ipsec_conf_source(struct ipsec_conf *cfg, const char *name)
+{
+	struct ipsec_conf_sources *source = alloc_thing(struct ipsec_conf_sources, __func__);
+	source->next = cfg->sources;
+	cfg->sources = source;
+	source->name = clone_str(name, __func__);
+	return source->name;
 }
 
 void pfree_ipsec_conf(struct ipsec_conf **cfgp)
@@ -456,12 +468,20 @@ void pfree_ipsec_conf(struct ipsec_conf **cfgp)
 			pfree(sec);
 		}
 
+		/* keep deleting the first entry */
+		struct ipsec_conf_sources *source;
+		while ((source = cfg->sources) != NULL) {
+			cfg->sources = source->next;
+			pfreeany(source->name);
+			pfreeany(source);
+		}
+
 		pfreeany(*cfgp);
 	}
 }
 
-void new_parser_key_value(struct parser *parser,
-			  struct keyword *key,
+void add_parser_key_value(struct parser *parser,
+			  struct ipsec_conf_keyval *key,
 			  shunk_t value,
 			  uintmax_t number,
 			  deltatime_t deltatime)
@@ -472,22 +492,22 @@ void new_parser_key_value(struct parser *parser,
 	/* Find end, while looking for duplicates. */
 	struct kw_list **end;
 	for (end = parser->kw; (*end) != NULL; end = &(*end)->next) {
-		if ((*end)->keyword.keydef != key->keydef) {
+		if ((*end)->keyval.key != key->key) {
 			continue;
 		}
-		if (((*end)->keyword.keyleft != key->keyleft) &&
-		    ((*end)->keyword.keyright != key->keyright)) {
+		if (((*end)->keyval.left != key->left) &&
+		    ((*end)->keyval.right != key->right)) {
 			continue;
 		}
-		if (key->keydef->validity & kv_duplicateok) {
+		if (key->key->validity & kv_duplicateok) {
 			continue;
 		}
 		/* note the weird behaviour! */
 		if (parser->section == SECTION_CONFIG_SETUP) {
 			parser_key_value_warning(parser, key, value,
 						 "overriding earlier '%s' keyword with new value", section);
-			pfreeany((*end)->string);
-			(*end)->string = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
+			pfreeany((*end)->keyval.val);
+			(*end)->keyval.val = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
 			(*end)->number = number;
 			(*end)->deltatime = deltatime;
 			return;
@@ -503,17 +523,21 @@ void new_parser_key_value(struct parser *parser,
 	 */
 	struct kw_list *new = alloc_thing(struct kw_list, "kw_list");
 	(*new) = (struct kw_list) {
-		.keyword = *key,
-		.string = clone_hunk_as_string(value, "keyword.list"), /*handles NULL*/
+		.keyval = *key,
 		.number = number,
 		.deltatime = deltatime,
 	};
 
+	/* add the value */
+	new->keyval.val = clone_hunk_as_string(value, /*handles NULL*/
+					       "keyword.list");
+
 	if (LDBGP(DBG_TMI, parser->logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, parser->logger, buf) {
-			jam(buf, "  %s%s=%s", leftright(key), key->keydef->keyname, new->string);
+			jam(buf, "  %s%s=%s", leftright(key),
+			    key->key->keyname, new->keyval.val);
 			jam(buf, " number=%ju", new->number);
-			jam(buf, " field=%u", key->keydef->field);
+			jam(buf, " field=%u", key->key->field);
 			jam_string(buf, " deltatime=");
 			jam_deltatime(buf, new->deltatime);
 		}
@@ -523,7 +547,7 @@ void new_parser_key_value(struct parser *parser,
 	(*end) = new;
 }
 
-static bool parse_kt_unsigned(struct keyword *key, shunk_t value,
+static bool parse_kt_unsigned(struct ipsec_conf_keyval *key, shunk_t value,
 			      uintmax_t *number, struct parser *parser)
 {
 	/* treat -1 as special, turning it into max */
@@ -542,7 +566,7 @@ static bool parse_kt_unsigned(struct keyword *key, shunk_t value,
 	return false;
 }
 
-static bool parse_kt_deltatime(struct keyword *key, shunk_t value,
+static bool parse_kt_deltatime(struct ipsec_conf_keyval *key, shunk_t value,
 			       enum timescale default_timescale,
 			       deltatime_t *deltatime,
 			       struct parser *parser)
@@ -557,10 +581,10 @@ static bool parse_kt_deltatime(struct keyword *key, shunk_t value,
 	return true;
 }
 
-static bool parse_kt_sparse_name(struct keyword *key, shunk_t value,
+static bool parse_kt_sparse_name(struct ipsec_conf_keyval *key, shunk_t value,
 				 uintmax_t *number, struct parser *parser)
 {
-	const struct sparse_names *names = key->keydef->sparse_names;
+	const struct sparse_names *names = key->key->sparse_names;
 	PASSERT(parser->logger, names != NULL);
 
 	const struct sparse_name *sn = sparse_lookup_by_name(names, value);
@@ -623,14 +647,14 @@ static bool parse_leftright(shunk_t s,
 }
 
 /* type is really "token" type, which is actually int */
-static bool parser_find_keyword(shunk_t s, enum end default_end,
-				struct keyword *kw,
-				struct parser *parser)
+static bool parser_find_key(shunk_t skey, enum end default_end,
+			    struct ipsec_conf_keyval *key,
+			    struct parser *parser)
 {
 	bool left = false;
 	bool right = false;
 
-	zero(kw);
+	zero(key);
 
 	lset_t section = (parser->section == SECTION_CONFIG_SETUP ? kv_config : kv_conn);
 
@@ -654,7 +678,7 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 			continue;
 		}
 
-		if (hunk_strcaseeq(s, k->keyname)) {
+		if (hunk_strcaseeq(skey, k->keyname)) {
 
 			/*
 			 * Given a KEY with BOTH|LEFTRIGHT, BOTH
@@ -705,12 +729,12 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 		}
 
 		if (k->validity & kv_leftright) {
-			left = parse_leftright(s, k, "left");
+			left = parse_leftright(skey, k, "left");
 			if (left) {
 				found = k;
 				break;
 			}
-			right = parse_leftright(s, k, "right");
+			right = parse_leftright(skey, k, "right");
 			if (right) {
 				found = k;
 				break;
@@ -721,33 +745,38 @@ static bool parser_find_keyword(shunk_t s, enum end default_end,
 	/* if we still found nothing */
 	if (found == NULL) {
 		parser_fatal(parser, /*errno*/0, "unrecognized '%s' keyword '"PRI_SHUNK"'",
-			     str_parser_section(parser), pri_shunk(s));
+			     str_parser_section(parser), pri_shunk(skey));
 		/* never returns */
 		return false;
 	}
 
 	/* else, set up llval.k to point, and return KEYWORD */
-	kw->keydef = found;
-	kw->keyleft = left;
-	kw->keyright = right;
+	key->key = found;
+	key->left = left;
+	key->right = right;
+	key->val = NULL; /* later */
+	key->sal = scanner_sal(parser);
 	return true;
 }
 
-void parse_key_value(struct parser *parser, enum end default_end,
-		     shunk_t key, shunk_t value)
+void parse_keyval(struct parser *parser, enum end default_end,
+		  shunk_t skey, shunk_t value)
 {
-	struct keyword kw[1];
-	if (!parser_find_keyword(key, default_end, kw, parser)) {
+	struct ipsec_conf_keyval key;
+	if (!parser_find_key(skey, default_end, &key, parser)) {
 		return;
 	}
+
+	/* fill in once look succeeds */
+	PEXPECT(parser->logger, key.val == NULL);
 
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
 	bool ok = true;
 
-	switch (kw->keydef->type) {
+	switch (key.key->type) {
 	case kt_sparse_name:
-		ok = parse_kt_sparse_name(kw, value, &number, parser);
+		ok = parse_kt_sparse_name(&key, value, &number, parser);
 		break;
 	case kt_string:
 	case kt_also:
@@ -756,17 +785,17 @@ void parse_key_value(struct parser *parser, enum end default_end,
 		break;
 
 	case kt_unsigned:
-		ok = parse_kt_unsigned(kw, value, &number, parser);
+		ok = parse_kt_unsigned(&key, value, &number, parser);
 		break;
 
 	case kt_seconds:
-		ok = parse_kt_deltatime(kw, value, TIMESCALE_SECONDS,
+		ok = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS,
 					&deltatime, parser);
 		break;
 
 	case kt_obsolete:
 		/* drop it on the floor */
-		parser_key_value_warning(parser, kw, value,
+		parser_key_value_warning(parser, &key, value,
 					 "obsolete keyword ignored");
 		ok = false;
 		break;
@@ -774,6 +803,6 @@ void parse_key_value(struct parser *parser, enum end default_end,
 	}
 
 	if (ok) {
-		new_parser_key_value(parser, kw, value, number, deltatime);
+		add_parser_key_value(parser, &key, value, number, deltatime);
 	}
 }

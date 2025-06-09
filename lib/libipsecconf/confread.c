@@ -110,15 +110,15 @@ static bool translate_field(struct starter_conn *conn,
 {
 	bool ok = true;
 
-	unsigned int field = kw->keyword.keydef->field;
+	unsigned int field = kw->keyval.key->field;
 
-	assert(kw->keyword.keydef != NULL);
+	assert(kw->keyval.key != NULL);
 
-	switch (kw->keyword.keydef->type) {
+	switch (kw->keyval.key->type) {
 	case kt_also:
 	{
 		struct section_list *addin;
-		const char *seeking = kw->string;
+		const char *seeking = kw->keyval.val;
 		TAILQ_FOREACH(addin, &cfgp->sections, link) {
 			if (streq(seeking, addin->name)) {
 				break;
@@ -140,30 +140,29 @@ static bool translate_field(struct starter_conn *conn,
 		if (values[field].set == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
-			     leftright, kw->keyword.keydef->keyname,
+			     leftright, kw->keyval.key->keyname,
 			     conn->name,
 			     sl->name);
 
 			/* only fatal if we try to change values */
-			if (kw->keyword.string == NULL ||
+			if (kw->keyval.val == NULL ||
 			    values[field].string == NULL ||
-			    !streq(kw->keyword.string,
-				   values[field].string))
-			{
+			    !streq(kw->keyval.val, values[field].string)) {
 				ok = false;
 				break;
 			}
 		}
 		pfreeany(values[field].string);
 
-		if (kw->string == NULL) {
+		if (kw->keyval.val == NULL) {
 			llog(RC_LOG, logger, "invalid %s value",
-			     kw->keyword.keydef->keyname);
+			     kw->keyval.key->keyname);
 			ok = false;
 			break;
 		}
 
-		values[field].string = clone_str(kw->string, "kt_idtype kw->string");
+		values[field].string = clone_str(kw->keyval.val,
+						 "kt_idtype kw->keyval.val");
 		values[field].set = assigned_value;
 		break;
 
@@ -171,16 +170,17 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_appendlist:
 		/* implicitly, this field can have multiple values */
 		if (values[field].string == NULL) {
-			values[field].string = clone_str(kw->string, "kt_appendlist kw->string");
+			values[field].string = clone_str(kw->keyval.val,
+							 "kt_appendlist kw->keyval.val");
 		} else {
 			char *s = values[field].string;
 			size_t old_len = strlen(s);	/* excludes '\0' */
-			size_t new_len = strlen(kw->string);
+			size_t new_len = strlen(kw->keyval.val);
 			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
 
 			memcpy(n, s, old_len);
 			n[old_len] = ' ';
-			memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
+			memcpy(n + old_len + 1, kw->keyval.val, new_len + 1);	/* includes '\0' */
 			values[field].string = n;
 			pfree(s);
 		}
@@ -193,7 +193,7 @@ static bool translate_field(struct starter_conn *conn,
 		if (values[field].set == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
-			     leftright, kw->keyword.keydef->keyname,
+			     leftright, kw->keyval.key->keyname,
 			     conn->name,
 			     sl->name);
 
@@ -213,7 +213,7 @@ static bool translate_field(struct starter_conn *conn,
 		if (values[field].set == k_set) {
 			llog(RC_LOG, logger,
 			     "duplicate key '%s%s' in conn %s while processing def %s",
-			     leftright, kw->keyword.keydef->keyname,
+			     leftright, kw->keyval.key->keyname,
 			     conn->name,
 			     sl->name);
 
@@ -268,14 +268,14 @@ static bool translate_conn(struct starter_conn *conn,
 	bool ok = true;
 
 	for (const struct kw_list *kw = sl->kw; kw != NULL; kw = kw->next) {
-		if ((kw->keyword.keydef->validity & kv_leftright) ||
-		    (kw->keyword.keydef->validity & kv_both)) {
-			if (kw->keyword.keyleft) {
+		if ((kw->keyval.key->validity & kv_leftright) ||
+		    (kw->keyval.key->validity & kv_both)) {
+			if (kw->keyval.left) {
 				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
 							  kw, &conn->end[LEFT_END],
 							  logger);
 			}
-			if (kw->keyword.keyright) {
+			if (kw->keyval.right) {
 				ok &= translate_leftright(conn, cfgp, sl, assigned_value,
 							  kw, &conn->end[RIGHT_END],
 							  logger);
@@ -537,6 +537,7 @@ struct starter_config *confread_load(const char *file,
 	 */
 	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
 		pfree_ipsec_conf(&cfgp);
+		confread_free(cfg);
 		return NULL;
 	}
 

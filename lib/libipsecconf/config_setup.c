@@ -268,16 +268,16 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		 * the parser already made sure that only config keywords were used,
 		 * but we double check!
 		 */
-		passert(kw->keyword.keydef->validity & kv_config);
-		unsigned f = kw->keyword.keydef->field;
+		passert(kw->keyval.key->validity & kv_config);
+		unsigned f = kw->keyval.key->field;
 
-		switch (kw->keyword.keydef->type) {
+		switch (kw->keyval.key->type) {
 		case kt_string:
 			/* all treated as strings for now */
 			PASSERT(logger, f < elemsof(config_setup.values));
 			pfreeany(config_setup.values[f].string);
-			config_setup.values[f].string =
-				clone_str(kw->string, "kt_loose_enum kw->string");
+			config_setup.values[f].string = clone_str(kw->keyval.val,
+								  "kt_loose_enum kw->string");
 			config_setup.values[f].set = true;
 			break;
 

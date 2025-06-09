@@ -31,5 +31,6 @@ void scanner_init(struct parser *parser, const char *name, int start);
 bool scanner_open(struct parser *parser, const char *filename);
 void scanner_close(struct parser *parser);
 void scanner_include(const char *filename, struct parser *parser);
+struct ipsec_conf_sal scanner_sal(struct parser *parser);
 
 #endif
