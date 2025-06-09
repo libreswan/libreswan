@@ -41,6 +41,7 @@ east #
 "nss-cert-correct":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-correct":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"nss-cert-correct":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "nss-cert-correct":   sec_label:unset;
 "nss-cert-correct":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "nss-cert-correct":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -62,6 +63,7 @@ east #
 "nss-cert-wrong":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-wrong":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"nss-cert-wrong":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "nss-cert-wrong":   sec_label:unset;
 "nss-cert-wrong":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
 "nss-cert-wrong":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

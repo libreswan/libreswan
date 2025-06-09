@@ -45,6 +45,7 @@ north #
 "north-eastnets/0x1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "north-eastnets/0x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "north-eastnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"north-eastnets/0x1":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "north-eastnets/0x1":   sec_label:unset;
 "north-eastnets/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "north-eastnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
@@ -69,6 +70,7 @@ north #
 "north-eastnets/0x2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "north-eastnets/0x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "north-eastnets/0x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"north-eastnets/0x2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "north-eastnets/0x2":   sec_label:unset;
 "north-eastnets/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "north-eastnets/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;

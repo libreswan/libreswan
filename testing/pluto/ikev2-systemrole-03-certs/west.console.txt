@@ -48,6 +48,7 @@ interface eth1 192.1.2.45:UDP/500
 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "192.1.2.45-to-192.1.2.23":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"192.1.2.45-to-192.1.2.23":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
 "192.1.2.45-to-192.1.2.23":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "192.1.2.45-to-192.1.2.23":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
