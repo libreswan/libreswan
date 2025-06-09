@@ -205,28 +205,6 @@
 
       <arg choice="opt">--pfs</arg>
 
-      <arg choice="opt">--pfsgroup <group choice="plain">
-          <arg choice="opt">modp1024</arg>
-
-          <arg choice="opt">modp1536</arg>
-
-          <arg choice="opt">modp2048</arg>
-
-          <arg choice="opt">modp3072</arg>
-
-          <arg choice="opt">modp4096</arg>
-
-          <arg choice="opt">modp6144</arg>
-
-          <arg choice="opt">modp8192</arg>
-
-          <arg choice="opt">dh22</arg>
-
-          <arg choice="opt">dh23</arg>
-
-          <arg choice="opt">dh24</arg>
-        </group></arg>
-
       <arg choice="opt">--ikelifetime <replaceable>seconds</replaceable></arg>
 
       <arg choice="opt">--ipseclifetime
@@ -1354,27 +1332,6 @@
 	    option, the SAKMP SA keying material is used instead.
 	    <command>pluto</command> will propose the same
 	    group that was used with the original IKE SA.
-	  </para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>
-	  <option>--pfsgroup <replaceable>modp-group</replaceable></option>
-	</term>
-        <listitem>
-          <para>
-	    Sets the Diffie-Hellman group used. Currently the
-	    following values are supported:
-	    <emphasis>modp1536</emphasis> (DHgroup 5),
-	    <emphasis>modp2048</emphasis> (DHgroup 14),
-	    <emphasis>modp3072</emphasis> (DHgroup 15),
-	    <emphasis>modp4096</emphasis> (DHgroup 16),
-	    <emphasis>modp6144</emphasis> (DHgroup 17), and
-	    <emphasis>modp8192</emphasis> (DHgroup 18).
-	    It is possible to support the weak and broken
-	    <emphasis>modp1024</emphasis> (DHgroup 2), but this
-	    requires a manual recompile and is strongly discouraged.
 	  </para>
         </listitem>
       </varlistentry>
@@ -3443,6 +3400,13 @@
 
     <para>
       Detailed history (including FreeS/WAN and Openswan) can be found in the docs/ directory.
+    </para>
+
+    <para>
+      The <option>--pfsgroup</option> was removed in &Libreswan;
+      version 5.3.  Both <option>--ike</option> and
+      <option>--esp</option> have supported compound proposals since
+      version 4.0.  See &ipsec.conf.5;.
     </para>
 
   </refsect1>

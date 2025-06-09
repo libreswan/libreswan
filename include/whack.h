@@ -419,7 +419,6 @@ struct whack_message {
 	const char *hostaddrfamily;
 
 	const char *ike;			/* ike algo string (separated by commas) */
-	const char *pfsgroup;			/* pfsgroup will be "encapsulated" in esp string for pluto */
 	const char *esp;			/* esp algo string (separated by commas) */
 
 	/* for WHACK_KEY: */

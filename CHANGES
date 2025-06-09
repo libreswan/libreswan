@@ -8,6 +8,8 @@ v5.3 (unreleased)
   - nflog= made an alias to nflog-group= [Andrew]
   - default whack --sendcert to "always" like addconn [Andrew #2176]
   - rename `pluto --dnssec-trusted` to `--dnssec-achors` [Andrew #2240]
+* ipsec whack:
+  - remove broken --pfsgroup option (have more robust --{esp,ike}) [Andrew #2246]
 * PKIX (Public Key Infrastructure X.509)
   - moved cURL and LDAP CRL download code out of pluto [Andrew]
   - replaced CRL thread with libevent [Andrew]

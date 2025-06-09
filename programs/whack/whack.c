@@ -98,9 +98,6 @@ static void help(void)
 		"	[--ms-dh-downgrade] \\\n"
 		"	[--overlapip] [--tunnel] \\\n"
 		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
-		"	[--pfsgroup <modp1024 | modp1536 | modp2048 | \\\n"
-		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
-		"		dh22 | dh23 | dh24>] \\\n"
 		"	[--ike-lifetime <seconds>] [--ipsec-lifetime <seconds>] \\\n"
 		"	[--ipsec-max-bytes <num>] [--ipsec-max-packets <num>] \\\n"
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
@@ -565,7 +562,6 @@ enum opt {
 	CD_TCP,
 	CD_TCP_REMOTE_PORT,
 	CD_SENDCA,
-	CD_PFSGROUP,
 	CD_REMOTE_PEER_TYPE,
 	CD_SHA2_TRUNCBUG,
 	CD_DONT_SHARE_LEASE,
@@ -926,7 +922,7 @@ const struct option optarg_options[] = {
 	{ "replay-window\0", required_argument, NULL, CD_REPLAY_WINDOW },
 	{ "ike\0",    required_argument, NULL, CD_IKE },
 	{ "ikealg\0", required_argument, NULL, CD_IKE },
-	{ "pfsgroup\0", required_argument, NULL, CD_PFSGROUP },
+	{ FATAL_OPT("pfsgroup", "5.3"), required_argument, NULL, 0 },
 	{ "esp\0", required_argument, NULL, CD_ESP },
 	{ "remote-peer-type\0", required_argument, NULL, CD_REMOTE_PEER_TYPE },
 	{ "nic-offload\0", required_argument, NULL, CD_NIC_OFFLOAD},
@@ -996,7 +992,6 @@ int main(int argc, char **argv)
 {
 	struct logger *logger = tool_logger(argc, argv);
 
-	char esp_buf[256];	/* uses snprintf */
 	bool seen[OPTION_ENUMS_ROOF] = {0};
 	lset_t opts_seen = LEMPTY;
 
@@ -1884,10 +1879,6 @@ int main(int argc, char **argv)
 			msg.ike = optarg;
 			continue;
 
-		case CD_PFSGROUP:	/* --pfsgroup modpXXXX */
-			msg.pfsgroup = optarg;
-			continue;
-
 		case CD_ESP:	/* --esp <esp_alg1,esp_alg2,...> */
 			msg.esp = optarg;
 			continue;
@@ -2318,14 +2309,6 @@ int main(int argc, char **argv)
 	if (msg.whack_command == WHACK_SHUTDOWN_LEAVE_STATE) {
 		/* --leave-state overrides basic shutdown */
 		msg.basic.whack_shutdown = false;
-	}
-
-	/* build esp message as esp="<esp>;<pfsgroup>" */
-	if (msg.pfsgroup != NULL) {
-		snprintf(esp_buf, sizeof(esp_buf), "%s;%s",
-			 msg.esp != NULL ? msg.esp : "",
-			 msg.pfsgroup != NULL ? msg.pfsgroup : "");
-		msg.esp = esp_buf;
 	}
 
 	int exit_status = whack_send_msg(&msg,
