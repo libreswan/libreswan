@@ -46,6 +46,15 @@ struct ipsec_conf_keyval {
 #define PRI_KEYVAL_SAL "%s:%u"
 #define pri_keyval_sal(KV) (KV)->sal.source, (KV)->sal.line
 
+diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key,
+			 shunk_t value, uintmax_t *number);
+diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key,
+			  shunk_t value, enum timescale default_timescale,
+			  deltatime_t *deltatime);
+diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
+			    shunk_t value, uintmax_t *number,
+			    enum stream stream, struct logger *logger);
+
 /* note: these lists are dynamic */
 
 struct keyval_entry {

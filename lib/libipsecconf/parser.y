@@ -46,7 +46,7 @@
 #define ERRSTRING_LEN	256
 
 static void parser_key_value_warning(struct parser *parser,
-				     struct ipsec_conf_keyval *key,
+				     const struct ipsec_conf_keyval *key,
 				     shunk_t value,
 				     const char *s, ...) PRINTF_LIKE(4);
 
@@ -227,7 +227,7 @@ void parser_fatal(struct parser *parser, int error, const char *s, ...)
 	abort(); /* gcc doesn't believe above always exits */
 }
 
-static const char *leftright(struct ipsec_conf_keyval *keyval)
+static const char *leftright(const struct ipsec_conf_keyval *keyval)
 {
 	if (keyval->left && !keyval->right) {
 		return "left";
@@ -243,7 +243,7 @@ static const char *leftright(struct ipsec_conf_keyval *keyval)
  */
 
 void parser_key_value_warning(struct parser *parser,
-			      struct ipsec_conf_keyval *key,
+			      const struct ipsec_conf_keyval *key,
 			      shunk_t value,
 			      const char *s, ...)
 {
@@ -561,45 +561,40 @@ static void append_parser_key_value(struct parser *parser,
 	TAILQ_INSERT_TAIL(parser->keyvals, new, next);
 }
 
-static bool parse_kt_unsigned(struct ipsec_conf_keyval *key, shunk_t value,
-			      uintmax_t *number, struct parser *parser)
+diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
+			 shunk_t value, uintmax_t *number)
 {
 	/* treat -1 as special, turning it into max */
 	if (hunk_streq(value, "-1")) {
 		(*number) = UINTMAX_MAX;
-		return true;
+		return NULL;
 	}
 
 	err_t err = shunk_to_uintmax(value, NULL, /*base*/10, number);
 	if (err == NULL) {
-		return true;
+		return NULL;
 	}
 
-	parser_key_value_warning(parser, key, value,
-				 "%s, keyword ignored", err);
-	return false;
+	return diag("%s", err);
 }
 
-static bool parse_kt_deltatime(struct ipsec_conf_keyval *key, shunk_t value,
-			       enum timescale default_timescale,
-			       deltatime_t *deltatime,
-			       struct parser *parser)
+diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
+			  shunk_t value, enum timescale default_timescale,
+			  deltatime_t *deltatime)
 {
 	diag_t diag = ttodeltatime(value, deltatime, default_timescale);
 	if (diag != NULL) {
-		parser_key_value_warning(parser, key, value,
-					 "%s, keyword ignored", str_diag(diag));
-		pfree_diag(&diag);
-		return false;
+		return diag;
 	}
-	return true;
+
+	return NULL;
 }
 
-static bool parse_kt_sparse_name(struct ipsec_conf_keyval *key, shunk_t value,
-				 uintmax_t *number, struct parser *parser)
+diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
+			    shunk_t value, uintmax_t *number,
+			    enum stream stream, struct logger *logger)
 {
 	const struct sparse_names *names = key->key->sparse_names;
-	PASSERT(parser->logger, names != NULL);
 
 	const struct sparse_name *sn = sparse_lookup_by_name(names, value);
 	if (sn == NULL) {
@@ -608,29 +603,30 @@ static bool parse_kt_sparse_name(struct ipsec_conf_keyval *key, shunk_t value,
 		 *
 		 * XXX: call jam_sparse_names() to list what is valid?
 		 */
-		parser_key_value_warning(parser, key, value,
-					 "invalid, keyword ignored");
-		return false;
+		return diag("invalid");
 	}
 
-	enum name_flags flags = (sn->value & NAME_FLAGS);
 	(*number) = sn->value & ~NAME_FLAGS;
-	name_buf new_name;
 
-	switch (flags) {
-	case NAME_IMPLEMENTED_AS:
-		parser_key_value_warning(parser, key, value,
-					 PRI_SHUNK" implemented as %s",
-					 pri_shunk(value), str_sparse_short(names, (*number), &new_name));
-		return true;
-	case NAME_RENAMED_TO:
-		parser_key_value_warning(parser, key, value,
-					 PRI_SHUNK" renamed to %s",
-					 pri_shunk(value), str_sparse_short(names, (*number), &new_name));
-		return true;
+	if (stream != NO_STREAM) {
+		enum name_flags flags = (sn->value & NAME_FLAGS);
+		name_buf new_name;
+
+		switch (flags) {
+		case NAME_IMPLEMENTED_AS:
+			llog(stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" implemented as %s",
+			     pri_keyval_sal(key),
+			     pri_shunk(value), str_sparse_short(names, (*number), &new_name));
+			return NULL;
+		case NAME_RENAMED_TO:
+			llog(stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" renamed to %s",
+			     pri_keyval_sal(key),
+			     pri_shunk(value), str_sparse_short(names, (*number), &new_name));
+			return NULL;
+		}
 	}
 
-	return true;
+	return NULL;
 }
 
 /*
@@ -786,12 +782,16 @@ void parse_keyval(struct parser *parser, enum end default_end,
 
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
-	bool ok = true;
+	diag_t d = NULL;
 
 	switch (key.key->type) {
+
 	case kt_sparse_name:
-		ok = parse_kt_sparse_name(&key, value, &number, parser);
+		d = parse_kt_sparse_name(&key, value, &number,
+					 parser->error_stream,
+					 parser->logger);
 		break;
+
 	case kt_string:
 	case kt_also:
 	case kt_appendstring:
@@ -799,24 +799,28 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		break;
 
 	case kt_unsigned:
-		ok = parse_kt_unsigned(&key, value, &number, parser);
+		d = parse_kt_unsigned(&key, value, &number);
 		break;
 
 	case kt_seconds:
-		ok = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS,
-					&deltatime, parser);
+		d = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS, &deltatime);
 		break;
 
 	case kt_obsolete:
 		/* drop it on the floor */
-		parser_key_value_warning(parser, &key, value,
-					 "obsolete keyword ignored");
-		ok = false;
-		break;
+		parser_key_value_warning(parser, &key, value, "obsolete keyword ignored");
+		return;
 
 	}
 
-	if (ok) {
-		add_parser_key_value(parser, &key, value, number, deltatime);
+	if (d != NULL) {
+		llog(RC_LOG, parser->logger,
+		     PRI_KEYVAL_SAL": warning: %s, keyword ignored: %s%s="PRI_SHUNK,
+		     pri_keyval_sal(&key), str_diag(d),
+		     leftright(&key), key.key->keyname, pri_shunk(value));
+		pfree_diag(&d);
+		return;
 	}
+
+	add_parser_key_value(parser, &key, value, number, deltatime);
 }
