@@ -52,7 +52,8 @@ struct keyword_value {
 	deltatime_t deltatime;
 };
 
-typedef struct keyword_value keyword_values[KW_roof];
+typedef struct keyword_value config_setup_values[CONFIG_SETUP_KEYWORD_ROOF];
+typedef struct keyword_value config_conn_values[CONFIG_CONN_KEYWORD_ROOF];
 
 /*
  * Note: string fields in struct starter_end and struct starter_conn
@@ -61,7 +62,7 @@ typedef struct keyword_value keyword_values[KW_roof];
 
 struct starter_end {
 	const char *leftright;
-	keyword_values values;
+	config_conn_values values;
 };
 
 /*
@@ -73,11 +74,11 @@ struct starter_conn {
 	TAILQ_ENTRY(starter_conn) link;
 	char *name;
 
-	keyword_values values;
+	config_conn_values values;
+	struct starter_end end[END_ROOF];
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
-	struct starter_end end[END_ROOF];
 
 	enum {
 		STATE_INVALID,
@@ -90,7 +91,7 @@ struct starter_conn {
 };
 
 struct config_setup {
-	keyword_values values;
+	config_setup_values values;
 };
 
 struct starter_config {

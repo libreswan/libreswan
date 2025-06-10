@@ -55,7 +55,8 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 static void confwrite_value(FILE *out,
 			    const char *side, /* never NULL! */
 			    enum keyword_valid type,
-			    const keyword_values values)
+			    const struct keyword_value *values,
+			    unsigned elemsof_values)
 {
 	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
 
@@ -90,6 +91,8 @@ static void confwrite_value(FILE *out,
 		       k->keyname, k->validity, KV_CONTEXT_MASK,
 		       k->validity & KV_CONTEXT_MASK, context);
 #endif
+
+		passert(k->field < elemsof_values);
 
 		switch (k->type) {
 		case kt_also:
@@ -170,7 +173,7 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			end->values[KWS_PROTOPORT].string);
 	}
 
-	confwrite_value(out, side, kv_conn, end->values);
+	confwrite_value(out, side, kv_conn, ARRAY_REF(end->values));
 }
 
 static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
@@ -195,7 +198,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	fprintf(out, "conn %s\n", conn->name);
 	confwrite_side(out, &conn->end[LEFT_END]);
 	confwrite_side(out, &conn->end[RIGHT_END]);
-	confwrite_value(out, "", kv_conn, conn->values);
+	confwrite_value(out, "", kv_conn, ARRAY_REF(conn->values));
 
 	if (conn->values[KNCF_AUTO].option != 0) {
 		name_buf sb;
@@ -293,7 +296,7 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 	if (setup) {
 		const struct config_setup *setup = config_setup_singleton();
 		fprintf(out, "config setup\n");
-		confwrite_value(out, "", kv_config, setup->values);
+		confwrite_value(out, "", kv_config, ARRAY_REF(setup->values));
 		fprintf(out, "\n");
 	}
 

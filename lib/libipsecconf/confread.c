@@ -105,7 +105,7 @@ static bool translate_field(struct starter_conn *conn,
 			    enum keyword_set assigned_value,
 			    const struct keyval_entry *kw,
 			    const char *leftright,
-			    keyword_values values,
+			    config_conn_values values,
 			    struct logger *logger)
 {
 	bool ok = true;
@@ -245,8 +245,7 @@ static bool translate_leftright(struct starter_conn *conn,
 {
 	return translate_field(conn, cfgp, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
-			       this->values,
-			       logger);
+			       this->values, logger);
 }
 
 static bool translate_conn(struct starter_conn *conn,
