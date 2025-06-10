@@ -31,6 +31,7 @@ struct resolve_host {
 };
 
 struct resolve_end {
+	const char *leftright;
 	struct resolve_host host;
 	struct resolve_host nexthop; /* aka gateway */
 };
