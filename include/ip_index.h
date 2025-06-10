@@ -18,10 +18,13 @@
 #define IP_INDEX_H
 
 enum ip_index {
-	IPv4_INDEX,
+#define IP_INDEX_FLOOR IPv4_INDEX
+	IPv4_INDEX = 1,
 	IPv6_INDEX,
+#define IP_INDEX_ROOF (IPv6_INDEX+1)
 };
 
-#define IP_INDEX_ROOF (IPv6_INDEX+1)
+extern const struct ip_info *ip_index_info(enum ip_index);
+extern const struct sparse_names ip_index_names;
 
 #endif

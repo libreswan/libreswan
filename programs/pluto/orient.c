@@ -387,7 +387,7 @@ bool orient(struct connection *c, struct logger *logger)
 	 */
 	build_connection_spds_from_proposals(c);
 
-	for (enum ip_index i = 0; i < IP_INDEX_ROOF; i++) {
+	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
 		if (c->remote->config->child.addresspool[i] != NULL) {
 			c->pool[i] = addresspool_addref(c->remote->config->child.addresspool[i]);
 		}

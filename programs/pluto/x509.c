@@ -337,7 +337,7 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
 	{
 		const struct ip_info *afi = NULL;
-		for (enum ip_index i = 0; i < IP_INDEX_ROOF; i++) {
+		for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
 			if (ip_families[i].ip_size == gn->name.len) {
 				afi = &ip_families[i];
 				break;
