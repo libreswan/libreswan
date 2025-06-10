@@ -178,9 +178,6 @@ err_t ttobool(const char *t, bool *b);	/* string -> bool */
 extern char *jam_str(char *dest, size_t size, const char *src);
 extern char *add_str(char *buf, size_t size, const char *src);
 
-/* XXX: assumes enums are 8-bits!?! */
-#define LOOSE_ENUM_OTHER 255
-
 #include "ietf_constants.h"
 #include "pluto_constants.h"
 #include "names_constant.h"

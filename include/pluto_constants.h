@@ -813,10 +813,6 @@ enum sa_policy_bits {
 
 /*
  * values for right=/left=
- *
- * LOOSE_ENUM_OTHER is used by the config parser's loose-enum code to
- * flag that the field didn't match one of the pre-defined "%..."
- * values.
  */
 enum keyword_host {
 	KH_NOTSET       = 0,
@@ -827,7 +823,7 @@ enum keyword_host {
 	KH_OPPOGROUP    = 5,
 	KH_GROUP        = 6,
 	KH_IPHOSTNAME   = 7,            	/* host_addr invalid, only string */
-	KH_IPADDR       = LOOSE_ENUM_OTHER,
+	KH_IPADDR       = 8,
 };
 
 extern const struct sparse_names keyword_host_names;

@@ -811,8 +811,7 @@ static diag_t extract_host(const struct whack_message *wm,
 			end->host.name = value;
 			const struct sparse_name *sn =
 				sparse_lookup_by_name(&keyword_host_names, shunk1(value));
-			end->host.type = (sn != NULL ? sn->value :
-					  KH_IPADDR/* aka LOOSE_ENUM_OTHER */);
+			end->host.type = (sn != NULL ? sn->value : KH_IPADDR);
 		}
 
 		/*

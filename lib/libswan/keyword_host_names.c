@@ -23,7 +23,6 @@
  * for more details.
  */
 
-#include "constants.h"		/* for LOOSE_ENUM_OTHER */
 #include "pluto_constants.h"	/* for enum keyword_host */
 #include "sparse_names.h"
 

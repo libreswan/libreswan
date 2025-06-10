@@ -31,7 +31,6 @@
 #define IPSECCONF_KEYWORDS_H
 
 #include "lset.h"	/* for LELEM() */
-#include "constants.h"	/* for LOOSE_ENUM_OTHER ULGH! */
 #include "config_setup.h"	/* for config_setup_keyword */
 
 /*
