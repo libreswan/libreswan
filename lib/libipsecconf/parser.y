@@ -46,7 +46,7 @@
 #define ERRSTRING_LEN	256
 
 static void parser_key_value_warning(struct parser *parser,
-				     struct ipsec_conf_keyval *key,
+				     const struct ipsec_conf_keyval *key,
 				     shunk_t value,
 				     const char *s, ...) PRINTF_LIKE(4);
 
@@ -54,6 +54,13 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		  shunk_t key, shunk_t value);
 
 static void yyerror(struct parser *parser, const char *msg);
+
+static void append_parser_key_value(struct parser *parser,
+				    struct ipsec_conf_keyval *key,
+				    shunk_t value,
+				    uintmax_t number,
+				    deltatime_t deltatime);
+
 static void add_parser_key_value(struct parser *parser,
 				 struct ipsec_conf_keyval *key,
 				 shunk_t value,
@@ -103,7 +110,7 @@ sections: /* NULL */
 
 section_or_include:
 	CONFIG SETUP EOL {
-		parser->kw = &parser->cfg->config_setup;
+		parser->keyvals = &parser->cfg->config_setup;
 		parser->section = SECTION_CONFIG_SETUP;
 		ldbg(parser->logger, "reading config setup");
 	} kw_sections
@@ -112,14 +119,13 @@ section_or_include:
 		PASSERT(parser->logger, section != NULL);
 
 		section->name = clone_str($2, "section->name");
-		section->kw = NULL;
-
-		TAILQ_INSERT_TAIL(&parser->cfg->sections, section, link);
+		TAILQ_INIT(&section->keyvals);
+		TAILQ_INSERT_TAIL(&parser->cfg->sections, section, next);
 
 		/* setup keyword section to record values */
-		parser->kw = &section->kw;
+		parser->keyvals = &section->keyvals;
 		parser->section = (streq(section->name, "%default") ? SECTION_CONN_DEFAULT :
-				  SECTION_CONN);
+				   SECTION_CONN);
 
 		ldbg(parser->logger, "reading conn %s", section->name);
 
@@ -221,7 +227,7 @@ void parser_fatal(struct parser *parser, int error, const char *s, ...)
 	abort(); /* gcc doesn't believe above always exits */
 }
 
-static const char *leftright(struct ipsec_conf_keyval *keyval)
+static const char *leftright(const struct ipsec_conf_keyval *keyval)
 {
 	if (keyval->left && !keyval->right) {
 		return "left";
@@ -237,7 +243,7 @@ static const char *leftright(struct ipsec_conf_keyval *keyval)
  */
 
 void parser_key_value_warning(struct parser *parser,
-			      struct ipsec_conf_keyval *key,
+			      const struct ipsec_conf_keyval *key,
 			      shunk_t value,
 			      const char *s, ...)
 {
@@ -273,7 +279,9 @@ void yyerror(struct parser *parser, const char *s)
 static struct ipsec_conf *alloc_ipsec_conf(void)
 {
 	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
+	TAILQ_INIT(&cfgp->config_setup);
 	TAILQ_INIT(&cfgp->sections);
+	TAILQ_INIT(&cfgp->sources);
 	return cfgp;
 }
 
@@ -309,7 +317,6 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	/**
 	 * Config valid
 	 */
-	ldbg(logger, "allocated config %p", parser.cfg->conn_default.kw);
 	return parser.cfg;
 }
 
@@ -328,11 +335,12 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 	 */
 
 	struct section_list *section = alloc_thing(struct section_list, __func__);
-	TAILQ_INSERT_TAIL(&parser.cfg->sections, section, link);
 	section->name = clone_str(name, __func__);
+	TAILQ_INIT(&section->keyvals);
+	TAILQ_INSERT_TAIL(&parser.cfg->sections, section, next);
 
 	parser.section = SECTION_CONN;
-	parser.kw = &section->kw,
+	parser.keyvals = &section->keyvals,
 
 	scanner_init(&parser, "argv", start);
 
@@ -432,24 +440,21 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 	return parser.cfg;
 }
 
-static void parser_free_kwlist(struct kw_list *list)
+static void pfree_keyval_list(struct keyval_list *list)
 {
-	while (list != NULL) {
-		/* advance */
-		struct kw_list *elt = list;
-		list = list->next;
-		/* free */
-		pfreeany(elt->keyval.val);
-		pfree(elt);
+	struct keyval_entry *head;
+	while ((head = TAILQ_FIRST(list)) != NULL) {
+		TAILQ_REMOVE(list, head, next);
+		pfreeany(head->keyval.val);
+		pfree(head);
 	}
 }
 
 const char *add_ipsec_conf_source(struct ipsec_conf *cfg, const char *name)
 {
-	struct ipsec_conf_sources *source = alloc_thing(struct ipsec_conf_sources, __func__);
-	source->next = cfg->sources;
-	cfg->sources = source;
+	struct ipsec_conf_source *source = alloc_thing(struct ipsec_conf_source, __func__);
 	source->name = clone_str(name, __func__);
+	TAILQ_INSERT_TAIL(&cfg->sources, source, next);
 	return source->name;
 }
 
@@ -457,21 +462,21 @@ void pfree_ipsec_conf(struct ipsec_conf **cfgp)
 {
 	if ((*cfgp) != NULL) {
 		struct ipsec_conf *cfg = (*cfgp);
-		parser_free_kwlist(cfg->config_setup);
+		pfree_keyval_list(&cfg->config_setup);
 
 		/* keep deleting the first entry */
-		struct section_list *sec;
-		while ((sec = TAILQ_FIRST(&cfg->sections)) != NULL) {
-			TAILQ_REMOVE(&cfg->sections, sec, link);
-			pfreeany(sec->name);
-			parser_free_kwlist(sec->kw);
-			pfree(sec);
+		struct section_list *section;
+		while ((section = TAILQ_FIRST(&cfg->sections)) != NULL) {
+			TAILQ_REMOVE(&cfg->sections, section, next);
+			pfreeany(section->name);
+			pfree_keyval_list(&section->keyvals);
+			pfree(section);
 		}
 
 		/* keep deleting the first entry */
-		struct ipsec_conf_sources *source;
-		while ((source = cfg->sources) != NULL) {
-			cfg->sources = source->next;
+		struct ipsec_conf_source *source;
+		while ((source = TAILQ_FIRST(&cfg->sources)) != NULL) {
+			TAILQ_REMOVE(&cfg->sources, source, next);
 			pfreeany(source->name);
 			pfreeany(source);
 		}
@@ -490,13 +495,13 @@ void add_parser_key_value(struct parser *parser,
 	const char *section = str_parser_section(parser);
 
 	/* Find end, while looking for duplicates. */
-	struct kw_list **end;
-	for (end = parser->kw; (*end) != NULL; end = &(*end)->next) {
-		if ((*end)->keyval.key != key->key) {
+	struct keyval_entry *kv;
+	TAILQ_FOREACH(kv, parser->keyvals, next) {
+		if (kv->keyval.key != key->key) {
 			continue;
 		}
-		if (((*end)->keyval.left != key->left) &&
-		    ((*end)->keyval.right != key->right)) {
+		if ((kv->keyval.left != key->left) &&
+		    (kv->keyval.right != key->right)) {
 			continue;
 		}
 		if (key->key->validity & kv_duplicateok) {
@@ -506,10 +511,10 @@ void add_parser_key_value(struct parser *parser,
 		if (parser->section == SECTION_CONFIG_SETUP) {
 			parser_key_value_warning(parser, key, value,
 						 "overriding earlier '%s' keyword with new value", section);
-			pfreeany((*end)->keyval.val);
-			(*end)->keyval.val = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
-			(*end)->number = number;
-			(*end)->deltatime = deltatime;
+			pfreeany(kv->keyval.val);
+			kv->keyval.val = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
+			kv->number = number;
+			kv->deltatime = deltatime;
 			return;
 		}
 		parser_key_value_warning(parser, key, value,
@@ -517,12 +522,21 @@ void add_parser_key_value(struct parser *parser,
 		return;
 	}
 
+	append_parser_key_value(parser, key, value, number, deltatime);
+}
+
+static void append_parser_key_value(struct parser *parser,
+				    struct ipsec_conf_keyval *key,
+				    shunk_t value,
+				    uintmax_t number,
+				    deltatime_t deltatime)
+{
 	/*
 	 * fill the values into new
 	 * (either string or number might have a placeholder value
 	 */
-	struct kw_list *new = alloc_thing(struct kw_list, "kw_list");
-	(*new) = (struct kw_list) {
+	struct keyval_entry *new = alloc_thing(struct keyval_entry, "kw_list");
+	(*new) = (struct keyval_entry) {
 		.keyval = *key,
 		.number = number,
 		.deltatime = deltatime,
@@ -544,48 +558,43 @@ void add_parser_key_value(struct parser *parser,
 	}
 
 	/* append the new kw_list to the list */
-	(*end) = new;
+	TAILQ_INSERT_TAIL(parser->keyvals, new, next);
 }
 
-static bool parse_kt_unsigned(struct ipsec_conf_keyval *key, shunk_t value,
-			      uintmax_t *number, struct parser *parser)
+diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
+			 shunk_t value, uintmax_t *number)
 {
 	/* treat -1 as special, turning it into max */
 	if (hunk_streq(value, "-1")) {
 		(*number) = UINTMAX_MAX;
-		return true;
+		return NULL;
 	}
 
 	err_t err = shunk_to_uintmax(value, NULL, /*base*/10, number);
 	if (err == NULL) {
-		return true;
+		return NULL;
 	}
 
-	parser_key_value_warning(parser, key, value,
-				 "%s, keyword ignored", err);
-	return false;
+	return diag("%s", err);
 }
 
-static bool parse_kt_deltatime(struct ipsec_conf_keyval *key, shunk_t value,
-			       enum timescale default_timescale,
-			       deltatime_t *deltatime,
-			       struct parser *parser)
+diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
+			  shunk_t value, enum timescale default_timescale,
+			  deltatime_t *deltatime)
 {
 	diag_t diag = ttodeltatime(value, deltatime, default_timescale);
 	if (diag != NULL) {
-		parser_key_value_warning(parser, key, value,
-					 "%s, keyword ignored", str_diag(diag));
-		pfree_diag(&diag);
-		return false;
+		return diag;
 	}
-	return true;
+
+	return NULL;
 }
 
-static bool parse_kt_sparse_name(struct ipsec_conf_keyval *key, shunk_t value,
-				 uintmax_t *number, struct parser *parser)
+diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
+			    shunk_t value, uintmax_t *number,
+			    enum stream stream, struct logger *logger)
 {
 	const struct sparse_names *names = key->key->sparse_names;
-	PASSERT(parser->logger, names != NULL);
 
 	const struct sparse_name *sn = sparse_lookup_by_name(names, value);
 	if (sn == NULL) {
@@ -594,29 +603,32 @@ static bool parse_kt_sparse_name(struct ipsec_conf_keyval *key, shunk_t value,
 		 *
 		 * XXX: call jam_sparse_names() to list what is valid?
 		 */
-		parser_key_value_warning(parser, key, value,
-					 "invalid, keyword ignored");
-		return false;
+		return diag("invalid");
 	}
 
-	enum name_flags flags = (sn->value & NAME_FLAGS);
 	(*number) = sn->value & ~NAME_FLAGS;
-	name_buf new_name;
 
-	switch (flags) {
-	case NAME_IMPLEMENTED_AS:
-		parser_key_value_warning(parser, key, value,
-					 PRI_SHUNK" implemented as %s",
-					 pri_shunk(value), str_sparse_short(names, (*number), &new_name));
-		return true;
-	case NAME_RENAMED_TO:
-		parser_key_value_warning(parser, key, value,
-					 PRI_SHUNK" renamed to %s",
-					 pri_shunk(value), str_sparse_short(names, (*number), &new_name));
-		return true;
+	if (stream != NO_STREAM) {
+		enum name_flags flags = (sn->value & NAME_FLAGS);
+		name_buf new_name;
+
+		switch (flags) {
+		case NAME_IMPLEMENTED_AS:
+			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
+			     pri_keyval_sal(key),
+			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
+			     key->key->keyname, pri_shunk(value));
+			return NULL;
+		case NAME_RENAMED_TO:
+			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
+			     pri_keyval_sal(key),
+			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
+			     key->key->keyname, pri_shunk(value));
+			return NULL;
+		}
 	}
 
-	return true;
+	return NULL;
 }
 
 /*
@@ -770,14 +782,30 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	/* fill in once look succeeds */
 	PEXPECT(parser->logger, key.val == NULL);
 
+	if (key.key->validity & kv_config) {
+		/*
+		 * Throw everything onto the end of the list:
+		 *
+		 * Note: this includes kt_obsolete keyvalues.
+		 * Note: this includes duplicate keywords.
+		 */
+		append_parser_key_value(parser, &key, value, 0, (deltatime_t){0});
+		return;
+	}
+
+
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
-	bool ok = true;
+	diag_t d = NULL;
 
 	switch (key.key->type) {
+
 	case kt_sparse_name:
-		ok = parse_kt_sparse_name(&key, value, &number, parser);
+		d = parse_kt_sparse_name(&key, value, &number,
+					 parser->error_stream,
+					 parser->logger);
 		break;
+
 	case kt_string:
 	case kt_also:
 	case kt_appendstring:
@@ -785,24 +813,28 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		break;
 
 	case kt_unsigned:
-		ok = parse_kt_unsigned(&key, value, &number, parser);
+		d = parse_kt_unsigned(&key, value, &number);
 		break;
 
 	case kt_seconds:
-		ok = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS,
-					&deltatime, parser);
+		d = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS, &deltatime);
 		break;
 
 	case kt_obsolete:
 		/* drop it on the floor */
-		parser_key_value_warning(parser, &key, value,
-					 "obsolete keyword ignored");
-		ok = false;
-		break;
+		parser_key_value_warning(parser, &key, value, "obsolete keyword ignored");
+		return;
 
 	}
 
-	if (ok) {
-		add_parser_key_value(parser, &key, value, number, deltatime);
+	if (d != NULL) {
+		llog(RC_LOG, parser->logger,
+		     PRI_KEYVAL_SAL": warning: %s, keyword ignored: %s%s="PRI_SHUNK,
+		     pri_keyval_sal(&key), str_diag(d),
+		     leftright(&key), key.key->keyname, pri_shunk(value));
+		pfree_diag(&d);
+		return;
 	}
+
+	add_parser_key_value(parser, &key, value, number, deltatime);
 }

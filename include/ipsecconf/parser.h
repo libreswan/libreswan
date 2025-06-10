@@ -46,43 +46,59 @@ struct ipsec_conf_keyval {
 #define PRI_KEYVAL_SAL "%s:%u"
 #define pri_keyval_sal(KV) (KV)->sal.source, (KV)->sal.line
 
+diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key,
+			 shunk_t value, uintmax_t *number);
+diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key,
+			  shunk_t value, enum timescale default_timescale,
+			  deltatime_t *deltatime);
+diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
+			    shunk_t value, uintmax_t *number,
+			    enum stream stream, struct logger *logger);
+
 /* note: these lists are dynamic */
-struct kw_list {
-	struct kw_list *next;
+
+struct keyval_entry {
 	struct ipsec_conf_keyval keyval;
 	uintmax_t number;
 	deltatime_t deltatime;
+
+	TAILQ_ENTRY(keyval_entry) next;
 };
+
+TAILQ_HEAD(keyval_list, keyval_entry);
 
 struct section_list {
-	TAILQ_ENTRY(section_list) link;
-
 	char *name;
-	struct kw_list *kw;
+	struct keyval_list keyvals;
 	bool beenhere;
+
+	TAILQ_ENTRY(section_list) next;
 };
 
-struct ipsec_conf_sources {
+struct ipsec_conf_source {
 	char *name;
-	struct ipsec_conf_sources *next;
+
+	TAILQ_ENTRY(ipsec_conf_source) next;
 };
+
+TAILQ_HEAD(ipsec_conf_sources, ipsec_conf_source);
 
 const char *add_ipsec_conf_source(struct ipsec_conf *cfg, const char *name);
 
 struct ipsec_conf {
-	struct kw_list *config_setup;
+	struct keyval_list config_setup;
 
 	TAILQ_HEAD(sectionhead, section_list) sections;
 	int ipsec_conf_version;
 
 	struct section_list conn_default;
 
-	struct ipsec_conf_sources *sources;
+	struct ipsec_conf_sources sources;
 };
 
 struct parser {
 	struct ipsec_conf *cfg;
-	struct kw_list **kw;
+	struct keyval_list *keyvals;
 	enum section { SECTION_CONFIG_SETUP, SECTION_CONN_DEFAULT, SECTION_CONN, } section;
 #define str_parser_section(PARSER)					\
 	((PARSER)->section == SECTION_CONFIG_SETUP ? "config setup" :	\

@@ -31,6 +31,7 @@
 #include "seccomp_mode.h"
 #endif
 #include "ddos_mode.h"
+#include "timescale.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -49,6 +50,7 @@ void update_setup_string(enum config_setup_keyword kw, const char *string)
 	struct keyword_value *kv = &config_setup.values[kw];
 	pfreeany(kv->string);
 	kv->string = clone_str(string, "kv");
+	kv->set = k_set;
 }
 
 void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
@@ -57,6 +59,7 @@ void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = yn;
+	kv->set = k_set;
 }
 
 void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
@@ -65,6 +68,7 @@ void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->deltatime = deltatime;
+	kv->set = k_set;
 }
 
 void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
@@ -73,13 +77,18 @@ void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = option;
-	kv->set = true;
+	kv->set = k_set;
 }
 
 const struct config_setup *config_setup_singleton(void)
 {
 	if (!config_setup_is_set) {
 		config_setup_is_set = true;
+
+		/*
+		 * Note: these calls .set=k_set.  The damage is undone
+		 * at the end.
+		 */
 
 		update_setup_option(KBF_NHELPERS, -1);
 
@@ -139,6 +148,15 @@ const struct config_setup *config_setup_singleton(void)
 				    "pfkeyv2"
 #endif
 			);
+		/*
+		 * Clear .set, which is set by update_setup*().  Don't
+		 * use k_default as that is intended for 'conn
+		 * %default' section and seems to make for general
+		 * confusion.
+		 */
+		FOR_EACH_ELEMENT(kv, config_setup.values) {
+			kv->set = k_unset;
+		}
 
 	}
 	return &config_setup;
@@ -255,57 +273,108 @@ lset_t config_setup_debugging(struct logger *logger)
  * @param perr pointer to store errors in
  */
 
+static void llog_bad(struct logger *logger, const struct ipsec_conf_keyval *kv, diag_t d)
+{
+	llog(ERROR_STREAM, logger,
+	     PRI_KEYVAL_SAL": error: %s",
+	     pri_keyval_sal(kv), str_diag(d));
+}
+
 bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 				   struct logger *logger)
 {
 	config_setup_singleton();
 
-	bool ok = true;
-	const struct kw_list *kw;
+	const struct keyval_entry *kw;
 
-	for (kw = cfgp->config_setup; kw != NULL; kw = kw->next) {
+	TAILQ_FOREACH(kw, &cfgp->config_setup, next) {
 		/**
 		 * the parser already made sure that only config keywords were used,
 		 * but we double check!
 		 */
-		passert(kw->keyval.key->validity & kv_config);
-		unsigned f = kw->keyval.key->field;
+		const struct ipsec_conf_keyval *kv = &kw->keyval;
+		PASSERT(logger, kv->key->validity & kv_config);
+		enum config_setup_keyword f = kv->key->field;
+		shunk_t value = shunk1(kv->val);
+		diag_t d = NULL;
 
-		switch (kw->keyval.key->type) {
+		PASSERT(logger, f < elemsof(config_setup.values));
+		if (config_setup.values[f].set) {
+			llog(RC_LOG, logger, PRI_KEYVAL_SAL": warning: overriding earlier 'config setup' keyword with new value: %s=%s",
+			     pri_keyval_sal(kv),
+			     kv->key->keyname, kv->val);
+		}
+
+		switch (kv->key->type) {
 		case kt_string:
+		{
 			/* all treated as strings for now */
-			PASSERT(logger, f < elemsof(config_setup.values));
-			pfreeany(config_setup.values[f].string);
-			config_setup.values[f].string = clone_str(kw->keyval.val,
-								  "kt_loose_enum kw->string");
-			config_setup.values[f].set = true;
-			break;
+			update_setup_string(f, kv->val);
+			continue;
+		}
 
 		case kt_sparse_name:
+		{
+			uintmax_t number;
+			d = parse_kt_sparse_name(kv, value, &number,
+						 ERROR_STREAM, logger);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_option(f, number);
+			continue;
+		}
+
 		case kt_unsigned:
-			/* all treated as a number for now */
-			PASSERT(logger, f < elemsof(config_setup.values));
-			config_setup.values[f].option = kw->number;
-			config_setup.values[f].set = true;
-			break;
+		{
+			uintmax_t number;
+			d = parse_kt_unsigned(kv, value, &number);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_option(f, number);
+			continue;
+		}
 
 		case kt_seconds:
-			/* all treated as a number for now */
-			PASSERT(logger, f < elemsof(config_setup.values));
-			config_setup.values[f].deltatime = kw->deltatime;
-			config_setup.values[f].set = true;
-			break;
+		{
+			deltatime_t deltatime;
+			d = parse_kt_deltatime(kv, value, TIMESCALE_SECONDS, &deltatime);
+			if (d != NULL) {
+				llog_bad(logger, kv, d);
+				pfree_diag(&d);
+				return false;
+			}
+
+			update_setup_deltatime(f, deltatime);
+			continue;
+		}
+
+		case kt_obsolete:
+		{
+			llog(ERROR_STREAM, logger,
+			     PRI_KEYVAL_SAL": warning: obsolete keyword ignored: %s=%s",
+			     pri_keyval_sal(kv), kv->key->keyname, kv->val);
+			continue;
+		}
 
 		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
-		case kt_obsolete:
 			break;
 
 		}
+
+		bad_case(kv->key->type);
 	}
 
-	return ok;
+	return true;
 }
 
 bool load_config_setup(const char *file,
