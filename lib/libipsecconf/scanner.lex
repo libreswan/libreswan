@@ -358,13 +358,6 @@ static bool scanner_next_file(struct parser *parser)
 
 <INITIAL>[\t ]+		/* ignore spaces in line */ ;
 
-<VALUE>%forever		{
-				/* a number, really 0 */
-				yylval.s = clone_str("0", "string");
-				BEGIN INITIAL;
-				return STRING;
-			}
-
 <KEY>[\t ]	/* eat blanks */
 <KEY>\n	{
 				/* missing equals? */
