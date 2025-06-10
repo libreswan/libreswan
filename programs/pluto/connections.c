@@ -2402,7 +2402,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		if (nonzero_host.is_set) {
 			address_buf hb;
 			llog(RC_LOG, logger,
-			     "zeroing non-sero address identifier %s in %ssubnet=%s",
+			     "zeroing non-zero address identifier %s in %ssubnet=%s",
 			     str_address(&nonzero_host, &hb), leftright, src->subnet);
 		}
 
