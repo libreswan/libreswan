@@ -792,6 +792,23 @@ static diag_t extract_host(const struct whack_message *wm,
 	} winner = {0};
 
 	/*
+	 * Start with something easy.
+	 */
+
+	if (wm->hostaddrfamily != NULL) {
+		/* save the winner */
+		const struct ip_info *afi = ttoinfo(wm->hostaddrfamily);
+		if (afi == NULL) {
+			return diag("hostaddrfamily=%s is not unrecognized", wm->hostaddrfamily);
+		}
+		/* save source */
+		winner.afi = afi;
+		winner.name = "hostaddrfamily";
+		winner.value = wm->hostaddrfamily;
+		winner.leftright = "";
+	}
+
+	/*
 	 * Mimic addconn's kt_host and kt_ipaddr parsing, aka
 	 * translate_conn().
 	 *
@@ -837,19 +854,6 @@ static diag_t extract_host(const struct whack_message *wm,
 	 * config setup option, or via gai.conf / RFC3484 For now,
 	 * %defaultroute and %any means IPv4 only
 	 */
-
-	if (wm->hostaddrfamily != NULL) {
-		/* save the winner */
-		const struct ip_info *afi = ttoinfo(wm->hostaddrfamily);
-		if (afi == NULL) {
-			return diag("hostaddrfamily=%s is not unrecognized", wm->hostaddrfamily);
-		}
-		/* save source */
-		winner.afi = afi;
-		winner.name = "hostaddrfamily";
-		winner.value = wm->hostaddrfamily;
-		winner.leftright = "";
-	}
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
  		struct resolve_end *end = &resolve[lr];
