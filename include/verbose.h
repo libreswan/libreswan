@@ -174,4 +174,12 @@ struct verbose {
 #define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
 #define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
 
+#define VERBOSE_JAMBUF(BUF)						\
+	for (bool cond_ = (verbose.rc_flags != 0 &&			\
+			   verbose.rc_flags != NO_STREAM);		\
+	     cond_; cond_ = false)					\
+		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, BUF)	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose); cond_;	\
+			     cond_ = false)
+
 #endif
