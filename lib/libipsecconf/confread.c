@@ -105,7 +105,7 @@ static bool translate_field(struct starter_conn *conn,
 			    enum keyword_set assigned_value,
 			    const struct keyval_entry *kw,
 			    const char *leftright,
-			    keyword_values values,
+			    config_conn_values values,
 			    struct logger *logger)
 {
 	bool ok = true;
@@ -245,8 +245,7 @@ static bool translate_leftright(struct starter_conn *conn,
 {
 	return translate_field(conn, cfgp, sl, assigned_value, kw,
 			       /*leftright*/this->leftright,
-			       this->values,
-			       logger);
+			       this->values, logger);
 }
 
 static bool translate_conn(struct starter_conn *conn,
@@ -405,7 +404,8 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
-static void check_ipsec_conf_keywords(struct logger *logger)
+static void check_config_keywords(struct logger *logger,
+				  const struct keywords_def *keywords)
 {
 	static bool checked;
 	if (checked) {
@@ -414,18 +414,18 @@ static void check_ipsec_conf_keywords(struct logger *logger)
 	checked = true;
 
 	if (LDBGP(DBG_TMI, logger)) {
-		ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
+		ITEMS_FOR_EACH(k, keywords) {
 			if (k->keyname == NULL) {
 				continue;
 			}
-			unsigned i = (k - ipsec_conf_keywords.item);
+			unsigned i = (k - keywords->item);
 			LDBG_log(logger, "[%u] %s", i, k->keyname);
 		}
 	}
 
 	enum { SETUP, CONN } config = SETUP;
 	enum { NAME, ALIAS, OBSOLETE } group = NAME;
-	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
+	ITEMS_FOR_EACH(k, keywords) {
 
 		/*
 		 * Ignore gaps, happens when #ifdefs are at play.
@@ -436,7 +436,7 @@ static void check_ipsec_conf_keywords(struct logger *logger)
 		}
 
 		bool ok = true;
-		unsigned i = (k - ipsec_conf_keywords.item);
+		unsigned i = (k - keywords->item);
 
 		switch (group) {
 		case NAME:
@@ -492,19 +492,19 @@ static void check_ipsec_conf_keywords(struct logger *logger)
 
 		/* above checked k->field in range; check things,
 		 * notably aliases, point back to a real NAME */
-		ok &= pexpect(k->field < ipsec_conf_keywords.len);
-		ok &= pexpect(group == OBSOLETE ? ipsec_conf_keywords.item[k->field].keyname == NULL/*entry 0*/ :
-			      ipsec_conf_keywords.item[k->field].keyname != NULL);
-		ok &= pexpect(group == OBSOLETE ? ipsec_conf_keywords.item[k->field].field == 0/*entry 0*/ :
-			      ipsec_conf_keywords.item[k->field].field == k->field);
-		ok &= pexpect(group == OBSOLETE ? ipsec_conf_keywords.item[k->field].validity == 0/*entry 0*/ :
-			      ipsec_conf_keywords.item[k->field].validity == (k->validity & ~kv_alias));
+		ok &= pexpect(k->field < keywords->len);
+		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].keyname == NULL/*entry 0*/ :
+			      keywords->item[k->field].keyname != NULL);
+		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].field == 0/*entry 0*/ :
+			      keywords->item[k->field].field == k->field);
+		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].validity == 0/*entry 0*/ :
+			      keywords->item[k->field].validity == (k->validity & ~kv_alias));
 
 		if (!ok) {
 			llog_pexpect(logger, HERE, "[%u:%u] '%s' (follows '%s') expecting %s-%s",
 				     i, k->field,
 				     k->keyname,
-				     (i > 0 ? ipsec_conf_keywords.item[i-1].keyname : "???"),
+				     (i > 0 ? keywords->item[i-1].keyname : "???"),
 				     (config == SETUP ? "setup" :
 				      config == CONN ? "conn" :
 				      "???"),
@@ -516,6 +516,13 @@ static void check_ipsec_conf_keywords(struct logger *logger)
 		}
 	}
 }
+
+static void check_ipsec_conf_keywords(struct logger *logger)
+{
+	check_config_keywords(logger, &config_setup_keywords);
+	check_config_keywords(logger, &config_conn_keywords);
+}
+
 
 struct starter_config *confread_load(const char *file,
 				     bool setuponly,

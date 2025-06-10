@@ -85,7 +85,7 @@ static const struct sparse_names kw_phase2types_names = {
  * MASTER KEYWORD LIST
  */
 
-static const struct keyword_def ipsec_conf_keyword[] = {
+static const struct keyword_def config_setup_keyword[] = {
 #define K(KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME) [FIELD] = { KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME }
 
   K("ikev1-policy",  kv_config,  kt_sparse_name,  KBF_IKEv1_POLICY, &global_ikev1_policy_names),
@@ -164,6 +164,34 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 #ifdef USE_NFLOG
   K("nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL),
 #endif
+
+  /*
+   * Force first alias/obsolete keyword into slot following all
+   * defined keywords.  Else compiler tries to store it into above
+   * keyword's slot + 1, which is likely occupied by another keyword.
+   * The result is a nonsensical error.
+   */
+  [CONFIG_SETUP_KEYWORD_ROOF] =
+
+  /* alias for compatibility - undocumented on purpose */
+
+  { "curl-timeout",  kv_config | kv_alias,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, }, /* legacy */
+#ifdef XFRM_LIFETIME_DEFAULT
+  { "xfrmlifetime",  kv_config | kv_alias,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, }, /* legacy */
+#endif
+
+  /* obsolete config setup options */
+
+  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
+  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
+  { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
+
+  { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },  /* obsolete: not a value, a type */
+  { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
+
+};
+
+static const struct keyword_def config_conn_keyword[] = {
 
   /*
    * This is "left=" and "right="
@@ -348,10 +376,6 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 
   /* alias for compatibility - undocumented on purpose */
 
-  { "curl-timeout",  kv_config | kv_alias,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, }, /* legacy */
-#ifdef XFRM_LIFETIME_DEFAULT
-  { "xfrmlifetime",  kv_config | kv_alias,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, }, /* legacy */
-#endif
   { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, },
   { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
   { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
@@ -371,19 +395,18 @@ static const struct keyword_def ipsec_conf_keyword[] = {
 
   /* obsolete config setup options */
 
-  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
-  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
-  { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
-
-  { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },  /* obsolete: not a value, a type */
-  { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
   { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, },
   { "clientaddrfamily",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
   { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
 
 };
 
-const struct keywords_def ipsec_conf_keywords = {
-	.len = elemsof(ipsec_conf_keyword),
-	.item = ipsec_conf_keyword,
+const struct keywords_def config_setup_keywords = {
+	.len = elemsof(config_setup_keyword),
+	.item = config_setup_keyword,
+};
+
+const struct keywords_def config_conn_keywords = {
+	.len = elemsof(config_conn_keyword),
+	.item = config_conn_keyword,
 };

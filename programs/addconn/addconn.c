@@ -713,8 +713,8 @@ int main(int argc, char *argv[])
 		for (enum config_setup_keyword kw = CONFIG_SETUP_KEYWORD_FLOOR;
 		     kw < CONFIG_SETUP_KEYWORD_ROOF; kw++) {
 
-			PASSERT(logger, kw < ipsec_conf_keywords.len);
-			const struct keyword_def *kd = &ipsec_conf_keywords.item[kw];
+			PASSERT(logger, kw < config_setup_keywords.len);
+			const struct keyword_def *kd = &config_setup_keywords.item[kw];
 
 			if (kd->keyname == NULL) {
 				continue;
