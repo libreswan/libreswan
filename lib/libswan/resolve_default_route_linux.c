@@ -656,14 +656,8 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 void resolve_default_route(struct resolve_end *host,
 			   struct resolve_end *peer,
 			   const struct ip_info *host_afi,
-			   lset_t verbose_rc_flags,
-			   struct logger *logger)
+			   struct verbose verbose)
 {
-	struct verbose verbose = {
-		.rc_flags = verbose_rc_flags,
-		.logger = logger,
-		.level = 0,
-	};
 
 	switch (resolve_defaultroute_one(host, peer, host_afi, verbose)) {
 	case RESOLVE_FAILURE:

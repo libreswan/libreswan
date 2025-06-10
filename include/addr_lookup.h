@@ -18,7 +18,7 @@
 
 #include <stdbool.h>
 
-#include "lset.h"
+#include "verbose.h"
 #include "ip_address.h"
 
 struct starter_end;
@@ -38,8 +38,7 @@ struct resolve_end {
 void resolve_default_route(struct resolve_end *host,
 			   struct resolve_end *peer,
 			   const struct ip_info *host_afi,
-			   lset_t verbose_rc_flags,
-			   struct logger *logger);
+			   struct verbose verbose);
 
 enum route_status {
 	ROUTE_SUCCESS,

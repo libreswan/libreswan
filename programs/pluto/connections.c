@@ -781,7 +781,7 @@ void update_hosts_from_end_host_addr(struct connection *c,
 static diag_t extract_host(const struct whack_message *wm,
 			   struct resolve_end resolve[END_ROOF],
 			   const struct ip_info **host_afi,
-			   struct logger *logger UNUSED)
+			   struct verbose verbose)
 {
 	/* source of AFI */
 	struct {
@@ -912,7 +912,7 @@ static diag_t extract_host(const struct whack_message *wm,
 			break;
 
 		case KH_IPADDR:
-			PASSERT(logger, value != NULL);
+			vassert(value != NULL);
 			if (value[0] == '%') {
 				const char *iface = value + 1;
 				if (!starter_iface_find(iface, winner.afi,
@@ -931,7 +931,7 @@ static diag_t extract_host(const struct whack_message *wm,
 				/* not an IP address, so set the type to the string */
 				end->host.type = KH_IPHOSTNAME;
 			} else {
-				PEXPECT(logger, winner.afi == address_info(end->host.addr));
+				vexpect(winner.afi == address_info(end->host.addr));
 			}
 
 			break;
@@ -944,7 +944,7 @@ static diag_t extract_host(const struct whack_message *wm,
 		{
 			/* handled by pluto using .host_type */
 			name_buf nb;
-			ldbg(logger, "%s%s=%s handled as %s later",
+			vdbg("%s%s=%s handled as %s later",
 			     leftright, name, (value == NULL ? "<null>" : value),
 			     str_sparse_short(&keyword_host_names, end->host.type, &nb));
 			break;
@@ -955,7 +955,7 @@ static diag_t extract_host(const struct whack_message *wm,
 		{
 			/* generally, this doesn't show up at this stage */
 			name_buf nb;
-			llog_pexpect(logger, HERE,
+			llog_pexpect(verbose.logger, HERE,
 				     "%s%s=%s as %s isn't expected",
 				     leftright, name, value,
 				     str_sparse_short(&keyword_host_names, end->host.type, &nb));
@@ -994,13 +994,12 @@ static diag_t extract_host(const struct whack_message *wm,
 		}
 	}
 
-	lset_t verbose_rc_flags = LDBGP(DBG_BASE, logger) ? DEBUG_STREAM|ADD_PREFIX : LEMPTY;
 	resolve_default_route(&resolve[LEFT_END],
 			      &resolve[RIGHT_END],
-			      winner.afi, verbose_rc_flags, logger);
+			      winner.afi, verbose);
 	resolve_default_route(&resolve[RIGHT_END],
 			      &resolve[LEFT_END],
-			      winner.afi, verbose_rc_flags, logger);
+			      winner.afi, verbose);
 
 	/*
 	 * Finally, there's starter_whack_add_conn() /
@@ -3392,6 +3391,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c,
 				 struct config *config)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, c->name);
+
 	diag_t d = NULL;
 
 	enum ike_version ike_version = extract_ike_version(wm, &d, c->logger);
@@ -3411,7 +3412,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	struct resolve_end resolve[END_ROOF] = {0};
 	const struct ip_info *host_afi = NULL;
-	d = extract_host(wm, resolve, &host_afi, c->logger);
+	d = extract_host(wm, resolve, &host_afi, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -5172,7 +5173,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * might use subnet or host or addresspool.
 	 */
 
-	VERBOSE_DBGP(DBG_BASE, c->logger, "%s() ...", __func__);
 	build_connection_proposals_from_configs(c, host_afi, verbose);
 
 	/*

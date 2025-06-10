@@ -63,8 +63,7 @@ static const struct sparse_names rta_names = {
 void resolve_default_route(struct resolve_end *host,
 			   struct resolve_end *peer,
                            const struct ip_info *host_afi UNUSED,
-			   lset_t verbose_rc_flags UNUSED,
-			   struct logger *logger)
+			   struct verbose verbose UNUSED)
 {
 	/* What kind of result are we seeking? */
 	bool seeking_src = (host->host.type == KH_DEFAULTROUTE ||
@@ -74,8 +73,7 @@ void resolve_default_route(struct resolve_end *host,
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 
-	fatal(PLUTO_EXIT_FAIL, logger,
-	      "addcon: without XFRM, cannot resolve_defaultroute()");
+	vfatal("addcon: without XFRM, cannot resolve_defaultroute()");
 }
 
 static enum route_status get_route_1(int s, ip_address dst,
