@@ -669,9 +669,12 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 	zero(key);
 
 	lset_t section = (parser->section == SECTION_CONFIG_SETUP ? kv_config : kv_conn);
+	const struct keywords_def *keywords =
+		(parser->section == SECTION_CONFIG_SETUP ? &config_setup_keywords :
+		 &config_conn_keywords);
 
 	const struct keyword_def *found = NULL;
-	ITEMS_FOR_EACH(k, &ipsec_conf_keywords) {
+	ITEMS_FOR_EACH(k, keywords) {
 
 		if (k->keyname == NULL) {
 			continue;

@@ -266,6 +266,7 @@ struct keywords_def {
 	const struct keyword_def *item;
 };
 
-extern const struct keywords_def ipsec_conf_keywords;
+extern const struct keywords_def config_setup_keywords;
+extern const struct keywords_def config_conn_keywords;
 
 #endif /* _KEYWORDS_H_ */
