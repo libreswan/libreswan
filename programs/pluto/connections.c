@@ -778,18 +778,49 @@ void update_hosts_from_end_host_addr(struct connection *c,
  * not be determined.
  */
 
+struct afi_winner {
+	const char *leftright;
+	const char *name;
+	const char *value;
+	const struct ip_info *afi;
+};
+
+static diag_t check_afi(struct afi_winner *winner,
+			const char *leftright, const char *name, const char *value,
+			const struct ip_info *afi,
+			struct verbose verbose)
+{
+	if (afi == NULL) {
+		return NULL;
+	}
+
+	if (afi == winner->afi) {
+		return NULL;
+	}
+
+	if (winner->afi == NULL) {
+		vdbg("winner: %s%s=%s %s", leftright, name, value, afi->ip_name);
+		winner->afi = afi;
+		winner->leftright = leftright;
+		winner->name = name;
+		winner->value = value;
+		return NULL;
+	}
+
+	return diag("host address family %s from %s%s=%s conflicts with %s%s=%s",
+		    winner->afi->ip_name,
+		    winner->leftright, winner->name, winner->value,
+		    leftright, name, value);
+}
+
 static diag_t extract_host(const struct whack_message *wm,
 			   struct resolve_end resolve[END_ROOF],
 			   const struct ip_info **host_afi,
 			   struct verbose verbose)
 {
 	/* source of AFI */
-	struct {
-		const char *name;
-		const char *value;
-		const char *leftright;
-		const struct ip_info *afi;
-	} winner = {0};
+	diag_t d;
+	struct afi_winner winner = {0};
 
 	/*
 	 * Start with something easy.
@@ -801,11 +832,11 @@ static diag_t extract_host(const struct whack_message *wm,
 		if (afi == NULL) {
 			return diag("hostaddrfamily=%s is not unrecognized", wm->hostaddrfamily);
 		}
-		/* save source */
-		winner.afi = afi;
-		winner.name = "hostaddrfamily";
-		winner.value = wm->hostaddrfamily;
-		winner.leftright = "";
+		/* save source; must be winner! */
+		d = check_afi(&winner, "", "hostaddrfamily", wm->hostaddrfamily, afi, verbose);
+		if (vbad(d != NULL)) {
+			return d;
+		}
 	}
 
 	/*
@@ -877,16 +908,9 @@ static diag_t extract_host(const struct whack_message *wm,
 			    streq(value, "%defaultroute6")  ||
 			    streq(value, "%any6")) {
 				const struct ip_info *afi = &ipv6_info;
-				if (winner.afi == NULL) {
-					winner.afi = afi;
-					winner.leftright = leftright;
-					winner.name = name;
-					winner.value = value;
-				} else if (winner.afi != afi) {
-					return diag("host address family %s from %s%s=%s conflicts with %s%s=%s",
-						    winner.afi->ip_name,
-						    winner.leftright, winner.name, winner.value,
-						    leftright, name, value);
+				d = check_afi(&winner, leftright, name, value, afi, verbose);
+				if (d != NULL) {
+					return d;
 				}
 			}
 		}
