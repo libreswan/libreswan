@@ -1435,15 +1435,15 @@ int main(int argc, char **argv)
 			continue;
 		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
 			whack_command(&msg, WHACK_ACQUIRE);
-			msg.whack.acquire.ipproto = strtol(optarg, NULL, 0);
+			msg.whack.acquire.ipproto = optarg_ipproto(logger);
 			continue;
 		case OPT_OPPO_SPORT:	/* --opposport <port> */
 			whack_command(&msg, WHACK_ACQUIRE);
-			msg.whack.acquire.local.port = ip_hport(strtol(optarg, NULL, 0));
+			msg.whack.acquire.local.port = optarg_port(logger);
 			continue;
 		case OPT_OPPO_DPORT:	/* --oppodport <port> */
 			whack_command(&msg, WHACK_ACQUIRE);
-			msg.whack.acquire.remote.port = ip_hport(strtol(optarg, NULL, 0));
+			msg.whack.acquire.remote.port = optarg_port(logger);
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
