@@ -815,15 +815,16 @@ enum sa_policy_bits {
  * values for right=/left=
  */
 enum keyword_host {
-	KH_NOTSET       = 0,
-	KH_DEFAULTROUTE = 1,
-	KH_ANY          = 2,
-	KH_IFACE        = 3,
-	KH_OPPO         = 4,
-	KH_OPPOGROUP    = 5,
-	KH_GROUP        = 6,
-	KH_IPHOSTNAME   = 7,            	/* host_addr invalid, only string */
-	KH_IPADDR       = 8,
+	KH_NOTSET,
+	KH_DEFAULTROUTE,
+	KH_ANY,
+	KH_IFACE,
+	KH_OPPO,
+	KH_OPPOGROUP,
+	KH_GROUP,
+	KH_IPHOSTNAME,            	/* host_addr invalid, only string */
+	KH_IPADDR,
+	KH_DIRECT,
 };
 
 extern const struct sparse_names keyword_host_names;
