@@ -426,8 +426,23 @@ VARDIR ?= /var
 TRANSFORMS += 's:@@VARDIR@@:$(VARDIR):g'
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(VARDIR)\"
 
+#
+# Default is syslog?  Setting logfile= overides it (which the BSDs
+# do).
+#
+
+USE_LOGFFILE ?= false
+
 LOGDIR ?= $(VARDIR)/log
 TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
+
+LOGFILE ?= $(LOGDIR)/pluto.log
+TRANSFORMS += 's:@@LOGFILE@@:$(LOGFILE):g'
+USERLAND_CFLAGS += -DLOGFILE='"$(LOGFILE)"'
+
+ifeq ($(USE_LOGFILE),true)
+USERLAND_CFLAGS += -DUSE_LOGFILE
+endif
 
 # Directory for logrotate config
 LOGROTATEDDIR ?= $(SYSCONFDIR)/logrotate.d
