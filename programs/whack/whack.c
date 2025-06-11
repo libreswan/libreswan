@@ -1028,11 +1028,6 @@ int main(int argc, char **argv)
 			[RIGHT_END] = { .leftright = "right", },
 		},
 
-		/* set defaults to ICMP PING request */
-		.whack.acquire.ipproto = IPPROTO_ICMP,
-		.whack.acquire.local.port = ip_hport(8),
-		.whack.acquire.remote.port = ip_hport(0),
-
 	};
 
 	struct whack_end *end = &msg.end[LEFT_END];

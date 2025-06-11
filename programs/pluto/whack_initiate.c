@@ -107,14 +107,19 @@ void whack_acquire(const struct whack_message *wm, struct show *s)
 
 	const struct whack_acquire *wa = &wm->whack.acquire;
 
-	const struct ip_protocol *protocol = protocol_from_ipproto(wa->ipproto);
+	/* set defaults to ICMP PING request */
+	unsigned ipproto = (wa->ipproto > 0 ? wa->ipproto : IPPROTO_ICMP);
+	const struct ip_protocol *protocol = protocol_from_ipproto(ipproto);
+	ip_port local_port = (wa->local.port.is_set ? wa->local.port : ip_hport(8));
+	ip_port remote_port = (wa->remote.port.is_set ? wa->remote.port : ip_hport(0));
+
 	ip_packet packet = packet_from_raw(HERE,
 					   address_info(wa->local.address),
 					   &wa->local.address.bytes,
 					   &wa->remote.address.bytes,
 					   protocol,
-					   wa->local.port,
-					   wa->remote.port);
+					   local_port,
+					   remote_port);
 
 	struct kernel_acquire b = {
 		.packet = packet,
