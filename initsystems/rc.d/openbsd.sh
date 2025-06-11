@@ -1,7 +1,7 @@
 #!/bin/ksh
 
 daemon="@@LIBEXECDIR@@/pluto"
-daemon_flags="--logfile @@LOGDIR@@/pluto.log --config @@IPSEC_CONF@@ --leak-detective"
+daemon_flags="--config @@IPSEC_CONF@@ --leak-detective"
 
 . /etc/rc.d/rc.subr
 

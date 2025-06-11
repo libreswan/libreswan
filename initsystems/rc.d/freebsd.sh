@@ -15,7 +15,7 @@ required_modules=ipsec
 rcvar=${name}_enable
 
 command="@@LIBEXECDIR@@/pluto"
-command_args="--logfile @@LOGDIR@@/pluto.log --config @@IPSEC_CONF@@ --leak-detective"
+command_args="--config @@IPSEC_CONF@@ --leak-detective"
 required_files="@@IPSEC_CONF@@"
 
 pidfile="@@RUNDIR@@/${name}.pid"
