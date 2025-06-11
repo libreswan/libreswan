@@ -442,6 +442,7 @@ enum opt {
 	OPT_OPPO_PROTO,
 	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
+	OPT_OPPO_LABEL,
 
 	/* List options */
 
@@ -746,11 +747,12 @@ const struct option optarg_options[] = {
 	{ "xauthname\0", required_argument, NULL, OPT_USERNAME }, /* old name */
 	{ "xauthpass\0", required_argument, NULL, OPT_XAUTHPASS },
 
-	{ "oppohere\0", required_argument, NULL, OPT_OPPO_HERE },
-	{ "oppothere\0", required_argument, NULL, OPT_OPPO_THERE },
-	{ "oppoproto\0", required_argument, NULL, OPT_OPPO_PROTO },
-	{ "opposport\0", required_argument, NULL, OPT_OPPO_SPORT },
-	{ "oppodport\0", required_argument, NULL, OPT_OPPO_DPORT },
+	{ OPT("oppohere", "<address>"), required_argument, NULL, OPT_OPPO_HERE },
+	{ OPT("oppothere", "<address>"), required_argument, NULL, OPT_OPPO_THERE },
+	{ OPT("oppoproto", "<protocol> (ICMP)"), required_argument, NULL, OPT_OPPO_PROTO },
+	{ OPT("opposport", "<source-port> (0)"), required_argument, NULL, OPT_OPPO_SPORT },
+	{ OPT("oppodport", "<destination-port> (8)"), required_argument, NULL, OPT_OPPO_DPORT },
+	{ OPT("oppolabel", "<security-label>"), required_argument, NULL, OPT_OPPO_LABEL },
 
 	{ "asynchronous\0", no_argument, NULL, OPT_ASYNC },
 
@@ -1439,6 +1441,10 @@ int main(int argc, char **argv)
 		case OPT_OPPO_DPORT:	/* --oppodport <port> */
 			whack_command(&msg, WHACK_ACQUIRE);
 			msg.whack.acquire.remote.port = optarg_port(logger);
+			continue;
+		case OPT_OPPO_LABEL:
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.label = optarg;
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */

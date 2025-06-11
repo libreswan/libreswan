@@ -202,6 +202,7 @@ struct whack_acquire {
 		ip_address address;
 		ip_port port;
 	} local, remote;
+	const char *label;
 	unsigned ipproto;
 };
 
