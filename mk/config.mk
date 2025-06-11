@@ -427,11 +427,14 @@ TRANSFORMS += 's:@@VARDIR@@:$(VARDIR):g'
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(VARDIR)\"
 
 #
-# Default is syslog?  Setting logfile= overides it (which the BSDs
-# do).
+# Default is syslog(3) at DEFAULT_LOGLEVEL.
+#
+# Setting logfile= overides it.
 #
 
 USE_LOGFFILE ?= false
+DEFAULT_LOGLEVEL ?= LOG_WARNING
+USERLAND_CFLAGS += -DDEFAULT_LOGLEVEL=$(DEFAULT_LOGLEVEL)
 
 LOGDIR ?= $(VARDIR)/log
 TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
