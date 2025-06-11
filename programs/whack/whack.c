@@ -2193,37 +2193,14 @@ int main(int argc, char **argv)
 	 * required information was supplied.
 	 */
 
-	/* check opportunistic initiation simulation request */
+	/*
+	 * Check acquire (opportunistic initiation) simulation
+	 * request.
+	 */
 	if (msg.whack_command == WHACK_ACQUIRE) {
-		if (!seen[OPT_OPPO_HERE] || !seen[OPT_OPPO_THERE]) {
-			diagw("--oppohere and --oppothere must be used together");
-		}
-
-		/*
-		 * When the only CD (connection description) option is
-		 * TUNNELIPV[46] scrub that a connection description
-		 * option was seen.
-		 *
-		 * The END options are easy to exclude, the generic
-		 * conn options requires a brute force search.
-		 *
-		 * XXX: huh!?! .whack_command should have excluded
-		 * everything?
-		 */
-		if ((opts_seen & CONN_OPT_SEEN) && !(opts_seen & END_OPT_SEEN)) {
-			bool scrub = false;
-			for (enum opt e = FIRST_CONN_OPT; e <= LAST_CONN_OPT; e++) {
-				if (e != CD_TUNNELIPV4 &&
-				    e != CD_TUNNELIPV6 &&
-				    seen[e]) {
-					scrub = false;
-					break;
-				}
-			}
-			if (scrub) {
-				pexpect(opts_seen & CONN_OPT_SEEN);
-				opts_seen &= ~CONN_OPT_SEEN;
-			}
+		if (!seen[OPT_OPPO_HERE] ||
+		    !seen[OPT_OPPO_THERE]) {
+			diagw("acquire (opportunistic initiation) simulation requires both --oppohere and --oppothere");
 		}
 	}
 
