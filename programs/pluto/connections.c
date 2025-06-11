@@ -3409,7 +3409,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Determine the Host's address family.
 	 */
-	struct resolve_end resolve[END_ROOF] = {0};
+	struct resolve_end resolve[END_ROOF] = {
+		[LEFT_END] = { .leftright = "left", },
+		[RIGHT_END] = { .leftright = "right", },
+	};
+
 	const struct ip_info *host_afi = NULL;
 	d = extract_host(wm, resolve, &host_afi, verbose);
 	if (d != NULL) {

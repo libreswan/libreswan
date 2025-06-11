@@ -180,20 +180,13 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 
-static const char *pa(const struct resolve_host *host, address_buf *buf)
+static unsigned jam_pa(struct jambuf *buf, const struct resolve_host *host)
 {
-	switch (host->type) {
-	case KH_NOTSET: return "<not-set>";
-	case KH_DEFAULTROUTE: return "<defaultroute>";
-	case KH_ANY: return "<any>";
-	case KH_IFACE: return host->name;
-	case KH_OPPO: return "<oppo>";
-	case KH_OPPOGROUP: return "<oppogroup>";
-	case KH_GROUP: return "<group>";
-	case KH_IPHOSTNAME: return host->name;
-	case KH_IPADDR: return str_address(&host->addr, buf);
-	default: return "<other>";
+	if (host->type == KH_IPADDR) {
+		return jam_address(buf, &host->addr);
 	}
+
+	return jam_sparse_short(buf, &keyword_host_names, host->type);
 }
 
 enum resolve_status {
@@ -438,12 +431,16 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 	 * "leftnexthop="  == host->nexthop.type and host->nexthop.addr
 	 */
 
-	address_buf hb, gb, pb;
-	verbose("resolving family=%s src=%s gateway=%s peer %s",
-		(host_afi == NULL ? "<unset>" : host_afi->ip_name),
-		pa(&host->host, &hb),
-		pa(&host->nexthop, &gb),
-		pa(&peer->host, &pb));
+	VERBOSE_JAMBUF(buf) {
+		jam_string(buf, "resolving family=");
+		jam_string(buf, (host_afi == NULL ? "<unset>" : host_afi->ip_name));
+		jam(buf, " %s=", host->leftright);
+		jam_pa(buf, &host->host);
+		jam(buf, " %snexthop=", host->leftright);
+		jam_pa(buf, &host->nexthop);
+		jam(buf, " (peer) %s=", peer->leftright);
+		jam_pa(buf, &peer->host);
+	}
 	verbose.level++;
 
 	/*
@@ -581,13 +578,17 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 	}
 
 	verbose.level = 1;
-	verbose("%s: src=%s gateway=%s",
-		(context.status == RESOLVE_FAILURE ? "failure" :
-		 context.status == RESOLVE_SUCCESS ? "success" :
-		 context.status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
-		 "???"),
-		pa(&host->host, &hb),
-		pa(&host->nexthop, &gb));
+	VERBOSE_JAMBUF(buf) {
+		switch (context.status) {
+		case RESOLVE_FAILURE: jam_string(buf, "failure"); break;
+		case RESOLVE_SUCCESS: jam_string(buf, "success"); break;
+		case RESOLVE_PLEASE_CALL_AGAIN: jam_string(buf, "please-call-again");
+		}
+		jam(buf, " %s=", host->leftright);
+		jam_pa(buf, &host->host);
+		jam(buf, " %snexthop=", host->leftright);
+		jam_pa(buf, &host->nexthop);
+	}
 	pfree(msgbuf);
 	return context.status;
 }
@@ -600,11 +601,13 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 	const struct ip_info *host_afi = address_info(dest);
 
 	struct resolve_end this = {
+		.leftright = "this",
 		.host.type = KH_DEFAULTROUTE,
 		.nexthop.type = KH_DEFAULTROUTE,
 	};
 
 	struct resolve_end that = {
+		.leftright = "that",
 		.host.type = KH_IPADDR,
 	};
 
