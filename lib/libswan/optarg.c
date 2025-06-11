@@ -424,6 +424,26 @@ ip_address optarg_any(struct optarg_family *family)
 	return family->type->address.unspec;
 }
 
+ip_port optarg_port(const struct logger *logger)
+{
+	ip_port port;
+	err_t err = ttoport(shunk1(optarg), &port);
+	if (err != NULL) {
+		optarg_fatal(logger, "%s", err);
+	}
+	return port;
+}
+
+unsigned optarg_ipproto(const struct logger *logger UNUSED)
+{
+	const struct ip_protocol *protocol;
+	err_t err = ttoprotocol(shunk1(optarg), &protocol);
+	if (err != NULL) {
+		optarg_fatal(logger, "%s", err);
+	}
+	return protocol->ipproto;
+}
+
 void optarg_verbose(const struct logger *logger, lset_t start)
 {
 	verbose++;

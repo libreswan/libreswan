@@ -20,6 +20,7 @@
 #include "deltatime.h"
 #include "ip_address.h"
 #include "ip_cidr.h"
+#include "ip_port.h"
 #include "lmod.h"
 
 struct logger;
@@ -113,6 +114,8 @@ ip_address optarg_address_num(const struct logger *logger, struct optarg_family 
 ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *);
 void optarg_family(struct optarg_family *family, const struct ip_info *info);
 ip_address optarg_any(struct optarg_family *family);
+ip_port optarg_port(const struct logger *logger);
+unsigned optarg_ipproto(const struct logger *logger);
 
 /*
  * Call optarg_verbose() whenever --verbose is encountered.
