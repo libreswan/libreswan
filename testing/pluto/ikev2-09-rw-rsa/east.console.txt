@@ -11,7 +11,7 @@ east #
 east #
  ipsec auto --status | grep road-eastnet-nonat
 "road-eastnet-nonat": 192.0.2.0/24===192.1.2.23[@east]---192.1.2.254...%any[@road]===192.0.2.219/32; unrouted; my_ip=unset; their_ip=192.0.2.219;
-"road-eastnet-nonat":   host: oriented; local: 192.1.2.23; remote: %any;
+"road-eastnet-nonat":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %any;
 "road-eastnet-nonat":   my_updown=ipsec _updown;
 "road-eastnet-nonat":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-eastnet-nonat":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;

@@ -47,13 +47,13 @@ road #
 "defaultroute-ipv4": added IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-ipv4 | grep ' host: '
-"defaultroute-ipv4":   host: oriented; local: 192.1.3.209; remote: 192.1.2.23;
+"defaultroute-ipv4":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: 192.1.2.23;
 road #
  ipsec add defaultroute-ipv6
 "defaultroute-ipv6": added IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-ipv6 | grep ' host: '
-"defaultroute-ipv6":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
+"defaultroute-ipv6":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: 2001:db8:1:2::23;
 road #
  # simple case but with clash
 road #
@@ -83,13 +83,13 @@ road #
 "hostaddrfamily-ipv4-defaultroute-any": added IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-any | grep ' host: '
-"hostaddrfamily-ipv4-defaultroute-any":   host: oriented; local: 192.1.3.209; remote: %any;
+"hostaddrfamily-ipv4-defaultroute-any":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %any;
 road #
  ipsec add hostaddrfamily-ipv6-defaultroute-any
 "hostaddrfamily-ipv6-defaultroute-any": added unoriented IKEv2 connection (neither left=%defaultroute nor right=%any match an interface)
 road #
  ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-any | grep ' host: '
-"hostaddrfamily-ipv6-defaultroute-any":   host: unoriented; left: fe80::1000:ff:feab:cd02; right: %any;
+"hostaddrfamily-ipv6-defaultroute-any":   host: unoriented; left: fe80::1000:ff:feab:cd02; leftnexthop: 2001:db8:1:3::254; right: %any;
 road #
  # newoe case, peer is group (see newoe-20-ipv6)
 road #
@@ -97,13 +97,13 @@ road #
 "hostaddrfamily-ipv4-defaultroute-group": added IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-group | grep ' host: '
-"hostaddrfamily-ipv4-defaultroute-group":   host: oriented; local: 192.1.3.209; remote: %group;
+"hostaddrfamily-ipv4-defaultroute-group":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %group;
 road #
  ipsec add hostaddrfamily-ipv6-defaultroute-group
 "hostaddrfamily-ipv6-defaultroute-group": added IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-group | grep ' host: '
-"hostaddrfamily-ipv6-defaultroute-group":   host: oriented; local: 2001:db8:1:3::209; remote: %group;
+"hostaddrfamily-ipv6-defaultroute-group":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: %group;
 road #
  # re-adding while route is up (see ikev1-hostpair-02)
 road #
@@ -131,13 +131,13 @@ road #
 "hostaddrfamily-ipv4-defaultroute-group": added IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-group | grep ' host: '
-"hostaddrfamily-ipv4-defaultroute-group":   host: oriented; local: 192.1.3.209; remote: %group;
+"hostaddrfamily-ipv4-defaultroute-group":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %group;
 road #
  ipsec add hostaddrfamily-ipv6-defaultroute-group
 "hostaddrfamily-ipv6-defaultroute-group": added IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-group | grep ' host: '
-"hostaddrfamily-ipv6-defaultroute-group":   host: oriented; local: 2001:db8:1:3::209; remote: %group;
+"hostaddrfamily-ipv6-defaultroute-group":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: %group;
 road #
  ../../guestbin/ip.sh -4 route   del dev eth0       192.1.2.23 via       192.1.3.254 src       192.0.2.1
 road #
@@ -171,5 +171,5 @@ road #
 "defaultroute-ipv6": added IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-ipv6 | grep ' host: '
-"defaultroute-ipv6":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
+"defaultroute-ipv6":   host: oriented; local: 2001:db8:1:3::209; nexthop: fe80::1000:ff:fe32:64ba; remote: 2001:db8:1:2::23;
 road #

@@ -36,7 +36,7 @@ east #
 east #
  ipsec auto --status |grep road
 "road-A": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
-"road-A":   host: oriented; local: 192.1.2.23; remote: %any;
+"road-A":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.45; remote: %any;
 "road-A":   mycert=east; my_updown=ipsec _updown;
 "road-A":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
@@ -58,7 +58,7 @@ east #
 "road-A":   routing: unrouted;
 "road-A":   conn serial: $1;
 "road-chain-B": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;
-"road-chain-B":   host: oriented; local: 192.1.2.23; remote: %any;
+"road-chain-B":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.45; remote: %any;
 "road-chain-B":   mycert=east; my_updown=ipsec _updown;
 "road-chain-B":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-chain-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
