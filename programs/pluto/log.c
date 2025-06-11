@@ -300,11 +300,11 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		log_raw(LOG_DEBUG, "", buf);
 		return;
 	case ALL_STREAMS:
-		log_raw(LOG_WARNING, "", buf);
+		log_raw(DEFAULT_LOGLEVEL, "", buf);
 		log_whacks(rc, logger, buf);
 		return;
 	case LOG_STREAM:
-		log_raw(LOG_WARNING, "", buf);
+		log_raw(DEFAULT_LOGLEVEL, "", buf);
 		return;
 	case WHACK_STREAM:
 		if (DBGP(DBG_BASE)) {

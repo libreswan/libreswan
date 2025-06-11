@@ -49,3 +49,5 @@ EXAMPLE_IPSEC_SYSCONFDIR=$(PREFIX)/share/examples/libreswan
 # LTO seems either broken or confused
 USE_LTO ?= false
 
+# not LOG_WARNING!
+DEFAULT_LOGLEVEL=LOG_NOTICE

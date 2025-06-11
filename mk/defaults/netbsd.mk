@@ -41,3 +41,6 @@ USE_LTO ?= false
 # CHACHA is embedded in the ESP proposal (it shouldn't) this removes
 # it, but also removes it from IKE, oops.
 USE_CHACHA = false
+
+# not LOG_WARNING!
+DEFAULT_LOGLEVEL=LOG_NOTICE

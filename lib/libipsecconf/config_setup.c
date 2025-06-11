@@ -111,8 +111,12 @@ const struct config_setup *config_setup_singleton(void)
 		update_setup_string(KSF_DNSSEC_ROOTKEY_FILE, DEFAULT_DNSSEC_ROOTKEY_FILE);
 		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
 
+		update_setup_yn(KYN_LOGIP, YN_YES);
 		update_setup_yn(KYN_LOGTIME, YN_YES);
 		update_setup_yn(KYN_LOGAPPEND, YN_YES);
+#ifdef USE_LOGFILE
+		update_setup_string(KSF_LOGFILE, LOGFILE);
+#endif
 
 		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
 
@@ -125,7 +129,6 @@ const struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 
-		update_setup_yn(KYN_LOGIP, YN_YES);
 		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
 		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
 

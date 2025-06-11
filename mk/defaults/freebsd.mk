@@ -40,3 +40,6 @@ USE_LTO ?= false
 
 # FreeBSD's default SED doesn't support -i (in-place)
 SED = gsed
+
+# not LOG_WARNING!
+DEFAULT_LOGLEVEL=LOG_NOTICE
