@@ -95,7 +95,7 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 			      });
 }
 
-void whack_oppo_initiate(const struct whack_message *m, struct show *s)
+void whack_acquire(const struct whack_message *wm, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 
@@ -105,21 +105,28 @@ void whack_oppo_initiate(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	const struct ip_protocol *protocol = protocol_from_ipproto(m->oppo.ipproto);
+	const struct whack_acquire *wa = &wm->whack.acquire;
+
+	/* set defaults to ICMP PING request */
+	unsigned ipproto = (wa->ipproto > 0 ? wa->ipproto : IPPROTO_ICMP);
+	const struct ip_protocol *protocol = protocol_from_ipproto(ipproto);
+	ip_port local_port = (wa->local.port.is_set ? wa->local.port : ip_hport(8));
+	ip_port remote_port = (wa->remote.port.is_set ? wa->remote.port : ip_hport(0));
+
 	ip_packet packet = packet_from_raw(HERE,
-					   address_info(m->oppo.local.address),
-					   &m->oppo.local.address.bytes,
-					   &m->oppo.remote.address.bytes,
+					   address_info(wa->local.address),
+					   &wa->local.address.bytes,
+					   &wa->remote.address.bytes,
 					   protocol,
-					   m->oppo.local.port,
-					   m->oppo.remote.port);
+					   local_port,
+					   remote_port);
 
 	struct kernel_acquire b = {
 		.packet = packet,
 		.by_acquire = false,
 		.logger = logger, /*on-stack*/
-		.background = m->whack_async,
-		.sec_label = null_shunk,
+		.background = wm->whack_async,
+		.sec_label = shunk1(wa->label),
 	};
 
 	initiate_ondemand(&b);

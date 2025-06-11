@@ -75,7 +75,7 @@ enum whack_command {
 	WHACK_UNROUTE,
 	WHACK_INITIATE,
 	WHACK_SUSPND,
-	WHACK_OPPO_INITIATE,
+	WHACK_ACQUIRE,
 	WHACK_DOWN,
 	WHACK_SUSPEND,
 	/**/
@@ -197,6 +197,15 @@ struct whack_ddos {
 	enum ddos_mode mode;	/* for DDOS modes */
 };
 
+struct whack_acquire {
+	struct {
+		ip_address address;
+		ip_port port;
+	} local, remote;
+	const char *label;
+	unsigned ipproto;
+};
+
 /*
  * Impairments.
  */
@@ -272,6 +281,7 @@ struct whack_message {
 	struct {
 		struct whack_listen listen;
 		struct whack_ddos ddos;
+		struct whack_acquire acquire;
 	} whack;
 
 	const char *keyexchange;
@@ -430,14 +440,6 @@ struct whack_message {
 
 	/* for REMOTE_HOST */
 	const char *remote_host;
-
-	struct {
-		struct {
-			ip_address address;
-			ip_port port;
-		} local, remote;
-		unsigned ipproto;
-	} oppo;
 
 	/* for WHACK_DELETESTATE: */
 	long unsigned int whack_deletestateno;

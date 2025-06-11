@@ -287,14 +287,21 @@ static void diagq(err_t ugh, const char *this)
 static void whack_command(struct whack_message *wm, enum whack_command command)
 {
 	static unsigned last_index;
-	if (wm->whack_command != 0) {
-		fprintf(stderr, "whack error: conflicing command options '--%s' and '--%s'\n",
-			optarg_options[last_index].name,
-			optarg_options[optarg_index].name);
-		exit(RC_WHACK_PROBLEM);
+	if (wm->whack_command == 0) {
+		wm->whack_command = command;
+		last_index = optarg_index;
+		return;
 	}
-	wm->whack_command = command;
-	last_index = optarg_index;
+
+	if (wm->whack_command == command) {
+		/* for instance --oppo{here,there} */
+		return;
+	}
+
+	fprintf(stderr, "whack error: conflicing command options '--%s' and '--%s'\n",
+		optarg_options[last_index].name,
+		optarg_options[optarg_index].name);
+	exit(RC_WHACK_PROBLEM);
 }
 
 /*
@@ -435,6 +442,7 @@ enum opt {
 	OPT_OPPO_PROTO,
 	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
+	OPT_OPPO_LABEL,
 
 	/* List options */
 
@@ -739,11 +747,12 @@ const struct option optarg_options[] = {
 	{ "xauthname\0", required_argument, NULL, OPT_USERNAME }, /* old name */
 	{ "xauthpass\0", required_argument, NULL, OPT_XAUTHPASS },
 
-	{ "oppohere\0", required_argument, NULL, OPT_OPPO_HERE },
-	{ "oppothere\0", required_argument, NULL, OPT_OPPO_THERE },
-	{ "oppoproto\0", required_argument, NULL, OPT_OPPO_PROTO },
-	{ "opposport\0", required_argument, NULL, OPT_OPPO_SPORT },
-	{ "oppodport\0", required_argument, NULL, OPT_OPPO_DPORT },
+	{ OPT("oppohere", "<address>"), required_argument, NULL, OPT_OPPO_HERE },
+	{ OPT("oppothere", "<address>"), required_argument, NULL, OPT_OPPO_THERE },
+	{ OPT("oppoproto", "<protocol> (ICMP)"), required_argument, NULL, OPT_OPPO_PROTO },
+	{ OPT("opposport", "<source-port> (0)"), required_argument, NULL, OPT_OPPO_SPORT },
+	{ OPT("oppodport", "<destination-port> (8)"), required_argument, NULL, OPT_OPPO_DPORT },
+	{ OPT("oppolabel", "<security-label>"), required_argument, NULL, OPT_OPPO_LABEL },
 
 	{ "asynchronous\0", no_argument, NULL, OPT_ASYNC },
 
@@ -1020,11 +1029,6 @@ int main(int argc, char **argv)
 			[LEFT_END] = { .leftright = "left", },
 			[RIGHT_END] = { .leftright = "right", },
 		},
-
-		/* set defaults to ICMP PING request */
-		.oppo.ipproto = IPPROTO_ICMP,
-		.oppo.local.port = ip_hport(8),
-		.oppo.remote.port = ip_hport(0),
 
 	};
 
@@ -1407,35 +1411,40 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
-			msg.oppo.local.address = optarg_address_dns(logger, &child_family);
-			if (!address_is_specified(msg.oppo.local.address)) {
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.local.address = optarg_address_dns(logger, &child_family);
+			if (!address_is_specified(msg.whack.acquire.local.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.oppo.local.address, &ab));
+					     str_address(&msg.whack.acquire.local.address, &ab));
 			}
 			continue;
-
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
-			msg.oppo.remote.address = optarg_address_dns(logger, &child_family);
-			if (!address_is_specified(msg.oppo.remote.address)) {
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.remote.address = optarg_address_dns(logger, &child_family);
+			if (!address_is_specified(msg.whack.acquire.remote.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.oppo.remote.address, &ab));
+					     str_address(&msg.whack.acquire.remote.address, &ab));
 			}
 			continue;
-
 		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
-			msg.oppo.ipproto = strtol(optarg, NULL, 0);
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.ipproto = optarg_ipproto(logger);
 			continue;
-
 		case OPT_OPPO_SPORT:	/* --opposport <port> */
-			msg.oppo.local.port = ip_hport(strtol(optarg, NULL, 0));
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.local.port = optarg_port(logger);
 			continue;
-
 		case OPT_OPPO_DPORT:	/* --oppodport <port> */
-			msg.oppo.remote.port = ip_hport(strtol(optarg, NULL, 0));
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.remote.port = optarg_port(logger);
+			continue;
+		case OPT_OPPO_LABEL:
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.label = optarg;
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
@@ -2190,34 +2199,15 @@ int main(int argc, char **argv)
 	 * required information was supplied.
 	 */
 
-	/* check opportunistic initiation simulation request */
-	if (seen[OPT_OPPO_HERE] && seen[OPT_OPPO_THERE]) {
-		whack_command(&msg, WHACK_OPPO_INITIATE);
-		/*
-		 * When the only CD (connection description) option is
-		 * TUNNELIPV[46] scrub that a connection description
-		 * option was seen.
-		 *
-		 * The END options are easy to exclude, the generic
-		 * conn options requires a brute force search.
-		 */
-		if ((opts_seen & CONN_OPT_SEEN) && !(opts_seen & END_OPT_SEEN)) {
-			bool scrub = false;
-			for (enum opt e = FIRST_CONN_OPT; e <= LAST_CONN_OPT; e++) {
-				if (e != CD_TUNNELIPV4 &&
-				    e != CD_TUNNELIPV6 &&
-				    seen[e]) {
-					scrub = false;
-					break;
-				}
-			}
-			if (scrub) {
-				pexpect(opts_seen & CONN_OPT_SEEN);
-				opts_seen &= ~CONN_OPT_SEEN;
-			}
+	/*
+	 * Check acquire (opportunistic initiation) simulation
+	 * request.
+	 */
+	if (msg.whack_command == WHACK_ACQUIRE) {
+		if (!seen[OPT_OPPO_HERE] ||
+		    !seen[OPT_OPPO_THERE]) {
+			diagw("acquire (opportunistic initiation) simulation requires both --oppohere and --oppothere");
 		}
-	} else if (seen[OPT_OPPO_HERE] || seen[OPT_OPPO_THERE]) {
-		diagw("--oppohere and --oppothere must be used together");
 	}
 
 	/* check connection description */

@@ -368,6 +368,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->mtu) &&
 		PICKLE_STRING(&wm->priority) &&
 		PICKLE_STRING(&wm->tfc) &&
+		PICKLE_STRING(&wm->whack.acquire.label) &&
 		true);
 }
 
