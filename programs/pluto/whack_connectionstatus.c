@@ -450,16 +450,44 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, ";");
 		/* details */
 		if (oriented(c)) {
+			/* local */
 			jam_string(buf, " local: ");
 			jam_end_host(buf, c, &c->local->host);
 			jam_string(buf, ";");
+			/* nexthop */
+			if (address_is_specified(c->local->host.nexthop) &&
+			    !address_eq_address(c->local->host.nexthop,
+						c->remote->host.addr)) {
+				jam_string(buf, " nexthop: ");
+				jam_address(buf, &c->local->host.nexthop);
+				jam_string(buf, ";");
+			}
+			/* remote */
 			jam_string(buf, " remote: ");
 			jam_end_host(buf, c, &c->remote->host);
 			jam_string(buf, ";");
 		} else {
+			/* left */
 			jam_string(buf, " left: ");
 			jam_end_host(buf, c, &c->end[LEFT_END].host);
 			jam_string(buf, ";");
+			/* leftnexthop */
+			if (address_is_specified(c->end[LEFT_END].host.nexthop) &&
+			    !address_eq_address(c->end[LEFT_END].host.nexthop,
+						c->end[RIGHT_END].host.addr)) {
+				jam_string(buf, " leftnexthop: ");
+				jam_address(buf, &c->end[LEFT_END].host.nexthop);
+				jam_string(buf, ";");
+			}
+			/* rightnexthop */
+			if (address_is_specified(c->end[RIGHT_END].host.nexthop) &&
+			    !address_eq_address(c->end[RIGHT_END].host.nexthop,
+						c->end[LEFT_END].host.addr)) {
+				jam_string(buf, " rightnexthop: ");
+				jam_address(buf, &c->end[RIGHT_END].host.nexthop);
+				jam_string(buf, ";");
+			}
+			/* right */
 			jam_string(buf, " right: ");
 			jam_end_host(buf, c, &c->end[RIGHT_END].host);
 			jam_string(buf, ";");
