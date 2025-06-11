@@ -24,6 +24,7 @@ v5.3 (unreleased)
   - support qualified names, such as '"labeled"[1][2]' [Andrew #1308]
 * initsystem:
   - remove unused _stackmanager [Tuomo #2080]
+  - on BSD, default to syslog(LOG_NOTICE) and not pluto.log [Andrew #2295 #2298]
 * Testing:
   - eliminated all pyOpenSSL dependencies [Andrew]
   - review PKIX test coverage [Andrew]
