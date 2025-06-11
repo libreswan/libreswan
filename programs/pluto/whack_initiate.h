@@ -20,6 +20,6 @@ struct show;
 struct whack_message;
 
 void whack_initiate(const struct whack_message *m, struct show *s);
-void whack_oppo_initiate(const struct whack_message *m, struct show *s);
+void whack_acquire(const struct whack_message *m, struct show *s);
 
 #endif

@@ -407,9 +407,9 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_suspend,
 			.jam = jam_whack_name,
 		},
-		[WHACK_OPPO_INITIATE] = {
-			.name = "oppo-initiate",
-			.op = whack_oppo_initiate,
+		[WHACK_ACQUIRE] = {
+			.name = "acquire",
+			.op = whack_acquire,
 		},
 		[WHACK_DOWN] = {
 			.name = "down",

@@ -1029,9 +1029,9 @@ int main(int argc, char **argv)
 		},
 
 		/* set defaults to ICMP PING request */
-		.oppo.ipproto = IPPROTO_ICMP,
-		.oppo.local.port = ip_hport(8),
-		.oppo.remote.port = ip_hport(0),
+		.whack.acquire.ipproto = IPPROTO_ICMP,
+		.whack.acquire.local.port = ip_hport(8),
+		.whack.acquire.remote.port = ip_hport(0),
 
 	};
 
@@ -1414,35 +1414,36 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
-			msg.oppo.local.address = optarg_address_dns(logger, &child_family);
-			if (!address_is_specified(msg.oppo.local.address)) {
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.local.address = optarg_address_dns(logger, &child_family);
+			if (!address_is_specified(msg.whack.acquire.local.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.oppo.local.address, &ab));
+					     str_address(&msg.whack.acquire.local.address, &ab));
 			}
 			continue;
-
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
-			msg.oppo.remote.address = optarg_address_dns(logger, &child_family);
-			if (!address_is_specified(msg.oppo.remote.address)) {
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.remote.address = optarg_address_dns(logger, &child_family);
+			if (!address_is_specified(msg.whack.acquire.remote.address)) {
 				/* either :: or 0.0.0.0; unset already rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.oppo.remote.address, &ab));
+					     str_address(&msg.whack.acquire.remote.address, &ab));
 			}
 			continue;
-
 		case OPT_OPPO_PROTO:	/* --oppoproto <protocol> */
-			msg.oppo.ipproto = strtol(optarg, NULL, 0);
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.ipproto = strtol(optarg, NULL, 0);
 			continue;
-
 		case OPT_OPPO_SPORT:	/* --opposport <port> */
-			msg.oppo.local.port = ip_hport(strtol(optarg, NULL, 0));
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.local.port = ip_hport(strtol(optarg, NULL, 0));
 			continue;
-
 		case OPT_OPPO_DPORT:	/* --oppodport <port> */
-			msg.oppo.remote.port = ip_hport(strtol(optarg, NULL, 0));
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.remote.port = ip_hport(strtol(optarg, NULL, 0));
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
@@ -2198,8 +2199,11 @@ int main(int argc, char **argv)
 	 */
 
 	/* check opportunistic initiation simulation request */
-	if (seen[OPT_OPPO_HERE] && seen[OPT_OPPO_THERE]) {
-		whack_command(&msg, WHACK_OPPO_INITIATE);
+	if (msg.whack_command == WHACK_ACQUIRE) {
+		if (!seen[OPT_OPPO_HERE] || !seen[OPT_OPPO_THERE]) {
+			diagw("--oppohere and --oppothere must be used together");
+		}
+
 		/*
 		 * When the only CD (connection description) option is
 		 * TUNNELIPV[46] scrub that a connection description
@@ -2207,6 +2211,9 @@ int main(int argc, char **argv)
 		 *
 		 * The END options are easy to exclude, the generic
 		 * conn options requires a brute force search.
+		 *
+		 * XXX: huh!?! .whack_command should have excluded
+		 * everything?
 		 */
 		if ((opts_seen & CONN_OPT_SEEN) && !(opts_seen & END_OPT_SEEN)) {
 			bool scrub = false;
@@ -2223,8 +2230,6 @@ int main(int argc, char **argv)
 				opts_seen &= ~CONN_OPT_SEEN;
 			}
 		}
-	} else if (seen[OPT_OPPO_HERE] || seen[OPT_OPPO_THERE]) {
-		diagw("--oppohere and --oppothere must be used together");
 	}
 
 	/* check connection description */

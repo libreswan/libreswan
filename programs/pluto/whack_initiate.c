@@ -95,7 +95,7 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 			      });
 }
 
-void whack_oppo_initiate(const struct whack_message *m, struct show *s)
+void whack_acquire(const struct whack_message *wm, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 
@@ -105,20 +105,22 @@ void whack_oppo_initiate(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	const struct ip_protocol *protocol = protocol_from_ipproto(m->oppo.ipproto);
+	const struct whack_acquire *wa = &wm->whack.acquire;
+
+	const struct ip_protocol *protocol = protocol_from_ipproto(wa->ipproto);
 	ip_packet packet = packet_from_raw(HERE,
-					   address_info(m->oppo.local.address),
-					   &m->oppo.local.address.bytes,
-					   &m->oppo.remote.address.bytes,
+					   address_info(wa->local.address),
+					   &wa->local.address.bytes,
+					   &wa->remote.address.bytes,
 					   protocol,
-					   m->oppo.local.port,
-					   m->oppo.remote.port);
+					   wa->local.port,
+					   wa->remote.port);
 
 	struct kernel_acquire b = {
 		.packet = packet,
 		.by_acquire = false,
 		.logger = logger, /*on-stack*/
-		.background = m->whack_async,
+		.background = wm->whack_async,
 		.sec_label = null_shunk,
 	};
 
