@@ -287,14 +287,21 @@ static void diagq(err_t ugh, const char *this)
 static void whack_command(struct whack_message *wm, enum whack_command command)
 {
 	static unsigned last_index;
-	if (wm->whack_command != 0) {
-		fprintf(stderr, "whack error: conflicing command options '--%s' and '--%s'\n",
-			optarg_options[last_index].name,
-			optarg_options[optarg_index].name);
-		exit(RC_WHACK_PROBLEM);
+	if (wm->whack_command == 0) {
+		wm->whack_command = command;
+		last_index = optarg_index;
+		return;
 	}
-	wm->whack_command = command;
-	last_index = optarg_index;
+
+	if (wm->whack_command == command) {
+		/* for instance --oppo{here,there} */
+		return;
+	}
+
+	fprintf(stderr, "whack error: conflicing command options '--%s' and '--%s'\n",
+		optarg_options[last_index].name,
+		optarg_options[optarg_index].name);
+	exit(RC_WHACK_PROBLEM);
 }
 
 /*
