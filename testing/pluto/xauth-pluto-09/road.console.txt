@@ -17,7 +17,7 @@ road #
 road #
  ipsec whack --status | grep modecfg-road-eastnet-psk
 "modecfg-road-eastnet-psk": 192.1.3.209[@roadrandom]---192.1.3.254...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-"modecfg-road-eastnet-psk":   host: oriented; local: 192.1.3.209; remote: 192.1.2.23;
+"modecfg-road-eastnet-psk":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: 192.1.2.23;
 "modecfg-road-eastnet-psk":   my_updown=ipsec _updown;
 "modecfg-road-eastnet-psk":   xauth us:client, xauth them:server, my_username=[any]; their_username=[any]
 "modecfg-road-eastnet-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
