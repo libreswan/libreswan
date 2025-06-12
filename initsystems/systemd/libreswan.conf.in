@@ -1,1 +1,2 @@
 d @@RUNDIR@@ 755 root root -
+d @@IPSEC_NSSDIR@@ 700 root root -

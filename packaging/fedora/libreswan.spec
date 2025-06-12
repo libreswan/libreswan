@@ -186,18 +186,18 @@ certutil -N -d sql:$tmpdir --empty-password
 %license COPYING LICENSE
 %doc CHANGES CREDITS README*
 %doc docs/*.* docs/examples
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
+%config(noreplace) %{_sysconfdir}/ipsec.conf
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%attr(0644,root,root) %config(noreplace) %{_sysctldir}/50-libreswan.conf
-%attr(0755,root,root) %dir %{_rundir}/pluto
-%attr(0700,root,root) %dir %{_sharedstatedir}/ipsec
+%config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%config(noreplace) %{_sysctldir}/50-libreswan.conf
+%dir %{_rundir}/pluto
+%dir %{_sharedstatedir}/ipsec
 %attr(0700,root,root) %dir %{_sharedstatedir}/ipsec/nss
-%attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
-%attr(0644,root,root) %{_unitdir}/ipsec.service
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
+%{_tmpfilesdir}/libreswan.conf
+%{_unitdir}/ipsec.service
+%config(noreplace) %{_sysconfdir}/pam.d/pluto
 %config(noreplace) %{_sysconfdir}/logrotate.d/libreswan
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec

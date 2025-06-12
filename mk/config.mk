@@ -455,8 +455,6 @@ TRANSFORMS += 's:@@EXAMPLE_LOGROTATEDDIR@@:$(EXAMPLE_LOGROTATEDDIR):g'
 
 # Where nss databases go
 NSSDIR ?= $(VARDIR)/lib/ipsec/nss
-# RHEL/CentOS <= 8 and Fedora <= 32 uses /etc/ipsec.d
-# NSSDIR ?= /etc/ipsec.d
 TRANSFORMS += 's:@@IPSEC_NSSDIR@@:$(NSSDIR):g'
 USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(NSSDIR)\"
 
