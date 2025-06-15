@@ -37,7 +37,6 @@ enum config_setup_keyword {
 	 */
 	KSF_CURLIFACE = 1,
 	KSF_VIRTUAL_PRIVATE,
-	KSF_SYSLOG,
 	KSF_DUMPDIR,
 	KSF_STATSBIN,
 	KSF_IPSECDIR,

@@ -92,7 +92,6 @@ static const struct keyword_def config_setup_keyword[] = {
   K("curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL),
 
   K("myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL),
-  K("syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL),
 
   K("plutodebug",  kv_config, kt_string, KSF_PLUTODEBUG, NULL),
 
@@ -182,6 +181,7 @@ static const struct keyword_def config_setup_keyword[] = {
 
   /* obsolete config setup options */
 
+  { "syslog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* never went anywhere! */
   { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
   { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
   { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
