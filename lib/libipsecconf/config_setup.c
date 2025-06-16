@@ -404,83 +404,82 @@ bool load_config_setup(const char *file,
 }
 
 static const struct keyword_def config_setup_keyword[] = {
-#define K(KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME) [FIELD] = { KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME }
-#define kv_config LEMPTY
+#define K(KEYNAME, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
 
-  K("ikev1-policy",  kv_config,  kt_sparse_name,  KBF_IKEv1_POLICY, &global_ikev1_policy_names),
-  K("curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL),
+  K("ikev1-policy",  kt_sparse_name,  KBF_IKEv1_POLICY, .sparse_names = &global_ikev1_policy_names),
+  K("curl-iface",  kt_string,  KSF_CURLIFACE),
 
-  K("myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL),
+  K("myvendorid",  kt_string,  KSF_MYVENDORID),
 
-  K("plutodebug",  kv_config, kt_string, KSF_PLUTODEBUG, NULL),
+  K("plutodebug", kt_string, KSF_PLUTODEBUG),
 
-  K("logfile",  kv_config,  kt_string,  KSF_LOGFILE, NULL),
-  K("logtime",  kv_config,  kt_sparse_name,  KYN_LOGTIME, &yn_option_names),
-  K("logappend",  kv_config,  kt_sparse_name,  KYN_LOGAPPEND, &yn_option_names),
-  K("logip",  kv_config,  kt_sparse_name,  KYN_LOGIP, &yn_option_names),
-  K("audit-log",  kv_config,  kt_sparse_name,  KYN_AUDIT_LOG, &yn_option_names),
+  K("logfile",  kt_string,  KSF_LOGFILE),
+  K("logtime",  kt_sparse_name,  KYN_LOGTIME, .sparse_names = &yn_option_names),
+  K("logappend",  kt_sparse_name,  KYN_LOGAPPEND, .sparse_names = &yn_option_names),
+  K("logip",  kt_sparse_name,  KYN_LOGIP, .sparse_names = &yn_option_names),
+  K("audit-log",  kt_sparse_name,  KYN_AUDIT_LOG, .sparse_names = &yn_option_names),
 #ifdef USE_DNSSEC
-  K("dnssec-enable",  kv_config,  kt_sparse_name,  KYN_DNSSEC_ENABLE, &yn_option_names),
-  K("dnssec-rootkey-file",  kv_config,  kt_string, KSF_DNSSEC_ROOTKEY_FILE, NULL),
-  K("dnssec-anchors",  kv_config,  kt_string, KSF_DNSSEC_ANCHORS, NULL),
+  K("dnssec-enable",  kt_sparse_name,  KYN_DNSSEC_ENABLE, .sparse_names = &yn_option_names),
+  K("dnssec-rootkey-file",  kt_string, KSF_DNSSEC_ROOTKEY_FILE),
+  K("dnssec-anchors",  kt_string, KSF_DNSSEC_ANCHORS),
 #endif
-  K("dumpdir",  kv_config,  kt_string,  KSF_DUMPDIR, NULL),
-  K("ipsecdir",  kv_config,  kt_string,  KSF_IPSECDIR, NULL),
-  K("nssdir", kv_config, kt_string, KSF_NSSDIR, NULL),
-  K("rundir", kv_config|kv_ignore, kt_string, KSF_RUNDIR, NULL),
-  K("logstderr", kv_config|kv_ignore, kt_string, KYN_LOGSTDERR, NULL),
-  K("secretsfile",  kv_config,  kt_string,  KSF_SECRETSFILE, NULL),
-  K("statsbin",  kv_config,  kt_string,  KSF_STATSBIN, NULL),
-  K("uniqueids",  kv_config,  kt_sparse_name,  KYN_UNIQUEIDS, &yn_option_names),
-  K("shuntlifetime",  kv_config,  kt_seconds,  KBF_SHUNTLIFETIME, NULL),
+  K("dumpdir",  kt_string,  KSF_DUMPDIR),
+  K("ipsecdir",  kt_string,  KSF_IPSECDIR),
+  K("nssdir", kt_string, KSF_NSSDIR),
+  K("rundir", kt_string, KSF_RUNDIR, .validity = kv_ignore),
+  K("logstderr", kt_string, KYN_LOGSTDERR, .validity = kv_ignore),
+  K("secretsfile",  kt_string,  KSF_SECRETSFILE),
+  K("statsbin",  kt_string,  KSF_STATSBIN),
+  K("uniqueids",  kt_sparse_name,  KYN_UNIQUEIDS, .sparse_names = &yn_option_names),
+  K("shuntlifetime",  kt_seconds,  KBF_SHUNTLIFETIME),
 
-  K("global-redirect", kv_config, kt_sparse_name, KBF_GLOBAL_REDIRECT, &global_redirect_names),
-  K("global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL),
+  K("global-redirect", kt_sparse_name, KBF_GLOBAL_REDIRECT, .sparse_names = &global_redirect_names),
+  K("global-redirect-to", kt_string, KSF_GLOBAL_REDIRECT_TO),
 
-  K("crl-strict",  kv_config,  kt_sparse_name,  KYN_CRL_STRICT, &yn_option_names),
-  K("crlcheckinterval",  kv_config,  kt_seconds,  KBF_CRL_CHECKINTERVAL, NULL),
-  K("crl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL),
+  K("crl-strict",  kt_sparse_name,  KYN_CRL_STRICT, .sparse_names = &yn_option_names),
+  K("crlcheckinterval",  kt_seconds,  KBF_CRL_CHECKINTERVAL),
+  K("crl-timeout",  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS),
 
-  K("ocsp-strict",  kv_config,  kt_sparse_name,  KYN_OCSP_STRICT, &yn_option_names),
-  K("ocsp-enable",  kv_config,  kt_sparse_name,  KYN_OCSP_ENABLE, &yn_option_names),
-  K("ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI, NULL),
-  K("ocsp-timeout",  kv_config,  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS, NULL),
-  K("ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL),
-  K("ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL),
-  K("ocsp-cache-min-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS, NULL),
-  K("ocsp-cache-max-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS, NULL),
-  K("ocsp-method",  kv_config,  kt_sparse_name,  KBF_OCSP_METHOD, &ocsp_method_names),
+  K("ocsp-strict",  kt_sparse_name,  KYN_OCSP_STRICT, .sparse_names = &yn_option_names),
+  K("ocsp-enable",  kt_sparse_name,  KYN_OCSP_ENABLE, .sparse_names = &yn_option_names),
+  K("ocsp-uri",  kt_string,  KSF_OCSP_URI),
+  K("ocsp-timeout",  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS),
+  K("ocsp-trustname",  kt_string,  KSF_OCSP_TRUSTNAME),
+  K("ocsp-cache-size",  kt_unsigned,  KBF_OCSP_CACHE_SIZE),
+  K("ocsp-cache-min-age",  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS),
+  K("ocsp-cache-max-age",  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS),
+  K("ocsp-method",  kt_sparse_name,  KBF_OCSP_METHOD, .sparse_names = &ocsp_method_names),
 
 #ifdef USE_SECCOMP
-  K("seccomp",  kv_config,  kt_sparse_name,  KBF_SECCOMP,  &seccomp_mode_names),
+  K("seccomp",  kt_sparse_name,  KBF_SECCOMP,  &seccomp_mode_names),
 #endif
 
-  K("ddos-mode",  kv_config,  kt_sparse_name,  KBF_DDOS_MODE, &ddos_mode_names),
-  K("ddos-ike-threshold",  kv_config,  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD, NULL),
-  K("max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL),
+  K("ddos-mode",  kt_sparse_name,  KBF_DDOS_MODE, .sparse_names = &ddos_mode_names),
+  K("ddos-ike-threshold",  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD),
+  K("max-halfopen-ike",  kt_unsigned,  KBF_MAX_HALFOPEN_IKE),
 
-  K("ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKE_SOCKET_BUFSIZE, NULL),
-  K("ike-socket-errqueue",  kv_config,  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, &yn_option_names),
+  K("ike-socket-bufsize",  kt_unsigned,  KBF_IKE_SOCKET_BUFSIZE),
+  K("ike-socket-errqueue",  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, .sparse_names = &yn_option_names),
 #ifdef XFRM_LIFETIME_DEFAULT
-  K("expire-lifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL),
+  K("expire-lifetime",  kt_seconds,  KBF_EXPIRE_LIFETIME),
 #endif
-  K("virtual-private",  kv_config,  kt_string,  KSF_VIRTUAL_PRIVATE, NULL),
-  K("seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL),
-  K("keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL),
+  K("virtual-private",  kt_string,  KSF_VIRTUAL_PRIVATE),
+  K("seedbits",  kt_unsigned,  KBF_SEEDBITS),
+  K("keep-alive",  kt_seconds,  KBF_KEEP_ALIVE),
 
-  K("listen-tcp", kv_config, kt_sparse_name, KYN_LISTEN_TCP, &yn_option_names),
-  K("listen-udp", kv_config, kt_sparse_name, KYN_LISTEN_UDP, &yn_option_names),
+  K("listen-tcp", kt_sparse_name, KYN_LISTEN_TCP, .sparse_names = &yn_option_names),
+  K("listen-udp", kt_sparse_name, KYN_LISTEN_UDP, .sparse_names = &yn_option_names),
 
-  K("listen",  kv_config,  kt_string,  KSF_LISTEN, NULL),
-  K("protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL),
-  K("nhelpers",  kv_config,  kt_unsigned,  KBF_NHELPERS, NULL),
-  K("drop-oppo-null",  kv_config,  kt_sparse_name,  KYN_DROP_OPPO_NULL, &yn_option_names),
-  K("expire-shunt-interval", kv_config, kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL, NULL),
+  K("listen",  kt_string,  KSF_LISTEN),
+  K("protostack",  kt_string,  KSF_PROTOSTACK,  NULL),
+  K("nhelpers",  kt_unsigned,  KBF_NHELPERS),
+  K("drop-oppo-null",  kt_sparse_name,  KYN_DROP_OPPO_NULL, .sparse_names = &yn_option_names),
+  K("expire-shunt-interval", kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL),
 
-  K("ipsec-interface-managed", kv_config, kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, &yn_option_names),
+  K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
 
 #ifdef USE_NFLOG
-  K("nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL),
+  K("nflog-all",  kt_unsigned,  KBF_NFLOG_ALL),
 #endif
 
   /*
@@ -493,21 +492,24 @@ static const struct keyword_def config_setup_keyword[] = {
 
   /* alias for compatibility - undocumented on purpose */
 
-  { "curl-timeout",  kv_config | kv_alias,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, }, /* legacy */
+#define A(KEYNAME, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
+  A("curl-timeout", kt_seconds, KBF_CRL_TIMEOUT_SECONDS), /* legacy */
 #ifdef XFRM_LIFETIME_DEFAULT
-  { "xfrmlifetime",  kv_config | kv_alias,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, }, /* legacy */
+  A("xfrmlifetime", kt_seconds, KBF_EXPIRE_LIFETIME), /* legacy */
 #endif
 
   /* obsolete config setup options */
 
-  { "syslog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* never went anywhere! */
-  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
-  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
-  { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
+#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, .field = KNCF_OBSOLETE, ##__VA_ARGS__ }
+  O("syslog"), /* never went anywhere! */
+  O("plutostderrlog"), /* obsolete name, but very common :/ */
+  O("virtual_private"), /* obsolete variant, very common */
+  O("interfaces"), /* obsoleted but often present keyword */
+  O("ikev1-secctx-attr-type"),  /* obsolete: not a value, a type */
+  O("secctx-attr-type"),
 
-  { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },  /* obsolete: not a value, a type */
-  { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
-
+#undef O
+#undef A
 #undef K
 };
 
