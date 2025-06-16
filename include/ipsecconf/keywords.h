@@ -219,8 +219,6 @@ enum config_conn_keyword {
 
 /* these are bits set in a word */
 enum keyword_valid_ix {
-	KV_CONFIG_IX,           /* may be present in config section */
-	KV_CONN_IX,		/* may be present in conn section */
 	KV_LEFTRIGHT_IX,        /* comes in left-FOO and right-FOO
 				 * variants */
 	KV_BOTH_IX,		/* FOO means left-FOO and right-FOO */
@@ -231,8 +229,6 @@ enum keyword_valid_ix {
 };
 
 enum keyword_valid {
-        kv_config	= LELEM(KV_CONFIG_IX),
-        kv_conn		= LELEM(KV_CONN_IX),
         kv_leftright	= LELEM(KV_LEFTRIGHT_IX),
         kv_both		= LELEM(KV_BOTH_IX),
         kv_alias	= LELEM(KV_ALIAS_IX),

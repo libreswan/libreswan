@@ -296,7 +296,6 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		 * but we double check!
 		 */
 		const struct ipsec_conf_keyval *kv = &kw->keyval;
-		PASSERT(logger, kv->key->validity & kv_config);
 		enum config_setup_keyword f = kv->key->field;
 		shunk_t value = shunk1(kv->val);
 		diag_t d = NULL;
@@ -406,6 +405,7 @@ bool load_config_setup(const char *file,
 
 static const struct keyword_def config_setup_keyword[] = {
 #define K(KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME) [FIELD] = { KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME }
+#define kv_config LEMPTY
 
   K("ikev1-policy",  kv_config,  kt_sparse_name,  KBF_IKEv1_POLICY, &global_ikev1_policy_names),
   K("curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL),

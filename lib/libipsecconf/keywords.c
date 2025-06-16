@@ -87,6 +87,7 @@ static const struct sparse_names kw_phase2types_names = {
 
 static const struct keyword_def config_conn_keyword[] = {
 #define K(KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME) [FIELD] = { KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME }
+#define kv_conn LEMPTY
 
   /*
    * This is "left=" and "right="

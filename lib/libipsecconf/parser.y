@@ -668,7 +668,6 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 
 	zero(key);
 
-	lset_t section = (parser->section == SECTION_CONFIG_SETUP ? kv_config : kv_conn);
 	const struct keywords_def *keywords =
 		(parser->section == SECTION_CONFIG_SETUP ? &config_setup_keywords :
 		 &config_conn_keywords);
@@ -681,10 +680,6 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 		}
 
 		if (k->validity & kv_ignore) {
-			continue;
-		}
-
-		if ((k->validity & section) == LEMPTY) {
 			continue;
 		}
 
@@ -785,7 +780,7 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	/* fill in once look succeeds */
 	PEXPECT(parser->logger, key.val == NULL);
 
-	if (key.key->validity & kv_config) {
+	if (parser->section == SECTION_CONFIG_SETUP) {
 		/*
 		 * Throw everything onto the end of the list:
 		 *
