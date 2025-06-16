@@ -3364,6 +3364,75 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 	return ike_version;
 }
 
+static diag_t extract_encap_alg(const char **encap_alg,
+				const char *name, const char *value,
+				const struct whack_message *wm)
+{
+	if (wm->phase2alg == NULL) {
+		(*encap_alg) = value; /* could be NULL */
+		return NULL;
+	}
+	if (value == NULL) {
+		(*encap_alg) = wm->phase2alg; /* can't be NULL */
+		return NULL;
+	}
+	return diag("'%s=%s conficts with 'phase2alg=%s'",
+		    name, value, wm->phase2alg);
+}
+
+static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **encap_alg,
+				  const struct whack_message *wm, struct logger *logger)
+{
+	if (never_negotiate_enum_option("", "phase2", wm->phase2,
+					&encap_proto_story, wm, logger)) {
+		ldbg(logger, "never-negotiate phase2");
+		(*encap_proto) = ENCAP_PROTO_UNSET;
+		(*encap_alg) = NULL;
+		return NULL;
+	}
+
+	/*
+	 * Given phase2=... esp=... ah=..., pick the one that matches
+	 * phase2=...
+	 */
+
+	(*encap_proto) = wm->phase2;
+
+	switch ((*encap_proto)) {
+
+	case ENCAP_PROTO_AH:
+		return extract_encap_alg(encap_alg, "ah", wm->ah, wm);
+
+	case ENCAP_PROTO_ESP:
+		return extract_encap_alg(encap_alg, "esp", wm->esp, wm);
+
+	case ENCAP_PROTO_UNSET:
+		if (wm->ah == NULL && wm->esp == NULL) {
+			(*encap_alg) = wm->phase2alg;
+			(*encap_proto) = ENCAP_PROTO_ESP;
+			break;
+		}
+
+		if (wm->ah != NULL) {
+			(*encap_proto) = ENCAP_PROTO_AH;
+			(*encap_alg) = wm->ah;
+			break;
+		}
+
+		if (wm->esp != NULL) {
+			(*encap_proto) = ENCAP_PROTO_ESP;
+			(*encap_alg) = wm->esp;
+			break;
+		}
+
+		return diag("can not distinguish between 'ah=%s' and 'esp=%s' without 'phase2='",
+			    wm->ah, wm->esp);
+	}
+
+	return NULL;
+}
+
+
 static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c,
 				 struct config *config)
@@ -3532,16 +3601,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 				   wm, c->logger);
 	config->child_sa.ipcomp = compress;
 
-	/* sanity check?  done below */
-	enum encap_proto encap_proto;
-	if (never_negotiate_enum_option("", "phase2", wm->phase2,
-					&encap_proto_story, wm, c->logger)) {
-		ldbg(c->logger, "never-negotiate phase2");
-		encap_proto = ENCAP_PROTO_UNSET;
-	} else {
-		encap_proto = (wm->phase2 == ENCAP_PROTO_UNSET ? ENCAP_PROTO_ESP :
-			       wm->phase2);
+	/*
+	 * Extract the encapsulation protocol ESP/AH.
+	 */
+
+	enum encap_proto encap_proto = ENCAP_PROTO_UNSET;
+	const char *encap_alg = NULL;
+	d = extract_encap_proto(&encap_proto, &encap_alg, wm, c->logger);
+	if (d != NULL) {
+		return d;
 	}
+
 	config->child_sa.encap_proto = encap_proto;
 
 	enum encap_mode encap_mode;
@@ -3781,9 +3851,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 			return diag("IPTFS is not compatible with type=transport");
 		}
 		if (encap_proto != ENCAP_PROTO_ESP) {
-			name_buf sb;
-			return diag("IPTFS is not compatible with phase2=%s",
-				    str_enum_long(&encap_proto_story, wm->phase2, &sb));
+			name_buf eb;
+			return diag("IPTFS is not compatible with %s=",
+				    str_enum_short(&encap_proto_story, encap_proto, &eb));
 		}
 
 		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(c->logger);
@@ -4316,10 +4386,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* ESP or AH cipher suites (but not both) */
 
-	if (never_negotiate_string_option("", "esp", wm->esp, wm, c->logger)) {
-		ldbg(c->logger, "never-negotiate esp");
-	} else  {
-		PEXPECT(c->logger, encap_proto != ENCAP_PROTO_UNSET);
+	if (encap_proto != ENCAP_PROTO_UNSET) {
 
 		const struct proposal_policy proposal_policy = {
 			/*
@@ -4337,7 +4404,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.logger_rc_flags = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */
-			.ignore_parser_errors = (wm->esp == NULL),
+			.ignore_parser_errors = (encap_alg == NULL),
 		};
 
 		/*
@@ -4352,7 +4419,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			NULL;
 		passert(fn != NULL);
 		struct proposal_parser *parser = fn(&proposal_policy);
-		config->child_sa.proposals.p = proposals_from_str(parser, wm->esp);
+		config->child_sa.proposals.p = proposals_from_str(parser, encap_alg);
 		if (c->config->child_sa.proposals.p == NULL) {
 			pexpect(parser->diag != NULL);
 			diag_t d = parser->diag; parser->diag = NULL;

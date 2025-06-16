@@ -240,7 +240,6 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("auto",  kv_conn,  kt_sparse_name,  KNCF_AUTO, &autostart_names),
   K("also",  kv_conn | kv_duplicateok,  kt_also,  KSCF_ALSO, NULL),
-  K("ike",  kv_conn,  kt_string,  KWS_IKE, NULL),
   K("hostaddrfamily",  kv_conn,  kt_string,  KWS_HOSTADDRFAMILY, NULL),
   K("type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names),
   K("authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL),
@@ -339,9 +338,11 @@ static const struct keyword_def config_conn_keyword[] = {
   K("connalias",  kv_conn,  kt_appendstring,  KSCF_CONNALIAS, NULL),
 
   /* attributes of the phase2 policy */
-  K("esp",  kv_conn,  kt_string,  KWS_ESP, NULL),
-
-  K("phase2",  kv_conn,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names),
+  K("ike",  kv_conn,  kt_string, KWS_IKE, NULL),
+  K("esp",  kv_conn,  kt_string, KWS_ESP, NULL),
+  K("ah",  kv_conn,  kt_string, KWS_AH, NULL),
+  K("phase2",  kv_conn,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names), /*obsolete*/
+  K("phase2alg", kv_conn,  kt_string, KWS_PHASE2ALG, NULL), /* obsolete */
 
   K("compress",  kv_conn,  kt_sparse_name,  KWYN_COMPRESS, &yn_option_names),
 
@@ -379,7 +380,6 @@ static const struct keyword_def config_conn_keyword[] = {
   { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, },
   { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
   { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
-  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },	/* obsolete */
   { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KWS_DPDTIMEOUT, NULL, }, /* old name */
 #ifdef USE_NFLOG
   { "nflog",  kv_conn | kv_alias,  kt_string,  KWS_NFLOG_GROUP, NULL, }, /* old-name */
@@ -387,7 +387,6 @@ static const struct keyword_def config_conn_keyword[] = {
   { "salifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright | kv_alias,  kt_string,  KWS_USERNAME, NULL, }, /* old alias */
-  { "ah",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },
   { "policy-label",  kv_conn | kv_alias,  kt_string,  KWS_SEC_LABEL, NULL, }, /* obsolete variant */
   /* another alias used by NetworkManager-libreswan :/ */
   { "remote_peer_type",  kv_conn | kv_alias,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, },
