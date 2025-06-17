@@ -45,8 +45,5 @@
       command <command>ipsec algparse ah=...</command> can be used to
       query these defaults.
     </para>
-    <para>
-      This option replaces phase2alg= option for ah.
-    </para>
   </listitem>
 </varlistentry>

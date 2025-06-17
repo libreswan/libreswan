@@ -5,7 +5,8 @@
   <listitem>
     <para>
       Specifies the algorithms that will be offered/accepted when
-      negotiating a a Child SA.  The general syntax is:
+      negotiating a Child SA with ESP encapsulation.  The general
+      syntax is:
     </para>
     <para>
       <!-- should use EBNF -->
@@ -22,22 +23,24 @@
       algorithms.
     </para>
     <para>
-      Specifying the DH algorithms explicitly is
-      <option>not</option> recommended.  When PFS is enabled, and
-      the DH algorithms are omitted, each PROPOSAL will automatically
-      include the DH algorithm negotiated during the IKE exchange.
+      Specifying the DH algorithms explicitly is <option>not</option>
+      recommended.  When PFS is enabled, and the DH algorithms are
+      omitted, each PROPOSAL will automatically include the DH
+      algorithm negotiated during the IKE exchange.
     </para>
     <para>
       AEAD algorithms such as AES_GCM and AES_CCM do not not require a
-      separate integrity algorithm.  For example <option>esp=aes_gcm256</option>
-      or <option>esp=aes_ccm</option>.
+      separate integrity algorithm.  For example
+      <option>esp=aes_gcm256</option> or <option>esp=aes_ccm</option>.
     </para>
     <para>
-      Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte ICV versions.
-      RFC 8221 only requires AES_GCM with 16 byte ICV and AES_CCM with 8 byte ICV
-      to be implemented, and "aes_gcm" and "aes_ccm" refer to these variants. The
-      other variants can be specified using an _a (8), _b(12) or _c(16) postfix,
-      eg esp=aes_gcm_a for the 8 byte ICV and esp=aes_gcm_b for the 12 byte ICV.
+      Note that AES_GCM and AES_CCM for ESP come in 8, 12 and 16 byte
+      ICV versions.  RFC 8221 only requires AES_GCM with 16 byte ICV
+      and AES_CCM with 8 byte ICV to be implemented, and "aes_gcm" and
+      "aes_ccm" refer to these variants. The other variants can be
+      specified using an _a (8), _b(12) or _c(16) postfix, eg
+      esp=aes_gcm_a for the 8 byte ICV and esp=aes_gcm_b for the 12
+      byte ICV.
     </para>
     <para>
       For instance:
@@ -53,9 +56,6 @@
       program <command>ipsec algparse</command> can be used to query
       these defaults for instance: <command>ipsec algparse
       esp=</command> (see &ipsec-algparse.8;).
-    </para>
-    <para>
-      This option replaces phase2alg= option for esp.
     </para>
   </listitem>
 </varlistentry>
