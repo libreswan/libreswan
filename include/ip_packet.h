@@ -32,8 +32,9 @@ struct jambuf;
 
 typedef struct {
 	bool is_set;
-	const struct ip_info *info; /* 0, 4, 6 */
-	const struct ip_protocol *protocol;
+	enum ip_version ip_version;
+	unsigned ipproto;
+
 	struct {
 		struct ip_bytes bytes;
 		/*
@@ -46,13 +47,13 @@ typedef struct {
 	/*XXX sec_label?*/
 } ip_packet;
 
-#define PRI_PACKET "<packet-%s:%s["PRI_IP_BYTES"]:%u-%s->["PRI_IP_BYTES"]:%u>"
+#define PRI_PACKET "<packet-%s:IPv%d["PRI_IP_BYTES"]:%u-%u->["PRI_IP_BYTES"]:%u>"
 #define pri_packet(S)							\
-		((S)->is_set ? "set" : "unset"),			\
-		(S)->info != NULL ? (S)->info->ip_name : "IPv?",	\
+	((S)->is_set ? "set" : "unset"),				\
+		(S)->ip_version,					\
 		pri_ip_bytes((S)->src.bytes),				\
 		(S)->src.hport,						\
-		(S)->protocol != NULL ? (S)->protocol->name : "<null>",	\
+		(S)->ipproto,						\
 		pri_ip_bytes((S)->dst.bytes),				\
 		(S)->dst.hport
 
@@ -84,6 +85,11 @@ ip_packet packet_from_raw(where_t where,
  */
 
 extern const ip_packet unset_packet;
+
+bool packet_is_unset(const ip_packet *packet);			/* handles NULL */
+const struct ip_info *packet_type(const ip_packet *packet);	/* handles NULL */
+const struct ip_info *packet_info(const ip_packet packet);
+const struct ip_protocol *packet_protocol(const ip_packet packet);
 
 /* attributes */
 

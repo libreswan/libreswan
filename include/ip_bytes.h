@@ -94,19 +94,6 @@ int ip_bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 
 bool ip_bytes_is_zero(const struct ip_bytes *bytes);
 
-#define IP_INFO_UNSET(IP)			\
-	(IP == NULL ? "null" :			\
-	 !IP->is_set ? "unset" :		\
-	 IP->info == NULL ? "family-unset" :	\
-	 NULL)
-
-#define IP_INFO_PROTOCOL_UNSET(IP)			\
-	(IP == NULL ? "null" :				\
-	 !IP->is_set ? "unset" :			\
-	 IP->info == NULL ? "family-unset" :		\
-	 IP->protocol == NULL ? "protocol-unset" :	\
-	 NULL)
-
 size_t jam_ip_bytes_range(struct jambuf *buf,
 			  const struct ip_info *afi,
 			  const struct ip_bytes lo,
