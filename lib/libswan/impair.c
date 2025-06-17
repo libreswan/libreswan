@@ -372,6 +372,8 @@ struct impairment impairments[] = {
 	B(install_ipsec_sa_outbound_state, "error after installing the outbound IPsec SA state (but before policy)"),
 	B(install_ipsec_sa_outbound_policy, "error after installing the outbound IPsec SA policy (and state)"),
 
+	B(ignore_viable_parent, "always initiate a new IKE SA (ignoring any existing viable parent)"),
+
 #undef U
 #undef B
 #undef V

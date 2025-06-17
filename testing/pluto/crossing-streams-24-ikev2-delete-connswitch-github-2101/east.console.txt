@@ -1,0 +1,38 @@
+/testing/guestbin/swan-prep --nokey
+Creating empty NSS database
+east #
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
+    inet 192.0.20.254/24 scope global eth0
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair suppress_retransmits
+east #
+ ipsec add a
+"a": added IKEv2 connection
+east #
+ ipsec add b
+"b": added IKEv2 connection
+east #
+ ipsec up b
+"b" #3: initiating Child SA using IKE SA #1
+"b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
+"b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+east #
+ # non-zero counts confirm encrypted traffic flowing
+east #
+ ipsec trafficstatus
+east #
+ # do things line up?
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
+src 192.0.20.0/24 dst 192.0.3.254/32
+	dir out action block priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+east #

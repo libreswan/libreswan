@@ -343,6 +343,17 @@ void initiate(struct connection *c,
 	struct ike_sa *ike = find_viable_parent_for_connection(c);
 
 	/*
+	 * Force a new IKE SA by ignoring viable parent?
+	 */
+	if (ike != NULL && impair.ignore_viable_parent) {
+		state_buf sb;
+		llog(RC_LOG, logger, "IMPAIR: ignoring viable %s "PRI_STATE,
+		     ike->sa.st_connection->config->ike_info->parent_sa_name,
+		     pri_state(&ike->sa, &sb));
+		ike = NULL;
+	}
+
+	/*
 	 * There's no viable IKE (parent) SA, initiate a new one.
 	 */
 
