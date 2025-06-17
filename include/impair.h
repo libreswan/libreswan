@@ -195,6 +195,8 @@ struct impair {
 	bool record_inbound;
 	bool record_outbound;
 
+	bool ignore_viable_parent;
+
 	/*
 	 * add more here
 	 */
