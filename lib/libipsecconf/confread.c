@@ -404,7 +404,10 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	return conn;
 }
 
+enum config_section { CONFIG_SETUP, CONFIG_CONN };
+
 static void check_config_keywords(struct logger *logger,
+				  const enum config_section section,
 				  const struct keywords_def *keywords)
 {
 	static bool checked;
@@ -423,8 +426,8 @@ static void check_config_keywords(struct logger *logger,
 		}
 	}
 
-	enum { SETUP, CONN } config = SETUP;
 	enum { NAME, ALIAS, OBSOLETE } group = NAME;
+
 	ITEMS_FOR_EACH(k, keywords) {
 
 		/*
@@ -440,27 +443,22 @@ static void check_config_keywords(struct logger *logger,
 
 		switch (group) {
 		case NAME:
-			if (config == SETUP && k->validity & kv_conn) {
-				config = CONN;
-			}
 			if (k->validity & kv_alias) {
 				group = ALIAS;
-				config = SETUP;
-			}
-			break;
-		case ALIAS:
-			if (config == SETUP && k->validity & kv_conn) {
-				config = CONN;
+				break;
 			}
 			if (k->field == KNCF_OBSOLETE) {
 				group = OBSOLETE;
-				config = SETUP;
+				break;
+			}
+			break;
+		case ALIAS:
+			if (k->field == KNCF_OBSOLETE) {
+				group = OBSOLETE;
+				break;
 			}
 			break;
 		case OBSOLETE:
-			if (config == SETUP && k->validity & kv_conn) {
-				config = CONN;
-			}
 			break;
 		}
 
@@ -474,20 +472,18 @@ static void check_config_keywords(struct logger *logger,
 		ok &= pexpect(group == NAME ? i == k->field : i > k->field);
 		ok &= pexpect(group == OBSOLETE ? k->sparse_names == NULL : true);
 
-		if (k->validity & kv_config) {
-			ok &= pexpect(config == SETUP);
+		switch (section) {
+		case CONFIG_SETUP:
 			ok &= pexpect((k->field >= CONFIG_SETUP_KEYWORD_FLOOR &&
 				       k->field < CONFIG_SETUP_KEYWORD_ROOF) ||
 				      k->field == KNCF_OBSOLETE);
-			ok &= pexpect((k->validity & (kv_conn | kv_leftright | kv_both)) == LEMPTY);
-		}
-
-		if (k->validity & kv_conn) {
-			ok &= pexpect(config == CONN);
+			ok &= pexpect((k->validity & (kv_leftright | kv_both)) == LEMPTY);
+			break;
+		case CONFIG_CONN:
 			ok &= pexpect((k->field >= CONFIG_CONN_KEYWORD_FLOOR &&
 				       k->field < CONFIG_CONN_KEYWORD_ROOF) ||
 				      k->field == KNCF_OBSOLETE);
-			ok &= pexpect((k->validity & (kv_config)) == LEMPTY);
+			break;
 		}
 
 		/* above checked k->field in range; check things,
@@ -505,8 +501,8 @@ static void check_config_keywords(struct logger *logger,
 				     i, k->field,
 				     k->keyname,
 				     (i > 0 ? keywords->item[i-1].keyname : "???"),
-				     (config == SETUP ? "setup" :
-				      config == CONN ? "conn" :
+				     (section == CONFIG_SETUP ? "setup" :
+				      section == CONFIG_CONN ? "conn" :
 				      "???"),
 				     (group == NAME ? "name" :
 				      group == ALIAS ? "alias" :
@@ -519,8 +515,8 @@ static void check_config_keywords(struct logger *logger,
 
 static void check_ipsec_conf_keywords(struct logger *logger)
 {
-	check_config_keywords(logger, &config_setup_keywords);
-	check_config_keywords(logger, &config_conn_keywords);
+	check_config_keywords(logger, CONFIG_SETUP, &config_setup_keywords);
+	check_config_keywords(logger, CONFIG_CONN, &config_conn_keywords);
 }
 
 

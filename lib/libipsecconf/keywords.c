@@ -85,286 +85,179 @@ static const struct sparse_names kw_phase2types_names = {
  * MASTER KEYWORD LIST
  */
 
-static const struct keyword_def config_setup_keyword[] = {
-#define K(KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME) [FIELD] = { KEYNAME, VALIDITY, TYPE, FIELD, SPARSE_NAME }
-
-  K("ikev1-policy",  kv_config,  kt_sparse_name,  KBF_IKEv1_POLICY, &global_ikev1_policy_names),
-  K("curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL),
-
-  K("myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL),
-
-  K("plutodebug",  kv_config, kt_string, KSF_PLUTODEBUG, NULL),
-
-  K("logfile",  kv_config,  kt_string,  KSF_LOGFILE, NULL),
-  K("logtime",  kv_config,  kt_sparse_name,  KYN_LOGTIME, &yn_option_names),
-  K("logappend",  kv_config,  kt_sparse_name,  KYN_LOGAPPEND, &yn_option_names),
-  K("logip",  kv_config,  kt_sparse_name,  KYN_LOGIP, &yn_option_names),
-  K("audit-log",  kv_config,  kt_sparse_name,  KYN_AUDIT_LOG, &yn_option_names),
-#ifdef USE_DNSSEC
-  K("dnssec-enable",  kv_config,  kt_sparse_name,  KYN_DNSSEC_ENABLE, &yn_option_names),
-  K("dnssec-rootkey-file",  kv_config,  kt_string, KSF_DNSSEC_ROOTKEY_FILE, NULL),
-  K("dnssec-anchors",  kv_config,  kt_string, KSF_DNSSEC_ANCHORS, NULL),
-#endif
-  K("dumpdir",  kv_config,  kt_string,  KSF_DUMPDIR, NULL),
-  K("ipsecdir",  kv_config,  kt_string,  KSF_IPSECDIR, NULL),
-  K("nssdir", kv_config, kt_string, KSF_NSSDIR, NULL),
-  K("rundir", kv_config|kv_ignore, kt_string, KSF_RUNDIR, NULL),
-  K("logstderr", kv_config|kv_ignore, kt_string, KYN_LOGSTDERR, NULL),
-  K("secretsfile",  kv_config,  kt_string,  KSF_SECRETSFILE, NULL),
-  K("statsbin",  kv_config,  kt_string,  KSF_STATSBIN, NULL),
-  K("uniqueids",  kv_config,  kt_sparse_name,  KYN_UNIQUEIDS, &yn_option_names),
-  K("shuntlifetime",  kv_config,  kt_seconds,  KBF_SHUNTLIFETIME, NULL),
-
-  K("global-redirect", kv_config, kt_sparse_name, KBF_GLOBAL_REDIRECT, &global_redirect_names),
-  K("global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL),
-
-  K("crl-strict",  kv_config,  kt_sparse_name,  KYN_CRL_STRICT, &yn_option_names),
-  K("crlcheckinterval",  kv_config,  kt_seconds,  KBF_CRL_CHECKINTERVAL, NULL),
-  K("crl-timeout",  kv_config,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL),
-
-  K("ocsp-strict",  kv_config,  kt_sparse_name,  KYN_OCSP_STRICT, &yn_option_names),
-  K("ocsp-enable",  kv_config,  kt_sparse_name,  KYN_OCSP_ENABLE, &yn_option_names),
-  K("ocsp-uri",  kv_config,  kt_string,  KSF_OCSP_URI, NULL),
-  K("ocsp-timeout",  kv_config,  kt_seconds,  KBF_OCSP_TIMEOUT_SECONDS, NULL),
-  K("ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL),
-  K("ocsp-cache-size",  kv_config,  kt_unsigned,  KBF_OCSP_CACHE_SIZE, NULL),
-  K("ocsp-cache-min-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MIN_AGE_SECONDS, NULL),
-  K("ocsp-cache-max-age",  kv_config,  kt_seconds,  KBF_OCSP_CACHE_MAX_AGE_SECONDS, NULL),
-  K("ocsp-method",  kv_config,  kt_sparse_name,  KBF_OCSP_METHOD, &ocsp_method_names),
-
-#ifdef USE_SECCOMP
-  K("seccomp",  kv_config,  kt_sparse_name,  KBF_SECCOMP,  &seccomp_mode_names),
-#endif
-
-  K("ddos-mode",  kv_config,  kt_sparse_name,  KBF_DDOS_MODE, &ddos_mode_names),
-  K("ddos-ike-threshold",  kv_config,  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD, NULL),
-  K("max-halfopen-ike",  kv_config,  kt_unsigned,  KBF_MAX_HALFOPEN_IKE, NULL),
-
-  K("ike-socket-bufsize",  kv_config,  kt_unsigned,  KBF_IKE_SOCKET_BUFSIZE, NULL),
-  K("ike-socket-errqueue",  kv_config,  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, &yn_option_names),
-#ifdef XFRM_LIFETIME_DEFAULT
-  K("expire-lifetime",  kv_config,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL),
-#endif
-  K("virtual-private",  kv_config,  kt_string,  KSF_VIRTUAL_PRIVATE, NULL),
-  K("seedbits",  kv_config,  kt_unsigned,  KBF_SEEDBITS, NULL),
-  K("keep-alive",  kv_config,  kt_seconds,  KBF_KEEP_ALIVE, NULL),
-
-  K("listen-tcp", kv_config, kt_sparse_name, KYN_LISTEN_TCP, &yn_option_names),
-  K("listen-udp", kv_config, kt_sparse_name, KYN_LISTEN_UDP, &yn_option_names),
-
-  K("listen",  kv_config,  kt_string,  KSF_LISTEN, NULL),
-  K("protostack",  kv_config,  kt_string,  KSF_PROTOSTACK,  NULL),
-  K("nhelpers",  kv_config,  kt_unsigned,  KBF_NHELPERS, NULL),
-  K("drop-oppo-null",  kv_config,  kt_sparse_name,  KYN_DROP_OPPO_NULL, &yn_option_names),
-  K("expire-shunt-interval", kv_config, kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL, NULL),
-
-  K("ipsec-interface-managed", kv_config, kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, &yn_option_names),
-
-#ifdef USE_NFLOG
-  K("nflog-all",  kv_config,  kt_unsigned,  KBF_NFLOG_ALL, NULL),
-#endif
-
-  /*
-   * Force first alias/obsolete keyword into slot following all
-   * defined keywords.  Else compiler tries to store it into above
-   * keyword's slot + 1, which is likely occupied by another keyword.
-   * The result is a nonsensical error.
-   */
-  [CONFIG_SETUP_KEYWORD_ROOF] =
-
-  /* alias for compatibility - undocumented on purpose */
-
-  { "curl-timeout",  kv_config | kv_alias,  kt_seconds,  KBF_CRL_TIMEOUT_SECONDS, NULL, }, /* legacy */
-#ifdef XFRM_LIFETIME_DEFAULT
-  { "xfrmlifetime",  kv_config | kv_alias,  kt_seconds,  KBF_EXPIRE_LIFETIME, NULL, }, /* legacy */
-#endif
-
-  /* obsolete config setup options */
-
-  { "syslog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* never went anywhere! */
-  { "plutostderrlog",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete name, but very common :/ */
-  { "virtual_private",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, }, /* obsolete variant, very common */
-  { "interfaces",  kv_config, kt_obsolete, KNCF_OBSOLETE, NULL, }, /* obsoleted but often present keyword */
-
-  { "ikev1-secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },  /* obsolete: not a value, a type */
-  { "secctx-attr-type",  kv_config,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
-
-};
-
 static const struct keyword_def config_conn_keyword[] = {
+#define K(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .validity = VALIDITY, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
 
   /*
    * This is "left=" and "right="
    */
-  K("",  kv_conn | kv_leftright,  kt_string,  KWS_HOST, NULL),
+  K("",  kv_leftright,  kt_string,  KWS_HOST),
 
-  K("debug",       kv_conn, kt_string, KWS_DEBUG, NULL),
+  K("debug",  LEMPTY, kt_string, KWS_DEBUG),
 
-  K("subnet",  kv_conn | kv_leftright,  kt_string,  KWS_SUBNET, NULL),
-  K("subnets",  kv_conn | kv_leftright,  kt_appendlist,  KSCF_SUBNETS, NULL),
-  K("sourceip",  kv_conn | kv_leftright,  kt_string,  KWS_SOURCEIP, NULL),
-  K("ikeport",  kv_conn | kv_leftright,  kt_string,  KWS_IKEPORT, NULL),
-  K("interface-ip", kv_conn | kv_leftright,  kt_string, KWS_INTERFACE_IP, NULL),
-  K("vti",  kv_conn | kv_leftright,  kt_string,  KWS_VTI, NULL),
-  K("nexthop",  kv_conn | kv_leftright,  kt_string,  KWS_NEXTHOP, NULL),
-  K("updown",  kv_conn | kv_leftright,  kt_string,  KWS_UPDOWN, NULL),
-  K("id",  kv_conn | kv_leftright,  kt_string,  KWS_ID, NULL),
+  K("subnet",  kv_leftright,  kt_string,  KWS_SUBNET),
+  K("subnets",  kv_leftright,  kt_appendlist,  KSCF_SUBNETS),
+  K("sourceip",  kv_leftright,  kt_string,  KWS_SOURCEIP),
+  K("ikeport",  kv_leftright,  kt_string,  KWS_IKEPORT),
+  K("interface-ip", kv_leftright,  kt_string, KWS_INTERFACE_IP),
+  K("vti",  kv_leftright,  kt_string,  KWS_VTI),
+  K("nexthop",  kv_leftright,  kt_string,  KWS_NEXTHOP),
+  K("updown",  kv_leftright,  kt_string,  KWS_UPDOWN),
+  K("id",  kv_leftright,  kt_string,  KWS_ID),
 
   /*
    * Note: these are merged into .pubkey + .pubkey_alg before sending
    * to pluto.
    */
-  K("rsasigkey",  kv_conn | kv_leftright,  kt_string,  KWS_RSASIGKEY, NULL),
-  K("ecdsakey",  kv_conn | kv_leftright,  kt_string,  KWS_ECDSAKEY, NULL),
-  K("pubkey",  kv_conn | kv_leftright,  kt_string,  KWS_PUBKEY, NULL),
+  K("rsasigkey",  kv_leftright,  kt_string,  KWS_RSASIGKEY),
+  K("ecdsakey",  kv_leftright,  kt_string,  KWS_ECDSAKEY),
+  K("pubkey",  kv_leftright,  kt_string,  KWS_PUBKEY),
 
-  K("cert",  kv_conn | kv_leftright,  kt_string,  KWS_CERT, NULL),
-  K("ckaid",  kv_conn | kv_leftright,  kt_string,  KWS_CKAID, NULL),
-  K("sendcert",  kv_conn | kv_leftright,  kt_string,  KWS_SENDCERT, NULL),
-  K("ca",  kv_conn | kv_leftright,  kt_string,  KWS_CA, NULL),
-  K("xauthserver",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_XAUTHSERVER, &yn_option_names),
-  K("xauthclient",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_XAUTHCLIENT, &yn_option_names),
-  K("modecfgserver",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGSERVER, &yn_option_names),
-  K("modecfgclient",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGCLIENT, &yn_option_names),
-  K("username",  kv_conn | kv_leftright,  kt_string,  KWS_USERNAME, NULL),
-  K("addresspool",  kv_conn | kv_leftright,  kt_string,  KWS_ADDRESSPOOL, NULL),
-  K("auth",  kv_conn | kv_leftright, kt_string,  KWS_AUTH, NULL),
+  K("cert",  kv_leftright,  kt_string,  KWS_CERT),
+  K("ckaid",  kv_leftright,  kt_string,  KWS_CKAID),
+  K("sendcert",  kv_leftright,  kt_string,  KWS_SENDCERT),
+  K("ca",  kv_leftright,  kt_string,  KWS_CA),
+  K("xauthserver",  kv_leftright,  kt_sparse_name,  KWYN_XAUTHSERVER, .sparse_names = &yn_option_names),
+  K("xauthclient",  kv_leftright,  kt_sparse_name,  KWYN_XAUTHCLIENT, .sparse_names = &yn_option_names),
+  K("modecfgserver",  kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGSERVER, .sparse_names = &yn_option_names),
+  K("modecfgclient",  kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGCLIENT, .sparse_names = &yn_option_names),
+  K("username",  kv_leftright,  kt_string,  KWS_USERNAME),
+  K("addresspool",  kv_leftright,  kt_string,  KWS_ADDRESSPOOL),
+  K("auth",  kv_leftright, kt_string,  KWS_AUTH),
 #ifdef USE_CAT
-  K("cat",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_CAT, &yn_option_names),
+  K("cat",  kv_leftright,  kt_sparse_name,  KWYN_CAT, .sparse_names = &yn_option_names),
 #endif
-  K("protoport",  kv_conn | kv_leftright,  kt_string,  KWS_PROTOPORT, NULL),
-  K("autheap",  kv_conn | kv_leftright,  kt_string,  KWS_AUTHEAP, NULL),
-  K("groundhog",  kv_conn | kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, &yn_option_names),
+  K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),
+  K("autheap",  kv_leftright,  kt_string,  KWS_AUTHEAP),
+  K("groundhog",  kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, .sparse_names = &yn_option_names),
 
   /* these are conn statements which are not left/right */
 
-  K("auto",  kv_conn,  kt_sparse_name,  KNCF_AUTO, &autostart_names),
-  K("also",  kv_conn | kv_duplicateok,  kt_also,  KSCF_ALSO, NULL),
-  K("ike",  kv_conn,  kt_string,  KWS_IKE, NULL),
-  K("hostaddrfamily",  kv_conn,  kt_string,  KWS_HOSTADDRFAMILY, NULL),
-  K("type",  kv_conn,  kt_sparse_name,  KNCF_TYPE, &type_option_names),
-  K("authby",  kv_conn,  kt_string,  KWS_AUTHBY, NULL),
-  K("keyexchange",  kv_conn,  kt_string,  KWS_KEYEXCHANGE, NULL),
-  K("ikev2",  kv_conn,  kt_string,  KWS_IKEv2, NULL),
-  K("ppk", kv_conn, kt_sparse_name, KNCF_PPK, &nppi_option_names),
-  K("ppk-ids", kv_conn, kt_string, KWS_PPK_IDS, NULL),
-  K("intermediate",  kv_conn, kt_sparse_name, KWYN_INTERMEDIATE, &yn_option_names),
-  K("esn",  kv_conn,  kt_sparse_name,  KNCF_ESN, &yne_option_names),
-  K("decap-dscp",  kv_conn,  kt_sparse_name,  KWYN_DECAP_DSCP, &yn_option_names),
-  K("encap-dscp",  kv_conn,  kt_sparse_name,  KWYN_ENCAP_DSCP, &yn_option_names),
-  K("nopmtudisc",  kv_conn,  kt_sparse_name,  KWYN_NOPMTUDISC, &yn_option_names),
-  K("fragmentation",  kv_conn,  kt_sparse_name,  KNCF_FRAGMENTATION, &ynf_option_names),
-  K("mobike",  kv_conn,  kt_sparse_name,  KWYN_MOBIKE, &yn_option_names),
-  K("narrowing",  kv_conn,  kt_sparse_name,  KWYN_NARROWING, &yn_option_names),
-  K("pam-authorize",  kv_conn,  kt_sparse_name,  KWYN_PAM_AUTHORIZE, &yn_option_names),
-  K("send-redirect",  kv_conn,  kt_sparse_name,  KNCF_SEND_REDIRECT, &yna_option_names),
-  K("redirect-to",  kv_conn,  kt_string,  KWS_REDIRECT_TO, NULL),
-  K("accept-redirect",  kv_conn,  kt_sparse_name, KWYN_ACCEPT_REDIRECT, &yn_option_names),
-  K("accept-redirect-to",  kv_conn,  kt_string, KWS_ACCEPT_REDIRECT_TO, NULL),
-  K("pfs",  kv_conn,  kt_sparse_name,  KWYN_PFS, &yn_option_names),
-  K("session-resumption",  kv_conn,  kt_sparse_name,  KWYN_SESSION_RESUMPTION, &yn_option_names),
+  K("auto",  LEMPTY,  kt_sparse_name,  KNCF_AUTO, .sparse_names = &autostart_names),
+  K("also",  kv_duplicateok,  kt_also,  KSCF_ALSO),
+  K("ike",  LEMPTY,  kt_string,  KWS_IKE),
+  K("hostaddrfamily",  LEMPTY,  kt_string,  KWS_HOSTADDRFAMILY),
+  K("type",  LEMPTY,  kt_sparse_name,  KNCF_TYPE, .sparse_names = &type_option_names),
+  K("authby",  LEMPTY,  kt_string,  KWS_AUTHBY),
+  K("keyexchange",  LEMPTY,  kt_string,  KWS_KEYEXCHANGE),
+  K("ikev2",  LEMPTY,  kt_string,  KWS_IKEv2),
+  K("ppk",  LEMPTY, kt_sparse_name, KNCF_PPK, .sparse_names = &nppi_option_names),
+  K("ppk-ids",  LEMPTY, kt_string, KWS_PPK_IDS),
+  K("intermediate",  LEMPTY, kt_sparse_name, KWYN_INTERMEDIATE, .sparse_names = &yn_option_names),
+  K("esn",  LEMPTY,  kt_sparse_name,  KNCF_ESN, .sparse_names = &yne_option_names),
+  K("decap-dscp",  LEMPTY,  kt_sparse_name,  KWYN_DECAP_DSCP, .sparse_names = &yn_option_names),
+  K("encap-dscp",  LEMPTY,  kt_sparse_name,  KWYN_ENCAP_DSCP, .sparse_names = &yn_option_names),
+  K("nopmtudisc",  LEMPTY,  kt_sparse_name,  KWYN_NOPMTUDISC, .sparse_names = &yn_option_names),
+  K("fragmentation",  LEMPTY,  kt_sparse_name,  KNCF_FRAGMENTATION, .sparse_names = &ynf_option_names),
+  K("mobike",  LEMPTY,  kt_sparse_name,  KWYN_MOBIKE, .sparse_names = &yn_option_names),
+  K("narrowing",  LEMPTY,  kt_sparse_name,  KWYN_NARROWING, .sparse_names = &yn_option_names),
+  K("pam-authorize",  LEMPTY,  kt_sparse_name,  KWYN_PAM_AUTHORIZE, .sparse_names = &yn_option_names),
+  K("send-redirect",  LEMPTY,  kt_sparse_name,  KNCF_SEND_REDIRECT, .sparse_names = &yna_option_names),
+  K("redirect-to",  LEMPTY,  kt_string,  KWS_REDIRECT_TO),
+  K("accept-redirect",  LEMPTY,  kt_sparse_name, KWYN_ACCEPT_REDIRECT, .sparse_names = &yn_option_names),
+  K("accept-redirect-to",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT_TO),
+  K("pfs",  LEMPTY,  kt_sparse_name,  KWYN_PFS, .sparse_names = &yn_option_names),
+  K("session-resumption",  LEMPTY,  kt_sparse_name,  KWYN_SESSION_RESUMPTION, .sparse_names = &yn_option_names),
 
-  K("nat-keepalive",  kv_conn,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, &yn_option_names),
+  K("nat-keepalive",  LEMPTY,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, .sparse_names = &yn_option_names),
 
-  K("initial-contact",  kv_conn,  kt_sparse_name,  KWYN_INITIAL_CONTACT, &yn_option_names),
-  K("send-esp-tfc-padding-not-supported",  kv_conn,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names),
+  K("initial-contact",  LEMPTY,  kt_sparse_name,  KWYN_INITIAL_CONTACT, .sparse_names = &yn_option_names),
+  K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, .sparse_names = &yn_option_names),
 
-  K("iptfs",  kv_conn,  kt_sparse_name,  KWYN_IPTFS, &yn_option_names),
-  K("iptfs-fragmentation",  kv_conn,  kt_sparse_name,  KWYN_IPTFS_FRAGMENTATION, &yn_option_names),
-  K("iptfs-packet-size",  kv_conn,  kt_string,  KWS_IPTFS_PACKET_SIZE, NULL),
-  K("iptfs-max-queue-size",  kv_conn,  kt_string,  KWS_IPTFS_MAX_QUEUE_SIZE, NULL),
-  K("iptfs-reorder-window",  kv_conn,  kt_string,  KWS_IPTFS_REORDER_WINDOW, NULL),
-  K("iptfs-init-delay",  kv_conn,  kt_seconds,  KNCF_IPTFS_INIT_DELAY, NULL),
-  K("iptfs-drop-time",  kv_conn,  kt_seconds,  KNCF_IPTFS_DROP_TIME, NULL),
+  K("iptfs",  LEMPTY,  kt_sparse_name,  KWYN_IPTFS, .sparse_names = &yn_option_names),
+  K("iptfs-fragmentation",  LEMPTY,  kt_sparse_name,  KWYN_IPTFS_FRAGMENTATION, .sparse_names = &yn_option_names),
+  K("iptfs-packet-size",  LEMPTY,  kt_string,  KWS_IPTFS_PACKET_SIZE),
+  K("iptfs-max-queue-size",  LEMPTY,  kt_string,  KWS_IPTFS_MAX_QUEUE_SIZE),
+  K("iptfs-reorder-window",  LEMPTY,  kt_string,  KWS_IPTFS_REORDER_WINDOW),
+  K("iptfs-init-delay",  LEMPTY,  kt_seconds,  KNCF_IPTFS_INIT_DELAY),
+  K("iptfs-drop-time",  LEMPTY,  kt_seconds,  KNCF_IPTFS_DROP_TIME),
 
-  K("fake-strongswan",  kv_conn,  kt_sparse_name,  KWYN_FAKE_STRONGSWAN, &yn_option_names),
-  K("send-vendorid",  kv_conn,  kt_sparse_name,  KWYN_SEND_VENDORID, &yn_option_names),
-  K("sha2-truncbug",  kv_conn,  kt_sparse_name,  KWYN_SHA2_TRUNCBUG, &yn_option_names),
-  K("share-lease",  kv_conn,  kt_sparse_name,  KWYN_SHARE_LEASE, &yn_option_names),
-  K("ms-dh-downgrade",  kv_conn,  kt_sparse_name,  KWYN_MS_DH_DOWNGRADE, &yn_option_names),
-  K("pfs-rekey-workaround",  kv_conn,  kt_sparse_name,  KWYN_PFS_REKEY_WORKAROUND, &yn_option_names),
-  K("require-id-on-certificate",  kv_conn,  kt_sparse_name,  KWYN_REQUIRE_ID_ON_CERTIFICATE, &yn_option_names),
-  K("dns-match-id,",  kv_conn,  kt_sparse_name,  KWYN_DNS_MATCH_ID, &yn_option_names),
-  K("ipsec-max-bytes",  kv_conn,  kt_string,  KWS_IPSEC_MAX_BYTES, NULL),
-  K("ipsec-max-packets",  kv_conn,  kt_string,  KWS_IPSEC_MAX_PACKETS, NULL),
-  K("ipsec-lifetime",  kv_conn,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL),
+  K("fake-strongswan",  LEMPTY,  kt_sparse_name,  KWYN_FAKE_STRONGSWAN, .sparse_names = &yn_option_names),
+  K("send-vendorid",  LEMPTY,  kt_sparse_name,  KWYN_SEND_VENDORID, .sparse_names = &yn_option_names),
+  K("sha2-truncbug",  LEMPTY,  kt_sparse_name,  KWYN_SHA2_TRUNCBUG, .sparse_names = &yn_option_names),
+  K("share-lease",  LEMPTY,  kt_sparse_name,  KWYN_SHARE_LEASE, .sparse_names = &yn_option_names),
+  K("ms-dh-downgrade",  LEMPTY,  kt_sparse_name,  KWYN_MS_DH_DOWNGRADE, .sparse_names = &yn_option_names),
+  K("pfs-rekey-workaround",  LEMPTY,  kt_sparse_name,  KWYN_PFS_REKEY_WORKAROUND, .sparse_names = &yn_option_names),
+  K("require-id-on-certificate",  LEMPTY,  kt_sparse_name,  KWYN_REQUIRE_ID_ON_CERTIFICATE, .sparse_names = &yn_option_names),
+  K("dns-match-id,",  LEMPTY,  kt_sparse_name,  KWYN_DNS_MATCH_ID, .sparse_names = &yn_option_names),
+  K("ipsec-max-bytes",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_BYTES),
+  K("ipsec-max-packets",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_PACKETS),
+  K("ipsec-lifetime",  LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME),
 
-  K("retransmit-timeout",  kv_conn,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT, NULL),
-  K("retransmit-interval",  kv_conn,  kt_string,  KWS_RETRANSMIT_INTERVAL, NULL),
+  K("retransmit-timeout",  LEMPTY,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT),
+  K("retransmit-interval",  LEMPTY,  kt_string,  KWS_RETRANSMIT_INTERVAL),
 
-  K("ikepad",  kv_conn,  kt_sparse_name,  KNCF_IKEPAD, &yna_option_names),
-  K("nat-ikev1-method",  kv_conn,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, &nat_ikev1_method_option_names),
+  K("ikepad",  LEMPTY,  kt_sparse_name,  KNCF_IKEPAD, .sparse_names = &yna_option_names),
+  K("nat-ikev1-method",  LEMPTY,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, .sparse_names = &nat_ikev1_method_option_names),
 
-  K("sec-label",  kv_conn,  kt_string,  KWS_SEC_LABEL, NULL),
+  K("sec-label",  LEMPTY,  kt_string,  KWS_SEC_LABEL),
 
   /* Cisco interop: remote peer type */
-  K("remote-peer-type",  kv_conn,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL),
+  K("remote-peer-type",  LEMPTY,  kt_string,  KWS_REMOTE_PEER_TYPE),
   /* Network Manager support */
-  K("nm-configured",  kv_conn,  kt_string,  KWS_NM_CONFIGURED, NULL),
-  K("cisco-unity",  kv_conn,  kt_string,  KWS_CISCO_UNITY, NULL),
-  K("cisco-split",  kv_conn,  kt_string,  KWS_CISCO_SPLIT, NULL),
+  K("nm-configured",  LEMPTY,  kt_string,  KWS_NM_CONFIGURED),
+  K("cisco-unity",  LEMPTY,  kt_string,  KWS_CISCO_UNITY),
+  K("cisco-split",  LEMPTY,  kt_string,  KWS_CISCO_SPLIT),
 
-  K("xauthby",  kv_conn,  kt_sparse_name,  KNCF_XAUTHBY, &xauthby_names),
-  K("xauthfail",  kv_conn,  kt_sparse_name,  KNCF_XAUTHFAIL, &xauthfail_names),
-  K("modecfgpull",  kv_conn,  kt_sparse_name,  KWYN_MODECFGPULL, &yn_option_names),
-  K("modecfgdns",  kv_conn,  kt_string,  KWS_MODECFGDNS, NULL),
-  K("modecfgdomains",  kv_conn,  kt_string,  KWS_MODECFGDOMAINS, NULL),
-  K("modecfgbanner",  kv_conn,  kt_string,  KWS_MODECFGBANNER, NULL),
-  K("ignore-peer-dns",  kv_conn,  kt_sparse_name,  KWYN_IGNORE_PEER_DNS, &yn_option_names),
-  K("mark",  kv_conn,  kt_string,  KWS_MARK, NULL),
-  K("mark-in",  kv_conn,  kt_string,  KWS_MARK_IN, NULL),
-  K("mark-out",  kv_conn,  kt_string,  KWS_MARK_OUT, NULL),
-  K("vti-interface",  kv_conn,  kt_string,  KWS_VTI_INTERFACE, NULL),
-  K("vti-routing",  kv_conn,  kt_sparse_name,  KWYN_VTI_ROUTING, &yn_option_names),
-  K("vti-shared",  kv_conn,  kt_sparse_name,  KWYN_VTI_SHARED, &yn_option_names),
-  K("ipsec-interface", kv_conn, kt_string, KWS_IPSEC_INTERFACE, NULL),
+  K("xauthby",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHBY, .sparse_names = &xauthby_names),
+  K("xauthfail",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHFAIL, .sparse_names = &xauthfail_names),
+  K("modecfgpull",  LEMPTY,  kt_sparse_name,  KWYN_MODECFGPULL, .sparse_names = &yn_option_names),
+  K("modecfgdns",  LEMPTY,  kt_string,  KWS_MODECFGDNS),
+  K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),
+  K("modecfgbanner",  LEMPTY,  kt_string,  KWS_MODECFGBANNER),
+  K("ignore-peer-dns",  LEMPTY,  kt_sparse_name,  KWYN_IGNORE_PEER_DNS, .sparse_names = &yn_option_names),
+  K("mark",  LEMPTY,  kt_string,  KWS_MARK),
+  K("mark-in",  LEMPTY,  kt_string,  KWS_MARK_IN),
+  K("mark-out",  LEMPTY,  kt_string,  KWS_MARK_OUT),
+  K("vti-interface",  LEMPTY,  kt_string,  KWS_VTI_INTERFACE),
+  K("vti-routing",  LEMPTY,  kt_sparse_name,  KWYN_VTI_ROUTING, .sparse_names = &yn_option_names),
+  K("vti-shared",  LEMPTY,  kt_sparse_name,  KWYN_VTI_SHARED, .sparse_names = &yn_option_names),
+  K("ipsec-interface",  LEMPTY, kt_string, KWS_IPSEC_INTERFACE),
 
-  K("nic-offload",  kv_conn,  kt_sparse_name,  KNCF_NIC_OFFLOAD, &nic_offload_option_names),
+  K("nic-offload",  LEMPTY,  kt_sparse_name,  KNCF_NIC_OFFLOAD, .sparse_names = &nic_offload_option_names),
 
-  K("encapsulation",  kv_conn,  kt_sparse_name,  KNCF_ENCAPSULATION, &yna_option_names),
+  K("encapsulation",  LEMPTY,  kt_sparse_name,  KNCF_ENCAPSULATION, .sparse_names = &yna_option_names),
 
-  K("overlapip",  kv_conn,  kt_sparse_name,  KWYN_OVERLAPIP, &yn_option_names),
-  K("reauth",  kv_conn,  kt_sparse_name,  KWYN_REAUTH, &yn_option_names),
-  K("rekey",  kv_conn,  kt_sparse_name,  KWYN_REKEY, &yn_option_names),
-  K("rekeymargin",  kv_conn,  kt_seconds,  KNCF_REKEYMARGIN, NULL),
-  K("rekeyfuzz",  kv_conn,  kt_string,  KWS_REKEYFUZZ, NULL),
-  K("replay-window",  kv_conn,  kt_string,  KWS_REPLAY_WINDOW, NULL),
-  K("ikelifetime",  kv_conn,  kt_seconds,  KNCF_IKELIFETIME, NULL),
-  K("failureshunt",  kv_conn,  kt_sparse_name,  KNCF_FAILURESHUNT, &failure_shunt_names),
-  K("negotiationshunt",  kv_conn,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, &negotiation_shunt_names),
+  K("overlapip",  LEMPTY,  kt_sparse_name,  KWYN_OVERLAPIP, .sparse_names = &yn_option_names),
+  K("reauth",  LEMPTY,  kt_sparse_name,  KWYN_REAUTH, .sparse_names = &yn_option_names),
+  K("rekey",  LEMPTY,  kt_sparse_name,  KWYN_REKEY, .sparse_names = &yn_option_names),
+  K("rekeymargin",  LEMPTY,  kt_seconds,  KNCF_REKEYMARGIN),
+  K("rekeyfuzz",  LEMPTY,  kt_string,  KWS_REKEYFUZZ),
+  K("replay-window",  LEMPTY,  kt_string,  KWS_REPLAY_WINDOW),
+  K("ikelifetime",  LEMPTY,  kt_seconds,  KNCF_IKELIFETIME),
+  K("failureshunt",  LEMPTY,  kt_sparse_name,  KNCF_FAILURESHUNT, .sparse_names = &failure_shunt_names),
+  K("negotiationshunt",  LEMPTY,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, .sparse_names = &negotiation_shunt_names),
 
-  K("enable-tcp",  kv_conn, kt_sparse_name, KNCF_ENABLE_TCP, &tcp_option_names),
-  K("tcp-remoteport",  kv_conn, kt_unsigned, KNCF_TCP_REMOTEPORT, NULL),
+  K("enable-tcp",  LEMPTY, kt_sparse_name, KNCF_ENABLE_TCP, .sparse_names = &tcp_option_names),
+  K("tcp-remoteport",  LEMPTY, kt_unsigned, KNCF_TCP_REMOTEPORT),
 
-  K("connalias",  kv_conn,  kt_appendstring,  KSCF_CONNALIAS, NULL),
+  K("connalias",  LEMPTY,  kt_appendstring,  KSCF_CONNALIAS),
 
   /* attributes of the phase2 policy */
-  K("esp",  kv_conn,  kt_string,  KWS_ESP, NULL),
+  K("esp",  LEMPTY,  kt_string,  KWS_ESP),
 
-  K("phase2",  kv_conn,  kt_sparse_name,  KNCF_PHASE2, &kw_phase2types_names),
+  K("phase2",  LEMPTY,  kt_sparse_name,  KNCF_PHASE2, .sparse_names = &kw_phase2types_names),
 
-  K("compress",  kv_conn,  kt_sparse_name,  KWYN_COMPRESS, &yn_option_names),
+  K("compress",  LEMPTY,  kt_sparse_name,  KWYN_COMPRESS, .sparse_names = &yn_option_names),
 
   /* route metric */
-  K("metric",  kv_conn,  kt_unsigned,  KNCF_METRIC, NULL),
+  K("metric",  LEMPTY,  kt_unsigned,  KNCF_METRIC),
 
   /* DPD */
-  K("dpddelay",  kv_conn,  kt_string,  KWS_DPDDELAY, NULL),
-  K("ikev1-dpdtimeout",  kv_conn,  kt_string,  KWS_DPDTIMEOUT, NULL),
+  K("dpddelay",  LEMPTY,  kt_string,  KWS_DPDDELAY),
+  K("ikev1-dpdtimeout",  LEMPTY,  kt_string,  KWS_DPDTIMEOUT),
 
-  K("sendca",      kv_conn,  kt_string,  KWS_SENDCA, NULL),
+  K("sendca",  LEMPTY,  kt_string,  KWS_SENDCA),
 
-  K("mtu",  kv_conn,  kt_string,  KWS_MTU, NULL),
-  K("priority",  kv_conn,  kt_string,  KWS_PRIORITY, NULL),
-  K("tfc",  kv_conn,  kt_string,  KWS_TFC, NULL),
-  K("reqid",  kv_conn,  kt_string,  KWS_REQID, NULL),
+  K("mtu",  LEMPTY,  kt_string,  KWS_MTU),
+  K("priority",  LEMPTY,  kt_string,  KWS_PRIORITY),
+  K("tfc",  LEMPTY,  kt_string,  KWS_TFC),
+  K("reqid",  LEMPTY,  kt_string,  KWS_REQID),
 #ifdef USE_NFLOG
-  K("nflog-group",  kv_conn,  kt_string,  KWS_NFLOG_GROUP, NULL),
+  K("nflog-group",  LEMPTY,  kt_string,  KWS_NFLOG_GROUP),
 #endif
 
-  K("aggressive",  kv_conn,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names),
-
-#undef K
+  K("aggressive",  LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
 
   /*
    * Force first alias/obsolete keyword into slot following all
@@ -376,34 +269,34 @@ static const struct keyword_def config_conn_keyword[] = {
 
   /* alias for compatibility - undocumented on purpose */
 
-  { "aggrmode",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_AGGRESSIVE, &yn_option_names, },
-  { "keylife",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
-  { "lifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
-  { "phase2alg",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },	/* obsolete */
-  { "dpdtimeout",  kv_conn | kv_alias,  kt_string,  KWS_DPDTIMEOUT, NULL, }, /* old name */
+#define A(KEYNAME, VALIDITY, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = VALIDITY|kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
+  A("aggrmode", LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
+  A("keylife", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
+  A("lifetime", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
+  A("phase2alg", LEMPTY,  kt_string,  KWS_ESP),	/* obsolete */
+  A("dpdtimeout", LEMPTY,  kt_string,  KWS_DPDTIMEOUT), /* old name */
 #ifdef USE_NFLOG
-  { "nflog",  kv_conn | kv_alias,  kt_string,  KWS_NFLOG_GROUP, NULL, }, /* old-name */
+  A("nflog", LEMPTY,  kt_string,  KWS_NFLOG_GROUP), /* old-name */
 #endif
-  { "salifetime",  kv_conn | kv_alias,  kt_seconds,  KNCF_IPSEC_LIFETIME, NULL, }, /* old name */
+  A("salifetime", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
   /* xauthusername is still used in NetworkManager-libreswan :/ */
-  { "xauthusername",  kv_conn | kv_leftright | kv_alias,  kt_string,  KWS_USERNAME, NULL, }, /* old alias */
-  { "ah",  kv_conn | kv_alias,  kt_string,  KWS_ESP, NULL, },
-  { "policy-label",  kv_conn | kv_alias,  kt_string,  KWS_SEC_LABEL, NULL, }, /* obsolete variant */
+  A("xauthusername",  kv_leftright,  kt_string,  KWS_USERNAME), /* old alias */
+  A("ah", LEMPTY,  kt_string,  KWS_ESP),
+  A("policy-label", LEMPTY,  kt_string,  KWS_SEC_LABEL), /* obsolete variant */
   /* another alias used by NetworkManager-libreswan :/ */
-  { "remote_peer_type",  kv_conn | kv_alias,  kt_string,  KWS_REMOTE_PEER_TYPE, NULL, },
-  { "send-no-esp-tfc",  kv_conn | kv_alias,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, &yn_option_names, }, /*compat, but forever*/
+  A("remote_peer_type", LEMPTY,  kt_string,  KWS_REMOTE_PEER_TYPE),
+  A("send-no-esp-tfc", LEMPTY,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, .sparse_names = &yn_option_names), /*compat, but forever*/
 
   /* obsolete config setup options */
 
-  { "dpdaction",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE,  NULL, },
-  { "clientaddrfamily",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
-  { "keyingtries",  kv_conn,  kt_obsolete,  KNCF_OBSOLETE, NULL, },
+#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, .field = KNCF_OBSOLETE, ##__VA_ARGS__ }
+  O("dpdaction"),
+  O("clientaddrfamily"),
+  O("keyingtries"),
 
-};
-
-const struct keywords_def config_setup_keywords = {
-	.len = elemsof(config_setup_keyword),
-	.item = config_setup_keyword,
+#undef O
+#undef A
+#undef K
 };
 
 const struct keywords_def config_conn_keywords = {

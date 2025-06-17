@@ -720,13 +720,12 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
-			if ((kd->validity & kv_config) == 0)
-				continue;
-
 			/* don't print backwards compatible aliases */
-			if ((kd->validity & kv_alias) != 0)
+			if ((kd->validity & kv_alias) != 0) {
 				continue;
+			}
 
+			/* only print --configsetup=NAME? */
 			if (strlen(configsetup.name) > 0 &&
 			    !strheq(configsetup.name, kd->keyname)) {
 				continue;

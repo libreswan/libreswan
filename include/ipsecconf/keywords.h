@@ -218,23 +218,22 @@ enum config_conn_keyword {
 };
 
 /* these are bits set in a word */
+enum keyword_valid_ix {
+	KV_LEFTRIGHT_IX,        /* comes in left-FOO and right-FOO
+				 * variants */
+	KV_BOTH_IX,		/* FOO means left-FOO and right-FOO */
+	KV_ALIAS_IX,		/* is an alias for another keyword */
+	KV_DUPLICATEOK_IX,	/* within a connection, the item can
+				 * be duplicated (notably also=) */
+	KV_IGNORE_IX,		/* pretend entry does not exist */
+};
+
 enum keyword_valid {
-	kv_config = LELEM(0),           /* may be present in config section */
-	kv_conn   = LELEM(1),           /* may be present in conn section */
-	kv_leftright = LELEM(2),        /* comes in left-FOO and right-FOO variants */
-	kv_both = LELEM(3),		/* FOO means left-FOO and
-					 * right-FOO */
-	kv_alias  = LELEM(5),           /* is an alias for another keyword */
-	kv_duplicateok = LELEM(8),	/* within a connection, the
-					 * item can be duplicated
-					 * (notably also=) */
-	kv_ignore = LELEM(9),		/* pretend entry does not
-					 * exist */
-#if 0
-	kv_overrideok = LELEM(?),	/* between merged connections
-					 * (also=), the item can be
-					 * overwritten */
-#endif
+        kv_leftright	= LELEM(KV_LEFTRIGHT_IX),
+        kv_both		= LELEM(KV_BOTH_IX),
+        kv_alias	= LELEM(KV_ALIAS_IX),
+        kv_ignore	= LELEM(KV_IGNORE_IX),
+        kv_duplicateok	= LELEM(KV_DUPLICATEOK_IX),
 };
 
 enum keyword_type {
