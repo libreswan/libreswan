@@ -236,7 +236,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("ike",  LEMPTY,  kt_string,  KWS_IKE),
   /* attributes of the phase2 policy */
   K("esp",  LEMPTY,  kt_string,  KWS_ESP),
-  K("esp",  LEMPTY,  kt_string,  KWS_AH),
+  K("ah",   LEMPTY,  kt_string,  KWS_AH),
   K("phase2",  LEMPTY,  kt_sparse_name,  KNCF_PHASE2, .sparse_names = &kw_phase2types_names),
   K("phase2alg",  LEMPTY,  kt_string,  KWS_PHASE2ALG),
 
