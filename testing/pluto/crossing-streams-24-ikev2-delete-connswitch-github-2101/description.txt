@@ -1,0 +1,55 @@
+Child's connswitch leaves two IKE SAs
+
+each end has two connections that can share their IKE SA
+
+- WEST establishes "a"
+
+  a.ike#1: established
+
+  a.child#2: established using a.ike#1
+
+01 prepare EAST
+
+02 prepare WEST
+
+03 WEST brings up "a"
+
+   a.ike#1: established
+   a.child#2: established using a.ike#1
+
+04 EAST brings up "b"
+
+   WEST chooses "a" as the tentative connection
+
+   a.ike#1: established
+   a.child#2: established using a.ike#1
+
+   a.ike#3: larval
+
+   WEST establishes IKE, starts on Child:
+
+   a.ike#1: lingering
+   a.child#2: established using a.ike#1
+
+   a.ike#3: established
+   a.child#4: larval using a.ike#3
+
+   WEST connswitches then establishes Child
+
+
+   a.ike#1: lingering
+   a.child#2: established using a.ike#1
+
+   a.ike#3: established
+   b.child#4: larval using a.ike#3
+
+05 WEST `ipsec delete a`
+
+   * scrub a.ike#1 viable bit
+   * scrub a.ike#3 viable bit
+   * terminate'n'delete a.ike#1
+     destroys a.child#2
+   * terminate'n'delete a.ike#3
+     destroys b.child#4
+
+ref ipsec delete: EXPECTATION FAILED: ike == ((void *)0) #2101

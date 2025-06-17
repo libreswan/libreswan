@@ -1631,6 +1631,8 @@ kvmplutotest	crossing-streams-21-second-child-crypto-ikev2	good
 kvmplutotest	crossing-streams-22-ikev2-ipsec-interface	wip	github:557
 kvmplutotest	crossing-streams-23-conswitch-ike-sa-init-ikev2	good	github/1989
 
+kvmplutotest	crossing-streams-24-ikev2-delete-connswitch-github-2101	wip	github/2101
+
 # uses the kernel-pfkeyv2.c code
 
 kvmplutotest	pfkeyv2-transport-4in4-ah-ipcomp-ikev2	good
