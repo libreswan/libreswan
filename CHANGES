@@ -8,6 +8,7 @@ v5.3 (unreleased)
   - nflog= made an alias to nflog-group= [Andrew]
   - default whack --sendcert to "always" like addconn [Andrew #2176]
   - rename `pluto --dnssec-trusted` to `--dnssec-achors` [Andrew #2240]
+  - recognize ah=... as phase2=ah phase2alg=... [Andrew #712]
 * ipsec whack:
   - remove broken --pfsgroup option (have more robust --{esp,ike}) [Andrew #2246]
 * PKIX (Public Key Infrastructure X.509)
