@@ -326,6 +326,8 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
 		PICKLE_STRING(&wm->ike) &&
 		PICKLE_STRING(&wm->esp) &&
+		PICKLE_STRING(&wm->ah) &&
+		PICKLE_STRING(&wm->phase2alg) &&
 		PICKLE_STRING(&wm->connalias) &&
 		PICKLE_STRING(&wm->modecfgdns) &&
 		PICKLE_STRING(&wm->modecfgdomains) &&

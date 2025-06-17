@@ -333,7 +333,6 @@ struct whack_message {
 	enum yn_options pfs;
 	enum yn_options compress;
 	enum type_options type;		/* type=tunnel|transport|SHUNT */
-	enum encap_proto phase2;	/* outer protocol: ESP|AH */
 	enum yn_options session_resumption;	/* for RFC 5723 -
 						 * IKEv2 Session
 						 * Resumption */
@@ -428,8 +427,11 @@ struct whack_message {
 
 	const char *hostaddrfamily;
 
-	const char *ike;			/* ike algo string (separated by commas) */
-	const char *esp;			/* esp algo string (separated by commas) */
+	const char *ike;		/* ike algo string (separated by commas) */
+	enum encap_proto phase2;	/* outer protocol: ESP|AH */
+	const char *phase2alg;		/* outer protocol: ESP|AH */
+	const char *esp;		/* esp algo string (separated by commas) */
+	const char *ah;			/* esp algo string (separated by commas) */
 
 	/* for WHACK_KEY: */
 	bool whack_key;

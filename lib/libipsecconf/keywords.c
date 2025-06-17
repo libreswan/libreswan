@@ -135,7 +135,6 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("auto",  LEMPTY,  kt_sparse_name,  KNCF_AUTO, .sparse_names = &autostart_names),
   K("also",  kv_duplicateok,  kt_also,  KSCF_ALSO),
-  K("ike",  LEMPTY,  kt_string,  KWS_IKE),
   K("hostaddrfamily",  LEMPTY,  kt_string,  KWS_HOSTADDRFAMILY),
   K("type",  LEMPTY,  kt_sparse_name,  KNCF_TYPE, .sparse_names = &type_option_names),
   K("authby",  LEMPTY,  kt_string,  KWS_AUTHBY),
@@ -233,10 +232,13 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("connalias",  LEMPTY,  kt_appendstring,  KSCF_CONNALIAS),
 
+  /* attributes of the phase1 policy */
+  K("ike",  LEMPTY,  kt_string,  KWS_IKE),
   /* attributes of the phase2 policy */
   K("esp",  LEMPTY,  kt_string,  KWS_ESP),
-
+  K("esp",  LEMPTY,  kt_string,  KWS_AH),
   K("phase2",  LEMPTY,  kt_sparse_name,  KNCF_PHASE2, .sparse_names = &kw_phase2types_names),
+  K("phase2alg",  LEMPTY,  kt_string,  KWS_PHASE2ALG),
 
   K("compress",  LEMPTY,  kt_sparse_name,  KWYN_COMPRESS, .sparse_names = &yn_option_names),
 

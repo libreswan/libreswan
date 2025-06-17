@@ -210,7 +210,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.pfs = conn->values[KWYN_PFS].option;
 	msg.compress = conn->values[KWYN_COMPRESS].option;
 	msg.type = conn->values[KNCF_TYPE].option;
-	msg.phase2 = conn->values[KNCF_PHASE2].option;
 	msg.authby = conn->values[KWS_AUTHBY].string;
 
 	msg.never_negotiate_shunt = conn->never_negotiate_shunt;
@@ -338,8 +337,12 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
 		return -1;
 
-	msg.esp = conn->values[KWS_ESP].string;
 	msg.ike = conn->values[KWS_IKE].string;
+
+	msg.esp = conn->values[KWS_ESP].string;
+	msg.ah = conn->values[KWS_AH].string;
+	msg.phase2 = conn->values[KNCF_PHASE2].option;
+	msg.phase2alg = conn->values[KWS_PHASE2ALG].string;
 
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
