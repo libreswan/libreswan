@@ -14,6 +14,18 @@ west #
  ipsec add addconn--phase2=ah
 "addconn--phase2=ah": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
+ ipsec add addconn--phase2=esp--ah=sha1--esp=aes
+"addconn--phase2=esp--ah=sha1--esp=aes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn--phase2=ah--ah=sha1--esp=aes
+"addconn--phase2=ah--ah=sha1--esp=aes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn--esp=aes
+"addconn--esp=aes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec add addconn--ah=sha1
+"addconn--ah=sha1": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
  ipsec add addconn--type=passthrough
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
@@ -47,11 +59,15 @@ west #
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*ENCRYPT.*/\1 ENCRYPT/p'
 "addconn":   policy: ENCRYPT
+"addconn--esp=aes":   policy: ENCRYPT
 "addconn--phase2=esp":   policy: ENCRYPT
+"addconn--phase2=esp--ah=sha1--esp=aes":   policy: ENCRYPT
 "whack":   policy: ENCRYPT
 "whack--encrypt":   policy: ENCRYPT
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*AUTHENTICATE.*/\1 AUTHENTICATE/p'
+"addconn--ah=sha1":   policy: AUTHENTICATE
 "addconn--phase2=ah":   policy: AUTHENTICATE
+"addconn--phase2=ah--ah=sha1--esp=aes":   policy: AUTHENTICATE
 "whack--authenticate":   policy: AUTHENTICATE
 west #
