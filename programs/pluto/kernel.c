@@ -600,11 +600,15 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 
 	struct spd_filter srf = {
 		.remote_client_range = c_remote,
-		.where = where,
+		.search = {
+			.order = NEW2OLD,
+			.verbose.logger = logger,
+			.where = where,
+		},
 	};
 
 	indent += 2;
-	while (next_spd(NEW2OLD, &srf)) {
+	while (next_spd(&srf)) {
 		struct spd *d_spd = srf.spd;
 		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
 		struct connection *d = d_spd->connection;
