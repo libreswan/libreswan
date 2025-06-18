@@ -730,7 +730,7 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa
 void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-	LLOG_JAMBUF(RC_SUCCESS, child->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
 		switch (child->sa.st_sa_role) {
 		case SA_INITIATOR: jam_string(buf, "initiator"); break;
 		case SA_RESPONDER: jam_string(buf, "responder"); break;

@@ -51,8 +51,6 @@ enum rc_type {
 	RC_LOG = 2,			/* message aimed at log (does
 					 * not affect exit status) */
 
-	RC_SUCCESS = 4,			/* success (exit status 0) */
-
 	/* entry of secrets */
 	RC_ENTERSECRET = 10,
 	RC_USERPROMPT = 11,
