@@ -507,14 +507,12 @@ static struct kernel_route kernel_route_from_state(const struct child_sa *child,
 	}
 }
 
-PRINTF_LIKE(4)
-static void ldbg_spd(struct logger *logger, unsigned indent,
-			  const struct spd *spd,
-			  const char *fmt, ...)
+PRINTF_LIKE(3)
+static void vdbg_spd(struct verbose verbose,
+		     const struct spd *spd,
+		     const char *fmt, ...)
 {
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "%*s", indent, "");
-		jam_string(buf, " ");
+	VDBG_JAMBUF(buf) {
 		jam_connection(buf, spd->connection);
 		jam_string(buf, " ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
@@ -530,50 +528,54 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 	}
 }
 
-static void LDBG_owner(struct logger *logger, const char *what,
+static void vdbg_owner(struct verbose verbose, const char *what,
 		       const struct spd *owner)
 {
 	if (owner != NULL) {
-		ldbg_spd(logger, 1, owner, "%s owner", what);
+		vdbg_spd(verbose, owner, "%s owner", what);
 	}
 }
 
-static void ldbg_owner(struct logger *logger, const struct spd_owner *owner,
-		       const ip_selector *local, const ip_selector *remote,
-		       enum routing routing, const char *who)
+static void vdbg_owners(struct verbose verbose,
+			const struct spd_owner *owner,
+			const ip_selector *local,
+			const ip_selector *remote,
+			enum routing routing,
+			where_t where)
 {
-	if (LDBGP(DBG_BASE, logger)) {
-
-		enum shunt_kind shunt_kind = routing_shunt_kind(routing);
-
-		selector_pair_buf spb;
-		name_buf rb, sb;
-		LDBG_log(logger,
-			 "%s: owners of %s routing >= %s[%s]",
-			 who, str_selector_pair(local, remote, &spb),
-			 str_enum_short(&routing_names, routing, &rb),
-			 str_enum_short(&shunt_kind_names, shunt_kind, &sb));
-
-		LDBG_owner(logger, "policy", owner->policy);
-		LDBG_owner(logger, "bare_route", owner->bare_route);
-		LDBG_owner(logger, "bare_cat", owner->bare_cat);
-		LDBG_owner(logger, "bare_policy", owner->bare_policy);
+	if (!LDBGP(DBG_BASE, verbose.logger)) {
+		return;
 	}
+
+	enum shunt_kind shunt_kind = routing_shunt_kind(routing);
+
+	selector_pair_buf spb;
+	name_buf rb, sb;
+	VDBG_log("%s() owners of %s routing >= %s[%s]",
+		 where->func, str_selector_pair(local, remote, &spb),
+		 str_enum_short(&routing_names, routing, &rb),
+		 str_enum_short(&shunt_kind_names, shunt_kind, &sb));
+
+	verbose.level++;
+	vdbg_owner(verbose, "policy", owner->policy);
+	vdbg_owner(verbose, "bare_route", owner->bare_route);
+	vdbg_owner(verbose, "bare_cat", owner->bare_cat);
+	vdbg_owner(verbose, "bare_policy", owner->bare_policy);
 }
 
 static void save_spd_owner(const struct spd **owner, const char *name,
-			    const struct spd *d_spd,
-			    struct logger *logger, unsigned indent)
+			   const struct spd *d_spd,
+			   struct verbose verbose)
 {
 	/* winner? */
 	if (*owner == NULL) {
-		ldbg_spd(logger, indent, d_spd, "saved %s; first match", name);
+		vdbg_spd(verbose, d_spd, "saved %s; first match", name);
 		*owner = d_spd;
 	} else if (spd_shunt_kind(*owner) < spd_shunt_kind(d_spd)) {
-		ldbg_spd(logger, indent, d_spd, "saved %s; better match", name);
+		vdbg_spd(verbose, d_spd, "saved %s; better match", name);
 		*owner = d_spd;
 	} else {
-		ldbg_spd(logger, indent, d_spd, "skipped %s; not the best", name);
+		vdbg_spd(verbose, d_spd, "skipped %s; not the best", name);
 	}
 }
 
@@ -581,17 +583,18 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 			   const enum routing new_c_routing,
 			   struct logger *logger, where_t where)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "");
+
 	enum routing c_routing = new_c_routing;
 	const struct connection *c = c_spd->connection;
 	const ip_selector *c_local = &c_spd->local->client;
 	const ip_selector *c_remote = &c_spd->remote->client;
 	const enum shunt_kind c_shunt_kind = routing_shunt_kind(c_routing);
-	unsigned indent = 0;
 
 	selector_pair_buf spb;
 	name_buf rb, sb;
-	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s[%s]",
-	     indent, "", __func__,
+	vdbg("%s() looking for SPD owner of %s with routing >= %s[%s]",
+	     __func__,
 	     str_selector_pair(c_local, c_remote, &spb),
 	     str_enum_short(&routing_names, c_routing, &rb),
 	     str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
@@ -602,12 +605,11 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 		.remote_client_range = c_remote,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = logger,
+			.verbose = verbose,
 			.where = where,
 		},
 	};
 
-	indent += 2;
 	while (next_spd(&srf)) {
 		struct spd *d_spd = srf.spd;
 		enum shunt_kind d_shunt_kind = spd_shunt_kind(d_spd);
@@ -625,27 +627,26 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 
 		if (!oriented(d)) {
 			/* can happen during shutdown */
-			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
+			vdbg_spd(verbose, d_spd, "skipped; not oriented");
 			continue;
 		}
 
 		if (d->routing.state == RT_UNROUTED) {
-			ldbg_spd(logger, indent, d_spd, "skipped; UNROUTED");
+			vdbg_spd(verbose, d_spd, "skipped; UNROUTED");
 			continue;
 		}
 
 		if (c_spd == d_spd) {
-			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
+			vdbg_spd(verbose, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
 		/* fast lookup did it's job! */
 
-		PEXPECT(logger, selector_range_eq_selector_range(*c_remote,
-								 d_spd->remote->client));
+		vexpect(selector_range_eq_selector_range(*c_remote, d_spd->remote->client));
 
 		if (!selector_eq_selector(*c_remote, d_spd->remote->client)) {
-			ldbg_spd(logger, indent, d_spd, "skipped; different remote selectors");
+			vdbg_spd(verbose, d_spd, "skipped; different remote selectors");
 			continue;
 		}
 
@@ -655,7 +656,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 		 */
 
 		if (!sa_mark_eq(c->sa_marks.in, d->sa_marks.in)) {
-			ldbg_spd(logger, indent, d_spd,
+			vdbg_spd(verbose, d_spd,
 				 "skipped; marks.in "PRI_SA_MARK" vs "PRI_SA_MARK,
 				 pri_sa_mark(c->sa_marks.in),
 				 pri_sa_mark(d->sa_marks.in));
@@ -663,7 +664,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 		}
 
 		if (!sa_mark_eq(c->sa_marks.out, d->sa_marks.out)) {
-			ldbg_spd(logger, indent, d_spd,
+			vdbg_spd(verbose, d_spd,
 				 "skipped; marks.out "PRI_SA_MARK" vs "PRI_SA_MARK,
 				 pri_sa_mark(c->sa_marks.out),
 				 pri_sa_mark(d->sa_marks.out));
@@ -683,16 +684,16 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 		{
 			const char *checking = "bare_route";
 			if (!kernel_route_installed(d)) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; not routed", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s; not routed", checking);
 			} else if (c->clonedfrom == d) {
 				/* D, the parent, is already routed */
-				ldbg_spd(logger, indent, d_spd,
+				vdbg_spd(verbose, d_spd,
 					 "skipped %s; is connection parent", checking);
 			} else if (!address_eq_address(c->local->host.addr,
 						       d->local->host.addr)) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; different local address?!?", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s; different local address?!?", checking);
 			} else {
-				save_spd_owner(&owner.bare_route, checking, d_spd, logger, indent);
+				save_spd_owner(&owner.bare_route, checking, d_spd, verbose);
 			}
 		}
 
@@ -707,11 +708,11 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 			const char *checking = "bare_cat";
 			ip_selector c_local_host = selector_from_address(c_spd->local->host->addr);
 			if (!selector_eq_selector(c_local_host, d_spd->local->client)) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s; different local selectors", checking);
 			} else if (c->config->overlapip && d->config->overlapip) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
 			} else {
-				save_spd_owner(&owner.bare_cat, checking, d_spd, logger, indent);
+				save_spd_owner(&owner.bare_cat, checking, d_spd, verbose);
 			}
 		}
 
@@ -728,9 +729,9 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 		{
 			const char *checking = "bare_policy";
 			if (!selector_eq_selector(*c_local, d_spd->local->client)) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s; different local selectors", checking);
 			} else {
-				save_spd_owner(&owner.bare_policy, checking, d_spd, logger, indent);
+				save_spd_owner(&owner.bare_policy, checking, d_spd, verbose);
 			}
 		}
 
@@ -741,30 +742,30 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 			const char *checking = "policy";
 			if (!selector_eq_selector(c_spd->local->client,
 						  d_spd->local->client)) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s; different local selectors", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s; different local selectors", checking);
 			} else if (d_shunt_kind < c_shunt_kind) {
 				name_buf rb, sb;
-				ldbg_spd(logger, indent, d_spd, "skipped %s; < %s[%s]",
+				vdbg_spd(verbose, d_spd, "skipped %s; < %s[%s]",
 					 checking,
 					 str_enum_short(&routing_names, c_routing, &rb),
 					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb));
 			} else if (d_shunt_kind == c_shunt_kind && c->clonedfrom == d) {
 				name_buf rb, sb;
-				ldbg_spd(logger, indent, d_spd,
+				vdbg_spd(verbose, d_spd,
 					 "skipped %s; is connection parent with routing = %s[%s] %s",
 					 checking,
 					 str_enum_short(&routing_names, c_routing, &rb),
 					 str_enum_short(&shunt_kind_names, c_shunt_kind, &sb),
 					 bool_str(d->routing.state >= c_routing));
 			} else if (c->config->overlapip && d->config->overlapip) {
-				ldbg_spd(logger, indent, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
+				vdbg_spd(verbose, d_spd, "skipped %s;  both ends have POLICY_OVERLAPIP", checking);
 			} else {
-				save_spd_owner(&owner.policy, checking, d_spd, logger, indent);
+				save_spd_owner(&owner.policy, checking, d_spd, verbose);
 			}
 		}
 	}
 
-	ldbg_owner(logger, &owner, c_local, c_remote, c_routing, __func__);
+	vdbg_owners(verbose, &owner, c_local, c_remote, c_routing, where);
 	return owner;
 }
 
