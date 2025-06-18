@@ -44,17 +44,19 @@ REHASH_DB_ENTRY(spd, remote_client, .remote->client);
 
 static struct list_head *spd_filter_head(struct spd_filter *filter)
 {
+	struct verbose verbose = filter->search.verbose;
 	/* select list head */
 	if (filter->remote_client_range != NULL) {
 		selector_buf sb;
-		dbg("FOR_EACH_SPD[remote_client_range=%s]... in "PRI_WHERE,
-		    str_selector(filter->remote_client_range, &sb), pri_where(filter->where));
+		vdbg("FOR_EACH_SPD[remote_client_range=%s]... in "PRI_WHERE,
+		     str_selector(filter->remote_client_range, &sb),
+		     pri_where(filter->search.where));
 		hash_t hash = hash_spd_remote_client(filter->remote_client_range);
 		return hash_table_bucket(&spd_remote_client_hash_table, hash);
 	}
 
 	/* else other queries? */
-	dbg("FOR_EACH_SPD_... in "PRI_WHERE, pri_where(filter->where));
+	vdbg("FOR_EACH_SPD_... in "PRI_WHERE, pri_where(filter->search.where));
 	return &spd_db_list_head;
 }
 
@@ -67,34 +69,48 @@ static bool matches_spd_filter(struct spd *spd, struct spd_filter *filter)
 	return true;
 }
 
-bool next_spd(enum chrono order, struct spd_filter *filter)
+bool next_spd(struct spd_filter *filter)
 {
+	struct verbose verbose;
 	if (filter->internal == NULL) {
 		/*
+		 * First time.
+		 *
 		 * Advance to first entry of the circular list (if the
 		 * list is entry it ends up back on HEAD which has no
 		 * data).
 		 */
-		filter->internal = spd_filter_head(filter)->head.next[order];
+		filter->internal = spd_filter_head(filter)->
+			head.next[filter->search.order];
+		/* found=base+1; caller=base+2 */
+		filter->search.verbose.level++;
+		verbose = filter->search.verbose;
+		filter->search.verbose.level++;
+	} else {
+		/* found=caller-1 */
+		verbose = filter->search.verbose;
+		verbose.level--;
 	}
+
 	/* Walk list until an entry matches */
 	filter->spd = NULL;
 	for (struct list_entry *entry = filter->internal;
 	     entry->data != NULL /* head has DATA == NULL */;
-	     entry = entry->next[order]) {
+	     entry = entry->next[filter->search.order]) {
 		struct spd *spd = (struct spd *) entry->data;
 		if (matches_spd_filter(spd, filter)) {
 			/* save connection; but step off current entry */
-			filter->internal = entry->next[order];
+			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
-				jam_string(buf, "  found ");
+			VDBG_JAMBUF(buf) {
+				jam_string(buf, "found ");
 				jam_spd(buf, spd);
 			}
 			filter->spd = spd;
 			return true;
 		}
 	}
-	dbg("  matches: %d", filter->count);
+
+	vdbg("matches: %d", filter->count);
 	return false;
 }

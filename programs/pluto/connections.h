@@ -1092,7 +1092,7 @@ bool next_connection(struct connection_filter *query);
 bool all_connections(struct connection_filter *query);
 
 /*
- * For iterating over the spd DB.
+ * For iterating over the SPD DB.
  *
  * - parameters are only matched when non-NULL or non-zero
  * - .connection can be deleted between calls
@@ -1112,11 +1112,19 @@ struct spd_filter {
 	struct list_entry *internal;
 	/* internal: total matches so far */
 	unsigned count;
-	/* .where MUST BE LAST (See GCC bug 102288) */
-	where_t where;
+
+	/*
+	 * Required fields.
+	 */
+	struct /*search*/ {
+		const enum chrono order;
+		struct verbose verbose; /* writable */
+		/* .where MUST BE LAST (See GCC bug 102288) */
+		const where_t where;
+	} search;
 };
 
-bool next_spd(enum chrono order, struct spd_filter *srf);
+bool next_spd(struct spd_filter *srf);
 
 void replace_connection_that_id(struct connection *c, const struct id *new_id);
 void connection_db_rehash_that_id(struct connection *c);

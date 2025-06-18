@@ -266,13 +266,22 @@ static bool matches_connection_filter(struct connection *c,
 
 bool next_connection(struct connection_filter *filter)
 {
-	struct verbose verbose = filter->search.verbose;
-	/* try to stop all_connections() calls */
-	vassert(filter->connections == NULL);
+	struct verbose verbose;
 	if (filter->internal == NULL) {
 		/*
 		 * First time.
 		 *
+		 * Advance to first entry of the circular list (if the
+		 * list is entry it ends up back on HEAD which has no
+		 * data). And announces that the search has started.
+		 */
+		filter->internal = connection_filter_head(filter)->
+			head.next[filter->search.order];
+		/* found=base+1; caller=base+2 */
+		filter->search.verbose.level++;
+		verbose = filter->search.verbose;
+		filter->search.verbose.level++;
+		/*
 		 * Some sanity checks.  Only simple and name checks
 		 * can leave out .ike_version.
 		 */
@@ -294,16 +303,13 @@ bool next_connection(struct connection_filter *filter)
 			vexpect_where(filter->search.where, filter->this_id_eq == NULL);
 			vexpect_where(filter->search.where, filter->that_id_eq == NULL);
 		}
-		/*
-		 * Advance to first entry of the circular list (if the
-		 * list is entry it ends up back on HEAD which has no
-		 * data). And announces that the search has started.
-		 */
-		filter->internal = connection_filter_head(filter)->
-			head.next[filter->search.order];
-		filter->search.verbose.level++;	/* ready for caller */
+		/* try to stop all_connections() calls */
+		vassert(filter->connections == NULL);
+	} else {
+		/* found=caller-1 */
+		verbose = filter->search.verbose;
+		verbose.level--;
 	}
-	verbose = filter->search.verbose; /* update */
 
 	/* Walk list until an entry matches */
 	filter->c = NULL;
@@ -315,8 +321,11 @@ bool next_connection(struct connection_filter *filter)
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			vdbg("found %s", c->name);
 			filter->c = c;
+			VDBG_JAMBUF(buf) {
+				jam_string(buf, "found ");
+				jam_connection(buf, c);
+			}
 			return true;
 		}
 	}

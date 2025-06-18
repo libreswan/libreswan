@@ -402,6 +402,7 @@ static bool matches_filter(struct state *st, struct state_filter *filter)
 
 bool next_state(struct state_filter *filter)
 {
+	struct verbose verbose;
 	if (filter->internal == NULL) {
 		/*
 		 * Advance to first entry of the circular list (if the
@@ -410,9 +411,15 @@ bool next_state(struct state_filter *filter)
 		 */
 		filter->internal = state_filter_head(filter)->
 			head.next[filter->search.order];
+		/* found=base+1; caller=base+2 */
 		filter->search.verbose.level++;
+		verbose = filter->search.verbose;
+		filter->search.verbose.level++;
+	} else {
+		/* found=caller-1 */
+		verbose = filter->search.verbose;
+		verbose.level--;
 	}
-	struct verbose verbose = filter->search.verbose;
 
 	filter->st = NULL;
 	/* Walk list until an entry matches */
@@ -424,9 +431,8 @@ bool next_state(struct state_filter *filter)
 			/* save state; but step off current entry */
 			filter->internal = entry->next[filter->search.order];
 			filter->count++;
-			LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-				jam(buf, PRI_VERBOSE, pri_verbose);
-				jam_string(buf, "  found ");
+			VDBG_JAMBUF(buf) {
+				jam_string(buf, "found ");
 				jam_state(buf, st);
 			}
 			filter->st = st;

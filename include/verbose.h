@@ -137,12 +137,15 @@ struct verbose {
  * is logged, prefixed by indentation.
  */
 
+#define VDBG_log(FMT, ...)						\
+	llog(DEBUG_STREAM, verbose.logger,				\
+	     PRI_VERBOSE""FMT,						\
+	     pri_verbose, ##__VA_ARGS__);				\
+
 #define vdbg(FMT, ...)							\
 	{								\
 		if (LDBGP(DBG_BASE, verbose.logger)) {			\
-			llog(DEBUG_STREAM, verbose.logger,		\
-			     PRI_VERBOSE""FMT,				\
-			     pri_verbose, ##__VA_ARGS__);		\
+			VDBG_log(FMT, ##__VA_ARGS__);			\
 		}							\
 	}
 
@@ -179,7 +182,17 @@ struct verbose {
 			   verbose.rc_flags != NO_STREAM);		\
 	     cond_; cond_ = false)					\
 		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, BUF)	\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose); cond_;	\
-			     cond_ = false)
+			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			     cond_; cond_ = false)
+
+#define VLOG_JAMBUF(BUF)				\
+	LLOG_JAMBUF(RC_LOG, verbose.logger, BUF)
+
+#define VDBG_JAMBUF(BUF)						\
+	for (bool cond_ = LDBGP(DBG_BASE, verbose.logger);		\
+	     cond_; cond_ = false)					\
+		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			     cond_; cond_ = false)
 
 #endif
