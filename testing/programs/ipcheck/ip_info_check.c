@@ -94,7 +94,7 @@ static const struct address_test {
 	bool is_specified;
 	bool is_loopback;
 } address_tests[] = {
-	{ LN, NULL, NULL,                        "<unset-address>", .is_unset = true, },
+	{ LN, NULL, NULL,                        "<null-address>", .is_unset = true, },
 	{ LN, NULL, &unset_address,              "<unset-address>", .is_unset = true, },
 	{ LN, &ipv4_info, &ipv4_info.address.unspec,   "0.0.0.0",         .is_unset = false },
 	{ LN, &ipv6_info, &ipv6_info.address.unspec,   "::",              .is_unset = false },
@@ -112,8 +112,8 @@ static const struct endpoint_test {
 	bool is_any;
 	int hport;
 } endpoint_tests[] = {
-	{ LN, NULL, NULL,                     "<unset-endpoint>",   .is_unset = true, .hport = -1, },
-	{ LN, NULL, &unset_endpoint,          "<unset-endpoint>",   .is_unset = true, .hport = -1, },
+	{ LN, NULL, NULL,                     "<null-endpoint>",   .is_unset = true, .hport = -1, },
+	{ LN, NULL, &unset_endpoint,          "<unset-endpoint>",  .is_unset = true, .hport = -1, },
 };
 
 static const struct subnet_test {
@@ -126,7 +126,7 @@ static const struct subnet_test {
 	bool is_all;
 	bool is_zero;
 } subnet_tests[] = {
-	{ LN, NULL, NULL,                    "<unset-subnet>", .is_unset = true, },
+	{ LN, NULL, NULL,                    "<null-subnet>",  .is_unset = true, },
 	{ LN, NULL, &unset_subnet,           "<unset-subnet>", .is_unset = true, },
 	{ LN, &ipv4_info, &ipv4_info.subnet.zero,  "0.0.0.0/32",     .is_zero = true, .size = 1, },
 	{ LN, &ipv6_info, &ipv6_info.subnet.zero,  "::/128",         .is_zero = true, .size = 1, },
@@ -144,8 +144,8 @@ static const struct range_test {
 	bool is_all;
 	uintmax_t size;
 } range_tests[] = {
-	{ LN, NULL, NULL,                  "<unset-range>",     .is_unset = true, },
-	{ LN, NULL, &unset_range,          "<unset-range>",     .is_unset = true, },
+	{ LN, NULL, NULL,                  "<null-range>",       .is_unset = true, },
+	{ LN, NULL, &unset_range,          "<unset-range>",      .is_unset = true, },
 	{ LN, &ipv4_info, &ipv4_info.range.zero, "0.0.0.0/32",   .is_zero = true, .size = 1, },
 	{ LN, &ipv6_info, &ipv6_info.range.zero, "::/128",             .is_zero = true, .size = 1, },
 	{ LN, &ipv4_info, &ipv4_info.range.all,  "0.0.0.0/0",  .is_all = true,  .size = (uintmax_t)1<<32, },
@@ -163,7 +163,7 @@ static const struct selector_test {
 	bool is_address;
 	bool is_subnet;
 } selector_tests[] = {
-	{ LN, NULL,       NULL,                     "<unset-selector>", .is_unset = true, },
+	{ LN, NULL,       NULL,                     "<null-selector>",  .is_unset = true, },
 	{ LN, NULL,       &unset_selector,          "<unset-selector>", .is_unset = true, },
 	{ LN, &ipv4_info, &ipv4_info.selector.zero, "0.0.0.0/32",       .is_zero = true, .is_subnet = true, },
 	{ LN, &ipv6_info, &ipv6_info.selector.zero, "::/128",           .is_zero = true, .is_subnet = true, },
