@@ -69,7 +69,8 @@ static void terminate_v1_state(struct connection *c,
 {
 	switch (visit_kind) {
 
-	case CONNECTION_IKE_PREP:
+	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
+	case NUDGE_CONNECTION_CROSSED_IKE_SA:
 		/*
 		 * Prepare the IKE SA for deletion.
 		 *
@@ -80,9 +81,10 @@ static void terminate_v1_state(struct connection *c,
 		(*ike)->sa.st_viable_parent = false;
 		return;
 
-	case CONNECTION_IKE_CHILD: /* ignore IKE */
-	case CONNECTION_CUCKOO_CHILD:
-	case CONNECTION_ORPHAN_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA: /* ignore IKE */
+	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
+	case VISIT_CONNECTION_CHILD_OF_NONE:
+	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
 	{
 		/*
 		 * Can't always assume IKE is suitable for sending
@@ -100,30 +102,30 @@ static void terminate_v1_state(struct connection *c,
 		return;
 	}
 
-	case CONNECTION_LURKING_CHILD:
+	case VISIT_CONNECTION_LURKING_CHILD_SA:
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case CONNECTION_LURKING_IKE:
+	case VISIT_CONNECTION_LURKING_IKE_SA:
 		state_attach(&(*ike)->sa, c->logger);
 		delete_ike_sa(ike);
 		return;
 
-	case CONNECTION_CHILD_SIBLING:
+	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
 		/*
 		 * When IKEv1 deletes an IKE SA any siblings are
 		 * orphaned.
 		 */
 		return;
-	case CONNECTION_CHILDLESS_IKE:
+	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
 		/*
 		 * When IKEv1 deletes an IKE SA it always sends a
 		 * delete notify; hence handle this in
-		 * CONNECTION_IKE_POST.
+		 * FINISH_CONNECTION_PRINCIPAL_IKE_SA.
 		 */
 		return;
 
-	case CONNECTION_IKE_POST:
+	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
 	{
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(&(*ike)->sa, /*viable-parent*/false);
@@ -142,7 +144,8 @@ static void terminate_v2_states(struct connection *c,
 				enum connection_visit_kind visit_kind)
 {
 	switch (visit_kind) {
-	case CONNECTION_IKE_PREP:
+	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
+	case NUDGE_CONNECTION_CROSSED_IKE_SA:
 		/*
 		 * Prepare the IKE SA for deletion.
 		 *
@@ -153,25 +156,24 @@ static void terminate_v2_states(struct connection *c,
 		record_n_send_n_log_v2_delete(*ike, HERE);
 		return;
 
-	case CONNECTION_IKE_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA:
+	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
+	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
+		PEXPECT(c->logger, ike != NULL);
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case CONNECTION_CUCKOO_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_NONE:
+		llog_pexpect(c->logger, HERE, "trying to teardown an orphan child");
 		state_attach(&(*child)->sa, c->logger);
-		connection_teardown_child(child, REASON_DELETED, HERE);
-		return;
-	case CONNECTION_ORPHAN_CHILD:
-		state_attach(&(*child)->sa, c->logger);
-		PEXPECT(c->logger, ike == NULL);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
-	case CONNECTION_LURKING_CHILD:
+	case VISIT_CONNECTION_LURKING_CHILD_SA:
 		state_attach(&(*child)->sa, c->logger);
 		delete_child_sa(child);
 		return;
-	case CONNECTION_LURKING_IKE:
+	case VISIT_CONNECTION_LURKING_IKE_SA:
 		/*
 		 * For instance, a larval IKE SA, either stuck waiting
 		 * for IKE_SA_INIT response crossed by the peer
@@ -185,11 +187,11 @@ static void terminate_v2_states(struct connection *c,
 		terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 
-	case CONNECTION_CHILD_SIBLING:
+	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
-	case CONNECTION_CHILDLESS_IKE:
+	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
 	{
 		/*
 		 * Since connection_teardown_child() was not
@@ -217,7 +219,7 @@ static void terminate_v2_states(struct connection *c,
 		return;
 	}
 
-	case CONNECTION_IKE_POST:
+	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
 		delete_ike_sa(ike);
 		return;
 	}

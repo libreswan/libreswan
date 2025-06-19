@@ -18,6 +18,8 @@ v5.3 (unreleased)
   - when configured, use cURL to download LDAP CRLs [Andrew]
   - verify using NSS's IPsec profile aka certificateUsageIPsec [Andrew]
   - only verify using certificateUsageSSL{Client,Server} when USE_NSS_TLS_SECURITY_PROFILE [Andrew]
+* IKEv2:
+  - fix PEXPECT when deleting crossed IKE SA [Andrew, Ilya Maximets #2101, Ondrej Moris #2123]
 * IKEv1:
   - fix CISCO's split support (requires cisco-split=yes) [Andrew, Amirreza #2230 Erikas #633]
   - share-lease=yes|no (default yes) to share XAUTH/ModeCfg lease IP on multiple connections [Paul]

@@ -32,7 +32,7 @@ initiating 2 connections
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": initiating delete of connection's Child SA #3 using IKE SA #1
+"west-cuckoo": initiating delete of connection's Child SA #3, IKE SA #1 is shared with "west-cuckold"
 "west-cuckold": initiating delete of connection's Child SA #2, IKE SA #1 is shared with "west-cuckoo"
 terminated 2 connections
 "west-cuckoo" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
@@ -59,7 +59,7 @@ initiating 1 connection
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": initiating delete of connection's Child SA #6 using IKE SA #4
+"west-cuckoo": initiating delete of connection's Child SA #6, IKE SA #4 is shared with "west-cuckold"
 "west-cuckold": initiating delete of connection's Child SA #5, IKE SA #4 is shared with "west-cuckoo"
 "west-cuckold" #1: deleting IKE SA (established IKE SA)
 terminated 2 connections

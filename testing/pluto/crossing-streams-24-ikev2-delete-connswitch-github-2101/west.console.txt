@@ -24,11 +24,65 @@ west #
 "a" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "a" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.253/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
+ ipsec connectionstatus
+Connection list:
+ 
+"a": 192.0.3.253/32===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-tunnel; my_ip=192.0.3.253; their_ip=unset;
+"a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #3;
+"a":   my_updown=ipsec _updown;
+"a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"a":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"a":   sec_label:unset;
+"a":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"a":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"a":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"a":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"a":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"a":   v2-auth-hash-policy: none;
+"a":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"a":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"a":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"a":   sendca: all; our sendcert: always; their sendcert: always;
+"a":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
+"a":   nat-traversal: encapsulation:auto; keepalive:20s
+"a":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #3; established Child SA: #2;
+"a":   conn serial: $1;
+"a":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
+"a":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"b": 192.0.3.254/32===192.1.2.45[@west]...192.1.2.23[@east]===192.0.20.0/24; routed-tunnel; my_ip=192.0.3.254; their_ip=unset;
+"b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"b":   my_updown=ipsec _updown;
+"b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"b":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"b":   sec_label:unset;
+"b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"b":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"b":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"b":   v2-auth-hash-policy: none;
+"b":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"b":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"b":   sendca: all; our sendcert: always; their sendcert: always;
+"b":   liveness: passive; dpddelay:0s; retransmit-timeout:10s
+"b":   nat-traversal: encapsulation:auto; keepalive:20s
+"b":   routing: routed-tunnel; owner: Child SA #4; established Child SA: #4;
+"b":   conn serial: $2;
+"b":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+ 
+Total IPsec connections: loaded 2, active 2
+west #
  ipsec delete a
 "a": terminating SAs using this connection
 "a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+"a" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 "a" #2: ESP traffic information: in=0B out=0B
-"b" #3: ESP traffic information: in=0B out=0B
+"b" #4: ESP traffic information: in=0B out=0B
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #
