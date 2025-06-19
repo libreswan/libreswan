@@ -301,28 +301,42 @@ enum opt {
 
 const struct option optarg_options[] =
 {
-	{ "config\0<file>", required_argument, NULL, OPT_CONFIG, },
+	{ OPT("help"), no_argument, NULL, OPT_HELP, },
+	{ OPT("checkconfig"), no_argument, NULL, OPT_CHECKCONFIG, },
+	{ OPT("autoall"), no_argument, NULL, OPT_AUTOALL, },
+	{ REPLACE_OPT("addall", "autoall", "2.9"), no_argument, NULL, OPT_AUTOALL, }, /* alias, backwards compat */
+
+	HEADING_OPT("  Load alternate 'ipsec.conf' file:"),
+	{ OPT("config", "<ipsec.conf>"), required_argument, NULL, OPT_CONFIG, },
+
+	HEADING_OPT("  Display more details:"),
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
-	{ "verbose\0", no_argument, NULL, OPT_VERBOSE, },
-	{ "autoall\0", no_argument, NULL, OPT_AUTOALL, },
-	{ "addall\0", no_argument, NULL, OPT_AUTOALL, }, /* alias, backwards compat */
-	{ "listall\0", no_argument, NULL, OPT_LISTALL, },
-	{ "listadd\0", no_argument, NULL, OPT_LISTADD, },
-	{ "listroute\0", no_argument, NULL, OPT_LISTROUTE, },
-	{ "liststart\0", no_argument, NULL, OPT_LISTSTART, },
-	{ "listignore\0", no_argument, NULL, OPT_LISTIGNORE, },
-	{ "varprefix\0<prefix>", required_argument, NULL, OPT_VARPREFIX, },
-	{ "ctlsocket\0<socketfile>", required_argument, NULL, OPT_CTLSOCKET, },
-	{ "ctlbase\0>ctlsocket", required_argument, NULL, OPT_CTLSOCKET, }, /* backwards compatibility */
-	{ OPT("configsetup", "option"), optional_argument, NULL, OPT_CONFIGSETUP, },
+	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
+
+	HEADING_OPT("  Display content of 'ipsec.conf' 'conn' sections:"),
+	{ OPT("listall"), no_argument, NULL, OPT_LISTALL, },
+	{ OPT("listadd"), no_argument, NULL, OPT_LISTADD, },
+	{ OPT("listroute"), no_argument, NULL, OPT_LISTROUTE, },
+	{ OPT("liststart"), no_argument, NULL, OPT_LISTSTART, },
+	{ OPT("listignore"), no_argument, NULL, OPT_LISTIGNORE, },
+
+	HEADING_OPT("  Display content of 'ipsec.conf' 'config setup' section:"),
 	{ OPT("liststack"), no_argument, NULL, OPT_LISTSTACK, },
-	{ "checkconfig\0", no_argument, NULL, OPT_CHECKCONFIG, },
-	{ "noexport\0", no_argument, NULL, OPT_NOEXPORT, },
-	{ "help\0", no_argument, NULL, OPT_HELP, },
+	{ OPT("configsetup", "<option>"), optional_argument, NULL, OPT_CONFIGSETUP, },
+	{ OPT("noexport"), no_argument, NULL, OPT_NOEXPORT, },
+	{ OPT("varprefix", "<prefix>"), required_argument, NULL, OPT_VARPREFIX, },
+
+	HEADING_OPT("  Override default pluto socket:"),
+	{ OPT("ctlsocket", "<socketfile>"), required_argument, NULL, OPT_CTLSOCKET, },
+	{ REPLACE_OPT("ctlbase", "ctlsocket", "3.22"), required_argument, NULL, OPT_CTLSOCKET, }, /* backwards compatibility */
+
+	HEADING_OPT("  Specify connection on command line:"),
+	{ OPT("name", "<connection-name>"), required_argument, NULL, OPT_NAME, },
+	HEADING_OPT("\tleft=<ip>\n\tright=<ip>\n\t..."),
+
 	/* obsoleted, eat and ignore for compatibility */
-	{"defaultroute\0!", required_argument, NULL, 0, },
-	{"defaultroutenexthop\0!", required_argument, NULL, 0, },
-	{"name\0", required_argument, NULL, OPT_NAME, },
+	{ IGNORE_OPT("defaultroute", "3.8"), required_argument, NULL, 0, },
+	{ IGNORE_OPT("defaultroutenexthop", "3.8"), required_argument, NULL, 0, },
 	{ 0, 0, 0, 0 }
 };
 
@@ -374,7 +388,8 @@ int main(int argc, char *argv[])
 
 		switch ((enum opt)c) {
 		case OPT_HELP:
-			optarg_usage("ipsec addconn", "[<names>]", "");
+			optarg_usage("ipsec addconn", "<connection-name> ...",
+				     "By default, 'addconn' will load <connection-name> into pluto.\n");
 
 		case OPT_AUTOALL:
 			autoall = true;
