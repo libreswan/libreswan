@@ -1071,21 +1071,26 @@ void show_connection_statuses(struct show *s)
 	show(s, "Connection list:");
 	show_separator(s);
 
-	int count = 0;
-	int active = 0;
+	unsigned active = 0;
+	unsigned routed = 0;
 
 	struct connections *connections = sort_connections();
-	ITEMS_FOR_EACH(c, connections) {
-		count++;
-		if ((*c)->routing.state == RT_ROUTED_TUNNEL) {
+	ITEMS_FOR_EACH(cp, connections) {
+		const struct connection *c = (*cp);
+		if (kernel_route_installed(c)) {
+			routed++;
+		}
+		if (c->routing.state == RT_ROUTED_TUNNEL) {
 			active++;
 		}
-		show_connection_status(s, *c);
+		show_connection_status(s, c);
 	}
-	pfree(connections);
 
 	show_separator(s);
-	show(s, "Total IPsec connections: loaded %d, active %d", count, active);
+	show(s, "Total IPsec connections: loaded %u, routed %u, active %u",
+	     connections->len, routed, active);
+
+	pfree(connections);
 }
 
 static unsigned whack_connection_status(const struct whack_message *m UNUSED,

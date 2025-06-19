@@ -416,7 +416,8 @@ enum shunt_kind spd_shunt_kind(const struct spd *spd)
 }
 
 /*
- * True when updown(route) has been run; not <<ipsec route>>.
+ * True when updown(route) has been run; not <<ipsec route>>.  The
+ * latter just adds the +ROUTE bit and then stands back.
  */
 
 bool kernel_route_installed(const struct connection *c)
