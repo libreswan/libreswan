@@ -141,32 +141,27 @@ static void newline(FILE *stream, struct line *line)
 	jam_str(line->buf, sizeof(line->buf), "\t");
 }
 
-void optarg_usage(const char *progname, const char *arguments,
-		  const char *details)
+void optarg_usage(const char *progname, const char *synopsys, const char *details)
 {
 	FILE *stream = stdout;
 
-	struct line line;
-	snprintf(line.buf, sizeof(line.buf), "Usage: %s", progname);
+	struct line line = {"\t"};
+
+	if (strlen(synopsys) == 0) {
+		snprintf(line.buf, sizeof(line.buf), "Usage: %s", progname);
+	} else {
+		fprintf(stream, "Usage: %s [--options] %s\n", progname, synopsys);
+	}
 
 	for (const struct option *opt = optarg_options; opt->name != NULL; opt++) {
 
 		const char *nm = opt->name;
 
 		/*
-		 * "\0heading"
-		 *
-		 * A zero length option string.  Assume the meta is a
-		 * heading.
+		 * "\r\a\n\t<HEADING>"
 		 *
 		 * Experimental, is this portable?
 		 */
-		if (*nm == '\0') {
-			newline(stream, &line);
-			/* output heading */
-			fprintf(stream, "%s\n", nm + 1);
-			continue;
-		}
 
 		if (startswith(nm, METAOPT_HEADING)) {
 			newline(stream, &line);
@@ -228,14 +223,8 @@ void optarg_usage(const char *progname, const char *arguments,
 		add_str(line.buf, sizeof(line.buf), option);
 	}
 
-	if (arguments == NULL || strlen(arguments) == 0) {
-		fprintf(stream, "%s\n", line.buf);
-	} else if (strlen(line.buf) + strlen(arguments) + 2 >= sizeof(line.buf)) {
-		fprintf(stream, "%s\n", line.buf);
-		fprintf(stream, "\t%s\n", arguments);
-	} else {
-		fprintf(stream, "%s %s\n", line.buf, arguments);
-	}
+	/* force flush */
+	newline(stream, &line);
 
 	if (details != NULL) {
 		fprintf(stream, "%s", details);

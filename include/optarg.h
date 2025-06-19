@@ -71,7 +71,7 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 #define HEADING_OPT(HEADING)		{ METAOPT_HEADING HEADING, no_argument, NULL, 0, }
 #define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__
 
-void optarg_usage(const char *progname, const char *arguments,
+void optarg_usage(const char *progname, const char *synopsis,
 		  const char *details) NEVER_RETURNS;
 
 NEVER_RETURNS PRINTF_LIKE(2) void optarg_fatal(const struct logger *logger,
