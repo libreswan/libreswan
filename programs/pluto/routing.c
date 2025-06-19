@@ -1557,14 +1557,12 @@ static bool dispatch_1(enum routing_event event,
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
 			if (!unrouted_to_routed_never_negotiate(c, e->where)) {
-				/* XXX: why whack only? */
 				llog(RC_ROUTE, logger, "could not route");
 				return true;
 			}
 			PEXPECT(logger, c->routing.state == RT_ROUTED_NEVER_NEGOTIATE);
 		} else {
 			if (!unrouted_to_routed_ondemand(c, e->where)) {
-				/* XXX: why whack only? */
 				llog(RC_ROUTE, logger, "could not route");
 				return true;
 			}
@@ -2272,8 +2270,7 @@ static bool dispatch_1(enum routing_event event,
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
 			if (!unrouted_to_routed_never_negotiate(c, e->where)) {
-				/* XXX: why whack only? */
-				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+				llog(RC_ROUTE, logger, "could not route");
 				return true;
 			}
 			PEXPECT(logger, c->routing.state == RT_ROUTED_NEVER_NEGOTIATE);
