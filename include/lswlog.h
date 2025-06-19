@@ -48,7 +48,7 @@
 
 enum rc_type {
 
-	RC_LOG = 2,			/* message aimed at log (does
+	RC_LOG = 0,			/* message aimed at log (does
 					 * not affect exit status) */
 
 	/* entry of secrets */
