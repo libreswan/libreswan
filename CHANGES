@@ -1,16 +1,6 @@
 See also https://libreswan.org/
 
 v5.3 (unreleased)
-* config:
-  - obsoleted virtual_private and plutostderrlog keywords [Tuomo]
-  - drop undocumented --rootdir{,2} option to `ipsec readwriteconf` [Andrew, #2152]
-  - warn when END-option= has no END [Andrew #663]
-  - nflog= made an alias to nflog-group= [Andrew]
-  - default whack --sendcert to "always" like addconn [Andrew #2176]
-  - rename `pluto --dnssec-trusted` to `--dnssec-achors` [Andrew #2240]
-  - recognize ah=... as phase2=ah phase2alg=... [Andrew #712]
-* ipsec whack:
-  - remove broken --pfsgroup option (have more robust --{esp,ike}) [Andrew #2246]
 * PKIX (Public Key Infrastructure X.509)
   - moved cURL and LDAP CRL download code out of pluto [Andrew]
   - replaced CRL thread with libevent [Andrew]
@@ -23,14 +13,27 @@ v5.3 (unreleased)
 * IKEv1:
   - fix CISCO's split support (requires cisco-split=yes) [Andrew, Amirreza #2230 Erikas #633]
   - share-lease=yes|no (default yes) to share XAUTH/ModeCfg lease IP on multiple connections [Paul]
-* ipsec commands:
-  - support qualified names, such as '"labeled"[1][2]' [Andrew #1308]
 * initsystem:
   - remove unused _stackmanager [Tuomo #2080]
   - on BSD, default to syslog(LOG_NOTICE) and not pluto.log [Andrew #2295 #2298]
-* Testing:
+* config:
+  - merge `addconn` (`ipsec.conf`) and `whack` connection option parsers [Andrew]
+  - change `whack` to use same connection defaults as `ipsec.conf` [Andrew]
+  - support `ipsec addconn --name connname left=1.2.3.4 right=5.6.7.8` (experimental) [Andrew #2138]
+  - drop undocumented `ipsec readwriteconf --rootdir` option [Andrew, #2152]
+  - obsoleted virtual_private= and plutostderrlog= keywords [Tuomo]
+  - warn when END-option= has no END [Andrew #663]
+  - nflog= made an alias to nflog-group= [Andrew]
+  - recognize ah=... as phase2=ah phase2alg=... [Andrew #712]
+* ipsec pluto:
+  - make `ipsec.conf`'s `config setup` and pluto options consistent [Andrew]
+  - fix `--config file1 --config file2` [Andrew]
+* ipsec connectionstatus:
+  - support `ipsec connectionstatus '"labeled"[1][2]'` [Andrew #1308]
+* testing:
   - eliminated all pyOpenSSL dependencies [Andrew]
   - review PKIX test coverage [Andrew]
+  - upgrade Fedora test domain to f42
 
 v5.2 (Feb 26, 2025)
 * IKEv2:
