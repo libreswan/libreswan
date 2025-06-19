@@ -65,7 +65,7 @@ static void check_sockaddr_as_endpoint(struct logger *logger)
 				.len = t->size,
 			}
 		};
-		switch (t->afi->ip_version) {
+		switch (t->afi->ip.version) {
 		case IPv4:
 			memcpy(&raw.sa.sa.sin.sin_addr, t->addr, sizeof(raw.sa.sa.sin.sin_addr));
 			raw.sa.sa.sin.sin_family = AF_INET;

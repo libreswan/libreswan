@@ -33,7 +33,7 @@ ip_packet packet_from_raw(where_t where,
 {
 	ip_packet packet = {
 		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.version = afi->ip.version,
 		.ipproto = protocol->ipproto,
 		.src = {
 			.bytes = *src_bytes,
@@ -73,7 +73,7 @@ const struct ip_info *packet_info(const ip_packet packet)
 	}
 
 	/* may return NULL */
-	return ip_version_info(packet.ip_version);
+	return ip_version_info(packet.ip.version);
 }
 
 const struct ip_protocol *packet_protocol(const ip_packet packet)

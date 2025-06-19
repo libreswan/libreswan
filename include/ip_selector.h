@@ -17,6 +17,7 @@
 #ifndef IP_SELECTOR_H
 #define IP_SELECTOR_H
 
+#include "ip_base.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_subnet.h"
@@ -45,20 +46,17 @@ struct jambuf;
  */
 
 typedef struct {
+	struct ip_base ip;	/* MUST BE FIRST */
 	bool is_set;
-	/*
-	 * Index into the struct ip_info array; must be stream
-	 * friendly.
-	 */
-	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
+
 	/*
 	 * We need something that makes static IPv4 initializers
 	 * possible (struct in_addr requires htonl() which is run-time
 	 * only).
 	 */
+	unsigned ipproto:16;
 	struct ip_bytes lo;
 	struct ip_bytes hi;
-	unsigned ipproto;
 	/*
 	 * For moment, one port
 	 */
@@ -68,7 +66,7 @@ typedef struct {
 #define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES".."PRI_IP_BYTES"]:%u>"
 #define pri_selector(S)						\
 		((S)->is_set ? "set" : "unset"),		\
-		(S)->ip_version,					\
+			(S)->ip.version,			\
 		((S)->ipproto > 255 ? "IPPROTO>255" :		\
 		 protocol_from_ipproto((S)->ipproto)->name),	\
 		pri_ip_bytes((S)->lo),				\

@@ -30,7 +30,7 @@ ip_said said_from_raw(where_t where UNUSED,
 {
 	ip_said said = {
 		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.version = afi->ip.version,
 		.dst = dst,
 		.ipproto = protocol->ipproto,
 		.spi = spi,
@@ -123,7 +123,7 @@ const struct ip_info *said_info(const ip_said said)
 	}
 
 	/* may return NULL */
-	return ip_version_info(said.ip_version);
+	return ip_version_info(said.ip.version);
 }
 
 ip_address said_address(const ip_said said)

@@ -105,7 +105,7 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDipaddr("PLUTO_ME", sr->local->host->addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
-	jam(&jb, "PLUTO_CLIENT_FAMILY='ipv%d' ", selector_info(sr->local->client)->ip_version);
+	jam(&jb, "PLUTO_CLIENT_FAMILY='ipv%d' ", selector_info(sr->local->client)->ip.version);
 	JDemitter("PLUTO_MY_CLIENT", jam_selector_range(&jb, &sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local->client));
@@ -183,7 +183,7 @@ static bool fmt_common_shell_out(char *buf,
 	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
 	JDemitter("PLUTO_CONN_KIND", jam_enum_long(&jb, &connection_kind_names, c->local->kind));
-	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_info(sr->local->host->addr)->ip_version);
+	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_info(sr->local->host->addr)->ip.version);
 	JDuint("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 
 	if (child != NULL && child->sa.st_xauth_username[0] != '\0') {

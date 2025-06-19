@@ -2851,10 +2851,10 @@ void build_connection_spds_from_proposals(struct connection *c)
 
 	unsigned nr_spds = 0;
 	FOR_EACH_ITEM(left_selector, left_proposals) {
-		vexpect(left_selector->ip_version != 0);
+		vexpect(left_selector->ip.version != 0);
 		FOR_EACH_ITEM(right_selector, right_proposals) {
-			vexpect(right_selector->ip_version != 0);
-			if (left_selector->ip_version == right_selector->ip_version) {
+			vexpect(right_selector->ip.version != 0);
+			if (left_selector->ip.version == right_selector->ip.version) {
 				nr_spds ++;
 			}
 		}
@@ -2871,7 +2871,7 @@ void build_connection_spds_from_proposals(struct connection *c)
 	FOR_EACH_ITEM(left_selector, left_proposals) {
 		FOR_EACH_ITEM(right_selector, right_proposals) {
 			verbose.level = 2;
-			if (left_selector->ip_version == right_selector->ip_version) {
+			if (left_selector->ip.version == right_selector->ip.version) {
 				selector_pair_buf spb;
 				vdbg("%s", str_selector_pair(left_selector, right_selector, &spb));
 				verbose.level = 3;

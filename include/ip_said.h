@@ -19,6 +19,7 @@
 #define IP_SAID_H
 
 #include "diag.h"
+#include "ip_base.h"
 #include "ip_endpoint.h"
 #include "ipsec_spi.h"		/* for ipsec_spi_t */
 #include "ttodata.h"
@@ -46,12 +47,8 @@ struct jambuf;
  */
 
 typedef struct {
+	struct ip_base ip;	/* MUST BE FIRST */
 	bool is_set;
-	/*
-	 * Index into the struct ip_info array; must be stream
-	 * friendly.
-	 */
-	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).

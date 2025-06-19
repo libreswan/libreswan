@@ -357,7 +357,7 @@ static void check_in_addr(void)
 		PRINT("%s '%s' -> '%s'", pri_afi(t->afi), t->in, t->in);
 
 		ip_address a;
-		switch (t->afi->ip_version) {
+		switch (t->afi->ip.version) {
 		case IPv4:
 		{
 			struct in_addr in;

@@ -1982,7 +1982,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		case KERNEL_OFFLOAD_NONE: bad_case(KERNEL_OFFLOAD_NONE);
 		}
 
-		switch (address_info(sa->src.address)->ip_version) {
+		switch (address_info(sa->src.address)->ip.version) {
 		case IPv4: xuo.flags |= 0; break;
 		case IPv6: xuo.flags |= XFRM_OFFLOAD_IPV6; break;
 		}

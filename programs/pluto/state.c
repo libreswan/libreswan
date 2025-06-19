@@ -1805,7 +1805,7 @@ diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi, struct s
 	/* XXX: before trying to extract! */
 	if (st->st_connection->config->ignore_peer_dns) {
 		llog(RC_LOG, st->logger, "ignoring INTERNAL_IP%d_DNS server address payload (ignore-peer-dns=yes)",
-		     afi->ip_version);
+		     afi->ip.version);
 		return NULL;
 	}
 
@@ -1813,19 +1813,19 @@ diag_t append_st_cfg_dns(struct pbs_in *pbs, const struct ip_info *afi, struct s
 	diag_t d = pbs_in_address(pbs, &ip, afi, "INTERNAL_IPn_DNS payload");
 	if (d != NULL) {
 		return diag_diag(&d, "invalid INTERNAL_IP%d_DNS server address payload, ",
-				 afi->ip_version);
+				 afi->ip.version);
 	}
 
 	/* i.e. not all zeros */
 	if (!address_is_specified(ip)) {
 		address_buf ip_str;
 		return diag("invalid INTERNAL_IP%d_DNS server address %s, unspecified",
-			    afi->ip_version, str_address(&ip, &ip_str));
+			    afi->ip.version, str_address(&ip, &ip_str));
 	}
 
 	address_buf dnsb;
 	llog(RC_LOG, st->logger, "received INTERNAL_IP%d_DNS server address %s",
-	     afi->ip_version, str_address(&ip, &dnsb));
+	     afi->ip.version, str_address(&ip, &dnsb));
 
 	append_str(&st->st_seen_cfg_dns, " ", dnsb.buf);
 	return NULL;

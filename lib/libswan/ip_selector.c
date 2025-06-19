@@ -239,7 +239,7 @@ ip_selector selector_from_raw(where_t where,
 {
 	ip_selector selector = {
 		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
 		.ipproto = protocol->ipproto,
@@ -420,7 +420,7 @@ const struct ip_info *selector_info(const ip_selector selector)
 	}
 
 	/* may return NULL */
-	return ip_version_info(selector.ip_version);
+	return ip_version_info(selector.ip.version);
 }
 
 ip_port selector_port(const ip_selector selector)
@@ -568,11 +568,11 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 
 	/* I.lo >= O.lo && I.hi <= O.hi */
 
-	if (ip_bytes_cmp(i.ip_version, i.lo, o.ip_version, o.lo) < 0) {
+	if (ip_bytes_cmp(i.ip.version, i.lo, o.ip.version, o.lo) < 0) {
 		return false;
 	}
 
-	if (ip_bytes_cmp(i.ip_version, i.hi, o.ip_version, o.hi) > 0) {
+	if (ip_bytes_cmp(i.ip.version, i.hi, o.ip.version, o.hi) > 0) {
 		return false;
 	}
 
@@ -623,7 +623,7 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 	}
 
 	/* must compare individual fields */
-	return (l.ip_version == r.ip_version &&
+	return (l.ip.version == r.ip.version &&
 		thingeq(l.lo, r.lo) &&
 		thingeq(l.hi, r.hi) &&
 		l.ipproto == r.ipproto &&
@@ -648,7 +648,7 @@ void pexpect_selector(const ip_selector *s, where_t where)
 	}
 
 	if (s->is_set == false ||
-	    s->ip_version == 0) {
+	    s->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
 	}
 }

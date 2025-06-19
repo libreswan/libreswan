@@ -103,8 +103,8 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 						       &keep_routing_prefix,
 						       &clear_host_identifier,
 						       prefix_len);
-	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
-			 afi->ip_version, address.bytes) != 0) {
+	if (ip_bytes_cmp(afi->ip.version, routing_prefix,
+			 afi->ip.version, address.bytes) != 0) {
 		*nonzero_host = address;
 	}
 

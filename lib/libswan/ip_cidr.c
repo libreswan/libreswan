@@ -33,7 +33,7 @@ ip_cidr cidr_from_raw(where_t where,
  	/* combine */
 	ip_cidr cidr = {
 		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.version = afi->ip.version,
 		.bytes = bytes,
 		.prefix_len = prefix_len,
 	};
@@ -97,7 +97,7 @@ const struct ip_info *cidr_info(const ip_cidr cidr)
 	}
 
 	/* may return NULL */
-	return ip_version_info(cidr.ip_version);
+	return ip_version_info(cidr.ip.version);
 }
 
 ip_address cidr_address(const ip_cidr cidr)
@@ -202,7 +202,7 @@ const char *str_cidr(const ip_cidr *cidr, cidr_buf *out)
 void pexpect_cidr(const ip_cidr cidr, where_t where)
 {
 	if (cidr.is_set == false ||
-	    cidr.ip_version == 0) {
+	    cidr.ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid "PRI_CIDR, pri_cidr(cidr));
 	}
 }
@@ -220,7 +220,7 @@ bool cidr_eq_cidr(const ip_cidr l, const ip_cidr r)
 		return false;
 	}
 	/* must compare individual fields */
-	return (l.ip_version == r.ip_version &&
+	return (l.ip.version == r.ip.version &&
 		l.prefix_len == r.prefix_len &&
 		thingeq(l.bytes, r.bytes));
 }

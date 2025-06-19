@@ -476,7 +476,7 @@ static diag_t ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	if (is_opportunistic(c)) {
 		llog_sa(RC_LOG, child,
 			  "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
-			  af->ip_version);
+			  af->ip.version);
 		return NULL;
 	}
 
@@ -484,7 +484,7 @@ static diag_t ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	if (responder) {
 		llog_sa(RC_LOG, child,
 			"initiator INTERNAL_IP%d_DNS CP ignored",
-			af->ip_version);
+			af->ip.version);
 		return NULL;
 	}
 
@@ -516,7 +516,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 		address_buf ip_str;
 		llog_sa(RC_LOG, child,
 			  "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
-			  afi->ip_version, str_address(&ip, &ip_str));
+			  afi->ip.version, str_address(&ip, &ip_str));
 		return false;
 	}
 
@@ -525,7 +525,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	address_buf ip_str;
 	llog_sa(RC_LOG, child,
 		"received INTERNAL_IP%d_ADDRESS %s%s",
-		afi->ip_version, str_address(&ip, &ip_str),
+		afi->ip.version, str_address(&ip, &ip_str),
 		duplicate_lease ? "; discarded" : "");
 
 	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
@@ -556,7 +556,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			address_buf ipb;
 			pdbg(child->sa.logger,
 			     "CAT: received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT rules",
-			     afi->ip_version, str_address(&ip, &ipb));
+			     afi->ip.version, str_address(&ip, &ipb));
 		} else {
 			update_end_selector(cc, cc->local->config->index,
 					    selector_from_address(ip),
