@@ -172,7 +172,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 
 void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
 {
-	LLOG_JAMBUF(RC_SUCCESS, larval->sa.logger, buf) {
+	LLOG_JAMBUF(RC_LOG, larval->sa.logger, buf) {
 		switch (larval->sa.st_sa_role) {
 		case SA_INITIATOR: jam_string(buf, "initiator"); break;
 		case SA_RESPONDER: jam_string(buf, "responder"); break;

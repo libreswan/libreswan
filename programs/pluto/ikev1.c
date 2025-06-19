@@ -2406,26 +2406,22 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* tell whack and log of progress */
 		{
-			enum rc_type w;
 			void (*jam_details)(struct jambuf *buf, struct state *st);
 
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
 				jam_details = jam_v1_ipsec_details;
-				w = RC_SUCCESS; /* log our success */
 			} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				pstat_sa_established(st);
 				jam_details = jam_v1_isakmp_details;
-				w = RC_SUCCESS; /* log our success */
 			} else {
 				jam_details = NULL;
-				w = RC_LOG;
 			}
 
 			passert(st->st_state->kind < STATE_IKEv1_ROOF);
 
 			/* tell whack and logs our progress */
-			LLOG_JAMBUF(w, st->logger, buf) {
+			LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 				jam(buf, "%s", st->st_state->story);
 				/* document SA details for admin's pleasure */
 				if (jam_details != NULL) {
