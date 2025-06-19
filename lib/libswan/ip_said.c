@@ -55,10 +55,7 @@ ip_said said_from_address_protocol_spi(const ip_address address,
 
 bool said_is_unset(const ip_said *said)
 {
-	if (said == NULL) {
-		return true;
-	}
-	return !said->ip.is_set;
+	return ip_is_unset(said);
 }
 
 /*

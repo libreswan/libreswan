@@ -211,12 +211,8 @@ const char *str_address_reversed(const ip_address *src,
 
 bool address_is_unset(const ip_address *address)
 {
-	if (address == NULL) {
-		return true;
-	}
-	return !address->ip.is_set;
+	return ip_is_unset(address);
 }
-
 
 bool address_is_specified(const ip_address address)
 {

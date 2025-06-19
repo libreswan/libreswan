@@ -23,11 +23,7 @@ const ip_selector unset_selector;
 
 bool selector_is_unset(const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return true;
-	}
-
-	return !selector->ip.is_set;
+	return ip_is_unset(selector);
 }
 
 bool selector_is_zero(const ip_selector selector)

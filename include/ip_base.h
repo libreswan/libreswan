@@ -25,6 +25,9 @@
 
 struct ip_base {
 	bool is_set;
+#define ip_is_set(IP) ((IP) != NULL && (IP)->ip.is_set)
+#define ip_is_unset(IP) ((IP) == NULL || !(IP)->ip.is_set)
+
 	enum ip_version version:8; /* 0, IPv4(4), IPv6(6) */
 };
 

@@ -129,11 +129,7 @@ const struct ip_info *subnet_info(const ip_subnet subnet)
 
 bool subnet_is_unset(const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
-		return true;
-	}
-
-	return !subnet->ip.is_set;
+	return ip_is_unset(subnet);
 }
 
 bool subnet_is_zero(const ip_subnet subnet)

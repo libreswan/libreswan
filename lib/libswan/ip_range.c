@@ -143,11 +143,7 @@ const struct ip_info *range_info(const ip_range range)
 
 bool range_is_unset(const ip_range *range)
 {
-	if (range == NULL) {
-		return true;
-	}
-
-	return !range->ip.is_set;
+	return ip_is_unset(range);
 }
 
 bool range_is_zero(const ip_range range)

@@ -50,10 +50,7 @@ ip_packet packet_from_raw(where_t where,
 
 bool packet_is_unset(const ip_packet *packet)
 {
-	if (packet == NULL) {
-		return true;
-	}
-	return !packet->ip.is_set;
+	return ip_is_unset(packet);
 }
 
 const struct ip_info *packet_type(const ip_packet *packet)

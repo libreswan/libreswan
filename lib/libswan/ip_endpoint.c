@@ -131,10 +131,7 @@ const struct ip_info *endpoint_info(const ip_endpoint endpoint)
 
 bool endpoint_is_unset(const ip_endpoint *endpoint)
 {
-	if (endpoint == NULL) {
-		return true;
-	}
-	return !endpoint->ip.is_set;
+	return ip_is_unset(endpoint);
 }
 
 const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint)
