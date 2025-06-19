@@ -32,7 +32,7 @@ ip_endpoint endpoint_from_raw(where_t where,
 			      ip_port port)
 {
 	ip_endpoint endpoint = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.bytes = bytes,
 		.hport = port.hport,
@@ -121,7 +121,7 @@ const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 
 const struct ip_info *endpoint_info(const ip_endpoint endpoint)
 {
-	if (!endpoint.is_set) {
+	if (!endpoint.ip.is_set) {
 		return NULL;
 	}
 
@@ -134,7 +134,7 @@ bool endpoint_is_unset(const ip_endpoint *endpoint)
 	if (endpoint == NULL) {
 		return true;
 	}
-	return !endpoint->is_set;
+	return !endpoint->ip.is_set;
 }
 
 const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint)
@@ -332,7 +332,7 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 	 */
 
 	const struct ip_protocol *protocol = endpoint_protocol(*e);
-	if (e->is_set == false ||
+	if (e->ip.is_set == false ||
 	    e->ip.version == 0 ||
 	    e->ipproto == 0 ||
 	    protocol == NULL /* ||

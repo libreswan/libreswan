@@ -38,7 +38,6 @@ struct jambuf;
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
 
 	/*
 	 * We need something that makes static IPv4 initializers
@@ -54,7 +53,7 @@ typedef struct {
 
 #define PRI_SUBNET "<subnet-%s:IPv%d["PRI_IP_BYTES"]/%u>"
 #define pri_subnet(S)					\
-		((S)->is_set ? "set" : "unset"),	\
+		((S)->ip.is_set ? "set" : "unset"),	\
 			(S)->ip.version,		\
 		pri_ip_bytes((S)->bytes),		\
 		(S)->maskbits

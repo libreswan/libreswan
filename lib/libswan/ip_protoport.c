@@ -31,7 +31,7 @@ size_t jam_protoport(struct jambuf *buf, const ip_protoport *protoport)
 		return jam(buf, "<null-protoport>");
 	}
 
-	if (!protoport->is_set) {
+	if (!protoport->ip.is_set) {
 		return jam(buf, "<unset-protoport>");
 	}
 

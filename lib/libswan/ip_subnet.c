@@ -31,7 +31,7 @@ ip_subnet subnet_from_raw(where_t where,
 			  unsigned prefix_len)
 {
 	ip_subnet s = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.bytes = bytes,
 		.maskbits = prefix_len,
@@ -119,7 +119,7 @@ const struct ip_info *subnet_type(const ip_subnet *subnet)
 
 const struct ip_info *subnet_info(const ip_subnet subnet)
 {
-	if (!subnet.is_set) {
+	if (!subnet.ip.is_set) {
 		return NULL;
 	}
 
@@ -133,7 +133,7 @@ bool subnet_is_unset(const ip_subnet *subnet)
 		return true;
 	}
 
-	return !subnet->is_set;
+	return !subnet->ip.is_set;
 }
 
 bool subnet_is_zero(const ip_subnet subnet)
@@ -234,7 +234,7 @@ void pexpect_subnet(const ip_subnet *s, where_t where)
 		return;
 	}
 
-	if (s->is_set == false ||
+	if (s->ip.is_set == false ||
 	    s->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid subnet: "PRI_SUBNET, pri_subnet(s));
 	}

@@ -210,7 +210,7 @@ static void read_foodgroup(struct file_lex_position *oflp,
 			continue;
 		}
 
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			address_buf hb;
 			llog(RC_LOG, flp->logger,
 			     "zeroing non-zero host identifier %s in '%s'",

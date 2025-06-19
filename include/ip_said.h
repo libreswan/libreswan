@@ -48,7 +48,7 @@ struct jambuf;
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
+
 	/*
 	 * We need something that makes static IPv4 initializers possible
 	 * (struct in_addr requires htonl() which is run-time only).

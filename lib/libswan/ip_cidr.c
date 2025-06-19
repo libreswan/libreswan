@@ -32,7 +32,7 @@ ip_cidr cidr_from_raw(where_t where,
 
  	/* combine */
 	ip_cidr cidr = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.bytes = bytes,
 		.prefix_len = prefix_len,
@@ -92,7 +92,7 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 
 const struct ip_info *cidr_info(const ip_cidr cidr)
 {
-	if (!cidr.is_set) {
+	if (!cidr.ip.is_set) {
 		return NULL;
 	}
 
@@ -130,7 +130,7 @@ int cidr_prefix_len(const ip_cidr cidr)
 
 err_t cidr_check(const ip_cidr cidr)
 {
-	if (!cidr.is_set) {
+	if (!cidr.ip.is_set) {
 		return "unset";
 	}
 
@@ -201,7 +201,7 @@ const char *str_cidr(const ip_cidr *cidr, cidr_buf *out)
 
 void pexpect_cidr(const ip_cidr cidr, where_t where)
 {
-	if (cidr.is_set == false ||
+	if (cidr.ip.is_set == false ||
 	    cidr.ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid "PRI_CIDR, pri_cidr(cidr));
 	}

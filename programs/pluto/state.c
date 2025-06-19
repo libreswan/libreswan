@@ -522,7 +522,7 @@ static bool get_initiator_endpoints(struct connection *c,
 
 	if (c->revival.attempt > 0 &&
 	    c->revival.local != NULL &&
-	    c->revival.remote.is_set) {
+	    c->revival.remote.ip.is_set) {
 
 		ldbg(c->logger, "TCP: using revival revival endpoints");
 		/* transfer (with some logging) */

@@ -188,7 +188,7 @@ static err_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
 		return err;
 	}
 
-	if (nonzero_host.is_set) {
+	if (nonzero_host.ip.is_set) {
 		return "nonzero host identifier";
 	}
 
@@ -244,7 +244,7 @@ static err_t do_selector_from_ttoselector(const struct selector *s, ip_selector 
 	if (e != NULL) {
 		return e;
 	}
-	if (nonzero_host.is_set) {
+	if (nonzero_host.ip.is_set) {
 		return "non-zero host identifier";
 	}
 	return NULL;
@@ -512,7 +512,7 @@ static void check_selector_op_selector(void)
 		if (err != NULL) {
 			FAIL("ttoselector_num(%s) failed: %s", t->inner, err);
 		}
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->inner);
 		}
 
@@ -528,7 +528,7 @@ static void check_selector_op_selector(void)
 		if (err != NULL) {
 			FAIL("ttoselector_num(%s) failed: %s", t->outer, err);
 		}
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->outer);
 		}
 

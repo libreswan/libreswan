@@ -33,7 +33,6 @@ struct ip_protocol;
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
 
 	/*
 	 * We need something that makes static IPv4 initializers possible
@@ -55,7 +54,7 @@ typedef struct {
 
 #define PRI_ENDPOINT "<endpoint-%s:IPv%d,%s["PRI_IP_BYTES"]:%u>"
 #define pri_endpoint(A)						\
-		((A)->is_set ? "set" : "unset"),		\
+		((A)->ip.is_set ? "set" : "unset"),		\
 		(A)->ip.version,				\
 		((A)->ipproto > 255 ? "PROTO>255" :		\
 		 protocol_from_ipproto((A)->ipproto)->name),	\

@@ -337,7 +337,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 	case IKEv1_INTERNAL_IP4_ADDRESS:
 	{
 		/* YES, REMOTE, as leased */
-		if (!PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.ip.is_set)) {
 			return false;
 		}
 		if (!pbs_out_address(&attrval,
@@ -351,7 +351,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	case IKEv1_INTERNAL_IP4_SUBNET:
 	{
-		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.ip.is_set)) {
 			return false;
 		}
 		ip_address addr = selector_prefix(c->child.spds.list->local->client);
@@ -369,7 +369,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 	case IKEv1_INTERNAL_IP4_NETMASK:
 	{
-		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.is_set)) {
+		if (!PEXPECT(ike->sa.logger, c->child.spds.list->local->client.ip.is_set)) {
 			return false;
 		}
 		ip_address mask = selector_prefix_mask(c->child.spds.list->local->client);
@@ -601,7 +601,7 @@ static bool get_internal_address(struct ike_sa *ike)
 
 		from = "lease";
 
-	} else if (PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.is_set)) {
+	} else if (PEXPECT(ike->sa.logger, c->child.spds.list->remote->client.ip.is_set)) {
 
 		from = "remote SPD";
 

@@ -135,9 +135,9 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 			FAIL("ttosubnet(%s) succeeded unexpectedly", t->in);
 		}
 
-		if (nonzero_host.is_set != t->zeroed) {
+		if (nonzero_host.ip.is_set != t->zeroed) {
 			FAIL("ttosubnet(%s) failed: zeroed %s should be %s",
-			     t->in, bool_str(nonzero_host.is_set), bool_str(t->zeroed));
+			     t->in, bool_str(nonzero_host.ip.is_set), bool_str(t->zeroed));
 		}
 
 		CHECK_INFO(subnet);
@@ -178,7 +178,7 @@ static void check_subnet_mask(void)
 		if (oops != NULL) {
 			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
 		}
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
 		}
 
@@ -232,7 +232,7 @@ static void check_subnet_prefix(void)
 		if (oops != NULL) {
 			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
 		}
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
 		}
 
@@ -295,7 +295,7 @@ static void check_subnet_is(void)
 			if (oops != NULL) {
 				FAIL("ttosubnet(%s) failed: %s", t->in, oops);
 			}
-			if (nonzero_host.is_set) {
+			if (nonzero_host.ip.is_set) {
 				FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 			}
 			CHECK_INFO(subnet);

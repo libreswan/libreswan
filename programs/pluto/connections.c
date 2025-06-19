@@ -190,7 +190,7 @@ void vdbg_connection(const struct connection *c,
 		jam_string(buf, "; leases:");
 		FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
 			FOR_EACH_ELEMENT(lease, end->lease) {
-				if (lease->is_set) {
+				if (lease->ip.is_set) {
 					jam_string(buf, " ");
 					jam_address(buf, lease);
 				}
@@ -2363,7 +2363,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					 leftright, src->subnet);
 		}
 
-		if (protoport.is_set) {
+		if (protoport.ip.is_set) {
 			if (child_config->selectors.len > 1) {
 				return diag("%ssubnet= must be a single subnet when combined with %sprotoport=",
 					    leftright, leftright);
@@ -2379,7 +2379,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				selector_from_subnet_protoport(subnet, protoport);
 		}
 
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			address_buf hb;
 			llog(RC_LOG, logger,
 			     "zeroing non-zero address identifier %s in %ssubnet=%s",
@@ -2446,7 +2446,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			/* i.e., not 1::1,1::2 */
 			const struct ip_info *afi = address_type(sourceip);
 			PASSERT(logger, afi != NULL); /* since specified */
-			if (seen[afi->ip_index].is_set) {
+			if (seen[afi->ip_index].ip.is_set) {
 				address_buf sb, ipb;
 				return diag("%ssourceip=%s invalid, multiple %s addresses (%s and %s) specified",
 					    leftright, src->sourceip, afi->ip_name,
@@ -2488,7 +2488,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						    str_address(sourceip, &sipb),
 						    leftright, src->subnet);
 				}
-			} else if (resolve->host.addr.is_set) {
+			} else if (resolve->host.addr.ip.is_set) {
 				if (!address_eq_address(*sourceip, resolve->host.addr)) {
 					address_buf sipb;
 					address_buf hab;
@@ -2794,7 +2794,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 		 * Note: NOT afi->selector.all.  It needs to
 		 * differentiate so it knows it is to be updated.
 		 *
-		 * selector.unset has .is_set=false so looks unset;
+		 * selector.unset has .ip.is_set=false so looks unset;
 		 * but has .version=IPv[46].
 		 */
 		append_end_selector(end, host_afi->selector.unset, verbose.logger, HERE);
@@ -2846,7 +2846,7 @@ void build_connection_spds_from_proposals(struct connection *c)
 	 * Note: All selectors in the proposal, even unset selectors,
 	 * have .version set.  When there's no subnet= and the
 	 * host-addr isn't known it is set to selector.unset (aka
-	 * .is_set=false, .version=..., )
+	 * .ip.is_set=false, .version=..., )
 	 */
 
 	unsigned nr_spds = 0;
@@ -3047,7 +3047,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	if (protoport[that_end].is_set /*technically redundant but good form*/ &&
+	if (protoport[that_end].ip.is_set /*technically redundant but good form*/ &&
 	    protoport[that_end].has_port_wildcard) {
 		ldbg(logger, "%s connection is CK_TEMPLATE: %s child has protoport wildcard port",
 		     this->leftright, that->leftright);
@@ -3584,8 +3584,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* some port stuff */
 
-	if (protoport[LEFT_END].is_set && protoport[LEFT_END].has_port_wildcard &&
-	    protoport[RIGHT_END].is_set && protoport[RIGHT_END].has_port_wildcard) {
+	if (protoport[LEFT_END].ip.is_set && protoport[LEFT_END].has_port_wildcard &&
+	    protoport[RIGHT_END].ip.is_set && protoport[RIGHT_END].has_port_wildcard) {
 		return diag("cannot have protoports with wildcard (%%any) ports on both sides");
 	}
 
@@ -4118,7 +4118,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * selector.
 	 */
 	FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-		narrowing |= (end->protoport.is_set &&
+		narrowing |= (end->protoport.ip.is_set &&
 			      end->protoport.has_port_wildcard);
 	}
 #endif
@@ -5394,7 +5394,7 @@ static size_t jam_connection_child(struct jambuf *b,
 		}
 		const char *sep = "";
 		FOR_EACH_ITEM(selector, selectors) {
-			if (pexpect(selector->is_set)) {
+			if (pexpect(selector->ip.is_set)) {
 				s += jam_selector_range(b, selector);
 				if (selector_is_zero(*selector)) {
 					s += jam_string(b, "?");
@@ -6018,7 +6018,7 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	 * Find a configured sourceip within the SPD's client.
 	 */
 	ip_address sourceip = config_end_sourceip(spde->client, spde->child->config);
-	if (sourceip.is_set) {
+	if (sourceip.ip.is_set) {
 		return sourceip;
 	}
 
@@ -6028,7 +6028,7 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	 */
 	const struct ip_info *afi = selector_info(spde->client);
 	if (afi != NULL &&
-	    spde->child->lease[afi->ip_index].is_set &&
+	    spde->child->lease[afi->ip_index].ip.is_set &&
 	    !spde->child->config->has_client_address_translation) {
 		/* XXX: same as .lease[]? */
 		ip_address a = selector_prefix(spde->client);

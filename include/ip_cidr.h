@@ -32,7 +32,6 @@ struct jambuf;
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
 
 	struct ip_bytes bytes;
 	unsigned prefix_len;
@@ -40,7 +39,7 @@ typedef struct {
 
 #define PRI_CIDR "<cidr-%s:IPv%d["PRI_IP_BYTES"]/%u>"
 #define pri_cidr(A)							\
-		((A).is_set ? "set" : "unset"),				\
+	((A).ip.is_set ? "set" : "unset"),				\
 			(A).ip.version,					\
 			pri_ip_bytes((A).bytes),			\
 			(A).prefix_len

@@ -17,11 +17,14 @@
 #ifndef IP_BASE_H
 #define IP_BASE_H
 
+#include <stdbool.h>
+
 /* base class */
 
 #include "ip_version.h"
 
 struct ip_base {
+	bool is_set;
 	enum ip_version version:8; /* 0, IPv4(4), IPv6(6) */
 };
 

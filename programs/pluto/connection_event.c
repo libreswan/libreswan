@@ -56,7 +56,7 @@ static void jam_connection_event(struct jambuf *buf, const struct connection_eve
 			jam_string(buf, " next in ");
 			jam_deltatime(buf, c->revival.delay);
 			jam_string(buf, "s");
-			if (c->revival.remote.is_set) {
+			if (c->revival.remote.ip.is_set) {
 				jam_string(buf, " to ");
 				jam_endpoint_sensitive(buf, &c->revival.remote);
 			}

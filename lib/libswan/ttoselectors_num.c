@@ -78,7 +78,7 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 			zero(output);
 			return d;
 		}
-		if (tmp_nonzero.is_set && !nonzero_host->is_set) {
+		if (tmp_nonzero.ip.is_set && !nonzero_host->ip.is_set) {
 			*nonzero_host = tmp_nonzero; /* save first */
 		}
 	}

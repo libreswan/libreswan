@@ -37,7 +37,7 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes hi)
 {
 	ip_range r = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
@@ -133,7 +133,7 @@ const struct ip_info *range_type(const ip_range *range)
 
 const struct ip_info *range_info(const ip_range range)
 {
-	if (!range.is_set) {
+	if (!range.ip.is_set) {
 		return NULL;
 	}
 
@@ -147,7 +147,7 @@ bool range_is_unset(const ip_range *range)
 		return true;
 	}
 
-	return !range->is_set;
+	return !range->ip.is_set;
 }
 
 bool range_is_zero(const ip_range range)
@@ -435,7 +435,7 @@ void pexpect_range(const ip_range *r, where_t where)
 		return;
 	}
 
-	if (r->is_set == false ||
+	if (r->ip.is_set == false ||
 	    r->ip.version == 0 ||
 	    ip_bytes_cmp(r->ip.version, r->lo, r->ip.version, r->hi) > 0) {
 		llog_pexpect(&global_logger, where, "invalid range: "PRI_RANGE, pri_range(r));

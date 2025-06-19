@@ -191,7 +191,7 @@ static bool fmt_common_shell_out(char *buf,
 	}
 
 	ip_address sourceip = spd_end_sourceip(sr->local);
-	if (sourceip.is_set) {
+	if (sourceip.ip.is_set) {
 		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
 		if (child != NULL) {
 			JDstr("PLUTO_MOBIKE_EVENT",

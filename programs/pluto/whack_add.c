@@ -81,7 +81,7 @@ static bool parse_subnets(struct subnets *sn,
 						   end->leftright, end->subnet, e);
 			return false;
 		}
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			llog_add_connection_failed(wm, logger,
 						   "%ssubnet=%s contains non-zero host identifier",
 						   end->leftright, end->subnet);
@@ -109,13 +109,13 @@ static bool parse_subnets(struct subnets *sn,
 	/*
 	 * Merge lists.
 	 */
-	sn->start = (subnet.is_set ? 0 :
+	sn->start = (subnet.ip.is_set ? 0 :
 		     subnets.len == 0 ? 0 :
 		     1);
 	sn->subnets.len = len;
 	sn->subnets.list = alloc_things(ip_subnet, len, "subnets");
 	unsigned pos = 0;
-	if (subnet.is_set) {
+	if (subnet.ip.is_set) {
 		sn->subnets.list[pos++] = subnet;
 	}
 	FOR_EACH_ITEM(s, &subnets) {
@@ -229,7 +229,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			wam.name = name;
 
 			/*
-			 * Either .subnet is !.is_set or is valid.
+			 * Either .subnet is !.ip.is_set or is valid.
 			 * {left,right}_afi can be NULL.
 			 */
 			char *left_subnet = NULL; /* must free */

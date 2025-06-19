@@ -178,7 +178,7 @@ void jam_end_client(struct jambuf *buf,
 {
 	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
 
-	if (!this->client.is_set) {
+	if (!this->client.ip.is_set) {
 		return;
 	}
 

@@ -418,7 +418,7 @@ static struct lease *connection_lease(struct connection *c,
 	 * No point looking for a lease when the connection doesn't
 	 * think it has one.
 	 */
-	if (!pexpect(c->remote->child.lease[afi->ip_index].is_set)) {
+	if (!pexpect(c->remote->child.lease[afi->ip_index].ip.is_set)) {
 		return NULL;
 	}
 
@@ -481,7 +481,7 @@ void free_that_address_lease(struct connection *c,
 {
 	VERBOSE_DBGP(DBG_BASE, logger, "freeing peer %s lease", afi->ip_name);
 
-	if (!c->remote->child.lease[afi->ip_index].is_set) {
+	if (!c->remote->child.lease[afi->ip_index].ip.is_set) {
 		vdbg("connection has no %s lease", afi->ip_name);
 		return;
 	}
@@ -786,7 +786,7 @@ diag_t assign_remote_lease(struct connection *c,
 
 	(*assigned_address) = unset_address;
 
-	if (c->remote->child.lease[afi->ip_index].is_set &&
+	if (c->remote->child.lease[afi->ip_index].ip.is_set &&
 	    connection_lease(c, afi, verbose) != NULL) {
 		ldbg(logger, "connection both thinks it has, and really has a lease");
 		(*assigned_address) = c->remote->child.lease[afi->ip_index];
@@ -837,7 +837,7 @@ diag_t assign_remote_lease(struct connection *c,
 	/*
 	 * If the peer's given a preferred address try to assign that.
 	 */
-	if (new_lease == NULL && preferred_address.is_set) {
+	if (new_lease == NULL && preferred_address.ip.is_set) {
 		diag_t d = assign_requested_lease(c, pool, &reusable_id,
 						  &preferred_address,
 						  &new_lease, verbose);

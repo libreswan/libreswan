@@ -89,7 +89,7 @@ err_t ttoprotoport(shunk_t src, ip_protoport *protoport)
 		port_wildcard = false;
 	}
 
-	protoport->is_set = true;
+	protoport->ip.is_set = true;
 	protoport->ipproto = protocol->ipproto;
 	protoport->has_port_wildcard = port_wildcard;
 	protoport->hport = port.hport;

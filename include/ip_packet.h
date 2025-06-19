@@ -33,7 +33,6 @@ struct jambuf;
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
 
 	unsigned ipproto:16;
 
@@ -51,7 +50,7 @@ typedef struct {
 
 #define PRI_PACKET "<packet-%s:IPv%d["PRI_IP_BYTES"]:%u-%u->["PRI_IP_BYTES"]:%u>"
 #define pri_packet(S)							\
-	((S)->is_set ? "set" : "unset"),				\
+	((S)->ip.is_set ? "set" : "unset"),				\
 		(S)->ip.version,					\
 		pri_ip_bytes((S)->src.bytes),				\
 		(S)->src.hport,						\

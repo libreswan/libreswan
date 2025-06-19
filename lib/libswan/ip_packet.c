@@ -32,7 +32,7 @@ ip_packet packet_from_raw(where_t where,
 			  ip_port src_port, ip_port dst_port)
 {
 	ip_packet packet = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.ipproto = protocol->ipproto,
 		.src = {
@@ -53,7 +53,7 @@ bool packet_is_unset(const ip_packet *packet)
 	if (packet == NULL) {
 		return true;
 	}
-	return !packet->is_set;
+	return !packet->ip.is_set;
 }
 
 const struct ip_info *packet_type(const ip_packet *packet)
@@ -68,7 +68,7 @@ const struct ip_info *packet_type(const ip_packet *packet)
 
 const struct ip_info *packet_info(const ip_packet packet)
 {
-	if (!packet.is_set) {
+	if (!packet.ip.is_set) {
 		return NULL;
 	}
 
@@ -78,7 +78,7 @@ const struct ip_info *packet_info(const ip_packet packet)
 
 const struct ip_protocol *packet_protocol(const ip_packet packet)
 {
-	if (!packet.is_set) {
+	if (!packet.ip.is_set) {
 		return NULL;
 	}
 

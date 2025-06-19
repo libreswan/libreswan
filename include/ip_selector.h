@@ -47,7 +47,6 @@ struct jambuf;
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
 
 	/*
 	 * We need something that makes static IPv4 initializers
@@ -65,7 +64,7 @@ typedef struct {
 
 #define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES".."PRI_IP_BYTES"]:%u>"
 #define pri_selector(S)						\
-		((S)->is_set ? "set" : "unset"),		\
+		((S)->ip.is_set ? "set" : "unset"),		\
 			(S)->ip.version,			\
 		((S)->ipproto > 255 ? "IPPROTO>255" :		\
 		 protocol_from_ipproto((S)->ipproto)->name),	\

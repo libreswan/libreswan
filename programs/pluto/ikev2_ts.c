@@ -940,7 +940,7 @@ static bool score_narrowed_selector(struct score *score,
 				    const struct narrowed_selector *ts,
 				    struct verbose verbose)
 {
-	if (!pexpect(ts->selector.is_set)) {
+	if (!pexpect(ts->selector.ip.is_set)) {
 		return false;
 	}
 

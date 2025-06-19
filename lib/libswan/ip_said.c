@@ -29,7 +29,7 @@ ip_said said_from_raw(where_t where UNUSED,
 		      ipsec_spi_t spi)
 {
 	ip_said said = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.dst = dst,
 		.ipproto = protocol->ipproto,
@@ -58,7 +58,7 @@ bool said_is_unset(const ip_said *said)
 	if (said == NULL) {
 		return true;
 	}
-	return !said->is_set;
+	return !said->ip.is_set;
 }
 
 /*
@@ -67,7 +67,7 @@ bool said_is_unset(const ip_said *said)
 
 size_t jam_said(struct jambuf *buf, const ip_said *said)
 {
-	if (!said->is_set) {
+	if (!said->ip.is_set) {
 		return jam_string(buf, "<unset-said>");
 	}
 
@@ -118,7 +118,7 @@ const struct ip_info *said_type(const ip_said *said)
 
 const struct ip_info *said_info(const ip_said said)
 {
-	if (!said.is_set) {
+	if (!said.ip.is_set) {
 		return NULL;
 	}
 

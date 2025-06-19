@@ -258,7 +258,7 @@ static void check_range_from_subnet(void)
 		if (oops != NULL) {
 			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
 		}
-		if (nonzero_host.is_set) {
+		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 		}
 
@@ -471,7 +471,7 @@ static void check_range_to_address(void)
 		str_address(&address, &out);
 
 		if (t->address == NULL) {
-			if (address.is_set) {
+			if (address.ip.is_set) {
 				FAIL("range_to_address(%s + %jx -> %s) should have returned <unset>",
 				     t->range, t->offset, out.buf);
 			}

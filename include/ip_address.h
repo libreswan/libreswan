@@ -52,7 +52,6 @@ extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
 
 typedef struct {
 	struct ip_base ip;	/* MUST BE FIRST */
-	bool is_set;
 
 	/*
 	 * We need something that makes static IPv4 initializers possible
@@ -63,7 +62,7 @@ typedef struct {
 
 #define PRI_ADDRESS "<address-%s:IPv%d["PRI_IP_BYTES"]>"
 #define pri_address(A)					\
-		((A)->is_set ? "set" : "unset"),	\
+		((A)->ip.is_set ? "set" : "unset"),	\
 			(A)->ip.version,		\
 		pri_ip_bytes((A)->bytes)
 

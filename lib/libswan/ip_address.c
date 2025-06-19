@@ -30,7 +30,7 @@ ip_address address_from_raw(where_t where,
 			    const struct ip_bytes bytes)
 {
 	ip_address a = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.bytes = bytes,
 	};
@@ -85,7 +85,7 @@ const struct ip_info *address_type(const ip_address *address)
 
 const struct ip_info *address_info(const ip_address address)
 {
-	if (!address.is_set) {
+	if (!address.ip.is_set) {
 		return NULL;
 	}
 
@@ -214,7 +214,7 @@ bool address_is_unset(const ip_address *address)
 	if (address == NULL) {
 		return true;
 	}
-	return !address->is_set;
+	return !address->ip.is_set;
 }
 
 
@@ -269,7 +269,7 @@ void pexpect_address(const ip_address *a, where_t where)
 		return;
 	}
 
-	if (a->is_set == false ||
+	if (a->ip.is_set == false ||
 	    a->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid address: "PRI_ADDRESS, pri_address(a));
 	}

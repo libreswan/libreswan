@@ -32,7 +32,11 @@
 struct jambuf;
 
 typedef struct {
-	bool is_set;
+	/* be consistent with ip_base */
+	struct {
+		bool is_set;
+	} ip;
+
 	/*
 	 * XXX: 0 is interpreted as either 0, or any-port (is this a
 	 * good idea?); host-byte ordered.

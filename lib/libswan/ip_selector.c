@@ -27,7 +27,7 @@ bool selector_is_unset(const ip_selector *selector)
 		return true;
 	}
 
-	return !selector->is_set;
+	return !selector->ip.is_set;
 }
 
 bool selector_is_zero(const ip_selector selector)
@@ -238,7 +238,7 @@ ip_selector selector_from_raw(where_t where,
 			      const struct ip_protocol *protocol, const ip_port port)
 {
 	ip_selector selector = {
-		.is_set = true,
+		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
@@ -415,7 +415,7 @@ const struct ip_info *selector_type(const ip_selector *selector)
 
 const struct ip_info *selector_info(const ip_selector selector)
 {
-	if (!selector.is_set) {
+	if (!selector.ip.is_set) {
 		return NULL;
 	}
 
@@ -647,7 +647,7 @@ void pexpect_selector(const ip_selector *s, where_t where)
 		return;
 	}
 
-	if (s->is_set == false ||
+	if (s->ip.is_set == false ||
 	    s->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
 	}

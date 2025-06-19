@@ -207,7 +207,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 
 	FOR_EACH_ELEMENT(lease, c->remote->child.lease) {
-		if (lease->is_set) {
+		if (lease->ip.is_set) {
 			const struct ip_info *lease_afi = address_type(lease);
 			if (!emit_v2CP_attribute_address(lease_afi->ikev2_internal_address,
 							 lease, "Internal IP Address", &cp_pbs)) {
@@ -520,7 +520,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 		return false;
 	}
 
-	bool duplicate_lease = local->lease[afi->ip_index].is_set;
+	bool duplicate_lease = local->lease[afi->ip_index].ip.is_set;
 
 	address_buf ip_str;
 	llog_sa(RC_LOG, child,
@@ -611,7 +611,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	 * revived.
 	 */
 	FOR_EACH_ELEMENT(lease, c->local->child.lease) {
-		if (lease->is_set) {
+		if (lease->ip.is_set) {
 			address_buf ab;
 			ldbg(c->logger, "zapping lease %s", str_address(lease, &ab));
 			zero(lease);

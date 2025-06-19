@@ -31,7 +31,7 @@ static err_t parse_subnets(shunk_t token, const struct ip_info *afi,
 		return e;
 	}
 
-	if (nonzero_host.is_set) {
+	if (nonzero_host.ip.is_set) {
 		return "subnet has non-zero address identifier";
 	}
 

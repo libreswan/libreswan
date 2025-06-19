@@ -183,7 +183,7 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
 static unsigned jam_pa(struct jambuf *buf, const struct resolve_host *host)
 {
 	size_t s = 0;
-	if (host->addr.is_set) {
+	if (host->addr.ip.is_set) {
 		s += jam_address(buf, &host->addr);
 	}
 
