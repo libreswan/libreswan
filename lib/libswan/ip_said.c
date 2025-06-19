@@ -64,13 +64,10 @@ bool said_is_unset(const ip_said *said)
 
 size_t jam_said(struct jambuf *buf, const ip_said *said)
 {
-	if (!said->ip.is_set) {
-		return jam_string(buf, "<unset-said>");
-	}
-
-	const struct ip_info *afi = said_type(said);
-	if (afi == NULL) {
-		return jam(buf, "<said-has-no-type");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "said", said, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	const struct ip_protocol *proto = protocol_from_ipproto(said->ipproto);
@@ -84,7 +81,7 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 	}
 
 	/* general case needed */
-	size_t s = 0;
+
 	s += jam_string(buf, proto->prefix != NULL ? proto->prefix : proto->name);
 	/* .SPI */
 	s += jam_char(buf, (afi == &ipv4_info ? '.' :

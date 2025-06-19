@@ -155,13 +155,15 @@ OBJS += chunk.o
 OBJS += shunk.o
 OBJS += hunk.o
 
-OBJS += ip_index.o
-OBJS += ip_bytes.o
 OBJS += ip_address.o
+OBJS += ip_base.o
+OBJS += ip_bytes.o
 OBJS += ip_cidr.o
 OBJS += ip_encap.o
 OBJS += ip_endpoint.o
+OBJS += ip_index.o
 OBJS += ip_info.o
+OBJS += ip_packet.o
 OBJS += ip_port.o
 OBJS += ip_port_range.o
 OBJS += ip_protocol.o
@@ -171,7 +173,6 @@ OBJS += ip_said.o
 OBJS += ip_selector.o
 OBJS += ip_sockaddr.o
 OBJS += ip_subnet.o
-OBJS += ip_packet.o
 
 OBJS += lmod.o
 OBJS += lset.o

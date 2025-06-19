@@ -164,12 +164,12 @@ bool endpoint_is_specified(const ip_endpoint endpoint)
 
 size_t jam_endpoint(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-endpoint>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	if (s > 0) {
+		return s;
 	}
 
-	size_t s = 0;
 	s += afi->jam.address_wrapped(buf, afi, &endpoint->bytes);
 	s += jam(buf, ":%d", endpoint->hport);
 	return s;
@@ -184,6 +184,12 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 
 size_t jam_endpoint_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	if (s > 0) {
+		return s;
+	}
+
 	if (!log_ip) {
 		return jam_string(buf, "<endpoint>");
 	}
@@ -211,12 +217,12 @@ const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *ds
 
 size_t jam_endpoint_address_protocol_port(struct jambuf *buf, const ip_endpoint *endpoint)
 {
-	const struct ip_info *afi = endpoint_type(endpoint);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-endpoint>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	if (s > 0) {
+		return s;
 	}
 
-	size_t s = 0;
 	s += afi->jam.address_wrapped(buf, afi, &endpoint->bytes);
 	s += jam_string(buf, ":");
 	s += jam_protocol(buf, endpoint_protocol(*endpoint));
@@ -234,6 +240,12 @@ const char *str_endpoint_address_protocol_port(const ip_endpoint *endpoint, endp
 
 size_t jam_endpoint_address_protocol_port_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	if (s > 0) {
+		return s;
+	}
+
 	if (!log_ip) {
 		return jam_string(buf, "<endpoint>");
 	}

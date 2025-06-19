@@ -180,12 +180,12 @@ unsigned subnet_prefix_bits(const ip_subnet subnet)
 
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-subnet>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "subnet", subnet, &afi);
+	if (s > 0) {
+		return s;
 	}
 
-	size_t s = 0;
 	ip_address sa = subnet_prefix(*subnet);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", subnet->maskbits);

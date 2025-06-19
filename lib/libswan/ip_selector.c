@@ -97,12 +97,11 @@ bool selector_is_address(const ip_selector selector)
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-selector>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "selector", selector, &afi);
+	if (s > 0) {
+		return s;
 	}
-
-	size_t s = 0;
 
 	s += jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 
@@ -128,9 +127,10 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 
 size_t jam_selector_range(struct jambuf *buf, const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-selector>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "selector", selector, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
@@ -145,12 +145,11 @@ const char *str_selector_range(const ip_selector *selector, subnet_buf *out)
 
 size_t jam_selector_range_port(struct jambuf *buf, const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-selector>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "selector", selector, &afi);
+	if (s > 0) {
+		return s;
 	}
-
-	size_t s = 0;
 
 	s += jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 
@@ -171,10 +170,6 @@ size_t jam_selector_pair(struct jambuf *buf,
 			 const ip_selector *src,
 			 const ip_selector *dst)
 {
-	if (selector_is_unset(src) && selector_is_unset(dst)) {
-		return jam_string(buf, "<unset-selectors>");
-	}
-
 	size_t s = 0;
 	const char *sep = "";
 	FOR_EACH_THING(selector, src, dst) {

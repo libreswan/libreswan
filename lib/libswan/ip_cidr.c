@@ -172,12 +172,12 @@ chunk_t cidr_as_chunk(ip_cidr *cidr)
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
-	const struct ip_info *afi = cidr_type(cidr);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-cidr>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "cidr", cidr, &afi);
+	if (s > 0) {
+		return s;
 	}
 
-	size_t s = 0;
 	ip_address sa = cidr_address(*cidr);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", cidr->prefix_len);

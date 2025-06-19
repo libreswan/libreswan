@@ -143,9 +143,10 @@ ip_selector packet_dst_selector(const ip_packet packet)
 
 size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 {
-	const struct ip_info *afi = packet_type(packet);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-packet>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "packet", packet, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	const struct ip_protocol *protocol = protocol_from_ipproto(packet->ipproto);
@@ -153,7 +154,6 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 		return jam_string(buf, "<unknown-packet>");
 	}
 
-	size_t s = 0;
 	if (packet->src.hport == 0 && protocol->zero_port_is_any) {
 		/*
 		 * SRC port can be zero aka wildcard aka ephemeral, it

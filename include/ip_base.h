@@ -18,10 +18,14 @@
 #define IP_BASE_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 /* base class */
 
 #include "ip_version.h"
+
+struct ip_info;
+struct jambuf;
 
 struct ip_base {
 	bool is_set;
@@ -30,5 +34,16 @@ struct ip_base {
 
 	enum ip_version version:8; /* 0, IPv4(4), IPv6(6) */
 };
+
+/*
+ * Handle invalid IPs (NULL, unset, bogus AFI).  Returns >0 (the bytes
+ * written) when the IP isn't valid.  Sets AFI when IP is valid
+ */
+
+#define jam_invalid_ip(BUF, WHAT, IP, AFI)				\
+	jam_ip_invalid(BUF, WHAT, ((IP) == NULL ? NULL : &(IP)->ip), AFI)
+
+size_t jam_ip_invalid(struct jambuf *buf, const char *what,
+		      const struct ip_base *ip, const struct ip_info **afi);
 
 #endif

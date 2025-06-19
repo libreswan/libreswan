@@ -108,9 +108,10 @@ chunk_t address_as_chunk(ip_address *address)
 
 size_t jam_address(struct jambuf *buf, const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-address>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return afi->jam.address(buf, afi, &address->bytes);
@@ -118,9 +119,10 @@ size_t jam_address(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-address>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return afi->jam.address_wrapped(buf, afi, &address->bytes);
@@ -128,6 +130,12 @@ size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
+	}
+
 	if (!log_ip) {
 		return jam_string(buf, "<address>");
 	}
@@ -136,13 +144,13 @@ size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_reversed(struct jambuf *buf, const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam(buf, "<invalid>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	shunk_t bytes = address_as_shunk(address);
-	size_t s = 0;
 
 	switch (afi->af) {
 	case AF_INET:
