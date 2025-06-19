@@ -401,22 +401,14 @@ ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 
 const struct ip_info *selector_type(const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return selector_info(*selector);
+	return ip_type(selector);
 }
 
 const struct ip_info *selector_info(const ip_selector selector)
 {
-	if (!selector.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(selector.ip.version);
+	return ip_info(selector);
 }
 
 ip_port selector_port(const ip_selector selector)

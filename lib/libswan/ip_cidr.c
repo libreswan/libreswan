@@ -82,22 +82,14 @@ ip_cidr cidr_from_address(ip_address address)
 
 const struct ip_info *cidr_type(const ip_cidr *cidr)
 {
-	if (cidr == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return cidr_info(*cidr);
+	return ip_type(cidr);
 }
 
 const struct ip_info *cidr_info(const ip_cidr cidr)
 {
-	if (!cidr.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(cidr.ip.version);
+	return ip_info(cidr);
 }
 
 ip_address cidr_address(const ip_cidr cidr)

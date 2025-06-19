@@ -55,22 +55,14 @@ bool packet_is_unset(const ip_packet *packet)
 
 const struct ip_info *packet_type(const ip_packet *packet)
 {
-	if (packet == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return packet_info(*packet);
+	return ip_type(packet);
 }
 
 const struct ip_info *packet_info(const ip_packet packet)
 {
-	if (!packet.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(packet.ip.version);
+	return ip_info(packet);
 }
 
 const struct ip_protocol *packet_protocol(const ip_packet packet)

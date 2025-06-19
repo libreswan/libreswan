@@ -123,22 +123,14 @@ ip_range range_from_subnet(const ip_subnet subnet)
 
 const struct ip_info *range_type(const ip_range *range)
 {
-	if (range == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return range_info(*range);
+	return ip_type(range);
 }
 
 const struct ip_info *range_info(const ip_range range)
 {
-	if (!range.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(range.ip.version);
+	return ip_info(range);
 }
 
 bool range_is_unset(const ip_range *range)

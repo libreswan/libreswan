@@ -75,22 +75,14 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 
 const struct ip_info *address_type(const ip_address *address)
 {
-	if (address == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return address_info(*address);
+	return ip_type(address);
 }
 
 const struct ip_info *address_info(const ip_address address)
 {
-	if (!address.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(address.ip.version);
+	return ip_info(address);
 }
 
 shunk_t address_as_shunk(const ip_address *address)

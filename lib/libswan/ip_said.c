@@ -105,22 +105,14 @@ const char *str_said(const ip_said *said, said_buf *buf)
 
 const struct ip_info *said_type(const ip_said *said)
 {
-	if (said == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return said_info(*said);
+	return ip_type(said);
 }
 
 const struct ip_info *said_info(const ip_said said)
 {
-	if (!said.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(said.ip.version);
+	return ip_info(said);
 }
 
 ip_address said_address(const ip_said said)

@@ -111,22 +111,14 @@ ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 
 const struct ip_info *endpoint_type(const ip_endpoint *endpoint)
 {
-	if (endpoint == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return endpoint_info(*endpoint);
+	return ip_type(endpoint);
 }
 
 const struct ip_info *endpoint_info(const ip_endpoint endpoint)
 {
-	if (!endpoint.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(endpoint.ip.version);
+	return ip_info(endpoint);
 }
 
 bool endpoint_is_unset(const ip_endpoint *endpoint)

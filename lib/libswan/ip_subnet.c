@@ -109,22 +109,14 @@ ip_address subnet_prefix(const ip_subnet subnet)
 
 const struct ip_info *subnet_type(const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return subnet_info(*subnet);
+	return ip_type(subnet);
 }
 
 const struct ip_info *subnet_info(const ip_subnet subnet)
 {
-	if (!subnet.ip.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(subnet.ip.version);
+	return ip_info(subnet);
 }
 
 bool subnet_is_unset(const ip_subnet *subnet)

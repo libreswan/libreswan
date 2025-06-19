@@ -147,6 +147,12 @@ const struct ip_info *ttoinfo(const char *name);
 
 const struct ip_info *ip_version_info(enum ip_version version);
 
+#define ip_type(IP) ((IP) == NULL ? NULL :		\
+		     (IP)->ip.is_set == false ? NULL :	\
+		     ip_version_info((IP)->ip.version))
+#define ip_info(IP) ((IP).ip.is_set == false ? NULL :	\
+		     ip_version_info((IP).ip.version))
+
 /*
  * Internal.
  */
