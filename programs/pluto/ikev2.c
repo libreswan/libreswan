@@ -1802,7 +1802,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		return;
 
 	case STF_FATAL:
-		llog_sa(RC_FATAL, ike,
+		llog_rc(RC_FATAL, ike->sa.logger,
 			"encountered fatal error in state %s", ike->sa.st_state->name);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:

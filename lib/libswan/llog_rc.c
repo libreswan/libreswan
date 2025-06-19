@@ -1,6 +1,6 @@
 /* logging, for libreswan
  *
- * Copyright (C) 2020 Andrew Cagney
+ * Copyright (C) 2025 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,11 +17,11 @@
 
 #include "lswlog.h"
 
-void llog(enum stream stream, const struct logger *logger,
-	  const char *message, ...)
+void llog_rc(enum rc_type rc, const struct logger *logger,
+	     const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	llog_va_list(stream, logger, message, ap);
+	llog_va_list(rc|ALL_STREAMS, logger, message, ap);
 	va_end(ap);
 }

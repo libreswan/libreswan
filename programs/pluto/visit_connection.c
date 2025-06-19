@@ -421,7 +421,7 @@ static void visit_connections(const struct whack_message *m,
 #define MESSAGE "no connection or alias named \"%s\"'", m->name
 		/* what means leave more breadcrumbs */
 		if (each->past_tense != NULL) {
-			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
+			llog_rc(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
 			whack_log(RC_UNKNOWN_NAME, s, MESSAGE);
 		}

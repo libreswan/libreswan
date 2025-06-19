@@ -48,9 +48,6 @@
 
 enum rc_type {
 
-	RC_LOG = 0,			/* message aimed at log (does
-					 * not affect exit status) */
-
 	/* entry of secrets */
 	RC_ENTERSECRET = 10,
 	RC_USERPROMPT = 11,
@@ -119,6 +116,7 @@ enum stream {
 	/*                                 syslog()                      */
 	/*                                Severity  Whack  Tools  Prefix */
 	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <o>   */
+#define RC_LOG 2
 	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <o>   */
 	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
 	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
@@ -189,8 +187,10 @@ struct logger {
 		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->whackfd[0]), \
 		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->whackfd[1])
 
-void llog(lset_t rc_flags,
-	  const struct logger *log,
+void llog_rc(enum rc_type rc, const struct logger *log,
+	     const char *format, ...) PRINTF_LIKE(3);
+
+void llog(enum stream stream, const struct logger *log,
 	  const char *format, ...) PRINTF_LIKE(3);
 
 void llog_va_list(lset_t rc_flags, const struct logger *logger,

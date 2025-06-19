@@ -417,8 +417,8 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 		size_t min_bytes = (offsetof(struct whack_message, basic.whack_shutdown) +
 				    sizeof(wp->msg->basic.whack_shutdown));
 		if (wp->n < min_bytes) {
-			llog(RC_BADWHACKMESSAGE, logger,
-			     "ignoring runt message from whack: got %zu bytes", wp->n);
+			llog_rc(RC_BADWHACKMESSAGE, logger,
+				"ignoring runt message from whack: got %zu bytes", wp->n);
 			return false;
 		}
 
@@ -443,9 +443,9 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	}
 
 	if (wp->msg->basic.magic != whack_magic()) {
-		llog(RC_BADWHACKMESSAGE, logger,
-		     "ignoring message from whack with bad magic %u; should be %u; Mismatched versions of userland tools.",
-		     wp->msg->basic.magic, whack_magic());
+		llog_rc(RC_BADWHACKMESSAGE, logger,
+			"ignoring message from whack with bad magic %u; should be %u; Mismatched versions of userland tools.",
+			wp->msg->basic.magic, whack_magic());
 		return false;
 	}
 
@@ -456,15 +456,15 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	wp->str_next = wp->msg->string;
 	wp->str_roof = (unsigned char *)wp->msg + wp->n;
 	if (wp->str_next > wp->str_roof) {
-		llog(RC_BADWHACKMESSAGE, logger,
-		     "ignoring truncated message from whack: got %zu bytes; expected %zu",
-		     wp->n, sizeof(wp->msg));
+		llog_rc(RC_BADWHACKMESSAGE, logger,
+			"ignoring truncated message from whack: got %zu bytes; expected %zu",
+			wp->n, sizeof(wp->msg));
 		return false;
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {
-		llog(RC_BADWHACKMESSAGE, logger,
-		     "message from whack contains bad string or key");
+		llog_rc(RC_BADWHACKMESSAGE, logger,
+			"message from whack contains bad string or key");
 		return false;
 	}
 

@@ -1453,8 +1453,8 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 void connection_route(struct connection *c, where_t where)
 {
 	if (!oriented(c)) {
-		llog(RC_ORIENT, c->logger,
-		     "we cannot identify ourselves with either end of this connection");
+		llog_rc(RC_ORIENT, c->logger,
+			"we cannot identify ourselves with either end of this connection");
 		return;
 	}
 
@@ -1473,9 +1473,9 @@ void connection_route(struct connection *c, where_t where)
 			     c->remote->config->leftright);
 		} else {
 			policy_buf pb;
-			llog(RC_ROUTE, c->logger,
-			     "cannot route template policy of %s",
-			     str_connection_policies(c, &pb));
+			llog_rc(RC_ROUTE, c->logger,
+				"cannot route template policy of %s",
+				str_connection_policies(c, &pb));
 			return;
 		}
 	}
@@ -1557,13 +1557,13 @@ static bool dispatch_1(enum routing_event event,
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
 			if (!unrouted_to_routed_never_negotiate(c, e->where)) {
-				llog(RC_ROUTE, logger, "could not route");
+				llog_rc(RC_ROUTE, logger, "could not route");
 				return true;
 			}
 			PEXPECT(logger, c->routing.state == RT_ROUTED_NEVER_NEGOTIATE);
 		} else {
 			if (!unrouted_to_routed_ondemand(c, e->where)) {
-				llog(RC_ROUTE, logger, "could not route");
+				llog_rc(RC_ROUTE, logger, "could not route");
 				return true;
 			}
 			PEXPECT(logger, c->routing.state == RT_ROUTED_ONDEMAND);
@@ -2213,7 +2213,7 @@ static bool dispatch_1(enum routing_event event,
 
 	case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
 	case X(UNROUTE, ROUTED_TUNNEL, PERMANENT):
-		llog(RC_RTBUSY, logger, "cannot unroute: route busy");
+		llog_rc(RC_RTBUSY, logger, "cannot unroute: route busy");
 		return true;
 
 	case X(UNROUTE, UNROUTED, GROUP):
@@ -2252,7 +2252,7 @@ static bool dispatch_1(enum routing_event event,
 		 * seems to do no harm.
 		 */
 		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
-			llog(RC_ROUTE, logger, "could not route");
+			llog_rc(RC_ROUTE, logger, "could not route");
 			return true;
 		}
 		set_established_ike(event, c, RT_ROUTED_ONDEMAND, e);
@@ -2270,14 +2270,14 @@ static bool dispatch_1(enum routing_event event,
 		add_policy(c, policy.route); /* always */
 		if (never_negotiate(c)) {
 			if (!unrouted_to_routed_never_negotiate(c, e->where)) {
-				llog(RC_ROUTE, logger, "could not route");
+				llog_rc(RC_ROUTE, logger, "could not route");
 				return true;
 			}
 			PEXPECT(logger, c->routing.state == RT_ROUTED_NEVER_NEGOTIATE);
 			return true;
 		}
 		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
-			llog(RC_ROUTE, logger, "could not route");
+			llog_rc(RC_ROUTE, logger, "could not route");
 			return true;
 		}
 		return true;
@@ -2304,7 +2304,7 @@ static bool dispatch_1(enum routing_event event,
 		 * routing happens twice which seems to be harmless.
 		 */
 		if (!unrouted_to_routed_ondemand_sec_label(c, logger, e->where)) {
-			llog(RC_ROUTE, logger, "could not route");
+			llog_rc(RC_ROUTE, logger, "could not route");
 			return true;
 		}
 		return true;

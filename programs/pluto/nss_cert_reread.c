@@ -19,9 +19,9 @@ static void reread_end_cert(struct host_end_config *host_end_config,
 
 	const char *nickname = cert_nickname(&host_end_config->cert);
 	if (nickname == NULL) {
-		llog(RC_BADID, logger,
-		     "reloading %scert failed: cannot be reread due to unknown nickname",
-		     host_end_config->leftright);
+		llog_rc(RC_BADID, logger,
+			"reloading %scert failed: cannot be reread due to unknown nickname",
+			host_end_config->leftright);
 		return;
 	}
 
@@ -40,8 +40,8 @@ static void reread_end_cert(struct host_end_config *host_end_config,
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
-		llog(RC_BADID, logger, "reloading %scert='%s' failed: %s",
-		     host_end_config->leftright, nickname, str_diag(diag));
+		llog_rc(RC_BADID, logger, "reloading %scert='%s' failed: %s",
+			host_end_config->leftright, nickname, str_diag(diag));
 		pfree_diag(&diag);
 		CERT_DestroyCertificate(new_cert);
 		host_end_config->cert.nss_cert = old_cert;

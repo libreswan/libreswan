@@ -53,13 +53,13 @@ void whack_debug(const struct whack_message *m, struct show *s)
 	struct logger *logger = show_logger(s);
 	if (is_fips_mode()) {
 		if (lmod_is_set(m->whack_debugging, DBG_PRIVATE)) {
-			llog(RC_FATAL, logger,
-			     "FIPS: --debug private is not allowed in FIPS mode, aborted");
+			llog_rc(RC_FATAL, logger,
+				"FIPS: --debug private is not allowed in FIPS mode, aborted");
 			return; /*don't shutdown*/
 		}
 		if (lmod_is_set(m->whack_debugging, DBG_CRYPT)) {
-			llog(RC_FATAL, logger,
-			     "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
+			llog_rc(RC_FATAL, logger,
+				"FIPS: --debug crypt is not allowed in FIPS mode, aborted");
 			return; /*don't shutdown*/
 		}
 	}
