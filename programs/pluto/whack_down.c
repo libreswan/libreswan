@@ -91,8 +91,8 @@ static void delete_ikev1_child(struct connection *c, struct child_sa **child, wh
 	 * Child.
 	 */
 	state_attach(&(*child)->sa, c->logger);
-	struct ike_sa *ike =
-		established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
+	struct ike_sa *ike = established_isakmp_sa_for_state(&(*child)->sa,
+							     /*viable-parent*/false);
 	llog_n_maybe_send_v1_delete(ike, &(*child)->sa, where);
 	connection_teardown_child(child, REASON_DELETED, where);
 }
@@ -115,7 +115,8 @@ static void down_ikev1_connection_state(struct connection *c,
 {
 	switch (visit_kind) {
 
-	case CONNECTION_IKE_PREP:
+	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
+	case NUDGE_CONNECTION_CROSSED_IKE_SA:
 		/*
 		 * Since the connection is down, the IKE SA is off
 		 * limits for anything trying to establish or revive.
@@ -123,8 +124,9 @@ static void down_ikev1_connection_state(struct connection *c,
 		(*ike)->sa.st_viable_parent = false;
 		return;
 
-	case CONNECTION_CUCKOO_CHILD:
-	case CONNECTION_IKE_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA:
+	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
+	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
 		if (shared_phase1_connection(c, (*ike), (*child))) {
 			delete_ikev1_child(c, child, HERE);
 			(*ike) = NULL; /* hands off IKE */
@@ -141,28 +143,28 @@ static void down_ikev1_connection_state(struct connection *c,
 		delete_ikev1_ike(c, ike, HERE);
 		return;
 
-	case CONNECTION_ORPHAN_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_NONE:
 		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->child_sa_name,
 		     pri_so((*child)->sa.st_serialno));
 		delete_ikev1_child(c, child, HERE);
 		return;
 
-	case CONNECTION_LURKING_CHILD:
+	case VISIT_CONNECTION_LURKING_CHILD_SA:
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
-	case CONNECTION_LURKING_IKE:
+	case VISIT_CONNECTION_LURKING_IKE_SA:
 		state_attach(&(*ike)->sa, c->logger);
 		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
 
-	case CONNECTION_CHILD_SIBLING:
+	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
 		/* IKEv1 orphans siblings */
 		return;
 
-	case CONNECTION_CHILDLESS_IKE:
+	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
 		if (shared_phase1_connection(c, (*ike), NULL)) {
 			/* nothing to do! */
 			return;
@@ -174,7 +176,7 @@ static void down_ikev1_connection_state(struct connection *c,
 		delete_ikev1_ike(c, ike, HERE);
 		return;
 
-	case CONNECTION_IKE_POST:
+	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
 		return;
 
 	}
@@ -190,7 +192,8 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 {
 	switch (visit_kind) {
 
-	case CONNECTION_IKE_PREP:
+	case NUDGE_CONNECTION_PRINCIPAL_IKE_SA:
+	case NUDGE_CONNECTION_CROSSED_IKE_SA:
 		/*
 		 * Since the connection is down, the IKE SA is off
 		 * limits for anything trying to establish or revive.
@@ -198,75 +201,75 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		(*ike)->sa.st_viable_parent = false;
 		return;
 
-	case CONNECTION_IKE_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA:
+	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
 		if (shared_phase1_connection(c, (*ike), (*child))) {
+			/*
+			 * The IKE SA is shared so just delete the
+			 * Child SA.  Also zap the IKE SA.  When the
+			 * IKE is principal this helps stop the visit
+			 * code making further callbacks.
+			 */
 			state_attach(&(*child)->sa, c->logger);
 			submit_v2_delete_exchange((*ike), (*child));
-			(*ike) = NULL; /* also handled IKE */
+			(*ike) = NULL;
 			return;
 		}
 
 		/* remember, deleting the IKE SA deletes the child */
 		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" (and %s "PRI_SO")",
-		     c->config->ike_info->parent_sa_name,
-		     pri_so((*ike)->sa.st_serialno),
-		     c->config->ike_info->child_sa_name,
-		     pri_so((*child)->sa.st_serialno));
+		     c->config->ike_info->parent_sa_name, pri_so((*ike)->sa.st_serialno),
+		     c->config->ike_info->child_sa_name, pri_so((*child)->sa.st_serialno));
 		state_attach(&(*ike)->sa, c->logger);
 		submit_v2_delete_exchange((*ike), NULL);
 		return;
 
-	case CONNECTION_CUCKOO_CHILD:
+	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
 		if (shared_phase1_connection(c, (*ike), (*child))) {
-			/* don't touch IKE */
+			/*
+			 * The cuckold is shared.  Just delete this
+			 * Child SA.
+			 */
 			state_attach(&(*child)->sa, c->logger);
-			submit_v2_delete_exchange(ike_sa(&(*child)->sa, HERE), (*child));
+			submit_v2_delete_exchange((*ike), (*child));
+			(*ike) = NULL;
 			return;
 		}
 
-		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" and %s "PRI_SO" (%s has %s "PRI_SO")",
-		     c->config->ike_info->parent_sa_name,
-		     pri_so((*ike)->sa.st_serialno),
-		     c->config->ike_info->child_sa_name,
-		     pri_so((*child)->sa.st_serialno),
-		     c->config->ike_info->child_sa_name,
-		     c->config->ike_info->parent_sa_name,
-		     pri_so((*child)->sa.st_clonedfrom));
+		state_buf ib;
+		llog(RC_LOG, c->logger, "initiating delete of "PRI_STATE" which has connection's %s "PRI_SO,
+		     pri_state(&(*ike)->sa, &ib),
+		     c->config->ike_info->child_sa_name, pri_so((*child)->sa.st_serialno));
 
-		/* and zap this IKE SA */
+		/* zap the cuckold's IKE SA which will delete the Child */
 		state_attach(&(*ike)->sa, c->logger);
 		submit_v2_delete_exchange((*ike), NULL);
-		/* zap the other connection's child */
-		state_attach(&(*child)->sa, c->logger);
-		submit_v2_delete_exchange(ike_sa(&(*child)->sa, HERE), (*child));
 		return;
 
-	case CONNECTION_ORPHAN_CHILD:
-		llog(RC_LOG, c->logger,
-		     "initiating delete of connection's %s "PRI_SO" using %s "PRI_SO,
-		     c->config->ike_info->child_sa_name,
-		     pri_so((*child)->sa.st_serialno),
-		     c->config->ike_info->parent_sa_name,
-		     pri_so((*child)->sa.st_clonedfrom));
-		state_attach(&(*child)->sa, c->logger);
-		submit_v2_delete_exchange(ike_sa(&(*child)->sa, HERE), (*child));
+	case VISIT_CONNECTION_CHILD_OF_NONE:
+		llog_pexpect(c->logger, HERE,
+			     "attempting delete of connection's %s "PRI_SO" using %s "PRI_SO,
+			     c->config->ike_info->child_sa_name,
+			     pri_so((*child)->sa.st_serialno),
+			     c->config->ike_info->parent_sa_name,
+			     pri_so((*child)->sa.st_clonedfrom));
 		return;
 
-	case CONNECTION_LURKING_CHILD:
+	case VISIT_CONNECTION_LURKING_CHILD_SA:
 		state_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
-	case CONNECTION_LURKING_IKE:
+	case VISIT_CONNECTION_LURKING_IKE_SA:
 		state_attach(&(*ike)->sa, c->logger);
 		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
 
-	case CONNECTION_CHILD_SIBLING:
+	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
 		/* ignore - siblings mean that the IKE SA is shared */
 		return;
 
-	case CONNECTION_CHILDLESS_IKE:
+	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
 		if (shared_phase1_connection(c, (*ike), NULL)) {
 			/* nothing to do! */
 			return;
@@ -279,7 +282,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		submit_v2_delete_exchange((*ike), NULL);
 		return;
 
-	case CONNECTION_IKE_POST:
+	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
 		return;
 
 	}

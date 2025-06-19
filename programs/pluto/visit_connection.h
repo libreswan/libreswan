@@ -104,20 +104,30 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m, struct
 
 enum connection_visit_kind {
 	/*
-	 * The connection's established IKE SA (if there is one).
+	 * Nuge all of the connection's established IKE SAs (if there
+	 * are any).  First the established IKE SA, and then any
+	 * lurking SAs.
 	 *
-	 * The termnate's callback use this to PREPARE the IKE SA for
-	 * deletion, for instance clearing the .st_viable_parent bit
-	 * thus preventing Child SAs from trying to use the IKE SA for
-	 * revival.
+	 * The terminate callback uses this to the IKE SA for
+	 * deletion: clearing the .st_viable_parent bit thus
+	 * preventing Child SAs from trying to use the IKE SA for
+	 * revival; and for IKEv2 sending out a record-n-send delete
+	 * notification (IKEv1 sends out the delete notification after
+	 * all the children are gone).
 	 *
-	 * This callback MUST NOT delete the IKE SA.  IKEv1 needs it
-	 * to send Child SA deletes, and IKEv2 never creates orphans.
+	 * This callback MUST NOT delete the IKE SA: IKEv1 needs the
+	 * IKE SA so it can send out the Child SA deletes; and IKEv2
+	 * never creates orphans.
 	 */
-	CONNECTION_IKE_PREP,
+	NUDGE_CONNECTION_PRINCIPAL_IKE_SA,
+	NUDGE_CONNECTION_CROSSED_IKE_SA,
+
 	/*
-	 * The connection's negotiating / established Child SA (if
-	 * there is one).
+	 * Visit the connection's negotiating / established Child SA
+	 * (if there is one).
+	 *
+	 * In all cases, the callback is passed the Child SA's IKE SA
+	 * (and not the connection's IKE SA).
 	 *
 	 * This is visited before any siblings, thus ensuring that it
 	 * gets gets in first for things like revival (without this,
@@ -126,17 +136,27 @@ enum connection_visit_kind {
 	 *
 	 * It comes in three flavours:
 	 *
-	 * IKE_CHILD: the connection's Child SA is using the same
-	 * connection for its IKE SA and both exist.
+	 * CHILD_OF_PRINCIPAL_IKE_SA: the connection's principal Child
+	 * SA is using the connection principal (established) IKE SA
 	 *
-	 * ORPHAN_CHILD: the connection has a Child SA but no IKE SA.
+	 * CHILD_OF_CROSSED_IKE_SA: the connection's principal Child
+	 * SA is using an established IKE SA that shares the
+	 * connection, however that IKE SA is not principal (aka
+	 * owner); most likely because the current principal IKE SA
+	 * double-crossed it
 	 *
-	 * CUCKOO_CHILD: the connection's Child SA isn't for the IKE
-	 * SA.
+	 * CHILD_OF_CUCKOLD_IKE_SA: the connection's principal Child
+	 * SA's established IKE SA is for some other connection that
+	 * has found itself the (unwitting) parent
+	 *
+	 * CHILD_OF_NONE: the connection's Child SA has no IKE SA (or
+	 * it was deleted); this is IKEv1 only.
 	 */
-	CONNECTION_IKE_CHILD,
-	CONNECTION_ORPHAN_CHILD,
-	CONNECTION_CUCKOO_CHILD,
+	VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA,
+	VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA,
+	VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA,
+	VISIT_CONNECTION_CHILD_OF_NONE,
+
 	/*
 	 * Random states that get in the way; typically just blown
 	 * away.  These are returned in no particular order.
@@ -144,14 +164,17 @@ enum connection_visit_kind {
 	 * For instance, a larval IKE or Child SA.  In the case of an
 	 * IKE SA, it may have further children.
 	 */
-	CONNECTION_LURKING_IKE,
-	CONNECTION_LURKING_CHILD,
+	VISIT_CONNECTION_LURKING_IKE_SA,
+	VISIT_CONNECTION_LURKING_CHILD_SA,
+
 	/*
 	 * Children of other connections that have hitched a lift on
-	 * the connection's IKE SA (i.e., the IKE SA is a cuckold, and
-	 * these are the cuckoos).
+	 * the connection's established and principal IKE SA (i.e.,
+	 * the connection's IKE SA is a cuckold, and these are the
+	 * cuckoos).
 	 */
-	CONNECTION_CHILD_SIBLING,
+	VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA,
+
 	/*
 	 * When the connection has an IKE SA but no Child SA.
 	 *
@@ -163,12 +186,12 @@ enum connection_visit_kind {
 	 * Since there's no Child SA, it's the IKE SA that is
 	 * responsible for cleaning up the connection.
 	 */
-	CONNECTION_CHILDLESS_IKE,
+	VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA,
 
 	/*
 	 * Perform any post processing (when there's still an IKE SA).
 	 */
-	CONNECTION_IKE_POST,
+	FINISH_CONNECTION_PRINCIPAL_IKE_SA,
 };
 
 typedef void (visit_connection_state_cb)
