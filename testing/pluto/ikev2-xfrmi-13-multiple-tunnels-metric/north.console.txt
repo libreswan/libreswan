@@ -41,7 +41,8 @@ north #
 up
 north #
  ipsec auto --down north-east-sn
-"north-east-sn": initiating delete of connection's Child SA #3, IKE SA #1 is shared with "north-east-gw"
+"north-east-sn": initiating delete of connection's Child SA #3 using IKE SA "north-east-gw" #1
+"north-east-sn": note: IKE SA "north-east-gw" #1 will remain up: required by UP policy; in-use by "north-east-gw" #2
 "north-east-sn" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "north-east-sn" #3: ESP traffic information: in=84B out=84B
 north #

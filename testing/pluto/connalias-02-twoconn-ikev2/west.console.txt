@@ -32,8 +32,10 @@ initiating 2 connections
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": initiating delete of connection's Child SA #3, IKE SA #1 is shared with "west-cuckold"
-"west-cuckold": initiating delete of connection's Child SA #2, IKE SA #1 is shared with "west-cuckoo"
+"west-cuckoo": initiating delete of connection's Child SA #3 using IKE SA "west-cuckold" #1
+"west-cuckoo": note: IKE SA "west-cuckold" #1 will remain up: required by UP policy; in-use by "west-cuckold" #2
+"west-cuckold": initiating delete of connection's Child SA #2 using IKE SA #1
+"west-cuckold": note: connection's IKE SA #1 will remain up: in-use by "west-cuckoo" #3
 terminated 2 connections
 "west-cuckoo" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-cuckoo" #3: ESP traffic information: in=0B out=0B
@@ -59,8 +61,10 @@ initiating 1 connection
 west #
  ipsec down west
 terminating all connections with alias "west"
-"west-cuckoo": initiating delete of connection's Child SA #6, IKE SA #4 is shared with "west-cuckold"
-"west-cuckold": initiating delete of connection's Child SA #5, IKE SA #4 is shared with "west-cuckoo"
+"west-cuckoo": initiating delete of connection's Child SA #6 using IKE SA "west-cuckold" #4
+"west-cuckoo": note: IKE SA "west-cuckold" #4 will remain up: required by UP policy; in-use by "west-cuckold" #5
+"west-cuckold": initiating delete of connection's Child SA #5 using IKE SA #4
+"west-cuckold": note: connection's IKE SA #4 will remain up: in-use by "west-cuckoo" #6
 "west-cuckold" #1: deleting IKE SA (established IKE SA)
 terminated 2 connections
 "west-cuckoo" #6: sent INFORMATIONAL request to delete established Child SA using IKE SA #4

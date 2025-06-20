@@ -171,13 +171,16 @@ west #
 west #
  ipsec auto --down westnet-eastnet-subnets || echo "return code failed - should be 0"
 terminating all connections with alias "westnet-eastnet-subnets"
-"westnet-eastnet-subnets/2x2": initiating delete of connection's IPsec SA #5
+"westnet-eastnet-subnets/2x2": initiating delete of connection's IPsec SA #5 using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
+"westnet-eastnet-subnets/2x2": note: ISAKMP SA "westnet-eastnet-subnets/1x1" #1 will remain up: required by UP policy; in-use by "westnet-eastnet-subnets/2x1" #4, "westnet-eastnet-subnets/1x2" #3, "westnet-eastnet-subnets/1x1" #2
 "westnet-eastnet-subnets/2x2" #5: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/2x2" #5: ESP traffic information: in=0B out=0B
-"westnet-eastnet-subnets/2x1": initiating delete of connection's IPsec SA #4
+"westnet-eastnet-subnets/2x1": initiating delete of connection's IPsec SA #4 using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
+"westnet-eastnet-subnets/2x1": note: ISAKMP SA "westnet-eastnet-subnets/1x1" #1 will remain up: required by UP policy; in-use by "westnet-eastnet-subnets/1x2" #3, "westnet-eastnet-subnets/1x1" #2
 "westnet-eastnet-subnets/2x1" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/2x1" #4: ESP traffic information: in=0B out=0B
-"westnet-eastnet-subnets/1x2": initiating delete of connection's IPsec SA #3
+"westnet-eastnet-subnets/1x2": initiating delete of connection's IPsec SA #3 using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
+"westnet-eastnet-subnets/1x2": note: ISAKMP SA "westnet-eastnet-subnets/1x1" #1 will remain up: required by UP policy; in-use by "westnet-eastnet-subnets/1x1" #2
 "westnet-eastnet-subnets/1x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "westnet-eastnet-subnets/1x1" #1
 "westnet-eastnet-subnets/1x2" #3: ESP traffic information: in=0B out=0B
 "westnet-eastnet-subnets/1x1": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1

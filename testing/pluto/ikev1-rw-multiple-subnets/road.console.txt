@@ -20,7 +20,8 @@ done
 road #
  ipsec auto --down road
 terminating all connections with alias "road"
-"road/0x2": initiating delete of connection's IPsec SA #3
+"road/0x2": initiating delete of connection's IPsec SA #3 using ISAKMP SA "road/0x1" #1
+"road/0x2": note: ISAKMP SA "road/0x1" #1 will remain up: required by UP policy; in-use by "road/0x1" #2
 "road/0x2" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "road/0x1" #1
 "road/0x2" #3: ESP traffic information: in=84B out=84B
 "road/0x1": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1
