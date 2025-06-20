@@ -3,10 +3,6 @@
 west #
  ipsec initnss
 Initializing NSS database
-Relabeled /var/lib/ipsec/nss from unconfined_u:object_r:var_lib_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
-Relabeled /var/lib/ipsec/nss/pkcs11.txt from unconfined_u:object_r:var_lib_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
-Relabeled /var/lib/ipsec/nss/cert9.db from unconfined_u:object_r:var_lib_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
-Relabeled /var/lib/ipsec/nss/key4.db from unconfined_u:object_r:var_lib_t:s0 to unconfined_u:object_r:ipsec_key_file_t:s0
 west #
  # --efence-protect; prior to 5.3 it had required_argument, oops
 west #
