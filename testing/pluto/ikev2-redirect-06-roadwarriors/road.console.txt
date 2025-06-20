@@ -98,7 +98,7 @@ Connection list:
 "road-east":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "road-east":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
  
-Total IPsec connections: loaded 1, active 1
+Total IPsec connections: loaded 1, routed 1, active 1
 road #
  ipsec _kernel state
 src 192.1.3.209 dst 192.1.2.45

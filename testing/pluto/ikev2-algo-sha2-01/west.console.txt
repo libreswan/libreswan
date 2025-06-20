@@ -137,7 +137,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms: AES_CBC_128-HMAC_SHA2_256_128
  
-Total IPsec connections: loaded 1, active 0
+Total IPsec connections: loaded 1, routed 0, active 0
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)

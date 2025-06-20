@@ -13,7 +13,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
-Total IPsec connections: loaded 7, active 0
+Total IPsec connections: loaded 7, routed 0, active 0
 road #
  ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 down

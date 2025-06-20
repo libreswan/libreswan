@@ -17,7 +17,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
-Total IPsec connections: loaded 2, active 0
+Total IPsec connections: loaded 2, routed 0, active 0
 road #
  # establish a baseline: one trap, no state and nothing up
 road #

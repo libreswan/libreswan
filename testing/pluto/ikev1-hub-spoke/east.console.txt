@@ -143,7 +143,7 @@ Connection list:
 "westnet-northnet-ipv4-psk":   routing: unrouted;
 "westnet-northnet-ipv4-psk":   conn serial: $1;
  
-Total IPsec connections: loaded 2, active 0
+Total IPsec connections: loaded 2, routed 0, active 0
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)

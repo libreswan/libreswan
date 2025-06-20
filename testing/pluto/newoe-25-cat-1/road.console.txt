@@ -299,7 +299,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   routing: unrouted;
 "private-or-clear#192.1.2.0/24":   conn serial: $9, instantiated from: $3;
  
-Total IPsec connections: loaded 9, active 0
+Total IPsec connections: loaded 9, routed 0, active 0
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)

@@ -6,4 +6,4 @@ EF_DISABLE_BANNER=1 ipsec pluto --impair helper_thread_delay:1 --config /etc/ips
 
 ipsec status | grep Total
 
-../../guestbin/wait-for.sh --timeout 180 --match 'loaded 37, active 37' -- ipsec status
+../../guestbin/wait-for.sh --timeout 180 --match ', active 37' -- ipsec status

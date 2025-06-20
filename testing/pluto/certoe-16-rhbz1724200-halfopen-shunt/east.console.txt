@@ -22,7 +22,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 7' -- ipsec auto --status
-Total IPsec connections: loaded 7, active 0
+Total IPsec connections: loaded 7, routed 0, active 0
 east #
  iptables -D INPUT -p UDP --dport 500 -j DROP
 east #

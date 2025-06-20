@@ -18,7 +18,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 2,' -- ipsec auto --status
-Total IPsec connections: loaded 2, active 0
+Total IPsec connections: loaded 2, routed 0, active 0
 east #
  # initiate a reverse connection
 east #
