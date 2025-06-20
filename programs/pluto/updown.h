@@ -29,6 +29,8 @@
 #ifndef UPDOWN_H
 #define UPDOWN_H
 
+#include <stdbool.h>
+
 struct state;
 struct connection;
 struct spd;
@@ -38,14 +40,20 @@ struct child_sa;
 struct spd_owner;
 
 /* many bits reach in to use this, but maybe shouldn't */
+
 enum updown {
+#define UPDOWN_FLOOR UPDOWN_PREPARE
 	UPDOWN_PREPARE,
 	UPDOWN_ROUTE,
 	UPDOWN_UNROUTE,
 	UPDOWN_UP,
 	UPDOWN_DOWN,
 	UPDOWN_DISCONNECT_NM,
+#define UPDOWN_ROOF (UPDOWN_DISCONNECT_NM+1)
 };
+
+extern const struct enum_names updown_stories;
+extern const struct enum_names updown_names;
 
 bool do_updown(enum updown updown_verb,
 	       const struct connection *c, const struct spd *sr,

@@ -395,31 +395,22 @@ static bool do_updown_1(enum updown updown_verb,
 			 (st != NULL && st->logger == logger)));
 #endif
 
-	const char *verb;
-	switch (updown_verb) {
-#define C(E,N) case E: verb = N; break
-		C(UPDOWN_PREPARE, "prepare");
-		C(UPDOWN_ROUTE, "route");
-		C(UPDOWN_UNROUTE, "unroute");
-		C(UPDOWN_UP, "up");
-		C(UPDOWN_DOWN, "down");
-		C(UPDOWN_DISCONNECT_NM, "disconnectNM");
-#undef C
-	default:
-		bad_case(updown_verb);
-	}
-
 	/*
 	 * Support for skipping updown, eg leftupdown="".  Useful on
 	 * busy servers that do not need to use updown for anything.
 	 * Same for never_negotiate().
 	 */
 	if (c->local->config->child.updown == NULL) {
-		vdbg("kernel: skipped updown %s command - disabled per policy", verb);
+		vdbg("skipped updown command - disabled per policy");
 		return true;
 	}
 
-	return do_updown_verb(verb, c, spd, child, updown_env, verbose);
+	name_buf verb;
+	if (!vexpect(enum_short(&updown_stories, updown_verb, &verb))) {
+		return false;
+	}
+
+	return do_updown_verb(verb.buf, c, spd, child, updown_env, verbose);
 }
 
 bool do_updown(enum updown updown_verb,
@@ -428,16 +419,24 @@ bool do_updown(enum updown updown_verb,
 	       struct child_sa *child,
 	       struct logger *logger/*C-or-CHILD*/)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s()", __func__);
+	name_buf vb;
+	enum_long(&updown_names, updown_verb, &vb);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, vb.buf);
 	return do_updown_1(updown_verb, c, spd, child,
 			   (struct updown_env) {0}, verbose);
 }
 
 void do_updown_child(enum updown updown_verb, struct child_sa *child)
 {
+	/* use full UPDOWN_UP as prefix */
+	name_buf vb;
+	enum_long(&updown_names, updown_verb, &vb);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
+
 	struct connection *c = child->sa.st_connection;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		do_updown(updown_verb, c, spd, child, child->sa.logger);
+		do_updown_1(updown_verb, c, spd, child,
+			    (struct updown_env) {0}, verbose);
 	}
 }
 
@@ -450,9 +449,12 @@ void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger,
 			   struct updown_env updown_env)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s()", __func__);
-	if (owner->bare_route == NULL) {
-		do_updown_1(UPDOWN_UNROUTE, spd->connection,
-			    spd, child, updown_env, verbose);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "UNBOUND_UNROUTE");
+	if (owner->bare_route != NULL) {
+		vdbg("skip as has owner->bare_route");
+		return;
 	}
+
+	do_updown_1(UPDOWN_UNROUTE, spd->connection, spd, child,
+		    updown_env, verbose);
 }
