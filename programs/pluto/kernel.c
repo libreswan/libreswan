@@ -583,7 +583,7 @@ struct spd_owner spd_owner(const struct spd *c_spd,
 			   const enum routing new_c_routing,
 			   struct logger *logger, where_t where)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 
 	enum routing c_routing = new_c_routing;
 	const struct connection *c = c_spd->connection;

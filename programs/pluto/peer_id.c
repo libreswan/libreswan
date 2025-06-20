@@ -709,7 +709,7 @@ bool refine_host_connection_of_state_on_responder(struct ike_sa *ike,
 						  const struct id *initiator_id,
 						  const struct id *responder_id)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "rfc: ");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, "rfc");
 	vdbg("looking for an %s connection more refined than %s",
 	     ike->sa.st_connection->config->ike_info->version_name,
 	     ike->sa.st_connection->name);

@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 {
 	err_t err;
 	struct logger *logger = tool_logger(argc, argv);
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s:", argv[0]);
 
 	if (argc != 4) {

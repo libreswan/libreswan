@@ -114,8 +114,11 @@ struct verbose {
  * Format the prefix, handle poorly constructed struct verbose.
  */
 
-#define PRI_VERBOSE "%s%*s"
-#define pri_verbose (verbose.prefix == NULL ? "" : verbose.prefix), (verbose.level * 2), ""
+#define PRI_VERBOSE "%s%s%*s"
+#define pri_verbose \
+	(verbose.prefix == NULL ? "" : verbose.prefix), \
+		(verbose.prefix == NULL ? "" : ": "),	\
+		(verbose.level * 2), ""
 
 /*
  * Normal logging: the message is always logged (no indentation); just

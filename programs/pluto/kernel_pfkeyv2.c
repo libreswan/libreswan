@@ -1189,7 +1189,7 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 			break;
 		default:
 		{
-			struct verbose verbose = VERBOSE(RC_LOG, logger, "");
+			struct verbose verbose = VERBOSE(RC_LOG, logger, NULL);
 			verbose("%s(), ignoring unexpected:", __func__);
 			llog_sadb_ext(verbose, req.base, ext, ext_cursor);
 			break;

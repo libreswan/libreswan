@@ -2830,7 +2830,7 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 
 void build_connection_spds_from_proposals(struct connection *c)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	vdbg("adding connection spds using proposed");
 	verbose.level++;
 
