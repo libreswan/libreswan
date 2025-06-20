@@ -253,30 +253,47 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 *    The message has been constructed and sent
 	 */
 
-	if (predecessor != NULL) {
-		const char *what;
-		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
-			what = "established Child SA";
-		} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
-			ike->sa.st_v2_ike_pred = predecessor->st_serialno;
-			what = "established IKE SA";
-		} else if (IS_IKE_SA(predecessor)) {
-			what = "establishing IKE SA";
-		} else {
-			what = "establishing Child SA";
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "initiating IKEv2 connection");
+		if (predecessor != NULL) {
+			jam_string(buf, " replacing ");
+			if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
+				jam_string(buf, "established Child SA");
+			} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
+				jam_string(buf, "established IKE SA");
+			} else if (IS_IKE_SA(predecessor)) {
+				jam_string(buf, "establishing IKE SA");
+			} else {
+				jam_string(buf, "establishing Child SA");
+			}
+			jam_string(buf, " ");
+			jam_so(buf, predecessor->st_serialno);
 		}
-		llog(RC_LOG, ike->sa.logger,
-		     "initiating IKEv2 connection to replace %s #%lu",
-		     what, predecessor->st_serialno);
-		move_pending(ike_sa(predecessor, HERE), ike);
-	} else {
-		address_buf ab;
+		jam_string(buf, " to ");
+#if 0
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+#else
+		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
+		jam_address_sensitive(buf, &remote_address);
+#endif
+		if (c->remote->config->host.type == KH_IPHOSTNAME) {
+			jam_string(buf, " (");
+			jam_string(buf, c->remote->config->host.name);
+			jam_string(buf, ")");
+		}
+#if 0
+#else
 		const struct ip_protocol *protocol = endpoint_protocol(ike->sa.st_remote_endpoint);
-		ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-		llog(RC_LOG, ike->sa.logger,
-		     "initiating IKEv2 connection to %s using %s",
-		     str_address(&remote_addr, &ab),
-		     protocol->name);
+		jam_string(buf, " using ");
+		jam_string(buf, protocol->name);
+#endif
+	}
+
+	if (predecessor != NULL) {
+		if (IS_IKE_SA_ESTABLISHED(predecessor)) {
+			ike->sa.st_v2_ike_pred = predecessor->st_serialno;
+		}
+		move_pending(ike_sa(predecessor, HERE), ike);
 	}
 
 	/*
