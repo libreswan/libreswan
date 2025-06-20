@@ -63,8 +63,8 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 
 	struct state *st = state_by_serialno(m->whack_deletestateno);
 	if (st == NULL) {
-		llog(RC_UNKNOWN_NAME, show_logger(s), "no state "PRI_SO" to delete",
-		     pri_so(m->whack_deletestateno));
+		llog_rc(RC_UNKNOWN_NAME, show_logger(s), "no state "PRI_SO" to delete",
+			pri_so(m->whack_deletestateno));
 		return;
 	}
 

@@ -100,7 +100,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	struct id keyid; /* must free_id_content() */
 	err = atoid(wm->keyid, &keyid);
 	if (err != NULL) {
-		llog(RC_BADID, logger, "bad --keyid \"%s\": %s", wm->keyid, err);
+		llog_rc(RC_BADID, logger, "bad --keyid \"%s\": %s", wm->keyid, err);
 		return;
 	}
 

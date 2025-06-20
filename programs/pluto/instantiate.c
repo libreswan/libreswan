@@ -158,8 +158,8 @@ struct connection *group_instantiate(struct connection *group,
 	}
 
 	if (connection_with_name_exists(base_name)) {
-		llog(RC_DUPNAME, group->logger,
-		     "group name + target yields duplicate name \"%s\"", base_name);
+		llog_rc(RC_DUPNAME, group->logger,
+			"group name + target yields duplicate name \"%s\"", base_name);
 		pfreeany(base_name);
 		return NULL;
 	}

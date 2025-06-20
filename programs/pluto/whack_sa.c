@@ -121,10 +121,10 @@ void whack_sa(const struct whack_message *m, struct show *s)
 	if (m->name == NULL) {
 		/* leave bread crumb */
 		name_buf stb;
-		llog(RC_FATAL, logger,
-		     "received command to %s connection %s, but did not receive the connection name",
-		     whack_sa_name(m->whack_command),
-		     str_enum_long(&sa_kind_names, whack_sa_kind(m->whack_command), &stb));
+		llog_rc(RC_FATAL, logger,
+			"received command to %s connection %s, but did not receive the connection name",
+			whack_sa_name(m->whack_command),
+			str_enum_long(&sa_kind_names, whack_sa_kind(m->whack_command), &stb));
 		return;
 	}
 

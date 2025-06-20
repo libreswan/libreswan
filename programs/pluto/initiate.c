@@ -93,16 +93,16 @@ static bool initiate_connection_1_basics(struct connection *c,
 	if (!oriented(c)) {
 		address_buf a;
 		address_buf b;
-		llog(RC_ORIENT, c->logger,
-		     "we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
-		     str_address(&c->local->host.addr, &a),
-		     str_address(&c->remote->host.addr, &b));
+		llog_rc(RC_ORIENT, c->logger,
+			"we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
+			str_address(&c->local->host.addr, &a),
+			str_address(&c->remote->host.addr, &b));
 		return false;
 	}
 
 	if (never_negotiate(c)) {
-		llog(RC_INITSHUNT, c->logger,
-		     "cannot initiate an authby=never connection");
+		llog_rc(RC_INITSHUNT, c->logger,
+			"cannot initiate an authby=never connection");
 		return false;
 	}
 
@@ -135,24 +135,24 @@ static bool initiate_connection_2_address(struct connection *c,
 		 */
 
 		if (!is_template(c)) {
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot instantiate non-template connection to a supplied remote IP address");
+			llog_rc(RC_NOPEERIP, c->logger,
+				"cannot instantiate non-template connection to a supplied remote IP address");
 			return false;
 		}
 
 		ip_address remote_ip;
 		err_t e = ttoaddress_dns(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
 		if (e != NULL) {
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot instantiate connection: resolution of \"%s\" failed: %s",
-			     remote_host, e);
+			llog_rc(RC_NOPEERIP, c->logger,
+				"cannot instantiate connection: resolution of \"%s\" failed: %s",
+				remote_host, e);
 			return false;
 		}
 
 		if (!address_is_specified(remote_ip)) {
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot instantiate connection: \"%s\" resolved to the unspecified address",
-			     remote_host);
+			llog_rc(RC_NOPEERIP, c->logger,
+				"cannot instantiate connection: \"%s\" resolved to the unspecified address",
+				remote_host);
 			return false;
 		}
 
@@ -194,15 +194,15 @@ static bool initiate_connection_2_address(struct connection *c,
 		if (c->remote->config->host.name != NULL) {
 			if (c->config->narrowing) {
 				name_buf b;
-				llog(RC_NOPEERIP, c->logger,
-				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-				     str_enum_long(&connection_kind_names, c->local->kind, &b),
-				     bool_str(c->config->narrowing));
+				llog_rc(RC_NOPEERIP, c->logger,
+					"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
+					str_enum_long(&connection_kind_names, c->local->kind, &b),
+					bool_str(c->config->narrowing));
 			} else {
 				name_buf b;
-				llog(RC_NOPEERIP, c->logger,
-				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
-				     str_enum_long(&connection_kind_names, c->local->kind, &b));
+				llog_rc(RC_NOPEERIP, c->logger,
+					"cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
+					str_enum_long(&connection_kind_names, c->local->kind, &b));
 			}
 			add_policy(c, policy.up);
 			return true;
@@ -210,16 +210,16 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		if (c->config->narrowing) {
 			name_buf b;
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			     str_enum_long(&connection_kind_names, c->local->kind, &b),
-			     bool_str(c->config->narrowing));
+			llog_rc(RC_NOPEERIP, c->logger,
+				"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+				str_enum_long(&connection_kind_names, c->local->kind, &b),
+				bool_str(c->config->narrowing));
 		} else {
 			name_buf b;
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
-			     pri_co(c->serialno),
-			     str_enum_long(&connection_kind_names, c->local->kind, &b));
+			llog_rc(RC_NOPEERIP, c->logger,
+				"cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
+				pri_co(c->serialno),
+				str_enum_long(&connection_kind_names, c->local->kind, &b));
 		}
 		return false;
 	}

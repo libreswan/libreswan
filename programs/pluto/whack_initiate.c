@@ -77,8 +77,8 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 
 	if (m->name == NULL) {
 		/* leave bread crumb */
-		llog(RC_FATAL, logger,
-		     "received command to initiate connection, but did not receive the connection name - ignored");
+		llog_rc(RC_FATAL, logger,
+			"received command to initiate connection, but did not receive the connection name - ignored");
 		return;
 	}
 

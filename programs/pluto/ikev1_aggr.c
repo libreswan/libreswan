@@ -120,7 +120,7 @@ struct ike_sa *aggr_outI1(struct connection *c,
 		 * configurations, even conflicting multiple DH groups.  So this
 		 * should tell the user to add a proper proposal policy
 		 */
-		llog_sa(RC_AGGRALGO, ike,
+		llog_rc(RC_AGGRALGO, ike->sa.logger,
 			"no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		return NULL;
 	}

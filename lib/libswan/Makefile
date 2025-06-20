@@ -210,6 +210,7 @@ OBJS += jam_bytes.o
 OBJS += jam_base64_bytes.o
 OBJS += llog.o
 OBJS += llog_dump.o
+OBJS += llog_rc.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
 OBJS += jam_logger_rc_prefix.o
