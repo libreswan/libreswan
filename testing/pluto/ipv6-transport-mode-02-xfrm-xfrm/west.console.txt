@@ -141,7 +141,7 @@ Connection list:
 "v6-transport":   routing: unrouted;
 "v6-transport":   conn serial: $1;
  
-Total IPsec connections: loaded 1, active 0
+Total IPsec connections: loaded 1, routed 0, active 0
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)

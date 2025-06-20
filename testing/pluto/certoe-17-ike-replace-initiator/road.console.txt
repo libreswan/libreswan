@@ -11,7 +11,7 @@ road #
  # give OE policies time to load
 road #
  ../../guestbin/wait-for.sh --match 'loaded 8' -- ipsec auto --status
-Total IPsec connections: loaded 8, active 0
+Total IPsec connections: loaded 8, routed 0, active 0
 road #
  echo "initdone"
 initdone

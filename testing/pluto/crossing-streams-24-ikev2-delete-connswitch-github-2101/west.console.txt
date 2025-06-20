@@ -75,7 +75,7 @@ Connection list:
 "b":   conn serial: $2;
 "b":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
  
-Total IPsec connections: loaded 2, active 2
+Total IPsec connections: loaded 2, routed 2, active 2
 west #
  ipsec delete a
 "a": terminating SAs using this connection

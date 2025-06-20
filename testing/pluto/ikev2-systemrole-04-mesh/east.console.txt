@@ -42,7 +42,7 @@ east #
  # give OE a chance to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 6,' -- ipsec status
-Total IPsec connections: loaded 6, active 0
+Total IPsec connections: loaded 6, routed 3, active 0
 east #
  ipsec status
 using kernel interface: xfrm
@@ -269,7 +269,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   routing: routed-ondemand;
 "private-or-clear#192.1.2.0/24":   conn serial: $5, instantiated from: $2;
  
-Total IPsec connections: loaded 6, active 0
+Total IPsec connections: loaded 6, routed 3, active 0
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)

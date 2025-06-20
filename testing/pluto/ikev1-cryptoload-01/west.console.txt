@@ -26,8 +26,8 @@ west #
  # offloads (plus possible extra offloads for things like NONCE).
 west #
  ipsec status | grep Total
-Total IPsec connections: loaded 0, active 0
+Total IPsec connections: loaded 0, routed 0, active 0
 west #
- ../../guestbin/wait-for.sh --timeout 180 --match 'loaded 37, active 37' -- ipsec status
-Total IPsec connections: loaded 37, active 37
+ ../../guestbin/wait-for.sh --timeout 180 --match ', active 37' -- ipsec status
+Total IPsec connections: loaded 37, routed 37, active 37
 west #

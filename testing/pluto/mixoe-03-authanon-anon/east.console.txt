@@ -17,7 +17,7 @@ east #
  # give OE policies time to load
 east #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-Total IPsec connections: loaded 10, active 0
+Total IPsec connections: loaded 10, routed 4, active 0
 east #
  ipsec status | grep "our auth" | grep private
 "clear-or-private":   our auth:null, their auth:null, our autheap:none, their autheap:none;

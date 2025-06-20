@@ -132,7 +132,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
 "northnet-westnet-ipv4-psk":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
  
-Total IPsec connections: loaded 1, active 1
+Total IPsec connections: loaded 1, routed 1, active 1
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)

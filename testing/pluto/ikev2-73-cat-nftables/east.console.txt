@@ -12,7 +12,7 @@ east #
 "east-rw": added IKEv2 connection
 east #
  ../../guestbin/wait-for.sh --match 'loaded 1,' -- ipsec auto --status
-Total IPsec connections: loaded 1, active 0
+Total IPsec connections: loaded 1, routed 0, active 0
 east #
  echo "initdone"
 initdone

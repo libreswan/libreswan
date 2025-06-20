@@ -13,7 +13,7 @@ west #
  # give OE policies time to load
 west #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
-Total IPsec connections: loaded 10, active 0
+Total IPsec connections: loaded 10, routed 5, active 0
 west #
  echo "initdone"
 initdone

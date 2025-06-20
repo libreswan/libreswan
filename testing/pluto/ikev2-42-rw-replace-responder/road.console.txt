@@ -186,7 +186,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
 "road-east-x509-ipv4"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
  
-Total IPsec connections: loaded 2, active 1
+Total IPsec connections: loaded 2, routed 1, active 1
  
 State Information: DDoS cookies not required, Accepting new IKE connections
 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
