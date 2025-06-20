@@ -965,7 +965,6 @@ static diag_t extract_host(const struct whack_message *wm,
 		case KH_OPPO:
 		case KH_OPPOGROUP:
 		case KH_GROUP:
-		case KH_NOTSET:
 		case KH_IPHOSTNAME:
 		{
 			/* handled by pluto using .host_type */
@@ -996,6 +995,9 @@ static diag_t extract_host(const struct whack_message *wm,
 			end->host.type = KH_IFACE;
 			break;
 		}
+
+		case KH_NOTSET:
+			return diag("%s%s= is not set", leftright, name);
 
 		case KH_DIRECT:
 			return diag("%s%s=%s invalid", leftright, name, value);
