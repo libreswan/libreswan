@@ -31,7 +31,7 @@ west #
 "west-cuckold" #1: sent Main Mode I3
 "west-cuckold" #1: Peer ID is FQDN: '@east'
 "west-cuckold" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"west-cuckold" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckold" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.1.2.23/32}
 "west-cuckold" #2: sent Quick Mode request
 "west-cuckold" #2: STATE_QUICK_I1: 5 second timeout exceeded after 4 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -39,12 +39,12 @@ west #
 "west-cuckold" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec up west-cuckoo-1
-"west-cuckoo-1" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckoo-1" #3: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.2.0/24}
 "west-cuckoo-1" #3: sent Quick Mode request
 "west-cuckoo-1" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec up west-cuckoo-2
-"west-cuckoo-2" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"west-cuckoo-2" #4: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.3.0/24===192.0.20.0/24}
 "west-cuckoo-2" #4: sent Quick Mode request
 "west-cuckoo-2" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
@@ -59,23 +59,24 @@ west #
 #4: "west-cuckoo-2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec down west-cuckold
-"west-cuckold": marking connection down, ISAKMP SA #1 is shared with "west-cuckoo-2", "west-cuckoo-1"
+"west-cuckold": marking connection down
+"west-cuckold": note: connection's ISAKMP SA #1 will remain up: in-use by "west-cuckoo-2" #4, "west-cuckoo-1" #3
 west #
  ipsec down west-cuckoo-1
-"west-cuckoo-1": initiating delete of connection's ISAKMP SA #3
+"west-cuckoo-1": initiating delete of connection's IPsec SA #3 using ISAKMP SA "west-cuckold" #1
+"west-cuckoo-1": note: ISAKMP SA "west-cuckold" #1 will remain up: in-use by "west-cuckoo-2" #4
 "west-cuckoo-1" #3: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo-1" #3: ESP traffic information: in=84B out=84B
 west #
  ipsec down west-cuckoo-2
-"west-cuckoo-2": initiating delete of connection's ISAKMP SA #4
+"west-cuckoo-2": initiating delete of connection's IPsec SA #4 and ISAKMP SA #1
 "west-cuckoo-2" #4: deleting IPsec SA (QUICK_I2) and sending notification using ISAKMP SA "west-cuckold" #1
 "west-cuckoo-2" #4: ESP traffic information: in=84B out=84B
+"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # should not be needed
 west #
  ipsec down west-cuckold
-"west-cuckold": initiating delete of connection's ISAKMP SA #1
-"west-cuckold" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # non-zero counts confirm encrypted traffic flowing
 west #

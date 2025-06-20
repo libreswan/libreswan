@@ -33,13 +33,26 @@
 #include "ikev1_delete.h"		/* for llog_n_maybe_send_v1_delete() */
 
 /*
- * Is a connection in use by some state?
+ * Must the IKE SA remain up?
+ *
+ * Either because it has +UP or is shared with other connections.
+ *
+ * When the IKE SA stays up, log two messages: first announcing Child
+ * SA's death; and second announcing IKE SA's survival.
  */
 
 static bool shared_phase1_connection(struct connection *c,
 				     struct ike_sa *ike,
 				     struct child_sa *child)
 {
+	/*
+	 * Check the IKE SA to see if it has children from other
+	 * connections (i.e., not C).
+	 *
+	 * Always check so all reasons to keep the IKE SA up can be
+	 * logged.
+	 */
+
 	struct state_filter sf = {
 		.clonedfrom = ike->sa.st_serialno,
 		.search = {
@@ -48,37 +61,91 @@ static bool shared_phase1_connection(struct connection *c,
 			.where = HERE,
 		},
 	};
+
 	while (next_state(&sf)) {
 		if (sf.st->st_connection != c) {
 			break;
 		}
 	}
 
-	if (sf.st == NULL) {
+	/*
+	 * Does the IKE SA need to stay up?
+	 */
+
+	if (ike->sa.st_connection->policy.up) {
+		/*
+		 * Yes, a +UP IKE SA can never be taken down.
+		 *
+		 * Since +UP as been stripped from the connection C,
+		 * the IKE SA can only have +UP when it's for another
+		 * connection (i.e., CUCKOLD).
+		 */
+		PEXPECT(c->logger, ike->sa.st_connection != c);
+		PEXPECT(c->logger, (child != NULL &&
+				    child->sa.st_connection->policy.up == false));
+	} else if (sf.st == NULL) {
+		/*
+		 * No: The IKE SA isn't +UP and has no other children.
+		 * It doesn't need to stay up.
+		 */
 		return false;
 	}
 
-	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
-		if (child != NULL) {
+	/*
+	 * Note: IKE SA could have no Child SAs from the connection C,
+	 * leading to CHILD being NULL.
+	 */
+
+	if (child != NULL) {
+		LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 			jam_string(buf, "initiating delete of connection's ");
 			jam_string(buf, c->config->ike_info->child_sa_name);
 			jam_string(buf, " ");
 			jam_so(buf, child->sa.st_serialno);
-			jam_string(buf, ", ");
-		} else {
-			jam_string(buf, "marking connection down, ");
-		}
-		jam_string(buf, c->config->ike_info->parent_sa_name);
-		jam_string(buf, " ");
-		jam_so(buf, ike->sa.st_serialno);
-		jam_string(buf, " is shared with ");
-		const char *sep = "";
-		do {
-			if (sf.st->st_connection != c) {
-				jam_string(buf, sep); sep = ", ";
-				jam_connection(buf, sf.st->st_connection);
+			jam_string(buf, " using ");
+			if (ike->sa.st_connection == c) {
+				jam_string(buf, c->config->ike_info->parent_sa_name);
+				jam_string(buf, " ");
+				jam_so(buf, ike->sa.st_serialno);
+			} else {
+				jam_string(buf, c->config->ike_info->parent_sa_name);
+				jam_string(buf, " ");
+				jam_state(buf, &ike->sa);
 			}
-		} while (next_state(&sf));
+		}
+	} else {
+		llog(RC_LOG, c->logger, "marking connection down");
+	}
+
+	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+		jam_string(buf, "note: ");
+		if (ike->sa.st_connection == c) {
+			jam_string(buf, "connection's ");
+			jam_string(buf, c->config->ike_info->parent_sa_name);
+			jam_string(buf, " ");
+			jam_so(buf, ike->sa.st_serialno);
+		} else {
+			jam_string(buf, c->config->ike_info->parent_sa_name);
+			jam_string(buf, " ");
+			jam_state(buf, &ike->sa);
+		}
+		jam_string(buf, " will remain up");
+		char *sep = ":";
+		if (ike->sa.st_connection->policy.up) {
+			jam_string(buf, sep); sep = ";";
+			jam_string(buf, " required by UP policy");
+		}
+		if (sf.st != NULL) {
+			jam_string(buf, sep); sep = "";
+			jam_string(buf, " in-use by");
+			do {
+				if (sf.st->st_connection != c) {
+					jam_string(buf, sep); sep = ",";
+					jam_string(buf, " ");
+					jam_state(buf, sf.st);
+				}
+			} while (next_state(&sf));
+		}
 	}
 
 	return true;
