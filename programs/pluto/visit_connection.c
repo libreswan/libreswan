@@ -545,30 +545,32 @@ bool visit_connection_principal_child(struct connection *c,
 				      struct verbose verbose)
 {
 	/*
-	 * While having .established_child_sa implies having
-	 * .negotiating_child_sa, check both.  More robust and leads
-	 * to a better debug message.
+	 * The NEGOTIATING Child SA is the owner, NOT the ESTABLISHED
+	 * Child SA.
+	 *
+	 * For instance, an IKEv1 Quick mode responder sets
+	 * NEGOTIATING when processing the first message, and
+	 * ESTABLISHED when processing the second.  This means that
+	 * during a replace, there's a period where ESTABLISHED is for
+	 * the old SA, and NEGOTIATING for the new.
 	 */
-	struct child_sa *child;
-	const char *child_state;
 
-	if (c->established_child_sa != SOS_NOBODY) {
-		child_state = "established";
-		child = child_sa_by_serialno(c->established_child_sa);
-	} else if (c->negotiating_child_sa != SOS_NOBODY) {
-		child_state = "negotiating";
-		child = child_sa_by_serialno(c->negotiating_child_sa);
-	} else {
+	if (c->negotiating_child_sa == SOS_NOBODY) {
 		vdbg("skipping principal Child SA, connection doesn't have one you see");
 		return false;
 	}
 
+	struct child_sa *child = child_sa_by_serialno(c->negotiating_child_sa);
 	if (child == NULL) {
 		llog_pexpect(verbose.logger, HERE,
-			     "skipping %s principal Child SA, as "PRI_SO" was not found",
-			     child_state, pri_so(c->negotiating_child_sa));
+			     "skipping principal Child SA, as negotiating "PRI_SO" was not found",
+			     pri_so(c->negotiating_child_sa));
 		return false;
 	}
+
+	const char *child_state =
+		(c->established_child_sa == child->sa.st_serialno ? "established" :
+		 "negotiating");
 
 	if (c->established_ike_sa == child->sa.st_clonedfrom) {
 		/*
