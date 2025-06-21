@@ -36,6 +36,7 @@ const struct sparse_names keyword_host_names = {
 		SPARSE("%oppogroup",     KH_OPPOGROUP),
 		SPARSE("%group",         KH_GROUP),
 		SPARSE("%direct",        KH_DIRECT),
+		SPARSE("<hostname>",     KH_IPHOSTNAME),
 		SPARSE("<address>",      KH_IPADDR),
 		SPARSE("<not-set>",      KH_NOTSET),
 		SPARSE_NULL

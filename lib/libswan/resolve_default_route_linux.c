@@ -182,11 +182,22 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
 
 static unsigned jam_pa(struct jambuf *buf, const struct resolve_host *host)
 {
-	if (host->type == KH_IPADDR) {
-		return jam_address(buf, &host->addr);
+	size_t s = 0;
+	if (host->addr.is_set) {
+		s += jam_address(buf, &host->addr);
 	}
 
-	return jam_sparse_short(buf, &keyword_host_names, host->type);
+	if (host->type > 0) {
+		s += jam_sparse_short(buf, &keyword_host_names, host->type);
+	}
+
+	if (host->type == KH_IPHOSTNAME) {
+		s += jam_string(buf, "(");
+		s += jam_string(buf, host->name);
+		s += jam_string(buf, ")");
+	}
+
+	return s;
 }
 
 enum resolve_status {
@@ -464,9 +475,9 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 				host->host.type == KH_DEFAULTROUTE ? PREFSRC :
 				NOTHING);
 	verbose("seeking %s", (seeking == NOTHING ? "NOTHING" :
-			    seeking == PREFSRC ? "PREFSRC" :
-			    seeking == GATEWAY ? "GATEWAY" :
-			    "?"));
+			       seeking == PREFSRC ? "PREFSRC" :
+			       seeking == GATEWAY ? "GATEWAY" :
+			       "?"));
 	verbose.level++;
 	if (seeking == NOTHING) {
 		return RESOLVE_SUCCESS;	/* this end already figured out */
@@ -487,61 +498,68 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 	 * the gateway.
 	 */
 
-	const bool has_peer = (peer->host.type == KH_IPADDR || peer->host.type == KH_IPHOSTNAME);
 	bool added_dst;
-	if (host->nexthop.type == KH_IPADDR && host_afi == &ipv4_info) {
+	if (host->nexthop.type == KH_IPADDR &&
+	    host_afi == &ipv4_info) {
 		pexpect(seeking == PREFSRC);
 		/*
-		 * My nexthop (gateway) is specified.
-		 * We need to figure out our source IP to get there.
+		 * My nexthop (gateway) is specified.  We need to
+		 * figure out our source IP to get there.
 		 */
 
 		/*
-		 * AA_2019 Why use nexthop and not peer->host.addr to look up src address?
-		 * The lore is that there is an (old) bug when looking up IPv4 src
-		 * IPv6 with gateway link local address will return link local
+		 * AA_2019 Why use nexthop and not peer->host.addr to
+		 * look up src address?  The lore is that there is an
+		 * (old) bug when looking up IPv4 src IPv6 with
+		 * gateway link local address will return link local
 		 * address and not the global address.
 		 */
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
 				  "host->nexthop.addr", verbose);
-	} else if (has_peer) {
+	} else if (peer->host.type == KH_IPHOSTNAME) {
 		/*
-		 * Peer IP is specified.
-		 * We may need to figure out source IP
-		 * and gateway IP to get there.
+		 * Peer IP is a DNS hostname.
+		 *
+		 * We may need to figure out source IP and gateway IP
+		 * to get there.
 		 *
 		 * XXX: should this also update peer->host.type?
+		 *
+		 * XXX: No!  The field still needs to be copied into
+		 * the connection struct so that ddns.c knows to
+		 * re-resolve the address (which strongly suggests the
+		 * need for more fields - extract_connection() even
+		 * does this with a separate host_addr[] array).
 		 */
-		pexpect(host_afi != NULL);
-		if (peer->host.type == KH_IPHOSTNAME) {
 #ifdef USE_DNSSEC
-			/* try numeric first */
-			err_t er = ttoaddress_num(shunk1(peer->host.name),
-						  host_afi, &peer->host.addr);
-			if (er != NULL) {
-				/* not numeric, so resolve it */
-				if (!unbound_resolve(peer->host.name,
-						     host_afi, &peer->host.addr,
-						     verbose.logger)) {
-					pfree(msgbuf);
-					return RESOLVE_FAILURE;
-				}
-			}
-#else
-			err_t er = ttoaddress_dns(shunk1(peer->host.name),
-				 		  host_afi, &peer->host.addr);
-			if (er != NULL) {
+		/* try numeric first */
+		err_t er = ttoaddress_num(shunk1(peer->host.name),
+					  host_afi, &peer->host.addr);
+		if (er != NULL) {
+			/* not numeric, so resolve it */
+			if (!unbound_resolve(peer->host.name,
+					     host_afi, &peer->host.addr,
+					     verbose.logger)) {
 				pfree(msgbuf);
 				return RESOLVE_FAILURE;
 			}
-#endif
-		} else {
-			pexpect(peer->host.type == KH_IPADDR);
 		}
+#else
+		err_t er = ttoaddress_dns(shunk1(peer->host.name),
+					  host_afi, &peer->host.addr);
+		if (er != NULL) {
+			pfree(msgbuf);
+			return RESOLVE_FAILURE;
+		}
+#endif
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
-				  "peer->host.addr", verbose);
+				  "peer->host.addr(dns)", verbose);
+	} else if (peer->host.type == KH_IPADDR) {
+		added_dst = true;
+		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
+				  "peer->host.addr(ip)", verbose);
 	} else if (host->nexthop.type == KH_IPADDR &&
 		   (peer->host.type == KH_GROUP ||
 		    peer->host.type == KH_OPPOGROUP)) {
