@@ -3469,49 +3469,64 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	PASSERT(c->logger, host_afi != NULL);
 
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const struct whack_end *we = &wm->end[lr];
-		const char *leftright = we->leftright;
-		const struct resolve_end *re = &resolve[lr];
-		name_buf wb;
-		ldbg(c->logger, "%s.host.type=%s",
-		     leftright, str_sparse_short(&keyword_host_names, re->host.type, &wb));
-		address_buf ab;
-		ldbg(c->logger, "%s.host.addr=%s",
-		     leftright, str_address(&re->host.addr, &ab));
-		ldbg(c->logger, "%s.nexthop.addr=%s",
-		     leftright, str_address(&re->nexthop.addr, &ab));
-	}
-
 	/*
-	 * Determine the host topology.
+	 * Convert the resolved host addresses into proper addresses.
 	 *
-	 * Needs two passes: first pass extracts tentative
-	 * host/nexthop; scecond propagates that to other dependent
-	 * fields.
+	 * Note: both the resolve and the DNS lookup should be part of
+	 * orient(), and offloaded?
 	 *
-	 * XXX: the host lookup is blocking; should instead do it
-	 * asynchronously using unbound.
+	 * Note: currently resolve_default_route(), when deemed
+	 * necessary, will do a DNS lookup of the peer (but not the
+	 * local end).  This makes the below DNS kind of redundant.
 	 */
+
 	ip_address host_addr[END_ROOF];
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[end];
-		const struct resolve_end *re = &resolve[end];
-		host_addr[end] = host_afi->address.unspec;
-		if (address_is_specified(re->host.addr)) {
-			host_addr[end] = re->host.addr;
-		} else if (re->host.type == KH_IPHOSTNAME) {
+		const struct resolve_host *host = &resolve[end].host;
+
+		if (address_is_specified(host->addr)) {
+			host_addr[end] = host->addr;
+			continue;
+		}
+
+		if (host->type == KH_IPHOSTNAME) {
 			ip_address addr;
 			err_t er = ttoaddress_dns(shunk1(we->host),
 						  host_afi, &addr);
-			if (er != NULL) {
-				llog(RC_LOG, c->logger,
-				     "failed to resolve '%s=%s' at load time: %s",
-				     we->leftright, we->host, er);
-			} else {
+			if (er == NULL) {
 				host_addr[end] = addr;
+				continue;
 			}
+
+			llog(RC_LOG, c->logger,
+			     "failed to resolve '%s=%s' at load time: %s",
+			     we->leftright, we->host, er);
+			host_addr[end] = host_afi->address.unspec;
+			continue;
 		}
+
+		host_addr[end] = host_afi->address.unspec;
+
+	}
+
+	/*
+	 * At least one end must specify an IP address (or at least
+	 * have that potential to be resolved to an IP address by
+	 * being a KP_IPHOSTNAME).
+	 *
+	 * Without at least one address the connection can never be
+	 * orient()ed.
+	 */
+	if (!(resolve[LEFT_END].host.type == KH_IPHOSTNAME ||
+	      resolve[RIGHT_END].host.type == KH_IPHOSTNAME ||
+	      address_is_specified(resolve[LEFT_END].host.addr) ||
+	      address_is_specified(resolve[RIGHT_END].host.addr))) {
+		const char *left = resolve[LEFT_END].host.name;
+		const char *right = resolve[RIGHT_END].host.name;
+		return diag("neither left=%s nor right=%s' specify the local host's IP address",
+			    (left == NULL ? "" : left),
+			    (right == NULL ? "" : right));
 	}
 
 	/*
@@ -4063,18 +4078,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		dbg("ignore sighash, IKEv1");
 	} else {
 		config->sighash_policy = sighash_policy;
-	}
-
-	/*
-	 * When the other side is wildcard: we must check if other
-	 * conditions met.
-	 *
-	 * MAKE this more sane in the face of unresolved IP
-	 * addresses.
-	 */
-	if (resolve[LEFT_END].host.type != KH_IPHOSTNAME && !address_is_specified(resolve[LEFT_END].host.addr) &&
-	    resolve[RIGHT_END].host.type != KH_IPHOSTNAME && !address_is_specified(resolve[RIGHT_END].host.addr)) {
-		return diag("must specify host IP address for our side");
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
