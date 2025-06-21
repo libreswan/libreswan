@@ -39,7 +39,7 @@ west #
 west #
  ipsec whack --ddns
 updating pending dns lookups
-"named" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"named" #1: initiating IKEv2 connection to 192.1.2.23 (right.libreswan.org) using UDP
 west #
  # give conn time to establish by itself
 west #

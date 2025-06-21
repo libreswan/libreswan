@@ -16,7 +16,7 @@ road #
 initdone
 road #
  ipsec auto --up road-eastnet-ikev2
-"road-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"road-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 (east) using UDP
 "road-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/4500
 "road-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/4500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESPinUDP <0xESPESP}
