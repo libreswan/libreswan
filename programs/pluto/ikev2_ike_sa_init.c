@@ -256,7 +256,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "initiating IKEv2 connection");
 		if (predecessor != NULL) {
-			jam_string(buf, " replacing ");
+			jam_string(buf, " (replacing ");
 			if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
 				jam_string(buf, "established Child SA");
 			} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
@@ -268,6 +268,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 			}
 			jam_string(buf, " ");
 			jam_so(buf, predecessor->st_serialno);
+			jam_string(buf, ")");
 		}
 		jam_string(buf, " to ");
 #if 0

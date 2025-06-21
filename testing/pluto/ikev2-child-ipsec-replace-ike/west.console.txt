@@ -63,8 +63,8 @@ west #
 west #
  # wait for the replace
 west #
- ../../guestbin/wait-for-pluto.sh '#5: initiating IKEv2 connection to replace established IKE SA #1'
-"westnet-eastnet-ikev2a" #5: initiating IKEv2 connection to replace established IKE SA #1
+ ../../guestbin/wait-for-pluto.sh '#5: initiating IKEv2 connection'
+"westnet-eastnet-ikev2a" #5: initiating IKEv2 connection (replacing established IKE SA #1) to 192.1.2.23 using UDP
 west #
  ../../guestbin/wait-for-pluto.sh '#6: initiator established Child SA using #5' | sed -e 's/[a-c]"/."/'
 "westnet-eastnet-ikev2." #6: initiator established Child SA using #5; IPsec tunnel [192.0.100.0/24===192.0.200.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
