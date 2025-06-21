@@ -38,7 +38,7 @@ Connection list:
 "a":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "a":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "a":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-"a":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"a":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "a":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "a":   v2-auth-hash-policy: none;
 "a":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
@@ -62,7 +62,7 @@ Connection list:
 "b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "b":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-"b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"b":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "b":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "b":   v2-auth-hash-policy: none;
 "b":   conn_prio: 32,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
