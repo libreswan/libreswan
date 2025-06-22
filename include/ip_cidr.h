@@ -26,20 +26,21 @@
 #include "ip_bytes.h"
 #include "ip_version.h"
 #include "ip_address.h"
+#include "ip_base.h"
 
 struct jambuf;
 
 typedef struct {
-	bool is_set;
-	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
+	struct ip_base ip;	/* MUST BE FIRST */
+
 	struct ip_bytes bytes;
 	unsigned prefix_len;
 } ip_cidr;
 
 #define PRI_CIDR "<cidr-%s:IPv%d["PRI_IP_BYTES"]/%u>"
 #define pri_cidr(A)							\
-		((A).is_set ? "set" : "unset"),				\
-			(A).ip_version,					\
+	((A).ip.is_set ? "set" : "unset"),				\
+			(A).ip.version,					\
 			pri_ip_bytes((A).bytes),			\
 			(A).prefix_len
 

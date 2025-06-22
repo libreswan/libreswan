@@ -243,7 +243,7 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
 
 	FOR_EACH_ITEM(sip, &child_config->sourceip) {
 		/* Use the first sourceip in the list that is set */
-		if (sip->is_set) {
+		if (sip->ip.is_set) {
 			address_buf ab;
 			ipsec_interface_buf ib;
 			vdbg("using sourceip=%s for ipsec-interface %s",
@@ -258,7 +258,7 @@ ip_cidr get_connection_ipsec_interface_cidr(const struct connection *c,
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		/* Use the first sourceip in the list that is set */
 		ip_address spd_sourceip = spd_end_sourceip(spd->local);
-		if (spd_sourceip.is_set) {
+		if (spd_sourceip.ip.is_set) {
 			address_buf ab;
 			ipsec_interface_buf ib;
 			vdbg("using spd_end_sourceip(spd->local) %s for ipsec-interface %s",

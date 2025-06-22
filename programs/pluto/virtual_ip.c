@@ -98,7 +98,7 @@ static err_t read_subnet(shunk_t src, ip_subnet *dst, bool *isincl)
 	if (e != NULL) {
 		return e;
 	}
-	if (nonzero_host.is_set) {
+	if (nonzero_host.ip.is_set) {
 		return "subnet contains non-zero host identifier";
 	}
 	return NULL;

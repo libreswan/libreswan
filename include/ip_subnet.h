@@ -26,6 +26,7 @@
  *
  */
 
+#include "ip_base.h"
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_cidr.h"
@@ -36,12 +37,7 @@
 struct jambuf;
 
 typedef struct {
-	bool is_set;
-	/*
-	 * Index into the struct ip_info array; must be stream
-	 * friendly.
-	 */
-	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
+	struct ip_base ip;	/* MUST BE FIRST */
 
 	/*
 	 * We need something that makes static IPv4 initializers
@@ -57,8 +53,8 @@ typedef struct {
 
 #define PRI_SUBNET "<subnet-%s:IPv%d["PRI_IP_BYTES"]/%u>"
 #define pri_subnet(S)					\
-		((S)->is_set ? "set" : "unset"),	\
-			(S)->ip_version,		\
+		((S)->ip.is_set ? "set" : "unset"),	\
+			(S)->ip.version,		\
 		pri_ip_bytes((S)->bytes),		\
 		(S)->maskbits
 

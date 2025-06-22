@@ -586,7 +586,7 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
 	/* if not forbidden by config, try to re-use a given lease */
-	if (c->config->share_lease && ike->sa.hidden_variables.st_lease_ip.is_set) {
+	if (c->config->share_lease && ike->sa.hidden_variables.st_lease_ip.ip.is_set) {
 		ip_address lease = ike->sa.hidden_variables.st_lease_ip;
 
 		if (!c->local->child.has_client) {
@@ -1191,7 +1191,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 */
 	if (c->remote->config->child.addresspools.len == 0) {
 		vdbg("connection has no addresspool");
-	} else if (c->remote->child.lease[IPv4_INDEX].is_set) {
+	} else if (c->remote->child.lease[IPv4_INDEX].ip.is_set) {
 		vdbg("connection already has a lease");
 	} else {
 		ip_address preferred_address = selector_prefix(remote_client);
@@ -1289,12 +1289,12 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * XXX: IKEv1 only does IPv4 address pool.
 	 */
 
-	if (!c->child.spds.list->remote->client.is_set) {
+	if (!c->child.spds.list->remote->client.ip.is_set) {
 		llog(RC_LOG, ike->sa.logger, "Quick Mode request rejected; connection has no remote client selector");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
-	if (!c->child.spds.list->local->client.is_set) {
+	if (!c->child.spds.list->local->client.ip.is_set) {
 		llog(RC_LOG, ike->sa.logger, "Quick Mode request rejected; connection has no remote client selector");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}

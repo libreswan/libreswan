@@ -144,8 +144,8 @@ err_t ttoselector_num(shunk_t cursor,
 						       &keep_routing_prefix,
 						       &clear_host_identifier,
 						       prefix_length);
-	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
-			 afi->ip_version, address.bytes) != 0) {
+	if (ip_bytes_cmp(afi->ip.version, routing_prefix,
+			 afi->ip.version, address.bytes) != 0) {
 		*nonzero_host = address;
 	}
 

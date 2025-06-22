@@ -29,7 +29,11 @@
 struct jambuf;
 
 typedef struct {
-	bool is_set;
+	/* be consistent with ip_base */
+	struct {
+		bool is_set;
+	} ip;
+
 	bool has_port_wildcard;	/* i.e., must narrow port */
 	unsigned hport;		/* 1..65535; 0->0-65535 */
 	unsigned ipproto;	/* 1..255; 0->unset */

@@ -23,11 +23,7 @@ const ip_selector unset_selector;
 
 bool selector_is_unset(const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return true;
-	}
-
-	return !selector->is_set;
+	return ip_is_unset(selector);
 }
 
 bool selector_is_zero(const ip_selector selector)
@@ -101,12 +97,11 @@ bool selector_is_address(const ip_selector selector)
 
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-selector>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "selector", selector, &afi);
+	if (s > 0) {
+		return s;
 	}
-
-	size_t s = 0;
 
 	s += jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 
@@ -132,9 +127,10 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 
 size_t jam_selector_range(struct jambuf *buf, const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-selector>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "selector", selector, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
@@ -149,12 +145,11 @@ const char *str_selector_range(const ip_selector *selector, subnet_buf *out)
 
 size_t jam_selector_range_port(struct jambuf *buf, const ip_selector *selector)
 {
-	const struct ip_info *afi = selector_type(selector);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-selector>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "selector", selector, &afi);
+	if (s > 0) {
+		return s;
 	}
-
-	size_t s = 0;
 
 	s += jam_ip_bytes_range(buf, afi, selector->lo, selector->hi);
 
@@ -175,10 +170,6 @@ size_t jam_selector_pair(struct jambuf *buf,
 			 const ip_selector *src,
 			 const ip_selector *dst)
 {
-	if (selector_is_unset(src) && selector_is_unset(dst)) {
-		return jam_string(buf, "<unset-selectors>");
-	}
-
 	size_t s = 0;
 	const char *sep = "";
 	FOR_EACH_THING(selector, src, dst) {
@@ -238,8 +229,8 @@ ip_selector selector_from_raw(where_t where,
 			      const struct ip_protocol *protocol, const ip_port port)
 {
 	ip_selector selector = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
 		.ipproto = protocol->ipproto,
@@ -405,22 +396,14 @@ ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 
 const struct ip_info *selector_type(const ip_selector *selector)
 {
-	if (selector == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return selector_info(*selector);
+	return ip_type(selector);
 }
 
 const struct ip_info *selector_info(const ip_selector selector)
 {
-	if (!selector.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(selector.ip_version);
+	return ip_info(selector);
 }
 
 ip_port selector_port(const ip_selector selector)
@@ -568,11 +551,11 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 
 	/* I.lo >= O.lo && I.hi <= O.hi */
 
-	if (ip_bytes_cmp(i.ip_version, i.lo, o.ip_version, o.lo) < 0) {
+	if (ip_bytes_cmp(i.ip.version, i.lo, o.ip.version, o.lo) < 0) {
 		return false;
 	}
 
-	if (ip_bytes_cmp(i.ip_version, i.hi, o.ip_version, o.hi) > 0) {
+	if (ip_bytes_cmp(i.ip.version, i.hi, o.ip.version, o.hi) > 0) {
 		return false;
 	}
 
@@ -623,7 +606,7 @@ bool selector_eq_selector(const ip_selector l, const ip_selector r)
 	}
 
 	/* must compare individual fields */
-	return (l.ip_version == r.ip_version &&
+	return (l.ip.version == r.ip.version &&
 		thingeq(l.lo, r.lo) &&
 		thingeq(l.hi, r.hi) &&
 		l.ipproto == r.ipproto &&
@@ -647,8 +630,8 @@ void pexpect_selector(const ip_selector *s, where_t where)
 		return;
 	}
 
-	if (s->is_set == false ||
-	    s->ip_version == 0) {
+	if (s->ip.is_set == false ||
+	    s->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
 	}
 }

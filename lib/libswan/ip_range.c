@@ -37,8 +37,8 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes hi)
 {
 	ip_range r = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
 	};
@@ -75,9 +75,10 @@ int range_host_len(const ip_range range)
 
 size_t jam_range(struct jambuf *buf, const ip_range *range)
 {
-	const struct ip_info *afi = range_type(range);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-range>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "range", range, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return jam_ip_bytes_range(buf, afi, range->lo, range->hi);
@@ -123,31 +124,19 @@ ip_range range_from_subnet(const ip_subnet subnet)
 
 const struct ip_info *range_type(const ip_range *range)
 {
-	if (range == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return range_info(*range);
+	return ip_type(range);
 }
 
 const struct ip_info *range_info(const ip_range range)
 {
-	if (!range.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(range.ip_version);
+	return ip_info(range);
 }
 
 bool range_is_unset(const ip_range *range)
 {
-	if (range == NULL) {
-		return true;
-	}
-
-	return !range->is_set;
+	return ip_is_unset(range);
 }
 
 bool range_is_zero(const ip_range range)
@@ -231,10 +220,10 @@ bool range_eq_range(const ip_range l, const ip_range r)
 		return false;
 	}
 
-	return (ip_bytes_cmp(l.ip_version, l.lo,
-			     r.ip_version, r.lo) == 0 &&
-		ip_bytes_cmp(l.ip_version, l.hi,
-			     r.ip_version, r.hi) == 0);
+	return (ip_bytes_cmp(l.ip.version, l.lo,
+			     r.ip.version, r.lo) == 0 &&
+		ip_bytes_cmp(l.ip.version, l.hi,
+			     r.ip.version, r.hi) == 0);
 }
 
 bool address_in_range(const ip_address address, const ip_range range)
@@ -255,10 +244,10 @@ bool range_in_range(const ip_range inner, const ip_range outer)
 		return false;
 	}
 
-	return (ip_bytes_cmp(inner.ip_version, inner.lo,
-			     outer.ip_version, outer.lo) >= 0 &&
-		ip_bytes_cmp(inner.ip_version, inner.hi,
-			     outer.ip_version, outer.hi) <= 0);
+	return (ip_bytes_cmp(inner.ip.version, inner.lo,
+			     outer.ip.version, outer.lo) >= 0 &&
+		ip_bytes_cmp(inner.ip.version, inner.hi,
+			     outer.ip.version, outer.hi) <= 0);
 }
 
 ip_address range_start(const ip_range range)
@@ -289,13 +278,13 @@ bool range_overlaps_range(const ip_range l, const ip_range r)
 	}
 
 	/* l before r */
-	if (ip_bytes_cmp(l.ip_version, l.hi,
-			 r.ip_version, r.lo) < 0) {
+	if (ip_bytes_cmp(l.ip.version, l.hi,
+			 r.ip.version, r.lo) < 0) {
 		return false;
 	}
 	/* l after r */
-	if (ip_bytes_cmp(l.ip_version, l.lo,
-			 r.ip_version, r.hi) > 0) {
+	if (ip_bytes_cmp(l.ip.version, l.lo,
+			 r.ip.version, r.hi) > 0) {
 		return false;
 	}
 
@@ -435,9 +424,9 @@ void pexpect_range(const ip_range *r, where_t where)
 		return;
 	}
 
-	if (r->is_set == false ||
-	    r->ip_version == 0 ||
-	    ip_bytes_cmp(r->ip_version, r->lo, r->ip_version, r->hi) > 0) {
+	if (r->ip.is_set == false ||
+	    r->ip.version == 0 ||
+	    ip_bytes_cmp(r->ip.version, r->lo, r->ip.version, r->hi) > 0) {
 		llog_pexpect(&global_logger, where, "invalid range: "PRI_RANGE, pri_range(r));
 	}
 }

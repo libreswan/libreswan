@@ -117,7 +117,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 			jam(buf, ", lease=");
 			const char *sep = "";
 			FOR_EACH_ELEMENT(lease, (*end)->child.lease) {
-				if (lease->is_set) {
+				if (lease->ip.is_set) {
 					jam_string(buf, sep); sep = ",";
 					/* XXX: lease should be CIDR */
 					ip_subnet s = subnet_from_address(*lease);

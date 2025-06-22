@@ -20,21 +20,22 @@
 #define IP_RANGE_H
 
 #include "err.h"
+#include "ip_base.h"
 #include "ip_address.h"
 #include "ip_subnet.h"
 #include "ip_version.h"
 
 typedef struct {
-	bool is_set;
-	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
+	struct ip_base ip;	/* MUST BE FIRST */
+
 	struct ip_bytes lo;
 	struct ip_bytes hi;
 } ip_range;
 
 #define PRI_RANGE "<range-%s:IPv%d["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>"
 #define pri_range(R)					\
-		((R)->is_set ? "set" : "unset"),	\
-		(R)->ip_version,				\
+		((R)->ip.is_set ? "set" : "unset"),	\
+			(R)->ip.version,		\
 		pri_ip_bytes((R)->lo),			\
 		pri_ip_bytes((R)->hi)
 

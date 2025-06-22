@@ -32,8 +32,8 @@ ip_packet packet_from_raw(where_t where,
 			  ip_port src_port, ip_port dst_port)
 {
 	ip_packet packet = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.ipproto = protocol->ipproto,
 		.src = {
 			.bytes = *src_bytes,
@@ -50,35 +50,24 @@ ip_packet packet_from_raw(where_t where,
 
 bool packet_is_unset(const ip_packet *packet)
 {
-	if (packet == NULL) {
-		return true;
-	}
-	return !packet->is_set;
+	return ip_is_unset(packet);
 }
 
 const struct ip_info *packet_type(const ip_packet *packet)
 {
-	if (packet == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return packet_info(*packet);
+	return ip_type(packet);
 }
 
 const struct ip_info *packet_info(const ip_packet packet)
 {
-	if (!packet.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(packet.ip_version);
+	return ip_info(packet);
 }
 
 const struct ip_protocol *packet_protocol(const ip_packet packet)
 {
-	if (!packet.is_set) {
+	if (!packet.ip.is_set) {
 		return NULL;
 	}
 
@@ -154,9 +143,10 @@ ip_selector packet_dst_selector(const ip_packet packet)
 
 size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 {
-	const struct ip_info *afi = packet_type(packet);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-packet>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "packet", packet, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	const struct ip_protocol *protocol = protocol_from_ipproto(packet->ipproto);
@@ -164,7 +154,6 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 		return jam_string(buf, "<unknown-packet>");
 	}
 
-	size_t s = 0;
 	if (packet->src.hport == 0 && protocol->zero_port_is_any) {
 		/*
 		 * SRC port can be zero aka wildcard aka ephemeral, it

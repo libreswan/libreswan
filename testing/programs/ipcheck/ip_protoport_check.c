@@ -57,9 +57,9 @@ static void check__ttoprotoport(void)
 			FAIL("%s got error: %s\n", t->in, err);
 		}
 
-		if (out.is_set != t->ok) {
+		if (out.ip.is_set != t->ok) {
 			FAIL("%s expected .is_set %s, got %s",
-			     t->in, bool_str(t->ok), bool_str(out.is_set));
+			     t->in, bool_str(t->ok), bool_str(out.ip.is_set));
 		}
 
 		if (out.ipproto != t->ipproto) {

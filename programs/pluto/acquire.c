@@ -90,7 +90,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	 * explicitly handles the clients.
 	 */
 
-	if (!b->packet.is_set) {
+	if (!b->packet.ip.is_set) {
 		cannot_ondemand(RC_OPPOFAILURE, b, "impossible IP address");
 		return;
 	}

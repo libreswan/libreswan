@@ -29,7 +29,11 @@
  */
 
 typedef struct {
-	bool is_set;
+	/* be consistent with ip_base */
+	struct {
+		bool is_set;
+	} ip;
+
 	unsigned lo;
 	unsigned hi;
 } ip_port_range;

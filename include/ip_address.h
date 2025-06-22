@@ -28,6 +28,7 @@
 #include "ip_bytes.h"
 #include "ip_version.h"
 #include "ip_index.h"
+#include "ip_base.h"
 
 struct in_addr;
 struct in6_addr;
@@ -50,12 +51,7 @@ extern bool log_ip; /* false -> redact (aka sanitize) ip addresses */
  */
 
 typedef struct {
-	bool is_set;
-	/*
-	 * Index into the struct ip_info array; must be stream
-	 * friendly.
-	 */
-	enum ip_version ip_version; /* 0, IPv4(4), IPv6(6) */
+	struct ip_base ip;	/* MUST BE FIRST */
 
 	/*
 	 * We need something that makes static IPv4 initializers possible
@@ -66,8 +62,8 @@ typedef struct {
 
 #define PRI_ADDRESS "<address-%s:IPv%d["PRI_IP_BYTES"]>"
 #define pri_address(A)					\
-		((A)->is_set ? "set" : "unset"),	\
-			(A)->ip_version,		\
+		((A)->ip.is_set ? "set" : "unset"),	\
+			(A)->ip.version,		\
 		pri_ip_bytes((A)->bytes)
 
 void pexpect_address(const ip_address *a, where_t where);

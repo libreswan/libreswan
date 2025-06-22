@@ -89,8 +89,8 @@ void ip_endpoint_check(void)
 			 * endpoint_from_*() code would pexpect().
 			 */
 			e = (ip_endpoint) {
-				.is_set = true,
-				.ip_version = a.ip_version,
+				.ip.is_set = true,
+				.ip.version = a.ip.version,
 				.bytes = a.bytes,
 				.hport = t->hport,
 				.ipproto = protocol->ipproto,

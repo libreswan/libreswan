@@ -600,11 +600,11 @@ struct child_end {
 	 * .has_lease indicates that the end has been given an address
 	 * from the address pool.
 	 */
-#define nr_child_leases(END)					\
-	({							\
-		const struct connection_end *end_ = END;	\
-		(end_->child.lease[IPv4_INDEX].is_set +		\
-		 end_->child.lease[IPv6_INDEX].is_set);		\
+#define nr_child_leases(END)						\
+	({								\
+		const struct connection_end *end_ = END;		\
+		(end_->child.lease[IPv4_INDEX].ip.is_set +		\
+		 end_->child.lease[IPv6_INDEX].ip.is_set);		\
 	})
 
 	ip_address lease[IP_INDEX_ROOF];

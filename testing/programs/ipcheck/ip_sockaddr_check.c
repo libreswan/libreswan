@@ -65,7 +65,7 @@ static void check_sockaddr_as_endpoint(struct logger *logger)
 				.len = t->size,
 			}
 		};
-		switch (t->afi->ip_version) {
+		switch (t->afi->ip.version) {
 		case IPv4:
 			memcpy(&raw.sa.sa.sin.sin_addr, t->addr, sizeof(raw.sa.sa.sin.sin_addr));
 			raw.sa.sa.sin.sin_family = AF_INET;
@@ -96,7 +96,7 @@ static void check_sockaddr_as_endpoint(struct logger *logger)
 			} else if (!streq(err, t->err)) {
 				FAIL("sockaddr_to_address_port() returned error '%s', expecting '%s'", err, t->err);
 			}
-			if (address->is_set) {
+			if (address->ip.is_set) {
 				FAIL("sockaddr_to_address_port() failed yet address is set");
 			}
 			if (hport(port) != 0) {

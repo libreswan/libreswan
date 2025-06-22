@@ -53,7 +53,7 @@ extern enum have_dns { DNS_NO, HAVE_HOSTS_FILE, DNS_YES, } have_dns;
 #define PREFIX(FILE)							\
 	{								\
 		const char *file = HERE_FILENAME;			\
-		fprintf(FILE, "%s:%d", file, t->line);			\
+		fprintf(FILE, "+%d %s", t->line, file);			\
 		fprintf(FILE, " ");					\
 		fprintf(FILE, "%s():%d[%zu]", __func__, LN, ti);	\
 		fprintf(FILE, " ");					\

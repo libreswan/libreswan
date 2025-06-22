@@ -30,8 +30,8 @@ ip_address address_from_raw(where_t where,
 			    const struct ip_bytes bytes)
 {
 	ip_address a = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.bytes = bytes,
 	};
 	pexpect_address(&a, where);
@@ -75,22 +75,14 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 
 const struct ip_info *address_type(const ip_address *address)
 {
-	if (address == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return address_info(*address);
+	return ip_type(address);
 }
 
 const struct ip_info *address_info(const ip_address address)
 {
-	if (!address.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(address.ip_version);
+	return ip_info(address);
 }
 
 shunk_t address_as_shunk(const ip_address *address)
@@ -116,9 +108,10 @@ chunk_t address_as_chunk(ip_address *address)
 
 size_t jam_address(struct jambuf *buf, const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-address>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return afi->jam.address(buf, afi, &address->bytes);
@@ -126,9 +119,10 @@ size_t jam_address(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-address>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return afi->jam.address_wrapped(buf, afi, &address->bytes);
@@ -136,6 +130,12 @@ size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
+	}
+
 	if (!log_ip) {
 		return jam_string(buf, "<address>");
 	}
@@ -144,13 +144,13 @@ size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 
 size_t jam_address_reversed(struct jambuf *buf, const ip_address *address)
 {
-	const struct ip_info *afi = address_type(address);
-	if (afi == NULL) {
-		return jam(buf, "<invalid>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	shunk_t bytes = address_as_shunk(address);
-	size_t s = 0;
 
 	switch (afi->af) {
 	case AF_INET:
@@ -211,12 +211,8 @@ const char *str_address_reversed(const ip_address *src,
 
 bool address_is_unset(const ip_address *address)
 {
-	if (address == NULL) {
-		return true;
-	}
-	return !address->is_set;
+	return ip_is_unset(address);
 }
-
 
 bool address_is_specified(const ip_address address)
 {
@@ -243,7 +239,7 @@ bool address_eq_address(const ip_address l, const ip_address r)
 		return false;
 	}
 	/* must compare individual fields */
-	return (l.ip_version == r.ip_version &&
+	return (l.ip.version == r.ip.version &&
 		thingeq(l.bytes, r.bytes));
 }
 
@@ -269,8 +265,8 @@ void pexpect_address(const ip_address *a, where_t where)
 		return;
 	}
 
-	if (a->is_set == false ||
-	    a->ip_version == 0) {
+	if (a->ip.is_set == false ||
+	    a->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid address: "PRI_ADDRESS, pri_address(a));
 	}
 }

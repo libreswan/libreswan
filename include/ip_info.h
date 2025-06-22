@@ -17,7 +17,10 @@ struct ip_info {
 	/*
 	 * address family
 	 */
-	enum ip_version ip_version; /* 4 or 6 */
+	struct {
+		/* ip.version matches field in ip structs */
+		enum ip_version version; /* 4 or 6 */
+	} ip;
 	enum ip_index ip_index; /* 1 or 2 */
 	const char *ip_name; /* "IPv4" or "IPv6" */
 	const char *inet_name;		/* "inet" or "inet6" */
@@ -143,6 +146,12 @@ extern const struct ip_info *aftoinfo(int af);
 const struct ip_info *ttoinfo(const char *name);
 
 const struct ip_info *ip_version_info(enum ip_version version);
+
+#define ip_type(IP) ((IP) == NULL ? NULL :		\
+		     (IP)->ip.is_set == false ? NULL :	\
+		     ip_version_info((IP)->ip.version))
+#define ip_info(IP) ((IP).ip.is_set == false ? NULL :	\
+		     ip_version_info((IP).ip.version))
 
 /*
  * Internal.

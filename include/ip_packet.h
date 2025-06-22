@@ -17,6 +17,7 @@
 #ifndef IP_PACKET_H
 #define IP_PACKET_H
 
+#include "ip_base.h"
 #include "ip_bytes.h"
 #include "ip_port.h"
 #include "ip_endpoint.h"
@@ -31,9 +32,9 @@ struct jambuf;
  */
 
 typedef struct {
-	bool is_set;
-	enum ip_version ip_version;
-	unsigned ipproto;
+	struct ip_base ip;	/* MUST BE FIRST */
+
+	unsigned ipproto:16;
 
 	struct {
 		struct ip_bytes bytes;
@@ -49,8 +50,8 @@ typedef struct {
 
 #define PRI_PACKET "<packet-%s:IPv%d["PRI_IP_BYTES"]:%u-%u->["PRI_IP_BYTES"]:%u>"
 #define pri_packet(S)							\
-	((S)->is_set ? "set" : "unset"),				\
-		(S)->ip_version,					\
+	((S)->ip.is_set ? "set" : "unset"),				\
+		(S)->ip.version,					\
 		pri_ip_bytes((S)->src.bytes),				\
 		(S)->src.hport,						\
 		(S)->ipproto,						\

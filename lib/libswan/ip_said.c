@@ -29,8 +29,8 @@ ip_said said_from_raw(where_t where UNUSED,
 		      ipsec_spi_t spi)
 {
 	ip_said said = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.dst = dst,
 		.ipproto = protocol->ipproto,
 		.spi = spi,
@@ -55,10 +55,7 @@ ip_said said_from_address_protocol_spi(const ip_address address,
 
 bool said_is_unset(const ip_said *said)
 {
-	if (said == NULL) {
-		return true;
-	}
-	return !said->is_set;
+	return ip_is_unset(said);
 }
 
 /*
@@ -67,13 +64,10 @@ bool said_is_unset(const ip_said *said)
 
 size_t jam_said(struct jambuf *buf, const ip_said *said)
 {
-	if (!said->is_set) {
-		return jam_string(buf, "<unset-said>");
-	}
-
-	const struct ip_info *afi = said_type(said);
-	if (afi == NULL) {
-		return jam(buf, "<said-has-no-type");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "said", said, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	const struct ip_protocol *proto = protocol_from_ipproto(said->ipproto);
@@ -87,7 +81,7 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 	}
 
 	/* general case needed */
-	size_t s = 0;
+
 	s += jam_string(buf, proto->prefix != NULL ? proto->prefix : proto->name);
 	/* .SPI */
 	s += jam_char(buf, (afi == &ipv4_info ? '.' :
@@ -108,22 +102,14 @@ const char *str_said(const ip_said *said, said_buf *buf)
 
 const struct ip_info *said_type(const ip_said *said)
 {
-	if (said == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return said_info(*said);
+	return ip_type(said);
 }
 
 const struct ip_info *said_info(const ip_said said)
 {
-	if (!said.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(said.ip_version);
+	return ip_info(said);
 }
 
 ip_address said_address(const ip_said said)

@@ -32,8 +32,8 @@ ip_cidr cidr_from_raw(where_t where,
 
  	/* combine */
 	ip_cidr cidr = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.bytes = bytes,
 		.prefix_len = prefix_len,
 	};
@@ -82,22 +82,14 @@ ip_cidr cidr_from_address(ip_address address)
 
 const struct ip_info *cidr_type(const ip_cidr *cidr)
 {
-	if (cidr == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return cidr_info(*cidr);
+	return ip_type(cidr);
 }
 
 const struct ip_info *cidr_info(const ip_cidr cidr)
 {
-	if (!cidr.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(cidr.ip_version);
+	return ip_info(cidr);
 }
 
 ip_address cidr_address(const ip_cidr cidr)
@@ -130,7 +122,7 @@ int cidr_prefix_len(const ip_cidr cidr)
 
 err_t cidr_check(const ip_cidr cidr)
 {
-	if (!cidr.is_set) {
+	if (!cidr.ip.is_set) {
 		return "unset";
 	}
 
@@ -180,12 +172,12 @@ chunk_t cidr_as_chunk(ip_cidr *cidr)
 
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 {
-	const struct ip_info *afi = cidr_type(cidr);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-cidr>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "cidr", cidr, &afi);
+	if (s > 0) {
+		return s;
 	}
 
-	size_t s = 0;
 	ip_address sa = cidr_address(*cidr);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", cidr->prefix_len);
@@ -201,8 +193,8 @@ const char *str_cidr(const ip_cidr *cidr, cidr_buf *out)
 
 void pexpect_cidr(const ip_cidr cidr, where_t where)
 {
-	if (cidr.is_set == false ||
-	    cidr.ip_version == 0) {
+	if (cidr.ip.is_set == false ||
+	    cidr.ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid "PRI_CIDR, pri_cidr(cidr));
 	}
 }
@@ -220,7 +212,7 @@ bool cidr_eq_cidr(const ip_cidr l, const ip_cidr r)
 		return false;
 	}
 	/* must compare individual fields */
-	return (l.ip_version == r.ip_version &&
+	return (l.ip.version == r.ip.version &&
 		l.prefix_len == r.prefix_len &&
 		thingeq(l.bytes, r.bytes));
 }

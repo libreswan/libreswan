@@ -31,8 +31,8 @@ ip_subnet subnet_from_raw(where_t where,
 			  unsigned prefix_len)
 {
 	ip_subnet s = {
-		.is_set = true,
-		.ip_version = afi->ip_version,
+		.ip.is_set = true,
+		.ip.version = afi->ip.version,
 		.bytes = bytes,
 		.maskbits = prefix_len,
 	};
@@ -109,31 +109,19 @@ ip_address subnet_prefix(const ip_subnet subnet)
 
 const struct ip_info *subnet_type(const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return subnet_info(*subnet);
+	return ip_type(subnet);
 }
 
 const struct ip_info *subnet_info(const ip_subnet subnet)
 {
-	if (!subnet.is_set) {
-		return NULL;
-	}
-
 	/* may return NULL */
-	return ip_version_info(subnet.ip_version);
+	return ip_info(subnet);
 }
 
 bool subnet_is_unset(const ip_subnet *subnet)
 {
-	if (subnet == NULL) {
-		return true;
-	}
-
-	return !subnet->is_set;
+	return ip_is_unset(subnet);
 }
 
 bool subnet_is_zero(const ip_subnet subnet)
@@ -192,12 +180,12 @@ unsigned subnet_prefix_bits(const ip_subnet subnet)
 
 size_t jam_subnet(struct jambuf *buf, const ip_subnet *subnet)
 {
-	const struct ip_info *afi = subnet_type(subnet);
-	if (afi == NULL) {
-		return jam_string(buf, "<unset-subnet>");
+	const struct ip_info *afi;
+	size_t s = jam_invalid_ip(buf, "subnet", subnet, &afi);
+	if (s > 0) {
+		return s;
 	}
 
-	size_t s = 0;
 	ip_address sa = subnet_prefix(*subnet);
 	s += jam_address(buf, &sa); /* sensitive? */
 	s += jam(buf, "/%u", subnet->maskbits);
@@ -234,8 +222,8 @@ void pexpect_subnet(const ip_subnet *s, where_t where)
 		return;
 	}
 
-	if (s->is_set == false ||
-	    s->ip_version == 0) {
+	if (s->ip.is_set == false ||
+	    s->ip.version == 0) {
 		llog_pexpect(&global_logger, where, "invalid subnet: "PRI_SUBNET, pri_subnet(s));
 	}
 }
@@ -252,7 +240,7 @@ bool subnet_eq_subnet(const ip_subnet l, const ip_subnet r)
 	}
 
 	/* must compare individual fields */
-	return (l.ip_version == r.ip_version &&
+	return (l.ip.version == r.ip.version &&
 		thingeq(l.bytes, r.bytes) &&
 		l.maskbits == r.maskbits);
 }
@@ -266,7 +254,7 @@ bool subnet_eq_address(const ip_subnet subnet, const ip_address address)
 
 	/* XXX: reject any? */
 	/* must compare individual fields */
-	return (subnet.ip_version == address.ip_version &&
+	return (subnet.ip.version == address.ip.version &&
 		thingeq(subnet.bytes, address.bytes) &&
 		subnet.maskbits == afi->mask_cnt);
 }

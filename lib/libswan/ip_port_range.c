@@ -24,7 +24,7 @@ const ip_port_range unset_port_range;
 ip_port_range port_range_from_ports(ip_port lo, ip_port hi)
 {
 	ip_port_range r = {
-		.is_set = true,
+		.ip.is_set = true,
 		.lo = lo.hport,
 		.hi = hi.hport,
 	};
@@ -34,7 +34,7 @@ ip_port_range port_range_from_ports(ip_port lo, ip_port hi)
 
 size_t jam_port_range(struct jambuf *buf, ip_port_range r)
 {
-	if (!r.is_set) {
+	if (!r.ip.is_set) {
 		return jam(buf, "<unset-port-range>");
 	}
 
