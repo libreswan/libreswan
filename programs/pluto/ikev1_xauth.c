@@ -110,8 +110,8 @@ struct attrs {
 
 static bool visit_attrs(const struct attrs *attrs,
 			struct modecfg_pbs *modecfg_pbs,
-			const char *modecfg_payload,
 			struct ike_sa *ike,
+			const char *modecfg_payload,
 			bool (*visitor)(struct modecfg_pbs *, const char *modecfg_payload,
 					unsigned, struct ike_sa *))
 {
@@ -665,41 +665,41 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 
 	/* will never include IPv6 */
 
-	static const unsigned default_attrs[] = {
-		IKEv1_INTERNAL_IP4_ADDRESS,
-		IKEv1_INTERNAL_IP4_SUBNET,
-		IKEv1_INTERNAL_IP4_DNS,
-		MODECFG_DOMAIN,
-		MODECFG_BANNER,
-		CISCO_SPLIT_INC,
+	struct attrs default_attrs = {
+		.ikev1_internal_ip4_address = true,
+		.ikev1_internal_ip4_subnet = true,
+		.ikev1_internal_ip4_dns = true,
+		.modecfg_domain = true,
+		.modecfg_banner = true,
+		.cisco_split_inc = ike->sa.st_connection->config->host.cisco.split,
 	};
 
 	switch (mode_cfg_type) {
 
 	case ISAKMP_CFG_REQUEST: /* client initiating */
 		/* send empty prompts */
-		FOR_EACH_ELEMENT(attr, default_attrs) {
-			if (!emit_empty_mode_cfg_attr(&modecfg_pbs, "client REQUEST", (*attr), ike)) {
-				return false;
-			}
+		if (!visit_attrs(&default_attrs, &modecfg_pbs, ike,
+				 "client REQUEST", emit_empty_mode_cfg_attr)) {
+			return false;
 		}
 		break;
 	case ISAKMP_CFG_REPLY: /* server responding */
-		if (!visit_attrs(&attrs_recv, &modecfg_pbs, "server RESPONSE", ike, emit_mode_cfg_attr)) {
+		if (!visit_attrs(&attrs_recv, &modecfg_pbs, ike,
+				 "server RESPONSE", emit_mode_cfg_attr)) {
 			return false;
 		}
 		break;
 
 	case ISAKMP_CFG_SET: /* server initiating */
-		FOR_EACH_ELEMENT(attr, default_attrs) {
-			if (!emit_mode_cfg_attr(&modecfg_pbs, "server SET", *attr, ike)) {
-				return false;
-			}
+		if (!visit_attrs(&default_attrs, &modecfg_pbs, ike,
+				 "server SET", emit_mode_cfg_attr)) {
+			return false;
 		}
 		break;
 	case ISAKMP_CFG_ACK: /* client responding */
 		/* send back empty entries */
-		visit_attrs(&attrs_recv, &modecfg_pbs, "client ACK", ike, emit_empty_mode_cfg_attr);
+		visit_attrs(&attrs_recv, &modecfg_pbs, ike,
+			    "client ACK", emit_empty_mode_cfg_attr);
 		break;
 
 	default:
@@ -756,7 +756,8 @@ static bool build_v1_modecfg_ack_from_md_in_reply_stream(struct ike_sa *ike,
 		return false;
 	}
 
-	if (!visit_attrs(&attrs_recv, &modecfg_pbs, "client ack", ike, emit_mode_cfg_attr)) {
+	if (!visit_attrs(&attrs_recv, &modecfg_pbs, ike,
+			 "client ack", emit_mode_cfg_attr)) {
 		return false;
 	}
 
