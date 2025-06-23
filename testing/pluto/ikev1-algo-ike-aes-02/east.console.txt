@@ -16,7 +16,7 @@ east #
 "westnet-eastnet-3des":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-3des":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-3des":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-3des":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-3des":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-3des":   sec_label:unset;
 "westnet-eastnet-3des":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-3des":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

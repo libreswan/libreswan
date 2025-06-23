@@ -667,13 +667,13 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
 		/* mode config */
-		jam(buf, " cisco-split:%s", bool_str(c->config->host.cisco.split));
-		jam(buf, " cisco-unity:%s", bool_str(c->config->host.cisco.unity));
+		jam(buf, " cisco-split: %s;", bool_str(c->config->host.cisco.split));
+		jam(buf, " cisco-unity: %s;", bool_str(c->config->host.cisco.unity));
 		if (c->config->host.cisco.peer) {
-			jam(buf, " remote-peer-type:cisco");
+			jam(buf, " remote-peer-type: cisco;");
 		}
-		jam(buf, " cisco-peer:%s", bool_str(c->config->host.cisco.peer));
-		jam(buf, " nm-configured:%s", bool_str(c->config->host.cisco.nm));
+		jam(buf, " cisco-peer: %s;", bool_str(c->config->host.cisco.peer));
+		jam(buf, " nm-configured: %s;", bool_str(c->config->host.cisco.nm));
 	}
 
 	/* the banner */

@@ -21,7 +21,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
-"roadnet-eastnet-ipv4-psk-ikev2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"roadnet-eastnet-ipv4-psk-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "roadnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
 "roadnet-eastnet-ipv4-psk-ikev2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "roadnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -44,7 +44,7 @@ east #
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   modecfg info: us:server, them:client, modecfg policy:push, dns:1.2.3.4, 8.8.8.8, domains:unset, cat:unset;
-"roadnet-eastnet-ipv4-psk-ikev2"[1]:   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"roadnet-eastnet-ipv4-psk-ikev2"[1]:   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   sec_label:unset;
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "roadnet-eastnet-ipv4-psk-ikev2"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

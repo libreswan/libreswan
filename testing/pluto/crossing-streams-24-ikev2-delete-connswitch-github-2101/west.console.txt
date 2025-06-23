@@ -33,7 +33,7 @@ Connection list:
 "a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"a":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"a":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "a":   sec_label:unset;
 "a":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "a":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -57,7 +57,7 @@ Connection list:
 "b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"b":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"b":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "b":   sec_label:unset;
 "b":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "b":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

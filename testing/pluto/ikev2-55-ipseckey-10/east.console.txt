@@ -15,7 +15,7 @@ east #
 "road-east-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-east-ikev2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "road-east-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"road-east-ikev2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"road-east-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "road-east-ikev2":   labeled_ipsec:no;
 "road-east-ikev2":   sec_label:unset;
 "road-east-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

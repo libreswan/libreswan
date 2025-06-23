@@ -114,7 +114,7 @@ Connection list:
 "northnet-westnet-ipv4-psk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "northnet-westnet-ipv4-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "northnet-westnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"northnet-westnet-ipv4-psk":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"northnet-westnet-ipv4-psk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "northnet-westnet-ipv4-psk":   sec_label:unset;
 "northnet-westnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "northnet-westnet-ipv4-psk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
