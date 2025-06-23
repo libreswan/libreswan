@@ -107,7 +107,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev1":   xauth us:client, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ikev1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-ipv4-psk-ikev1":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-ipv4-psk-ikev1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ipv4-psk-ikev1":   sec_label:unset;
 "westnet-eastnet-ipv4-psk-ikev1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 "westnet-eastnet-ipv4-psk-ikev1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

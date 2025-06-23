@@ -35,7 +35,7 @@ west #
 "westnet-eastnet-subnets/1x1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/1x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/1x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/1x1":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/1x1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/1x1":   sec_label:unset;
 "westnet-eastnet-subnets/1x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/1x1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -57,7 +57,7 @@ west #
 "westnet-eastnet-subnets/1x2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/1x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/1x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/1x2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/1x2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/1x2":   sec_label:unset;
 "westnet-eastnet-subnets/1x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/1x2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -79,7 +79,7 @@ west #
 "westnet-eastnet-subnets/2x1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/2x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/2x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/2x1":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/2x1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/2x1":   sec_label:unset;
 "westnet-eastnet-subnets/2x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/2x1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -101,7 +101,7 @@ west #
 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/2x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/2x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/2x2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/2x2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/2x2":   sec_label:unset;
 "westnet-eastnet-subnets/2x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/2x2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -196,7 +196,7 @@ west #
 "westnet-eastnet-subnets/1x1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/1x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/1x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/1x1":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/1x1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/1x1":   sec_label:unset;
 "westnet-eastnet-subnets/1x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/1x1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -218,7 +218,7 @@ west #
 "westnet-eastnet-subnets/1x2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/1x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/1x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/1x2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/1x2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/1x2":   sec_label:unset;
 "westnet-eastnet-subnets/1x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/1x2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -240,7 +240,7 @@ west #
 "westnet-eastnet-subnets/2x1":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/2x1":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/2x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/2x1":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/2x1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/2x1":   sec_label:unset;
 "westnet-eastnet-subnets/2x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/2x1":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -262,7 +262,7 @@ west #
 "westnet-eastnet-subnets/2x2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-subnets/2x2":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 "westnet-eastnet-subnets/2x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-subnets/2x2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-subnets/2x2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-subnets/2x2":   sec_label:unset;
 "westnet-eastnet-subnets/2x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "westnet-eastnet-subnets/2x2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

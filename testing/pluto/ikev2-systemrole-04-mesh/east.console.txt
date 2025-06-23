@@ -138,7 +138,7 @@ Connection list:
 "clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"clear":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "clear":   sec_label:unset;
 "clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%;
 "clear":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -160,7 +160,7 @@ Connection list:
 "clear#192.1.2.254/32":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "clear#192.1.2.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 "clear#192.1.2.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"clear#192.1.2.254/32":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"clear#192.1.2.254/32":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "clear#192.1.2.254/32":   sec_label:unset;
 "clear#192.1.2.254/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 128; rekey_margin: 0s; rekey_fuzz: 0%;
 "clear#192.1.2.254/32":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -182,7 +182,7 @@ Connection list:
 "private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"private":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"private":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private":   sec_label:unset;
 "private":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -205,7 +205,7 @@ Connection list:
 "private#10.1.0.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"private#10.1.0.0/24":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"private#10.1.0.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private#10.1.0.0/24":   sec_label:unset;
 "private#10.1.0.0/24":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "private#10.1.0.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -228,7 +228,7 @@ Connection list:
 "private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"private-or-clear":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"private-or-clear":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear":   sec_label:unset;
 "private-or-clear":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
@@ -251,7 +251,7 @@ Connection list:
 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"private-or-clear#192.1.2.0/24":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"private-or-clear#192.1.2.0/24":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "private-or-clear#192.1.2.0/24":   sec_label:unset;
 "private-or-clear#192.1.2.0/24":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

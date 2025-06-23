@@ -15,7 +15,7 @@ west #
 "order-test":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none;
 "order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"order-test":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"order-test":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "order-test":   sec_label:unset;
 "order-test":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "order-test":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

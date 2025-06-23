@@ -60,9 +60,9 @@ west #
 "send-vendorid=yes": send-vendorid:yes;
 west #
  ipsec connectionstatus | sed -n -e 's/^\("cisco-unity[^:]*:\) .* \(cisco-unity:[^;]*;\).*$/\1 \2/p'
-"cisco-unity=": cisco-unity:no;
-"cisco-unity=no": cisco-unity:no;
-"cisco-unity=yes": cisco-unity:yes;
+"cisco-unity=": cisco-unity: no;
+"cisco-unity=no": cisco-unity: no;
+"cisco-unity=yes": cisco-unity: yes;
 west #
  ipsec connectionstatus | sed -n -e 's/^\("fake-strongswan[^:]*:\) .* \(fake-strongswan:[^;]*;\).*$/\1 \2/p'
 "fake-strongswan=": fake-strongswan:no;

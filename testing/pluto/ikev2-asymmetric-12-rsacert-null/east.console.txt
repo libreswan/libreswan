@@ -27,7 +27,7 @@ east #
 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2":   our auth:null, their auth:RSASIG+RSASIG_v1_5, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-ikev2":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2":   sec_label:unset;
 "westnet-eastnet-ikev2":   CAs: '%any'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

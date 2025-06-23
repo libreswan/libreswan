@@ -41,7 +41,7 @@ west #
 "nss-cert-chain":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "nss-cert-chain":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "nss-cert-chain":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"nss-cert-chain":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"nss-cert-chain":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "nss-cert-chain":   sec_label:unset;
 "nss-cert-chain":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_int_2.testing.libreswan.org, E=west_chain_int_2@testing.libreswan.org'...'%any'
 "nss-cert-chain":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;

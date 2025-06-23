@@ -70,7 +70,7 @@ west #
 "westnet-eastnet-ikev2a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-ikev2a":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-ikev2a":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2a":   sec_label:unset;
 "westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%;
 "westnet-eastnet-ikev2a":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -96,7 +96,7 @@ west #
 "westnet-eastnet-ikev2b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-ikev2b":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-ikev2b":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2b":   sec_label:unset;
 "westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%;
 "westnet-eastnet-ikev2b":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
@@ -121,7 +121,7 @@ west #
 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-ikev2c":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"westnet-eastnet-ikev2c":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "westnet-eastnet-ikev2c":   sec_label:unset;
 "westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%;
 "westnet-eastnet-ikev2c":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

@@ -22,7 +22,7 @@ road #
 "modecfg-road-eastnet-psk":   xauth us:client, xauth them:server, my_username=[any]; their_username=[any]
 "modecfg-road-eastnet-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"modecfg-road-eastnet-psk":   cisco-split:no cisco-unity:no cisco-peer:no nm-configured:no
+"modecfg-road-eastnet-psk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "modecfg-road-eastnet-psk":   sec_label:unset;
 "modecfg-road-eastnet-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "modecfg-road-eastnet-psk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
