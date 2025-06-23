@@ -22,6 +22,8 @@ size_t jam_ip_invalid(struct jambuf *buf,
 		      const struct ip_base *ip,
 		      const struct ip_info **afi)
 {
+	(*afi) = NULL;	/* unconfuse gcc-14.3.1-2.el10 */
+
 	if (ip == NULL) {
 		return jam(buf, "<null-%s>", what);
 	}
