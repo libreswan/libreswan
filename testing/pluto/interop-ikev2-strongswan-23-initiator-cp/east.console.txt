@@ -110,7 +110,7 @@ Connection list:
 "roadnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 "roadnet-eastnet-ipv4-psk-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "roadnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-"roadnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"roadnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "roadnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 "roadnet-eastnet-ipv4-psk-ikev2":   v2-auth-hash-policy: none;
 "roadnet-eastnet-ipv4-psk-ikev2":   conn_prio: 0,0,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
