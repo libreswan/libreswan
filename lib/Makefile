@@ -18,7 +18,6 @@ include ../mk/dirs.mk
 include $(top_srcdir)/mk/config.mk
 
 SUBDIRS += libswan
-SUBDIRS += libipsecconf
 SUBDIRS += liblswtool
 ifeq ($(USE_SYSTEMD_WATCHDOG),true)
 SUBDIRS += liblswsd

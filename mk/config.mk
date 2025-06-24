@@ -620,8 +620,6 @@ LSWTOOLLIBS = $(LSWTOOLLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR = ${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 
-IPSECCONFLIB = ${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
-
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR
 export LIBRESWANLIB LSWTOOLLIB
