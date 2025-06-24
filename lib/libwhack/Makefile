@@ -24,10 +24,17 @@ OBJS += aliascomp.o
 OBJS += pickle.o
 OBJS += send.o
 
-OBJS += $(abs_builddir)/whack_magic.o
+#
+# generate WHACK
+#
 
-# build whack_magic.c using whack_magic.in.c
-$(abs_builddir)/whack_magic.c: $(srcdir)/whack_magic.in.c
+OBJS += whack_magic.o
+
+whack_magic.o: $(builddir)/whack_magic.c
+
+TRANSFORM_VARIABLES += -e "s/@@WHACK_MAGIC@@/$(word 1, $(shell echo $(IPSECVERSION) | cksum))/"
+
+$(builddir)/whack_magic.c: whack_magic.in.c
 	rm -f $@.tmp
 	sed -e "s/@@WHACK_MAGIC@@/$$(echo $(IPSECVERSION) | cksum | { read s e ; echo $$s; })/" \
 	    $(srcdir)/whack_magic.in.c \

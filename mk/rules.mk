@@ -45,29 +45,33 @@ $(builddir)/%: %.in $(TRANSFORM_DEPS) | $(builddir)/
 $(builddir)/%: %.pl $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
+ifdef OBJS
+
 # In addition to compiling the .c file to .o, generate a dependency
-# file.  Force all output to the build directory.  $(basename
-# $(notdir)) is an approximation of UNIX basename.
+# file.  Force all output to the build directory.
 #
-# -DHERE_FILENAME is because it is a pita to create a path from
-#  __FILE__ using a static C expression
+# -DHERE_FILENAME, used by where_t, is because it is a PITA to create
+#  a path from __FILE__ using a static C expression
+#
+# Two rules are provided.  The standard rule, and a rule for the case
+# where the .c file is generated.
+#
+# These rules accomodate sources in a sub-directory.
 #
 # -MP: add a fake header target for when a header is deleted
 # -MMD: only list user header files
 # -MT: the target (otherwise $(builddir)/$(notdir $@) is used
 # -MF: where to write the dependency
+#
+# Note: when GMAKE tries to match this rule it will try adding
+# $(VPATH), which means it will find $(builddir)/*.c.
 
-ifdef OBJS
-
-.c.o:
-	$(CC) $(USERLAND_CFLAGS) \
-		$(USERLAND_INCLUDES) \
-		-DHERE_FILENAME='"$(patsubst /%,%,$(path_srcdir)/$(notdir $<))"' \
-		$(CFLAGS) \
-		-MF $(builddir)/$(basename $(notdir $@)).d \
-		-MP -MMD -MT $@ \
-		-o $(builddir)/$(notdir $@) \
-		-c $(abspath $<)
+%.o: %.c
+	$(CC) $(USERLAND_CFLAGS) $(USERLAND_INCLUDES) $(CFLAGS) \
+		-DHERE_FILENAME='"$(patsubst /%,%,$(path_srcdir)/$(*).c)"' \
+		-MP -MMD -MT $(*).o -MF $(builddir)/$(*).d \
+		-o $(builddir)/$(*).o \
+		-c $<
 
 # Assume each source file has its own generated dependency file that
 # is updated whenever the corresponding output is updated.  Given

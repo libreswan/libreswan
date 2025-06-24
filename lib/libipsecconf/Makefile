@@ -14,25 +14,33 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+#
+# XXX:
+#
+# Because libswan's Makefile tests USE_... variables, defined in
+# config.mk, using "ifeq", it needs to include that file early.
+#
+# Instead:
+#
+# - replace the code with '$(call if-enabled)'.
+#
+# - move the optional files to their own library?
+#
+
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
+include $(top_srcdir)/mk/config.mk
+
 LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
 
-SRCS=confread.c confwrite.c starterwhack.c
-SRCS+=parser.tab.c lex.yy.c keywords.c
-SRCS+=interfaces.c
-SRCS+=config_setup.c
-
-OBJS=${SRCS:.c=.o}
-
-ifdef top_srcdir
-include ${top_srcdir}/mk/library.mk
-else
-include ../../mk/library.mk
-endif
-
-# Hack to force the generated files to be built first.  Not too bad
-# since all the $(OBJS) indirectly depend on the header anyway.
-$(OBJS): $(builddir)/parser.tab.h
+OBJS += confread.o
+OBJS += confwrite.o
+OBJS += starterwhack.o
+OBJS += keywords.o
+OBJS += interfaces.o
+OBJS += config_setup.o
 
 # Avoid flex bugs:
 #
@@ -65,15 +73,18 @@ $(OBJS): $(builddir)/parser.tab.h
 
 LEX = flex
 
-$(builddir)/lex.yy.c: scanner.lex
+OBJS += scanner.o
+scanner.o: $(builddir)/scanner.c
+
+$(builddir)/%.c: %.lex
 	: no space between -o and scratch output file
-	$(LEX) -o$@ --stdout $< | sed \
+	$(LEX) -o$(builddir)/$(*).c --stdout $(*).lex | sed \
 		-e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
 		-e '/^extern int isatty.*$$/d' \
 		-e 's/if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {$$/if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {/' \
-		> $@.tmp
+		> $(builddir)/$(*).tmp
 	: install result
-	mv $@.tmp $@
+	mv $(builddir)/$(*).tmp $(builddir)/$(*).c
 
 # Use wild card rule so that GNU Make knows that both are output from
 # a single recipe.
@@ -94,7 +105,14 @@ BISON=bison
 BISONOSFLAGS=-g --verbose
 endif
 
-$(builddir)/%.tab.h $(builddir)/%.tab.c: %.y
+OBJS += parser.tab.o
+parser.tab.o: $(builddir)/parser.tab.c
+
+# Hack to force the generated files to be built first.  Not too bad
+# since all the $(OBJS) indirectly depend on the header anyway.
+$(OBJS): $(builddir)/parser.tab.h
+
+$(builddir)/%.tab.h $(builddir)/%.tab.c: $(srcdir)/%.y
 	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v --defines=$*.tab.h -o $*.tab.c.tmp $(abs_srcdir)/$*.y
 	sed -i -e '/^#line/ s;"$*.tab.h";"$(builddir)/$*.tab.h";' $(builddir)/$*.tab.h
 	sed -i -e '/^#line/ s;"$*.tab.c.tmp";"$(builddir)/$*.tab.c";' $(builddir)/$*.tab.c.tmp
@@ -108,3 +126,5 @@ clean: parser-clean
 .PHONY: parser-clean
 parser-clean:
 	cd $(builddir) && rm -f *.tab.[cdho] *.dot *.output lex.yy.[cdho] *tmp
+
+include ${top_srcdir}/mk/library.mk

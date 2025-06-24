@@ -13,9 +13,9 @@ ARFLAGS=crvs
 local-check local-base: $(LIB)
 
 local-clean-base:
-	rm -f $(builddir)/*.o
 	rm -f $(builddir)/*.a
-	rm -f $(builddir)/*.c
+	rm -f $(builddir)/*.o $(builddir)/*/*.o
+	rm -f $(builddir)/*.c $(builddir)/*/*.c
 
 list-local-base:
 	@: never nothing to do

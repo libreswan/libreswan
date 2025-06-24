@@ -27,7 +27,9 @@ endif
 local-base: $(PROGRAM)
 
 local-clean-base:
-	rm -f $(builddir)/*.o $(foreach p,$(PROGRAM), $(builddir)/$(p))
+	rm -f $(foreach p,$(PROGRAM), $(builddir)/$(p))
+	rm -f $(builddir)/*.o $(builddir)/*/*.o
+	rm -f $(builddir)/*.c $(builddir)/*/*.c
 
 src-file = $(firstword $(wildcard $(srcdir)/$(1) $(builddir)/$(1)))
 

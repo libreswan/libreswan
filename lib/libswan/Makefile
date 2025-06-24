@@ -298,8 +298,6 @@ endif
 
 OBJS += autostart_names.o
 
-OBJS += $(abs_builddir)/version.o
-
 # always compile, won't be linked
 OBJS += seccomp_mode_names.o
 
@@ -307,9 +305,12 @@ OBJS += seccomp_mode_names.o
 # Build version.c using version number from git repo or mk/version.mk
 #
 
+OBJS += version.o
+version.o: $(builddir)/version.c
+
 IPSECVIDVERSION ?= $(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 
-$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
+$(builddir)/version.c: version.in.c $(top_srcdir)/mk/version.mk
 	rm -f $@.tmp
 	sed -e '/"/s/@@IPSECVERSION@@/$(subst /,_,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(subst /,_,$(IPSECVIDVERSION))/' \
@@ -317,22 +318,25 @@ $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
 	    > $@.tmp
 	mv $@.tmp $@
 
-
+#
 # generate enum name checklists
+#
 
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*.h)
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*/*.h)
 
-OBJS += $(abs_builddir)/enum_names_checklist.o
+OBJS += enum_names_checklist.o
+enum_names_checklist.o: $(builddir)/enum_names_checklist.c
 
-$(abs_builddir)/enum_names_checklist.c: $(srcdir)/Makefile $(srcdir)/enum_checklist.sh $(ENUM_INCLUDES)
+$(builddir)/enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
 	$(srcdir)/enum_checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
 
-OBJS += $(abs_builddir)/enum_enum_names_checklist.o
+OBJS += enum_enum_names_checklist.o
+enum_enum_names_checklist.o: $(builddir)/enum_enum_names_checklist.c
 
-$(abs_builddir)/enum_enum_names_checklist.c: $(srcdir)/Makefile $(srcdir)/enum_checklist.sh $(ENUM_INCLUDES)
+$(builddir)/enum_enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
 	$(srcdir)/enum_checklist.sh enum_enum_names $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
