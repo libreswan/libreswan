@@ -79,14 +79,9 @@ ifdef OBJS
 mk.depend.file := $(lastword $(MAKEFILE_LIST))
 mk.depend.dependencies.file := $(builddir)/Makefile.depend.mk
 $(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file) | $(builddir)/
-	set -e ; \
-	for f in $(OBJS) ; do \
-		case $$f in \
-			*.c ) echo "-include \$$(builddir)/$$(basename $$f .c).d # $$f" ;; \
-			*.o ) echo "-include \$$(builddir)/$$(basename $$f .o).d # $$f" ;; \
-			* ) echo "# $$f ignored by Makefile.dep" ;; \
-		esac ; \
-	done > $@.tmp
+	( set -e $(foreach OBJ, $(OBJS), \
+	&& echo "-include $(builddir)/$(basename $(OBJ)).d # $(OBJ)") \
+	) > $@.tmp
 	mv $@.tmp $@
 
 clean: mk.depend.clean
@@ -94,6 +89,7 @@ clean: mk.depend.clean
 mk.depend.clean:
 	rm -f $(mk.depend.dependencies.file)
 	rm -f $(builddir)/*.d
+	rm -f $(builddir)/*/*.d
 
 -include $(mk.depend.dependencies.file)
 
