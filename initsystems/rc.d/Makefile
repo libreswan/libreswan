@@ -53,5 +53,5 @@ include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk
 
 # assumes a single word
-pluto: $(BSD_VARIANT).sh $(TRANSFORM_DEPS) | $(builddir)
+pluto: $(BSD_VARIANT).sh $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)

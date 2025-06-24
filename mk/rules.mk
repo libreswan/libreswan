@@ -1,13 +1,13 @@
 # generic make rules for libreswan
 
-# Targets needing the builddir should add:
+# Targets needing a build directory should add:
 #
-#     | $(builddir)
+#     | $(builddir)/
 #
 # as a soft/order-only dependency.
 
-$(builddir):
-	mkdir -p $(builddir)
+%/:
+	mkdir -p $@
 
 # script transforms
 
@@ -27,22 +27,22 @@ TRANSFORM_DEPS = \
 	$(top_srcdir)/mk/config.mk \
 	$(wildcard $(top_srcdir)/Makefile.inc.local)
 
-%: %.sh $(TRANSFORM_DEPS) | $(builddir)
+%: %.sh $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
-%: %.in $(TRANSFORM_DEPS) | $(builddir)
+%: %.in $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
-%: %.pl $(TRANSFORM_DEPS) | $(builddir)
+%: %.pl $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
-$(builddir)/%: %.sh $(TRANSFORM_DEPS) | $(builddir)
+$(builddir)/%: %.sh $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
-$(builddir)/%: %.in $(TRANSFORM_DEPS) | $(builddir)
+$(builddir)/%: %.in $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
-$(builddir)/%: %.pl $(TRANSFORM_DEPS) | $(builddir)
+$(builddir)/%: %.pl $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
 
 # In addition to compiling the .c file to .o, generate a dependency
@@ -78,7 +78,7 @@ ifdef OBJS
 
 mk.depend.file := $(lastword $(MAKEFILE_LIST))
 mk.depend.dependencies.file := $(builddir)/Makefile.depend.mk
-$(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file) | $(builddir)
+$(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file) | $(builddir)/
 	set -e ; \
 	for f in $(OBJS) ; do \
 		case $$f in \

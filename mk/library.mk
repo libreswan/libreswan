@@ -24,7 +24,7 @@ list-local-base:
 # depend on Makefile; and always build a new archive.  Could also
 # depend the mk/* directory?
 
-$(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)
+$(LIB): $(OBJS) $(srcdir)/Makefile | $(builddir)/
 	rm -f $(builddir)/$(LIB).tmp
 	cd $(builddir) && $(AR) $(ARFLAGS) $(LIB).tmp $(OBJS)
 	mv $(builddir)/$(LIB).tmp $(builddir)/$(LIB)

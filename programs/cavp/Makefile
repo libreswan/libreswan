@@ -62,7 +62,7 @@ endif
 local-check: $(TESTCHECKS)
 
 .PRECIOUS: %.fax
-test.cavp.%.fax: | $(builddir)
+test.cavp.%.fax: | $(builddir)/
 	echo $@ $*
 	curl -o $(builddir)/$@.bz2 https://download.libreswan.org/cavs/$*.fax.bz2
 	bunzip2 $(builddir)/$@.bz2
