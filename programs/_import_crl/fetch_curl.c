@@ -100,7 +100,7 @@ err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
 	CESO(CURLOPT_ERRORBUFFER, errorbuffer);
 	CESO(CURLOPT_CONNECTTIMEOUT, timeout);
 	CESO(CURLOPT_TIMEOUT, 2 * timeout);
-	CESO(CURLOPT_NOSIGNAL, 1);	/* work around for libcurl signal bug */
+	CESO(CURLOPT_NOSIGNAL, 1L);	/* work around for libcurl signal bug */
 
 	if (curl_iface != NULL)
 		CESO(CURLOPT_INTERFACE, curl_iface);
