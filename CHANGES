@@ -34,6 +34,8 @@ v5.3 (unreleased)
   - eliminated all pyOpenSSL dependencies [Andrew]
   - review PKIX test coverage [Andrew]
   - upgrade Fedora test domain to f42
+* building:
+  - build with curl 8.14.1 [Andrew, Vincent #2319]
 
 v5.2 (Feb 26, 2025)
 * IKEv2:
