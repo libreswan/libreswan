@@ -123,12 +123,12 @@ abs_builddir := $(abspath $(builddir))
 #
 # XXX: The VPATH+=$(srcdir) will hopefully go away and this will
 # become unconditional.
-ifeq ($(srcdir),.)
+#
+# GMAKE looks along $(VPATH) when trying to resolve rules like
+# %.o:%.c.
+
 VPATH += $(builddir)
-endif
-ifeq ($(builddir),.)
 VPATH += $(srcdir)
-endif
 
 # For compatibility with existing include files:
 LIBRESWANSRCDIR?=$(abs_top_srcdir)
