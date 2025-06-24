@@ -302,6 +302,29 @@ OBJS += autostart_names.o
 OBJS += seccomp_mode_names.o
 
 #
+# whack stuff
+#
+
+$(OBJS): | $(builddir)/whack/
+$(builddir)/%/:
+	mkdir -p $@
+
+OBJS += whack/pickle.o
+OBJS += whack/send.o
+OBJS += whack/aliascomp.o
+OBJS += whack/whack_magic.o
+
+whack/whack_magic.o: $(builddir)/whack/whack_magic.c
+
+TRANSFORM_VARIABLES += -e "s/@@WHACK_MAGIC@@/$(word 1, $(shell echo $(IPSECVERSION) | cksum))/"
+
+$(builddir)/whack/whack_magic.c: whack/whack_magic.in.c
+	rm -f $@.tmp
+	sed -e "s/@@WHACK_MAGIC@@/$$(echo $(IPSECVERSION) | cksum | { read s e ; echo $$s; })/" \
+	    $< > $@.tmp
+	mv $@.tmp $@
+
+#
 # Build version.c using version number from git repo or mk/version.mk
 #
 
