@@ -36,9 +36,6 @@ RHEL_LIKE= $(shell cat /etc/os-release | grep ID_LIKE | sed -e "s/ID_LIKE=//" -e
 RHEL_MAJOR= $(shell cat /etc/os-release |grep VERSION_ID | sed -e 's/.*"\([0-9]*\)"/\1/' -e 's/VERSION_ID=//')
 SRCDIR?=$(shell pwd)/
 
-# dummy default rule
-def: all
-
 help:
 	@echo
 	@echo "To build and install on a recent Linux kernel:"

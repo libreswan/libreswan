@@ -12,6 +12,10 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+# force all: as default
+.PHONY: all
+all:
+
 # From a source directory Makefile use:
 #
 #   ifndef top_srcdir
