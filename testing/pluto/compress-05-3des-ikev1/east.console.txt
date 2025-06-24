@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -35,9 +36,22 @@ east #
  echo "initdone"
 initdone
 east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
+ ipsec _kernel state
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(des3_ede) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -56,25 +70,9 @@ src 192.1.2.45 dst 192.1.2.23
 src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(des3_ede) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-src 192.1.2.23 dst 192.1.2.45
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	comp deflate 
-src 192.1.2.23 dst 192.1.2.45
-	proto 4 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 flag af-unspec
-XFRM policy:
+east #
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -95,14 +93,4 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		proto comp reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 east #

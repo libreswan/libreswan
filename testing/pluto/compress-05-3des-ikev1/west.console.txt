@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
+Creating NSS database containing host keys
 west #
  # confirm that the network is alive
 west #
@@ -59,7 +60,7 @@ west #
 "westnet-eastnet-esp-3des-alg" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-esp-3des-alg" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-esp-3des-alg" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-esp-3des-alg" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+"westnet-eastnet-esp-3des-alg" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=3DES_CBC-HMAC_SHA1_96 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-esp-3des-alg" #2: sent Quick Mode request
 "westnet-eastnet-esp-3des-alg" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 IPCOMP=>0xCPI <0xCPI DPD=passive}
 west #
@@ -72,9 +73,22 @@ west #
  echo done
 done
 west #
- ../../guestbin/ipsec-look.sh
-west NOW
-XFRM state:
+ ipsec _kernel state
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(des3_ede) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	sel src 0.0.0.0/0 dst 0.0.0.0/0 
+src 192.1.2.45 dst 192.1.2.23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
+src 192.1.2.45 dst 192.1.2.23
+	proto 4 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -93,25 +107,9 @@ src 192.1.2.23 dst 192.1.2.45
 src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode transport
-	replay-window 0 
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(des3_ede) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 0.0.0.0/0 dst 0.0.0.0/0 
-src 192.1.2.45 dst 192.1.2.23
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	comp deflate 
-src 192.1.2.45 dst 192.1.2.23
-	proto 4 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 flag af-unspec
-XFRM policy:
+west #
+ ipsec _kernel policy
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
@@ -132,14 +130,4 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 		level use
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-XFRM done
-IPSEC mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
-192.0.2.0/24 via 192.1.2.23 dev eth1
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
 west #

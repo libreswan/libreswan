@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --hostkeys
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through
@@ -8,6 +8,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-compress
-ipsec whack --connectionstatus --name westnet-eastnet-compress
+ipsec auto --add westnet-eastnet-esp-3des-alg
+ipsec auto --status | grep westnet-eastnet-esp-3des-alg
 echo "initdone"

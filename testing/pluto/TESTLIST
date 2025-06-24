@@ -1135,13 +1135,15 @@ kvmplutotest	ikev2-labeled-ipsec-08-narrow-ike-ondemand			good
 kvmplutotest	ikev2-labeled-ipsec-08-narrow-ike-childless			good
 
 # compress tests
-kvmplutotest    compress-pluto-01			good
-kvmplutotest    compress-pluto-01-cleanup		wip	github:435
-kvmplutotest    compress-pluto-02			good
-kvmplutotest    ikev2-14-compress			good
-kvmplutotest    ikev2-14-compress-mismatch		good
-kvmplutotest    ikev2-14-compress-cleanup		wip	github:435
-kvmplutotest	ikev2-14-compress-unsolicited		good
+kvmplutotest    compress-01-ikev1			good
+kvmplutotest    compress-01-ikev2			good
+kvmplutotest    compress-02-cleanup-ikev1		good	github/435
+kvmplutotest    compress-02-cleanup-ikev2		good	github/435
+kvmplutotest    compress-03-mismatch-ikev1		good
+kvmplutotest    compress-03-mismatch-ikev2		good
+kvmplutotest	compress-04-unsolicited-ikev2		good
+kvmplutotest	compress-05-3des-ikev1			good
+
 kvmplutotest	sourceip-01				good
 
 #################################################################
