@@ -12,10 +12,9 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+include ../mk/dirs.mk
+include $(top_srcdir)/mk/targets.mk
+
 SUBDIRS += pluto
 SUBDIRS += programs
 
-ifndef top_srcdir
-include ../mk/dirs.mk
-endif
-include $(top_srcdir)/mk/targets.mk

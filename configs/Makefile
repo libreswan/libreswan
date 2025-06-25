@@ -11,6 +11,9 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+include ../mk/dirs.mk
+include $(top_srcdir)/mk/config.mk
+
 # the man page source is generated
 MANPAGES += ipsec.conf.5
 MANPAGES += ipsec.secrets.5
@@ -27,15 +30,6 @@ LOGROTATEDFILE += libreswan
 
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
-
-ifndef top_srcdir
-include ../mk/dirs.mk
-endif
-include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/targets.mk
-include $(top_srcdir)/mk/rules.mk
-include $(top_srcdir)/mk/manpages.mk
-include $(top_srcdir)/mk/install.mk
 
 local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDFILE)
 
@@ -145,3 +139,9 @@ $(builddir)/ipsec.conf.5.ok:  $(srcdir)/d.ipsec.conf/*.xml
 	touch $@
 
 $(top_builddir)/html/ipsec.conf.5.html: $(srcdir)/d.ipsec.conf/*.xml
+
+
+include $(top_srcdir)/mk/targets.mk
+include $(top_srcdir)/mk/rules.mk
+include $(top_srcdir)/mk/manpages.mk
+include $(top_srcdir)/mk/install.mk

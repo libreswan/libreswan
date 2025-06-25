@@ -17,10 +17,9 @@ def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
 
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
-include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/config.mk
 
 UTILS=${LIBRESWANSRCDIR}/testing/utils
+
+include $(top_srcdir)/mk/targets.mk

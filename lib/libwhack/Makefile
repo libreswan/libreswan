@@ -15,9 +15,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
 include $(top_srcdir)/mk/config.mk
 
 LIB = libwhack.a

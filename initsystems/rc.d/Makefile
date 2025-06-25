@@ -1,9 +1,5 @@
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
-
 include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/install.mk
 
 RC_D_FILE = pluto
 
@@ -49,9 +45,11 @@ ifeq ($(INSTALL_INITSYSTEM),true)
 	@set -eu ; echo $(RC_D_DIR)/$(RC_D_FILE)
 endif
 
-include $(top_srcdir)/mk/targets.mk
-include $(top_srcdir)/mk/rules.mk
-
 # assumes a single word
 pluto: $(BSD_VARIANT).sh $(TRANSFORM_DEPS) | $(builddir)/
 	$(transform_script)
+
+include $(top_srcdir)/mk/install.mk
+include $(top_srcdir)/mk/targets.mk
+include $(top_srcdir)/mk/rules.mk
+

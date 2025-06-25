@@ -1,11 +1,8 @@
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
+include $(top_srcdir)/mk/config.mk
 
 UNITFILE=ipsec.service
 TMPFILESCONFIG=libreswan.conf
-
-include $(top_srcdir)/mk/config.mk
 
 # Use dependencies to force the order: LOCAL-BASE,
 # INSTALLSYSTEMDSERVICE, OLDINITDCHECK, POSTCHECK.

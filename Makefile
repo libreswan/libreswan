@@ -16,13 +16,11 @@
 # for more details.
 #
 
-ifndef top_srcdir
 include mk/dirs.mk
-endif
+include $(top_srcdir)/mk/config.mk
 
 LIBRESWANSRCDIR?=$(shell pwd)
 
-include $(top_srcdir)/mk/config.mk
 
 MAIN_RPMBUILD_SOURCES  = $(shell rpm --eval %{_sourcedir})
 MAIN_RPMBUILD_SPEC  = $(shell rpm --eval %{_specdir})

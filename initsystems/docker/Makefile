@@ -1,15 +1,10 @@
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
+include $(top_srcdir)/mk/config.mk
 
 INIT_D_FILE=ipsec.init
 SYSCONFIGFILE=$(builddir)/sysconfig.pluto
 SYSCONFIGDIR=$(DESTDIR)$(SYSCONFDIR)/sysconfig
 SYSVINIT_DEFAULT_START?=
-
-include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/install.mk
-include $(top_srcdir)/mk/install.init.d.mk
 
 # Use dependencies to force the order.
 #
@@ -41,5 +36,7 @@ checkenabled: install.init.d installsysconfig
 		echo "**********************************************************************" ; \
 	fi
 
+include $(top_srcdir)/mk/install.mk
+include $(top_srcdir)/mk/install.init.d.mk
 include ${top_srcdir}/mk/targets.mk
 include ${top_srcdir}/mk/rules.mk

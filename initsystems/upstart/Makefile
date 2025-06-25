@@ -1,6 +1,5 @@
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
+include $(top_srcdir)/mk/config.mk
 
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
@@ -10,8 +9,6 @@ DEFAULTFILE=$(builddir)/default.pluto
 SUBDIRS=
 UPSTARTDIR=$(DESTDIR)$(SYSCONFDIR)/init
 DEFAULTDIR=$(DESTDIR)$(SYSCONFDIR)/default
-
-include $(top_srcdir)/mk/config.mk
 
 # Use dependencies to force the order.
 #

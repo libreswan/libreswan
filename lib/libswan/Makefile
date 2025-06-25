@@ -17,22 +17,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#
-# XXX:
-#
-# Because libswan's Makefile tests USE_... variables, defined in
-# config.mk, using "ifeq", it needs to include that file early.
-#
-# Instead:
-#
-# - replace the code with '$(call if-enabled)'.
-#
-# - move the optional files to their own library?
-#
-
-ifndef top_srcdir
 include ../../mk/dirs.mk
-endif
 include $(top_srcdir)/mk/config.mk
 
 LIB = libswan.a
