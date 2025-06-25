@@ -308,8 +308,5 @@ OBJS += $(LSWSDLIB)
 endif
 
 OBJS += $(LIBRESWANLIB)
-OBJS += $(WHACKLIB)
-OBJS += $(IPSECCONFLIB)
-OBJS += $(LIBRESWANLIB)
 
 include $(top_srcdir)/mk/program.mk

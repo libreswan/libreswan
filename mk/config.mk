@@ -620,13 +620,9 @@ LSWTOOLLIBS = $(LSWTOOLLIB) $(LIBRESWANLIB)
 
 LIBDESSRCDIR = ${LIBRESWANSRCDIR}/linux/crypto/ciphers/des
 
-WHACKLIB = ${OBJDIRTOP}/lib/libwhack/libwhack.a
-IPSECCONFLIB = ${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
-
 # export everything so that scripts can use them.
 export LIBSWANDIR LIBRESWANSRCDIR
 export LIBRESWANLIB LSWTOOLLIB
-export WHACKLIB IPSECCONFLIB
 
 # how to do variable substitution in sed-transformed files
 #

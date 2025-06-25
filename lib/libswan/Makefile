@@ -298,18 +298,141 @@ endif
 
 OBJS += autostart_names.o
 
-OBJS += $(abs_builddir)/version.o
-
 # always compile, won't be linked
 OBJS += seccomp_mode_names.o
+
+#
+# whack stuff
+#
+
+$(OBJS): | $(builddir)/whack/
+$(builddir)/%/:
+	mkdir -p $@
+
+OBJS += whack/pickle.o
+OBJS += whack/send.o
+OBJS += whack/aliascomp.o
+OBJS += whack/whack_magic.o
+
+whack/whack_magic.o: $(builddir)/whack/whack_magic.c
+
+TRANSFORM_VARIABLES += -e "s/@@WHACK_MAGIC@@/$(word 1, $(shell echo $(IPSECVERSION) | cksum))/"
+
+$(builddir)/whack/whack_magic.c: whack/whack_magic.in.c
+	rm -f $@.tmp
+	sed -e "s/@@WHACK_MAGIC@@/$$(echo $(IPSECVERSION) | cksum | { read s e ; echo $$s; })/" \
+	    $< > $@.tmp
+	mv $@.tmp $@
+
+#
+# ipsec.conf stuff
+#
+
+$(OBJS): | $(builddir)/ipsecconf/
+
+OBJS += ipsecconf/confread.o
+OBJS += ipsecconf/confwrite.o
+OBJS += ipsecconf/starterwhack.o
+OBJS += ipsecconf/keywords.o
+OBJS += ipsecconf/interfaces.o
+OBJS += ipsecconf/config_setup.o
+
+
+# Avoid flex bugs:
+#
+# - flex 3.5.4 (centos 5) doesn't allow a space between the '-o'
+#   option and the file name.
+#
+#   Fortunately later versions of flex seem to handle this.
+#
+# - flex < 2.5.35 generates an invalid extern
+#
+#   Use sed to strip this out.
+#
+# - flex on RHEL 7 generates code that provokes GCC to warn
+#   about comparing a signed value with an unsigned value
+#   (Combination of a new GCC and an old flex).
+#
+#   Adding one cast makes RHEL 6's GCC unhappy, so we add two.
+#   On RHEL 6, i is int and _yybytes_len is int.
+#   On RHEL 7, i is int and _yybytes_len is yy_size_t
+#   On Fedora 21, i is yy_size_t and _yybytes_len is yy_size_t
+#   On some architectures, yy_size_t is wider than int;
+#   which makes a mixed comparison OK.
+#
+# - flex 2.6.0-11 and gcc 4:5.3.1-3 on debian testing (2016-06-18)
+#   also warns about comparisons of different kinds, so we add a third
+#   fix.
+#
+# - avoid sed -i which somehow causes unwritable files on fedora 20
+#   with 9p filesystem mount.
+
+LEX = flex
+
+OBJS += ipsecconf/scanner.o
+
+# point GMAKE at .c file on $(VPATH)
+ipseconf/scanner.o: $(builddir)/ipsecconf/scanner.c
+
+$(builddir)/ipsecconf/scanner.c: ipsecconf/scanner.lex
+	: no space between -o and scratch output file
+	$(LEX) -o$@ --stdout $< | sed \
+		-e 's/for ( i = 0; i < _yybytes_len; ++i )$$/for ( i = 0; (yy_size_t)i < (yy_size_t)_yybytes_len; ++i )/' \
+		-e '/^extern int isatty.*$$/d' \
+		-e 's/if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {$$/if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {/' \
+		> $@.tmp
+	: install result
+	mv $@.tmp $@
+
+
+# Use wild card rule so that GNU Make knows that both are output from
+# a single recipe.
+# - sed command for workaround for older bison vs GCC warning
+# - avoid sed -i which somehow causes unwritable files
+#   on fedora 20 with 9p filesystem mount
+# - avoid creating the target file until it is done
+# - $* matches %
+#
+# - run bison from the builddir so that parser.tab.h defines
+#   YY_YY_PARSER_TAB_H_INCLUDED and not a macro containing the
+#   buildpath.  See parser-controls.h for why.
+
+ifeq ($(USE_YACC),true)
+BISON=yacc -b parser
+else
+BISON=bison
+BISONOSFLAGS=-g --verbose
+endif
+
+OBJS += ipsecconf/parser.tab.o
+
+# Hack to force the generated files to be built first.  Not too bad
+# since all the $(OBJS) indirectly depend on the header anyway.
+#
+# Point GMAKE at .[hc] file on $(VPATH)
+$(OBJS): $(builddir)/ipsecconf/parser.tab.h
+ipsecconf/parser.tab.o: $(builddir)/ipsecconf/parser.tab.c
+
+$(builddir)/ipsecconf/parser.tab.c: ipsecconf/parser.y
+	$(BISON) ${BISONOSFLAGS} -v --defines=$(@D)/parser.tab.h -o $(@D)/parser.tab.c.tmp $<
+	sed -i -e '/^#line/ s;".*parser.tab.h";"$(@D)/parser.tab.h";' $(@D)/parser.tab.h
+	sed -i -e '/^#line/ s;".*parser.tab.c.tmp";"$(@D)/parser.tab.c";' $(@D)/parser.tab.c.tmp
+	sed -i -e '/^ *#/ s/if YYENABLE_NLS/if defined(YYENABLE_NLS) \&\& YYENABLE_NLS/' $(@D)/parser.tab.c.tmp
+	sed -i -e '/^ *#/ s/if YYLTYPE_IS_TRIVIAL/if defined(YYLTYPE_IS_TRIVIAL) \&\& YYLTYPE_IS_TRIVIAL/' $(@D)/parser.tab.c.tmp
+	mv $(@D)/parser.tab.c.tmp $(@D)/parser.tab.c
+$(builddir)/ipsecconf/parser.tab.h: $(builddir)/ipsecconf/parser.tab.c
+	touch $@
 
 #
 # Build version.c using version number from git repo or mk/version.mk
 #
 
+OBJS += version.o
+version.o: $(builddir)/version.c
+
 IPSECVIDVERSION ?= $(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 
-$(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
+$(builddir)/version.c: version.in.c $(top_srcdir)/mk/version.mk
 	rm -f $@.tmp
 	sed -e '/"/s/@@IPSECVERSION@@/$(subst /,_,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(subst /,_,$(IPSECVIDVERSION))/' \
@@ -317,22 +440,25 @@ $(abs_builddir)/version.c: $(srcdir)/version.in.c $(top_srcdir)/mk/version.mk
 	    > $@.tmp
 	mv $@.tmp $@
 
-
+#
 # generate enum name checklists
+#
 
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*.h)
 ENUM_INCLUDES += $(wildcard $(top_srcdir)/include/*/*.h)
 
-OBJS += $(abs_builddir)/enum_names_checklist.o
+OBJS += enum_names_checklist.o
+enum_names_checklist.o: $(builddir)/enum_names_checklist.c
 
-$(abs_builddir)/enum_names_checklist.c: $(srcdir)/Makefile $(srcdir)/enum_checklist.sh $(ENUM_INCLUDES)
+$(builddir)/enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
 	$(srcdir)/enum_checklist.sh enum_names $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
 
-OBJS += $(abs_builddir)/enum_enum_names_checklist.o
+OBJS += enum_enum_names_checklist.o
+enum_enum_names_checklist.o: $(builddir)/enum_enum_names_checklist.c
 
-$(abs_builddir)/enum_enum_names_checklist.c: $(srcdir)/Makefile $(srcdir)/enum_checklist.sh $(ENUM_INCLUDES)
+$(builddir)/enum_enum_names_checklist.c: Makefile enum_checklist.sh $(ENUM_INCLUDES)
 	rm -f $@.tmp
 	$(srcdir)/enum_checklist.sh enum_enum_names $(ENUM_INCLUDES) >$@.tmp
 	mv $@.tmp $@
