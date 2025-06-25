@@ -696,6 +696,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 			"%s", str_diag(d));
 		pfree_diag(&d);
 		/* already logged */
+		whack_rc(RC_BADWHACKMESSAGE, whack_logger);
 		return; /* don't shutdown */
 	}
 

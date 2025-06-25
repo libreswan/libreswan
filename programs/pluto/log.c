@@ -134,9 +134,11 @@ void switch_log(const struct config_setup *oco, struct logger **logger)
 /*
  * Wrap up the logic to decide if a particular output should occur.
  * The compiler will likely inline these.
+ *
+ * MESSAGE does not include trailing '\0'.
  */
 
-static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum rc_type rc)
+static void shunk_to_whack(shunk_t message, const struct fd *whackfd, enum rc_type rc)
 {
 	/*
 	 * XXX: use iovec as it's easier than trying to deal with
@@ -149,9 +151,6 @@ static void jambuf_to_whack(struct jambuf *buf, const struct fd *whackfd, enum r
 	char prefix[10];/*65535+200*/
 	int prefix_len = snprintf(prefix, sizeof(prefix), "%03u ", rc);
 	passert(prefix_len >= 0 && (unsigned) prefix_len < sizeof(prefix));
-
-	/* message, not including trailing '\0' */
-	shunk_t message = jambuf_as_shunk(buf);
 
 	/* NL */
 	char nl = '\n';
@@ -202,8 +201,10 @@ bool whack_prompt_for(struct ike_sa *ike,
 		jam_logger_prefix(buf, ike->sa.logger);
 		/* the real message */
 		jam(buf, "prompt for %s:", prompt);
-		jambuf_to_whack(buf, whack_fd,
-				echo ? RC_USERPROMPT : RC_ENTERSECRET);
+		/* message, not including trailing '\0' */
+		shunk_t message = jambuf_as_shunk(buf);
+		shunk_to_whack(message, whack_fd,
+			       echo ? RC_USERPROMPT : RC_ENTERSECRET);
 	}
 
 	ssize_t n = fd_read(whack_fd, ansbuf, ansbuf_len);
@@ -227,8 +228,19 @@ void llog_rc(enum rc_type rc, const struct logger *logger,
 {
 	va_list ap;
 	va_start(ap, message);
-	llog_va_list(rc|ALL_STREAMS, logger, message, ap);
+	llog_va_list(ALL_STREAMS, logger, message, ap);
 	va_end(ap);
+	whack_rc(rc, logger);
+}
+
+void whack_rc(enum rc_type rc, const struct logger *logger)
+{
+	for (unsigned i = 0; i < elemsof(logger->whackfd); i++) {
+		if (logger->whackfd[i] == NULL) {
+			continue;
+		}
+		shunk_to_whack(empty_shunk, logger->whackfd[i], rc);
+	}
 }
 
 static void log_raw(int severity, const char *prefix, struct jambuf *buf)
@@ -292,11 +304,13 @@ void set_debugging(lset_t deb)
 
 static void log_whacks(enum rc_type rc, const struct logger *logger, struct jambuf *buf)
 {
+	/* message, not including trailing '\0' */
+	shunk_t message = jambuf_as_shunk(buf);
 	for (unsigned i = 0; i < elemsof(logger->whackfd); i++) {
 		if (logger->whackfd[i] == NULL) {
 			continue;
 		}
-		jambuf_to_whack(buf, logger->whackfd[i], rc);
+		shunk_to_whack(message, logger->whackfd[i], rc);
 	}
 }
 
