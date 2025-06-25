@@ -690,7 +690,11 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 		.n = n,
 	};
 
-	if (!unpack_whack_msg(&wp, whack_logger)) {
+	diag_t d = unpack_whack_msg(&wp, whack_logger);
+	if (d != NULL) {
+		llog_rc(RC_BADWHACKMESSAGE, whack_logger,
+			"%s", str_diag(d));
+		pfree_diag(&d);
 		/* already logged */
 		return; /* don't shutdown */
 	}

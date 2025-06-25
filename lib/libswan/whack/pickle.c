@@ -409,7 +409,7 @@ err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
  * @param wp The whack message
  * @return err_t
  */
-bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
+diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
 	/* sanity check message */
 	if (wp->msg->basic.magic == WHACK_BASIC_MAGIC) {
@@ -417,9 +417,7 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 		size_t min_bytes = (offsetof(struct whack_message, basic.whack_shutdown) +
 				    sizeof(wp->msg->basic.whack_shutdown));
 		if (wp->n < min_bytes) {
-			llog_rc(RC_BADWHACKMESSAGE, logger,
-				"ignoring runt message from whack: got %zu bytes", wp->n);
-			return false;
+			return diag("ignoring runt message from whack: got %zu bytes", wp->n);
 		}
 
 		/*
@@ -439,14 +437,12 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 		memset((unsigned char*)wp->msg + sizeof(struct whack_basic), 0,
 		       sizeof(struct whack_message) - sizeof(struct whack_basic));
 
-		return true;
+		return NULL;
 	}
 
 	if (wp->msg->basic.magic != whack_magic()) {
-		llog_rc(RC_BADWHACKMESSAGE, logger,
-			"ignoring message from whack with bad magic %u; should be %u; Mismatched versions of userland tools.",
-			wp->msg->basic.magic, whack_magic());
-		return false;
+		return diag("ignoring message from whack with bad magic %u; should be %u; Mismatched versions of userland tools.",
+			    wp->msg->basic.magic, whack_magic());
 	}
 
 	/*
@@ -456,17 +452,13 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	wp->str_next = wp->msg->string;
 	wp->str_roof = (unsigned char *)wp->msg + wp->n;
 	if (wp->str_next > wp->str_roof) {
-		llog_rc(RC_BADWHACKMESSAGE, logger,
-			"ignoring truncated message from whack: got %zu bytes; expected %zu",
-			wp->n, sizeof(wp->msg));
-		return false;
+		return diag("ignoring truncated message from whack: got %zu bytes; expected %zu",
+			    wp->n, sizeof(wp->msg));
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {
-		llog_rc(RC_BADWHACKMESSAGE, logger,
-			"message from whack contains bad string or key");
-		return false;
+		return diag("message from whack contains bad string or key");
 	}
 
-	return true;
+	return NULL;
 }
