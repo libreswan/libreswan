@@ -497,6 +497,10 @@ ipsec_whack() {
 		verbose="${1}"
 		shift
 		;;
+	    --json)
+		json="${1}"
+		shift
+		;;
 	    -*)
 		echo "Unknown option \"${1}\"" >&2
 		echo >&2
@@ -509,7 +513,7 @@ ipsec_whack() {
 		;;
 	esac
     done
-    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host}
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host} ${json}
     exit $?
 }
 
