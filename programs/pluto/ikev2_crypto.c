@@ -50,6 +50,8 @@
 
 void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 {
+	struct logger *logger = child->sa.logger;
+
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -143,17 +145,17 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	 */
 	switch (child->sa.st_sa_role) {
 	case SA_RESPONDER:
-		if (DBGP(DBG_CRYPT)) {
-			    DBG_dump_hunk("our  keymat", ikeymat);
-			    DBG_dump_hunk("peer keymat", rkeymat);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			    LDBG_log_hunk(logger, "inbound  keymat:", ikeymat);
+			    LDBG_log_hunk(logger, "outbound keymat:", rkeymat);
 		}
 		ipi->inbound.keymat = ikeymat;
 		ipi->outbound.keymat = rkeymat;
 		break;
 	case SA_INITIATOR:
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("our  keymat", rkeymat);
-			DBG_dump_hunk("peer keymat", ikeymat);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log_hunk(logger, "inbound  keymat:", rkeymat);
+			LDBG_log_hunk(logger, "outbound keymat:", ikeymat);
 		}
 		ipi->outbound.keymat = ikeymat;
 		ipi->inbound.keymat = rkeymat;

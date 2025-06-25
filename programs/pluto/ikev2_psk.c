@@ -251,12 +251,12 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 
 	passert(pss.len != 0);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
-		DBG_dump_hunk(nonce_name, *nonce);
-		DBG_dump_hunk("idhash", *idhash);
-		DBG_dump_hunk("IntAuth", intermediate_auth);
-		DBG_dump_hunk("PSK", pss);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
+		LDBG_log_hunk(logger, "%s:", *nonce, nonce_name);
+		LDBG_log_hunk(logger, "idhash:", *idhash);
+		LDBG_log_hunk(logger, "IntAuth:", intermediate_auth);
+		LDBG_log_hunk(logger, "PSK:", pss);
 	}
 
 	/*
@@ -276,6 +276,8 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
 {
+	struct logger *logger = ike->sa.logger;
+
 	*additional_auth = empty_chunk;
 	struct crypt_mac signed_octets = empty_mac;
 	diag_t d = ikev2_calculate_psk_sighash(LOCAL_PERSPECTIVE, NULL,
@@ -290,8 +292,8 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
 	*additional_auth = clone_hunk(signed_octets, chunk_n);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk(chunk_n, *additional_auth);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log_hunk(logger, "%s:", *additional_auth, chunk_n);
 	}
 
 	return true;
@@ -309,6 +311,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 				       struct pbs_in *sig_pbs,
 				       const struct hash_signature *auth_sig)
 {
+	struct logger *logger = ike->sa.logger;
 	shunk_t sig = pbs_in_left(sig_pbs);
 
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
@@ -333,9 +336,9 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 		return d;
 	}
 
-	if (DBGP(DBG_CRYPT)) {
-	    DBG_dump_hunk("Received PSK auth octets", sig);
-	    DBG_dump_hunk("Calculated PSK auth octets", calc_hash);
+	if (LDBGP(DBG_CRYPT, logger)) {
+	    LDBG_log_hunk(logger, "received PSK auth octets:", sig);
+	    LDBG_log_hunk(logger, "calculated PSK auth octets:", calc_hash);
 	}
 
 	if (!hunk_eq(sig, calc_hash)) {

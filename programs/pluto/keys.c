@@ -533,16 +533,18 @@ const struct secret_preshared_stuff *xauth_secret_by_xauthname(char *xauthname)
 
 const struct secret_preshared_stuff *get_connection_psk(const struct connection *c)
 {
+	struct logger *logger = c->logger;
 	struct secret *s = lsw_get_secret(c, SECRET_PSK, false);
 	if (s == NULL) {
-		dbg("no PreShared Key Found");
+		ldbg(logger, "no PreShared Key Found");
 		return NULL;
 	}
 
 	const struct secret_preshared_stuff *psk = secret_preshared_stuff(s);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("PreShared Key", *psk);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log_hunk(logger, "pre-shared key (PSK):", *psk);
 	}
+
 	return psk;
 }
 
@@ -552,6 +554,7 @@ const struct secret_preshared_stuff *get_connection_psk(const struct connection 
 
 const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connection *c)
 {
+	struct logger *logger = c->logger;
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 
 	if (ppk_ids_shunks == NULL) {
@@ -566,10 +569,10 @@ const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connec
 		}
 
 		const struct secret_ppk_stuff *ppk = secret_ppk_stuff(s);
-		if (DBGP(DBG_CRYPT)) {
-			DBG_log("found PPK");
-			DBG_dump_hunk("PPK_ID:", ppk->id);
-			DBG_dump_hunk("PPK:", ppk->key);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log(logger, "found PPK");
+			LDBG_log_hunk(logger, "PPK_ID:", ppk->id);
+			LDBG_log_hunk(logger, "PPK:", ppk->key);
 		}
 		return ppk;
 	} else {

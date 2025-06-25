@@ -47,6 +47,8 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct hash_desc *hasher,
 				      enum perspective from_the_perspective_of)
 {
+	struct logger *logger = ike->sa.logger;
+
 	enum sa_role role;
 	chunk_t firstpacket;
 	switch (from_the_perspective_of) {
@@ -87,13 +89,13 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		bad_case(role);
 	}
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
-		DBG_dump_hunk(nonce_name, *nonce);
-		DBG_dump_hunk("idhash", *idhash);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
+		LDBG_log_hunk(logger, "%s", *nonce, nonce_name);
+		LDBG_log_hunk(logger, "idhash", *idhash);
 		if (ike->sa.st_v2_ike_intermediate.enabled) {
-			DBG_dump_hunk("IntAuth_*_I_A", ia1);
-			DBG_dump_hunk("IntAuth_*_R_A", ia2);
+			LDBG_log_hunk(logger, "IntAuth_*_I_A:", ia1);
+			LDBG_log_hunk(logger, "IntAuth_*_R_A:", ia2);
 		}
 	}
 
@@ -620,6 +622,8 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
 						      v2_auth_signature_cb auth_cb)
 {
+	struct logger *logger = ike->sa.logger;
+
 	enum keyword_auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
@@ -729,8 +733,8 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			return STF_FATAL;
 		}
 
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("PSK auth octets", signed_octets);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
 		}
 
 		struct hash_signature signed_signature = {
@@ -774,7 +778,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						      struct msg_digest *md,
 						      v2_auth_signature_cb *cb)
 {
-
+	struct logger *logger = ike->sa.logger;
 	enum keyword_auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
@@ -855,8 +859,8 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			return STF_FATAL;
 		}
 
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("PSK auth octets", signed_octets);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
 		}
 
 		struct hash_signature signed_signature = {

@@ -1523,6 +1523,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 								 * can appear. */
 				       struct ike_sa *ike)	/* current state object */
 {
+	struct logger *logger = ike->sa.logger;
 	diag_t d;
 	const struct connection *const c = ike->sa.st_connection;
 	bool xauth_init = false,
@@ -1857,8 +1858,9 @@ psk_common:
 							    remote_id_was_instantiated(c) ?
 							    "%any" :
 							    str_id(&c->remote->host.id, &hid));
-						} else if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-							DBG_dump_hunk("User PSK:", *pss);
+						} else if (LDBGP(DBG_PRIVATE, logger) ||
+							   LDBGP(DBG_CRYPT, logger)) {
+							LDBG_log_hunk(logger, "user PSK:", *pss);
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}

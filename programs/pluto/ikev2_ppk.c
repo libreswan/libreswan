@@ -221,6 +221,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 				 const struct hash_desc *hash_algo,
 				 const struct pubkey_signer *signer)
 {
+	struct logger *logger = ike->sa.logger;
 	const struct pubkey_type *type = &pubkey_type_rsa;
 	statetime_t start = statetime_start(&ike->sa);
 	const struct connection *c = ike->sa.st_connection;
@@ -236,8 +237,8 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 						     LOCAL_PERSPECTIVE);
 	passert(hash.len <= sizeof(hash.ptr/*array*/));
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump_hunk("v2rsa octets", *idhash);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log_hunk(logger, "v2rsa octets:", *idhash);
 	}
 
 	/* now generate signature blob */
@@ -252,7 +253,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	if (no_ppk_auth != NULL) {
 		*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth);
+			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", *no_ppk_auth);
 		}
 	} else {
 		if (!out_hunk(sig, a_pbs, "rsa signature"))
@@ -344,9 +345,9 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	PK11SymKey *t = ikev2_prfplus(prf_desc, ppk_key, *sk, prf_desc->prf_key_size, logger);
 	symkey_delref(logger, name, sk);
 	*sk = t;
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
-		DBG_dump_hunk(name, chunk_sk);
+		LDBG_log_hunk(logger, "%s:", chunk_sk, name);
 		free_chunk_content(&chunk_sk);
 	}
 }
@@ -359,9 +360,9 @@ void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
 {
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk, logger);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("Starting to recalculate SK_d, SK_pi, SK_pr");
-		DBG_dump_hunk("PPK:", ppk);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger, "starting to recalculate SK_d, SK_pi, SK_pr");
+		LDBG_log_hunk(logger, "PPK:", ppk);
 	}
 
 	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);

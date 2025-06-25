@@ -96,6 +96,8 @@ static bool compute_v2_cookie_from_md(v2_cookie_t *cookie,
 bool v2_rejected_initiator_cookie(struct msg_digest *md,
 				  bool me_want_cookie)
 {
+	struct logger *logger = md->logger;
+
 	/* establish some home truths, but don't barf */
 	if (!pexpect(md->hdr.isa_msgid == 0) ||
 	    !pexpect(v2_msg_role(md) == MESSAGE_REQUEST) ||
@@ -180,9 +182,9 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	}
 	shunk_t remote_cookie = pbs_in_left(&cookie_digest->pbs);
 
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("received cookie", remote_cookie);
-		DBG_dump_hunk("computed cookie", local_cookie);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log_hunk(logger, "received cookie:", remote_cookie);
+		LDBG_log_hunk(logger, "computed cookie:", local_cookie);
 	}
 
 	if (!hunk_eq(local_cookie, remote_cookie)) {

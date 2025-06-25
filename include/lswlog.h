@@ -317,10 +317,10 @@ void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
 
-#define DBG_dump_hunk(LABEL, HUNK)					\
-	{								\
-		LDBG_log(&global_logger, "%s", LABEL);			\
-		LDBG_hunk(&global_logger, HUNK);			\
+#define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)		\
+	{						\
+		LDBG_log(LOGGER, LABEL, ##__VA_ARGS__);	\
+		LDBG_hunk(LOGGER, HUNK);		\
 	}
 
 #define LDBG_dump(LOGGER, DATA, LEN)			\

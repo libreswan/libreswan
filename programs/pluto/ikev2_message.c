@@ -381,6 +381,7 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 {
 	struct ike_sa *ike = sk->ike;
+	struct logger *logger = sk->logger;
 
 	/*
 	 * Will encrypt .cleartext + .padding (they are assumed to be
@@ -427,12 +428,10 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		chunk_t text_and_tag = chunk2(enc.ptr, enc.len + sk->integrity.len);
 
 		/* now, encrypt */
-		if (DBGP(DBG_CRYPT)) {
-		    DBG_dump_hunk("Salt before authenticated encryption:", salt);
-		    LDBG_log(sk->logger, "IV before authenticated encryption:");
-		    LDBG_hunk(sk->logger, sk->wire_iv);
-		    LDBG_log(sk->logger, "AAD before authenticated encryption:");
-		    LDBG_hunk(sk->logger, sk->aad);
+		if (LDBGP(DBG_CRYPT, logger)) {
+		    LDBG_log_hunk(logger, "salt before authenticated encryption:", salt);
+		    LDBG_log_hunk(logger, "IV before authenticated encryption:", sk->wire_iv);
+		    LDBG_log_hunk(logger, "AAD before authenticated encryption:", sk->aad);
 		}
 
 		if (!cipher_context_op_aead(ike->sa.st_ike_encrypt_cipher_context,
@@ -495,6 +494,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 					  shunk_t *plain,
 					  size_t iv_offset)
 {
+	struct logger *logger = ike->sa.logger;
+
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
 		llog_pexpect(ike->sa.logger, HERE,
@@ -581,16 +582,12 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		chunk_t text_and_tag = chunk2(enc.ptr, enc.len + integ.len);
 
 		/* decrypt */
-		if (DBGP(DBG_CRYPT)) {
-			DBG_dump_hunk("Salt before authenticated decryption:", salt);
-			LDBG_log(ike->sa.logger, "IV before authenticated decryption:");
-			LDBG_hunk(ike->sa.logger, wire_iv);
-			LDBG_log(ike->sa.logger, "AAD before authenticated decryption:");
-			LDBG_hunk(ike->sa.logger, aad);
-			LDBG_log(ike->sa.logger, "integ before authenticated decryption:");
-			LDBG_hunk(ike->sa.logger, integ);
-			LDBG_log(ike->sa.logger, "payload before decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log_hunk(logger, "salt before authenticated decryption:", salt);
+			LDBG_log_hunk(logger, "IV before authenticated decryption:", wire_iv);
+			LDBG_log_hunk(logger, "AAD before authenticated decryption:", aad);
+			LDBG_log_hunk(logger, "integ before authenticated decryption:", integ);
+			LDBG_log_hunk(logger, "payload before decryption:", enc);
 		}
 
 		if (!cipher_context_op_aead(ike->sa.st_ike_decrypt_cipher_context,

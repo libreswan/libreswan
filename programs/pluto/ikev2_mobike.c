@@ -219,6 +219,8 @@ static bool mobike_check_established(struct ike_sa *ike)
 bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 				 struct pbs_out *pbs)
 {
+	struct logger *logger = ike->sa.logger;
+
 	if (!mobike_check_established(ike)) {
 		return true;
 	}
@@ -259,8 +261,8 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 			dbg("MOBIKE COOKIE2 notify payload too big - ignored");
 		} else {
 			cookie2 = tmp;
-			if (DBGP(DBG_BASE)) {
-				DBG_dump_hunk("MOBIKE COOKIE2 received:", cookie2);
+			if (LDBGP(DBG_BASE, logger)) {
+				LDBG_log_hunk(logger, "MOBIKE COOKIE2 received:", cookie2);
 			}
 		}
 	}
