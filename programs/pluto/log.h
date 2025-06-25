@@ -52,6 +52,10 @@ extern bool whack_prompt_for(struct ike_sa *ike,
 			     char *ansbuf,
 			     size_t ansbuf_len);
 
+/* send log message + RC exit code to whack */
+void llog_rc(enum rc_type rc, const struct logger *log,
+	     const char *format, ...) PRINTF_LIKE(3);
+
 void release_whack(struct logger *logger, where_t where);
 
 bool whack_attached(const struct logger *logger);

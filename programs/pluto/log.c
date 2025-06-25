@@ -222,6 +222,15 @@ bool whack_prompt_for(struct ike_sa *ike,
 	return true;
 }
 
+void llog_rc(enum rc_type rc, const struct logger *logger,
+	     const char *message, ...)
+{
+	va_list ap;
+	va_start(ap, message);
+	llog_va_list(rc|ALL_STREAMS, logger, message, ap);
+	va_end(ap);
+}
+
 static void log_raw(int severity, const char *prefix, struct jambuf *buf)
 {
 	/* assume there's a logging prefix; normally there is */

@@ -187,9 +187,6 @@ struct logger {
 		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->whackfd[0]), \
 		pri_fd((LOGGER) == NULL ? NULL : (LOGGER)->whackfd[1])
 
-void llog_rc(enum rc_type rc, const struct logger *log,
-	     const char *format, ...) PRINTF_LIKE(3);
-
 void llog(enum stream stream, const struct logger *log,
 	  const char *format, ...) PRINTF_LIKE(3);
 
