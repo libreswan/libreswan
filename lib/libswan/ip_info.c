@@ -149,6 +149,8 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.ip.version = IPv4,
 		.ip_index = IPv4_INDEX,
 		.ip_size = sizeof(struct in_addr),
+
+		.n_name = "4",
 		.ip_name = "IPv4",
 		.inet_name = "inet",
 		.mask_cnt = 32,
@@ -216,6 +218,8 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 		.ip.version = IPv6,
 		.ip_index = IPv6_INDEX,
 		.ip_size = sizeof(struct in6_addr),
+
+		.n_name = "6",
 		.ip_name = "IPv6",
 		.inet_name = "inet6",
 		.mask_cnt = 128,

@@ -21,9 +21,13 @@ struct ip_info {
 		/* ip.version matches field in ip structs */
 		enum ip_version version; /* 4 or 6 */
 	} ip;
+
 	enum ip_index ip_index; /* 1 or 2 */
-	const char *ip_name; /* "IPv4" or "IPv6" */
-	const char *inet_name;		/* "inet" or "inet6" */
+
+	/* too many choices */
+	const char *n_name;	/* "4"|"6" */
+	const char *ip_name;	/* "IPv4" or "IPv6" */
+	const char *inet_name;	/* "inet" or "inet6" */
 
 	size_t ip_size; /* 4 or 16 */
 	unsigned mask_cnt; /* 32 or 128 */
