@@ -45,3 +45,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 east #
+ grep -e IMPAIR: -e '^packet from ' /tmp/pluto.log
+packet from 192.1.2.45:500: responding to IKE_SA_INIT request with Message ID 0 with unencrypted notification COOKIE, DOS mode is on, initial request must include a COOKIE
+east #

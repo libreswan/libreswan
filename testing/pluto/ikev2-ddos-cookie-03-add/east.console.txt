@@ -12,3 +12,6 @@ east #
  echo "initdone"
 initdone
 east #
+ grep -e IMPAIR: -e '^packet from ' /tmp/pluto.log
+packet from 192.1.2.45:500: DOS cookie notification corrupt, or invalid - dropping message
+east #

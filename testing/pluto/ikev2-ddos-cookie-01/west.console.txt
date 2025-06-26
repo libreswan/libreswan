@@ -22,15 +22,17 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ ipsec whack --impair revival
 west #
  ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ikev2
+ ipsec up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload
@@ -81,4 +83,6 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
+west #
+ grep -e IMPAIR: -e '^packet from ' /tmp/pluto.log
 west #
