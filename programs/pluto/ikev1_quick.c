@@ -937,8 +937,10 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 
 stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 {
-	VERBOSE_DBGP(DBG_BASE, ike_sa->logger,
-		     "in %s() with "PRI_SO, __func__, pri_so(ike_sa->st_serialno));
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike_sa->logger, NULL);
+	vdbg("in %s() with "PRI_SO, __func__, pri_so(ike_sa->st_serialno));
+	verbose.level++;
+
 	vassert(ike_sa == md->v1_st);
 
 	struct ike_sa *ike = pexpect_parent_sa(ike_sa);

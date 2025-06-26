@@ -641,7 +641,9 @@ static void register_satype(const struct ip_protocol *protocol, struct verbose v
 
 static void kernel_pfkeyv2_init(struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "initializing PFKEY V2");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("initializing PFKEY V2");
+	verbose.level++;
 
 	pfkeyv2_pid = getpid();
 
@@ -653,7 +655,7 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 	/* server.c will close this */
 	add_fd_read_listener(pfkeyv2_fd, "pfkey v2 messages",
 			     pfkeyv2_process_msg, NULL);
-	ldbg(logger, "pfkey opened on %d with CLOEXEC", pfkeyv2_fd);
+	vdbg("pfkey opened on %d with CLOEXEC", pfkeyv2_fd);
 
 	/* register everything */
 
@@ -664,7 +666,9 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 
 static void kernel_pfkeyv2_flush(struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "flushing");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("flushing");
+	verbose.level++;
 
 	struct inbuf resp;
 	sadb_base_sendrecv(&resp, SADB_FLUSH, SADB_SATYPE_UNSPEC, verbose);
@@ -694,7 +698,9 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const char *story UNUSED,	/* often SAID string */
 					 struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "reqid=%d ...", reqid);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() reqid=%d ...", __func__, reqid);
+	verbose.level++;
 
 	/* GETSPI */
 	/* send: <base, address, SPI range> */
@@ -780,7 +786,10 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 				  const char *story UNUSED,
 				  struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	/* DEL */
 	/* send: <base, SA(*), address(SD)> */
 	/* recv: <base, SA(*), address(SD)> */
@@ -819,7 +828,9 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 			   bool replace,
 			   struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
 
 	/* UPDATE <base, SA, (lifetime(HSC),) address(SD),
 	   (address(P),) key(AE), (identity(SD),) (sensitivity)> */
@@ -1096,7 +1107,9 @@ static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				     uint64_t *lastused UNUSED,
 				     struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
 
 	/* GET */
 	/* <base, SA(*), address(SD)> */
@@ -1204,7 +1217,10 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 							   enum ipsec_mode mode,
 							   const struct kernel_policy_rule *rule)
 {
-	VERBOSE_DBGP(DBG_BASE, msg->logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, msg->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	/*
 	 * XXX: sadb_x_ipsecrequest screwed up the LEN parameter; it's
 	 * in bytes.
@@ -1242,7 +1258,9 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 					       enum kernel_policy_id policy_id,
 					       const struct kernel_policy *kernel_policy)
 {
-	VERBOSE_DBGP(DBG_BASE, req->logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, req->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
 
 	enum ipsec_dir policy_dir = (dir == DIRECTION_INBOUND ? IPSEC_DIR_INBOUND :
 				     dir == DIRECTION_OUTBOUND ? IPSEC_DIR_OUTBOUND :
@@ -1311,7 +1329,10 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      deltatime_t use_lifetime UNUSED,
 				      struct logger *logger, const char *func)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s ...", func);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() ...", func);
+	verbose.level++;
+
 	if (policy->ipsec_interface != NULL) {
 		ipsec_interface_buf ifb;
 		vlog("BSD doesn't add kernel-policy to an ipsec-interface (%s)",
@@ -1517,7 +1538,10 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      const shunk_t sec_label UNUSED,
 				      struct logger *logger, const char *func)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s policy_id=%u ...", func, policy_id);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() policy_id=%u ...", func, policy_id);
+	verbose.level++;
+
 	if (ipsec_interface != NULL) {
 		ipsec_interface_buf ifb;
 		vlog("BSD doesn't add kernel-policy to an ipsec-interface (%s)",
@@ -1630,9 +1654,11 @@ static bool parse_sadb_address(struct verbose verbose, const struct sadb_msg *b,
 
 static void parse_sadb_acquire(const struct sadb_msg *msg,
 			       shunk_t msg_cursor,
-			       const struct logger *logger)
+			       struct verbose verbose)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;
 	ip_port src_port, dst_port;
@@ -1690,7 +1716,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 	}
 
 	if (address_is_unset(&src_address) || address_is_unset(&dst_address)) {
-		ldbg(logger, "something isn't set");
+		vdbg("something isn't set");
 		return;
 	}
 
@@ -1704,7 +1730,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 	struct kernel_acquire b = {
 		.packet = packet,
 		.by_acquire = true,
-		.logger = logger, /*on-stack*/
+		.logger = verbose.logger, /*on-stack*/
 		.background = true, /* no whack so doesn't matter */
 		.sec_label = null_shunk,
 		.policy_id = policy_id,
@@ -1728,7 +1754,7 @@ static void process_pending(shunk_t payload, struct verbose verbose)
 
 	switch (msg->sadb_msg_type) {
 	case SADB_ACQUIRE:
-		parse_sadb_acquire(msg, msg_cursor, verbose.logger);
+		parse_sadb_acquire(msg, msg_cursor, verbose);
 		break;
 	}
 }
@@ -1746,7 +1772,10 @@ static void process_pending_queue(struct verbose verbose)
 
 static void pfkeyv2_process_msg(int fd UNUSED, void *arg UNUSED, struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "processing message");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("processing message");
+	verbose.level++;
+
 	struct inbuf msg;
 	if (!recv_msg(&msg, "process", verbose)) {
 		return;

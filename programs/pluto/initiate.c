@@ -66,10 +66,11 @@ bool initiate_connection(struct connection *c,
 			 bool background,
 			 struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, c->logger, "%s()", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	vdbg_connection(c, verbose, HERE,
 			"initiate: remote_host=%s",
 			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
+	verbose.level++;
 	connection_attach(c, logger);
 	bool ok = initiate_connection_1_basics(c, remote_host, background);
 	connection_detach(c, logger);
@@ -315,7 +316,7 @@ void initiate(struct connection *c,
 	      enum initiated_by initiated_by,
 	      where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, c->logger, "%s()", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	name_buf ifnb;
 	child_policy_buf pb;
 	name_buf epb;
@@ -326,6 +327,7 @@ void initiate(struct connection *c,
 			str_child_policy(policy, &pb),
 			str_enum_short(&encap_proto_names, c->config->child_sa.encap_proto, &epb),
 			pri_shunk(sec_label));
+	verbose.level++;
 
 	/*
 	 * Try to find a viable IKE (parent) SA.  A viable IKE SA is

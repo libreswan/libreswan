@@ -370,7 +370,9 @@ static bool add_kernel_ipsec_interface_address_1(struct connection *c,
 bool add_kernel_ipsec_interface_address(struct connection *c,
 					struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() %s ...", __func__, c->name);
+	verbose.level++;
 
 	if (c->ipsec_interface == NULL) {
 		vdbg("skipped; no ipsec-interface");
@@ -399,7 +401,9 @@ void del_kernel_ipsec_interface_address(struct connection *c,
 					struct logger *logger)
 {
 
-	VERBOSE_DBGP(DBG_BASE, logger, "...");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() %s ...", __func__, c->name);
+	verbose.level++;
 
 	if (c->ipsec_interface == NULL) {
 		vdbg("skipped; no ipsec-interface");
@@ -474,7 +478,9 @@ struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 			    struct logger *logger, where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%p", *ipsec_if);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() %p ...", __func__, *ipsec_if);
+	verbose.level++;
 
 	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
 	if (ipsec_interface == NULL) {
@@ -529,7 +535,9 @@ diag_t parse_ipsec_interface(const char *ipsec_interface,
 			     struct ipsec_interface_config *config,
 			     struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "adding %s to config", ipsec_interface);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() adding %s to config", __func__, ipsec_interface);
+	verbose.level++;
 
 	/*
 	 * Danger; yn_option_names includes "0" and "1" but that isn't
@@ -589,9 +597,13 @@ bool add_ipsec_interface(struct connection *c,
 			 const struct iface_device *iface)
 {
 	ipsec_interface_buf ifb;
-	VERBOSE_DBGP(DBG_BASE, c->logger, "adding %s@%s to connection",
-		     str_ipsec_interface_id(c->config->ipsec_interface.id, &ifb),
-		     iface->real_device_name);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
+	vdbg("%s() adding %s@%s to connection %s",
+	     __func__,
+	     str_ipsec_interface_id(c->config->ipsec_interface.id, &ifb),
+	     iface->real_device_name,
+	     c->name);
+	verbose.level++;
 
 	if (vbad(!c->config->ipsec_interface.enabled) ||
 	    vbad(c->ipsec_interface != NULL)) {
@@ -677,9 +689,12 @@ bool add_ipsec_interface(struct connection *c,
 
 reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s:%s() if_id=%d",
-		     kernel_ops->ipsec_interface->name, __func__,
-		     if_id);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s:%s() if_id=%d",
+	     kernel_ops->ipsec_interface->name, __func__,
+	     if_id);
+	verbose.level++;
+
 	if (kernel_ops->ipsec_interface->reqid != NULL) {
 		return kernel_ops->ipsec_interface->reqid(if_id, verbose);
 	}
@@ -689,11 +704,14 @@ reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger)
 void config_ipsec_interface(enum yn_options managed, struct logger *logger)
 {
 	name_buf nb;
-	VERBOSE_DBGP(DBG_BASE, logger, "%s:%s() managed=%s",
-		     (kernel_ops->ipsec_interface == NULL ? "?!?" :
-		      kernel_ops->ipsec_interface->name),
-		     __func__,
-		     str_sparse_long(&yn_option_names, managed, &nb));
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s:%s() managed=%s",
+	     (kernel_ops->ipsec_interface == NULL ? "?!?" :
+	      kernel_ops->ipsec_interface->name),
+	     __func__,
+	     str_sparse_long(&yn_option_names, managed, &nb));
+	verbose.level++;
+
 	switch (managed) {
 	case YN_UNSET:
 		return;
@@ -708,8 +726,10 @@ void config_ipsec_interface(enum yn_options managed, struct logger *logger)
 enum yn_options init_ipsec_interface(struct logger *logger)
 {
 	name_buf nb;
-	VERBOSE_DBGP(DBG_BASE, logger, "%s() managed=%s",
-		     __func__, str_sparse_long(&yn_option_names, ipsec_interface_managed, &nb));
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() managed=%s",
+	     __func__, str_sparse_long(&yn_option_names, ipsec_interface_managed, &nb));
+	verbose.level++;
 
 	if (kernel_ops->ipsec_interface == NULL) {
 		ipsec_interface_managed = YN_UNSET;

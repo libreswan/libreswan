@@ -97,20 +97,6 @@ struct verbose {
 			}
 
 /*
- * verbose() outputs indented debug logs when DBG_<COND> vdbg()
- * outputs indented debug logs when DBG_BASE
- */
-
-#define VERBOSE_DBGP(COND, LOGGER, MESSAGE, ...)			\
-	struct verbose verbose = {					\
-		.logger = (LOGGER),					\
-		.rc_flags = (LDBGP(COND, LOGGER) ? DEBUG_STREAM : 0),	\
-		.prefix = "",						\
-	};								\
-	verbose(MESSAGE, ##__VA_ARGS__);				\
-	verbose.level++;
-
-/*
  * Format the prefix, handle poorly constructed struct verbose.
  */
 

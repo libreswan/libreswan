@@ -120,7 +120,7 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port remote_port,
 				     where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, group->logger, "%s() ...", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, group->logger, NULL);
 	subnet_buf rsb;
 	vdbg_connection(group, verbose, where,
 			"%s: "PRI_HPORT" %s -> [%s]:"PRI_HPORT,
@@ -129,12 +129,13 @@ struct connection *group_instantiate(struct connection *group,
 			protocol->name,
 			str_subnet(&remote_subnet, &rsb),
 			pri_hport(remote_port));
-	PASSERT(group->logger, is_group(group));
-	PASSERT(group->logger, oriented(group));
-	PASSERT(group->logger, protocol != NULL);
-	PASSERT(group->logger, group->child.spds.len <= 1);
-	PASSERT(group->logger, (group->child.spds.len == 0 ||
-				group->child.spds.list->local->virt == NULL));
+	verbose.level++;
+
+	vassert(is_group(group));
+	vassert(oriented(group));
+	vassert(protocol != NULL);
+	vassert(group->child.spds.len <= 1);
+	vassert(group->child.spds.len == 0 || group->child.spds.list->local->virt == NULL);
 
 	/*
 	 * Manufacture a unique name for this template.
@@ -350,7 +351,10 @@ struct connection *spd_instantiate(struct connection *t,
 				   const ip_address remote_addr,
 				   where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	vassert(!is_labeled(t));
 
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
@@ -379,7 +383,10 @@ struct connection *labeled_template_instantiate(struct connection *t,
 						const ip_address remote_address,
 						where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	vassert(is_labeled_template(t));
 
 	struct connection *p = instantiate(t, remote_address, /*peer-id*/NULL,
@@ -408,7 +415,10 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 					      where_t where)
 {
 	struct connection *p = ike->sa.st_connection;
-	VERBOSE_DBGP(DBG_BASE, p->logger, "%s() ...", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, p->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	vassert(is_labeled_parent(p));
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
@@ -439,7 +449,10 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
 					    where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	vassert(!is_opportunistic(t));
 	vassert(!is_labeled(t));
 
@@ -461,7 +474,10 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					       const struct id *remote_id,
 					       where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	vassert(!is_opportunistic(t));
 	vassert(!is_labeled(t));
 	vassert(remote_id != NULL);
@@ -691,6 +707,10 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 					      const ip_address remote_address,
 					      where_t where)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	/*
 	 * Did find oppo connection do its job?
 	 *
@@ -699,7 +719,6 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 	 * it falls within the selector's range (can't match port as
 	 * not yet known).
 	 */
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
 	vassert(t->remote->child.selectors.proposed.len == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
 	vassert(address_in_selector_range(remote_address, remote_template));
@@ -710,6 +729,10 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 					      ip_packet packet,
 					      where_t where)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+
 	/*
 	 * Did find oppo connection do its job?
 	 *
@@ -717,7 +740,6 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	 * endpoint that needs to be negotiated.  Hence this endpoint
 	 * must be fully within the template's selector).
 	 */
-	VERBOSE_DBGP(DBG_BASE, t->logger, "%s() ...", __func__);
 	vassert(t->remote->child.selectors.proposed.len == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
 	ip_endpoint remote_endpoint = packet_dst_endpoint(packet);

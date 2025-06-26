@@ -479,7 +479,9 @@ void free_that_address_lease(struct connection *c,
 			     const struct ip_info *afi,
 			     struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "freeing peer %s lease", afi->ip_name);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("freeing peer %s lease", afi->ip_name);
+	verbose.level++;
 
 	if (!c->remote->child.lease[afi->ip_index].ip.is_set) {
 		vdbg("connection has no %s lease", afi->ip_name);
@@ -780,9 +782,11 @@ diag_t assign_remote_lease(struct connection *c,
 			   ip_address *assigned_address,
 			   struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s() xauth=%s family=%s",
-		     __func__, (xauth_username == NULL ? "n/a" : xauth_username),
-		     afi->ip_name);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("%s() xauth=%s family=%s",
+	     __func__, (xauth_username == NULL ? "n/a" : xauth_username),
+	     afi->ip_name);
+	verbose.level++;
 
 	(*assigned_address) = unset_address;
 
@@ -925,7 +929,10 @@ diag_t assign_remote_lease(struct connection *c,
 
 void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "releasing address pool");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("releasing address pool");
+	verbose.level++;
+
 	struct addresspool *pool = delref_where(poolparty, verbose.logger, HERE);
 	if (pool != NULL) {
 		for (struct addresspool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
@@ -993,8 +1000,9 @@ diag_t install_addresspool(const ip_range pool_range,
 			   struct logger *logger)
 {
 	range_buf rb;
-	VERBOSE_DBGP(DBG_BASE, logger, "installing address pool %s",
-		     str_range(&pool_range, &rb));
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("installing address pool %s", str_range(&pool_range, &rb));
+	verbose.level++;
 
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);

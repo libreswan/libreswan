@@ -632,14 +632,15 @@ void visit_connection_states(struct connection *c,
 			     struct visit_connection_state_context *context,
 			     where_t where)
 {
-	VERBOSE_DBGP(DBG_BASE, c->logger,
-		     "%s .routing_ike_sa "PRI_SO" .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
-		     c->name,
-		     pri_so(c->routing_sa),
-		     pri_so(c->negotiating_ike_sa),
-		     pri_so(c->established_ike_sa),
-		     pri_so(c->negotiating_child_sa),
-		     pri_so(c->established_child_sa));
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "visit");
+	vdbg("%s .routing_ike_sa "PRI_SO" .negotiating_ike_sa "PRI_SO" .established_ike_sa "PRI_SO" .negotiating_child_sa "PRI_SO" .established_child_sa "PRI_SO,
+	     c->name,
+	     pri_so(c->routing_sa),
+	     pri_so(c->negotiating_ike_sa),
+	     pri_so(c->established_ike_sa),
+	     pri_so(c->negotiating_child_sa),
+	     pri_so(c->established_child_sa));
+	verbose.level++;
 
 	/*
 	 * Start by nudging all the connection's IKE SAs (assuming

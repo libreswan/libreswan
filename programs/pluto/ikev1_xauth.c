@@ -1078,10 +1078,10 @@ static bool add_xauth_addresspool(struct connection *c,
 				  const char *addresspool,
 				  struct logger *logger)
 {
-	VERBOSE_DBGP(DBG_BASE, logger, "%s() ...", __func__);
-
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("XAUTH: adding connection addresspool %s for user \"%s\"",
 	     addresspool, userid);
+	verbose.level++;
 
 	/*
 	 * Allows <address>, <address>-<address> and <address>/bits.
