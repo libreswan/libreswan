@@ -30,27 +30,28 @@ struct jambuf;
 struct logjam;
 
 /*
- * XXX: The message format is:
- *   FATAL ERROR: <log-prefix><message...>
+ * Note: the message format is:
+ *   "FATAL ERROR: " <log-prefix> <message...> [ ": " <strerror> ]
  * and not:
- *   <log-prefix>FATAL ERROR: <message...>
+ *   <log-prefix> "FATAL_ERROR: " <message...> [ ": " <strerror> ]
+ * i.e., the FATAL ERROR: goes _before_ any prefix.
+ *
+ * When ERROR is non-zero, it is appended with a ": " separator.
  */
 
 void fatal(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
-	   const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
-void fatal_errno(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
-		 int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
+	   int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
 void fatal_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;
 
-#define LLOG_FATAL_JAMBUF(PEC, LOGGER, BUF)				\
+#define LLOG_FATAL_JAMBUF(EXIT_CODE, LOGGER, BUF)			\
 	/* create the buffer */						\
-	for (struct logjam logjam_, *lbp_ = &logjam_;		\
+	for (struct logjam logjam_, *lbp_ = &logjam_;			\
 	     lbp_ != NULL; lbp_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						PEC, NULL, FATAL_STREAM); \
+						EXIT_CODE, NULL, FATAL_STREAM); \
 		     BUF != NULL;					\
 		     fatal_logjam_to_logger(&logjam_), BUF = NULL)
 

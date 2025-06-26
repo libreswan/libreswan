@@ -130,7 +130,7 @@ struct verbose {
 	llog(RC_LOG, verbose.logger, FMT, ##__VA_ARGS__);
 
 #define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
-	fatal_errno(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
+	fatal(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
 
 #define verror(ERROR, FMT, ...)					\
 	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)

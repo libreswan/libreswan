@@ -78,9 +78,9 @@ realtime_t realnow(void)
 		 * a logger and/or a way to return the failure to the
 		 * caller.
 		 */
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, &global_logger, errno,
-			    "clock_gettime(%d,...) call in realnow() failed",
-			    realtime_clockid());
+		fatal(PLUTO_EXIT_KERNEL_FAIL, &global_logger, errno,
+		      "clock_gettime(%d,...) call in realnow() failed",
+		      realtime_clockid());
 	}
 	realtime_t t = {
 		.rt = {

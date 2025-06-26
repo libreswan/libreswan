@@ -146,13 +146,14 @@ void init_ctl_socket(const struct config_setup *oco,
 	int n = snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
 			 "%s/pluto.ctl", rundir);
 	if (n < 0 || n >= (ssize_t)sizeof(ctl_addr.sun_path)) {
-		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, "rundir argument is too long for control socket path");
+		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, /*no-errno*/0,
+		      "rundir argument is too long for control socket path");
 	}
 
 	delete_ctl_socket();    /* preventative medicine */
 	ctl_fd = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
-		fatal_errno(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not create control socket: ");
+		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not create control socket");
 	}
 
 	/* to keep control socket secure, use umask */
@@ -165,7 +166,7 @@ void init_ctl_socket(const struct config_setup *oco,
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
 		 strlen(ctl_addr.sun_path)) < 0) {
-		fatal_errno(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not bind control socket: ");
+		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not bind control socket");
 	}
 	umask(ou);
 
@@ -188,7 +189,7 @@ void init_ctl_socket(const struct config_setup *oco,
 	 * Rumour has it that this is the max on BSD systems.
 	 */
 	if (listen(ctl_fd, 5) < 0) {
-		fatal_errno(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not listen on control socket: ");
+		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not listen on control socket");
 	}
 
 }
@@ -1046,9 +1047,7 @@ void run_server(const char *conffile, struct logger *logger)
 
 	static const char addconn_path[] = IPSEC_EXECDIR "/addconn";
 	if (access(addconn_path, X_OK) < 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "%s: missing or not executable",
-			    addconn_path);
+		fatal(PLUTO_EXIT_FAIL, logger, errno, "%s: missing or not executable", addconn_path);
 	}
 
 	char *newargv[] = {

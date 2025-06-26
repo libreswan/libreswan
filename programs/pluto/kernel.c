@@ -2412,7 +2412,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	pluto_expire_shunt_interval = config_setup_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL);
 	if (deltasecs(pluto_expire_shunt_interval) < 0 ||
 	    deltasecs(pluto_expire_shunt_interval) > MAX_EXPIRE_SHUNT_INTERVAL_SECONDS) {
-		fatal(PLUTO_EXIT_FAIL, logger,
+		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0,
 		      "expire-shunt-interval must be between 1 and %u",
 		      MAX_EXPIRE_SHUNT_INTERVAL_SECONDS);
 	}

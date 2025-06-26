@@ -34,7 +34,8 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
 		/* no error code!?! */
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp_init() failed!");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0,
+		      "seccomp_init() failed!");
 	}
 
 	/*
@@ -176,8 +177,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
 		seccomp_release(ctx);
-		fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc,
-			    "seccomp_load() failed");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc, "seccomp_load() failed");
 	}
 }
 
@@ -316,12 +316,14 @@ void seccomp_sigsys_handler(struct logger *logger)
 
 	switch (seccomp_mode(oco)) {
 	case SECCOMP_ENABLED:
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0,
+		      "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
 	case SECCOMP_TOLERANT:
 		llog(RC_LOG, logger, "pluto received SIGSYS - seccomp=tolerant - possible SECCOMP violation!");
 		return;
 	case SECCOMP_DISABLED:
-		fatal(PLUTO_EXIT_FAIL, logger, "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
+		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0,
+		      "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
 	}
 	bad_case(seccomp_mode(oco));
 }

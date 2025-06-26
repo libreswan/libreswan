@@ -251,7 +251,7 @@ static void init_netlink_rtm_fd(struct logger *logger)
 {
 	netlink_rtm_fd = cloexec_socket(AF_NETLINK, SOCK_RAW|SOCK_NONBLOCK, NETLINK_ROUTE);
 	if (netlink_rtm_fd < 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "socket()");
+		fatal(PLUTO_EXIT_FAIL, logger, errno, "socket()");
 	}
 
 	struct sockaddr_nl addr = {
@@ -262,8 +262,8 @@ static void init_netlink_rtm_fd(struct logger *logger)
 	};
 
 	if (bind(netlink_rtm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "failed to bind NETLINK_ROUTE bcast socket - perhaps kernel was not compiled with CONFIG_XFRM");
+		fatal(PLUTO_EXIT_FAIL, logger, errno,
+		      "failed to bind NETLINK_ROUTE bcast socket - perhaps kernel was not compiled with CONFIG_XFRM");
 	}
 
 	/* server.c will clean this up */
@@ -275,8 +275,7 @@ static void init_netlink_xfrm_fd(struct logger *logger)
 {
 	netlink_xfrm_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, NETLINK_XFRM);
 	if (netlink_xfrm_fd < 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "socket() for bcast in init_netlink()");
+		fatal(PLUTO_EXIT_FAIL, logger, errno, "socket() for bcast in init_netlink()");
 	}
 
 	struct sockaddr_nl addr;
@@ -285,8 +284,8 @@ static void init_netlink_xfrm_fd(struct logger *logger)
 	addr.nl_pad = 0; /* make coverity happy */
 	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
 	if (bind(netlink_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "Failed to bind bcast socket in init_netlink() - perhaps kernel was not compiled with CONFIG_XFRM");
+		fatal(PLUTO_EXIT_FAIL, logger, errno,
+		      "failed to bind bcast socket in init_netlink() - perhaps kernel was not compiled with CONFIG_XFRM");
 	}
 
 	/* server.c will clean this up */
@@ -380,8 +379,7 @@ static void kernel_xfrm_init(struct logger *logger)
 	nl_send_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (nl_send_fd < 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "socket() in init_netlink()");
+		fatal(PLUTO_EXIT_FAIL, logger, errno, "socket() in init_netlink()");
 	}
 
 #ifdef SOL_NETLINK
@@ -2983,15 +2981,13 @@ static void kernel_xfrm_poke_holes(struct logger *logger)
 
 	FILE *f = fopen(proc_f, "r");
 	if (f == NULL) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
-			    "kernel: could not open \"%s\"", proc_f);
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger, errno, "kernel: could not open \"%s\"", proc_f);
 	}
 
 	char buf[64];
 	if (fgets(buf, sizeof(buf), f) ==  NULL) {
 		(void) fclose(f);
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
-			    "kernel: could not read \"%s\"", proc_f);
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger, errno, "kernel: could not read \"%s\"", proc_f);
 	}
 	(void) fclose(f);
 
@@ -3002,7 +2998,7 @@ static void kernel_xfrm_poke_holes(struct logger *logger)
 	}
 
 	if (!insert_icmpv6_bypass_policies(logger)) {
-		fatal(PLUTO_EXIT_KERNEL_FAIL, logger, "kernel: could not insert bypass policies");
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger, /*no-errno*/0, "kernel: could not insert bypass policies");
 	}
 
 	hyperspace_bypass.icmpv6 = true;

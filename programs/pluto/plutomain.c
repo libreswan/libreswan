@@ -228,8 +228,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 
 	dev = open(device, 0);
 	if (dev < 0) {
-		fatal_errno(PLUTO_EXIT_NSS_FAIL, logger, errno,
-			    "could not open %s", device);
+		fatal(PLUTO_EXIT_NSS_FAIL, logger, errno, "could not open %s", device);
 	}
 
 	ndone = 0;
@@ -239,11 +238,10 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {
-			fatal_errno(PLUTO_EXIT_NSS_FAIL, logger, errno,
-				    "read error on %s", device);
+			fatal(PLUTO_EXIT_NSS_FAIL, logger, errno, "read error on %s", device);
 		}
 		if (got == 0) {
-			fatal(PLUTO_EXIT_NSS_FAIL, logger, "EOF on %s!?!\n",  device);
+			fatal(PLUTO_EXIT_NSS_FAIL, logger, /*no-errno*/0, "EOF on %s!?!\n",  device);
 		}
 		ndone += got;
 	}
@@ -1160,7 +1158,7 @@ int main(int argc, char **argv)
 	} else if (fork_desired) {
 #if USE_DAEMON
 		if (daemon(true, true) < 0) {
-			fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, "daemon failed");
+			fatal(PLUTO_EXIT_FORK_FAIL, errno, logger, "daemon failed");
 		}
 		/*
 		 * Parent just exits, so need to fill in our own PID
@@ -1177,7 +1175,7 @@ int main(int argc, char **argv)
 			pid_t pid = fork();
 
 			if (pid < 0) {
-				fatal_errno(PLUTO_EXIT_FORK_FAIL, logger, errno, "fork failed");
+				fatal(PLUTO_EXIT_FORK_FAIL, logger, errno, "fork failed");
 			}
 
 			if (pid == 0) {
@@ -1200,8 +1198,7 @@ int main(int argc, char **argv)
 		fatal(PLUTO_EXIT_FORK_FAIL, logger, "fork/daemon not supported; specify --nofork");
 #endif
 		if (setsid() < 0) {
-			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-				    "setsid() failed in main()");
+			fatal(PLUTO_EXIT_FAIL, logger, errno, "setsid() failed in main()");
 		}
 	} else {
 		/* no daemon fork: we have to fill in lock file */
@@ -1342,11 +1339,11 @@ int main(int argc, char **argv)
 	bool nss_fips_mode = PK11_IsFIPS();
 	if (is_fips_mode()) {
 		llog(RC_LOG, logger, "FIPS mode enabled for pluto daemon");
-		if (nss_fips_mode) {
-			llog(RC_LOG, logger, "NSS library is running in FIPS mode");
-		} else {
-			fatal(PLUTO_EXIT_FIPS_FAIL, logger, "pluto in FIPS mode but NSS library is not");
+		if (!nss_fips_mode) {
+			fatal(PLUTO_EXIT_FIPS_FAIL, logger, /*no-errno*/0,
+			      "pluto in FIPS mode but NSS library is not");
 		}
+		llog(RC_LOG, logger, "NSS library is running in FIPS mode");
 	} else {
 		llog(RC_LOG, logger, "FIPS mode disabled for pluto daemon");
 		if (nss_fips_mode) {
@@ -1359,7 +1356,7 @@ int main(int argc, char **argv)
 		/* may not return */
 		diag_t d = init_x509_ocsp(logger);
 		if (d != NULL) {
-			fatal(PLUTO_EXIT_NSS_FAIL, logger,
+			fatal(PLUTO_EXIT_NSS_FAIL, logger, /*no-errno*/0,
 			      "NSS: OCSP initialization failed: %s",
 			      str_diag(d));
 		}
@@ -1523,7 +1520,7 @@ int main(int argc, char **argv)
 			       pluto_dnssec.anchors,
 			       logger/*for-warnings*/);
 	if (d != NULL) {
-		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, "%s", str_diag(d));
+		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0, "%s", str_diag(d));
 	}
 	llog(RC_LOG, logger, "DNSSEC support [%s]",
 	     (pluto_dnssec.enable ? "enabled" : "disabled"));
