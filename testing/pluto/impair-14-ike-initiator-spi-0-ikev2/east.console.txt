@@ -5,12 +5,14 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add east
-"east": added IKEv2 connection
+ ipsec add west-east
+"west-east": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
- grep 'dropping packet' /tmp/pluto.log
+ grep IMPAIR: /tmp/pluto.log
+east #
+ grep '^packet from 192.1.2.45' /tmp/pluto.log
 packet from 192.1.2.45:500: IKE_SA_INIT request has zero IKE SA Initiator SPI; dropping packet
 east #

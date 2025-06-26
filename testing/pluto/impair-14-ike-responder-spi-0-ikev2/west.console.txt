@@ -1,0 +1,45 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair timeout_on_retransmit
+west #
+ ipsec add west-east
+"west-east": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west-east
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #1: IKE_SA_INIT response has zero IKE SA Responder SPI; dropping packet
+"west-east" #1: encountered fatal error in state IKE_SA_INIT_I
+"west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #1: IMPAIR: revival: skip scheduling revival event
+"west-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
+west #
+ ipsec down west-east
+west #
+ ipsec whack --impair ike_responder_spi:0
+west #
+ ipsec up west-east
+"west-east" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #2: IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
+"west-east" #2: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-east" #2: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #3 {ESP <0xESPESP}
+"west-east" #2: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ grep IMPAIR: /tmp/pluto.log
+"west-east" #1: IMPAIR: revival: skip scheduling revival event
+"west-east" #2: IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
+west #
+ grep '^packet from 192.1.2.45' /tmp/pluto.log
+west #

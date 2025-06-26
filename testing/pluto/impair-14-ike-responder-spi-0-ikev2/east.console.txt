@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair ike_responder_spi:0
+east #
+ ipsec add west-east
+"west-east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ grep IMPAIR: /tmp/pluto.log
+"west-east" #1: IMPAIR: forcing IKE responder SPI to 0x0
+"west-east" #2: IMPAIR: forcing IKE responder SPI to 0x0
+east #
+ grep '^packet from 192.1.2.45' /tmp/pluto.log
+east #
