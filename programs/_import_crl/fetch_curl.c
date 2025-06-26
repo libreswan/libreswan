@@ -66,7 +66,7 @@ err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
 	/* init curl */
 	int status = curl_global_init(CURL_GLOBAL_DEFAULT);
 	if (status != 0) {
-		vfatal("libcurl could not be initialized, status = %d", status);
+		vfatal(PLUTO_EXIT_FAIL, 0, "libcurl could not be initialized, status = %d", status);
 	}
 
 	/* get it with libcurl */

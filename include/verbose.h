@@ -124,13 +124,13 @@ struct verbose {
  * Normal logging: the message is always logged (no indentation); just
  * a wrapper around llog(verbose.logger)
  *
- * verror(), like perror() adds ": ", before ERROR.
+ * vfatal() and verror(), like perror() add ": ", before ERROR.
  */
 #define vlog(FMT, ...)						\
 	llog(RC_LOG, verbose.logger, FMT, ##__VA_ARGS__);
 
-#define vfatal(FMT, ...)						\
-	fatal(PLUTO_EXIT_FAIL, verbose.logger, FMT, ##__VA_ARGS__)
+#define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
+	fatal_errno(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
 
 #define verror(ERROR, FMT, ...)					\
 	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
