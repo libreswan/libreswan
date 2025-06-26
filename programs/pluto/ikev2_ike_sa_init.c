@@ -416,12 +416,24 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		return false;
 	}
 
-	if (impair.send_bogus_dcookie) {
+	switch (impair.ddos_cookie) {
+	case IMPAIR_DDOS_COOKIE_ADD:
+		if (ike->sa.st_dcookie.ptr == NULL) {
+			llog(RC_LOG, ike->sa.logger, "IMPAIR: adding unsolicited and mangled DDOS cookie");
+			uint8_t byte = 0;
+			messupn(&byte, sizeof(byte));
+			replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
+		}
+		break;
+	case IMPAIR_DDOS_COOKIE_MANGLE:
 		/* add or mangle a dcookie so what we will send is bogus */
-		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
-		uint8_t byte = 0;
-		messupn(&byte, sizeof(byte));
-		replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
+		if (ike->sa.st_dcookie.ptr != NULL) {
+			llog(RC_LOG, ike->sa.logger, "IMPAIR: mangling DDOS cookie sent by peer");
+			uint8_t byte = 0;
+			messupn(&byte, sizeof(byte));
+			replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
+		}
+		break;
 	}
 
 	/*

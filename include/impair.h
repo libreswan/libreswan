@@ -27,6 +27,16 @@ struct jambuf;
 struct whack_impair;
 
 /*
+ * Make a mess of the DDOS cookie.
+ */
+
+enum impair_ddos_cookie {
+	IMPAIR_DDOS_COOKIE_ADD = 1,
+	IMPAIR_DDOS_COOKIE_MANGLE,
+#define IMPAIR_DDOS_COOKIE_ROOF (IMPAIR_DDOS_COOKIE_MANGLE+1)
+};
+
+/*
  * Meddle with the contents of a payload.
  */
 
@@ -121,7 +131,7 @@ struct impair {
 	bool send_no_main_r2;
 	bool force_fips;
 	bool send_key_size_check;
-	bool send_bogus_dcookie;
+	enum impair_ddos_cookie ddos_cookie;
 
 	bool childless_ikev2_supported;
 

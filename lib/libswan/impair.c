@@ -25,6 +25,22 @@
 #include "lswlog.h"
 #include "whack.h"
 
+static const struct sparse_names impair_ddos_cookie_names = {
+	.roof = IMPAIR_DDOS_COOKIE_ROOF,
+	.list = {
+#define S(E, H)							\
+		{						\
+			.name = #E,				\
+			.value = IMPAIR_DDOS_COOKIE_##E,	\
+			.help = H,				\
+		}
+		S(ADD, "add a bogus DDOS cookie to the initial IKE_SA_INIT request"),
+		S(MANGLE, "mangle the peer's DDOS cookie when re-sending the IKE_SA_INIT request"),
+#undef S
+		SPARSE_NULL,
+	},
+};
+
 static const struct sparse_names impair_emit_names = {
 	.roof = IMPAIR_EMIT_ROOF,
 	.list = {
@@ -221,7 +237,8 @@ struct impairment impairments[] = {
 	B(rekey_respond_subnet, "impair IPsec SA rekey responder TSi and TSR to X/32 X/128"),
 	B(replay_encrypted, "replay encrypted packets"),
 	B(revival, "disable code that revives a connection that is supposed to stay up"),
-	B(send_bogus_dcookie, "causes pluto to send a a bogus IKEv2 DCOOKIE"),
+	V(ddos_cookie, "mangle the DDOS cookie in the IKE_SA_INIT request",
+	  .how_sparse_names = &impair_ddos_cookie_names),
 	B(send_bogus_isakmp_flag, "causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it"),
 	B(send_bogus_payload_flag, "causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it"),
 	B(send_key_size_check, "causes pluto to omit checking configured ESP key sizes for testing"),
