@@ -138,19 +138,29 @@ struct verbose {
 /*
  * Debug-logging: when the logger has debugging enabled, the message
  * is logged, prefixed by indentation.
+ *
+ * These all have the same feel as the LDBG*() series.
  */
+
+#define vdbg(FMT, ...)							\
+	{								\
+		if (VDBGP()) {						\
+			VDBG_log(FMT, ##__VA_ARGS__);			\
+		}							\
+	}
+
+#define VDBGP()	LDBGP(DBG_BASE, verbose.logger)
 
 #define VDBG_log(FMT, ...)						\
 	llog(DEBUG_STREAM, verbose.logger,				\
 	     PRI_VERBOSE""FMT,						\
 	     pri_verbose, ##__VA_ARGS__);				\
 
-#define vdbg(FMT, ...)							\
-	{								\
-		if (LDBGP(DBG_BASE, verbose.logger)) {			\
-			VDBG_log(FMT, ##__VA_ARGS__);			\
-		}							\
-	}
+#define VDBG_JAMBUF(BUF)						\
+	for (bool cond_ = VDBGP(); cond_; cond_ = false)		\
+		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			     cond_; cond_ = false)
 
 /*
  * Informational log: when verbose.rc_info is non-zero, the message is
@@ -190,12 +200,5 @@ struct verbose {
 
 #define VLOG_JAMBUF(BUF)				\
 	LLOG_JAMBUF(RC_LOG, verbose.logger, BUF)
-
-#define VDBG_JAMBUF(BUF)						\
-	for (bool cond_ = LDBGP(DBG_BASE, verbose.logger);		\
-	     cond_; cond_ = false)					\
-		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
-			     cond_; cond_ = false)
 
 #endif
