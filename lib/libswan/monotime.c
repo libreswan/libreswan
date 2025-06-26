@@ -57,9 +57,9 @@ monotime_t mononow(void)
 		 * a logger and/or a way to return the failure to the
 		 * caller.
 		 */
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, &global_logger, errno,
-			    "clock_gettime(%d,...) in mononow() failed",
-			    monotime_clockid());
+		fatal(PLUTO_EXIT_KERNEL_FAIL, &global_logger, errno,
+		      "clock_gettime(%d,...) in mononow() failed",
+		      monotime_clockid());
 	}
 	/* OK */
 	return (monotime_t) {

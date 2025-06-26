@@ -275,8 +275,7 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, verbose.logger, errno,
-			    "sending %s", req->what);
+		vfatal(PLUTO_EXIT_KERNEL_FAIL, errno, "sending %s", req->what);
 		return false;
 	}
 
@@ -649,8 +648,7 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 	/* initialize everything */
 	pfkeyv2_fd = cloexec_socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 	if (pfkeyv2_fd < 0) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
-			    "opening PF_KEY_V2 socket failed");
+		fatal(PLUTO_EXIT_KERNEL_FAIL, logger, errno, "opening PF_KEY_V2 socket failed");
 	}
 	/* server.c will close this */
 	add_fd_read_listener(pfkeyv2_fd, "pfkey v2 messages",

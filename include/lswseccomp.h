@@ -37,11 +37,11 @@
 		if (rc != 0) {						\
 			seccomp_release(ctx); /* XXX: needed? */	\
 			if (rc < 0) {					\
-				fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc, \
-					    "seccomp_rule_add() failed for system call '%s'", \
-					    #NAME);			\
+				fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc, \
+				      "seccomp_rule_add() failed for system call '%s'", \
+				      #NAME);				\
 			} else {					\
-				fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, \
+				fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0, \
 				      "seccomp_rule_add() failed for system call '%s' with unexpected error %d", \
 				      #NAME, rc);			\
 			}						\

@@ -104,8 +104,7 @@ bool linux_audit_init(bool do_audit, struct logger *logger)
 			return false;
 		}
 #endif
-		fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
-			    "audit_open() failed");
+		fatal(PLUTO_EXIT_AUDIT_FAIL, logger, errno, "audit_open() failed");
 	}
 
 	log_to_audit = do_audit;
@@ -120,8 +119,7 @@ static void linux_audit(const int type, const char *message, const char *laddr, 
 
 	audit_fd = audit_open();
 	if (audit_fd < 0) {
-		fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
-			    "audit_open() failed");
+		fatal(PLUTO_EXIT_AUDIT_FAIL, logger, errno, "audit_open() failed");
 	}
 
 	/*
@@ -141,8 +139,7 @@ static void linux_audit(const int type, const char *message, const char *laddr, 
 	rc = audit_log_user_message(audit_fd, type, message, NULL, laddr, NULL, result);
 	close(audit_fd);
 	if (rc < 0) {
-		fatal_errno(PLUTO_EXIT_AUDIT_FAIL, logger, errno,
-			    "audit log failed");
+		fatal(PLUTO_EXIT_AUDIT_FAIL, logger, errno, "audit log failed");
 	}
 }
 

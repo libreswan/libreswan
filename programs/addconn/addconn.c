@@ -61,7 +61,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, "seccomp_init_addconn() failed!");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0, "seccomp_init_addconn() failed!");
 	}
 
 	/*
@@ -133,8 +133,7 @@ static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 	int rc = seccomp_load(ctx);
 	if (rc < 0) {
 		seccomp_release(ctx);
-		fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc,
-			    "seccomp_load() failed!");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc, "seccomp_load() failed!");
 	}
 }
 #endif

@@ -56,9 +56,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 
 	int udp_sock = cloexec_socket(afi->socket.domain, SOCK_DGRAM, IPPROTO_UDP);
 	if (udp_sock == -1) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "find %s interfaces failed calling cloexec_socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
-			    afi->ip_name, afi->socket.domain_name);
+		fatal(PLUTO_EXIT_FAIL, logger, errno,
+		      "find %s interfaces failed calling cloexec_socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
+		      afi->ip_name, afi->socket.domain_name);
 	}
 
 	/*
@@ -68,9 +68,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	static const int on = true;     /* by-reference parameter; constant, we hope */
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "find %s interfaces failed calling setsockopt(SOL_SOCKET, SO_REUSEADDR)",
-			    afi->ip_name);
+		fatal(PLUTO_EXIT_FAIL, logger, errno,
+		      "find %s interfaces failed calling setsockopt(SOL_SOCKET, SO_REUSEADDR)",
+		      afi->ip_name);
 	}
 
 	/*
@@ -82,9 +82,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
 	if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 		endpoint_buf eb;
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "find %s interfaces failed calling bind(%s)",
-			    afi->ip_name, str_endpoint(&any_ep, &eb));
+		fatal(PLUTO_EXIT_FAIL, logger, errno,
+		      "find %s interfaces failed calling bind(%s)",
+		      afi->ip_name, str_endpoint(&any_ep, &eb));
 	}
 
 	/*
@@ -113,9 +113,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		};
 
 		if (ioctl(udp_sock, SIOCGIFCONF, &ifconf) == -1) {
-			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-				    "find %s interfaces failed calling ioctl(SIOCGIFCONF)",
-				    afi->ip_name);
+			fatal(PLUTO_EXIT_FAIL, logger, errno,
+			      "find %s interfaces failed calling ioctl(SIOCGIFCONF)",
+			      afi->ip_name);
 		}
 
 		/* if we got back less than we asked for, we have them all */

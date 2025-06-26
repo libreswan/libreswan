@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 	vdbg("%s:", argv[0]);
 
 	if (argc != 4) {
-		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <crl-fetch-timeout> <curl-iface>");
+		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0, "expecting: <url> <crl-fetch-timeout> <curl-iface>");
 	}
 
 	/* lazy parsing, assume pluto isn't broken */
@@ -104,13 +104,13 @@ int main(int argc, char *argv[])
 	chunk_t blob = NULL_HUNK;
 	err = fetch_blob(url, timeout, &blob, verbose);
 	if (err != NULL) {
-		fatal(PLUTO_EXIT_FAIL, logger, "fetch failed: %s", err);
+		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0, "fetch failed: %s", err);
 	}
 
 	err = decode_blob(&blob, verbose);
 	if (err != NULL) {
 		free_chunk_content(&blob);
-		fatal(PLUTO_EXIT_FAIL, logger, "fetch invalid: %s", err);
+		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0, "fetch invalid: %s", err);
 	}
 
 	init_nss(config_setup_nssdir(), (struct nss_flags){0}, logger);

@@ -73,7 +73,7 @@ void resolve_default_route(struct resolve_end *host,
 	if (!seeking_src && !seeking_gateway)
 		return;	/* this end already figured out */
 
-	vfatal("addcon: without XFRM, cannot resolve_defaultroute()");
+	vfatal(PLUTO_EXIT_FAIL, 0, "addcon: without XFRM, cannot resolve_defaultroute()");
 }
 
 static enum route_status get_route_1(int s, ip_address dst,

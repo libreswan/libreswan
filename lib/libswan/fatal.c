@@ -22,8 +22,8 @@
 #include "constants.h"		/* for enum pluto_exit_code */
 #include "lswlog.h"		/* for LOG_WIDTH et.al. */
 
-void fatal(enum pluto_exit_code pluto_exit_code,
-	   const struct logger *logger, const char *fmt, ...)
+void fatal(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
+	   int error, const char *fmt, ...)
 {
 	struct logjam logjam;
 	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pluto_exit_code,
@@ -33,23 +33,10 @@ void fatal(enum pluto_exit_code pluto_exit_code,
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-	}
-	fatal_logjam_to_logger(&logjam);
-}
-
-void fatal_errno(enum pluto_exit_code pluto_exit_code, const struct logger *logger,
-		 int error, const char *fmt, ...)
-{
-	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, pluto_exit_code,
-						NULL/*where*/, FATAL_STREAM);
-	{
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-		jam_string(buf, ": ");
-		jam_errno(buf, error);
+		if (error != 0) {
+			jam_string(buf, ": ");
+			jam_errno(buf, error);
+		}
 	}
 	fatal_logjam_to_logger(&logjam);
 }

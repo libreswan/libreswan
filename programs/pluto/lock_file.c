@@ -48,8 +48,8 @@ int create_lock_file(const struct config_setup *oco, bool fork_desired, struct l
 	const char *rundir = config_setup_string(oco, KSF_RUNDIR);
 	if (mkdir(rundir, 0755) != 0) {
 		if (errno != EEXIST) {
-			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "unable to create lock dir: \"%s\"", rundir);
+			fatal(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+			      "unable to create lock dir: \"%s\"", rundir);
 		}
 	}
 
@@ -63,11 +63,11 @@ int create_lock_file(const struct config_setup *oco, bool fork_desired, struct l
 			return fd;
 		}
 		if (errno != EEXIST) {
-			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "unable to create lock file \"%s\"", pluto_lock_filename);
+			fatal(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+			      "unable to create lock file \"%s\"", pluto_lock_filename);
 		}
 		if (fork_desired) {
-			fatal(PLUTO_EXIT_LOCK_FAIL, logger,
+			fatal(PLUTO_EXIT_LOCK_FAIL, logger, 0,
 			      "lock file \"%s\" already exists", pluto_lock_filename);
 		}
 		/*
@@ -75,16 +75,17 @@ int create_lock_file(const struct config_setup *oco, bool fork_desired, struct l
 		 * control, so wipe it
 		 */
 		if (unlink(pluto_lock_filename) == -1) {
-			fatal_errno(PLUTO_EXIT_LOCK_FAIL, logger, errno,
-				    "lock file \"%s\" already exists and could not be removed",
-				    pluto_lock_filename);
+			fatal(PLUTO_EXIT_LOCK_FAIL, logger, errno,
+			      "lock file \"%s\" already exists and could not be removed",
+			      pluto_lock_filename);
 		}
 		/*
 		 * lock file removed, try creating it
 		 * again ...
 		 */
 	}
-	fatal(PLUTO_EXIT_LOCK_FAIL, logger, "lock file \"%s\" could not be created after %u attempts",
+	fatal(PLUTO_EXIT_LOCK_FAIL, logger, /*no-errno*/0,
+	      "lock file \"%s\" could not be created after %u attempts",
 	      pluto_lock_filename, attempt);
 }
 
