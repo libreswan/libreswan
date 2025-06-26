@@ -456,12 +456,12 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
-				if (DBGP(DBG_CPU_USAGE)) {
+				if (LDBGP(DBG_CPU_USAGE, pid_entry->logger)) {
 					deltatime_t took = monotime_diff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;
-					DBG_log("#%lu waited %s for '%s' fork()",
-						st->st_serialno, str_deltatime(took, &dtb),
-						pid_entry->name);
+					LDBG_log(pid_entry->logger, "#%lu waited %s for '%s' fork()",
+						 st->st_serialno, str_deltatime(took, &dtb),
+						 pid_entry->name);
 				}
 				statetime_t start = statetime_start(st);
 				const enum ike_version ike_version = st->st_ike_version;

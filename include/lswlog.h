@@ -291,11 +291,11 @@ extern lset_t cur_debugging;	/* current debugging level */
 #define DBGP(cond)	(cur_debugging & (cond))
 #define LDBGP(COND, LOGGER) (COND & (cur_debugging | (LOGGER)->debugging))
 
-#define dbg(MESSAGE, ...)					\
-	{							\
-		if (DBGP(DBG_BASE)) {				\
-			DBG_log(MESSAGE, ##__VA_ARGS__);	\
-		}						\
+#define dbg(MESSAGE, ...)						\
+	{								\
+		if (LDBGP(DBG_BASE, &global_logger)) {			\
+			LDBG_log(&global_logger, MESSAGE, ##__VA_ARGS__); \
+		}							\
 	}
 
 void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
@@ -315,7 +315,6 @@ void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 
 
 /* DBG_*() are unconditional */
-void DBG_log(const char *message, ...) PRINTF_LIKE(1);
 
 #define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)		\
 	{						\

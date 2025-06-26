@@ -644,10 +644,11 @@ bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
  */
 
 diag_t match_peer_id_cert(const struct certs *peer_certs,
-			 const struct id *peer_id,
-			 struct id *cert_id)
+			  const struct id *peer_id,
+			  struct id *cert_id)
 {
 	CERTCertificate *end_cert = peer_certs->cert;
+	struct logger *logger = &global_logger;
 
 	if (CERT_IsCACert(end_cert, NULL)) {
 		return diag("cannot use peer CA certificate");
@@ -668,12 +669,12 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 	{
 		asn1_t end_cert_der_subject = same_secitem_as_shunk(end_cert->derSubject);
 		/* adopt ID from CERT (the CERT has been verified) */
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			id_buf idb;
 			dn_buf dnb;
-			DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification; stomping on peer_id with '%s'",
-				str_id(peer_id, &idb),
-				str_dn(end_cert_der_subject, &dnb));
+			LDBG_log(logger, "ID_DER_ASN1_DN '%s' does not need further ID verification; stomping on peer_id with '%s'",
+				 str_id(peer_id, &idb),
+				 str_dn(end_cert_der_subject, &dnb));
 		}
 		/* provide replacement */
 		*cert_id = (struct id) {
@@ -687,7 +688,7 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 	case ID_DER_ASN1_DN:
 	{
 		asn1_t end_cert_der_subject = same_secitem_as_shunk(end_cert->derSubject);
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			/*
 			 * Dump .derSubject as an RFC 1485 string.
 			 * Include both our (str_dn()) and NSS's
@@ -696,10 +697,10 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 			 */
 			dn_buf dnb;
 			id_buf idb;
-			DBG_log("comparing ID_DER_ASN1_DN '%s' to certificate derSubject='%s' (subjectName='%s')",
-				str_id(peer_id, &idb),
-				str_dn(end_cert_der_subject, &dnb),
-				end_cert->subjectName);
+			LDBG_log(logger, "comparing ID_DER_ASN1_DN '%s' to certificate derSubject='%s' (subjectName='%s')",
+				 str_id(peer_id, &idb),
+				 str_dn(end_cert_der_subject, &dnb),
+				 end_cert->subjectName);
 		}
 
 		struct verbose verbose = { .logger = &global_logger, };
@@ -713,11 +714,11 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 				    end_cert->subjectName, str_id(peer_id, &idb));
 		}
 
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			id_buf idb;
-			DBG_log("ID_DER_ASN1_DN '%s' matched our ID '%s'",
-				end_cert->subjectName,
-				str_id(peer_id, &idb));
+			LDBG_log(logger, "ID_DER_ASN1_DN '%s' matched our ID '%s'",
+				 end_cert->subjectName,
+				 str_id(peer_id, &idb));
 		}
 		if (wildcards) {
 			/* provide replacement */

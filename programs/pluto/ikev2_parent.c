@@ -242,6 +242,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 {
 	const struct connection *c = ike->sa.st_connection;
+	struct logger *logger = ike->sa.logger;
 	struct id id = c->remote->host.id;
 
 	if (!c->remote->host.config->key_from_DNS_on_demand)
@@ -260,7 +261,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 		}
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* eb2 and err2 must have same scope */
 		name_buf eb2;
 		const char *err1 = "%dnsondemand";
@@ -281,11 +282,11 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 
 		id_buf thatid;
 		endpoint_buf ra;
-		DBG_log("%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
-			c->name, ike->sa.st_serialno,
-			err1, err2,
-			str_endpoint(&ike->sa.st_remote_endpoint, &ra),
-			str_id(&id, &thatid));
+		LDBG_log(logger, "%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
+			 c->name, ike->sa.st_serialno,
+			 err1, err2,
+			 str_endpoint(&ike->sa.st_remote_endpoint, &ra),
+			 str_id(&id, &thatid));
 	}
 	return false;
 }

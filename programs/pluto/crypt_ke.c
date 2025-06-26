@@ -66,9 +66,9 @@ static void compute_ke_and_nonce(struct logger *logger,
 {
 	if (task->dh != NULL) {
 		task->local_secret = calc_dh_local_secret(task->dh, logger);
-		if (DBGP(DBG_CRYPT)) {
-			DBG_log("NSS: Local DH %s secret (pointer): %p",
-				task->dh->common.fqn, task->local_secret);
+		if (LDBGP(DBG_CRYPT, logger)) {
+			LDBG_log(logger, "NSS: Local DH %s secret (pointer): %p",
+				 task->dh->common.fqn, task->local_secret);
 		}
 	}
 	task->nonce = alloc_rnd_chunk(DEFAULT_NONCE_SIZE, "nonce");
@@ -122,6 +122,8 @@ void submit_ke_and_nonce(struct state *callback_sa,
 void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secret,
 			   chunk_t *g)
 {
+	struct logger *logger = st->logger;
+
 	/*
 	 * Should the crypto helper group and the state group be in
 	 * sync?
@@ -144,12 +146,12 @@ void unpack_KE_from_helper(struct state *st, struct dh_local_secret *local_secre
 	 * one) and only set st_oakley.group when the initial
 	 * responder comes back with a vald accepted propsal and KE.
 	 */
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		const struct dh_desc *group = dh_local_secret_desc(local_secret);
-		DBG_log("wire (crypto helper) group %s and state group %s %s",
-			group->common.fqn,
-			st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
-			group == st->st_oakley.ta_dh ? "match" : "differ");
+		LDBG_log(logger, "wire (crypto helper) group %s and state group %s %s",
+			 group->common.fqn,
+			 st->st_oakley.ta_dh ? st->st_oakley.ta_dh->common.fqn : "NULL",
+			 group == st->st_oakley.ta_dh ? "match" : "differ");
 	}
 
 	replace_chunk(g, dh_local_secret_ke(local_secret), "KE");

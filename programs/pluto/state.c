@@ -885,11 +885,11 @@ void delete_state(struct state *st)
 	 * it when debugging - values range from very approximate to
 	 * (in the case of IKEv1) simply wrong.
 	 */
-	if (DBGP(DBG_CPU_USAGE) || DBGP(DBG_BASE)) {
-		DBG_log("#%lu main thread "PRI_CPU_USAGE" helper thread "PRI_CPU_USAGE" in total",
-			st->st_serialno,
-			pri_cpu_usage(st->st_timing.main_usage),
-			pri_cpu_usage(st->st_timing.helper_usage));
+	if (LDBGP(DBG_CPU_USAGE, st->logger) || LDBGP(DBG_BASE, st->logger)) {
+		LDBG_log(st->logger, PRI_SO" main thread "PRI_CPU_USAGE" helper thread "PRI_CPU_USAGE" in total",
+			 pri_so(st->st_serialno),
+			 pri_cpu_usage(st->st_timing.main_usage),
+			 pri_cpu_usage(st->st_timing.helper_usage));
 	}
 
 	/*

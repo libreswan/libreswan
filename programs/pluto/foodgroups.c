@@ -366,28 +366,28 @@ void load_groups(struct logger *logger)
 		}
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* dump old food groups */
-		DBG_log("old food groups:");
+		LDBG_log(logger, "old food groups:");
 		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			subnet_buf atarget;
-			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
-				str_subnet(&t->subnet, &atarget),
-				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				t->group->name);
+			LDBG_log(logger, "  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
+				 str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
+				 str_subnet(&t->subnet, &atarget),
+				 t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
+				 t->group->name);
 		}
 		/* dump new food groups */
-		DBG_log("new food groups:");
+		LDBG_log(logger, "new food groups:");
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			subnet_buf atarget;
-			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
-				str_subnet(&t->subnet, &atarget),
-				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				t->group->name);
+			LDBG_log(logger, "  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
+				 str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
+				 str_subnet(&t->subnet, &atarget),
+				 t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
+				 t->group->name);
 		}
 	}
 

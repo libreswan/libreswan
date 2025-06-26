@@ -433,25 +433,26 @@ void ikev2_ipseckey_log_missing_st(struct p_dns_req *dnsr)
 
 void ipseckey_dbg_dns_resp(struct p_dns_req *dnsr)
 {
+	struct logger *logger = dnsr->logger;
+
 	deltatime_t served_delta = realtime_diff(dnsr->done_time, dnsr->start_time);
 	deltatime_buf db;
-	dbg("%s returned %s cache=%s elapsed time %s seconds",
-	    dnsr->log_buf,
-	    dnsr->rcode_name,
-	    bool_str(dnsr->cache_hit),
-	    str_deltatime(served_delta, &db));
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "%s returned %s cache=%s elapsed time %s seconds",
+			 dnsr->log_buf,
+			 dnsr->rcode_name,
+			 bool_str(dnsr->cache_hit),
+			 str_deltatime(served_delta, &db));
+
 		const enum lswub_resolve_event_secure_kind k = dnsr->secure;
-
-		DBG_log("DNSSEC=%s %s MSG SIZE %d bytes",
-			k == UB_EVENT_SECURE ? "SECURE"
-			: k == UB_EVENT_INSECURE ? "INSECURE"
-			: k == UB_EVENT_BOGUS ? "BOGUS"
-			: "invalid lswub_resolve_event_secure_kind",
-
-			k == UB_EVENT_BOGUS ? dnsr->why_bogus : "",
-			dnsr->wire_len);
+		LDBG_log(logger, "DNSSEC=%s %s MSG SIZE %d bytes",
+			 (k == UB_EVENT_SECURE ? "SECURE" :
+			  k == UB_EVENT_INSECURE ? "INSECURE" :
+			  k == UB_EVENT_BOGUS ? "BOGUS" :
+			  "invalid lswub_resolve_event_secure_kind"),
+			 (k == UB_EVENT_BOGUS ? dnsr->why_bogus : ""),
+			 dnsr->wire_len);
 	}
 }
 

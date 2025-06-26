@@ -902,7 +902,7 @@ err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, stru
 const struct pubkey *find_pubkey_by_ckaid(const char *ckaid)
 {
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
-		DBG_log("looking at a PUBKEY");
+		dbg("looking at a PUBKEY");
 		struct pubkey *key = p->key;
 		const ckaid_t *key_ckaid = pubkey_ckaid(key);
 		if (ckaid_starts_with(key_ckaid, ckaid)) {

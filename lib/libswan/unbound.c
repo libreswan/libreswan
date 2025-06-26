@@ -72,9 +72,9 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 {
 	int ugh;
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		ub_ctx_debuglevel(dns_ctx, 5);
-		DBG_log("unbound context created - setting debug level to 5");
+		LDBG_log(logger, "unbound context created - setting debug level to 5");
 	}
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
@@ -259,21 +259,22 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 		    result->qname);
 	}
 
-	if (DBGP(DBG_TMI)) {
+	if (LDBGP(DBG_TMI, logger)) {
 		int i = 0;
-		DBG_log("The result has:");
-		DBG_log("qname: %s", result->qname);
-		DBG_log("qtype: %d", result->qtype);
-		DBG_log("qclass: %d", result->qclass);
-		if (result->canonname)
-			DBG_log("canonical name: %s", result->canonname);
-		DBG_log("DNS rcode: %d", result->rcode);
+		LDBG_log(logger, "The result has:");
+		LDBG_log(logger, "qname: %s", result->qname);
+		LDBG_log(logger, "qtype: %d", result->qtype);
+		LDBG_log(logger, "qclass: %d", result->qclass);
+		if (result->canonname) {
+			LDBG_log(logger, "canonical name: %s", result->canonname);
+		}
+		LDBG_log(logger, "DNS rcode: %d", result->rcode);
 
 		for (i = 0; result->data[i] != NULL; i++) {
-			DBG_log("result data element %d has length %d",
-				i, result->len[i]);
+			LDBG_log(logger, "result data element %d has length %d",
+				 i, result->len[i]);
 		}
-		DBG_log("result has %d data element(s)", i);
+		LDBG_log(logger, "result has %d data element(s)", i);
 	}
 
 	/* XXX: for now pick the first one and return that */

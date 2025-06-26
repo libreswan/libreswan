@@ -64,7 +64,7 @@ static int state_compare(const struct state *sl,
 	struct connection *cl = sl->st_connection;
 	struct connection *cr = sr->st_connection;
 
-	/* DBG_log("comparing %s to %s", ca->name, cb->name); */
+	/* LDBG_log(logger, "comparing %s to %s", ca->name, cb->name); */
 
 	int order = connection_compare(cl, cr);
 	if (order != 0) {

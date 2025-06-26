@@ -1930,6 +1930,8 @@ static void DBG_print_struct(const char *label, unsigned level,
 			     const void *struct_ptr,
 			     struct_desc *sd, bool len_meaningful)
 {
+	struct logger *logger = &global_logger;
+
 	bool immediate = false;
 	const uint8_t *inp = struct_ptr;
 	field_desc *fp;
@@ -1941,7 +1943,7 @@ static void DBG_print_struct(const char *label, unsigned level,
 		stars[s+1] = '\0';
 	}
 
-	DBG_log("%s%s%s:", stars, label, sd->name);
+	LDBG_log(logger, "%s%s%s:", stars, label, sd->name);
 
 	for (fp = sd->fields; fp->field_type != ft_end; fp++) {
 		int i = fp->size;
@@ -2007,10 +2009,10 @@ static void DBG_print_struct(const char *label, unsigned level,
 				if (!enum_long(fp->desc, last_enum, &nb)) {
 					enum_long(fp->desc, n, &nb);
 				}
-				DBG_log("   %s: %s%s (0x%jx)",
-					fp->name,
-					immediate ? "AF+" : "",
-					nb.buf, n);
+				LDBG_log(logger, "   %s: %s%s (0x%jx)",
+					 fp->name,
+					 immediate ? "AF+" : "",
+					 nb.buf, n);
 				break;
 			}
 
@@ -2022,10 +2024,10 @@ static void DBG_print_struct(const char *label, unsigned level,
 			{
 				last_enum = n;
 				name_buf nb;
-				DBG_log("   %s: %s (0x%jx)",
-					fp->name,
-					str_enum_long(fp->desc, n, &nb),
-					n);
+				LDBG_log(logger, "   %s: %s (0x%jx)",
+					 fp->name,
+					 str_enum_long(fp->desc, n, &nb),
+					 n);
 				break;
 			}
 
@@ -2033,8 +2035,8 @@ static void DBG_print_struct(const char *label, unsigned level,
 			{
 				name_buf buf;
 				const char *name = str_enum_enum(fp->desc, last_enum, n, &buf);
-				DBG_log("   %s: %s (0x%jx)",
-					fp->name, name, n);
+				LDBG_log(logger, "   %s: %s (0x%jx)",
+					 fp->name, name, n);
 				break;
 			}
 
@@ -2908,7 +2910,7 @@ bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char
 	}
 
 	if (LDBGP(DBG_BASE, logger)) {
-		DBG_log("emitting %zu raw bytes of %s into %s", len, name, outs->name);
+		LDBG_log(logger, "emitting %zu raw bytes of %s into %s", len, name, outs->name);
 		if (len > 16) { /* arbitrary */
 			LDBG_dump(logger, bytes, len);
 		} else {

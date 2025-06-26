@@ -93,8 +93,8 @@ extern void whack_clearstats(const struct whack_message *wm, struct show *s);
 		const unsigned __pstat = (INDEX);			\
 		if (__pstat < elemsof(pstats_##TYPE)) {			\
 			pstats_##TYPE[__pstat]++;			\
-		} else if (DBGP(DBG_BASE)) {				\
-			DBG_log("pstats %s %d", #TYPE, __pstat);	\
+		} else {						\
+			dbg("pstats %s %d", #TYPE, __pstat);		\
 		}							\
 	}
 

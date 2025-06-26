@@ -638,11 +638,11 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct logger *l
 {
 	ip_address lip;	/* --listen filter option */
 
-	if (pluto_listen) {
+	if (pluto_listen != NULL) {
 		err_t e = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
 
 		if (e != NULL) {
-			DBG_log("invalid listen= option ignored: %s", e);
+			llog(RC_LOG, logger, "invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
 		address_buf b;

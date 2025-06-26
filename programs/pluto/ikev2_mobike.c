@@ -226,26 +226,26 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 #if 0
-	if (DBGP(DBG_BASE) && md->pd[PD_v2N_NO_NATS_ALLOWED] != NULL) {
-		DBG_log("NO_NATS_ALLOWED payload ignored (not yet supported)");
+	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_NO_NATS_ALLOWED] != NULL) {
+		LDBG_LOG(logger, "NO_NATS_ALLOWED payload ignored (not yet supported)");
 	}
 #endif
 
 #if 0
-	if (DBGP(DBG_BASE) && md->pd[PD_v2N_ADDITIONAL_IP4_ADDRESS] != NULL) {
-		DBG_log("ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
+	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_ADDITIONAL_IP4_ADDRESS] != NULL) {
+		LDBG_LOG(logger, "ADDITIONAL_IP4_ADDRESS payload ignored (not yet supported)");
 	}
 #endif
 
 #if 0
-	if (DBGP(DBG_BASE) && md->pd[PD_v2N_ADDITIONAL_IP6_ADDRESS] != NULL) {
-		DBG_log("ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
+	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_ADDITIONAL_IP6_ADDRESS] != NULL) {
+		LDBG_LOG(logger, "ADDITIONAL_IP6_ADDRESS payload ignored (not yet supported)");
 	}
 #endif
 
 #if 0
-	if (DBGP(DBG_BASE) && md->pd[PD_v2N_NO_ADDITIONAL_ADDRESSES] != NULL) {
-		DBG_log("Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
+	if (LDBGP(DBG_BASE, logger) && md->pd[PD_v2N_NO_ADDITIONAL_ADDRESSES] != NULL) {
+		LDBG_LOG(logger, "Received NO_ADDITIONAL_ADDRESSES - no need to act on this");
 	}
 #endif
 

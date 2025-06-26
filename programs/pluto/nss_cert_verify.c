@@ -226,17 +226,17 @@ static bool verify_end_cert(struct logger *logger,
 #endif
 	};
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log("%s verifying %s using:", __func__, end_cert->subjectName);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "%s verifying %s using:", __func__, end_cert->subjectName);
 		unsigned nr = 0;
 		for (CERTCertListNode *node = CERT_LIST_HEAD(trustcl);
 		     !CERT_LIST_END(node, trustcl);
 		     node = CERT_LIST_NEXT(node)) {
-			DBG_log("  trusted CA: %s", node->cert->subjectName);
+			LDBG_log(logger, "  trusted CA: %s", node->cert->subjectName);
 			nr++;
 		}
 		if (nr == 0) {
-			DBG_log("  but have no trusted CAs");
+			LDBG_log(logger, "  but have no trusted CAs");
 		}
 	}
 

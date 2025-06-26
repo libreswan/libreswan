@@ -160,8 +160,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 					   struct proposal *proposal, shunk_t input)
 {
 	struct logger *logger = parser->policy->logger;
-	if (DBGP(DBG_PROPOSAL_PARSER)) {
-		DBG_log("proposal: '"PRI_SHUNK"'", pri_shunk(input));
+	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
+		LDBG_log(logger, "proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
 
 	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+");

@@ -130,13 +130,13 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 
 	if (ike->sa.st_peer_wants_null) {
 		/* XXX: only ever true on responder */
-		dbg("IKEv2 CERT: not sending cert: peer wants (we're using?) NULL")
+		dbg("IKEv2 CERT: not sending cert: peer wants (we're using?) NULL");
 		return false;
 	}
 
 	if (c->local->host.config->auth == AUTH_EAPONLY) {
 		dbg("IKEv2 CERT: not sending cert: local %sauth==EAPONLY",
-		    c->local->config->leftright)
+		    c->local->config->leftright);
 		return false;
 	}
 

@@ -43,17 +43,17 @@ bool server_run(const char *verb, const char *verb_suffix,
 		struct verbose verbose)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
-	if (DBGP(DBG_BASE)) {
+	if (VDBGP()) {
 		int slen = strlen(cmd);
 		int i;
 
-		DBG_log("executing %s%s: %s",
-			verb, verb_suffix, cmd);
-		DBG_log("popen cmd is %d chars long", slen);
+		VDBG_log("executing %s%s: %s",
+			 verb, verb_suffix, cmd);
+		VDBG_log("popen cmd is %d chars long", slen);
 		for (i = 0; i < slen; i += CHUNK_WIDTH)
-			DBG_log("cmd(%4d):%.*s:", i,
-				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
-				&cmd[i]);
+			VDBG_log("cmd(%4d):%.*s:", i,
+				 slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
+				 &cmd[i]);
 	}
 #	undef CHUNK_WIDTH
 

@@ -544,9 +544,9 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		 * deal - find_likely_sender() only needs the header
 		 * when figuring out which state sent the packet.
 		 */
-		if (DBGP(DBG_BASE) && (emh.msg_flags & MSG_TRUNC)) {
-			DBG_log("recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
-				ifp->ip_dev->real_device_name);
+		if (LDBGP(DBG_BASE, logger) && (emh.msg_flags & MSG_TRUNC)) {
+			LDBG_log(logger, "recvmsg(,, MSG_ERRQUEUE) on %s returned a truncated (IKE) datagram (MSG_TRUNC)",
+				 ifp->ip_dev->real_device_name);
 		}
 
 		if (LDBGP(DBG_BASE, logger)) {

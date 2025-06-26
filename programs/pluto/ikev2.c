@@ -1309,16 +1309,18 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 const struct v2_transition *svm)
 {
+	struct logger *logger = ike->sa.logger;
+
 	/*
 	 * Start the state transition, including any updates to
 	 * work-in-progress Message IDs.
 	 */
 	start_v2_transition(ike, svm, md, HERE);
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		if (pbs_left(&md->message_pbs) != 0)
-			DBG_log("removing %d bytes of padding",
-				(int) pbs_left(&md->message_pbs));
+			LDBG_log(logger, "removing %d bytes of padding",
+				 (int) pbs_left(&md->message_pbs));
 	}
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
