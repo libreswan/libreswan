@@ -204,11 +204,11 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		endpoint_buf b;
 		endpoint_buf ib;
 		llog(RC_LOG, logger,
-			    "IMPAIR: JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
-			    len, where,
-			    interface->ip_dev->real_device_name,
-			    str_endpoint(&interface->local_endpoint, &ib),
-			    str_endpoint(&remote_endpoint, &b));
+		     "IMPAIR: JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
+		     len, where,
+		     interface->ip_dev->real_device_name,
+		     str_endpoint(&interface->local_endpoint, &ib),
+		     str_endpoint(&remote_endpoint, &b));
 
 		ip_sockaddr remote_sa = sockaddr_from_endpoint(remote_endpoint);
 		ssize_t wlen = sendto(interface->fd, packet.ptr, packet.len, 0, &remote_sa.sa.sa, remote_sa.len);

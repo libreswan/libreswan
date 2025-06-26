@@ -135,7 +135,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		return true;
 	}
 	if (impair.v1_hash_check) {
-		log_state(RC_LOG, st, "IMPAIR: skipping check of '%s' HASH payload", what);
+		llog(RC_LOG, st->logger, "IMPAIR: skipping check of '%s' HASH payload", what);
 		return true;
 	}
 	if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {

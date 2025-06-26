@@ -186,9 +186,9 @@ bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 
 	/* See RFC 5996 section 3.10 "Notify Payload" */
 	if (!PEXPECT(outs->logger, (impair.emitting ||
-					 protocol_id == PROTO_v2_RESERVED ||
-					 protocol_id == PROTO_v2_AH ||
-					 protocol_id == PROTO_v2_ESP))) {
+				    protocol_id == PROTO_v2_RESERVED ||
+				    protocol_id == PROTO_v2_AH ||
+				    protocol_id == PROTO_v2_ESP))) {
 		return false;
 	}
 

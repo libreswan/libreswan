@@ -2276,12 +2276,12 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 	if ((hard && impair.ignore_hard_expire) ||
 	    (!hard && impair.ignore_soft_expire)) {
 		address_buf a;
-		llog_sa(RC_LOG, child,
-			"IMPAIR: suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
-			hard ? "hard" : "soft",
-			pri_ipsec_spi(spi),
-			str_address(&dst, &a),
-			bytes, packets);
+		llog(RC_LOG, child->sa.logger,
+		     "IMPAIR: suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
+		     hard ? "hard" : "soft",
+		     pri_ipsec_spi(spi),
+		     str_address(&dst, &a),
+		     bytes, packets);
 		return;
 	}
 

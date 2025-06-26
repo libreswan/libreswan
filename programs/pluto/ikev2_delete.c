@@ -540,7 +540,7 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	}
 
 	if (impair.send_no_delete) {
-		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
 		return;
 	}
 

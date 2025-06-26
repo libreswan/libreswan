@@ -436,31 +436,29 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 		    impair.rekey_respond_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf sb;
-			llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-subnet %s set to %s",
-				name, str_selector(&ts, &sb));
+			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-respond-subnet %s set to %s",
+			     name, str_selector(&ts, &sb));
 		}
 		if (child->sa.st_state == &state_v2_REKEY_CHILD_R0 &&
 		    impair.rekey_respond_supernet) {
 			ts = impair_selector_to_supernet(ts);
 			selector_buf sb;
-			llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-supernet %s set to %s",
-				name, str_selector(&ts, &sb));
+			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-respond-supernet %s set to %s",
+			     name, str_selector(&ts, &sb));
 		}
 		if (child->sa.st_state == &state_v2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_supernet) {
 			ts = impair_selector_to_supernet(ts);
 			selector_buf tsb;
-			llog_sa(RC_LOG, child,
-				"IMPAIR: rekey-initiate-supernet %s set to %s",
-				name, str_selector(&ts, &tsb));
+			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-initiate-supernet %s set to %s",
+			     name, str_selector(&ts, &tsb));
 		}
 		if (child->sa.st_state == &state_v2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf tsb;
-			llog_sa(RC_LOG, child,
-				"IMPAIR: rekey-initiate-subnet %s set to %s",
-				name, str_selector(&ts, &tsb));
+			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-initiate-subnet %s set to %s",
+			     name, str_selector(&ts, &tsb));
 		}
 
 		if (!emit_v2TS_selector(&ts_pbs, ts)) {

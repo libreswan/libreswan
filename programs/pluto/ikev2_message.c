@@ -206,7 +206,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 	}
 
 	if (impair.bad_ike_auth_xchg) {
-		llog_sa(RC_LOG, ike, "IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
 		if ((hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) && exchange_type == ISAKMP_v2_IKE_AUTH) {
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 		}
@@ -1040,8 +1040,8 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	 * decrypted in-place (but only once).
 	 */
 	if (impair.replay_encrypted && !md->fake_clone) {
-		llog_sa(RC_LOG, ike,
-			  "IMPAIR: cloning incoming encrypted message and scheduling its replay");
+		llog(RC_LOG, ike->sa.logger,
+		     "IMPAIR: cloning incoming encrypted message and scheduling its replay");
 		schedule_md_event("replay encrypted message",
 				  clone_raw_md(md, HERE));
 	}
@@ -1052,8 +1052,8 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	 */
 	size_t iv_offset = sk_pbs->cur - md->packet_pbs.start;
 	if (impair.corrupt_encrypted && !md->fake_clone) {
-		llog_sa(RC_LOG, ike,
-			  "IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
+		llog(RC_LOG, ike->sa.logger,
+		     "IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
 		md->packet_pbs.start[iv_offset] = ~(md->packet_pbs.start[iv_offset]);
 	}
 

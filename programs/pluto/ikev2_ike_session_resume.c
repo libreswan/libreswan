@@ -904,8 +904,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog_sa(RC_LOG, ike,
-			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 

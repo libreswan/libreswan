@@ -203,7 +203,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 			if (impair.ikev1_del_with_notify) {
 				struct pbs_out cruft_pbs;
 
-				log_state(RC_LOG, st, "IMPAIR: adding bogus Notify payload after IKE Delete payload");
+				llog(RC_LOG, st->logger, "IMPAIR: adding bogus Notify payload after IKE Delete payload");
 				struct isakmp_notification isan = {
 					.isan_doi = ISAKMP_DOI_IPSEC,
 					.isan_protoid = PROTO_ISAKMP,

@@ -219,7 +219,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ldbg(ike->sa.logger,
 		     "omitting CHILD SA payloads from the IKE_AUTH request as no child policy");
 	} else if (impair.omit_v2_ike_auth_child) {
-		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else {
 		struct connection *cc;
 		if (is_labeled(c)) {
@@ -371,8 +371,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, outs->logger,
-		     "IMPAIR: omitting %s notification",
+		llog(RC_LOG, outs->logger, "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}
@@ -894,7 +893,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	if (impair.childless_ikev2_supported) {
-		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILDESS_IKEV2_SUPPORTED notify");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILDESS_IKEV2_SUPPORTED notify");
 	} else {
 		if (!emit_v2N(v2N_CHILDLESS_IKEV2_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
@@ -1066,8 +1065,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog_sa(RC_LOG, ike,
-			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 

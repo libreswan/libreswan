@@ -1526,7 +1526,8 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	if (impair.v2_proposal_protoid.enabled) {
 		name_buf ebo, ebn;
 		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid.value;
-		llog(RC_LOG, sa_pbs->logger, "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
+		llog(RC_LOG, sa_pbs->logger,
+		     "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_proposal_protocol_id_names, proposal_protoid, &ebo),
 		     str_enum_short(&ikev2_proposal_protocol_id_names, protoid, &ebn),
 		     protoid);

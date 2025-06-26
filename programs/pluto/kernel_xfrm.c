@@ -2495,12 +2495,12 @@ static void xfrm_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 
 	if (ue->hard) {
 		if (impair.ignore_hard_expire) {
-			llog(RC_LOG, logger, "IMPAIR is suppress a HARD EXPIRE event");
+			llog(RC_LOG, logger, "IMPAIR: suppressing a HARD EXPIRE event");
 			return;
 		}
 	} else {
 		if (impair.ignore_soft_expire) {
-			llog(RC_LOG, logger, "IMPAIR is suppress a SOFT EXPIRE event");
+			llog(RC_LOG, logger, "IMPAIR: suppressing a SOFT EXPIRE event");
 			return;
 		}
 	}
