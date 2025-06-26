@@ -1082,6 +1082,20 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	}
 
 	/*
+	 * The responder really shouldn't be using 0 as its SPI
+	 * (nothing in the RFC explicitly prohibits it though).
+	 *
+	 * Only allow when there's an impair.
+	 */
+	if (thingeq(md->hdr.isa_ike_responder_spi, zero_ike_spi)) {
+		if (!impair.ike_responder_spi.enabled) {
+			llog(RC_LOG, ike->sa.logger, "IKE_SA_INIT response has zero IKE SA Responder SPI; dropping packet");
+			return STF_FATAL;
+		}
+		llog(RC_LOG, ike->sa.logger, "IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway");
+	}
+
+	/*
 	 * XXX: this iteration over the notifies modifies state
 	 * _before_ the code's committed to creating an SA.  Hack this
 	 * by resetting any flags that might be set.
