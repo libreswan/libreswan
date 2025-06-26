@@ -173,6 +173,7 @@ OBJS += refcnt.o
 OBJS += debug.o
 OBJS += impair.o
 
+OBJS += cur_debugging.o
 OBJS += ldbg.o
 OBJS += DBG_log.o
 

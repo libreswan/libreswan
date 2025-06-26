@@ -15,17 +15,7 @@
  *
  */
 
-#include <stdio.h>
-#include <stdarg.h>
 
 #include "lswlog.h"
 
-void DBG_log(const char *message, ...)
-{
-	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
-		va_list args;
-		va_start(args, message);
-		jam_va_list(buf, message, args);
-		va_end(args);
-	}
-}
+lset_t cur_debugging = DBG_NONE;       /* default to reporting nothing */
