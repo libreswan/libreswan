@@ -18,10 +18,10 @@
 
 #include "lswlog.h"
 
-void llog_va_list(lset_t rc_flags, const struct logger *logger,
-		 const char *message, va_list ap)
+void llog_va_list(enum stream stream, const struct logger *logger,
+		  const char *message, va_list ap)
 {
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		jam_va_list(buf, message, ap);
 	}
 }
