@@ -1,0 +1,36 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair timeout_on_retransmit
+west #
+ ipsec add west-east
+"west-east": added IKEv1 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair ike_initiator_spi:0
+west #
+ ipsec up west-east
+"west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
+"west-east" #1: initiating IKEv1 Main Mode connection
+"west-east" #1: sent Main Mode request
+"west-east" #1: ignoring unsecured informational payload INVALID_COOKIE, length=12
+"west-east" #1: IMPAIR: retransmit so timing out SA (may retry)
+"west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #1: IMPAIR: revival: skip scheduling revival event
+"west-east" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+west #
+ grep IMPAIR: /tmp/pluto.log
+"west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
+"west-east" #1: IMPAIR: retransmit so timing out SA (may retry)
+"west-east" #1: IMPAIR: revival: skip scheduling revival event
+west #
+ grep '^packet from 192.1.2.45' /tmp/pluto.log
+west #

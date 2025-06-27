@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
+west #
+ ipsec whack --impair timeout_on_retransmit
+west #
+ ipsec add west-east
+"west-east": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec whack --impair ike_initiator_spi:0
+west #
+ ipsec up west-east
+"west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
+"west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east" #1: IMPAIR: retransmit so timing out SA (may retry)
+"west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"west-east" #1: IMPAIR: revival: skip scheduling revival event
+"west-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
+west #
+ grep IMPAIR: /tmp/pluto.log
+"west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
+"west-east" #1: IMPAIR: retransmit so timing out SA (may retry)
+"west-east" #1: IMPAIR: revival: skip scheduling revival event
+west #
+ grep '^packet from 192.1.2.45' /tmp/pluto.log
+west #

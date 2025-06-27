@@ -406,6 +406,11 @@ kvmplutotest	impair-13-ikev2-transform-integ-none	good	github/1244
 kvmplutotest	impair-09-protected-ikev1		good
 #kvmplutotest	impair-09-protected-ikev2		wip
 
+kvmplutotest	impair-14-ike-initiator-spi-0-ikev1	good
+kvmplutotest	impair-14-ike-initiator-spi-0-ikev2	good
+kvmplutotest	impair-14-ike-responder-spi-0-ikev1	good
+kvmplutotest	impair-14-ike-responder-spi-0-ikev2	good
+
 kvmplutotest	impair-20-ikev2-rekey-sa-protoid	good
 kvmplutotest	impair-30-ikev1-ip-as-fqdn		good
 kvmplutotest	impair-31-ikev1-quick-id		good

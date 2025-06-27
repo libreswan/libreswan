@@ -472,8 +472,23 @@ static struct state *new_state(struct connection *c,
 	st->st_inception = realnow();
 	st->st_sa_role = sa_role;
 	st->st_sa_kind_when_established = sa_kind;
+
 	st->st_ike_spis.initiator = ike_initiator_spi;
+	if (sa_kind == IKE_SA && sa_role == SA_INITIATOR &&
+	    impair.ike_initiator_spi.enabled) {
+		uintmax_t v = impair.ike_initiator_spi.value;
+		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE initiator SPI to 0x%jx", v);
+		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.initiator));
+	}
+
 	st->st_ike_spis.responder = ike_responder_spi;
+	if (sa_kind == IKE_SA && sa_role == SA_RESPONDER &&
+	    impair.ike_responder_spi.enabled) {
+		uintmax_t v = impair.ike_responder_spi.value;
+		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE responder SPI to 0x%jx", v);
+		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.responder));
+	}
+
 	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
 	st->hidden_variables.st_natd = ipv4_info.address.unspec;
 	st->st_remote_endpoint = remote_endpoint;
