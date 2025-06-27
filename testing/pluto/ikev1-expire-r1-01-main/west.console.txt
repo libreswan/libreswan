@@ -23,6 +23,7 @@ west #
  ipsec auto --up westnet-eastnet
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #1: sent Main Mode request
+"westnet-eastnet" #1: IMPAIR: dropping Main Mode I2 packet as per impair
 "westnet-eastnet" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet" #1: IMPAIR: revival: skip scheduling revival event
