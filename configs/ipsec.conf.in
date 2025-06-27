@@ -1,4 +1,4 @@
-# @@CONFDIR@@/ipsec.conf - Libreswan 4.x configuration file
+# @@CONFDIR@@/ipsec.conf - Libreswan 5.x configuration file
 #
 # see 'man ipsec.conf' and 'man pluto' for more information
 #
@@ -36,8 +36,8 @@ config setup
 	# placed in (anti-ddos) busy mode. The default is 25000.
 
 	# IKEv1 policy (accept, reject or drop)
-	# See RFC XXX - Deprecation of IKEv1 and obsoleted algorithms
-	#ikev1-policy=accept
+	# See RFC 9395 - Deprecation of IKEv1 and obsoleted algorithms
+	#ikev1-policy=drop
 
 	# IKEv2 global redirect (during IKE_SA_INIT)
 	# Whether to send requests for the remote peer to redirect IKE/IPsec
