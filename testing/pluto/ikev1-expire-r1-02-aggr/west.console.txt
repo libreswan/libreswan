@@ -23,6 +23,7 @@ west #
  ipsec auto --up westnet-eastnet-aggr
 "westnet-eastnet-aggr" #1: initiating IKEv1 Aggressive Mode connection
 "westnet-eastnet-aggr" #1: sent Aggressive Mode request
+"westnet-eastnet-aggr" #1: IMPAIR: dropping Aggressive Mode I2 packet as per impair
 "westnet-eastnet-aggr" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-aggr" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-aggr" #1: IMPAIR: revival: skip scheduling revival event
