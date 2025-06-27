@@ -1,0 +1,40 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair ddos_cookie:mangle
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair revival
+west #
+ ipsec add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ # expected to fail due to bad dcookie
+west #
+ ipsec up westnet-eastnet-ikev2 #retransmits
+"westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload
+"westnet-eastnet-ikev2" #1: IMPAIR: mangling DDOS cookie sent by peer
+"westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: IKE_SA_INIT_I: 5 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ikev2" #1: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ikev2" #1: deleting IKE SA (sent IKE_SA_INIT request)
+west #
+ echo done
+done
+west #
+ grep -e IMPAIR: -e '^packet from ' /tmp/pluto.log
+"westnet-eastnet-ikev2" #1: IMPAIR: mangling DDOS cookie sent by peer
+"westnet-eastnet-ikev2" #1: IMPAIR: revival: skip scheduling revival event
+west #

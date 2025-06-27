@@ -181,9 +181,9 @@ kvmplutotest	ikev2-05-basic-psk-debian		good
 kvmplutotest	ikev2-06-dual-net			good	github/275
 kvmplutotest	ikev2-06-dual-net-notany		good
 kvmplutotest	ikev2-07-invalid-xchg			good
-kvmplutotest	ikev2-dcookie-01			good
-kvmplutotest	ikev2-dcookie-02			good
-kvmplutotest	ikev2-dcookie-03			good
+kvmplutotest	ikev2-ddos-cookie-01			good
+kvmplutotest	ikev2-ddos-cookie-02-mangle		good
+kvmplutotest	ikev2-ddos-cookie-03-add		good
 
 kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
