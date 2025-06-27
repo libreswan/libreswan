@@ -1940,7 +1940,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * see ikev1-aggr-08-copy-r1-spis-to-i1
 		 */
 		if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
-			ldbg(ike->sa.logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
+			llog(RC_LOG, ike->sa.logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
 			/* skip non-ESP marker if needed */
 			size_t skip = (ike->sa.st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
 			size_t spis = sizeof(md->hdr.isa_ike_spis);
