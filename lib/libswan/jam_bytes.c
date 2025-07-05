@@ -40,6 +40,24 @@ size_t jam_HEX_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	return n;
 }
 
+size_t jam_json_quoted_bytes(struct jambuf *buf, const void *ptr, size_t size)
+{
+	size_t n = 0;
+	const char *chars = ptr;
+	for (unsigned i = 0; i < size; i++) {
+		char c = chars[i];
+		switch (c) {
+		case '"':
+		case '\\':
+			n += jam_char(buf, '\\');
+			/* FALLTHROUGH */
+		default:
+			n += jam_char(buf, chars[i]);
+		}
+	}
+	return n;
+}
+
 /*
  * Roughly mimic LDBG_dump(): use a space separator; and after the 4th
  * byte, a double space separator.
