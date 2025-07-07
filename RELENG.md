@@ -40,7 +40,17 @@
 - push commits to github (or wait 15 mins):
     ssh build@vaul.libreswan.org ./bin/github-push.sh
 
-## GITHUB
+# After the release
+
+- Start new section in CHANGES with x.y+1 (unreleased)
+
+- Post to announce@libreswan.org
+
+  (causes mail approval msgs for swan and dev as well)
+
+- twitter: announce using libreswan account [no longer done]
+
+## Update GITHUB
 
 - create a milestone for the next release
 
@@ -52,19 +62,17 @@
 
   v5.3, for instance, has the colour #0503ff, get it?
 
-# After the release
+- add replease to GITHUB
 
-- Start new section in CHANGES with x.y+1 (unreleased)
+  see (https://github.com/libreswan/libreswan/releases)[releases]
 
-- Post to announce@libreswan.org
-
-  (causes mail approval msgs for swan and dev as well)
+## Update Distros
 
 - Build fedora release
 
-- future: build copr releases for Centos Stream
+- update pkgsrc/wip/libreswan-5/
 
-- twitter: announce using libreswan account [no longer done]
+- future: build copr releases for Centos Stream
 
 ## rebuild testing.libreswan.org
 
