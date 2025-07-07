@@ -40,12 +40,25 @@
 - push commits to github (or wait 15 mins):
     ssh build@vaul.libreswan.org ./bin/github-push.sh
 
+## GITHUB
+
+- create a milestone for the next release
+
+- close this release's milestone
+
+  (it has nothing outstanding, right?!?)
+
+- create a bug label with magic colouring
+
+  v5.3, for instance, has the colour #0503ff, get it?
+
 # After the release
 
 - Start new section in CHANGES with x.y+1 (unreleased)
 
-- Post to announce@libreswan.org (causes mail approval msgs for swan
-  and dev as well)
+- Post to announce@libreswan.org
+
+  (causes mail approval msgs for swan and dev as well)
 
 - Build fedora release
 
@@ -53,9 +66,8 @@
 
 - twitter: announce using libreswan account [no longer done]
 
-- update 
+## rebuild testing.libreswan.org
 
-## Update testing.libreswan.org
-
-This website will need an update.  See "After a Release" in
-`testing/web/README.md`
+Details should be in testing.libreswan.org/README.md under "After a
+Release" but a quick summary is: reboot; update/upgrade machine; save
+-0- result in releases/; delete results/; re-start tester script
