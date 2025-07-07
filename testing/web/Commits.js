@@ -27,10 +27,7 @@ class Commits {
 	    }
 	}
 
-	// fill in children
-	//
-	// walk first parent before walking second parent so that
-	// first child back link is to first parent
+	// Walk the parent chain adding backlinks to children.
 	this._fill_children(this.commits[0])
 
 	/* save oldest and and newest based on commit date */
@@ -44,13 +41,16 @@ class Commits {
 	console.log("commits", i, this)
     }
 
+    // Walk the child's parent branches adding backlinks to the
+    // parent's children. Start with first parent (aka 0) so that
+    // mainline is correct.
+
     _fill_children(child) {
-	// assume child has at least one parent
 	let branches = []
 	branches.push([child, 0])
 	while (branches.length > 0) {
 	    let [child, level] = branches.pop()
-	    do {
+	    while (child.parents.length > 0) {
 		if (child.parents.length > level+1) {
 		    branches.push([child, level+1])
 		}
@@ -61,7 +61,7 @@ class Commits {
 		parent.children.push(child)
 		child = parent
 		level = 0
-	    } while (child.parents.length > 0)
+	    }
 	}
 	return
     }
