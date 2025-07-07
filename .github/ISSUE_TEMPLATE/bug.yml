@@ -1,68 +1,51 @@
 name: Bug Report
-description: File a bug report.
+title: What is the problem?
 type: bug
+description: |
+  File a bug report
 body:
+  - type: markdown
+    attributes:
+      value: |
+        _Please remember that this is a volunteer project._
+        _If you have an urgent problem that cannot wait, consider one of the [commercial support](https://libreswan.org/wiki/Support) options._
   - type: textarea
     attributes:
-      label: Please Tell Us About Your System
+      label: Please Tell Us About Your Operating System
       description: |
-        Please provide the output from `ipsec whack --version` and `uname -a`.
-        If the other end is different, then include that as well.
-    validations:
-      required: true
-  - type: checkboxes
-    id: ike_version
-    attributes:
-      label: IKE Version
-      description: |
-        Please note that IKEv1 is (depreciated)[https://www.rfc-editor.org/rfc/rfc9395].
-        If you can, please try reproducing the problem using IKEv2.
-      options:
-        - label: IKEv1
-        - label: IKEv2
-    validations:
-      required: true
-  - type: checkboxes
-    id: protocol
-    attributes:
-      label: Protocol
-      description: |
-        Please note that AH has, for the most part, been made obsolete by ESP with NULL integrity
-        (the exception is AH combined with transport mode).
-      options:
-        - label: ESP
-        - label: AH
-    validations:
-      required: false
-  - type: checkboxes
-    id: interface
-    attributes:
-      label: Is IPsec or VTI involved?
-      description: |
-        Please note that on Linux, VTI has been replaced by XFRMI (enabled using `ipsec-interface=`).
-        (The BSD IPsec devices are only supported using `ipsec-interface=`).
-      options:
-        - label: IPsec Interface
-        - label: VTI
-    validations:
-      required: false
-  - type: textarea
-    attributes:
-      label: What happened?
-      description: Also tell us, what you expected to happen?
+        - what is the local machine's Operating System?<br>
+          Please include the output from `uname -a`
+        - which Liberswan version is the local machine running?<br>
+          Please include the output from `ipsec whack --version`.<br>
+          You're more likely to get someones attention when the problem has been reproduced in the current release
+        - is the peer different?<br>
+          If so, please include its details.
+      placeholder: Your system details
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Your configuration
-      description: Please copy and past your configuration file.
+      label: Please Describe Your IPsec Configuration
+      description: |
+        - what are the host and client addresses?
+        - are you using IKEv1 or IKEv2?<br>
+          Since IKEv1 is [deprecated](https://www.rfc-editor.org/rfc/rfc9395) you're more likely to get attention when an IKEv1 problem is also demonstrated using IKEv2.
+          However, we're still interested in interop. issues and crashes.
+        - are you using ESP or AH, TRANSPORT or TUNNEL mode, IPCOMP, IP-TFS?<br>
+          AH has been made obsolete by ESP and NULL authentication (the only exception is AH+TRANSPORT).
+        - (on Linux) are you using VTI or IPsec Interfaces (XFRMI)?<br>
+          If you're using VTI then please try IPsec Interfaces.
       placeholder: |
-        - if necessary remove sensitive details
-          but keep as much information as possible
-        - this will be automatically formatted into code, so no need for backticks
-      render: shell
+        If possible, include `ipsec.conf` (wrapped in tripple backticks)
     validations:
-      required: false
+      required: true
+  - type: textarea
+    attributes:
+      label: Please Tell Us What Happened?
+      placeholder: |
+        Also tell us, what you expected to happen?
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: Relevant log output
@@ -74,8 +57,6 @@ body:
           most problems are better understood with just the standard logs
         - this will be automatically formatted into code, so no need for backticks.
       render: shell
-    validations:
-      required: false
   - type: markdown
     attributes:
       value: |
