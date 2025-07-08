@@ -168,7 +168,7 @@ ipsec _vendoridcheck: FIPS Mode: OFF
 [Libreswan (3.6+)] (prefix match)
   4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d            OE-Libreswan-
 [Libreswan (this version)]
-  4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d 35 2e 32   OE-Libreswan-5.2
+  4f 45 2d 4c  69 62 72 65  73 77 61 6e  2d 35 2e 33   OE-Libreswan-5.3
 [FreeS/WAN 2.00]
   4f 45 44 76  5b 57 6b 40  45 41 74 47                OEDv[Wk@EAtG
 [Openswan 2.2.0]
