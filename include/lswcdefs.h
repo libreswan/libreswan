@@ -42,23 +42,25 @@
 
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT
-# define NEVER_RETURNS __attribute__ ((noreturn))
-# define UNUSED __attribute__ ((unused))
-# define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
+# define NEVER_RETURNS		__attribute__ ((noreturn))
+# define UNUSED			__attribute__ ((unused))
+# define MUST_USE_RESULT	__attribute__ ((warn_unused_result))
+# define NONNULL(ARG, ...)	__attribute__ ((nonnull(ARG, ##__VA_ARGS__)))
 #else
-# define NEVER_RETURNS  /* ignore */
-# define UNUSED         /* ignore */
+# define NEVER_RETURNS		/* ignore */
+# define UNUSED			/* ignore */
 # define MUST_USE_RESULT	/* ignore */
+# define NONNULL(ARG, ...)	/* ignore */
 #endif
 
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
-# define PRINTF_LIKE(n) /* ignore */
-# define VPRINTF_LIKE(n) /* ignore */
-# define STRFTIME_LIKE(n) /* ignore */
+# define PRINTF_LIKE(n)		/* ignore */
+# define VPRINTF_LIKE(n)	/* ignore */
+# define STRFTIME_LIKE(n)	/* ignore */
 #else
-# define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
-# define VPRINTF_LIKE(n) __attribute__((format(printf, n, 0)))
-# define STRFTIME_LIKE(n) __attribute__ ((format(strftime, n, 0)))
+# define PRINTF_LIKE(n)		__attribute__ ((format(printf, n, n + 1)))
+# define VPRINTF_LIKE(n)	__attribute__ ((format(printf, n, 0)))
+# define STRFTIME_LIKE(n)	__attribute__ ((format(strftime, n, 0)))
 #endif
 
 /*

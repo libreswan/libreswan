@@ -81,7 +81,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
 	passert(privk != NULL);
 	passert(pubk != NULL);
-	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, HERE);
+	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, logger, HERE);
 	secret->group = group;
 	secret->privk = privk;
 	secret->pubk = pubk;
@@ -105,7 +105,8 @@ const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
 {
-	return addref_where(secret, where);
+	struct logger *logger = &global_logger;
+	return addref_where(secret, logger, where);
 }
 
 void dh_local_secret_delref(struct dh_local_secret **secretp, where_t where)

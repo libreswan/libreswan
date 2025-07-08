@@ -368,9 +368,9 @@ bool all_connections(struct connection_filter *filter)
 			struct connection_filter iterator = *filter;
 			unsigned i = 0;
 			while (next_connection(&iterator)) {
-				vassert(refcnt_peek(iterator.c, verbose.logger) >= 1);
+				vassert(refcnt_peek(iterator.c) >= 1);
 				connections[i++] = connection_addref(iterator.c, verbose.logger);
-				vassert(refcnt_peek(iterator.c, verbose.logger) > 1);
+				vassert(refcnt_peek(iterator.c) > 1);
 			}
 			vassert(i == count);
 			vassert(connections[i] == NULL);
@@ -385,7 +385,7 @@ bool all_connections(struct connection_filter *filter)
 	 * XXX: refcnt_peek() returns 0 for NULL.
 	 */
 
-	while (refcnt_peek(filter->connections[filter->count], verbose.logger) == 1) {
+	while (refcnt_peek(filter->connections[filter->count]) == 1) {
 		connection_delref(&filter->connections[filter->count], verbose.logger);
 		filter->count++;
 	}
@@ -395,7 +395,7 @@ bool all_connections(struct connection_filter *filter)
 	 */
 	filter->c = filter->connections[filter->count];
 	if (filter->c != NULL) {
-		vassert(refcnt_peek(filter->c, verbose.logger) > 1);
+		vassert(refcnt_peek(filter->c) > 1);
 		connection_delref(&filter->connections[filter->count], verbose.logger);
 		filter->count++;
 		return true;

@@ -980,7 +980,8 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 
 struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 {
-	return addref_where(pk, where);
+	struct logger *logger = &global_logger;
+	return addref_where(pk, logger, where);
 }
 
 /*
@@ -1065,10 +1066,12 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   shunk_t issuer,
 				   where_t where)
 {
+	struct logger *logger = &global_logger;
+
 	pexpect(pkc->keyid.keyid[0] != '\0');
 	pexpect(pkc->ckaid.len > 0);
 
-	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len, where);
+	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len, logger, where);
 	pk->content = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
@@ -1182,7 +1185,8 @@ static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_
 struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuff *pks,
 						       where_t where)
 {
-	return addref_where(pks, where);
+	struct logger *logger = &global_logger;
+	return addref_where(pks, logger, where);
 }
 
 void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)
@@ -1218,7 +1222,7 @@ static err_t add_private_key(struct secret **secrets,
 	s->kind = type->private_key_kind;
 	s->line = 0;
 	/* make an unpacked copy of the private key */
-	s->u.pubkey = refcnt_alloc(struct secret_pubkey_stuff, HERE);
+	s->u.pubkey = refcnt_alloc(struct secret_pubkey_stuff, logger, HERE);
 	s->u.pubkey->private_key = copy_private_key(private_key);
 	s->u.pubkey->content = content;
 

@@ -111,8 +111,9 @@ const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if,
 static struct ipsec_interface_address *alloc_ipsec_interface_address(struct ipsec_interface *ipsec_if,
 								     ip_cidr cidr)
 {
+	struct logger *logger = &global_logger;
 	struct ipsec_interface_address *new_address =
-		refcnt_alloc(struct ipsec_interface_address, HERE);
+		refcnt_alloc(struct ipsec_interface_address, logger, HERE);
 	new_address->pluto_added = false;
 	new_address->if_ip = cidr;
 	/* add to front */
@@ -150,7 +151,8 @@ static struct ipsec_interface_address *find_ipsec_interface_address(struct ipsec
 static struct ipsec_interface_address *ipsec_interface_address_addref(struct ipsec_interface_address *address,
 								      where_t where)
 {
-	return addref_where(address, where);
+	struct logger *logger = &global_logger;
+	return addref_where(address, logger, where);
 }
 
 static void ipsec_interface_address_delref(struct ipsec_interface *ipsec_if,
@@ -444,12 +446,13 @@ static struct ipsec_interface *find_ipsec_interface_by_id(ipsec_interface_id_t i
 static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_if_id,
 						     const struct iface_device *iface)
 {
+	struct logger *logger = &global_logger;
 	/*
 	 * Create a new ref-counted ipsec_interface, it is not added
 	 * to system yet.  The call to refcnt_alloc() counts as the
 	 * first reference.
 	 */
-	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, HERE);
+	struct ipsec_interface *p = refcnt_alloc(struct ipsec_interface, logger, HERE);
 	p->if_id = ipsec_if_id;
 	/* unmap the ID and then generate the name; can't use str*id()
 	 * function above as that appends [] */
@@ -470,9 +473,9 @@ static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_
 }
 
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
-					       struct logger *logger UNUSED, where_t where)
+					       struct logger *logger, where_t where)
 {
-	return addref_where(ipsec_if, where);
+	return addref_where(ipsec_if, logger, where);
 }
 
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,

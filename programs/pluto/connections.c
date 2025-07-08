@@ -419,12 +419,12 @@ void delete_connection_where(struct connection **cp, where_t where)
 
 struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where)
 {
-	return laddref_where(c, owner, where);
+	return refcnt_addref(c, owner, where);
 }
 
 void connection_delref_where(struct connection **cp, const struct logger *owner, where_t where)
 {
-	struct connection *c = ldelref_where(cp, owner, where);
+	struct connection *c = refcnt_delref(cp, owner, where);
 	if (c == NULL) {
 		return;
 	}
@@ -437,7 +437,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 	bool ok_to_delete = true;
 	struct logger *logger = c->logger;
 
-	unsigned refcnt = refcnt_peek(c, logger);
+	unsigned refcnt = refcnt_peek(c);
 	if (refcnt != 0) {
 		llog_pexpect(logger, where,
 			     "connection "PRI_CO" [%p] still has %u references",
@@ -3157,7 +3157,7 @@ struct connection *alloc_connection(const char *name,
 				    struct logger *logger,
 				    where_t where)
 {
-	struct connection *c = refcnt_alloc(struct connection, where);
+	struct connection *c = refcnt_alloc(struct connection, logger, where);
 	const struct config *config = (t != NULL ? t->config : root_config);
 
 	/* before alloc_logger(); can't use C */

@@ -372,7 +372,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 		bad_case(c->config->ike_version);
 	}
 
-	if (is_instance(c) && refcnt_peek(c, c->logger) == 1) {
+	if (is_instance(c) && refcnt_peek(c) == 1) {
 		/*
 		 * XXX: hack don't detach the console.  This way when
 		 * the caller delref()s the connection's last
