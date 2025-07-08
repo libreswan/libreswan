@@ -210,7 +210,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 	if (local_nsp->nr > 1 || remote_nsp->nr > 1) {
 		llog_narrowed_selector_payloads(RC_LOG, verbose.logger,
 						local_nsp, remote_nsp);
-	} else if (DBGP(DBG_BASE)) {
+	} else if (VDBGP()) {
 		llog_narrowed_selector_payloads(DEBUG_STREAM, verbose.logger,
 						local_nsp, remote_nsp);
 	}

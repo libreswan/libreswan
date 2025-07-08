@@ -105,7 +105,7 @@ void append_pending(struct ike_sa *ike,
 	 * going on; no need to log this action.
 	 */
 	enum stream only = (!part_of_initiating_ike_sa ? ALL_STREAMS :
-			    DBGP(DBG_BASE) ? DEBUG_STREAM :
+			    LDBGP(DBG_BASE, p->logger) ? DEBUG_STREAM :
 			    NO_STREAM);
 
 	if (only != NO_STREAM) {

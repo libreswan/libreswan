@@ -2116,6 +2116,8 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     void *dest_start, size_t dest_size,
 		     struct pbs_in *obj_pbs)
 {
+	struct logger *logger = &global_logger;
+
 	const uint8_t *cur = ins->cur;
 	if (cur + sd->size > ins->roof) {
 		return diag("not enough room in input packet for %s (remain=%li, sd->size=%zu)",
@@ -2314,7 +2316,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		obj_pbs->desc = sd;
 	}
 	ins->cur = roof;
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		DBG_prefix_print_pbs_in_struct(ins, "parse ",
 					       dest_start, sd,
 					       true);
@@ -2668,10 +2670,11 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 {
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
+	struct logger *logger = outs->logger;
 
 	passert(struct_size == 0 || struct_size >= sd->size);
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		DBG_prefix_print_pbs_out_struct(outs, "emit ", struct_ptr, sd, obj_pbs == NULL);
 	}
 

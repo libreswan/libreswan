@@ -73,9 +73,11 @@ threadtime_t threadtime_start(void)
 
 void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...)
 {
-	if (DBGP(DBG_CPU_USAGE)) {
+	struct logger *logger = &global_logger;
+
+	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		struct cpu_usage usage = threadtime_sub(threadtime_start(), *start);
-		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			if (serialno > 0) {
 				/* on thread so in background */
 				jam(buf, "(#%lu) ", serialno);
@@ -102,9 +104,11 @@ logtime_t logtime_start(struct logger *logger)
 
 struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 {
+	struct logger *logger = &global_logger;
+
 	struct cpu_usage usage = threadtime_sub(threadtime_start(), start->time);
-	if (DBGP(DBG_CPU_USAGE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+	if (LDBGP(DBG_CPU_USAGE, logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
@@ -161,6 +165,8 @@ static statetime_t start_statetime(struct state *st,
 
 statetime_t statetime_start(struct state *st)
 {
+	struct logger *logger = &global_logger;
+
 	if (st == NULL) {
 		/*
 		 * IKEv1 sometimes doesn't have a state to time, just
@@ -169,7 +175,7 @@ statetime_t statetime_start(struct state *st)
 		dbg("in %s() with no state", __func__);
 		return disabled_statetime;
 	}
-	if (st->st_timing.level > 0 && !DBGP(DBG_CPU_USAGE)) {
+	if (st->st_timing.level > 0 && !LDBGP(DBG_CPU_USAGE, logger)) {
 		/*
 		 * When DBG_CPU_USAGE isn't enabled, only time the
 		 * outer most level.
@@ -179,7 +185,7 @@ statetime_t statetime_start(struct state *st)
 	/* save last_log before start_statetime() updates it */
 	threadtime_t last_log = st->st_timing.last_log.time;
 	statetime_t start = start_statetime(st, threadtime_start());
-	if (DBGP(DBG_CPU_USAGE) && start.level > 0) {
+	if (LDBGP(DBG_CPU_USAGE, logger) && start.level > 0) {
 		/*
 		 * If there a large blob of time unaccounted for since
 		 * the last and nested start() or stop() call, log it
@@ -192,6 +198,8 @@ statetime_t statetime_start(struct state *st)
 
 statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 {
+	struct logger *logger = &global_logger;
+
 	if (st == NULL) {
 		/*
 		 * IKEv1 sometimes doesn't have a state to time, just
@@ -212,7 +220,7 @@ statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 	 * inception, log it.  Remember, start.time will be set to
 	 * inception time so isn't useful.
 	 */
-	if (DBGP(DBG_CPU_USAGE)) {
+	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		DBG_missing(&start, threadtime_start(), *inception);
 	}
 	return start;
@@ -220,6 +228,8 @@ statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 
 void statetime_stop(const statetime_t *start, const char *fmt, ...)
 {
+	struct logger *logger = &global_logger;
+
 	/*
 	 * Check for disabled statetime, indicates that timing is
 	 * disabled for this level.
@@ -227,7 +237,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	if (memeq(start, &disabled_statetime, sizeof(disabled_statetime))) {
 		return;
 	}
-	pexpect(start->level == 0 || DBGP(DBG_CPU_USAGE));
+	pexpect(start->level == 0 || LDBGP(DBG_CPU_USAGE, logger));
 
 	/* state disappeared? */
 	struct state *st = state_by_serialno(start->so);
@@ -242,14 +252,14 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	 * If there a large blob of time unaccounted for since the
 	 * last nested stop(), log it as a separate line item.
 	 */
-	if (DBGP(DBG_CPU_USAGE) &&
+	if (LDBGP(DBG_CPU_USAGE, logger) &&
 	    st->st_timing.last_log.level > start->level) {
 		DBG_missing(start, stop_time, st->st_timing.last_log.time);
 	}
 
 	/* time since start */
 	struct cpu_usage usage = threadtime_sub(stop_time, start->time);
-	if (DBGP(DBG_CPU_USAGE)) {
+	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {

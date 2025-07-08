@@ -46,7 +46,7 @@ void fd_delref_where(struct fd **fdp, where_t where)
 	if (fd != NULL) {
 		pexpect(fd->magic == FD_MAGIC);
 		if (close(fd->fd) != 0) {
-			if (DBGP(DBG_BASE)) {
+			if (LDBGP(DBG_BASE, logger)) {
 				llog_errno(DEBUG_STREAM, logger, errno,
 					   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
 					   pri_fd(fd), pri_where(where));

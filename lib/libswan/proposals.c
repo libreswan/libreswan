@@ -823,14 +823,16 @@ struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims
 
 void proposal_next_token(struct proposal_tokenizer *tokens)
 {
+	struct logger *logger = &global_logger;
+
 	/* shuffle terminators */
 	tokens->prev_term = tokens->this_term;
 	tokens->this_term = tokens->next_term;
 	/* shuffle tokens */
 	tokens->this = tokens->next;
 	tokens->next = shunk_token(&tokens->input, &tokens->next_term, tokens->delims);
-	if (DBGP(DBG_PROPOSAL_PARSER)) {
-		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "token: ");
 			if (tokens->prev_term != '\0') {
 				jam(buf, "'%c'", tokens->prev_term);

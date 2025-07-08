@@ -156,7 +156,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 	/*
 	 * The IKEv2 documentation, even for ECP, refers to "g^ir".
 	 */
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_dh_local_secret(buf, secret);
 			jam(buf, "computed shared DH secret key@%p",

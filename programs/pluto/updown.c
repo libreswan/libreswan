@@ -270,7 +270,7 @@ static bool fmt_common_shell_out(char *buf,
 		first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->outbound.spi),
 		first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->inbound.spi));
 
-	if (DBGP(DBG_UPDOWN)) {
+	if (LDBGP(DBG_UPDOWN, verbose.logger)) {
 		JDstr("IPSEC_INIT_SCRIPT_DEBUG", "yes");
 	}
 

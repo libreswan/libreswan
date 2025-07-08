@@ -222,7 +222,7 @@ static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 
 bool orient(struct connection *c, struct logger *logger)
 {
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(c->logger, "orienting %s", c->name);
 		LDBG_orient_end(c, LEFT_END);
 		LDBG_orient_end(c, RIGHT_END);
@@ -250,7 +250,7 @@ bool orient(struct connection *c, struct logger *logger)
 		bool right = host_end_matches_iface(c, RIGHT_END, iface);
 
 		if (!left && !right) {
-			if (DBGP(DBG_BASE)) {
+			if (LDBGP(DBG_BASE, logger)) {
 				LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 					jam_string(buf, "    interface ");
 					jam_iface(buf, iface);
@@ -320,7 +320,7 @@ bool orient(struct connection *c, struct logger *logger)
 		}
 
 		/* save match, and then continue search */
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 				jam_string(buf, "    interface ");
 				jam_iface(buf, iface);

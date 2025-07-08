@@ -69,7 +69,7 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 	case AUTO_PREFIX:
 		jam_stream_prefix(buf, stream);
 		if (stream != DEBUG_STREAM ||
-		    DBGP(DBG_ADD_PREFIX) ||
+		    LDBGP(DBG_ADD_PREFIX, logger) ||
 		    logger->debugging != LEMPTY) {
 			jam_logger_prefix(buf, logger);
 		}

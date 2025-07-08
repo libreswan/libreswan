@@ -330,7 +330,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		log_raw(DEFAULT_LOGLEVEL, "", buf);
 		return;
 	case WHACK_STREAM:
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, logger)) {
 			log_raw(LOG_DEBUG, "|] ", buf);
 		}
 		log_whacks(rc, logger, buf);
@@ -472,7 +472,7 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 		const struct state *st = object;
 		s += jam_state(buf, st);
 		/* state name */
-		if (DBGP(DBG_ADD_PREFIX)) {
+		if (LDBGP(DBG_ADD_PREFIX, st->logger)) {
 			s += jam(buf, " ");
 			s += jam_string(buf, st->st_state->short_name);
 		}

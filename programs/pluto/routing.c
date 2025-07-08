@@ -255,7 +255,7 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 		old.owner[i] = c->routing.owner[i];
 	}
 
-	if (DBGP(DBG_ROUTING)) {
+	if (LDBGP(DBG_ROUTING, logger)) {
 		/*
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
@@ -279,7 +279,7 @@ static void ldbg_routing_stop(enum routing_event event,
 			      const struct old_routing *old,
 			      bool ok)
 {
-	if (DBGP(DBG_ROUTING)) {
+	if (LDBGP(DBG_ROUTING, logger)) {
 		/*
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
@@ -312,7 +312,7 @@ static void ldbg_routing_stop(enum routing_event event,
 PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...)
 {
-	if (DBGP(DBG_ROUTING)) {
+	if (LDBGP(DBG_ROUTING, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
 			jam_string(buf, "routing:   ");
 			va_list ap;
@@ -1429,12 +1429,13 @@ static void set_established_ike(enum routing_event event UNUSED,
 {
 	/* steal both the established and negotiating IKE SAs */
 	struct ike_sa *ike = (*e->ike);
+	struct logger *logger = ike->sa.logger;
 	c->negotiating_ike_sa = c->established_ike_sa = ike->sa.st_serialno;
 	c->routing.state = routing; /* XXX: but this is IKE!?! */
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	/* dump new keys */
-	if (DBGP(DBG_PRIVATE)) {
+	if (LDBGP(DBG_PRIVATE, logger)) {
 		LDBG_tcpdump_ike_sa_keys(&global_logger, ike);
 	}
 }
@@ -2403,7 +2404,7 @@ static bool dispatch_1(enum routing_event event,
 
 	}
 
-	BARF_JAMBUF((DBGP(DBG_ROUTING) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+	BARF_JAMBUF((LDBGP(DBG_ROUTING, logger) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 		    c->logger, /*ignore-exit-code*/0, e->where, buf) {
 		jam_routing_prefix(buf, "unhandled", event,
 				   c->routing.state, c->routing.state,

@@ -415,7 +415,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	}
 
 	/* now, encrypt */
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(sk->logger, "data before [authenticated] encryption:");
 		LDBG_hunk(sk->logger, enc);
 		LDBG_log(sk->logger, "integ before [authenticated] encryption:");
@@ -458,7 +458,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 		memcpy_hunk(sk->integrity.ptr, mac, sk->integrity.len);
 
-		if (DBGP(DBG_CRYPT)) {
+		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(sk->logger, "data being hmac:");
 			LDBG_hunk(sk->logger, message);
 			LDBG_log(sk->logger, "out calculated auth:");
@@ -466,7 +466,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		}
 	}
 
-	if (DBGP(DBG_CRYPT)) {
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(sk->logger, "data after [authenticated] encryption:");
 		LDBG_hunk(sk->logger,  enc);
 		LDBG_log(sk->logger, "integ after [authenticated] encryption:");
@@ -597,7 +597,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			return false;
 		}
 
-		if (DBGP(DBG_CRYPT)) {
+		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "data after authenticated decryption:");
 			LDBG_hunk(ike->sa.logger, enc);
 			LDBG_hunk(ike->sa.logger, integ);
@@ -620,7 +620,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		dbg("authenticator matched");
 
-		if (DBGP(DBG_CRYPT)) {
+		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload before decryption:");
 			LDBG_hunk(ike->sa.logger, enc);
 		}
@@ -630,7 +630,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 					 wire_iv, enc, /*ikev1_iv*/NULL,
 					 ike->sa.logger);
 
-		if (DBGP(DBG_CRYPT)) {
+		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload after decryption:");
 			LDBG_hunk(ike->sa.logger, enc);
 		}
