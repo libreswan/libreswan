@@ -25,11 +25,13 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 			    const uint8_t *packet, size_t packet_len,
 			    where_t where)
 {
-	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len, where);
+	struct logger *logger = &global_logger;
+	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len,
+						 logger, where);
 	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
 	md->logger = alloc_logger(md, &logger_message_vec,
-				     /*debugging*/LEMPTY, where);
+				  /*debugging*/LEMPTY, where);
 	void *buffer = md + 1;
 	md->packet_pbs = pbs_in_from_shunk(shunk2(buffer, packet_len), "packet");
 	if (packet != NULL) {
@@ -51,7 +53,7 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 
 struct msg_digest *md_addref_where(struct msg_digest *md, where_t where)
 {
-	return addref_where(md, where);
+	return refcnt_addref(md, NULL, where);
 }
 
 void md_delref_where(struct msg_digest **mdp, where_t where)

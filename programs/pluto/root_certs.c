@@ -33,7 +33,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *logger)
 	/* extend or set cert cache lifetime */
 	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
 	if (root_cert_db != NULL) {
-		return addref_where(root_cert_db, where);
+		return addref_where(root_cert_db, logger, where);
 	}
 
 	dbg("loading root certificate cache");
@@ -43,13 +43,13 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *logger)
 	 * it will contain an empty list of certificates (but avoid
 	 * possibly expensive attempts to re-load).
 	 */
-	root_cert_db = refcnt_alloc(struct root_certs, where);
+	root_cert_db = refcnt_alloc(struct root_certs, logger, where);
 
 	/*
 	 * Start with two references: the ROOT_CERT_DB; and the result
 	 * of this function.
 	 */
-	struct root_certs *root_certs = addref_where(root_cert_db, where); /* function result */
+	struct root_certs *root_certs = addref_where(root_cert_db, logger, where); /* function result */
 	root_certs->trustcl = CERT_NewCertList();
 
 	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
@@ -144,7 +144,7 @@ void free_root_certs(struct logger *logger)
 	 * the call to refcnt_peek and the root_certs_delref's deletion.
 	 * The consequence is benign: only a delay of FREE_ROOT_CERTS_TIMEOUT.
 	 */
-	if (refcnt_peek(root_cert_db, logger) > 1) {
+	if (refcnt_peek_where(root_cert_db, &root_cert_db->refcnt, logger, HERE) > 1) {
 		llog(RC_LOG, logger, "root certs still in use; suspect stuck thread");
 		/* extend or set cert cache lifetime */
 		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);

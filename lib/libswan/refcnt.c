@@ -1,6 +1,6 @@
 /* reference counting, for libreswan
  *
- * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2025  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,19 +20,21 @@
 
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+NONNULL(1,3,5)
 static void ldbg_ref(const struct logger *logger,
 		     const struct logger *owner,
-		     const char *why, const char *what,
-		     const void *pointer, where_t where,
+		     const char *why,
+		     const char *what,
+		     const void *pointer,
+		     where_t where,
 		     int old_count, int new_count)
 {
-	if (DBGP(DBG_REFCNT)) {
-		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
-			if (logger == NULL) {
+	if (LDBGP(DBG_REFCNT, logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_logger_prefix(buf, logger);
+			if (what != NULL) {
 				jam_string(buf, what);
 				jam_string(buf, ": ");
-			} else {
-				jam_logger_prefix(buf, logger);
 			}
 			jam(buf, "%sref @%p(%u->%u)",
 			    why, pointer, old_count, new_count);
@@ -53,9 +55,9 @@ static void ldbg_ref(const struct logger *logger,
  * So existing code can use the refcnt tracer.
  */
 
-void ldbg_alloc(const struct logger *new_owner, const char *what, const void *pointer, where_t where)
+void ldbg_alloc(const struct logger *logger, const char *what, const void *pointer, where_t where)
 {
-	ldbg_ref(NULL, new_owner, "new", what, pointer, where, 0, 1);
+	ldbg_ref(logger, NULL, "new", what, pointer, where, 0, 1);
 }
 
 void ldbg_free(const struct logger *logger, const char *what, const void *pointer, where_t where)
@@ -66,7 +68,7 @@ void ldbg_free(const struct logger *logger, const char *what, const void *pointe
 void ldbg_addref_where(const struct logger *logger, const char *what,
 		       const void *pointer, where_t where)
 {
-	if (DBGP(DBG_REFCNT)) {
+	if (LDBGP(DBG_REFCNT, logger)) {
 		LDBG_log(logger, "addref %s@%p "PRI_WHERE,
 			 what, pointer, pri_where(where));
 	}
@@ -75,7 +77,7 @@ void ldbg_addref_where(const struct logger *logger, const char *what,
 void ldbg_delref_where(const struct logger *logger, const char *what,
 		       const void *pointer, where_t where)
 {
-	if (DBGP(DBG_REFCNT)) {
+	if (LDBGP(DBG_REFCNT, logger)) {
 		LDBG_log(logger, "delref %s@%p "PRI_WHERE,
 			 what, pointer, pri_where(where));
 	}
@@ -83,8 +85,10 @@ void ldbg_delref_where(const struct logger *logger, const char *what,
 
 /* -- */
 
-void refcnt_init(const void *pointer, struct refcnt *refcnt,
+void refcnt_init(const void *pointer,
+		 struct refcnt *refcnt,
 		 const struct refcnt_base *base,
+		 const struct logger *logger,
 		 const struct where *where)
 {
 	unsigned old, new;
@@ -97,11 +101,11 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old != 0 || new != 1) {
-		llog_passert(&global_logger, where,
+		llog_passert(logger, where,
 			     "%s() %s@%p should have been 0 initialized",
 			     __func__, base->what, pointer);
 	}
-	ldbg_ref(NULL, NULL, "new", base->what, pointer, where, old, new);
+	ldbg_ref(logger, NULL, "new", base->what, pointer, where, old, new);
 }
 
 void refcnt_addref_where(const char *what,
@@ -121,7 +125,7 @@ void refcnt_addref_where(const char *what,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert((logger == NULL ? &global_logger : logger), where,
+		llog_passert(logger, where,
 			     "%s() refcnt for %s@%p should have been non-0",
 			     __func__, what, pointer);
 	}
@@ -167,7 +171,7 @@ void *refcnt_delref_where(const char *what, void *pointer,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert((logger == NULL ? &global_logger : logger), where,
+		llog_passert(logger, where,
 			     "%s() refcnt for %s@%p should have been non-0",
 			     __func__, what, pointer);
 	}

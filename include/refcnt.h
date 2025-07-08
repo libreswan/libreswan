@@ -43,69 +43,76 @@ typedef struct refcnt {
  */
 
 void refcnt_init(const void *pointer, struct refcnt *refcnt,
-		 const struct refcnt_base *base, where_t where);
+		 const struct refcnt_base *base,
+		 const struct logger *logger, where_t where)
+	NONNULL(1,2,3,4);
 
-#define refcnt_overalloc(THING, EXTRA, WHERE)			       \
+#define refcnt_overalloc(THING, EXTRA, LOGGER, WHERE)		       \
 	({							       \
 		static const struct refcnt_base b_ = {		       \
 			.what = #THING,				       \
 		};						       \
 		THING *t_ = overalloc_thing(THING, EXTRA);	       \
-		refcnt_init(t_, &t_->refcnt, &b_, WHERE);	       \
+		refcnt_init(t_, &t_->refcnt, &b_, LOGGER, WHERE);      \
 		t_;						       \
 	})
 
-#define refcnt_alloc(THING, WHERE)			\
-	refcnt_overalloc(THING, /*extra*/0, WHERE)
+#define refcnt_alloc(THING, LOGGER, WHERE)				\
+	refcnt_overalloc(THING, /*extra*/0, LOGGER, WHERE)
 
 /* look at refcnt atomically */
 
 unsigned refcnt_peek_where(const void *pointer,
 			   const refcnt_t *refcnt,
 			   const struct logger *owner,
-			   where_t where);
-#define refcnt_peek(OBJ, OWNER)						\
+			   where_t where)
+	NONNULL(1,2,3);
+
+#define refcnt_peek(OBJ)						\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
 		(o_ == NULL ? 0 : /* a NULL pointer has no references */ \
-		 refcnt_peek_where(o_, &o_->refcnt, OWNER, HERE));	\
+		 refcnt_peek_where(o_, &o_->refcnt, o_->logger, HERE));	\
 	})
 
 /*
  * Add a reference.
  */
 
-void refcnt_addref_where(const char *what, const void *pointer,
+void refcnt_addref_where(const char *what,
+			 const void *pointer,
 			 refcnt_t *refcnt,
 			 const struct logger *logger,
 			 const struct logger *new_owner,
-			 where_t where);
+			 where_t where)
+	NONNULL(1,2,3,4);
 
 /* old */
 
-#define addref_where(OBJ, WHERE)					\
-	({								\
-		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
-		if (o_ != NULL) {					\
-			refcnt_addref_where(#OBJ, o_,			\
-					    &o_->refcnt,		\
-					    NULL, NULL, WHERE);		\
-		}							\
-		o_; /* result */					\
+#define addref_where(OBJ, LOGGER, WHERE)			\
+	({							\
+		typeof(OBJ) o_ = OBJ; /* evaluate once */	\
+		if (o_ != NULL) {				\
+			refcnt_addref_where(#OBJ, o_,		\
+					    &o_->refcnt,	\
+					    LOGGER,		\
+					    NULL, WHERE);	\
+		}						\
+		o_; /* result */				\
 	})
 
 /* new */
 
-#define laddref_where(OBJ, OWNER, WHERE)				\
-	({								\
-		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
-		if (o_ != NULL) {					\
-			refcnt_addref_where(#OBJ, o_,			\
-					    &o_->refcnt,		\
-					    o_->logger,			\
-					    OWNER, WHERE);		\
-		}							\
-		o_; /* result */					\
+#define refcnt_addref(OBJ, OWNER, WHERE)			\
+	({							\
+		typeof(OBJ) o_ = OBJ; /* evaluate once */	\
+		if (o_ != NULL) {				\
+			refcnt_addref_where(#OBJ, o_,		\
+					    &o_->refcnt,	\
+					    o_->logger,		\
+					    OWNER, WHERE);	\
+		}						\
+		o_; /* result */				\
 	})
 
 /*
@@ -115,11 +122,14 @@ void refcnt_addref_where(const char *what, const void *pointer,
  * reference and needs to be pfree()ed.
  */
 
-void *refcnt_delref_where(const char *what, void *pointer,
+void *refcnt_delref_where(const char *what,
+			  void *pointer,
 			  struct refcnt *refcnt,
 			  const struct logger *logger,
 			  const struct logger *owner,
-			  where_t where) MUST_USE_RESULT;
+			  where_t where)
+	MUST_USE_RESULT
+	NONNULL(1,2,3,4);
 
 #define delref_where(OBJP, LOGGER, WHERE)				\
 	({								\
@@ -134,7 +144,7 @@ void *refcnt_delref_where(const char *what, void *pointer,
 		o_; /* NULL or last OBJ */				\
 	})
 
-#define ldelref_where(OBJP, OWNER, WHERE)				\
+#define refcnt_delref(OBJP, OWNER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
@@ -152,10 +162,20 @@ void *refcnt_delref_where(const char *what, void *pointer,
  * For code wanting to use refcnt checks but with normal allocs.
  */
 
-void ldbg_alloc(const struct logger *logger, const char *what, const void *pointer, where_t where);
-void ldbg_free(const struct logger *logger, const char *what, const void *pointer, where_t where);
+void ldbg_alloc(const struct logger *logger,
+		const char *what, const void *pointer, where_t where)
+	NONNULL(1,2);
 
-void ldbg_addref_where(const struct logger *logger, const char *what, const void *pointer, where_t where);
-void ldbg_delref_where(const struct logger *logger, const char *what, const void *pointer, where_t where);
+void ldbg_free(const struct logger *logger,
+	       const char *what, const void *pointer, where_t where)
+	NONNULL(1,2);
+
+void ldbg_addref_where(const struct logger *logger,
+		       const char *what, const void *pointer, where_t where)
+	NONNULL(1,2);
+
+void ldbg_delref_where(const struct logger *logger,
+		       const char *what, const void *pointer, where_t where)
+	NONNULL(1,2);
 
 #endif

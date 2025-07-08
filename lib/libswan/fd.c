@@ -34,8 +34,9 @@ struct fd {
 
 struct fd *fd_addref_where(struct fd *fd, const struct where *where)
 {
+	struct logger *logger = &global_logger;
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	return addref_where(fd, where);
+	return addref_where(fd, logger, where);
 }
 
 void fd_delref_where(struct fd **fdp, where_t where)
@@ -102,7 +103,7 @@ struct fd *fd_accept(int socket, const struct where *where, struct logger *logge
 		return NULL;
 	}
 
-	struct fd *fdt = refcnt_alloc(struct fd, where);
+	struct fd *fdt = refcnt_alloc(struct fd, logger, where);
 	fdt->fd = fd;
 	fdt->magic = FD_MAGIC;
 	dbg("%s: new "PRI_FD" "PRI_WHERE"",

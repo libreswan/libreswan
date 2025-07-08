@@ -186,6 +186,7 @@ struct lease {
 
 struct addresspool {
 	struct refcnt refcnt;
+	struct logger *logger;
 	ip_range r;
 	uint32_t size; /* number of addresses within range */
 
@@ -272,7 +273,7 @@ static void vdbg_pool(struct verbose verbose,
 		jam_va_list(buf, format, args);
 		va_end(args);
 		jam(buf, "; pool-refcount %u size %u leases %u in-use %u free %u reusable %u",
-		    refcnt_peek(pool, verbose.logger),
+		    refcnt_peek(pool),
 		    pool->size, pool->nr_leases,
 		    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
 	}
@@ -942,6 +943,7 @@ void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
 					free_lease_content(&pool->leases[l]);
 				}
 				pfreeany(pool->leases);
+				free_logger(&pool->logger, HERE);
 				pfree(pool);
 				return;
 			}
@@ -952,7 +954,9 @@ void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
 
 struct addresspool *addresspool_addref(struct addresspool *pool)
 {
-	return addref_where(pool, HERE);
+	struct logger *logger = &global_logger;
+
+	return refcnt_addref(pool, logger, HERE);
 }
 
 /*
@@ -1063,13 +1067,15 @@ diag_t install_addresspool(const ip_range pool_range,
 	}
 
 	/* make a new pool */
-	struct addresspool *new_pool = refcnt_alloc(struct addresspool, HERE);
+	struct addresspool *new_pool = refcnt_alloc(struct addresspool, logger, HERE);
 	new_pool->r = pool_range;
 	new_pool->size = pool_size;
 	new_pool->nr_in_use = 0;
 	new_pool->nr_leases = 0;
 	new_pool->free_list = empty_list;
 	new_pool->leases = NULL;
+
+	new_pool->logger = string_logger(HERE, "%s", str_range(&pool_range, &rb));
 
 	/* insert at front */
 	new_pool->next = pluto_pools;
