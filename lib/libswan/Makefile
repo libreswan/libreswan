@@ -146,7 +146,6 @@ OBJS += ip_bytes.o
 OBJS += ip_cidr.o
 OBJS += ip_encap.o
 OBJS += ip_endpoint.o
-OBJS += ip_index.o
 OBJS += ip_info.o
 OBJS += ip_packet.o
 OBJS += ip_port.o

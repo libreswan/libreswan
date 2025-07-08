@@ -93,7 +93,7 @@ static struct connection *duplicate_connection(const char *name, struct connecti
 	}
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
-		c->pool[afi->ip_index] = addresspool_addref(t->pool[afi->ip_index]);
+		c->pool[afi->ip.version] = addresspool_addref(t->pool[afi->ip.version]);
 	}
 
 	c->sa_marks = t->sa_marks; /* no pointers? */

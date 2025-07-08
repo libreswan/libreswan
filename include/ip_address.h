@@ -27,7 +27,6 @@
 #include "where.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
-#include "ip_index.h"
 #include "ip_base.h"
 
 struct in_addr;

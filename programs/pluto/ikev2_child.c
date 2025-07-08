@@ -981,8 +981,8 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	pexpect(ike->sa.st_connection == child->sa.st_connection);
 	const struct host_end_config *local = ike->sa.st_connection->local->host.config;
 	const struct ip_info *pool_afi =
-		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
-		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :
+		(child->sa.st_connection->pool[IPv4] != NULL ? &ipv4_info :
+		 child->sa.st_connection->pool[IPv6] != NULL ? &ipv6_info :
 		 NULL);
 	bool oe_server = (is_opportunistic(ike->sa.st_connection) &&
 			  md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL);

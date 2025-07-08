@@ -256,14 +256,14 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 
 	struct connection *cc = child->sa.st_connection;
-	bool ask_for_ip[IP_INDEX_ROOF] = {0};
+	bool ask_for_ip[IP_VERSION_ROOF] = {0};
 	bool ask_for_something = false;
 
 	FOR_EACH_ITEM(proposed, &cc->local->child.selectors.proposed) {
 		const struct ip_info *afi = selector_type(proposed);
 		ldbg(child->sa.logger, "pool says to ask for %s", afi->ip_name);
-		ask_for_ip[afi->ip_index] = true;
-		ask_for_something |= ask_for_ip[afi->ip_index];
+		ask_for_ip[afi->ip.version] = true;
+		ask_for_something |= ask_for_ip[afi->ip.version];
 	}
 
 	if (!ask_for_something) {
@@ -273,7 +273,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	}
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
-		if (ask_for_ip[afi->ip_index]) {
+		if (ask_for_ip[afi->ip.version]) {
 			if (!emit_v2CP_attribute_address(afi->ikev2_internal_address,
 							 NULL, "address", &cp_pbs) ||
 			    !emit_v2CP_attribute_address(afi->ikev2_internal_dns,
@@ -293,7 +293,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 {
 	struct connection *cc = child->sa.st_connection;
-	const struct addresspool *pool = cc->pool[afi->ip_index];
+	const struct addresspool *pool = cc->pool[afi->ip.version];
 	if (pool == NULL) {
 		ldbg_sa(child, "ignoring %s address request, no pool",
 			afi->ip_name);
@@ -520,7 +520,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 		return false;
 	}
 
-	bool duplicate_lease = local->lease[afi->ip_index].ip.is_set;
+	bool duplicate_lease = local->lease[afi->ip.version].ip.is_set;
 
 	address_buf ip_str;
 	llog_sa(RC_LOG, child,
@@ -539,7 +539,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	}
 
 	set_child_has_client(cc, local, true);
-	local->lease[afi->ip_index] = ip;
+	local->lease[afi->ip.version] = ip;
 
 	if (local->config->has_client_address_translation) {
 		address_buf ipb;

@@ -10,7 +10,6 @@
 #include "ip_selector.h"
 #include "ip_sockaddr.h"
 #include "ip_version.h"
-#include "ip_index.h"
 #include "constants.h"			/* for enum ikev2_ts_addr_range_type; et.al. */
 
 struct ip_info {
@@ -21,8 +20,6 @@ struct ip_info {
 		/* ip.version matches field in ip structs */
 		enum ip_version version; /* 4 or 6 */
 	} ip;
-
-	enum ip_index ip_index; /* 1 or 2 */
 
 	/* too many choices */
 	const char *n_name;	/* "4"|"6" */
@@ -139,10 +136,10 @@ struct ip_info {
 
 };
 
-extern const struct ip_info ip_families[IP_INDEX_ROOF];
+extern const struct ip_info ip_families[IP_VERSION_ROOF];
 
-#define ipv4_info ip_families[IPv4_INDEX]
-#define ipv6_info ip_families[IPv6_INDEX]
+#define ipv4_info ip_families[IPv4]
+#define ipv6_info ip_families[IPv6]
 extern const struct ip_info unspec_ip_info;
 
 extern const struct ip_info *aftoinfo(int af);

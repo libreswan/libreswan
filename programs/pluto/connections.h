@@ -51,7 +51,6 @@
 #include "diag.h"
 #include "ckaid.h"
 #include "authby.h"
-#include "ip_index.h"
 #include "routing.h"
 #include "connection_owner.h"
 #include "connection_kind.h"
@@ -154,7 +153,7 @@ struct child_end_config {
 	 * Should an addresspool combined with selectors be allowed?
 	 */
 	ip_ranges addresspools;
-	struct addresspool *addresspool[IP_INDEX_ROOF]; /* list? */
+	struct addresspool *addresspool[IP_VERSION_ROOF]; /* list? */
 
 	/*
 	 * When set, put this on the ipsec-interface.  Should there be
@@ -564,7 +563,7 @@ struct child_end {
 		 * The see append_end_selector(), but be warned other
 		 * code fiddles with this.
 		 */
-		ip_selector assigned[IP_INDEX_ROOF/*space for IPv4+IPv6 in no order*/];
+		ip_selector assigned[IP_VERSION_ROOF/*space for IPv4+IPv6 in no order*/];
 		ip_selectors proposed; /* either .config->selectors or above; do not free */
 		/*
 		 * XXX: used when logging the established description
@@ -603,11 +602,11 @@ struct child_end {
 #define nr_child_leases(END)						\
 	({								\
 		const struct connection_end *end_ = END;		\
-		(end_->child.lease[IPv4_INDEX].ip.is_set +		\
-		 end_->child.lease[IPv6_INDEX].ip.is_set);		\
+		(end_->child.lease[IPv4].ip.is_set +		\
+		 end_->child.lease[IPv6].ip.is_set);		\
 	})
 
-	ip_address lease[IP_INDEX_ROOF];
+	ip_address lease[IP_VERSION_ROOF];
 	bool has_cat;		/* add a CAT iptable rule when a valid
 				   INTERNAL_IP4_ADDRESS is received */
 };
@@ -890,7 +889,7 @@ struct connection {
 #define established_child_sa routing.owner[ESTABLISHED_CHILD_SA]
 	} routing;
 
-	struct addresspool *pool[IP_INDEX_ROOF];
+	struct addresspool *pool[IP_VERSION_ROOF];
 
 	uint16_t nflog_group;	/* NFLOG group - 0 means disabled */
 

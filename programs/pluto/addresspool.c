@@ -323,7 +323,7 @@ static void scribble_remote_lease(struct connection *c,
 {
 	/* assign the lease */
 	const struct ip_info *afi = address_info(ia);
-	c->remote->child.lease[afi->ip_index] = ia;
+	c->remote->child.lease[afi->ip.version] = ia;
 	set_child_has_client(c, remote, true);
 
 	/* update the selectors */
@@ -418,11 +418,11 @@ static struct lease *connection_lease(struct connection *c,
 	 * No point looking for a lease when the connection doesn't
 	 * think it has one.
 	 */
-	if (!pexpect(c->remote->child.lease[afi->ip_index].ip.is_set)) {
+	if (!pexpect(c->remote->child.lease[afi->ip.version].ip.is_set)) {
 		return NULL;
 	}
 
-	struct addresspool *pool = c->pool[afi->ip_index];
+	struct addresspool *pool = c->pool[afi->ip.version];
 
 	/*
 	 * "i" is index of client.addr within pool's range.
@@ -432,7 +432,7 @@ static struct lease *connection_lease(struct connection *c,
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	ip_address prefix = c->remote->child.lease[afi->ip_index];
+	ip_address prefix = c->remote->child.lease[afi->ip.version];
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
@@ -483,7 +483,7 @@ void free_that_address_lease(struct connection *c,
 	vdbg("freeing peer %s lease", afi->ip_name);
 	verbose.level++;
 
-	if (!c->remote->child.lease[afi->ip_index].ip.is_set) {
+	if (!c->remote->child.lease[afi->ip.version].ip.is_set) {
 		vdbg("connection has no %s lease", afi->ip_name);
 		return;
 	}
@@ -491,11 +491,11 @@ void free_that_address_lease(struct connection *c,
 	struct lease *lease = connection_lease(c, afi, verbose);
 	if (lease == NULL) {
 		vdbg("connection lost its %s lease", afi->ip_name);
-		c->remote->child.lease[afi->ip_index] = unset_address;
+		c->remote->child.lease[afi->ip.version] = unset_address;
 		return;
 	}
 
-	struct addresspool *pool = c->pool[afi->ip_index];
+	struct addresspool *pool = c->pool[afi->ip.version];
 
 	if (lease->reusable_name != NULL) {
 		/* the lease is reusable, leave it lingering */
@@ -513,7 +513,7 @@ void free_that_address_lease(struct connection *c,
 	}
 
 	/* break the link */
-	c->remote->child.lease[afi->ip_index] = unset_address;
+	c->remote->child.lease[afi->ip.version] = unset_address;
 	lease->assigned_to = COS_NOBODY;
 }
 
@@ -525,7 +525,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 				   const struct ip_info *afi,
 				   struct verbose verbose)
 {
-	struct addresspool *pool = c->pool[afi->ip_index];
+	struct addresspool *pool = c->pool[afi->ip.version];
 	if (pool->nr_leases == 0) {
 		return NULL;
 	}
@@ -790,14 +790,14 @@ diag_t assign_remote_lease(struct connection *c,
 
 	(*assigned_address) = unset_address;
 
-	if (c->remote->child.lease[afi->ip_index].ip.is_set &&
+	if (c->remote->child.lease[afi->ip.version].ip.is_set &&
 	    connection_lease(c, afi, verbose) != NULL) {
 		ldbg(logger, "connection both thinks it has, and really has a lease");
-		(*assigned_address) = c->remote->child.lease[afi->ip_index];
+		(*assigned_address) = c->remote->child.lease[afi->ip.version];
 		return NULL;
 	}
 
-	struct addresspool *pool = c->pool[afi->ip_index];
+	struct addresspool *pool = c->pool[afi->ip.version];
 	if (PBAD(logger, pool == NULL)) {
 		return diag("confused, no address pool");
 	}
@@ -1049,7 +1049,7 @@ diag_t install_addresspool(const ip_range pool_range,
 	}
 
 	const struct ip_info *afi = range_info(pool_range);
-	if (addresspool[afi->ip_index] != NULL) {
+	if (addresspool[afi->ip.version] != NULL) {
 		llog_pexpect(verbose.logger, HERE,
 			     "connection already has a %s address pool", afi->ip_name);
 		return diag("confused, connection has an address pool");
@@ -1058,7 +1058,7 @@ diag_t install_addresspool(const ip_range pool_range,
 	if (existing_pool != NULL) {
 		/* re-use existing pool */
 		vdbg_pool(verbose, existing_pool, "reusing existing address pool@%p", existing_pool);
-		addresspool[afi->ip_index] = addresspool_addref(existing_pool);
+		addresspool[afi->ip.version] = addresspool_addref(existing_pool);
 		return NULL;
 	}
 
@@ -1077,7 +1077,7 @@ diag_t install_addresspool(const ip_range pool_range,
 
 	vdbg_pool(verbose, new_pool, "creating new address pool@%p", new_pool);
 
-	addresspool[afi->ip_index] = new_pool;
+	addresspool[afi->ip.version] = new_pool;
 	return NULL;
 }
 

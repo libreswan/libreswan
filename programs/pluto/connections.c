@@ -554,9 +554,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 */
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
-		if (c->pool[afi->ip_index] != NULL) {
+		if (c->pool[afi->ip.version] != NULL) {
 			free_that_address_lease(c, afi, c->logger);
-			addresspool_delref(&c->pool[afi->ip_index], c->logger);
+			addresspool_delref(&c->pool[afi->ip.version], c->logger);
 		}
 	}
 
@@ -2434,7 +2434,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					 src->leftright, src->sourceip);
 		}
 		/* valid? */
-		ip_address seen[IP_INDEX_ROOF] = {0};
+		ip_address seen[IP_VERSION_ROOF] = {0};
 		FOR_EACH_ITEM(sourceip, &child_config->sourceip) {
 
 			/* i.e., not :: and not 0.0.0.0 */
@@ -2446,14 +2446,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			/* i.e., not 1::1,1::2 */
 			const struct ip_info *afi = address_type(sourceip);
 			PASSERT(logger, afi != NULL); /* since specified */
-			if (seen[afi->ip_index].ip.is_set) {
+			if (seen[afi->ip.version].ip.is_set) {
 				address_buf sb, ipb;
 				return diag("%ssourceip=%s invalid, multiple %s addresses (%s and %s) specified",
 					    leftright, src->sourceip, afi->ip_name,
-					    str_address(&seen[afi->ip_index], &sb),
+					    str_address(&seen[afi->ip.version], &sb),
 					    str_address(sourceip, &ipb));
 			}
-			seen[afi->ip_index] = (*sourceip);
+			seen[afi->ip.version] = (*sourceip);
 
 			if (child_config->selectors.len > 0) {
 				/* skip aliases; they hide the selectors list */
@@ -5144,14 +5144,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		bool used;
 		const char *field;
 		const char *value;
-	} end_family[END_ROOF][IP_INDEX_ROOF] = {0};
+	} end_family[END_ROOF][IP_VERSION_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		const ip_ranges *const pools = &c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
 			FOR_EACH_ITEM(selector, selectors) {
 				const struct ip_info *afi = selector_type(selector);
-				struct end_family *family = &end_family[end][afi->ip_index];
+				struct end_family *family = &end_family[end][afi->ip.version];
 				if (!family->used) {
 					family->used = true;
 					family->field = "subnet";
@@ -5162,14 +5162,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 			FOR_EACH_ITEM(range, pools) {
 				const struct ip_info *afi = range_type(range);
 				/* only one for now */
-				struct end_family *family = &end_family[end][afi->ip_index];
+				struct end_family *family = &end_family[end][afi->ip.version];
 				passert(family->used == false);
 				family->used = true;
 				family->field = "addresspool";
 				family->value = whack_ends[end]->addresspool;
 			}
 		} else {
-			struct end_family *family = &end_family[end][host_afi->ip_index];
+			struct end_family *family = &end_family[end][host_afi->ip.version];
 			family->used = true;
 			family->field = "";
 			family->value = whack_ends[end]->host;
@@ -5178,7 +5178,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* now check there's a match */
 	FOR_EACH_ELEMENT(afi, ip_families) {
-		enum ip_index i = afi->ip_index;
+		enum ip_version i = afi->ip.version;
 
 		/* both ends do; or both ends don't */
 		if (end_family[LEFT_END][i].used == end_family[RIGHT_END][i].used) {
@@ -5188,7 +5188,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * Flip the AFI for RIGHT.  Presumably it being
 		 * non-zero is the reason for the conflict?
 		 */
-		enum ip_index j = (i == IPv4_INDEX ? IPv6_INDEX : IPv4_INDEX);
+		enum ip_version j = (i == IPv4 ? IPv6 : IPv4);
 		if (end_family[LEFT_END][i].used) {
 			/* oops, no winner */
 			pexpect(end_family[RIGHT_END][j].used);
@@ -6028,11 +6028,11 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	 */
 	const struct ip_info *afi = selector_info(spde->client);
 	if (afi != NULL &&
-	    spde->child->lease[afi->ip_index].ip.is_set &&
+	    spde->child->lease[afi->ip.version].ip.is_set &&
 	    !spde->child->config->has_client_address_translation) {
 		/* XXX: same as .lease[]? */
 		ip_address a = selector_prefix(spde->client);
-		pexpect(address_eq_address(a, spde->child->lease[afi->ip_index]));
+		pexpect(address_eq_address(a, spde->child->lease[afi->ip.version]));
 		return selector_prefix(spde->client);
 	}
 

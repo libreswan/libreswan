@@ -579,7 +579,7 @@ static bool get_internal_address(struct ike_sa *ike)
 	const struct ip_info *afi = &ipv4_info;
 
 	const char *from;
-	if (c->pool[afi->ip_index] != NULL) {
+	if (c->pool[afi->ip.version] != NULL) {
 
 		ip_address assigned_address;
 		diag_t d = assign_remote_lease(c, ike->sa.st_xauth_username, afi,
@@ -1113,9 +1113,9 @@ static bool add_xauth_addresspool(struct connection *c,
 	 * First delete any existing pool if it exists.
 	 */
 
-	if (c->pool[IPv4_INDEX] != NULL) {
+	if (c->pool[IPv4] != NULL) {
 		free_that_address_lease(c, &ipv4_info, logger);
-		addresspool_delref(&c->pool[IPv4_INDEX], logger);
+		addresspool_delref(&c->pool[IPv4], logger);
 	}
 
 	diag_t d = install_addresspool(pool_range, c->pool, logger);
@@ -1933,7 +1933,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			ike->sa.hidden_variables.st_lease_ip = a;
 
 			const struct ip_info *afi = address_info(a);
-			c->local->child.lease[afi->ip_index] = a;
+			c->local->child.lease[afi->ip.version] = a;
 
 #if 0
 /*

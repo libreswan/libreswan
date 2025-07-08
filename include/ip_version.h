@@ -17,9 +17,16 @@
 #ifndef IP_VERSION_H
 #define IP_VERSION_H
 
+/*
+ * A compact enum for all supported IP versions.
+ */
+
 enum ip_version {
-	IPv4 = 4,
-	IPv6 = 6,
+	/* 0 is reserved!! */
+#define IP_VERSION_FLOOR IPv4
+	IPv4 = 1,
+	IPv6,
+#define IP_VERSION_ROOF (IPv6+1)
 };
 
 #endif

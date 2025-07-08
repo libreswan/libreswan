@@ -142,12 +142,11 @@ static ip_port port_from_ipv6_sockaddr(const ip_sockaddr sa)
 
 #define IPv4_FF { { 255, 255, 255, 255, }, }
 
-const struct ip_info ip_families[IP_INDEX_ROOF] = {
+const struct ip_info ip_families[IP_VERSION_ROOF] = {
 
-	[IPv4_INDEX] = {
+	[IPv4] = {
 
 		.ip.version = IPv4,
-		.ip_index = IPv4_INDEX,
 		.ip_size = sizeof(struct in_addr),
 
 		.n_name = "4",
@@ -213,10 +212,9 @@ const struct ip_info ip_families[IP_INDEX_ROOF] = {
 
 #define IPv6_FF { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, }, }
 
-	[IPv6_INDEX] = {
+	[IPv6] = {
 
 		.ip.version = IPv6,
-		.ip_index = IPv6_INDEX,
 		.ip_size = sizeof(struct in6_addr),
 
 		.n_name = "6",

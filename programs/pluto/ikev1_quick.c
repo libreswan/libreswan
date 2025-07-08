@@ -592,7 +592,7 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 		if (!c->local->child.has_client) {
 			const struct ip_info *afi = address_info(lease);
 			if (c->local->child.config->selectors.len <= 0) {
-				c->local->child.lease[afi->ip_index] = lease;
+				c->local->child.lease[afi->ip.version] = lease;
 				update_end_selector(c, c->local->config->index,
 					selector_from_address(lease),
 					"^*(&^(* IKEv1 mangling lease IP onto local subnet");
@@ -1193,7 +1193,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 */
 	if (c->remote->config->child.addresspools.len == 0) {
 		vdbg("connection has no addresspool");
-	} else if (c->remote->child.lease[IPv4_INDEX].ip.is_set) {
+	} else if (c->remote->child.lease[IPv4].ip.is_set) {
 		vdbg("connection already has a lease");
 	} else {
 		ip_address preferred_address = selector_prefix(remote_client);
@@ -1247,7 +1247,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	     str_selector(&c->child.spds.list->remote->client, &rcb),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c, verbose)),
-	     str_address(&c->remote->child.lease[client_afi->ip_index], &lb),
+	     str_address(&c->remote->child.lease[client_afi->ip.version], &lb),
 	     c->remote->child.selectors.proposed.len,
 	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
 
@@ -2107,8 +2107,8 @@ static struct connection *fc_try(const struct connection *c,
 		 * but then the XAUTH exchange replaces it with one
 		 * from a file.
 		 */
-		if (c->pool[IPv4_INDEX] != NULL) {
-			ip_range pool_range = addresspool_range(c->pool[IPv4_INDEX]);
+		if (c->pool[IPv4] != NULL) {
+			ip_range pool_range = addresspool_range(c->pool[IPv4]);
 			if (!selector_is_address(*remote_client)) {
 				range_buf rb;
 				selector_buf cb;
@@ -2215,7 +2215,7 @@ static struct connection *fc_try(const struct connection *c,
 				continue;
 			}
 
-			if (c->pool[IPv4_INDEX] != NULL) {
+			if (c->pool[IPv4] != NULL) {
 				selector_buf s2;
 				vdbg("initiator's remote client range %s is within address-pool, continuing",
 				     str_selector(remote_client, &s2));
