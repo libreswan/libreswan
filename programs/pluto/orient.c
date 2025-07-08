@@ -205,7 +205,7 @@ static void LDBG_orient_end(struct connection *c, enum end end)
 	name_buf tcpb;
 	LDBG_log(c->logger, "  %s host type=%s address=%s port="PRI_HPORT" ikeport="PRI_HPORT" encap=%s tcp=%s",
 		 this->config->leftright,
-		 str_sparse_short(&keyword_host_names, this->config->type, &enb),
+		 str_sparse_short(&keyword_host_names, this->config->host.type, &enb),
 		 str_address(&this->addr, &ab),
 		 pri_hport(end_host_port(this, that)),
 		 pri_hport(this->config->ikeport),
@@ -461,8 +461,8 @@ static void jam_host_addr(struct jambuf *buf, struct connection_end *end)
 {
 	jam_string(buf, end->host.config->leftright);
 	jam_string(buf, "=");
-	if (end->host.config->name != NULL) {
-		jam_string(buf, end->host.config->name);
+	if (end->host.config->host.name != NULL) {
+		jam_string(buf, end->host.config->host.name);
 	} else {
 		jam_address(buf, &end->host.addr);
 	}

@@ -80,14 +80,19 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  * then authenticate the IKE SA.
  */
 
+struct host_addr_config {
+	enum keyword_host type;
+	char *name;	/* string version from whack */
+	ip_address addr;
+};
+
 struct host_end_config {
 	const char *leftright;
 
-	char *name;	/* string version from whack */
+	struct host_addr_config host;
+	struct host_addr_config nexthop;
 
-	ip_address nexthop;
 	ip_port ikeport;
-	enum keyword_host type;
 	enum tcp_options iketcp;	/* Allow TCP as fallback,
 					 * insist on TCP(YES) or stick
 					 * to UDP(NO). */

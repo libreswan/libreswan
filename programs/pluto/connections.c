@@ -631,7 +631,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
-			pfreeany(end->host.name);
+			pfreeany(end->host.host.name);
+			pfreeany(end->host.nexthop.name);
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown);
@@ -759,7 +760,7 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	 *
 	 *   other_host.ADDR -> other_host.NEXTHOP -> ADDR.
 	 */
-	other_host->nexthop = other_host->config->nexthop;
+	other_host->nexthop = other_host->config->nexthop.addr;
 	if (address_is_specified(host_addr) &&
 	    !address_is_specified(other_host->nexthop)) {
 		other_host->nexthop = host_addr;
@@ -767,7 +768,7 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	address_buf old, new;
 	dbg("  updated %s.host_nexthop from %s to %s",
 	    other_host->config->leftright,
-	    str_address(&other_host->config->nexthop, &old),
+	    str_address(&other_host->config->nexthop.addr, &old),
 	    str_address(&other_host->nexthop, &new));
 }
 
@@ -1698,14 +1699,6 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	/*
-	 * Save the whack value, update_hosts_from_end_host_addr()
-	 * will set the actual .nexthop value for the connection.
-	 * Either now, during extraction, or later, during
-	 * instantiation.
-	 */
-	host_config->nexthop = resolve->nexthop.addr;
-
-	/*
 	 * Decode id, if any.
 	 *
 	 * For %fromcert, the load_end_cert*() call will update it.
@@ -1984,9 +1977,23 @@ static diag_t extract_host_end(struct host_end *host,
 		host->id = clone_id(&host_config->id, __func__);
 	}
 
+	/*
+	 * Save the whack value, update_hosts_from_end_host_addr()
+	 * will set the actual .nexthop value for the connection.
+	 * Either now, during extraction, or later, during
+	 * instantiation.
+	 */
+
+	host_config->host.type = resolve->host.type;
+	host_config->host.name = clone_str(resolve->host.name, "host ip");
+	host_config->host.addr = resolve->host.addr;
+
+	host_config->nexthop.type = resolve->nexthop.type;
+	host_config->nexthop.name = clone_str(resolve->nexthop.name, "nexthop");
+	host_config->nexthop.addr = resolve->nexthop.addr;
+
 	/* the rest is simple copying of corresponding fields */
-	host_config->type = resolve->host.type;
-	host_config->name = clone_str(src->host, "host ip");
+
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
 					       YN_NO, wm, logger);
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,

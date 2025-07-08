@@ -55,12 +55,12 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	/* find the end needing DNS */
-	if (c->remote->config->host.type != KH_IPHOSTNAME) {
+	if (c->remote->config->host.host.type != KH_IPHOSTNAME) {
 		pdbg(c->logger, "pending ddns: skipping connection, has no KP_IPHOSTNAME");
 		return;
 	}
 
-	if (PBAD(c->logger, c->remote->config->host.name == NULL)) {
+	if (PBAD(c->logger, c->remote->config->host.host.name == NULL)) {
 		return;
 	}
 
@@ -106,16 +106,17 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	/* XXX: blocking call */
 
 	ip_address new_remote_addr;
-	e = ttoaddress_dns(shunk1(c->remote->config->host.name), NULL/*UNSPEC*/, &new_remote_addr);
+	e = ttoaddress_dns(shunk1(c->remote->config->host.host.name),
+			   NULL/*UNSPEC*/, &new_remote_addr);
 	if (e != NULL) {
 		pdbg(c->logger, "pending ddns: skipping connection, lookup of \"%s\" failed: %s",
-		     c->remote->config->host.name, e);
+		     c->remote->config->host.host.name, e);
 		return;
 	}
 
 	if (!address_is_specified(new_remote_addr)) {
 		pdbg(c->logger, "pending ddns: skipping connection, still no address for \"%s\"",
-		     c->remote->config->host.name);
+		     c->remote->config->host.host.name);
 		return;
 	}
 
@@ -134,7 +135,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	address_buf old, new;
 	pdbg(c->logger,
 	     "pending ddns: updating connection IP address by '%s' from %s to %s",
-	     c->remote->config->host.name,
+	     c->remote->config->host.host.name,
 	     str_address_sensitive(&c->remote->host.addr, &old),
 	     str_address_sensitive(&new_remote_addr, &new));
 

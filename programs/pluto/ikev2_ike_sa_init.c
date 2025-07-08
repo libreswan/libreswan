@@ -278,9 +278,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ip_address remote_address = endpoint_address(ike->sa.st_remote_endpoint);
 		jam_address_sensitive(buf, &remote_address);
 #endif
-		if (c->remote->config->host.type == KH_IPHOSTNAME) {
+		if (c->remote->config->host.host.type == KH_IPHOSTNAME) {
 			jam_string(buf, " (");
-			jam_string(buf, c->remote->config->host.name);
+			jam_string(buf, c->remote->config->host.host.name);
 			jam_string(buf, ")");
 		}
 #if 0
