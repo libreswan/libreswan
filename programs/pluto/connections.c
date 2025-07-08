@@ -4382,7 +4382,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			config->v2_ike_proposals =
 				ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
 							       config->ike_proposals.p,
-							       c->logger);
+							       verbose);
 			llog_v2_proposals(LOG_STREAM/*not-whack*/, c->logger,
 					  config->v2_ike_proposals,
 					  "IKE SA proposals (connection add)");

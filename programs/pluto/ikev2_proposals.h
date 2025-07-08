@@ -25,10 +25,10 @@
 #ifndef IKEV2_SA_PAYLOAD_H
 #define IKEV2_SA_PAYLOAD_H
 
-void DBG_log_ikev2_proposal(const char *prefix,
-			    const struct ikev2_proposal *proposal);
+void vdbg_ikev2_proposal(struct verbose verbose, const char *prefix,
+			 const struct ikev2_proposal *proposal);
 
-void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
+void llog_v2_proposals(enum stream stream, const struct logger *logger,
 		       const struct ikev2_proposals *proposals,
 		       const char *title);
 
@@ -53,7 +53,7 @@ v2_notification_t process_v2SA_payload(const char *what,
 				       bool limit_logging/*because-oe?*/,
 				       struct ikev2_proposal **chosen_proposal,
 				       const struct ikev2_proposals *local_proposals,
-				       struct logger *logger);
+				       struct verbose verbose);
 
 bool emit_v2SA_proposals(struct pbs_out *pbs,
 			 const struct ikev2_proposals *proposals,
@@ -80,7 +80,7 @@ void free_ikev2_proposal(struct ikev2_proposal **proposal);
 
 struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id protoid,
 						       const struct proposals *proposals,
-						       struct logger *logger);
+						       struct verbose verbose);
 
 /*
  * On-demand compute and return the IKE proposals for the connection.
@@ -94,19 +94,22 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c);
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
-								   struct child_sa *larval_child);
+								   struct child_sa *larval_child,
+								   struct verbose verbose);
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_sa *ike,
 								     struct child_sa *established_child,
-								     struct logger *logger);
+								     struct verbose verbose);
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa *ike,
-								   struct logger *logger);
+								   struct verbose verbose);
 
 /*
  * Return the first valid DH proposal that is supported.
  */
 
-const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal);
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals);
+const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
+					      struct verbose verbose);
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
+					       struct verbose verbose);
 
 /*
  * Is the modp group in the proposal set?

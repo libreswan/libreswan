@@ -169,16 +169,13 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ipsec stop
-Redirecting to: [initsystem]
-west #
  # east shows what was sent across the wire; expect two lines for each
 west #
  # of the three connections: default (missing); integ=none included;
 west #
  # integ=none excluded
 west #
- grep 'chosen from remote proposal' /tmp/pluto.log | sed -e 's/SPI=[0-9a-z]*/SPI=X/'
+ sed -n -e '/^[^|].*chosen from remote proposal/ { s/SPI=[0-9a-z]*/SPI=X/; p }' /tmp/pluto.log
 west #
  # west shows what came back, expect two lines for each of the three
 west #
@@ -186,7 +183,7 @@ west #
 west #
  # excluded
 west #
- grep 'remote accepted' /tmp/pluto.log
+ sed -n -e '/remote accepted/ { s/^| */| /; p }' /tmp/pluto.log
 | remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;ESN=YES[first-match]
 | remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]

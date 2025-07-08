@@ -190,8 +190,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		return NULL;
 	}
 
-	start_v2_exchange(ike, &v2_IKE_SA_INIT_exchange, HERE);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
 
+	start_v2_exchange(ike, &v2_IKE_SA_INIT_exchange, HERE);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
@@ -326,7 +327,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
+	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, verbose);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
 		llog_sa(RC_LOG, ike, "proposals do not contain a valid DH");
 		delete_ike_sa(&ike);
@@ -590,24 +591,26 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
  */
 
 stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
-					  struct child_sa *child,
+					  struct child_sa *null_child,
 					  struct msg_digest *md)
 {
+	v2_notification_t n;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
+	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
+
+	vassert(ike->sa.st_ike_version == IKEv2);
+	vassert(ike->sa.st_state == &state_v2_UNSECURED_R);
+	vassert(ike->sa.st_sa_role == SA_RESPONDER);
+	vassert(null_child == NULL);
+
 	/*
 	 * This log line establishes that resources (such as the state
 	 * structure) have been allocated and the packet is being
 	 * processed for real.
 	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
 
-	v2_notification_t n;
-	pexpect(child == NULL);
 	struct connection *c = ike->sa.st_connection;
-	/* set up new state */
 	update_ike_endpoints(ike, md);
-	passert(ike->sa.st_ike_version == IKEv2);
-	passert(ike->sa.st_state == &state_v2_UNSECURED_R);
-	passert(ike->sa.st_sa_role == SA_RESPONDER);
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
@@ -627,7 +630,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				 /*expect_accepted*/ false,
 				 /*limit-logging*/is_opportunistic(c),
 				 &ike->sa.st_v2_accepted_proposal,
-				 ike_proposals, ike->sa.logger);
+				 ike_proposals, verbose);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -641,10 +644,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       ike->sa.st_v2_accepted_proposal);
-	}
+	vdbg_ikev2_proposal(verbose, "accepted IKE proposal",
+			    ike->sa.st_v2_accepted_proposal);
 
 	/*
 	 * Convert what was accepted to internal form and apply some
@@ -1014,7 +1015,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
 		name_buf esb;
 		llog_sa(RC_LOG, ike,
-			"Discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
+			"discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
 			ike->sa.st_oakley.ta_dh->common.fqn,
 			str_enum_short(&oakley_group_names,
 				       sg.sg_group, &esb));
@@ -1031,7 +1032,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	const struct dh_desc *new_group = ikev2_dh_desc(sg.sg_group, &ignore);
 	passert(new_group != NULL);
 	llog_sa(RC_LOG, ike,
-		  "Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
+		  "received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
 		  ike->sa.st_oakley.ta_dh->common.fqn,
 		  new_group->common.fqn);
 	ike->sa.st_oakley.ta_dh = new_group;
@@ -1057,11 +1058,12 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
  */
 
 stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
-					   struct child_sa *unused_child UNUSED,
+					   struct child_sa *null_child UNUSED,
 					   struct msg_digest *md)
 {
 	v2_notification_t n;
 	struct connection *c = ike->sa.st_connection;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
@@ -1210,7 +1212,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					 /*expect_accepted*/ true,
 					 /*limit-logging*/is_opportunistic(c),
 					 &ike->sa.st_v2_accepted_proposal,
-					 ike_proposals, ike->sa.logger);
+					 ike_proposals, verbose);
 		if (n != v2N_NOTHING_WRONG) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			/*

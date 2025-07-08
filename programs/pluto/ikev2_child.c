@@ -571,12 +571,14 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 }
 
 v2_notification_t process_childs_v2SA_payload(const char *what,
-					      struct ike_sa *ike UNUSED,
+					      struct ike_sa *unused_ike UNUSED,
 					      struct child_sa *child,
 					      struct msg_digest *md,
 					      const struct ikev2_proposals *child_proposals,
 					      bool expect_accepted_proposal)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
+
 	struct connection *c = child->sa.st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	enum ikev2_exchange isa_xchg = md->hdr.isa_xchg;
@@ -589,7 +591,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 expect_accepted_proposal,
 				 /*limit-logging*/is_opportunistic(c),
 				 &child->sa.st_v2_accepted_proposal,
-				 child_proposals, child->sa.logger);
+				 child_proposals, verbose);
 	if (n != v2N_NOTHING_WRONG) {
 		name_buf nb;
 		llog_sa(RC_LOG, child,
@@ -598,9 +600,8 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 		return n;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log_ikev2_proposal(what, child->sa.st_v2_accepted_proposal);
-	}
+	vdbg_ikev2_proposal(verbose, what, child->sa.st_v2_accepted_proposal);
+
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(child);
 	/* hack until esp/ah merged */
 	const struct ip_protocol *protocol = NULL;

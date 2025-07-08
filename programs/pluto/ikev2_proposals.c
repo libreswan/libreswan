@@ -362,10 +362,10 @@ static void jam_chosen_proposal(struct jambuf *buf,
 	jam_jambuf(buf, proposals);
 }
 
-void DBG_log_ikev2_proposal(const char *prefix,
-			    const struct ikev2_proposal *proposal)
+void vdbg_ikev2_proposal(struct verbose verbose, const char *prefix,
+			 const struct ikev2_proposal *proposal)
 {
-	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
+	VDBG_JAMBUF(buf) {
 		jam(buf, "%s ikev2_proposal: ", prefix);
 		jam_v2_proposal(buf, proposal->propnum, proposal);
 	}
@@ -385,15 +385,15 @@ static void jam_v2_proposals(struct jambuf *buf,
 	}
 }
 
-void llog_v2_proposals(lset_t rc_flags, struct logger *logger,
+void llog_v2_proposals(enum stream stream, const struct logger *logger,
 		       const struct ikev2_proposals *proposals,
 		       const char *title)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
-	llog(rc_flags, logger, "%s:", title);
+	llog(stream, logger, "%s:", title);
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		LLOG_JAMBUF(rc_flags, logger, buf) {
+		LLOG_JAMBUF(stream, logger, buf) {
 			jam_string(buf, "  ");
 			jam_v2_proposal(buf, propnum, proposal);
 		}
@@ -421,12 +421,13 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 			      const struct ikev2_proposals *local_proposals,
 			      const int local_propnum_base, const int local_propnum_bound,
 			      struct ikev2_proposal_match *matching_local_proposals,
-			      struct logger *logger)
+			      struct verbose verbose)
 {
-	dbg("Comparing remote proposal %u containing %d transforms against local proposal [%d..%d] of %d local proposals",
-	    remote_propnum, num_remote_transforms,
-	    local_propnum_base, local_propnum_bound - 1,
-	    local_proposals->roof - 1);
+	vdbg("Comparing remote proposal %u containing %d transforms against local proposal [%d..%d] of %d local proposals",
+	     remote_propnum, num_remote_transforms,
+	     local_propnum_base, local_propnum_bound - 1,
+	     local_proposals->roof - 1);
+	verbose.level++;
 
 	/*
 	 * The MATCHING_LOCAL_PROPOSALS table contains one entry per
@@ -447,7 +448,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 			/* clear matched */
 			matching_local_proposal->matched_transform_types = LEMPTY;
 			/* start with the sentinels */
-			passert(sizeof(matching_local_proposal->matching_transform) ==
+			vassert(sizeof(matching_local_proposal->matching_transform) ==
 				sizeof(matching_local_proposal->sentinel_transform));
 			memcpy(matching_local_proposal->matching_transform,
 			       matching_local_proposal->sentinel_transform,
@@ -497,8 +498,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 					 &remote_trans, sizeof(remote_trans),
 					 &trans_pbs);
 		if (d != NULL) {
-			llog(RC_LOG, logger,
-			     "remote proposal %u transform %d is corrupt: %s",
+			vlog("remote proposal %u transform %d is corrupt: %s",
 			     remote_propnum, remote_transform_nr, str_diag(d));
 			pfree_diag(&d);
 			jam_string(remote_jam_buf, "[corrupt-transform]");
@@ -526,8 +526,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 			diag_t d = pbs_in_struct(&trans_pbs, &ikev2_trans_attr_desc,
 						 &attr, sizeof(attr), &attr_pbs);
 			if (d != NULL) {
-				llog(RC_LOG, logger,
-				     "remote proposal %u transform %d contains corrupt attribute: %s",
+				vlog("remote proposal %u transform %d contains corrupt attribute: %s",
 				     remote_propnum, remote_transform_nr,
 				     str_diag(d));
 				pfree_diag(&d);
@@ -545,8 +544,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				remote_transform.attr_keylen = attr.isatr_lv;
 				break;
 			default:
-				llog(RC_LOG, logger,
-				     "remote proposal %u transform %d has unknown attribute %d or unexpected attribute encoding",
+				vlog("remote proposal %u transform %d has unknown attribute %d or unexpected attribute encoding",
 				     remote_propnum, remote_transform_nr,
 				     attr.isatr_type & ISAKMP_ATTR_RTYPE_MASK);
 				jam_string(remote_jam_buf, "[unknown-attribute]");
@@ -573,9 +571,9 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				first_integrity_transid = remote_trans.isat_transid;
 			} else if (first_integrity_transid == IKEv2_INTEG_NONE ||
 				   remote_trans.isat_transid == IKEv2_INTEG_NONE) {
-				llog(RC_LOG, logger, "remote proposal %u transform %d has more than 'none' integrity %d %d",
-					    remote_propnum, remote_transform_nr,
-					    first_integrity_transid, remote_trans.isat_transid);
+				vlog("remote proposal %u transform %d has more than 'none' integrity %d %d",
+				     remote_propnum, remote_transform_nr,
+				     first_integrity_transid, remote_trans.isat_transid);
 				jam_string(remote_jam_buf, "[mixed-integrity]");
 				return 0; /* try next proposal */
 			}
@@ -594,10 +592,10 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				 * type that match.  Limit the search to
 				 * transforms before the last match.
 				 */
-				passert(type < elemsof(local_proposal->transforms)); /* aka IKEv2_TRANS_TYPE_ROOF */
+				vassert(type < elemsof(local_proposal->transforms)); /* aka IKEv2_TRANS_TYPE_ROOF */
 				const struct ikev2_transforms *local_transforms = &local_proposal->transforms[type];
 				struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-				passert(type < elemsof(matching_local_proposal->matching_transform)); /* aka IKEv2_TRANS_TYPE_ROOF */
+				vassert(type < elemsof(matching_local_proposal->matching_transform)); /* aka IKEv2_TRANS_TYPE_ROOF */
 				const struct ikev2_transform **matching_local_transform = &matching_local_proposal->matching_transform[type];
 				/*
 				 * The matching local transform always
@@ -606,8 +604,8 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				 * sentinel transform at the array
 				 * end).
 				 */
-				passert(*matching_local_transform >= &local_transforms->transform[0]);
-				passert(*matching_local_transform < &local_transforms->transform[elemsof(local_transforms->transform)]);
+				vassert(*matching_local_transform >= &local_transforms->transform[0]);
+				vassert(*matching_local_transform < &local_transforms->transform[elemsof(local_transforms->transform)]);
 				/*
 				 * See if this match improves things.
 				 */
@@ -618,7 +616,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 					}
 					if (local_transform->id == remote_transform.id &&
 					    local_transform->attr_keylen == remote_transform.attr_keylen) {
-						LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+						VDBG_JAMBUF(buf) {
 							jam(buf, "remote proposal %u transform %d (",
 							    remote_propnum, remote_transform_nr);
 							jam_type_transform(buf, type, &remote_transform);
@@ -670,7 +668,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 	 *   transform types".
 	 */
 	lset_t unmatched_remote_transform_types = proposed_remote_transform_types & ~matched_remote_transform_types;
-	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+	VDBG_JAMBUF(buf) {
 		jam(buf, "remote proposal %u proposed transforms: ",
 			remote_propnum);
 		jam_trans_types(buf, proposed_remote_transform_types);
@@ -680,7 +678,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 		jam_trans_types(buf, unmatched_remote_transform_types);
 	}
 	if (unmatched_remote_transform_types) {
-		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+		VDBG_JAMBUF(buf) {
 			jam(buf, "remote proposal %u does not match; unmatched remote transforms: ",
 				remote_propnum);
 			jam_trans_types(buf, unmatched_remote_transform_types);
@@ -693,7 +691,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 	FOR_EACH_V2_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				      local_propnum_base, local_propnum_bound) {
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-		LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
+		VDBG_JAMBUF(log) {
 			jam(log, "comparing remote proposal %u containing ",
 			    remote_propnum);
 			jam_trans_types(log, proposed_remote_transform_types);
@@ -775,7 +773,7 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
 		 */
 		if (unmatched || missing) {
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
+			VDBG_JAMBUF(log) {
 				jam(log, "remote proposal %d does not match local proposal %d; unmatched transforms: ",
 					remote_propnum, local_propnum);
 				jam_trans_types(log, unmatched);
@@ -783,13 +781,13 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				jam_trans_types(log, missing);
 			}
 		} else {
-			dbg("remote proposal %u matches local proposal %d",
-			    remote_propnum, local_propnum);
+			vdbg("remote proposal %u matches local proposal %d",
+			     remote_propnum, local_propnum);
 			return local_propnum;
 		}
 	}
 
-	dbg("remote proposal %u matches no local proposals", remote_propnum); /*  */
+	vdbg("remote proposal %u matches no local proposals", remote_propnum); /*  */
 	return 0;
 }
 
@@ -822,7 +820,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				   const struct ikev2_proposals *local_proposals,
 				   struct ikev2_proposal *best_proposal,
 				   struct jambuf *remote_jam_buf,
-				   struct logger *logger)
+				   struct verbose verbose)
 {
 	/*
 	 * An array to track the best proposals/transforms found so
@@ -874,9 +872,9 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					}
 				}
 				/* save the sentinel */
-				passert(!sentinel_transform->valid);
+				vassert(!sentinel_transform->valid);
 				matching_local_proposal->sentinel_transform[type] = sentinel_transform;
-				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				VDBG_JAMBUF(buf) {
 					jam(buf, "local proposal %d type ", local_propnum);
 					jam_trans_type(buf, type);
 					jam(buf, " has %td transforms",
@@ -895,7 +893,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 			 */
 			matching_local_proposal->optional_transform_types = optional_transform_types;
 			matching_local_proposal->required_transform_types = all_transform_types & ~optional_transform_types;
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+			VDBG_JAMBUF(buf) {
 				jam(buf, "local proposal %d transforms: required: ",
 					local_propnum);
 				jam_trans_types(buf, matching_local_proposal->
@@ -930,7 +928,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					 &remote_proposal, sizeof(remote_proposal),
 					 &proposal_pbs);
 		if (d != NULL) {
-			llog(RC_LOG, logger, "proposal %d corrupt: %s", next_propnum, str_diag(d));
+			vlog("proposal %d corrupt: %s", next_propnum, str_diag(d));
 			pfree_diag(&d);
 			jam_string(remote_jam_buf, " [corrupt-proposal]");
 			matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
@@ -957,22 +955,22 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 		if (expect_accepted) {
 			/* There can be only one accepted proposal. */
 			if (remote_proposal.isap_lp != v2_PROPOSAL_LAST) {
-				llog(RC_LOG, logger, "Error: more than one accepted proposal received.");
+				vlog("Error: more than one accepted proposal received.");
 				jam_string(remote_jam_buf, "[too-many-accepted-proposals]");
 				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				break;
 			}
 			if (remote_proposal.isap_propnum < 1 || remote_proposal.isap_propnum >= local_proposals->roof) {
-				llog(RC_LOG, logger, "Error: invalid accepted proposal.");
+				vlog("Error: invalid accepted proposal.");
 				jam_string(remote_jam_buf, "[invalid-accepted-proposal]");
 				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				break;
 			}
 		} else {
 			if (next_propnum != remote_proposal.isap_propnum) {
-				llog(RC_LOG, logger, "proposal number was %u but %u expected",
-					      remote_proposal.isap_propnum,
-					      next_propnum);
+				vlog("proposal number was %u but %u expected",
+				     remote_proposal.isap_propnum,
+				     next_propnum);
 				jam_string(remote_jam_buf, "[wrong-protonum]");
 				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
 				break;
@@ -989,18 +987,18 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 		 */
 		if (expect_ike) {
 			if (remote_proposal.isap_protoid != IKEv2_SEC_PROTO_IKE) {
-				llog(RC_LOG, logger, "proposal %d has unexpected Protocol ID %d; expected IKE",
-					    remote_proposal.isap_propnum,
-					    remote_proposal.isap_protoid);
+				vlog("proposal %d has unexpected Protocol ID %d; expected IKE",
+				     remote_proposal.isap_propnum,
+				     remote_proposal.isap_protoid);
 				jam_string(remote_jam_buf, "[unexpected-protoid]");
 				continue;
 			}
 		} else {
 			if (remote_proposal.isap_protoid != IKEv2_SEC_PROTO_AH &&
 			    remote_proposal.isap_protoid != IKEv2_SEC_PROTO_ESP) {
-				llog(RC_LOG, logger, "proposal %d has unexpected Protocol ID %d; expected AH or ESP",
-					    remote_proposal.isap_propnum,
-					    remote_proposal.isap_protoid);
+				vlog("proposal %d has unexpected Protocol ID %d; expected AH or ESP",
+				     remote_proposal.isap_propnum,
+				     remote_proposal.isap_protoid);
 				jam_string(remote_jam_buf, "[unexpected-protoid]");
 				continue;
 			}
@@ -1021,10 +1019,10 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 			.size = (expect_spi ? proto_spi_size(remote_proposal.isap_protoid) : 0),
 		};
 		if (remote_proposal.isap_spisize != remote_spi.size) {
-			llog(RC_LOG, logger, "proposal %d has incorrect SPI size (%u), expected %zu; ignored",
-				      remote_proposal.isap_propnum,
-				      remote_proposal.isap_spisize,
-				      remote_spi.size);
+			vlog("proposal %d has incorrect SPI size (%u), expected %zu; ignored",
+			     remote_proposal.isap_propnum,
+			     remote_proposal.isap_spisize,
+			     remote_spi.size);
 			jam_string(remote_jam_buf, "[spi-size]");
 			continue;
 		}
@@ -1032,7 +1030,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 			diag_t d = pbs_in_bytes(&proposal_pbs, remote_spi.bytes,
 						remote_spi.size, "remote SPI");
 			if (d != NULL) {
-				llog(RC_LOG, logger, "proposal %d contains corrupt SPI: %s",
+				vlog("proposal %d contains corrupt SPI: %s",
 				     remote_proposal.isap_propnum, str_diag(d));
 				pfree_diag(&d);
 				matching_local_propnum = -v2N_INVALID_SYNTAX; /* fatal */
@@ -1060,7 +1058,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					       local_propnum_base,
 					       local_propnum_bound,
 					       matching_local_proposals,
-					       logger);
+					       verbose);
 
 		if (match < 0) {
 			/* capture the error and bail */
@@ -1069,7 +1067,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 		}
 
 		if (match > 0) {
-			passert(match < local_proposals->roof);
+			vassert(match < local_proposals->roof);
 			/* mark what happened */
 			if (matching_local_propnum == 0) {
 				/* first match */
@@ -1096,7 +1094,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				&matching_local_proposals[matching_local_propnum];
 			FOR_EACH_TRANSFORMS_TYPE(type, best_transforms, best_proposal) {
 				const struct ikev2_transform *matching_transform = matching_local_proposal->matching_transform[type];
-				passert(matching_transform != NULL);
+				vassert(matching_transform != NULL);
 				if (!matching_transform->valid &&
 				    LHAS(matching_local_proposal->optional_transform_types, type)) {
 					/*
@@ -1155,12 +1153,13 @@ v2_notification_t process_v2SA_payload(const char *what,
 				       bool limit_logging/*because-oe*/,
 				       struct ikev2_proposal **chosen_proposal,
 				       const struct ikev2_proposals *local_proposals,
-				       struct logger *logger)
+				       struct verbose verbose)
 {
-	dbg("comparing remote proposals against %s %d local proposals",
-	    what, local_proposals->roof - 1);
+	vdbg("comparing remote proposals against %s %d local proposals",
+	     what, local_proposals->roof - 1);
+	verbose.level++;
 
-	PASSERT(logger, *chosen_proposal == NULL);
+	vassert(*chosen_proposal == NULL);
 
 	/*
 	 * The chosen proposal.  If there was a match, and no errors,
@@ -1181,7 +1180,7 @@ v2_notification_t process_v2SA_payload(const char *what,
 								     local_proposals,
 								     best_proposal,
 								     remote_jam_buf,
-								     logger);
+								     verbose);
 
 		if (matching_local_propnum < 0) {
 			/*
@@ -1191,7 +1190,7 @@ v2_notification_t process_v2SA_payload(const char *what,
 			 * Dump the proposals so far.  The detailed
 			 * error reason will have already been logged.
 			 */
-			LLOG_JAMBUF(RC_LOG, logger, buf) {
+			VLOG_JAMBUF(buf) {
 				jam_string(buf, "partial list of remote proposals: ");
 				jam_jambuf(buf, remote_jam_buf);
 			}
@@ -1199,12 +1198,12 @@ v2_notification_t process_v2SA_payload(const char *what,
 		} else if (matching_local_propnum == 0) {
 			/* no luck */
 			if (expect_accepted) {
-				LLOG_JAMBUF(RC_LOG, logger, buf) {
+				VLOG_JAMBUF(buf) {
 					jam_string(buf, "remote accepted the invalid proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
 			} else {
-				LLOG_JAMBUF(RC_LOG, logger, buf) {
+				VLOG_JAMBUF(buf) {
 					jam_string(buf, "no local proposal matches remote proposals ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
@@ -1214,18 +1213,18 @@ v2_notification_t process_v2SA_payload(const char *what,
 			if (expect_accepted) {
 				pexpect(matching_local_propnum == best_proposal->propnum);
 				/* don't log on initiator's end - redundant */
-				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				VDBG_JAMBUF(buf) {
 					jam_string(buf, "remote accepted the proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
 			} else {
 				if (limit_logging) {
-					LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+					VDBG_JAMBUF(buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);
 					}
 				} else {
-					LLOG_JAMBUF(RC_LOG, logger, buf) {
+					VLOG_JAMBUF(buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);
 					}
@@ -1242,9 +1241,9 @@ v2_notification_t process_v2SA_payload(const char *what,
 	pfreeany(best_proposal); /* only free if still owned by us */
 
 	if (notification == v2N_NOTHING_WRONG) {
-		PASSERT(logger, *chosen_proposal != NULL);
+		vassert(*chosen_proposal != NULL);
 	} else {
-		PASSERT(logger, *chosen_proposal == NULL);
+		vassert(*chosen_proposal == NULL);
 	}
 
 	return notification;
@@ -1363,7 +1362,7 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			   const struct ikev2_proposal *proposal,
 			   unsigned propnum,
 			   bool allow_single_transform_none,
-			   struct logger *logger)
+			   struct verbose verbose)
 {
 	const char *what = proposal_pbs != NULL ? "emitting proposal" : "counting transforms";
 	/*
@@ -1440,27 +1439,27 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			switch (impairment) {
 			case IMPAIR_v2_TRANSFORM_ALLOW_NONE:
 				if (transform->id == none) {
-					llog(RC_LOG, logger, "IMPAIR: proposal %d transform %s=%s included when %s",
-						    propnum, transform_type_name, transform_id_name, what);
+					vlog("IMPAIR: proposal %d transform %s=%s included when %s",
+					     propnum, transform_type_name, transform_id_name, what);
 				}
 				break;
 			case IMPAIR_v2_TRANSFORM_DROP_NONE:
 				if (transform->id == none) {
-					llog(RC_LOG, logger, "IMPAIR: proposal %d transform %s=%s excluded when %s",
-						    propnum, transform_type_name, transform_id_name, what);
+					vlog("IMPAIR: proposal %d transform %s=%s excluded when %s",
+					     propnum, transform_type_name, transform_id_name, what);
 					continue;
 				}
 				break;
 			case IMPAIR_v2_TRANSFORM_OMIT:
-				llog(RC_LOG, logger, "IMPAIR: proposal %d transform %s=%s excluded when %s",
-					    propnum, transform_type_name, transform_id_name, what);
+				vlog("IMPAIR: proposal %d transform %s=%s excluded when %s",
+				     propnum, transform_type_name, transform_id_name, what);
 				continue;
 			case IMPAIR_v2_TRANSFORM_NO:
 				if (transform->id == none) {
-					dbg("%s %s=%s when %s (multiple %d; allow single %d)",
-					    allow_transform_none ? "allow" : "discard",
-					    transform_type_name, transform_id_name, what,
-					    multiple_transforms, allow_single_transform_none);
+					vdbg("%s %s=%s when %s (multiple %d; allow single %d)",
+					     allow_transform_none ? "allow" : "discard",
+					     transform_type_name, transform_id_name, what,
+					     multiple_transforms, allow_single_transform_none);
 					if (!allow_transform_none) {
 						continue;
 					}
@@ -1493,7 +1492,7 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
 			unsigned transform_id = (type_id & 0xffff);
 			name_buf typeb, idb;
-			llog(RC_LOG, logger, "IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
+			vlog("IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
 			     str_enum_short(&ikev2_trans_type_names, transform_type, &typeb),
 			     transform_type,
 			     str_enum_enum(&v2_transform_ID_enums, transform_type, transform_id, &idb),
@@ -1516,8 +1515,10 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 			  enum ikev2_last_proposal last_proposal,
 			  bool allow_single_transform_none)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, sa_pbs->logger, NULL);
+
 	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
-				       allow_single_transform_none, sa_pbs->logger);
+				       allow_single_transform_none, verbose);
 	if (numtrans < 0) {
 		return false;
 	}
@@ -1556,7 +1557,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	}
 
 	if (walk_transforms(&proposal_pbs, numtrans, proposal, propnum,
-			    allow_single_transform_none, sa_pbs->logger) < 0) {
+			    allow_single_transform_none, verbose) < 0) {
 		return false;
 	}
 
@@ -1568,7 +1569,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 			 const struct ikev2_proposals *proposals,
 			 const shunk_t local_spi)
 {
-	dbg("Emitting ikev2_proposals ...");
+	ldbg(pbs->logger, "emitting ikev2_proposals ...");
 
 	/* SA header out */
 	struct ikev2_sa sa = {
@@ -1602,7 +1603,7 @@ bool emit_v2SA_proposal(struct pbs_out *pbs,
 			const struct ikev2_proposal *proposal,
 			shunk_t local_spi)
 {
-	dbg("emitting ikev2_proposal ...");
+	ldbg(pbs->logger, "emitting ikev2_proposal ...");
 	passert(pbs != NULL);
 
 	/* SA header out */
@@ -1631,7 +1632,9 @@ bool emit_v2SA_proposal(struct pbs_out *pbs,
 bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				   struct trans_attrs *ta_out, struct logger *logger)
 {
-	dbg("converting proposal to internal trans attrs");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	vdbg("converting proposal to internal trans attrs");
+	verbose.level++;
 
 	/*
 	 * Start with an empty TA.
@@ -1794,16 +1797,20 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 static void add_missing_transform(struct ikev2_proposal *proposal,
 				  const struct ikev2_proposal *accepted_proposal,
 				  enum ikev2_trans_type trans_type,
-				  const struct ike_alg *transform)
+				  const struct ike_alg *transform,
+				  struct verbose verbose)
 {
+	name_buf ttb;
+	vdbg("XXX: adding missing %s?", str_enum_short(&ikev2_trans_type_names, trans_type, &ttb));
+
 	/* fill in DH=NULL when missing */
 	const struct ikev2_transform *accepted_transform =
 		&accepted_proposal->transforms[trans_type].transform[0];
 	if (accepted_transform->valid) {
-		dbg("XXX: transform already valid for %s", transform->fqn);
+		vdbg("XXX: transform already valid for %s", transform->fqn);
 		return;
 	}
-	dbg("XXX: adding transform %s", transform->fqn);
+	vdbg("XXX: adding transform %s", transform->fqn);
 	append_transform(proposal, trans_type, transform->id[IKEv2_ALG_ID], 0);
 }
 
@@ -1819,7 +1826,7 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 						       const struct ikev2_proposal *accepted_proposal,
 						       const struct dh_desc *default_dh,
 						       bool ms_dh_downgrade/*aka add none*/,
-						       struct logger *logger)
+						       struct verbose verbose)
 {
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, story);
 	const struct dh_desc *dh[3] = {NULL}; /*[0] is ignored*/
@@ -1829,13 +1836,13 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 	 */
 	unsigned dhc = 0;
 	FOR_EACH_THING(d,
-		       ikev2_proposal_first_dh(accepted_proposal),
+		       ikev2_proposal_first_dh(accepted_proposal, verbose),
 		       default_dh, &ike_alg_dh_none) {
 		if (d != NULL) {
 			dhc++;
-			PASSERT(logger, dhc < elemsof(dh));
+			vassert(dhc < elemsof(dh));
 			dh[dhc] = d;
-			ldbg(logger, "XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
+			vdbg("XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
 			break;
 		}
 	}
@@ -1844,9 +1851,9 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 	if (ms_dh_downgrade && dh[0] != &ike_alg_dh_none) {
 		/* space for duplicate proposal with none */
 		dhc++;
-		PASSERT(logger, dhc < elemsof(dh));
+		vassert(dhc < elemsof(dh));
 		dh[dhc] = &ike_alg_dh_none;
-		ldbg(logger, "XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
+		vdbg("XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
 	}
 
 
@@ -1872,18 +1879,20 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 		 * transform (by default they are omitted when
 		 * emitting the proposal).
 		 */
-		dbg("XXX: adding missing integ?");
 		add_missing_transform(proposal, accepted_proposal,
 				      IKEv2_TRANS_TYPE_INTEG,
-				      &ike_alg_integ_none.common);
+				      &ike_alg_integ_none.common,
+				      verbose);
 		/* ... and forcing DH */
 		force_transform(proposal, IKEv2_TRANS_TYPE_DH, &dh[p]->common);
 	}
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+
+	VDBG_JAMBUF(buf) {
 		jam_string(buf, story);
 		jam_string(buf, " ");
 		jam_v2_proposals(buf, proposals);
 	}
+
 	return proposals;
 }
 
@@ -1940,27 +1949,26 @@ static void append_transform(struct ikev2_proposal *proposal,
 static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 				     const struct encrypt_desc *encrypt,
 				     unsigned keylen,
-				     struct logger *logger)
+				     struct verbose verbose)
 {
 	name_buf protocol;
 	if (proposal->protoid == 0 ||
 	    !enum_short(&ikev2_proposal_protocol_id_names, proposal->protoid, &protocol)) {
-		llog_pexpect(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
+		vlog_pexpect(HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
 		return false;
 	}
 	if (encrypt == NULL) {
-		llog_pexpect(logger, HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm",
+		vlog_pexpect(HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm",
 			     protocol.buf);
 		return false;
 	}
 	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
-		llog(RC_LOG, logger,
-		     "IKEv2 %s %s ENCRYPT transform is not supported",
+		vlog("IKEv2 %s %s ENCRYPT transform is not supported",
 		     protocol.buf, encrypt->common.fqn);
 		return false;
 	}
 	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
-		llog_pexpect(logger, HERE, "IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
+		vlog_pexpect(HERE, "IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
 			     protocol.buf, encrypt->common.fqn, keylen);
 		return false;
 	}
@@ -1974,13 +1982,13 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * attribute - it's redundant as there is only one
 		 * valid key length.
 		 */
-		ldbg(logger, "omitting IKEv2 %s %s ENCRYPT transform key-length",
+		vdbg("omitting IKEv2 %s %s ENCRYPT transform key-length",
 		     protocol.buf, encrypt->common.fqn);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], 0);
 	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
-		passert(encrypt->keydeflen > 0);
-		ldbg(logger, "forcing IKEv2 %s %s ENCRYPT transform key length: %u",
+		vassert(encrypt->keydeflen > 0);
+		vdbg("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
 		     protocol.buf, encrypt->common.fqn, encrypt->keydeflen);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
 				 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
@@ -2013,13 +2021,13 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		 * redundant proposal is made.
 		 */
 		unsigned keymaxlen = encrypt_max_key_bit_length(encrypt);
-		passert(encrypt->keydeflen > 0);
-		passert(keymaxlen > 0);
+		vassert(encrypt->keydeflen > 0);
+		vassert(keymaxlen > 0);
 		/* equal handled above */
-		passert(keymaxlen > encrypt->keydeflen);
+		vassert(keymaxlen > encrypt->keydeflen);
 		switch (proposal->protoid) {
 		case IKEv2_SEC_PROTO_IKE:
-			ldbg(logger, "forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
+			vdbg("forcing IKEv2 %s %s ENCRYPT transform high-to-low key lengths: %u %u",
 			     protocol.buf, encrypt->common.fqn,
 			     keymaxlen, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
@@ -2028,7 +2036,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
 			break;
 		case IKEv2_SEC_PROTO_ESP:
-			ldbg(logger, "forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
+			vdbg("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
 			     protocol.buf, encrypt->common.fqn,
 			     encrypt->keydeflen, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
@@ -2038,7 +2046,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			break;
 		default:
 			/* presumably AH */
-			llog(RC_LOG, logger, "dropping local IKEv2 %s %s ENCRYPT transform with wrong protocol",
+			vlog("dropping local IKEv2 %s %s ENCRYPT transform with wrong protocol",
 			     protocol.buf, encrypt->common.fqn);
 			break;
 		}
@@ -2051,7 +2059,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 								struct ikev2_proposals *v2_proposals,
 								const struct dh_desc *force_dh,
 								const struct dh_desc *default_dh,
-								struct logger *logger)
+								struct verbose verbose)
 {
 	/*
 	 * Both initialize and empty this proposal (might
@@ -2070,7 +2078,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		if (!append_encrypt_transform(v2_proposal, encrypt,
-					      alg->enckeylen, logger)) {
+					      alg->enckeylen, verbose)) {
 			return NULL;
 		}
 	}
@@ -2152,12 +2160,15 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 
 struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id protoid,
 						       const struct proposals *proposals,
-						       struct logger *logger)
+						       struct verbose verbose)
 {
 	name_buf name;
-	PASSERT(logger, enum_short(&ikev2_proposal_protocol_id_names, protoid, &name));
-	ldbg(logger, "generating IKEv2 %s proposals", name.buf);
-	PASSERT(logger, proposals != NULL);
+	vassert(enum_short(&ikev2_proposal_protocol_id_names, protoid, &name));
+	vassert(proposals != NULL);
+
+	vdbg("generating IKEv2 %s proposals", name.buf);
+	verbose.level++;
+
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals, "v2 proposals");
 	/* +1 as proposal[0] is empty */
 	int v2_proposals_roof = nr_proposals(proposals) + 1;
@@ -2167,24 +2178,22 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 	v2_proposals->roof = 1; /* i.e., empty: [1,1) */
 
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+		VDBG_JAMBUF(buf) {
 			jam(buf, "converting %s proposal ", name.buf);
 			jam_proposal(buf, proposal);
 			jam_string(buf, " to ikev2 ...");
 		}
 
-		PASSERT(logger, v2_proposals->roof < v2_proposals_roof);
+		vassert(v2_proposals->roof < v2_proposals_roof);
 		struct ikev2_proposal *v2_proposal =
 			ikev2_proposal_from_proposal_info(proposal,
 							  protoid,
 							  v2_proposals,
 							  /*force_dh*/NULL,
 							  /*default_dh*/NULL,
-							  logger);
+							  verbose);
 		if (v2_proposal != NULL) {
-			if (DBGP(DBG_BASE)) {
-				DBG_log_ikev2_proposal("... ", v2_proposal);
-			}
+			vdbg_ikev2_proposal(verbose, "... ", v2_proposal);
 			v2_proposals->roof++;
 		}
 	}
@@ -2207,15 +2216,16 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 						      const char *why,
 						      bool strip_dh,
 						      const struct dh_desc *default_dh,
-						      struct logger *logger)
+						      struct verbose verbose)
 {
 	if (!pexpect(c->config->child_sa.proposals.p != NULL)) {
 		return NULL;
 	}
 
-	ldbg(logger, "constructing ESP/AH proposals for %s with strip_dh=%s ms_dh_downgrade=%s default_dh=%s",
+	vdbg("constructing ESP/AH proposals for %s with strip_dh=%s ms_dh_downgrade=%s default_dh=%s",
 	     why, bool_str(strip_dh), bool_str(c->config->ms_dh_downgrade),
 	     default_dh->common.fqn);
+	verbose.level++;
 
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
 							   "ESP/AH proposals");
@@ -2247,7 +2257,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		protoid = IKEv2_SEC_PROTO_AH;
 		break;
 	default:
-		bad_enum(logger, &encap_proto_names, c->config->child_sa.encap_proto);
+		bad_enum(verbose.logger, &encap_proto_names, c->config->child_sa.encap_proto);
 	}
 
 	/*
@@ -2259,13 +2269,13 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 
 		FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {
 
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
+			VDBG_JAMBUF(log) {
 				jam(log, "converting proposal ");
 				jam_proposal(log, proposal);
 				jam(log, " to ikev2 pass %u ...", pass);
 			}
 
-			PASSERT(logger, v2_proposals->roof < v2_proposals_roof);
+			vassert(v2_proposals->roof < v2_proposals_roof);
 
 			/*
 			 * If the pass=1 proposal no DH, then there's
@@ -2299,12 +2309,10 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 								  v2_proposals,
 								  force_dh,
 								  default_dh,
-								  logger);
+								  verbose);
 			if (v2_proposal != NULL) {
 				add_esn_transforms(v2_proposal, c);
-				if (DBGP(DBG_BASE)) {
-					DBG_log_ikev2_proposal("... ", v2_proposal);
-				}
+				vdbg_ikev2_proposal(verbose, "... ", v2_proposal);
 				v2_proposals->roof++;
 			}
 		}
@@ -2316,7 +2324,8 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
  * Return the first valid DH proposal that is supported.
  */
 
-const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal)
+const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
+					      struct verbose verbose)
 {
 	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_DH];
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
@@ -2329,12 +2338,12 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 			 * been pruned earlier), rather than crash,
 			 * continue looking for a valid group.
 			 */
-			dbg("unrecognized group %s", b.buf);
+			vdbg("unrecognized group %s", b.buf);
 			continue;
 		}
 
 		if (group == &ike_alg_dh_none) {
-			dbg("ignoring DH=none when looking for first DH");
+			vdbg("ignoring DH=none when looking for first DH");
 			continue;
 		}
 
@@ -2343,12 +2352,13 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 	return NULL;
 }
 
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals)
+const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
+					       struct verbose verbose)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		const struct dh_desc *dh = ikev2_proposal_first_dh(proposal);
+		const struct dh_desc *dh = ikev2_proposal_first_dh(proposal, verbose);
 		if (dh != NULL) {
 			return dh;
 		}
@@ -2375,7 +2385,6 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 			}
 		}
 	}
-	dbg("no first MODP (DH) transform found");
 	return false;
 }
 
@@ -2389,10 +2398,11 @@ void ikev2_copy_child_spi_from_proposal(const struct ikev2_proposal *accepted_ik
 
 struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	return get_v2_child_proposals(c, "loading config",
 				      /*strip_dh*/true,
 				      /*default_dh*/&ike_alg_dh_none,
-				      c->logger);
+				      verbose);
 }
 
 /*
@@ -2407,11 +2417,10 @@ struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c
  */
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
-								   struct child_sa *larval_child)
+								   struct child_sa *larval_child,
+								   struct verbose verbose)
 {
 	struct connection *cc = larval_child->sa.st_connection; /*not IKE's connection*/
-	struct logger *logger = larval_child->sa.logger;
-
 	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
 
 	struct ikev2_proposals *proposals;
@@ -2425,7 +2434,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		 */
 		proposals = get_v2_child_proposals(cc, "new Child SA",
 						   /*strip-dh*/true,
-						   ike_dh, logger);
+						   ike_dh, verbose);
 	} else if (cc->config->child_sa.pfs) {
 		/*
 		 * Propose the full ESP= line.  If the proposal
@@ -2440,7 +2449,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		 */
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
 						   /*strip_dh*/false,
-						   ike_dh, logger);
+						   ike_dh, verbose);
 	} else {
 		/*
 		 * Propose the full ESP= line with no PFS.
@@ -2453,10 +2462,10 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		proposals = get_v2_child_proposals(cc, "new Child SA",
 						   /*strip-dh*/true,
 						   &ike_alg_dh_none,
-						   logger);
+						   verbose);
 	}
 
-	llog_v2_proposals(LOG_STREAM/*not-whack*/, logger, proposals,
+	llog_v2_proposals(LOG_STREAM/*not-whack*/, verbose.logger, proposals,
 			  "Child SA proposals (new child)");
 	return proposals;
 }
@@ -2478,7 +2487,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_sa *ike,
 								     struct child_sa *established_child,
-								     struct logger *logger)
+								     struct verbose verbose)
 {
 	struct connection *cc = established_child->sa.st_connection;
 
@@ -2501,7 +2510,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 
 	const struct ikev2_proposal *accepted_proposal =
 		established_child->sa.st_v2_accepted_proposal;
-	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal);
+	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal, verbose);
 
 	/*
 	 * Normally, with PFS=YES, the Child SA's previously accepted
@@ -2537,7 +2546,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 						    accepted_proposal,
 						    ike_dh,
 						    cc->config->ms_dh_downgrade,
-						    logger);
+						    verbose);
 	} else if (ike_auth_child_rekey_needs_dh && proposal_dh == NULL) {
 		/*
 		 * The proposal does not include DH, but DH needs to
@@ -2555,18 +2564,18 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		proposals = proposals_from_accepted("rekey IKE SA CHILD", accepted_proposal,
 						    ike_dh,
 						    cc->config->ms_dh_downgrade,
-						    logger);
+						    verbose);
 	} else if (ike_auth_child_rekey_needs_dh) {
 		/*
 		 * Since the proposals include DH, and there's no easy
 		 * way of figuring out which of the proposals and DH
 		 * were chosen, just re-send everything.
 		 */
-		PEXPECT(logger, proposal_dh != NULL);
+		vexpect(proposal_dh != NULL);
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
 						   /*strip_dh*/false,
 						   /*default-ignored*/&ike_alg_dh_none,
-						   logger);
+						   verbose);
 	} else {
 		/*
 		 * Use the previously accepted proposal.  If the
@@ -2575,15 +2584,15 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		 *
 		 * This behaviour is unchanged.
 		 */
-		PEXPECT(logger, (cc->config->child_sa.pfs == (accepted_dh != NULL)));
+		vexpect(cc->config->child_sa.pfs == (accepted_dh != NULL));
 		proposals = proposals_from_accepted("rekey CHILD",
 						    accepted_proposal,
 						    &ike_alg_dh_none,
 						    cc->config->ms_dh_downgrade,
-						    logger);
+						    verbose);
 	}
 
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+	VDBG_JAMBUF(buf) {
 		jam_string(buf, "rekey CHILD ");
 		jam_v2_proposals(buf, proposals);
 	}
@@ -2591,13 +2600,13 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 }
 
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa *established_ike,
-								   struct logger *logger)
+								   struct verbose verbose)
 {
 	return proposals_from_accepted("rekey IKE",
 				       established_ike->sa.st_v2_accepted_proposal,
 				       /*default_dh-ignored*/&ike_alg_dh_none,
 				       /*ms_dh_downgrade*/false,
-				       logger);
+				       verbose);
 }
 
 void set_ikev2_accepted_proposal(struct ike_sa *ike,
