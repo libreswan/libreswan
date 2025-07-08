@@ -517,45 +517,6 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
 				  "host->nexthop.addr", verbose);
-	} else if (peer->host.type == KH_IPHOSTNAME) {
-		/*
-		 * Peer IP is a DNS hostname.
-		 *
-		 * We may need to figure out source IP and gateway IP
-		 * to get there.
-		 *
-		 * XXX: should this also update peer->host.type?
-		 *
-		 * XXX: No!  The field still needs to be copied into
-		 * the connection struct so that ddns.c knows to
-		 * re-resolve the address (which strongly suggests the
-		 * need for more fields - extract_connection() even
-		 * does this with a separate host_addr[] array).
-		 */
-#ifdef USE_DNSSEC
-		/* try numeric first */
-		err_t er = ttoaddress_num(shunk1(peer->host.name),
-					  host_afi, &peer->host.addr);
-		if (er != NULL) {
-			/* not numeric, so resolve it */
-			if (!unbound_resolve(peer->host.name,
-					     host_afi, &peer->host.addr,
-					     verbose.logger)) {
-				pfree(msgbuf);
-				return RESOLVE_FAILURE;
-			}
-		}
-#else
-		err_t er = ttoaddress_dns(shunk1(peer->host.name),
-					  host_afi, &peer->host.addr);
-		if (er != NULL) {
-			pfree(msgbuf);
-			return RESOLVE_FAILURE;
-		}
-#endif
-		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
-				  "peer->host.addr(dns)", verbose);
 	} else if (peer->host.type == KH_IPADDR) {
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
