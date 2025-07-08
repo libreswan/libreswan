@@ -324,26 +324,28 @@ void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 
 #define LDBG_dump(LOGGER, DATA, LEN)			\
 	llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN)
+
 #define LDBG_hunk(LOGGER, HUNK)				\
 	llog_hunk(DEBUG_STREAM, LOGGER, HUNK);
+
 #define LDBG_thing(LOGGER, THING)			\
 	llog_thing(DEBUG_STREAM, LOGGER, THING);
 
 #define ldbg_dump(LOGGER, DATA, LEN)			\
 	{						\
-		if (DBGP(DBG_BASE)) {			\
+		if (LDBGP(DBG_BASE, LOGGER)) {		\
 			LDBG_dump(LOGGER, DATA, LEN);	\
 		}					\
 	}
 #define ldbg_hunk(LOGGER, HUNK)				\
 	{						\
-		if (DBGP(DBG_BASE)) {			\
+		if (LDBGP(DBG_BASE, LOGGER)) {		\
 			LDBG_hunk(LOGGER, HUNK);	\
 		}					\
 	}
 #define ldbg_thing(LOGGER, THING)			\
 	{						\
-		if (DBGP(DBG_BASE)) {			\
+		if (LDBGP(DBG_BASE, LOGGER)) {		\
 			LDBG_thing(LOGGER, THING);	\
 		}					\
 	}

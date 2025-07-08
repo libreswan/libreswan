@@ -33,7 +33,7 @@
  *
  *	struct verbose verbose = {
  *		.logger = logger,
- *		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : 0),
+ *		.rc_flags = (LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : 0),
  *	};
  *
  * Functions then pass verbose by value, and increment .level as
@@ -82,18 +82,15 @@ struct verbose {
  *   NO PREFIX and NO indentation (i.e., a shortcut for llog(RC_LOG,
  *   verbose.logger, ...).
  *
- * Use GNU ?: formatting, shh.
  */
 
 #define VERBOSE(RC_FLAGS, LOGGER, PREFIX)				\
 	{								\
 		.logger = LOGGER,					\
 			.prefix = PREFIX,				\
-			.rc_flags = ((lset_t)RC_FLAGS == (lset_t)DEBUG_STREAM \
-				     ? (LDBGP(DBG_BASE, LOGGER)		\
-					? DEBUG_STREAM			\
-					: NO_STREAM)			\
-				     : RC_FLAGS),			\
+			.rc_flags = ((lset_t)RC_FLAGS != (lset_t)DEBUG_STREAM ? RC_FLAGS : \
+				     LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
+				     NO_STREAM),			\
 			}
 
 /*
