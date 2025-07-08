@@ -821,6 +821,7 @@ static diag_t extract_resolve_host(struct afi_winner *winner,
 				   struct verbose verbose)
 {
 	diag_t d;
+	err_t e;
 
 	vdbg("extracting '%s%s=%s':", leftright, name, (value == NULL ? "" : value));
 	verbose.level++;
@@ -867,29 +868,30 @@ static diag_t extract_resolve_host(struct afi_winner *winner,
 	}
 
 	/* let parser decide address, then reject after */
-	err_t er = ttoaddress_num(shunk1(value), NULL, &end->addr);
-	if (er != NULL) {
-		/* not an IP address, so set the type to the string */
-		end->type = KH_IPHOSTNAME;
+
+	e = ttoaddress_num(shunk1(value), NULL, &end->addr);
+	if (e == NULL) {
+		const struct ip_info *afi = address_info(end->addr);
+		d = check_afi(winner, leftright, name, value, afi, verbose);
+		if (d != NULL) {
+			return d;
+		}
+
+		end->type = KH_IPADDR;
 
 		name_buf tb;
-		vdbg("-> %s", str_sparse_short(&keyword_host_names, end->type, &tb));
+		address_buf ab;
+		vdbg("-> %s %s", str_sparse_short(&keyword_host_names, end->type, &tb),
+		     str_address(&end->addr, &ab));
 		return NULL;
 	}
 
-	const struct ip_info *afi = address_info(end->addr);
-	d = check_afi(winner, leftright, name, value, afi, verbose);
-	if (d != NULL) {
-		return d;
-	}
-
-	end->type = KH_IPADDR;
-
+	/* not an IP address, assume it's a DNS hostname */
+	end->type = KH_IPHOSTNAME;
 	name_buf tb;
-	address_buf ab;
-	vdbg("-> %s %s", str_sparse_short(&keyword_host_names, end->type, &tb),
-	     str_address(&end->addr, &ab));
+	vdbg("-> %s", str_sparse_short(&keyword_host_names, end->type, &tb));
 	return NULL;
+
 }
 
 static diag_t extract_host(const struct whack_message *wm,
@@ -946,38 +948,58 @@ static diag_t extract_host(const struct whack_message *wm,
 	 * Verify the extract, update with the unset address when
 	 * necessary.
 	 *
-	 * Deal with the lurking %iface.
+	 * Deal with the lurking {left,right}=%iface.
 	 */
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
- 		struct resolve_end *end = &resolve[lr];
- 		const char *leftright = wm->end[lr].leftright;
+
+	struct {
+		const char *leftright;
 		const char *name;
 		const char *value;
+	} unresolved = {0};
 
-		/* validate the KSCF_IP/KNCF_IP */
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		name = "";
-		value = end->host.name;
+ 		struct resolve_host *host = &resolve[lr].host;
+		struct resolve_host *nexthop = &resolve[lr].nexthop;
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name = "";
+		const char *value = host->name;
 
-		switch (end->host.type) {
+		switch (host->type) {
+
 		case KH_IPADDR:
+			/* handled by pluto using .host_type */
+			break;
+
 		case KH_DEFAULTROUTE:
 		case KH_OPPO:
 		case KH_OPPOGROUP:
 		case KH_GROUP:
+			/* handled by pluto using .host_type */
+			host->addr = winner.afi->address.unspec;
+			break;
+
 		case KH_IPHOSTNAME:
 		{
-			/* handled by pluto using .host_type */
-			name_buf nb;
-			vdbg("%s%s=%s handled as %s later",
-			     leftright, name, (value == NULL ? "<null>" : value),
-			     str_sparse_short(&keyword_host_names, end->host.type, &nb));
+			err_t er = ttoaddress_dns(shunk1(value), winner.afi, &host->addr);
+			if (er == NULL) {
+				break;
+			}
+
+			vlog("failed to resolve '%s%s=%s' at load time: %s",
+			     leftright, name, value, er);
+			host->addr = winner.afi->address.unspec;
+
+			unresolved.leftright = leftright;
+			unresolved.name = name;
+			unresolved.value = value;
 			break;
 		}
 
 		case KH_ANY:
+			/* handled by pluto using .host_type */
 			/* any/4 any/6? */
-			end->host.addr = unset_address;
+			host->addr = winner.afi->address.unspec;
 			break;
 
 		case KH_IFACE:
@@ -986,13 +1008,12 @@ static diag_t extract_host(const struct whack_message *wm,
 			vexpect(value[0] == '%');
 			const char *iface = value + 1;
 			if (!starter_iface_find(iface, winner.afi,
-						&end->host.addr,
-						&end->nexthop.addr)) {
+						&host->addr,
+						&nexthop->addr)) {
 				return diag("%s%s=%s does not appear to be an interface",
 					    leftright, name, value);
 			}
-			/* not numeric, so set the type to the iface type */
-			end->host.type = KH_IFACE;
+
 			break;
 		}
 
@@ -1004,12 +1025,29 @@ static diag_t extract_host(const struct whack_message *wm,
 
 		}
 
-		/* Validate nexthop */
+		name_buf nb;
+		address_buf hab, nab;
+		vdbg("%s%s=%s aka %s set to %s -> %s",
+		     leftright, name, (value == NULL ? "<null>" : value),
+		     str_sparse_short(&keyword_host_names, host->type, &nb),
+		     str_address(&host->addr, &hab),
+		     str_address(&nexthop->addr, &nab));
 
-		name = "nexthop";
-		value = end->nexthop.name;
+	}
 
-		switch (end->nexthop.type) {
+	/*
+	 * Validate nexthop.
+	 */
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+
+ 		struct resolve_host *nexthop = &resolve[lr].nexthop;
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name = "nexthop";
+		const char *value = nexthop->name;
+		enum keyword_host type = nexthop->type;
+
+		switch (type) {
 		case KH_ANY:
 		case KH_IFACE:
 		case KH_OPPO:
@@ -1022,30 +1060,47 @@ static diag_t extract_host(const struct whack_message *wm,
 			break;
 
 		case KH_DIRECT:
-			end->nexthop.addr = winner.afi->address.unspec;
+			nexthop->addr = winner.afi->address.unspec;
 			break;
 
 		case KH_NOTSET:
-			end->nexthop.addr = winner.afi->address.unspec;
-			end->nexthop.type = (end->host.type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE :
-					     KH_NOTSET);
-			break;
-
-		case KH_DEFAULTROUTE:
-			end->nexthop.addr = winner.afi->address.unspec;
+		{
+			struct resolve_host *host = &resolve[lr].host;
+			nexthop->addr = winner.afi->address.unspec;
+			nexthop->type = (host->type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE : KH_NOTSET);
 			break;
 		}
 
+		case KH_DEFAULTROUTE:
+			nexthop->addr = winner.afi->address.unspec;
+			break;
+
+		}
+
+		name_buf tb, nb;
+		address_buf nab;
+		vdbg("%s%s=%s aka %s set to %s %s",
+		     leftright, name, (value == NULL ? "<null>" : value),
+		     str_sparse_short(&keyword_host_names, type, &tb),
+		     str_sparse_short(&keyword_host_names, nexthop->type, &nb),
+		     str_address(&nexthop->addr, &nab));
+
 	}
 
-	resolve_default_route(&resolve[LEFT_END],
-			      &resolve[RIGHT_END],
-			      winner.afi,
-			      verbose);
-	resolve_default_route(&resolve[RIGHT_END],
-			      &resolve[LEFT_END],
-			      winner.afi,
-			      verbose);
+	if (unresolved.name != NULL) {
+		vdbg("skipping resolve as '%s%s=%s' did not resolve",
+		     unresolved.leftright, unresolved.name, unresolved.value);
+		(*host_afi) = winner.afi;
+	} else {
+		resolve_default_route(&resolve[LEFT_END],
+				      &resolve[RIGHT_END],
+				      winner.afi,
+				      verbose);
+		resolve_default_route(&resolve[RIGHT_END],
+				      &resolve[LEFT_END],
+				      winner.afi,
+				      verbose);
+	}
 
 	(*host_afi) = winner.afi;
 	return NULL;
@@ -3470,47 +3525,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	PASSERT(c->logger, host_afi != NULL);
 
 	/*
-	 * Convert the resolved host addresses into proper addresses.
-	 *
-	 * Note: both the resolve and the DNS lookup should be part of
-	 * orient(), and offloaded?
-	 *
-	 * Note: currently resolve_default_route(), when deemed
-	 * necessary, will do a DNS lookup of the peer (but not the
-	 * local end).  This makes the below DNS kind of redundant.
-	 */
-
-	ip_address host_addr[END_ROOF];
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const struct whack_end *we = whack_ends[end];
-		const struct resolve_host *host = &resolve[end].host;
-
-		if (address_is_specified(host->addr)) {
-			host_addr[end] = host->addr;
-			continue;
-		}
-
-		if (host->type == KH_IPHOSTNAME) {
-			ip_address addr;
-			err_t er = ttoaddress_dns(shunk1(we->host),
-						  host_afi, &addr);
-			if (er == NULL) {
-				host_addr[end] = addr;
-				continue;
-			}
-
-			llog(RC_LOG, c->logger,
-			     "failed to resolve '%s=%s' at load time: %s",
-			     we->leftright, we->host, er);
-			host_addr[end] = host_afi->address.unspec;
-			continue;
-		}
-
-		host_addr[end] = host_afi->address.unspec;
-
-	}
-
-	/*
 	 * At least one end must specify an IP address (or at least
 	 * have that potential to be resolved to an IP address by
 	 * being a KP_IPHOSTNAME).
@@ -5029,7 +5043,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		update_hosts_from_end_host_addr(c, end, host_addr[end], HERE); /* from add */
+		update_hosts_from_end_host_addr(c, end, resolve[end].host.addr, HERE); /* from add */
 	}
 
 	/*
