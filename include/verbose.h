@@ -110,16 +110,38 @@ struct verbose {
  * Normal logging: the message is always logged (no indentation); just
  * a wrapper around llog(verbose.logger)
  *
- * vfatal() and verror(), like perror() add ": ", before ERROR.
+ * vfatal() and verror(), like perror() add ": ", before FMT when
+ * ERRNO is non-zero.
  */
+
 #define vlog(FMT, ...)						\
-	llog(RC_LOG, verbose.logger, FMT, ##__VA_ARGS__);
+	llog(RC_LOG, verbose.logger, FMT, ##__VA_ARGS__)
+
+#define VLOG_JAMBUF(BUF)				\
+	LLOG_JAMBUF(RC_LOG, verbose.logger, BUF)
+
+#define vlog_errno(ERRNO, FMT, ...)					\
+	llog_errno(RC_LOG, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
+
+#define vlog_pexpect(WHERE, FMT, ...)				\
+	llog_pexpect(verbose.logger, WHERE, FMT, ##__VA_ARGS__)
+
+#define vlog_passert(WHERE, FMT, ...)				\
+	llog_passert(verbose.logger, WHERE, FMT, ##__VA_ARGS__)
 
 #define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
 	fatal(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
 
 #define verror(ERROR, FMT, ...)					\
 	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
+
+#define vbad(BAD) PBAD(verbose.logger, BAD)
+
+#define vexpect(EXPECT) PEXPECT(verbose.logger, EXPECT)
+#define vassert(ASSERT) PASSERT(verbose.logger, ASSERT)
+
+#define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
+#define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
 
 /*
  * Debug-logging: when the logger has debugging enabled, the message
@@ -128,6 +150,8 @@ struct verbose {
  * These all have the same feel as the LDBG*() series.
  */
 
+#define VDBGP()	LDBGP(DBG_BASE, verbose.logger)
+
 #define vdbg(FMT, ...)							\
 	{								\
 		if (VDBGP()) {						\
@@ -135,12 +159,25 @@ struct verbose {
 		}							\
 	}
 
-#define VDBGP()	LDBGP(DBG_BASE, verbose.logger)
+#define VDBG_log(FMT, ...)			\
+	llog(DEBUG_STREAM, verbose.logger,	\
+	     PRI_VERBOSE""FMT,			\
+	     pri_verbose, ##__VA_ARGS__)
 
-#define VDBG_log(FMT, ...)						\
-	llog(DEBUG_STREAM, verbose.logger,				\
-	     PRI_VERBOSE""FMT,						\
-	     pri_verbose, ##__VA_ARGS__);				\
+#define vdbg_errno(ERRNO, FMT, ...)				\
+	{							\
+		if (VDBGP()) {					\
+			VDBG_errno(errno_, FMT, ##__VA_ARGS__);	\
+		}						\
+	}
+
+#define VDBG_errno(ERRNO, FMT, ...)					\
+	{								\
+		int errno_ = ERRNO; /* save value across va args */	\
+		llog_errno(DEBUG_STREAM, verbose.logger, errno_,	\
+			   PRI_VERBOSE""FMT,				\
+			   pri_verbose, ##__VA_ARGS__);			\
+	}
 
 #define VDBG_JAMBUF(BUF)						\
 	for (bool cond_ = VDBGP(); cond_; cond_ = false)		\
@@ -168,14 +205,6 @@ struct verbose {
 		}							\
 	}
 
-#define vbad(BAD) PBAD(verbose.logger, BAD)
-
-#define vexpect(EXPECT) PEXPECT(verbose.logger, EXPECT)
-#define vassert(ASSERT) PASSERT(verbose.logger, ASSERT)
-
-#define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
-#define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
-
 #define VERBOSE_JAMBUF(BUF)						\
 	for (bool cond_ = (verbose.rc_flags != 0 &&			\
 			   verbose.rc_flags != NO_STREAM);		\
@@ -183,8 +212,5 @@ struct verbose {
 		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, BUF)	\
 			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
 			     cond_; cond_ = false)
-
-#define VLOG_JAMBUF(BUF)				\
-	LLOG_JAMBUF(RC_LOG, verbose.logger, BUF)
 
 #endif
