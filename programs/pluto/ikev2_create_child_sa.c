@@ -475,13 +475,14 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	struct logger *logger = child_being_replaced->sa.logger;
 	passert(c != NULL);
 
-	dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+	ldbg(ike->sa.logger, "initiating child sa with "PRI_LOGGER, pri_logger(logger));
 
 	pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
 	struct child_sa *larval_child = new_v2_child_sa(c, ike, CHILD_SA,
 							SA_INITIATOR,
 							STATE_V2_REKEY_CHILD_I0);
 	state_attach(&larval_child->sa, logger);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_child->sa.logger, NULL);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
@@ -495,11 +496,9 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	larval_child->sa.st_v2_rekey_pred = child_being_replaced->sa.st_serialno;
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
-							     child_being_replaced,
-							     larval_child->sa.logger);
+		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, child_being_replaced, verbose);
 	larval_child->sa.st_pfs_group =
-		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals);
+		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
 
 	/*
 	 * Note: this will callback with the larval SA.
@@ -852,11 +851,11 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		new_v2_child_sa(predecessor->sa.st_connection,
 				       ike, CHILD_SA, SA_RESPONDER,
 				       STATE_V2_REKEY_CHILD_R0);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_child->sa.logger, NULL);
 
 	larval_child->sa.st_v2_rekey_pred = predecessor->sa.st_serialno;
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, predecessor,
-							     larval_child->sa.logger);
+		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, predecessor, verbose);
 
 	if (!verify_rekey_child_request_ts(larval_child, md)) {
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -887,6 +886,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	struct child_sa *larval_child = new_v2_child_sa(cc, ike, CHILD_SA,
 							SA_INITIATOR,
 							STATE_V2_NEW_CHILD_I0);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_child->sa.logger, NULL);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
@@ -897,9 +897,9 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 		"initiating Child SA using IKE SA #%lu", ike->sa.st_serialno);
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child);
+		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child, verbose);
 	larval_child->sa.st_pfs_group =
-		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals);
+		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
 
 	/*
 	 * Note: this will callback with the larval SA.
@@ -1080,9 +1080,10 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		new_v2_child_sa(ike->sa.st_connection,
 				ike, CHILD_SA, SA_RESPONDER,
 				STATE_V2_NEW_CHILD_R0);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_child->sa.logger, NULL);
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child);
+		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child, verbose);
 
 	/* state m/c created CHILD SA */
 	pexpect(larval_child->sa.st_v2_ike_pred == SOS_NOBODY);
@@ -1602,6 +1603,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 						      SA_INITIATOR,
 						      STATE_V2_REKEY_IKE_I0);
 	state_attach(&larval_ike->sa, ike->sa.logger);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_ike->sa.logger, NULL);
+
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
 	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
@@ -1611,7 +1614,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	 */
 	larval_ike->sa.st_policy = (struct child_policy) {0};
 	larval_ike->sa.st_v2_create_child_sa_proposals =
-		get_v2_CREATE_CHILD_SA_rekey_ike_proposals(ike, larval_ike->sa.logger);
+		get_v2_CREATE_CHILD_SA_rekey_ike_proposals(ike, verbose);
 
 	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
@@ -1762,10 +1765,10 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 }
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
-							struct child_sa *unused_ike,
+							struct child_sa *null_child,
 							struct msg_digest *request_md)
 {
-	pexpect(unused_ike == NULL);
+	pexpect(null_child == NULL);
 	v2_notification_t n;
 
 	struct child_sa *larval_ike =
@@ -1773,6 +1776,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		new_v2_child_sa(ike->sa.st_connection,
 				ike, IKE_SA, SA_RESPONDER,
 				STATE_V2_REKEY_IKE_R0);
+
+	/* the larval IKE, not it's parent */
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_ike->sa.logger, NULL);
 
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
 
@@ -1808,7 +1814,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 				 /*expect_accepted*/ false,
 				 /*limit-logging*/is_opportunistic(c),
 				 &larval_ike->sa.st_v2_accepted_proposal,
-				 ike_proposals, larval_ike->sa.logger);
+				 ike_proposals, verbose);
 	if (n != v2N_NOTHING_WRONG) {
 		pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(larval_ike->sa.logger, ike, request_md,
@@ -1819,10 +1825,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /* IKE */
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       larval_ike->sa.st_v2_accepted_proposal);
-	}
+	vdbg_ikev2_proposal(verbose, "accepted IKE proposal",
+			    larval_ike->sa.st_v2_accepted_proposal);
 
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.logger)) {
@@ -1962,6 +1966,8 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_ike->sa.logger, NULL);
+
 	pexpect(larval_ike->sa.st_sa_kind_when_established == IKE_SA);
 	pexpect(ike->sa.st_serialno == larval_ike->sa.st_clonedfrom); /* not yet emancipated */
 	struct connection *c = larval_ike->sa.st_connection;
@@ -1994,7 +2000,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 				 /*limit-logging*/is_opportunistic(c),
 				 &larval_ike->sa.st_v2_accepted_proposal,
 				 larval_ike->sa.st_v2_create_child_sa_proposals,
-				 larval_ike->sa.logger);
+				 verbose);
 	if (n != v2N_NOTHING_WRONG) {
 		/*
 		 * XXX: what should happen here?  It feels like a
@@ -2008,10 +2014,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 		return (v2_notification_fatal(n) ? STF_FATAL : STF_OK); /* IKE */
 	}
 
-	if (DBGP(DBG_BASE)) {
-		DBG_log_ikev2_proposal("accepted IKE proposal",
-				       larval_ike->sa.st_v2_accepted_proposal);
-	}
+	vdbg_ikev2_proposal(verbose, "accepted IKE proposal",
+			    larval_ike->sa.st_v2_accepted_proposal);
+
 	if (!ikev2_proposal_to_trans_attrs(larval_ike->sa.st_v2_accepted_proposal,
 					   &larval_ike->sa.st_oakley, larval_ike->sa.logger)) {
 		llog_sa(RC_LOG, larval_ike,
