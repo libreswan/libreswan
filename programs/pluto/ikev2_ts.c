@@ -1342,7 +1342,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 							 const struct traffic_selector_payloads *tsps,
 							 const struct msg_digest *md)
 {
-	struct verbose verbose = { .logger = child->sa.logger, };
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -1478,7 +1478,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 bool process_v2TS_request_payloads(struct child_sa *child,
 				   const struct msg_digest *md)
 {
-	struct verbose verbose = { .logger = child->sa.logger, };
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 	struct connection *cc = child->sa.st_connection;
@@ -1836,8 +1836,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 bool process_v2TS_response_payloads(struct child_sa *child,
 				    struct msg_digest *md)
 {
-	struct verbose verbose = { .logger = child->sa.logger, };
-
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
 	passert(child->sa.st_sa_role == SA_INITIATOR);
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
 
@@ -1918,7 +1917,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
  */
 bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md)
 {
-	struct verbose verbose = { .logger = child->sa.logger, };
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, NULL);
 
 	if (!pexpect(child->sa.st_state == &state_v2_REKEY_CHILD_R0))
 		return false;

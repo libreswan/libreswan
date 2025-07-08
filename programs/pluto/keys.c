@@ -214,11 +214,14 @@ static bool try_all_keys(enum cert_origin cert_origin,
 			 struct pubkey_list *pubkey_db,
 			 struct tac_state *s)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, s->logger, "tak");
+
 	id_buf thatid;
-	ldbg(s->logger, "trying all '%s's for %s key using %s signature that matches ID: %s",
+	vdbg("trying all '%s's for %s key using %s signature that matches ID: %s",
 	     str_cert_origin(cert_origin),
 	     s->signer->type->name, s->signer->name,
 	     str_id(&s->remote->id, &thatid));
+	verbose.level++;
 	s->cert_origin = cert_origin;
 
 	bool described = false;
@@ -227,17 +230,16 @@ static bool try_all_keys(enum cert_origin cert_origin,
 
 		if (key->content.type != s->signer->type) {
 			id_buf printkid;
-			dbg("  skipping '%s' with type %s",
-			    str_id(&key->id, &printkid), key->content.type->name);
+			vdbg("skipping '%s' with type %s",
+			     str_id(&key->id, &printkid), key->content.type->name);
 			continue;
 		}
 
-		struct verbose verbose = { .logger = &global_logger, };
 		int wildcards; /* value ignored */
 		if (!match_id(&key->id, &s->remote->id,
 			      &wildcards, verbose)) {
 			id_buf printkid;
-			dbg("  skipping '%s' with wrong ID",
+			vdbg("skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));
 			continue;
 		}
@@ -247,7 +249,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 				&pl, verbose)) {
 			id_buf printkid;
 			dn_buf buf;
-			dbg("  skipping '%s' with untrusted CA '%s'",
+			vdbg("skipping '%s' with untrusted CA '%s'",
 			    str_id(&key->id, &printkid),
 			    str_dn_or_null(key->issuer, "%any", &buf));
 			continue;
@@ -262,7 +264,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 		    realtime_cmp(key->until_time, <, s->now)) {
 			id_buf printkid;
 			realtime_buf buf;
-			dbg("  skipping '%s' which expired on %s",
+			vdbg("skipping '%s' which expired on %s",
 			    str_id(&key->id, &printkid),
 			    str_realtime(key->until_time, /*utc?*/false, &buf));
 			continue;
@@ -271,7 +273,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 		id_buf printkid;
 		dn_buf buf;
 		const char *keyid_str = str_keyid(*pubkey_keyid(key));
-		dbg("  trying '%s' aka *%s issued by CA '%s'",
+		vdbg("trying '%s' aka *%s issued by CA '%s'",
 		    str_id(&key->id, &printkid), keyid_str,
 		    str_dn_or_null(key->issuer, "%any", &buf));
 		s->tried_cnt++;
@@ -291,20 +293,20 @@ static bool try_all_keys(enum cert_origin cert_origin,
 
 		if (s->fatal_diag != NULL) {
 			/* already logged */
-			dbg("  '%s' fatal", keyid_str);
+			vdbg("'%s' fatal", keyid_str);
 			jam(&s->tried_jambuf, "(fatal)");
 			s->key = key; /* also return failing key */
 			return true; /* stop searching; enough is enough */
 		}
 
 		if (passed) {
-			dbg("  '%s' passed", keyid_str);
+			vdbg("'%s' passed", keyid_str);
 			s->key = key;
 			return true; /* stop searching */
 		}
 
 		/* should have been logged */
-		dbg("  '%s' failed", keyid_str);
+		vdbg("'%s' failed", keyid_str);
 		pexpect(s->key == NULL);
 	}
 

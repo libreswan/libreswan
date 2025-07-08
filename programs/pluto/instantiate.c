@@ -290,7 +290,7 @@ static struct connection *instantiate(struct connection *t,
 			    is_labeled_parent(t)));
 
 	if (peer_id != NULL) {
-		struct verbose verbose = { .logger = t->logger, };
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, t->logger, NULL);
 		int wildcards;	/* value ignored */
 		passert(t->remote->host.id.kind == ID_FROMCERT ||
 			match_id(peer_id, &t->remote->host.id, &wildcards, verbose));

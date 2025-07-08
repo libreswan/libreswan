@@ -703,7 +703,7 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 				 end_cert->subjectName);
 		}
 
-		struct verbose verbose = { .logger = &global_logger, };
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 		int wildcards;
 		bool m = match_dn_any_order_wild(end_cert_der_subject,
 						 peer_id->name,
