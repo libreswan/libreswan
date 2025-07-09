@@ -453,9 +453,9 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 	jam_string(buf, term);
 }
 
-void llog_msg_digest(lset_t rc_flags, struct logger *logger, const char *prefix, const struct msg_digest *md)
+void llog_msg_digest(enum stream stream, struct logger *logger, const char *prefix, const struct msg_digest *md)
 {
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		jam_msg_digest(buf, prefix, md);
 	}
 }
