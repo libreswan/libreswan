@@ -158,7 +158,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		packet = a;
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		endpoint_buf lb;
 		endpoint_buf rb;
 		llog(DEBUG_STREAM, logger,

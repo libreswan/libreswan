@@ -370,9 +370,7 @@ static struct connection *find_v2_unset_peer_connection(const struct msg_digest 
 struct connection *find_v2_unsecured_host_pair_connection(const struct msg_digest *md,
 							  bool *send_reject_response)
 {
-	struct verbose verbose = {
-		.logger = md->logger,
-	};
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, md->logger, NULL);
 
 	endpoint_buf lb;
 	endpoint_buf rb;

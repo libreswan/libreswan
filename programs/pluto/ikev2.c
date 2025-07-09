@@ -1361,12 +1361,10 @@ static void success_v2_state_transition(struct ike_sa *ike,
 {
 	passert(ike != NULL);
 
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, ike->sa.logger, buf) {
-			jam(buf, "IKE SA in state %s transitioning to ",
-			    ike->sa.st_state->short_name);
-			jam_v2_transition(buf, transition);
-		}
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
+		jam(buf, "IKE SA in state %s transitioning to ",
+		    ike->sa.st_state->short_name);
+		jam_v2_transition(buf, transition);
 	}
 
 	/*

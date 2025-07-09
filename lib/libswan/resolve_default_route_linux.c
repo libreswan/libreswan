@@ -590,11 +590,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 		.host.type = KH_IPADDR,
 	};
 
-	struct verbose verbose = {
-		.logger = logger,
-		.rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY,
-		.level = 0,
-	};
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 
 	/*
 	 * mobike need two lookups. one for the gateway and the one

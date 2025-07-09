@@ -161,8 +161,8 @@ static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *w
 PRINTF_LIKE(2)
 static void dbg_whack(struct show *s, const char *fmt, ...)
 {
-	if (DBGP(DBG_BASE)) {
-		struct logger *logger = show_logger(s);
+	struct logger *logger = show_logger(s);
+	if (LDBGP(DBG_BASE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "whack: ");
 			va_list ap;
@@ -537,7 +537,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		return;
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "whack: ");
 			jam_string(buf, "start: ");
@@ -552,7 +552,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 
 	command->op(wm, s);
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		struct logger *logger = show_logger(s);
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "whack: ");

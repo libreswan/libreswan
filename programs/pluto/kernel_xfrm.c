@@ -506,7 +506,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	size_t len = hdr->nlmsg_len;
 
 	ldbg(logger, "%s() sending %d %s %s", __func__, hdr->nlmsg_type, description, story);
-	if (DBGP(DBG_TMI)) {
+	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_dump(logger, hdr, len);
 	}
 
@@ -558,7 +558,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		}
 
 		ldbg(logger, "%s() recvfrom() returned %zd bytes", __func__, r);
-		if (DBGP(DBG_TMI)) {
+		if (LDBGP(DBG_TMI, logger)) {
 			LDBG_dump(logger, &rsp, r);
 		}
 
@@ -604,7 +604,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 	 */
 	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (expected_resp_type == NLMSG_ERROR) {
-			if (DBGP(DBG_BASE)) {
+			if (LDBGP(DBG_BASE, logger)) {
 				llog_errno(DEBUG_STREAM, logger, -rsp.u.e.error,
 					   "%s() expected netlink error response for %s %s: ",
 					   __func__, description, story);
@@ -619,7 +619,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			 * result we'll let it pass.  This really
 			 * happens for netlink_add_sa().
 			 */
-			if (DBGP(DBG_BASE)) {
+			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(logger, "%s() netlink response for %s %s included non-error error",
 					 __func__, description, story);
 				llog_ext_ack(DEBUG_STREAM, logger, &rsp.n);
@@ -628,7 +628,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		} else {
 			/* Probe failures are not real ERRORs */
 			if (streq(story, "Probe Test")) {
-				if (DBGP(DBG_BASE))
+				if (LDBGP(DBG_BASE, logger))
 					LDBG_log(logger, "netlink response for %s %s", description, story);
 			} else {
 				llog_error(logger, -rsp.u.e.error,
@@ -2379,7 +2379,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(pol->sel.proto);
 	ip_selector src = selector_from_address_protocol(src_addr, transport_proto);
 	ip_selector dst = selector_from_address_protocol(dst_addr, transport_proto);
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* XXX: use packet_from_xfrm()? */
 		PEXPECT(logger, pol->sel.sport == 0);
 		PEXPECT(logger, pol->sel.dport == 0);
@@ -2571,7 +2571,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 		return;
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		/* XXX: use packet_from_xfrm*()? */
 		PEXPECT(logger, upe->pol.sel.sport == 0);
 		PEXPECT(logger, upe->pol.sel.dport == 0);
@@ -2640,7 +2640,7 @@ static bool netlink_get(int fd,
 	}
 
 	ldbg(logger, "%s() recvfrom() returned %zd bytes", __func__, r);
-	if (DBGP(DBG_TMI)) {
+	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_dump(logger, &rsp, r);
 	}
 

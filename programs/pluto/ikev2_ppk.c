@@ -252,7 +252,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 
 	if (no_ppk_auth != NULL) {
 		*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
-		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+		if (LDBGP(DBG_PRIVATE, logger) || LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", *no_ppk_auth);
 		}
 	} else {

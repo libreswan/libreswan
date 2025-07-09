@@ -710,7 +710,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					 * logging system?
 					 */
 					log_to = ALL_STREAMS;
-				} else if (DBGP(DBG_BASE)) {
+				} else if (LDBGP(DBG_BASE, logger)) {
 					/*
 					 * Since this output is forced
 					 * using DBGP, report the

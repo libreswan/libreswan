@@ -1775,7 +1775,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 				return v1N_BAD_PROPOSAL_SYNTAX;
 			}
 
-			if (DBGP(DBG_BASE)) {
+			if (LDBGP(DBG_BASE, ike->sa.logger)) {
 				name_buf b;
 				if (enum_enum_name(&ikev1_oakley_attr_value_names, type, value, &b)) {
 					LDBG_log(ike->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
@@ -2283,7 +2283,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				  uint8_t proto,
 				  struct child_sa *child) /* current state object */
 {
-
 	diag_t d = pbs_in_struct(prop_pbs, trans_desc, trans, sizeof(*trans), trans_pbs);
 	if (d != NULL) {
 		llog(RC_LOG, child->sa.logger, "%s", str_diag(d));
@@ -2421,7 +2420,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		 * For instance, SA_LIFE_DURATION has no names and is
 		 * supported.
 		 */
-		if (DBGP(DBG_BASE)) {
+		if (LDBGP(DBG_BASE, child->sa.logger)) {
 			/* i.e., VALUE is real value */
 			name_buf b;
 			if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {

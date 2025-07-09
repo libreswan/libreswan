@@ -143,7 +143,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		ldbg(logger, "%s duplicate notification %s ignored", type, name.buf);
 		return;
 	}
-	if (DBGP(DBG_TMI)) {
+	if (LDBGP(DBG_TMI, logger)) {
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
 	md->pd[v2_pd] = notify;

@@ -24,17 +24,11 @@
  * Standalone tools, such as <<ipsec showroute>>, can enable more
  * verbose logging when --verbose is specified, vis:
  *
- *	struct verbose verbose = {
- *		.logger = logger,
- *		.rc_flags = (verbose ? LOG_STREAM : 0),
- *	};
+ *	struct verbose verbose = VERBOSE(LOG_STREAM, logger, NULL);
  *
  * While pluto, internally, enables more verbose debug logging:
  *
- *	struct verbose verbose = {
- *		.logger = logger,
- *		.rc_flags = (DBGP(DBG_BASE) ? DEBUG_STREAM : 0),
- *	};
+ *	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
  *
  * Functions then pass verbose by value, and increment .level as
  * needed.
@@ -82,18 +76,15 @@ struct verbose {
  *   NO PREFIX and NO indentation (i.e., a shortcut for llog(RC_LOG,
  *   verbose.logger, ...).
  *
- * Use GNU ?: formatting, shh.
  */
 
 #define VERBOSE(RC_FLAGS, LOGGER, PREFIX)				\
 	{								\
 		.logger = LOGGER,					\
 			.prefix = PREFIX,				\
-			.rc_flags = ((lset_t)RC_FLAGS == (lset_t)DEBUG_STREAM \
-				     ? (LDBGP(DBG_BASE, LOGGER)		\
-					? DEBUG_STREAM			\
-					: NO_STREAM)			\
-				     : RC_FLAGS),			\
+			.rc_flags = ((lset_t)RC_FLAGS != (lset_t)DEBUG_STREAM ? RC_FLAGS : \
+				     LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
+				     NO_STREAM),			\
 			}
 
 /*

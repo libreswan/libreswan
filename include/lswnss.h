@@ -83,8 +83,8 @@ void pexpect_nss_error(struct logger *logger, where_t where,
 
 #define ldbg_nss_error(LOGGER, MESSAGE, ...)				\
 	{								\
-		if (DBGP(DBG_BASE)) {					\
-			llog_nss_error(DEBUG_STREAM, logger,		\
+		if (LDBGP(DBG_BASE, LOGGER)) {				\
+			llog_nss_error(DEBUG_STREAM, LOGGER,		\
 				       MESSAGE, ##__VA_ARGS__);		\
 		}							\
 	}

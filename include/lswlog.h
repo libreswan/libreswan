@@ -262,15 +262,25 @@ void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 void log_error(const struct logger *logger, int error,
 	       const char *message, ...) PRINTF_LIKE(3);
 
-#define llog_error(LOGGER, ERRNO, FMT, ...)				\
-	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		log_error(LOGGER, e_, FMT, ##__VA_ARGS__); \
+#define llog_error(LOGGER, ERRNO, FMT, ...)			\
+	{							\
+		int e_ = ERRNO; /* save value across va args */	\
+		log_error(LOGGER, e_, FMT, ##__VA_ARGS__);	\
 	}
 
-/* like log_error() but no ERROR: prefix and/or ": " separator */
+/*
+ * Unlike llog_error(), there's no "ERROR: " prefix and no ": "
+ * separator.
+ */
+
 void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
 		const char *message, ...) PRINTF_LIKE(4);
+
+#define LDBG_errno(LOGGER, ERRNO, FMT, ...)				\
+	{								\
+		int e_ = ERRNO; /* save value across va args */		\
+		llog_errno(DEBUG_STREAM, LOGGER, e_, FMT, ##__VA_ARGS__); \
+	}
 
 /*
  * Log debug messages to the main log stream, but not the WHACK log
@@ -282,13 +292,13 @@ void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
  * as macro argument separators.  This happens accidentally if
  * multiple variables are declared in one declaration.
  *
- * Naming: All DBG_*() prefixed functions send stuff to the debug
- * stream unconditionally.  Hence they should be wrapped in DBGP().
+ * Naming: All LDBG_*(logger) prefixed functions send stuff to the
+ * debug stream unconditionally.  Hence they should be wrapped in
+ * LDBGP(logger).
  */
 
 extern lset_t cur_debugging;	/* current debugging level */
 
-#define DBGP(cond)	(cur_debugging & (cond))
 #define LDBGP(COND, LOGGER) (COND & (cur_debugging | (LOGGER)->debugging))
 
 #define dbg(MESSAGE, ...)						\
@@ -324,26 +334,28 @@ void pdbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 
 #define LDBG_dump(LOGGER, DATA, LEN)			\
 	llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN)
+
 #define LDBG_hunk(LOGGER, HUNK)				\
 	llog_hunk(DEBUG_STREAM, LOGGER, HUNK);
+
 #define LDBG_thing(LOGGER, THING)			\
 	llog_thing(DEBUG_STREAM, LOGGER, THING);
 
 #define ldbg_dump(LOGGER, DATA, LEN)			\
 	{						\
-		if (DBGP(DBG_BASE)) {			\
+		if (LDBGP(DBG_BASE, LOGGER)) {		\
 			LDBG_dump(LOGGER, DATA, LEN);	\
 		}					\
 	}
 #define ldbg_hunk(LOGGER, HUNK)				\
 	{						\
-		if (DBGP(DBG_BASE)) {			\
+		if (LDBGP(DBG_BASE, LOGGER)) {		\
 			LDBG_hunk(LOGGER, HUNK);	\
 		}					\
 	}
 #define ldbg_thing(LOGGER, THING)			\
 	{						\
-		if (DBGP(DBG_BASE)) {			\
+		if (LDBGP(DBG_BASE, LOGGER)) {		\
 			LDBG_thing(LOGGER, THING);	\
 		}					\
 	}

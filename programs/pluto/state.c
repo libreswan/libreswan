@@ -231,7 +231,7 @@ static void update_state_stats(struct state *st,
 	 *
 	 * XXX: It's an assertion check only executed when debugging.
 	 */
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, st->logger)) {
 		name_buf ocb, ncb;
 		LDBG_log(st->logger, "%s state "PRI_SO": %s(%s) => %s(%s)",
 			 (IS_IKE_SA(st) ? "parent" : "child"),
@@ -849,7 +849,7 @@ void delete_state(struct state *st)
 	 */
 	if (st->st_connection->config->ike_version == IKEv2 &&
 	    IS_IKE_SA(st) &&
-	    DBGP(DBG_BASE)) {
+	    LDBGP(DBG_BASE, st->logger)) {
 		struct state_filter sf = {
 			.clonedfrom = st->st_serialno,
 			.search = {
@@ -860,7 +860,7 @@ void delete_state(struct state *st)
 		};
 		while (next_state(&sf)) {
 			state_buf sb;
-			barf((DBGP(DBG_BASE) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+			barf((LDBGP(DBG_BASE, st->logger) ? PASSERT_FLAGS : PEXPECT_FLAGS),
 			     st->logger, /*ignore-exit-code*/0, HERE,
 			     "unexpected Child SA "PRI_STATE,
 			     pri_state(sf.st, &sb));
@@ -2155,7 +2155,7 @@ void wipe_old_connections(const struct ike_sa *ike)
  */
 void LDBG_tcpdump_ike_sa_keys(struct logger *logger, const struct ike_sa *ike)
 {
-	passert(DBGP(DBG_PRIVATE));
+	passert(LDBGP(DBG_PRIVATE, logger));
 	passert(!is_fips_mode());
 
 	if (ike->sa.st_oakley.ta_integ == NULL ||

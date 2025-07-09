@@ -139,7 +139,7 @@ uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,
 		actual_limit = 1;
 	}
 
-	if (DBGP(DBG_BASE)) {
+	if (LDBGP(DBG_BASE, logger)) {
 		ldbg(logger, "%s %s: hard-limit=%ju soft-limit=%ju softer-limit=%ju fuzz=%ju actual-limit=%ju",
 		     role_name, what, hard_limit, soft_limit, softer_limit, fuzz, actual_limit);
 	}
