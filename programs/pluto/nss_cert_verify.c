@@ -387,9 +387,9 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		llog_nss_error(RC_LOG, logger,
 			       "NSS: decoding certificate payload using CERT_NewTempCertificate() failed");
 		if (PR_GetError() == SEC_ERROR_REUSED_ISSUER_AND_SERIAL) {
-			lset_t rc_flags = log_limiter_rc_flags(logger, CERTIFICATE_LOG_LIMITER);
-			if (rc_flags != LEMPTY) {
-				llog_pem_bytes(rc_flags, logger, "CERTIFICATE", der_cert.data, der_cert.len);
+			enum stream stream = log_limiter_stream(logger, CERTIFICATE_LOG_LIMITER);
+			if (stream != NO_STREAM) {
+				llog_pem_bytes(stream, logger, "CERTIFICATE", der_cert.data, der_cert.len);
 			}
 		}
 		return;

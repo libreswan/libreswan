@@ -70,8 +70,8 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 	struct logger *logger = show_logger(s);
 
 	if (!listening) {
-		whack_log(RC_DEAF, s,
-			  "need --listen before --initiate");
+		show_rc(RC_DEAF, s,
+			"need --listen before --initiate");
 		return;
 	}
 
@@ -100,8 +100,8 @@ void whack_acquire(const struct whack_message *wm, struct show *s)
 	struct logger *logger = show_logger(s);
 
 	if (!listening) {
-		whack_log(RC_DEAF, s,
-			  "need --listen before opportunistic initiation");
+		show_rc(RC_DEAF, s,
+			"need --listen before opportunistic initiation");
 		return;
 	}
 

@@ -46,7 +46,7 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 	address_buf peer_buf;
 	const char *peerstr = str_address(peer, &peer_buf);
 
-	whack_log(RC_LOG, s, "restarting peer %s", peerstr);
+	show(s, "restarting peer %s", peerstr);
 
 	/* first restart the phase1s */
 	for (int ph1 = 0; ph1 < 2; ph1++) {
@@ -68,9 +68,8 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 			if (peer != NULL /* ever false? */ &&
 			    endpoint_address_eq_address(st->st_remote_endpoint, *peer)) {
 				if (ph1 == 0 && IS_IKE_SA(st)) {
-					whack_log(RC_LOG, s,
-						  "peer %s for connection %s crashed; replacing",
-						  peerstr, c->name);
+					show(s, "peer %s for connection %s crashed; replacing",
+					     peerstr, c->name);
 					switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 					case IKEv1:

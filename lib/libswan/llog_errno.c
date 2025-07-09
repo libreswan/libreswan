@@ -19,16 +19,16 @@
 
 #include "lswlog.h"
 
-void llog_errno(lset_t rc_flags, const struct logger *logger, int error, const char *fmt, ...)
+void llog_errno(enum stream stream, const struct logger *logger, int error, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		jam_logger_rc_prefix(buf, logger, rc_flags);
+		jam_logger_rc_prefix(buf, logger, stream);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 		/* NO ": "; not a *perror() function */
 		jam_errno(buf, error);
-		jambuf_to_logger(buf, logger, rc_flags);
+		jambuf_to_logger(buf, logger, stream);
 	}
 }

@@ -81,15 +81,15 @@ static unsigned whack_route_connection(const struct whack_message *m UNUSED,
 void whack_route(const struct whack_message *m, struct show *s)
 {
 	if (!listening) {
-		whack_log(RC_DEAF, s,
-			  "need --listen before --route");
+		show_rc(RC_DEAF, s,
+			"need --listen before --route");
 		return;
 	}
 
 	if (m->name == NULL) {
 		/* leave bread crumb */
-		whack_log(RC_FATAL, s,
-			  "received command to route connection, but did not receive the connection name - ignored");
+		show_rc(RC_FATAL, s,
+			"received command to route connection, but did not receive the connection name - ignored");
 		return;
 	}
 

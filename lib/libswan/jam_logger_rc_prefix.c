@@ -46,6 +46,7 @@ static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 		return;
 	case ERROR_STREAM:
 		return;
+	case RC_LOG:
 	case ALL_STREAMS:
 	case LOG_STREAM:
 	case WHACK_STREAM:

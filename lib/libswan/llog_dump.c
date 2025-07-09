@@ -31,12 +31,12 @@
  * line containing the label.
  */
 
-void llog_dump(lset_t rc_flags, const struct logger *logger,
+void llog_dump(enum stream stream, const struct logger *logger,
 	       const void *p, size_t len)
 {
 	if (p == NULL) {
 		PEXPECT(logger, len == 0);
-		llog(rc_flags, logger, "  <null>");
+		llog(stream, logger, "  <null>");
 		return;
 	}
 	const uint8_t *cp = p;
@@ -65,6 +65,6 @@ void llog_dump(lset_t rc_flags, const struct logger *logger,
 		*sp++ = '\0';
 		passert(hp <= hex + elemsof(hex));
 		passert(sp <= str + elemsof(str));
-		llog(rc_flags, logger, "%-*s   %s", (int)sizeof(hex)-1, hex, str);
+		llog(stream, logger, "%-*s   %s", (int)sizeof(hex)-1, hex, str);
 	} while (len != 0);
 }

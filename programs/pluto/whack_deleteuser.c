@@ -35,8 +35,8 @@
 void whack_deleteuser(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL ) {
-		whack_log(RC_FATAL, s,
-			  "received whack command to delete a connection by username, but did not receive the username - ignored");
+		show_rc(RC_FATAL, s,
+			"received whack command to delete a connection by username, but did not receive the username - ignored");
 		return;
 	}
 

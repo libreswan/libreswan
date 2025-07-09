@@ -52,11 +52,11 @@ void logjam_to_logger(struct logjam *logjam)
 	}
 }
 
-void barf(lset_t rc_flags, struct logger *logger,
+void barf(enum stream stream, struct logger *logger,
 	  enum pluto_exit_code pluto_exit_code, where_t where,
 	  const char *fmt, ...)
 {
-	BARF_JAMBUF(rc_flags, logger, pluto_exit_code, where, buf) {
+	BARF_JAMBUF(stream, logger, pluto_exit_code, where, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

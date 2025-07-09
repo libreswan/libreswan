@@ -64,7 +64,7 @@ static unsigned log_limit(const struct limiter *limiter)
 	return limiter->limit;
 }
 
-lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter log_limiter)
+enum stream log_limiter_stream(struct logger *logger, enum log_limiter log_limiter)
 {
 	struct limiter *limiter = &log_limiters[log_limiter];
 
@@ -100,7 +100,7 @@ lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter log_limiter)
 		     limiter->what, limit);
 		return RC_LOG; /* let this one through */
 	case OVER_LIMIT:
-		return (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : LEMPTY);
+		return (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
 	}
 
 	bad_case(limiting);
@@ -109,11 +109,11 @@ lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter log_limiter)
 void limited_llog(struct logger *logger, enum log_limiter log_limiter,
 		  const char *format, ...)
 {
-	lset_t rc_flags = log_limiter_rc_flags(logger, log_limiter);
-	if (rc_flags != LEMPTY) {
+	enum stream stream = log_limiter_stream(logger, log_limiter);
+	if (stream != NO_STREAM) {
 		va_list ap;
 		va_start(ap, format);
-		llog_va_list(rc_flags, logger, format, ap);
+		llog_va_list(stream, logger, format, ap);
 		va_end(ap);
 	}
 }

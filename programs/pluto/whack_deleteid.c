@@ -36,8 +36,8 @@
 void whack_deleteid(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL ) {
-		whack_log(RC_FATAL, s,
-			  "received whack command to delete a connections with peer ID, but did not receive the ID - ignored");
+		show_rc(RC_FATAL, s,
+			"received whack command to delete a connections with peer ID, but did not receive the ID - ignored");
 		return;
 	}
 

@@ -29,7 +29,7 @@ static unsigned whack_suspend_connection(const struct whack_message *m UNUSED,
 					 struct connection *c)
 {
 	if (c->session == NULL) {
-		whack_log(RC_FATAL, s, "no stored ticket, cannot suspend connection");
+		show_rc(RC_FATAL, s, "no stored ticket, cannot suspend connection");
 		return 0; /*doesn't count*/
 	}
 
@@ -44,8 +44,8 @@ static unsigned whack_suspend_connection(const struct whack_message *m UNUSED,
 void whack_suspend(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
-		whack_log(RC_FATAL, s,
-			  "received command to suspend a connection, but did not receive the connection name - ignored");
+		show_rc(RC_FATAL, s,
+			"received command to suspend a connection, but did not receive the connection name - ignored");
 		return;
 	}
 

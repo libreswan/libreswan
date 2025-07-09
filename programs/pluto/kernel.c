@@ -298,10 +298,10 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	}
 }
 
-static void llog_bare_shunt(lset_t rc_flags, struct logger *logger,
+static void llog_bare_shunt(enum stream stream, struct logger *logger,
 			    const struct bare_shunt *bs, const char *op)
 {
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
 	}

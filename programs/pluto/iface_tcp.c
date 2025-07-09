@@ -98,15 +98,12 @@ void dbg_iketcp(const struct iface_endpoint *ifp, const char *msg, ...)
 	}
 }
 
-static void llog_iketcp(lset_t rc_flags, struct logger *logger,
-			const struct iface_endpoint *ifp, int error,
-			const char *msg, ...) PRINTF_LIKE(5);
-
-void llog_iketcp(lset_t rc_flags, struct logger *logger,
+static PRINTF_LIKE(5)
+void llog_iketcp(enum stream stream, struct logger *logger,
 		 const struct iface_endpoint *ifp, int error,
 		 const char *msg, ...)
 {
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		jam_iketcp_prefix(buf, ifp);
 		va_list ap;
 		va_start(ap, msg);

@@ -116,7 +116,7 @@ enum stream {
 	/*                                 syslog()                      */
 	/*                                Severity  Whack  Tools  Prefix */
 	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <o>   */
-#define RC_LOG 2
+	RC_LOG = 2,
 	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <o>   */
 	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
 	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
@@ -206,7 +206,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
-void llog_dump(lset_t rc_flags,
+void llog_dump(enum stream stream,
 	       const struct logger *log,
 	       const void *p, size_t len);
 #define llog_hunk(RC_FLAGS, LOGGER, HUNK)				\
@@ -217,7 +217,7 @@ void llog_dump(lset_t rc_flags,
 #define llog_thing(RC_FLAGS, LOGGER, THING)			\
 	llog_dump(RC_FLAGS, LOGGER, &(THING), sizeof(THING))
 
-void llog_base64_bytes(lset_t rc_flags,
+void llog_base64_bytes(enum stream stream,
 		       const struct logger *log,
 		       const void *p, size_t len);
 #define llog_base64_hunk(RC_FLAGS, LOGGER, HUNK)			\
@@ -226,7 +226,7 @@ void llog_base64_bytes(lset_t rc_flags,
 		llog_base64_bytes(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len); \
 	}
 
-void llog_pem_bytes(lset_t rc_flags,
+void llog_pem_bytes(enum stream stream,
 		    const struct logger *log,
 		    const char *name,
 		    const void *p, size_t len);
@@ -273,7 +273,7 @@ void log_error(const struct logger *logger, int error,
  * separator.
  */
 
-void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
+void llog_errno(enum stream stream, const struct logger *logger, int error,
 		const char *message, ...) PRINTF_LIKE(4);
 
 #define LDBG_errno(LOGGER, ERRNO, FMT, ...)				\

@@ -38,11 +38,11 @@ struct logger *show_logger(struct show *s);
  * a jambuf.
  */
 
-struct jambuf *show_jambuf(struct show *s, enum rc_type rc);
+struct jambuf *show_jambuf(struct show *s);
 void show_to_logger(struct show *s);
-#define SHOW_JAMBUF(S, BUF)					\
-	for (struct jambuf *BUF = show_jambuf(S, RC_LOG);	\
-	     BUF != NULL;					\
+#define SHOW_JAMBUF(S, BUF)				\
+	for (struct jambuf *BUF = show_jambuf(S);	\
+	     BUF != NULL;				\
 	     show_to_logger(S), BUF = NULL)
 
 /*
@@ -87,18 +87,6 @@ void show_blank(struct show *s);
  */
 
 void show(struct show *s, const char *message, ...) PRINTF_LIKE(2);
-
-/*
- * Whack only logging.
- *
- * None of these functions add a context prefix (such as connection
- * name).  If that's really really needed then use
- * log_*(WHACK_STREAM,...) above.
- *
- * also requires a valid whackfd.  It should only be used by show
- * commands.
- */
-
-void whack_log(enum rc_type rc, struct show *s, const char *message, ...) PRINTF_LIKE(3);
+void show_rc(enum rc_type rc, struct show *s, const char *message, ...) PRINTF_LIKE(3);
 
 #endif

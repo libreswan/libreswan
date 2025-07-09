@@ -40,8 +40,8 @@ void whack_unroute(const struct whack_message *m, struct show *s)
 {
 	if (m->name == NULL) {
 		/* leave bread crumb */
-		whack_log(RC_FATAL, s,
-			  "received command to unroute connection, but did not receive the connection name - ignored");
+		show_rc(RC_FATAL, s,
+			"received command to unroute connection, but did not receive the connection name - ignored");
 		return;
 	}
 

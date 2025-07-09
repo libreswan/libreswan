@@ -38,10 +38,10 @@ static void jam_va_nss_error_code(struct jambuf *buf, PRErrorCode code,
 	jam_nss_error_code(buf, code);
 }
 
-void llog_nss_error_code(lset_t rc_flags, struct logger *logger,
+void llog_nss_error_code(enum stream stream, struct logger *logger,
 			 PRErrorCode code, const char *message, ...)
 {
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		va_list ap;
 		va_start(ap, message);
 		jam_va_nss_error_code(buf, code, message, ap);

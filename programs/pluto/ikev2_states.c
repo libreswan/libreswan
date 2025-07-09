@@ -771,12 +771,12 @@ void llog_v2_payload_errors(struct logger *logger,
 			    const struct msg_digest *md,
 			    const struct ikev2_payload_errors *errors)
 {
-	lset_t rc_flags = log_limiter_rc_flags(logger, PAYLOAD_ERRORS_LOG_LIMITER);
-	if (rc_flags == LEMPTY) {
+	enum stream stream = log_limiter_stream(logger, PAYLOAD_ERRORS_LOG_LIMITER);
+	if (stream == NO_STREAM) {
 		return;
 	}
 
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		jam_v2_payload_errors(buf, md, errors);
 	}
 }
