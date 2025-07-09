@@ -217,9 +217,9 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	/*
 	 * Cookie exchanges are not logged when the connection is OE.
 	 */
-	lset_t rc_flags = (!is_opportunistic(ike->sa.st_connection) ? RC_LOG :
-			   LDBGP(DBG_BASE, ike->sa.logger) ? DEBUG_STREAM :
-			   LEMPTY);
+	enum stream stream = (!is_opportunistic(ike->sa.st_connection) ? RC_LOG :
+			      LDBGP(DBG_BASE, ike->sa.logger) ? DEBUG_STREAM :
+			      NO_STREAM);
 
 	/*
 	 * Responder replied with N(COOKIE) for DOS avoidance.  See
@@ -237,14 +237,14 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	 */
 	shunk_t cookie = pbs_in_left(cookie_pbs);
 	if (cookie.len > IKEv2_MAX_COOKIE_SIZE) {
-		if (rc_flags != LEMPTY) {
-			llog(rc_flags, ike->sa.logger, "IKEv2 COOKIE notify payload too big - packet dropped");
+		if (stream != NO_STREAM) {
+			llog(stream, ike->sa.logger, "IKEv2 COOKIE notify payload too big - packet dropped");
 		}
 		return STF_IGNORE;
 	}
 	if (cookie.len < 1) {
-		if (rc_flags != LEMPTY) {
-			llog(rc_flags, ike->sa.logger, "IKEv2 COOKIE notify payload too small - packet dropped");
+		if (stream != NO_STREAM) {
+			llog(stream, ike->sa.logger, "IKEv2 COOKIE notify payload too small - packet dropped");
 		}
 		return STF_IGNORE;
 	}
@@ -263,8 +263,8 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 		LDBG_hunk(ike->sa.logger, ike->sa.st_dcookie);
 	}
 
-	if (rc_flags != LEMPTY) {
-		llog(rc_flags, ike->sa.logger,
+	if (stream != NO_STREAM) {
+		llog(stream, ike->sa.logger,
 		     "received anti-DDOS COOKIE response, resending IKE_SA_INIT request with COOKIE payload");
 	}
 
