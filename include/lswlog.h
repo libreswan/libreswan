@@ -273,7 +273,7 @@ void log_error(const struct logger *logger, int error,
  * separator.
  */
 
-void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
+void llog_errno(enum stream stream, const struct logger *logger, int error,
 		const char *message, ...) PRINTF_LIKE(4);
 
 #define LDBG_errno(LOGGER, ERRNO, FMT, ...)				\
