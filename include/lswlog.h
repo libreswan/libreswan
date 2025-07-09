@@ -206,7 +206,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
-void llog_dump(lset_t rc_flags,
+void llog_dump(enum stream stream,
 	       const struct logger *log,
 	       const void *p, size_t len);
 #define llog_hunk(RC_FLAGS, LOGGER, HUNK)				\
