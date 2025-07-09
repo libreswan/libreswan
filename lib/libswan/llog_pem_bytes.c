@@ -15,12 +15,12 @@
 
 #include "lswlog.h"
 
-void llog_pem_bytes(lset_t rc_flags,
+void llog_pem_bytes(enum stream stream,
 		    const struct logger *logger,
 		    const char *name,
 		    const void *ptr, size_t size)
 {
-	llog(rc_flags, logger, "-----BEGIN %s-----", name);
-	llog_base64_bytes(rc_flags, logger, ptr, size);
-	llog(rc_flags, logger, "-----END %s-----", name);
+	llog(stream, logger, "-----BEGIN %s-----", name);
+	llog_base64_bytes(stream, logger, ptr, size);
+	llog(stream, logger, "-----END %s-----", name);
 }

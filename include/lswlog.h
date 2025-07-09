@@ -217,7 +217,7 @@ void llog_dump(enum stream stream,
 #define llog_thing(RC_FLAGS, LOGGER, THING)			\
 	llog_dump(RC_FLAGS, LOGGER, &(THING), sizeof(THING))
 
-void llog_base64_bytes(lset_t rc_flags,
+void llog_base64_bytes(enum stream stream,
 		       const struct logger *log,
 		       const void *p, size_t len);
 #define llog_base64_hunk(RC_FLAGS, LOGGER, HUNK)			\
@@ -226,7 +226,7 @@ void llog_base64_bytes(lset_t rc_flags,
 		llog_base64_bytes(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len); \
 	}
 
-void llog_pem_bytes(lset_t rc_flags,
+void llog_pem_bytes(enum stream stream,
 		    const struct logger *log,
 		    const char *name,
 		    const void *p, size_t len);
