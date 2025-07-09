@@ -1,5 +1,0 @@
-addconn failing in libreswan up to 3.21 in specific scenarios
-
-east is not used.
-
-The connection on west should succeed to load.

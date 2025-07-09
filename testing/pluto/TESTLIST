@@ -109,11 +109,10 @@ kvmplutotest	algparse-01					good
 kvmplutotest	algparse-02-fips				good
 
 kvmplutotest	addconn-02-many-routes				good
-kvmplutotest	addconn-03-defaultroute-any			good
 kvmplutotest	addconn-04-config-path				good
 kvmplutotest	addconn-05-bogus-left-interface			good
 kvmplutotest	addconn-06-whack-algos				good
-kvmplutotest	addconn-07-defaultroute				good
+kvmplutotest	addconn-07-defaultroute				good	github/2336
 kvmplutotest	addconn-08-ordering				good	github:658
 kvmplutotest	addconn-09-dpd-vs-liveness			good
 kvmplutotest	addconn-10-duplicate-key			good

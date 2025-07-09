@@ -1,1 +1,1 @@
-Compare resolve_defaultroute_one() to <<ip route get>>
+Compare resolve_default_route() to <<ip route get>>
