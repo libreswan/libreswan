@@ -26,6 +26,8 @@
 #include "secrets.h"
 #include "diag.h"
 
+enum stream;
+
 struct nss_flags {
 	const char *password;
 
@@ -66,7 +68,7 @@ PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
 size_t jam_nss_error_code(struct jambuf *log, PRErrorCode code);
 
-void llog_nss_error_code(lset_t rc_log, struct logger *logger,
+void llog_nss_error_code(enum stream stream, struct logger *logger,
 			 PRErrorCode code,
 			 const char *message, ...) PRINTF_LIKE(4);
 #define llog_nss_error(RC_LOG, LOGGER, MESSAGE, ...)		\
