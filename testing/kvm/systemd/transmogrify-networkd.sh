@@ -23,5 +23,6 @@ Name=eth0
 Host=${PLATFORM}
 [Network]
 Description=fallback for when no other interface matches
-DHCP=yes
+DHCP=ipv4
+KeepConfiguration=no
 EOF
