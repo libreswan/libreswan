@@ -905,15 +905,15 @@ shunk_t shunk_from_vendorid(enum known_vendorid id)
 	return pvid->vid;
 }
 
-void llog_vendorids(lset_t rc_flags, struct logger *logger)
+void llog_vendorids(enum stream stream, struct logger *logger)
 {
 	FOR_EACH_ELEMENT(v, vid_sorted) {
 		enum known_vendorid id = v->entry->id;
 		shunk_t vid = shunk_from_vendorid(id);
 		name_buf idb;
-		llog(rc_flags, logger, "[%s]%s", str_vendorid(id, &idb),
+		llog(stream, logger, "[%s]%s", str_vendorid(id, &idb),
 		     (v->entry->kind == VID_SUBSTRING ? " (prefix match)" : ""));
-		llog_hunk(rc_flags, logger, vid);
+		llog_hunk(stream, logger, vid);
 		enum known_vendorid r = vendorid_by_shunk(vid);
 		passert(r != VID_none);
 		if (r != id) {

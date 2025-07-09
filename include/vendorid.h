@@ -29,9 +29,10 @@
 
 struct logger;
 struct name_buf;
+enum stream;
 
 void init_vendorid(struct logger *logger);
-void llog_vendorids(lset_t rc_flags, struct logger *logger);
+void llog_vendorids(enum stream stream, struct logger *logger);
 
 enum known_vendorid vendorid_by_shunk(shunk_t vid);
 shunk_t shunk_from_vendorid(enum known_vendorid id);
