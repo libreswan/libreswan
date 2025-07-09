@@ -171,12 +171,12 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 	}
 }
 
-static void llog_narrowed_selector_payloads(lset_t rc_flags,
+static void llog_narrowed_selector_payloads(enum stream stream,
 					    const struct logger *logger,
 					    const struct narrowed_selector_payload *local_nsp,
 					    const struct narrowed_selector_payload *remote_nsp)
 {
-	LLOG_JAMBUF(rc_flags, logger, buf) {
+	LLOG_JAMBUF(stream, logger, buf) {
 		jam_string(buf, "accepted selectors");
 		const char *sep = " [";
 		FOR_EACH_THING(nsp, local_nsp, remote_nsp) {
