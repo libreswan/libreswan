@@ -432,7 +432,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		};
 		struct pbs_out nr_pbs;
 
-		if (!pbs_out_struct(message.pbs, &ikev2_nonce_desc, &in, sizeof(in), &nr_pbs)) {
+		if (!pbs_out_struct(message.pbs, in, &ikev2_nonce_desc, &nr_pbs)) {
 			/* already logged */
 			return false; /*fatal*/
 		}

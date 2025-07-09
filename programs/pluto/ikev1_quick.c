@@ -1497,8 +1497,7 @@ static bool echo_id(struct pbs_out *outs,
 		.isaiid_port = id_pd->payload.ipsec_id.isaiid_port,
 	};
 	struct pbs_out id_body;
-	if (!pbs_out_struct(outs, &isakmp_ipsec_identification_desc,
-			    &id_header, sizeof(id_header), &id_body)) {
+	if (!pbs_out_struct(outs, id_header, &isakmp_ipsec_identification_desc, &id_body)) {
 		return false;
 	}
 

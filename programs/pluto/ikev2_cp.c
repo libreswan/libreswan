@@ -168,8 +168,7 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 	};
 
 	struct pbs_out a_pbs;
-	if (!pbs_out_struct(outpbs, &ikev2_cp_attribute_desc,
-			    &attr, sizeof(attr), &a_pbs)) {
+	if (!pbs_out_struct(outpbs, attr, &ikev2_cp_attribute_desc, &a_pbs)) {
 		/* already logged */
 		return false; /*fatal*/
 	}

@@ -204,10 +204,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	{
 		struct pbs_out i_id_pbs;
-		if (!pbs_out_struct(request.pbs, &ikev2_id_i_desc,
-				    &ike->sa.st_v2_id_payload.header,
-				    sizeof(ike->sa.st_v2_id_payload.header),
-				    &i_id_pbs)) {
+		if (!pbs_out_struct(request.pbs, ike->sa.st_v2_id_payload.header,
+				    &ikev2_id_i_desc, &i_id_pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 		if (!pbs_out_hunk(&i_id_pbs, ike->sa.st_v2_id_payload.data, "my identity")) {
@@ -261,9 +259,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 				build_v2_id_payload(&pc->remote->host, &id_b,
 						    "their IDr", ike->sa.logger);
 			struct pbs_out r_id_pbs;
-			if (!pbs_out_struct(request.pbs, &ikev2_id_r_desc,
-					    &r_id, sizeof(r_id),
-					    &r_id_pbs)) {
+			if (!pbs_out_struct(request.pbs, r_id, &ikev2_id_r_desc, &r_id_pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 			if (!pbs_out_hunk(&r_id_pbs, id_b, "their IDr")) {

@@ -212,7 +212,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 		}
 	}
 
-	if (!pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), body)) {
+	if (!pbs_out_struct(message, hdr, &isakmp_hdr_desc, body)) {
 		/* already logged */
 		return false;
 	}
@@ -264,7 +264,7 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 		.isag_length = 0, /* filled in later */
 		.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 	};
-	if (!pbs_out_struct(container, &ikev2_sk_desc, &e, sizeof(e), &sk->pbs)) {
+	if (!pbs_out_struct(container, e, &ikev2_sk_desc, &sk->pbs)) {
 		llog(RC_LOG, logger,
 		     "error initializing SK header for encrypted %s message",
 		     container->name);
@@ -1113,7 +1113,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	/* HDR out */
 
 	struct pbs_out body;
-	if (!pbs_out_struct(&message_fragment.pbs, &isakmp_hdr_desc, hdr, sizeof(*hdr), &body))
+	if (!pbs_out_struct(&message_fragment.pbs, (*hdr), &isakmp_hdr_desc, &body))
 		return false;
 
 	/*
@@ -1147,7 +1147,7 @@ static bool record_outbound_fragment(struct logger *logger,
 		.isaskf_number = number,
 		.isaskf_total = total,
 	};
-	if (!pbs_out_struct(&body, &ikev2_skf_desc, &e, sizeof(e), &skf.pbs))
+	if (!pbs_out_struct(&body, e, &ikev2_skf_desc, &skf.pbs))
 		return false;
 
 	/*

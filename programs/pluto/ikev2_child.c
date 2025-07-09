@@ -171,7 +171,7 @@ static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_o
 		.ikev2_notify_ipcomp_trans = IPCOMP_DEFLATE,
 	};
 
-	if (!pbs_out_struct(&d_pbs, &ikev2notify_ipcomp_data_desc, &id, sizeof(id), NULL)) {
+	if (!pbs_out_struct(&d_pbs, id, &ikev2notify_ipcomp_data_desc, NULL)) {
 		/* already logged */
 		return false; /*fatal */
 	}
@@ -228,7 +228,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 			.isag_critical = build_ikev2_critical(false, larval_child->sa.logger),
 		};
 		struct pbs_out pb_nr;
-		if (!pbs_out_struct(pbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr)) {
+		if (!pbs_out_struct(pbs, in, &ikev2_nonce_desc, &pb_nr)) {
 			/* already logged */
 			return false; /*fatal*/
 		}
@@ -517,7 +517,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		};
 		struct pbs_out pb_nr;
 
-		if (!pbs_out_struct(outpbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr)) {
+		if (!pbs_out_struct(outpbs, in, &ikev2_nonce_desc, &pb_nr)) {
 			/* already logged */
 			return false; /*fatal*/
 		}

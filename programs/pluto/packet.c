@@ -2664,9 +2664,9 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	return true;
 }
 
-bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
-		    const void *struct_ptr, size_t struct_size,
-		    struct pbs_out *obj_pbs)
+bool pbs_out_struct_desc(struct pbs_out *outs,
+			 const void *struct_ptr, size_t struct_size,
+			 struct_desc *sd, struct pbs_out *obj_pbs)
 {
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
@@ -2836,7 +2836,7 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 bool out_struct(const void *struct_ptr, struct_desc *sd,
 		struct pbs_out *outs, struct pbs_out *obj_pbs)
 {
-	return pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
+	return pbs_out_struct_desc(outs, struct_ptr, 0, sd, obj_pbs);
 }
 
 bool ikev1_out_generic(struct_desc *sd,

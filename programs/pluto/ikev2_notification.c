@@ -218,8 +218,7 @@ bool open_v2N_SA_output_pbs(struct pbs_out *outs,
 		.isan_type = ntype,
 	};
 
-	if (!pbs_out_struct(outs, &ikev2_notify_desc,
-			    &n, sizeof(n), sub_payload)) {
+	if (!pbs_out_struct(outs, n, &ikev2_notify_desc, sub_payload)) {
 		return false;
 	}
 

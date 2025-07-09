@@ -1050,8 +1050,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 							ike->sa.logger);
 
 		struct pbs_out id_pbs;
-		if (!pbs_out_struct(&idout_pbs, &isakmp_ipsec_identification_desc,
-				    &id_header, sizeof(id_header), &id_pbs)) {
+		if (!pbs_out_struct(&idout_pbs, id_header, &isakmp_ipsec_identification_desc, &id_pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 		if (!pbs_out_hunk(&id_pbs, id_body, "my identity")) {

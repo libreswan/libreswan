@@ -69,9 +69,7 @@ static bool emit_v1_notification(struct pbs_out *pbs,
 		.isan_protoid = protoid,
 	};
 
-	if (!pbs_out_struct(pbs, &isakmp_notification_desc,
-			    &notification, sizeof(notification),
-			    NULL/*no-inner-payload*/)) {
+	if (!pbs_out_struct(pbs, notification, &isakmp_notification_desc, NULL/*no-inner-payload*/)) {
 		llog(RC_LOG, pbs->logger, "failed to build notification");
 		return false;
 	}
@@ -180,7 +178,7 @@ static void send_v1_notification(struct logger *logger,
 		memcpy(hdr.isa_ike_initiator_spi.bytes, icookie, COOKIE_SIZE);
 	if (rcookie != NULL)
 		memcpy(hdr.isa_ike_responder_spi.bytes, rcookie, COOKIE_SIZE);
-	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &hdr_pbs)) {
+	if (!pbs_out_struct(&packet.pbs, hdr, &isakmp_hdr_desc, &hdr_pbs)) {
 		return;
 	}
 
@@ -327,7 +325,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 		.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi,
 	};
 
-	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &hdr_pbs)) {
+	if (!pbs_out_struct(&packet.pbs, hdr, &isakmp_hdr_desc, &hdr_pbs)) {
 		return;
 	}
 
