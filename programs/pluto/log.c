@@ -314,18 +314,16 @@ static void log_whacks(enum rc_type rc, const struct logger *logger, struct jamb
 	}
 }
 
-void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stream stream)
 {
-	enum rc_type rc = (rc_flags & RC_MASK);
-	enum stream stream = (rc_flags & STREAM_MASK);
 	switch (stream) {
-	case RC_LOG:
 	case DEBUG_STREAM:
 		log_raw(LOG_DEBUG, "", buf);
 		return;
+	case RC_LOG:
 	case ALL_STREAMS:
 		log_raw(DEFAULT_LOGLEVEL, "", buf);
-		log_whacks(rc, logger, buf);
+		log_whacks(0, logger, buf);
 		return;
 	case LOG_STREAM:
 		log_raw(DEFAULT_LOGLEVEL, "", buf);
@@ -335,12 +333,12 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		if (LDBGP(DBG_BASE, logger)) {
 			log_raw(LOG_DEBUG, "|] ", buf);
 		}
-		log_whacks(rc, logger, buf);
+		log_whacks(0, logger, buf);
 		return;
 	case ERROR_STREAM:
 	case FATAL_STREAM:
 		log_raw(LOG_ERR, "", buf);
-		log_whacks(rc, logger, buf);
+		log_whacks(0, logger, buf);
 		return;
 	case PEXPECT_STREAM:
 	case PASSERT_STREAM:
