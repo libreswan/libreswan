@@ -2833,12 +2833,6 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 	/* never reached!?! */
 }
 
-bool out_struct(const void *struct_ptr, struct_desc *sd,
-		struct pbs_out *outs, struct pbs_out *obj_pbs)
-{
-	return pbs_out_struct_desc(outs, struct_ptr, 0, sd, obj_pbs);
-}
-
 bool ikev1_out_generic(struct_desc *sd,
 		       struct pbs_out *outs, struct pbs_out *obj_pbs)
 {
