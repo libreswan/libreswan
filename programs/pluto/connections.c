@@ -959,7 +959,7 @@ static diag_t extract_host(const struct whack_message *wm,
 	 * orient()ed.
 	 */
 
-	bool can_orient;
+	bool can_orient = false;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 

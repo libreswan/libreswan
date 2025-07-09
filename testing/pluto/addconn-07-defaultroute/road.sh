@@ -6,49 +6,57 @@ ipsec start
 ../../guestbin/ip.sh -6 route
 
 # %any
+
 ../../guestbin/ip.sh -4 route get to 0.0.0.0
 ../../guestbin/ip.sh -6 route get to ::
 
 # gateway
+
 ../../guestbin/ip.sh -4 route get to 192.1.3.254
 ../../guestbin/ip.sh -6 route get to 2001:db8:1:3::254
 
 # peer
+
 ../../guestbin/ip.sh -4 route get to 192.1.2.23
 ../../guestbin/ip.sh -6 route get to 2001:db8:1:2::23
 
 # simple case, peer known
 
-ipsec add defaultroute-ipv4
-ipsec connectionstatus defaultroute-ipv4 | grep ' host: '
-ipsec add defaultroute-ipv6
-ipsec connectionstatus defaultroute-ipv6 | grep ' host: '
+./run.sh left=%defaultroute right=192.1.2.23
+./run.sh left=%defaultroute right=2001:db8:1:2::23
 
 # simple case but with clash
 
-ipsec add defaultroute4-ipv6 # fail
-ipsec add defaultroute6-ipv4 # fail
+./run.sh left=%defaultroute4 right=2001:db8:1:2::23 # fail
+./run.sh left=%defaultroute6 right=192.1.2.23       # fail
 
 # defaultroute-direct-ip
 
-ipsec add defaultroute-direct-ipv4
-ipsec connectionstatus defaultroute-direct-ipv4 | grep ' host: '
-ipsec add defaultroute-direct-ipv6
-ipsec connectionstatus defaultroute-direct-ipv6 | grep ' host: '
+./run.sh left=%defaultroute leftnexthop=%direct right=192.1.2.23
+./run.sh left=%defaultroute leftnexthop=%direct right=2001:db8:1:2::23
 
-# simple case, forced family
+# simple case, peer unknown
 
-ipsec add hostaddrfamily-ipv4-defaultroute-any
-ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-any | grep ' host: '
-ipsec add hostaddrfamily-ipv6-defaultroute-any
-ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-any | grep ' host: '
+./run.sh left=%defaultroute right=%any
+./run.sh hostaddrfamily=ipv4 left=%defaultroute right=%any
+./run.sh hostaddrfamily=ipv6 left=%defaultroute right=%any
+
+# simple case, can't load as to-any
+
+./run.sh left=%any right=%any
+./run.sh hostaddrfamily=ipv4 left=%any right=%any
+./run.sh hostaddrfamily=ipv4 left=%any right=%any
+
+# peer unknown (failing in libreswan up to 3.21 in specific scenarios)
+
+./run.sh left=%defaultroute leftnexthop=%defaultroute right=%any
+./run.sh hostaddrfamily=ipv4 left=%defaultroute leftnexthop=%defaultroute right=%any
+./run.sh hostaddrfamily=ipv6 left=%defaultroute leftnexthop=%defaultroute right=%any
 
 # newoe case, peer is group (see newoe-20-ipv6)
 
-ipsec add hostaddrfamily-ipv4-defaultroute-group
-ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-group | grep ' host: '
-ipsec add hostaddrfamily-ipv6-defaultroute-group
-ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-group | grep ' host: '
+./run.sh hostaddrfamily=ipv4 left=%defaultroute right=%group
+./run.sh hostaddrfamily=ipv6 left=%defaultroute right=%group
 
 # re-adding while route is up (see ikev1-hostpair-02)
 
@@ -59,10 +67,8 @@ ip -6 address add dev eth0  2001:db8:0:2::1 nodad
 ../../guestbin/ip.sh -4 route
 ../../guestbin/ip.sh -6 route
 
-ipsec add hostaddrfamily-ipv4-defaultroute-group
-ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-group | grep ' host: '
-ipsec add hostaddrfamily-ipv6-defaultroute-group
-ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-group | grep ' host: '
+./run.sh hostaddrfamily=ipv4 left=%defaultroute right=%group
+./run.sh hostaddrfamily=ipv6 left=%defaultroute right=%group
 
 ../../guestbin/ip.sh -4 route   del dev eth0       192.1.2.23 via       192.1.3.254 src       192.0.2.1
 ../../guestbin/ip.sh -6 route   del dev eth0 2001:db8:1:2::23 via 2001:db8:1:3::254 src 2001:db8:0:2::1
@@ -77,5 +83,4 @@ ip -6 address del dev eth0  2001:db8:0:2::1
 ../../guestbin/ip.sh -6 route add default dev eth0 via fe80::1000:ff:fe32:64ba
 ../../guestbin/ip.sh -6 route
 
-ipsec add defaultroute-ipv6
-ipsec connectionstatus defaultroute-ipv6 | grep ' host: '
+./run.sh left=%defaultroute right=2001:db8:1:2::23
