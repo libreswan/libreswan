@@ -61,13 +61,14 @@
  * carries negotiation forward.
  */
 
-static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b, const char *ughmsg)
+static void cannot_ondemand(enum rc_type rc, const struct kernel_acquire *b, const char *ughmsg)
 {
-	LLOG_JAMBUF(rc_flags, b->logger, buf) {
+	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 		jam(buf, "cannot ");
 		jam_kernel_acquire(buf, b);
 		jam(buf, ": %s", ughmsg);
 	}
+	whack_rc(rc, b->logger);
 
 	if (b->by_acquire) {
 		ldbg(b->logger, "initiate from acquire so kernel policy is assumed to already expire");
