@@ -31,6 +31,7 @@
 #include "constants.h"		/* for enum pluto_exit_code */
 
 struct logger;
+enum stream;
 
 #define DEBUG_PREFIX		"| "
 #define ERROR_PREFIX		"ERROR: "
@@ -75,7 +76,7 @@ void logjam_to_logger(struct logjam *buf); /* may not return */
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
 PRINTF_LIKE(5)
-void barf(lset_t rc_flags, struct logger *logger,
+void barf(enum stream stream, struct logger *logger,
 	  enum pluto_exit_code pluto_exit_code, where_t where,
 	  const char *fmt, ...);
 
