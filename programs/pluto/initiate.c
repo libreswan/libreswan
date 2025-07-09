@@ -192,7 +192,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		 * a really detailed message!!!
 		 */
 
-		if (c->remote->config->host.name != NULL) {
+		if (c->remote->config->host.host.name != NULL) {
 			if (c->config->narrowing) {
 				name_buf b;
 				llog_rc(RC_NOPEERIP, c->logger,

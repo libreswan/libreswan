@@ -631,7 +631,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
-			pfreeany(end->host.name);
+			pfreeany(end->host.host.name);
+			pfreeany(end->host.nexthop.name);
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown);
@@ -759,7 +760,7 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	 *
 	 *   other_host.ADDR -> other_host.NEXTHOP -> ADDR.
 	 */
-	other_host->nexthop = other_host->config->nexthop;
+	other_host->nexthop = other_host->config->nexthop.addr;
 	if (address_is_specified(host_addr) &&
 	    !address_is_specified(other_host->nexthop)) {
 		other_host->nexthop = host_addr;
@@ -767,7 +768,7 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	address_buf old, new;
 	dbg("  updated %s.host_nexthop from %s to %s",
 	    other_host->config->leftright,
-	    str_address(&other_host->config->nexthop, &old),
+	    str_address(&other_host->config->nexthop.addr, &old),
 	    str_address(&other_host->nexthop, &new));
 }
 
@@ -949,13 +950,16 @@ static diag_t extract_host(const struct whack_message *wm,
 	 * necessary.
 	 *
 	 * Deal with the lurking {left,right}=%iface.
+	 *
+	 * At least one end must specify an IP address (or at least
+	 * have that potential to be resolved to an IP address by
+	 * being a KP_IPHOSTNAME).
+	 *
+	 * Without at least one address the connection can never be
+	 * orient()ed.
 	 */
 
-	struct {
-		const char *leftright;
-		const char *name;
-		const char *value;
-	} unresolved = {0};
+	bool can_orient;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
@@ -964,42 +968,33 @@ static diag_t extract_host(const struct whack_message *wm,
  		const char *leftright = wm->end[lr].leftright;
 		const char *name = "";
 		const char *value = host->name;
+		bool end_can_orient = false;
 
 		switch (host->type) {
 
 		case KH_IPADDR:
 			/* handled by pluto using .host_type */
+			end_can_orient = true;
 			break;
 
 		case KH_DEFAULTROUTE:
+			/* handled by pluto using .host_type */
+			end_can_orient = true;
+			host->addr = winner.afi->address.unspec;
+			break;
+
 		case KH_OPPO:
 		case KH_OPPOGROUP:
 		case KH_GROUP:
+		case KH_ANY:
 			/* handled by pluto using .host_type */
 			host->addr = winner.afi->address.unspec;
 			break;
 
 		case KH_IPHOSTNAME:
-		{
-			err_t er = ttoaddress_dns(shunk1(value), winner.afi, &host->addr);
-			if (er == NULL) {
-				break;
-			}
-
-			vlog("failed to resolve '%s%s=%s' at load time: %s",
-			     leftright, name, value, er);
-			host->addr = winner.afi->address.unspec;
-
-			unresolved.leftright = leftright;
-			unresolved.name = name;
-			unresolved.value = value;
-			break;
-		}
-
-		case KH_ANY:
 			/* handled by pluto using .host_type */
-			/* any/4 any/6? */
 			host->addr = winner.afi->address.unspec;
+			end_can_orient = true;
 			break;
 
 		case KH_IFACE:
@@ -1014,6 +1009,7 @@ static diag_t extract_host(const struct whack_message *wm,
 					    leftright, name, value);
 			}
 
+			end_can_orient = true;
 			break;
 		}
 
@@ -1027,12 +1023,22 @@ static diag_t extract_host(const struct whack_message *wm,
 
 		name_buf nb;
 		address_buf hab, nab;
-		vdbg("%s%s=%s aka %s set to %s -> %s",
+		vdbg("%s%s=%s aka %s set to %s -> %s%s",
 		     leftright, name, (value == NULL ? "<null>" : value),
 		     str_sparse_short(&keyword_host_names, host->type, &nb),
 		     str_address(&host->addr, &hab),
-		     str_address(&nexthop->addr, &nab));
+		     str_address(&nexthop->addr, &nab),
+		     (end_can_orient ? "; can orient" : ""));
 
+		can_orient |= end_can_orient;
+	}
+
+	if (!can_orient) {
+		const char *left = resolve[LEFT_END].host.name;
+		const char *right = resolve[RIGHT_END].host.name;
+		return diag("neither 'left=%s' nor 'right=%s' specify the local host's IP address",
+			    (left == NULL ? "" : left),
+			    (right == NULL ? "" : right));
 	}
 
 	/*
@@ -1085,21 +1091,6 @@ static diag_t extract_host(const struct whack_message *wm,
 		     str_sparse_short(&keyword_host_names, nexthop->type, &nb),
 		     str_address(&nexthop->addr, &nab));
 
-	}
-
-	if (unresolved.name != NULL) {
-		vdbg("skipping resolve as '%s%s=%s' did not resolve",
-		     unresolved.leftright, unresolved.name, unresolved.value);
-		(*host_afi) = winner.afi;
-	} else {
-		resolve_default_route(&resolve[LEFT_END],
-				      &resolve[RIGHT_END],
-				      winner.afi,
-				      verbose);
-		resolve_default_route(&resolve[RIGHT_END],
-				      &resolve[LEFT_END],
-				      winner.afi,
-				      verbose);
 	}
 
 	(*host_afi) = winner.afi;
@@ -1698,14 +1689,6 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 
 	/*
-	 * Save the whack value, update_hosts_from_end_host_addr()
-	 * will set the actual .nexthop value for the connection.
-	 * Either now, during extraction, or later, during
-	 * instantiation.
-	 */
-	host_config->nexthop = resolve->nexthop.addr;
-
-	/*
 	 * Decode id, if any.
 	 *
 	 * For %fromcert, the load_end_cert*() call will update it.
@@ -1984,9 +1967,23 @@ static diag_t extract_host_end(struct host_end *host,
 		host->id = clone_id(&host_config->id, __func__);
 	}
 
+	/*
+	 * Save the whack value, update_hosts_from_end_host_addr()
+	 * will set the actual .nexthop value for the connection.
+	 * Either now, during extraction, or later, during
+	 * instantiation.
+	 */
+
+	host_config->host.type = resolve->host.type;
+	host_config->host.name = clone_str(resolve->host.name, "host ip");
+	host_config->host.addr = resolve->host.addr;
+
+	host_config->nexthop.type = resolve->nexthop.type;
+	host_config->nexthop.name = clone_str(resolve->nexthop.name, "nexthop");
+	host_config->nexthop.addr = resolve->nexthop.addr;
+
 	/* the rest is simple copying of corresponding fields */
-	host_config->type = resolve->host.type;
-	host_config->name = clone_str(src->host, "host ip");
+
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
 					       YN_NO, wm, logger);
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
@@ -3524,23 +3521,37 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	PASSERT(c->logger, host_afi != NULL);
 
-	/*
-	 * At least one end must specify an IP address (or at least
-	 * have that potential to be resolved to an IP address by
-	 * being a KP_IPHOSTNAME).
-	 *
-	 * Without at least one address the connection can never be
-	 * orient()ed.
-	 */
-	if (!(resolve[LEFT_END].host.type == KH_IPHOSTNAME ||
-	      resolve[RIGHT_END].host.type == KH_IPHOSTNAME ||
-	      address_is_specified(resolve[LEFT_END].host.addr) ||
-	      address_is_specified(resolve[RIGHT_END].host.addr))) {
-		const char *left = resolve[LEFT_END].host.name;
-		const char *right = resolve[RIGHT_END].host.name;
-		return diag("neither left=%s nor right=%s' specify the local host's IP address",
-			    (left == NULL ? "" : left),
-			    (right == NULL ? "" : right));
+	bool can_resolve = true;
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+
+ 		struct resolve_host *host = &resolve[lr].host;
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name = "";
+		const char *value = host->name;
+
+		if (host->type == KH_IPHOSTNAME) {
+			ip_address addr;
+			err_t e = ttoaddress_dns(shunk1(value), host_afi, &addr);
+			if (e == NULL) {
+				host->addr = addr;
+				continue;
+			}
+
+			vlog("failed to resolve '%s%s=%s' at load time: %s",
+			     leftright, name, value, e);
+			can_resolve = false;
+		}
+	}
+
+	if (can_resolve) {
+		resolve_default_route(&resolve[LEFT_END],
+				      &resolve[RIGHT_END],
+				      host_afi,
+				      verbose);
+		resolve_default_route(&resolve[RIGHT_END],
+				      &resolve[LEFT_END],
+				      host_afi,
+				      verbose);
 	}
 
 	/*
