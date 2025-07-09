@@ -453,7 +453,7 @@ static void kernel_xfrm_flush(struct logger *logger)
 			  &recv_errno, logger);
 }
 
-static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
+static void llog_ext_ack(enum stream stream, struct logger *logger,
 			 const struct nlmsghdr *n)
 {
 #ifdef SOL_NETLINK
@@ -473,14 +473,14 @@ static void llog_ext_ack(lset_t rc_flags, struct logger *logger,
 		if ((attr->nla_type & NLA_TYPE_MASK) == NLMSGERR_ATTR_MSG) {
 			const char *msg = nl_getattrvalstrz(n, attr);
 			if (msg) {
-				llog(rc_flags, logger, "netlink ext_ack: %s",
+				llog(stream, logger, "netlink ext_ack: %s",
 				     msg);
 			}
 		}
 	}
 #else
 	/* use the arguments */
-	ldbg(logger, "ignoring "PRI_LSET" %p", rc_flags, n);
+	ldbg(logger, "ignoring %x %p", stream, n);
 #endif
 }
 
