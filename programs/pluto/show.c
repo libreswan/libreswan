@@ -114,15 +114,12 @@ void show_blank(struct show *s)
 	s->separator = SEPARATE_NEXT_OUTPUT;
 }
 
-struct jambuf *show_jambuf(struct show *s, enum rc_type rc)
+struct jambuf *show_jambuf(struct show *s)
 {
-	pexpect(rc == RC_LOG ||
-		rc == RC_UNKNOWN_NAME/*show_traffic_status()*/ ||
-		rc == RC_DEAF/*(oppo)initiate*/);
 	return jambuf_from_logjam(&s->logjam, s->logger,
 				  /*pluto_exit_code*/0,
 				  /*where*/NULL,
-				  WHACK_STREAM|rc|NO_PREFIX);
+				  WHACK_STREAM|NO_PREFIX);
 }
 
 struct logger *show_logger(struct show *s)
@@ -146,11 +143,10 @@ void show_to_logger(struct show *s)
 	s->separator = HAD_OUTPUT;
 }
 
-VPRINTF_LIKE(3)
-static void show_rc_va_list(struct show *s, enum rc_type rc,
-			    const char *message, va_list ap)
+VPRINTF_LIKE(2)
+static void show_va_list(struct show *s, const char *message, va_list ap)
 {
-	struct jambuf *buf = show_jambuf(s, rc);
+	struct jambuf *buf = show_jambuf(s);
 	jam_va_list(buf, message, ap);
 	show_to_logger(s);
 }
@@ -159,14 +155,15 @@ void show(struct show *s, const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	show_rc_va_list(s, RC_LOG, message, ap);
+	show_va_list(s, message, ap);
 	va_end(ap);
 }
 
-void whack_log(enum rc_type rc, struct show *s, const char *message, ...)
+void show_rc(enum rc_type rc, struct show *s, const char *message, ...)
 {
 	va_list ap;
 	va_start(ap, message);
-	show_rc_va_list(s, rc, message, ap);
+	show_va_list(s, message, ap);
 	va_end(ap);
+	whack_rc(rc, s->logger);
 }

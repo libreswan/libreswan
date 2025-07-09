@@ -327,8 +327,8 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 void whack_add(const struct whack_message *wm, struct show *s)
 {
 	if (wm->name == NULL) {
-		whack_log(RC_FATAL, s,
-			  "received command to add a connection, but did not receive the connection name - ignored");
+		show_rc(RC_FATAL, s,
+			"received command to add a connection, but did not receive the connection name - ignored");
 		return;
 	}
 
@@ -361,8 +361,8 @@ void whack_add(const struct whack_message *wm, struct show *s)
 		 * duplicate connection is rejected.
 		 */
 		if (connection_with_name_exists(wm->name)) {
-			whack_log(RC_DUPNAME, s,
-				  "attempt to redefine connection \"%s\"", wm->name);
+			show_rc(RC_DUPNAME, s,
+				"attempt to redefine connection \"%s\"", wm->name);
 			return;
 		}
 		break;

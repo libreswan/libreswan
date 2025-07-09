@@ -423,7 +423,7 @@ static void visit_connections(const struct whack_message *m,
 		if (each->past_tense != NULL) {
 			llog_rc(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
-			whack_log(RC_UNKNOWN_NAME, s, MESSAGE);
+			show_rc(RC_UNKNOWN_NAME, s, MESSAGE);
 		}
 	}
 #undef MESSAGE
