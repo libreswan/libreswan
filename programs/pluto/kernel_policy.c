@@ -886,7 +886,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     str_enum_short(&routing_names, c->routing.state, &eb));
 
 		if (!install_inbound_ipsec_kernel_policy(child, spd, HERE)) {
-		    log_state(RC_LOG, &child->sa, "Installing IPsec SA failed - check logs or dmesg");
+		    llog(RC_LOG, child->sa.logger, "installing IPsec SA failed - check logs or dmesg");
 			return false;
 		}
 	}

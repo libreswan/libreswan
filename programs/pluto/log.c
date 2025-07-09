@@ -606,22 +606,6 @@ void free_logger(struct logger **logp, where_t where)
 	*logp = NULL;
 }
 
-void log_state(lset_t rc_flags, const struct state *st,
-	       const char *msg, ...)
-{
-	va_list ap;
-	va_start(ap, msg);
-	if (pexpect((st) != NULL) &&
-	    pexpect(in_main_thread())) {
-		llog_va_list(rc_flags, st->logger, msg, ap);
-	} else {
-		/* still get the message out */
-		llog_va_list(rc_flags, &global_logger, msg, ap);
-
-	}
-	va_end(ap);
-}
-
 static struct fd *logger_fd(const struct logger *logger)
 {
 	/* find a whack */

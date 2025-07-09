@@ -105,9 +105,9 @@ msgid_t generate_msgid(const struct state *st)
 			break;
 
 		if (--timeout == 0) {
-			log_state(RC_LOG, st,
-				"gave up looking for unique msgid; using %08" PRIx32,
-				msgid);
+			llog(RC_LOG, st->logger,
+			     "gave up looking for unique msgid; using %08" PRIx32,
+			     msgid);
 			break;
 		}
 	}

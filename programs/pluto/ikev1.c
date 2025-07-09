@@ -272,8 +272,8 @@ void jam_v1_transition(struct jambuf *buf, const struct state_v1_microcode *tran
 
 stf_status unexpected(struct state *st, struct msg_digest *md UNUSED)
 {
-	log_state(RC_LOG, st, "unexpected message received in state %s",
-		  st->st_state->name);
+	llog(RC_LOG, st->logger, "unexpected message received in state %s",
+	     st->st_state->name);
 	return STF_IGNORE;
 }
 
@@ -452,14 +452,14 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 			 */
 			if (st->st_v1_last_transition->timeout_event == EVENT_v1_DISCARD ||
 			    count_duplicate(st, MAXIMUM_v1_ACCEPTED_DUPLICATES)) {
-				log_state(RC_LOG, st,
-					  "retransmitting in response to duplicate packet; already %s",
-					  st->st_state->name);
+				llog(RC_LOG, st->logger,
+				     "retransmitting in response to duplicate packet; already %s",
+				     st->st_state->name);
 				resend_recorded_v1_ike_msg(st, "retransmit in response to duplicate");
 			} else {
-				log_state(RC_LOG, st,
-					  "discarding duplicate packet -- exhausted retransmission; already %s",
-					  st->st_state->name);
+				llog(RC_LOG, st->logger,
+				     "discarding duplicate packet -- exhausted retransmission; already %s",
+				     st->st_state->name);
 			}
 		} else {
 			dbg("#%lu discarding duplicate packet; already %s; replied=%s retransmit_on_duplicate=%s",
@@ -2231,7 +2231,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->st_state->kind == STATE_XAUTH_I1) {
 			bool aggrmode = st->st_connection->config->aggressive;
 
-			log_state(RC_LOG, st, "XAUTH completed; ModeCFG skipped as per configuration");
+			llog(RC_LOG, st->logger,
+			     "XAUTH completed; ModeCFG skipped as per configuration");
 			change_v1_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
 			st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 		}
@@ -2284,7 +2285,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			    impair.send_no_main_r2) {
 				/* record-only so we properly emulate packet drop */
 				record_outbound_v1_ike_msg(st, &reply_stream, smc->message);
-				log_state(RC_LOG, st, "IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
+				llog(RC_LOG, st->logger,
+				     "IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
 			} else {
 				record_and_send_v1_ike_msg(st, &reply_stream, smc->message);
 			}
@@ -2438,8 +2440,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			if (dpd_init(st) != STF_OK) {
-				log_state(RC_LOG, st,
-					  "DPD initialization failed - continuing without DPD");
+				llog(RC_LOG, st->logger,
+				     "DPD initialization failed - continuing without DPD");
 			}
 		}
 
@@ -2571,8 +2573,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		passert(st != NULL);
 		/* update the previous packet history */
 		remember_received_packet(st, md);
-		log_state(RC_FATAL, st, "encountered fatal error in state %s",
-			  st->st_state->name);
+		llog_rc(RC_FATAL, st->logger,
+			"encountered fatal error in state %s", st->st_state->name);
 		if (st->st_connection->config->host.cisco.peer &&
 		    st->st_connection->config->host.cisco.nm) {
 			if (!do_updown(UPDOWN_DISCONNECT_NM,
@@ -2623,7 +2625,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			/* this will log */
 			SEND_NOTIFICATION(md->v1_note);
 		} else {
-			log_state(RC_LOG, st, "state transition failed: %s", notify_name.buf);
+			llog(RC_LOG, st->logger,
+			     "state transition failed: %s", notify_name.buf);
 		}
 
 		dbg("state transition function for %s failed: %s",
@@ -2845,9 +2848,9 @@ bool verbose_v1_state_busy(const struct state *st)
 	/* not whack */
 	/* XXX: why not whack? */
 	/* XXX: can this and below be merged; is there always an offloaded task? */
-	log_state(RC_LOG, st,
-		  "discarding packet received during asynchronous work (DNS or crypto) in %s",
-		  st->st_state->name);
+	llog(RC_LOG, st->logger,
+	     "discarding packet received during asynchronous work (DNS or crypto) in %s",
+	     st->st_state->name);
 	return true;
 }
 

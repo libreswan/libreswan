@@ -1280,7 +1280,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 		larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0);
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
-		log_state(RC_LOG, &larval_child->sa, "DH failed");
+		llog_sa(RC_LOG, larval_child, "DH failed");
 		record_v2N_response(larval_child->sa.logger, ike, request_md,
 				    v2N_INVALID_SYNTAX, empty_shunk,
 				    ENCRYPTED_PAYLOAD);

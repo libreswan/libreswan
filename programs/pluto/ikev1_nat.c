@@ -150,9 +150,9 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	 * We need at least 2 NAT-D (1 for us, many for peer)
 	 */
 	if (i < 2) {
-		log_state(RC_LOG, st,
-			  "NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
-			  i);
+		llog(RC_LOG, st->logger,
+		     "NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
+		     i);
 		st->hidden_variables.st_nat_traversal = LEMPTY;
 		return;
 	}

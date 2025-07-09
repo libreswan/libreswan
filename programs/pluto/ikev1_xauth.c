@@ -957,7 +957,7 @@ stf_status xauth_send_request(struct ike_sa *ike)
 
 stf_status modecfg_send_request(struct ike_sa *ike)
 {
-	log_state(RC_LOG, &ike->sa, "modecfg: Sending IP request (MODECFG_I1)");
+	llog(RC_LOG, ike->sa.logger, "modecfg: Sending IP request (MODECFG_I1)");
 
 	/* this is the beginning of a new exchange */
 	ike->sa.st_v1_msgid.phase15 = generate_msgid(&ike->sa);

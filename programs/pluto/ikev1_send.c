@@ -182,12 +182,12 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 						 bool resending)
 {
 	if (st->st_iface_endpoint == NULL) {
-		log_state(RC_LOG, st, "Cannot send packet - interface vanished!");
+		llog(RC_LOG, st->logger, "cannot send packet - interface vanished!");
 		return false;
 	}
 	/* another bandaid */
 	if (st->st_v1_tpacket.ptr == NULL) {
-		log_state(RC_LOG, st, "Cannot send packet - st_v1_tpacket.ptr is NULL");
+		llog(RC_LOG, st->logger, "cannot send packet - st_v1_tpacket.ptr is NULL");
 		return false;
 	}
 

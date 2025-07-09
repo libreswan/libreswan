@@ -255,7 +255,8 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		 conn->base_name, p1,
 		 conn->base_name, p2);
 	if (system(buf) == -1) {
-		log_state(RC_LOG, st, "statsbin= failed to send status update notification");
+		llog(RC_LOG, st->logger,
+		     "statsbin= failed to send status update notification");
 	}
 	dbg("log_state for connection %s completed", conn->name);
 }

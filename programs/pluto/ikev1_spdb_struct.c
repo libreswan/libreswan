@@ -1126,7 +1126,8 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					    (oakley_mode ? a->type.oakley == OAKLEY_KEY_LENGTH
 					     :  a->type.ipsec == KEY_LENGTH)) {
 						key_length_to_impair = a->val;
-						log_state(RC_LOG, st, "IMPAIR: stripping key-length");
+						llog(RC_LOG, st->logger,
+						     "IMPAIR: stripping key-length");
 						continue;
 					}
 					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
@@ -1148,14 +1149,17 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					 * long form packet of no
 					 * length.
 					 */
-					log_state(RC_LOG, st, "IMPAIR: key-length-attribute:empty not implemented");
+					llog(RC_LOG, st->logger,
+					     "IMPAIR: key-length-attribute:empty not implemented");
 					break;
 				case IMPAIR_EMIT_OMIT:
-					log_state(RC_LOG, st, "IMPAIR: not sending key-length attribute");
+					llog(RC_LOG, st->logger,
+					     "IMPAIR: not sending key-length attribute");
 					break;
 				case IMPAIR_EMIT_DUPLICATE:
 					if (key_length_to_impair >= 0) {
-						log_state(RC_LOG, st, "IMPAIR: duplicating key-length");
+						llog(RC_LOG, st->logger,
+						     "IMPAIR: duplicating key-length");
 						for (unsigned dup = 0; dup < 2; dup++) {
 							if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 								      key_length_to_impair,
@@ -1165,14 +1169,16 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 								goto fail;
 						}
 					} else {
-						log_state(RC_LOG, st, "IMPAIR: no key-length to duplicate");
+						llog(RC_LOG, st->logger,
+						     "IMPAIR: no key-length to duplicate");
 					}
 					break;
 				default:
 				{
 					unsigned keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF;
-					log_state(RC_LOG, st, "IMPAIR: sending key-length attribute value %u",
-						  keylen);
+					llog(RC_LOG, st->logger,
+					     "IMPAIR: sending key-length attribute value %u",
+					     keylen);
 					if (!out_attr(oakley_mode ? OAKLEY_KEY_LENGTH : KEY_LENGTH,
 						      keylen, attr_desc, attr_value_names,
 						      &trans_pbs))

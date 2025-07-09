@@ -126,8 +126,6 @@ void free_logger(struct logger **logp, where_t where);
  * PRI_STATE() / PRI_SA() try to match the llog_sa() prefix.
  */
 
-void log_state(lset_t rc_flags, const struct state *st,
-	       const char *msg, ...) PRINTF_LIKE(3);
 #define llog_sa(RC_FLAGS, SA, MSG, ...) llog(RC_FLAGS, (SA)->sa.logger, MSG, ##__VA_ARGS__)
 #define ldbg_sa(SA, MSG, ...) ldbg((SA)->sa.logger, MSG, ##__VA_ARGS__)
 

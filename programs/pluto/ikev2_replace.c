@@ -152,9 +152,9 @@ static bool v2_state_is_expired(struct state *st, const char *verb)
 			     "not %s stale %s SA #%lu; as already got a newer #%lu",
 			     verb, satype, st->st_serialno, newer_sa);
 #else
-		log_state(RC_LOG, st,
-			  "not %s stale %s SA #%lu; as already got a newer #%lu",
-			  verb, satype, st->st_serialno, newer_sa);
+		llog(RC_LOG, st->logger,
+		     "not %s stale %s SA "PRI_SO"; as already got a newer #%lu",
+		     verb, satype, pri_so(st->st_serialno), newer_sa);
 #endif
 		event_force(EVENT_v2_EXPIRE, st);
 		return true;
@@ -198,7 +198,7 @@ void ikev2_replace(struct state *st, bool detach_whack)
 		struct connection *c = st->st_connection;
 		const struct child_policy policy = {0};
 		if (IS_IKE_SA_ESTABLISHED(st)) {
-			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
+			llog(RC_LOG, st->logger, "initiate reauthentication of IKE SA");
 		}
 		initiate_v2_IKE_SA_INIT_request(c, st, &policy, &inception,
 						HUNK_AS_SHUNK(c->child.sec_label),

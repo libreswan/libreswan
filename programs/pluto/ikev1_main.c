@@ -694,8 +694,8 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	passert(md != NULL);
 
 	if (is_fips_mode() && ike->sa.st_oakley.ta_prf == NULL) {
-		log_state(RC_LOG, &ike->sa,
-			  "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
+		llog(RC_LOG, ike->sa.logger,
+		     "missing prf - algo not allowed in fips mode (inI2_outR2)?");
 		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
 	}
 
@@ -1028,7 +1028,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 			return STF_INTERNAL_ERROR;
 		}
 	} else if (send_cert) {
-		log_state(RC_LOG, &ike->sa, "I am sending my cert");
+		llog(RC_LOG, ike->sa.logger, "I am sending my cert");
 
 		if (!ikev1_ship_CERT(cert_ike_type(mycert), cert_der(mycert), rbody)) {
 			free_auth_chain(auth_chain, chain_len);

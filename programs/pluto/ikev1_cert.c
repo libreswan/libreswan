@@ -149,8 +149,8 @@ bool v1_decode_certs(struct msg_digest *md)
 			/* For instance, no CA, unknown certs, ... */
 			return true;
 		} else {
-			log_state(RC_LOG, st,
-				    "X509: certificate rejected for this connection");
+			llog(RC_LOG, st->logger,
+			     "X509: certificate rejected for this connection");
 			/* For instance, revoked */
 			return false;
 		}
