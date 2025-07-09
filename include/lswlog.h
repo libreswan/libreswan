@@ -116,7 +116,7 @@ enum stream {
 	/*                                 syslog()                      */
 	/*                                Severity  Whack  Tools  Prefix */
 	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <o>   */
-#define RC_LOG 2
+	RC_LOG = 2,
 	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <o>   */
 	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
 	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
