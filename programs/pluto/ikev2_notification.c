@@ -455,9 +455,9 @@ void send_v2N_response_from_md(struct msg_digest *md,
 		    exchange_type);
 	}
 
-	lset_t rc_flags = log_limiter_rc_flags(md->logger, UNSECURED_LOG_LIMITER);
-	if (rc_flags != LEMPTY) {
-		LLOG_JAMBUF(rc_flags, md->logger, buf) {
+	enum stream stream = log_limiter_stream(md->logger, UNSECURED_LOG_LIMITER);
+	if (stream != NO_STREAM) {
+		LLOG_JAMBUF(stream, md->logger, buf) {
 			jam_string(buf, "responding to ");
 			jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
 			jam(buf, " request with Message ID %u", md->hdr.isa_msgid);

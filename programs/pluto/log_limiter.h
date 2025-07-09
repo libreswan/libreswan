@@ -36,17 +36,17 @@ enum log_limiter {
 };
 
 /*
- * Returns non-LEMPTY RC_FLAGS (either RC_LOG, or DEBUG_STREAM) when
- * the message should be logged.  For instance:
+ * Returns the stream to use (either RC_LOG or DEBUG_STREAM), or when
+ * over limit has been exceeded, NO_STREAM.  For instance:
  *
- *    lset_t rc_flags = log_limiter_rc_flags(logger, MD_LOG_LIMITER);
- *    if (rc_flags != LEMPTY) {
- *        llog(rc_flags, logger, "a log-limited message");
+ *    enum stream stream = log_limiter_stream(logger, MD_LOG_LIMITER);
+ *    if (stream != NO_STREAM) {
+ *        llog(stream, logger, "a log-limited message");
  *    }
  *
  */
 
-lset_t log_limiter_rc_flags(struct logger *logger, enum log_limiter limiter);
+enum stream log_limiter_stream(struct logger *logger, enum log_limiter limiter);
 
 void limited_llog(struct logger *logger, enum log_limiter limiter,
 		  const char *format, ...) PRINTF_LIKE(3);

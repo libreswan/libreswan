@@ -101,9 +101,9 @@ void process_md(struct msg_digest *md)
 		 * of any content - not even to look for major version
 		 * number!  So we'll just drop it.
 		 */
-		lset_t rc_flags = log_limiter_rc_flags(md->logger, MD_LOG_LIMITER);
-		if (rc_flags != 0) {
-			llog(rc_flags, md->logger,
+		enum stream stream = log_limiter_stream(md->logger, MD_LOG_LIMITER);
+		if (stream != NO_STREAM) {
+			llog(stream, md->logger,
 			     "dropping packet with mangled IKE header: %s",
 			     str_diag(d));
 		}
@@ -463,11 +463,11 @@ void llog_msg_digest(enum stream stream, struct logger *logger, const char *pref
 void llog_md(const struct msg_digest *md,
 	     const char *message, ...)
 {
-	lset_t rc_flags = log_limiter_rc_flags(md->logger, MD_LOG_LIMITER);
-	if (rc_flags != LEMPTY) {
+	enum stream stream = log_limiter_stream(md->logger, MD_LOG_LIMITER);
+	if (stream != NO_STREAM) {
 		va_list ap;
 		va_start(ap, message);
-		llog_va_list(rc_flags, md->logger, message, ap);
+		llog_va_list(stream, md->logger, message, ap);
 		va_end(ap);
 	}
 }

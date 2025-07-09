@@ -546,9 +546,9 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 	const struct v2_transition *transition = NULL;
 	diag_t d = find_v2_unsecured_response_transition(ike, md, &transition);
 	if (transition == NULL) {
-		lset_t rc_flags = log_limiter_rc_flags(ike->sa.logger, PAYLOAD_ERRORS_LOG_LIMITER);
-		if (rc_flags != LEMPTY) {
-			llog(rc_flags, ike->sa.logger, "ignoring %s", str_diag(d));
+		enum stream stream = log_limiter_stream(ike->sa.logger, PAYLOAD_ERRORS_LOG_LIMITER);
+		if (stream != NO_STREAM) {
+			llog(stream, ike->sa.logger, "ignoring %s", str_diag(d));
 		}
 		pfree_diag(&d);
 		return;
