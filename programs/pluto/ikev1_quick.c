@@ -210,7 +210,7 @@ static bool emit_subnet_id(enum perspective perspective,
 		.isaiid_port = port,
 	};
 
-	if (!out_struct(&id, &isakmp_ipsec_identification_desc, outs, &id_pbs))
+	if (!pbs_out_struct(outs, id, &isakmp_ipsec_identification_desc, &id_pbs))
 		return false;
 
 	ip_address tp = subnet_prefix(net);
@@ -227,7 +227,7 @@ static bool emit_subnet_id(enum perspective perspective,
 		}
 	}
 
-	close_output_pbs(&id_pbs);
+	close_pbs_out(&id_pbs);
 	return true;
 }
 
@@ -270,7 +270,7 @@ static bool compute_proto_keymat(struct ike_sa *ike,
 		ldbg(child->sa.logger, "compute_proto_keymat: encrypt_key_size %zd encrypt_salt_size %zd needed_len=%zd",
 		     encrypt_key_size, encrypt_salt_size, encrypt_salt_size);
 		needed_len += pi->trans_attrs.ta_integ->integ_keymat_size;
-		dbg("compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
+		ldbg(child->sa.logger, "compute_proto_keymat: needed_len (after ESP auth)=%d", (int)needed_len);
 		break;
 	}
 
@@ -393,7 +393,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		}
 		net = subnet_from_address(temp_address);
 		subnet_buf b;
-		dbg("%s is %s", which, str_subnet(&net, &b));
+		ldbg(logger, "%s is %s", which, str_subnet(&net, &b));
 		break;
 	}
 
@@ -431,7 +431,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 		subnet_buf buf;
-		dbg("%s is subnet %s", which, str_subnet(&net, &buf));
+		ldbg(logger, "%s is subnet %s", which, str_subnet(&net, &buf));
 		break;
 	}
 
@@ -470,7 +470,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		}
 
 		subnet_buf buf;
-		dbg("%s is subnet %s (received as range)", which, str_subnet(&net, &buf));
+		ldbg(logger, "%s is subnet %s (received as range)", which, str_subnet(&net, &buf));
 		break;
 	}
 	default:
@@ -556,7 +556,7 @@ static bool child_has_client(struct ike_sa *ike, struct child_sa *child)
 
 #define HAS_CLIENT(P)						\
 	if (P) {						\
-		pdbg(child->sa.logger, "has_client: " #P);	\
+		ldbg(child->sa.logger, "has_client: " #P);	\
 		return true;					\
 	}
 	HAS_CLIENT(c->local->child.has_client);
@@ -568,7 +568,7 @@ static bool child_has_client(struct ike_sa *ike, struct child_sa *child)
 	HAS_CLIENT(nat_traversal_detected(&ike->sa) && ike->sa.hidden_variables.st_nated_host);
 #undef HAS_CLIENT
 
-	pdbg(child->sa.logger, "has_client: no!");
+	ldbg(child->sa.logger, "has_client: no!");
 	return false;
 }
 
@@ -627,7 +627,8 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 		jam(buf, "initiating Quick Mode ");
 		jam_connection_policies(buf, child->sa.st_connection);
 		if (replacing != SOS_NOBODY) {
-			jam(buf, " to replace #%lu", replacing);
+			jam_string(buf, " to replace ");
+			jam_so(buf, replacing);
 		}
 		jam(buf, " {using isakmp"PRI_SO" msgid:%08" PRIx32 " proposal=",
 		    pri_so(ike->sa.st_serialno), child->sa.st_v1_msgid.id);
@@ -746,8 +747,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		};
 		hdr.isa_ike_initiator_spi = child->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = child->sa.st_ike_spis.responder;
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
+		if (!pbs_out_struct(&reply_stream, hdr, &isakmp_hdr_desc, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -899,9 +899,9 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		llog(RC_LOG, child->sa.logger,
 		     "%s", child->sa.st_state->story);
 	} else {
-		llog(RC_LOG, child->sa.logger, "%s, to replace #%lu",
+		llog(RC_LOG, child->sa.logger, "%s, to replace "PRI_SO,
 		     child->sa.st_state->story,
-		     child->sa.st_v1_ipsec_pred);
+		     pri_so(child->sa.st_v1_ipsec_pred));
 		child->sa.st_v1_ipsec_pred = SOS_NOBODY;
 	}
 
@@ -1523,7 +1523,7 @@ static bool echo_id(struct pbs_out *outs,
 		return false;
 	}
 
-	close_output_pbs(&id_body);
+	close_pbs_out(&id_body);
 	return true;
 }
 
@@ -1563,8 +1563,8 @@ static void terminate_conflicts(struct child_sa *child)
 
 			/* note: we ignore the client addresses at this end */
 			/* XXX: but compating interfaces doesn't ?!? */
-			if (sameaddr(&co->remote->host.addr,
-				     &c->remote->host.addr) &&
+			if (address_eq_address(co->remote->host.addr,
+					       c->remote->host.addr) &&
 			    co->iface == c->iface)
 				break;  /* existing route is compatible */
 
@@ -1633,7 +1633,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 		struct isakmp_sa sa = {
 			.isasa_doi = ISAKMP_DOI_IPSEC,
 		};
-		if (!out_struct(&sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
+		if (!pbs_out_struct(&rbody, sa, &isakmp_sa_desc, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1708,7 +1708,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	dbg("finished processing quick inI1");
+	ldbg(child->sa.logger, "finished processing quick inI1");
 	return STF_OK;
 }
 
@@ -1785,8 +1785,8 @@ static stf_status quick_inR1_outI2_continue(struct state *child_sa,
 	if (ike == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
 		llog(RC_LOG, child->sa.logger,
-		     "phase2 initiation failed because parent ISAKMP #%lu is gone",
-		     child->sa.st_clonedfrom);
+		     "phase2 initiation failed because parent ISAKMP "PRI_SO" is gone",
+		     pri_so(child->sa.st_clonedfrom));
 		return STF_FATAL;
 	}
 
