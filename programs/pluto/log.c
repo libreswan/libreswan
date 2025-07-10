@@ -330,6 +330,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 	case LOG_STREAM:
 		log_raw(DEFAULT_LOGLEVEL, "", buf);
 		return;
+	case PRINTF_STREAM:
 	case WHACK_STREAM:
 		if (LDBGP(DBG_BASE, logger)) {
 			log_raw(LOG_DEBUG, "|] ", buf);

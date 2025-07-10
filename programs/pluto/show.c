@@ -119,7 +119,7 @@ struct jambuf *show_jambuf(struct show *s)
 	return jambuf_from_logjam(&s->logjam, s->logger,
 				  /*pluto_exit_code*/0,
 				  /*where*/NULL,
-				  WHACK_STREAM|NO_PREFIX);
+				  PRINTF_STREAM);
 }
 
 struct logger *show_logger(struct show *s)

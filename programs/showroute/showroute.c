@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 	switch (get_route(dst, &route, logger)) {
 	case ROUTE_SUCCESS:
 	{
-		LLOG_JAMBUF(WHACK_STREAM|NO_PREFIX, logger, buf) {
+		LLOG_JAMBUF(PRINTF_STREAM, logger, buf) {
 			const char *sep = "";
 			if (show_source) {
 				jam_string(buf, sep); sep = " ";

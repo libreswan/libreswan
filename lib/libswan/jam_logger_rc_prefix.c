@@ -51,6 +51,7 @@ static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 	case LOG_STREAM:
 	case WHACK_STREAM:
 	case NO_STREAM:
+	case PRINTF_STREAM:
 		return;
 	}
 	abort(); /* not bad_case(stream) as recursive */
@@ -60,9 +61,12 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 {
 	enum log_prefix prefix = (rc_flags & LOG_PREFIX_MASK);
 	enum stream stream = (rc_flags & STREAM_MASK);
-	switch (prefix) {
-	case NO_PREFIX:
+
+	if (stream == PRINTF_STREAM) {
 		return;
+	}
+
+	switch (prefix) {
 	case ADD_PREFIX:
 		jam_stream_prefix(buf, stream);
 		jam_logger_prefix(buf, logger);
