@@ -85,57 +85,6 @@ enum rc_type {
 	RC_EXIT_ROOF = 100,
 };
 
-
-/*
- * A generic buffer for accumulating unbounded output.
- *
- * The buffer's contents can be directed to various logging streams.
- */
-
-struct jambuf;
-
-/*
- * By default messages are broadcast (to both log files and whack),
- * mix-in one of these options to limit this.
- *
- * This means that a simple RC_* code will go to both whack and and
- * the log files.
- */
-
-#define RC_MASK              0x00fffff	/* rc_type max is 64435+200 */
-#define STREAM_MASK          0x0f00000
-#define LOG_PREFIX_MASK	     0xf000000
-
-enum log_prefix {
-	AUTO_PREFIX =        0x0000000,
-	NO_PREFIX =          0x1000000,
-        ADD_PREFIX =         0x2000000,
-};
-
-enum stream {
-	/*                                 syslog()                      */
-	/*                                Severity  Whack  Tools  Prefix */
-	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <o>   */
-	RC_LOG = 2,
-	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <o>   */
-	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
-	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
-	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    <o>   */
-	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    EXPECTATION FAILED: <o> */
-	PASSERT_STREAM     = 0x0600000, /*   ERR     yes    err    ABORT: ASSERTION_FAILED: <o> */
-	FATAL_STREAM       = 0x0700000, /*   ERR     yes    err    FATAL ERROR: <o> */
-	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
-	/*
-	 * <o>: add prefix when object is available
-	 *
-	 * | <o>: add both "| " and prefix when object is available and
-         * feature is enabled
-	 *
-	 * err?: write to stderr when enabled (tests log_to_stderr,
-	 * typically via -v).  Used by tools such as whack.
-	 */
-};
-
 /*
  * Broadcast a log message.
  *
