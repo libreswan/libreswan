@@ -118,9 +118,9 @@ void vdbg_connection(const struct connection *c,
 	if (!LDBGP(DBG_BASE, c->logger)) {
 		return;
 	}
-	verbose.rc_flags = DEBUG_STREAM;
+	verbose.stream = DEBUG_STREAM;
 	/* MESSAGE ... */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		va_list ap;
 		va_start(ap, message);
@@ -131,7 +131,7 @@ void vdbg_connection(const struct connection *c,
 	}
 	verbose.level++;
 	/* connection ... */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "connection ");
 		jam_connection_co(buf, c);
@@ -144,7 +144,7 @@ void vdbg_connection(const struct connection *c,
 	}
 	verbose.level++;
 	/* host local->remote */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "host: ");
 		jam_address(buf, &c->local->host.addr);
@@ -152,7 +152,7 @@ void vdbg_connection(const struct connection *c,
 		jam_address(buf, &c->remote->host.addr);
 	}
 	/* host id */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "id: ");
 		jam_id(buf, &c->local->host.id);
@@ -160,7 +160,7 @@ void vdbg_connection(const struct connection *c,
 		jam_id(buf, &c->remote->host.id);
 	}
 	/* routing+kind ... */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "routing+kind: ");
 		jam_enum_short(buf, &routing_names, c->routing.state);
@@ -168,7 +168,7 @@ void vdbg_connection(const struct connection *c,
 		jam_enum_short(buf, &connection_kind_names, c->local->kind);
 	}
 	/* selectors local->remote */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "selectors");
 		jam_string(buf, " proposed:");
@@ -199,7 +199,7 @@ void vdbg_connection(const struct connection *c,
 		}
 	}
 	/* SPDs local->remote */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "spds:");
 		FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -208,14 +208,14 @@ void vdbg_connection(const struct connection *c,
 		}
 	}
 	/* policy */
-	LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "policy: ");
 		jam_connection_policies(buf, c);
 	}
 	/* sec-label */
 	if (c->config->sec_label.len > 0) {
-		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, buf) {
+		LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 			jam(buf, PRI_VERBOSE, pri_verbose);
 			jam_string(buf, "sec_label: ");
 			if (c->child.sec_label.len > 0) {

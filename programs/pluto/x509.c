@@ -184,13 +184,13 @@ static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
 
 bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 {
-	if (verbose.rc_flags != LEMPTY) {
+	if (verbose.stream != NO_STREAM) {
 		dn_buf abuf;
-		llog(verbose.rc_flags, verbose.logger,
+		llog(verbose.stream, verbose.logger,
 		     PRI_VERBOSE"trustee A = '%s'",
 		     pri_verbose, str_dn(a, &abuf));
 		dn_buf bbuf;
-		llog(verbose.rc_flags, verbose.logger,
+		llog(verbose.stream, verbose.logger,
 		     PRI_VERBOSE"trustor B = '%s'",
 		     pri_verbose, str_dn(b, &bbuf));
 	}

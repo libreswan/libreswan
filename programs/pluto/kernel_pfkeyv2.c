@@ -112,7 +112,7 @@ static size_t msg_len(const void *start, struct outbuf *msg)
 		struct TYPE ps_thing_ = { __VA_ARGS__ };		\
 		struct outbuf *ps_req_ = MSG;				\
 		struct TYPE *ps_ptr_ = hunk_put_thing(ps_req_, ps_thing_); \
-		if (verbose.rc_flags != 0) {				\
+		if (verbose.stream != NO_STREAM) {			\
 			verbose("put %s ...", ps_req_->what);		\
 			verbose.level++;				\
 			llog_##TYPE(verbose, ps_req_->base, ps_ptr_);	\
@@ -135,7 +135,7 @@ static size_t msg_len(const void *start, struct outbuf *msg)
 		req_->len -= pad_;					\
 		/* XXX: pexpect ..._len == sizeof(TYPE) */		\
 		ext_->sadb_##NAME##_len = msg_len(ext_, req_);		\
-		if (verbose.rc_flags != 0) {				\
+		if (verbose.stream != NO_STREAM) {			\
 			verbose("padup %s ...", req_->what);		\
 			verbose.level++;				\
 			llog_sadb_##NAME(verbose, req_->base, NAME);	\
@@ -219,7 +219,7 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 			/* flip verbose to RC_LOG */
 			struct verbose log = {
 				.logger = verbose.logger,
-				.rc_flags = RC_LOG,
+				.stream = RC_LOG,
 			};
 			llog(RC_LOG, log.logger,
 			     "ignoring message with sequence number 0:");
@@ -234,7 +234,7 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 			/* flip verbose to rc_log */
 			struct verbose log = {
 				.logger = verbose.logger,
-				.rc_flags = RC_LOG,
+				.stream = RC_LOG,
 			};
 			llog(RC_LOG, log.logger,
 			     "ignoring message with incorrect sequence number %u, expecting %u:",
