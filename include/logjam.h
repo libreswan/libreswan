@@ -25,7 +25,6 @@
 #ifndef LOGJAM_H
 #define LOGJAM_H
 
-#include "lset.h"
 #include "where.h"
 #include "jambuf.h"
 #include "constants.h"		/* for enum pluto_exit_code */
@@ -45,7 +44,7 @@ struct logjam {
 	struct barf {
 		const struct logger *logger;
 		struct jambuf jambuf;
-		lset_t rc_flags;
+		enum stream stream;
 		where_t where;
 		enum pluto_exit_code pluto_exit_code;
 	} barf;
@@ -55,7 +54,7 @@ struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 				  const struct logger *logger,
 				  enum pluto_exit_code pluto_exit_code,
 				  where_t where,
-				  lset_t rc_flags) MUST_USE_RESULT;
+				  enum stream stream) MUST_USE_RESULT;
 
 void logjam_to_logger(struct logjam *buf); /* may not return */
 

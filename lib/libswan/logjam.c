@@ -23,20 +23,20 @@ struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 				   const struct logger *logger,
 				   enum pluto_exit_code pluto_exit_code,
 				   where_t where,
-				   lset_t rc_flags)
+				   enum stream stream)
 {
 	/*
 	 * Note: don't initialize entire logjam; as that would zero
 	 * the very large array[LOG_WIDTH].
 	 */
 	logjam->barf = (struct barf) {
-		.rc_flags = rc_flags,
+		.stream = stream,
 		.jambuf = ARRAY_AS_JAMBUF(logjam->array),
 		.logger = logger,
 		.where = where,
 		.pluto_exit_code = pluto_exit_code,
 	};
-	jam_logger_rc_prefix(&logjam->barf.jambuf, logger, rc_flags);
+	jam_logger_rc_prefix(&logjam->barf.jambuf, logger, stream);
 	return &logjam->barf.jambuf;
 }
 
@@ -46,8 +46,8 @@ void logjam_to_logger(struct logjam *logjam)
 		jam_string(&logjam->barf.jambuf, " ");
 		jam_where(&logjam->barf.jambuf, logjam->barf.where);
 	}
-	jambuf_to_logger(&logjam->barf.jambuf, logjam->barf.logger, logjam->barf.rc_flags);
-	if ((logjam->barf.rc_flags & STREAM_MASK) == PASSERT_STREAM) {
+	jambuf_to_logger(&logjam->barf.jambuf, logjam->barf.logger, logjam->barf.stream);
+	if ((logjam->barf.stream & STREAM_MASK) == PASSERT_STREAM) {
 		abort();
 	}
 }

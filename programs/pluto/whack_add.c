@@ -14,7 +14,7 @@
  *
  */
 
-#include "lswlog.h"	/* for RC_FATAL */
+#include "log.h"
 #include "whack.h"
 
 #include "whack_add.h"
@@ -27,13 +27,14 @@ static void llog_add_connection_failed(const struct whack_message *wm,
 				       struct logger *logger,
 				       const char *fmt, ...)
 {
-	LLOG_JAMBUF(RC_FATAL, logger, buf) {
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
 		jam(buf, "\"%s\": failed to add connection: ", wm->name);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 	}
+	whack_rc(RC_FATAL, logger);
 }
 
 /*
