@@ -201,7 +201,7 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 			(c->local->host.config->sendcert == SENDCERT_IFASKED ||
 			 c->local->host.config->sendcert == SENDCERT_ALWAYS));
 
-	dbg("aggr_outI1_tail for #%lu", ike->sa.st_serialno);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO, __func__, pri_so(ike->sa.st_serialno));
 
 	/* make sure HDR is at start of a clean buffer */
 	reply_stream = open_pbs_out("reply packet", reply_buffer, sizeof(reply_buffer), ike->sa.logger);
@@ -217,8 +217,7 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		/* R-cookie, flags and MessageID are left zero */
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
+		if (!pbs_out_struct(&reply_stream, hdr, &isakmp_hdr_desc, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -251,12 +250,11 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
 
 		struct pbs_out id_pbs;
-		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&rbody, &id_pbs) ||
-		    !out_hunk(id_b, &id_pbs, "my identity"))
+		if (!pbs_out_struct(&rbody, id_hd, &isakmp_ipsec_identification_desc, &id_pbs) ||
+		    !pbs_out_hunk(&id_pbs, id_b, "my identity"))
 			return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&id_pbs);
+		close_pbs_out(&id_pbs);
 	}
 
 	/* CERTREQ out */
@@ -279,7 +277,7 @@ static stf_status aggr_outI1_continue_tail(struct state *ike_sa,
 	if (!close_v1_message(&rbody, ike))
 		return STF_INTERNAL_ERROR;
 
-	close_output_pbs(&reply_stream);
+	close_pbs_out(&reply_stream);
 
 	/* Transmit */
 	record_and_send_v1_ike_msg(&ike->sa, &reply_stream, "aggr_outI1");
@@ -338,7 +336,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	d = unpack_id(id->isaid_idtype, &peer_id, &id_pld->pbs, md->logger);
 	if (d != NULL) {
-		dbg("IKEv1 aggressive mode peer ID unpacking failed - ignored peer ID to find connection");
+		ldbg(md->logger, "IKEv1 aggressive mode peer ID unpacking failed - ignored peer ID to find connection");
 	} else {
 		ppeer_id = &peer_id;
 	}
@@ -414,8 +412,8 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 		address_buf b;
 		connection_buf cib;
 		llog_sa(RC_LOG, ike,
-			"responding to Aggressive Mode, state #%lu, connection "PRI_CONNECTION" from %s",
-			ike->sa.st_serialno,
+			"responding to Aggressive Mode, state "PRI_SO", connection "PRI_CONNECTION" from %s",
+			pri_so(ike->sa.st_serialno),
 			pri_connection(c, &cib),
 			str_address_sensitive(&c->remote->host.addr, &b));
 	}
@@ -558,8 +556,8 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	/* send certificate request, if we don't have a preloaded RSA public key */
 	bool send_cr = send_cert && !remote_has_preloaded_pubkey(ike);
 
-	dbg(" I am %ssending a certificate request",
-	    send_cr ? "" : "not ");
+	ldbg(ike->sa.logger, " I am %ssending a certificate request",
+	     send_cr ? "" : "not ");
 
 	/* done parsing; initialize crypto */
 
@@ -579,7 +577,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
+		if (!pbs_out_struct(&reply_stream, hdr, &isakmp_hdr_desc, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -592,8 +590,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 
 		struct pbs_out r_sa_pbs;
 
-		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody,
-				&r_sa_pbs)) {
+		if (!pbs_out_struct(&rbody, r_sa, &isakmp_sa_desc, &r_sa_pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -630,13 +627,12 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 	{
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
-		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&rbody, &r_id_pbs) ||
-		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
+		if (!pbs_out_struct(&rbody, id_hd, &isakmp_ipsec_identification_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, id_b, "my identity")) {
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&r_id_pbs);
+		close_pbs_out(&r_id_pbs);
 	}
 
 	/* CERT out */
@@ -646,14 +642,11 @@ static stf_status aggr_inI1_outR1_continue2(struct state *ike_sa,
 			.isacert_type = cert_ike_type(mycert),
 		};
 		llog(RC_LOG, ike->sa.logger, "I am sending my certificate");
-		if (!out_struct(&cert_hd,
-				&isakmp_ipsec_certificate_desc,
-				&rbody,
-				&cert_pbs) ||
-		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
+		if (!pbs_out_struct(&rbody, cert_hd, &isakmp_ipsec_certificate_desc, &cert_pbs) ||
+		    !pbs_out_hunk(&cert_pbs, cert_der(mycert), "CERT")) {
 			return STF_INTERNAL_ERROR;
 		}
-		close_output_pbs(&cert_pbs);
+		close_pbs_out(&cert_pbs);
 	}
 
 	/* CERTREQ out */
@@ -882,8 +875,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
+		if (!pbs_out_struct(&reply_stream, hdr, &isakmp_hdr_desc, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -900,15 +892,12 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 		llog(RC_LOG, ike->sa.logger, "I am sending my cert");
 
-		if (!out_struct(&cert_hd,
-				&isakmp_ipsec_certificate_desc,
-				&rbody,
-				&cert_pbs) ||
-		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
+		if (!pbs_out_struct(&rbody, cert_hd, &isakmp_ipsec_certificate_desc, &cert_pbs) ||
+		    !pbs_out_hunk(&cert_pbs, cert_der(mycert), "CERT")) {
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&cert_pbs);
+		close_pbs_out(&cert_pbs);
 	}
 
 	/* [ NAT-D, NAT-D ] */
@@ -922,7 +911,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 
 	/* HASH_I or SIG_I out */
 	{
-		dbg("next payload chain: creating a fake payload for hashing identity");
+		ldbg(ike->sa.logger, "next payload chain: creating a fake payload for hashing identity");
 
 		/* first build an ID payload as a raw material */
 		shunk_t id_b;
@@ -931,13 +920,12 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 		uint8_t idbuf[1024]; /* fits all possible identity payloads? */
 		struct pbs_out id_pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), ike->sa.logger);
 		struct pbs_out r_id_pbs;
-		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-				&id_pbs, &r_id_pbs) ||
-		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
+		if (!pbs_out_struct(&id_pbs, id_hd, &isakmp_ipsec_identification_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, id_b, "my identity")) {
 			return STF_INTERNAL_ERROR;
 		}
-		close_output_pbs(&r_id_pbs);
-		close_output_pbs(&id_pbs);
+		close_pbs_out(&r_id_pbs);
+		close_pbs_out(&id_pbs);
 
 		struct crypt_mac hash = main_mode_hash(ike, SA_INITIATOR,
 						       pbs_out_all(&id_pbs));
@@ -979,12 +967,12 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *ike_sa,
 	if (c->established_ike_sa != SOS_NOBODY &&
 	    c->local->host.config->xauth.client &&
 	    c->config->host.cisco.peer) {
-		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
+		ldbg(ike->sa.logger, "skipping XAUTH for rekey for Cisco Peer compatibility.");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
 
 		if (c->local->host.config->modecfg.client) {
-			dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
+			ldbg(ike->sa.logger, "skipping XAUTH for rekey for Cisco Peer compatibility.");
 			ike->sa.hidden_variables.st_modecfg_vars_set = true;
 			ike->sa.hidden_variables.st_modecfg_started = true;
 		}
@@ -1037,7 +1025,7 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 	shunk_t initiator_id;
 
 	{
-		dbg("next payload chain: creating a fake payload for hashing identity");
+		ldbg(ike->sa.logger, "next payload chain: creating a fake payload for hashing identity");
 
 		shunk_t id_body;
 		struct isakmp_ipsec_id id_header = build_v1_id_payload(&c->remote->host, &id_body);
@@ -1057,8 +1045,8 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&id_pbs);
-		close_output_pbs(&idout_pbs);
+		close_pbs_out(&id_pbs);
+		close_pbs_out(&idout_pbs);
 		initiator_id = pbs_out_to_cursor(&idout_pbs);
 	}
 
@@ -1120,12 +1108,12 @@ stf_status aggr_inI2(struct state *ike_sa, struct msg_digest *md)
 	if (c->established_ike_sa != SOS_NOBODY &&
 	    ike->sa.st_connection->local->host.config->xauth.client &&
 	    ike->sa.st_connection->config->host.cisco.peer) {
-		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
+		ldbg(ike->sa.logger, "skipping XAUTH for rekey for Cisco Peer compatibility.");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
 
 		if (ike->sa.st_connection->local->host.config->modecfg.client) {
-			dbg("skipping ModeCFG for rekey for Cisco Peer compatibility.");
+			ldbg(ike->sa.logger, "skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			ike->sa.hidden_variables.st_modecfg_vars_set = true;
 			ike->sa.hidden_variables.st_modecfg_started = true;
 		}
