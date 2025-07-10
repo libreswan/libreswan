@@ -65,7 +65,7 @@ static bool emit_v2V_raw(struct pbs_out *outs, shunk_t vid, const char *descr)
 	};
 
 	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs)) {
+	if (!pbs_out_struct(outs, gen, &ikev2_vendor_id_desc, &pbs)) {
 		/* already logged */
 		return false; /*fatal*/
 	}

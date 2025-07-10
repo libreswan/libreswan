@@ -123,7 +123,7 @@ bool emit_v2UNKNOWN(const char *victim,
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->logger),
 	};
 	struct pbs_out pbs;
-	if (!pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs)) {
+	if (!pbs_out_struct(outs, gen, &ikev2_unknown_payload_desc, &pbs)) {
 		/* already logged */
 		return false; /*fatal*/
 	}

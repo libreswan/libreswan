@@ -112,8 +112,7 @@ static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa 
 	};
 
 	struct pbs_out notify_pbs;
-	if (!pbs_out_struct(rbody, &isakmp_notification_desc,
-			    &isan, sizeof(notify_pbs), &notify_pbs)) {
+	if (!pbs_out_struct(rbody, isan, &isakmp_notification_desc, &notify_pbs)) {
 		return false;
 	}
 

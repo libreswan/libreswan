@@ -64,8 +64,7 @@ bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *p
 
 	/* Emit delete payload header out */
 	struct pbs_out spi_pbs;
-	if (!pbs_out_struct(pbs, &ikev2_delete_desc,
-			    &v2del, sizeof(v2del), &spi_pbs)) {
+	if (!pbs_out_struct(pbs, v2del, &ikev2_delete_desc, &spi_pbs)) {
 		return false;
 	}
 

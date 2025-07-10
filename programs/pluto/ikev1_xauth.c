@@ -294,17 +294,15 @@ static bool modecfg_out_open(struct pbs_out *rbody,
 			     struct modecfg_pbs *modecfg_pbs,
 			     const struct isakmp_mode_attr *attrh)
 {
-	return pbs_out_struct(rbody, &isakmp_attr_desc,
-			      attrh, sizeof(*attrh), &modecfg_pbs->pbs);
+	return pbs_out_struct(rbody, attrh, &isakmp_attr_desc, &modecfg_pbs->pbs);
 }
 
 static bool modecfg_out_attr(struct modecfg_pbs *modecfg_pbs,
 			     const struct isakmp_attribute *attr,
 			     struct pbs_out *attrval)
 {
-	return pbs_out_struct(&modecfg_pbs->pbs,
+	return pbs_out_struct(&modecfg_pbs->pbs, attr,
 			      &isakmp_xauth_attribute_desc,
-			      attr, sizeof(*attr),
 			      attrval);
 }
 
@@ -455,7 +453,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 			struct CISCO_split_item i = {0};
 			memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
 			memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
-			if (!pbs_out_struct(&attrval, &CISCO_split_desc, &i, sizeof(i), NULL)) {
+			if (!pbs_out_struct(&attrval, i, &CISCO_split_desc, NULL)) {
 				return false;
 			}
 		}
@@ -642,7 +640,7 @@ static bool record_n_send_v1_mode_cfg(struct ike_sa *ike,
 	}
 
 	struct pbs_out rbody;
-	if (!pbs_out_struct(&packet.pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &rbody))
+	if (!pbs_out_struct(&packet.pbs, hdr, &isakmp_hdr_desc, &rbody))
 		return false;
 
 	struct v1_hash_fixup hash_fixup;

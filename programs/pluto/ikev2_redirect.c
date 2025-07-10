@@ -169,8 +169,7 @@ static bool emit_redirect_common(struct pbs_out *pbs,
 		.gw_identity_len = id.len
 	};
 
-	if (!pbs_out_struct(pbs, &ikev2_redirect_desc,
-			    &gwi, sizeof(gwi), /*inner-pbs*/NULL)) {
+	if (!pbs_out_struct(pbs, gwi, &ikev2_redirect_desc, /*inner-pbs*/NULL)) {
 		return false;
 	}
 

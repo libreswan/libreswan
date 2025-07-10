@@ -301,9 +301,7 @@ static bool emit_v2TS_selector(struct pbs_out *ts_pbs, ip_selector selector)
 	};
 
 	struct pbs_out ts_range_pbs;
-	if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
-			    &ts_range_header, sizeof(ts_range_header),
-			    &ts_range_pbs)) {
+	if (!pbs_out_struct(ts_pbs, ts_range_header, &ikev2_ts_header_desc, &ts_range_pbs)) {
 		/* already logged */
 		return false;
 	}
@@ -313,8 +311,7 @@ static bool emit_v2TS_selector(struct pbs_out *ts_pbs, ip_selector selector)
 		.isatpr_endport = (selector.hport == 0 ? 65535 : selector.hport),
 	};
 
-	if (!pbs_out_struct(&ts_range_pbs, &ikev2_ts_portrange_desc,
-			    &ts_ports, sizeof(ts_ports), NULL)) {
+	if (!pbs_out_struct(&ts_range_pbs, ts_ports, &ikev2_ts_portrange_desc, NULL)) {
 		/* already logged */
 		return false;
 	}
@@ -341,9 +338,7 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 
 	/* Output the header of the TS_SECLABEL substructure payload. */
 	struct pbs_out ts_label_pbs;
-	if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
-			    &ts_sec_label_header, sizeof(ts_sec_label_header),
-			    &ts_label_pbs)) {
+	if (!pbs_out_struct(ts_pbs, ts_sec_label_header, &ikev2_ts_header_desc, &ts_label_pbs)) {
 		/* already logged */
 		return false;
 	}

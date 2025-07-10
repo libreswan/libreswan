@@ -289,12 +289,14 @@ bool open_large_pbs_out(const char *name, struct large_pbs_out *pbs, struct logg
  * [start..cur) of an output PBS as a chunk.
  */
 
-bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
-		    const void *struct_ptr, size_t struct_size,
-		    struct pbs_out *obj_pbs) MUST_USE_RESULT;
+bool pbs_out_struct_desc(struct pbs_out *outs,
+			 const void *struct_ptr, size_t struct_size,
+			 struct_desc *sd, struct pbs_out *obj_pbs) MUST_USE_RESULT;
+#define pbs_out_struct(PBS, STRUCT, STRUCT_DESC, STRUCT_PBS)		\
+	pbs_out_struct_desc(PBS, &(STRUCT), sizeof(STRUCT), STRUCT_DESC, STRUCT_PBS)
 
-bool out_struct(const void *struct_ptr, struct_desc *sd,
-		struct pbs_out *outs, struct pbs_out *obj_pbs) MUST_USE_RESULT;
+#define out_struct(STRUCT_PTR, STRUCT_DESC, PBS, STRUCT_PBS)		\
+	pbs_out_struct_desc(PBS, STRUCT_PTR, sizeof *(STRUCT_PTR), STRUCT_DESC, STRUCT_PBS)
 
 extern bool ikev1_out_generic(struct_desc *sd,
 			      struct pbs_out *outs,
