@@ -71,7 +71,7 @@ static bool out_attr(int type,
 			.isaat_af_type = type | ISAKMP_ATTR_AF_TV,
 			.isaat_lv = val,
 		};
-		if (!out_struct(&attr, attr_desc, pbs, NULL))
+		if (!pbs_out_struct(pbs, attr, attr_desc, NULL))
 			return false;
 	} else {
 		/* This is a real fudge!  Since we rarely use long attributes
@@ -89,12 +89,11 @@ static bool out_attr(int type,
 			.isaat_af_type = type | ISAKMP_ATTR_AF_TLV,
 			.isaat_lv = sizeof(nval),
 		};
-		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
-		    !out_raw(&nval, sizeof(nval), &val_pbs,
-			     "long attribute value"))
+		if (!pbs_out_struct(pbs, attr, attr_desc, &val_pbs) ||
+		    !pbs_out_raw(&val_pbs, &nval, sizeof(nval), "long attribute value"))
 			return false;
 
-		close_output_pbs(&val_pbs);
+		close_pbs_out(&val_pbs);
 	}
 	if (LDBGP(DBG_BASE, pbs->logger)) {
 		name_buf b;
@@ -378,7 +377,7 @@ static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
 		protoid = PROTO_IPSEC_AH;
 	}
 
-	dbg("%s() initial trans_cnt=%d", __func__, trans_cnt);
+	ldbg(logger, "%s() initial trans_cnt=%d", __func__, trans_cnt);
 
 	/*	pass approx. number of transforms and attributes */
 	struct db_context *ctx_new = db_prop_new(protoid, trans_cnt, trans_cnt * 2);
@@ -394,7 +393,7 @@ static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
 	bool success = true;
 	if (proposals.p != NULL) {
 		FOR_EACH_PROPOSAL(proposals.p, proposal) {
-			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 				jam_string(buf, "adding proposal: ");
 				jam_proposal(buf, proposal);
 			}
@@ -413,19 +412,19 @@ static struct db_context *kernel_alg_db_new(enum encap_proto encap_proto,
 
 	struct db_prop *prop = db_prop_get(ctx_new);
 
-	dbg("%s() will return p_new->protoid=%d, p_new->trans_cnt=%d",
-	    __func__, prop->protoid, prop->trans_cnt);
+	ldbg(logger, "%s() will return p_new->protoid=%d, p_new->trans_cnt=%d",
+	     __func__, prop->protoid, prop->trans_cnt);
 
 	unsigned int tn = 0;
 	struct db_trans *t;
 	for (t = prop->trans, tn = 0;
 	     t != NULL && t[tn].transid != 0 && tn < prop->trans_cnt;
 	     tn++) {
-		dbg("%s()     trans[%d]: transid=%d, attr_cnt=%d, attrs[0].type=%d, attrs[0].val=%d",
-		    __func__, tn,
-		    t[tn].transid, t[tn].attr_cnt,
-		    t[tn].attrs ? t[tn].attrs[0].type.ipsec : 255,
-		    t[tn].attrs ? t[tn].attrs[0].val : 255);
+		ldbg(logger, "%s()     trans[%d]: transid=%d, attr_cnt=%d, attrs[0].type=%d, attrs[0].val=%d",
+		     __func__, tn,
+		     t[tn].transid, t[tn].attr_cnt,
+		     t[tn].attrs ? t[tn].attrs[0].type.ipsec : 255,
+		     t[tn].attrs ? t[tn].attrs[0].val : 255);
 	}
 	prop->trans_cnt = tn;
 
@@ -503,7 +502,7 @@ static struct db_sa *v1_kernel_alg_makedb(enum encap_proto encap_proto,
 		n->prop_conjs->prop_cnt += 1;
 	}
 
-	dbg("returning new proposal from esp_info");
+	ldbg(logger, "returning new proposal from esp_info");
 	return n;
 }
 
@@ -582,11 +581,12 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		unsigned modp = algs.dh->group;
 		unsigned eklen = algs.enckeylen;
 
-		dbg("oakley_alg_makedb() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
-		    algs.encrypt->common.fqn, ealg,
-		    algs.prf->common.fqn, halg,
-		    algs.dh->common.fqn, modp,
-		    eklen);
+		ldbg(logger, "%s() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
+		     __func__,
+		     algs.encrypt->common.fqn, ealg,
+		     algs.prf->common.fqn, halg,
+		     algs.dh->common.fqn, modp,
+		     eklen);
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
@@ -806,7 +806,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 	if (gsp != NULL)
 		gsp->parentSA = true;
 
-	dbg("oakley_alg_makedb() returning %p", gsp);
+	ldbg(logger, "%s() returning %p", __func__, gsp);
 	return gsp;
 }
 
@@ -823,15 +823,14 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 		struct isakmp_sa sa = {
 			.isasa_doi = ISAKMP_DOI_IPSEC /* all we know */
 		};
-		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
+		if (!pbs_out_struct(outs, sa, &isakmp_sa_desc, &sa_pbs))
 			goto fail;
 	}
 
 	/* within SA: situation out */
 	{
 		static const uint32_t situation = SIT_IDENTITY_ONLY;
-
-		if (!out_struct(&situation, &ipsec_sit_desc, &sa_pbs, NULL))
+		if (!pbs_out_struct(&sa_pbs, situation, &ipsec_sit_desc, NULL))
 			goto fail;
 	}
 
@@ -853,7 +852,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 		const struct db_prop_conj *const pc = &sadb->prop_conjs[pcn];
 		int valid_prop_cnt = pc->prop_cnt;
 
-		dbg("%s() pcn: %d has %d valid proposals", __func__, pcn, valid_prop_cnt);
+		ldbg(outs->logger, "%s() pcn: %d has %d valid proposals", __func__, pcn, valid_prop_cnt);
 
 		for (unsigned pn = 0; pn < pc->prop_cnt; pn++) {
 			const struct db_prop *const p = &pc->props[pn];
@@ -863,9 +862,9 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 			 * pick the part of the proposal we are trying to work on
 			 */
 
-			dbg("%s() pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
-			    __func__, pcn, pn, pc->prop_cnt, valid_prop_cnt,
-			    p->trans_cnt);
+			ldbg(outs->logger, "%s() pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			     __func__, pcn, pn, pc->prop_cnt, valid_prop_cnt,
+			     p->trans_cnt);
 
 			/* but, skip things if the transform count is zero */
 			if (p->trans_cnt == 0)
@@ -887,8 +886,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					.isap_notrans = p->trans_cnt
 				};
 
-				if (!out_struct(&proposal, &isakmp_proposal_desc,
-						&sa_pbs, &proposal_pbs))
+				if (!pbs_out_struct(&sa_pbs, proposal, &isakmp_proposal_desc, &proposal_pbs))
 					goto fail;
 			}
 
@@ -969,11 +967,12 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					 * CPI is stored in network low order end of an
 					 * ipsec_spi_t.  So we start a couple of bytes in.
 					 */
-					if (!out_raw((uint8_t *)&st->st_ipcomp.inbound.spi +
-						     IPSEC_DOI_SPI_SIZE -
-						     IPCOMP_CPI_SIZE,
-						     IPCOMP_CPI_SIZE,
-						     &proposal_pbs, "CPI"))
+					if (!pbs_out_raw(&proposal_pbs,
+							 ((uint8_t *)&st->st_ipcomp.inbound.spi +
+							  IPSEC_DOI_SPI_SIZE -
+							  IPCOMP_CPI_SIZE),
+							 IPCOMP_CPI_SIZE,
+							 "CPI"))
 						goto fail;
 					break;
 
@@ -987,9 +986,10 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 									 st->logger);
 						*spi_generated = true;
 					}
-					if (!out_raw((uint8_t *)spi_ptr,
-						     IPSEC_DOI_SPI_SIZE,
-						     &proposal_pbs, "SPI"))
+					if (!pbs_out_raw(&proposal_pbs,
+							 (uint8_t *)spi_ptr,
+							 IPSEC_DOI_SPI_SIZE,
+							 "SPI"))
 						goto fail;
 				}
 			}
@@ -1009,8 +1009,7 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 						.isat_transid = t->transid
 					};
 
-					if (!out_struct(&trans, trans_desc,
-							&proposal_pbs, &trans_pbs))
+					if (!pbs_out_struct(&proposal_pbs, trans, trans_desc, &trans_pbs))
 						goto fail;
 				}
 
@@ -1186,13 +1185,13 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 					break;
 				}
 				}
-				close_output_pbs(&trans_pbs);
+				close_pbs_out(&trans_pbs);
 			}
-			close_output_pbs(&proposal_pbs);
+			close_pbs_out(&proposal_pbs);
 		}
 		/* end of a conjunction of proposals */
 	}
-	close_output_pbs(&sa_pbs);
+	close_pbs_out(&sa_pbs);
 	return true;
 
 fail:
@@ -1465,7 +1464,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		return false;
 	}
 	if (ike_proposals.p == NULL) {
-		dbg("OAKLEY proposal verified unconditionally; no alg_info to check against");
+		ldbg(logger, "OAKLEY proposal verified unconditionally; no alg_info to check against");
 		return true;
 	}
 
@@ -1488,7 +1487,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 					    "You should NOT use insecure/broken IKE algorithms (%s)!",
 					    ta->ta_encrypt->common.fqn);
 			} else {
-				dbg("OAKLEY proposal verified; matching alg_info found");
+				ldbg(logger, "OAKLEY proposal verified; matching alg_info found");
 				return true;
 			}
 		}
@@ -2104,33 +2103,29 @@ rsasig_common:
 			if (r_sa_pbs != NULL) {
 
 				/* Situation */
-				passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
-						   r_sa_pbs, NULL));
+				passert(pbs_out_struct(r_sa_pbs, ipsecdoisit, &ipsec_sit_desc, NULL));
 
 				/* Proposal */
 				struct isakmp_proposal r_proposal = proposal;
 				r_proposal.isap_spisize = 0;
 				r_proposal.isap_notrans = 1;
 				struct pbs_out r_proposal_pbs;
-				passert(out_struct(&r_proposal,
-						   &isakmp_proposal_desc,
-						   r_sa_pbs,
-						   &r_proposal_pbs));
+				passert(pbs_out_struct(r_sa_pbs, r_proposal, &isakmp_proposal_desc,
+						       &r_proposal_pbs));
 
 				/* Transform */
 				struct isakmp_transform r_trans = trans;
 				r_trans.isat_tnp = ISAKMP_NEXT_NONE;
 				struct pbs_out r_trans_pbs;
-				passert(out_struct(&r_trans,
-						   &isakmp_isakmp_transform_desc,
-						   &r_proposal_pbs,
-						   &r_trans_pbs));
+				passert(pbs_out_struct(&r_proposal_pbs,
+						       r_trans,
+						       &isakmp_isakmp_transform_desc,
+						       &r_trans_pbs));
 
-				passert(out_raw(attr_start, attr_len,
-						&r_trans_pbs, "attributes"));
-				close_output_pbs(&r_trans_pbs);
-				close_output_pbs(&r_proposal_pbs);
-				close_output_pbs(r_sa_pbs);
+				passert(pbs_out_raw(&r_trans_pbs, attr_start, attr_len, "attributes"));
+				close_pbs_out(&r_trans_pbs);
+				close_pbs_out(&r_proposal_pbs);
+				close_pbs_out(r_sa_pbs);
 			}
 
 			/* copy over the results */
@@ -2206,8 +2201,8 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	const struct db_attr *auth = &trans->attrs[2];
 	const struct db_attr *grp  = &trans->attrs[3];
 
-	dbg("initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
-	    enc->val, hash->val, grp->val);
+	ldbg(ike->sa.logger, "initiating aggressive mode with IKE=E=%d-H=%d-M=%d",
+	     enc->val, hash->val, grp->val);
 
 	passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 
@@ -2716,7 +2711,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * For instance, AEAD+[NONE].
 	 */
 	if (proto == PROTO_IPSEC_ESP && !LHAS(seen_attrs, AUTH_ALGORITHM)) {
-		dbg("ES missing INTEG aka AUTH, setting it to NONE");
+		ldbg(child->sa.logger, "ES missing INTEG aka AUTH, setting it to NONE");
 		attrs->transattrs.ta_integ = &ike_alg_integ_none;
 	}
 
@@ -2747,8 +2742,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	/* Proposal */
 	r_proposal.isap_pnp = pnp;
 	r_proposal.isap_notrans = 1;
-	passert(out_struct(&r_proposal, &isakmp_proposal_desc, r_sa_pbs,
-			   &r_proposal_pbs));
+	passert(pbs_out_struct(r_sa_pbs, r_proposal, &isakmp_proposal_desc, &r_proposal_pbs));
 
 	/* allocate and emit our CPI/SPI */
 	if (r_proposal.isap_protoid == PROTO_IPCOMP) {
@@ -2758,10 +2752,10 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * but we'll ignore that.
 		 */
 		pi->inbound.spi = get_ipsec_cpi(sr->connection, logger);
-		passert(out_raw((uint8_t *) &pi->inbound.spi +
-				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
-				IPCOMP_CPI_SIZE,
-				&r_proposal_pbs, "CPI"));
+		passert(pbs_out_raw(&r_proposal_pbs,
+				    ((uint8_t *) &pi->inbound.spi + IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE),
+				    IPCOMP_CPI_SIZE,
+				    "CPI"));
 	} else {
 		pi->inbound.spi = get_ipsec_spi(sr->connection,
 						r_proposal.isap_protoid == PROTO_IPSEC_AH ?
@@ -2769,21 +2763,19 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 						pi->outbound.spi,
 						logger);
 		/* XXX should check for errors */
-		passert(out_raw((uint8_t *) &pi->inbound.spi, IPSEC_DOI_SPI_SIZE,
-				&r_proposal_pbs, "SPI"));
+		passert(pbs_out_raw(&r_proposal_pbs, (uint8_t *) &pi->inbound.spi, IPSEC_DOI_SPI_SIZE, "SPI"));
 	}
 
 	/* Transform */
 	r_trans.isat_tnp = ISAKMP_NEXT_NONE;
-	passert(out_struct(&r_trans, trans_desc, &r_proposal_pbs, &r_trans_pbs));
+	passert(pbs_out_struct(&r_proposal_pbs, r_trans, trans_desc, &r_trans_pbs));
 
 	/* Transform Attributes: pure echo */
 	trans_pbs->cur = trans_pbs->start + sizeof(struct isakmp_transform);
-	passert(out_raw(trans_pbs->cur, pbs_left(trans_pbs),
-			&r_trans_pbs, "attributes"));
+	passert(pbs_out_raw(&r_trans_pbs, trans_pbs->cur, pbs_left(trans_pbs), "attributes"));
 
-	close_output_pbs(&r_trans_pbs);
-	close_output_pbs(&r_proposal_pbs);
+	close_pbs_out(&r_trans_pbs);
+	close_pbs_out(&r_proposal_pbs);
 }
 
 v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body of input SA Payload */
@@ -3114,7 +3106,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				 */
 				if (ah_attrs.transattrs.ta_integ == NULL) {
 					/* error already logged */
-					dbg("ignoring AH proposal with unknown integrity");
+					ldbg(child->sa.logger, "ignoring AH proposal with unknown integrity");
 					continue;       /* try another */
 				}
 
@@ -3152,7 +3144,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			ah_attrs.spi = ah_spi;
 		} else if (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
 			address_buf b;
-			pdbg(child->sa.logger, "policy requires authentication but none in proposal from %s",
+			ldbg(child->sa.logger, "policy requires authentication but none in proposal from %s",
 			    str_address(&c->remote->host.addr, &b));
 			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
@@ -3216,7 +3208,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			esp_attrs.spi = esp_spi;
 		} else if (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP) {
 			address_buf b;
-			pdbg(child->sa.logger, "policy requires encryption but ESP not in Proposal from %s",
+			ldbg(child->sa.logger, "policy requires encryption but ESP not in Proposal from %s",
 			     str_address(&c->remote->host.addr, &b));
 			continue; /* we needed encryption, but didn't find ESP */
 		}
@@ -3260,37 +3252,37 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				previous_transnum = ipcomp_trans.isat_transnum;
 
 				if (ipcomp_attrs.transattrs.ta_ipcomp == NULL) {
-					dbg("ignoring IPCOMP proposal with NULL or unknown ID");
+					ldbg(child->sa.logger, "ignoring IPCOMP proposal with NULL or unknown ID");
 					continue; /* try another */
 				}
 
 				if (well_known_cpi != NULL &&
 				    ipcomp_attrs.transattrs.ta_ipcomp != well_known_cpi) {
 					llog(RC_LOG, child->sa.logger,
-						  "illegal proposal: IPCOMP well-known CPI %s disagrees with transform %s",
-						  well_known_cpi->common.fqn,
-						  ipcomp_attrs.transattrs.ta_ipcomp->common.fqn);
+					     "illegal proposal: IPCOMP well-known CPI %s disagrees with transform %s",
+					     well_known_cpi->common.fqn,
+					     ipcomp_attrs.transattrs.ta_ipcomp->common.fqn);
 					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 
 				/* all we can handle! */
 				if (ipcomp_attrs.transattrs.ta_ipcomp != &ike_alg_ipcomp_deflate) {
 					address_buf b;
-					dbg("unsupported IPCOMP Transform %s from %s",
-					    ipcomp_attrs.transattrs.ta_ipcomp->common.fqn,
-					    str_address(&c->remote->host.addr, &b));
+					ldbg(child->sa.logger, "unsupported IPCOMP Transform %s from %s",
+					     ipcomp_attrs.transattrs.ta_ipcomp->common.fqn,
+					     str_address(&c->remote->host.addr, &b));
 					continue; /* try another */
 				}
 
 				if (ah_seen &&
 				    ah_attrs.kernel_mode != ipcomp_attrs.kernel_mode) {
 					/* ??? This should be an error, but is it? */
-					dbg("AH and IPCOMP transforms disagree about mode; TUNNEL presumed");
+					ldbg(child->sa.logger, "AH and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				}
 				if (esp_seen &&
 				    esp_attrs.kernel_mode != ipcomp_attrs.kernel_mode) {
 					/* ??? This should be an error, but is it? */
-					dbg("ESP and IPCOMP transforms disagree about mode; TUNNEL presumed");
+					ldbg(child->sa.logger, "ESP and IPCOMP transforms disagree about mode; TUNNEL presumed");
 				}
 
 				break; /* we seem to be happy */
@@ -3307,8 +3299,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			/* emit what we've accepted */
 
 			/* Situation */
-			passert(out_struct(&ipsecdoisit, &ipsec_sit_desc,
-					   r_sa_pbs, NULL));
+			passert(pbs_out_struct(r_sa_pbs, ipsecdoisit, &ipsec_sit_desc, NULL));
 
 			/* AH proposal */
 			if (ah_seen) {
@@ -3349,7 +3340,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      child->sa.logger);
 			}
 
-			close_output_pbs(r_sa_pbs);
+			close_pbs_out(r_sa_pbs);
 		}
 
 		/* save decoded version of winning SA in state */
