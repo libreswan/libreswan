@@ -169,7 +169,7 @@ void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 	struct logger *logger = ike->sa.logger;
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			va_list ap;
 			va_start(ap, fmt);
 			/* dump non-default values */
@@ -205,7 +205,7 @@ static void dbg_msgid_update(const char *what,
 	struct logger *logger = ike->sa.logger;
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "Message ID: %s", what);
 			switch (message) {
 			case MESSAGE_REQUEST: jam(buf, " request %jd", msgid); break;
@@ -507,7 +507,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 	 */
 	enum stream stream = (ranking > 0 ? LOG_STREAM :
 			      crossing_stream ? LOG_STREAM :
-			      LDBGP(DBG_BASE, logger) ? DEBUG_STREAM|ADD_PREFIX :
+			      LDBGP(DBG_BASE, logger) ? DEBUG_STREAM :
 			      NO_STREAM);
 	if (stream != NO_STREAM) {
 		LLOG_JAMBUF(stream, logger, buf) {

@@ -260,7 +260,7 @@ static struct old_routing ldbg_routing_start(enum routing_event event,
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
 		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_routing_prefix(buf, "start", event,
 					   c->routing.state, c->routing.state,
 					   c->local->kind);
@@ -284,7 +284,7 @@ static void ldbg_routing_stop(enum routing_event event,
 		 * XXX: force ADD_PREFIX so that the connection name
 		 * is before the interesting stuff.
 		 */
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_routing_prefix(buf, "stop", event,
 					   old->routing, c->routing.state,
 					   c->local->kind);
@@ -313,7 +313,7 @@ PRINTF_LIKE(2)
 void ldbg_routing(struct logger *logger, const char *fmt, ...)
 {
 	if (LDBGP(DBG_ROUTING, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "routing:   ");
 			va_list ap;
 			va_start(ap, fmt);

@@ -979,12 +979,6 @@ extern void init_pluto_constants(void);
 
 #define RC_MASK              0x00fffff	/* rc_type max is 64435+200 */
 #define STREAM_MASK          0x0f00000
-#define LOG_PREFIX_MASK	     0xf000000
-
-enum log_prefix {
-	AUTO_PREFIX =        0x0000000,
-        ADD_PREFIX =         0x2000000,
-};
 
 enum stream {
 	/*                                 syslog()                      */
