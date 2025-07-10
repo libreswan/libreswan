@@ -1229,7 +1229,7 @@ void state_disowns_connection(struct state *st)
 				     connection_owner_names[i]);
 #else
 			name_buf ob;
-			pdbgf(DBG_ROUTING, st->logger,
+			ldbgf(DBG_ROUTING, st->logger,
 			      "routing: disown .%s",
 			      str_enum_long(&connection_owner_names, i, &ob));
 #endif
