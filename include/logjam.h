@@ -40,9 +40,6 @@ enum stream;
 #define FATAL_PREFIX		"FATAL ERROR: "
 /*#define PRINTF_PREFIX		""*/
 
-#define PEXPECT_FLAGS		(PEXPECT_STREAM|RC_INTERNAL_ERROR)
-#define PASSERT_FLAGS		(PASSERT_STREAM|RC_INTERNAL_ERROR)
-
 struct logjam {
 	char array[LOG_WIDTH];
 	struct barf {

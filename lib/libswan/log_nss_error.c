@@ -64,7 +64,7 @@ void passert_nss_error(const struct logger *logger, where_t where,
 		       const char *message, ...)
 {
 	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PASSERT_FLAGS);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PASSERT_STREAM);
 	{
 		va_list ap;
 		va_start(ap, message);
@@ -78,7 +78,7 @@ void pexpect_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...)
 {
 	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PEXPECT_FLAGS);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PEXPECT_STREAM);
 	{
 		va_list ap;
 		va_start(ap, message);

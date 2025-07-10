@@ -59,7 +59,7 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						 0, WHERE, PEXPECT_FLAGS); \
+						 0, WHERE, PEXPECT_STREAM); \
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 

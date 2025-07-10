@@ -860,7 +860,7 @@ void delete_state(struct state *st)
 		};
 		while (next_state(&sf)) {
 			state_buf sb;
-			barf((LDBGP(DBG_BASE, st->logger) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+			barf((LDBGP(DBG_BASE, st->logger) ? PASSERT_STREAM : PEXPECT_STREAM),
 			     st->logger, /*ignore-exit-code*/0, HERE,
 			     "unexpected Child SA "PRI_STATE,
 			     pri_state(sf.st, &sb));
