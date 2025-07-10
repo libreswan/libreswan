@@ -144,45 +144,45 @@ void llog_va_list(enum stream stream, const struct logger *logger,
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
-#define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
+#define LLOG_JAMBUF(STREAM, LOGGER, BUF)				\
 	/* create the buffer */						\
 	for (struct logjam logjam_, *lbp_ = &logjam_;			\
 	     lbp_ != NULL; lbp_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						0, NULL, RC_FLAGS);	\
+						0, NULL, STREAM);	\
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
 void llog_dump(enum stream stream,
 	       const struct logger *log,
 	       const void *p, size_t len);
-#define llog_hunk(RC_FLAGS, LOGGER, HUNK)				\
+#define llog_hunk(STREAM, LOGGER, HUNK)				\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
+		llog_dump(STREAM, LOGGER, hunk_->ptr, hunk_->len);	\
 	}
-#define llog_thing(RC_FLAGS, LOGGER, THING)			\
-	llog_dump(RC_FLAGS, LOGGER, &(THING), sizeof(THING))
+#define llog_thing(STREAM, LOGGER, THING)			\
+	llog_dump(STREAM, LOGGER, &(THING), sizeof(THING))
 
 void llog_base64_bytes(enum stream stream,
 		       const struct logger *log,
 		       const void *p, size_t len);
-#define llog_base64_hunk(RC_FLAGS, LOGGER, HUNK)			\
+#define llog_base64_hunk(STREAM, LOGGER, HUNK)			\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_base64_bytes(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len); \
+		llog_base64_bytes(STREAM, LOGGER, hunk_->ptr, hunk_->len); \
 	}
 
 void llog_pem_bytes(enum stream stream,
 		    const struct logger *log,
 		    const char *name,
 		    const void *p, size_t len);
-#define llog_pem_hunk(RC_FLAGS, LOGGER, NAME, HUNK)			\
+#define llog_pem_hunk(STREAM, LOGGER, NAME, HUNK)			\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_pem_bytes(RC_FLAGS, LOGGER, NAME, hunk_->ptr, hunk_->len); \
+		llog_pem_bytes(STREAM, LOGGER, NAME, hunk_->ptr, hunk_->len); \
 	}
 
 /*
