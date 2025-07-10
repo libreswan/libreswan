@@ -113,19 +113,19 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 
 	struct ike_sa *ike = ike_sa_by_serialno(c->established_ike_sa);
 	if (ike != NULL) {
-		pdbg(ike->sa.logger, "no longer viable");
+		ldbg(ike->sa.logger, "no longer viable");
 		ike->sa.st_viable_parent = false; /*needed?*/
 		struct state_filter sf = {
 			.clonedfrom = ike->sa.st_serialno,
 			.search = {
 				.order = NEW2OLD,
-				.verbose.logger = &global_logger,
+				.verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL),
 				.where = HERE,
 			},
 		};
 		while (next_state(&sf)) {
 			struct child_sa *child = pexpect_child_sa(sf.st);
-			pdbg(logger, "delete IPsec SA "PRI_SO" which is a sibling",
+			ldbg(logger, "delete IPsec SA "PRI_SO" which is a sibling",
 			     pri_so(child->sa.st_serialno));
 			state_attach(&child->sa, logger);
 			llog_n_maybe_send_v1_delete(ike, &child->sa, HERE);
@@ -141,7 +141,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			.connection_serialno = c->serialno,
 			.search = {
 				.order = NEW2OLD,
-				.verbose.logger = &global_logger,
+				.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 				.where = HERE,
 			},
 		};
@@ -151,7 +151,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 				continue;
 			}
 			state_attach(sf.st, logger);
-			pdbg(logger,
+			ldbg(logger,
 			     "delete IPsec SA "PRI_SO" which shares the connection",
 			     pri_so(sf.st->st_serialno));
 			struct ike_sa *isakmp = /* could be NULL */
@@ -170,7 +170,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 			.connection_serialno = c->serialno,
 			.search = {
 				.order = NEW2OLD,
-				.verbose.logger = &global_logger,
+				.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 				.where = HERE,
 			},
 		};
@@ -179,7 +179,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 				continue;
 			}
 			state_attach(sf.st, logger);
-			pdbg(logger,
+			ldbg(logger,
 			     "delete ISAKMP SA "PRI_SO" which shares the connection",
 			     pri_so(sf.st->st_serialno));
 			struct ike_sa *isakmp = /* could be NULL */
@@ -253,29 +253,29 @@ stf_status dpd_init(struct state *st)
 	bool want_dpd = dpd_active_locally(st->st_connection);
 
 	if (IS_IKE_SA(st)) { /* so we log this only once */
-		pdbg(st->logger,
+		ldbg(st->logger,
 		     "DPD: dpd_init() called on ISAKMP SA");
 
 		if (!peer_supports_dpd) {
-			pdbg(st->logger,
+			ldbg(st->logger,
 			     "DPD: Peer does not support Dead Peer Detection");
 			if (want_dpd)
 				llog(RC_LOG, st->logger,
 				     "Configured DPD (RFC 3706) support not enabled because remote peer did not advertise DPD support");
 			return STF_OK;
 		} else {
-			pdbg(st->logger, "DPD: Peer supports Dead Peer Detection");
+			ldbg(st->logger, "DPD: Peer supports Dead Peer Detection");
 		}
 
 		if (!want_dpd) {
-			pdbg(st->logger,
+			ldbg(st->logger,
 			     "DPD: not initializing DPD because DPD is disabled locally");
 			return STF_OK;
 		}
 	} else {
-		pdbg(st->logger, "DPD: dpd_init() called on IPsec SA");
+		ldbg(st->logger, "DPD: dpd_init() called on IPsec SA");
 		if (!peer_supports_dpd || !want_dpd) {
-			pdbg(st->logger, "DPD: Peer does not support Dead Peer Detection");
+			ldbg(st->logger, "DPD: Peer does not support Dead Peer Detection");
 			return STF_OK;
 		}
 
@@ -333,7 +333,7 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 {
 	uint32_t seqno;
 
-	pdbg(st->logger, "DPD: processing");
+	ldbg(st->logger, "DPD: processing");
 
 	/* if peer doesn't support DPD, DPD should never have started */
 	if (!PEXPECT(st->logger, st->hidden_variables.st_peer_supports_dpd)) {
@@ -369,9 +369,9 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	if (deltatime_cmp(next_delay, >, deltatime(0))) {
 		/* Yes, just reschedule "phase 2" */
 		monotime_buf mb1, mb2;
-		dbg("DPD: not yet time for dpd event: %s < %s",
-		    str_monotime(now, &mb1),
-		    str_monotime(next_time, &mb2));
+		ldbg(p1->sa.logger, "DPD: not yet time for dpd event: %s < %s",
+		     str_monotime(now, &mb1),
+		     str_monotime(next_time, &mb2));
 		event_schedule(EVENT_v1_DPD, next_delay, st);
 		return;
 	}
@@ -384,7 +384,7 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	 */
 	if (st->hidden_variables.st_nat_traversal == LEMPTY &&
 	    !was_eroute_idle(pexpect_child_sa(st), delay)) {
-		dbg("DPD: out event not sent, phase 2 active");
+		ldbg(p1->sa.logger, "DPD: out event not sent, phase 2 active");
 
 		/* update phase 2 time stamp only */
 		st->st_last_dpd = now;
@@ -399,7 +399,7 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 		 */
 		if (p1->sa.st_v1_dpd_event != NULL &&
 		    p1->sa.st_v1_dpd_event->ev_type == EVENT_v1_DPD_TIMEOUT) {
-			dbg("DPD: deleting p1st DPD event");
+			ldbg(p1->sa.logger, "DPD: deleting p1st DPD event");
 			event_delete(EVENT_v1_DPD, &p1->sa);
 		}
 
@@ -431,10 +431,10 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	dpd_sched_timeout(p1, now, timeout);
 
 	endpoint_buf b;
-	dbg("DPD: sending R_U_THERE %u to %s (state #%lu)",
-	    p1->sa.st_dpd_seqno,
-	    str_endpoint(&p1->sa.st_remote_endpoint, &b),
-	    p1->sa.st_serialno);
+	ldbg(p1->sa.logger, "DPD: sending R_U_THERE %u to %s (state "PRI_SO")",
+	     p1->sa.st_dpd_seqno,
+	     str_endpoint(&p1->sa.st_remote_endpoint, &b),
+	     pri_so(p1->sa.st_serialno));
 
 	if (send_dpd_notification(p1, v1N_R_U_THERE,
 				  &seqno, sizeof(seqno)) != STF_IGNORE) {
@@ -471,7 +471,7 @@ static void p2_dpd_outI1(struct child_sa *p2)
 	}
 
 	if (p1->sa.st_connection->established_child_sa != p2->sa.st_serialno) {
-		pdbg(p1->sa.logger,
+		ldbg(p1->sa.logger,
 		     "DPD: no need to send or schedule DPD for replaced IPsec SA");
 		return;
 	}
@@ -526,12 +526,12 @@ stf_status dpd_inI_outR(struct state *p1sa,
 	if (!memeq(pbs->cur, p1->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
-		dbg("DPD: R_U_THERE has invalid icookie (tolerated)");
+		ldbg(p1->sa.logger, "DPD: R_U_THERE has invalid icookie (tolerated)");
 	}
 	pbs->cur += COOKIE_SIZE;
 
 	if (!memeq(pbs->cur, p1->sa.st_ike_spis.responder.bytes, COOKIE_SIZE)) {
-		dbg("DPD: R_U_THERE has invalid rcookie (tolerated)");
+		ldbg(p1->sa.logger, "DPD: R_U_THERE has invalid rcookie (tolerated)");
 	}
 	pbs->cur += COOKIE_SIZE;
 
@@ -570,10 +570,10 @@ stf_status dpd_inI_outR(struct state *p1sa,
 	}
 
 	monotime_buf nwb;
-	dbg("DPD: received R_U_THERE seq:%u monotime: %s (state=#%lu name=%s)",
-	    seqno, str_monotime(now, &nwb),
-	    p1->sa.st_serialno,
-	    p1->sa.st_connection->name);
+	ldbg(p1->sa.logger, "DPD: received R_U_THERE seq:%u monotime: %s (state="PRI_SO" name=%s)",
+	     seqno, str_monotime(now, &nwb),
+	     pri_so(p1->sa.st_serialno),
+	     p1->sa.st_connection->name);
 
 	p1->sa.st_dpd_peerseqno = seqno;
 
@@ -635,14 +635,14 @@ stf_status dpd_inR(struct state *p1sa,
 	if (!memeq(pbs->cur, p1->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
-		pdbg(p1->sa.logger, "DPD: R_U_THERE_ACK has invalid icookie");
+		ldbg(p1->sa.logger, "DPD: R_U_THERE_ACK has invalid icookie");
 	}
 	pbs->cur += COOKIE_SIZE;
 
 	if (!memeq(pbs->cur, p1->sa.st_ike_spis.responder.bytes, COOKIE_SIZE)) {
 		/* RFC states we *SHOULD* check cookies, not MUST.  So invalid
 		   cookies are technically valid, as per Geoffrey Huang */
-		dbg("DPD: R_U_THERE_ACK has invalid rcookie");
+		ldbg(p1->sa.logger, "DPD: R_U_THERE_ACK has invalid rcookie");
 	}
 	pbs->cur += COOKIE_SIZE;
 
@@ -655,9 +655,9 @@ stf_status dpd_inR(struct state *p1sa,
 	}
 
 	seqno = ntohl(*(uint32_t *)pbs->cur);
-	pdbg(p1->sa.logger,
-	     "DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
-	     seqno, p1->sa.st_dpd_expectseqno, p1->sa.st_serialno);
+	ldbg(p1->sa.logger,
+	     "DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state="PRI_SO")",
+	     seqno, p1->sa.st_dpd_expectseqno, pri_so(p1->sa.st_serialno));
 
 	if (seqno == p1->sa.st_dpd_expectseqno) {
 		/* update the time stamp */
@@ -707,7 +707,7 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 		};
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &packet.pbs, &rbody))
+		if (!pbs_out_struct(&packet.pbs, hdr, &isakmp_hdr_desc, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -727,19 +727,16 @@ stf_status send_dpd_notification(struct ike_sa *ike,
 			.isan_spisize = COOKIE_SIZE * 2,
 			.isan_type = type,
 		};
-		if (!out_struct(&isan, &isakmp_notification_desc, &rbody,
-				&notify_pbs) ||
-		    !out_raw(ike->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE, &notify_pbs,
-			     "notify icookie") ||
-		    !out_raw(ike->sa.st_ike_spis.responder.bytes, COOKIE_SIZE, &notify_pbs,
-			     "notify rcookie"))
+		if (!pbs_out_struct(&rbody, isan, &isakmp_notification_desc, &notify_pbs) ||
+		    !pbs_out_raw(&notify_pbs, ike->sa.st_ike_spis.initiator.bytes, COOKIE_SIZE, "notify icookie") ||
+		    !pbs_out_raw(&notify_pbs, ike->sa.st_ike_spis.responder.bytes, COOKIE_SIZE, "notify rcookie"))
 			return STF_INTERNAL_ERROR;
 
 		if (data != NULL && len > 0)
-			if (!out_raw(data, len, &notify_pbs, "notify data"))
+			if (!pbs_out_raw(&notify_pbs, data, len, "notify data"))
 				return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&notify_pbs);
+		close_pbs_out(&notify_pbs);
 	}
 
 	fixup_v1_HASH(&ike->sa, &hash_fixup, msgid, rbody.cur);
