@@ -814,12 +814,12 @@ static diag_t check_afi(struct afi_winner *winner,
 		    leftright, name, value);
 }
 
-static diag_t extract_resolve_host(struct afi_winner *winner,
-				   struct resolve_host *end,
-				   const char *leftright,
-				   const char *name,
-				   const char *value,
-				   struct verbose verbose)
+static diag_t extract_host_addr(struct afi_winner *winner,
+				struct host_addr_config *end,
+				const char *leftright,
+				const char *name,
+				const char *value,
+				struct verbose verbose)
 {
 	diag_t d;
 	err_t e;
@@ -837,7 +837,7 @@ static diag_t extract_resolve_host(struct afi_winner *winner,
 		return NULL;
 	}
 
-	end->name = value;
+	end->name = clone_str(value, "host name");
 
 	if (value[0] == '%') {
 		/* either keyword, or %interface */
@@ -895,10 +895,10 @@ static diag_t extract_resolve_host(struct afi_winner *winner,
 
 }
 
-static diag_t extract_host(const struct whack_message *wm,
-			   struct resolve_end resolve[END_ROOF],
-			   const struct ip_info **host_afi,
-			   struct verbose verbose)
+static diag_t extract_host_addrs(const struct whack_message *wm,
+				 struct end_config ends[END_ROOF],
+				 const struct ip_info **host_afi,
+				 struct verbose verbose)
 {
 	/* source of AFI */
 	diag_t d;
@@ -922,16 +922,17 @@ static diag_t extract_host(const struct whack_message *wm,
 	}
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		struct resolve_end *end = &resolve[lr];
 		const struct whack_end *we = &wm->end[lr];
 		const char *leftright = we->leftright;
+		struct host_addr_config *host = &ends[lr].host.host;
+		struct host_addr_config *nexthop = &ends[lr].host.nexthop;
 
-		d = extract_resolve_host(&winner, &end->host, leftright, "", we->host, verbose);
+		d = extract_host_addr(&winner, host, leftright, "", we->host, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
-		d = extract_resolve_host(&winner, &end->nexthop, leftright, "nexthop", we->nexthop, verbose);
+		d = extract_host_addr(&winner, nexthop, leftright, "nexthop", we->nexthop, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -963,8 +964,8 @@ static diag_t extract_host(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
- 		struct resolve_host *host = &resolve[lr].host;
-		struct resolve_host *nexthop = &resolve[lr].nexthop;
+		struct host_addr_config *host = &ends[lr].host.host;
+		struct host_addr_config *nexthop = &ends[lr].host.nexthop;
  		const char *leftright = wm->end[lr].leftright;
 		const char *name = "";
 		const char *value = host->name;
@@ -1034,8 +1035,8 @@ static diag_t extract_host(const struct whack_message *wm,
 	}
 
 	if (!can_orient) {
-		const char *left = resolve[LEFT_END].host.name;
-		const char *right = resolve[RIGHT_END].host.name;
+		const char *left = ends[LEFT_END].host.host.name;
+		const char *right = ends[RIGHT_END].host.host.name;
 		return diag("neither 'left=%s' nor 'right=%s' specify the local host's IP address",
 			    (left == NULL ? "" : left),
 			    (right == NULL ? "" : right));
@@ -1047,7 +1048,7 @@ static diag_t extract_host(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
- 		struct resolve_host *nexthop = &resolve[lr].nexthop;
+		struct host_addr_config *nexthop = &ends[lr].host.nexthop;
  		const char *leftright = wm->end[lr].leftright;
 		const char *name = "nexthop";
 		const char *value = nexthop->name;
@@ -1071,7 +1072,7 @@ static diag_t extract_host(const struct whack_message *wm,
 
 		case KH_NOTSET:
 		{
-			struct resolve_host *host = &resolve[lr].host;
+			struct host_addr_config *host = &ends[lr].host.host;
 			nexthop->addr = winner.afi->address.unspec;
 			nexthop->type = (host->type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE : KH_NOTSET);
 			break;
@@ -1966,21 +1967,6 @@ static diag_t extract_host_end(struct host_end *host,
 		     leftright, str_id(&host_config->id, &idb));
 		host->id = clone_id(&host_config->id, __func__);
 	}
-
-	/*
-	 * Save the whack value, update_hosts_from_end_host_addr()
-	 * will set the actual .nexthop value for the connection.
-	 * Either now, during extraction, or later, during
-	 * instantiation.
-	 */
-
-	host_config->host.type = resolve->host.type;
-	host_config->host.name = clone_str(resolve->host.name, "host ip");
-	host_config->host.addr = resolve->host.addr;
-
-	host_config->nexthop.type = resolve->nexthop.type;
-	host_config->nexthop.name = clone_str(resolve->nexthop.name, "nexthop");
-	host_config->nexthop.addr = resolve->nexthop.addr;
 
 	/* the rest is simple copying of corresponding fields */
 
@@ -3507,19 +3493,40 @@ static diag_t extract_connection(const struct whack_message *wm,
 	};
 
 	/*
-	 * Determine the Host's address family.
+	 * Extract {left,right} and {left,right}nexthop.  Since this
+	 * clones the string values, save values directly into CONFIG.
 	 */
-	struct resolve_end resolve[END_ROOF] = {
-		[LEFT_END] = { .leftright = "left", },
-		[RIGHT_END] = { .leftright = "right", },
-	};
+
 	const struct ip_info *host_afi = NULL;
-	d = extract_host(wm, resolve, &host_afi, verbose);
+	d = extract_host_addrs(wm, config->end, &host_afi, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	PASSERT(c->logger, host_afi != NULL);
+
+	/*
+	 * Now copy the extracted values into the resolve structure
+	 * and try to resolve them.
+	 */
+
+	struct resolve_end resolve[END_ROOF] = {
+		[LEFT_END] = { .leftright = "left", },
+		[RIGHT_END] = { .leftright = "right", },
+	};
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct host_end_config *src = &config->end[lr].host;
+ 		struct resolve_end *dst = &resolve[lr];
+		/* host */
+		dst->host.name = src->host.name;
+		dst->host.addr = src->host.addr;
+		dst->host.type = src->host.type;
+		/* nexthop */
+		dst->nexthop.name = src->nexthop.name;
+		dst->nexthop.addr = src->nexthop.addr;
+		dst->nexthop.type = src->nexthop.type;
+	}
 
 	bool can_resolve = true;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
@@ -3552,6 +3559,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 				      &resolve[LEFT_END],
 				      host_afi,
 				      verbose);
+	}
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct resolve_host *nexthop = &resolve[lr].nexthop;
+		config->end[lr].host.nexthop.addr = nexthop->addr;
 	}
 
 	/*
