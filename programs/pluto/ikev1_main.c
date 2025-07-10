@@ -124,7 +124,7 @@ static bool emit_v1N_IPSEC_INITIAL_CONTACT(struct pbs_out *rbody, struct ike_sa 
 	}
 
 	/* zero length data payload */
-	close_output_pbs(&notify_pbs);
+	close_pbs_out(&notify_pbs);
 	return true;
 }
 
@@ -160,10 +160,10 @@ struct ike_sa *main_outI1(struct connection *c,
 	}
 
 	if (predecessor == NULL) {
-		llog_sa(RC_LOG, ike, "initiating IKEv1 Main Mode connection");
+		llog(RC_LOG, ike->sa.logger, "initiating IKEv1 Main Mode connection");
 	} else {
-		llog_sa(RC_LOG, ike, "initiating IKEv1 Main Mode connection to replace #%lu",
-			  predecessor->sa.st_serialno);
+		llog(RC_LOG, ike->sa.logger, "initiating IKEv1 Main Mode connection to replace "PRI_SO,
+		     pri_so(predecessor->sa.st_serialno));
 	}
 
 	/* set up reply */
@@ -184,8 +184,7 @@ struct ike_sa *main_outI1(struct connection *c,
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&rbody)) {
+		if (!pbs_out_struct(&reply_stream, hdr, &isakmp_hdr_desc, &rbody)) {
 			/* leak!?! */
 			return NULL;
 		}
@@ -223,7 +222,7 @@ struct ike_sa *main_outI1(struct connection *c,
 		return NULL;
 	}
 
-	close_output_pbs(&reply_stream);
+	close_pbs_out(&reply_stream);
 
 	/* Transmit */
 	record_and_send_v1_ike_msg(&ike->sa, &reply_stream,
@@ -454,8 +453,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 		}
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-					&rbody))
+		if (!pbs_out_struct(&reply_stream, hdr, &isakmp_hdr_desc, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -464,7 +462,7 @@ stf_status main_inI1_outR1(struct state *null_st,
 		struct isakmp_sa r_sa = {
 			.isasa_doi = ISAKMP_DOI_IPSEC,
 		};
-		if (!out_struct(&r_sa, &isakmp_sa_desc, &rbody, &r_sa_pbs))
+		if (!pbs_out_struct(&rbody, r_sa, &isakmp_sa_desc, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -612,12 +610,12 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&vid_pbs);
+		close_pbs_out(&vid_pbs);
 	}
 
-	dbg("NAT-T checking st_nat_traversal");
+	ldbg(ike->sa.logger, "NAT-T checking st_nat_traversal");
 	if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
-		dbg("NAT-T found (implies NAT_T_WITH_NATD)");
+		ldbg(ike->sa.logger, "NAT-T found (implies NAT_T_WITH_NATD)");
 		/* send two ISAKMP_NEXT_NATD_RFC* hash payloads to support NAT */
 		if (!ikev1_nat_traversal_add_natd(&rbody, md))
 			return STF_INTERNAL_ERROR;
@@ -735,7 +733,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&vid_pbs);
+		close_pbs_out(&vid_pbs);
 	}
 
 	/* CR out */
@@ -793,14 +791,14 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	 * actually just doing work in the background.  md will not be
 	 * retained.
 	 */
-	dbg("main inI2_outR2: starting async DH calculation (group=%d)",
-	    ike->sa.st_oakley.ta_dh->group);
+	ldbg(ike->sa.logger, "%s() starting async DH calculation (group=%d)",
+	     __func__, ike->sa.st_oakley.ta_dh->group);
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
 				/*no-md:in-background*/NULL,
 				ike->sa.st_gi/*responder needs initiator's KE*/,
 				main_inI2_outR2_continue2, HERE);
 	/* we are calculating in the background, so it doesn't count */
-	dbg("#%lu %s:%u ike->sa.st_calculating = false;", ike->sa.st_serialno, __func__, __LINE__);
+	ldbg(ike->sa.logger, "%s() ike->sa.st_calculating = false;", __func__);
 	ike->sa.st_v1_offloaded_task_in_background = true;
 
 	/* outR2 is not encrypted; but callback will be filling in IV */
@@ -971,8 +969,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	 */
 	bool send_cr = send_cert && !remote_has_preloaded_pubkey(ike);
 
-	dbg(" I am %ssending a certificate request",
-	    send_cr ? "" : "not ");
+	ldbg(ike->sa.logger, " I am %ssending a certificate request",
+	     send_cr ? "" : "not ");
 
 	/* done parsing; initialize crypto */
 
@@ -999,16 +997,13 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 		 */
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
-		if (!out_struct(&id_hd,
-				&isakmp_ipsec_identification_desc,
-				rbody,
-				&id_pbs) ||
-		    !out_hunk(id_b, &id_pbs, "my identity")) {
+		if (!pbs_out_struct(rbody, id_hd, &isakmp_ipsec_identification_desc, &id_pbs) ||
+		    !pbs_out_hunk(&id_pbs, id_b, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&id_pbs);
+		close_pbs_out(&id_pbs);
 	}
 
 	/* CERT out */
@@ -1110,7 +1105,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
-		pdbg(ike->sa.logger, "Not sending INITIAL_CONTACT");
+		ldbg(ike->sa.logger, "not sending INITIAL_CONTACT");
 	}
 
 	/* encrypt message, except for fixed part of header */
@@ -1163,7 +1158,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	 */
 
 	if (!ikev1_decode_peer_id_main_mode_responder(ike, md)) {
-		dbg("Peer ID failed to decode");
+		ldbg(ike->sa.logger, "Peer ID failed to decode");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
@@ -1229,14 +1224,13 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 		 */
 		shunk_t id_b;
 		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->local->host, &id_b);
-		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
-					&rbody, &r_id_pbs) ||
-		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
+		if (!pbs_out_struct(&rbody, id_hd, &isakmp_ipsec_identification_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, id_b, "my identity")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&r_id_pbs);
+		close_pbs_out(&r_id_pbs);
 	}
 
 	/* CERT out, if we have one */
@@ -1337,15 +1331,15 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	 * XXX: IKEv1 only implements IPv4 leases.
 	 */
 	if (!c->config->send_initial_contact) {
-		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; initial-contact=false");
+		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; initial-contact=false");
 	} else if (!c->local->config->host.modecfg.server) {
-		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; local is not a modecfg server");
+		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; local is not a modecfg server");
 	} else if (c->remote->config->child.addresspools.len == 0) {
-		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote has no IPv4 addresspool range");
+		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote has no IPv4 addresspool range");
 	} else if (c->remote->child.lease[IPv4].ip.is_set) {
-		pdbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote already has a lease");
+		ldbg(ike->sa.logger, "responder is not sending IPSEC_INITIAL_CONTACT; remote already has a lease");
 	} else {
-		pdbg(ike->sa.logger, "responder is sending IPSEC_INITIAL_CONTACT; remote initiator needs to ask for a lease");
+		ldbg(ike->sa.logger, "responder is sending IPSEC_INITIAL_CONTACT; remote initiator needs to ask for a lease");
 		if (!emit_v1N_IPSEC_INITIAL_CONTACT(&rbody, ike)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1368,12 +1362,12 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	if (c->config->host.cisco.peer &&
 	    c->established_ike_sa != SOS_NOBODY &&
 	    c->local->host.config->xauth.client) {
-		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
+		ldbg(ike->sa.logger, "skipping XAUTH for rekey for Cisco Peer compatibility.");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
 
 		if (c->local->host.config->modecfg.client) {
-			dbg("Skipping ModeCFG for rekey for Cisco Peer compatibility.");
+			ldbg(ike->sa.logger, "skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			ike->sa.hidden_variables.st_modecfg_vars_set = true;
 			ike->sa.hidden_variables.st_modecfg_started = true;
 		}
@@ -1425,7 +1419,7 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 	struct connection *c = ike->sa.st_connection;
 
 	if (!ikev1_decode_peer_id_initiator(ike, md)) {
-		dbg("Peer ID failed to decode");
+		ldbg(ike->sa.logger, "Peer ID failed to decode");
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
@@ -1448,12 +1442,12 @@ stf_status main_inR3(struct state *ike_sa, struct msg_digest *md)
 	if (c->config->host.cisco.peer &&
 	    c->established_ike_sa != SOS_NOBODY &&
 	    c->local->host.config->xauth.client) {
-		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
+		ldbg(ike->sa.logger, "skipping XAUTH for rekey for Cisco Peer compatibility.");
 		ike->sa.hidden_variables.st_xauth_client_done = true;
 		ike->sa.st_oakley.doing_xauth = false;
 
 		if (c->local->host.config->modecfg.client) {
-			dbg("Skipping ModeCFG for rekey for Cisco Peer compatibility.");
+			ldbg(ike->sa.logger, "skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			ike->sa.hidden_variables.st_modecfg_vars_set = true;
 			ike->sa.hidden_variables.st_modecfg_started = true;
 		}
