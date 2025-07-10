@@ -85,57 +85,6 @@ enum rc_type {
 	RC_EXIT_ROOF = 100,
 };
 
-
-/*
- * A generic buffer for accumulating unbounded output.
- *
- * The buffer's contents can be directed to various logging streams.
- */
-
-struct jambuf;
-
-/*
- * By default messages are broadcast (to both log files and whack),
- * mix-in one of these options to limit this.
- *
- * This means that a simple RC_* code will go to both whack and and
- * the log files.
- */
-
-#define RC_MASK              0x00fffff	/* rc_type max is 64435+200 */
-#define STREAM_MASK          0x0f00000
-#define LOG_PREFIX_MASK	     0xf000000
-
-enum log_prefix {
-	AUTO_PREFIX =        0x0000000,
-	NO_PREFIX =          0x1000000,
-        ADD_PREFIX =         0x2000000,
-};
-
-enum stream {
-	/*                                 syslog()                      */
-	/*                                Severity  Whack  Tools  Prefix */
-	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <o>   */
-	RC_LOG = 2,
-	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <o>   */
-	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
-	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
-	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    <o>   */
-	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    EXPECTATION FAILED: <o> */
-	PASSERT_STREAM     = 0x0600000, /*   ERR     yes    err    ABORT: ASSERTION_FAILED: <o> */
-	FATAL_STREAM       = 0x0700000, /*   ERR     yes    err    FATAL ERROR: <o> */
-	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
-	/*
-	 * <o>: add prefix when object is available
-	 *
-	 * | <o>: add both "| " and prefix when object is available and
-         * feature is enabled
-	 *
-	 * err?: write to stderr when enabled (tests log_to_stderr,
-	 * typically via -v).  Used by tools such as whack.
-	 */
-};
-
 /*
  * Broadcast a log message.
  *
@@ -195,45 +144,45 @@ void llog_va_list(enum stream stream, const struct logger *logger,
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
-#define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
+#define LLOG_JAMBUF(STREAM, LOGGER, BUF)				\
 	/* create the buffer */						\
 	for (struct logjam logjam_, *lbp_ = &logjam_;			\
 	     lbp_ != NULL; lbp_ = NULL)					\
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						0, NULL, RC_FLAGS);	\
+						0, NULL, STREAM);	\
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
 void llog_dump(enum stream stream,
 	       const struct logger *log,
 	       const void *p, size_t len);
-#define llog_hunk(RC_FLAGS, LOGGER, HUNK)				\
+#define llog_hunk(STREAM, LOGGER, HUNK)				\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
+		llog_dump(STREAM, LOGGER, hunk_->ptr, hunk_->len);	\
 	}
-#define llog_thing(RC_FLAGS, LOGGER, THING)			\
-	llog_dump(RC_FLAGS, LOGGER, &(THING), sizeof(THING))
+#define llog_thing(STREAM, LOGGER, THING)			\
+	llog_dump(STREAM, LOGGER, &(THING), sizeof(THING))
 
 void llog_base64_bytes(enum stream stream,
 		       const struct logger *log,
 		       const void *p, size_t len);
-#define llog_base64_hunk(RC_FLAGS, LOGGER, HUNK)			\
+#define llog_base64_hunk(STREAM, LOGGER, HUNK)			\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_base64_bytes(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len); \
+		llog_base64_bytes(STREAM, LOGGER, hunk_->ptr, hunk_->len); \
 	}
 
 void llog_pem_bytes(enum stream stream,
 		    const struct logger *log,
 		    const char *name,
 		    const void *p, size_t len);
-#define llog_pem_hunk(RC_FLAGS, LOGGER, NAME, HUNK)			\
+#define llog_pem_hunk(STREAM, LOGGER, NAME, HUNK)			\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_pem_bytes(RC_FLAGS, LOGGER, NAME, hunk_->ptr, hunk_->len); \
+		llog_pem_bytes(STREAM, LOGGER, NAME, hunk_->ptr, hunk_->len); \
 	}
 
 /*

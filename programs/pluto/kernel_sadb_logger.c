@@ -79,12 +79,12 @@ typedef uint64_t u64_t;
 	}
 
 #define JAM_HEADER(T)							\
-	if (verbose.rc_flags == 0) {					\
+	if (verbose.stream == NO_STREAM) {				\
 		return;	/* skip when not verbose */			\
 	}								\
 	struct logjam logjam;						\
 	struct jambuf *buf = jambuf_from_logjam(&logjam, verbose.logger, \
-						0, NULL, verbose.rc_flags); \
+						0, NULL, verbose.stream); \
 	jam(buf, PRI_VERBOSE, pri_verbose);				\
 	jam_string(buf, #T" @");					\
 	if (b != NULL) {						\
@@ -537,9 +537,7 @@ void llog_sadb_ext(struct verbose verbose,
 		}
 		address_buf ab;
 		port_buf pb;
-		llog(verbose.rc_flags, verbose.logger,
-		     PRI_VERBOSE"  %s:%s", pri_verbose,
-		     str_address_wrapped(&addr, &ab), str_hport(port, &pb));
+		verbose("  %s:%s", str_address_wrapped(&addr, &ab), str_hport(port, &pb));
 		/* no PEXPECT(logger, address_cursor.len == 0); may be padded */
 		return;
 	}
@@ -555,7 +553,7 @@ void llog_sadb_ext(struct verbose verbose,
 		}
 		llog_sadb_key(verbose, base, key);
 		if (LDBGP(DBG_CRYPT, verbose.logger)) {
-			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+			VERBOSE_JAMBUF(buf) {
 				jam(buf, "   ");
 				jam_dump_hunk(buf, key_cursor);
 			}
@@ -698,9 +696,7 @@ void llog_sadb_ext(struct verbose verbose,
 				}
 				address_buf ab;
 				port_buf pb;
-				llog(verbose.rc_flags, verbose.logger,
-				     PRI_VERBOSE"  %s:%s", pri_verbose,
-				     str_address_wrapped(&address, &ab), str_hport(port, &pb));
+				verbose("  %s:%s", str_address_wrapped(&address, &ab), str_hport(port, &pb));
 			}
 		}
 		vexpect(ext_cursor.len == 0);
@@ -833,7 +829,7 @@ void llog_sadb_ext(struct verbose verbose,
 	}
 
 	/* Force to ERROR stream! */
-	verbose.rc_flags = ERROR_STREAM;
+	verbose.stream = ERROR_STREAM;
 	llog_pexpect(verbose.logger, HERE, "unexpected payload");
 
 	const struct sadb_msg *b = base; /*hack*/
@@ -846,7 +842,7 @@ void llog_sadb_ext(struct verbose verbose,
 
 void llog_sadb(struct verbose verbose, shunk_t msg_cursor)
 {
-	if (verbose.rc_flags == 0) {
+	if (verbose.stream == NO_STREAM) {
 		return;
 	}
 

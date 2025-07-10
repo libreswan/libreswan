@@ -83,7 +83,7 @@ struct proposal_policy {
 	 * logging context
 	 */
 	struct logger *logger;
-	lset_t logger_rc_flags;
+	enum stream stream;
 };
 
 /*

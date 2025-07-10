@@ -17,6 +17,8 @@
 #ifndef VERBOSE_H
 #define VERBOSE_H
 
+#include "pluto_constants.h"	/* for enum stream; */
+
 /*
  * Pass-by-value wrapper around logger to make it easy to generate
  * indented debug/verbose logs.
@@ -34,11 +36,9 @@
  * needed.
  */
 
-#include "lset.h"
-
 struct verbose {
 	const struct logger *logger;
-	lset_t rc_flags;
+	enum stream stream;
 	int level;
 	const char *prefix;
 };
@@ -78,13 +78,13 @@ struct verbose {
  *
  */
 
-#define VERBOSE(RC_FLAGS, LOGGER, PREFIX)				\
+#define VERBOSE(STREAM, LOGGER, PREFIX)					\
 	{								\
 		.logger = LOGGER,					\
 			.prefix = PREFIX,				\
-			.rc_flags = ((lset_t)RC_FLAGS != (lset_t)DEBUG_STREAM ? RC_FLAGS : \
-				     LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
-				     NO_STREAM),			\
+			.stream = (STREAM != DEBUG_STREAM ? STREAM :	\
+				   LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
+				   NO_STREAM),				\
 			}
 
 /*
@@ -188,19 +188,18 @@ struct verbose {
 
 #define verbose(FMT, ...)						\
 	{								\
-		if (verbose.rc_flags != 0 &&				\
-		    verbose.rc_flags != NO_STREAM) {			\
-			llog(verbose.rc_flags, verbose.logger,		\
+		if (verbose.stream != 0 &&				\
+		    verbose.stream != NO_STREAM) {			\
+			llog(verbose.stream, verbose.logger,		\
 			     PRI_VERBOSE""FMT,				\
 			     pri_verbose, ##__VA_ARGS__);		\
 		}							\
 	}
 
 #define VERBOSE_JAMBUF(BUF)						\
-	for (bool cond_ = (verbose.rc_flags != 0 &&			\
-			   verbose.rc_flags != NO_STREAM);		\
+	for (bool cond_ = (verbose.stream != NO_STREAM);		\
 	     cond_; cond_ = false)					\
-		LLOG_JAMBUF(verbose.rc_flags, verbose.logger, BUF)	\
+		LLOG_JAMBUF(verbose.stream, verbose.logger, BUF)	\
 			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
 			     cond_; cond_ = false)
 

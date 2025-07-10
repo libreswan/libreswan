@@ -63,7 +63,7 @@ struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 
 void logjam_to_logger(struct logjam *buf); /* may not return */
 
-#define BARF_JAMBUF(RC_FLAGS, LOGGER, PLUTO_EXIT_CODE, WHERE, BUF)	\
+#define BARF_JAMBUF(STREAM, LOGGER, PLUTO_EXIT_CODE, WHERE, BUF)	\
 	/* create the buffer */						\
 	for (struct logjam logjam_, *bf_ = &logjam_;			\
 	     bf_ != NULL; bf_ = NULL)					\
@@ -71,7 +71,7 @@ void logjam_to_logger(struct logjam *buf); /* may not return */
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
 						PLUTO_EXIT_CODE, \
-						WHERE, RC_FLAGS);	\
+						WHERE, STREAM);	\
 		     BUF != NULL;					\
 		     logjam_to_logger(&logjam_), BUF = NULL)
 
