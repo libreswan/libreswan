@@ -938,7 +938,9 @@ extern bool same_peer_ids(const struct connection *c,
 diag_t add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,
-				     ip_address host_addr, where_t where);
+				     ip_address this_host_addr,
+				     ip_address that_nexthop_addr,
+				     where_t where);
 
 void delete_connection_where(struct connection **cp, where_t where);
 #define delete_connection(CP) delete_connection_where(CP, HERE)

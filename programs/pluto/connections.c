@@ -700,21 +700,32 @@ ip_port local_host_port(const struct connection *c)
 void update_hosts_from_end_host_addr(struct connection *c,
 				     enum end end,
 				     ip_address host_addr,
+				     ip_address peer_nexthop,
 				     where_t where)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "ehr");
 	struct host_end *host = &c->end[end].host;
-	struct host_end *other_host = &c->end[!end].host;
+	struct host_end *peer = &c->end[!end].host;
 
-	address_buf hab;
-	ldbg(c->logger, "updating host ends from %s.host.addr %s",
-	     host->config->leftright, str_address(&host_addr, &hab));
+	address_buf hab, pb;
+	vdbg("updating %s host ends from host.addr %s and peer.nexthop %s",
+	     host->config->leftright,
+	     str_address(&host_addr, &hab),
+	     str_address(&peer_nexthop, &pb));
+	verbose.level++;
 
 	/* could be %any but can't be an address */
-	PASSERT_WHERE(c->logger, where, !address_is_specified(host->addr));
+	vassert_where(where, !address_is_specified(host->addr));
 
 	/* can't be unset; but could be %any[46] */
 	const struct ip_info *afi = address_info(host_addr);
-	PASSERT_WHERE(c->logger, where, afi != NULL); /* since specified */
+	vassert_where(where, afi != NULL); /* since specified */
+
+	address_buf old_ha, new_ha;
+	vdbg("updated %s.host.addr %s to %s",
+	     host->config->leftright,
+	     str_address(&host->addr, &old_ha),
+	     str_address(&host_addr, &new_ha));
 
 	host->addr = host_addr;
 	host->first_addr = host_addr;
@@ -731,11 +742,11 @@ void update_hosts_from_end_host_addr(struct connection *c,
 			.ip_addr = host->addr,
 		};
 		id_buf hid, cid, nid;
-		dbg("  updated %s.id from %s (config=%s) to %s",
-		    host->config->leftright,
-		    str_id(&host->id, &hid),
-		    str_id(&host->config->id, &cid),
-		    str_id(&id, &nid));
+		vdbg("updated %s.id from %s (config=%s) to %s",
+		     host->config->leftright,
+		     str_id(&host->id, &hid),
+		     str_id(&host->config->id, &cid),
+		     str_id(&id, &nid));
 		host->id = id;
 	}
 
@@ -745,31 +756,31 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
 	if (address_is_specified(host_addr)) {
-		unsigned host_port = hport(end_host_port(host, other_host));
-		dbg("  updated %s.host_port from %u to %u",
+		unsigned host_port = hport(end_host_port(host, peer));
+		vdbg("updated %s.host.port from %u to %u",
 		    host->config->leftright,
 		    host->port, host_port);
 		host->port = host_port;
 	}
 
 	/*
-	 * Set the other end's NEXTHOP.
+	 * Set the peer's NEXTHOP when necessary.
 	 *
-	 * When not specified by the config, use this end's HOST_ADDR,
-	 * as in:
+	 * When not supplied, use this end's HOST_ADDR, as in:
 	 *
-	 *   other_host.ADDR -> other_host.NEXTHOP -> ADDR.
+	 *   peer.ADDR -> peer.NEXTHOP=host.ADDR -> host.ADDR.
 	 */
-	other_host->nexthop = other_host->config->nexthop.addr;
 	if (address_is_specified(host_addr) &&
-	    !address_is_specified(other_host->nexthop)) {
-		other_host->nexthop = host_addr;
+	    !address_is_specified(peer_nexthop)) {
+		peer_nexthop = host_addr;
 	}
-	address_buf old, new;
-	dbg("  updated %s.host_nexthop from %s to %s",
-	    other_host->config->leftright,
-	    str_address(&other_host->config->nexthop.addr, &old),
-	    str_address(&other_host->nexthop, &new));
+
+	address_buf old_nh, new_nh;
+	vdbg("updated peer %s.nexthop from %s to %s",
+	    peer->config->leftright,
+	    str_address(&peer->nexthop, &old_nh),
+	    str_address(&peer_nexthop, &new_nh));
+	peer->nexthop = peer_nexthop;
 }
 
 /*
@@ -3561,11 +3572,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 				      verbose);
 	}
 
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		struct resolve_host *nexthop = &resolve[lr].nexthop;
-		config->end[lr].host.nexthop.addr = nexthop->addr;
-	}
-
 	/*
 	 * Turn the .authby string into struct authby bit struct.
 	 */
@@ -5066,7 +5072,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		update_hosts_from_end_host_addr(c, end, resolve[end].host.addr, HERE); /* from add */
+		update_hosts_from_end_host_addr(c, end,
+						resolve[end].host.addr,
+						resolve[!end].nexthop.addr,
+						HERE); /* from add */
 	}
 
 	/*

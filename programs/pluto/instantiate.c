@@ -312,7 +312,8 @@ static struct connection *instantiate(struct connection *t,
 	} else {
 		/* this updates ID NULL */
 		update_hosts_from_end_host_addr(d, d->remote->config->index,
-						remote_addr, HERE); /* from whack initiate */
+						remote_addr, d->local->host.nexthop,
+						HERE); /* from whack initiate */
 	}
 
 	d->child.reqid = child_reqid(t->config, d->logger);
