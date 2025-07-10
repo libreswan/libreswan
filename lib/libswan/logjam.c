@@ -36,7 +36,7 @@ struct jambuf *jambuf_from_logjam(struct logjam *logjam,
 		.where = where,
 		.pluto_exit_code = pluto_exit_code,
 	};
-	jam_logger_rc_prefix(&logjam->barf.jambuf, logger, stream);
+	jam_stream_prefix(&logjam->barf.jambuf, logger, stream);
 	return &logjam->barf.jambuf;
 }
 

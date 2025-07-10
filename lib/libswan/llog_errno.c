@@ -22,7 +22,7 @@
 void llog_errno(enum stream stream, const struct logger *logger, int error, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		jam_logger_rc_prefix(buf, logger, stream);
+		jam_stream_prefix(buf, logger, stream);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);

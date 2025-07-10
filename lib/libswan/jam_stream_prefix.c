@@ -29,47 +29,41 @@
  * say
  */
 
-static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
+void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum stream stream)
 {
 	switch (stream) {
+	case PRINTF_STREAM:
+	case NO_STREAM:
+		/* suppress all prefixes */
+		return;
 	case DEBUG_STREAM:
 		jam_string(buf, DEBUG_PREFIX);
+		/* add prefix when enabled */
+		if (LDBGP(DBG_ADD_PREFIX, logger) ||
+		    logger->debugging != LEMPTY) {
+			jam_logger_prefix(buf, logger);
+		}
 		return;
 	case PEXPECT_STREAM:
 		jam_string(buf, PEXPECT_PREFIX);
+		jam_logger_prefix(buf, logger);
 		return;
 	case PASSERT_STREAM:
 		jam_string(buf, PASSERT_PREFIX);
+		jam_logger_prefix(buf, logger);
 		return;
 	case FATAL_STREAM:
 		jam_string(buf, FATAL_PREFIX);
+		jam_logger_prefix(buf, logger);
 		return;
 	case ERROR_STREAM:
-		return;
 	case RC_LOG:
 	case ALL_STREAMS:
 	case LOG_STREAM:
 	case WHACK_STREAM:
-	case NO_STREAM:
-	case PRINTF_STREAM:
-		return;
-	}
-	abort(); /* not bad_case(stream) as recursive */
-}
-
-void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
-{
-	enum stream stream = (rc_flags & STREAM_MASK);
-
-	if (stream == PRINTF_STREAM) {
-		return;
-	}
-
-	jam_stream_prefix(buf, stream);
-	if (stream != DEBUG_STREAM ||
-	    LDBGP(DBG_ADD_PREFIX, logger) ||
-	    logger->debugging != LEMPTY) {
 		jam_logger_prefix(buf, logger);
+		return;
 	}
-	return;
+
+	abort(); /* not passert as goes recursive */
 }

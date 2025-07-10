@@ -198,7 +198,7 @@ OBJS += llog.o
 OBJS += llog_dump.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
-OBJS += jam_logger_rc_prefix.o
+OBJS += jam_stream_prefix.o
 OBJS += jam_logger.o
 OBJS += logjam.o
 
