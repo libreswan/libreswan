@@ -1,5 +1,7 @@
 See also https://libreswan.org/
 
+v5.4 (unreleased)
+
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)
   - moved cURL and LDAP CRL download code out of pluto [Andrew]
