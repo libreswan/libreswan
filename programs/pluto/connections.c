@@ -4379,7 +4379,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.alg_is_ok = ike_alg_is_ike,
 			.pfs = pfs,
 			.check_pfs_vs_dh = false,
-			.logger_rc_flags = ALL_STREAMS,
+			.stream = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (wm->ike == NULL),
@@ -4431,7 +4431,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.alg_is_ok = kernel_alg_is_ok,
 			.pfs = pfs,
 			.check_pfs_vs_dh = true,
-			.logger_rc_flags = ALL_STREAMS,
+			.stream = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (encap_alg == NULL),
