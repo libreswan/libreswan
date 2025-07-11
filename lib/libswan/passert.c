@@ -22,7 +22,7 @@
 void llog_passert(const struct logger *logger, where_t where, const char *fmt, ...)
 {
 	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PASSERT_FLAGS);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PASSERT_STREAM);
 	{
 		va_list ap;
 		va_start(ap, fmt);

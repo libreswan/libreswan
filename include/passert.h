@@ -52,7 +52,7 @@ void passert_logjam_to_logger(struct logjam *buf) NEVER_RETURNS;
 		/* create the jambuf */					\
 		for (struct jambuf *BUF =				\
 			     jambuf_from_logjam(&logjam_, LOGGER,	\
-						 0, WHERE, PASSERT_FLAGS); \
+						 0, WHERE, PASSERT_STREAM); \
 		     BUF != NULL;					\
 		     passert_logjam_to_logger(&logjam_), BUF = NULL)
 

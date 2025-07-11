@@ -2404,7 +2404,7 @@ static bool dispatch_1(enum routing_event event,
 
 	}
 
-	BARF_JAMBUF((LDBGP(DBG_ROUTING, logger) ? PASSERT_FLAGS : PEXPECT_FLAGS),
+	BARF_JAMBUF((LDBGP(DBG_ROUTING, logger) ? PASSERT_STREAM : PEXPECT_STREAM),
 		    c->logger, /*ignore-exit-code*/0, e->where, buf) {
 		jam_routing_prefix(buf, "unhandled", event,
 				   c->routing.state, c->routing.state,

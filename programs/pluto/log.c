@@ -330,6 +330,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 	case LOG_STREAM:
 		log_raw(DEFAULT_LOGLEVEL, "", buf);
 		return;
+	case PRINTF_STREAM:
 	case WHACK_STREAM:
 		if (LDBGP(DBG_BASE, logger)) {
 			log_raw(LOG_DEBUG, "|] ", buf);
@@ -337,14 +338,14 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		log_whacks(rc, logger, buf);
 		return;
 	case ERROR_STREAM:
-	case PEXPECT_STREAM:
 	case FATAL_STREAM:
 		log_raw(LOG_ERR, "", buf);
 		log_whacks(rc, logger, buf);
 		return;
+	case PEXPECT_STREAM:
 	case PASSERT_STREAM:
 		log_raw(LOG_ERR, "", buf);
-		log_whacks(rc, logger, buf);
+		log_whacks(RC_INTERNAL_ERROR, logger, buf);
 		return; /*abort();*/
 	case NO_STREAM:
 		/*

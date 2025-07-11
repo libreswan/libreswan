@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 		return PLUTO_EXIT_FAIL;
 	}
 
-	llog_pem_bytes(RC_LOG|NO_PREFIX, logger, "NAME", crl->crl.derName.data, crl->crl.derName.len);
+	llog_pem_bytes(PRINTF_STREAM, logger, "NAME", crl->crl.derName.data, crl->crl.derName.len);
 
 	free_chunk_content(&blob);
 

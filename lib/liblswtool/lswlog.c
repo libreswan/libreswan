@@ -94,6 +94,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, ls
 			fprintf(stderr, "%s\n", buf->array);
 		}
 		return;
+	case PRINTF_STREAM:
 	case WHACK_STREAM:
 		/* AKA the console */
 		fprintf(stdout, "%s\n", buf->array);

@@ -22,7 +22,7 @@
 void llog_pexpect(const struct logger *logger, where_t where, const char *message, ...)
 {
 	struct logjam logjam;
-	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PEXPECT_FLAGS);
+	struct jambuf *buf = jambuf_from_logjam(&logjam, logger, 0, where, PEXPECT_STREAM);
 	{
 		va_list ap;
 		va_start(ap, message);

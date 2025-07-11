@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	 */
 	init_nss(NULL, (struct nss_flags) { .open_readonly = true}, logger);
 	init_vendorid(logger);
-	llog_vendorids(NO_PREFIX|WHACK_STREAM, logger);
+	llog_vendorids(PRINTF_STREAM, logger);
 
 	/* shhh; try some bonus searches */
 	static const struct {
