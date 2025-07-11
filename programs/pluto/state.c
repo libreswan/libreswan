@@ -451,11 +451,26 @@ static struct state *new_state(struct connection *c,
 	passert(&sap->st == &sap->ike.sa);
 	struct state *st = &sap->st;
 
-	/* Create the logger ASAP; needs real ST */
-	st->logger = alloc_logger(st, &logger_state_vec,
-				  c->logger->debugging,
-				  where);
-	state_attach(st, c->logger);
+	/*
+	 * Create a minmally viable logger ASAP (which requires a
+	 * minimally viable state).
+	 *
+	 * At the time of writing that was: .st_serialno, .st_state,
+	 * and .st_connection.
+	 *
+	 * See github#2338 (.st_state was being dereferenced by the
+	 * logger) causing state_attach(), which debug-logs, to core
+	 * dump.
+	 *
+	 * Note:
+	 *
+	 * There's a catch-22 with .st_connection.  It can't be set to
+	 * addref(st->logger) because there isn't yet a logger.  Get
+	 * around this by setting .st_connection to c and then, later,
+	 * updating it with the reference.
+	 *
+	 * delete_state() has a similar problem.
+	 */
 
 	/* Determine the serialno.  */
 	static so_serial_t state_serialno;
@@ -463,12 +478,24 @@ static struct state *new_state(struct connection *c,
 	passert(state_serialno > 0); /* can't overflow */
 	st->st_serialno = state_serialno;
 
-	/* needed by jam_state_connection_serialno() */
+	st->st_state = &state_undefined;
+	st->st_connection = c; /* HACK: can't yet call addref(st->logger) */
+
+	st->logger = alloc_logger(st, &logger_state_vec,
+				  c->logger->debugging,
+				  where);
+
+	/* the logger is minimally viable */
+
+	/* causes first (debug-log) gasp */
+	state_attach(st, c->logger);
+
+	/* fix HACK: above with real reference */
 	st->st_connection = connection_addref(c, st->logger);
 	state_db_init_state(st); /* hash called below */
 
+	/* parameter values */
 	st->st_clonedfrom = clonedfrom;
-	st->st_state = &state_undefined;
 	st->st_inception = realnow();
 	st->st_sa_role = sa_role;
 	st->st_sa_kind_when_established = sa_kind;
