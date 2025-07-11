@@ -63,7 +63,8 @@ static struct double_double debug = {
 	D(DBG_CRYPT, "debug-crypt", "encryption/decryption of messages: DANGER!"),
 	D(DBG_PRIVATE, "debug-private", "displays private information: DANGER!"),
 	D(DBG_WHACKWATCH, "debug-whackwatch", "never let WHACK go"),
-	D(DBG_ADD_PREFIX, "debug-add-prefix", "add the log+state prefix to debug lines"),
+	D(DBG_ADD_PREFIX, "debug-add-prefix", "add the log prefix to debug lines"),
+	D(DBG_ADD_STATE, "debug-add-state", "add the SA's state to debug lines"),
 
 #undef D
 };

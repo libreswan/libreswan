@@ -474,7 +474,7 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 		const struct state *st = object;
 		s += jam_state(buf, st);
 		/* state name */
-		if (LDBGP(DBG_ADD_PREFIX, st->logger)) {
+		if (LDBGP(DBG_ADD_STATE, st->logger)) {
 			s += jam(buf, " ");
 			s += jam_string(buf, st->st_state->short_name);
 		}
