@@ -451,8 +451,20 @@ size_t jam_state(struct jambuf *buf, const struct state *st)
 {
 	size_t s = 0;
 	/*
-	 * XXX: When delete state() triggers a delete
-	 * connection, this can be NULL.
+	 * Note: .st_connection can be NULL.
+	 *
+	 * In new_state(), there's a catch-22.  To initialize
+	 * .st_connection to addref(c,st->logger) requires a working
+	 * logger but the logger isn't working because .st_connection
+	 * isn't yet initialized.  This is worked around by
+	 * temporarily setting .st_connection to the existing C
+	 * reference and then, later, updating it.
+	 *
+	 * Conversely, in delete_state(), delref(&st->st_connection,
+	 * st->logger) is used to release the reference, and that
+	 * NULL's .st_connection before trying to log.
+	 *
+	 * Trying to avoid this just makes things more complex.
 	 */
 	if (st->st_connection != NULL) {
 		s += jam_connection(buf, st->st_connection);
@@ -474,7 +486,7 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 		const struct state *st = object;
 		s += jam_state(buf, st);
 		/* state name */
-		if (LDBGP(DBG_ADD_PREFIX, st->logger)) {
+		if (LDBGP(DBG_ADD_STATE, st->logger)) {
 			s += jam(buf, " ");
 			s += jam_string(buf, st->st_state->short_name);
 		}

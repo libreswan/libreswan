@@ -371,70 +371,70 @@ typedef enum {
 #define PPK_ID_MAXLEN 64 /* fairly arbitrary */
 
 /*
- * debugging settings: a set of selections for reporting These would
- * be more naturally situated in log.h, but they are shared with
- * whack.
+ * Debug bit indexes.
  *
- * NOTE: A change to WHACK_MAGIC in whack.h will be required too.
- */
-
-/*
- * Index of DBG set elements.
+ * Note: these are NOT sets: further down LELEM(IX) is used to turn
+ * these indexes into single bits.
  *
- * Note: these are NOT sets: use LELEM to turn these into singletons.
- * Used by whack and pluto.
+ * A note on naming:
  *
- * NOTE: when updating/adding x_IX, do so to x in the next table too!
+ * DBG_[A-Z]*_IX, for instance DBG_BASE_IX, is a debug bits index.
+ * DBG_[A-Z]*, for instance DBG_BASE, is an individual debug bit.
+ * DBG_[a-z], for instance DBG_base, is a set of debug bits.
  */
 
 enum {
-	DBG_floor_IX = 0,
-
-	DBG_BASE_IX = DBG_floor_IX,
+	/*
+	 * The following are enabled by debug=base.
+	 *
+	 * This means that debug=base picks up ROUTING, but routing
+	 * can also be enabled separately.
+	 */
 	DBG_ROUTING_IX,
+	DBG_BASE_IX,
+#define DBG_base LRANGE(0, DBG_BASE_IX)
 
-	DBG_base_IX = DBG_ROUTING_IX,
-
-	/* below are also enabled by debug=all */
-
+	/*
+	 * In addition to the above, the following are enabled by
+	 * debug=all.
+	 */
 	DBG_CPU_USAGE_IX,
 	DBG_REFCNT_IX,
+#define DBG_none LEMPTY
+#define DBG_all LRANGE(0, DBG_REFCNT_IX)
 
-	DBG_all_IX = DBG_REFCNT_IX,
-
-	/* below are also enabled by debug=tmi */
-
+	/*
+	 * In addition to the above, the following are enabled by
+	 * debug=tmi.
+	 */
 	DBG_TMI_IX,
+#define DBG_tmi LRANGE(0, DBG_TMI_IX)
 
-	DBG_tmi_IX = DBG_TMI_IX,
-
-	/* below are excluded */
+	/*
+	 * The remainder are enabled individually.
+	 */
 
 	DBG_UPDOWN_IX,
 
 	DBG_CRYPT_IX,
 	DBG_PRIVATE_IX,
 
-	DBG_WHACKWATCH_IX,
 	DBG_ADD_PREFIX_IX,
+	DBG_ADD_STATE_IX,
 
-	DBG_roof_IX,
+	DBG_WHACKWATCH_IX,
+#define DBG_roof_IX (DBG_WHACKWATCH_IX+1)
+#define DBG_mask LRANGE(0, DBG_roof_IX)
+
 };
 
-/* Sets of Debug items */
-
-#define DBG_MASK	LRANGE(DBG_floor_IX, DBG_roof_IX - 1)
-#define DBG_NONE        LEMPTY                               /* no options on, including impairments */
+/* individual DEBUG bits */
 
 #define DBG_BASE        LELEM(DBG_BASE_IX)
 #define DBG_ROUTING	LELEM(DBG_ROUTING_IX)
 #define DBG_CPU_USAGE	LELEM(DBG_CPU_USAGE_IX)
 #define DBG_REFCNT	LELEM(DBG_REFCNT_IX)
-
-#define DBG_ALL		LRANGE(DBG_floor_IX, DBG_all_IX)
-
 #define DBG_TMI		LELEM(DBG_TMI_IX)
-
 #define DBG_CRYPT	LELEM(DBG_CRYPT_IX)
 #define DBG_PRIVATE	LELEM(DBG_PRIVATE_IX)
 #define DBG_UPDOWN	LELEM(DBG_UPDOWN_IX)
@@ -444,6 +444,7 @@ enum {
 
 #define DBG_WHACKWATCH	LELEM(DBG_WHACKWATCH_IX)
 #define DBG_ADD_PREFIX	LELEM(DBG_ADD_PREFIX_IX)
+#define DBG_ADD_STATE	LELEM(DBG_ADD_STATE_IX)
 
 /* State of exchanges
  *

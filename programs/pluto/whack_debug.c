@@ -68,11 +68,8 @@ void whack_debug(const struct whack_message *m, struct show *s)
 		 * This is done in two two-steps so that if either old
 		 * or new would cause a debug message to print, it
 		 * will be printed.
-		 *
-		 * XXX: why not unconditionally send what was changed
-		 * back to whack?
 		 */
-		lset_t old_debugging = cur_debugging & DBG_MASK;
+		lset_t old_debugging = cur_debugging;
 		lset_t new_debugging = lmod(old_debugging, m->whack_debugging);
 		set_debugging(cur_debugging | new_debugging);
 		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
