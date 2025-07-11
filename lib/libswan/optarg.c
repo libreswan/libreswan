@@ -441,7 +441,7 @@ void optarg_verbose(const struct logger *logger, lset_t start)
 	}
 
 	const lset_t debugging[] = {
-		start, DBG_BASE, DBG_ALL, DBG_TMI,
+		start, DBG_base, DBG_all, DBG_tmi,
 	};
 
 	unsigned i = verbose - 2;
@@ -505,8 +505,8 @@ void optarg_debug_lmod(enum optarg_debug debug, lmod_t *mods)
 void optarg_debug(enum optarg_debug debug)
 {
 	if (optarg == NULL) {
-		cur_debugging = (debug == OPTARG_DEBUG_YES ? DBG_ALL :
-				 debug == OPTARG_DEBUG_NO ? DBG_NONE :
+		cur_debugging = (debug == OPTARG_DEBUG_YES ? DBG_all :
+				 debug == OPTARG_DEBUG_NO ? DBG_none :
 				 0);
 	} else {
 		lmod_t mods = {0};
@@ -514,4 +514,3 @@ void optarg_debug(enum optarg_debug debug)
 		cur_debugging = lmod(cur_debugging, mods);
 	}
 }
-

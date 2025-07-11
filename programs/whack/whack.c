@@ -2110,7 +2110,7 @@ int main(int argc, char **argv)
 			 * force all debug/impair options to values
 			 * defined by whack.
 			 */
-			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_MASK);
+			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_mask);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all (obsolete) */
@@ -2128,10 +2128,9 @@ int main(int argc, char **argv)
 			 * force all debug/impair options to values
 			 * defined by whack.
 			 */
-			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_MASK);
-			msg.whack_debugging = lmod_set(msg.whack_debugging, DBG_ALL);
+			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_mask);
+			msg.whack_debugging = lmod_set(msg.whack_debugging, DBG_all);
 			continue;
-
 		case DBGOPT_DEBUG:	/* --debug */
 			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack_debugging);
 			continue;

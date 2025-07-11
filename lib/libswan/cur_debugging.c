@@ -18,4 +18,4 @@
 
 #include "lswlog.h"
 
-lset_t cur_debugging = DBG_NONE;       /* default to reporting nothing */
+lset_t cur_debugging = DBG_none;       /* default to reporting nothing */

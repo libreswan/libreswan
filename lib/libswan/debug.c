@@ -34,15 +34,15 @@
  */
 
 struct double_double {
-	const char *name[DBG_roof_IX - DBG_floor_IX];
-	const char *help[DBG_roof_IX - DBG_floor_IX];
+	const char *name[DBG_roof_IX];
+	const char *help[DBG_roof_IX];
 };
 
 static struct double_double debug = {
 
 #define D(N,A,H)			       \
-	.name[N##_IX - DBG_floor_IX] = A "\0", \
-	.help[N##_IX - DBG_floor_IX] = H
+	.name[N##_IX] = A "\0", \
+	.help[N##_IX] = H
 
 	D(DBG_BASE, "debug-base", "enable detailed debug logging"),
 	D(DBG_ROUTING, "debug-routing", "enable routing debug logging"),
@@ -69,27 +69,27 @@ static struct double_double debug = {
 };
 
 const enum_names debug_names = {
-	DBG_floor_IX, DBG_roof_IX - 1,
+	0, DBG_roof_IX - 1,
 	ARRAY_REF(debug.name),
 	"debug-",
 	NULL,
 };
 
 struct lmod_alias debug_aliases[] = {
-	{ "base", LRANGE(DBG_floor_IX, DBG_base_IX), },
-	{ "all", LRANGE(DBG_floor_IX, DBG_all_IX), },
-	{ "tmi", LRANGE(DBG_floor_IX, DBG_tmi_IX), },
-	{ NULL, LEMPTY, },
+	{ "base", DBG_base, },
+	{ "all",  DBG_all, },
+	{ "tmi",  DBG_tmi, },
+	{ NULL,   LEMPTY, },
 };
 
 const struct lmod_info debug_lmod_info = {
 	.names = &debug_names,
-	.mask = DBG_MASK,
+	.mask = DBG_mask,
 	.aliases = debug_aliases,
 };
 
 const struct enum_names debug_help = {
-	DBG_floor_IX, DBG_roof_IX - 1,
+	0, DBG_roof_IX - 1,
 	ARRAY_REF(debug.help),
 	NULL, NULL,
 };

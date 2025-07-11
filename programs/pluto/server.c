@@ -923,10 +923,9 @@ void show_debug_status(struct show *s)
 {
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "debug:");
-		if (cur_debugging & DBG_MASK) {
+		if (cur_debugging) {
 			jam(buf, " ");
-			jam_lset_short(buf, &debug_names, "+",
-				       cur_debugging & DBG_MASK);
+			jam_lset_short(buf, &debug_names, "+", cur_debugging);
 		}
 		if (have_impairments()) {
 			jam(buf, " impair: ");
