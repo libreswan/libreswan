@@ -160,7 +160,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 
 	/* propagate remote address */
 	pdbg(c->logger, "  updating hosts");
-	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
+	update_hosts_from_end_host_addr(c, c->remote->config->index,
+					new_remote_addr, c->local->host.nexthop,
+					HERE); /* from DNS */
 
 	if (c->remote->child.config->selectors.len > 0) {
 		pdbg(c->logger, "  %s.child already has hard-wired selectors; skipping",
