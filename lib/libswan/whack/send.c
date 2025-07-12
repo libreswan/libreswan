@@ -124,7 +124,8 @@ static int whack_read_reply(int sock,
 
 		if (rl == 0) {
 			if (be != buf) {
-				llog_error(logger, 0, "last line from pluto too long or unterminated");
+				llog(ERROR_STREAM, logger,
+				     "last line from pluto too long or unterminated");
 			}
 			break;
 		}
@@ -151,8 +152,8 @@ static int whack_read_reply(int sock,
 			unsigned long s = strtoul(ls, &lpe, 10);
 			if (lpe == ls || *lpe != ' ') {
 				/* includes embedded NL, see above */
-				llog_error(logger, 0, "log line missing NNN prefix: %*s",
-					   (int)(le - ls), ls);
+				llog(ERROR_STREAM, logger,
+				     "log line missing NNN prefix: %*s", (int)(le - ls), ls);
 				exit(RC_WHACK_PROBLEM);
 			}
 
@@ -172,7 +173,8 @@ static int whack_read_reply(int sock,
 
 			case RC_ENTERSECRET:
 				if (xauthpass == NULL) {
-					llog_error(logger, 0, "unexpected request for xauth password");
+					llog(ERROR_STREAM, logger,
+					     "unexpected request for xauth password");
 					exit(RC_WHACK_PROBLEM);
 				}
 				if (xauthpasslen == 0) {
@@ -187,16 +189,17 @@ static int whack_read_reply(int sock,
 					 */
 					xauthpasslen =
 						XAUTH_MAX_PASS_LENGTH;
-					llog_error(logger, 0,
-						   "xauth password cannot be >= %d chars",
-						   XAUTH_MAX_PASS_LENGTH);
+					llog(ERROR_STREAM, logger,
+					     "xauth password cannot be >= %d chars",
+					     XAUTH_MAX_PASS_LENGTH);
 				}
 				whack_send_reply(sock, xauthpass, xauthpasslen, logger);
 				break;
 
 			case RC_USERPROMPT:
 				if (xauthusername == NULL) {
-					llog_error(logger, 0, "unexpected request for xauth username");
+					llog(ERROR_STREAM, logger,
+					     "unexpected request for xauth username");
 					exit(RC_WHACK_PROBLEM);
 				}
 				if (usernamelen == 0) {
@@ -209,9 +212,9 @@ static int whack_read_reply(int sock,
 					 * useramelen would be 129
 					 */
 					usernamelen = MAX_XAUTH_USERNAME_LEN;
-					llog_error(logger, 0,
-						   "username cannot be >= %d chars",
-						   MAX_XAUTH_USERNAME_LEN);
+					llog(ERROR_STREAM, logger,
+					     "username cannot be >= %d chars",
+					     MAX_XAUTH_USERNAME_LEN);
 				}
 				whack_send_reply(sock, xauthusername, usernamelen, logger);
 
@@ -268,7 +271,7 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 	err_t ugh = pack_whack_msg(&wp, logger);
 
 	if (ugh != NULL) {
-		llog_error(logger, 0, "send_wack_msg(): can't pack strings: %s", ugh);
+		llog(ERROR_STREAM, logger, "send_wack_msg(): can't pack strings: %s", ugh);
 		return -1;
 	}
 

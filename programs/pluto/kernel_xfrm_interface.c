@@ -709,8 +709,8 @@ static bool xfrm_ipsec_interface_has_cidr(const char *ipsec_if_name,
 				 parse_getaddr_response,
 				 &ctx, verbose)) {
 		/* netlink error */
-		llog_error(verbose.logger, 0/*no-errno*/,
-			   "%s() request for all IPs failed", __func__);
+		llog(ERROR_STREAM, verbose.logger,
+		     "%s() request for all IPs failed", __func__);
 		return false;
 	}
 
@@ -805,9 +805,9 @@ static err_t xfrm_iface_supported(struct verbose verbose)
 	vdbg("trying to create the XFRMi ipsec-interface %s bound to %s",
 	     ipsec_if_name, physical_if_name);
 	if (!nl_newlink(ipsec_if_name, ipsec_if_id, physical_if_name, verbose)) {
-		llog_error(verbose.logger, 0/*lost-error*/,
-			   "xfrmi is not supported, failed to create ipsec-interface %s bound to %s",
-			   ipsec_if_name, physical_if_name);
+		llog(ERROR_STREAM, verbose.logger,
+		     "xfrmi is not supported, failed to create ipsec-interface %s bound to %s",
+		     ipsec_if_name, physical_if_name);
 		/* xfrm_interface_support = -1; */
 		return "xfrmi is not supported";
 	}

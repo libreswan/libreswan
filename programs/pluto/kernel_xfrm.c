@@ -318,7 +318,8 @@ static void update_xfrm_acq_expires(struct logger *logger)
 
 	int lifetime = atoi(line);
 	if (lifetime <= 0) {
-		llog_error(logger, 0, "could not parse '"XFRM_ACQ_EXPIRES"' containing '%s'", line);
+		llog(ERROR_STREAM, logger,
+		     "could not parse '"XFRM_ACQ_EXPIRES"' containing '%s'", line);
 		return;
 	}
 

@@ -138,10 +138,10 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	err = whack_pubkey_to_chunk(wm->pubkey_alg, wm->pubkey, &rawkey);
 	if (err != NULL) {
 		name_buf pkb;
-		llog_error(logger, 0, "malformed %s pubkey %s: %s",
-			   str_enum_long(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
-			   wm->pubkey,
-			   err);
+		llog(ERROR_STREAM, logger, "malformed %s pubkey %s: %s",
+		     str_enum_long(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
+		     wm->pubkey,
+		     err);
 		free_id_content(&keyid);
 		return;
 	}

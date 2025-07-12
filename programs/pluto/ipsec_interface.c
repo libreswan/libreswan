@@ -353,10 +353,10 @@ static bool add_kernel_ipsec_interface_address_1(struct connection *c,
 					     c->ipsec_interface_address->if_ip,
 					     verbose)) {
 		cidr_buf cb;
-		llog_error(verbose.logger, 0/*no-errno*/,
-			   "unable to add CIDR %s to ipsec-interface %s ID %u",
-			   str_cidr(&c->ipsec_interface_address->if_ip, &cb),
-			   c->ipsec_interface->name, c->ipsec_interface->if_id);
+		llog(ERROR_STREAM, verbose.logger,
+		     "unable to add CIDR %s to ipsec-interface %s ID %u",
+		     str_cidr(&c->ipsec_interface_address->if_ip, &cb),
+		     c->ipsec_interface->name, c->ipsec_interface->if_id);
 		return false;
 	}
 
@@ -677,9 +677,9 @@ bool add_ipsec_interface(struct connection *c,
 
 	if (!kernel_ipsec_interface_match(&match, verbose)) {
 		/* .NAME isn't suitable */
-		llog_error(verbose.logger, 0/*no-errno*/,
-			   "existing ipsec-interface %s is not valid: %s",
-			   ipsec_if_name, str_diag(match.diag));
+		llog(ERROR_STREAM, verbose.logger,
+		     "existing ipsec-interface %s is not valid: %s",
+		     ipsec_if_name, str_diag(match.diag));
 		pfree_diag(&match.diag);
 		return false;
 	}

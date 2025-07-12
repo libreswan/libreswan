@@ -308,7 +308,7 @@ static pid_t child_pipeline(const char *name,
 			if (n < 0) {
 				llog_error(logger, errno, "write to %d failed", pid);
 			} else if (n != (ssize_t)input.len) {
-				llog_error(logger, 0, "write to %d truncated", pid);
+				llog(ERROR_STREAM, logger, "write to %d truncated", pid);
 			}
 		}
 		close(fdpipe[FD_OUT]);

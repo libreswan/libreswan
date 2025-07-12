@@ -341,18 +341,18 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 			    struct logger *logger)
 {
 	if (!WIFEXITED(wstatus)) {
-		llog_error(logger, 0,
-			   "CRL: importing %s failed, helper aborted with waitpid status %d",
-			   dp->url, wstatus);
+		llog(ERROR_STREAM, logger,
+		     "CRL: importing %s failed, helper aborted with waitpid status %d",
+		     dp->url, wstatus);
 		llog_hunk(RC_LOG, logger, output);
 		return false;
 	}
 
 	int ret = WEXITSTATUS(wstatus);
 	if (ret != 0) {
-		llog_error(logger, 0,
-			   "CRL: importing %s failed, helper exited with non-zero status %d",
-			   dp->url, ret);
+		llog(ERROR_STREAM, logger,
+		     "CRL: importing %s failed, helper exited with non-zero status %d",
+		     dp->url, ret);
 		llog_hunk(RC_LOG, logger, output);
 		return false;
 	}
