@@ -3534,62 +3534,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	};
 
 	/*
-	 * Now copy the extracted values into the resolve structure
-	 * and try to resolve them.
-	 */
-
-	struct resolve_end resolve[END_ROOF] = {
-		[LEFT_END] = { .leftright = "left", },
-		[RIGHT_END] = { .leftright = "right", },
-	};
-
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		struct host_end_config *src = &config->end[lr].host;
- 		struct resolve_end *dst = &resolve[lr];
-		/* host */
-		dst->host.name = src->host.name;
-		dst->host.addr = src->host.addr;
-		dst->host.type = src->host.type;
-		/* nexthop */
-		dst->nexthop.name = src->nexthop.name;
-		dst->nexthop.addr = src->nexthop.addr;
-		dst->nexthop.type = src->nexthop.type;
-	}
-
-	bool can_resolve = true;
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-
- 		struct resolve_host *host = &resolve[lr].host;
- 		const char *leftright = wm->end[lr].leftright;
-		const char *name = "";
-		const char *value = host->name;
-
-		if (host->type == KH_IPHOSTNAME) {
-			ip_address addr;
-			err_t e = ttoaddress_dns(shunk1(value), host_afi, &addr);
-			if (e == NULL) {
-				host->addr = addr;
-				continue;
-			}
-
-			vlog("failed to resolve '%s%s=%s' at load time: %s",
-			     leftright, name, value, e);
-			can_resolve = false;
-		}
-	}
-
-	if (can_resolve) {
-		resolve_default_route(&resolve[LEFT_END],
-				      &resolve[RIGHT_END],
-				      host_afi,
-				      verbose);
-		resolve_default_route(&resolve[RIGHT_END],
-				      &resolve[LEFT_END],
-				      host_afi,
-				      verbose);
-	}
-
-	/*
 	 * Turn the .authby string into struct authby bit struct.
 	 */
 	struct authby whack_authby = {0};
@@ -5088,6 +5032,62 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
+	}
+
+	/*
+	 * Now copy the extracted values into the resolve structure
+	 * and try to resolve them.
+	 */
+
+	struct resolve_end resolve[END_ROOF] = {
+		[LEFT_END] = { .leftright = "left", },
+		[RIGHT_END] = { .leftright = "right", },
+	};
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct host_end_config *src = &config->end[lr].host;
+ 		struct resolve_end *dst = &resolve[lr];
+		/* host */
+		dst->host.name = src->host.name;
+		dst->host.addr = src->host.addr;
+		dst->host.type = src->host.type;
+		/* nexthop */
+		dst->nexthop.name = src->nexthop.name;
+		dst->nexthop.addr = src->nexthop.addr;
+		dst->nexthop.type = src->nexthop.type;
+	}
+
+	bool can_resolve = true;
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+
+ 		struct resolve_host *host = &resolve[lr].host;
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name = "";
+		const char *value = host->name;
+
+		if (host->type == KH_IPHOSTNAME) {
+			ip_address addr;
+			err_t e = ttoaddress_dns(shunk1(value), host_afi, &addr);
+			if (e == NULL) {
+				host->addr = addr;
+				continue;
+			}
+
+			vlog("failed to resolve '%s%s=%s' at load time: %s",
+			     leftright, name, value, e);
+			can_resolve = false;
+		}
+	}
+
+	if (can_resolve) {
+		resolve_default_route(&resolve[LEFT_END],
+				      &resolve[RIGHT_END],
+				      host_afi,
+				      verbose);
+		resolve_default_route(&resolve[RIGHT_END],
+				      &resolve[LEFT_END],
+				      host_afi,
+				      verbose);
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
