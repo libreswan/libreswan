@@ -178,7 +178,7 @@ OBJS += cur_debugging.o
 
 OBJS += llog_base64_bytes.o
 OBJS += llog_pem_bytes.o
-OBJS += llog_errno.o
+OBJS += log_errno.o
 OBJS += log_error.o
 OBJS += fatal.o
 OBJS += bad_enum_where.o

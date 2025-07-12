@@ -217,18 +217,19 @@ void log_error(const struct logger *logger, int error,
 		log_error(LOGGER, e_, FMT, ##__VA_ARGS__);	\
 	}
 
-/*
- * Unlike llog_error(), there's no "ERROR: " prefix and no ": "
- * separator.
- */
+void log_errno(enum stream stream, const struct logger *logger, int error,
+	       const char *message, ...) PRINTF_LIKE(4);
 
-void llog_errno(enum stream stream, const struct logger *logger, int error,
-		const char *message, ...) PRINTF_LIKE(4);
+#define llog_errno(STREAM, LOGGER, ERRNO, FMT, ...)			\
+	{								\
+		int errno_ = ERRNO;					\
+		log_errno(STREAM, LOGGER, errno_, FMT, ##__VA_ARGS__);	\
+	}
 
 #define LDBG_errno(LOGGER, ERRNO, FMT, ...)				\
 	{								\
-		int e_ = ERRNO; /* save value across va args */		\
-		llog_errno(DEBUG_STREAM, LOGGER, e_, FMT, ##__VA_ARGS__); \
+		int errno_ = ERRNO; /* save value across va args */	\
+		log_errno(DEBUG_STREAM, LOGGER, errno_, FMT, ##__VA_ARGS__); \
 	}
 
 /*
