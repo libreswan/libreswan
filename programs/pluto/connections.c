@@ -2266,7 +2266,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
-				       const struct resolve_end *resolve,
+				       const struct host_addr_config *host_addr,
 				       ip_protoport protoport,
 				       enum ike_version ike_version,
 				       struct connection *c,
@@ -2538,14 +2538,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						    str_address(sourceip, &sipb),
 						    leftright, src->subnet);
 				}
-			} else if (resolve->host.addr.ip.is_set) {
-				if (!address_eq_address(*sourceip, resolve->host.addr)) {
+			} else if (host_addr->addr.ip.is_set) {
+				if (!address_eq_address(*sourceip, host_addr->addr)) {
 					address_buf sipb;
 					address_buf hab;
 					return diag("%ssourceip=%s invalid, address %s does not match %s=%s and %ssubnet= was not specified",
 						    leftright, src->sourceip,
 						    str_address(sourceip, &sipb),
-						    leftright, str_address(&resolve->host.addr, &hab),
+						    leftright, str_address(&host_addr->addr, &hab),
 						    leftright);
 				}
 			} else {
@@ -5149,7 +5149,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		d = extract_child_end_config(wm, whack_ends[end],
-					     &resolve[end],
+					     host_addrs[end],
 					     protoport[end],
 					     ike_version,
 					     c, &config->end[end].child,
