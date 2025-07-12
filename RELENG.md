@@ -79,3 +79,9 @@
 Details should be in testing.libreswan.org/README.md under "After a
 Release" but a quick summary is: reboot; update/upgrade machine; save
 -0- result in releases/; delete results/; re-start tester script
+
+## Check for tasks, create bugs
+
+- have any of the tested operating systems put out a new release?
+
+  if so file a task against the next relese
