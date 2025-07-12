@@ -1676,7 +1676,7 @@ static diag_t extract_host_end(struct host_end *host,
 			       const struct whack_message *wm,
 			       const struct whack_end *src,
 			       const struct whack_end *other_src,
-			       const struct resolve_end *resolve,
+			       const struct host_addr_config *host_addr,
 			       const struct host_addr_config *const host_addrs[END_ROOF],
 			       enum ike_version ike_version,
 			       struct authby whack_authby,
@@ -1736,13 +1736,13 @@ static diag_t extract_host_end(struct host_end *host,
 		host_config->id = id;
 
 	} else if (!is_never_negotiate_wm(wm) &&
-		   resolve->host.type == KH_IPADDR) {
+		   host_addr->type == KH_IPADDR) {
 
 		address_buf ab;
-		err_t e = atoid(str_address(&resolve->host.addr, &ab), &id);
+		err_t e = atoid(str_address(&host_addr->addr, &ab), &id);
 		if (e != NULL) {
 			return diag("%sid=%s invalid: %s",
-				    leftright, resolve->host.name, e);
+				    leftright, host_addr->name, e);
 		}
 
 		id_buf idb;
@@ -3610,7 +3610,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     wm,
 				     whack_ends[this],
 				     whack_ends[that],
-				     &resolve[this],
+				     host_addrs[this],
 				     host_addrs,
 				     ike_version, whack_authby,
 				     &same_ca[this],
