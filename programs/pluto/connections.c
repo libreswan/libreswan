@@ -3060,7 +3060,6 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
 							enum end this_end,
-							const struct resolve_end resolve[END_ROOF],
 							const struct host_addr_config *const host_addrs[END_ROOF],
 							const ip_protoport protoport[END_ROOF],
 							struct logger *logger)
@@ -3106,11 +3105,16 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	}
 	if (!is_never_negotiate_wm(wm)) {
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-			const struct resolve_end *re = &resolve[lr];
-			if (!address_is_specified(re->host.addr) &&
-			    re->host.type != KH_IPHOSTNAME) {
-				ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
-				     this->leftright, wm->end[lr].leftright);
+			const struct host_addr_config *re = host_addrs[lr];
+			if (re->type != KH_IPADDR &&
+			    re->type != KH_IFACE &&
+			    re->type != KH_DEFAULTROUTE &&
+			    re->type != KH_IPHOSTNAME) {
+				name_buf tb;
+				ldbg(logger, "%s connection is CK_TEMPLATE: has policy negotiate yet %s address is %s",
+				     this->leftright,
+				     wm->end[lr].leftright,
+				     str_sparse_short(&keyword_host_names, re->type, &tb));
 				return CK_TEMPLATE;
 			}
 		}
@@ -3655,7 +3659,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		c->end[end].kind = extract_connection_end_kind(wm, end,
-							       resolve,
 							       host_addrs,
 							       protoport,
 							       c->logger);
