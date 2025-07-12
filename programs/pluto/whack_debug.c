@@ -38,7 +38,7 @@ static unsigned whack_debug_connection(const struct whack_message *m,
 	connection_attach(c, show_logger(s));
 	c->logger->debugging = lmod(c->logger->debugging, m->whack_debugging);
 	if (LDBGP(DBG_BASE, c->logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 			jam_string(buf, "extra_debugging = ");
 			jam_lset_short(buf, &debug_names,
 				       "+", c->logger->debugging);

@@ -59,26 +59,17 @@ static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 
 void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
 {
-	enum log_prefix prefix = (rc_flags & LOG_PREFIX_MASK);
 	enum stream stream = (rc_flags & STREAM_MASK);
 
 	if (stream == PRINTF_STREAM) {
 		return;
 	}
 
-	switch (prefix) {
-	case ADD_PREFIX:
-		jam_stream_prefix(buf, stream);
+	jam_stream_prefix(buf, stream);
+	if (stream != DEBUG_STREAM ||
+	    LDBGP(DBG_ADD_PREFIX, logger) ||
+	    logger->debugging != LEMPTY) {
 		jam_logger_prefix(buf, logger);
-		return;
-	case AUTO_PREFIX:
-		jam_stream_prefix(buf, stream);
-		if (stream != DEBUG_STREAM ||
-		    LDBGP(DBG_ADD_PREFIX, logger) ||
-		    logger->debugging != LEMPTY) {
-			jam_logger_prefix(buf, logger);
-		}
-		return;
 	}
-	abort(); /* not bad_case(stream) as recursive */
+	return;
 }
