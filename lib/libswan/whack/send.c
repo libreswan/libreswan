@@ -95,8 +95,7 @@ static void whack_send_reply(int sock, const char *buf, ssize_t len, struct logg
 	/* send the secret to pluto */
 	if (write(sock, buf, len) != len) {
 		/* not fatal() which should be internal to pluto() */
-		int e = errno;
-		llog_error(logger, e, "write() failed");
+		llog_errno(ERROR_STREAM, logger, errno, "write() failed: ");
 		exit(RC_WHACK_PROBLEM);
 	}
 }
@@ -117,8 +116,7 @@ static int whack_read_reply(int sock,
 		ssize_t rl = read(sock, be, (buf + sizeof(buf) - 1) - be);
 
 		if (rl < 0) {
-			int e = errno;
-			llog_error(logger, e, "read() failed");
+			llog_errno(ERROR_STREAM, logger, errno, "read() failed: ");
 			exit(RC_WHACK_PROBLEM);
 		}
 
@@ -284,15 +282,17 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 
 		switch (e) {
 		case EACCES:
-			llog_error(logger, e, "no right to communicate with pluto (access(\"%s\"))",
+			llog_errno(ERROR_STREAM, logger, e,
+				   "no right to communicate with pluto (access(\"%s\")): ",
 				   ctl_addr.sun_path);
 			break;
 		case ENOENT:
-			llog_error(logger, e, "Pluto is not running (no \"%s\")",
+			llog_errno(ERROR_STREAM, logger, e,
+				   "Pluto is not running (no \"%s\"): ",
 				   ctl_addr.sun_path);
 			break;
 		default:
-			llog_error(logger, e, "access(\"%s\") failed",
+			llog_errno(ERROR_STREAM, logger, e, "access(\"%s\") failed: ",
 				   ctl_addr.sun_path);
 			break;
 		}
@@ -301,13 +301,13 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 
 	int sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
-		llog_error(logger, errno, "socket() failed");
+		llog_errno(ERROR_STREAM, logger, errno, "socket() failed: ");
 		exit(RC_WHACK_PROBLEM);
 	}
 
 	if (connect(sock, (struct sockaddr *)&ctl_addr,
 		    offsetof(struct sockaddr_un, sun_path) + strlen(ctl_addr.sun_path)) < 0) {
-		llog_error(logger, errno, "connect(pluto_ctl) failed");
+		llog_errno(ERROR_STREAM, logger, errno, "connect(pluto_ctl) failed: ");
 		close(sock);
 		exit(RC_WHACK_PROBLEM);
 	}
@@ -315,7 +315,7 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 	/* Send message */
 
 	if (write(sock, msg, len) != len) {
-		llog_error(logger, errno, "write(pluto_ctl) failed");
+		llog_errno(ERROR_STREAM, logger, errno, "write(pluto_ctl) failed: ");
 		close(sock);
 		exit(RC_WHACK_PROBLEM);
 	}

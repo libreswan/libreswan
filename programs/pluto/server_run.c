@@ -100,8 +100,8 @@ bool server_run(const char *verb, const char *verb_suffix,
 
 			if (fgets(resp, sizeof(resp), f) == NULL) {
 				if (ferror(f)) {
-					llog_error(verbose.logger, errno,
-						   "fgets failed on output of %s%s command",
+					llog_errno(ERROR_STREAM, verbose.logger, errno,
+						   "fgets failed on output of %s%s command: ",
 						   verb, verb_suffix);
 					pclose(f);
 					return false;
@@ -123,8 +123,8 @@ bool server_run(const char *verb, const char *verb_suffix,
 			int r = pclose(f);
 
 			if (r == -1) {
-				llog_error(verbose.logger, errno,
-					   "pclose failed for %s%s command",
+				llog_errno(ERROR_STREAM, verbose.logger, errno,
+					   "pclose failed for %s%s command: ",
 					   verb, verb_suffix);
 				return false;
 			} else if (WIFEXITED(r)) {
@@ -168,7 +168,8 @@ bool server_runv(const char *argv[], const struct verbose verbose)
 						 * for close on
 						 * exec */
 	if (out == NULL) {
-		llog_error(verbose.logger, errno, "command '%s' failed: ", command);
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "command '%s' failed: ", command);
 		return false;
 	}
 
@@ -213,13 +214,13 @@ struct server_run server_runv_chunk(const char *argv[], shunk_t input,
 
 	int fd[2];
 	if (pipe(fd) == -1) {
-		llog_error(verbose.logger, errno, "pipe(): ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno, "pipe(): ");
 		return (struct server_run) { .status = -1, };
 	}
 
 	pid_t child = fork();
 	if (child < 0) {
-		llog_error(verbose.logger, errno, "fork(): ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno, "fork(): ");
 		return (struct server_run) { .status = -1, };
 	}
 
@@ -228,11 +229,11 @@ struct server_run server_runv_chunk(const char *argv[], shunk_t input,
 		/* dup() write side, fd[1], of pipe to STDOUT */
 		if (fd[1] != STDOUT_FILENO) {
 			if (dup2(fd[1], STDOUT_FILENO) < 0) {
-				llog_error(verbose.logger, errno, "dup2(fd[1], STDOUT): ");
+				llog_errno(ERROR_STREAM, verbose.logger, errno, "dup2(fd[1], STDOUT): ");
 				exit(127);
 			}
 			if (close(fd[1]) < 0) {
-				llog_error(verbose.logger, errno, "close(fd[1]): ");
+				llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[1]): ");
 				exit(127);
 			}
 		}
@@ -241,28 +242,28 @@ struct server_run server_runv_chunk(const char *argv[], shunk_t input,
 		if (fd[0] != STDIN_FILENO) {
 			/* switch fd[0] to STDIN */
 			if (dup2(fd[0], STDIN_FILENO) < 0) {
-				llog_error(verbose.logger, errno, "dup2(fd[0], STDIN): ");
+				llog_errno(ERROR_STREAM, verbose.logger, errno, "dup2(fd[0], STDIN): ");
 				exit(127);
 			}
 			if (close(fd[0]) < 0) {
-				llog_error(verbose.logger, errno, "close(fd[0]): ");
+				llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[0]): ");
 				exit(127);
 			}
 		}
 
 		execvp(argv[0], (char**)argv);
-		llog_error(verbose.logger, errno, "execve(): ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno, "execve(): ");
 		exit(127);
 	}
 
 	if (input.len > 0 &&
 	    write(fd[1], input.ptr, input.len) != (ssize_t)input.len) {
-		llog_error(verbose.logger, errno, "partial write: ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno, "partial write: ");
 		/* stumble on to waitpid() */
 	}
 
 	if (close(fd[1]) < 0) {
-		llog_error(verbose.logger, errno, "close(fd[1])");
+		llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[1]): ");
 		/* stumble on to waitpid() */
 	}
 

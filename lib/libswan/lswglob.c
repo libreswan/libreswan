@@ -33,8 +33,8 @@ static const char *lswglob_what;
 
 static int lswglob_errfunc(const char *epath, int eerrno)
 {
-	llog_error(lswglob_logger, eerrno,
-		   "problem with %s file \"%s\"", lswglob_what, epath);
+	llog_errno(ERROR_STREAM, lswglob_logger, eerrno,
+		   "problem with %s file \"%s\": ", lswglob_what, epath);
 	return 1;	/* stop glob */
 }
 

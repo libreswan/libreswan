@@ -181,7 +181,8 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	char buf[LOG_WIDTH/2];
 	ssize_t len = read(pid_entry->fd, buf, sizeof(buf));
 	if (len < 0) {
-		llog_error(pid_entry->logger, errno, "%s: reading fd %d failed: ",
+		llog_errno(ERROR_STREAM, pid_entry->logger, errno,
+			   "%s: reading fd %d failed: ",
 			   pid_entry->name, pid_entry->fd);
 		return false;
 	}
@@ -253,7 +254,7 @@ static pid_t child_pipeline(const char *name,
 #define FD_IN 0
 #define FD_OUT 1
 	if (pipe2(fdpipe, O_CLOEXEC) < 0) {
-		llog_error(logger, errno, "pipe2() failed");
+		llog_errno(ERROR_STREAM, logger, errno, "pipe2() failed: ");
 		return -1;
 	}
 
@@ -263,7 +264,7 @@ static pid_t child_pipeline(const char *name,
 
 	case -1:
 	{
-		llog_error(logger, errno, "fork failed");
+		llog_errno(ERROR_STREAM, logger, errno, "fork failed: ");
 		return -1;
 	}
 
@@ -306,7 +307,8 @@ static pid_t child_pipeline(const char *name,
 		if (input.len > 0) {
 			ssize_t n = write(fdpipe[FD_OUT], input.ptr, input.len);
 			if (n < 0) {
-				llog_error(logger, errno, "write to %d failed", pid);
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "write to %d failed: ", pid);
 			} else if (n != (ssize_t)input.len) {
 				llog(ERROR_STREAM, logger, "write to %d truncated", pid);
 			}
@@ -413,7 +415,8 @@ void server_fork_sigchld_handler(struct logger *logger)
 			if (errno == ECHILD) {
 				dbg("waitpid returned ECHILD (no child processes left)");
 			} else {
-				llog_error(logger, errno, "waitpid unexpectedly failed");
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "waitpid unexpectedly failed: ");
 			}
 			return;
 		case 0: /* nothing to do */

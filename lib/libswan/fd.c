@@ -91,14 +91,15 @@ struct fd *fd_accept(int socket, const struct where *where, struct logger *logge
 
 	int fd = accept(socket, (struct sockaddr *)&addr, &addrlen);
 	if (fd < 0) {
-		llog_error(logger, errno, "accept() failed in "PRI_WHERE"",
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "accept() failed in "PRI_WHERE": ",
 			   pri_where(where));
 		return NULL;
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
-		llog_error(logger, errno, "failed to set CLOEXEC in "PRI_WHERE"",
-			   pri_where(where));
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "failed to set CLOEXEC in "PRI_WHERE": ", pri_where(where));
 		close(fd);
 		return NULL;
 	}

@@ -466,7 +466,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 
 	int fd = cloexec_socket(afi->socket.domain, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
-		llog_error(logger, errno, "TCP: cloexec_socket(%s,SOCK_STREAM,IPPROTO_TCP) failed",
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "TCP: cloexec_socket(%s,SOCK_STREAM,IPPROTO_TCP) failed: ",
 			   afi->socket.domain_name);
 		return NULL;
 	}
@@ -493,7 +494,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
 		endpoint_buf eb;
-		llog_error(logger, errno, "TCP: socket %d: connecting to %s",
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "TCP: socket %d: connecting to %s: ",
 			   fd, str_endpoint(&remote_endpoint, &eb));
 		close(fd);
 		return NULL;
@@ -507,8 +509,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 			.len = sizeof(local_sockaddr.sa),
 		};
 		if (getsockname(fd, &local_sockaddr.sa.sa, &local_sockaddr.len) < 0) {
-			llog_error(logger, errno,
-				   "TCP: socket %d: getting local TCP sockaddr", fd);
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "TCP: socket %d: getting local TCP sockaddr: ", fd);
 			close(fd);
 			return NULL;
 		}
@@ -535,8 +537,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 		ldbg(logger, "TCP: socket %d: sending IKE-in-TCP prefix", fd);
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
-			llog_error(logger, errno,
-				   "TCP: socket %d: sending IKE-in-TCP prefix", fd);
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "TCP: socket %d: sending IKE-in-TCP prefix: ", fd);
 			close(fd);
 			return NULL;
 		}
@@ -554,8 +556,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 	} else {
 		ldbg(logger, "TCP: socket %d: enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
-			llog_error(logger, errno,
-				   "TCP: socket %d: setting socket option \"espintcp\"", fd);
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "TCP: socket %d: setting socket option \"espintcp\": ", fd);
 			close(fd);
 			return NULL;
 		}

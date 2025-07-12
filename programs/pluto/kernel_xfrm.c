@@ -300,16 +300,16 @@ static void update_xfrm_acq_expires(struct logger *logger)
 {
 	int r = open(XFRM_ACQ_EXPIRES, O_RDONLY);
 	if (r < 0) {
-		llog_error(logger, errno,
-			   "failed to open '"XFRM_ACQ_EXPIRES"' for reading");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "failed to open '"XFRM_ACQ_EXPIRES"' for reading: ");
 		return;
 	}
 
 	char line[255];
 	ssize_t n = read(r, line, sizeof(line));
 	if (n < 0) {
-		llog_error(logger, errno,
-			   "failed to read '"XFRM_ACQ_EXPIRES"'");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "failed to read '"XFRM_ACQ_EXPIRES"': ");
 		close(r);
 		return;
 	}
@@ -347,14 +347,15 @@ static void update_xfrm_acq_expires(struct logger *logger)
 
 	int w = open(XFRM_ACQ_EXPIRES, O_WRONLY);
 	if (w < 0) {
-		llog_error(logger, errno,
-			   "failed to open "XFRM_ACQ_EXPIRES" for writing");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "failed to open "XFRM_ACQ_EXPIRES" for writing: ");
 		return;
 	}
 
 	n = write(w, numstr, strlen(numstr));
 	if (n == -1) {
-		llog_error(logger, errno, "failed to write '%s' to '"XFRM_ACQ_EXPIRES"'", numstr);
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "failed to write '%s' to '"XFRM_ACQ_EXPIRES"': ", numstr);
 	}
 
 	close(w);
@@ -523,8 +524,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 
 	if (r < 0) {
 		name_buf sb;
-		llog_error(logger, errno,
-			   "netlink write() of %s message for %s %s failed",
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "netlink write() of %s message for %s %s failed: ",
 			   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 			   description, story);
 		return false;
@@ -532,10 +533,10 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 
 	if ((size_t)r != len) {
 		name_buf sb;
-		llog_error(logger, 0/*no-errno*/,
-			   "netlink write() of %s message for %s %s truncated: %zd instead of %zu",
-			   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
-			   description, story, r, len);
+		llog(ERROR_STREAM, logger,
+		     "netlink write() of %s message for %s %s truncated: %zd instead of %zu",
+		     str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
+		     description, story, r, len);
 		return false;
 	}
 
@@ -551,8 +552,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 				continue;
 			*recv_errno = errno;
 			name_buf sb;
-			llog_error(logger, errno,
-				   "netlink recvfrom() of response to our %s message for %s %s failed",
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "netlink recvfrom() of response to our %s message for %s %s failed: ",
 				   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 				   description, story);
 			return false;
@@ -632,8 +633,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 				if (LDBGP(DBG_BASE, logger))
 					LDBG_log(logger, "netlink response for %s %s", description, story);
 			} else {
-				llog_error(logger, -rsp.u.e.error,
-				   "netlink response for %s %s", description, story);
+				llog_errno(ERROR_STREAM, logger, -rsp.u.e.error,
+					   "netlink response for %s %s: ",
+					   description, story);
 				llog_ext_ack(RC_LOG, logger, &rsp.n);
 			}
 			return false;
@@ -750,8 +752,8 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	}
 
 	name_buf sb;
-	llog_error(logger, error,
-		   "kernel: xfrm %s %s response for flow %s",
+	llog_errno(ERROR_STREAM, logger, error,
+		   "kernel: xfrm %s %s response for flow %s: ",
 		   str_sparse_long(&xfrm_type_names, hdr->nlmsg_type, &sb),
 		   story, adstory);
 	return false;
@@ -1485,7 +1487,8 @@ static bool siocethtool(const char *ifname, void *data, const char *action, stru
 			ldbg(logger, "cannot offload to %s because SIOCETHTOOL %s failed: %s",
 				ifname, action, strerror(errno));
 		} else {
-			llog_error(logger, errno, "can't offload to %s because SIOCETHTOOL %s failed",
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "can't offload to %s because SIOCETHTOOL %s failed: ",
 				   ifname, action);
 		}
 		return false;
@@ -2635,7 +2638,8 @@ static bool netlink_get(int fd,
 		if (errno == EAGAIN)
 			return false;
 		if (errno != EINTR) {
-			llog_error(logger, errno, "kernel: recvfrom() failed in netlink_get");
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "kernel: recvfrom() failed in netlink_get: ");
 		}
 		return true;
 	}
@@ -3111,8 +3115,8 @@ static bool qry_xfrm_migrate_support(struct logger *logger)
 	int nl_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, NETLINK_XFRM);
 
 	if (nl_fd < 0) {
-		llog_error(logger, errno,
-			   "socket() in qry_xfrm_migrate_support()");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "socket() in qry_xfrm_migrate_support(): ");
 		return false;
 	}
 
@@ -3123,16 +3127,16 @@ static bool qry_xfrm_migrate_support(struct logger *logger)
 	} while (r < 0 && errno == EINTR);
 
 	if (r < 0) {
-		llog_error(logger, errno,
-			   "netlink write() qry_xfrm_migrate_support lookup");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "netlink write() qry_xfrm_migrate_support lookup: ");
 		close(nl_fd);
 		return false;
 	}
 
 	if ((size_t)r != len) {
-		llog_error(logger, 0/*no-errno*/,
-			   "netlink write() qry_xfrm_migrate_support message truncated: %zd instead of %zu",
-			    r, len);
+		llog(ERROR_STREAM, logger,
+		     "netlink write() qry_xfrm_migrate_support message truncated: %zd instead of %zu",
+		     r, len);
 		close(nl_fd);
 		return false;
 	}
@@ -3322,15 +3326,15 @@ static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, st
 
 	policy.dir = XFRM_POLICY_IN;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		llog_error(logger, errno,
-			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_kernel_ifaces()");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_kernel_ifaces(): ");
 		return false;
 	}
 
 	policy.dir = XFRM_POLICY_OUT;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		llog_error(logger, errno,
-			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_kernel_ifaces()");
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_kernel_ifaces(): ");
 		return false;
 	}
 
