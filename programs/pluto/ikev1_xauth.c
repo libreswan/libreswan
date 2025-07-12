@@ -399,7 +399,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 
 			if (dns + 1 < end) {
 				/* end this attribute */
-				close_output_pbs(&attrval);
+				close_pbs_out(&attrval);
 
 				/* start the next attribute */
 				if (!modecfg_out_attr(modecfg_pbs, attr, &attrval)) {
@@ -421,7 +421,7 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 			ldbg(ike->sa.logger, "we are sending '"PRI_SHUNK"' as domain",
 			     pri_shunk(c->config->modecfg.domains[0]));
 			shunk_t first = c->config->modecfg.domains[0];
-			if (!out_raw(first.ptr, first.len, &attrval, "MODECFG_DOMAIN")) {
+			if (!pbs_out_hunk(&attrval, first, "MODECFG_DOMAIN")) {
 				return false;
 			}
 		}
@@ -431,9 +431,9 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 	case MODECFG_BANNER:
 		ldbg(ike->sa.logger, "we are sending '%s' as banner",
 		     c->config->modecfg.banner);
-		if (!out_raw(c->config->modecfg.banner,
-			     strlen(c->config->modecfg.banner),
-			     &attrval, "")) {
+		if (!pbs_out_raw(&attrval, c->config->modecfg.banner,
+				 strlen(c->config->modecfg.banner),
+				 "banner")) {
 			return false;
 		}
 		break;
@@ -868,7 +868,7 @@ stf_status xauth_send_request(struct ike_sa *ike)
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
+		if (!pbs_out_struct(&reply, hdr, &isakmp_hdr_desc, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1010,7 +1010,7 @@ static stf_status xauth_send_status(struct ike_sa *ike, int status)
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply, &rbody))
+		if (!pbs_out_struct(&reply, hdr, &isakmp_hdr_desc, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1244,11 +1244,11 @@ static bool do_file_authentication(struct ike_sa *ike, const char *name,
 		if (connectionname != NULL && connectionname[0] == '\0')
 			connectionname = NULL;
 
-		dbg("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
-		    userid, name, passwdhash,
-		    connectionname == NULL ? "" : connectionname,
-		    connname,
-		    addresspool == NULL ? "" : addresspool);
+		ldbg(ike->sa.logger, "XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
+		     userid, name, passwdhash,
+		     connectionname == NULL ? "" : connectionname,
+		     connname,
+		     addresspool == NULL ? "" : addresspool);
 
 		/* If connectionname is null, it applies to all connections */
 		if (streq(userid, name) &&
@@ -1370,9 +1370,9 @@ static stf_status xauth_immediate_callback(struct state *ike_sa,
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa); /* could be NULL! */
 	struct xauth_immediate_context *xic = (struct xauth_immediate_context *)arg;
 	if (ike == NULL) {
-		llog(RC_LOG, &global_logger,
-		     "XAUTH: #%lu: state destroyed for user '%s'",
-		     xic->serialno, xic->name);
+		llog(RC_LOG, md->logger,
+		     "XAUTH: "PRI_SO": state destroyed for user '%s'",
+		     pri_so(xic->serialno), xic->name);
 	} else {
 		/* ikev1_xauth_callback() will log result */
 		ikev1_xauth_callback(ike, md, xic->name, xic->success);
@@ -1467,13 +1467,13 @@ static void xauth_launch_authent(struct ike_sa *ike,
 }
 
 /* log a nice description of an unsupported attribute */
-static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
+static void llog_bad_attr(struct logger *logger, const char *kind, enum_names *ed, unsigned val)
 {
 	name_buf b;
-	dbg("Unsupported %s %s attribute %s received.",
-	    kind,
-	    (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
-	    str_enum_long(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
+	ldbg(logger, "unsupported %s %s attribute %s received.",
+	     kind,
+	     (val & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV ? "basic" : "long",
+	     str_enum_long(ed, val & ISAKMP_ATTR_RTYPE_MASK, &b));
 }
 
 /*
@@ -1552,7 +1552,7 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 
 		case IKEv1_ATTR_XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
-				dbg("XAUTH: two User Names!  Rejected");
+				ldbg(ike->sa.logger, "XAUTH: two User Names!  Rejected");
 				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
@@ -1587,7 +1587,7 @@ stf_status xauth_inR0(struct state *ike_sa, struct msg_digest *md)
 			break;
 
 		default:
-			log_bad_attr("XAUTH (inR0)", &xauth_attr_names, attr.isaat_af_type);
+			llog_bad_attr(ike->sa.logger, "XAUTH (inR0)", &xauth_attr_names, attr.isaat_af_type);
 			break;
 		}
 	}
@@ -1650,19 +1650,19 @@ stf_status xauth_inR1(struct state *ike_sa, struct msg_digest *md UNUSED)
 	ike->sa.st_oakley.doing_xauth = false;
 
 	if (!ike->sa.st_connection->local->host.config->modecfg.server) {
-		dbg("not server, starting new exchange");
+		ldbg(ike->sa.logger, "not server, starting new exchange");
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (ike->sa.st_connection->local->host.config->modecfg.server &&
 	    ike->sa.hidden_variables.st_modecfg_vars_set) {
-		dbg("modecfg server, vars are set. Starting new exchange.");
+		ldbg(ike->sa.logger, "modecfg server, vars are set. Starting new exchange.");
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (ike->sa.st_connection->local->host.config->modecfg.server &&
 	    ike->sa.st_connection->config->modecfg.pull) {
-		dbg("modecfg server, pull mode. Starting new exchange.");
+		ldbg(ike->sa.logger, "modecfg server, pull mode. Starting new exchange.");
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 	return STF_OK;
@@ -1695,7 +1695,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	struct attrs recv;
 
-	dbg("arrived in modecfg_inR0");
+	ldbg(ike->sa.logger, "arrived in modecfg_inR0");
 
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
@@ -1720,7 +1720,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 			}
 
 			if (!set_attr(&recv, attr.isaat_af_type)) {
-				log_bad_attr("modecfg (CFG_REQUEST)", &modecfg_attr_names, attr.isaat_af_type);
+				llog_bad_attr(ike->sa.logger, "modecfg (CFG_REQUEST)", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -1780,7 +1780,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	struct attrs recv = {0};
 
-	dbg("modecfg_inI2");
+	ldbg(ike->sa.logger, "modecfg_inI2");
 
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
@@ -1825,7 +1825,7 @@ static stf_status modecfg_inI2(struct ike_sa *ike,
 	if (has_attrs(&recv))
 		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
-	dbg("modecfg_inI2(STF_OK)");
+	ldbg(ike->sa.logger, "modecfg_inI2(STF_OK)");
 	return STF_OK;
 }
 
@@ -1995,7 +1995,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			}
 
 			address_buf b;
-			dbg("Received IP4 NETMASK %s", str_address(&a, &b));
+			ldbg(ike->sa.logger, "Received IP4 NETMASK %s", str_address(&a, &b));
 			resp.ikev1_internal_ip4_netmask = true;
 			break;
 		}
@@ -2171,7 +2171,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			break;
 
 		default:
-			log_bad_attr("modecfg (CISCO_SPLIT_INC)", &modecfg_attr_names, attr.isaat_af_type);
+			llog_bad_attr(ike->sa.logger, "modecfg (CISCO_SPLIT_INC)", &modecfg_attr_names, attr.isaat_af_type);
 			break;
 
 		}
@@ -2201,7 +2201,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
 	struct attrs recv = {0};
 
-	dbg("modecfg_inR1: received mode cfg reply");
+	ldbg(ike->sa.logger, "modecfg_inR1: received mode cfg reply");
 
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 
@@ -2223,7 +2223,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 			}
 
 			if (!set_attr(&recv, attr.isaat_af_type)) {
-				log_bad_attr("modecfg (CFG_ACK)", &modecfg_attr_names, attr.isaat_af_type);
+				llog_bad_attr(ike->sa.logger, "modecfg (CFG_ACK)", &modecfg_attr_names, attr.isaat_af_type);
 				break;
 			}
 		}
@@ -2256,7 +2256,7 @@ stf_status modecfg_inR1(struct state *ike_sa, struct msg_digest *md)
 	if (has_attrs(&recv))
 		ike->sa.hidden_variables.st_modecfg_vars_set = true;
 
-	dbg("modecfg_inR1(STF_OK)");
+	ldbg(ike->sa.logger, "modecfg_inR1(STF_OK)");
 	return STF_OK;
 }
 
@@ -2455,13 +2455,13 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 							xauth_username);
 					}
 
-					if (!out_raw(ike->sa.st_xauth_username,
-						     strlen(ike->sa. st_xauth_username),
-						     &attrval,
-						     "XAUTH username"))
+					if (!pbs_out_raw(&attrval,
+							 ike->sa.st_xauth_username,
+							 strlen(ike->sa. st_xauth_username),
+							 "XAUTH username"))
 						return STF_INTERNAL_ERROR;
 
-					close_output_pbs(&attrval);
+					close_pbs_out(&attrval);
 
 					break;
 				}
@@ -2479,7 +2479,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 					if (ike->sa.st_xauth_password.ptr == NULL) {
 						const struct secret_preshared_stuff *pks =
 							xauth_secret_by_xauthname(ike->sa.st_xauth_username);
-						dbg("looked up username=%s, got=%p",
+						ldbg(ike->sa.logger, "looked up username=%s, got=%p",
 						    ike->sa.st_xauth_username,
 						    pks);
 						if (pks != NULL) {
@@ -2521,8 +2521,9 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						discard_pw = true;
 					}
 
-					if (!out_hunk(ike->sa.st_xauth_password, &attrval,
-						      "XAUTH password")) {
+					if (!pbs_out_hunk(&attrval,
+							  ike->sa.st_xauth_password,
+							  "XAUTH password")) {
 						if (discard_pw) {
 							free_chunk_content(&ike->sa.st_xauth_password);
 						}
@@ -2532,7 +2533,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 					if (discard_pw) {
 						free_chunk_content(&ike->sa.st_xauth_password);
 					}
-					close_output_pbs(&attrval);
+					close_pbs_out(&attrval);
 					break;
 				}
 
@@ -2551,7 +2552,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 		}
 
 		/* do not PAD here, */
-		close_output_pbs(&modecfg_pbs.pbs);
+		close_pbs_out(&modecfg_pbs.pbs);
 	}
 
 	llog(RC_LOG, ike->sa.logger, "XAUTH: Answering XAUTH challenge with user='%s'",
@@ -2603,7 +2604,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 		return modecfg_inI2(ike, md);
 	}
 
-	dbg("arrived in xauth_inI0");
+	ldbg(ike->sa.logger, "arrived in xauth_inI0");
 
 	if (impair.drop_xauth_r0) {
 		llog(RC_LOG, ike->sa.logger, "IMPAIR: drop XAUTH R0 message ");
@@ -2655,7 +2656,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 				status = attr.isaat_lv;
 				break;
 			case XAUTH_STATUS_OK:
-				dbg("received Cisco XAUTH status: OK");
+				ldbg(ike->sa.logger, "received Cisco XAUTH status: OK");
 				status = attr.isaat_lv;
 				break;
 			default:
@@ -2673,7 +2674,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 			size_t len = attr.isaat_lv;
 			char msgbuf[81];
 
-			dbg("received Cisco XAUTH message");
+			ldbg(ike->sa.logger, "received Cisco XAUTH message");
 			if (len >= sizeof(msgbuf) )
 				len = sizeof(msgbuf) - 1;
 			memcpy(msgbuf, strattr.cur, len);
@@ -2688,42 +2689,42 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 				     attr.isaat_lv);
 				return STF_IGNORE;
 			}
-			dbg("received Cisco XAUTH type: Generic");
+			ldbg(ike->sa.logger, "received Cisco XAUTH type: Generic");
 			xauth_resp |= XAUTHLELEM(IKEv1_ATTR_XAUTH_TYPE);
 			break;
 
 		case IKEv1_ATTR_XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
-			dbg("received Cisco XAUTH username");
+			ldbg(ike->sa.logger, "received Cisco XAUTH username");
 			xauth_resp |= XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_NAME);
 			break;
 
 		case IKEv1_ATTR_XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
-			dbg("received Cisco XAUTH password");
+			ldbg(ike->sa.logger, "received Cisco XAUTH password");
 			xauth_resp |= XAUTHLELEM(IKEv1_ATTR_XAUTH_USER_PASSWORD);
 			break;
 
 		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			dbg("received Cisco Internal IPv4 address");
+			ldbg(ike->sa.logger, "received Cisco Internal IPv4 address");
 			break;
 
 		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			dbg("received Cisco Internal IPv4 netmask");
+			ldbg(ike->sa.logger, "received Cisco Internal IPv4 netmask");
 			break;
 
 		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			dbg("received Cisco IPv4 DNS info");
+			ldbg(ike->sa.logger, "received Cisco IPv4 DNS info");
 			break;
 
 		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
-			dbg("received Cisco IPv4 Subnet info");
+			ldbg(ike->sa.logger, "received Cisco IPv4 Subnet info");
 			break;
 
 		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
-			dbg("received Cisco NetBEUI NS info");
+			ldbg(ike->sa.logger, "received Cisco NetBEUI NS info");
 			break;
 
 		default:
-			log_bad_attr("XAUTH (inI0)", &modecfg_attr_names, attr.isaat_af_type);
+			llog_bad_attr(ike->sa.logger, "XAUTH (inI0)", &modecfg_attr_names, attr.isaat_af_type);
 			break;
 		}
 	}
@@ -2777,7 +2778,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	/* reset the message ID */
 	ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 
-	dbg("xauth_inI0(STF_OK)");
+	ldbg(ike->sa.logger, "xauth_inI0(STF_OK)");
 	return STF_OK;
 }
 
@@ -2863,14 +2864,14 @@ stf_status xauth_inI1(struct state *ike_sa, struct msg_digest *md)
 	unsigned int status = XAUTH_STATUS_FAIL;
 	stf_status stat;
 
-	dbg("xauth_inI1");
+	ldbg(ike->sa.logger, "xauth_inI1");
 
 	if (ike->sa.hidden_variables.st_xauth_client_done) {
-		dbg("st_xauth_client_done, moving into modecfg_inI2");
+		ldbg(ike->sa.logger, "st_xauth_client_done, moving into modecfg_inI2");
 		return modecfg_inI2(ike, md);
 	}
 
-	dbg("Continuing with xauth_inI1");
+	ldbg(ike->sa.logger, "Continuing with xauth_inI1");
 
 	ike->sa.st_v1_msgid.phase15 = md->hdr.isa_msgid;
 

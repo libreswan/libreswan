@@ -228,14 +228,14 @@ struct v1_msgid_filter {
 static bool phase15_predicate(struct state *st, void *context)
 {
 	struct v1_msgid_filter *filter = context;
-	ldbg(&global_logger,
-	     "peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
-	     st->st_serialno, filter->msgid,
+	ldbg(st->logger,
+	     "peer and cookies match on "PRI_SO"; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_v1_msgid.phase15=%08" PRIx32,
+	     pri_so(st->st_serialno), filter->msgid,
 	     st->st_v1_msgid.id, st->st_v1_msgid.phase15);
 	if (st->st_v1_msgid.phase15 == filter->msgid) {
-		ldbg(&global_logger,
-		     "p15 state object #%lu found, in %s",
-		     st->st_serialno, st->st_state->name);
+		ldbg(st->logger,
+		     "p15 state object "PRI_SO" found, in %s",
+		     pri_so(st->st_serialno), st->st_state->name);
 		return true;
 	}
 	return false;
@@ -416,7 +416,7 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 	/* there is only one IKEv1 version, and no new one will ever come - no need to set version */
 	hdr.isa_np = 0;
 	/* surely must have room and be well-formed */
-	passert(out_struct(&hdr, &isakmp_hdr_desc, output_stream, rbody));
+	passert(pbs_out_struct(output_stream, hdr, &isakmp_hdr_desc, rbody));
 }
 
 /*
@@ -462,9 +462,9 @@ static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 				     st->st_state->name);
 			}
 		} else {
-			dbg("#%lu discarding duplicate packet; already %s; replied=%s retransmit_on_duplicate=%s",
-			    st->st_serialno, st->st_state->name,
-			    bool_str(replied), bool_str(retransmit_on_duplicate));
+			ldbg(st->logger, PRI_SO" discarding duplicate packet; already %s; replied=%s retransmit_on_duplicate=%s",
+			     pri_so(st->st_serialno), st->st_state->name,
+			     bool_str(replied), bool_str(retransmit_on_duplicate));
 		}
 		return true;
 	}
@@ -790,7 +790,7 @@ void process_v1_packet(struct msg_digest *md)
 								  md->hdr.isa_msgid);
 			if (child != NULL) {
 				if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-					pdbg(child->sa.logger,
+					ldbg(child->sa.logger,
 					     "deleted IKE (ISAKMP) SA "PRI_SO" has established Child SA in state %s",
 					     pri_so(child->sa.st_clonedfrom),
 					     child->sa.st_state->name);
@@ -1019,7 +1019,7 @@ void process_v1_packet(struct msg_digest *md)
 
 		const struct spd_end *this = ike->sa.st_connection->child.spds.list->local;
 		name_buf b;
-		pdbg(ike->sa.logger,
+		ldbg(ike->sa.logger,
 		     " %s processing received isakmp_xchg_type %s; xauthserver=%s xauthclient=%s modecfgserver=%s modecfgclient=%s modecfgpull=%s",
 		     ike->sa.st_state->name,
 		     str_enum_long(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
@@ -2084,6 +2084,10 @@ static void jam_v1_isakmp_details(struct jambuf *buf, struct state *st)
  */
 void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_status result)
 {
+	struct logger *logger = (st != NULL ? st->logger :
+				 md != NULL ? md->logger :
+				 &global_logger);
+
 	/* handle oddball/meta results now */
 
 	/*
@@ -2094,9 +2098,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	/* DANGER: MD might be NULL; ST might be NULL */
 	name_buf neb;
 	name_buf rb;
-	dbg("complete v1 state transition with %s",
-	    (result > STF_FAIL_v1N ? str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
-	     str_enum_long(&stf_status_names, result, &rb)));
+	ldbg(logger, "complete v1 state transition with %s",
+	     (result > STF_FAIL_v1N ? str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
+	      str_enum_long(&stf_status_names, result, &rb)));
 
 	switch (result) {
 	case STF_SUSPEND:
@@ -2173,9 +2177,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* advance the state */
 		const struct state_v1_microcode *smc = md->smc;
 
-		dbg("doing_xauth:%s, t_xauth_client_done:%s",
-		    bool_str(st->st_oakley.doing_xauth),
-		    bool_str(st->hidden_variables.st_xauth_client_done));
+		ldbg(st->logger, "doing_xauth:%s, t_xauth_client_done:%s",
+		     bool_str(st->st_oakley.doing_xauth),
+		     bool_str(st->hidden_variables.st_xauth_client_done));
 
 		/* accept info from VID because we accept this message */
 
@@ -2185,15 +2189,15 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 
 		if (md->fragvid) {
-			dbg("peer supports fragmentation");
+			ldbg(st->logger, "peer supports fragmentation");
 			st->st_v1_seen_fragmentation_supported = true;
 		}
 
 		if (md->dpd) {
-			dbg("peer supports DPD");
+			ldbg(st->logger, "peer supports DPD");
 			st->hidden_variables.st_peer_supports_dpd = true;
 			if (dpd_active_locally(st->st_connection)) {
-				dbg("DPD is configured locally");
+				ldbg(st->logger, "DPD is configured locally");
 			}
 		}
 
@@ -2210,9 +2214,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			st->st_v1_msgid.reserved = true;
 		}
 
-		dbg("IKEv1: transition from state %s to state %s",
-		    finite_states[from_state]->name,
-		    finite_states[smc->next_state]->name);
+		ldbg(st->logger, "IKEv1: transition from state %s to state %s",
+		     finite_states[from_state]->name,
+		     finite_states[smc->next_state]->name);
 
 		change_v1_state(st, smc->next_state);
 
@@ -2279,7 +2283,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
-			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
+			close_pbs_out(&reply_stream); /* good form, but actually a no-op */
 
 			if (st->st_state->kind == STATE_MAIN_R2 &&
 			    impair.send_no_main_r2) {
@@ -2302,7 +2306,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    st->hidden_variables.st_xauth_client_done &&
 		    !c->local->host.config->modecfg.client &&
 		    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2)) {
-			dbg("fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_v1_REPLACE");
+			ldbg(st->logger, "fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_v1_REPLACE");
 			event_type = EVENT_v1_REPLACE;
 		}
 
@@ -2449,7 +2453,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->local->host.config->xauth.server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-				dbg("XAUTH: Sending XAUTH Login/Password Request");
+				ldbg(st->logger, "XAUTH: Sending XAUTH Login/Password Request");
 				event_schedule(EVENT_v1_SEND_XAUTH,
 					       deltatime_from_milliseconds(EVENT_v1_SEND_XAUTH_DELAY_MS),
 					       st);
@@ -2464,7 +2468,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (!IS_V1_QUICK(st->st_state->kind) &&
 		    st->st_connection->local->host.config->xauth.client &&
 		    !st->hidden_variables.st_xauth_client_done) {
-			dbg("XAUTH client is not yet authenticated");
+			ldbg(st->logger, "XAUTH client is not yet authenticated");
 			break;
 		}
 
@@ -2473,12 +2477,12 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * cfg request to get challenged, but there is also an
 		 * override in the form of a policy bit.
 		 */
-		dbg("modecfg pull: %s policy:%s %s",
-		    (st->st_v1_quirks.modecfg_pull_mode ?
-		     "quirk-poll" : "noquirk"),
-		    (st->st_connection->config->modecfg.pull ? "pull" : "push"),
-		    (st->st_connection->local->host.config->modecfg.client ?
-		     "modecfg-client" : "not-client"));
+		ldbg(st->logger, "modecfg pull: %s policy:%s %s",
+		     (st->st_v1_quirks.modecfg_pull_mode ?
+		      "quirk-poll" : "noquirk"),
+		     (st->st_connection->config->modecfg.pull ? "pull" : "push"),
+		     (st->st_connection->local->host.config->modecfg.client ?
+		      "modecfg-client" : "not-client"));
 
 		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
@@ -2523,11 +2527,11 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set) {
-			dbg("waiting for modecfg set from server");
+			ldbg(st->logger, "waiting for modecfg set from server");
 			break;
 		}
 
-		dbg("phase 1 is done, looking for phase 2 to unpend");
+		ldbg(st->logger, "phase 1 is done, looking for phase 2 to unpend");
 
 		if (smc->flags & SMF_RELEASE_PENDING_P2) {
 			/* Initiate any Quick Mode negotiations that
@@ -2582,7 +2586,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				       st->st_connection->child.spds.list,
 				       pexpect_child_sa(st),
 				       st->logger))
-				dbg("sending disconnect to NM failed, you may need to do it manually");
+				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
 		}
 
 		struct ike_sa *isakmp =
@@ -2629,8 +2633,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			     "state transition failed: %s", notify_name.buf);
 		}
 
-		dbg("state transition function for %s failed: %s",
-		    st->st_state->name, notify_name.buf);
+		ldbg(st->logger, "state transition function for %s failed: %s",
+		     st->st_state->name, notify_name.buf);
 
 		if (st->st_connection->config->host.cisco.peer &&
 		    st->st_connection->config->host.cisco.nm) {
@@ -2639,7 +2643,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				       st->st_connection->child.spds.list,
 				       pexpect_child_sa(st),
 				       st->logger))
-				dbg("sending disconnect to NM failed, you may need to do it manually");
+				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
 		}
 
 		if (IS_V1_QUICK(st->st_state->kind)) {
@@ -2748,14 +2752,14 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 	PASSERT(st->logger, st->st_ike_version == IKEv1);
 
 	if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
-		pdbg(st->logger,
+		ldbg(st->logger,
 		     "send? yes, IKEv1 ISAKMP SA in state %s is established",
 		     st->st_state->short_name);
 		return pexpect_ike_sa(st);
 	}
 
 	if (IS_V1_ISAKMP_SA(st)) {
-		pdbg(st->logger,
+		ldbg(st->logger,
 		     "send? no, IKEv1 ISAKMP SA in state %s is NOT established",
 		     st->st_state->short_name);
 		return NULL;
@@ -2769,7 +2773,7 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 		 * need to start a new IKE SA to send the delete
 		 * notification ???
 		 */
-		pdbg(st->logger,
+		ldbg(st->logger,
 		     "send? no, IKEv1 IPsec SA in state %s is not established",
 		     st->st_state->name);
 		return NULL;
@@ -2779,13 +2783,13 @@ struct ike_sa *established_isakmp_sa_for_state(struct state *st,
 							  V1_ISAKMP_SA_ESTABLISHED_STATES,
 							  viable_parent);
 	if (isakmp == NULL) {
-		pdbg(st->logger,
+		ldbg(st->logger,
 		     "send? no, IKEv1 IPsec SA in state %s is established but has no established ISAKMP SA",
 		     st->st_state->short_name);
 		return NULL;
 	}
 
-	pdbg(st->logger,
+	ldbg(st->logger,
 	     "send? yes, IKEv1 IPsec SA in state %s is established and has the established ISAKMP SA "PRI_SO,
 	     st->st_state->short_name,
 	     pri_so(isakmp->sa.st_serialno));
@@ -2801,14 +2805,14 @@ bool v1_state_busy(const struct state *st)
 	passert(st != NULL);
 
 	if (st->st_v1_background_md != NULL) {
-		dbg("#%lu is busy; has background MD %p",
-		    st->st_serialno, st->st_v1_background_md);
+		ldbg(st->logger, PRI_SO" is busy; has background MD %p",
+		     pri_so(st->st_serialno), st->st_v1_background_md);
 		return true;
 	}
 
 	if (st->ipseckey_dnsr != NULL) {
-		dbg("#%lu is busy; has IPSECKEY DNS %p",
-		    st->st_serialno, st->ipseckey_dnsr);
+		ldbg(st->logger, PRI_SO" is busy; has IPSECKEY DNS %p",
+		     pri_so(st->st_serialno), st->ipseckey_dnsr);
 		return true;
 	}
 
@@ -2818,30 +2822,31 @@ bool v1_state_busy(const struct state *st)
 	 */
 	if (st->st_v1_offloaded_task_in_background) {
 		pexpect(st->st_offloaded_task != NULL);
-		dbg("#%lu is idle; has background offloaded task",
-		    st->st_serialno);
+		ldbg(st->logger, PRI_SO" is idle; has background offloaded task",
+		     pri_so(st->st_serialno));
 		return false;
 	}
 	/*
 	 * If this state is busy calculating.
 	 */
 	if (st->st_offloaded_task != NULL) {
-		dbg("#%lu is busy; has an offloaded task",
-		    st->st_serialno);
+		ldbg(st->logger, PRI_SO" is busy; has an offloaded task",
+		     pri_so(st->st_serialno));
 		return true;
 	}
-	dbg("#%lu is idle", st->st_serialno);
+	ldbg(st->logger, PRI_SO" is idle", pri_so(st->st_serialno));
 	return false;
 }
 
 bool verbose_v1_state_busy(const struct state *st)
 {
 	if (st == NULL) {
-		dbg("#null state always idle");
+		struct logger *logger = &global_logger;
+		ldbg(logger, "#null state always idle");
 		return false;
 	}
 	if (!v1_state_busy(st)) {
-		dbg("#%lu idle", st->st_serialno);
+		ldbg(st->logger, PRI_SO" idle", pri_so(st->st_serialno));
 		return false;
 	}
 

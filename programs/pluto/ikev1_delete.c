@@ -107,8 +107,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 		};
 		hdr.isa_ike_initiator_spi = ike->sa.st_ike_spis.initiator;
 		hdr.isa_ike_responder_spi = ike->sa.st_ike_spis.responder;
-		passert(out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
-				   &r_hdr_pbs));
+		passert(pbs_out_struct(&reply_pbs, hdr, &isakmp_hdr_desc, &r_hdr_pbs));
 	}
 
 	/* HASH -- value to be filled later */
@@ -128,35 +127,36 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 			.isad_nospi = 1,
 		};
 
-		struct pbs_out del_pbs;
+
 		switch (impair.v1_isakmp_delete_payload) {
 		case IMPAIR_EMIT_NO:
-			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs, &del_pbs));
-			passert(out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE,
-					&del_pbs, "initiator SPI"));
-			passert(out_raw(st->st_ike_spis.responder.bytes, COOKIE_SIZE,
-					&del_pbs, "responder SPI"));
-			close_output_pbs(&del_pbs);
+		{
+			struct pbs_out del_pbs;
+			passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
+			passert(pbs_out_thing(&del_pbs, st->st_ike_spis.initiator, "initiator SPI"));
+			passert(pbs_out_thing(&del_pbs, st->st_ike_spis.responder, "responder SPI"));
+			close_pbs_out(&del_pbs);
 			break;
+		}
 		case IMPAIR_EMIT_OMIT:
 			llog(RC_LOG, st->logger, "IMPAIR: omitting ISKMP delete payload");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs, &del_pbs));
 			llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) ISKMP delete payload");
-			close_output_pbs(&del_pbs);
+			passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, NULL));
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
+		{
 			llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate ISKMP delete payloads");
 			for (unsigned nr = 0; nr < 2; nr++) {
-				passert(out_struct(&isad, &isakmp_delete_desc, &r_hdr_pbs, &del_pbs));
-				passert(out_raw(st->st_ike_spis.initiator.bytes, COOKIE_SIZE,
-						&del_pbs, "initiator SPI"));
-				passert(out_raw(st->st_ike_spis.responder.bytes, COOKIE_SIZE,
-						&del_pbs, "responder SPI"));
-				close_output_pbs(&del_pbs);
+				struct pbs_out del_pbs;
+				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
+				passert(pbs_out_thing(&del_pbs, st->st_ike_spis.initiator, "initiator SPI"));
+				passert(pbs_out_thing(&del_pbs, st->st_ike_spis.responder, "responder SPI"));
+				close_pbs_out(&del_pbs);
 			}
 			break;
+		}
 		}
 
 	} else {
@@ -170,34 +170,33 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 				.isad_nospi = 1,
 			};
 
-			struct pbs_out del_pbs;
 			switch (impair.v1_ipsec_delete_payload) {
 			case IMPAIR_EMIT_NO:
-				passert(out_struct(&isad, &isakmp_delete_desc,
-						   &r_hdr_pbs, &del_pbs));
-				passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
-						&del_pbs, "delete payload"));
-				close_output_pbs(&del_pbs);
+			{
+				struct pbs_out del_pbs;
+				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
+				passert(pbs_out_thing(&del_pbs, ns->spi, "delete payload"));
+				close_pbs_out(&del_pbs);
 				break;
+			}
 			case IMPAIR_EMIT_OMIT:
 				llog(RC_LOG, st->logger, "IMPAIR: omitting IPsec delete payload");
 				break;
 			case IMPAIR_EMIT_EMPTY:
-				passert(out_struct(&isad, &isakmp_delete_desc,
-						   &r_hdr_pbs, &del_pbs));
+				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, NULL));
 				llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) IPsec delete payload");
-				close_output_pbs(&del_pbs);
 				break;
 			case IMPAIR_EMIT_DUPLICATE:
+			{
 				llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate IPsec delete payloads");
 				for (unsigned nr = 0; nr < 2; nr++) {
-					passert(out_struct(&isad, &isakmp_delete_desc,
-							   &r_hdr_pbs, &del_pbs));
-					passert(out_raw(&ns->spi, sizeof(ipsec_spi_t),
-							&del_pbs, "delete payload"));
-					close_output_pbs(&del_pbs);
+					struct pbs_out del_pbs;
+					passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
+					passert(pbs_out_thing(&del_pbs, ns->spi, "delete payload"));
+					close_pbs_out(&del_pbs);
 				}
 				break;
+			}
 			}
 
 			if (impair.ikev1_del_with_notify) {
@@ -211,11 +210,9 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 					.isan_type = v1N_INVALID_PAYLOAD_TYPE,
 				};
 
-				passert(out_struct(&isan, &isakmp_notification_desc, &r_hdr_pbs,
-					&cruft_pbs));
-				passert(out_raw(&ns->spi, sizeof(ipsec_spi_t), &cruft_pbs,
-					"notify payload"));
-				close_output_pbs(&cruft_pbs);
+				passert(pbs_out_struct(&r_hdr_pbs, isan, &isakmp_notification_desc, &cruft_pbs));
+				passert(pbs_out_thing(&cruft_pbs, ns->spi, "notify payload"));
+				close_pbs_out(&cruft_pbs);
 			}
 		}
 	}
@@ -252,6 +249,7 @@ void llog_n_maybe_send_v1_delete(struct ike_sa *ike, struct state *st, where_t w
  * but mark it as bogus.
  */
 
+NONNULL(1)
 static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 						    uint8_t protoid,
 						    ipsec_spi_t spi,
@@ -263,7 +261,7 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 	struct state_filter sf = {
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL),
 			.where = HERE,
 		},
 	};

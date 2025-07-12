@@ -46,7 +46,7 @@
  */
 bool emit_nat_traversal_vid(struct pbs_out *outs, const struct connection *c)
 {
-	dbg("nat add vid");
+	ldbg(outs->logger, "nat add vid");
 
 	/*
 	 * Some Cisco's have a broken NAT-T implementation where it
@@ -60,11 +60,11 @@ bool emit_nat_traversal_vid(struct pbs_out *outs, const struct connection *c)
 	 */
 	switch (c->config->ikev1_natt) {
 	case NATT_RFC:
-		dbg("skipping VID_NATT drafts");
+		ldbg(outs->logger, "skipping VID_NATT drafts");
 		return out_v1VID(outs, VID_NATT_RFC);
 
 	case NATT_BOTH:
-		dbg("emitting draft and RFC NATT VIDs");
+		ldbg(outs->logger, "emitting draft and RFC NATT VIDs");
 		return (out_v1VID(outs, VID_NATT_RFC) &&
 			/* drafts */
 			out_v1VID(outs, VID_NATT_IETF_03) &&
@@ -72,14 +72,14 @@ bool emit_nat_traversal_vid(struct pbs_out *outs, const struct connection *c)
 			out_v1VID(outs, VID_NATT_IETF_02));
 
 	case NATT_DRAFTS:
-		dbg("skipping VID_NATT_RFC");
+		ldbg(outs->logger, "skipping VID_NATT_RFC");
 		return (out_v1VID(outs, VID_NATT_IETF_03) &&
 			out_v1VID(outs, VID_NATT_IETF_02_N) &&
 			out_v1VID(outs, VID_NATT_IETF_02));
 
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */
-		dbg("not emitting any NATT VID's");
+		ldbg(outs->logger, "not emitting any NATT VID's");
 		return true;
 
 	default:
@@ -87,17 +87,18 @@ bool emit_nat_traversal_vid(struct pbs_out *outs, const struct connection *c)
 	}
 }
 
-static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vid)
+static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vid,
+						    struct logger *logger)
 {
 	switch (nat_t_vid) {
 	case VID_NATT_IETF_00:
-		dbg("NAT_TRAVERSAL_METHOD_IETF_00_01 no longer supported");
+		ldbg(logger, "NAT_TRAVERSAL_METHOD_IETF_00_01 no longer supported");
 		return NAT_TRAVERSAL_METHOD_none;
 
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
 	case VID_NATT_IETF_03:
-		dbg("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_02_03");
+		ldbg(logger, "returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_02_03");
 		return NAT_TRAVERSAL_METHOD_IETF_02_03;
 
 	case VID_NATT_IETF_04:
@@ -106,11 +107,11 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
-		dbg("NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 ");
+		ldbg(logger, "NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 ");
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
 
 	case VID_NATT_RFC:
-		dbg("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC");
+		ldbg(logger, "returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC");
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
 
 	default:
@@ -125,7 +126,8 @@ void check_nat_traversal_vid(struct ike_sa *ike, const struct msg_digest *md)
 	     md->v1_quirks.qnat_traversal_vid);
 	if ((md->v1_quirks.qnat_traversal_vid != VID_none) &&
 	    (ike->sa.st_connection->config->ikev1_natt != NATT_NONE)) {
-		enum natt_method v = nat_traversal_vid_to_method(md->v1_quirks.qnat_traversal_vid);
+		enum natt_method v = nat_traversal_vid_to_method(md->v1_quirks.qnat_traversal_vid,
+								 ike->sa.logger);
 
 		ike->sa.hidden_variables.st_nat_traversal = LELEM(v);
 		name_buf vb;
@@ -179,12 +181,13 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	bool found_remote = false;
 
 	for (const struct payload_digest *p = hd; p != NULL; p = p->next) {
-		if (LDBGP(DBG_BASE, st->logger)) {
-			LDBG_log(st->logger, "received NAT-D:");
-			LDBG_dump(st->logger, p->pbs.cur, pbs_left(&p->pbs));
-		}
 
 		shunk_t left = pbs_in_left(&p->pbs);
+		if (LDBGP(DBG_BASE, st->logger)) {
+			LDBG_log(st->logger, "received NAT-D:");
+			LDBG_hunk(st->logger, left);
+		}
+
 		if (hunk_eq(left, hash_local))
 			found_local = true;
 		if (hunk_eq(left, hash_remote))
@@ -214,12 +217,12 @@ bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
 
 	passert(st->st_oakley.ta_prf != NULL);
 
-	dbg("emitting NAT-D payloads");
+	ldbg(outs->logger, "emitting NAT-D payloads");
 
 	unsigned remote_port = endpoint_hport(st->st_remote_endpoint);
 	unsigned short local_port = endpoint_hport(st->st_iface_endpoint->local_endpoint);
 	if (st->st_connection->config->encapsulation == YNA_YES) {
-		dbg("NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
+		ldbg(outs->logger, "NAT-T: encapsulation=yes, so mangling hash to force NAT-T detection");
 		local_port = remote_port = 0;
 	}
 
@@ -270,22 +273,22 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		i++;
 	}
 
-	dbg("NAT-Traversal: received %d NAT-OA.", i);
+	ldbg(logger, "NAT-Traversal: received %d NAT-OA.", i);
 
 	if (i == 0)
 		return;
 
 	if (!hv->st_nated_peer) {
 		llog(RC_LOG, logger,
-			    "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
-			    i);
+		     "NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
+		     i);
 		return;
 	}
 
 	if (i > 1) {
 		llog(RC_LOG, logger,
-			    "NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
-			    i);
+		     "NAT-Traversal: received %d NAT-OA. Using first; ignoring others",
+		     i);
 	}
 
 	/* Take first */
@@ -329,7 +332,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		     str_address(&ip, &b));
 	} else {
 		address_buf b;
-		dbg("received NAT-OA: %s", str_address(&ip, &b));
+		ldbg(logger, "received NAT-OA: %s", str_address(&ip, &b));
 		hv->st_nat_oa = ip;
 	}
 }
@@ -344,7 +347,7 @@ static bool emit_one_natoa(struct pbs_out *outs,
 	};
 
 	struct pbs_out pbs;
-	if (!out_struct(&natoa, pd, outs, &pbs)) {
+	if (!pbs_out_struct(outs, natoa, pd, &pbs)) {
 		return false;
 	}
 
@@ -354,8 +357,8 @@ static bool emit_one_natoa(struct pbs_out *outs,
 	}
 
 	address_buf ab;
-	dbg("NAT-OAi (S): %s", str_address(&ip, &ab));
-	close_output_pbs(&pbs);
+	ldbg(outs->logger, "NAT-OAi (S): %s", str_address(&ip, &ab));
+	close_pbs_out(&pbs);
 	return true;
 }
 
@@ -379,14 +382,14 @@ static void nat_traversal_show_result(struct state *st, uint16_t sport)
 			    "no NAT detected");
 
 	name_buf nb;
-	dbg("NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
-	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ? str_enum_long(&natt_method_names,
-							       NAT_TRAVERSAL_METHOD_IETF_RFC, &nb) :
-	    LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ? str_enum_long(&natt_method_names,
-								 NAT_TRAVERSAL_METHOD_IETF_02_03, &nb) :
-	    "unknown or unsupported method",
-	    sport,
-	    rslt);
+	ldbg(st->logger, "NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
+	     LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ? str_enum_long(&natt_method_names,
+								     NAT_TRAVERSAL_METHOD_IETF_RFC, &nb) :
+	     LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ? str_enum_long(&natt_method_names,
+								       NAT_TRAVERSAL_METHOD_IETF_02_03, &nb) :
+	     "unknown or unsupported method",
+	     sport,
+	     rslt);
 }
 
 void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
@@ -442,9 +445,9 @@ void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 	     st->st_state->kind == STATE_AGGR_I2) &&
 	    nat_traversal_detected(st) &&
 	    endpoint_hport(st->st_iface_endpoint->local_endpoint) != NAT_IKE_UDP_PORT) {
-		dbg("NAT-T: #%lu in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
-		    st->st_serialno, st->st_state->short_name,
-		    NAT_IKE_UDP_PORT);
+		ldbg(st->logger, "NAT-T: "PRI_SO" in %s floating IKEv1 ports to PLUTO_NAT_PORT %d",
+		     pri_so(st->st_serialno), st->st_state->short_name,
+		     NAT_IKE_UDP_PORT);
 		v1_natify_initiator_endpoints(st, where);
 	}
 }
@@ -463,11 +466,11 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	 */
 	endpoint_buf b1, b2;
 	ip_endpoint new_local_endpoint = set_endpoint_port(st->st_iface_endpoint->local_endpoint, ip_hport(NAT_IKE_UDP_PORT));
-	dbg("NAT: #%lu floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
-	    st->st_serialno,
-	    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
-	    str_endpoint(&new_local_endpoint, &b2),
-	    pri_where(where));
+	ldbg(st->logger, "NAT: "PRI_SO" floating local endpoint from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
+	     pri_so(st->st_serialno),
+	     str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
+	     str_endpoint(&new_local_endpoint, &b2),
+	     pri_where(where));
 	/*
 	 * If not already ...
 	 */
@@ -483,9 +486,9 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 		struct iface_endpoint *i = find_iface_endpoint_by_local_endpoint(new_local_endpoint);
 		if (pexpect(i != NULL)) {
 			endpoint_buf b;
-			dbg("NAT: #%lu floating endpoint ended up on interface %s %s",
-			    st->st_serialno, i->ip_dev->real_device_name,
-			    str_endpoint(&i->local_endpoint, &b));
+			ldbg(st->logger, "NAT: "PRI_SO" floating endpoint ended up on interface %s %s",
+			     pri_so(st->st_serialno), i->ip_dev->real_device_name,
+			     str_endpoint(&i->local_endpoint, &b));
 			iface_endpoint_delref(&st->st_iface_endpoint);
 			st->st_iface_endpoint = i;
 		}

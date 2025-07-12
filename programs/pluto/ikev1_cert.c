@@ -91,11 +91,11 @@ bool v1_decode_certs(struct msg_digest *md)
 	}
 
 	if (st->st_remote_certs.verified != NULL) {
-		dbg("hacking around a redundant call to v1_process_certs() - releasing verified");
+		ldbg(md->logger, "hacking around a redundant call to v1_process_certs() - releasing verified");
 		release_certs(&st->st_remote_certs.verified);
 	}
 	if (st->st_remote_certs.pubkey_db != NULL) {
-		dbg("hacking around a redundant call to v1_process_certs() - releasing pubkey_db");
+		ldbg(md->logger, "hacking around a redundant call to v1_process_certs() - releasing pubkey_db");
 		free_public_keys(&st->st_remote_certs.pubkey_db);
 	}
 
@@ -248,12 +248,11 @@ bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, struct pbs_out *outs
 		.isacert_length = 0, /* XXX unused on sending ? */
 	};
 
-	if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc, outs,
-				&cert_pbs) ||
-	    !out_hunk(cert, &cert_pbs, "CERT"))
+	if (!pbs_out_struct(outs, cert_hd, &isakmp_ipsec_certificate_desc, &cert_pbs) ||
+	    !pbs_out_hunk(&cert_pbs, cert, "CERT"))
 		return false;
 
-	close_output_pbs(&cert_pbs);
+	close_pbs_out(&cert_pbs);
 	return true;
 }
 
@@ -265,11 +264,11 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 		.isacr_type = type,
 	};
 
-	if (!out_struct(&cr_hd, &isakmp_ipsec_cert_req_desc, outs, &cr_pbs) ||
-	    (ca.ptr != NULL && !out_hunk(ca, &cr_pbs, "CA")))
+	if (!pbs_out_struct(outs, cr_hd, &isakmp_ipsec_cert_req_desc, &cr_pbs) ||
+	    (ca.ptr != NULL && !pbs_out_hunk(&cr_pbs, ca, "CA")))
 		return false;
 
-	close_output_pbs(&cr_pbs);
+	close_pbs_out(&cr_pbs);
 	return true;
 }
 
