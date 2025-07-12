@@ -83,9 +83,8 @@ struct logger *tool_logger(int argc UNUSED, char *argv[])
 	return &progname_logger;
 }
 
-void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, enum stream stream)
 {
-	enum stream stream = (rc_flags & STREAM_MASK);
 	switch (stream) {
 	case RC_LOG:
 	case ALL_STREAMS:

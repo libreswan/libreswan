@@ -115,7 +115,7 @@ size_t jam_prefix(struct jambuf *buf, const struct logger *logger);
 
 /* these include ": " when jam_prefix() is non-empty */
 size_t jam_logger_prefix(struct jambuf *buf, const struct logger *logger);
-void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
+void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum stream stream);
 
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
@@ -142,7 +142,7 @@ void llog(enum stream stream, const struct logger *log,
 void llog_va_list(enum stream stream, const struct logger *logger,
 		  const char *message, va_list ap) VPRINTF_LIKE(3);
 
-void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
+void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stream stream);
 
 #define LLOG_JAMBUF(STREAM, LOGGER, BUF)				\
 	/* create the buffer */						\

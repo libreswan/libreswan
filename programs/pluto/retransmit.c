@@ -220,7 +220,8 @@ enum retransmit_action retransmit(struct state *st)
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
 	    deltatime_exceeds_limit) {
-		LLOG_JAMBUF(RC_NORETRANSMISSION, st->logger, buf) {
+		whack_rc(RC_NORETRANSMISSION, st->logger);
+		LLOG_JAMBUF(RC_LOG, st->logger, buf) {
 			jam(buf, "%s: ", st->st_state->name);
 			if (retransmit_count_exceeded) {
 				jam(buf, "max number of retransmissions (%lu) reached after ",

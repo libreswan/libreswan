@@ -26,11 +26,11 @@ east #
 "westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT request; retransmitting response
 "westnet-eastnet-ikev2" #1: received duplicate IKE_SA_INIT request; retransmitting response
 "westnet-eastnet-ikev2" #1: IKE_AUTH request fragment 1 of 6 has duplicate Message ID 1; retransmitting response
-| "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 2 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
-| "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 3 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
-| "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 4 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
-| "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 5 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
-| "westnet-eastnet-ikev2" #1: Message ID: IKE_AUTH request fragment 6 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE_AUTH request fragment 2 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE_AUTH request fragment 3 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE_AUTH request fragment 4 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE_AUTH request fragment 5 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
+| Message ID: IKE_AUTH request fragment 6 of 6 has duplicate Message ID 1 but is not fragment 1; message dropped
 east #
  ipsec _kernel state
 east #

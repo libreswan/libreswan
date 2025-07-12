@@ -170,13 +170,6 @@ static int whack_read_reply(int sock,
 
 			switch (s) {
 
-			case RC_LOG:
-				/*
-				 * Ignore; these logs are
-				 * informational only.
-				 */
-				break;
-
 			case RC_ENTERSECRET:
 				if (xauthpass == NULL) {
 					llog_error(logger, 0, "unexpected request for xauth password");
