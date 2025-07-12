@@ -3,6 +3,8 @@ See also https://libreswan.org/
 v5.4 (unreleased)
 * config:
   - fix plutodebug=all,add-prefix [Andrew #2338]
+* testing:
+  - FreeBSD upgraded to 14.3 [Andrew #2341]
 
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)
