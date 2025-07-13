@@ -1901,7 +1901,7 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
 		 * decimal it should be clear.
 		 *
 		 * XXX: the same conversion code appears in
-		 * out_struct() and probably elsewhere?
+		 * pbs_out_struct() and probably elsewhere?
 		 */
 		passert(fp->size > 0);
 		passert(fp->size <= sizeof(nat));
@@ -2841,7 +2841,7 @@ bool ikev1_out_generic(struct_desc *sd,
 	struct isakmp_generic gen = {
 		.isag_np = 0,
 	};
-	return out_struct(&gen, sd, outs, obj_pbs);
+	return pbs_out_struct(outs, gen, sd, obj_pbs);
 }
 
 bool ikev1_out_generic_raw(struct_desc *sd,

@@ -98,8 +98,8 @@ struct fixup {
  * memory.  Several routines are provided to manipulate these objects.
  * Actual packet transfer is done elsewhere.
  *
- * Note: it is safe to copy a PBS with no children because a PBS
- * is only pointed to by its children.  This is done in out_struct().
+ * Note: it is safe to copy a PBS with no children because a PBS is
+ * only pointed to by its children.  This is done in pbs_out_struct().
  */
 
 struct pbs_in {
@@ -294,9 +294,6 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 			 struct_desc *sd, struct pbs_out *obj_pbs) MUST_USE_RESULT;
 #define pbs_out_struct(PBS, STRUCT, STRUCT_DESC, STRUCT_PBS)		\
 	pbs_out_struct_desc(PBS, &(STRUCT), sizeof(STRUCT), STRUCT_DESC, STRUCT_PBS)
-
-#define out_struct(STRUCT_PTR, STRUCT_DESC, PBS, STRUCT_PBS)		\
-	pbs_out_struct_desc(PBS, STRUCT_PTR, sizeof *(STRUCT_PTR), STRUCT_DESC, STRUCT_PBS)
 
 extern bool ikev1_out_generic(struct_desc *sd,
 			      struct pbs_out *outs,
