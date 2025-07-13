@@ -5100,15 +5100,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Now try to resolve the host/nexthop in .config, copying the
-	 * result into the connection.
-	 */
-
-	if (!resolve_connection_hosts_from_configs(c, config, host_afi, verbose)) {
-		vdbg("could not resolve connection");
-	}
-
-	/*
 	 * Cross-check the auth= vs authby= results.
 	 */
 
@@ -5294,6 +5285,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * CK_PERMANENT need one.  Does CK_TEMPLATE need one?
 	 */
 	c->child.reqid = child_reqid(c->config, c->logger);
+
+	/*
+	 * Now try to resolve the host/nexthop in .config, copying the
+	 * result into the connection.
+	 */
+
+	if (!resolve_connection_hosts_from_configs(c, config, host_afi, verbose)) {
+		vdbg("could not resolve connection");
+	}
 
 	/*
 	 * Fill in the child's selector proposals from the config.  It
