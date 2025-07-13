@@ -783,6 +783,71 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	peer->nexthop = peer_nexthop;
 }
 
+static bool resolve_connection_hosts_from_configs(struct connection *c,
+						  const struct config *config,
+						  const struct ip_info *host_afi,
+						  struct verbose verbose)
+{
+	struct resolve_end resolve[END_ROOF] = {0};
+
+	bool can_resolve = true;
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		const struct host_end_config *src = &config->end[lr].host;
+ 		struct resolve_end *dst = &resolve[lr];
+ 		const char *leftright = config->end[lr].leftright;
+
+		/* leftright */
+		dst->leftright = leftright;
+
+		/* nexthop */
+		dst->nexthop.name = src->nexthop.name;
+		dst->nexthop.addr = src->nexthop.addr;
+		dst->nexthop.type = src->nexthop.type;
+
+		/* host */
+		ip_address host_addr;
+		if (src->host.type == KH_IPHOSTNAME) {
+			err_t e = ttoaddress_dns(shunk1(src->host.name), host_afi, &host_addr);
+			if (e != NULL) {
+				/*
+				 * XXX: failing ttoaddress*() sets
+				 * host_addr to unset but want
+				 * src.host.addr.
+				 */
+				vlog("failed to resolve '%s%s=%s' at load time: %s",
+				     leftright, "", src->host.name, e);
+				can_resolve = false;
+				host_addr = src->host.addr;
+			}
+		} else {
+			host_addr = src->host.addr;
+		}
+		dst->host.name = src->host.name;
+		dst->host.addr = host_addr;
+		dst->host.type = src->host.type;
+	}
+
+	if (can_resolve) {
+		resolve_default_route(&resolve[LEFT_END],
+				      &resolve[RIGHT_END],
+				      host_afi,
+				      verbose);
+		resolve_default_route(&resolve[RIGHT_END],
+				      &resolve[LEFT_END],
+				      host_afi,
+				      verbose);
+	}
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		update_hosts_from_end_host_addr(c, lr,
+						resolve[lr].host.addr,
+						resolve[!lr].nexthop.addr,
+						HERE); /* from add */
+	}
+
+	return can_resolve;
+}
+
 /*
  * Figure out the host / nexthop / client addresses.
  *
@@ -5035,66 +5100,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Now copy the extracted values into the resolve structure
-	 * and try to resolve them.
+	 * Now try to resolve the host/nexthop in .config, copying the
+	 * result into the connection.
 	 */
 
-	struct resolve_end resolve[END_ROOF] = {
-		[LEFT_END] = { .leftright = "left", },
-		[RIGHT_END] = { .leftright = "right", },
-	};
-
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		struct host_end_config *src = &config->end[lr].host;
- 		struct resolve_end *dst = &resolve[lr];
-		/* host */
-		dst->host.name = src->host.name;
-		dst->host.addr = src->host.addr;
-		dst->host.type = src->host.type;
-		/* nexthop */
-		dst->nexthop.name = src->nexthop.name;
-		dst->nexthop.addr = src->nexthop.addr;
-		dst->nexthop.type = src->nexthop.type;
-	}
-
-	bool can_resolve = true;
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-
- 		struct resolve_host *host = &resolve[lr].host;
- 		const char *leftright = wm->end[lr].leftright;
-		const char *name = "";
-		const char *value = host->name;
-
-		if (host->type == KH_IPHOSTNAME) {
-			ip_address addr;
-			err_t e = ttoaddress_dns(shunk1(value), host_afi, &addr);
-			if (e == NULL) {
-				host->addr = addr;
-				continue;
-			}
-
-			vlog("failed to resolve '%s%s=%s' at load time: %s",
-			     leftright, name, value, e);
-			can_resolve = false;
-		}
-	}
-
-	if (can_resolve) {
-		resolve_default_route(&resolve[LEFT_END],
-				      &resolve[RIGHT_END],
-				      host_afi,
-				      verbose);
-		resolve_default_route(&resolve[RIGHT_END],
-				      &resolve[LEFT_END],
-				      host_afi,
-				      verbose);
-	}
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		update_hosts_from_end_host_addr(c, end,
-						resolve[end].host.addr,
-						resolve[!end].nexthop.addr,
-						HERE); /* from add */
+	if (!resolve_connection_hosts_from_configs(c, config, host_afi, verbose)) {
+		vdbg("could not resolve connection");
 	}
 
 	/*
