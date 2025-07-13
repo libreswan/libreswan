@@ -124,7 +124,7 @@ struct pbs_out {
 	/*
 	 * For patching Length field in header.
 	 *
-	 * Filled in by close_output_pbs().
+	 * Filled in by close_pbs_out().
 	 * Note: it may not be aligned.
 	 */
 	uint8_t *lenfld;	/* start of variable length field */
@@ -256,7 +256,6 @@ extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
 
 bool close_pbs_out(struct pbs_out *pbs);
-#define close_output_pbs close_pbs_out
 
 /*
  * For sending packets (such as notifications) that won't fragment.

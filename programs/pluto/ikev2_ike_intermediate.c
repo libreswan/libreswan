@@ -286,7 +286,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
 					return STF_INTERNAL_ERROR;
 				}
-				close_output_pbs(&ppks);
+				close_pbs_out(&ppks);
 				free_chunk_content(&ppk_confirmation);
 			}
 		} else {
@@ -316,7 +316,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
 						return STF_INTERNAL_ERROR;
 					}
-					close_output_pbs(&ppks);
+					close_pbs_out(&ppks);
 					free_chunk_content(&ppk_confirmation);
 				}
 			}
@@ -499,7 +499,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 						return STF_INTERNAL_ERROR;
 					}
-					close_output_pbs(&ppks);
+					close_pbs_out(&ppks);
 				}
 				free_chunk_content(&ppk_confirmation);
 			}

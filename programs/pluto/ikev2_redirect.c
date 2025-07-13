@@ -244,7 +244,7 @@ bool emit_v2N_REDIRECT_response(struct pbs_out *pbs,
 		return false;
 	}
 
-	close_output_pbs(&redirect);
+	close_pbs_out(&redirect);
 	return true;
 }
 
@@ -321,7 +321,7 @@ bool emit_v2N_REDIRECT(const char *destination, struct pbs_out *outs)
 		return false;
 	}
 
-	close_output_pbs(&redirect);
+	close_pbs_out(&redirect);
 	return true;
 }
 
@@ -336,7 +336,7 @@ bool emit_v2N_REDIRECTED_FROM(const ip_address *old_gateway, struct pbs_out *out
 		return false;
 	}
 
-	close_output_pbs(&redirected_from);
+	close_pbs_out(&redirected_from);
 	return true;
 }
 

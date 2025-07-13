@@ -90,7 +90,7 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			pbs_out_repeated_byte(&z, byte, g->len, "fake g^x") &&
-			(close_output_pbs(&z), true);
+			(close_pbs_out(&z), true);
 	}
 	}
 }
@@ -158,7 +158,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 		}
 	}
 
-	close_output_pbs(pbs);
+	close_pbs_out(pbs);
 	return true;
 }
 
@@ -243,7 +243,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		}
 	}
 
-	close_output_pbs(pbs);
+	close_pbs_out(pbs);
 
 	/* XXX: not ldbg(pbs->logger) as can be NULL */
 	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",

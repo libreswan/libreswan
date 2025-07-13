@@ -445,7 +445,7 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 			return false;
 		}
 
-		close_output_pbs(&nr_pbs);
+		close_pbs_out(&nr_pbs);
 	}
 
 
@@ -802,7 +802,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 		/* no payload */
-		close_output_pbs(&rekey_pbs);
+		close_pbs_out(&rekey_pbs);
 
 	}
 

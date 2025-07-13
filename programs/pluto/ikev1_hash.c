@@ -56,7 +56,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 			return false; /*fatal*/
 		}
 	}
-	close_output_pbs(&hash_pbs);
+	close_pbs_out(&hash_pbs);
 	/* save start of rest of message for later */
 	fixup->body = rbody->cur;
 	return true;

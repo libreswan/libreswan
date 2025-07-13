@@ -335,7 +335,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 		return;
 	}
 
-	close_output_pbs(&hdr_pbs);
+	close_pbs_out(&hdr_pbs);
 	send_pbs_out_using_md(md, "notification packet", &packet.pbs);
 }
 
