@@ -26,31 +26,33 @@
 
 static struct root_certs *root_cert_db;
 
-struct root_certs *root_certs_addref_where(where_t where, struct logger *logger)
+struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 {
-	passert(in_main_thread());
+	struct logger *logger = &global_logger;
+	PASSERT(logger, in_main_thread());
 
 	/* extend or set cert cache lifetime */
 	schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
 	if (root_cert_db != NULL) {
-		return addref_where(root_cert_db, logger, where);
+		return refcnt_addref(root_cert_db, owner, where);
 	}
 
-	dbg("loading root certificate cache");
+	ldbg(owner, "loading root certificate cache");
 
 	/*
 	 * Always allocate the ROOT_CERTS structure.  If things fail,
 	 * it will contain an empty list of certificates (but avoid
 	 * possibly expensive attempts to re-load).
 	 */
+
 	root_cert_db = refcnt_alloc(struct root_certs, logger, where);
+	root_cert_db->logger = logger;
+	root_cert_db->trustcl = CERT_NewCertList();
 
 	/*
-	 * Start with two references: the ROOT_CERT_DB; and the result
-	 * of this function.
+	 * Add a second reference for the caller.
 	 */
-	struct root_certs *root_certs = addref_where(root_cert_db, logger, where); /* function result */
-	root_certs->trustcl = CERT_NewCertList();
+	struct root_certs *root_certs = refcnt_addref(root_cert_db, owner, where); /* function result */
 
 	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
@@ -79,11 +81,11 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *logger)
 	     !CERT_LIST_END(node, allcerts);
 	     node = CERT_LIST_NEXT(node)) {
 		if (!CERT_IsCACert(node->cert, NULL)) {
-			dbg("discarding non-CA cert %s", node->cert->subjectName);
+			ldbg(logger, "discarding non-CA cert %s", node->cert->subjectName);
 			continue;
 		}
 		if (!node->cert->isRoot) {
-			dbg("discarding non-root CA cert %s", node->cert->subjectName);
+			ldbg(logger, "discarding non-root CA cert %s", node->cert->subjectName);
 			continue;
 		}
 		llog(RC_LOG, logger, "adding the CA+root cert %s", node->cert->subjectName);

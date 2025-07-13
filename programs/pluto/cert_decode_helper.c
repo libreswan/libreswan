@@ -76,7 +76,7 @@ void submit_v2_cert_decode(struct ike_sa *ike,
 			   cert_decode_cb *cb, where_t where)
 {
 	struct task task = {
-		.root_certs = root_certs_addref(&global_logger),
+		.root_certs = root_certs_addref(ike->sa.logger),
 		.md = md_addref(md),
 		.cert_payloads = cert_payloads,
 		.cb = cb,

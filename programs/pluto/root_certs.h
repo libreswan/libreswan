@@ -25,10 +25,11 @@ void free_root_certs(struct logger *logger);
 
 struct root_certs {
 	refcnt_t refcnt;
+	const struct logger *logger; /* makes refcnt easier */
 	CERTCertList *trustcl;
 };
 
-struct root_certs *root_certs_addref_where(where_t where, struct logger *logger);
+struct root_certs *root_certs_addref_where(where_t where, struct logger *owner);
 #define root_certs_addref(LOGGER) root_certs_addref_where(HERE, LOGGER)
 
 void root_certs_delref_where(struct root_certs **,
