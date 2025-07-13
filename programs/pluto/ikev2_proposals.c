@@ -94,7 +94,7 @@ static bool v2_out_attr_variable(struct pbs_out *pbs,
 		.isatr_type = type & ~ISAKMP_ATTR_AF_TV,
 		.isatr_lv = chunk.len,
 	};
-	if (!pbs_out_struct(pbs, attr, &ikev2_trans_attr_desc, pbs, NULL)) {
+	if (!pbs_out_struct(pbs, attr, &ikev2_trans_attr_desc, NULL)) {
 		return false;
 	}
 	if (!pbs_out_hunk(pbs, chunk, "attribute value")) {
@@ -1543,7 +1543,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	};
 
 	struct pbs_out proposal_pbs;
-	if (!pbs_out_struct&(sa_pbs, prop, &ikev2_prop_desc, &proposal_pbs)) {
+	if (!pbs_out_struct(sa_pbs, prop, &ikev2_prop_desc, &proposal_pbs)) {
 		return false;
 	}
 
