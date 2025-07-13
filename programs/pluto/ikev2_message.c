@@ -297,8 +297,10 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 
 	passert(sk->wire_iv.ptr <= sk->cleartext.ptr);
 
-	/* XXX: coverity thinks .container (set to E by out_struct()
-	 * above) can be NULL. */
+	/*
+	 * XXX: coverity thinks .container (set to E by
+	 * pbs_out_struct() above) can be NULL.
+	 */
 	passert(sk->pbs.container != NULL && sk->pbs.container->name == container->name);
 
 	ldbg(sk->logger, "%s() %s=[%zu,%zu) %s=[%zu,%zu)",
@@ -364,7 +366,7 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 	/* close the SK payload */
 
 	sk->payload.len = sk->pbs.cur - sk->payload.ptr;
-	close_output_pbs(&sk->pbs);
+	close_pbs_out(&sk->pbs);
 
 	ldbg(sk->logger, "%s() payload=%zu bytes %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu)",
 	     __func__, sk->padding.len,
@@ -499,9 +501,9 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
 		llog_pexpect(ike->sa.logger, HERE,
-			     "received encrypted packet from %s but no exponents for state #%lu to decrypt it",
+			     "received encrypted packet from %s but no exponents for state "PRI_SO" to decrypt it",
 			     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
-			     ike->sa.st_serialno);
+			     pri_so(ike->sa.st_serialno));
 		return false;
 	}
 
@@ -618,7 +620,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 			return false;
 		}
 
-		dbg("authenticator matched");
+		ldbg(ike->sa.logger, "authenticator matched");
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload before decryption:");
@@ -659,13 +661,13 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	if (pad_to_blocksize) {
 		if (padlen > enc_blocksize) {
 			/* probably racoon */
-			dbg("payload contains %zu blocks of extra padding (padding-length: %d (octet 0x%2x), encryption block-size: %zu)",
+			ldbg(ike->sa.logger, "payload contains %zu blocks of extra padding (padding-length: %d (octet 0x%2x), encryption block-size: %zu)",
 			    (padlen - 1) / enc_blocksize,
 			    padlen, padlen - 1, enc_blocksize);
 		}
 	} else {
 		if (padlen > 1) {
-			dbg("payload contains %u octets of extra padding (padding-length: %u (octet 0x%2x))",
+			ldbg(ike->sa.logger, "payload contains %u octets of extra padding (padding-length: %u (octet 0x%2x))",
 			    padlen - 1, padlen, padlen - 1);
 		}
 	}
@@ -674,7 +676,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 * Don't check the contents of the pad octets; racoon, for
 	 * instance, sets them to random values.
 	 */
-	dbg("stripping %u octets as pad", padlen);
+	ldbg(ike->sa.logger, "stripping %u octets as pad", padlen);
 	*plain = shunk2(enc.ptr, enc.len - padlen);
 
 	return true;
@@ -793,8 +795,8 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	struct ikev2_skf *skf_hdr = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 
-	dbg("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
-	    skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
+	ldbg(ike->sa.logger, "received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+	     skf_hdr->isaskf_number, skf_hdr->isaskf_total, skf_hdr->isaskf_np);
 
 	const char *why = ignore_v2_incoming_fragment((*frags), md, skf_hdr);
 	if (why != NULL) {
@@ -833,9 +835,9 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 				skf_hdr->isaskf_total);
 			return FRAGMENT_IGNORED;
 		}
-		dbg("fragment %u of %u decrypted",
-		    skf_hdr->isaskf_number,
-		    skf_hdr->isaskf_total);
+		ldbg(ike->sa.logger, "fragment %u of %u decrypted",
+		     skf_hdr->isaskf_number,
+		     skf_hdr->isaskf_total);
 	}
 
 	/* make space for the fragment (it's worth saving) */
@@ -941,8 +943,8 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				frag->plain = null_shunk;
 				frag->iv_offset = 0;
 			}
-			dbg("saved fragment %u of %u decrypted",
-			    i, (*frags)->total);
+			ldbg(ike->sa.logger, "saved fragment %u of %u decrypted",
+			     i, (*frags)->total);
 		}
 	}
 
@@ -953,23 +955,24 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 		 * Without a valid fragment there's no way to trust
 		 * .md and .total, start again from scratch.
 		 */
-		dbg("all fragments were invalid, .total can NOT be trusted");
+		ldbg(ike->sa.logger, "all fragments were invalid, .total can NOT be trusted");
 		free_v2_incoming_fragments(frags);
 		return false;
 	}
 
 	if ((*frags)->count < (*frags)->total) {
 		/* more to do */
-		dbg("some, but not all fragments were invalid, .total can be trusted");
+		ldbg(ike->sa.logger, "some, but not all fragments were invalid, .total can be trusted");
 		return false;
 	}
 
 	return true;
 }
 
-struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags)
+struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags,
+						    struct logger *logger)
 {
-	dbg("reassembling incoming fragments");
+	ldbg(logger, "reassembling incoming fragments");
 	struct msg_digest *md = md_addref((*frags)->md);
 	passert(md->chain[ISAKMP_NEXT_v2SK] == NULL);
 	passert(md->chain[ISAKMP_NEXT_v2SKF] != NULL);
@@ -1175,22 +1178,22 @@ static bool record_outbound_fragment(struct logger *logger,
 
 	/* output the fragment */
 
-	if (!out_hunk(*fragment, &skf.pbs, "cleartext fragment"))
+	if (!pbs_out_hunk(&skf.pbs, *fragment, "cleartext fragment"))
 		return false;
 
 	if (!close_v2SK_payload(&skf)) {
 		return false;
 	}
 
-	close_output_pbs(&body);
-	close_output_pbs(&message_fragment.pbs);
+	close_pbs_out(&body);
+	close_pbs_out(&message_fragment.pbs);
 
 	if (!encrypt_v2SK_payload(&skf)) {
 		llog(RC_LOG, logger, "error encrypting fragment %u", number);
 		return false;
 	}
 
-	dbg("recording fragment %u", number);
+	ldbg(ike->sa.logger, "recording fragment %u", number);
 	record_v2_outgoing_fragment(&message_fragment.pbs, desc, fragp);
 	return true;
 }
@@ -1338,7 +1341,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
 	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
 		if (!record_outbound_fragments(msg, sk, what, outgoing_fragments)) {
-			dbg("record outbound fragments failed");
+			ldbg(sk->logger, "record outbound fragments failed");
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -1347,7 +1350,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 				    "error encrypting %s message", what);
 			return STF_INTERNAL_ERROR;
 		}
-		dbg("recording outgoing fragment failed");
+		ldbg(sk->logger, "recording outgoing fragment failed");
 		record_v2_message(msg, what, outgoing_fragments);
 	}
 	return STF_OK;
@@ -1474,8 +1477,8 @@ bool close_v2_message(struct v2_message *message)
 	case UNENCRYPTED_PAYLOAD:
 		break;
 	}
-	close_output_pbs(&message->body);
-	close_output_pbs(&message->message);
+	close_pbs_out(&message->body);
+	close_pbs_out(&message->message);
 	return true;
 }
 

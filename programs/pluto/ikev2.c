@@ -1215,7 +1215,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * fragment 1 (which also contains unencrypted
 		 * payloads).
 		 */
-		protected_md = reassemble_v2_incoming_fragments(frags);
+		protected_md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
 		break;
 	}
 	case v2P(SK):

@@ -97,7 +97,8 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 						     struct v2_incoming_fragments **frags);
 bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				   struct v2_incoming_fragments **frags);
-struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags);
+struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags,
+						    struct logger *logger);
 
 bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
 
