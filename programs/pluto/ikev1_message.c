@@ -35,15 +35,6 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *
 	return id_hd;
 }
 
-bool out_raw(const void *bytes, size_t len, struct pbs_out *outs, const char *name)
-{
-	if (!pbs_out_raw(outs, bytes, len, name)) {
-		/* already logged */
-		return false;
-	}
-	return true;
-}
-
 bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 			  const char *name)
 {
@@ -99,7 +90,7 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			pbs_out_repeated_byte(&z, byte, g->len, "fake g^x") &&
-			(close_output_pbs(&z), true);
+			(close_pbs_out(&z), true);
 	}
 	}
 }
@@ -167,7 +158,7 @@ bool close_v1_message(struct pbs_out *pbs, const struct ike_sa *ike)
 		}
 	}
 
-	close_output_pbs(pbs);
+	close_pbs_out(pbs);
 	return true;
 }
 
@@ -252,7 +243,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 		}
 	}
 
-	close_output_pbs(pbs);
+	close_pbs_out(pbs);
 
 	/* XXX: not ldbg(pbs->logger) as can be NULL */
 	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",

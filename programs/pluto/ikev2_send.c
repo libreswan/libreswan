@@ -127,7 +127,7 @@ bool emit_v2UNKNOWN(const char *victim,
 		/* already logged */
 		return false; /*fatal*/
 	}
-	close_output_pbs(&pbs);
+	close_pbs_out(&pbs);
 	return true;
 }
 

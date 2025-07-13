@@ -74,7 +74,7 @@ static bool emit_v2V_raw(struct pbs_out *outs, shunk_t vid, const char *descr)
 		/* already logged */
 		return false;
 	}
-	close_output_pbs(&pbs);
+	close_pbs_out(&pbs);
 	return true;
 }
 

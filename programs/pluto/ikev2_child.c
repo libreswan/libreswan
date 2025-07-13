@@ -176,7 +176,7 @@ static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_o
 		return false; /*fatal */
 	}
 
-	close_output_pbs(&d_pbs);
+	close_pbs_out(&d_pbs);
 	return true;
 }
 
@@ -237,7 +237,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 			/* already logged */
 			return false;
 		}
-		close_output_pbs(&pb_nr);
+		close_pbs_out(&pb_nr);
 	}
 
 	/* KEi - only for CREATE_CHILD_SA; and then only sometimes. */
@@ -527,7 +527,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 			return false;
 		}
 
-		close_output_pbs(&pb_nr);
+		close_pbs_out(&pb_nr);
 
 		/*
 		 * XXX: shouldn't this be conditional on the local end

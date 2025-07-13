@@ -265,7 +265,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		return false;
 	}
 
-	close_output_pbs(&pl);
+	close_pbs_out(&pl);
 	return true;
 }
 
@@ -363,7 +363,7 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 		}
 	}
 
-	close_output_pbs(&n_pbs);
+	close_pbs_out(&n_pbs);
 	return true;
 }
 

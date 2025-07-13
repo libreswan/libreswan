@@ -28,8 +28,6 @@ struct ike_sa;
 
 struct isakmp_ipsec_id build_v1_id_payload(const struct host_end *end, shunk_t *body);
 
-extern bool out_raw(const void *bytes, size_t len, struct pbs_out *outs, const char *name) MUST_USE_RESULT;
-
 extern bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 				 const char *name);
 

@@ -98,8 +98,8 @@ struct fixup {
  * memory.  Several routines are provided to manipulate these objects.
  * Actual packet transfer is done elsewhere.
  *
- * Note: it is safe to copy a PBS with no children because a PBS
- * is only pointed to by its children.  This is done in out_struct().
+ * Note: it is safe to copy a PBS with no children because a PBS is
+ * only pointed to by its children.  This is done in pbs_out_struct().
  */
 
 struct pbs_in {
@@ -124,7 +124,7 @@ struct pbs_out {
 	/*
 	 * For patching Length field in header.
 	 *
-	 * Filled in by close_output_pbs().
+	 * Filled in by close_pbs_out().
 	 * Note: it may not be aligned.
 	 */
 	uint8_t *lenfld;	/* start of variable length field */
@@ -256,7 +256,6 @@ extern struct pbs_out open_pbs_out(const char *name, uint8_t *buffer,
 				   size_t sizeof_buffer, struct logger *logger);
 
 bool close_pbs_out(struct pbs_out *pbs);
-#define close_output_pbs close_pbs_out
 
 /*
  * For sending packets (such as notifications) that won't fragment.
@@ -295,9 +294,6 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 #define pbs_out_struct(PBS, STRUCT, STRUCT_DESC, STRUCT_PBS)		\
 	pbs_out_struct_desc(PBS, &(STRUCT), sizeof(STRUCT), STRUCT_DESC, STRUCT_PBS)
 
-#define out_struct(STRUCT_PTR, STRUCT_DESC, PBS, STRUCT_PBS)		\
-	pbs_out_struct_desc(PBS, STRUCT_PTR, sizeof *(STRUCT_PTR), STRUCT_DESC, STRUCT_PBS)
-
 extern bool ikev1_out_generic(struct_desc *sd,
 			      struct pbs_out *outs,
 			      struct pbs_out *obj_pbs) MUST_USE_RESULT;
@@ -316,8 +312,6 @@ bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
 
 bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		 const char *name) MUST_USE_RESULT;
-
-#define out_hunk(HUNK, OUTS, NAME) pbs_out_hunk(OUTS, HUNK, NAME)
 
 #define pbs_out_hunk(OUTS, HUNK, NAME)					\
 	({								\
