@@ -118,7 +118,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	statetime_t start = statetime_start(st);
 	struct connection *c = st->st_connection;
 
-	struct root_certs *root_certs = root_certs_addref(&global_logger); /* must-release */
+	struct root_certs *root_certs = root_certs_addref(st->logger); /* must-release */
 	struct verified_certs certs = find_and_verify_certs(st->logger, st->st_ike_version,
 							    cert_payloads,
 							    root_certs,
