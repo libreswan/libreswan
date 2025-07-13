@@ -106,7 +106,6 @@ List of Pre-shared secrets (from /etc/ipsec.secrets)
        ckaid: 01
  
 List of X.509 End Certificates:
-adding the CA+root cert E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
  
 List of X.509 CA Certificates:
  
