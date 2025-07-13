@@ -108,8 +108,8 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
 	PEXPECT(ike->sa.logger, null_md == NULL);
 	PEXPECT(ike->sa.logger, null_child_sa == NULL);
-	dbg("%s() for #%lu %s: g^{xy} calculated, sending IKE_AUTH",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending IKE_AUTH",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
 
@@ -127,7 +127,7 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 			get_connection_ppk_and_ppk_id(ike->sa.st_connection);
 
 		if (ppk != NULL) {
-			dbg("found PPK and PPK_ID for our connection");
+			ldbg(ike->sa.logger, "found PPK and PPK_ID for our connection");
 
 			pexpect(ike->sa.st_sk_d_no_ppk == NULL);
 			ike->sa.st_sk_d_no_ppk = symkey_addref(ike->sa.logger, "sk_d_no_ppk",
@@ -286,7 +286,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
-		dbg("not sending INITIAL_CONTACT");
+		ldbg(ike->sa.logger, "not sending INITIAL_CONTACT");
 	}
 
 	/* send out the AUTH payload */
@@ -390,12 +390,12 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;
 		}
-		close_output_pbs(&ppks);
+		close_pbs_out(&ppks);
 
 		if (!cc->config->ppk.insist) {
 			if (!ikev2_calc_no_ppk_auth(ike, &ike->sa.st_v2_id_payload.mac_no_ppk_auth,
 						    &ike->sa.st_no_ppk_auth)) {
-				dbg("ikev2_calc_no_ppk_auth() failed dying");
+				ldbg(ike->sa.logger, "ikev2_calc_no_ppk_auth() failed dying");
 				return STF_FATAL;
 			}
 
@@ -465,8 +465,8 @@ static stf_status ikev2_pam_continue(struct ike_sa *ike,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
-	dbg("%s() for #%lu %s",
-	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	if (!success) {
 		record_v2N_response(ike->sa.logger, ike, md,
@@ -690,10 +690,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	/* Only RFC 8784 PPK mechanism here: */
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_AUTH) {
 		if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
-			dbg("received PPK_IDENTITY");
+			ldbg(ike->sa.logger, "received PPK_IDENTITY");
 			struct ppk_id_payload payl;
 			if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
-				dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+				ldbg(ike->sa.logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 				return STF_FATAL;
 			}
 
@@ -720,9 +720,9 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			}
 		}
 		if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
-			dbg("received NO_PPK_AUTH");
+			ldbg(ike->sa.logger, "received NO_PPK_AUTH");
 			if (c->config->ppk.insist) {
-				dbg("Ignored NO_PPK_AUTH data - connection insists on PPK");
+				ldbg(ike->sa.logger, "Ignored NO_PPK_AUTH data - connection insists on PPK");
 			} else {
 				struct pbs_in pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
 				/* zero length doesn't matter? */
@@ -833,7 +833,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 * we didn't recalculate keys with PPK, but we found NO_PPK_AUTH
 		 * (meaning that initiator did use PPK) so we try to verify NO_PPK_AUTH.
 		 */
-		dbg("going to try to verify NO_PPK_AUTH.");
+		ldbg(ike->sa.logger, "going to try to verify NO_PPK_AUTH.");
 		/*
 		 * Making a dummy struct pbs_in so we could pass it to
 		 * v2_check_auth.
@@ -850,14 +850,14 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			dbg("no PPK auth failed");
+			ldbg(ike->sa.logger, "no PPK auth failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
-		dbg("NO_PPK_AUTH verified");
+		ldbg(ike->sa.logger, "NO_PPK_AUTH verified");
 	} else if (md->pd[PD_v2N_NULL_AUTH] != NULL &&
 		   remote_can_authby_null && !remote_can_authby_digsig) {
 		/*
@@ -876,16 +876,16 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			dbg("NULL_auth from Notify Payload failed");
+			ldbg(ike->sa.logger, "NULL_auth from Notify Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
-		dbg("NULL_AUTH verified");
+		ldbg(ike->sa.logger, "NULL_AUTH verified");
 	} else {
-		dbg("responder verifying AUTH payload");
+		ldbg(ike->sa.logger, "responder verifying AUTH payload");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in,
 						 &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
@@ -893,7 +893,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 			pfree_diag(&d);
-			dbg("I2 Auth Payload failed");
+			ldbg(ike->sa.logger, "I2 Auth Payload failed");
 			record_v2N_response(ike->sa.logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 					    ENCRYPTED_PAYLOAD);
@@ -994,16 +994,17 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 			 * Note that "xauth_server" also refers to
 			 * IKEv2 CP
 			 */
-			dbg("ignoring initial contact: we are a server using PSK and clients are using a group ID");
+			ldbg(ike->sa.logger, "ignoring initial contact: we are a server using PSK and clients are using a group ID");
 		} else if (!pluto_uniqueIDs) {
-			dbg("ignoring initial contact: uniqueIDs disabled");
+			ldbg(ike->sa.logger, "ignoring initial contact: uniqueIDs disabled");
 		} else {
 			struct state *old_p2 = state_by_serialno(c->established_child_sa);
 			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
 			if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
-				dbg("Initial Contact received, deleting old state #%lu from connection %s due to new IKE SA #%lu",
-				    c->established_child_sa, c->name, ike->sa.st_serialno);
+				ldbg(ike->sa.logger, "initial Contact received, deleting old state "PRI_SO" from connection %s due to new IKE SA "PRI_SO,
+				     pri_so(c->established_child_sa),
+				     c->name, pri_so(ike->sa.st_serialno));
 				on_delete(old_p2, skip_send_delete);
 				event_force(EVENT_v2_DISCARD, old_p2);
 			}
@@ -1100,13 +1101,12 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	/* send out the IDr payload */
 	{
 		struct pbs_out r_id_pbs;
-		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
-		    !out_hunk(ike->sa.st_v2_id_payload.data,
-				  &r_id_pbs, "my identity"))
+		if (!pbs_out_struct(response.pbs, ike->sa.st_v2_id_payload.header,
+				    &ikev2_id_r_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, ike->sa.st_v2_id_payload.data, "my identity"))
 			return STF_INTERNAL_ERROR;
-		close_output_pbs(&r_id_pbs);
-		dbg("added IDr payload to packet");
+		close_pbs_out(&r_id_pbs);
+		ldbg(ike->sa.logger, "added IDr payload to packet");
 	}
 
 	/*
@@ -1140,7 +1140,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 */
 
 	if (send_redirect) {
-		dbg("skipping child; redirect response");
+		ldbg(ike->sa.logger, "skipping child; redirect response");
 	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;
@@ -1180,7 +1180,7 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 				      process_v2_IKE_AUTH_response_post_cert_decode, HERE);
 		return STF_SUSPEND;
 	} else {
-		dbg("no certs to decode");
+		ldbg(ike->sa.logger, "no certs to decode");
 		ike->sa.st_remote_certs.processed = true;
 		ike->sa.st_remote_certs.harmless = true;
 		return process_v2_IKE_AUTH_response_post_cert_decode(&ike->sa, md);
@@ -1222,7 +1222,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 			if (c->config->ppk.insist) {
 				llog_sa(RC_LOG, ike,
 					"failed to receive PPK confirmation and connection has ppk=insist");
-				dbg("should be initiating a notify that kills the state");
+				ldbg(ike->sa.logger, "should be initiating a notify that kills the state");
 				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 				return STF_FATAL;
 			}
@@ -1255,7 +1255,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	/* process AUTH payload */
 
-	dbg("initiator verifying AUTH payload");
+	ldbg(ike->sa.logger, "initiator verifying AUTH payload");
 	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 				  ike, &idhash_in,
 				  &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,

@@ -62,13 +62,12 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 			.isac_enc = CERT_PKCS7_WRAPPED_X509,
 		};
 		struct pbs_out cert_pbs;
-		if (!out_struct(&pkcs7_hdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs) ||
-		    !out_hunk(same_secitem_as_chunk(*pkcs7), &cert_pbs, "PKCS7")) {
+		if (!pbs_out_struct(outpbs, pkcs7_hdr, &ikev2_certificate_desc, &cert_pbs) ||
+		    !pbs_out_hunk(&cert_pbs, same_secitem_as_chunk(*pkcs7), "PKCS7")) {
 			SECITEM_FreeItem(pkcs7, PR_TRUE);
 			return STF_INTERNAL_ERROR;
 		}
-		close_output_pbs(&cert_pbs);
+		close_pbs_out(&cert_pbs);
 		SECITEM_FreeItem(pkcs7, PR_TRUE);
 		return STF_OK;
 	}
@@ -86,16 +85,15 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 	{
 		struct pbs_out cert_pbs;
 
-		dbg("sending [CERT] of certificate: %s", cert_nickname(mycert));
+		ldbg(outpbs->logger, "sending [CERT] of certificate: %s", cert_nickname(mycert));
 
-		if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs) ||
-		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
+		if (!pbs_out_struct(outpbs, certhdr, &ikev2_certificate_desc, &cert_pbs) ||
+		    !pbs_out_hunk(&cert_pbs, cert_der(mycert), "CERT")) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
 		}
 
-		close_output_pbs(&cert_pbs);
+		close_pbs_out(&cert_pbs);
 	}
 
 	/* send optional chain CERTs */
@@ -103,16 +101,14 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 		for (int i = 0; i < chain_len ; i++) {
 			struct pbs_out cert_pbs;
 
-			dbg("sending an authcert");
+			ldbg(outpbs->logger, "sending an authcert");
 
-			if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs) ||
-			    !out_hunk(auth_chain[i], &cert_pbs, "CERT"))
-			{
+			if (!pbs_out_struct(outpbs, certhdr, &ikev2_certificate_desc, &cert_pbs) ||
+			    !pbs_out_hunk(&cert_pbs, auth_chain[i], "CERT")) {
 				free_auth_chain(auth_chain, chain_len);
 				return STF_INTERNAL_ERROR;
 			}
-			close_output_pbs(&cert_pbs);
+			close_pbs_out(&cert_pbs);
 		}
 	}
 	free_auth_chain(auth_chain, chain_len);
@@ -130,37 +126,37 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 
 	if (ike->sa.st_peer_wants_null) {
 		/* XXX: only ever true on responder */
-		dbg("IKEv2 CERT: not sending cert: peer wants (we're using?) NULL");
+		ldbg(ike->sa.logger, "IKEv2 CERT: not sending cert: peer wants (we're using?) NULL");
 		return false;
 	}
 
 	if (c->local->host.config->auth == AUTH_EAPONLY) {
-		dbg("IKEv2 CERT: not sending cert: local %sauth==EAPONLY",
-		    c->local->config->leftright);
+		ldbg(ike->sa.logger, "IKEv2 CERT: not sending cert: local %sauth==EAPONLY",
+		     c->local->config->leftright);
 		return false;
 	}
 
 	if (!authby_has_digsig(c->local->host.config->authby)) {
 		authby_buf pb;
-		dbg("IKEv2 CERT: not sending cert: local %sauthby=%s does not have RSA or ECDSA",
-		    c->local->config->leftright,
-		    str_authby(c->local->host.config->authby, &pb));
+		ldbg(ike->sa.logger, "IKEv2 CERT: not sending cert: local %sauthby=%s does not have RSA or ECDSA",
+		     c->local->config->leftright,
+		     str_authby(c->local->host.config->authby, &pb));
 		return false;
 	}
 
 	if (c->local->host.config->cert.nss_cert == NULL) {
-		dbg("IKEv2 CERT: not sending cert: there is no local certificate to send");
+		ldbg(ike->sa.logger, "IKEv2 CERT: not sending cert: there is no local certificate to send");
 		return false;
 	}
 
 	if (c->local->host.config->sendcert == SENDCERT_IFASKED &&
 	    ike->sa.st_v2_ike_seen_certreq) {
-		dbg("IKEv2 CERT: OK to send certificate (send if asked)");
+		ldbg(ike->sa.logger, "IKEv2 CERT: OK to send certificate (send if asked)");
 		return true;
 	}
 
 	if (c->local->host.config->sendcert == SENDCERT_ALWAYS) {
-		dbg("IKEv2 CERT: OK to send a certificate (always)");
+		ldbg(ike->sa.logger, "IKEv2 CERT: OK to send a certificate (always)");
 		return true;
 	}
 

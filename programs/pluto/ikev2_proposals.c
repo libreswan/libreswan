@@ -77,7 +77,7 @@ static bool v2_out_attr_fixed(struct pbs_out *pbs, enum ikev2_trans_attr_type ty
 		.isatr_type = type | ISAKMP_ATTR_AF_TV,
 		.isatr_lv = val,
 	};
-	if (!out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL)) {
+	if (!pbs_out_struct(pbs, attr, &ikev2_trans_attr_desc, NULL)) {
 		llog(RC_LOG, pbs->logger, "%s() for attribute %d failed", __func__, type);
 		return false;
 	}
@@ -94,10 +94,10 @@ static bool v2_out_attr_variable(struct pbs_out *pbs,
 		.isatr_type = type & ~ISAKMP_ATTR_AF_TV,
 		.isatr_lv = chunk.len,
 	};
-	if (!pexpect(out_struct(&attr, &ikev2_trans_attr_desc, pbs, NULL))) {
+	if (!pbs_out_struct(pbs, attr, &ikev2_trans_attr_desc, NULL)) {
 		return false;
 	}
-	if (!pexpect(out_hunk(chunk, pbs, "attribute value"))) {
+	if (!pbs_out_hunk(pbs, chunk, "attribute value")) {
 		return false;
 	}
 	return true;
@@ -1346,7 +1346,7 @@ static bool emit_transform(struct pbs_out *proposal_pbs,
 				       transform_type, transform)) {
 		return false;
 	}
-	close_output_pbs(&transform_pbs); /* set len */
+	close_pbs_out(&transform_pbs); /* set len */
 	return true;
 }
 
@@ -1543,7 +1543,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	};
 
 	struct pbs_out proposal_pbs;
-	if (!out_struct(&prop, &ikev2_prop_desc, sa_pbs, &proposal_pbs)) {
+	if (!pbs_out_struct(sa_pbs, prop, &ikev2_prop_desc, &proposal_pbs)) {
 		return false;
 	}
 
@@ -1560,7 +1560,7 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 		return false;
 	}
 
-	close_output_pbs(&proposal_pbs);
+	close_pbs_out(&proposal_pbs);
 	return true;
 }
 
@@ -1575,7 +1575,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 		.isasa_critical = build_ikev2_critical(false, pbs->logger),
 	};
 	struct pbs_out sa_pbs;
-	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs))
+	if (!pbs_out_struct(pbs, sa, &ikev2_sa_desc, &sa_pbs))
 		return false;
 
 	int propnum;
@@ -1594,7 +1594,7 @@ bool emit_v2SA_proposals(struct pbs_out *pbs,
 		}
 	}
 
-	close_output_pbs(&sa_pbs);
+	close_pbs_out(&sa_pbs);
 	return true;
 }
 
@@ -1610,7 +1610,7 @@ bool emit_v2SA_proposal(struct pbs_out *pbs,
 		.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 	};
 	struct pbs_out sa_pbs;
-	if (!out_struct(&sa, &ikev2_sa_desc, pbs, &sa_pbs)) {
+	if (!pbs_out_struct(pbs, sa, &ikev2_sa_desc, &sa_pbs)) {
 		return false;
 	}
 
@@ -1624,7 +1624,7 @@ bool emit_v2SA_proposal(struct pbs_out *pbs,
 		return false;
 	}
 
-	close_output_pbs(&sa_pbs);
+	close_pbs_out(&sa_pbs);
 	return true;
 }
 

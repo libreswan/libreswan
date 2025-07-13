@@ -275,11 +275,13 @@ struct session {
 
 void pfree_session(struct session **session)
 {
+	struct logger *logger = &global_logger;
+
 	if (*session == NULL) {
 		return;
 	}
 	free_chunk_content(&(*session)->ticket);
-	symkey_delref(&global_logger, "session.sk_d_old", &(*session)->sk_d_old);
+	symkey_delref(logger, "session.sk_d_old", &(*session)->sk_d_old);
 	pfree((*session));
 	(*session) = NULL;
 }
@@ -419,7 +421,7 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 		return false;
 	}
 
-	if (!out_struct(&tl, &ikev2_ticket_lifetime_desc, &resume_pbs, NULL))
+	if (!pbs_out_struct(&resume_pbs, tl, &ikev2_ticket_lifetime_desc, NULL))
 		return false;
 
 	if (!pbs_out_thing(&resume_pbs, ticket, "resume (encrypted) ticket data")) {
@@ -564,11 +566,11 @@ bool record_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike)
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, request.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(request.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_ni, "IKEv2 nonce"))
 			return false;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	/* send TICKET_OPAQUE */
@@ -601,10 +603,11 @@ bool skeyseed_v2_sr(struct ike_sa *ike,
 	const size_t key_size = ike->sa.st_oakley.enckeylen / BITS_PER_BYTE;
 
 	passert(ike->sa.st_oakley.ta_prf != NULL);
-	dbg("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-	    ike->sa.st_oakley.ta_prf->common.fqn,
-	    (ike->sa.st_oakley.ta_integ ? ike->sa.st_oakley.ta_integ->common.fqn : "n/a"),
-	    key_size, salt_size);
+	ldbg(ike->sa.logger,
+	     "calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+	     ike->sa.st_oakley.ta_prf->common.fqn,
+	     (ike->sa.st_oakley.ta_integ ? ike->sa.st_oakley.ta_integ->common.fqn : "n/a"),
+	     key_size, salt_size);
 
 	/* old key unpacked by resume */
 	pexpect(ike->sa.st_skey_d_nss != NULL);
@@ -704,8 +707,8 @@ stf_status initiate_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_sa,
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	PASSERT(ike->sa.logger, md == NULL); /* initiator */
-	ldbg(ike->sa.logger, "%s() for #%lu %s",
-	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	PASSERT(ike->sa.logger, local_secret == NULL);
 	unpack_nonce(&ike->sa.st_ni, nonce);
@@ -799,8 +802,8 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_UNSECURED_R);
-	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: calculated ke+nonce, sending R1",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	/* Nr generated */
 
@@ -851,11 +854,11 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, response.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_nr, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(response.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	if (!close_and_record_v2_message(&response)) {
@@ -925,8 +928,8 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 	 */
 	if (c->established_child_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu, drop this negotiation",
-			  c->established_child_sa);
+			"state superseded by "PRI_SO", drop this negotiation",
+			pri_so(c->established_child_sa));
 		return STF_FATAL;
 	}
 

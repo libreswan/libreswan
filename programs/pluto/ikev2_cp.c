@@ -122,7 +122,7 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		.type = type,
 	};
 
-	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs, &a_pbs)) {
+	if (!pbs_out_struct(outpbs, attr, &ikev2_cp_attribute_desc, &a_pbs)) {
 		return false;
 	}
 
@@ -154,7 +154,7 @@ static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 		}
 	}
 
-	close_output_pbs(&a_pbs);
+	close_pbs_out(&a_pbs);
 	return true;
 }
 
@@ -180,7 +180,7 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 		}
 	}
 
-	close_output_pbs(&a_pbs);
+	close_pbs_out(&a_pbs);
 	return true;
 }
 
@@ -202,7 +202,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		"send %s Configuration Payload",
 		str_enum_long(&ikev2_cp_type_names, cp.isacp_type, &cpb));
 
-	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
+	if (!pbs_out_struct(outpbs, cp, &ikev2_cp_desc, &cp_pbs))
 		return false;
 
 	FOR_EACH_ELEMENT(lease, c->remote->child.lease) {
@@ -234,7 +234,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	close_output_pbs(&cp_pbs);
+	close_pbs_out(&cp_pbs);
 	return true;
 }
 
@@ -251,7 +251,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		"emit %s Configuration Payload",
 		str_enum_long(&ikev2_cp_type_names, cp.isacp_type, &cpb));
 
-	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
+	if (!pbs_out_struct(outpbs, cp, &ikev2_cp_desc, &cp_pbs))
 		return false;
 
 	struct connection *cc = child->sa.st_connection;
@@ -285,7 +285,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 	}
 
-	close_output_pbs(&cp_pbs);
+	close_pbs_out(&cp_pbs);
 	return true;
 }
 
@@ -553,7 +553,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			 * side should we also check the host_srcip.
 			 */
 			address_buf ipb;
-			pdbg(child->sa.logger,
+			ldbg(child->sa.logger,
 			     "CAT: received INTERNAL_IP%s_ADDRESS that is same as this->client.addr %s. Will not add CAT rules",
 			     afi->n_name, str_address(&ip, &ipb));
 		} else {
@@ -579,7 +579,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	struct connection *c = child->sa.st_connection;
 	struct pbs_in *attrs = &cp_pd->pbs;
 
-	pdbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
+	ldbg(child->sa.logger, "parsing ISAKMP_NEXT_v2CP payload");
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:

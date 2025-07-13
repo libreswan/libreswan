@@ -259,11 +259,11 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 		return false;
 	}
 
-	if (!out_struct(&ie, &ikev2_eap_desc, pbs, &pb_eap) ||
-	    !out_struct(&eap_payload, &eap_tls_desc, &pb_eap, 0))
+	if (!pbs_out_struct(pbs, ie, &ikev2_eap_desc, &pb_eap) ||
+	    !pbs_out_struct(&pb_eap, eap_payload, &eap_tls_desc, NULL))
 		return false;
 
-	close_output_pbs(&pb_eap);
+	close_pbs_out(&pb_eap);
 	llog_sa(RC_LOG, ike, "added EAP payload to packet");
 
 	PRFileDesc *pr = PR_CreateIOLayerStub(get_layer_name(), &eaptls_io);
@@ -316,18 +316,18 @@ static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_d
 	};
 
 	struct pbs_out eap_payload;
-	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload)) {
+	if (!pbs_out_struct(response.pbs, ie, &ikev2_eap_desc, &eap_payload)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!out_struct(&eap_msg, &eap_termination_desc, &eap_payload, 0)) {
+	if (!pbs_out_struct(&eap_payload, eap_msg, &eap_termination_desc, NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	dbg("closing EAP termination payload");
-	close_output_pbs(&eap_payload);
+	ldbg(ike->sa.logger, "closing EAP termination payload");
+	close_pbs_out(&eap_payload);
 
-	dbg("closing/recording EAP termination response");
+	ldbg(ike->sa.logger, "closing/recording EAP termination response");
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -371,12 +371,12 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 	}
 
 	struct pbs_out eap_payload;
-	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload)) {
+	if (!pbs_out_struct(response.pbs, ie, &ikev2_eap_desc, &eap_payload)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	struct pbs_out eap_data;
-	if (!out_struct(&eaptls, &eap_tls_desc, &eap_payload, &eap_data)) {
+	if (!pbs_out_struct(&eap_payload, eaptls, &eap_tls_desc, &eap_data)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -405,11 +405,11 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 		}
 	}
 
-	dbg("closing EAP data / payload");
-	close_output_pbs(&eap_data);
- 	close_output_pbs(&eap_payload);
+	ldbg(ike->sa.logger, "closing EAP data / payload");
+	close_pbs_out(&eap_data);
+ 	close_pbs_out(&eap_payload);
 
-	dbg("closing/recording EAP response");
+	ldbg(ike->sa.logger, "closing/recording EAP response");
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -518,13 +518,12 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	/* send out the IDr payload */
 	{
 		struct pbs_out r_id_pbs;
-		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
-		    !out_hunk(ike->sa.st_v2_id_payload.data,
-				  &r_id_pbs, "my identity"))
+		if (!pbs_out_struct(response.pbs, ike->sa.st_v2_id_payload.header,
+				    &ikev2_id_r_desc, &r_id_pbs) ||
+		    !pbs_out_hunk(&r_id_pbs, ike->sa.st_v2_id_payload.data, "my identity"))
 			return STF_INTERNAL_ERROR;
-		close_output_pbs(&r_id_pbs);
-		dbg("added IDr payload to packet");
+		close_pbs_out(&r_id_pbs);
+		ldbg(ike->sa.logger, "added IDr payload to packet");
 	}
 
 	/*
@@ -651,7 +650,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 		}
 	}
 
-	close_output_pbs(&eap->eaptls_outbuf);
+	close_pbs_out(&eap->eaptls_outbuf);
 	replace_chunk(&eap->eaptls_chunk, pbs_out_all(&eap->eaptls_outbuf), "EAP response");
 	eap->eaptls_pos = 0;
 
@@ -683,7 +682,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	if (!eap->eap_established)
 		return STF_FATAL;
 
-	dbg("responder verifying AUTH payload");
+	ldbg(ike->sa.logger, "responder verifying AUTH payload");
 
 	/*
 	 * IKEv2: 2.16.  Extensible Authentication Protocol Methods
@@ -721,7 +720,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
-		dbg("EAP AUTH failed");
+		ldbg(ike->sa.logger, "EAP AUTH failed");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -820,7 +819,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	 */
 
 	if (send_redirect) {
-		dbg("skipping child; redirect response");
+		ldbg(ike->sa.logger, "skipping child; redirect response");
 	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;

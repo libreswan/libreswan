@@ -265,17 +265,17 @@ static const struct hash_desc *negotiated_hash_map[] = {
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
-	dbg("digsig: selecting negotiated hash algorithm");
+	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
 	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->common.ikev2_alg_id)) {
-			dbg("digsig:   selected hash algorithm %s",
-			    (*hash)->common.fqn);
+			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
+			     (*hash)->common.fqn);
 			return (*hash);
 		}
-		dbg("digsig:   skipped hash algorithm %s as not negotiated",
-		    (*hash)->common.fqn);
+		ldbg(ike->sa.logger, "digsig:   skipped hash algorithm %s as not negotiated",
+		     (*hash)->common.fqn);
 	}
-	dbg("DigSig: no compatible DigSig hash algo");
+	ldbg(ike->sa.logger, "DigSig: no compatible DigSig hash algo");
 	return NULL;
 }
 
@@ -291,7 +291,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	};
 
 	struct pbs_out auth_pbs;
-	if (!out_struct(&a, &ikev2_auth_desc, outs, &auth_pbs)) {
+	if (!pbs_out_struct(outs, a, &ikev2_auth_desc, &auth_pbs)) {
 		return false;
 	}
 
@@ -302,7 +302,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 	case IKEv2_AUTH_SHARED_KEY_MAC:
 	case IKEv2_AUTH_NULL:
-		if (!out_hunk(*auth_sig, &auth_pbs, "signature")) {
+		if (!pbs_out_hunk(&auth_pbs, *auth_sig, "signature")) {
 			return false;
 		}
 		break;
@@ -333,7 +333,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		bad_case(a.isaa_auth_method);
 	}
 
-	close_output_pbs(&auth_pbs);
+	close_pbs_out(&auth_pbs);
 	return true;
 }
 
@@ -383,7 +383,7 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 	lset_t hash_bit = LELEM(hash_algo->common.ikev2_alg_id);
 	if (authby.rsasig_v1_5 && hash_algo == &ike_alg_hash_sha1) {
 		pexpect(!(c->config->sighash_policy & hash_bit));
-		dbg("skipping sighash check as PKCS#1 1.5 RSA + SHA1");
+		ldbg(ike->sa.logger, "skipping sighash check as PKCS#1 1.5 RSA + SHA1");
 	} else if (!(c->config->sighash_policy & hash_bit)) {
 		return diag("authentication failed: peer authentication requires hash algorithm %s",
 			    hash_algo->common.fqn);
@@ -416,9 +416,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     const enum keyword_auth that_auth)
 {
 	name_buf ramb, eanb;
-	dbg("verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
-	    str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
-	    str_enum_short(&keyword_auth_names, that_auth, &eanb));
+	ldbg(ike->sa.logger, "verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
+	     str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
+	     str_enum_short(&keyword_auth_names, that_auth, &eanb));
 
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTH matches
@@ -468,7 +468,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
-			dbg("authentication failed: PSK AUTH mismatch");
+			ldbg(ike->sa.logger, "authentication failed: PSK AUTH mismatch");
 			return d;
 		}
 
@@ -492,7 +492,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
 							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
-			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
+			ldbg(ike->sa.logger, "authentication failed: NULL AUTH mismatch (implementation bug?)");
 			return d;
 		}
 
@@ -513,13 +513,13 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 		shunk_t signature = pbs_in_left(signature_pbs);
 
-		dbg("digsig: looking for matching DIGSIG blob");
+		ldbg(ike->sa.logger, "digsig: looking for matching DIGSIG blob");
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
 			if ((ike->sa.st_connection->config->sighash_policy &
 			     LELEM((*hash)->common.ikev2_alg_id)) == LEMPTY) {
-				dbg("digsig:   skipping %s as not negotiated",
-				    (*hash)->common.fqn);
+				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
+				     (*hash)->common.fqn);
 				continue;
 			}
 
@@ -530,7 +530,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			 * more meaningful log message can be printed
 			 * (we're looking at you PKCS#1 1.5 RSA).
 			 */
-			dbg("digsig:   trying %s", (*hash)->common.fqn);
+			ldbg(ike->sa.logger, "digsig:   trying %s", (*hash)->common.fqn);
 			static const struct {
 				const struct pubkey_signer *signer;
 				struct authby authby;
@@ -544,26 +544,29 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				enum digital_signature_blob b = s->signer->digital_signature_blob;
 				shunk_t blob = (*hash)->digital_signature_blob[b];
 				if (blob.len == 0) {
-					dbg("digsig:     skipping %s as no blob",
-					    s->signer->name);
+					ldbg(ike->sa.logger,
+					     "digsig:     skipping %s as no blob",
+					     s->signer->name);
 					continue;
 				}
 				if (!hunk_starteq(signature, blob)) {
-					dbg("digsig:     skipping %s as blob does not match",
-					    s->signer->name);
+					ldbg(ike->sa.logger,
+					     "digsig:     skipping %s as blob does not match",
+					     s->signer->name);
 					continue;
 				};
 
-				dbg("digsig:    using signer %s and hash %s",
-				    s->signer->name, (*hash)->common.fqn);
+				ldbg(ike->sa.logger, "digsig:    using signer %s and hash %s",
+				     s->signer->name, (*hash)->common.fqn);
 
 				/* eat the blob */
 				shunk_t ignore;
 				diag_t d = pbs_in_shunk(signature_pbs, blob.len, &ignore,
 							"skip ASN.1 blob for hash algo");
 				if (d != NULL) {
-					dbg("digsig:     failing %s due to I/O error: %s",
-					    s->signer->name, str_diag(d));
+					ldbg(ike->sa.logger,
+					     "digsig:     failing %s due to I/O error: %s",
+					     s->signer->name, str_diag(d));
 					return d;
 				}
 
@@ -584,7 +587,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			}
 		}
 
-		dbg("digsig:   no match");
+		ldbg(ike->sa.logger, "digsig:   no match");
 		name_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
 			    str_enum_long(&keyword_auth_names, that_auth, &an));
@@ -610,7 +613,7 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, md,
 				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
-		dbg("submit_v2_auth_signature() died, fatal");
+		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -669,7 +672,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		 * Save the decision so it is available when emitting
 		 * the computed hash.
 		 */
-		dbg("digsig: selecting hash and signer");
+		ldbg(ike->sa.logger, "digsig: selecting hash and signer");
 		const char *hash_story;
 		if (ike->sa.st_v2_digsig.hash == NULL) {
 			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
@@ -683,9 +686,9 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		}
-		dbg("digsig:   using hash %s %s",
-		    ike->sa.st_v2_digsig.hash->common.fqn,
-		    hash_story);
+		ldbg(ike->sa.logger,"digsig:   using hash %s %s",
+		     ike->sa.st_v2_digsig.hash->common.fqn,
+		     hash_story);
 		const char *signer_story;
 		switch (authby) {
 		case AUTH_RSASIG:
@@ -705,8 +708,8 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		default:
 			bad_case(authby);
 		}
-		dbg("digsig:   using %s signer %s",
-		    ike->sa.st_v2_digsig.signer->name, signer_story);
+		ldbg(ike->sa.logger, "digsig:   using %s signer %s",
+		     ike->sa.st_v2_digsig.signer->name, signer_story);
 
 		return submit_v2_IKE_AUTH_response_signature(ike, md,
 							     &ike->sa.st_v2_id_payload,
@@ -768,7 +771,7 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, md,
 				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
-		dbg("submit_v2_auth_signature() died, fatal");
+		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		return STF_FATAL;
 	}
 	return STF_SUSPEND;
@@ -832,9 +835,9 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			bad_case(authby);
 		}
 		name_buf ana;
-		dbg("digsig:   authby %s selects signer %s",
-		    str_enum_long(&keyword_auth_names, authby, &ana),
-		    signer->name);
+		ldbg(ike->sa.logger, "digsig:   authby %s selects signer %s",
+		     str_enum_long(&keyword_auth_names, authby, &ana),
+		     signer->name);
 		ike->sa.st_v2_digsig.signer = signer;
 
 		return submit_v2_IKE_AUTH_request_signature(ike, md,

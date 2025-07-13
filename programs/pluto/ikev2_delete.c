@@ -76,7 +76,7 @@ bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *p
 		}
 	}
 
-	close_output_pbs(&spi_pbs);
+	close_pbs_out(&spi_pbs);
 
 	return true;
 }
@@ -139,7 +139,7 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 							    struct child_sa *null_child,
 							    struct msg_digest *md)
 {
-	dbg("an informational request needing a response");
+	ldbg(ike->sa.logger, "an informational request needing a response");
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(null_child == NULL);
 
@@ -428,10 +428,9 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 
 			/* Emit delete payload header and SPI values */
 			struct pbs_out del_pbs;	/* output stream */
-			if (!out_struct(&v2del_tmp,
-					&ikev2_delete_desc,
-					pbs,
-					&del_pbs))
+			if (!pbs_out_struct(pbs, v2del_tmp,
+					    &ikev2_delete_desc,
+					    &del_pbs))
 				return false;
 			if (!pbs_out_raw(&del_pbs, spi_buf,
 					 j * sizeof(spi_buf[0]), "local SPIs")) {
@@ -439,7 +438,7 @@ bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike, struct msg_dig
 				return false;
 			}
 
-			close_output_pbs(&del_pbs);
+			close_pbs_out(&del_pbs);
 			break;
 		}
 

@@ -356,8 +356,8 @@ stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* I1 is from INVALID KE */
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_I0 ||
 		ike->sa.st_state == &state_v2_IKE_SA_INIT_I);
-	dbg("%s() for #%lu %s",
-	     __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gi);
 	unpack_nonce(&ike->sa.st_ni, nonce);
@@ -399,7 +399,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	H(POL_SIGHASH_SHA2_512, IKEv2_HASH_ALGORITHM_SHA2_512);
 #undef H
 
-	close_output_pbs(&n_pbs);
+	close_pbs_out(&n_pbs);
 	return true;
 }
 
@@ -471,11 +471,11 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, request.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(request.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_ni, "IKEv2 nonce"))
 			return false;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	/* Send fragmentation support notification */
@@ -728,7 +728,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * away) when necessary.
 	 */
 	if (v2_nat_detected(ike, md)) {
-		dbg("NAT: responder so initiator gets to switch ports");
+		ldbg(ike->sa.logger, "NAT: responder so initiator gets to switch ports");
 		/* should this check that a port is available? */
 	}
 
@@ -766,8 +766,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(ike->sa.st_state == &state_v2_UNSECURED_R);
-	dbg("%s() for #%lu %s: calculated ke+nonce, sending R1",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: calculated ke+nonce, sending R1",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	struct connection *c = ike->sa.st_connection;
 
@@ -797,7 +797,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		passert(ike->sa.st_v2_accepted_proposal != NULL);
 		if (!emit_v2SA_proposal(response.pbs, ike->sa.st_v2_accepted_proposal,
 					null_shunk/*IKE has no SPI*/)) {
-			dbg("problem emitting accepted proposal");
+			ldbg(ike->sa.logger, "problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -842,11 +842,11 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, response.pbs, &pb) ||
-		    !out_hunk(ike->sa.st_nr, &pb, "IKEv2 nonce"))
+		if (!pbs_out_struct(response.pbs, in, &ikev2_nonce_desc, &pb) ||
+		    !pbs_out_hunk(&pb, ike->sa.st_nr, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
-		close_output_pbs(&pb);
+		close_pbs_out(&pb);
 	}
 
 	/* Send fragmentation support notification response? */
@@ -907,7 +907,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* send CERTREQ */
 
 	if (need_v2CERTREQ_in_IKE_SA_INIT_response(ike)) {
-		dbg("going to send a certreq");
+		ldbg(ike->sa.logger, "going to send a certreq");
 		emit_v2CERTREQ(ike, response.pbs);
 	}
 
@@ -973,12 +973,12 @@ static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 }
 
 stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa *ike,
-								  struct child_sa *child,
+								  struct child_sa *null_child,
 								  struct msg_digest *md)
 {
 	struct connection *c = ike->sa.st_connection;
 
-	pexpect(child == NULL);
+	pexpect(null_child == NULL);
 	if (!pexpect(md->pd[PD_v2N_INVALID_KE_PAYLOAD] != NULL)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -987,7 +987,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	/* careful of DDOS, only log with debugging on? */
 	/* we treat this as a "retransmit" event to rate limit these */
 	if (!count_duplicate(&ike->sa, MAXIMUM_INVALID_KE_RETRANS)) {
-		dbg("ignoring received INVALID_KE packets - received too many (DoS?)");
+		ldbg(ike->sa.logger, "ignoring received INVALID_KE packets - received too many (DoS?)");
 		return STF_IGNORE;
 	}
 
@@ -996,7 +996,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * one?
 	 */
 	if (md->chain[ISAKMP_NEXT_v2N]->next != NULL) {
-		dbg("ignoring other notify payloads");
+		ldbg(ike->sa.logger, "ignoring other notify payloads");
 	}
 
 	struct suggested_group sg;
@@ -1022,7 +1022,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 		return STF_IGNORE;
 	}
 
-	dbg("Suggested modp group is acceptable");
+	ldbg(ike->sa.logger, "Suggested modp group is acceptable");
 	/*
 	 * Since there must be a group object for every local
 	 * proposal, and sg.sg_group matches one of the local proposal
@@ -1088,8 +1088,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 */
 	if (c->established_child_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu, drop this negotiation",
-			  c->established_child_sa);
+			"state superseded by "PRI_SO", drop this negotiation",
+			pri_so(c->established_child_sa));
 		return STF_FATAL;
 	}
 
@@ -1169,7 +1169,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * the shared key values.
 	 */
 
-	dbg("ikev2 parent inR1: calculating g^{xy} in order to send I2");
+	ldbg(ike->sa.logger, "ikev2 parent inR1: calculating g^{xy} in order to send I2");
 
 	/* KE in */
 	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
@@ -1214,7 +1214,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					 &ike->sa.st_v2_accepted_proposal,
 					 ike_proposals, verbose);
 		if (n != v2N_NOTHING_WRONG) {
-			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
+			ldbg(ike->sa.logger, "ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
 			/*
 			 * STF_FATAL will send the code down the retry path.
 			 */

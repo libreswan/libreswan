@@ -164,7 +164,7 @@ static bool emit_v2CERTREQ_header(struct pbs_out *outs, enum ike_cert_type type,
 	};
 
 	/* build CR header */
-	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, cr_pbs)) {
+	if (!pbs_out_struct(outs, cr_hd, &ikev2_certificate_req_desc, cr_pbs)) {
 		return false;
 	}
 
@@ -211,7 +211,7 @@ static bool emit_v2CERTREQ_ca(struct pbs_out *cr_pbs, chunk_t ca)
 	}
 
 	if (!CERT_IsCACert(cacert, NULL)) {
-		dbg("located CA cert %s for CERTREQ is not a CA", cacert->subjectName);
+		ldbg(cr_pbs->logger, "located CA cert %s for CERTREQ is not a CA", cacert->subjectName);
 		CERT_DestroyCertificate(cacert);
 		return true;
 	}
@@ -234,7 +234,7 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 	}
 
 	if (is_permanent(ike->sa.st_connection)) {
-		dbg("connection->kind is CK_PERMANENT so send (possibly empty) CERTREQ");
+		ldbg(ike->sa.logger, "connection->kind is CK_PERMANENT so send (possibly empty) CERTREQ");
 		chunk_t ca = ike->sa.st_connection->remote->host.config->ca;
 		if (ca.len > 0) {
 			if (!emit_v2CERTREQ_ca(&cr_pbs, ca)) {
@@ -243,13 +243,13 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 			}
 		}
 	} else {
-		dbg("connection->kind is not CK_PERMANENT (instance), so collect CAs");
+		ldbg(ike->sa.logger, "connection->kind is not CK_PERMANENT (instance), so collect CAs");
 
 		ip_address local_address = ike->sa.st_iface_endpoint->ip_dev->local_address;
 		generalName_t *gn = collect_rw_ca_candidates(local_address, IKEv2);
 
 		if (gn != NULL) {
-			dbg("connection is RW, lookup CA candidates");
+			ldbg(ike->sa.logger, "connection is RW, lookup CA candidates");
 
 			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
 				if (!emit_v2CERTREQ_ca(&cr_pbs, ca->name)) {
@@ -259,11 +259,11 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 			}
 			free_generalNames(gn, false);
 		} else {
-			dbg("not a roadwarrior instance, sending empty CA in CERTREQ");
+			ldbg(ike->sa.logger, "not a roadwarrior instance, sending empty CA in CERTREQ");
 		}
 	}
 
-	close_output_pbs(&cr_pbs);
+	close_pbs_out(&cr_pbs);
 	return STF_OK;
 }
 
@@ -275,27 +275,27 @@ bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike)
 
 bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
 {
-	dbg("IKEv2 CERTREQ: send a cert request?");
+	ldbg(ike->sa.logger, "IKEv2 CERTREQ: send a cert request?");
 
 	const struct connection *c = ike->sa.st_connection;
 
 	if (!authby_has_digsig(c->remote->host.config->authby)) {
-		dbg("IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert");
+		ldbg(ike->sa.logger, "IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert");
 		return false;
 	}
 
 	if (remote_has_preloaded_pubkey(ike)) {
-		dbg("IKEv2 CERTREQ: public key already known");
+		ldbg(ike->sa.logger, "IKEv2 CERTREQ: public key already known");
 		return false;
 	}
 
 	if (c->remote->host.config->ca.ptr == NULL ||
 	    c->remote->host.config->ca.len < 1) {
-		dbg("IKEv2 CERTREQ: no CA DN known to send");
+		ldbg(ike->sa.logger, "IKEv2 CERTREQ: no CA DN known to send");
 		return false;
 	}
 
-	dbg("IKEv2 CERTREQ: OK to send a certificate request");
+	ldbg(ike->sa.logger, "IKEv2 CERTREQ: OK to send a certificate request");
 
 	return true;
 }

@@ -160,11 +160,11 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 
 		lset_t hash_bit = LELEM(h_value);
 		if (!(sighash_policy & hash_bit)) {
-			dbg("digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
+			ldbg(ike->sa.logger, "digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
 			continue;
 		}
 
-		dbg("digsig: received and accepted hash algorithm %s", hash->common.fqn);
+		ldbg(ike->sa.logger, "digsig: received and accepted hash algorithm %s", hash->common.fqn);
 		ike->sa.st_v2_digsig.negotiated_hashes |= hash_bit;
 	}
 	return true;
@@ -282,8 +282,8 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 
 		id_buf thatid;
 		endpoint_buf ra;
-		LDBG_log(logger, "%s #%lu not fetching ipseckey %s%s remote=%s thatid=%s",
-			 c->name, ike->sa.st_serialno,
+		LDBG_log(logger, "%s "PRI_SO" not fetching ipseckey %s%s remote=%s thatid=%s",
+			 c->name, pri_so(ike->sa.st_serialno),
 			 err1, err2,
 			 str_endpoint(&ike->sa.st_remote_endpoint, &ra),
 			 str_id(&id, &thatid));
@@ -309,7 +309,7 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 		.isak_group = group->common.id[IKEv2_ALG_ID],
 	};
 
-	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
+	if (!pbs_out_struct(outs, v2ke, &ikev2_ke_desc, &kepbs))
 		return false;
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
@@ -328,11 +328,11 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 			return false; /*fatal*/
 		}
 	} else {
-		if (!out_hunk(g, &kepbs, "ikev2 g^x"))
+		if (!pbs_out_hunk(&kepbs, g, "ikev2 g^x"))
 			return false;
 	}
 
-	close_output_pbs(&kepbs);
+	close_pbs_out(&kepbs);
 	return true;
 }
 
@@ -340,7 +340,8 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 {
 	struct state *rst = state_by_serialno(pred);
 	if (rst == NULL) {
-		ldbg_sa(larval, "rekeyed #%lu; the state is already is gone", pred);
+		ldbg_sa(larval, "rekeyed "PRI_SO"; the state is already is gone",
+			pri_so(pred));
 		return;
 	}
 
@@ -355,8 +356,9 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	}
 
 	deltatime_buf lb;
-	ldbg_sa(larval, "rekeyed #%lu; expire it remaining life %ss",
-		pred, (lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
+	ldbg_sa(larval, "rekeyed "PRI_SO"; expire it remaining life %ss",
+		pri_so(pred),
+		(lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
 
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		/* replace the REPLACE/EXPIRE event */
@@ -425,10 +427,10 @@ void schedule_v2_replace_event(struct state *st)
 
 		/* Time to rekey/reauth; scheduled once during a state's lifetime.*/
 		deltatime_buf rdb, lb;
-		dbg(PRI_SO" will start re-keying in %s seconds (replace in %s seconds)",
-		    st->st_serialno,
-		    str_deltatime(rekey_delay, &rdb),
-		    str_deltatime(lifetime, &lb));
+		ldbg(st->logger, PRI_SO" will start re-keying in %s seconds (replace in %s seconds)",
+		     pri_so(st->st_serialno),
+		     str_deltatime(rekey_delay, &rdb),
+		     str_deltatime(lifetime, &lb));
 		event_schedule(EVENT_v2_REKEY, rekey_delay, st);
 		pexpect(st->st_v2_rekey_event->ev_type == EVENT_v2_REKEY);
 		story = "attempting re-key";
@@ -441,10 +443,10 @@ void schedule_v2_replace_event(struct state *st)
 	 */
 	passert(kind == EVENT_v2_REPLACE || kind == EVENT_v2_EXPIRE);
 	deltatime_buf lb;
-	dbg(PRI_SO" will %s in %s seconds (%s)",
-	    st->st_serialno,
-	    kind == EVENT_v2_EXPIRE ? "expire" : "be replaced",
-	    str_deltatime(lifetime, &lb), story);
+	ldbg(st->logger, PRI_SO" will %s in %s seconds (%s)",
+	     pri_so(st->st_serialno),
+	     kind == EVENT_v2_EXPIRE ? "expire" : "be replaced",
+	     str_deltatime(lifetime, &lb), story);
 
 	/*
 	 * Schedule the lifetime (death) event.  Only happens once
@@ -461,8 +463,8 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(v2_msg_role(unused_md) == NO_MESSAGE);
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_R);
-	dbg("%s() for #%lu %s: calculating g^{xy}, sending R2",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: calculating g^{xy}, sending R2",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	/* * Since UNUSED_MD is a request. */
 	struct v2_incoming_fragments **frags = &ike->sa.st_v2_msgid_windows.responder.incoming_fragments;
@@ -476,7 +478,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		 * encrypted.  Try to send back a clear text notify
 		 * and then abandon the connection.
 		 */
-		dbg("aborting IKE SA: DH failed (EXPECTATION FAILED valid as no transition?)");
+		ldbg(ike->sa.logger, "aborting IKE SA: DH failed (EXPECTATION FAILED valid as no transition?)");
 		send_v2N_response_from_md((*frags)->md, v2N_INVALID_SYNTAX, NULL,
 					  "DH failed");
 		return STF_FATAL;
@@ -505,7 +507,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 			/* could free FRAGS */
 			return STF_SKIP_COMPLETE_STATE_TRANSITION;
 		}
-		md = reassemble_v2_incoming_fragments(frags);
+		md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
 	}
 
 	process_protected_v2_message(ike, md);
@@ -567,11 +569,11 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		 * Already accumulating fragments, keep going?
 		 */
 		if (md->chain[ISAKMP_NEXT_v2SK] != NULL) {
-			dbg("received IKE encrypted message");
+			ldbg(ike->sa.logger, "received IKE encrypted message");
 			if ((*frags)->total == 0) {
-				dbg("  ignoring message; collecting fragments");
+				ldbg(ike->sa.logger, "  ignoring message; collecting fragments");
 			} else {
-				dbg("  ignoring message; already collected");
+				ldbg(ike->sa.logger, "  ignoring message; already collected");
 			}
 			pexpect((*frags)->md != NULL);
 		} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
@@ -600,7 +602,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
 		case FRAGMENT_IGNORED:
-			dbg("no fragments accumulated; skipping SKEYSEED");
+			ldbg(ike->sa.logger, "no fragments accumulated; skipping SKEYSEED");
 			return;
 		case FRAGMENTS_MISSING:
 		case FRAGMENTS_COMPLETE:
