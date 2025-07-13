@@ -301,28 +301,28 @@ static bool never_negotiate_enum_option(const char *leftright,
 	return false;
 }
 
-static bool is_opportunistic_wm_end(const struct resolve_end *end)
+static bool is_opportunistic_wm_end(const struct host_addr_config *host_addr)
 {
-	return (end->host.type == KH_OPPO ||
-		end->host.type == KH_OPPOGROUP);
+	return (host_addr->type == KH_OPPO ||
+		host_addr->type == KH_OPPOGROUP);
 }
 
-static bool is_opportunistic_wm(const struct resolve_end resolve[END_ROOF])
+static bool is_opportunistic_wm(const struct host_addr_config *const host_addrs[END_ROOF])
 {
-	return (is_opportunistic_wm_end(&resolve[LEFT_END]) ||
-		is_opportunistic_wm_end(&resolve[RIGHT_END]));
+	return (is_opportunistic_wm_end(host_addrs[LEFT_END]) ||
+		is_opportunistic_wm_end(host_addrs[RIGHT_END]));
 }
 
-static bool is_group_wm_end(const struct resolve_end *end)
+static bool is_group_wm_end(const struct host_addr_config *host_addr)
 {
-	return (end->host.type == KH_GROUP ||
-		end->host.type == KH_OPPOGROUP);
+	return (host_addr->type == KH_GROUP ||
+		host_addr->type == KH_OPPOGROUP);
 }
 
-static bool is_group_wm(const struct resolve_end resolve[END_ROOF])
+static bool is_group_wm(const struct host_addr_config *const host_addrs[END_ROOF])
 {
-	return (is_group_wm_end(&resolve[LEFT_END]) ||
-		is_group_wm_end(&resolve[RIGHT_END]));
+	return (is_group_wm_end(host_addrs[LEFT_END]) ||
+		is_group_wm_end(host_addrs[RIGHT_END]));
 }
 
 /*
@@ -1676,7 +1676,8 @@ static diag_t extract_host_end(struct host_end *host,
 			       const struct whack_message *wm,
 			       const struct whack_end *src,
 			       const struct whack_end *other_src,
-			       const struct resolve_end *resolve,
+			       const struct host_addr_config *host_addr,
+			       const struct host_addr_config *const host_addrs[END_ROOF],
 			       enum ike_version ike_version,
 			       struct authby whack_authby,
 			       bool *same_ca,
@@ -1735,13 +1736,13 @@ static diag_t extract_host_end(struct host_end *host,
 		host_config->id = id;
 
 	} else if (!is_never_negotiate_wm(wm) &&
-		   resolve->host.type == KH_IPADDR) {
+		   host_addr->type == KH_IPADDR) {
 
 		address_buf ab;
-		err_t e = atoid(str_address(&resolve->host.addr, &ab), &id);
+		err_t e = atoid(str_address(&host_addr->addr, &ab), &id);
 		if (e != NULL) {
 			return diag("%sid=%s invalid: %s",
-				    leftright, resolve->host.name, e);
+				    leftright, host_addr->name, e);
 		}
 
 		id_buf idb;
@@ -2157,7 +2158,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgserver == YN_YES && src->modecfgclient == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2167,7 +2168,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgserver == YN_YES && src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2177,7 +2178,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgclient == YN_YES && other_src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2187,7 +2188,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgserver == YN_YES && src->addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
 				leftright, src->leftright);
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2215,7 +2216,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->modecfgclient == YN_YES && other_src->addresspool != NULL) {
 		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
 				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2225,7 +2226,7 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->cat == YN_YES && other_src->addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
@@ -2265,7 +2266,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
-				       const struct resolve_end *resolve,
+				       const struct host_addr_config *host_addr,
 				       ip_protoport protoport,
 				       enum ike_version ike_version,
 				       struct connection *c,
@@ -2537,14 +2538,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						    str_address(sourceip, &sipb),
 						    leftright, src->subnet);
 				}
-			} else if (resolve->host.addr.ip.is_set) {
-				if (!address_eq_address(*sourceip, resolve->host.addr)) {
+			} else if (host_addr->addr.ip.is_set) {
+				if (!address_eq_address(*sourceip, host_addr->addr)) {
 					address_buf sipb;
 					address_buf hab;
 					return diag("%ssourceip=%s invalid, address %s does not match %s=%s and %ssubnet= was not specified",
 						    leftright, src->sourceip,
 						    str_address(sourceip, &sipb),
-						    leftright, str_address(&resolve->host.addr, &hab),
+						    leftright, str_address(&host_addr->addr, &hab),
 						    leftright);
 				}
 			} else {
@@ -3059,7 +3060,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
 							enum end this_end,
-							const struct resolve_end resolve[END_ROOF],
+							const struct host_addr_config *const host_addrs[END_ROOF],
 							const ip_protoport protoport[END_ROOF],
 							struct logger *logger)
 {
@@ -3067,7 +3068,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	enum end that_end = !this_end;
 	const struct whack_end *that = &wm->end[that_end];
 
-	if (is_group_wm(resolve)) {
+	if (is_group_wm(host_addrs)) {
 		ldbg(logger, "%s connection is CK_GROUP: by is_group_wm()",
 		     this->leftright);
 		return CK_GROUP;
@@ -3104,11 +3105,16 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	}
 	if (!is_never_negotiate_wm(wm)) {
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-			const struct resolve_end *re = &resolve[lr];
-			if (!address_is_specified(re->host.addr) &&
-			    re->host.type != KH_IPHOSTNAME) {
-				ldbg(logger, "%s connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
-				     this->leftright, wm->end[lr].leftright);
+			const struct host_addr_config *re = host_addrs[lr];
+			if (re->type != KH_IPADDR &&
+			    re->type != KH_IFACE &&
+			    re->type != KH_DEFAULTROUTE &&
+			    re->type != KH_IPHOSTNAME) {
+				name_buf tb;
+				ldbg(logger, "%s connection is CK_TEMPLATE: has policy negotiate yet %s address is %s",
+				     this->leftright,
+				     wm->end[lr].leftright,
+				     str_sparse_short(&keyword_host_names, re->type, &tb));
 				return CK_TEMPLATE;
 			}
 		}
@@ -3504,8 +3510,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 	};
 
 	/*
-	 * Extract {left,right} and {left,right}nexthop.  Since this
-	 * clones the string values, save values directly into CONFIG.
+	 * Extract {left,right} and {left,right}nexthop.
+	 *
+	 * To make cleanup easier (the code clones whack message's
+	 * .host and .nexthop strings) the results are stored directly
+	 * into CONFIG.
+	 *
+	 * To stop follow-on code directly accessing CONFIG values,
+	 * the table HOST_ADDRS[] is created and passed around.
 	 */
 
 	const struct ip_info *host_afi = NULL;
@@ -3516,61 +3528,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	PASSERT(c->logger, host_afi != NULL);
 
-	/*
-	 * Now copy the extracted values into the resolve structure
-	 * and try to resolve them.
-	 */
-
-	struct resolve_end resolve[END_ROOF] = {
-		[LEFT_END] = { .leftright = "left", },
-		[RIGHT_END] = { .leftright = "right", },
+	const struct host_addr_config *const host_addrs[END_ROOF] = {
+		[LEFT_END] = &config->end[LEFT_END].host.host,
+		[RIGHT_END] = &config->end[RIGHT_END].host.host,
 	};
-
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		struct host_end_config *src = &config->end[lr].host;
- 		struct resolve_end *dst = &resolve[lr];
-		/* host */
-		dst->host.name = src->host.name;
-		dst->host.addr = src->host.addr;
-		dst->host.type = src->host.type;
-		/* nexthop */
-		dst->nexthop.name = src->nexthop.name;
-		dst->nexthop.addr = src->nexthop.addr;
-		dst->nexthop.type = src->nexthop.type;
-	}
-
-	bool can_resolve = true;
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-
- 		struct resolve_host *host = &resolve[lr].host;
- 		const char *leftright = wm->end[lr].leftright;
-		const char *name = "";
-		const char *value = host->name;
-
-		if (host->type == KH_IPHOSTNAME) {
-			ip_address addr;
-			err_t e = ttoaddress_dns(shunk1(value), host_afi, &addr);
-			if (e == NULL) {
-				host->addr = addr;
-				continue;
-			}
-
-			vlog("failed to resolve '%s%s=%s' at load time: %s",
-			     leftright, name, value, e);
-			can_resolve = false;
-		}
-	}
-
-	if (can_resolve) {
-		resolve_default_route(&resolve[LEFT_END],
-				      &resolve[RIGHT_END],
-				      host_afi,
-				      verbose);
-		resolve_default_route(&resolve[RIGHT_END],
-				      &resolve[LEFT_END],
-				      host_afi,
-				      verbose);
-	}
 
 	/*
 	 * Turn the .authby string into struct authby bit struct.
@@ -3597,7 +3558,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 				     wm,
 				     whack_ends[this],
 				     whack_ends[that],
-				     &resolve[this],
+				     host_addrs[this],
+				     host_addrs,
 				     ike_version, whack_authby,
 				     &same_ca[this],
 				     c->logger);
@@ -3641,7 +3603,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		c->end[end].kind = extract_connection_end_kind(wm, end,
-							       resolve, protoport,
+							       host_addrs,
+							       protoport,
 							       c->logger);
 	}
 
@@ -3737,17 +3700,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 #if 0
 	PASSERT(c->logger,
-		is_opportunistic_wm(resolve) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
-	PASSERT(c->logger, is_group_wm(resolve) == wm->is_connection_group);
+		is_opportunistic_wm(host_addr) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
+	PASSERT(c->logger, is_group_wm(host_addr) == wm->is_connection_group);
 #endif
 
-	if (is_opportunistic_wm(resolve) && c->config->ike_version < IKEv2) {
+	if (is_opportunistic_wm(host_addrs) && c->config->ike_version < IKEv2) {
 		return diag("opportunistic connection MUST have IKEv2");
 	}
-	config->opportunistic = is_opportunistic_wm(resolve);
+	config->opportunistic = is_opportunistic_wm(host_addrs);
 
 #if 0
-	if (is_opportunistic_wm(resolve)) {
+	if (is_opportunistic_wm(host_addr)) {
 		if (whack_authby.psk) {
 			return diag("PSK is not supported for opportunism");
 		}
@@ -4996,7 +4959,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (wm->end[LEFT_END].modecfgserver == YN_YES &&
 	    wm->end[RIGHT_END].modecfgserver == YN_YES) {
 		diag_t d = diag("both leftmodecfgserver=yes and rightmodecfgserver=yes defined");
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -5006,7 +4969,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (wm->end[LEFT_END].modecfgclient == YN_YES &&
 	    wm->end[RIGHT_END].modecfgclient == YN_YES) {
 		diag_t d = diag("both leftmodecfgclient=yes and rightmodecfgclient=yes defined");
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -5015,7 +4978,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	if (wm->end[LEFT_END].cat == YN_YES && wm->end[RIGHT_END].cat == YN_YES) {
 		diag_t d = diag("both leftcat=yes and rightcat=yes defined");
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -5026,8 +4989,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("both leftvirt= and rightvirt= defined");
 	}
 
-	if (is_group_wm(resolve) && (wm->end[LEFT_END].virt != NULL ||
-				wm->end[RIGHT_END].virt != NULL)) {
+	if (is_group_wm(host_addrs) && (wm->end[LEFT_END].virt != NULL ||
+					wm->end[RIGHT_END].virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");
 	}
 
@@ -5054,7 +5017,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (config->end[LEFT_END].host.modecfg.server &&
 	    config->end[RIGHT_END].host.modecfg.server) {
 		diag_t d = diag("both left and right are configured as a server");
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
@@ -5064,11 +5027,67 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if (config->end[LEFT_END].host.modecfg.client &&
 	    config->end[RIGHT_END].host.modecfg.client) {
 		diag_t d = diag("both left and right are configured as a client");
-		if (!is_opportunistic_wm(resolve)) {
+		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
 		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
+	}
+
+	/*
+	 * Now copy the extracted values into the resolve structure
+	 * and try to resolve them.
+	 */
+
+	struct resolve_end resolve[END_ROOF] = {
+		[LEFT_END] = { .leftright = "left", },
+		[RIGHT_END] = { .leftright = "right", },
+	};
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct host_end_config *src = &config->end[lr].host;
+ 		struct resolve_end *dst = &resolve[lr];
+		/* host */
+		dst->host.name = src->host.name;
+		dst->host.addr = src->host.addr;
+		dst->host.type = src->host.type;
+		/* nexthop */
+		dst->nexthop.name = src->nexthop.name;
+		dst->nexthop.addr = src->nexthop.addr;
+		dst->nexthop.type = src->nexthop.type;
+	}
+
+	bool can_resolve = true;
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+
+ 		struct resolve_host *host = &resolve[lr].host;
+ 		const char *leftright = wm->end[lr].leftright;
+		const char *name = "";
+		const char *value = host->name;
+
+		if (host->type == KH_IPHOSTNAME) {
+			ip_address addr;
+			err_t e = ttoaddress_dns(shunk1(value), host_afi, &addr);
+			if (e == NULL) {
+				host->addr = addr;
+				continue;
+			}
+
+			vlog("failed to resolve '%s%s=%s' at load time: %s",
+			     leftright, name, value, e);
+			can_resolve = false;
+		}
+	}
+
+	if (can_resolve) {
+		resolve_default_route(&resolve[LEFT_END],
+				      &resolve[RIGHT_END],
+				      host_afi,
+				      verbose);
+		resolve_default_route(&resolve[RIGHT_END],
+				      &resolve[LEFT_END],
+				      host_afi,
+				      verbose);
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
@@ -5133,7 +5152,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		d = extract_child_end_config(wm, whack_ends[end],
-					     &resolve[end],
+					     host_addrs[end],
 					     protoport[end],
 					     ike_version,
 					     c, &config->end[end].child,
