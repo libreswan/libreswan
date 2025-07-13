@@ -98,7 +98,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	enum ikev2_ppk_id_type id_type = id_byte;
 	switch (id_type) {
 	case PPK_ID_FIXED:
-		dbg("PPK_ID of type PPK_ID_FIXED.");
+		ldbg(ike->sa.logger, "PPK_ID of type PPK_ID_FIXED.");
 		break;
 	case PPK_ID_OPAQUE:
 	default:
@@ -169,7 +169,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	enum ikev2_ppk_id_type id_type = id_byte;
 	switch (id_type) {
 	case PPK_ID_FIXED:
-		dbg("PPK_ID of type PPK_ID_FIXED.");
+		ldbg(ike->sa.logger, "PPK_ID of type PPK_ID_FIXED.");
 		break;
 	case PPK_ID_OPAQUE:
 	default:
@@ -256,7 +256,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", *no_ppk_auth);
 		}
 	} else {
-		if (!out_hunk(sig, a_pbs, "rsa signature"))
+		if (!pbs_out_hunk(a_pbs, sig, "rsa signature"))
 			return false;
 	}
 

@@ -314,8 +314,6 @@ bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
 bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		 const char *name) MUST_USE_RESULT;
 
-#define out_hunk(HUNK, OUTS, NAME) pbs_out_hunk(OUTS, HUNK, NAME)
-
 #define pbs_out_hunk(OUTS, HUNK, NAME)					\
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
