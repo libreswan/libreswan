@@ -978,28 +978,24 @@ extern void init_pluto_constants(void);
  */
 
 enum stream {
-	/*                                 syslog()                      */
-	/*                                Severity  Whack  Tools  Prefix */
-	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <prefix> */
+	/*                 syslog()   To                      */
+	/*                 Severity   Whack  Tools     Format */
+
+	NO_STREAM,	/*    -       -      -         */
+	DEBUG_STREAM,	/*  DEBUG     no     stderr    | [<prefix>] */
+
+	ALL_STREAMS,	/*  WARNING   yes    stderr?   <prefix> ... */
 #define RC_LOG ALL_STREAMS
-	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <prefix> */
-	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <prefix> */
-	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    "| " [ <prefix> ] */
-	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    "ERROR: " <prefix>   */
-	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    "EXPECTATION FAILED: " <prefix> */
-	PASSERT_STREAM     = 0x0600000, /*   ERR     yes    err    "ABORT: ASSERTION_FAILED: " <prefix> */
-	FATAL_STREAM       = 0x0700000, /*   ERR     yes    err    "FATAL ERROR: " <prefix> */
-	PRINTF_STREAM      = 0x0800000, /*   N/A    stdout stdout  */
-	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
-	/*
-	 * <o>: add prefix when object is available
-	 *
-	 * | <o>: add both "| " and prefix when object is available and
-         * feature is enabled
-	 *
-	 * err?: write to stderr when enabled (tests log_to_stderr,
-	 * typically via -v).  Used by tools such as whack.
-	 */
+	LOG_STREAM,	/*  WARNING   no     stderr?   <prefix> ... */
+
+	ERROR_STREAM,	/*  ERR       yes    stderr    ERROR: <prefix>   */
+	PEXPECT_STREAM,	/*  ERR       yes    stderr    EXPECTATION FAILED: <prefix> ... */
+
+	FATAL_STREAM,	/*  ERR       yes    stderr    FATAL ERROR: <prefix> ... */
+	PASSERT_STREAM,	/*  ERR       yes    stderr    ABORT: ASSERTION_FAILED: <prefix> ... */
+
+	WHACK_STREAM,	/*  N/A       yes    stdout    <prefix> ...*/
+	PRINTF_STREAM,	/*  N/A       yes    stdout    */
 };
 
 #endif
