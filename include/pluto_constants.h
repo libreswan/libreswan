@@ -977,9 +977,6 @@ extern void init_pluto_constants(void);
  * to get the definition of "enum stream".
  */
 
-#define RC_MASK              0x00fffff	/* rc_type max is 64435+200 */
-#define STREAM_MASK          0x0f00000
-
 enum stream {
 	/*                                 syslog()                      */
 	/*                                Severity  Whack  Tools  Prefix */
