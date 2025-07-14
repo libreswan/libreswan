@@ -86,7 +86,6 @@ struct logger *tool_logger(int argc UNUSED, char *argv[])
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, enum stream stream)
 {
 	switch (stream) {
-	case RC_LOG:
 	case ALL_STREAMS:
 	case LOG_STREAM:
 		if (log_to_stderr) {
