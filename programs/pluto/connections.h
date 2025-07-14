@@ -208,6 +208,7 @@ extern const struct ike_info ikev1_info;
 extern const struct ike_info ikev2_info;
 
 struct host_config {
+	const struct ip_info *afi;
 	struct cisco_host_config {
 		bool unity;
 		bool peer;
