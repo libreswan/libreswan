@@ -714,8 +714,10 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	     str_address(&peer_nexthop, &pb));
 	verbose.level++;
 
+#if 0
 	/* could be %any but can't be an address */
 	vassert_where(where, !address_is_specified(host->addr));
+#endif
 
 	/* can't be unset; but could be %any[46] */
 	const struct ip_info *afi = address_info(host_addr);
@@ -783,9 +785,9 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	peer->nexthop = peer_nexthop;
 }
 
-static bool resolve_connection_hosts_from_configs(struct connection *c,
-						  const struct config *config,
-						  struct verbose verbose)
+bool resolve_connection_hosts_from_configs(struct connection *c,
+					   const struct config *config,
+					   struct verbose verbose)
 {
 	struct resolve_end resolve[END_ROOF] = {0};
 

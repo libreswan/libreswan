@@ -938,6 +938,10 @@ extern bool same_peer_ids(const struct connection *c,
 
 diag_t add_connection(const struct whack_message *wm, struct logger *logger);
 
+bool resolve_connection_hosts_from_configs(struct connection *c,
+					   const struct config *config,
+					   struct verbose verbose);
+
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,
 				     ip_address this_host_addr,
 				     ip_address that_nexthop_addr,

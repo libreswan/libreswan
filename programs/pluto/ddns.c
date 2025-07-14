@@ -46,8 +46,6 @@
 
 static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 {
-	const char *e;
-
 	/* This is the cheapest check, so do it first */
 	if (never_negotiate(c)) {
 		vdbg("skipping connection %s, is never_negotiate",
@@ -108,45 +106,14 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		return;
 	}
 
-	/* XXX: blocking call */
-
-	ip_address new_remote_addr;
-	e = ttoaddress_dns(shunk1(c->remote->config->host.host.name),
-			   NULL/*UNSPEC*/, &new_remote_addr);
-	if (e != NULL) {
-		vdbg("skipping connection %s, lookup of \"%s\" failed: %s",
-		     c->name, c->remote->config->host.host.name, e);
-		return;
-	}
-
-	if (!address_is_specified(new_remote_addr)) {
-		vdbg("skipping connection %s, still no address for \"%s\"",
-		     c->name, c->remote->config->host.host.name);
-		return;
-	}
-
-	/*
-	 * Since above rejected a specified .remote .host .addr, this
-	 * check currently cannot succeed.  If in the future we do,
-	 * don't do weird things.
-	 */
-	if (sameaddr(&new_remote_addr, &c->remote->host.addr)) {
-		llog_pexpect(c->logger, HERE,
-			     "skipping connection %s, unset address unchanged",
-			     c->name);
-		return;
-	}
-
-	/* I think this is OK now we check everything above. */
-
-	address_buf old, new;
-	vdbg("updating connection IP address by '%s' from %s to %s",
-	     c->remote->config->host.host.name,
-	     str_address_sensitive(&c->remote->host.addr, &old),
-	     str_address_sensitive(&new_remote_addr, &new));
+	vdbg("updating connection IP addresses");
 	verbose.level++;
 
-	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
+	/* XXX: blocking call on dedicated thread */
+
+	if (!resolve_connection_hosts_from_configs(c, c->config, verbose)) {
+		return;
+	}
 
 	/*
 	 * Pull any existing routing based on current SPDs.  Remember,
@@ -163,35 +130,6 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		disorient(c);
 	} else {
 		vdbg("already disoriented");
-	}
-
-	/* propagate remote address */
-	vdbg("updating hosts");
-	update_hosts_from_end_host_addr(c, c->remote->config->index,
-					new_remote_addr, c->local->host.nexthop,
-					HERE); /* from DNS */
-
-	if (c->remote->child.config->selectors.len > 0) {
-		vdbg("%s.child already has hard-wired selectors; skipping",
-		     c->remote->config->leftright);
-	} else if (c->remote->child.has_client) {
-		pexpect(is_opportunistic(c));
-		vdbg("%s.child.has_client yet no selectors; skipping magic",
-		     c->remote->config->leftright);
-	} else {
-		/*
-		 * Default the end's child selector (client)
-		 * to a subnet containing only the end's host
-		 * address.
-		 */
-		struct child_end *child = &c->remote->child;
-		ip_selector remote =
-			selector_from_address_protoport(new_remote_addr, child->config->protoport);
-		selector_buf new;
-		vdbg("updated %s.selector to %s",
-		    c->remote->config->leftright,
-		    str_selector(&remote, &new));
-		append_end_selector(c->remote, remote, c->logger, HERE);
 	}
 
 	/*
