@@ -31,7 +31,7 @@ struct connection;
 struct child_policy;
 
 bool initiate_connection(struct connection *c, const char *remote_host,
-			 bool background, struct logger *logger);
+			 bool background, const struct logger *logger);
 
 void initiate(struct connection *c,
 	      const struct child_policy *policy,
