@@ -56,7 +56,7 @@ west #
  # wait for a DPD; XXX: this is a debug line!
 west #
  ../../guestbin/wait-for.sh --match 'R_U_THERE_ACK, seqno received' -- cat /tmp/pluto.log | sed -e 's/received:.*/received:/'
-| DPD: R_U_THERE_ACK, seqno received:
+| "westnet-eastnet-ikev1" #1: DPD: R_U_THERE_ACK, seqno received:
 west #
  # confirm --down is processed properly too
 west #
