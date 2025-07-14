@@ -320,7 +320,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 	case DEBUG_STREAM:
 		log_raw(LOG_DEBUG, "", buf);
 		return;
-	case RC_LOG:
 	case ALL_STREAMS:
 		log_raw(DEFAULT_LOGLEVEL, "", buf);
 		log_whacks(0, logger, buf);
