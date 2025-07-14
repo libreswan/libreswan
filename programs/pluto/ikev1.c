@@ -1393,7 +1393,7 @@ void process_v1_packet(struct msg_digest *md)
 		}
 		if (st->st_v1_background_md != NULL) {
 			ldbg(logger, "suspend: releasing suspended operation for "PRI_SO" MD@%p before completion "PRI_WHERE,
-			     st->st_serialno, st->st_v1_background_md,
+			     pri_so(st->st_serialno), st->st_v1_background_md,
 			     pri_where(HERE));
 			md_delref(&st->st_v1_background_md);
 		}

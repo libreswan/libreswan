@@ -423,8 +423,8 @@ void record_newaddr(ip_address *ip, char *a_type)
 					       &ike->sa);
 			} else {
 				address_buf b;
-				dbg(PRI_SO" MOBIKE ignore address %s change pending previous",
-				    ike->sa.st_serialno, str_address_sensitive(ip, &b));
+				ldbg(ike->sa.logger, PRI_SO" MOBIKE ignore address %s change pending previous",
+				     pri_so(ike->sa.st_serialno), str_address_sensitive(ip, &b));
 			}
 		}
 	}
@@ -485,10 +485,10 @@ void record_deladdr(ip_address *ip, char *a_type)
 			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), &ike->sa);
 		} else {
 			address_buf o, n;
-			dbg(PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",
-			    ike->sa.st_serialno,
-			    str_address(ip, &n),
-			    str_address(&ip_p, &o));
+			ldbg(ike->sa.logger, PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",
+			     pri_so(ike->sa.st_serialno),
+			     str_address(ip, &n),
+			     str_address(&ip_p, &o));
 		}
 	}
 }
@@ -603,11 +603,11 @@ static void initiate_mobike_probe(struct ike_sa *ike,
 
 	address_buf g;
 	endpoint_buf lb, rb;
-	dbg(PRI_SO" MOBIKE new local %s remote %s and gateway %s",
-	    ike->sa.st_serialno,
-	    str_endpoint(&new_iface->local_endpoint, &lb),
-	    str_endpoint(&ike->sa.st_remote_endpoint, &rb),
-	    str_address(&new_nexthop, &g));
+	ldbg(ike->sa.logger, PRI_SO" MOBIKE new local %s remote %s and gateway %s",
+	     pri_so(ike->sa.st_serialno),
+	     str_endpoint(&new_iface->local_endpoint, &lb),
+	     str_endpoint(&ike->sa.st_remote_endpoint, &rb),
+	     str_address(&new_nexthop, &g));
 	/*
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
@@ -638,8 +638,8 @@ static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_
 		find_iface_endpoint_by_local_endpoint(local_endpoint); /* must delref */
 	if (iface == NULL) {
 		endpoint_buf b;
-		dbg(PRI_SO" no interface for %s try to initialize",
-		    ike->sa.st_serialno, str_endpoint(&local_endpoint, &b));
+		ldbg(ike->sa.logger, PRI_SO" no interface for %s try to initialize",
+		     pri_so(ike->sa.st_serialno), str_endpoint(&local_endpoint, &b));
 		find_ifaces(false, ike->sa.logger);
 		iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 		if (iface ==  NULL) {
@@ -683,8 +683,8 @@ void ikev2_addr_change(struct state *ike_sa)
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
-		dbg(PRI_SO" no local gateway to reach %s",
-		    ike->sa.st_serialno, str_address(&dest, &b));
+		ldbg(ike->sa.logger, PRI_SO" no local gateway to reach %s",
+		     pri_so(ike->sa.st_serialno), str_address(&dest, &b));
 		break;
 	}
 	case ROUTE_SOURCE_FAILED:

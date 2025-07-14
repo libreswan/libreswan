@@ -87,16 +87,16 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		ike = ike_sa(st, HERE);
 	}
 
-	dbg(PRI_SO" check last used on newest CHILD SA "PRI_SO,
-	    ike->sa.st_serialno, child->sa.st_serialno);
+	ldbg(ike->sa.logger, PRI_SO" check last used on newest CHILD SA "PRI_SO,
+	     pri_so(ike->sa.st_serialno), pri_so(child->sa.st_serialno));
 
 	/* not sure why idleness is set to rekey margin? */
 	if (was_eroute_idle(child, c->config->sa_rekey_margin)) {
 		/* we observed no traffic, let IPSEC SA and IKE SA expire */
-		dbg("expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
-		    ike->sa.st_serialno,
-		    child->sa.st_serialno,
-		    deltasecs(c->config->sa_rekey_margin));
+		ldbg(ike->sa.logger, "expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
+		     pri_so(ike->sa.st_serialno),
+		     pri_so(child->sa.st_serialno),
+		     deltasecs(c->config->sa_rekey_margin));
 		return true;
 	}
 	return false;

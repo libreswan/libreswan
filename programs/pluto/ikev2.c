@@ -911,7 +911,7 @@ void ikev2_process_packet(struct msg_digest *md)
 		name_buf ixb;
 		/* there's no rate_llog() */
 		llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
-			ike->sa.st_serialno,
+			pri_so(ike->sa.st_serialno),
 			str_enum_short(&ikev2_exchange_names, ix, &ixb),
 			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
@@ -1881,7 +1881,8 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	 */
 	if (ike->sa.st_iface_endpoint != NULL &&
 	    ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
-		dbg("TCP: freeing interface as "PRI_SO" is restarting", ike->sa.st_serialno);
+		ldbg(ike->sa.logger, "TCP: freeing interface as "PRI_SO" is restarting",
+		     pri_so(ike->sa.st_serialno));
 		/* create new-from-old first; must delref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_iface_endpoint->ip_dev,
 								   ike->sa.st_remote_endpoint,

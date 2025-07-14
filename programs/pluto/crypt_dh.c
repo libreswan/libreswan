@@ -179,8 +179,9 @@ static stf_status complete_dh_shared_secret(struct state *task_st,
 					    struct task *task)
 {
 	struct state *dh_st = state_by_serialno(task->dh_serialno);
-	dbg("completing DH shared secret for "PRI_SO"/"PRI_SO,
-	    task_st->st_serialno, dh_st->st_serialno);
+	ldbg(dh_st->logger, "completing DH shared secret for "PRI_SO"/"PRI_SO,
+	     pri_so(task_st->st_serialno),
+	     pri_so(dh_st->st_serialno));
 	pexpect(dh_st->st_dh_shared_secret == NULL);
 	symkey_delref(dh_st->logger, "st_dh_shared_secret", &dh_st->st_dh_shared_secret);
 	/* transfer */
@@ -203,8 +204,10 @@ void submit_dh_shared_secret(struct state *callback_sa,
 			     chunk_t remote_ke,
 			     dh_shared_secret_cb *cb, where_t where)
 {
-	dbg("submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
-	    callback_sa->st_serialno, dh_st->st_serialno, pri_where(where));
+	ldbg(dh_st->logger, "submitting DH shared secret for "PRI_SO"/"PRI_SO" "PRI_WHERE,
+	     pri_so(callback_sa->st_serialno),
+	     pri_so(dh_st->st_serialno),
+	     pri_where(where));
 	if (dh_st->st_dh_shared_secret != NULL) {
 		llog_pexpect(dh_st->logger, where,
 			     "in %s expecting st->st_dh_shared_secret == NULL",

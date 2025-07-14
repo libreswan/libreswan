@@ -120,7 +120,7 @@ static size_t jam_backlog(struct jambuf *buf, const void *data)
 		s += jam(buf, " state "PRI_SO, pri_so(job->callback_so));
 	}
 	if (job->task_so != SOS_NOBODY && job->task_so != job->callback_so) {
-		s += jam(buf, " state #%lu", pri_so(job->task_so));
+		s += jam(buf, " state "PRI_SO, pri_so(job->task_so));
 	}
 	if (job->helper_id != 0) {
 		s += jam(buf, " helper %u", job->helper_id);
