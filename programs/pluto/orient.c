@@ -220,7 +220,7 @@ static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 	jam_address(buf, &iface->local_address);
 }
 
-bool orient(struct connection *c, struct logger *logger)
+bool orient(struct connection *c, const struct logger *logger)
 {
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(c->logger, "orienting %s", c->name);

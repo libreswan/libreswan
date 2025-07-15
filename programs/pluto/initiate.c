@@ -64,7 +64,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 bool initiate_connection(struct connection *c,
 			 const char *remote_host,
 			 bool background,
-			 struct logger *logger)
+			 const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	vdbg_connection(c, verbose, HERE,
