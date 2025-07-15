@@ -70,11 +70,11 @@ void append_pending(struct ike_sa *ike,
 	if (c->pending != NULL) {
 		address_buf b;
 		bool duplicate = (c->pending->ike == ike);
-		ldbg_sa(ike, "connection %s is already pending: waiting on IKE SA #%lu connecting to %s; %s",
+		ldbg_sa(ike, "connection %s is already pending: waiting on IKE SA "PRI_SO" connecting to %s; %s",
 			c->name,
-			c->pending->ike->sa.st_serialno,
+			pri_so(c->pending->ike->sa.st_serialno),
 			str_address(&c->remote->host.addr, &b),
-			duplicate ? "ignoring duplicate" : "this IKE SA is different");
+			(duplicate ? "ignoring duplicate" : "this IKE SA is different"));
 		if (duplicate) {
 			return;
 		}
@@ -276,11 +276,11 @@ static void delete_pending(struct pending **pp, const char *what)
 void unpend(struct ike_sa *ike, struct connection *cc)
 {
 	if (cc == NULL) {
-		ldbg_sa(ike, "pending: unpending state %p #%lu pending %p",
-			ike, ike->sa.st_serialno, ike->sa.st_pending);
+		ldbg_sa(ike, "pending: unpending state %p "PRI_SO" pending %p",
+			ike, pri_so(ike->sa.st_serialno), ike->sa.st_pending);
 	} else {
-		ldbg_sa(ike, "pending: unpending state #%lu connection %s",
-			ike->sa.st_serialno, cc->name);
+		ldbg_sa(ike, "pending: unpending state "PRI_SO" connection %s",
+			pri_so(ike->sa.st_serialno), cc->name);
 	}
 
 	struct pending **pp = &ike->sa.st_pending;

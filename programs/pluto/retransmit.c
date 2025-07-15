@@ -24,11 +24,11 @@
 #include "log.h"
 #include "iface.h"
 
-#define dbg_retransmit(ST, FMT, ...)				\
-	{							\
-		dbg("#%ld %s: retransmits: "FMT,		\
-		    st->st_serialno, st->st_state->name,	\
-		    ##__VA_ARGS__);				\
+#define dbg_retransmit(ST, FMT, ...)					\
+	{								\
+		dbg(PRI_SO" %s: retransmits: "FMT,			\
+		    pri_so(st->st_serialno), st->st_state->name,	\
+		    ##__VA_ARGS__);					\
 	}
 
 unsigned long retransmit_count(struct state *st)

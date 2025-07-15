@@ -127,8 +127,10 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		 str_endpoint_sensitive(&old_endpoint, &old),
 		 str_endpoint_sensitive(&new_endpoint, &new));
 
-	dbg("#%lu pst=#%lu %s", child->sa.st_serialno,
-	    ike->sa.st_serialno, buf);
+	ldbg(ike->sa.logger, PRI_SO" pst="PRI_SO" %s",
+	     pri_so(child->sa.st_serialno),
+	     pri_so(ike->sa.st_serialno),
+	     buf);
 
 	if (endpoint_eq_endpoint(old_endpoint, new_endpoint)) {
 		if (md_role == MESSAGE_REQUEST) {

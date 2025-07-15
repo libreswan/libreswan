@@ -6126,12 +6126,12 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 
 	if (IS_IKE_SA(st)) {
 		newest = c->established_ike_sa;
-		dbg("picked established_ike_sa #%lu for #%lu",
-		    newest, st->st_serialno);
+		ldbg(st->logger, "picked established_ike_sa "PRI_SO" for "PRI_SO"",
+		     pri_so(newest), pri_so(st->st_serialno));
 	} else {
 		newest = c->established_child_sa;
-		dbg("picked established_child_sa #%lu for #%lu",
-		    newest, st->st_serialno);
+		ldbg(st->logger, "picked established_child_sa "PRI_SO" for "PRI_SO"",
+		     pri_so(newest), pri_so(st->st_serialno));
 	}
 
 	if (newest != SOS_NOBODY && newest != st->st_serialno) {

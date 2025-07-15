@@ -242,8 +242,8 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, null_child == NULL);
 	PEXPECT(ike->sa.logger, null_md == NULL);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-	dbg("%s() for #%lu %s: g^{xy} calculated, sending INTERMEDIATE",
-	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
+	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending INTERMEDIATE",
+	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	/* beginning of data going out */
 
@@ -602,8 +602,8 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 */
 	if (c->established_child_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu, drop this negotiation",
-			  c->established_child_sa);
+			"state superseded by "PRI_SO", drop this negotiation",
+			pri_so(c->established_child_sa));
 		return STF_FATAL;
 	}
 

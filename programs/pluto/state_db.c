@@ -141,8 +141,8 @@ struct state *state_by_reqid(reqid_t reqid,
 		    !predicate(st, predicate_context)) {
 			continue;
 		}
-		dbg("State DB: found state #%lu in %s (%s)",
-		    st->st_serialno, st->st_state->short_name, reason);
+		dbg("State DB: found state "PRI_SO" in %s (%s)",
+		    pri_so(st->st_serialno), st->st_state->short_name, reason);
 		return st;
 	}
 	dbg("State DB: state not found (%s)", reason);
@@ -185,9 +185,9 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
 		}
-		dbg("State DB: found %s state #%lu in %s (%s)",
+		dbg("State DB: found %s state "PRI_SO" in %s (%s)",
 		    st->st_connection->config->ike_info->version_name,
-		    st->st_serialno, st->st_state->short_name, name);
+		    pri_so(st->st_serialno), st->st_state->short_name, name);
 		return st;
 	}
 	name_buf vb;
@@ -251,9 +251,9 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				continue;
 			}
 		}
-		dbg("State DB: found %s state #%lu in %s (%s)",
+		dbg("State DB: found %s state "PRI_SO" in %s (%s)",
 		    st->st_connection->config->ike_info->version_name,
-		    st->st_serialno, st->st_state->short_name, name);
+		    pri_so(st->st_serialno), st->st_state->short_name, name);
 		return st;
 	}
 	name_buf vb;
@@ -313,9 +313,9 @@ void update_st_ike_spis_responder(struct ike_sa *ike,
 	/* update the responder's SPI */
 	ike->sa.st_ike_spis.responder = *ike_responder_spi;
 	/* now, update the state */
-	ldbg_sa(ike, "State DB: re-hashing %s state #%lu IKE SPIr",
+	ldbg_sa(ike, "State DB: re-hashing %s state "PRI_SO" IKE SPIr",
 		ike->sa.st_connection->config->ike_info->version_name,
-		ike->sa.st_serialno);
+		pri_so(ike->sa.st_serialno));
 	state_db_rehash_ike_spis(&ike->sa);
 	/* just logs change */
 	binlog_refresh_state(&ike->sa);
@@ -333,9 +333,9 @@ void update_st_ike_spis(struct child_sa *new_ike, const ike_spis_t *ike_spis)
 	/* update the responder's SPI */
 	new_ike->sa.st_ike_spis = *ike_spis;
 	/* now, update the state */
-	ldbg_sa(new_ike, "State DB: re-hashing %s state #%lu IKE SPI[ir]",
+	ldbg_sa(new_ike, "State DB: re-hashing %s state "PRI_SO" IKE SPI[ir]",
 		new_ike->sa.st_connection->config->ike_info->version_name,
-		new_ike->sa.st_serialno);
+		pri_so(new_ike->sa.st_serialno));
 	state_db_rehash_ike_spis(&new_ike->sa);
 	state_db_rehash_ike_initiator_spi(&new_ike->sa);
 	/* just logs change */

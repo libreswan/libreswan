@@ -403,8 +403,8 @@ struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)
 		return NULL;
 	}
 	if (!IS_IKE_SA(st)) {
-		llog_pexpect(st->logger, where,
-			     "state #%lu is not an IKE SA", st->st_serialno);
+		llog_pexpect(st->logger, where, "state "PRI_SO" is not an IKE SA",
+			     pri_so(st->st_serialno));
 		return NULL; /* kaboom */
 	}
 	return (struct ike_sa*) st;
@@ -417,8 +417,8 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
 	}
 	if (!IS_CHILD_SA(st)) {
 		/* In IKEv2 a re-keying IKE SA starts life as a child */
-		llog_pexpect(st->logger, where,
-			     "state #%lu is not a CHILD", st->st_serialno);
+		llog_pexpect(st->logger, where, "state "PRI_SO" is not a CHILD",
+			     pri_so(st->st_serialno));
 		return NULL; /* kaboom */
 	}
 	return (struct child_sa*) st;
@@ -1240,10 +1240,11 @@ static struct child_sa *duplicate_state(struct connection *c,
 					   ike->sa.st_ike_spis.responder,
 					   sa_kind, sa_role, HERE));
 
-	ldbg(ike->sa.logger, "duplicating state object %s #%lu as #%lu for %s",
+	ldbg(ike->sa.logger, "duplicating state object %s "PRI_SO" as "PRI_SO" for %s",
 	     ike->sa.st_connection->name,
-	     ike->sa.st_serialno,
-	     child->sa.st_serialno, sa_kind == CHILD_SA ? "IPSEC SA" : "IKE SA");
+	     pri_so(ike->sa.st_serialno),
+	     pri_so(child->sa.st_serialno),
+	     (sa_kind == CHILD_SA ? "IPSEC SA" : "IKE SA"));
 
 	/*
 	 * Some sloppy value inheritance.
@@ -1428,8 +1429,8 @@ static bool v2_spi_predicate(struct state *st, void *context)
 
 	if (pr->protocol != NULL) {
 		if (pr->outbound.spi == filter->outbound_spi) {
-			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
-			    st->st_serialno, st->st_state->name);
+			ldbg(st->logger, "v2 CHILD SA "PRI_SO" found using their inbound (our outbound) SPI, in %s",
+			     pri_so(st->st_serialno), st->st_state->name);
 			ret = true;
 			if (filter->dst != NULL) {
 				ret = false;
@@ -1439,8 +1440,8 @@ static bool v2_spi_predicate(struct state *st, void *context)
 			}
 		} else if (filter->inbound_spi > 0 &&
 			   filter->inbound_spi == pr->inbound.spi) {
-			dbg("v2 CHILD SA #%lu found using their our SPI, in %s",
-			    st->st_serialno, st->st_state->name);
+			ldbg(st->logger, "v2 CHILD SA "PRI_SO" found using their our SPI, in %s",
+			     pri_so(st->st_serialno), st->st_state->name);
 			ret = true;
 			if (filter->dst != NULL) {
 				ret = false;
@@ -1452,7 +1453,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 #if 0
 		/* see function description above */
 		if (pr->inbound.spi == filter->outbound_spi) {
-			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
+			dbg("v2 CHILD SA "PRI_SO" found using our inbound (their outbound) !?! SPI, in %s",
 			    st->st_serialno,
 			    st->st_state->name);
 			return true;
@@ -1717,11 +1718,11 @@ void update_ike_endpoints(struct ike_sa *ike,
 	/* caller must ensure we are not behind NAT */
 	ike->sa.st_remote_endpoint = md->sender;
 	endpoint_buf eb1, eb2;
-	dbg("#%lu updating local interface from %s to %s using md->iface "PRI_WHERE,
-	    ike->sa.st_serialno,
-	    ike->sa.st_iface_endpoint != NULL ? str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb1) : "<none>",
-	    str_endpoint(&md->iface->local_endpoint, &eb2),
-	    pri_where(HERE));
+	ldbg(ike->sa.logger, PRI_SO" updating local interface from %s to %s using md->iface "PRI_WHERE,
+	     pri_so(ike->sa.st_serialno),
+	     (ike->sa.st_iface_endpoint != NULL ? str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb1) : "<none>"),
+	     str_endpoint(&md->iface->local_endpoint, &eb2),
+	     pri_where(HERE));
 	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
 	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 }
@@ -1955,7 +1956,8 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 		       where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
-		jam(buf, "#%lu.st_v1_transition ", st->st_serialno);
+		jam_so(buf, st->st_serialno);
+		jam_string(buf, ".st_v1_transition ");
 		jam_v1_transition(buf, st->st_v1_transition);
 		jam(buf, " to ");
 		jam_v1_transition(buf, transition);
@@ -1970,7 +1972,8 @@ void set_v2_transition(struct state *st, const struct v2_transition *transition,
 		       where_t where)
 {
 	LDBGP_JAMBUF(DBG_BASE, st->logger, buf) {
-		jam(buf, "#%lu.st_v2_transition ", st->st_serialno);
+		jam_so(buf, st->st_serialno);
+		jam_string(buf, ".st_v2_transition ");
 		jam_v2_transition(buf, st->st_v2_transition);
 		jam(buf, " -> ");
 		jam_v2_transition(buf, transition);
@@ -1985,9 +1988,15 @@ static void jam_st(struct jambuf *buf, struct state *st)
 	if (st == NULL) {
 		jam(buf, "NULL");
 	} else {
-		jam(buf, "%s #%lu %s",
+		jam(buf, "%s "PRI_SO" %s",
 		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
-		    st->st_serialno, st->st_state->short_name);
+		    pri_so(st->st_serialno), st->st_state->short_name);
+		jam(buf, "%s "PRI_SO" %s",
+		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+		    pri_so(st->st_serialno), st->st_state->short_name);
+		jam(buf, "%s "PRI_SO" %s",
+		    IS_CHILD_SA(st) ? "CHILD" : "IKE",
+		    pri_so(st->st_serialno), st->st_state->short_name);
 	}
 }
 

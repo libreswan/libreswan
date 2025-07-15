@@ -172,8 +172,8 @@ void delete_state_event(struct state_event **evp, where_t where)
 	passert(e->ev_state != NULL);
 
 	name_buf tb;
-	dbg("#%lu deleting %s",
-	    e->ev_state->st_serialno,
+	dbg(""PRI_SO" deleting %s",
+	    pri_so(e->ev_state->st_serialno),
 	    str_enum_long(&event_type_names, e->ev_type, &tb));
 
 	/* first the event */
@@ -260,7 +260,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 	switch (event_type) {
 
 	case EVENT_v2_ADDR_CHANGE:
-		ldbg(st->logger, "#%lu IKEv2 local address change", st->st_serialno);
+		ldbg(st->logger, PRI_SO" IKEv2 local address change",
+		     pri_so(st->st_serialno));
 		ikev2_addr_change(st);
 		break;
 
@@ -279,8 +280,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 #ifdef USE_IKEv1
 	case EVENT_v1_SEND_XAUTH:
 	{
-		ldbg(st->logger, "XAUTH: event EVENT_v1_SEND_XAUTH #%lu %s",
-		     st->st_serialno, st->st_state->name);
+		ldbg(st->logger, "XAUTH: event EVENT_v1_SEND_XAUTH "PRI_SO" %s",
+		     pri_so(st->st_serialno), st->st_state->name);
 		struct ike_sa *ike = pexpect_ike_sa(st);
 		if (ike != NULL) {
 			xauth_send_request(ike);
@@ -315,8 +316,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 		if (newer_sa != SOS_NOBODY) {
 			/* not very interesting: already superseded */
-			ldbg(st->logger, "%s SA expired (superseded by #%lu)",
-			     satype, newer_sa);
+			ldbg(st->logger, "%s SA expired (superseded by "PRI_SO")",
+			     satype, pri_so(newer_sa));
 		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
 			   !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
@@ -341,8 +342,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 		if (newer_sa != SOS_NOBODY) {
 			/* not very interesting: already superseded */
-			ldbg(st->logger, "%s SA expired (superseded by #%lu)",
-			     satype, newer_sa);
+			ldbg(st->logger, "%s SA expired (superseded by "PRI_SO")",
+			     satype, pri_so(newer_sa));
 		} else if (!IS_IKE_SA_ESTABLISHED(st) &&
 			   !IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/* not very interesting: failed IKE attempt */
@@ -375,8 +376,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			struct child_sa *child = pexpect_child_sa(st);
 			state_attach(&child->sa, logger);
 			llog_pexpect(child->sa.logger, HERE,
-				     "Child SA lost its IKE SA #%lu",
-				     child->sa.st_clonedfrom);
+				     "Child SA lost its IKE SA "PRI_SO"",
+				     pri_so(child->sa.st_clonedfrom));
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			st = NULL;
 		} else if (IS_IKE_SA_ESTABLISHED(st)) {
@@ -519,7 +520,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 #ifdef USE_PAM_AUTH
 	case EVENT_v1_PAM_TIMEOUT:
 	{
-		ldbg(st->logger, "PAM thread timeout on state #%lu", st->st_serialno);
+		ldbg(st->logger, "PAM thread timeout on state "PRI_SO"",
+		     pri_so(st->st_serialno));
 		struct ike_sa *ike = pexpect_ike_sa(st);
 		if (ike != NULL) {
 			pam_auth_abort(ike, "timeout");
@@ -536,8 +538,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 #endif
 	case EVENT_v1_CRYPTO_TIMEOUT:
 		state_attach(st, logger);
-		ldbg(st->logger, "event crypto_failed on state #%lu, aborting",
-		     st->st_serialno);
+		ldbg(st->logger, "event crypto_failed on state "PRI_SO", aborting",
+		     pri_so(st->st_serialno));
 		if (IS_PARENT_SA(st)) {
 			struct ike_sa *ike = pexpect_ike_sa(st);
 			terminate_ike_family(&ike, REASON_CRYPTO_TIMEOUT, HERE);
@@ -607,8 +609,8 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
 		llog_pexpect(st->logger, where,
-			     "#%lu has no .st_*event field for %s",
-			     st->st_serialno, event_name.buf);
+			     ""PRI_SO" has no .st_*event field for %s",
+			     pri_so(st->st_serialno), event_name.buf);
 		return;
 	}
 
@@ -616,8 +618,8 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 		/* help debugging by stumbling on */
 		name_buf tb;
 		llog_pexpect(st->logger, where,
-			     "#%lu already has %s scheduled; forcing %s",
-			     st->st_serialno,
+			     ""PRI_SO" already has %s scheduled; forcing %s",
+			     pri_so(st->st_serialno),
 			     str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
 			     event_name.buf);
 		delete_state_event(evp, where);
@@ -632,9 +634,9 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	*evp = ev;
 
 	deltatime_buf buf;
-	ldbg(st->logger, "%s: newref %s-pe@%p timeout in %s seconds for #%lu",
+	ldbg(st->logger, "%s: newref %s-pe@%p timeout in %s seconds for "PRI_SO"",
 	     __func__, event_name.buf, ev, str_deltatime(delay, &buf),
-	     ev->ev_state->st_serialno);
+	     pri_so(ev->ev_state->st_serialno));
 
 	schedule_timeout(event_name.buf, &ev->timeout, delay, timer_event_cb, ev);
 }
@@ -648,14 +650,16 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 	if (evp == NULL) {
 		name_buf tb;
 		llog_pexpect(st->logger, where,
-			     "#%lu has no .st_event field for %s",
-			     st->st_serialno, str_enum_long(&event_type_names, type, &tb));
+			     ""PRI_SO" has no .st_event field for %s",
+			     pri_so(st->st_serialno),
+			     str_enum_long(&event_type_names, type, &tb));
 		return;
 	}
 	if (*evp != NULL) {
 		name_buf tb;
-		ldbg(st->logger, "#%lu requesting %s-event@%p be deleted "PRI_WHERE,
-		     st->st_serialno, str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
+		ldbg(st->logger, ""PRI_SO" requesting %s-event@%p be deleted "PRI_WHERE,
+		     pri_so(st->st_serialno),
+		     str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
 		     *evp, pri_where(where));
 		pexpect(st == (*evp)->ev_state);
 		delete_state_event(evp, where);

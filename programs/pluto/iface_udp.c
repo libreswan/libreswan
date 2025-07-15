@@ -457,9 +457,9 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		return NULL;
 	}
 
-	dbg("MSG_ERRQUEUE packet matches %s SA #%lu",
-	    st->st_connection->config->ike_info->version_name,
-	    st->st_serialno);
+	ldbg(st->logger, "MSG_ERRQUEUE packet matches %s SA "PRI_SO"",
+	     st->st_connection->config->ike_info->version_name,
+	     pri_so(st->st_serialno));
 	return st;
 }
 

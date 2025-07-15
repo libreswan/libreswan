@@ -108,9 +108,9 @@ static int pam_conversation(int nr_messages,
 
 static void dbg_pam_step(const struct pam_thread_arg *arg, const char *what)
 {
-	dbg("%s helper thread %s for state #%lu, %s[%lu] user=%s.",
+	dbg("%s helper thread %s for state "PRI_SO", %s[%lu] user=%s.",
 	    arg->atype, what,
-	    arg->st_serialno, arg->c_name,
+	    pri_so(arg->st_serialno), arg->c_name,
 	    arg->c_instance_serial, arg->name);
 }
 
@@ -174,9 +174,9 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 
 	/* common failure code */
 	llog(RC_LOG, logger,
-	     "%s FAILED during %s with '%s' for state #%lu, %s[%lu] user=%s.",
+	     "%s FAILED during %s with '%s' for state "PRI_SO", %s[%lu] user=%s.",
 	     arg->atype, what, pam_strerror(pamh, retval),
-	     arg->st_serialno, arg->c_name, arg->c_instance_serial,
+	     pri_so(arg->st_serialno), arg->c_name, arg->c_instance_serial,
 	     arg->name);
 	pam_end(pamh, retval);
 	return false;

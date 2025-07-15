@@ -629,7 +629,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 	 * pexpect() failed yet the passert() passed.
 	 */
 	pexpect(e->timer != NULL);
-	ldbg(event->logger, "processing resume %s for #%lu", e->name, e->serialno);
+	ldbg(event->logger, "processing resume %s for "PRI_SO"",
+	     e->name, pri_so(e->serialno));
 	/*
 	 * XXX: Don't confuse this and the "callback") code path.
 	 * This unsuspends MD, "callback" does not.
@@ -660,8 +661,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
 			ldbg(event->logger,
-			     "resume %s for #%lu suppressed complete_v%d_state_transition()%s",
-			     e->name, e->serialno, ike_version,
+			     "resume %s for "PRI_SO" suppressed complete_v%d_state_transition()%s",
+			     e->name, pri_so(e->serialno), ike_version,
 			     (old_md_st != SOS_NOBODY && e->md->v1_st == NULL ? "; MD.ST disappeared" :
 			      old_md_st != SOS_NOBODY && e->md->v1_st != st ? "; MD.ST was switched" :
 			      ""));
@@ -725,8 +726,8 @@ void schedule_resume(const char *name, so_serial_t serialno,
 		.md = md,
 	};
 	struct resume_event *e = clone_thing(tmp, name);
-	dbg("scheduling resume %s for #%lu",
-	    e->name, e->serialno);
+	dbg("scheduling resume %s for "PRI_SO"",
+	    e->name, pri_so(e->serialno));
 
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
@@ -776,7 +777,8 @@ static void callback_handler(void *arg, const struct timer_event *event)
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		ldbg(event->logger, "processing callback %s for #%lu", e.story, e.serialno);
+		ldbg(event->logger, "processing callback %s for "PRI_SO"",
+		     e.story, pri_so(e.serialno));
 		st = state_by_serialno(e.serialno);
 	}
 
@@ -796,7 +798,8 @@ void schedule_callback(const char *story, deltatime_t delay,
 		.story = story,
 	};
 	struct callback_event *e = clone_thing(tmp, story);
-	dbg("scheduling callback %s (#%lu)", e->story, e->serialno);
+	dbg("scheduling callback %s ("PRI_SO")",
+	    e->story, pri_so(e->serialno));
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
 	 * Event may have even run on another thread before the below
