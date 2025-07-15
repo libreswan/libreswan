@@ -230,6 +230,7 @@ OBJS += linux_audit.o
 USERLAND_LDFLAGS += $(LIBEVENT_LDFLAGS)
 
 OBJS += connections.o
+OBJS += extract.o
 OBJS += instantiate.o
 OBJS += connection_db.o
 OBJS += connection_event.o
