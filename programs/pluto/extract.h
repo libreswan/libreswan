@@ -31,6 +31,7 @@
 #define EXTRACT_H
 
 #include "diag.h"
+#include "verbose.h"
 
 struct whack_message;
 struct connection;
@@ -38,6 +39,7 @@ struct config;
 
 diag_t extract_connection(const struct whack_message *wm,
 			  struct connection *c,
-			  struct config *config);
+			  struct config *config,
+			  struct verbose verbose);
 
 #endif

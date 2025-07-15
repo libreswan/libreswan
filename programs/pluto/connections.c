@@ -689,9 +689,10 @@ void update_hosts_from_end_host_addr(struct connection *c,
 }
 
 bool resolve_connection_hosts_from_configs(struct connection *c,
-					   const struct config *config,
 					   struct verbose verbose)
 {
+	const struct config *config = c->config;
+
 	struct resolve_end resolve[END_ROOF] = {0};
 
 	bool can_resolve = true;
@@ -1253,6 +1254,9 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	 * Use lmod_args() since it both knows how to parse a comma
 	 * separated list and can handle no-XXX (ex: all,no-xauth).
 	 * The final set of enabled bits is returned in .set.
+	 *
+	 * Delay complaining about a lack of set bits until there's a
+	 * connection to log against.
 	 */
 	lmod_t debug = {0};
 	if (wm->debug != NULL) {
@@ -1270,15 +1274,20 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	struct connection *c = alloc_connection(root_config->name, NULL, root_config,
 						debugging | debug.set,
 						logger, HERE);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, c->name);
 
+	/*
+	 * Now that there's a connection to log against, complain
+	 * about broken debug=.
+	 */
 	if (wm->debug != NULL && debug.set == LEMPTY) {
-		llog(RC_LOG, c->logger, "warning: debug=%s invalid, ignored", wm->debug);
+		vlog("warning: debug=%s invalid, ignored", wm->debug);
 	}
 
-	diag_t d = extract_connection(wm, c, root_config);
+	diag_t d = extract_connection(wm, c, root_config, verbose);
 	if (d != NULL) {
 		struct connection *cp = c;
-		PASSERT(c->logger, delref_where(&cp, c->logger, HERE) == c);
+		vassert(delref_where(&cp, c->logger, HERE) == c);
 		discard_connection(&c, false/*not-valid*/, HERE);
 		return d;
 	}

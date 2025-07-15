@@ -2379,9 +2379,9 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 
 diag_t extract_connection(const struct whack_message *wm,
 			  struct connection *c,
-			  struct config *config)
+			  struct config *config,
+			  struct verbose verbose)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, c->name);
 	diag_t d = NULL;
 
 	enum ike_version ike_version = extract_ike_version(wm, &d, c->logger);
@@ -4113,7 +4113,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * result into the connection.
 	 */
 
-	if (!resolve_connection_hosts_from_configs(c, config, verbose)) {
+	if (!resolve_connection_hosts_from_configs(c, verbose)) {
 		vdbg("could not resolve connection");
 	}
 
