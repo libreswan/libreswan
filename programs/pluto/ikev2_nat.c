@@ -165,10 +165,11 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 */
 	if (ike->sa.st_iface_endpoint->esp_encapsulation_enabled) {
 		endpoint_buf b1;
-		dbg("NAT: #%lu not floating local port; interface %s supports encapsulated ESP "PRI_WHERE,
-		    ike->sa.st_serialno,
-		    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
-		    pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" not floating local port; interface %s supports encapsulated ESP "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     pri_where(where));
 	} else if (ike->sa.st_iface_endpoint->float_nat_initiator) {
 		/*
 		 * For IPv4, both :PLUTO_PORT and :PLUTO_NAT_PORT are
@@ -188,11 +189,12 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 			return false; /* must enable NAT */
 		}
 		endpoint_buf b1, b2;
-		dbg("NAT: #%lu floating local port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
-		    ike->sa.st_serialno,
-		    str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
-		    str_endpoint(&new_local_endpoint, &b2),
-		    pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" floating local port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     str_endpoint(&new_local_endpoint, &b2),
+		     pri_where(where));
 		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
 		ike->sa.st_iface_endpoint = i;
 	} else {
@@ -212,13 +214,15 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	 */
 	unsigned remote_hport = endpoint_hport(ike->sa.st_remote_endpoint);
 	if (port_is_specified(ike->sa.st_connection->remote->host.config->ikeport)) {
-		dbg("NAT: #%lu not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
-		    ike->sa.st_serialno,
-		    pri_hport(ike->sa.st_connection->remote->host.config->ikeport),
-		    pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" not floating remote port; hardwired to ikeport="PRI_HPORT" "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     pri_hport(ike->sa.st_connection->remote->host.config->ikeport),
+		     pri_where(where));
 	} else if (remote_hport != IKE_UDP_PORT) {
-		dbg("NAT: #%lu not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
-		    ike->sa.st_serialno, remote_hport, pri_where(where));
+		ldbg(ike->sa.logger,
+		     "NAT: "PRI_SO" not floating remote port; already pointing at non-IKE_UDP_PORT %u "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno), remote_hport, pri_where(where));
 	} else {
 		pexpect(remote_hport == IKE_UDP_PORT);
 		/* same address+protocol; change port */

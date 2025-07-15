@@ -215,7 +215,7 @@ ip_range addresspool_range(struct addresspool *pool)
 static void free_lease_content(struct lease *lease)
 {
 	pfreeany(lease->reusable_name);
-	lease->assigned_to = SOS_NOBODY;
+	lease->assigned_to = COS_NOBODY;
 }
 
 static unsigned hasher(const char *name)

@@ -76,8 +76,8 @@ void pam_auth_abort(struct ike_sa *ike, const char *story)
 	pstats_pamauth_aborted++;
 	passert(pamauth->serialno == ike->sa.st_serialno);
 	pamauth->aborted = story;
-	dbg("PAM: #%lu: %s while authenticating '%s'; aborting PAM",
-	    pamauth->serialno, story, pamauth->ptarg.name);
+	ldbg(ike->sa.logger, "PAM: "PRI_SO": %s while authenticating '%s'; aborting PAM",
+	     pri_so(pamauth->serialno), story, pamauth->ptarg.name);
 
 	/*
 	 * Don't hold back.
@@ -161,13 +161,14 @@ static int pam_child(void *arg, struct logger *logger)
 {
 	struct pam_auth *pamauth = arg;
 
-	dbg("PAM: #%lu: PAM-process authenticating user '%s'",
-	    pamauth->serialno,
-	    pamauth->ptarg.name);
+	ldbg(logger, "PAM: "PRI_SO": PAM-process authenticating user '%s'",
+	     pri_so(pamauth->serialno),
+	     pamauth->ptarg.name);
 	bool success = do_pam_authentication(&pamauth->ptarg, logger);
-	dbg("PAM: #%lu: PAM-process completed for user '%s' with result %s",
-	    pamauth->serialno, pamauth->ptarg.name,
-	    success ? "SUCCESS" : "FAILURE");
+	ldbg(logger, "PAM: "PRI_SO": PAM-process completed for user '%s' with result %s",
+	     pri_so(pamauth->serialno),
+	     pamauth->ptarg.name,
+	     success ? "SUCCESS" : "FAILURE");
 	return success ? 0 : 1;
 }
 
@@ -199,8 +200,8 @@ bool pam_auth_fork_request(struct ike_sa *ike,
 	pamauth->ptarg.c_instance_serial = ike->sa.st_connection->instance_serial;
 	pamauth->ptarg.atype = atype;
 
-	dbg("PAM: #%lu: main-process starting PAM-process for authenticating user '%s'",
-	    pamauth->serialno, pamauth->ptarg.name);
+	ldbg(ike->sa.logger, "PAM: "PRI_SO": main-process starting PAM-process for authenticating user '%s'",
+	     pri_so(pamauth->serialno), pamauth->ptarg.name);
 	pamauth->child = server_fork("pamauth", pam_child,
 				     pamauth->serialno, md,
 				     /*input*/null_shunk, DEBUG_STREAM,

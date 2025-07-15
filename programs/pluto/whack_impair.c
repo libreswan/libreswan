@@ -39,7 +39,7 @@ static struct state *find_impaired_state(so_serial_t so, struct logger *logger)
 {
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		llog(RC_LOG, logger, "state #%lu not found", so);
+		llog(RC_LOG, logger, "state "PRI_SO" not found", pri_so(so));
 		return NULL;
 	}
 	return st;

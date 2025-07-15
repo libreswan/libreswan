@@ -150,7 +150,7 @@ void pstat_sa_started(struct state *st)
 
 	enum sa_kind sa_kind = st->st_sa_kind_when_established;
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
-	dbg("pstats #%lu %s started", st->st_serialno, name);
+	ldbg(st->logger, "pstats "PRI_SO" %s started", pri_so(st->st_serialno), name);
 
 	pstats_sa_started[st->st_ike_version][sa_kind]++;
 }
@@ -162,10 +162,12 @@ void pstat_sa_failed(struct state *st, enum terminate_reason r)
 	name_buf rb;
 	const char *reason = str_enum_long(&terminate_reason_names, r, &rb);
 	if (st->st_pstats.terminate_reason == REASON_UNKNOWN) {
-		ldbg(st->logger, "pstats #%lu %s failed %s", st->st_serialno, name, reason);
+		ldbg(st->logger, "pstats "PRI_SO" %s failed %s",
+		     pri_so(st->st_serialno), name, reason);
 		st->st_pstats.terminate_reason = r;
 	} else {
-		ldbg(st->logger, "pstats #%lu %s re-failed %s", st->st_serialno, name, reason);
+		ldbg(st->logger, "pstats "PRI_SO" %s re-failed %s",
+		     pri_so(st->st_serialno), name, reason);
 	}
 }
 
@@ -175,7 +177,8 @@ void pstat_sa_deleted(struct state *st)
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
 	name_buf rb;
 	const char *reason = str_enum_long(&terminate_reason_names, st->st_pstats.terminate_reason, &rb);
-	ldbg(st->logger, "pstats #%lu %s deleted %s", st->st_serialno, name, reason);
+	ldbg(st->logger, "pstats "PRI_SO" %s deleted %s",
+	     pri_so(st->st_serialno), name, reason);
 
 	pstats_sa_finished[st->st_ike_version][sa_kind][st->st_pstats.terminate_reason]++;
 
@@ -300,7 +303,7 @@ void pstat_sa_established(struct state *st)
 {
 	enum sa_kind sa_kind = st->st_sa_kind_when_established;
 	const char *name = pstats_sa_names[st->st_ike_version][sa_kind];
-	dbg("pstats #%lu %s established", st->st_serialno, name);
+	ldbg(st->logger, "pstats "PRI_SO" %s established", pri_so(st->st_serialno), name);
 	pstats_sa_established[st->st_ike_version][sa_kind]++;
 
 	/*

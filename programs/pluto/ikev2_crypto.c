@@ -110,8 +110,9 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	PK11SymKey *shared = NULL;
 	if (child->sa.st_pfs_group != NULL) {
 		ldbgf(DBG_CRYPT, child->sa.logger,
-		      "#%lu %s add g^ir to child key %p",
-		      child->sa.st_serialno, child->sa.st_state->name, child->sa.st_dh_shared_secret);
+		      PRI_SO" %s add g^ir to child key %p",
+		      pri_so(child->sa.st_serialno),
+		      child->sa.st_state->name, child->sa.st_dh_shared_secret);
 		shared = child->sa.st_dh_shared_secret;
 	}
 

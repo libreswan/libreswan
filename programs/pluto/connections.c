@@ -134,10 +134,10 @@ void vdbg_connection(const struct connection *c,
 	LLOG_JAMBUF(verbose.stream, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam_string(buf, "connection ");
-		jam_connection_co(buf, c);
-		if (c->clonedfrom != 0) {
+		jam_co(buf, c->serialno);
+		if (c->clonedfrom != NULL) {
 			jam_string(buf, " clonedfrom ");
-			jam_connection_co(buf, c->clonedfrom);
+			jam_co(buf, c->clonedfrom->serialno);
 		}
 		jam_string(buf, ": ");
 		jam_connection(buf, c);
@@ -6127,12 +6127,12 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 
 	if (IS_IKE_SA(st)) {
 		newest = c->established_ike_sa;
-		dbg("picked established_ike_sa #%lu for #%lu",
-		    newest, st->st_serialno);
+		ldbg(st->logger, "picked established_ike_sa "PRI_SO" for "PRI_SO"",
+		     pri_so(newest), pri_so(st->st_serialno));
 	} else {
 		newest = c->established_child_sa;
-		dbg("picked established_child_sa #%lu for #%lu",
-		    newest, st->st_serialno);
+		ldbg(st->logger, "picked established_child_sa "PRI_SO" for "PRI_SO"",
+		     pri_so(newest), pri_so(st->st_serialno));
 	}
 
 	if (newest != SOS_NOBODY && newest != st->st_serialno) {
@@ -6676,4 +6676,9 @@ reqid_t child_reqid(const struct config *config, struct logger *logger)
 	     pri_reqid(config->sa_reqid),
 	     (config->sa_reqid == 0 ? "generate" : "use"));
 	return reqid;
+}
+
+size_t jam_co(struct jambuf *buf, co_serial_t co)
+{
+	return jam(buf, PRI_CO, co);
 }

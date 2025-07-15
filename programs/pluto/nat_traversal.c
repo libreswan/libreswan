@@ -178,12 +178,12 @@ bool nat_traversal_detected(struct state *st)
 static void nat_traversal_send_ka(struct state *st)
 {
 	endpoint_buf b;
-	dbg("ka_event: send NAT-KA to %s (state=#%lu)",
-	    str_endpoint(&st->st_remote_endpoint, &b),
-	    st->st_serialno);
+	ldbg(st->logger, "ka_event: send NAT-KA to %s (state="PRI_SO")",
+	     str_endpoint(&st->st_remote_endpoint, &b),
+	     pri_so(st->st_serialno));
 
 	/* send keep alive */
-	dbg("sending NAT-T Keep Alive");
+	ldbg(st->logger, "sending NAT-T Keep Alive");
 	send_keepalive_using_state(st, "NAT-T Keep Alive");
 }
 
@@ -366,8 +366,8 @@ static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 		endpoint_buf b1;
 		endpoint_buf b2;
 		ip_endpoint st_remote_endpoint = st->st_remote_endpoint;
-		ldbg(st->logger, "new NAT mapping for #%lu, was %s, now %s",
-		     st->st_serialno,
+		ldbg(st->logger, "new NAT mapping for "PRI_SO", was %s, now %s",
+		     pri_so(st->st_serialno),
 		     str_endpoint(&st_remote_endpoint, &b1),
 		     str_endpoint(&nfo->new_remote_endpoint, &b2));
 
@@ -432,8 +432,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 */
 		if (md->iface != st->st_iface_endpoint) {
 			endpoint_buf b1, b2;
-			dbg("NAT-T: #%lu updating local interface from %s to %s (using md->iface in %s())",
-			    st->st_serialno,
+			dbg("NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
+			    pri_so(st->st_serialno),
 			    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
 			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
 			iface_endpoint_delref(&st->st_iface_endpoint);

@@ -88,8 +88,8 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 					       chunk_t *nonce,
 					       const struct v2_exchange *exchange)
 {
-	dbg("%s() for #%lu %s",
-	     __func__, larval_sa->st_serialno, larval_sa->st_state->name);
+	ldbg(larval_sa->logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_sa->st_serialno), larval_sa->st_state->name);
 
 	struct ike_sa *ike = ike_sa(larval_sa, HERE);
 	/* and a parent? */
@@ -361,9 +361,10 @@ static bool find_v2N_REKEY_SA_child(struct ike_sa *ike,
 		return true;
 	}
 
-	ldbg_sa(ike, "#%lu hasa a rekey request for %s #%lu TSi TSr",
-		ike->sa.st_serialno, replaced_child->sa.st_connection->name,
-		replaced_child->sa.st_serialno);
+	ldbg_sa(ike, ""PRI_SO" hasa a rekey request for %s "PRI_SO" TSi TSr",
+		pri_so(ike->sa.st_serialno),
+		replaced_child->sa.st_connection->name,
+		pri_so(replaced_child->sa.st_serialno));
 
 	*child = replaced_child;
 	return true;
@@ -508,14 +509,15 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	 */
 
 	child_policy_buf pb;
-	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s sec_label="PRI_SHUNK,
-	    larval_child->sa.st_serialno,
-	    child_being_replaced->sa.st_serialno,
-	    ike->sa.st_serialno,
-	    str_child_policy(&larval_child->sa.st_policy, &pb),
-	    (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
-	     larval_child->sa.st_pfs_group->common.fqn),
-	    pri_shunk(c->child.sec_label));
+	ldbg(larval_child->sa.logger,
+	     PRI_SO" submitting crypto needed to rekey Child SA "PRI_SO" using IKE SA "PRI_SO" policy=%s pfs=%s sec_label="PRI_SHUNK,
+	     pri_so(larval_child->sa.st_serialno),
+	     pri_so(child_being_replaced->sa.st_serialno),
+	     pri_so(ike->sa.st_serialno),
+	     str_child_policy(&larval_child->sa.st_policy, &pb),
+	     (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
+	      larval_child->sa.st_pfs_group->common.fqn),
+	     pri_shunk(c->child.sec_label));
 
 	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
 			    larval_child->sa.st_pfs_group /*possibly-null*/,
@@ -713,8 +715,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 * responder also wants to initiate a child exchange.
 		 */
 		llog_sa(RC_LOG, larval_child,
-			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
-			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
+			"IKE SA "PRI_SO" no longer viable for rekey of Child SA "PRI_SO"",
+			pri_so(ike->sa.st_serialno),
+			pri_so(larval_child->sa.st_v2_rekey_pred));
 		connection_teardown_child(&larval_child, REASON_DELETED, HERE);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
@@ -741,8 +744,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 * The older child should have discarded this state.
 		 */
 		llog_pexpect(larval_child->sa.logger, HERE,
-			     "Child SA to rekey #%lu vanished abort this exchange",
-			     larval_child->sa.st_v2_rekey_pred);
+			     "Child SA to rekey "PRI_SO" vanished abort this exchange",
+			     pri_so(larval_child->sa.st_v2_rekey_pred));
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -778,8 +781,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			rekey_protoid = PROTO_IPSEC_AH;
 		} else {
 			llog_pexpect(larval_child->sa.logger, HERE,
-				     "previous Child SA #%lu being rekeyed is not ESP/AH",
-				     larval_child->sa.st_v2_rekey_pred);
+				     "previous Child SA "PRI_SO" being rekeyed is not ESP/AH",
+				     pri_so(larval_child->sa.st_v2_rekey_pred));
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -893,8 +896,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 
 	larval_child->sa.st_policy = *policy;
 
-	llog_sa(RC_LOG, larval_child,
-		"initiating Child SA using IKE SA #%lu", ike->sa.st_serialno);
+	llog_sa(RC_LOG, larval_child, "initiating Child SA using IKE SA "PRI_SO"",
+		pri_so(ike->sa.st_serialno));
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child, verbose);
@@ -909,11 +912,12 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	 */
 
 	child_policy_buf pb;
-	dbg("#%lu submitting crypto needed to initiate Child SA using IKE SA #%lu policy=%s pfs=%s",
-	    larval_child->sa.st_serialno,
-	    ike->sa.st_serialno,
-	    str_child_policy(policy, &pb),
-	    larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
+	ldbg(larval_child->sa.logger,
+	     PRI_SO" submitting crypto needed to initiate Child SA using IKE SA "PRI_SO" policy=%s pfs=%s",
+	     pri_so(larval_child->sa.st_serialno),
+	     pri_so(ike->sa.st_serialno),
+	     str_child_policy(policy, &pb),
+	     larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
 
 	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
 			    larval_child->sa.st_pfs_group /*possibly-null*/,
@@ -1029,8 +1033,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		 * responder also wants to initiate a child exchange.
 		 */
 		llog_sa(RC_LOG, larval_child,
-			"IKE SA #%lu no longer viable for initiating a Child SA",
-			ike->sa.st_serialno);
+			"IKE SA "PRI_SO" no longer viable for initiating a Child SA",
+			pri_so(ike->sa.st_serialno));
 		connection_teardown_child(&larval_child, REASON_DELETED, HERE);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
 		return STF_OK; /* IKE */
@@ -1224,8 +1228,8 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 	struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.responder.wip_sa;
 	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_RESPONDER);
-	dbg("%s() for #%lu %s",
-	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+	ldbg(larval_child->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_child->sa.st_serialno), larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
@@ -1268,8 +1272,8 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.responder.wip_sa;
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
-	dbg("%s() for #%lu %s",
-	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+	ldbg(larval_child->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_child->sa.st_serialno), larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
@@ -1301,8 +1305,8 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_R0 ||
 		larval_child->sa.st_state == &state_v2_REKEY_CHILD_R0);
-	dbg("%s() for #%lu %s",
-	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+	ldbg(larval_child->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_child->sa.st_serialno), larval_child->sa.st_state->name);
 
 	/*
 	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
@@ -1515,8 +1519,8 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval_child->sa.st_sa_kind_when_established == CHILD_SA);
-	dbg("%s() for #%lu %s",
-	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+	ldbg(larval_child->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_child->sa.st_serialno), larval_child->sa.st_state->name);
 
 	/*
 	 * XXX: Should this routine be split so that each instance
@@ -1628,10 +1632,11 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 
 	passert(larval_ike->sa.st_connection != NULL);
 	child_policy_buf pb;
-	dbg("#%lu submitting crypto needed to rekey IKE SA #%lu policy=%s pfs=%s",
-	    larval_ike->sa.st_serialno, ike->sa.st_serialno,
-	    str_child_policy(&larval_ike->sa.st_policy, &pb),
-	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
+	ldbg(larval_ike->sa.logger, PRI_SO" submitting crypto needed to rekey IKE SA "PRI_SO" policy=%s pfs=%s",
+	     pri_so(larval_ike->sa.st_serialno),
+	     pri_so(ike->sa.st_serialno),
+	     str_child_policy(&larval_ike->sa.st_policy, &pb),
+	     larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
 	submit_ke_and_nonce(/*callback*/&larval_ike->sa, /*task*/&larval_ike->sa, /*no-md*/NULL,
 			    larval_ike->sa.st_oakley.ta_dh,
@@ -1879,8 +1884,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 	struct child_sa *larval_ike = ike->sa.st_v2_msgid_windows.responder.wip_sa; /* not yet emancipated */
 	pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0);
-	dbg("%s() for #%lu %s",
-	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
+	ldbg(larval_ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_ike->sa.st_serialno), larval_ike->sa.st_state->name);
 
 	pexpect(local_secret != NULL);
 	pexpect(request_md->chain[ISAKMP_NEXT_v2KE] != NULL);
@@ -1922,8 +1927,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_R0);
-	dbg("%s() for #%lu %s",
-	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
+	ldbg(larval_ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_ike->sa.st_serialno), larval_ike->sa.st_state->name);
 
 	if (larval_ike->sa.st_dh_shared_secret == NULL) {
 		record_v2N_response(ike->sa.logger, ike, request_md,
@@ -2075,8 +2080,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	pexpect(larval_ike->sa.st_state == &state_v2_REKEY_IKE_I1);
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 
-	dbg("%s() for #%lu %s",
-	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
+	ldbg(larval_ike->sa.logger, "%s() for "PRI_SO" %s",
+	     __func__, pri_so(larval_ike->sa.st_serialno), larval_ike->sa.st_state->name);
 
 	/* and a parent? */
 

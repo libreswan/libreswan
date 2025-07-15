@@ -911,7 +911,7 @@ void ikev2_process_packet(struct msg_digest *md)
 		name_buf ixb;
 		/* there's no rate_llog() */
 		llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
-			ike->sa.st_serialno,
+			pri_so(ike->sa.st_serialno),
 			str_enum_short(&ikev2_exchange_names, ix, &ixb),
 			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
@@ -1345,8 +1345,8 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 * Danger! Processor did something dodgy like free the
 		 * IKE SA!
 		 */
-		dbg("processor '%s' for #%lu suppressed complete st_v2_transition",
-		    svm->story, old_ike);
+		ldbg(logger, "processor '%s' for "PRI_SO" suppressed complete st_v2_transition",
+		     svm->story, pri_so(old_ike));
 	} else {
 		complete_v2_state_transition(ike, md, e);
 	}
@@ -1534,8 +1534,8 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		const struct state_event *lifetime_event = st_v2_lifetime_event(&ike->sa);
 		if (PEXPECT(ike->sa.logger, lifetime_event != NULL)) {
 			name_buf tb;
-			ldbg(ike->sa.logger, "#%lu is retaining %s with is previously set timeout",
-			     ike->sa.st_serialno,
+			ldbg(ike->sa.logger, ""PRI_SO" is retaining %s with is previously set timeout",
+			     pri_so(ike->sa.st_serialno),
 			     str_enum_long(&event_type_names, lifetime_event->ev_type, &tb));
 		}
 		break;
@@ -1687,10 +1687,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	pstat(stf_status, result);
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
-		jam(buf, "#%lu complete_v2_state_transition() status ", ike->sa.st_serialno);
+		jam_so(buf, ike->sa.st_serialno);
+		jam_string(buf, " complete_v2_state_transition() status ");
 		jam_enum_long(buf, &stf_status_names, result);
-		jam(buf, " transitioning from state %s to ",
-		    ike->sa.st_state->short_name);
+		jam(buf, " transitioning from state %s to ", ike->sa.st_state->short_name);
 		jam_v2_transition(buf, transition);
 	}
 
@@ -1881,7 +1881,8 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	 */
 	if (ike->sa.st_iface_endpoint != NULL &&
 	    ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
-		dbg("TCP: freeing interface as "PRI_SO" is restarting", ike->sa.st_serialno);
+		ldbg(ike->sa.logger, "TCP: freeing interface as "PRI_SO" is restarting",
+		     pri_so(ike->sa.st_serialno));
 		/* create new-from-old first; must delref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_iface_endpoint->ip_dev,
 								   ike->sa.st_remote_endpoint,
@@ -1903,8 +1904,8 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 		/*
 		 * Danger! Processor did something dodgy like free ST!
 		 */
-		dbg("processor '%s' for #%lu suppressed complete st_v2_transition",
-		    story, old_st);
+		dbg("processor '%s' for "PRI_SO" suppressed complete st_v2_transition",
+		    story, pri_so(old_st));
 	} else {
 		complete_v2_state_transition(ike, NULL, e);
 	}
@@ -1965,8 +1966,8 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 		if (!streq(st->st_connection->base_name, c->base_name)) {
 			continue;
 		}
-		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation #%lu using IKE SA #%lu",
-		     st->st_serialno, ike->sa.st_serialno);
+		llog(RC_LOG, c->logger, "connection already has the pending Child SA negotiation "PRI_SO" using IKE SA "PRI_SO"",
+		     pri_so(st->st_serialno), pri_so(ike->sa.st_serialno));
 		return true;
 	}
 

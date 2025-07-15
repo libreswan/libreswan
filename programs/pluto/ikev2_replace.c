@@ -65,8 +65,8 @@ static bool expire_ike_because_child_not_used(struct state *st)
 
 	if (nr_child_leases(c->remote) > 0) {
 		llog_pexpect(st->logger, HERE,
-			     "#%lu has lease; should not be trying to replace",
-			     st->st_serialno);
+			     PRI_SO" has lease; should not be trying to replace",
+			     pri_so(st->st_serialno));
 		return true;
 	}
 
@@ -78,8 +78,8 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		child = child_sa_by_serialno(c->established_child_sa);
 		if (child == NULL) {
 			llog_pexpect(st->logger, HERE,
-				     "can't check usage as IKE SA #%lu has no newest child",
-				     ike->sa.st_serialno);
+				     "can't check usage as IKE SA "PRI_SO" has no newest child",
+				     pri_so(ike->sa.st_serialno));
 			return true;
 		}
 	} else {
@@ -87,16 +87,16 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		ike = ike_sa(st, HERE);
 	}
 
-	dbg(PRI_SO" check last used on newest CHILD SA "PRI_SO,
-	    ike->sa.st_serialno, child->sa.st_serialno);
+	ldbg(ike->sa.logger, PRI_SO" check last used on newest CHILD SA "PRI_SO,
+	     pri_so(ike->sa.st_serialno), pri_so(child->sa.st_serialno));
 
 	/* not sure why idleness is set to rekey margin? */
 	if (was_eroute_idle(child, c->config->sa_rekey_margin)) {
 		/* we observed no traffic, let IPSEC SA and IKE SA expire */
-		dbg("expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
-		    ike->sa.st_serialno,
-		    child->sa.st_serialno,
-		    deltasecs(c->config->sa_rekey_margin));
+		ldbg(ike->sa.logger, "expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
+		     pri_so(ike->sa.st_serialno),
+		     pri_so(child->sa.st_serialno),
+		     deltasecs(c->config->sa_rekey_margin));
 		return true;
 	}
 	return false;
@@ -115,8 +115,8 @@ static bool v2_state_is_expired(struct state *st, const char *verb)
 		 * rekeys!
 		 */
 		llog_pexpect(st->logger, HERE,
-			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
-			     verb, st->st_serialno, st->st_clonedfrom);
+			     "not %s Child SA "PRI_SO"; as IKE SA "PRI_SO" has diasppeared",
+			     verb, pri_so(st->st_serialno), pri_so(st->st_clonedfrom));
 		event_force(EVENT_v2_EXPIRE, st);
 		return true;
 	}
@@ -149,12 +149,12 @@ static bool v2_state_is_expired(struct state *st, const char *verb)
 		const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
 #if 0
 		llog_pexpect(st->logger, HERE,
-			     "not %s stale %s SA #%lu; as already got a newer #%lu",
-			     verb, satype, st->st_serialno, newer_sa);
+			     "not %s stale %s SA "PRI_SO"; as already got a newer "PRI_SO"",
+			     verb, satype, pri_so(st->st_serialno), pri_so(newer_sa));
 #else
 		llog(RC_LOG, st->logger,
-		     "not %s stale %s SA "PRI_SO"; as already got a newer #%lu",
-		     verb, satype, pri_so(st->st_serialno), newer_sa);
+		     "not %s stale %s SA "PRI_SO"; as already got a newer "PRI_SO"",
+		     verb, satype, pri_so(st->st_serialno), pri_so(newer_sa));
 #endif
 		event_force(EVENT_v2_EXPIRE, st);
 		return true;

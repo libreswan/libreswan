@@ -78,7 +78,8 @@ static size_t jam_pid_entry(struct jambuf *buf, const struct pid_entry *entry)
 	size_t s = 0;
 	passert(entry->magic == PID_MAGIC);
 	if (entry->serialno != SOS_NOBODY) {
-		s += jam(buf, "#%lu ", entry->serialno);
+		s += jam_so(buf, entry->serialno);
+		s += jam_string(buf, " ");
 	}
 	s += jam(buf, "%s pid %d", entry->name, entry->pid);
 	return s;
@@ -459,8 +460,9 @@ void server_fork_sigchld_handler(struct logger *logger)
 				if (LDBGP(DBG_CPU_USAGE, pid_entry->logger)) {
 					deltatime_t took = monotime_diff(mononow(), pid_entry->start_time);
 					deltatime_buf dtb;
-					LDBG_log(pid_entry->logger, "#%lu waited %s for '%s' fork()",
-						 st->st_serialno, str_deltatime(took, &dtb),
+					LDBG_log(pid_entry->logger, ""PRI_SO" waited %s for '%s' fork()",
+						 pri_so(st->st_serialno),
+						 str_deltatime(took, &dtb),
 						 pid_entry->name);
 				}
 				statetime_t start = statetime_start(st);
@@ -471,8 +473,9 @@ void server_fork_sigchld_handler(struct logger *logger)
 								     pid_entry->logger);
 				if (ret == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 					/* MD.ST may have been freed! */
-					dbg("resume %s for #%lu skipped complete_v%d_state_transition()",
-					    pid_entry->name, pid_entry->serialno, ike_version);
+					ldbg(pid_entry->logger,
+					     "resume %s for "PRI_SO" skipped complete_v%d_state_transition()",
+					     pid_entry->name, pri_so(pid_entry->serialno), ike_version);
 				} else {
 					complete_state_transition(st, pid_entry->md, ret);
 				}

@@ -162,13 +162,13 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		endpoint_buf lb;
 		endpoint_buf rb;
 		llog(DEBUG_STREAM, logger,
-		     "sending %zu bytes for %s through %s from %s to %s using %s (for #%lu)",
+		     "sending %zu bytes for %s through %s from %s to %s using %s (for "PRI_SO")",
 		     packet.len, where,
 		     interface->ip_dev->real_device_name,
 		     str_endpoint(&interface->local_endpoint, &lb),
 		     str_endpoint(&remote_endpoint, &rb),
 		     interface->io->protocol->name,
-		     serialno);
+		     pri_so(serialno));
 		llog_hunk(DEBUG_STREAM, logger, packet);
 	}
 

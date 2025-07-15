@@ -80,8 +80,8 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		 */
 		PEXPECT(ike->sa.logger, c->established_ike_sa != ike->sa.st_serialno);
 		llog(RC_LOG, ike->sa.logger,
-		     "dropping negotiation as superseded by established IKE SA #%lu",
-		     c->established_ike_sa);
+		     "dropping negotiation as superseded by established IKE SA "PRI_SO"",
+		     pri_so(c->established_ike_sa));
 		terminate_ike_family(&ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
 		return;
 	}

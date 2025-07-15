@@ -69,19 +69,20 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	delay = deltatime_sub(delay, time_since_last_contact);
 	delay = deltatime_max(delay, deltatime(MIN_LIVENESS));
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
-		deltatime_buf db;
-		endpoint_buf remote_buf;
-		jam(buf, "liveness: #%lu scheduling next check for %s in %s seconds",
-		    child->sa.st_serialno,
-		    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
-		    str_deltatime(delay, &db));
+		jam_string(buf, "liveness: ");
+		jam_so(buf, child->sa.st_serialno);
+		jam_string(buf, " scheduling next check for ");
+		jam_endpoint(buf, &child->sa.st_remote_endpoint);
+		jam_string(buf, " in ");
+		jam_deltatime(buf, delay);
+		jam_string(buf, " seconds (");
+		jam_string(buf, reason);
 		if (deltatime_cmp(time_since_last_contact, !=, deltatime(0))) {
-			deltatime_buf lcb;
-			jam(buf, " (%s was %s seconds ago)",
-			    reason, str_deltatime(time_since_last_contact, &lcb));
-		} else {
-			jam(buf, " (%s)", reason);
+			jam_string(buf, " was ");
+			jam_deltatime(buf, time_since_last_contact);
+			jam_string(buf, " seconds ago");
 		}
+		jam_string(buf, ")");
 	}
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
@@ -150,8 +151,8 @@ void event_v2_liveness(struct state *st)
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		/* already logged */
-		dbg("liveness: state #%lu has no IKE SA; deleting orphaned child",
-		    st->st_serialno);
+		ldbg(st->logger, "liveness: state "PRI_SO" has no IKE SA; deleting orphaned child",
+		     pri_so(st->st_serialno));
 		event_force(EVENT_v2_DISCARD, st);
 		return;
 	}
@@ -167,8 +168,9 @@ void event_v2_liveness(struct state *st)
 	 * don't do liveness.
 	 */
 	if (c->established_child_sa != child->sa.st_serialno) {
-		dbg("liveness: #%lu was replaced by #%lu so not needed",
-		    child->sa.st_serialno, c->established_child_sa);
+		ldbg(st->logger, "liveness: "PRI_SO" was replaced by "PRI_SO" so not needed",
+		     pri_so(child->sa.st_serialno),
+		     pri_so(c->established_child_sa));
 		return;
 	}
 
@@ -268,10 +270,10 @@ void event_v2_liveness(struct state *st)
 	}
 
 	endpoint_buf remote_buf;
-	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
-	    child->sa.st_serialno,
-	    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
-	    ike->sa.st_serialno);
+	ldbg(st->logger, "liveness: "PRI_SO" queueing liveness probe for %s using "PRI_SO"",
+	     pri_so(child->sa.st_serialno),
+	     str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
+	     pri_so(ike->sa.st_serialno));
 	submit_v2_liveness_exchange(ike, child->sa.st_serialno);
 
 	/* in case above screws up? */

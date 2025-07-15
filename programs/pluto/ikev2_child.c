@@ -492,8 +492,9 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 				return false;
 			}
 		} else {
-			dbg("#%lu %s ignoring unexpected v2CP payload",
-			    larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+			ldbg(larval_child->sa.logger, PRI_SO" %s ignoring unexpected v2CP payload",
+			     pri_so(larval_child->sa.st_serialno),
+			     larval_child->sa.st_state->name);
 		}
 	}
 
@@ -670,8 +671,8 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	 * re-key?
 	 */
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_group != NULL) {
-		dbg("updating #%lu's .st_oakley with preserved PRF, but why update?",
-			child->sa.st_serialno);
+		dbg("updating "PRI_SO"'s .st_oakley with preserved PRF, but why update?",
+		    pri_so(child->sa.st_serialno));
 		struct trans_attrs accepted_oakley = proto_info->trans_attrs;
 		pexpect(accepted_oakley.ta_prf == NULL);
 		accepted_oakley.ta_prf = child->sa.st_oakley.ta_prf;
@@ -798,9 +799,10 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 	}
 
-	dbg("unpending IKE SA #%lu CHILD SA #%lu connection %s",
-	    ike->sa.st_serialno, child->sa.st_serialno,
-	    child->sa.st_connection->name);
+	ldbg(child->sa.logger, "unpending IKE SA "PRI_SO" CHILD SA "PRI_SO" connection %s",
+	     pri_so(ike->sa.st_serialno),
+	     pri_so(child->sa.st_serialno),
+	     child->sa.st_connection->name);
 	unpend(ike, child->sa.st_connection);
 }
 
@@ -1168,7 +1170,8 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 				"IKE_AUTH response contains v2SA, v2TSi or v2TSr: but a CHILD SA was not requested!");
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
-		dbg("IKE SA #%lu has no and expects no CHILD SA", ike->sa.st_serialno);
+		ldbg(ike->sa.logger, "IKE SA "PRI_SO" has no and expects no CHILD SA",
+		     pri_so(ike->sa.st_serialno));
 		return v2N_NOTHING_WRONG;
 	}
 
@@ -1203,9 +1206,10 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			llog_sa(RC_LOG, child,
 				"IKE_AUTH response rejected Child SA with %s",
 				str_enum_short(&v2_notification_names, n, &esb));
-			dbg("unpending IKE SA #%lu CHILD SA #%lu connection %s",
-			    ike->sa.st_serialno, child->sa.st_serialno,
-			    child->sa.st_connection->name);
+			ldbg(child->sa.logger, "unpending IKE SA "PRI_SO" CHILD SA "PRI_SO" connection %s",
+			     pri_so(ike->sa.st_serialno),
+			     pri_so(child->sa.st_serialno),
+			     child->sa.st_connection->name);
 			unpend(ike, child->sa.st_connection);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;

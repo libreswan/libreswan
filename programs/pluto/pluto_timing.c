@@ -71,7 +71,7 @@ threadtime_t threadtime_start(void)
 	return start;
 }
 
-void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...)
+void threadtime_stop(const threadtime_t *start, so_serial_t serialno, const char *fmt, ...)
 {
 	struct logger *logger = &global_logger;
 
@@ -80,7 +80,9 @@ void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, 
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			if (serialno > 0) {
 				/* on thread so in background */
-				jam(buf, "(#%lu) ", serialno);
+				jam_string(buf, "(");
+				jam_so(buf, serialno);
+				jam_string(buf, ") ");
 			}
 			jam(buf, PRI_CPU_USAGE" in ",
 				pri_cpu_usage(usage));
@@ -114,8 +116,7 @@ struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 				jam_string(buf, INDENT INDENT);
 			}
 			jam_logger_prefix(buf, start->logger);
-			jam(buf, PRI_CPU_USAGE" in ",
-			    pri_cpu_usage(usage));
+			jam(buf, PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
@@ -144,8 +145,8 @@ static void DBG_missing(const statetime_t *start, threadtime_t now,
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
 			}
-			jam(buf, "#%lu "PRI_CPU_USAGE"",
-				start->so, pri_cpu_usage(missing));
+			jam_so(buf, start->so);
+			jam(buf, " "PRI_CPU_USAGE, pri_cpu_usage(missing));
 		}
 	}
 }
@@ -242,7 +243,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	/* state disappeared? */
 	struct state *st = state_by_serialno(start->so);
 	if (st == NULL) {
-		dbg("in %s() and could not find #%lu", __func__, start->so);
+		dbg("in %s() and could not find "PRI_SO"", __func__, pri_so(start->so));
 		return;
 	}
 
@@ -265,10 +266,8 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
 			}
-			jam(buf, "#%lu "PRI_CPU_USAGE"",
-				st->st_serialno,
-				pri_cpu_usage(usage));
-			jam(buf, " in ");
+			jam_so(buf, st->st_serialno);
+			jam(buf, " "PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
