@@ -752,6 +752,16 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 						HERE); /* from add */
 	}
 
+	/*
+	 * Since above updated HOST_PAIR, and possibly ID, must
+	 * re-hash.
+	 */
+	connection_db_rehash_that_id(c);
+	connection_db_rehash_host_pair(c);
+	if (VDBGP()) {
+		connection_db_check(verbose.logger, HERE);
+	}
+
 	return can_resolve;
 }
 

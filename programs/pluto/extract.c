@@ -4109,6 +4109,14 @@ diag_t extract_connection(const struct whack_message *wm,
 	c->child.reqid = child_reqid(c->config, c->logger);
 
 	/*
+	 * All done, enter it into the databases.  Since orient() may
+	 * switch ends, triggering an spd rehash, insert things into
+	 * the database first.
+	 */
+	connection_db_add(c);
+	vdbg_connection(c, verbose, HERE, "extracted");
+
+	/*
 	 * Now try to resolve the host/nexthop in .config, copying the
 	 * result into the connection.
 	 */
@@ -4124,12 +4132,10 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	build_connection_proposals_from_configs(c, host_afi, verbose);
 
-	/*
-	 * All done, enter it into the databases.  Since orient() may
-	 * switch ends, triggering an spd rehash, insert things into
-	 * the database first.
-	 */
-	connection_db_add(c);
+	if (VDBGP()) {
+		VDBG_log("proposals built");
+		connection_db_check(verbose.logger, HERE);
+	}
 
 	/*
 	 * Force orientation (currently kind of unoriented?).
@@ -4141,6 +4147,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 	PASSERT(c->logger, !oriented(c));
 	orient(c, c->logger);
+
+	if (VDBGP()) {
+		VDBG_log("oriented; maybe");
+		connection_db_check(verbose.logger, HERE);
+	}
 
 	return NULL;
 }
