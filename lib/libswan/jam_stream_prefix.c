@@ -52,11 +52,14 @@ void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum str
 		jam_string(buf, PASSERT_PREFIX);
 		jam_logger_prefix(buf, logger);
 		return;
+	case ERROR_STREAM:
+		jam_string(buf, ERROR_PREFIX);
+		jam_logger_prefix(buf, logger);
+		return;
 	case FATAL_STREAM:
 		jam_string(buf, FATAL_PREFIX);
 		jam_logger_prefix(buf, logger);
 		return;
-	case ERROR_STREAM:
 	case ALL_STREAMS:
 	case LOG_STREAM:
 	case WHACK_STREAM:
