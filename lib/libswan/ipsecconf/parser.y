@@ -197,8 +197,8 @@ statement_kw:
 
 void parser_warning(struct parser *parser, int error, const char *s, ...)
 {
-	if (parser->error_stream != NO_STREAM) {
-		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+	if (parser->stream.warning != NO_STREAM) {
+		LLOG_JAMBUF(parser->stream.warning, parser->logger, buf) {
 			jam_scanner_file_line(buf, parser);
 			jam_string(buf, "warning: ");
 			va_list ap;
@@ -247,8 +247,8 @@ void parser_key_value_warning(struct parser *parser,
 			      shunk_t value,
 			      const char *s, ...)
 {
-	if (parser->error_stream != NO_STREAM) {
-		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+	if (parser->stream.warning != NO_STREAM) {
+		LLOG_JAMBUF(parser->stream.warning, parser->logger, buf) {
 			jam(buf, PRI_KEYVAL_SAL": ", pri_keyval_sal(key));
 			jam_string(buf, "warning: ");
 			/* message */
@@ -268,8 +268,8 @@ void parser_key_value_warning(struct parser *parser,
 
 void yyerror(struct parser *parser, const char *s)
 {
-	if (parser->error_stream != NO_STREAM) {
-		LLOG_JAMBUF(parser->error_stream, parser->logger, buf) {
+	if (parser->stream.error != NO_STREAM) {
+		LLOG_JAMBUF(parser->stream.error, parser->logger, buf) {
 			jam_scanner_file_line(buf, parser);
 			jam_string(buf, s);
 		}
@@ -292,7 +292,8 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 {
 	struct parser parser = {
 		.logger = logger,
-		.error_stream = ERROR_STREAM,
+		.stream.warning = RC_LOG,
+		.stream.error = ERROR_STREAM,
 		.verbosity = verbosity,
 		.setuponly = setuponly,
 		.cfg = alloc_ipsec_conf(),
@@ -304,8 +305,10 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	}
 
 	if (yyparse(&parser) != 0) {
-		/* suppress errors */
-		parser.error_stream = (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
+		/* suppress errors and warnings */
+		enum stream stream =  (LDBGP(DBG_BASE, logger) ? DEBUG_STREAM : NO_STREAM);
+		parser.stream.warning = stream;
+		parser.stream.error = stream;
 		do {} while (yyparse(&parser) != 0);
 		pfree_ipsec_conf(&parser.cfg);
 		scanner_close(&parser);
@@ -592,7 +595,7 @@ diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
 
 diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 			    shunk_t value, uintmax_t *number,
-			    enum stream stream, struct logger *logger)
+			    enum stream warning_stream, struct logger *logger)
 {
 	const struct sparse_names *names = key->key->sparse_names;
 
@@ -608,19 +611,19 @@ diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 
 	(*number) = sn->value & ~NAME_FLAGS;
 
-	if (stream != NO_STREAM) {
+	if (warning_stream != NO_STREAM) {
 		enum name_flags flags = (sn->value & NAME_FLAGS);
 		name_buf new_name;
 
 		switch (flags) {
 		case NAME_IMPLEMENTED_AS:
-			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
+			llog(warning_stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
 			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
 			     key->key->keyname, pri_shunk(value));
 			return NULL;
 		case NAME_RENAMED_TO:
-			llog(stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
+			llog(warning_stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
 			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
 			     key->key->keyname, pri_shunk(value));
@@ -800,7 +803,7 @@ void parse_keyval(struct parser *parser, enum end default_end,
 
 	case kt_sparse_name:
 		d = parse_kt_sparse_name(&key, value, &number,
-					 parser->error_stream,
+					 parser->stream.warning,
 					 parser->logger);
 		break;
 

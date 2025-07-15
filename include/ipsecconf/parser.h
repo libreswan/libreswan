@@ -107,7 +107,10 @@ struct parser {
 	 "???")
 	struct starter_comments_list *comments;
 	struct logger *logger;
-	enum stream error_stream;
+	struct {
+		enum stream warning;
+		enum stream error;
+	} stream;
 	unsigned verbosity;
 	bool setuponly;
 	struct input_source *input;
