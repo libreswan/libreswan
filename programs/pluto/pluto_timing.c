@@ -71,7 +71,7 @@ threadtime_t threadtime_start(void)
 	return start;
 }
 
-void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...)
+void threadtime_stop(const threadtime_t *start, so_serial_t serialno, const char *fmt, ...)
 {
 	struct logger *logger = &global_logger;
 

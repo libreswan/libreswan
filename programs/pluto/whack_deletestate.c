@@ -52,19 +52,16 @@ static struct logger *merge_loggers(struct logger *o_logger,
 
 void whack_deletestate(const struct whack_message *m, struct show *s)
 {
-#if 0
-	/* this command uses .deletestateno instead */
-	if (m->name == NULL) {
-		whack_log(RC_FATAL, s,
-			  "received whack command to delete a state by serial number, but did not receive the serial number - ignored");
+	if (m->whack_deletestateno > SOS_MAX) {
+		show_rc(RC_FATAL, s, "received whack command to delete state #%lu but value is out-of-range", m->whack_deletestateno);
 		return;
 	}
-#endif
 
-	struct state *st = state_by_serialno(m->whack_deletestateno);
+	so_serial_t so = m->whack_deletestateno;
+	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		llog_rc(RC_UNKNOWN_NAME, show_logger(s), "no state "PRI_SO" to delete",
-			pri_so(m->whack_deletestateno));
+			pri_so(so));
 		return;
 	}
 

@@ -58,11 +58,14 @@ typedef enum { COS_NOBODY = 0, COS_MAX = UINT_MAX, } co_serial_t;
  * Doing this will require updating all the print statements using
  * "#%lu".  Sigh.
  */
-typedef unsigned long so_serial_t;
-#define SOS_NOBODY      ((so_serial_t)0)       /* null serial number */
-#define SOS_FIRST       ((so_serial_t)1)       /* first normal serial number */
 
-#define PRI_SO "#%lu"
+typedef enum {
+	SOS_NOBODY = 0,		/* null serial number */
+	SOS_FIRST = 1,		/* first normal serial number */
+	SOS_MAX = UINT_MAX,
+} so_serial_t;
+
+#define PRI_SO "#%u"
 #define pri_so(SO) (SO)
 #define jam_so(BUF, SO) jam(BUF, PRI_SO, SO)
 

@@ -142,7 +142,11 @@ static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
 
 static void jam_whack_deletestateno(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam_so(buf, wm->whack_deletestateno);
+	if (wm->whack_deletestateno > SOS_MAX) {
+		jam_string(buf, "<so-overflow>");
+	}
+	so_serial_t so = wm->whack_deletestateno;
+	jam_so(buf, so);
 }
 
 static void jam_whack_crash_peer(struct jambuf *buf, const struct whack_message *wm)
