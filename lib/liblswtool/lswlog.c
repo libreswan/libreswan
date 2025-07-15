@@ -110,20 +110,20 @@ void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum str
 		}
 		return;
 	case PEXPECT_STREAM:
-		jam_string(buf, PEXPECT_PREFIX);
 		jam_logger_prefix(buf, logger);
+		jam_string(buf, PEXPECT_PREFIX);
 		return;
 	case PASSERT_STREAM:
-		jam_string(buf, PASSERT_PREFIX);
 		jam_logger_prefix(buf, logger);
+		jam_string(buf, PASSERT_PREFIX);
 		return;
 	case ERROR_STREAM:
-		jam_string(buf, ERROR_PREFIX);
 		jam_logger_prefix(buf, logger);
+		jam_string(buf, ERROR_PREFIX);
 		return;
 	case FATAL_STREAM:
-		jam_string(buf, FATAL_PREFIX);
 		jam_logger_prefix(buf, logger);
+		jam_string(buf, FATAL_PREFIX);
 		return;
 	case ALL_STREAMS:
 	case LOG_STREAM:
