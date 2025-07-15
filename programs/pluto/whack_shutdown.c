@@ -165,10 +165,10 @@ void exit_epilogue(void)
 	/*
 	 * Before ripping everything down; check internal state.
 	 */
-	state_db_check(logger);
-	connection_db_check(logger);
-	spd_db_check(logger);
-	check_server_fork(logger); /*pid_entry_db_check()*/
+	state_db_check(logger, HERE);
+	connection_db_check(logger, HERE);
+	spd_db_check(logger, HERE);
+	check_server_fork(logger, HERE); /*pid_entry_db_check()*/
 
 	/*
 	 * This wipes out pretty much everything: connections, states,

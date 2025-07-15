@@ -25,7 +25,7 @@ struct list_entry;
 enum sa_role;
 
 void state_db_init(struct logger *logger);
-void state_db_check(struct logger *logger);
+void state_db_check(const struct logger *logger, where_t where);
 
 void state_db_init_state(struct state *st);
 

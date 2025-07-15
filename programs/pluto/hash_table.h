@@ -64,7 +64,9 @@ struct hash_table {
 	}
 
 void init_hash_table(struct hash_table *table, struct logger *logger);
-void check_hash_table(struct hash_table *table, struct logger *logger);
+void check_hash_table(struct hash_table *table,
+		      const struct logger *logger,
+		      where_t where);
 
 hash_t hash_bytes(const void *ptr, size_t len, hash_t hash);
 #define hash_hunk(HUNK, HASH)						\
@@ -112,10 +114,11 @@ void del_hash_table_entry(struct hash_table *table, void *data);
 		}							\
 	}								\
 									\
-	void STRUCT##_db_check(struct logger *logger)			\
+	void STRUCT##_db_check(const struct logger *logger,		\
+			       where_t where)				\
 	{								\
 		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
-			check_hash_table(*h, logger);			\
+			check_hash_table(*h, logger, where);		\
 		}							\
 	}								\
 									\

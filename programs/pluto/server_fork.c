@@ -106,7 +106,7 @@ static struct pid_entry *pid_entry_by_pid(const pid_t pid)
 }
 
 static void pid_entry_db_init(struct logger *logger);
-static void pid_entry_db_check(struct logger *logger);
+static void pid_entry_db_check(const struct logger *logger, where_t where);
 static void pid_entry_db_init_pid_entry(struct pid_entry *);
 static void pid_entry_db_add(struct pid_entry *);
 static void pid_entry_db_del(struct pid_entry *);
@@ -492,7 +492,7 @@ void init_server_fork(struct logger *logger)
 	pid_entry_db_init(logger);
 }
 
-void check_server_fork(struct logger *logger)
+void check_server_fork(struct logger *logger, where_t where)
 {
-	pid_entry_db_check(logger);
+	pid_entry_db_check(logger, where);
 }

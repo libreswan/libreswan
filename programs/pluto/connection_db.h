@@ -22,7 +22,7 @@ struct connection;
 struct logger;
 
 void connection_db_init(struct logger *logger);
-void connection_db_check(struct logger *logger);
+void connection_db_check(const struct logger *logger, where_t where);
 
 void connection_db_init_connection(struct connection *c);
 

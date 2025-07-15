@@ -96,7 +96,7 @@ void del_hash_table_entry(struct hash_table *table, void *data)
  */
 
 static void check_hash_table_entry(struct hash_table *table, void *data,
-				   struct logger *logger, where_t where)
+				   const struct logger *logger, where_t where)
 {
 	hash_t hash = table->hasher(data);
 	/* not inserted (might passert) */
@@ -135,14 +135,14 @@ static void check_hash_table_entry(struct hash_table *table, void *data,
 	}
 }
 
-void check_hash_table(struct hash_table *table, struct logger *logger)
+void check_hash_table(struct hash_table *table, const struct logger *logger, where_t where)
 {
 	for (unsigned n = 0; n < table->nr_slots; n++) {
 		const struct list_head *table_bucket = &table->slots[n];
 		void *bucket_data;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket_data, table_bucket) {
 			/* overkill */
-			check_hash_table_entry(table, bucket_data, logger, HERE);
+			check_hash_table_entry(table, bucket_data, logger, where);
 		}
 	}
 }
