@@ -226,6 +226,7 @@ void vdbg_connection(const struct connection *c,
 			jam(buf, PRI_SHUNK, pri_shunk(c->config->sec_label));
 		}
 	}
+	connection_db_check(verbose.logger, where);
 }
 
 /*
