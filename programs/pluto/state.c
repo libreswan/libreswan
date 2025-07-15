@@ -2316,3 +2316,8 @@ const char *str_child_policy(const struct child_policy *policy, child_policy_buf
 	jam_child_policy(&buf, policy);
 	return dst->buf;
 }
+
+size_t jam_so(struct jambuf *buf, so_serial_t so)
+{
+	return jam(buf, PRI_SO, so);
+}

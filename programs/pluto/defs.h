@@ -44,9 +44,8 @@ typedef enum { COS_NOBODY = 0, COS_MAX = UINT_MAX, } co_serial_t;
 
 #define PRI_CO "$%u"
 #define pri_co(CO) (CO)
-#define jam_co(BUF, CO) jam(BUF, PRI_CO, pri_co(CO))
+size_t jam_co(struct jambuf *buf, co_serial_t co);
 #define pri_connection_co(C) ((C) == NULL ? COS_NOBODY : (C)->serialno)
-#define jam_connection_co(BUF, C) jam(BUF, PRI_CO, pri_connection_co(C))
 
 /*
  * Type of serial number of a state object.
@@ -67,7 +66,7 @@ typedef enum {
 
 #define PRI_SO "#%u"
 #define pri_so(SO) (SO)
-#define jam_so(BUF, SO) jam(BUF, PRI_SO, SO)
+size_t jam_so(struct jambuf *buf, so_serial_t so);
 
 typedef uint32_t msgid_t;      /* Host byte ordered */
 #define PRI_MSGID "%"PRIu32

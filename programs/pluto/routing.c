@@ -165,7 +165,7 @@ static void jam_routing(struct jambuf *buf,
 			struct connection *c)
 {
 	jam_string(buf, " ");
-	jam_connection_co(buf, c);
+	jam_co(buf, c->serialno);
 	jam(buf, "@%p", c);
 	if (never_negotiate(c)) {
 		jam_string(buf, "; never-negotiate");
