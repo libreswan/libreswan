@@ -361,8 +361,8 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 
 		case kt_obsolete:
 		{
-			llog(ERROR_STREAM, logger,
-			     PRI_KEYVAL_SAL": warning: obsolete keyword ignored: %s=%s",
+			llog(WARNING_STREAM, logger,
+			     PRI_KEYVAL_SAL": obsolete keyword ignored: %s=%s",
 			     pri_keyval_sal(kv), kv->key->keyname, kv->val);
 			continue;
 		}
