@@ -531,7 +531,7 @@ void start_server_helpers(uintmax_t nhelpers, struct logger *logger)
 	 */
 
 	if (nhelpers > 1000/*arbitrary*/ && nhelpers < UINTMAX_MAX) {
-		llog(RC_LOG, logger, "warning: nhelpers=%ju is huge, limiting to number of CPUs", nhelpers);
+		llog(WARNING_STREAM, logger, "nhelpers=%ju is huge, limiting to number of CPUs", nhelpers);
 		nhelpers = UINTMAX_MAX;
 	}
 

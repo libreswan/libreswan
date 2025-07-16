@@ -1275,7 +1275,7 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
 		int e = errno;
-		llog(RC_LOG, logger, "pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
+		llog(WARNING_STREAM, logger, "chdir(\"%s\") to dumpdir failed (%d: %s)",
 		     coredir, e, strerror(e));
 	}
 

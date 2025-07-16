@@ -255,8 +255,7 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 	}
 
 	if (!result->secure) {
-		dbg("warning: %s lookup was not protected by DNSSEC!",
-		    result->qname);
+		dbg("%s lookup was not protected by DNSSEC!", result->qname);
 	}
 
 	if (LDBGP(DBG_TMI, logger)) {

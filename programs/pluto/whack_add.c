@@ -255,8 +255,12 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			} else {
 				PEXPECT(logger, (wam.end[LEFT_END].subnet != NULL &&
 						 wam.end[RIGHT_END].subnet != NULL));
-				llog(RC_LOG, logger,
-				     "\"%s\": warning: skipping mismatched leftsubnets=%s rightsubnets=%s",
+				/*
+				 * Fudge up what looks like the
+				 * connection's prefix.
+				 */
+				llog(WARNING_STREAM, logger,
+				     "\"%s\": skipping mismatched leftsubnets=%s rightsubnets=%s",
 				     wm->name, wam.end[LEFT_END].subnet, wam.end[RIGHT_END].subnet);
 			}
 

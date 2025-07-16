@@ -200,7 +200,6 @@ void parser_warning(struct parser *parser, int error, const char *s, ...)
 	if (parser->stream.warning != NO_STREAM) {
 		LLOG_JAMBUF(parser->stream.warning, parser->logger, buf) {
 			jam_scanner_file_line(buf, parser);
-			jam_string(buf, "warning: ");
 			va_list ap;
 			va_start(ap, s);
 			jam_va_list(buf, s, ap);
@@ -250,7 +249,6 @@ void parser_key_value_warning(struct parser *parser,
 	if (parser->stream.warning != NO_STREAM) {
 		LLOG_JAMBUF(parser->stream.warning, parser->logger, buf) {
 			jam(buf, PRI_KEYVAL_SAL": ", pri_keyval_sal(key));
-			jam_string(buf, "warning: ");
 			/* message */
 			va_list ap;
 			va_start(ap, s);
@@ -292,7 +290,7 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 {
 	struct parser parser = {
 		.logger = logger,
-		.stream.warning = RC_LOG,
+		.stream.warning = WARNING_STREAM,
 		.stream.error = ERROR_STREAM,
 		.verbosity = verbosity,
 		.setuponly = setuponly,
@@ -617,13 +615,13 @@ diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 
 		switch (flags) {
 		case NAME_IMPLEMENTED_AS:
-			llog(warning_stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
+			llog(warning_stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" implemented as %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
 			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
 			     key->key->keyname, pri_shunk(value));
 			return NULL;
 		case NAME_RENAMED_TO:
-			llog(warning_stream, logger, PRI_KEYVAL_SAL": warning: "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
+			llog(warning_stream, logger, PRI_KEYVAL_SAL": "PRI_SHUNK" renamed to %s: %s="PRI_SHUNK,
 			     pri_keyval_sal(key),
 			     pri_shunk(value), str_sparse_short(names, (*number), &new_name),
 			     key->key->keyname, pri_shunk(value));
@@ -829,8 +827,8 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	}
 
 	if (d != NULL) {
-		llog(RC_LOG, parser->logger,
-		     PRI_KEYVAL_SAL": warning: %s, keyword ignored: %s%s="PRI_SHUNK,
+		llog(WARNING_STREAM, parser->logger,
+		     PRI_KEYVAL_SAL": %s, keyword ignored: %s%s="PRI_SHUNK,
 		     pri_keyval_sal(&key), str_diag(d),
 		     leftright(&key), key.key->keyname, pri_shunk(value));
 		pfree_diag(&d);

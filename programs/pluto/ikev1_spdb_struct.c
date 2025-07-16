@@ -1985,8 +1985,8 @@ rsasig_common:
 				case OAKLEY_LIFE_SECONDS:
 					ta.life_seconds = deltatime(value);
 					if (deltatime_cmp(ta.life_seconds, >, IKE_SA_LIFETIME_MAXIMUM)) {
-						llog(RC_LOG, ike->sa.logger,
-						     "warning: peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
+						llog(WARNING_STREAM, ike->sa.logger,
+						     "peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
 						     value, deltasecs(IKE_SA_LIFETIME_MAXIMUM));
 						ta.life_seconds = IKE_SA_LIFETIME_MAXIMUM;
 					}

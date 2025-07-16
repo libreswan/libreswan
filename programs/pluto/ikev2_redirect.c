@@ -597,8 +597,8 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_request(struct ike_sa *i
 					 NULL, &redirect_to, ike->sa.logger);
 	if (e != NULL) {
 		/* XXX: parse_redirect_payload() also often logs! */
-		llog_sa(RC_LOG, ike,
-			"warning: parsing of v2N_REDIRECT payload failed: %s", e);
+		llog_sa(WARNING_STREAM, ike,
+			"parsing of v2N_REDIRECT payload failed: %s", e);
 #if 0
 		record_v2N_response(ike->sa.logger, ike, md,
 
@@ -790,8 +790,8 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 					   &redirect_ip,
 					   ike->sa.logger);
 	if (err != NULL) {
-		llog_sa(RC_LOG, ike,
-			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
+		llog_sa(WARNING_STREAM, ike,
+			"parsing of v2N_REDIRECT payload failed: %s", err);
 		return STF_IGNORE;
 	}
 
@@ -856,7 +856,8 @@ void init_global_redirect(enum global_redirect redirect, const char *redirect_to
 	switch (redirect) {
 	case GLOBAL_REDIRECT_NO:
 		if (redirect_to != NULL) {
-			llog(RC_LOG, logger, "warning: ignoring global-redirect-to='%s' as global-redirect=no",
+			llog(WARNING_STREAM, logger,
+			     "ignoring global-redirect-to='%s' as global-redirect=no",
 			     redirect_to);
 		}
 		return;
@@ -866,7 +867,8 @@ void init_global_redirect(enum global_redirect redirect, const char *redirect_to
 		if (redirect_to == NULL ||
 		    !set_global_redirect_dests(redirect_to)) {
 			name_buf rb;
-			llog(RC_LOG, logger, "warning: ignoring global-redirect=%s as global-redirect-to= is empty",
+			llog(WARNING_STREAM, logger,
+			     "ignoring global-redirect=%s as global-redirect-to= is empty",
 			     str_sparse_short(&global_redirect_names, redirect, &rb));
 			global_redirect = GLOBAL_REDIRECT_NO;
 			return;

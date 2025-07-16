@@ -344,8 +344,8 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 			}
 		}
 		if (afi == NULL) {
-			llog(RC_LOG, logger,
-			     "warning: invalid IP_ADDRESS general name: %zu byte length is not valid",
+			llog(WARNING_STREAM, logger,
+			     "invalid IP_ADDRESS general name: %zu byte length is not valid",
 			     gn->name.len);
 			PEXPECT(logger, id->kind == ID_NONE);
 			return;
@@ -358,7 +358,7 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 		ip_address addr;
 		diag_t diag = hunk_to_address(gn->name, afi, &addr);
 		if (diag != NULL) {
-			llog(RC_LOG, logger, "warning: invalid IP_ADDRESS general name: %s",
+			llog(WARNING_STREAM, logger, "invalid IP_ADDRESS general name: %s",
 			     str_diag(diag));
 			pfree_diag(&diag);
 			PEXPECT(logger, id->kind == ID_NONE);

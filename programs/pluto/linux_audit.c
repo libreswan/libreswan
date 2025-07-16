@@ -90,7 +90,7 @@ bool linux_audit_init(bool do_audit, struct logger *logger)
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
 			errno == EAFNOSUPPORT) {
-			llog(RC_LOG, logger, "warning: kernel has no audit support");
+			llog(WARNING_STREAM, logger, "kernel has no audit support");
 			log_to_audit = false;
 			return false;
 		}
@@ -99,7 +99,7 @@ bool linux_audit_init(bool do_audit, struct logger *logger)
 		 */
 #if 0
 		if (!do_audit) {
-			llog_errno(RC_LOG, logger, errno, "warning: audit_open() failed");
+			llog_errno(WARNING_STREAM, logger, errno, "audit_open() failed");
 			log_to_audit = false;
 			return false;
 		}

@@ -455,8 +455,8 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			passert(&(*ike)->sa != &p2d->sa);	/* st is an IKE SA */
 			if (bogus) {
 				name_buf b;
-				llog(RC_LOG, (*ike)->sa.logger,
-				     "warning: Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
+				llog(WARNING_STREAM, (*ike)->sa.logger,
+				     "Delete SA payload: IPsec %s SA with SPI "PRI_IPSEC_SPI" is our own SPI (bogus implementation) - deleting anyway",
 				     str_enum_long(&ikev1_protocol_names, d->isad_protoid, &b),
 				     pri_ipsec_spi(spi));
 			}

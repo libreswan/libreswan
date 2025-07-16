@@ -343,7 +343,7 @@ static bool load_conn(struct starter_conn *conn,
 			break;
 
 		case KS_REJECT:
-			llog(RC_LOG, logger, "warning: type=%%reject implemented as type=%%drop");
+			llog(WARNING_STREAM, logger, "type=%%reject implemented as type=%%drop");
 			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 		}
