@@ -372,7 +372,7 @@ struct connection *spd_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(d);
 
 	/* leave breadcrumb */
@@ -404,7 +404,7 @@ struct connection *labeled_template_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	build_connection_proposals_from_configs(p, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(p, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(p);
 
 	pexpect(p->negotiating_child_sa == SOS_NOBODY);
@@ -444,7 +444,7 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
 	c->child.sec_label = clone_hunk(sec_label, __func__);
 
-	build_connection_proposals_from_configs(c, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(c, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(c);
 
 	pexpect(c->negotiating_child_sa == SOS_NOBODY);
@@ -472,7 +472,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   empty_shunk, __func__,
 					   verbose, where);
 
-	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(d);
 
 	vdbg_connection(d, verbose, where, "%s: from %s",
@@ -502,7 +502,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 					   verbose, where);
 
 	/* real selectors are still unknown */
-	build_connection_proposals_from_configs(d, NULL/*afi-isn't-needed*/, verbose);
+	build_connection_proposals_from_hosts_and_configs(d, NULL/*afi-isn't-needed*/, verbose);
 	build_connection_spds_from_proposals(d);
 
 	vdbg_connection(d, verbose, where, "%s: from %s",

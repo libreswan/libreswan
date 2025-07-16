@@ -891,9 +891,9 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
  * proposals.
  */
 
-void build_connection_proposals_from_configs(struct connection *d,
-					     const struct ip_info *host_afi,
-					     struct verbose verbose)
+void build_connection_proposals_from_hosts_and_configs(struct connection *d,
+						       const struct ip_info *host_afi,
+						       struct verbose verbose)
 {
 	vdbg("%s() host-afi=%s", __func__, (host_afi == NULL ? "N/A" : host_afi->ip_name));
 	verbose.level++;
@@ -901,14 +901,20 @@ void build_connection_proposals_from_configs(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		vassert(end->child.selectors.proposed.list == NULL);
-		vassert(end->child.selectors.proposed.len == 0);
+		vexpect(end->child.selectors.proposed.list == NULL);
+		vexpect(end->child.selectors.proposed.len == 0);
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
-			vdbg("%s selectors from %d child.selectors",
-			     leftright, end->child.config->selectors.len);
+			VDBG_JAMBUF(buf) {
+				jam_string(buf, leftright);
+				jam_string(buf, " proposals from child config selectors");
+				FOR_EACH_ITEM(selector, &end->child.config->selectors) {
+					jam_string(buf, " ");
+					jam_selector(buf, selector);
+				}
+			}
 			end->child.selectors.proposed = end->child.config->selectors;
 			/*
 			 * This is important, but why?
@@ -937,7 +943,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				ip_selector selector = selector_from_range((*range));
 				selector_buf sb;
-				vdbg("%s selector formed from address pool %s",
+				vdbg("%s proposals formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
 				append_end_selector(end, selector, verbose.logger, HERE);
 			}
@@ -960,7 +966,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 			 */
 			address_buf ab;
 			protoport_buf pb;
-			vdbg("%s selector proposals from host address+protoport %s %s",
+			vdbg("%s proposals from host address+protoport %s %s",
 			     leftright,
 			     str_address(&end->host.addr, &ab),
 			     str_protoport(&end->child.config->protoport, &pb));
@@ -987,7 +993,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 		}
 
 		vexpect(is_permanent(d) || is_group(d) || is_template(d));
-		vdbg("%s selector proposals from host family %s",
+		vdbg("%s proposals from host family %s",
 		     leftright, host_afi->ip_name);
 		/*
 		 * Note: NOT afi->selector.all.  It needs to
