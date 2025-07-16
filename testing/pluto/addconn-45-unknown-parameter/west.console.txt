@@ -11,7 +11,7 @@ west #
  # fail as file not found
 west #
  ipsec addconn --config /dne.conf connection
-ERROR: ipsec addconn: could not open '/dne.conf': No such file or directory (errno 2)
+ipsec addconn: ERROR: could not open '/dne.conf': No such file or directory (errno 2)
 ipsec addconn: loading config file '/dne.conf' failed
 west #
  # fail as nothing to do
@@ -50,7 +50,7 @@ west #
  # will be ignored
 west #
  ipsec pluto --config obsolete-config-setup-key.conf
-ipsec pluto: obsolete-config-setup-key.conf:7: warning: obsolete keyword ignored: virtual_private=1.2.3.4
+ERROR: ipsec pluto: obsolete-config-setup-key.conf:7: warning: obsolete keyword ignored: virtual_private=1.2.3.4
 west #
  ipsec whack --shutdown
 Pluto is shutting down
@@ -93,7 +93,7 @@ west #
  journalctl --output cat -xeu ipsec.service | grep -e FATAL -e warning
 west #
  ipsec addconn --config bad-conn-key.conf    bad-conn-key
-FATAL ERROR: ipsec addconn: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
+ipsec addconn: FATAL ERROR: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
 west #
  ipsec addconn --config bad-conn-value.conf  bad-conn-value
 "bad-conn-value": warning: debug=asdlfasdfj invalid, ignored

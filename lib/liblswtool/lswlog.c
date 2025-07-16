@@ -83,6 +83,58 @@ struct logger *tool_logger(int argc UNUSED, char *argv[])
 	return &progname_logger;
 }
 
+/* XXX: The message format is:
+ *   FATAL ERROR: <log-prefix><message...><diag>
+ *   EXPECTATION FAILED: <log-prefix><message...><diag>
+ *   | <log-prefix><message...><diag>
+ * and not:
+ *   <log-prefix>FATAL ERROR: <message...><diag>
+ *   <log-prefix>| <message...><diag>
+ *   <log-prefix>EXPECTATION_FAILED: <message...><diag>
+ * say
+ */
+
+void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum stream stream)
+{
+	switch (stream) {
+	case PRINTF_STREAM:
+	case NO_STREAM:
+		/* suppress all prefixes */
+		return;
+	case DEBUG_STREAM:
+		jam_string(buf, DEBUG_PREFIX);
+		/* add prefix when enabled */
+		if (LDBGP(DBG_ADD_PREFIX, logger) ||
+		    logger->debugging != LEMPTY) {
+			jam_logger_prefix(buf, logger);
+		}
+		return;
+	case PEXPECT_STREAM:
+		jam_logger_prefix(buf, logger);
+		jam_string(buf, PEXPECT_PREFIX);
+		return;
+	case PASSERT_STREAM:
+		jam_logger_prefix(buf, logger);
+		jam_string(buf, PASSERT_PREFIX);
+		return;
+	case ERROR_STREAM:
+		jam_logger_prefix(buf, logger);
+		jam_string(buf, ERROR_PREFIX);
+		return;
+	case FATAL_STREAM:
+		jam_logger_prefix(buf, logger);
+		jam_string(buf, FATAL_PREFIX);
+		return;
+	case ALL_STREAMS:
+	case LOG_STREAM:
+	case WHACK_STREAM:
+		jam_logger_prefix(buf, logger);
+		return;
+	}
+
+	abort(); /* not passert as goes recursive */
+}
+
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, enum stream stream)
 {
 	switch (stream) {
