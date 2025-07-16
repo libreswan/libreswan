@@ -24,7 +24,7 @@ struct logger;
 /* spd route */
 
 void spd_db_init(struct logger *logger);
-void spd_db_check(struct logger *logger);
+void spd_db_check(const struct logger *logger, where_t where);
 
 void spd_db_init_spd(struct spd *sr);
 void spd_db_check_spd(struct spd *sr, struct logger *logger, where_t where);

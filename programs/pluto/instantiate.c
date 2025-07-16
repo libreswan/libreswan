@@ -241,9 +241,15 @@ struct connection *group_instantiate(struct connection *group,
 	t->child.reqid = child_reqid(t->config, t->logger);
 
 	PEXPECT(t->logger, oriented(t));
+
+	/*
+	 * All host/selector fields set, can enter into DB.
+	 */
 	connection_db_add(t);
 
-	/* fill in the SPDs */
+	/*
+	 * Fill in the SPDs; and add entries to the SPD db
+	 */
 	build_connection_spds_from_proposals(t);
 
 	vdbg_connection(t, verbose, HERE, "%s: from %s",
@@ -324,7 +330,6 @@ static struct connection *instantiate(struct connection *t,
 	 * endpoint and iface are unchanged.
 	 */
 	passert(oriented(d));
-	connection_db_add(d);
 
 	/* XXX: could this use the connection number? */
 	if (t->sa_marks.in.unique) {
@@ -336,6 +341,11 @@ static struct connection *instantiate(struct connection *t,
 			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
+
+	/*
+	 * With D initialized, enter it into the DB.
+	 */
+	connection_db_add(d);
 
 	return d;
 }

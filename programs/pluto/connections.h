@@ -939,7 +939,6 @@ extern bool same_peer_ids(const struct connection *c,
 diag_t add_connection(const struct whack_message *wm, struct logger *logger);
 
 bool resolve_connection_hosts_from_configs(struct connection *c,
-					   const struct config *config,
 					   struct verbose verbose);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,
@@ -1220,7 +1219,7 @@ bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);
 
 void build_connection_proposals_from_configs(struct connection *c,
-					     const struct ip_info *host_afi,
+					     const struct ip_info *host_afi/*possibly-NULL*/,
 					     struct verbose verbose);
 
 reqid_t child_reqid(const struct config *config, struct logger *logger);

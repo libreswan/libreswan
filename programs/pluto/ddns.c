@@ -111,7 +111,7 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 
 	/* XXX: blocking call on dedicated thread */
 
-	if (!resolve_connection_hosts_from_configs(c, c->config, verbose)) {
+	if (!resolve_connection_hosts_from_configs(c, verbose)) {
 		return;
 	}
 
