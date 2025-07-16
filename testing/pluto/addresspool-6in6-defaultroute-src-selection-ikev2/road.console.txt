@@ -88,7 +88,7 @@ road #
 opening file: /etc/ipsec.conf
 loading conns matching road:
   sending to pluto
-ERROR: ipsec addconn: Pluto is not running (no "/run/pluto/foo"): No such file or directory (errno 2)
+ipsec addconn: ERROR: Pluto is not running (no "/run/pluto/foo"): No such file or directory (errno 2)
 road #
  echo done
 done
