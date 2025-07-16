@@ -33,13 +33,18 @@ bool server_run(const char *verb, const char *verb_suffix,
 
 bool server_runv(const char *argv[], struct verbose verbose);
 
-/* sends INPUT, returns OUTPUT */
+/*
+ * Sends INPUT.
+ * Returns captured OUTPUT (also logs).
+ * When envp is non-NULL, use execve(argv,envp).
+ */
 
 struct server_run {
 	chunk_t output;
 	int status;
 };
 
-struct server_run server_runv_chunk(const char *argv[], shunk_t input, struct verbose verbose);
+struct server_run server_runve_chunk(const char *argv[], const char *envp[],
+				     shunk_t input, struct verbose verbose);
 
 #endif

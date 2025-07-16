@@ -200,10 +200,10 @@ bool server_runv(const char *argv[], const struct verbose verbose)
 	return true;
 }
 
-struct server_run server_runv_chunk(const char *argv[], shunk_t input,
-				    const struct verbose verbose)
+struct server_run server_runve_chunk(const char *argv[], const char *envp[],
+				     shunk_t input, const struct verbose verbose)
 {
-	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+	VERBOSE_JAMBUF(buf) {
 		jam_string(buf, "command:");
 		for (const char **arg = argv; (*arg) != NULL; arg++) {
 			jam_string(buf, " ");
@@ -250,7 +250,11 @@ struct server_run server_runv_chunk(const char *argv[], shunk_t input,
 			}
 		}
 
-		execvp(argv[0], (char**)argv);
+		if (envp == NULL) {
+			execv(argv[0], (char**)argv);
+		} else {
+			execve(argv[0], (char**)argv, (char**)envp);
+		}
 		llog_error(verbose.logger, errno, "execve(): ");
 		exit(127);
 	}
@@ -272,7 +276,7 @@ struct server_run server_runv_chunk(const char *argv[], shunk_t input,
 		char inp[100];
 		ssize_t n = read(fd[0], inp, sizeof(inp));
 		if (n > 0) {
-			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+			VERBOSE_JAMBUF(buf) {
 				jam_string(buf, "output: ");
 				jam_sanitized_hunk(buf, shunk2(inp, n));
 			}
@@ -282,13 +286,13 @@ struct server_run server_runv_chunk(const char *argv[], shunk_t input,
 
 		const char *why = (n == 0 ? "EOF" : strerror(errno));
 		waitpid(child, &result.status, 0);
-		vlog("wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
-		     result.status,
-		     bool_str(WIFEXITED(result.status)), WEXITSTATUS(result.status),
-		     bool_str(WIFSIGNALED(result.status)), WTERMSIG(result.status),
-		     bool_str(WIFSTOPPED(result.status)), WSTOPSIG(result.status),
-		     bool_str(WCOREDUMP(result.status)),
-		     why);
+		verbose("wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
+			result.status,
+			bool_str(WIFEXITED(result.status)), WEXITSTATUS(result.status),
+			bool_str(WIFSIGNALED(result.status)), WTERMSIG(result.status),
+			bool_str(WIFSTOPPED(result.status)), WSTOPSIG(result.status),
+			bool_str(WCOREDUMP(result.status)),
+			why);
 		break;
 	}
 
