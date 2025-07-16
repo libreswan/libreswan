@@ -54,7 +54,7 @@ static err_t parse_ldap_result(LDAP *ldap, LDAPMessage *result, chunk_t *blob,
 						values[0]->bv_len,
 						"ldap blob");
 					if (values[1] != NULL)
-						vlog("warning: more than one value was fetched from LDAP URL");
+						vwarning("more than one value was fetched from LDAP URL");
 				} else {
 					ugh = "no values in attribute";
 				}

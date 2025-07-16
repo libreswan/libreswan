@@ -120,11 +120,14 @@ struct verbose {
 #define vlog_passert(WHERE, FMT, ...)				\
 	llog_passert(verbose.logger, WHERE, FMT, ##__VA_ARGS__)
 
-#define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
-	fatal(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
+#define vwarning(FMT, ...)						\
+	llog(WARNING_STREAM, verbose.logger, FMT, ##__VA_ARGS__)
 
 #define verror(ERROR, FMT, ...)					\
 	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
+
+#define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
+	fatal(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)
 
 #define vbad(BAD) PBAD(verbose.logger, BAD)
 

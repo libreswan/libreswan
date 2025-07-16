@@ -1292,7 +1292,7 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	 * about broken debug=.
 	 */
 	if (wm->debug != NULL && debug.set == LEMPTY) {
-		vlog("warning: debug=%s invalid, ignored", wm->debug);
+		vwarning("debug=%s invalid, ignored", wm->debug);
 	}
 
 	diag_t d = extract_connection(wm, c, root_config, verbose);
