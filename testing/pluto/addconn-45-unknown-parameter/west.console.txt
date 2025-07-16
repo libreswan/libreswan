@@ -50,7 +50,7 @@ west #
  # will be ignored
 west #
  ipsec pluto --config obsolete-config-setup-key.conf
-ERROR: ipsec pluto: obsolete-config-setup-key.conf:7: warning: obsolete keyword ignored: virtual_private=1.2.3.4
+warning: ipsec pluto: obsolete-config-setup-key.conf:7: obsolete keyword ignored: virtual_private=1.2.3.4
 west #
  ipsec whack --shutdown
 Pluto is shutting down
