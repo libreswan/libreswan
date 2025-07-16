@@ -117,6 +117,10 @@ void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum str
 		jam_logger_prefix(buf, logger);
 		jam_string(buf, PASSERT_PREFIX);
 		return;
+	case WARNING_STREAM:
+		jam_logger_prefix(buf, logger);
+		jam_string(buf, WARNING_PREFIX);
+		return;
 	case ERROR_STREAM:
 		jam_logger_prefix(buf, logger);
 		jam_string(buf, ERROR_PREFIX);
@@ -149,6 +153,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, en
 		/* AKA the console */
 		fprintf(stdout, "%s\n", buf->array);
 		return;
+	case WARNING_STREAM:
 	case FATAL_STREAM:
 	case DEBUG_STREAM:
 	case ERROR_STREAM:

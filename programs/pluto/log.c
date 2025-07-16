@@ -348,6 +348,10 @@ void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum str
 		jam_string(buf, PASSERT_PREFIX);
 		jam_logger_prefix(buf, logger);
 		return;
+	case WARNING_STREAM:
+		jam_string(buf, WARNING_PREFIX);
+		jam_logger_prefix(buf, logger);
+		return;
 	case ERROR_STREAM:
 		jam_string(buf, ERROR_PREFIX);
 		jam_logger_prefix(buf, logger);
@@ -384,6 +388,10 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 		if (LDBGP(DBG_BASE, logger)) {
 			log_raw(LOG_DEBUG, "|] ", buf);
 		}
+		log_whacks(0, logger, buf);
+		return;
+	case WARNING_STREAM:
+		log_raw(LOG_WARNING, "", buf);
 		log_whacks(0, logger, buf);
 		return;
 	case ERROR_STREAM:

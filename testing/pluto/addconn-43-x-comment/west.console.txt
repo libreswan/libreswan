@@ -6,13 +6,13 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add ignore
-ipsec addconn: /etc/ipsec.conf:3: warning: X- style comment ignored: X-something
-ipsec addconn: /etc/ipsec.conf:3: warning: X- style comment ignored: X_something=
-ipsec addconn: /etc/ipsec.conf:3: warning: X- style comment ignored: x-something= ...
-ipsec addconn: /etc/ipsec.conf:4: warning: X- style comment ignored: x_something=  
-ipsec addconn: /etc/ipsec.conf:8: warning: X- style comment ignored: X-something
-ipsec addconn: /etc/ipsec.conf:8: warning: X- style comment ignored: X_something=
-ipsec addconn: /etc/ipsec.conf:8: warning: X- style comment ignored: x-something= ...
-ipsec addconn: /etc/ipsec.conf:9: warning: X- style comment ignored: x_something=  
+ipsec addconn: warning: /etc/ipsec.conf:3: X- style comment ignored: X-something
+ipsec addconn: warning: /etc/ipsec.conf:3: X- style comment ignored: X_something=
+ipsec addconn: warning: /etc/ipsec.conf:3: X- style comment ignored: x-something= ...
+ipsec addconn: warning: /etc/ipsec.conf:4: X- style comment ignored: x_something=  
+ipsec addconn: warning: /etc/ipsec.conf:8: X- style comment ignored: X-something
+ipsec addconn: warning: /etc/ipsec.conf:8: X- style comment ignored: X_something=
+ipsec addconn: warning: /etc/ipsec.conf:8: X- style comment ignored: x-something= ...
+ipsec addconn: warning: /etc/ipsec.conf:9: X- style comment ignored: x_something=  
 "ignore": failed to add connection: left= is not set
 west #

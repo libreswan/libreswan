@@ -60,28 +60,28 @@ west #
 "6to6in6": added IKEv2 connection
 west #
  ipsec auto --add 46to4in4
-"46to4in4": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
+warning: "46to4in4": limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "46to4in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 64to4in4
-"64to4in4": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
+warning: "64to4in4": limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "64to4in4": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=192.168.2.0/24
 west #
  ipsec auto --add 46to6in6
-"46to6in6": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
+warning: "46to6in6": limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "46to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 64to6in6
-"64to6in6": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
+warning: "64to6in6": limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "64to6in6": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 46to64in4
-"46to64in4": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
+warning: "46to64in4": limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "46to64in4": connection is using multiple addresspools
 "46to64in4": added IKEv2 connection
 west #
  ipsec auto --add 64to46in6
-"64to46in6": warning: limiting the address pool 2001:db8:1::/64 to 3Gi addresses
+warning: "64to46in6": limiting the address pool 2001:db8:1::/64 to 3Gi addresses
 "64to46in6": connection is using multiple addresspools
 "64to46in6": added IKEv2 connection
 west #
@@ -140,14 +140,14 @@ west #
 "ipv6-range-overlap-slash-124": failed to add connection: leftaddresspool=1::/124 invalid, range inexactly overlaps existing address pool 1::/120
 west #
  ipsec auto --add ipv6-range-overflow-slash-96
-"ipv6-range-overflow-slash-96": warning: limiting the address pool 2::/96 to 3Gi addresses
+warning: "ipv6-range-overflow-slash-96": limiting the address pool 2::/96 to 3Gi addresses
 "ipv6-range-overflow-slash-96": added IKEv2 connection
 west #
  ipsec auto --add ipv6-range-overflow-slash-95
-"ipv6-range-overflow-slash-95": warning: limiting the address pool 3::/95 to 3Gi addresses
+warning: "ipv6-range-overflow-slash-95": limiting the address pool 3::/95 to 3Gi addresses
 "ipv6-range-overflow-slash-95": added IKEv2 connection
 west #
  ipsec auto --add ipv6-range-overflow-slash-63
-"ipv6-range-overflow-slash-63": warning: limiting the address pool 4::/63 to 3Gi addresses
+warning: "ipv6-range-overflow-slash-63": limiting the address pool 4::/63 to 3Gi addresses
 "ipv6-range-overflow-slash-63": added IKEv2 connection
 west #

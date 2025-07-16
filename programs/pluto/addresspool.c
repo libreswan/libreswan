@@ -1032,7 +1032,7 @@ diag_t install_addresspool(const ip_range pool_range,
 		 */
 		humber_buf psb;
 		pool_size = UINT32_MAX;
-		llog(RC_LOG, logger, "warning: limiting the address pool %s to %s addresses",
+		llog(WARNING_STREAM, logger, "limiting the address pool %s to %s addresses",
 		     str_range(&pool_range, &rb),
 		     str_humber(pool_size, &psb));
 	}

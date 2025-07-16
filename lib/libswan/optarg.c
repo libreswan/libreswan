@@ -48,8 +48,8 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 		const char *optmeta = optname + strlen(optname);	/* at '\0?' */
 		if (memeq(optmeta, METAOPT_IGNORE, 2)) {
 			const char *release = optmeta + 2;
-			llog(PRINTF_STREAM, logger,
-			     "warning: ignoring option \"--%s\" that was removed in Libreswan %s", optname, release);
+			llog(WARNING_STREAM, logger,
+			     "ignoring option \"--%s\" that was removed in Libreswan %s", optname, release);
 			continue;	/* ignore it! */
 		}
 		if (memeq(optmeta, METAOPT_FATAL, 2)) {
@@ -62,8 +62,8 @@ int optarg_getopt(struct logger *logger, int argc, char **argv, const char *opti
 			char delim;
 			shunk_t newname = shunk_token(&cursor, &delim, "\n");
 			shunk_t release = cursor;
-			LLOG_JAMBUF(PRINTF_STREAM, logger, buf) {
-				jam_string(buf, "warning: option \"--");
+			LLOG_JAMBUF(WARNING_STREAM, logger, buf) {
+				jam_string(buf, "option \"--");
 				jam_string(buf, optname);
 				jam_string(buf, "\" was replaced by \"--");
 				jam_shunk(buf, newname);

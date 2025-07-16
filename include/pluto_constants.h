@@ -988,6 +988,8 @@ enum stream {
 #define RC_LOG ALL_STREAMS
 	LOG_STREAM,	/*  WARNING   no     stderr?   <prefix> ... */
 
+	WARNING_STREAM,	/*  WARNING   yes    stderr    warning: <prefix>   */
+
 	ERROR_STREAM,	/*  ERR       yes    stderr    ERROR: <prefix>   */
 	PEXPECT_STREAM,	/*  ERR       yes    stderr    EXPECTATION FAILED: <prefix> ... */
 

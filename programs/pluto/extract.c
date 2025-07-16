@@ -77,8 +77,8 @@ static void llog_never_negotiate_option(struct logger *logger,
 {
 	/* need to reverse engineer type= */
 	enum shunt_policy shunt = wm->never_negotiate_shunt;
-	llog(RC_LOG, logger,
-	     "warning: %s%s=%s ignored for never-negotiate (type=%s) connection",
+	llog(WARNING_STREAM, logger,
+	     "%s%s=%s ignored for never-negotiate (type=%s) connection",
 	     leftright, name, value,
 	     (shunt == SHUNT_PASS ? "passthrough" :
 	      shunt == SHUNT_DROP ? "drop" :
@@ -562,14 +562,12 @@ static bool extract_yn_p(const char *leftright, const char *name, enum yn_option
 
 	if (p == YN_UNSET) {
 		name_buf sb;
-		llog(RC_LOG, logger,
-		     "warning: %s%s=%s ignored without %s%s=yes",
+		llog(WARNING_STREAM, logger, "%s%s=%s ignored without %s%s=yes",
 		     leftright, name, str_sparse_long(names, value, &sb),
 		     p_leftright, p_name);
 	} else if (p == YN_NO) {
 		name_buf sb;
-		llog(RC_LOG, logger,
-		     "warning: %s%s=%s ignored when %s%s=no",
+		llog(WARNING_STREAM, logger, "%s%s=%s ignored when %s%s=no",
 		     leftright, name, str_sparse_long(names, value, &sb),
 		     p_leftright, p_name);
 	}
@@ -1185,16 +1183,16 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->cert != NULL) {
 
 		if (src->ckaid != NULL) {
-			llog(RC_LOG, logger,
-				    "warning: ignoring %s ckaid '%s' and using %s certificate '%s'",
-				    leftright, src->cert,
-				    leftright, src->cert);
+			llog(WARNING_STREAM, logger,
+			     "ignoring %s ckaid '%s' and using %s certificate '%s'",
+			     leftright, src->cert,
+			     leftright, src->cert);
 		}
 
 		if (pubkey != NULL) {
 			name_buf pkb;
-			llog(RC_LOG, logger,
-			     "warning: ignoring %s %s '%s' and using %s certificate '%s'",
+			llog(WARNING_STREAM, logger,
+			     "ignoring %s %s '%s' and using %s certificate '%s'",
 			     leftright,
 			     str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     pubkey,
@@ -1241,8 +1239,8 @@ static diag_t extract_host_end(struct host_end *host,
 
 		if (src->ckaid != NULL) {
 			name_buf pkb;
-			llog(RC_LOG, logger,
-			     "warning: ignoring %sckaid=%s and using %s%s",
+			llog(WARNING_STREAM, logger,
+			     "ignoring %sckaid=%s and using %s%s",
 			     leftright, src->ckaid,
 			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		}
@@ -1661,8 +1659,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	case IKEv1:
 		if (src->cat != YN_UNSET) {
 			name_buf nb;
-			llog(RC_LOG, logger,
-			     "warning: IKEv1, ignoring %scat=%s (client address translation)",
+			llog(WARNING_STREAM, logger,
+			     "IKEv1, ignoring %scat=%s (client address translation)",
 			     leftright, str_sparse_long(&yn_option_names, src->cat, &nb));
 		}
 		break;
@@ -2656,7 +2654,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (ike_version >= IKEv2) {
 		if (wm->ikepad != YNA_UNSET) {
 			name_buf vn, pn;
-			llog(RC_LOG, c->logger, "warning: %s connection ignores ikepad=%s",
+			llog(WARNING_STREAM, c->logger, "%s connection ignores ikepad=%s",
 			     str_enum_long(&ike_version_names, ike_version, &vn),
 			     str_sparse_long(&yna_option_names, wm->ikepad, &pn));
 		}
@@ -2844,15 +2842,15 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 	if (ike_version == IKEv1) {
 		if (wm->send_redirect != YNA_UNSET) {
-			llog(RC_LOG, c->logger,
-			     "warning: IKEv1 connection ignores send-redirect=");
+			llog(WARNING_STREAM, c->logger,
+			     "IKEv1 connection ignores send-redirect=");
 		}
 	} else {
 		switch (wm->send_redirect) {
 		case YNA_YES:
 			if (wm->redirect_to == NULL) {
-				llog(RC_LOG, c->logger,
-				     "warning: send-redirect=yes ignored, redirect-to= was not specified");
+				llog(WARNING_STREAM, c->logger,
+				     "send-redirect=yes ignored, redirect-to= was not specified");
 			}
 			/* set it anyway!?!  the code checking it
 			 * issues a second warning */
@@ -2861,8 +2859,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		case YNA_NO:
 			if (wm->redirect_to != NULL) {
-				llog(RC_LOG, c->logger,
-				     "warning: send-redirect=no, redirect-to= is ignored");
+				llog(WARNING_STREAM, c->logger,
+				     "send-redirect=no, redirect-to= is ignored");
 			}
 			config->redirect.send_never = true;
 			break;
@@ -2875,8 +2873,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (ike_version == IKEv1) {
 		if (wm->accept_redirect != YN_UNSET) {
-			llog(RC_LOG, c->logger,
-			     "warning: IKEv1 connection ignores accept-redirect=");
+			llog(WARNING_STREAM, c->logger,
+			     "IKEv1 connection ignores accept-redirect=");
 		}
 	} else {
 		config->redirect.accept =
@@ -2896,8 +2894,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		ldbg(c->logger, "never-negotiate fragmentation");
 	} else if (ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
 		name_buf fb;
-		llog(RC_LOG, c->logger,
-		     "warning: IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
+		llog(WARNING_STREAM, c->logger,
+		     "IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
 		     str_sparse_long(&ynf_option_names, wm->fragmentation, &fb));
 		config->ike_frag.allow = true;
 	} else {
@@ -2938,8 +2936,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	switch (iketcp) {
 	case IKE_TCP_NO:
 		if (wm->tcp_remoteport != 0) {
-			llog(RC_LOG, c->logger,
-			     "warning: tcp-remoteport=%ju ignored for non-TCP connections",
+			llog(WARNING_STREAM, c->logger,
+			     "tcp-remoteport=%ju ignored for non-TCP connections",
 			     wm->tcp_remoteport);
 		}
 		/* keep tests happy, value ignored */
@@ -3142,8 +3140,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		 * anti-replay for an SA.
 		 */
 		if (wm->esn != YNE_UNSET && wm->esn != YNE_NO) {
-			llog(RC_LOG, c->logger,
-			     "warning: forcing esn=no as replay-window=0");
+			llog(WARNING_STREAM, c->logger,
+			     "forcing esn=no as replay-window=0");
 		} else {
 			dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
 		}
@@ -3155,8 +3153,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (wm->esn == YNE_YES ||
 		    wm->esn == YNE_EITHER) {
 			name_buf nb;
-			llog(RC_LOG, c->logger,
-			     "warning: %s kernel interface does not support ESN, ignoring esn=%s",
+			llog(WARNING_STREAM, c->logger,
+			     "%s kernel interface does not support ESN, ignoring esn=%s",
 			     kernel_ops->interface_name,
 			     str_sparse_long(&yne_option_names, wm->esn, &nb));
 		}
@@ -3173,8 +3171,8 @@ diag_t extract_connection(const struct whack_message *wm,
 #if 0
 		if (wm->esn != YNE_UNSET) {
 			name_buf nb;
-			llog(RC_LOG, c->logger,
-			     "warning: ignoring esn=%s as not implemented with IKEv1",
+			llog(WARNING_STREAM, c->logger,
+			     "ignoring esn=%s as not implemented with IKEv1",
 			     str_sparse_long(yne_option_names, wm->esn, &nb));
 		}
 #endif
@@ -3211,8 +3209,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (ike_version == IKEv1) {
 		if (wm->ppk != NPPI_UNSET) {
 			name_buf sb;
-			llog(RC_LOG, c->logger,
-			     "warning: ignoring ppk=%s as IKEv1",
+			llog(WARNING_STREAM, c->logger,
+			     "ignoring ppk=%s as IKEv1",
 			     str_sparse_long(&nppi_option_names, wm->ppk, &sb));
 		}
 	} else {
@@ -3365,8 +3363,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing,
 					 /*value_when_unset*/YN_NO, wm, c->logger);
 	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
-		llog(RC_LOG, c->logger,
-		     "warning: length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
+		llog(WARNING_STREAM, c->logger,
+		     "length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
 		     wm->vti_interface, (unsigned) IFNAMSIZ);
 	}
 	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
@@ -3583,8 +3581,8 @@ diag_t extract_connection(const struct whack_message *wm,
 				     str_deltatime(config->dpd.delay, &tb));
 			} else if (wm->dpddelay != NULL  ||
 				   wm->dpdtimeout != NULL) {
-				llog(RC_LOG, c->logger,
-				     "warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
+				llog(WARNING_STREAM, c->logger,
+				     "IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
 		case IKEv2:
@@ -3600,8 +3598,8 @@ diag_t extract_connection(const struct whack_message *wm,
 			}
 			if (wm->dpdtimeout != NULL) {
 				/* actual values don't matter */
-				llog(RC_LOG, c->logger,
-				     "warning: IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
+				llog(WARNING_STREAM, c->logger,
+				     "IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
 			}
 			break;
 		}
@@ -3725,7 +3723,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (can_extract_string("", "mark-in", wm->mark_in, wm, c->logger)) {
 		if (wm->mark != NULL) {
-			llog(RC_LOG, c->logger, "warning: mark-in=%s overrides mark=%s",
+			llog(WARNING_STREAM, c->logger, "mark-in=%s overrides mark=%s",
 			     wm->mark_in, wm->mark);
 		}
 		d = mark_parse("", "mark-in", wm->mark_in, &c->sa_marks.in);
@@ -3736,7 +3734,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (can_extract_string("", "mark-out", wm->mark_out, wm, c->logger)) {
 		if (wm->mark != NULL) {
-			llog(RC_LOG, c->logger, "warning: mark-out=%s overrides mark=%s",
+			llog(WARNING_STREAM, c->logger, "mark-out=%s overrides mark=%s",
 			     wm->mark_out, wm->mark);
 		}
 		d = mark_parse("", "mark-out", wm->mark_out, &c->sa_marks.out);

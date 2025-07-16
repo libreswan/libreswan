@@ -413,7 +413,6 @@ enum opt {
 	OPT_DDNS,
 
 	OPT_REREADSECRETS,
-	OPT_REREADCRLS,
 	OPT_FETCHCRLS,
 	OPT_REREADCERTS,
 	OPT_REREADALL,
@@ -604,7 +603,6 @@ enum opt {
 	CD_TRANSPORT,
 	CD_ENCRYPT,
 	CD_AUTHENTICATE,
-	CD_INITIATEONTRAFFIC,
 
 	/*
 	 * Connection proof-of-identity options that set .auth and
@@ -715,7 +713,7 @@ const struct option optarg_options[] = {
 	{ "ddns\0", no_argument, NULL, OPT_DDNS },
 
 	{ "rereadsecrets\0", no_argument, NULL, OPT_REREADSECRETS },
-	{ "rereadcrls\0", no_argument, NULL, OPT_REREADCRLS }, /* obsolete */
+	{ FATAL_OPT("rereadcrls", "5.0"), no_argument, NULL, 0, }, /* obsolete */
 	{ "rereadcerts\0", no_argument, NULL, OPT_REREADCERTS },
 	{ "fetchcrls\0", no_argument, NULL, OPT_FETCHCRLS },
 	{ "rereadall\0", no_argument, NULL, OPT_REREADALL },
@@ -828,7 +826,7 @@ const struct option optarg_options[] = {
 	{ "aggressive\0", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode\0", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
 
-	{ "initiateontraffic\0", no_argument, NULL, CD_INITIATEONTRAFFIC }, /* obsolete */
+	{ FATAL_OPT("initiateontraffic", ""), no_argument, NULL, 0, }, /* obsolete */
 
 	{ "drop\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
 	{ "pass\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_PASS },
@@ -1330,9 +1328,6 @@ int main(int argc, char **argv)
 		case OPT_REREADALL:	/* --rereadall */
 			whack_command(&msg, WHACK_REREADALL);
 			continue;
-		case OPT_REREADCRLS:	/* --rereadcrls */
-			fprintf(stderr, "whack warning: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls\n");
-			continue;
 
 		case OPT_PURGEOCSP:	/* --purgeocsp */
 			whack_command(&msg, WHACK_PURGEOCSP);
@@ -1758,10 +1753,6 @@ int main(int argc, char **argv)
 		/* --mobike */
 		case CD_MOBIKE:
 			msg.mobike = optarg_yn(logger, YN_YES);
-			continue;
-
-		case CD_INITIATEONTRAFFIC:		/* --initiateontraffic */
-			fprintf(stderr, "whack warning: --initiateontraffic is obsolete, did you mean --ondemand");
 			continue;
 
 		case CDS_NEVER_NEGOTIATE_PASS:	/* --pass */

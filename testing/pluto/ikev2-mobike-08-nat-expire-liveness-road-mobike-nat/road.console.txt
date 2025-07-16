@@ -11,7 +11,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec add road
-ipsec addconn: /etc/ipsec.conf:20: warning: invalid, keyword ignored: mobike=nat
+ipsec addconn: warning: /etc/ipsec.conf:20: invalid, keyword ignored: mobike=nat
 "road": added IKEv2 connection
 road #
  ipsec up road
