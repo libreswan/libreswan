@@ -527,13 +527,13 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					return false;
 				}
 				again_count++;
-				llog_error(logger, errno,
-					   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
+				llog_errno(ERROR_STREAM, logger, errno,
+					   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d): ",
 					   ifp->ip_dev->real_device_name, before, again_count);
 				continue;
 			}
-			llog_error(logger, errno,
-				   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s): ",
 				   ifp->ip_dev->real_device_name, before);
 			break;
 		}

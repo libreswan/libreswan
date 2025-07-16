@@ -96,7 +96,7 @@ bool scanner_open(struct parser *parser, const char *file)
 {
 	FILE *f = (streq(file, "-") ? fdopen(STDIN_FILENO, "r") : fopen(file, "r"));
 	if (f == NULL) {
-		llog_error(parser->logger, errno, "could not open '%s'", file);
+		llog_errno(ERROR_STREAM, parser->logger, errno, "could not open '%s': ", file);
 		return false;
 	}
 

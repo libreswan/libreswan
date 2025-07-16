@@ -274,8 +274,8 @@ void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show 
 			     "OK: seccomp security was not enabled and the rogue syscall was blocked");
 			break;
 		case SECCOMP_ENABLED:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
+			llog(ERROR_STREAM, logger,
+			     "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
 			break;
 		default:
 			bad_case(seccomp_mode(oco));
@@ -285,16 +285,16 @@ void whack_seccomp_crashtest(const struct whack_message *wm UNUSED, struct show 
 		     "pluto: seccomp test syscall was not blocked");
 		switch (seccomp_mode(oco)) {
 		case SECCOMP_TOLERANT:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was tolerant but the rogue syscall was not blocked!");
+			llog(ERROR_STREAM, logger,
+			     "pluto seccomp was tolerant but the rogue syscall was not blocked!");
 			break;
 		case SECCOMP_DISABLED:
 			llog(RC_LOG, logger,
 			     "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
 			break;
 		case SECCOMP_ENABLED:
-			llog_error(logger, 0/*no-errno*/,
-				   "pluto seccomp was enabled but the rogue syscall was not blocked!");
+			llog(ERROR_STREAM, logger,
+			     "pluto seccomp was enabled but the rogue syscall was not blocked!");
 			break;
 		default:
 			bad_case(seccomp_mode(oco));

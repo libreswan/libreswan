@@ -392,9 +392,9 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,
 	{								\
 		int e = ERROR;						\
 		endpoint_buf eb;					\
-		llog_error(logger, e,					\
-			   "bind %s %s endpoint %s failed, "MSG,	\
-			   ifd->real_device_name, io->protocol->name,		\
+		llog_errno(ERROR_STREAM, logger, e,			\
+			   "bind %s %s endpoint %s failed, "MSG": ",	\
+			   ifd->real_device_name, io->protocol->name,	\
  			   str_endpoint(&local_endpoint, &eb),		\
 			   ##__VA_ARGS__);				\
 	}

@@ -19,7 +19,7 @@
 
 #include "lswlog.h"
 
-void llog_errno(enum stream stream, const struct logger *logger, int error, const char *fmt, ...)
+void log_errno(enum stream stream, const struct logger *logger, int error, const char *fmt, ...)
 {
 	JAMBUF(buf) {
 		jam_stream_prefix(buf, logger, stream);

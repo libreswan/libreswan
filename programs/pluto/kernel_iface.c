@@ -223,8 +223,8 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		passert(sizeof(auxinfo.ifr_name) == sizeof(ifr->ifr_name)); /* duh! */
 		memcpy(auxinfo.ifr_name, ifr->ifr_name, IFNAMSIZ);
 		if (ioctl(udp_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
-			llog_error(logger, errno,
-				   "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed",
+			llog_errno(ERROR_STREAM, logger, errno,
+				   "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed: ",
 				   afi->ip_name, ifname);
 			continue; /* happens when using device with label? */
 		}

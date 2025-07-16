@@ -676,8 +676,8 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 
 	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
-		llog_error(whack_logger, -(int)n,
-			   "read() failed in whack_handle()");
+		llog_errno(ERROR_STREAM, whack_logger, -(int)n,
+			   "read() failed in whack_handle(): ");
 		return;
 	}
 

@@ -30,7 +30,8 @@ int nl_send_query(const struct nlmsghdr *req, int protocol, const struct logger 
 	int nl_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, protocol);
 
 	if (nl_fd < 0) {
-		llog_error(logger, errno, "socket() in nl_send_query() protocol %d", protocol);
+		llog_errno(ERROR_STREAM, logger, errno,
+			   "socket() in nl_send_query() protocol %d: ", protocol);
 		return nl_fd;	/* -1 */
 	}
 
@@ -40,13 +41,13 @@ int nl_send_query(const struct nlmsghdr *req, int protocol, const struct logger 
 		r = write(nl_fd, req, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		llog_error(logger, errno, "netlink nl_send_query() write");
+		llog_errno(ERROR_STREAM, logger, errno, "netlink nl_send_query() write: ");
 		close(nl_fd);
 		return -1;
 	} else if ((size_t)r != len) {
-		llog_error(logger, 0/*no-strerr*/,
-			   "netlink write() message truncated: %zd instead of %zu",
-			   r, len);
+		llog(ERROR_STREAM, logger,
+		     "netlink write() message truncated: %zd instead of %zu",
+		     r, len);
 		close(nl_fd);
 		return -1;
 	}
