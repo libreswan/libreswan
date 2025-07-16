@@ -201,22 +201,6 @@ void llog_pem_bytes(enum stream stream,
 
 void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
 
-/*
- * XXX: The message format is:
- *   ERROR: <log-prefix><message...>[: <strerr> (errno)]
- * and not:
- *   <log-prefix>ERROR: <message...>...
- */
-
-void log_error(const struct logger *logger, int error,
-	       const char *message, ...) PRINTF_LIKE(3);
-
-#define llog_error(LOGGER, ERRNO, FMT, ...)			\
-	{							\
-		int e_ = ERRNO; /* save value across va args */	\
-		log_error(LOGGER, e_, FMT, ##__VA_ARGS__);	\
-	}
-
 void log_errno(enum stream stream, const struct logger *logger, int error,
 	       const char *message, ...) PRINTF_LIKE(4);
 
