@@ -76,7 +76,7 @@ west #
  # will be ignored
 west #
  ipsec pluto --config obsolete-conn-key.conf
-ipsec pluto: obsolete-conn-key.conf:9: warning: obsolete keyword ignored: dpdaction=drop
+warning: ipsec pluto: obsolete-conn-key.conf:9: obsolete keyword ignored: dpdaction=drop
 west #
  ipsec whack --shutdown
 Pluto is shutting down
@@ -96,6 +96,6 @@ west #
 ipsec addconn: FATAL ERROR: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
 west #
  ipsec addconn --config bad-conn-value.conf  bad-conn-value
-"bad-conn-value": warning: debug=asdlfasdfj invalid, ignored
+warning: "bad-conn-value": debug=asdlfasdfj invalid, ignored
 "bad-conn-value": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=%any match an interface)
 west #

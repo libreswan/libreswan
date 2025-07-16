@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rw-east-pool-x509-ipv4
-"rw-east-pool-x509-ipv4": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
+warning: "rw-east-pool-x509-ipv4": IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
 "rw-east-pool-x509-ipv4": added IKEv2 connection
 east #
  echo "initdone"

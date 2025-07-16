@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev1
-ipsec addconn: /etc/ipsec.conf:38: warning: obsolete keyword ignored: dpdaction=clear
+ipsec addconn: warning: /etc/ipsec.conf:38: obsolete keyword ignored: dpdaction=clear
 "westnet-eastnet-ikev1": added IKEv1 connection
 west #
  echo "initdone"

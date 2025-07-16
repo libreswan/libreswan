@@ -30,7 +30,7 @@ west #
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--leftupdown=left
-"addconn--type=passthrough--leftupdown=left": warning: leftupdown=left ignored for never-negotiate (type=passthrough) connection
+warning: "addconn--type=passthrough--leftupdown=left": leftupdown=left ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--leftupdown=left": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
@@ -43,7 +43,7 @@ west #
 "whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--updown=from  --pass --updown=from  --host 1.2.3.4 --to --host 5.6.7.8
-"whack--pass--updown=from": warning: leftupdown=from ignored for never-negotiate (type=passthrough) connection
+warning: "whack--pass--updown=from": leftupdown=from ignored for never-negotiate (type=passthrough) connection
 "whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort

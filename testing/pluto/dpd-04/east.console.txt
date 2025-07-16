@@ -7,11 +7,11 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ../../guestbin/ipsec-add.sh westnet-east west-eastnet west-east
-ipsec addconn: /etc/ipsec.conf:17: warning: obsolete keyword ignored: dpdaction=clear
+ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
 "westnet-east": added IKEv1 connection
-ipsec addconn: /etc/ipsec.conf:17: warning: obsolete keyword ignored: dpdaction=clear
+ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
 "west-eastnet": added IKEv1 connection
-ipsec addconn: /etc/ipsec.conf:17: warning: obsolete keyword ignored: dpdaction=clear
+ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
 "west-east": added IKEv1 connection
 east #
  echo "initdone"

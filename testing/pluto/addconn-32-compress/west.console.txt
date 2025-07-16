@@ -18,11 +18,11 @@ west #
 "addconn--type=passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--compress=no
-"addconn--type=passthrough--compress=no": warning: compress=no ignored for never-negotiate (type=passthrough) connection
+warning: "addconn--type=passthrough--compress=no": compress=no ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--compress=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--type=passthrough--compress=yes
-"addconn--type=passthrough--compress=yes": warning: compress=yes ignored for never-negotiate (type=passthrough) connection
+warning: "addconn--type=passthrough--compress=yes": compress=yes ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--compress=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack                               --encrypt --host 1.2.3.4 --to --host 5.6.7.8
@@ -41,15 +41,15 @@ west #
 "whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--compress      --compress     --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--compress": warning: compress=yes ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--compress": compress=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--compress": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--compress=no   --compress=no  --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--compress=no": warning: compress=no ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--compress=no": compress=no ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--compress=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--compress=yes  --compress=yes --pass --auth-never --host 1.2.3.4 --to --host 5.6.7.8
-"whack--passthrough--compress=yes": warning: compress=yes ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--compress=yes": compress=yes ignored for never-negotiate (type=passthrough) connection
 "whack--passthrough--compress=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*COMPRESS.*/\1 COMPRESS/p' | sort

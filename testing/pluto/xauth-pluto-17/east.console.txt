@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add xauth-road-eastnet-psk
-ipsec addconn: /etc/ipsec.conf:22: warning: obsolete keyword ignored: dpdaction=restart
+ipsec addconn: warning: /etc/ipsec.conf:22: obsolete keyword ignored: dpdaction=restart
 "xauth-road-eastnet-psk": added IKEv1 connection
 east #
  echo "initdone"

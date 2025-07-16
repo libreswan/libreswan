@@ -11,6 +11,6 @@ east #
  ipsec whack --impair suppress_retransmits
 east #
  ipsec add east
-ipsec addconn: /etc/ipsec.conf:20: warning: invalid, keyword ignored: mobike=nat
+ipsec addconn: warning: /etc/ipsec.conf:20: invalid, keyword ignored: mobike=nat
 "east": added IKEv2 connection
 east #
