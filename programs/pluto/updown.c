@@ -75,8 +75,11 @@ static void jam_clean_xauth_username(struct jambuf *buf,
  * note: this mutates *st by calling get_sa_bundle_info().
  */
 
-static bool fmt_common_shell_out(char *buf,
-				 size_t blen,
+static bool fmt_common_shell_out(char *buf, size_t blen,
+#ifdef UPDOWN_EXECVE
+				 const char **envp, unsigned envp_len,
+#endif
+				 const char *verb, const char *verb_suffix,
 				 const struct connection *c,
 				 const struct spd *sr,
 				 struct child_sa *child,
@@ -87,11 +90,36 @@ static bool fmt_common_shell_out(char *buf,
 	const bool tunneling = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
 
 	/* macros to jam definitions of various forms */
-#	define JDstr(name, string)  jam(&jb, name "='%s' ", string)
-#	define JDuint(name, u)  jam(&jb, name "=%u ", u)
-#	define JDuint64(name, u)  jam(&jb, name "=%" PRIu64 " ", u)
-#	define JDemitter(name, emitter)  { jam_string(&jb, name "='"); emitter; jam_string(&jb, "' "); }
-#	define JDipaddr(name, addr)  JDemitter(name, { ip_address ta = addr; jam_address(&jb, &ta); } )
+
+#ifdef UPDOWN_EXECVE
+	const char **envp_end = envp + envp_len - 1;
+#	define JDemitter(NAME, EMITTER)			\
+	{						\
+		if (envp < envp_end) {			\
+			*envp++ = jambuf_cursor(&jb);	\
+		}					\
+		jam_string(&jb, NAME "='");		\
+		EMITTER;				\
+		jam(&jb, "' ");				\
+	}
+#else
+#	define JDemitter(NAME, EMITTER)			\
+	{						\
+		jam_string(&jb, NAME "='");		\
+		EMITTER;				\
+		jam(&jb, "' ");				\
+	}
+#endif
+
+#	define JD(NAME, FMT, ...)  JDemitter(NAME, jam(&jb, FMT, ##__VA_ARGS__))
+#	define JDstr(NAME, STRING) JD(NAME, "%s", STRING)
+#	define JDunsigned(NAME, U) JD(NAME, "%u", U)
+#	define JDint(NAME, I)      JD(NAME, "%d", I)
+#	define JDuint64(NAME, U)   JD(NAME, "%"PRIu64, U)
+#	define JDipaddr(name, addr)					\
+	JDemitter(name, { ip_address ta = addr; jam_address(&jb, &ta); } )
+
+	JD("PLUTO_VERB", "%s%s", verb, verb_suffix);
 
 	JDstr("PLUTO_CONNECTION", c->base_name);
 	JDstr("PLUTO_CONNECTION_TYPE", (tunneling ? "tunnel" : "transport"));
@@ -105,7 +133,7 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDipaddr("PLUTO_ME", sr->local->host->addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
-	jam(&jb, "PLUTO_CLIENT_FAMILY='ipv%s' ", selector_info(sr->local->client)->n_name);
+	JD("PLUTO_CLIENT_FAMILY", "ipv%s", selector_info(sr->local->client)->n_name);
 	JDemitter("PLUTO_MY_CLIENT", jam_selector_range(&jb, &sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local->client));
@@ -118,9 +146,9 @@ static bool fmt_common_shell_out(char *buf,
 		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->config->child.ipsec_interface_ip));
 	}
 
-	JDuint("PLUTO_MY_PORT", sr->local->client.hport);
-	JDuint("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
-	JDuint("PLUTO_SA_REQID", (child == NULL ? c->child.reqid :
+	JDunsigned("PLUTO_MY_PORT", sr->local->client.hport);
+	JDunsigned("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
+	JDunsigned("PLUTO_SA_REQID", (child == NULL ? c->child.reqid :
 				  child->sa.st_esp.protocol == &ip_protocol_esp ? reqid_esp(c->child.reqid) :
 				  child->sa.st_ah.protocol == &ip_protocol_ah ? reqid_ah(c->child.reqid) :
 				  child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? reqid_ipcomp(c->child.reqid) :
@@ -136,16 +164,15 @@ static bool fmt_common_shell_out(char *buf,
 	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_shell_quoted_bytes));
 
 	/* for transport mode, things are complicated */
-	jam_string(&jb, "PLUTO_PEER_CLIENT='");
-	if (!tunneling && child != NULL &&
-	    child->sa.hidden_variables.st_nated_peer) {
-		/* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
-		jam_address(&jb, &sr->remote->host->addr);
-		jam(&jb, "/%d", address_info(sr->local->host->addr)->mask_cnt/*32 or 128*/);
-	} else {
-		jam_selector_range(&jb, &sr->remote->client);
-	}
-	jam_string(&jb, "' ");
+	JDemitter("PLUTO_PEER_CLIENT",
+		  if (!tunneling && child != NULL &&
+		      child->sa.hidden_variables.st_nated_peer) {
+			  /* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
+			  jam_address(&jb, &sr->remote->host->addr);
+			  jam(&jb, "/%d", address_info(sr->local->host->addr)->mask_cnt/*32 or 128*/);
+		  } else {
+			  jam_selector_range(&jb, &sr->remote->client);
+		  });
 
 	JDipaddr("PLUTO_PEER_CLIENT_NET",
 		 (!tunneling && child != NULL &&
@@ -153,38 +180,37 @@ static bool fmt_common_shell_out(char *buf,
 		 sr->remote->host->addr : selector_prefix(sr->remote->client));
 
 	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->remote->client));
-	JDuint("PLUTO_PEER_PORT", sr->remote->client.hport);
-	JDuint("PLUTO_PEER_PROTOCOL", sr->remote->client.ipproto);
+	JDunsigned("PLUTO_PEER_PORT", sr->remote->client.hport);
+	JDunsigned("PLUTO_PEER_PROTOCOL", sr->remote->client.ipproto);
 
-	jam_string(&jb, "PLUTO_PEER_CA='");
-	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
-		struct pubkey *key = p->key;
-		int pathlen;	/* value ignored */
-		if (key->content.type == &pubkey_type_rsa &&
-		    same_id(&c->remote->host.id, &key->id) &&
-		    trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca),
-			       &pathlen, verbose)) {
-			jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
-			break;
-		}
-	}
-	jam_string(&jb, "' ");
+	JDemitter("PLUTO_PEER_CA",
+		  for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
+			  struct pubkey *key = p->key;
+			  int pathlen;	/* value ignored */
+			  if (key->content.type == &pubkey_type_rsa &&
+			      same_id(&c->remote->host.id, &key->id) &&
+			      trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca),
+					 &pathlen, verbose)) {
+				  jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
+				  break;
+			  }
+		  });
 
 	JDstr("PLUTO_STACK", kernel_ops->updown_name);
 
 	if (c->config->child_sa.metric != 0) {
-		jam(&jb, "PLUTO_METRIC=%d ", c->config->child_sa.metric);
+		JDint("PLUTO_METRIC", c->config->child_sa.metric);
 	}
 
 	if (c->config->child_sa.mtu != 0) {
-		jam(&jb, "PLUTO_MTU=%d ", c->config->child_sa.mtu);
+		JDint("PLUTO_MTU", c->config->child_sa.mtu);
 	}
 
 	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
 	JDemitter("PLUTO_CONN_KIND", jam_enum_long(&jb, &connection_kind_names, c->local->kind));
-	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%s' ", address_info(sr->local->host->addr)->n_name);
-	JDuint("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
+	JD("PLUTO_CONN_ADDRFAMILY", "ipv%s", address_info(sr->local->host->addr)->n_name);
+	JDunsigned("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 
 	if (child != NULL && child->sa.st_xauth_username[0] != '\0') {
 		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, child->sa.st_xauth_username, child->sa.logger));
@@ -199,13 +225,13 @@ static bool fmt_common_shell_out(char *buf,
 		}
 	}
 
-	JDuint("PLUTO_IS_PEER_CISCO", c->config->host.cisco.peer);
+	JDunsigned("PLUTO_IS_PEER_CISCO", c->config->host.cisco.peer);
 	JDstr("PLUTO_PEER_DNS_INFO", (child != NULL && child->sa.st_seen_cfg_dns != NULL ? child->sa.st_seen_cfg_dns : ""));
 	JDstr("PLUTO_PEER_DOMAIN_INFO", (child != NULL && child->sa.st_seen_cfg_domains != NULL ? child->sa.st_seen_cfg_domains : ""));
 	JDstr("PLUTO_PEER_BANNER", (child != NULL && child->sa.st_seen_cfg_banner != NULL ? child->sa.st_seen_cfg_banner : ""));
-	JDuint("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
-	JDuint("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
-	JDuint("PLUTO_NM_CONFIGURED", c->config->host.cisco.nm);
+	JDunsigned("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
+	JDunsigned("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
+	JDunsigned("PLUTO_NM_CONFIGURED", c->config->host.cisco.nm);
 
 	struct ipsec_proto_info *const first_ipsec_proto =
 		(child == NULL ? NULL :
@@ -230,49 +256,56 @@ static bool fmt_common_shell_out(char *buf,
 	}
 
 	if (c->nflog_group != 0) {
-		jam(&jb, "NFLOG=%d ", c->nflog_group);
+		JDint("NFLOG", c->nflog_group);
 	}
 
 	if (c->sa_marks.in.val != 0) {
-		jam(&jb, "CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
-		    c->sa_marks.in.val, c->sa_marks.in.mask);
+		JD("CONNMARK_IN", "%"PRIu32"/%#08"PRIx32, c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
 	if (c->sa_marks.out.val != 0 && c->ipsec_interface == NULL) {
-		jam(&jb, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
-		    c->sa_marks.out.val, c->sa_marks.out.mask);
+		JD("CONNMARK_OUT", "%"PRIu32"/%#08"PRIx32, c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 	if (c->ipsec_interface != NULL) {
 		if (c->sa_marks.out.val != 0) {
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
-			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
-			    c->sa_marks.out.val, c->sa_marks.out.mask);
+			JD("PLUTO_XFRMI_FWMARK", "%"PRIu32"/%#08"PRIx32, c->sa_marks.out.val, c->sa_marks.out.mask);
 		} else if (address_in_selector_range(sr->remote->host->addr, sr->remote->client)) {
-			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
-			    c->ipsec_interface->if_id);
+			JD("PLUTO_XFRMI_FWMARK", "%"PRIu32"/0xffffffff", c->ipsec_interface->if_id);
 		} else {
 			address_buf bpeer;
 			selector_buf peerclient_str;
 			vdbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
 			     str_address(&sr->remote->host->addr, &bpeer),
 			     str_selector_range_port(&sr->remote->client, &peerclient_str));
-			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
+			JDstr("PLUTO_XFRMI_FWMARK", "");
 		}
 	}
+
 	JDstr("VTI_IFACE", (c->config->vti.interface == NULL ? "" : c->config->vti.interface));
 	JDstr("VTI_ROUTING", bool_str(c->config->vti.routing));
 	JDstr("VTI_SHARED", bool_str(c->config->vti.shared));
 
 	if (c->local->child.has_cat) {
-		jam_string(&jb, "CAT='YES' ");
+		JDstr("CAT", "YES");
 	}
 
-	jam(&jb, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
-		first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->outbound.spi),
-		first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->inbound.spi));
+	JD("SPI_IN", "0x%x", (first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->outbound.spi)));
+	JD("SPI_OUT", "0x%x", (first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->inbound.spi)));
 
 	if (LDBGP(DBG_UPDOWN, verbose.logger)) {
 		JDstr("IPSEC_INIT_SCRIPT_DEBUG", "yes");
 	}
+
+	/*
+	 * Terminate envp
+	 */
+#ifdef UPDOWN_EXECVE
+	if (envp == envp_end) {
+		verror(0, "environment overflow");
+		return false;
+	}
+	*envp++ = NULL;
+#endif
 
 	return jambuf_ok(&jb);
 
@@ -348,22 +381,35 @@ static bool do_updown_verb(const char *verb,
 	}
 
 	vdbg("kernel: command executing %s%s", verb, verb_suffix);
-
 	char common_shell_out_str[2048];
-	if (!fmt_common_shell_out(common_shell_out_str,
-				  sizeof(common_shell_out_str), c, spd,
+#ifdef UPDOWN_EXECVE
+	const char *envp[100];
+#endif
+	if (!fmt_common_shell_out(common_shell_out_str, sizeof(common_shell_out_str),
+#ifdef UPDOWN_EXECVE
+				  envp, elemsof(envp),
+#endif
+				  verb, verb_suffix, c, spd,
 				  child, updown_env, verbose)) {
 		vlog("%s%s command too long!", verb,
 		     verb_suffix);
 		return false;
 	}
 
+#ifdef UPDOWN_EXECVE
+	const char *argv[] = {
+		IPSEC_EXECDIR"/_updown",
+		NULL,
+	};
+
+	struct server_run run = server_runve_chunk(argv, envp, empty_shunk, verbose);
+	free_chunk_content(&run.output);
+	return (run.status == 0);
+#else
 	/* must free */
 	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */
-				 "PLUTO_VERB='%s%s' "
 				 "%s"         /* other stuff */
 				 "%s",        /* actual script */
-				 verb, verb_suffix,
 				 common_shell_out_str,
 				 c->local->config->child.updown);
 	if (cmd == NULL) {
@@ -375,6 +421,7 @@ static bool do_updown_verb(const char *verb,
 	bool ok = server_run(verb, verb_suffix, cmd, verbose);
 	pfree(cmd);
 	return ok;
+#endif
 }
 
 static bool do_updown_1(enum updown updown_verb,
