@@ -1154,9 +1154,9 @@ void vdbg_connection(const struct connection *c,
 		     const char *message, ...);
 
 void init_connection_spd(struct connection *c, struct spd *spd);
-void alloc_connection_spds(struct connection *c, unsigned nr);
-void discard_connection_spds(struct connection *c);
+void alloc_connection_spds(struct connection *c, unsigned nr, struct verbose verbose);
 void build_connection_spds_from_proposals(struct connection *c);
+void discard_connection_spds(struct connection *c);
 
 /* connections */
 

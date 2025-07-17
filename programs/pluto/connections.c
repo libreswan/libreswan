@@ -1022,10 +1022,11 @@ void init_connection_spd(struct connection *c, struct spd *spd)
 	spd_db_init_spd(spd);
 }
 
-void alloc_connection_spds(struct connection *c, unsigned nr_spds)
+void alloc_connection_spds(struct connection *c, unsigned nr_spds,
+			   struct verbose verbose)
 {
-	PASSERT(c->logger, c->child.spds.len == 0);
-	ldbg(c->logger, "allocating %u SPDs", nr_spds);
+	vassert(c->child.spds.len == 0);
+	vdbg("allocating %u SPDs", nr_spds);
 	c->child.spds = (struct spds) {
 		.len = nr_spds,
 		.list = alloc_things(struct spd, nr_spds, "spds"),
@@ -1066,7 +1067,7 @@ void build_connection_spds_from_proposals(struct connection *c)
 	}
 
 	/* Allocate the SPDs. */
-	alloc_connection_spds(c, nr_spds);
+	alloc_connection_spds(c, nr_spds, verbose);
 
 	/*
 	 * Pass 2: fill them in, hashing each as it is added.

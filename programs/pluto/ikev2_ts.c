@@ -219,7 +219,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 	for (unsigned pass = 1; pass <= 2; pass++) {
 		if (pass == 2) {
 			discard_connection_spds(c);
-			alloc_connection_spds(c, nr_spds);
+			alloc_connection_spds(c, nr_spds, verbose);
 		}
 		nr_spds = 0;
 		for (const struct narrowed_selector *local_ns = local_nsp->ns;
