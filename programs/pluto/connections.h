@@ -636,8 +636,9 @@ void update_end_selector_where(struct connection *c, enum end end,
 	update_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
 				  NULL, HERE)
 
-void append_end_selector(struct connection_end *end, ip_selector s,
-			 const struct logger *logger, where_t where);
+void append_end_selector(struct connection_end *end,
+			 ip_selector s/*when-TBD-can-be-unset*/,
+			 struct verbose verbose);
 
 struct spd_end {
 	ip_selector client;
@@ -1153,9 +1154,9 @@ void vdbg_connection(const struct connection *c,
 		     const char *message, ...);
 
 void init_connection_spd(struct connection *c, struct spd *spd);
-void alloc_connection_spds(struct connection *c, unsigned nr);
-void discard_connection_spds(struct connection *c);
+void alloc_connection_spds(struct connection *c, unsigned nr, struct verbose verbose);
 void build_connection_spds_from_proposals(struct connection *c);
+void discard_connection_spds(struct connection *c);
 
 /* connections */
 
@@ -1218,7 +1219,7 @@ struct child_policy child_sa_policy(const struct connection *c);
 bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);
 
-void build_connection_proposals_from_configs(struct connection *c,
+void build_connection_proposals_from_hosts_and_configs(struct connection *c,
 					     const struct ip_info *host_afi/*possibly-NULL*/,
 					     struct verbose verbose);
 

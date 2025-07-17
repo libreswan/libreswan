@@ -4128,7 +4128,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * might use subnet or host or addresspool.
 	 */
 
-	build_connection_proposals_from_configs(c, host_afi, verbose);
+	build_connection_proposals_from_hosts_and_configs(c, host_afi, verbose);
 
 	if (VDBGP()) {
 		VDBG_log("proposals built");

@@ -891,9 +891,9 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
  * proposals.
  */
 
-void build_connection_proposals_from_configs(struct connection *d,
-					     const struct ip_info *host_afi,
-					     struct verbose verbose)
+void build_connection_proposals_from_hosts_and_configs(struct connection *d,
+						       const struct ip_info *host_afi,
+						       struct verbose verbose)
 {
 	vdbg("%s() host-afi=%s", __func__, (host_afi == NULL ? "N/A" : host_afi->ip_name));
 	verbose.level++;
@@ -901,14 +901,20 @@ void build_connection_proposals_from_configs(struct connection *d,
 	FOR_EACH_ELEMENT(end, d->end) {
 		const char *leftright = end->config->leftright;
 
-		vassert(end->child.selectors.proposed.list == NULL);
-		vassert(end->child.selectors.proposed.len == 0);
+		vexpect(end->child.selectors.proposed.list == NULL);
+		vexpect(end->child.selectors.proposed.len == 0);
 		vexpect(end->child.has_client == false);
 
 		/* {left,right}subnet=... */
 		if (end->child.config->selectors.len > 0) {
-			vdbg("%s selectors from %d child.selectors",
-			     leftright, end->child.config->selectors.len);
+			VDBG_JAMBUF(buf) {
+				jam_string(buf, leftright);
+				jam_string(buf, " proposals from child config selectors");
+				FOR_EACH_ITEM(selector, &end->child.config->selectors) {
+					jam_string(buf, " ");
+					jam_selector(buf, selector);
+				}
+			}
 			end->child.selectors.proposed = end->child.config->selectors;
 			/*
 			 * This is important, but why?
@@ -937,9 +943,9 @@ void build_connection_proposals_from_configs(struct connection *d,
 			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
 				ip_selector selector = selector_from_range((*range));
 				selector_buf sb;
-				vdbg("%s selector formed from address pool %s",
+				vdbg("%s proposals formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
-				append_end_selector(end, selector, verbose.logger, HERE);
+				append_end_selector(end, selector, verbose);
 			}
 			continue;
 		}
@@ -960,14 +966,14 @@ void build_connection_proposals_from_configs(struct connection *d,
 			 */
 			address_buf ab;
 			protoport_buf pb;
-			vdbg("%s selector proposals from host address+protoport %s %s",
+			vdbg("%s proposals from host address+protoport %s %s",
 			     leftright,
 			     str_address(&end->host.addr, &ab),
 			     str_protoport(&end->child.config->protoport, &pb));
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			append_end_selector(end, selector, verbose.logger, HERE);
+			append_end_selector(end, selector, verbose);
 			continue;
 		}
 
@@ -987,7 +993,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 		}
 
 		vexpect(is_permanent(d) || is_group(d) || is_template(d));
-		vdbg("%s selector proposals from host family %s",
+		vdbg("%s proposals from host family %s",
 		     leftright, host_afi->ip_name);
 		/*
 		 * Note: NOT afi->selector.all.  It needs to
@@ -996,7 +1002,7 @@ void build_connection_proposals_from_configs(struct connection *d,
 		 * selector.unset has .ip.is_set=false so looks unset;
 		 * but has .version=IPv[46].
 		 */
-		append_end_selector(end, host_afi->selector.unset, verbose.logger, HERE);
+		append_end_selector(end, host_afi->selector.unset, verbose);
 	}
 }
 
@@ -1016,10 +1022,11 @@ void init_connection_spd(struct connection *c, struct spd *spd)
 	spd_db_init_spd(spd);
 }
 
-void alloc_connection_spds(struct connection *c, unsigned nr_spds)
+void alloc_connection_spds(struct connection *c, unsigned nr_spds,
+			   struct verbose verbose)
 {
-	PASSERT(c->logger, c->child.spds.len == 0);
-	ldbg(c->logger, "allocating %u SPDs", nr_spds);
+	vassert(c->child.spds.len == 0);
+	vdbg("allocating %u SPDs", nr_spds);
 	c->child.spds = (struct spds) {
 		.len = nr_spds,
 		.list = alloc_things(struct spd, nr_spds, "spds"),
@@ -1060,7 +1067,7 @@ void build_connection_spds_from_proposals(struct connection *c)
 	}
 
 	/* Allocate the SPDs. */
-	alloc_connection_spds(c, nr_spds);
+	alloc_connection_spds(c, nr_spds, verbose);
 
 	/*
 	 * Pass 2: fill them in, hashing each as it is added.
@@ -2095,20 +2102,20 @@ bool dpd_active_locally(const struct connection *c)
 
 void append_end_selector(struct connection_end *end,
 			 ip_selector selector/*can be unset!*/,
-			 const struct logger *logger, where_t where)
+			 struct verbose verbose)
 {
 	/* space? */
-	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
+	vassert(end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
 
 	/*
 	 * Ensure proposed is pointing at assigned aka scratch.
 	 */
 	if (end->child.selectors.proposed.list == NULL) {
-		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len == 0);
+		vassert(end->child.selectors.proposed.len == 0);
 		end->child.selectors.proposed.list = end->child.selectors.assigned;
 	} else {
-		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len > 0);
-		PASSERT_WHERE(logger, where, end->child.selectors.proposed.list == end->child.selectors.assigned);
+		vassert(end->child.selectors.proposed.len > 0);
+		vassert(end->child.selectors.proposed.list == end->child.selectors.assigned);
 	}
 
 	/* append the selector to assigned */
@@ -2116,30 +2123,33 @@ void append_end_selector(struct connection_end *end,
 	end->child.selectors.assigned[i] = selector;
 
 	selector_buf nb;
-	ldbg(logger, "%s() %s.child.selectors.proposed[%d] %s "PRI_WHERE,
-	     __func__,
+	vdbg("%s.child.selectors.proposed[%d] %s "PRI_WHERE,
 	     end->config->leftright,
 	     i, str_selector(&selector, &nb),
-	     pri_where(where));
+	     pri_where(verbose.where));
 }
 
 void update_end_selector_where(struct connection *c, enum end lr,
 			       ip_selector new_selector,
 			       const char *excuse, where_t where)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
+	verbose.where = where;
+
 	struct connection_end *end = &c->end[lr];
 	struct child_end *child = &end->child;
 	struct child_end_selectors *end_selectors = &end->child.selectors;
 	const char *leftright = end->config->leftright;
 
-	PEXPECT_WHERE(c->logger, where, end_selectors->proposed.len == 1);
+	vexpect(end_selectors->proposed.len == 1);
 	ip_selector old_selector = end_selectors->proposed.list[0];
 	selector_buf ob, nb;
-	ldbg(c->logger, "%s() update %s.child.selector %s -> %s "PRI_WHERE,
+	vdbg("%s() update %s.child.selector %s -> %s "PRI_WHERE,
 	     __func__, leftright,
 	     str_selector(&old_selector, &ob),
 	     str_selector(&new_selector, &nb),
 	     pri_where(where));
+	verbose.level++;
 
 	/*
 	 * Point the selectors list at and UPDATE the scratch value.
@@ -2149,7 +2159,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 	 * truncate the selector list.
 	 */
 	zero(&end->child.selectors.proposed);
-	append_end_selector(end, new_selector, c->logger, where);
+	append_end_selector(end, new_selector, verbose);
 
 	/*
 	 * If needed, also update the SPD.  It's assumed for this code
@@ -2160,7 +2170,7 @@ void update_end_selector_where(struct connection *c, enum end lr,
 		ip_selector old_client = c->child.spds.list->end[lr].client;
 		if (!selector_eq_selector(old_selector, old_client)) {
 			selector_buf sb, cb;
-			llog_pexpect(c->logger, where,
+			vlog_pexpect(where,
 				     "%s() %s.child.selector %s does not match %s.spd.client %s",
 				     __func__, leftright,
 				     str_selector(&old_selector, &sb),
@@ -2188,22 +2198,19 @@ void update_end_selector_where(struct connection *c, enum end lr,
 		ip_selector selector = child->config->selectors.list[0];
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;
-			ldbg(c->logger,
-			     "%s() %s.child.selector %s matches selectors[0] "PRI_WHERE,
-			     __func__, leftright,
+			vdbg("%s.child.selector %s matches selectors[0] "PRI_WHERE,
+			     leftright,
 			     str_selector(&new_selector, &sb),
 			     pri_where(where));
 		} else if (excuse != NULL) {
 			selector_buf sb, cb;
-			ldbg(c->logger,
-			     "%s() %s.child.selector %s does not match %s.selectors[0] %s but %s "PRI_WHERE,
-			     __func__, leftright, str_selector(&new_selector, &sb),
+			vdbg("%s.child.selector %s does not match %s.selectors[0] %s but %s "PRI_WHERE,
+			     leftright, str_selector(&new_selector, &sb),
 			     leftright, str_selector(&selector, &cb),
 			     excuse, pri_where(where));
 		} else {
 			selector_buf sb, cb;
-			llog_pexpect(c->logger, where,
-				     "%s() %s.child.selector %s does not match %s.selectors[0] %s",
+			vlog_pexpect(where, "%s() %s.child.selector %s does not match %s.selectors[0] %s",
 				     __func__, leftright, str_selector(&new_selector, &sb),
 				     leftright, str_selector(&selector, &cb));
 		}
