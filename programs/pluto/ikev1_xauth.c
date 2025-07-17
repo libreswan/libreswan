@@ -1132,7 +1132,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	selector_buf sb;
 	vdbg("%s selector formed from address pool %s",
 	     c->remote->config->leftright, str_selector(&selector, &sb));
-	append_end_selector(c->remote, selector, verbose.logger, HERE);
+	append_end_selector(c->remote, selector, verbose);
 
 	discard_connection_spds(c);
 	build_connection_spds_from_proposals(c);
@@ -1905,6 +1905,8 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 {
 	struct connection *c = ike->sa.st_connection;
 	struct logger *logger = ike->sa.logger;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 
 	struct attrs resp = {0};
 
@@ -2047,7 +2049,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 			/* potentially over-allocate */
 			discard_connection_spds(c);
-			alloc_connection_spds(c, nr_splits);
+			alloc_connection_spds(c, nr_splits, verbose);
 
 			unsigned split_nr = 0;
 			while (pbs_in_left(&split_attr).len > 0) {

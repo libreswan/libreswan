@@ -17,6 +17,7 @@
 #ifndef VERBOSE_H
 #define VERBOSE_H
 
+#include "where.h"
 #include "pluto_constants.h"	/* for enum stream; */
 
 /*
@@ -41,6 +42,7 @@ struct verbose {
 	enum stream stream;
 	int level;
 	const char *prefix;
+	where_t where;
 };
 
 /*
@@ -85,6 +87,7 @@ struct verbose {
 			.stream = (STREAM != DEBUG_STREAM ? STREAM :	\
 				   LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
 				   NO_STREAM),				\
+			.where = HERE,					\
 			}
 
 /*
@@ -131,8 +134,8 @@ struct verbose {
 
 #define vbad(BAD) PBAD(verbose.logger, BAD)
 
-#define vexpect(EXPECT) PEXPECT(verbose.logger, EXPECT)
-#define vassert(ASSERT) PASSERT(verbose.logger, ASSERT)
+#define vexpect(EXPECT) PEXPECT_WHERE(verbose.logger, verbose.where, EXPECT)
+#define vassert(ASSERT) PASSERT_WHERE(verbose.logger, verbose.where, ASSERT)
 
 #define vexpect_where(WHERE, EXPECT) PEXPECT_WHERE(verbose.logger, WHERE, EXPECT)
 #define vassert_where(WHERE, ASSERT) PASSERT_WHERE(verbose.logger, WHERE, ASSERT)
