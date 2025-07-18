@@ -126,19 +126,20 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		vdbg("already disoriented");
 	}
 
-	delete_connection_proposals(c);
-
 	/*
-	 * Now that everything is torn down, start the rebuild.
+	 * Now that everything is torn down, start the rebuild.  Even
+	 * when resolve failed, build new proposals - gives ipsec
+	 * connsectionstatus something to display.
 	 */
 
-	/* blocking call on event loop! */
+	delete_connection_proposals(c);
+	bool resolved = resolve_connection_hosts_from_configs(c, verbose);
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
 
-	if (!resolve_connection_hosts_from_configs(c, verbose)) {
+	if (!resolved) {
+		vlog("not resolved");
 		return;
 	}
-
-	build_connection_proposals_from_hosts_and_configs(c, verbose);
 
 	/*
 	 * Caller holds reference.
