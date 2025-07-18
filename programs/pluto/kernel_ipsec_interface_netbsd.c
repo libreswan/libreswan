@@ -145,7 +145,7 @@ static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbo
 		ctl,
 		NULL,
 	};
-	struct server_run result = server_runv_chunk(sysctl, null_shunk, verbose);
+	struct server_run result = server_runve_chunk(sysctl, NULL, null_shunk, verbose);
 	if (result.status != 0) {
 		return "sysctl exited with a non-zero status";
 	}
