@@ -838,12 +838,12 @@ static void process_secret_records(struct file_lex_position *flp,
 				if (tokeq(flp, "%any")) {
 					id = empty_id;
 					id.kind = ID_IPV4_ADDR;
-					id.ip_addr = ipv4_info.address.unspec;
+					id.ip_addr = ipv4_info.address.zero;
 					ugh = NULL;
 				} else if (tokeq(flp, "%any6")) {
 					id = empty_id;
 					id.kind = ID_IPV6_ADDR;
-					id.ip_addr = ipv6_info.address.unspec;
+					id.ip_addr = ipv6_info.address.zero;
 					ugh = NULL;
 				} else {
 					ugh = atoid(flp->tok, &id);

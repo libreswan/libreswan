@@ -18,7 +18,7 @@ struct ip_info {
 	 */
 	struct {
 		/* ip.version matches field in ip structs */
-		enum ip_version version; /* 4 or 6 */
+		enum ip_version version; /* IPv4|IPv6 */
 	} ip;
 
 	/* too many choices */
@@ -43,7 +43,7 @@ struct ip_info {
 	 * ip_address
 	 */
 	struct {
-		const ip_address unspec;	/* 0.0.0.0 or :: */
+		const ip_address zero;		/* 0.0.0.0 or :: */
 		const ip_address loopback;	/* 127.0.0.1 or ::1 */
 		const ip_address unset;
 	} address;

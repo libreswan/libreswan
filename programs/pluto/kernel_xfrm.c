@@ -3034,8 +3034,8 @@ static bool qry_xfrm_base_support(struct logger *logger, bool check_iptfs, bool 
 
 	struct kernel_state sa = {
 		.mode = KERNEL_MODE_TUNNEL,
-		.src.address = ipv4_info.address.unspec,
-		.dst.address = ipv4_info.address.unspec,
+		.src.address = ipv4_info.address.zero,
+		.dst.address = ipv4_info.address.zero,
 		.proto = &ip_protocol_esp,
 		.direction = DIRECTION_OUTBOUND,
 		.spi = 1,

@@ -410,7 +410,7 @@ ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *famil
 ip_address optarg_any(struct optarg_family *family)
 {
 	optarg_family(family, &ipv4_info);
-	return family->type->address.unspec;
+	return family->type->address.zero;
 }
 
 ip_port optarg_port(const struct logger *logger)
