@@ -126,11 +126,19 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		vdbg("already disoriented");
 	}
 
-	/* XXX: blocking call on dedicated thread */
+	delete_connection_proposals(c);
+
+	/*
+	 * Now that everything is torn down, start the rebuild.
+	 */
+
+	/* blocking call on event loop! */
 
 	if (!resolve_connection_hosts_from_configs(c, verbose)) {
 		return;
 	}
+
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
 
 	/*
 	 * Caller holds reference.
