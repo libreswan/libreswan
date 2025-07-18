@@ -86,7 +86,7 @@ void replace_connection_that_id(struct connection *c, const struct id *src)
 
 static hash_t hash_connection_clonedfrom(struct connection *const *cpp)
 {
-	so_serial_t serial = (*cpp == NULL ? 0 : (*cpp)->serialno);
+	co_serial_t serial = (*cpp == NULL ? COS_NOBODY : (*cpp)->serialno);
 	return hash_thing(serial, zero_hash);
 }
 
