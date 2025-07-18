@@ -53,14 +53,9 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		return;
 	}
 
-	/* find the end needing DNS */
-	if (c->remote->config->host.host.type != KH_IPHOSTNAME) {
-		vdbg("skipping connection %s, has no KP_IPHOSTNAME",
+	if (!is_permanent(c)) {
+		vdbg("skipping connection %s, is not permanent",
 		     c->name);
-		return;
-	}
-
-	if (PBAD(c->logger, c->remote->config->host.host.name == NULL)) {
 		return;
 	}
 
@@ -70,19 +65,14 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	 * changed IP?  The connection might need to get its host_addr
 	 * updated.  Do we do that when terminating the conn?
 	 */
-	if (address_is_specified(c->remote->host.addr)) {
-		vdbg("skipping connection %s, already has address",
+	if (address_is_specified(c->local->host.addr) &&
+	    address_is_specified(c->remote->host.addr)) {
+		vdbg("skipping connection %s, already has addresses",
 		     c->name);
 		return;
 	}
 
-	if (!is_permanent(c)) {
-		vdbg("skipping connection %s, is not permanent",
-		     c->name);
-		return;
-	}
-
-	/* should have been handled by above */
+	/* should have been handled by above is_permanent() */
 	if (pbad(id_has_wildcards(&c->remote->host.id))) {
 		vdbg("skipping connection %s, remote has wildcard ID",
 		     c->name);
