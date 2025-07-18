@@ -892,10 +892,9 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
  */
 
 void build_connection_proposals_from_hosts_and_configs(struct connection *d,
-						       const struct ip_info *host_afi,
 						       struct verbose verbose)
 {
-	vdbg("%s() host-afi=%s", __func__, (host_afi == NULL ? "N/A" : host_afi->ip_name));
+	vdbg("%s() ...", __func__);
 	verbose.level++;
 
 	FOR_EACH_ELEMENT(end, d->end) {
@@ -950,7 +949,7 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 			continue;
 		}
 
-		/* {left,right}= */
+		/* {left,right}= and non-zero */
 		if (address_is_specified(end->host.addr)) {
 			/*
 			 * When there's no subnet=, and the host.addr
@@ -978,23 +977,43 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 		}
 
 		/*
-		 * Make space for the to-be-determined selector so
-		 * that there's something to iterate over and
-		 * something containing the intended address family.
-		 *
-		 * When called by instantiate() and HOST_AFI==NULL,
-		 * this code isn't reached.  This is because both the
-		 * local (connection is oriented) and remote (the
-		 * packet from the peer triggering the instantiate)
-		 * host.addr are known.
+		 * Instances, since they are oriented, should have
+		 * been handled by the above.
 		 */
-		if (vbad(host_afi == NULL)) {
+		if (!vexpect(is_permanent(d) || is_group(d) || is_template(d))) {
 			return;
 		}
 
-		vexpect(is_permanent(d) || is_group(d) || is_template(d));
-		vdbg("%s proposals from host family %s",
-		     leftright, host_afi->ip_name);
+		/*
+		 * Either %any, or an unresolved address.
+		 *
+		 * Make space in the proposal for the value; and
+		 * preserve the expected address family.  Use the
+		 * .selector.unset as which has .ip.is_set=false so it
+		 * looks unset; yet has .version=IPv[46] so that is
+		 * available.
+		 *
+		 * Can't use .selector.zero as all zeros is a valid
+		 * selector value.
+		 *
+		 * Be forgiving of the extract code - accept either
+		 * .address.zero, or .address.unset.  Just log source.
+		 */
+
+		const struct ip_info *host_afi;
+		if (end->host.addr.ip.is_set) {
+			host_afi = address_info(end->host.addr);
+			vdbg("%s proposals from zero host family %s",
+			     leftright, host_afi->ip_name);
+		} else if (end->host.addr.ip.version != 0) {
+			host_afi = ip_version_info(end->host.addr.ip.version);
+			vdbg("%s proposals from unset host family %s",
+			     leftright, host_afi->ip_name);
+		} else {
+			vlog_pexpect(HERE, "%s host address is unknown", leftright);
+			return;
+		}
+
 		/*
 		 * Note: NOT afi->selector.all.  It needs to
 		 * differentiate so it knows it is to be updated.
