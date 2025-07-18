@@ -1025,6 +1025,18 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 	}
 }
 
+void delete_connection_proposals(struct connection *c)
+{
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct child_end *child = &c->end[lr].child;
+
+		pfreeany(child->selectors.accepted.list);
+		zero(&child->selectors.accepted);
+		zero(&child->selectors.proposed);
+		child->has_client = false;
+	}
+}
+
 void init_connection_spd(struct connection *c, struct spd *spd)
 {
 	/* back link */

@@ -99,20 +99,24 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	vdbg("updating connection IP addresses");
 	verbose.level++;
 
-	/* XXX: blocking call on dedicated thread */
-
-	if (!resolve_connection_hosts_from_configs(c, verbose)) {
-		return;
-	}
-
 	/*
-	 * Pull any existing routing based on current SPDs.  Remember,
-	 * per above, the connection isn't established.
+	 * Pull any existing kernel policy and routing based on
+	 * current SPDs, and then delete the SPDs.
+	 *
+	 * Remember, per above, the connection isn't established.
+
+	 * XXX: since the connection has at least one unknown
+	 * addresses is it even oriented or routed?  Lets find out.
 	 *
 	 * Note: disorient() also deletes any SPDs, orient() will put
 	 * them back.
 	 */
-	vdbg("unrouting");
+
+	vdbg("unrouting (oriented %s, routing %s, kernel route installed %s, kernel policy installed %s)",
+	     bool_str(oriented(c)),
+	     bool_str(c->policy.route),
+	     bool_str(kernel_route_installed(c)),
+	     bool_str(kernel_policy_installed(c)));
 	connection_unroute(c, HERE);
 
 	if (oriented(c)) {
@@ -120,6 +124,12 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		disorient(c);
 	} else {
 		vdbg("already disoriented");
+	}
+
+	/* XXX: blocking call on dedicated thread */
+
+	if (!resolve_connection_hosts_from_configs(c, verbose)) {
+		return;
 	}
 
 	/*

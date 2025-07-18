@@ -1221,6 +1221,7 @@ bool connections_can_share_parent(const struct connection *c,
 
 void build_connection_proposals_from_hosts_and_configs(struct connection *c,
 						       struct verbose verbose);
+void delete_connection_proposals(struct connection *c);
 
 reqid_t child_reqid(const struct config *config, struct logger *logger);
 
