@@ -26,6 +26,8 @@
  * for more details.
  */
 
+#define _GNU_SOURCE	/* expose execvpe() on Linux */
+
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -252,9 +254,10 @@ struct server_run server_runve_chunk(const char *argv[], const char *envp[],
 		}
 
 		if (envp == NULL) {
-			execv(argv[0], (char**)argv);
+			execvp(argv[0], (char**)argv);
 		} else {
-			execve(argv[0], (char**)argv, (char**)envp);
+			/* definition requires _GNU_SOURCE on Linux */
+			execvpe(argv[0], (char**)argv, (char**)envp);
 		}
 		llog_errno(ERROR_STREAM, verbose.logger, errno, "execve(): ");
 		exit(127);
