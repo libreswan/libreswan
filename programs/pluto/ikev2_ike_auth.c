@@ -1169,10 +1169,16 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 					       struct msg_digest *md)
 {
 	/*
+	 * This log line establishes that the packet's been decrypted
+	 * and now it is being processed for real.
+	 *
+	 * XXX: move this into ikev2.c?
+	 */
+	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
+
+	/*
 	 * If the initiator rejects the responders authentication it
 	 * should immediately send a delete notification and wipe the SA.
-	 *
-	 * This doesn't happen.  Instead the SA is deleted.
 	 */
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
