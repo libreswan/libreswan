@@ -124,7 +124,7 @@ void natd_lookup_common(struct state *st,
 			const ip_endpoint sender,
 			bool found_me, bool found_peer)
 {
-	st->hidden_variables.st_natd = ipv4_info.address.unspec;
+	st->hidden_variables.st_natd = ipv4_info.address.zero;
 
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->config->encapsulation) {

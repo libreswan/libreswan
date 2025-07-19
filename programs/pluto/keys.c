@@ -481,7 +481,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		/* roadwarrior: replace that with %ANYADDR */
 		rw_id = (struct id) {
 			.kind = address_info(c->local->host.addr)->id_ip_addr,
-			.ip_addr = address_info(c->local->host.addr)->address.unspec,
+			.ip_addr = address_info(c->local->host.addr)->address.zero,
 		};
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",

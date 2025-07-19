@@ -344,8 +344,8 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 	 * have that potential to be resolved to an IP address by
 	 * being a KP_IPHOSTNAME).
 	 *
-	 * Without at least one address the connection can never be
-	 * orient()ed.
+	 * Without at least one potential address the connection can
+	 * never be orient()ed.
 	 */
 
 	bool can_orient = false;
@@ -369,7 +369,7 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 		case KH_DEFAULTROUTE:
 			/* handled by pluto using .host_type */
 			end_can_orient = true;
-			host->addr = winner.afi->address.unspec;
+			host->addr = winner.afi->address.zero;
 			break;
 
 		case KH_OPPO:
@@ -377,12 +377,12 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 		case KH_GROUP:
 		case KH_ANY:
 			/* handled by pluto using .host_type */
-			host->addr = winner.afi->address.unspec;
+			host->addr = winner.afi->address.zero;
 			break;
 
 		case KH_IPHOSTNAME:
 			/* handled by pluto using .host_type */
-			host->addr = winner.afi->address.unspec;
+			host->addr = winner.afi->address.zero;
 			end_can_orient = true;
 			break;
 
@@ -455,19 +455,19 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 			break;
 
 		case KH_DIRECT:
-			nexthop->addr = winner.afi->address.unspec;
+			nexthop->addr = winner.afi->address.zero;
 			break;
 
 		case KH_NOTSET:
 		{
 			struct host_addr_config *host = &config->end[lr].host.host;
-			nexthop->addr = winner.afi->address.unspec;
+			nexthop->addr = winner.afi->address.zero;
 			nexthop->type = (host->type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE : KH_NOTSET);
 			break;
 		}
 
 		case KH_DEFAULTROUTE:
-			nexthop->addr = winner.afi->address.unspec;
+			nexthop->addr = winner.afi->address.zero;
 			break;
 
 		}
@@ -4128,8 +4128,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * might use subnet or host or addresspool.
 	 */
 
-	build_connection_proposals_from_hosts_and_configs(c, host_afi, verbose);
-
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
 	if (VDBGP()) {
 		VDBG_log("proposals built");
 		connection_db_check(verbose.logger, HERE);

@@ -53,14 +53,9 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		return;
 	}
 
-	/* find the end needing DNS */
-	if (c->remote->config->host.host.type != KH_IPHOSTNAME) {
-		vdbg("skipping connection %s, has no KP_IPHOSTNAME",
+	if (!is_permanent(c)) {
+		vdbg("skipping connection %s, is not permanent",
 		     c->name);
-		return;
-	}
-
-	if (PBAD(c->logger, c->remote->config->host.host.name == NULL)) {
 		return;
 	}
 
@@ -70,19 +65,14 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	 * changed IP?  The connection might need to get its host_addr
 	 * updated.  Do we do that when terminating the conn?
 	 */
-	if (address_is_specified(c->remote->host.addr)) {
-		vdbg("skipping connection %s, already has address",
+	if (address_is_specified(c->local->host.addr) &&
+	    address_is_specified(c->remote->host.addr)) {
+		vdbg("skipping connection %s, already has addresses",
 		     c->name);
 		return;
 	}
 
-	if (!is_permanent(c)) {
-		vdbg("skipping connection %s, is not permanent",
-		     c->name);
-		return;
-	}
-
-	/* should have been handled by above */
+	/* should have been handled by above is_permanent() */
 	if (pbad(id_has_wildcards(&c->remote->host.id))) {
 		vdbg("skipping connection %s, remote has wildcard ID",
 		     c->name);
@@ -109,20 +99,24 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	vdbg("updating connection IP addresses");
 	verbose.level++;
 
-	/* XXX: blocking call on dedicated thread */
-
-	if (!resolve_connection_hosts_from_configs(c, verbose)) {
-		return;
-	}
-
 	/*
-	 * Pull any existing routing based on current SPDs.  Remember,
-	 * per above, the connection isn't established.
+	 * Pull any existing kernel policy and routing based on
+	 * current SPDs, and then delete the SPDs.
+	 *
+	 * Remember, per above, the connection isn't established.
+
+	 * XXX: since the connection has at least one unknown
+	 * addresses is it even oriented or routed?  Lets find out.
 	 *
 	 * Note: disorient() also deletes any SPDs, orient() will put
 	 * them back.
 	 */
-	vdbg("unrouting");
+
+	vdbg("unrouting (oriented %s, routing %s, kernel route installed %s, kernel policy installed %s)",
+	     bool_str(oriented(c)),
+	     bool_str(c->policy.route),
+	     bool_str(kernel_route_installed(c)),
+	     bool_str(kernel_policy_installed(c)));
 	connection_unroute(c, HERE);
 
 	if (oriented(c)) {
@@ -130,6 +124,21 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 		disorient(c);
 	} else {
 		vdbg("already disoriented");
+	}
+
+	/*
+	 * Now that everything is torn down, start the rebuild.  Even
+	 * when resolve failed, build new proposals - gives ipsec
+	 * connsectionstatus something to display.
+	 */
+
+	delete_connection_proposals(c);
+	bool resolved = resolve_connection_hosts_from_configs(c, verbose);
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
+
+	if (!resolved) {
+		vlog("not resolved");
+		return;
 	}
 
 	/*

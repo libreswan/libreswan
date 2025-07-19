@@ -1220,8 +1220,8 @@ bool connections_can_share_parent(const struct connection *c,
 				  const struct connection *d);
 
 void build_connection_proposals_from_hosts_and_configs(struct connection *c,
-					     const struct ip_info *host_afi/*possibly-NULL*/,
-					     struct verbose verbose);
+						       struct verbose verbose);
+void delete_connection_proposals(struct connection *c);
 
 reqid_t child_reqid(const struct config *config, struct logger *logger);
 

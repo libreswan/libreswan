@@ -516,8 +516,8 @@ static struct state *new_state(struct connection *c,
 		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.responder));
 	}
 
-	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
-	st->hidden_variables.st_natd = ipv4_info.address.unspec;
+	st->hidden_variables.st_nat_oa = ipv4_info.address.zero;
+	st->hidden_variables.st_natd = ipv4_info.address.zero;
 	st->st_remote_endpoint = remote_endpoint;
 	st->st_iface_endpoint = local_iface_endpoint;
 

@@ -68,10 +68,10 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 		 * With transport mode, the encapsulated packet on the
 		 * host interface must have the same family as the raw
 		 * packet on the client interface.  Even though it is
-		 * UNSPEC.
+		 * ZERO aka UNSPEC.
 		 */
-		.local.host = child_afi->address.unspec,
-		.remote.host = child_afi->address.unspec,
+		.local.host = child_afi->address.zero,
+		.remote.host = child_afi->address.zero,
 		/* what will capture packets */
 		.local.client = local,
 		.local.route = local,

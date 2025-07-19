@@ -161,20 +161,23 @@ const struct ip_info ip_families[IP_VERSION_ROOF] = {
 		/*
 		 * Known values.
 		 *
-		 * Use .address.unset, and not .address-{...}, when
+		 * Use .address.unset, and not .address={...}, when
 		 * initializing so that `grep -e address.unset` finds
-		 * it.
+		 * this code.
 		 */
-		.address.unspec = { .ip.is_set = true, .ip.version = IPv4, }, /* 0.0.0.0 */
 		.address.loopback = { .ip.is_set = true, .ip.version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
-		/* none/zero */
+
+		/* none / zero / invalid yet valid */
+		.address.zero = { .ip.is_set = true, .ip.version = IPv4, }, /* 0.0.0.0 */
 		.range.zero = { .ip.is_set = true, .ip.version = IPv4, },
 		.selector.zero = { .ip.is_set = true, .ip.version = IPv4, }, /* 0.0.0.0/0 */
 		.subnet.zero = { .ip.is_set = true, .ip.version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
+
 		/* all addresses */
 		.range.all = { .ip.is_set = true, .ip.version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0-255.255.255.255 */
 		.selector.all = { .ip.is_set = true, .ip.version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0-255.255.255.255 */
 		.subnet.all = { .ip.is_set = true, .ip.version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
+
 		/* unset, yet IP version is known */
 		.address.unset = { .ip.is_set = false/*YES-FALSE*/, .ip.version = IPv4, },
 		.endpoint.unset = { .ip.is_set = false/*YES-FALSE*/, .ip.version = IPv4, },
@@ -234,16 +237,19 @@ const struct ip_info ip_families[IP_VERSION_ROOF] = {
 		 * .address-{...}, when initializing so that `grep -e
 		 * address.unset` finds it.
 		 */
-		.address.unspec = { .ip.is_set = true, .ip.version = IPv6, }, /* :: */
 		.address.loopback = { .ip.is_set = true, .ip.version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-		/* none/zero */
+
+		/* none / zero / invalid yet valid  */
+		.address.zero = { .ip.is_set = true, .ip.version = IPv6, }, /* :: */
 		.range.zero = { .ip.is_set = true, .ip.version = IPv6, },
 		.selector.zero = { .ip.is_set = true, .ip.version = IPv6, }, /* ::/0 */
 		.subnet.zero = { .ip.is_set = true, .ip.version = IPv6, .maskbits = 128, }, /* ::/128 */
+
 		/* all addresses */
 		.range.all = { .ip.is_set = true, .ip.version = IPv6, .hi = IPv6_FF, }, /* ::-ffff:..:ffff */
 		.selector.all = { .ip.is_set = true, .ip.version = IPv6, .hi = IPv6_FF, }, /* ::-ffff:..:ffff */
 		.subnet.all = { .ip.is_set = true, .ip.version = IPv6, .maskbits = 0, }, /* ::/0 */
+
 		/* unset, yet IP version is known */
 		.address.unset = { .ip.is_set = false/*YES-FALSE*/, .ip.version = IPv6, },
 		.endpoint.unset = { .ip.is_set = false/*YES-FALSE*/, .ip.version = IPv6, },

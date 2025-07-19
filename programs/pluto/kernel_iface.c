@@ -76,7 +76,7 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	/*
 	 * Build an "any" endpoint and then bind the socket.
 	 */
-	ip_endpoint any_ep = endpoint_from_address_protocol_port(afi->address.unspec,
+	ip_endpoint any_ep = endpoint_from_address_protocol_port(afi->address.zero,
 								 &ip_protocol_udp,
 								 ip_hport(IKE_UDP_PORT));
 	ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);

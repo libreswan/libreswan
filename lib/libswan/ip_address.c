@@ -222,7 +222,7 @@ bool address_is_specified(const ip_address address)
 	}
 
 	/* exclude any address */
-	if (address_eq_address(address, afi->address.unspec)) {
+	if (address_eq_address(address, afi->address.zero)) {
 		return false;
 	}
 
