@@ -103,6 +103,7 @@ road #
 "road"[1] 2001:db8:1:2::23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road"[1] 2001:db8:1:2::23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road"[1] 2001:db8:1:2::23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"road"[1] 2001:db8:1:2::23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road"[1] 2001:db8:1:2::23 #1: initiator established IKE SA; authenticated peer certificate '@east.testing.libreswan.org' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "road"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
 "road"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3:1::/128===::/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}

@@ -26,6 +26,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and IPV4_ADDR '192.1.2.45'; Child SA #2 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #1: X509: authentication failed; peer certificate contains no subjectAltName extension to match FQDN '@right'
 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (IKE_AUTH_I) and sending notification
 "ikev2-westnet-eastnet-x509-cr" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds

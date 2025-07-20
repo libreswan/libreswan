@@ -130,6 +130,7 @@ ipsec auto --up road-eastnet-nonat
 "road-eastnet-nonat" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=aes_gcm_16_256 integ=n/a prf=sha2_512 group=DH19}, initiating IKE_AUTH
 "road-eastnet-nonat" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "road-eastnet-nonat" #2: negotiated connection [192.0.2.219/32->192.0.2.0/24]
+"road-eastnet-nonat" #2: ESTABLISHED_IKE_SA: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road-eastnet-nonat" #2: ESTABLISHED_IKE_SA: initiator established IKE SA tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 DPD=passive}
 road #
 ping -n -c 4 -I 192.0.2.219  192.0.2.254

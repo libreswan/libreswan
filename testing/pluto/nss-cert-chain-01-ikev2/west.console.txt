@@ -54,6 +54,7 @@ west #
 "nss-cert-chain" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "nss-cert-chain" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "nss-cert-chain" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west_chain_endcert.testing.libreswan.org, E=west_chain_endcert@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"nss-cert-chain" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,CERT,CERT,AUTH,SA,TSi,TSr}
 "nss-cert-chain" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=east_chain_int_2@testing.libreswan.org'
 "nss-cert-chain" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #

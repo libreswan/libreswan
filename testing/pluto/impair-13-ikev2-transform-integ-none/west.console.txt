@@ -19,6 +19,7 @@ west #
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 "integ" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"integ" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "integ" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "integ" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 west #
@@ -103,6 +104,7 @@ west #
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 "integ" #1: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 "integ" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"integ" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "integ" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "integ" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 west #

@@ -22,6 +22,7 @@ road #
 "road" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
 "road" #1: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESP <0xESPESP}
+"road" #1: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "road" #2: accepted selectors [2001:db8:0:3::/64]->[2001:db8:0:2::/64 2001:db8:0:20::/64]
 "road" #2: running updown prepare 2001:db8:0:3::/64===2001:db8:0:2::/64

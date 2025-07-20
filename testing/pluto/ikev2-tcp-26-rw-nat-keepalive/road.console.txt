@@ -19,6 +19,7 @@ road #
 "road" #1: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "road" #1: processed IKE_SA_INIT response from 192.1.2.23:TCP/4500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "road" #1: sent IKE_AUTH request to 192.1.2.23:TCP/4500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESPinTCP <0xESPESP}
+"road" #1: processing IKE_AUTH response from 192.1.2.23:TCP/4500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "road" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.0.2.0/24] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
