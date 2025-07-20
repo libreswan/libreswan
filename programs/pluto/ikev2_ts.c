@@ -534,17 +534,18 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 /* return success */
 static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			 struct traffic_selector_payload *tsp,
-			 struct logger *logger)
+			 struct verbose verbose)
 {
 	diag_t d;
 	err_t e;
 
-	ldbg(logger, "%s: parsing %u traffic selectors",
+	vdbg("%s: parsing %u traffic selectors",
 	     tsp->name, ts_pd->payload.v2ts.isat_num);
+	verbose.level++;
+	const unsigned base_level = verbose.level;
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
-		llog(RC_LOG, logger,
-		     "%s payload contains no entries when at least one is expected",
+		vlog("%s payload contains no entries when at least one is expected",
 		     tsp->name);
 		return false;
 	}
@@ -555,20 +556,23 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 	 * ever sec-labels).
 	 */
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tsp->ts)) {
-		llog(RC_LOG, logger,
-		     "%s contains %d entries which exceeds hardwired max of %zu",
+		vlog("%s contains %d entries which exceeds hardwired max of %zu",
 		     tsp->name, ts_pd->payload.v2ts.isat_num, elemsof(tsp->ts));
 		return false;	/* won't fit in array */
 	}
 
 	for (unsigned n = 0; n < ts_pd->payload.v2ts.isat_num; n++) {
 
+		verbose.level = base_level + 1;
+		vdbg("parsing %s[%d]", tsp->name, n);
+		verbose.level++;
+
 		struct ikev2_ts_header ts_h;
 		struct pbs_in ts_body_pbs;
 		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts_header_desc,
 				  &ts_h, sizeof(ts_h), &ts_body_pbs);
 		if (d != NULL) {
-			llog(RC_LOG, logger, "%s", str_diag(d));
+			vlog("%s", str_diag(d));
 			pfree_diag(&d);
 			return false;
 		}
@@ -583,14 +587,13 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			d = pbs_in_struct(&ts_body_pbs, &ikev2_ts_portrange_desc,
 				  &pr, sizeof(pr), NULL);
 			if (d != NULL) {
-				llog(RC_LOG, logger, "%s", str_diag(d));
+				vlog("%s", str_diag(d));
 				pfree_diag(&d);
 				return false;
 			}
 
 			if (pr.isatpr_startport > pr.isatpr_endport) {
-				llog(RC_LOG, logger,
-				     "%s traffic selector %d has an invalid port range - ignored",
+				vlog("%s traffic selector %d has an invalid port range - ignored",
 				     tsp->name, tsp->nr);
 				continue;
 			}
@@ -611,7 +614,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			ip_address start;
 			d = pbs_in_address(&ts_body_pbs, &start, ipv, "TS IP start");
 			if (d != NULL) {
-				llog(RC_LOG, logger, "%s", str_diag(d));
+				vlog("%s", str_diag(d));
 				pfree_diag(&d);
 				return false;
 			}
@@ -619,7 +622,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			ip_address end;
 			d = pbs_in_address(&ts_body_pbs, &end, ipv, "TS IP end");
 			if (d != NULL) {
-				llog(RC_LOG, logger, "%s", str_diag(d));
+				vlog("%s", str_diag(d));
 				pfree_diag(&d);
 				return false;
 			}
@@ -633,7 +636,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			e = addresses_to_nonzero_range(start, end, &range);
 			if (e != NULL) {
 				address_buf sb, eb;
-				llog(RC_LOG, logger, "Traffic Selector range %s-%s invalid: %s",
+				vlog("Traffic Selector range %s-%s invalid: %s",
 				     str_address_sensitive(&start, &sb),
 				     str_address_sensitive(&end, &eb),
 				     e);
@@ -645,7 +648,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			e = range_to_subnet(range, &ignore);
 			if (e != NULL) {
 				address_buf sb, eb;
-				llog(RC_LOG, logger, "non-CIDR Traffic Selector range %s-%s is not supported (%s)",
+				vlog("non-CIDR Traffic Selector range %s-%s is not supported (%s)",
 				     str_address_sensitive(&start, &sb),
 				     str_address_sensitive(&end, &eb),
 				     e);
@@ -669,8 +672,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 		case IKEv2_TS_SECLABEL:
 		{
 			if (ts_h.isath_ipprotoid != 0) {
-				llog(RC_LOG, logger,
-				     "Traffic Selector of type Security Label should not have non-zero IP protocol '%u' - ignored",
+				vlog("Traffic Selector of type Security Label should not have non-zero IP protocol '%u' - ignored",
 				     ts_h.isath_ipprotoid);
 				/* do not stumble on; this is SE linux */
 				return false;
@@ -679,15 +681,14 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			shunk_t sec_label = pbs_in_left(&ts_body_pbs);
 			err_t ugh = vet_seclabel(sec_label);
 			if (ugh != NULL) {
-				llog(RC_LOG, logger, "Traffic Selector of type Security Label %s", ugh);
+				vlog("Traffic Selector of type Security Label %s", ugh);
 				/* do not stumble on; this is SE linux */
 				return false;
 			}
 
 
 			if (tsp->sec_label.len > 0) {
-				llog(RC_LOG, logger,
-				     "duplicate Traffic Selector of type Security Label");
+				vlog("duplicate Traffic Selector of type Security Label");
 				/* do not stumble on; this is SE linux */
 				return false;
 			}
@@ -697,28 +698,28 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 		}
 
 		case IKEv2_TS_FC_ADDR_RANGE:
-			llog(RC_LOG, logger, "Encountered Traffic Selector Type FC_ADDR_RANGE not supported");
+			vlog("encountered Traffic Selector Type FC_ADDR_RANGE not supported");
 			return false;
 
 		default:
-			llog(RC_LOG, logger, "Encountered Traffic Selector of unknown Type");
+			vlog("encountered Traffic Selector of unknown Type");
 			return false;
 		}
 	}
 
-	ldbg(logger, "%s: parsed %d traffic selectors", tsp->name, tsp->nr);
+	vdbg("%s: parsed %d traffic selectors", tsp->name, tsp->nr);
 	return true;
 }
 
 static bool v2_parse_tsps(const struct msg_digest *md,
 			  struct traffic_selector_payloads *tsps,
-			  struct logger *logger)
+			  struct verbose verbose)
 {
-	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSi], &tsps->i, logger)) {
+	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSi], &tsps->i, verbose)) {
 		return false;
 	}
 
-	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSr], &tsps->r, logger)) {
+	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSr], &tsps->r, verbose)) {
 		return false;
 	}
 
@@ -1336,8 +1337,16 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 							 const struct msg_digest *md)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
-	passert(v2_msg_role(md) == MESSAGE_REQUEST);
-	passert(child->sa.st_sa_role == SA_RESPONDER);
+	policy_buf pb;
+	struct connection *const cc = child->sa.st_connection;
+	vdbg("looking to best connection %s "PRI_CO" with policy <%s>:",
+	     cc->name, pri_co(cc->serialno),
+	     str_connection_policies(cc, &pb));
+	verbose.level++;
+	const unsigned base_level = verbose.level;
+
+	vassert(v2_msg_role(md) == MESSAGE_REQUEST);
+	vassert(child->sa.st_sa_role == SA_RESPONDER);
 
 	/*
 	 * Start with nothing.  The loop then evaluates each
@@ -1360,19 +1369,14 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 	 * equality).
 	 */
 
-	policy_buf pb;
-	struct connection *const cc = child->sa.st_connection;
-	vdbg("looking to best connection %s "PRI_CO" with policy <%s>:",
-	       cc->name, pri_co(cc->serialno),
-	       str_connection_policies(cc, &pb));
-
 	const ip_address local = md->iface->ip_dev->local_address;
 	FOR_EACH_THING(remote, endpoint_address(md->sender), unset_address) {
-		verbose.level = 1;
 
+		verbose.level = base_level + 1;
 		address_buf rab, lab;
 		vdbg("searching host_pair %s->%s",
-		       str_address(&remote, &rab), str_address(&local, &lab));
+		     str_address(&remote, &rab), str_address(&local, &lab));
+		verbose.level++;
 
 		struct connection_filter hpf = {
 			.host_pair = {
@@ -1388,17 +1392,16 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 		};
 		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
-			verbose.level = 2;
 
 			/* XXX: sec_label connections all look a-like, include CO */
 			policy_buf pb;
 			name_buf kb;
+			verbose.level = base_level + 2;
 			vdbg("evaluating %s connection %s "PRI_CO" with policy <%s>:",
 			       str_enum_short(&connection_kind_names, cc->local->kind, &kb),
 			       d->name, pri_co(d->serialno),
 			       str_connection_policies(d, &pb));
-
-			verbose.level = 3;
+			verbose.level++;
 
 			/*
 			 * Normally OE instances are never considered
@@ -1450,13 +1453,13 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			struct narrowed_selector_payloads nsps = {0};
 			if (!fit_connection_for_v2TS_request(d, tsps, &nsps, verbose)) {
 				vdbg("skipping %s does not score at all",
-				       d->name);
+				     d->name);
 				continue;
 			}
 
 			if (score_gt_best(&nsps.score, &best.nsps.score)) {
 				vdbg("protocol fitness found better match %s",
-				       d->name);
+				     d->name);
 				best = (struct best) {
 					.connection = d,
 					.instantiated = false,
@@ -1472,12 +1475,16 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				   const struct msg_digest *md)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
-	passert(v2_msg_role(md) == MESSAGE_REQUEST);
-	passert(child->sa.st_sa_role == SA_RESPONDER);
+	vdbg("%s() ...", __func__);
+	verbose.level++;
+	const unsigned base_level = verbose.level;
+
+	vassert(v2_msg_role(md) == MESSAGE_REQUEST);
+	vassert(child->sa.st_sa_role == SA_RESPONDER);
 	struct connection *cc = child->sa.st_connection;
 
 	struct traffic_selector_payloads tsps = empty_traffic_selector_payloads;
-	if (!v2_parse_tsps(md, &tsps, child->sa.logger)) {
+	if (!v2_parse_tsps(md, &tsps, verbose)) {
 		return false;
 	}
 
@@ -1491,10 +1498,10 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 	struct best best;
 	if (is_labeled(cc)) {
-		PEXPECT(child->sa.logger, is_labeled_parent(cc));
+		vexpect(is_labeled_parent(cc));
 		struct narrowed_selector_payloads nsps = {0};
 		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, verbose)) {
-			llog_sa(RC_LOG, child, "proposed Traffic Selectors do not match labeled IKEv2 connection");
+			vlog("proposed Traffic Selectors do not match labeled IKEv2 connection");
 			return false;
 		}
 		best = (struct best) {
@@ -1502,21 +1509,20 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			.instantiated = false,
 			.nsps = nsps,
 		};
+		vdbg("connection %s "PRI_CO" is a sec_label; sticking with it",
+		     cc->name, pri_so(cc->serialno));
 	} else {
 		best = find_best_connection_for_v2TS_request(child, &tsps, md);
-	}
-
-	verbose.level = 1;
-
-	if (best.connection == NULL) {
-		vdbg("connection %s "PRI_CO" is as good as it gets",
-		       cc->name, pri_so(cc->serialno));
-	} else {
-		vdbg("connection %s "PRI_CO" best by %s "PRI_CO"%s%s",
-		       cc->name, pri_so(cc->serialno),
-		       best.connection->name, pri_so(best.connection->serialno),
-		       (is_template(best.connection) ? " needs instantiating!" : ""),
-		       (is_group_instance(best.connection) ? " group-instance!" : ""));
+		if (best.connection == NULL) {
+			vdbg("connection %s "PRI_CO" is as good as it gets",
+			     cc->name, pri_so(cc->serialno));
+		} else {
+			vdbg("connection %s "PRI_CO" best by %s "PRI_CO"%s%s",
+			     cc->name, pri_so(cc->serialno),
+			     best.connection->name, pri_so(best.connection->serialno),
+			     (is_template(best.connection) ? " needs instantiating!" : ""),
+			     (is_group_instance(best.connection) ? " group-instance!" : ""));
+		}
 	}
 
 	/*
@@ -1561,8 +1567,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 */
 		name_buf kb;
 		vdbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
-		       str_enum_long(&connection_kind_names, cc->local->kind, &kb), cc->name);
-		llog_sa(RC_LOG, child, "no IKEv2 connection found with compatible Traffic Selectors");
+		     str_enum_long(&connection_kind_names, cc->local->kind, &kb), cc->name);
+		vlog("no IKEv2 connection found with compatible Traffic Selectors");
 		return false;
 	}
 
@@ -1614,7 +1620,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		};
 		while (next_connection(&cf)) {
 			struct connection *t = cf.c;
-			verbose.level = 2;
+			verbose.level = base_level + 1;
 
 			VDBG_JAMBUF(buf) {
 				jam(buf, "investigating template %s;", t->name);
@@ -1622,8 +1628,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				jam_connection_policies(buf, t);
 				jam(buf, ">");
 			}
-
-			verbose.level = 3;
+			verbose.level++;
 
 			/*
 			 * Is it worth looking at the template.
@@ -1768,14 +1773,14 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * - a more straight forward template that needs narrowing
 	 */
 
-	verbose.level = 1;
+	verbose.level = base_level;
 	if (is_labeled_parent(best.connection)) {
 		/*
 		 * Convert the hybrid sec_label template-instance into
 		 * a proper instance, and then update its selectors.
 		 */
 		vdbg("instantiating the labeled_parent connection");
-		verbose.level = 2;
+		verbose.level++;
 		pexpect(best.connection == child->sa.st_connection); /* big circle */
 		pexpect(best.nsps.i.sec_label.len > 0);
 		pexpect(best.nsps.r.sec_label.len > 0);
@@ -1789,7 +1794,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	} else if (best.connection != NULL &&
 		   is_template(best.connection)) {
 		vdbg("instantiating the template connection");
-		verbose.level = 2;
+		verbose.level++;
 		pexpect(best.nsps.i.sec_label.len == 0);
 		pexpect(best.nsps.r.sec_label.len == 0);
 		struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
@@ -1799,7 +1804,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		best.instantiated = true;
 	}
 
-	verbose.level = 1;
+	verbose.level = base_level;
 
 	if (best.connection == NULL) {
 		vdbg("giving up");
@@ -1828,13 +1833,15 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 				    struct msg_digest *md)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
-	passert(child->sa.st_sa_role == SA_INITIATOR);
-	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
+	vdbg("%s() ...", __func__);
+
+	vassert(child->sa.st_sa_role == SA_INITIATOR);
+	vassert(v2_msg_role(md) == MESSAGE_RESPONSE);
 
 	struct connection *c = child->sa.st_connection;
 
 	struct traffic_selector_payloads tsps = empty_traffic_selector_payloads;
-	if (!v2_parse_tsps(md, &tsps, child->sa.logger)) {
+	if (!v2_parse_tsps(md, &tsps, verbose)) {
 		return false;
 	}
 
@@ -1909,6 +1916,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
+	vdbg("%s() ...", __func__);
 
 	if (!pexpect(child->sa.st_state == &state_v2_REKEY_CHILD_R0))
 		return false;
@@ -1916,9 +1924,8 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	const struct connection *c = child->sa.st_connection;
 	struct traffic_selector_payloads their_tsps = empty_traffic_selector_payloads;
 
-	if (!v2_parse_tsps(md, &their_tsps, child->sa.logger)) {
-		llog_sa(RC_LOG, child,
-			  "received malformed TSi/TSr payload(s)");
+	if (!v2_parse_tsps(md, &their_tsps, verbose)) {
+		vlog("received malformed TSi/TSr payload(s)");
 		return false;
 	}
 
@@ -1946,8 +1953,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	if (!fit_tsps_to_ends(&best, &their_tsps, &ends,
 			      responder_selector_fit,
 			      responder_sec_label_fit, verbose)) {
-		llog_sa(RC_LOG, child,
-			  "rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
+		vlog("rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
 		return false;
 	}
 
