@@ -1266,15 +1266,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 
 	n = process_v2_child_response_payloads(ike, child, response_md);
 	if (n != v2N_NOTHING_WRONG) {
+		/* already logged */
 		if (v2_notification_fatal(n)) {
 			name_buf nb;
 			llog_sa(RC_LOG, child,
 				"CHILD SA encountered fatal error: %s",
-				str_enum_short(&v2_notification_names, n, &nb));
-		} else {
-			name_buf nb;
-			llog_sa(RC_LOG, child,
-				"CHILD SA failed: %s",
 				str_enum_short(&v2_notification_names, n, &nb));
 		}
 		return n;

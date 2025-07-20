@@ -1317,9 +1317,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	 */
 
 	v2_notification_t n = process_v2_IKE_AUTH_response_child_payloads(ike, md);
-
 	if (v2_notification_fatal(n)) {
-		/* already logged */
+		/* reason already logged */
 		/*
 		 * XXX: there was something "really bad" about the
 		 * child.  Should be sending the fatal notification in
@@ -1329,21 +1328,29 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		return STF_FATAL;
 	}
 
-	if(n != v2N_NOTHING_WRONG) {
-		/* already logged */
+	if (n != v2N_NOTHING_WRONG) {
+		/* already logged against child */
+
 		/*
 		 * This end (the initiator) did not like something
-		 * about the Child SA.
+		 * about the Child SA so need to delete it.
 		 *
 		 * (If the responder sent back an error notification
 		 * to reject the Child SA, then the above call would
-		 * have cleaned up the mess and return
-		 * v2N_NOTHING_WRONG.  After all, problem solved.
+		 * have cleaned up the mess and returned
+		 * v2N_NOTHING_WRONG).
 		 */
-		llog_sa(RC_LOG, ike, "IKE SA established but initiator rejected Child SA response");
+
 		struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+		PASSERT(ike->sa.logger, larval_child != NULL);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
-		passert(larval_child != NULL);
+
+		name_buf nb;
+		llog(RC_LOG, ike->sa.logger,
+		     "rejected Child SA "PRI_SO" response (%s), initiating delete of Child SA (IKE SA will remain UP)",
+		     pri_so(larval_child->sa.st_serialno),
+		     str_enum_short(&v2_notification_names, n, &nb));
+
 		/*
 		 * Needed to un-plug the pending queue.  Without this
 		 * the next pending exchange is never started.
@@ -1362,8 +1369,10 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * queue of things to do when there are no exchanges.
 		 */
 		unpend(ike, larval_child->sa.st_connection);
+
 		/*
-		 * Quickly delete this larval SA.
+		 * Quickly delete this larval SA.  This will, in turn,
+		 * clean up larval child.
 		 */
 		submit_v2_delete_exchange(ike, larval_child);
 	}

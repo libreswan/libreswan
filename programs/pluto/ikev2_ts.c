@@ -79,17 +79,17 @@ struct narrowed_selector_payloads {
  */
 
 struct traffic_selector {
+	const char *name;	/* static "TSi"|"TSr" */
 	unsigned nr;
 	uint8_t ts_type;
 	uint8_t ipprotoid;
 	uint16_t startport;
 	uint16_t endport;
 	ip_range range;	/* for now, always happens to be a CIDR */
-	const char *name; /*static*/
 };
 
 struct traffic_selector_payload {
-	const char *name;	/* XXX: redundant? */
+	const char *name;	/* static "TSi"|"TSr" */
 	shunk_t sec_label;
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
@@ -97,6 +97,7 @@ struct traffic_selector_payload {
 };
 
 struct traffic_selector_payloads {
+	enum message_role message_role;
 	struct traffic_selector_payload i;
 	struct traffic_selector_payload r;
 };
@@ -109,6 +110,114 @@ static const struct traffic_selector_payloads empty_traffic_selector_payloads = 
 		.name = "TSr",
 	},
 };
+
+static void jam_traffic_selector(struct jambuf *buf,
+				 const struct traffic_selector *ts)
+{
+	jam_range(buf, &ts->range);
+	if (ts->ipprotoid == 0 &&
+	    ts->startport == 0 &&
+	    ts->endport == 0xffff) {
+		return;
+	}
+	jam_string(buf, "/");
+	const struct ip_protocol *protocol = protocol_from_ipproto(ts->ipprotoid);
+	if (protocol != NULL) {
+		jam_string(buf, protocol->name);
+	}
+	if (ts->startport == ts->endport) {
+		jam(buf, "/%u", ts->startport);
+	} else if (ts->startport != 0 || ts->endport != 0xffff) {
+		jam(buf, "/%u-%u", ts->startport, ts->endport);
+	}
+}
+
+static void jam_traffic_selector_payload(struct jambuf *buf,
+					 const struct traffic_selector_payload *tsp)
+{
+	jam_string(buf, tsp->name);
+	const char *sep = "=";
+	for (unsigned i = 0; i < tsp->nr; i++) {
+		jam_string(buf, sep); sep = ",";
+		jam_traffic_selector(buf, &tsp->ts[i]);
+	}
+	if (tsp->sec_label.len > 0) {
+		jam_string(buf, sep); sep = ",";
+		jam_string(buf, "label=");
+		jam_shunk(buf, tsp->sec_label);
+	}
+}
+
+static void jam_traffic_selector_payloads(struct jambuf *buf,
+					  const struct traffic_selector_payloads *tsps)
+{
+	jam_string(buf, "Child SA's Traffic Selector ");
+	jam_enum_human(buf, &message_role_names, tsps->message_role);
+	jam_string(buf, " ");
+	jam_string(buf, "{");
+	jam_traffic_selector_payload(buf, &tsps->i);
+	jam_string(buf, ";");
+	jam_traffic_selector_payload(buf, &tsps->r);
+	jam_string(buf, "}");
+}
+
+static void jam_traffic_selector_proposal(struct jambuf *buf, const char *ts,
+					  ip_selectors *selectors,
+					  shunk_t sec_label)
+{
+	jam_string(buf, ts);
+	const char *sep = "=";
+	FOR_EACH_ITEM(selector, selectors) {
+		jam_string(buf, sep); sep = ",";
+		jam_selector(buf, selector);
+	}
+	if (sec_label.len > 0) {
+		jam_string(buf, sep); sep = ",";
+		jam_string(buf, "label=");
+		jam_shunk(buf, sec_label);
+	}
+}
+
+static void jam_traffic_selector_proposals(struct jambuf *buf, struct child_sa *child)
+{
+	const struct connection *c = child->sa.st_connection;
+	jam_string(buf, "{");
+	switch (child->sa.st_sa_role) {
+	case SA_INITIATOR:
+		jam_traffic_selector_proposal(buf, "TSi",
+					      &c->local->child.selectors.proposed,
+					      HUNK_AS_SHUNK(c->child.sec_label));
+		jam_string(buf, ";");
+		jam_traffic_selector_proposal(buf, "TSr",
+					      &c->remote->child.selectors.proposed,
+					      HUNK_AS_SHUNK(c->child.sec_label));
+		break;
+	case SA_RESPONDER:
+		jam_traffic_selector_proposal(buf, "TSi",
+					      &c->remote->child.selectors.proposed,
+					      HUNK_AS_SHUNK(c->child.sec_label));
+		jam_string(buf, " ");
+		jam_traffic_selector_proposal(buf, "TSr",
+					      &c->local->child.selectors.proposed,
+					      HUNK_AS_SHUNK(c->child.sec_label));
+		break;
+	}
+	jam_string(buf, "}");
+}
+
+static void llog_ts(struct child_sa *child,
+		    const struct traffic_selector_payloads *tsps,
+		    const char *fmt, ...)
+{
+	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
+		jam_traffic_selector_payloads(buf, tsps);
+		jam_string(buf, " ");
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+	}
+}
 
 struct child_selector_end {
 	chunk_t sec_label; /*points into config*/
@@ -715,6 +824,8 @@ static bool v2_parse_tsps(const struct msg_digest *md,
 			  struct traffic_selector_payloads *tsps,
 			  struct verbose verbose)
 {
+	tsps->message_role = v2_msg_role(md);
+
 	if (!v2_parse_tsp(md->chain[ISAKMP_NEXT_v2TSi], &tsps->i, verbose)) {
 		return false;
 	}
@@ -1504,7 +1615,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		 */
 		struct narrowed_selector_payloads nsps = {0};
 		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, verbose)) {
-			vlog("proposed Traffic Selectors do not match labeled IKEv2 connection");
+			llog_ts(child, &tsps, "does not match the labeled IKEv2 connection; responding with TS_UNACCEPTABLE");
 			return false;
 		}
 		/*
@@ -1584,10 +1695,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		 * values - something that should not be done to a
 		 * permanent connection.
 		 */
-		name_buf kb;
-		vdbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
-		     str_enum_long(&connection_kind_names, cc->local->kind, &kb), cc->name);
-		vlog("no IKEv2 connection found with compatible Traffic Selectors");
+		llog_ts(child, &tsps, "does not match any permanent IKEv2 connection; responding with TS_UNACCEPTABLE");
 		return false;
 	}
 
@@ -1778,7 +1886,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	verbose.level = base_level;
 
 	if (best.connection == NULL) {
-		vdbg("giving up");
+		llog_ts(child, &tsps, "does not match any IKEv2 connection; responding with TS_UNACCEPTABLE");
 		return false;
 	}
 
@@ -1884,8 +1992,11 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	if (!fit_tsps_to_ends(&best, &tsps, &ends,
 			      initiator_selector_fit,
 			      initiator_sec_label_fit, verbose)) {
-		vdbg("reject responder TSi/TSr Traffic Selector");
-		/* prevents parent from going to I3 */
+		VLOG_JAMBUF(buf) {
+			jam_traffic_selector_payloads(buf, &tsps);
+			jam_string(buf, " does not fit the proposal ");
+			jam_traffic_selector_proposals(buf, child);
+		}
 		return false;
 	}
 
@@ -1957,7 +2068,13 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	if (!fit_tsps_to_ends(&best, &their_tsps, &ends,
 			      responder_selector_fit,
 			      responder_sec_label_fit, verbose)) {
-		vlog("rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
+		VLOG_JAMBUF(buf) {
+			jam_traffic_selector_payloads(buf, &their_tsps);
+			jam_string(buf, "for rekey do not match the established IPsec SA");
+			if (their_tsps.message_role == MESSAGE_REQUEST) {
+				jam_string(buf, "; responding with TS_UNACCEPTABLE");
+			}
+		}
 		return false;
 	}
 
