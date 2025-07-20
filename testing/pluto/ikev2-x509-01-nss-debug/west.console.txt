@@ -58,6 +58,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #1: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -80,6 +81,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #4 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #3: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -93,6 +95,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #6 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #5: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -106,6 +109,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #8 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #7: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #7: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -119,6 +123,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #9: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #9: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #10 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #9: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #9: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -132,6 +137,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #11: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-westnet-eastnet-x509-cr" #11: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "ikev2-westnet-eastnet-x509-cr" #11: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"ikev2-westnet-eastnet-x509-cr" #11: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ikev2-westnet-eastnet-x509-cr" #11: initiator established IKE SA; authenticated peer RSASSA-PSS with SHA2_512
 "ikev2-westnet-eastnet-x509-cr" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #

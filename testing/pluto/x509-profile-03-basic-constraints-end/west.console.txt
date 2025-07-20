@@ -60,6 +60,7 @@ Redirecting to: [initsystem]
 "west-bc-ca-missing" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-ca-missing" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-bc-ca-missing" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-ca-missing.testing.libreswan.org, E=user-west-bc-ca-missing@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-bc-ca-missing" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "west-bc-ca-missing" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-bc-ca-missing" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
  ipsec stop
@@ -115,6 +116,7 @@ Redirecting to: [initsystem]
 "west-bc-ca-n" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-ca-n" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-bc-ca-n" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-ca-n.testing.libreswan.org, E=user-west-bc-ca-n@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-bc-ca-n" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "west-bc-ca-n" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-bc-ca-n" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
  ipsec stop
@@ -171,6 +173,7 @@ Redirecting to: [initsystem]
 "west-bc-ca-n-critical" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-bc-ca-n-critical" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-bc-ca-n-critical" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west-bc-ca-n-critical.testing.libreswan.org, E=user-west-bc-ca-n-critical@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-bc-ca-n-critical" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "west-bc-ca-n-critical" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-bc-ca-n-critical" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
  ipsec stop

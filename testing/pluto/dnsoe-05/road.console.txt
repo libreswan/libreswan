@@ -31,6 +31,7 @@ road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.66
 initiate on-demand for packet 192.1.3.209:8-ICMP->192.1.2.66:0 by whack
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: initiator established IKE SA; authenticated peer using preloaded certificate '192.1.2.66' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.66-192.1.2.66:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
@@ -96,5 +97,6 @@ road #
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
 |    auth method: IKEv2_AUTH_NULL (0xd)
 |    auth method: IKEv2_AUTH_DIGITAL_SIGNATURE (0xe)
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.66 #1: initiator established IKE SA; authenticated peer using preloaded certificate '192.1.2.66' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 road #

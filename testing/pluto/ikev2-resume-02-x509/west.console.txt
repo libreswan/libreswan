@@ -24,6 +24,7 @@ west #
 "west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-east" #1: asking for session resume ticket
 "west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west-east" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(TICKET_LT_OPAQUE),IDr,CERT,AUTH,SA,TSi,TSr}
 "west-east" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-east" #1: received v2N_TICKET_LT_OPAQUE
 "west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
@@ -44,6 +45,7 @@ west #
 "west-east" #3: initiator processed IKE_SESSION_RESUME; processed IKE_SESSION_RESUME response, preparing IKE_AUTH request
 "west-east" #3: asking for session resume ticket
 "west-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #4 {ESP <0xESPESP}
+"west-east" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(TICKET_LT_OPAQUE),IDr,AUTH,SA,TSi,TSr}
 "west-east" #3: initiator established IKE SA; authenticated peer using authby=session-resume
 "west-east" #3: received v2N_TICKET_LT_OPAQUE
 "west-east" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}

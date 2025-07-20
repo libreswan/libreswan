@@ -39,6 +39,7 @@ west #
 "west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-east" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-east" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
+"west-east" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-east" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-east" #2: IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA
 "west-east" #1: IKE SA established but initiator rejected Child SA response

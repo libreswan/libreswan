@@ -31,6 +31,7 @@ west #
 "esp=null-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-md5" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "esp=null-md5" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"esp=null-md5" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "esp=null-md5" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "esp=null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
 up
@@ -45,6 +46,7 @@ west #
 "esp=null-sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-sha1" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "esp=null-sha1" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
+"esp=null-sha1" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "esp=null-sha1" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "esp=null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 up
@@ -59,6 +61,7 @@ west #
 "esp=null_auth_aes_gmac-null" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null_auth_aes_gmac-null" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "esp=null_auth_aes_gmac-null" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #6 {ESP <0xESPESP}
+"esp=null_auth_aes_gmac-null" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "esp=null_auth_aes_gmac-null" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "esp=null_auth_aes_gmac-null" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE DPD=passive}
 up
@@ -73,6 +76,7 @@ west #
 "esp=chacha20_poly1305-null" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=chacha20_poly1305-null" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "esp=chacha20_poly1305-null" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #8 {ESP <0xESPESP}
+"esp=chacha20_poly1305-null" #7: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "esp=chacha20_poly1305-null" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "esp=chacha20_poly1305-null" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE DPD=passive}
 up

@@ -38,6 +38,7 @@ west #
 "westnet-eastnet2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet2" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "westnet-eastnet2" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
+"westnet-eastnet2" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet2" #3: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet2" #4: initiator established Child SA using #3; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
