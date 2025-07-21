@@ -1490,6 +1490,47 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	}
 
 	/*
+	 * Labeled connections are relatively simple.
+	 *
+	 * The Child SA was created with the IKE SA's connection.
+	 * Provided things fit, that (IKE SA) connection is always
+	 * instantiated and given to the child.
+	 */
+	if (is_labeled(cc)) {
+		vexpect(is_labeled_parent(cc));
+		vexpect(cc == ike->sa.st_connection);
+		/*
+		 * Check the child fits into the parent's connection.
+		 */
+		struct narrowed_selector_payloads nsps = {0};
+		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, verbose)) {
+			vlog("proposed Traffic Selectors do not match labeled IKEv2 connection");
+			return false;
+		}
+		/*
+		 * Convert the hybrid sec_label template-instance into
+		 * a proper instance, update the selectors, and then
+		 * assign a reference to the child.
+		 *
+		 * Remember, instantiating returns a counted reference
+		 * that must be released.
+		 */
+		vdbg("connection %s "PRI_CO" is a sec_label; sticking with it",
+		     cc->name, pri_so(cc->serialno));
+		verbose.level++;
+		pexpect(nsps.i.sec_label.len > 0);
+		pexpect(nsps.r.sec_label.len > 0);
+		pexpect(cc->child.sec_label.len == 0);
+		pexpect(address_is_specified(cc->remote->host.addr));
+		/* must delref */
+		struct connection *s = labeled_parent_instantiate(ike, nsps.i.sec_label, HERE);
+		scribble_ts_request_on_responder(child, s, &nsps, verbose);
+		connswitch_state_and_log(&child->sa, s);
+		connection_delref(&s, child->sa.logger);
+		return true;
+	}
+
+	/*
 	 * Start with nothing.  The loop then evaluates each
 	 * connection, including the child's existing connection.
 	 *
@@ -1497,33 +1538,17 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 * when it is an ID_NULL OE instance (normally these are
 	 * excluded).
 	 */
-	struct best best;
-	if (is_labeled(cc)) {
-		vexpect(is_labeled_parent(cc));
-		struct narrowed_selector_payloads nsps = {0};
-		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, verbose)) {
-			vlog("proposed Traffic Selectors do not match labeled IKEv2 connection");
-			return false;
-		}
-		best = (struct best) {
-			.connection = cc,
-			.instantiated = false,
-			.nsps = nsps,
-		};
-		vdbg("connection %s "PRI_CO" is a sec_label; sticking with it",
+
+	struct best best = find_best_connection_for_v2TS_request(child, &tsps, md);
+	if (best.connection == NULL) {
+		vdbg("connection %s "PRI_CO" is as good as it gets",
 		     cc->name, pri_so(cc->serialno));
 	} else {
-		best = find_best_connection_for_v2TS_request(child, &tsps, md);
-		if (best.connection == NULL) {
-			vdbg("connection %s "PRI_CO" is as good as it gets",
-			     cc->name, pri_so(cc->serialno));
-		} else {
-			vdbg("connection %s "PRI_CO" best by %s "PRI_CO"%s%s",
-			     cc->name, pri_so(cc->serialno),
-			     best.connection->name, pri_so(best.connection->serialno),
-			     (is_template(best.connection) ? " needs instantiating!" : ""),
-			     (is_group_instance(best.connection) ? " group-instance!" : ""));
-		}
+		vdbg("connection %s "PRI_CO" best by %s "PRI_CO"%s%s",
+		     cc->name, pri_so(cc->serialno),
+		     best.connection->name, pri_so(best.connection->serialno),
+		     (is_template(best.connection) ? " needs instantiating!" : ""),
+		     (is_group_instance(best.connection) ? " group-instance!" : ""));
 	}
 
 	/*
@@ -1537,12 +1562,8 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 *   instantiating something better (switching away from
 	 *   permanent connections isn't allowed; explaining why might
 	 *   be helpful here).
-	 *
-	 * = if the existing connection is LABELED then the search
-	 *   should have found the same label
 	 */
-	if (best.connection == NULL &&
-	    (is_permanent(cc) || is_labeled(cc))) {
+	if (best.connection == NULL && is_permanent(cc)) {
 		/*
 		 * Don't try to look for something else to
 		 * 'instantiate' when the current connection is
@@ -1562,9 +1583,6 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		 * sometimes blats the current instance with new
 		 * values - something that should not be done to a
 		 * permanent connection.
-		 *
-		 * XXX: For SEC_LABEL, best should have been set back
-		 * to CC?!?
 		 */
 		name_buf kb;
 		vdbg("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
@@ -1575,7 +1593,8 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 
 	/*
 	 *
-	 * Now retry the search looking for group instances:
+	 * Now retry the search looking for group instances, perhaps
+	 * it can be instantiated.
 	 *
 	 * Why?
 	 *
@@ -1593,9 +1612,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 * in.
 	 */
 
-	if (best.connection == NULL &&
-	    !is_labeled(cc) &&
-	    is_group_instance(cc)) {
+	if (best.connection == NULL && is_group_instance(cc)) {
 		/*
 		 * Is there something better than the current
 		 * connection?
@@ -1758,6 +1775,13 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		}
 	}
 
+	verbose.level = base_level;
+
+	if (best.connection == NULL) {
+		vdbg("giving up");
+		return false;
+	}
+
 	/*
 	 * Is best.connection is a template:
 	 *
@@ -1774,26 +1798,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 * - a more straight forward template that needs narrowing
 	 */
 
-	verbose.level = base_level;
-	if (is_labeled_parent(best.connection)) {
-		/*
-		 * Convert the hybrid sec_label template-instance into
-		 * a proper instance, and then update its selectors.
-		 */
-		vdbg("instantiating the labeled_parent connection");
-		verbose.level++;
-		pexpect(best.connection == child->sa.st_connection); /* big circle */
-		pexpect(best.nsps.i.sec_label.len > 0);
-		pexpect(best.nsps.r.sec_label.len > 0);
-		pexpect(best.connection->child.sec_label.len == 0);
-		pexpect(address_is_specified(best.connection->remote->host.addr));
-		struct connection *s = labeled_parent_instantiate(ike, best.nsps.i.sec_label, HERE);
-		scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
-		/* switch to instantiated instance; same score */
-		best.connection = s;
-		best.instantiated = true;
-	} else if (best.connection != NULL &&
-		   is_template(best.connection)) {
+	if (is_template(best.connection)) {
 		vdbg("instantiating the template connection");
 		verbose.level++;
 		pexpect(best.nsps.i.sec_label.len == 0);
@@ -1807,17 +1812,15 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 
 	verbose.level = base_level;
 
-	if (best.connection == NULL) {
-		vdbg("giving up");
-		return false;
-	}
-
 	/*
 	 * If needed, replace the child's connection.
 	 *
 	 * switch_state_connection(), if the connection changes,
 	 * de-references the old connection; which is what really
-	 * matters
+	 * matters.
+	 *
+	 * If above instantiated connection then also need to delete
+	 * local reference (state is given its own reference).
 	 */
 	if (best.connection != child->sa.st_connection) {
 		connswitch_state_and_log(&child->sa, best.connection);
