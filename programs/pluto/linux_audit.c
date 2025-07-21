@@ -250,7 +250,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		     st->st_ah.protocol == &ip_protocol_ah ? "ipsec-ah" :
 		     "ipsec-policy"));
 		jam_string(&buf, " samode=");
-		jam_enum_short(&buf, &encap_mode_story, c->config->child_sa.encap_mode);
+		jam_enum_short(&buf, &encap_mode_story, c->config->child.encap_mode);
 
 		/*
 		 * XXX: Instead of IKEv1_ESP_ID, this should use

@@ -183,7 +183,7 @@ static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_o
 bool prep_v2_child_for_request(struct child_sa *larval_child)
 {
 	struct connection *cc = larval_child->sa.st_connection;
-	if (cc->config->child_sa.ipcomp &&
+	if (cc->config->child.ipcomp &&
 	    !compute_v2_child_ipcomp_cpi(larval_child)) {
 		return false;
 	}
@@ -265,14 +265,14 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	/* IPCOMP based on policy */
 
-	if (cc->config->child_sa.ipcomp &&
+	if (cc->config->child.ipcomp &&
 	    !emit_v2N_IPCOMP_SUPPORTED(larval_child, pbs)) {
 		return false;
 	}
 
 	/* Transport based on policy */
 
-	bool send_use_transport = (cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
+	bool send_use_transport = (cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
 	dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE? %s",
 	    bool_str(send_use_transport));
 	if (send_use_transport &&
@@ -280,7 +280,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 		return false;
 	}
 
-	if (!send_use_transport && cc->config->child_sa.iptfs.enabled &&
+	if (!send_use_transport && cc->config->child.iptfs.enabled &&
 	    !emit_v2N(v2N_USE_AGGFRAG, pbs)) {
 		return false;
 	}
@@ -336,11 +336,11 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	bool transport_mode_accepted =
 		accept_v2_notification(v2N_USE_TRANSPORT_MODE,
 				       larval_child->sa.logger, request_md,
-				       cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
+				       cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
 
 	enum kernel_mode required_mode =
-		(cc->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
-		 cc->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		(cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+		 cc->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 pexpect(0));
 	enum kernel_mode requested_mode =
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
@@ -373,7 +373,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		accept_v2_notification(v2N_USE_AGGFRAG,
 				       larval_child->sa.logger,
 				       request_md,
-				       cc->config->child_sa.iptfs.enabled);
+				       cc->config->child.iptfs.enabled);
 
 	larval_child->sa.st_kernel_mode = required_mode;
 
@@ -381,7 +381,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		return v2N_INVALID_SYNTAX;/* something fatal */
 	}
 
-	bool expecting_compression = cc->config->child_sa.ipcomp;
+	bool expecting_compression = cc->config->child.ipcomp;
 	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		if (!expecting_compression) {
 			dbg("Ignored IPCOMP request as connection has compress=no");
@@ -691,7 +691,7 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa
 	 * inTCP/inUDP are (determined by the negotiating IKE
 	 * SA).  For completeness include both.
 	 */
-	jam_enum_short(buf, &encap_proto_names, config->child_sa.encap_proto);
+	jam_enum_short(buf, &encap_proto_names, config->child.encap_proto);
 	if (larval->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
 		jam_string(buf, "inTCP");
 	} else if (nat_traversal_detected(&larval->sa)) {
@@ -710,7 +710,7 @@ void jam_v2_success_child_sa_request_details(struct jambuf *buf, struct child_sa
 	} else if (config->esn.no) {
 		jam_string(buf, " ESN=N");
 	}
-	if (config->child_sa.iptfs.enabled) {
+	if (config->child.iptfs.enabled) {
 		jam_string(buf, " IPTFS?");
 	}
 #endif
@@ -842,11 +842,11 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 	bool transport_mode_accepted =
 		accept_v2_notification(v2N_USE_TRANSPORT_MODE, child->sa.logger, md,
-				       c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT);
+				       c->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
 
 	enum kernel_mode required_mode =
-		(c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
-		 c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		(c->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
+		 c->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 pexpect(0));
 	enum kernel_mode accepted_mode =
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
@@ -863,7 +863,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 	child->sa.st_seen_and_use_iptfs =
 		accept_v2_notification(v2N_USE_AGGFRAG, child->sa.logger, md,
-				       c->config->child_sa.iptfs.enabled);
+				       c->config->child.iptfs.enabled);
 
 	name_buf rmb;
 	ldbg_sa(child, "local policy is %s and received matching notify",
@@ -882,7 +882,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
 		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
-		if (!c->config->child_sa.ipcomp) {
+		if (!c->config->child.ipcomp) {
 			llog_sa(RC_LOG, child,
 				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
 			return v2N_NO_PROPOSAL_CHOSEN;
@@ -1034,7 +1034,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					ike, child, md,
-					child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
+					child->sa.st_connection->config->child.v2_ike_auth_proposals,
 					/*expect-accepted-proposal?*/false);
 	name_buf nb;
 	ldbg(child->sa.logger, "process_v2_childs_sa_payload() returned %s",
@@ -1242,7 +1242,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 
 	n = process_childs_v2SA_payload("IKE_AUTH initiator accepting remote ESP/AH proposal",
 					ike, child, response_md,
-					child->sa.st_connection->config->child_sa.v2_ike_auth_proposals,
+					child->sa.st_connection->config->child.v2_ike_auth_proposals,
 					/*expect-accepted-proposal?*/true);
 	if (n != v2N_NOTHING_WRONG) {
 		return n;

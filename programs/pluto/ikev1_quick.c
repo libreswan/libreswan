@@ -608,13 +608,13 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 
 	/* figure out PFS group, if any */
 
-	if (child->sa.st_connection->config->child_sa.pfs) {
+	if (child->sa.st_connection->config->child.pfs) {
 		/*
 		 * See if pfs_group has been specified for this conn,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child_sa.proposals);
+		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child.proposals);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
@@ -632,8 +632,8 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 		}
 		jam(buf, " {using isakmp"PRI_SO" msgid:%08" PRIx32 " proposal=",
 		    pri_so(ike->sa.st_serialno), child->sa.st_v1_msgid.id);
-		if (child->sa.st_connection->config->child_sa.proposals.p != NULL) {
-			jam_proposals(buf, child->sa.st_connection->config->child_sa.proposals.p);
+		if (child->sa.st_connection->config->child.proposals.p != NULL) {
+			jam_proposals(buf, child->sa.st_connection->config->child.proposals.p);
 		} else {
 			jam(buf, "defaults");
 		}
@@ -768,8 +768,8 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	 */
 	{
 		struct ipsec_db_policy pm = {
-			.encrypt = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-			.authenticate = (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+			.encrypt = (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_ESP),
+			.authenticate = (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_AH),
 			.compress = child->sa.st_policy.compress,
 		};
 
@@ -859,7 +859,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		}
 	}
 
-	if (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+	if (c->config->child.encap_mode == ENCAP_MODE_TRANSPORT &&
 	    (child->sa.hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 	    child->sa.hidden_variables.st_nated_host) {
 		/** Send NAT-OA if our address is NATed */
@@ -1081,7 +1081,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * For instance: ikev1-l2tp-02 and ikev1-nat-transport-02.
 	 */
 	if (p == NULL &&
-	    c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT &&
+	    c->config->child.encap_mode == ENCAP_MODE_TRANSPORT &&
 	    nat_traversal_detected(&ike->sa)) {
 		p = c;
 		vdbg("using existing connection; nothing better and current is NAT'ed and transport mode");
@@ -1094,7 +1094,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	 * is not IFF transport-mode.
 	 */
 	if (p == NULL &&
-	    /* c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT && */
+	    /* c->config->child.encap_mode == ENCAP_MODE_TRANSPORT && */
 	    is_virtual_remote(c, verbose)) {
 		p = c;
 		vdbg("using existing connection; nothing better and current is virtual-private");
@@ -1645,7 +1645,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 
 	passert(child->sa.st_pfs_group != &unset_group);
 
-	if (child->sa.st_connection->config->child_sa.pfs && child->sa.st_pfs_group == NULL) {
+	if (child->sa.st_connection->config->child.pfs && child->sa.st_pfs_group == NULL) {
 		llog(RC_LOG, child->sa.logger,
 		     "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */

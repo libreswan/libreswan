@@ -2217,7 +2217,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 						      const struct dh_desc *default_dh,
 						      struct verbose verbose)
 {
-	if (!pexpect(c->config->child_sa.proposals.p != NULL)) {
+	if (!pexpect(c->config->child.proposals.p != NULL)) {
 		return NULL;
 	}
 
@@ -2240,7 +2240,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		 c->config->ms_dh_downgrade ? 2 :
 		 1);
 	int v2_proposals_roof =
-		1 + nr_passes * nr_proposals(c->config->child_sa.proposals.p);
+		1 + nr_passes * nr_proposals(c->config->child.proposals.p);
 	v2_proposals->proposal = alloc_things(struct ikev2_proposal, v2_proposals_roof,
 					      "ESP/AH proposal");
 
@@ -2248,7 +2248,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	v2_proposals->roof = 1;
 
 	enum ikev2_sec_proto_id protoid;
-	switch (c->config->child_sa.encap_proto) {
+	switch (c->config->child.encap_proto) {
 	case ENCAP_PROTO_ESP:
 		protoid = IKEv2_SEC_PROTO_ESP;
 		break;
@@ -2256,7 +2256,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		protoid = IKEv2_SEC_PROTO_AH;
 		break;
 	default:
-		bad_enum(verbose.logger, &encap_proto_names, c->config->child_sa.encap_proto);
+		bad_enum(verbose.logger, &encap_proto_names, c->config->child.encap_proto);
 	}
 
 	/*
@@ -2266,7 +2266,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 
 	for (unsigned pass = 1; pass <= nr_passes; pass++) {
 
-		FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {
+		FOR_EACH_PROPOSAL(c->config->child.proposals.p, proposal) {
 
 			VDBG_JAMBUF(log) {
 				jam(log, "converting proposal ");
@@ -2424,7 +2424,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 
 	struct ikev2_proposals *proposals;
 	if (cc->config->pfs_rekey_workaround &&
-	    cc->config->child_sa.pfs) {
+	    cc->config->child.pfs) {
 		/*
 		 * Alternate behaviour for 5.0.
 		 *
@@ -2434,7 +2434,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		proposals = get_v2_child_proposals(cc, "new Child SA",
 						   /*strip-dh*/true,
 						   ike_dh, verbose);
-	} else if (cc->config->child_sa.pfs) {
+	} else if (cc->config->child.pfs) {
 		/*
 		 * Propose the full ESP= line.  If the proposal
 		 * contains no DH, use the IKE SA's DH.
@@ -2520,7 +2520,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * Since such a Child SA has PFS=YES, the proposal must ensure
 	 * that DH is included when rekeying.
 	 */
-	bool ike_auth_child_rekey_needs_dh = (cc->config->child_sa.pfs &&
+	bool ike_auth_child_rekey_needs_dh = (cc->config->child.pfs &&
 					      accepted_dh == NULL);
 
 	/*
@@ -2530,7 +2530,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * requires that either ALL or NO proposals have DH.  Hence
 	 * the need to only look at the first proposal.
 	 */
-	struct proposal *proposal = next_proposal(cc->config->child_sa.proposals.p, NULL);
+	struct proposal *proposal = next_proposal(cc->config->child.proposals.p, NULL);
 	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
 
 	struct ikev2_proposals *proposals;
@@ -2583,7 +2583,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		 *
 		 * This behaviour is unchanged.
 		 */
-		vexpect(cc->config->child_sa.pfs == (accepted_dh != NULL));
+		vexpect(cc->config->child.pfs == (accepted_dh != NULL));
 		proposals = proposals_from_accepted("rekey CHILD",
 						    accepted_proposal,
 						    &ike_alg_dh_none,

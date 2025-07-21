@@ -218,6 +218,45 @@ struct host_config {
 };
 
 struct child_config {
+
+	uintmax_t priority;
+	uintmax_t tfcpad;
+	uintmax_t replay_window;	/* Usually 32, KLIPS and
+					   XFRM/NETKEY support 64.
+					   See also kernel_ops
+					   .replay_window */
+	uint32_t metric;		/* metric for tunnel routes */
+	uint16_t mtu;			/* mtu for tunnel routes */
+	bool ipcomp;
+
+	struct config_iptfs {
+		bool enabled;
+		bool fragmentation;
+		uintmax_t packet_size;
+		uintmax_t max_queue_size;
+		uintmax_t reorder_window;
+		deltatime_t drop_time;
+		deltatime_t init_delay;
+	} iptfs;
+
+	enum encap_proto encap_proto;	/* ESP or AH */
+	enum encap_mode encap_mode;	/* tunnel or transport */
+	bool pfs;			/* use DH */
+
+	/*
+	 * The child proposals specified in the config file, and for
+	 * IKEv2, that proposal converted to IKEv2 form.
+	 *
+	 * IKEv2 child proposals negotiated IKE_AUTH - Child SA) can
+	 * be computed ahead of time, and are stored below.  However,
+	 * proposals negotiated during CREATE_CHILD_SA cannot.  For
+	 * instance, the CREATE_CHILD_SA may be re-keying the IKE SA
+	 * and it's DH is only determined during the initial
+	 * negotiation.
+	 */
+	struct child_proposals proposals; /* raw proposals */
+	struct ikev2_proposals *v2_ike_auth_proposals;
+
 	struct {
 		bool esp_tfc_padding_not_supported;	/* notification */
 	} send;
@@ -370,48 +409,6 @@ struct config {
 					 * empty and not cleanup
 					 * device on down */
 	} vti;
-
-	struct {
-		uintmax_t priority;
-		uintmax_t tfcpad;
-		uintmax_t replay_window;	/* Usually 32, KLIPS
-						   and XFRM/NETKEY
-						   support 64.  See
-						   also kernel_ops
-						   .replay_window */
-		uint32_t metric;	/* metric for tunnel routes */
-		uint16_t mtu;		/* mtu for tunnel routes */
-		bool ipcomp;
-
-		struct config_iptfs {
-			bool enabled;
-			bool fragmentation;
-			uintmax_t packet_size;
-			uintmax_t max_queue_size;
-			uintmax_t reorder_window;
-			deltatime_t drop_time;
-			deltatime_t init_delay;
-		} iptfs;
-
-		enum encap_proto encap_proto;	/* ESP or AH */
-		enum encap_mode encap_mode;	/* tunnel or transport */
-		bool pfs;			/* use DH */
-		/*
-		 * The child proposals specified in the config file,
-		 * and for IKEv2, that proposal converted to IKEv2
-		 * form.
-		 *
-		 * IKEv2 child proposals negotiated IKE_AUTH - Child
-		 * SA) can be computed ahead of time, and are stored
-		 * below.  However, proposals negotiated during
-		 * CREATE_CHILD_SA cannot.  For instance, the
-		 * CREATE_CHILD_SA may be re-keying the IKE SA and
-		 * it's DH is only determined during the initial
-		 * negotiation.
-		 */
-		struct child_proposals proposals; /* raw proposals */
-		struct ikev2_proposals *v2_ike_auth_proposals;
-	} child_sa;
 
 	struct host_config host;
 	struct child_config child;

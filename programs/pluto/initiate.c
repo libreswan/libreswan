@@ -325,7 +325,7 @@ void initiate(struct connection *c,
 			__func__,
 			str_enum_short(&initiated_by_names, initiated_by, &ifnb),
 			str_child_policy(policy, &pb),
-			str_enum_short(&encap_proto_names, c->config->child_sa.encap_proto, &epb),
+			str_enum_short(&encap_proto_names, c->config->child.encap_proto, &epb),
 			pri_shunk(sec_label));
 	verbose.level++;
 

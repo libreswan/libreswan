@@ -514,9 +514,9 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 		pfreeany(config->vti.interface);
 		free_chunk_content(&config->sec_label);
 		free_proposals(&config->ike_proposals.p);
-		free_proposals(&config->child_sa.proposals.p);
+		free_proposals(&config->child.proposals.p);
 		free_ikev2_proposals(&config->v2_ike_proposals);
-		free_ikev2_proposals(&config->child_sa.v2_ike_auth_proposals);
+		free_ikev2_proposals(&config->child.v2_ike_auth_proposals);
 		pfreeany(config->connalias);
 		pfree_list(&config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
@@ -1363,7 +1363,7 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 	     deltasecs(c->config->sa_ipsec_max_lifetime),
 	     deltasecs(c->config->sa_rekey_margin),
 	     c->config->sa_rekey_fuzz,
-	     c->config->child_sa.replay_window,
+	     c->config->child.replay_window,
 	     str_connection_policies(c, &pb),
 	     c->config->sa_ipsec_max_bytes,
 	     c->config->sa_ipsec_max_packets);
@@ -1556,7 +1556,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	switch (c->config->child_sa.encap_proto) {
+	switch (c->config->child.encap_proto) {
 	case ENCAP_PROTO_ESP:
 		CS("ENCRYPT");
 		break;
@@ -1567,13 +1567,13 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		break;
 	}
 
-	CT(child_sa.ipcomp, COMPRESS);
+	CT(child.ipcomp, COMPRESS);
 	if (!never_negotiate(c) &&
-	    c->config->child_sa.encap_mode != ENCAP_MODE_UNSET) {
+	    c->config->child.encap_mode != ENCAP_MODE_UNSET) {
 		name_buf eb;
-		CS(str_enum_short(&encap_mode_names, c->config->child_sa.encap_mode, &eb));
+		CS(str_enum_short(&encap_mode_names, c->config->child.encap_mode, &eb));
 	}
-	CT(child_sa.pfs, PFS);
+	CT(child.pfs, PFS);
 	CT(decap_dscp, DECAP_DSCP);
 	CF(encap_dscp, DONT_ENCAP_DSCP);
 	CT(nopmtudisc, NOPMTUDISC);
@@ -2583,12 +2583,12 @@ const char *connection_sa_short_name(const struct connection *c, enum sa_kind sa
 
 struct child_policy child_sa_policy(const struct connection *c)
 {
-	if (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP ||
-	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+	if (c->config->child.encap_proto == ENCAP_PROTO_ESP ||
+	    c->config->child.encap_proto == ENCAP_PROTO_AH) {
 		return (struct child_policy) {
 			.is_set = true,
-			.transport = (c->config->child_sa.encap_mode == ENCAP_MODE_TRANSPORT),
-			.compress = c->config->child_sa.ipcomp,
+			.transport = (c->config->child.encap_mode == ENCAP_MODE_TRANSPORT),
+			.compress = c->config->child.ipcomp,
 		};
 	}
 

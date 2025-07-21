@@ -115,11 +115,11 @@ static bool ikev1_verify_esp(const struct connection *c,
 			     const struct trans_attrs *ta,
 			     struct logger *logger)
 {
-	if (PBAD(logger, c->config->child_sa.proposals.p == NULL)) {
+	if (PBAD(logger, c->config->child.proposals.p == NULL)) {
 		return false;
 	}
 
-	if (c->config->child_sa.encap_proto != ENCAP_PROTO_ESP) {
+	if (c->config->child.encap_proto != ENCAP_PROTO_ESP) {
 		dbg("ignoring ESP proposal as POLICY_ENCRYPT unset");
 		return false;       /* try another */
 	}
@@ -213,7 +213,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;
 	}
 
-	FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {
+	FOR_EACH_PROPOSAL(c->config->child.proposals.p, proposal) {
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.encrypt == ta->ta_encrypt &&
 		    (algs.enckeylen == 0 ||
@@ -231,11 +231,11 @@ static bool ikev1_verify_ah(const struct connection *c,
 			    const struct trans_attrs *ta,
 			    struct logger *logger)
 {
-	if (PBAD(logger, c->config->child_sa.proposals.p == NULL)) {
+	if (PBAD(logger, c->config->child.proposals.p == NULL)) {
 		return false;
 	}
 
-	if (c->config->child_sa.encap_proto != ENCAP_PROTO_AH) {
+	if (c->config->child.encap_proto != ENCAP_PROTO_AH) {
 		dbg("ignoring AH proposal as POLICY_AUTHENTICATE unset");
 		return false;       /* try another */
 	}
@@ -260,7 +260,7 @@ static bool ikev1_verify_ah(const struct connection *c,
 		return false;
 	}
 
-	FOR_EACH_PROPOSAL(c->config->child_sa.proposals.p, proposal) {	/* really AH */
+	FOR_EACH_PROPOSAL(c->config->child.proposals.p, proposal) {	/* really AH */
 		struct v1_proposal algs = v1_proposal(proposal);
 		if (algs.integ == ta->ta_integ) {
 			dbg("ESP IPsec Transform verified; matches alg_info entry");
@@ -1202,8 +1202,8 @@ bool ikev1_out_quick_sa(struct pbs_out *outs,
 			struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child_sa.encap_proto,
-						  c->config->child_sa.proposals,
+	struct db_sa *sadb = v1_kernel_alg_makedb(c->config->child.encap_proto,
+						  c->config->child.proposals,
 						  child->sa.st_policy.compress,
 						  child->sa.logger);
 
@@ -3142,7 +3142,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			}
 			kernel_mode = ah_attrs.kernel_mode;
 			ah_attrs.spi = ah_spi;
-		} else if (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+		} else if (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_AH) {
 			address_buf b;
 			ldbg(child->sa.logger, "policy requires authentication but none in proposal from %s",
 			    str_address(&c->remote->host.addr, &b));
@@ -3206,7 +3206,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 			kernel_mode = esp_attrs.kernel_mode;
 			esp_attrs.spi = esp_spi;
-		} else if (child->sa.st_connection->config->child_sa.encap_proto == ENCAP_PROTO_ESP) {
+		} else if (child->sa.st_connection->config->child.encap_proto == ENCAP_PROTO_ESP) {
 			address_buf b;
 			ldbg(child->sa.logger, "policy requires encryption but ESP not in Proposal from %s",
 			     str_address(&c->remote->host.addr, &b));

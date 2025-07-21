@@ -735,7 +735,7 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->config->sa_ipsec_max_lifetime));
 		jam_humber_uintmax(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
 		jam_humber_uintmax(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
-		jam(buf, " replay_window: %ju;", c->config->child_sa.replay_window);
+		jam(buf, " replay_window: %ju;", c->config->child.replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->config->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
 	}
@@ -743,20 +743,20 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
-		jam(buf, " iptfs: %s;", bool_str(c->config->child_sa.iptfs.enabled));
-		jam(buf, " fragmentation: %s;", bool_str(c->config->child_sa.iptfs.fragmentation));
-		jam(buf, " packet-size: %ju;", c->config->child_sa.iptfs.packet_size);
-		jam(buf, " max-queue-size: %ju;", c->config->child_sa.iptfs.max_queue_size);
+		jam(buf, " iptfs: %s;", bool_str(c->config->child.iptfs.enabled));
+		jam(buf, " fragmentation: %s;", bool_str(c->config->child.iptfs.fragmentation));
+		jam(buf, " packet-size: %ju;", c->config->child.iptfs.packet_size);
+		jam(buf, " max-queue-size: %ju;", c->config->child.iptfs.max_queue_size);
 		/* */
 		jam(buf, " drop-time: ");
-		jam_deltatime(buf, c->config->child_sa.iptfs.drop_time);
+		jam_deltatime(buf, c->config->child.iptfs.drop_time);
 		jam_string(buf, ";");
 		/* */
 		jam_string(buf, " init-delay: ");
-		jam_deltatime(buf, c->config->child_sa.iptfs.init_delay);
+		jam_deltatime(buf, c->config->child.iptfs.init_delay);
 		jam_string(buf, ";");
 		/* */
-		jam(buf, " reorder-window: %ju;", c->config->child_sa.iptfs.reorder_window);
+		jam(buf, " reorder-window: %ju;", c->config->child.iptfs.reorder_window);
 	}
 
 	SHOW_JAMBUF(s, buf) {
@@ -839,29 +839,29 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		}
 		jam_string(buf, ";");
 		/* .metric */
-		jam(buf, " metric: %u;", c->config->child_sa.metric);
+		jam(buf, " metric: %u;", c->config->child.metric);
 		/* .connmtu */
 		jam_string(buf, " mtu: ");
-		if (c->config->child_sa.mtu == 0) {
+		if (c->config->child.mtu == 0) {
 			jam_string(buf, "unset");
 		} else {
-			jam(buf, "%d", c->config->child_sa.mtu);
+			jam(buf, "%d", c->config->child.mtu);
 		}
 		jam_string(buf, ";");
 		/* .sa_priority */
 		jam_string(buf, " sa_prio:");
-		if (c->config->child_sa.priority == 0) {
+		if (c->config->child.priority == 0) {
 			jam_string(buf, "auto");
 		} else {
-			jam(buf, "%ju", c->config->child_sa.priority);
+			jam(buf, "%ju", c->config->child.priority);
 		}
 		jam_string(buf, ";");
 		/* .sa_tfcpad */
 		jam_string(buf, " sa_tfc:");
-		if (c->config->child_sa.tfcpad == 0) {
+		if (c->config->child.tfcpad == 0) {
 			jam_string(buf, "none");
 		} else {
-			jam(buf, "%ju", c->config->child_sa.tfcpad);
+			jam(buf, "%ju", c->config->child.tfcpad);
 		}
 		jam_string(buf, ";");
 	}

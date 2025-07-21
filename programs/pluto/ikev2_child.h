@@ -74,7 +74,7 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 		/* evaluate once */					\
 		typeof(CHILD) child_ = (CHILD);				\
 		enum encap_proto encap_proto =				\
-			child_->sa.st_connection->config->child_sa.encap_proto; \
+			child_->sa.st_connection->config->child.encap_proto; \
 		/* handle const CHILD */				\
 		(encap_proto == ENCAP_PROTO_ESP ? &child_->sa.st_esp : \
 		 encap_proto == ENCAP_PROTO_AH ? &child_->sa.st_ah :	\

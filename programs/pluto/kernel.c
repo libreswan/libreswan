@@ -107,11 +107,11 @@ spd_priority_t spd_priority(const struct spd *spd)
 {
 	const struct connection *c = spd->connection;
 
-	if (c->config->child_sa.priority != 0) {
+	if (c->config->child.priority != 0) {
 		ldbg(c->logger,
 		     "priority calculation overruled by connection specification of %ju (0x%jx)",
-		     c->config->child_sa.priority, c->config->child_sa.priority);
-		return (spd_priority_t) { c->config->child_sa.priority, };
+		     c->config->child.priority, c->config->child.priority);
+		return (spd_priority_t) { c->config->child.priority, };
 	}
 
 	if (is_group(c)) {
@@ -1247,7 +1247,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		.dst.route = route.dst.route,
 		.direction = direction,
 		.mode = route.mode,
-		.iptfs = (child->sa.st_seen_and_use_iptfs ? &c->config->child_sa.iptfs : NULL),
+		.iptfs = (child->sa.st_seen_and_use_iptfs ? &c->config->child.iptfs : NULL),
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
@@ -1403,21 +1403,21 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * cleared on outbound SA).  The kernel backend gets
 		 * to handle this.
 		 */
-		said_next->replay_window = c->config->child_sa.replay_window;
+		said_next->replay_window = c->config->child.replay_window;
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
-		     c->config->child_sa.replay_window);
+		     c->config->child.replay_window);
 
 		if (direction == DIRECTION_OUTBOUND &&
-		    c->config->child_sa.tfcpad != 0 &&
+		    c->config->child.tfcpad != 0 &&
 		    !child->sa.st_seen_esp_tfc_padding_not_supported) {
 			ldbg(child->sa.logger, "kernel: Enabling TFC at %ju bytes (up to PMTU)",
-			     c->config->child_sa.tfcpad);
-			said_next->tfcpad = c->config->child_sa.tfcpad;
+			     c->config->child.tfcpad);
+			said_next->tfcpad = c->config->child.tfcpad;
 		}
 
 		/* IPTFS kernel options */
 		if (child->sa.st_seen_and_use_iptfs) {
-			said_next->iptfs = &c->config->child_sa.iptfs;
+			said_next->iptfs = &c->config->child.iptfs;
 			deltatime_buf dtb, idb;
 			ldbg(child->sa.logger,
 			     "kernel: IPTFS fragmentation=%s max-queue-size=%ju, packet-size=%ju %s, drop-time=%s, init-delay=%s, reorder-window=%ju",
@@ -1556,9 +1556,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * cleared on outbound SA).  The kernel backend gets
 		 * to handle this.
 		 */
-		said_next->replay_window = c->config->child_sa.replay_window;
+		said_next->replay_window = c->config->child.replay_window;
 		ldbg(child->sa.logger, "kernel: setting IPsec SA replay-window to %ju",
-		     c->config->child_sa.replay_window);
+		     c->config->child.replay_window);
 
 		if (child->sa.st_ah.trans_attrs.esn_enabled) {
 			ldbg(child->sa.logger, "kernel: Enabling ESN");

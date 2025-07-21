@@ -99,8 +99,8 @@ struct child_policy capture_child_rekey_policy(struct state *st)
 	 * the connection as a Child SA (look for add_pending()).
 	 */
 	const struct connection *c = st->st_connection;
-	if (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP ||
-	    c->config->child_sa.encap_proto == ENCAP_PROTO_AH) {
+	if (c->config->child.encap_proto == ENCAP_PROTO_ESP ||
+	    c->config->child.encap_proto == ENCAP_PROTO_AH) {
 		return (struct child_policy) {
 			.is_set = true,
 			.transport = (st->st_kernel_mode == KERNEL_MODE_TRANSPORT),
@@ -124,7 +124,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		jam_string(buf, ini);
 		ini = " ";
 		bool nat = nat_traversal_detected(st);
-		bool tfc = (c->config->child_sa.tfcpad != 0 &&
+		bool tfc = (c->config->child.tfcpad != 0 &&
 			    !st->st_seen_esp_tfc_padding_not_supported);
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		bool iptfs = st->st_seen_and_use_iptfs;

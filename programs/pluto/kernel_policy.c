@@ -279,21 +279,21 @@ bool add_sec_label_kernel_policy(const struct spd *spd,
 	const struct connection *c = spd->connection;
 	PASSERT(logger, c->config->sec_label.len > 0);
 	enum kernel_mode kernel_mode =
-		(c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
+		(c->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
 		 KERNEL_MODE_TRANSPORT);
 
 	struct nic_offload nic_offload = {};
 	setup_esp_nic_offload(&nic_offload, c, logger);
 
 	struct kernel_policy_encap policy = {
-		.ipcomp = c->config->child_sa.ipcomp,
-		.esp = (c->config->child_sa.encap_proto == ENCAP_PROTO_ESP),
-		.ah = (c->config->child_sa.encap_proto == ENCAP_PROTO_AH),
+		.ipcomp = c->config->child.ipcomp,
+		.esp = (c->config->child.encap_proto == ENCAP_PROTO_ESP),
+		.ah = (c->config->child.encap_proto == ENCAP_PROTO_AH),
 	};
 
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_spd(policy, spd, kernel_mode,
-				       c->config->child_sa.iptfs.enabled,
+				       c->config->child.iptfs.enabled,
 				       direction,
 				       &nic_offload,
 				       logger, where);

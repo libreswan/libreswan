@@ -2502,12 +2502,12 @@ diag_t extract_connection(const struct whack_message *wm,
 	bool pfs = extract_yn("", "pfs", wm->pfs,
 			      /*value_when_unset*/YN_YES,
 			      wm, c->logger);
-	config->child_sa.pfs = pfs;
+	config->child.pfs = pfs;
 
 	bool compress = extract_yn("", "compress", wm->compress,
 				   /*value_when_unset*/YN_NO,
 				   wm, c->logger);
-	config->child_sa.ipcomp = compress;
+	config->child.ipcomp = compress;
 
 	/*
 	 * Extract the encapsulation protocol ESP/AH.
@@ -2520,7 +2520,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	config->child_sa.encap_proto = encap_proto;
+	config->child.encap_proto = encap_proto;
 
 	enum encap_mode encap_mode;
 	if (wm->type == KS_UNSET) {
@@ -2538,7 +2538,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 		encap_mode = ENCAP_MODE_UNSET;
 	}
-	config->child_sa.encap_mode = encap_mode;
+	config->child.encap_mode = encap_mode;
 
 	if (encap_mode == ENCAP_MODE_TRANSPORT) {
 		if (wm->vti_interface != NULL) {
@@ -2731,7 +2731,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (encap_proto == ENCAP_PROTO_AH) {
 			return diag("connection with encap_proto=ah cannot specify tfc=");
 		}
-		config->child_sa.tfcpad = tfc;
+		config->child.tfcpad = tfc;
 	}
 
 
@@ -2771,8 +2771,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		deltatime_t uint32_max = deltatime_from_microseconds(UINT32_MAX);
 
-		config->child_sa.iptfs.enabled = true;
-		config->child_sa.iptfs.packet_size =
+		config->child.iptfs.enabled = true;
+		config->child.iptfs.packet_size =
 			extract_scaled_uintmax("", "", "iptfs-packet-size",
 					       wm->iptfs_packet_size,
 					       &binary_scales,
@@ -2784,7 +2784,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		config->child_sa.iptfs.max_queue_size =
+		config->child.iptfs.max_queue_size =
 			extract_scaled_uintmax("", "", "iptfs-max-queue-size",
 					       wm->iptfs_max_queue_size,
 					       &binary_scales,
@@ -2801,16 +2801,16 @@ diag_t extract_connection(const struct whack_message *wm,
 			return diag("iptfs-drop-time cannot larger than %s",
 				    str_deltatime(uint32_max, &tb));
 		}
-		config->child_sa.iptfs.drop_time = wm->iptfs_drop_time;
+		config->child.iptfs.drop_time = wm->iptfs_drop_time;
 
 			if (deltatime_cmp(wm->iptfs_init_delay, >=, uint32_max)) {
 			deltatime_buf tb;
 			return diag("iptfs-init-delay cannot larger than %s",
 				    str_deltatime(uint32_max, &tb));
 		}
-		config->child_sa.iptfs.init_delay = wm->iptfs_init_delay;
+		config->child.iptfs.init_delay = wm->iptfs_init_delay;
 
-		config->child_sa.iptfs.reorder_window =
+		config->child.iptfs.reorder_window =
 			extract_scaled_uintmax("", "", "iptfs-reorder-window",
 					       wm->iptfs_reorder_window,
 					       &binary_scales,
@@ -2829,7 +2829,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * consistent and toggling iptfs= doesn't seem to change the
 	 * field.  Could warn about this but meh.
 	 */
-	config->child_sa.iptfs.fragmentation =
+	config->child.iptfs.fragmentation =
 		extract_yn_p("", "iptfs-fragmentation", wm->iptfs_fragmentation,
 			     /*value_when_unset*/YN_YES,
 			     wm, c->logger,
@@ -3120,7 +3120,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (d != NULL) {
 		return d;
 	}
-	config->child_sa.replay_window = replay_window;
+	config->child.replay_window = replay_window;
 
 	if (never_negotiate_sparse_option("", "esn", wm->esn,
 					  &yne_option_names, wm, c->logger)) {
@@ -3315,8 +3315,8 @@ diag_t extract_connection(const struct whack_message *wm,
 			NULL;
 		passert(fn != NULL);
 		struct proposal_parser *parser = fn(&proposal_policy);
-		config->child_sa.proposals.p = proposals_from_str(parser, encap_alg);
-		if (c->config->child_sa.proposals.p == NULL) {
+		config->child.proposals.p = proposals_from_str(parser, encap_alg);
+		if (c->config->child.proposals.p == NULL) {
 			pexpect(parser->diag != NULL);
 			diag_t d = parser->diag; parser->diag = NULL;
 			free_proposal_parser(&parser);
@@ -3326,7 +3326,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
 			jam_string(buf, "ESP/AH string values: ");
-			jam_proposals(buf, c->config->child_sa.proposals.p);
+			jam_proposals(buf, c->config->child.proposals.p);
 		};
 
 		/*
@@ -3345,10 +3345,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		 * connection can be cached.
 		 */
 		if (c->config->ike_version == IKEv2) {
-			config->child_sa.v2_ike_auth_proposals =
+			config->child.v2_ike_auth_proposals =
 				get_v2_IKE_AUTH_new_child_proposals(c);
 			llog_v2_proposals(LOG_STREAM/*not-whack*/, c->logger,
-					  config->child_sa.v2_ike_auth_proposals,
+					  config->child.v2_ike_auth_proposals,
 					  "Child SA proposals (connection add)");
 		}
 	}
@@ -3604,9 +3604,9 @@ diag_t extract_connection(const struct whack_message *wm,
 			break;
 		}
 
-		config->child_sa.metric = wm->metric;
+		config->child.metric = wm->metric;
 
-		config->child_sa.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
+		config->child.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
 							      "", "mtu", wm->mtu,
 							      &binary_byte_scales,
 							      (struct range) {
@@ -3770,12 +3770,12 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->child_sa.priority = extract_uintmax("", "", "priority", wm->priority,
-						    (struct range) {
-							    .value_when_unset = 0,
-							    .limit.max = UINT32_MAX,
-						    },
-						    wm, &d, c->logger);
+	config->child.priority = extract_uintmax("", "", "priority", wm->priority,
+						 (struct range) {
+							 .value_when_unset = 0,
+							 .limit.max = UINT32_MAX,
+						 },
+						 wm, &d, c->logger);
 	if (d != NULL) {
 		return d;
 	}

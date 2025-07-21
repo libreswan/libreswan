@@ -87,7 +87,7 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 				 struct verbose verbose/*C-or-CHILD*/)
 {
 	struct jambuf jb = array_as_jambuf(buf, blen);
-	const bool tunneling = (c->config->child_sa.encap_mode == ENCAP_MODE_TUNNEL);
+	const bool tunneling = (c->config->child.encap_mode == ENCAP_MODE_TUNNEL);
 
 	/* macros to jam definitions of various forms */
 
@@ -198,12 +198,12 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 
 	JDstr("PLUTO_STACK", kernel_ops->updown_name);
 
-	if (c->config->child_sa.metric != 0) {
-		JDint("PLUTO_METRIC", c->config->child_sa.metric);
+	if (c->config->child.metric != 0) {
+		JDint("PLUTO_METRIC", c->config->child.metric);
 	}
 
-	if (c->config->child_sa.mtu != 0) {
-		JDint("PLUTO_MTU", c->config->child_sa.mtu);
+	if (c->config->child.mtu != 0) {
+		JDint("PLUTO_MTU", c->config->child.mtu);
 	}
 
 	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
