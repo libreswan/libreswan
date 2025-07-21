@@ -14,8 +14,6 @@ east #
  echo "initdone"
 initdone
 east #
- grep '^".* do not match ' /tmp/pluto.log
-east #
- grep "no IKEv2 connection found" /tmp/pluto.log
-"labeled" #2: no IKEv2 connection found with compatible Traffic Selectors
+ grep '^[^|]* Traffic Selector' /tmp/pluto.log
+"labeled" #2: Child SA's Traffic Selector request {TSi=192.1.2.45/32,label=system_u:system_r:ping_t:s0:c1.c256;TSr=192.1.2.23/32,label=system_u:system_r:ping_t:s0:c1.c256} does not match any permanent IKEv2 connection; responding with TS_UNACCEPTABLE
 east #
