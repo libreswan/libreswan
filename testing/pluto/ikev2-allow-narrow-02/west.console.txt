@@ -49,8 +49,8 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet-ikev2" #2: CHILD SA failed: TS_UNACCEPTABLE
-"westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
+"westnet-eastnet-ikev2" #2: Child SA's Traffic Selector response {TSi=192.0.1.0/24/UDP/1234;TSr=192.0.2.0/24/UDP/1234} does not fit the proposal {TSi=192.0.1.0/24;TSr=192.0.2.0/24}
+"westnet-eastnet-ikev2" #1: IKE SA established but this end (the initiator) rejected peer's Child SA #2 response (TS_UNACCEPTABLE); initiating delete of Child SA
 "westnet-eastnet-ikev2" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event

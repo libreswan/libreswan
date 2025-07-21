@@ -24,8 +24,7 @@ west #
 "westnet-eastnet-ipcomp" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(IPCOMP_SUPPORTED)}
 "westnet-eastnet-ipcomp" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-ipcomp" #2: Unexpected IPCOMP request as our connection policy did not indicate support for it
-"westnet-eastnet-ipcomp" #2: CHILD SA failed: NO_PROPOSAL_CHOSEN
-"westnet-eastnet-ipcomp" #1: IKE SA established but initiator rejected Child SA response
+"westnet-eastnet-ipcomp" #1: rejected Child SA #2 response (NO_PROPOSAL_CHOSEN), initiating delete of Child SA (IKE SA will remain UP)
 "westnet-eastnet-ipcomp" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "westnet-eastnet-ipcomp" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ipcomp" #2: IMPAIR: revival: skip scheduling revival event

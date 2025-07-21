@@ -22,8 +22,6 @@ east #
  echo "initdone"
 initdone
 east #
- grep '^".* do not match ' /tmp/pluto.log
-"labeled"[1] 192.1.2.45 #2: proposed Traffic Selectors do not match labeled IKEv2 connection
-east #
- grep "no IKEv2 connection found" /tmp/pluto.log
+ grep '^[^|]* Traffic Selector' /tmp/pluto.log
+"labeled"[1] 192.1.2.45 #2: Child SA's Traffic Selector request {TSi=192.1.2.45/32;TSr=192.1.2.23/32} does not match the labeled IKEv2 connection; responding with TS_UNACCEPTABLE
 east #

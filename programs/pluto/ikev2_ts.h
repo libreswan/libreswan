@@ -26,7 +26,8 @@ struct pbs_out;
 bool process_v2TS_response_payloads(struct child_sa *child,
 				    struct msg_digest *md);
 
-bool process_v2TS_request_payloads(struct child_sa *child,
+bool process_v2TS_request_payloads(struct ike_sa *ike,
+				   struct child_sa *child,
 				   const struct msg_digest *md);
 
 bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *cst);

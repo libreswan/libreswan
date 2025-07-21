@@ -29,8 +29,7 @@ west #
 "westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ikev2" #2: policy dictates Transport Mode, but peer requested Tunnel Mode
-"westnet-eastnet-ikev2" #2: CHILD SA failed: NO_PROPOSAL_CHOSEN
-"westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
+"westnet-eastnet-ikev2" #1: rejected Child SA #2 response (NO_PROPOSAL_CHOSEN), initiating delete of Child SA (IKE SA will remain UP)
 "westnet-eastnet-ikev2" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event

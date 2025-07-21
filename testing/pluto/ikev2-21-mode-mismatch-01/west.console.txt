@@ -53,8 +53,7 @@ west #
 "ipv4-psk-ikev2-transport" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "ipv4-psk-ikev2-transport" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "ipv4-psk-ikev2-transport" #2: policy dictates Transport Mode, but peer requested Tunnel Mode
-"ipv4-psk-ikev2-transport" #2: CHILD SA failed: NO_PROPOSAL_CHOSEN
-"ipv4-psk-ikev2-transport" #1: IKE SA established but initiator rejected Child SA response
+"ipv4-psk-ikev2-transport" #1: rejected Child SA #2 response (NO_PROPOSAL_CHOSEN), initiating delete of Child SA (IKE SA will remain UP)
 "ipv4-psk-ikev2-transport" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "ipv4-psk-ikev2-transport" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "ipv4-psk-ikev2-transport" #2: IMPAIR: revival: skip scheduling revival event
