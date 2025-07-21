@@ -1024,7 +1024,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		 * Danger! This TS call can change the child's
 		 * connection.
 		 */
-		if (!process_v2TS_request_payloads(child, md)) {
+		if (!process_v2TS_request_payloads(ike, child, md)) {
 			/* already logged; caller, below, cleans up */
 			return v2N_TS_UNACCEPTABLE;
 		}

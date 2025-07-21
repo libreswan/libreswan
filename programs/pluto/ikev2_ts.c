@@ -1471,7 +1471,8 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 	return best;
 }
 
-bool process_v2TS_request_payloads(struct child_sa *child,
+bool process_v2TS_request_payloads(struct ike_sa *ike,
+				   struct child_sa *child,
 				   const struct msg_digest *md)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
@@ -1786,7 +1787,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		pexpect(best.nsps.r.sec_label.len > 0);
 		pexpect(best.connection->child.sec_label.len == 0);
 		pexpect(address_is_specified(best.connection->remote->host.addr));
-		struct connection *s = labeled_parent_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
+		struct connection *s = labeled_parent_instantiate(ike, best.nsps.i.sec_label, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
 		/* switch to instantiated instance; same score */
 		best.connection = s;
