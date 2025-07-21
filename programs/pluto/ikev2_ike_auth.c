@@ -1359,6 +1359,42 @@ stf_status process_v2_IKE_AUTH_response_post_cert_child(struct ike_sa *ike, stru
 
 	struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa; /* could be NULL */
 
+	if (!ike->sa.st_connection->policy.up) {
+		/* already logged */
+		/*
+		 * Since the IKE SA has no-reason to be up, delete it.
+		 * This will implicitly delete the Child SA (not
+		 * exactly what the RFC says, but closer to how UP is
+		 * intended to work).  For instance, when the IKE SA +
+		 * Child SA are initiated on-demand, this won't leave
+		 * a lingering IKE SA.
+		 *
+		 * Any connections waiting for this IKE SA to
+		 * establish (they made a really poor choice) will be
+		 * given the boot forcing them to either initiate, or
+		 * find another parent.
+		 */
+
+		LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+			if (larval_child == NULL) {
+				jam_string(buf, "peer rejected Child SA ");
+			} else {
+				jam_string(buf, "response for Child SA ");
+				jam_so(buf, larval_child->sa.st_serialno);
+				jam_string(buf, " was rejected");
+			}
+
+			jam_string(buf, " (");
+			jam_enum_short(buf, &v2_notification_names, n);
+			jam_string(buf, ") and IKE SA does not have policy UP");
+		}
+
+		/*
+		 * This will log that the IKE SA is deleted.
+		 */
+		return STF_OK_INITIATOR_SEND_DELETE_IKE;
+	}
+
 	if (larval_child == NULL) {
 		/* already logged */
 		name_buf nb;
