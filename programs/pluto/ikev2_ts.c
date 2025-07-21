@@ -205,6 +205,7 @@ static void jam_traffic_selector_proposals(struct jambuf *buf, struct child_sa *
 	jam_string(buf, "}");
 }
 
+PRINTF_LIKE(3)
 static void llog_ts(struct child_sa *child,
 		    const struct traffic_selector_payloads *tsps,
 		    const char *fmt, ...)
