@@ -68,9 +68,17 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *data,
 		   msgid_t msgid, const uint8_t *roof);
 
 /*
- * Check the IKEv1 HASH payload.
+ * Based on TYPE, check the IKEv1 HASH payload.
+ *
+ * TYPE includes no-hash, for instance on the first message when there
+ * isn't yet a state.
+ *
+ * IKEv1 generates a new hash for each exchange.  Hence ST is either
+ * an IKE SA or Child SA as the Quick Mode exchange (creating a Child
+ * SA), it's the Child SA that contains the exchanges hash.
  */
+
 bool check_v1_HASH(enum v1_hash_type type, const char *what,
-		   struct state *st, struct msg_digest *md);
+		   struct state *st_or_null, struct msg_digest *md);
 
 #endif
