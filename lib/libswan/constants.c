@@ -2242,7 +2242,7 @@ static const char *const ikev2_trans_type_name[] = {
 	S(IKEv2_TRANS_TYPE_ENCR),
 	S(IKEv2_TRANS_TYPE_PRF),
 	S(IKEv2_TRANS_TYPE_INTEG),
-	S(IKEv2_TRANS_TYPE_DH),
+	S(IKEv2_TRANS_TYPE_KE),
 	S(IKEv2_TRANS_TYPE_ESN),
 	S(IKEv2_TRANS_TYPE_ADDKE1),
 	S(IKEv2_TRANS_TYPE_ADDKE2),
@@ -2268,7 +2268,7 @@ static enum_names *const ikev2_transid_val_descs[] = {
 	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
 	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
 	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
-	S(IKEv2_TRANS_TYPE_DH, oakley_group_names),                   /* 4 */
+	S(IKEv2_TRANS_TYPE_KE, oakley_group_names),                   /* 4 */
 	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
 	S(IKEv2_TRANS_TYPE_ADDKE1, oakley_group_names),               /* 6 */
 	S(IKEv2_TRANS_TYPE_ADDKE2, oakley_group_names),               /* 7 */
