@@ -1487,9 +1487,12 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 		trans_nr++;
 		if (proposal_pbs != NULL) {
 			bool is_last_transform = trans_nr == nr_trans;
+			/* unpack */
 			unsigned type_id = add_impaired_transform->value;
-			enum ikev2_trans_type transform_type = (type_id >> 16) & 0xff;
 			unsigned transform_id = (type_id & 0xffff);
+			/* adjust the type */
+			unsigned type = (type_id >> 16) & 0xff;
+			enum ikev2_trans_type transform_type = (type == 0xee ? IKEv2_TRANS_TYPE_ROOF : type);
 			name_buf typeb, idb;
 			vlog("IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
 			     str_enum_short(&ikev2_trans_type_names, transform_type, &typeb),
