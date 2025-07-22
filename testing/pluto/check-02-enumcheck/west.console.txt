@@ -3282,7 +3282,7 @@ name for -1 present (should be absent)
          jam_enum_short 14: HMAC_SHA2_512_256 OK
          jam_enum_human 14: hmac-sha2-512-256 OK
          match HMAC_SHA2_512_256 [short]: OK
-  ikev2_trans_type_names: [1..6)
+  ikev2_trans_type_names: [1..13)
     1 -> IKEv2_TRANS_TYPE_ENCR
          jam_enum 1: IKEv2_TRANS_TYPE_ENCR OK
          search IKEv2_TRANS_TYPE_ENCR: OK
@@ -3323,6 +3323,62 @@ name for -1 present (should be absent)
          jam_enum_short 5: ESN OK
          jam_enum_human 5: esn OK
          match ESN [short]: OK
+    6 -> IKEv2_TRANS_TYPE_ADDKE1
+         jam_enum 6: IKEv2_TRANS_TYPE_ADDKE1 OK
+         search IKEv2_TRANS_TYPE_ADDKE1: OK
+         match IKEv2_TRANS_TYPE_ADDKE1: OK
+         short_name 6: ADDKE1 OK
+         jam_enum_short 6: ADDKE1 OK
+         jam_enum_human 6: addke1 OK
+         match ADDKE1 [short]: OK
+    7 -> IKEv2_TRANS_TYPE_ADDKE2
+         jam_enum 7: IKEv2_TRANS_TYPE_ADDKE2 OK
+         search IKEv2_TRANS_TYPE_ADDKE2: OK
+         match IKEv2_TRANS_TYPE_ADDKE2: OK
+         short_name 7: ADDKE2 OK
+         jam_enum_short 7: ADDKE2 OK
+         jam_enum_human 7: addke2 OK
+         match ADDKE2 [short]: OK
+    8 -> IKEv2_TRANS_TYPE_ADDKE3
+         jam_enum 8: IKEv2_TRANS_TYPE_ADDKE3 OK
+         search IKEv2_TRANS_TYPE_ADDKE3: OK
+         match IKEv2_TRANS_TYPE_ADDKE3: OK
+         short_name 8: ADDKE3 OK
+         jam_enum_short 8: ADDKE3 OK
+         jam_enum_human 8: addke3 OK
+         match ADDKE3 [short]: OK
+    9 -> IKEv2_TRANS_TYPE_ADDKE4
+         jam_enum 9: IKEv2_TRANS_TYPE_ADDKE4 OK
+         search IKEv2_TRANS_TYPE_ADDKE4: OK
+         match IKEv2_TRANS_TYPE_ADDKE4: OK
+         short_name 9: ADDKE4 OK
+         jam_enum_short 9: ADDKE4 OK
+         jam_enum_human 9: addke4 OK
+         match ADDKE4 [short]: OK
+   10 -> IKEv2_TRANS_TYPE_ADDKE5
+         jam_enum 10: IKEv2_TRANS_TYPE_ADDKE5 OK
+         search IKEv2_TRANS_TYPE_ADDKE5: OK
+         match IKEv2_TRANS_TYPE_ADDKE5: OK
+         short_name 10: ADDKE5 OK
+         jam_enum_short 10: ADDKE5 OK
+         jam_enum_human 10: addke5 OK
+         match ADDKE5 [short]: OK
+   11 -> IKEv2_TRANS_TYPE_ADDKE6
+         jam_enum 11: IKEv2_TRANS_TYPE_ADDKE6 OK
+         search IKEv2_TRANS_TYPE_ADDKE6: OK
+         match IKEv2_TRANS_TYPE_ADDKE6: OK
+         short_name 11: ADDKE6 OK
+         jam_enum_short 11: ADDKE6 OK
+         jam_enum_human 11: addke6 OK
+         match ADDKE6 [short]: OK
+   12 -> IKEv2_TRANS_TYPE_ADDKE7
+         jam_enum 12: IKEv2_TRANS_TYPE_ADDKE7 OK
+         search IKEv2_TRANS_TYPE_ADDKE7: OK
+         match IKEv2_TRANS_TYPE_ADDKE7: OK
+         short_name 12: ADDKE7 OK
+         jam_enum_short 12: ADDKE7 OK
+         jam_enum_human 12: addke7 OK
+         match ADDKE7 [short]: OK
   ikev2_trans_type_prf_names: [1..9)
     1 -> IKEv2_PRF_HMAC_MD5
          jam_enum 1: IKEv2_PRF_HMAC_MD5 OK
@@ -7654,10 +7710,10 @@ IKEv2 transforms:
          jam_enum_enum 1 3: IKEv2_ENCR_3DES OK
          jam_enum_enum_short 1 3: 3DES OK
 IKEv2 transforms:
-         enum_enum_name 6 1: NULL OK
+         enum_enum_name 13 1: NULL OK
          enum_name table 1: N/A
-         jam_enum_enum 6 1: 6.1 OK
-         jam_enum_enum_short 6 1: 6.1 OK
+         jam_enum_enum 13 1: 13.1 OK
+         jam_enum_enum_short 13 1: 13.1 OK
 IKEv2 transforms:
          enum_enum_name 2 65536: NULL OK
          enum_name table 65536: OK

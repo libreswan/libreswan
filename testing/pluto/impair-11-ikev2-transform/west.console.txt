@@ -30,16 +30,16 @@ up
 west #
  ipsec whack --impair none
 west #
- # add IKE transform type 6 id 0 unknown
+ # add IKE transform type 0xee (aka ROOF) id 0 unknown
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2_add_ike_transform:0x60000
+ ipsec whack --impair ikev2_add_ike_transform:0xee0000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
 "conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"conf" #3: IMPAIR: adding transform type 6 (0x6) id 6.0 (0x0)
+"conf" #3: IMPAIR: adding transform type 13 (0xd) id 13.0 (0x0)
 "conf" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "conf" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
@@ -54,11 +54,11 @@ up
 west #
  ipsec whack --impair none
 west #
- # add IKE transform type 3 (PRF) id 0xff unknown
+ # add IKE transform type 0x03 (PRF) id 0xffff unknown
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2_add_ike_transform:0x3ffff
+ ipsec whack --impair ikev2_add_ike_transform:0x03ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
@@ -78,18 +78,18 @@ up
 west #
  ipsec whack --impair none
 west #
- # add CHILD transform type 6 id 0 unknown
+ # add CHILD transform type 0xee (aka ROOF) id 0 unknown
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2_add_child_transform:0x60000
+ ipsec whack --impair ikev2_add_child_transform:0xee0000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
 "conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"conf" #7: IMPAIR: adding transform type 6 (0x6) id 6.0 (0x0)
+"conf" #7: IMPAIR: adding transform type 13 (0xd) id 13.0 (0x0)
 "conf" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #8 {ESP <0xESPESP}
 "conf" #7: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "conf" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -102,11 +102,11 @@ up
 west #
  ipsec whack --impair none
 west #
- # add CHILD transform type 3 (PRF) id 0xffff unknown
+ # add CHILD transform type 0x03 (PRF) id 0xffff unknown
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec whack --impair ikev2_add_child_transform:0x3ffff
+ ipsec whack --impair ikev2_add_child_transform:0x03ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
