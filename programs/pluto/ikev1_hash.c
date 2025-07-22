@@ -128,26 +128,38 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 }
 
 bool check_v1_HASH(enum v1_hash_type type, const char *what,
-		   struct state *st, struct msg_digest *md)
+		   struct state *st_or_null, struct msg_digest *md)
 {
+	struct logger *logger = (st_or_null == NULL ? md->logger :
+				 st_or_null->logger);
+
 	if (type == V1_HASH_NONE) {
-		dbg("message '%s' HASH payload not checked early", what);
+		ldbg(logger, "message '%s' HASH payload not checked early", what);
 		return true;
 	}
+
 	if (impair.v1_hash_check) {
-		llog(RC_LOG, st->logger, "IMPAIR: skipping check of '%s' HASH payload", what);
+		llog(RC_LOG, logger, "IMPAIR: skipping check of '%s' HASH payload", what);
 		return true;
 	}
+
 	if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, logger,
 		     "received '%s' message is missing a HASH(%u) payload",
 		     what, type);
 		return false;
 	}
+
+	if (PBAD(logger, st_or_null == NULL)) {
+		return false;
+	}
+
+	struct state *st = st_or_null; /* checked above */
+
 	struct pbs_in *hash_pbs = &md->chain[ISAKMP_NEXT_HASH]->pbs;
 	shunk_t received_hash = pbs_in_left(hash_pbs);
 	if (received_hash.len != st->st_oakley.ta_prf->prf_output_size) {
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, logger,
 		     "received '%s' message HASH(%u) data is the wrong length (received %zd bytes but expected %zd)",
 		     what, type, received_hash.len, st->st_oakley.ta_prf->prf_output_size);
 		return false;
@@ -164,20 +176,20 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 		.body = received_hash.ptr + received_hash.len,
 		.what = what,
 		.hash_type = type,
-		.logger = st->logger,
+		.logger = logger,
 	};
 	fixup_v1_HASH(st, &expected, md->hdr.isa_msgid, md->message_pbs.roof);
 	/* does it match? */
 	if (!hunk_eq(received_hash, computed_hash)) {
-		if (LDBGP(DBG_BASE, st->logger)) {
-			LDBG_log(st->logger, "received %s HASH_DATA:", what);
-			LDBG_hunk(st->logger, received_hash);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "received %s HASH_DATA:", what);
+			LDBG_hunk(logger, received_hash);
 		}
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, logger,
 		     "received '%s' message HASH(%u) data does not match computed value",
 		     what, type);
 		return false;
 	}
-	ldbg(st->logger, "received '%s' message HASH(%u) data ok", what, type);
+	ldbg(logger, "received '%s' message HASH(%u) data ok", what, type);
 	return true;
 }
