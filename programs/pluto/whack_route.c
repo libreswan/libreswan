@@ -27,7 +27,7 @@
 static unsigned maybe_route_connection(struct connection *c)
 {
 	if (is_instance(c)) {
-		pdbg(c->logger, "instances are not routed");
+		ldbg(c->logger, "instances are not routed");
 		return 0; /* not counted */
 	}
 

@@ -115,7 +115,7 @@ static hash_t hash_host_pair(const ip_address *local,
 static hash_t hash_connection_host_pair(const struct connection *c)
 {
 	address_buf lb, rb;
-	pdbg(c->logger, "%s->%s oriented=%s",
+	ldbg(c->logger, "%s->%s oriented=%s",
 	     str_address(&c->local->host.addr, &lb),
 	     str_address(&c->remote->host.addr, &rb),
 	     bool_str(oriented(c)));

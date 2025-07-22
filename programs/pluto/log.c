@@ -609,7 +609,7 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	unsigned h = 0;
 	FOR_EACH_ELEMENT(sfd, stack->whackfd) {
 		if (*sfd != NULL) {
-			pdbg(l, "attach whack "PRI_FD" to logger %p slot %u "PRI_WHERE,
+			ldbg(l, "attach whack "PRI_FD" to logger %p slot %u "PRI_WHERE,
 			     pri_fd(*sfd), l, h, pri_where(where));
 			l->whackfd[h++] = fd_addref_where(*sfd, where);
 		}
@@ -650,13 +650,13 @@ void release_whack(struct logger *logger, where_t where)
 	for (unsigned i = 0; i < elemsof(logger->whackfd); i++) {
 		if (logger->whackfd[i] != NULL) {
 			whacked = true;
-			pdbg(logger, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
+			ldbg(logger, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
 			     pri_fd(logger->whackfd[i]), logger, i, pri_where(where));
 			fd_delref_where(&logger->whackfd[i], where);
 		}
 	}
 	if (!whacked) {
-		pdbg(logger, "releasing whack (but there are none) "PRI_WHERE,
+		ldbg(logger, "releasing whack (but there are none) "PRI_WHERE,
 		     pri_where(where));
 	}
 }
@@ -712,7 +712,7 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 {
 	/* do no harm? */
 	if (src_fd == NULL) {
-		pdbg(dst, "no whack to attach");
+		ldbg(dst, "no whack to attach");
 		return;
 	}
 
@@ -720,7 +720,7 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
 		if (dst->whackfd[i] == src_fd) {
 			/* already attached */
-			pdbg(dst, "whack "PRI_FD" already attached to logger %p slot %u",
+			ldbg(dst, "whack "PRI_FD" already attached to logger %p slot %u",
 			     pri_fd(src_fd), dst, i);
 			return;
 		}
@@ -730,14 +730,14 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
 		if (dst->whackfd[i] == NULL) {
 			dst->whackfd[i] = fd_addref_where(src_fd, where);
-			pdbg(dst, "attach whack "PRI_FD" to empty logger %p slot %u",
+			ldbg(dst, "attach whack "PRI_FD" to empty logger %p slot %u",
 			     pri_fd(src_fd), dst, i);
 			return;
 		}
 	}
 
 	/* replace first aka global */
-	pdbg(dst, "attach whack "PRI_FD" to logger %p slot 0 (global)",
+	ldbg(dst, "attach whack "PRI_FD" to logger %p slot 0 (global)",
 	     pri_fd(src_fd), dst);
 	fd_delref_where(dst->whackfd, where);
 	dst->whackfd[0] = fd_addref_where(src_fd, where);
@@ -769,21 +769,21 @@ void state_attach_where(struct state *st, const struct logger *src, where_t wher
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
 	if (src == dst) {
-		pdbg(dst, "don't detach our own logger "PRI_WHERE, pri_where(where));
+		ldbg(dst, "don't detach our own logger "PRI_WHERE, pri_where(where));
 		return;
 	}
 
 	/* find a whack to detach */
 	struct fd *src_fd = logger_fd(src);
 	if (src_fd == NULL) {
-		pdbg(dst, "no whack to detach "PRI_WHERE, pri_where(where));
+		ldbg(dst, "no whack to detach "PRI_WHERE, pri_where(where));
 		return;
 	}
 
 	/* find where it is attached */
 	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
 		if (dst->whackfd[i] == src_fd) {
-			pdbg(dst, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
+			ldbg(dst, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
 			     pri_fd(src_fd), dst, i, pri_where(where));
 			fd_delref_where(&dst->whackfd[i], where);
 			return;

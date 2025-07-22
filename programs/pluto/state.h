@@ -704,7 +704,7 @@ struct state {
 #define on_delete_where(ST, S, WHERE)				\
 	{							\
 		struct state *s_ = (ST);			\
-		pdbg(s_->logger,				\
+		ldbg(s_->logger,				\
 		     ".st_on_delete."#S" %s->true "PRI_WHERE,	\
 		     bool_str(s_->st_on_delete.S),		\
 		     pri_where(WHERE));				\

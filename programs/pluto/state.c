@@ -293,7 +293,7 @@ static void change_state(struct state *st, enum state_kind new_state_kind)
 	if (new_state != old_state) {
 		update_state_stats(st, old_state, new_state);
 		binlog_state(st, new_state_kind /* XXX */);
-		pdbg(st->logger, "transition %s->%s", old_state->short_name, new_state->short_name);
+		ldbg(st->logger, "transition %s->%s", old_state->short_name, new_state->short_name);
 		st->st_state = new_state;
 	}
 }
@@ -864,7 +864,7 @@ void llog_sa_delete_n_send(struct ike_sa *ike, struct state *st)
 /* delete a state object */
 void delete_state(struct state *st)
 {
-	pdbg(st->logger, "%s() skipping log_message:%s",
+	ldbg(st->logger, "%s() skipping log_message:%s",
 	     __func__,
 	     bool_str(st->st_on_delete.skip_log_message));
 

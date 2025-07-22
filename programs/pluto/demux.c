@@ -207,7 +207,7 @@ void process_md(struct msg_digest *md)
 			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
 		name_buf xb;
-		pdbg(md->logger,
+		ldbg(md->logger,
 		     " processing version=%u.%u packet with exchange type=%s (%d)",
 		     vmaj, vmin,
 		     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),

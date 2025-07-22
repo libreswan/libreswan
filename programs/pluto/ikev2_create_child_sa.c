@@ -136,7 +136,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 		unpack_KE_from_helper(&larval->sa, local_secret, &larval->sa.st_gi);
 	}
 
-	pdbg(logger, "adding larval SA to IKE SA "PRI_SO" message initiator queue; sec_label="PRI_SHUNK,
+	ldbg(logger, "adding larval SA to IKE SA "PRI_SO" message initiator queue; sec_label="PRI_SHUNK,
 	     pri_so(ike->sa.st_serialno),
 	     pri_shunk(larval->sa.st_connection->child.sec_label));
 

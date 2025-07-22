@@ -285,7 +285,7 @@ struct crypt_mac new_phase2_iv(const struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	const struct encrypt_desc *e = ike->sa.st_oakley.ta_encrypt;
 
-	pdbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
+	ldbg(logger, "phase2_iv: %s "PRI_WHERE, why, pri_where(where));
 
 	const struct hash_desc *h = ike->sa.st_oakley.ta_prf->hasher;
 	PASSERT_WHERE(logger, where, h != NULL);

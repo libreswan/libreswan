@@ -781,7 +781,7 @@ struct connection {
 	({							\
 		bool old_ = (C)->POLICY;			\
 		bool new_ = VALUE;				\
-		pdbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
+		ldbg((C)->logger, "%s:%s->%s "PRI_WHERE,	\
 		     #POLICY,					\
 		     bool_str(old_),				\
 		     bool_str(new_),				\

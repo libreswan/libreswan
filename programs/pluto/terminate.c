@@ -276,9 +276,9 @@ void terminate_connection(struct connection *c, where_t where)
 		 * is really needed.
 		 */
 		PEXPECT(c->logger, c->local->kind == CK_PERMANENT);
-		pdbg(c->logger, "terminating and downing never-negotiate connection");
+		ldbg(c->logger, "terminating and downing never-negotiate connection");
 	} else {
-		pdbg(c->logger, "terminating SAs using this connection");
+		ldbg(c->logger, "terminating SAs using this connection");
 	}
 
 	/* see callers */

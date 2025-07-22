@@ -870,7 +870,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	 */
 
 	if (is_labeled_child(c)) {
-		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
 		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
@@ -878,7 +878,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		selector_buf sb, db;
 		name_buf eb;
-		pdbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
+		ldbg(logger, "kernel: %s() installing SPD for %s=>%s %s",
 		     __func__,
 		     /* inbound */
 		     str_selector(&spd->remote->client, &sb),
@@ -907,7 +907,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 
 	if (is_labeled_child(c)) {
-		pdbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
+		ldbg(logger, "kernel: %s() skipping as IKEv2 config.sec_label="PRI_SHUNK,
 		     __func__, pri_shunk(c->config->sec_label));
 		return true;
 	}
@@ -925,7 +925,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 		selector_buf sb, db;
 		name_buf eb;
-		pdbg(logger,
+		ldbg(logger,
 		     "kernel: %s() installing SPD for %s=>%s %s route=%s up=%s",
 		     __func__,
 		     /* outbound */

@@ -243,7 +243,6 @@ extern lset_t cur_debugging;	/* current debugging level */
 	}
 
 void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
-#define pdbg ldbg
 
 void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINTF_LIKE(3);
 
@@ -252,7 +251,6 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 #define LDBGP_JAMBUF(COND, LOGGER, BUF)					\
 	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
-#define PDBGP_JAMBUF LDBGP_JAMBUF
 
 /* DBG_*() are unconditional */
 

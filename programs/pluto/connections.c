@@ -1204,7 +1204,7 @@ struct connection *alloc_connection(const char *name,
 		c->next_instance_serial = 1;
 		c->instance_serial = t->next_instance_serial;
 		t->next_instance_serial++;
-		pdbg(t->logger, "template .instance_serial_next updated to %lu; instance %lu",
+		ldbg(t->logger, "template .instance_serial_next updated to %lu; instance %lu",
 		     t->next_instance_serial,
 		     c->instance_serial);
 	}

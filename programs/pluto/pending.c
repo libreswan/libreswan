@@ -149,7 +149,7 @@ void append_pending(struct ike_sa *ike,
 void release_pending_whacks(struct state *st, err_t story)
 {
 	if (!whack_attached(st->logger)) {
-		pdbg(st->logger, "%s: state has no whack fd", __func__);
+		ldbg(st->logger, "%s: state has no whack fd", __func__);
 		return;
 	}
 
@@ -198,7 +198,7 @@ void release_pending_whacks(struct state *st, err_t story)
 
 		bool has_whack = whack_attached(p->logger);
 
-		pdbg(p->logger,
+		ldbg(p->logger,
 		     "pending: %s: %s SA "PRI_SO" "PRI_LOGGER" has %s SA with whack "PRI_LOGGER,
 		     __func__,
 		     p->ike->sa.st_connection->config->ike_info->parent_name,

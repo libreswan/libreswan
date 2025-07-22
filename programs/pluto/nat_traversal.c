@@ -196,18 +196,18 @@ static bool need_nat_keepalive(struct state *st)
 	const struct connection *c = st->st_connection;
 
 	if (!c->config->nat_keepalive) {
-		pdbg(st->logger, "NAT-keep-alive: not scheduled, nat-keepalive=no)");
+		ldbg(st->logger, "NAT-keep-alive: not scheduled, nat-keepalive=no)");
 		return false;
 	}
 
 	if (!st->hidden_variables.st_nated_host) {
-		pdbg(st->logger, "NAT-keep-alive: not scheduled, not behind NAT");
+		ldbg(st->logger, "NAT-keep-alive: not scheduled, not behind NAT");
 		return false;
 	}
 
 	/* XXX: .st_iface_endpoint, not c.interface - can be different */
 	if (!st->st_iface_endpoint->io->send_keepalive) {
-		pdbg(st->logger, "NAT-keep-alive: not scheduled, needed by %s protocol",
+		ldbg(st->logger, "NAT-keep-alive: not scheduled, needed by %s protocol",
 		     st->st_iface_endpoint->io->protocol->name);
 		return false;
 	}
@@ -221,7 +221,7 @@ void schedule_v1_nat_keepalive(struct state *st)
 		return;
 	}
 
-	pdbg(st->logger, "NAT-keep-alive: scheduled, period %jds",
+	ldbg(st->logger, "NAT-keep-alive: scheduled, period %jds",
 	     deltasecs(nat_keepalive_period));
 	event_schedule(EVENT_v1_NAT_KEEPALIVE, nat_keepalive_period, st);
 }
@@ -244,7 +244,7 @@ void schedule_v2_nat_keepalive(struct ike_sa *ike, where_t where)
 	 * established.
 	 */
 	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: allowing non-established IKE SA when scheduling (responder yet to process Child payloads?) "PRI_WHERE,
+		ldbg(ike->sa.logger, "NAT-keep-alive: allowing non-established IKE SA when scheduling (responder yet to process Child payloads?) "PRI_WHERE,
 		     pri_where(where));
 	}
 
@@ -254,12 +254,12 @@ void schedule_v2_nat_keepalive(struct ike_sa *ike, where_t where)
 	 * NAT open so it can later shutdown.
 	 */
 	if (ike->sa.st_connection->established_ike_sa != ike->sa.st_serialno) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: allowing IKE SA crossing-stream with "PRI_SO" when scheduling "PRI_WHERE,
+		ldbg(ike->sa.logger, "NAT-keep-alive: allowing IKE SA crossing-stream with "PRI_SO" when scheduling "PRI_WHERE,
 		     pri_so(ike->sa.st_connection->established_ike_sa),
 		     pri_where(where));
 	}
 
-	pdbg(ike->sa.logger, "NAT-keep-alive: scheduled, period %jds",
+	ldbg(ike->sa.logger, "NAT-keep-alive: scheduled, period %jds",
 	     deltasecs(nat_keepalive_period));
 	event_schedule(EVENT_v2_NAT_KEEPALIVE, nat_keepalive_period, &ike->sa);
 }
@@ -283,17 +283,17 @@ void event_v1_nat_keepalive(struct state *st)
 	 * get_sa_bundle_info() to kernel _and_ find ISAKMP SA.
 	 */
 	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
-		pdbg(st->logger, "NAT-keep-alive: IPsec SA is not established");
+		ldbg(st->logger, "NAT-keep-alive: IPsec SA is not established");
 		return;
 	}
 
 	if (c->established_child_sa != st->st_serialno) {
-		pdbg(st->logger, "NAT-keep-alive: IPsec SA is not the current SA ("PRI_SO")",
+		ldbg(st->logger, "NAT-keep-alive: IPsec SA is not the current SA ("PRI_SO")",
 		     pri_so(c->established_child_sa));
 		return;
 	}
 
-	pdbg(st->logger, "NAT-keep-alive: sending keep-alive");
+	ldbg(st->logger, "NAT-keep-alive: sending keep-alive");
 	nat_traversal_send_ka(st);
 }
 #endif
@@ -307,12 +307,12 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 * its timers.
 	 */
 	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, as IKE SA is not established");
+		ldbg(ike->sa.logger, "NAT-keep-alive: skipping send, as IKE SA is not established");
 		return;
 	}
 
 	if (c->established_ike_sa != ike->sa.st_serialno) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA is not current ("PRI_SO")",
+		ldbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA is not current ("PRI_SO")",
 		     pri_so(c->established_ike_sa));
 		return;
 	}
@@ -323,7 +323,7 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 */
 	if (!is_monotime_epoch(ike->sa.st_v2_msgid_windows.last_sent) &&
 	    deltasecs(monotime_diff(mononow(), ike->sa.st_v2_msgid_windows.last_sent)) < DEFAULT_KEEP_ALIVE_SECS) {
-		pdbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA recently sent a request");
+		ldbg(ike->sa.logger, "NAT-keep-alive: skipping send, IKE SA recently sent a request");
 		return;
 	}
 
@@ -342,7 +342,7 @@ void event_v2_nat_keepalive(struct ike_sa *ike)
 	 * finding the IKE SA is cheap.
 	 */
 
-	pdbg(ike->sa.logger, "NAT-keep-alive: sending keep-alive");
+	ldbg(ike->sa.logger, "NAT-keep-alive: sending keep-alive");
 	nat_traversal_send_ka(&ike->sa);
 }
 

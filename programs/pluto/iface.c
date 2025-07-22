@@ -215,20 +215,20 @@ static void release_dead_interfaces(struct logger *logger)
 
 		if (!oriented(c)) {
 			/* aka c->iface == NULL */
-			pdbg(c->logger, "connection interface un-oriented");
+			ldbg(c->logger, "connection interface un-oriented");
 			continue;
 		}
 
 		passert(c->iface != NULL); /* aka oriented() */
 		if (c->iface->ifd_change != IFD_DELETE) {
 			address_buf eb;
-			pdbg(c->logger, "connection interface %s safe",
+			ldbg(c->logger, "connection interface %s safe",
 			     str_address(&c->iface->local_address, &eb));
 			continue;
 		}
 
 		address_buf eb;
-		pdbg(c->logger, "connection interface %s being deleted",
+		ldbg(c->logger, "connection interface %s being deleted",
 		     str_address(&c->iface->local_address, &eb));
 
 		/*
