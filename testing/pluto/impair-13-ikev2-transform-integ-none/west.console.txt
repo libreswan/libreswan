@@ -186,10 +186,10 @@ west #
  # excluded
 west #
  sed -n -e '/remote accepted/ { s/^| */| /; p }' /tmp/pluto.log
-| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KE=MODP2048[first-match]
 | remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;ESN=YES[first-match]
-| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;DH=MODP2048[first-match]
-| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;DH=MODP2048;ESN=YES[first-match]
-| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;DH=MODP2048[first-match]
-| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;DH=MODP2048;ESN=YES[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KE=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;KE=MODP2048;ESN=YES[first-match]
+| remote accepted the proposal 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KE=MODP2048[first-match]
+| remote accepted the proposal 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;KE=MODP2048;ESN=YES[first-match]
 west #
