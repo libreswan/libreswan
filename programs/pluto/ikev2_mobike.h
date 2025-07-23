@@ -20,8 +20,8 @@ struct v2SK_payload;
 
 extern void ikev2_addr_change(struct state *st);
 
-extern void record_deladdr(ip_address *ip, char *a_type);
-extern void record_newaddr(ip_address *ip, char *a_type);
+extern void record_deladdr(ip_address *ip, char *a_type, struct logger *logger);
+extern void record_newaddr(ip_address *ip, char *a_type, struct logger *logger);
 
 bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md, struct pbs_out *pbs);
 

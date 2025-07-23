@@ -2427,9 +2427,9 @@ static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 			}
 
 			if (n->nlmsg_type == RTM_DELADDR) {
-				record_deladdr(&ip, "IFA_LOCAL");
+				record_deladdr(&ip, "IFA_LOCAL", logger);
 			} else if (n->nlmsg_type == RTM_NEWADDR) {
-				record_newaddr(&ip, "IFA_LOCAL");
+				record_newaddr(&ip, "IFA_LOCAL", logger);
 			}
 			break;
 

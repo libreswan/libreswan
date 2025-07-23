@@ -61,6 +61,7 @@ static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
  */
 static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	struct connection *c = ike->sa.st_connection;
 	const struct ip_info *afi = endpoint_info(md->iface->local_endpoint);
 
@@ -155,16 +156,16 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
 		c->local->host.addr = endpoint_address(child->sa.st_v2_mobike.local_endpoint);
-		dbg("%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
-		    c->local->host.port, endpoint_hport(child->sa.st_v2_mobike.local_endpoint));
+		ldbg(logger, "%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
+		     c->local->host.port, endpoint_hport(child->sa.st_v2_mobike.local_endpoint));
 		c->local->host.port = endpoint_hport(child->sa.st_v2_mobike.local_endpoint);
 		c->local->host.nexthop = child->sa.st_v2_mobike.host_nexthop;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->remote->host.addr = endpoint_address(md->sender);
-		dbg("%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
-		    c->remote->host.port, endpoint_hport(md->sender));
+		ldbg(logger, "%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
+		     c->remote->host.port, endpoint_hport(md->sender));
 		c->remote->host.port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
@@ -198,7 +199,7 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		child->sa.st_v2_mobike.deleted_local_addr = unset_address;
 		if (dpd_active_locally(child->sa.st_connection) &&
 		    child->sa.st_v2_liveness_event == NULL) {
-			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
+			ldbg(logger, "dpd re-enabled after mobike, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 		}
@@ -260,7 +261,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	if (md->pd[PD_v2N_COOKIE2] != NULL) {
 		shunk_t tmp = pbs_in_left(&md->pd[PD_v2N_COOKIE2]->pbs);
 		if (tmp.len > IKEv2_MAX_COOKIE_SIZE) {
-			dbg("MOBIKE COOKIE2 notify payload too big - ignored");
+			ldbg(logger, "MOBIKE COOKIE2 notify payload too big - ignored");
 		} else {
 			cookie2 = tmp;
 			if (LDBGP(DBG_BASE, logger)) {
@@ -294,7 +295,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		llog_sa(RC_LOG, ike,
 			  "MOBIKE request: updating IPsec SA by request");
 	} else {
-		dbg("MOBIKE request: not updating IPsec SA");
+		ldbg(logger, "MOBIKE request: not updating IPsec SA");
 	}
 
 	if (ntfy_natd) {
@@ -307,9 +308,10 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 
 static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	bool may_mobike = mobike_check_established(ike);
 	if (!may_mobike) {
-		dbg("MOBIKE response: not updating IPsec SA");
+		ldbg(logger, "MOBIKE response: not updating IPsec SA");
 		return;
 	}
 
@@ -320,15 +322,15 @@ static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *
 
 	/* XXX: keep testsuite happy */
 	if (natd_s) {
-		dbg("TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response ");
+		ldbg(logger, "TODO: process v2N_NAT_DETECTION_SOURCE_IP in MOBIKE response ");
 	}
 	if (natd_d) {
-		dbg("TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response ");
+		ldbg(logger, "TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response ");
 	}
 
 	if (ret && !update_mobike_endpoints(ike, md)) {
 		/* IPs already updated from md */
-		dbg("MOBIKE response: update MOBIKE failed; not updating IPsec SA");
+		ldbg(logger, "MOBIKE response: update MOBIKE failed; not updating IPsec SA");
 		return;
 	}
 
@@ -363,8 +365,9 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 				  struct pbs_out *pbs, struct ike_sa *ike)
 {
-	dbg("adding NATD%s payloads to MOBIKE response",
-	    cookie2.len != 0 ? " and cookie2" : "");
+	struct logger *logger = ike->sa.logger;
+	ldbg(logger, "adding NATD%s payloads to MOBIKE response",
+	     cookie2.len != 0 ? " and cookie2" : "");
 	/* assumptions from ikev2_out_nat_v2n() and caller */
 	pexpect(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(!ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
@@ -390,15 +393,15 @@ static bool add_mobike_payloads(struct ike_sa *ike,
 	return true;
 }
 
-void record_newaddr(ip_address *ip, char *a_type)
+void record_newaddr(ip_address *ip, char *a_type, struct logger *logger)
 {
 	address_buf ip_str;
-	dbg("XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
+	ldbg(logger, "XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
 	struct state_filter sf = {
 		.ike_version = IKEv2,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
@@ -432,15 +435,15 @@ void record_newaddr(ip_address *ip, char *a_type)
 	}
 }
 
-void record_deladdr(ip_address *ip, char *a_type)
+void record_deladdr(ip_address *ip, char *a_type, struct logger *logger)
 {
 	address_buf ip_str;
-	dbg("XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
+	ldbg(logger, "XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
 	struct state_filter sf = {
 		.ike_version = IKEv2,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
