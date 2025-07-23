@@ -625,6 +625,8 @@ kvmplutotest	ikev2-x509-ecdsa-06-rsa-asym-flip			wip	github/789
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good
+kvmplutotest	newoe-02-whack-wrong-mode-initiator	good
+kvmplutotest	newoe-02-whack-wrong-mode-responder	good
 kvmplutotest	newoe-03-oeself				good
 kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good

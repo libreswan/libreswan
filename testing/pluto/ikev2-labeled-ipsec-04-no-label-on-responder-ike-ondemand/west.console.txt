@@ -50,6 +50,7 @@ west #
  ../../guestbin/wait-for-pluto.sh 'TS_UNACCEPTABLE'
 "labeled"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(TS_UNACCEPTABLE)}
 "labeled"[1][1] 192.1.2.23 #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
+"labeled"[1] 192.1.2.23 #1: peer rejected Child SA  (TS_UNACCEPTABLE) and IKE SA does not have policy UP
 west #
  # there should be 0 tunnels - child rejected
 west #

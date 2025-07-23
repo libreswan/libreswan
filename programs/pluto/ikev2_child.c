@@ -1124,12 +1124,16 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 /*
  * Process the Child SA payloads from an IKE_AUTH response.
  *
- * Return value is quirky:
+ * Return something other than v2N_NOTHING_WRONG when Child SA is
+ * rejected.
  *
- * NOTHING_WRONG: either child is ok, or peer rejected child and it has been deleted.
+ * When the peer rejects the Child SA, delete it before returning.
+ * Since the peer never created the Child SA, there's nothing to
+ * cleanup.
  *
- * v2N*: peer OKed child but this end did not, caller will initiate
- * delete child exchange sending v2N.
+ * When this end rejects the Child SA, leave it standing.  Caller will
+ * see this and initiate a cleanup such as Delete Child SA (but
+ * sometimes deletes the IKE SA instead).
  */
 
 v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike,
@@ -1181,8 +1185,11 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	set_larval_v2_transition(child, &state_v2_ESTABLISHED_CHILD_SA, HERE);
 
 	/*
-	 * Was there a child error notification?  The RFC says this
-	 * list isn't definitive.
+	 * Was there an error notification for the Child SA in the
+	 * response?  The RFC says this list isn't definitive.
+	 *
+	 * Since the peer rejected the Child SA (i.e., never created
+	 * it), there's no need to send a delete.
 	 *
 	 * XXX: can this code assume that the response contains only
 	 * one notify and that is for the child?  Given notifies are
@@ -1206,15 +1213,25 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 			llog_sa(RC_LOG, child,
 				"IKE_AUTH response rejected Child SA with %s",
 				str_enum_short(&v2_notification_names, n, &esb));
+			/*
+			 * Remove the Child SA's connection from the
+			 * pending queue.
+			 */
 			ldbg(child->sa.logger, "unpending IKE SA "PRI_SO" CHILD SA "PRI_SO" connection %s",
 			     pri_so(ike->sa.st_serialno),
 			     pri_so(child->sa.st_serialno),
 			     child->sa.st_connection->name);
 			unpend(ike, child->sa.st_connection);
+			/*
+			 * Clean up the Child SA.
+			 *
+			 * If the caller sees the Child SA it will
+			 * assume that it needs to initiate a delete.
+			 */
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
 			/* handled */
-			return v2N_NOTHING_WRONG;
+			return n;
 		}
 	}
 

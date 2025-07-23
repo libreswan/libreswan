@@ -15,9 +15,7 @@ ipsec _kernel policy
 echo : ${conn} WAIT FOR IKE_AUTH TO FAIL
 ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: initiator established IKE SA'
 ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#2: IKE_AUTH response rejected Child SA'
-
-# doesn't happen; bug
-# echo ../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: deleting IKE SA'
+../../guestbin/wait-for-pluto.sh --timeout 10 --match '#1: deleting IKE SA'
 
 echo : ${conn} WAIT FOR ACQUIRE TO EXPIRE
 ../../guestbin/wait-for.sh --timeout 10 --no-match 'spi 0x00000000' -- ipsec _kernel state
@@ -28,7 +26,7 @@ ipsec _kernel policy
 echo : ${conn} FAILURE SHUNT - WHEN failpass OR faildrop
 ipsec shuntstatus
 
-echo : ${conn} EXPECT NO FAILURE STATES -- SHOULD BE NONE BUT THERE ARE - BUG
+echo : ${conn} EXPECT NO FAILURE STATES
 ipsec showstates
 
 echo : ${conn} TRY FAILURE PING

@@ -1,0 +1,68 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ cp policies/* /etc/ipsec.d/policies/
+west #
+ echo "192.1.2.0/24" >> /etc/ipsec.d/policies/private-or-clear
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # give OE policies time to load
+west #
+ ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
+Total IPsec connections: loaded 10, routed 5, active 0
+west #
+ echo "initdone"
+initdone
+west #
+ # ICMP ping; expect error from trying to delete the kernel's acquire shunt
+west #
+ ipsec whack --oppohere 192.1.2.45 --oppothere 192.1.2.23 --oppoproto 1 --opposport 8 --oppodport 0
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: initiate on-demand for packet 192.1.2.45:8-ICMP->192.1.2.23:0 by whack
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with null and NULL 'ID_NULL'; Child SA #2 {ESP <0xESPESP}
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=null and NULL 'ID_NULL'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: peer rejected Child SA  (NO_PROPOSAL_CHOSEN) and IKE SA does not have policy UP
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+west #
+ ipsec _kernel state
+west #
+ ipsec _kernel policy
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority 0 ptype main
+src 127.0.0.1/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+src 127.0.0.1/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.45/32 dst 127.0.0.1/32
+	dir out priority PRIORITY ptype main
+src 192.1.2.45/32 dst 192.1.2.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.2.45/32 dst 192.1.2.254/32
+	dir out priority PRIORITY ptype main
+src 192.1.2.45/32 dst 192.1.3.253/32
+	dir out priority PRIORITY ptype main
+src 192.1.2.253/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.253/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.254/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+src 192.1.3.253/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+src 192.1.2.45/32 dst 192.1.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #

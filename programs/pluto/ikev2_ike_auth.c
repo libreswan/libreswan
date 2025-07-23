@@ -99,6 +99,9 @@ static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct
 static stf_status process_v2_IKE_AUTH_request_skip_cert_decode(struct ike_sa *ike,
 							       struct msg_digest *md);
 
+static stf_status process_v2_IKE_AUTH_response_post_cert_child(struct ike_sa *ike,
+							       struct msg_digest *md);
+
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
 static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
@@ -1316,72 +1319,134 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	ike->sa.st_v2_mobike.enabled =
 		accept_v2_notification(v2N_MOBIKE_SUPPORTED, ike->sa.logger, md, c->config->mobike);
 
+	return process_v2_IKE_AUTH_response_post_cert_child(ike, md);
+}
+
+stf_status process_v2_IKE_AUTH_response_post_cert_child(struct ike_sa *ike, struct msg_digest *md)
+{
 	/*
-	 * Figure out of the child is both expected and viable.
+	 * Figure out if the child is both expected and viable.
+	 *
+	 * If the Child SA is still standing (because this end
+	 * rejected response) then this end needs to initiate a delete
+	 * so that the peer is cleaned up.
 	 *
 	 * See 2.21.2.  Error Handling in IKE_AUTH
 	 */
 
 	v2_notification_t n = process_v2_IKE_AUTH_response_child_payloads(ike, md);
+	if (n == v2N_NOTHING_WRONG) {
+		return STF_OK;
+	}
+
 	if (v2_notification_fatal(n)) {
 		/* reason already logged */
 		/*
-		 * XXX: there was something "really bad" about the
-		 * child.  Should be sending the fatal notification in
-		 * a new exchange (see RFC); returning STF_FATAL just
-		 * causes the IKE SA to silently self-destruct.
+		 * There was something "really bad" about the child.
+		 *
+		 * Should be sending the fatal notification in a new
+		 * exchange (see RFC); returning STF_FATAL just causes
+		 * the IKE SA to silently self-destruct leaving the
+		 * other end hanging.
+		 *
+		 * XXX: This will clean out any lingering child.
+		 *
+		 * XXX: Can't use STF_OK_INITIATOR_SEND_DELETE_IKE as
+		 * that sends a clean delete and not a dirty notify.
 		 */
 		return STF_FATAL;
 	}
 
-	if (n != v2N_NOTHING_WRONG) {
-		/* already logged against child */
+	struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa; /* could be NULL */
 
+	if (!ike->sa.st_connection->policy.up) {
+		/* already logged */
 		/*
-		 * This end (the initiator) did not like something
-		 * about the Child SA so need to delete it.
+		 * Since the IKE SA has no-reason to be up, delete it.
+		 * This will implicitly delete the Child SA (not
+		 * exactly what the RFC says, but closer to how UP is
+		 * intended to work).  For instance, when the IKE SA +
+		 * Child SA are initiated on-demand, this won't leave
+		 * a lingering IKE SA.
 		 *
-		 * (If the responder sent back an error notification
-		 * to reject the Child SA, then the above call would
-		 * have cleaned up the mess and returned
-		 * v2N_NOTHING_WRONG).
+		 * Any connections waiting for this IKE SA to
+		 * establish (they made a really poor choice) will be
+		 * given the boot forcing them to either initiate, or
+		 * find another parent.
 		 */
 
-		struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
-		PASSERT(ike->sa.logger, larval_child != NULL);
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+		LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+			if (larval_child == NULL) {
+				jam_string(buf, "peer rejected Child SA ");
+			} else {
+				jam_string(buf, "response for Child SA ");
+				jam_so(buf, larval_child->sa.st_serialno);
+				jam_string(buf, " was rejected");
+			}
 
-		name_buf nb;
-		llog(RC_LOG, ike->sa.logger,
-		     "rejected Child SA "PRI_SO" response (%s), initiating delete of Child SA (IKE SA will remain UP)",
-		     pri_so(larval_child->sa.st_serialno),
-		     str_enum_short(&v2_notification_names, n, &nb));
-
-		/*
-		 * Needed to un-plug the pending queue.  Without this
-		 * the next pending exchange is never started.
-		 *
-		 * While not obvious from the name - unpend() - the
-		 * code is doing two things: removing LARVAL_CHILD's
-		 * pending connection; and submitting a request to
-		 * initiate the next pending connection, if any.
-		 *
-		 * The key thing here is that unpend() delays creating
-		 * the next child until after the previous child is
-		 * done.  Avoiding a race for which child goes next.
-		 *
-		 * For IKEv2, should merge the pending queue into the
-		 * Message ID queue.  Have a queue of exchanges, and a
-		 * queue of things to do when there are no exchanges.
-		 */
-		unpend(ike, larval_child->sa.st_connection);
+			jam_string(buf, " (");
+			jam_enum_short(buf, &v2_notification_names, n);
+			jam_string(buf, ") and IKE SA does not have policy UP");
+		}
 
 		/*
-		 * Quickly delete this larval SA.  This will, in turn,
-		 * clean up larval child.
+		 * This will log that the IKE SA is deleted.
 		 */
-		submit_v2_delete_exchange(ike, larval_child);
+		return STF_OK_INITIATOR_SEND_DELETE_IKE;
 	}
+
+	if (larval_child == NULL) {
+		/* already logged */
+		name_buf nb;
+		ldbg(ike->sa.logger, "leaving IKE SA UP; peer rejected Child SA with %s",
+		     str_enum_short(&v2_notification_names, n, &nb));
+		return STF_OK;
+	}
+
+	/* already logged against child */
+
+	/*
+	 * This end (the initiator) did not like something about the
+	 * Child SA so need to delete it.
+	 *
+	 * (If the responder sent back an error notification to reject
+	 * the Child SA, then the above call would have cleaned up the
+	 * mess and returned v2N_NOTHING_WRONG).
+	 */
+
+	PASSERT(ike->sa.logger, larval_child != NULL);
+	ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+
+	name_buf nb;
+	llog(RC_LOG, ike->sa.logger,
+	     "response for Child SA "PRI_SO" was rejected with %s; initiating delete of Child SA (IKE SA will remain UP)",
+	     pri_so(larval_child->sa.st_serialno),
+	     str_enum_short(&v2_notification_names, n, &nb));
+
+	/*
+	 * Needed to un-plug the pending queue.  Without this the next
+	 * pending exchange is never started.
+	 *
+	 * While not obvious from the name - unpend() - the code is
+	 * doing two things: removing LARVAL_CHILD's pending
+	 * connection; and submitting a request to initiate the next
+	 * pending connection, if any.
+	 *
+	 * The key thing here is that unpend() delays creating the
+	 * next child until after the previous child is done.
+	 * Avoiding a race for which child goes next.
+	 *
+	 * For IKEv2, should merge the pending queue into the Message
+	 * ID queue.  Have a queue of exchanges, and a queue of things
+	 * to do when there are no exchanges.
+	 */
+	unpend(ike, larval_child->sa.st_connection);
+
+	/*
+	 * Quickly delete this larval SA.  This will, in turn, clean
+	 * up larval child.
+	 */
+	submit_v2_delete_exchange(ike, larval_child);
 
 	return STF_OK;
 }
