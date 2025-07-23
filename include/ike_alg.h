@@ -111,6 +111,11 @@ extern const struct ike_alg_type ike_alg_ipcomp;
 #define IKE_ALG_DH &ike_alg_dh
 #define IKE_ALG_IPCOMP &ike_alg_ipcomp
 
+#define ike_alg_ke ike_alg_dh
+#define IKE_ALG_KE IKE_ALG_DH
+#define ke_desc dh_desc
+#define ike_alg_ke_none ike_alg_dh_none
+
 /*
  * User frendly string representing the algorithm type (family).
  * "...Name()" returns the capitalized name.

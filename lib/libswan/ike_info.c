@@ -70,8 +70,8 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	}
 
 	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL);
-	FOR_EACH_ALGORITHM(proposal, dh, alg) {
+			 next_algorithm(proposal, PROPOSAL_ke, NULL) != NULL);
+	FOR_EACH_ALGORITHM(proposal, ke, alg) {
 		const struct dh_desc *dh = dh_desc(alg->desc);
 		passert(ike_alg_is_ike(&dh->common));
 		if (dh == &ike_alg_dh_none) {
@@ -126,7 +126,7 @@ static const struct ike_alg *default_ikev1_groups[] = {
 const struct proposal_defaults ikev1_ike_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev1_ike_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev1_ike_proposals,
-	.dh = default_ikev1_groups,
+	.ke = default_ikev1_groups,
 	.prf = default_ikev1_ike_prfs,
 };
 
@@ -200,7 +200,7 @@ const struct proposal_defaults ikev2_ike_defaults = {
 	.proposals[FIPS_MODE_OFF] = default_fips_off_ikev2_ike_proposals,
 	.prf = default_ikev2_ike_prfs,
 	/* INTEG is derived from PRF when applicable */
-	.dh = default_ikev2_groups,
+	.ke = default_ikev2_groups,
 };
 
 /*
@@ -215,7 +215,7 @@ static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	.encrypt = true,
 	.prf = true,
 	.integ = true,
-	.dh = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol ikev2_ike_proposal_protocol = {
@@ -226,7 +226,7 @@ static const struct proposal_protocol ikev2_ike_proposal_protocol = {
 	.encrypt = true,
 	.prf = true,
 	.integ = true,
-	.dh = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol *ike_proposal_protocol[] = {

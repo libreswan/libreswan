@@ -107,7 +107,7 @@ static void check(const struct protocol *protocol,
 		.pfs = pfs,
 		.stream = WHACK_STREAM,
 		.logger = logger,
-		.check_pfs_vs_dh = protocol->pfs_vs_dh,
+		.check_pfs_vs_ke = protocol->pfs_vs_dh,
 		.ignore_parser_errors = ignore_parser_errors,
 	};
 	struct proposal_parser *parser =

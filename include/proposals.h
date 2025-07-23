@@ -57,7 +57,8 @@ enum proposal_algorithm {
 	PROPOSAL_integ,
 	PROPOSAL_prf,
 
-	PROPOSAL_dh,
+	PROPOSAL_ke,
+
 	PROPOSAL_addke1,
 	PROPOSAL_addke2,
 	PROPOSAL_addke3,
@@ -85,7 +86,7 @@ struct proposal_parser {
 struct proposal_policy {
 	enum ike_version version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
-	bool check_pfs_vs_dh;
+	bool check_pfs_vs_ke;
 	bool ignore_parser_errors;
 	/*
 	 * According to current policy, is the algorithm ok
@@ -118,7 +119,7 @@ struct proposal_defaults {
 	 * Algorithms to add to the proposal when they were not
 	 * specified by the proposal string.
 	 */
-	const struct ike_alg **dh;
+	const struct ike_alg **ke;
 	const struct ike_alg **prf;
 	const struct ike_alg **integ;
 	const struct ike_alg **encrypt;
@@ -152,7 +153,7 @@ struct proposal_protocol {
 	bool encrypt;
 	bool prf;
 	bool integ;
-	bool dh;
+	bool ke;
 };
 
 /*
@@ -284,7 +285,7 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct dh_desc *dh;
+	const struct dh_desc *ke;
 	const struct proposal_protocol *protocol;
 };
 

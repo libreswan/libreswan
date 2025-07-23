@@ -136,7 +136,7 @@ const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 		return NULL;
 	}
 	struct proposal *proposal = next_proposal(proposals.p, NULL);
-	struct algorithm *dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
+	struct algorithm *dh = next_algorithm(proposal, PROPOSAL_ke, NULL);
 	if (dh == NULL) {
 		return NULL;
 	}

@@ -107,7 +107,7 @@ static const struct proposal_protocol ikev1_ah_proposal_protocol = {
 	.defaults = &ikev1_ah_defaults,
 	.proposal_ok = ah_proposal_ok,
 	.integ = true,
-	.dh = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol ikev2_ah_proposal_protocol = {
@@ -116,7 +116,7 @@ static const struct proposal_protocol ikev2_ah_proposal_protocol = {
 	.defaults = &ikev2_ah_defaults,
 	.proposal_ok = ah_proposal_ok,
 	.integ = true,
-	.dh = true,
+	.ke = true,
 };
 
 static const struct proposal_protocol *ah_proposal_protocol[] = {

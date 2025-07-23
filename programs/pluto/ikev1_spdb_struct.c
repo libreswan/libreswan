@@ -574,18 +574,18 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		passert(algs.encrypt != NULL);
 		passert(algs.prf != NULL);
-		passert(algs.dh != NULL);
+		passert(algs.ke != NULL);
 
 		unsigned ealg = algs.encrypt->common.ikev1_oakley_id;
 		unsigned halg = algs.prf->common.ikev1_oakley_id;
-		unsigned modp = algs.dh->group;
+		unsigned modp = algs.ke->group;
 		unsigned eklen = algs.enckeylen;
 
 		ldbg(logger, "%s() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
 		     __func__,
 		     algs.encrypt->common.fqn, ealg,
 		     algs.prf->common.fqn, halg,
-		     algs.dh->common.fqn, modp,
+		     algs.ke->common.fqn, modp,
 		     eklen);
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
@@ -671,7 +671,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    algs.dh->group != last_modp) {
+		    algs.ke->group != last_modp) {
 			if (
 #ifdef USE_DH2
 			    last_modp == OAKLEY_GROUP_MODP1024 ||
@@ -695,7 +695,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					      algs.encrypt->common.ikev1_oakley_id, &eb),
 				     str_enum_long(&oakley_hash_names,
 					      algs.prf->common.ikev1_oakley_id, &hb),
-				     algs.dh->common.fqn,
+				     algs.ke->common.fqn,
 				     algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
@@ -796,7 +796,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = algs.dh->group;
+			last_modp = algs.ke->group;
 		}
 
 		pexpect(emp_sp == NULL);
@@ -1481,7 +1481,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.prf == ta->ta_prf &&
-		    algs.dh == ta->ta_dh) {
+		    algs.ke == ta->ta_dh) {
 			if (ealg_insecure) {
 				llog(RC_LOG, logger,
 					    "You should NOT use insecure/broken IKE algorithms (%s)!",

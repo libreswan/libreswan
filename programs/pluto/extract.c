@@ -3244,7 +3244,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.version = c->config->ike_version,
 			.alg_is_ok = ike_alg_is_ike,
 			.pfs = pfs,
-			.check_pfs_vs_dh = false,
+			.check_pfs_vs_ke = false,
 			.stream = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */
@@ -3296,7 +3296,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.version = c->config->ike_version,
 			.alg_is_ok = kernel_alg_is_ok,
 			.pfs = pfs,
-			.check_pfs_vs_dh = true,
+			.check_pfs_vs_ke = true,
 			.stream = ALL_STREAMS,
 			.logger = c->logger, /* on-stack */
 			/* let defaults stumble on regardless */

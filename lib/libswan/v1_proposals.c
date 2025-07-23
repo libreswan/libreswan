@@ -37,7 +37,7 @@ typedef struct v1_proposal merge_alg_default_t(struct v1_proposal proposal,
 static struct v1_proposal merge_dh_default(struct v1_proposal proposal,
 					   const struct ike_alg *default_alg)
 {
-	proposal.dh = dh_desc(default_alg);
+	proposal.ke = dh_desc(default_alg);
 	return proposal;
 }
 
@@ -127,7 +127,7 @@ static bool add_proposal(struct proposal_parser *parser,
 	}
 	A(prf);
 	A(integ);
-	A(dh);
+	A(ke);
 #undef A
 	/* back end? */
 	if (!proposal->protocol->proposal_ok(parser, new)) {
@@ -153,11 +153,11 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
 	 * things like the order of proposals.
 	 */
-	if (proposal->dh == NULL &&
-	    defaults != NULL && defaults->dh != NULL) {
+	if (proposal->ke == NULL &&
+	    defaults != NULL && defaults->ke != NULL) {
 		return add_alg_defaults(parser, defaults,
 					proposals, proposal,
-					&ike_alg_dh, defaults->dh,
+					&ike_alg_dh, defaults->ke,
 					merge_dh_default);
 	} else if (proposal->encrypt == NULL &&
 		   defaults != NULL && defaults->encrypt != NULL) {
@@ -333,10 +333,10 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	bool lookup_dh = parser->protocol->dh || impair.proposal_parser;
-	if (lookup_dh && tokens->this.ptr != NULL) {
-		shunk_t dh = tokens[0].this;
-		proposal.dh = dh_desc(alg_byname(parser, IKE_ALG_DH, dh, dh));
+	bool lookup_ke = parser->protocol->ke || impair.proposal_parser;
+	if (lookup_ke && tokens->this.ptr != NULL) {
+		shunk_t ke = tokens[0].this;
+		proposal.ke = dh_desc(alg_byname(parser, IKE_ALG_KE, ke, ke));
 		if (parser->diag != NULL) {
 			return false;
 		}
