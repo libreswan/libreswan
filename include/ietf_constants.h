@@ -953,7 +953,7 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ENCR = 1,
 	IKEv2_TRANS_TYPE_PRF = 2,
 	IKEv2_TRANS_TYPE_INTEG = 3,
-	IKEv2_TRANS_TYPE_DH = 4, /* same as in IKEv1 */
+	IKEv2_TRANS_TYPE_KE = 4, /* same as in IKEv1; nee DH */
 	IKEv2_TRANS_TYPE_ESN = 5,
 	IKEv2_TRANS_TYPE_ADDKE1 = 6,
 	IKEv2_TRANS_TYPE_ADDKE2 = 7,
