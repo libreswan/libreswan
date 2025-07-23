@@ -46,8 +46,17 @@ enum stream;
  */
 enum proposal_algorithm {
 	PROPOSAL_encrypt,
-	PROPOSAL_prf,
+
+	/*
+	 * XXX: order INTEG before PRF so it is displayed first.
+	 *
+	 * The parser interprets AES-SHA1-SHA2 as ENCR-INTEG-PRF.
+	 * Putting INTEG before PRF causes jam_proposal() to be
+	 * consistent.
+	 */
 	PROPOSAL_integ,
+	PROPOSAL_prf,
+
 	PROPOSAL_dh,
 	PROPOSAL_addke1,
 	PROPOSAL_addke2,
