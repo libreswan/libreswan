@@ -1213,19 +1213,13 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	}
 
 	/*
-	 * XXX: remote approved the Child SA; now check that what was
-	 * approved is acceptable to this local end.  If it isn't
-	 * return a notification.
-	 *
-	 * Code should be initiating a new exchange that contains the
-	 * notification; later.
+	 * Requested a Child SA, since peer didn't reject it (see
+	 * above), there should be Child SA payloads in the response.
 	 */
 
-	/* Expect CHILD SA payloads. */
 	if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
-		llog_sa(RC_LOG, child,
-			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
-		return v2N_TS_UNACCEPTABLE;
+		llog_sa(RC_LOG, child, "IKE_AUTH response missing at least one of the Child SA payloads v2SA, v2TSi and v2TSr");
+		return v2N_INVALID_SYNTAX;	/* fatal */
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */
