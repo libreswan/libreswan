@@ -223,7 +223,8 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 
 	migrate_v2_children(old_ike, new_ike);
 
-	dbg("moving over any pending requests");
+	ldbg(old_ike->sa.logger, "moving any pending requests to "PRI_SO,
+	     pri_so(new_ike->sa.st_serialno));
 	v2_msgid_migrate_queue(old_ike, new_ike);
 	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&new_ike->sa));
 
@@ -2183,10 +2184,11 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			default:
 			{
 				name_buf esb;
-				llog_sa(RC_LOG, (*larval_child),
+				llog(RC_LOG, (*larval_child)->sa.logger,
 					"CREATE_CHILD_SA failed with error notification %s",
 					str_enum_short(&v2_notification_names, n, &esb));
-				dbg("re-add child to pending queue with exponential back-off?");
+				ldbg((*larval_child)->sa.logger,
+				     "re-add child to pending queue with exponential back-off?");
 				status = (n == v2N_INVALID_SYNTAX ? STF_FATAL/*kill IKE*/ :
 					  STF_OK/*keep IKE*/);
 				break;

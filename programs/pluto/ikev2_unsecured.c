@@ -300,7 +300,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
 		if (vid_is_oppo((char *)p->pbs.cur, pbs_left(&p->pbs))) {
 			if (pluto_drop_oppo_null) {
-				dbg("Dropped IKE request for Opportunistic IPsec by global policy");
+				ldbg(md->logger, "dropped IKE request for Opportunistic IPsec by global policy");
 				return;
 			}
 			ldbg(md->logger, "Processing IKE request for Opportunistic IPsec");

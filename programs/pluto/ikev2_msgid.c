@@ -559,7 +559,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
-		dbg("IKE SA with pending initiates disappeared (%s)", story);
+		ldbg(&global_logger, "IKE SA with pending initiates disappeared (%s)", story);
 		return;
 	}
 

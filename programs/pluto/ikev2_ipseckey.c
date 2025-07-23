@@ -266,7 +266,7 @@ static void idi_a_fetch_continue(struct p_dns_req *dnsr)
 	ike->sa.ipseckey_fwd_dnsr = NULL;
 
 	if (ike->sa.ipseckey_dnsr != NULL) {
-		dbg("wait for IPSECKEY DNS response %s", dnsr->qname);
+		ldbg(dnsr->logger, "wait for IPSECKEY DNS response %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(dnsr);
 		return;
@@ -325,7 +325,7 @@ static void responder_fetch_idi_ipseckey_continue(struct p_dns_req *dnsr)
 	ike->sa.ipseckey_dnsr = NULL;
 
 	if (ike->sa.ipseckey_fwd_dnsr != NULL) {
-		dbg("wait for additional DNS A/AAAA check %s", dnsr->qname);
+		ldbg(dnsr->logger, "wait for additional DNS A/AAAA check %s", dnsr->qname);
 		/* wait for additional A/AAAA dns response */
 		free_ipseckey_dns(dnsr);
 		return;

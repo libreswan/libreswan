@@ -81,7 +81,7 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 
 	size_t keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
 
-	dbg("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%zu",
+	ldbg(logger, "integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%zu",
 	    integ != NULL ? integ->common.fqn : "N/A",
 	    integ_key_size,
 	    encrypt != NULL ? encrypt->common.fqn : "N/A",

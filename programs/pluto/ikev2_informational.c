@@ -85,7 +85,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 					    struct child_sa *null_child,
 					    struct msg_digest *md)
 {
-	dbg("an informational request needing a response");
+	ldbg(ike->sa.logger, "an informational request needing a response");
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
 	pexpect(null_child == NULL);
 

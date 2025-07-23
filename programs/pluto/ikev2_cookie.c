@@ -119,7 +119,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		pexpect(cookie_digest == md->pd[PD_v2N_COOKIE]);
 	}
 	if (!me_want_cookie && cookie_digest == NULL) {
-		dbg("DDOS disabled and no cookie sent, continuing");
+		ldbg(logger, "DDOS disabled and no cookie sent, continuing");
 		return false; /* all ok!?! */
 	}
 	pexpect(me_want_cookie || cookie_digest != NULL);
@@ -191,7 +191,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		llog_md(md, "DOS cookies do not match - dropping message");
 		return true; /* reject cookie */
 	}
-	dbg("cookies match");
+	ldbg(logger, "cookies match");
 
 	return false; /* love the cookie */
 }

@@ -196,7 +196,7 @@ void llog_v2_success_state_story_to(struct ike_sa *ike)
 /*
  * split an incoming message into payloads
  */
-struct payload_summary ikev2_decode_payloads(struct logger *log,
+struct payload_summary ikev2_decode_payloads(struct logger *logger,
 					     struct msg_digest *md,
 					     struct pbs_in *in_pbs,
 					     enum next_payload_types_ikev2 np)
@@ -229,13 +229,12 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 
 	while (np != ISAKMP_NEXT_v2NONE) {
 		name_buf b;
-		dbg("Now let's proceed with payload (%s)",
-		    str_enum_long(&ikev2_payload_names, np, &b));
+		ldbg(logger, "now let's proceed with payload (%s)",
+		     str_enum_long(&ikev2_payload_names, np, &b));
 
 		if (md->digest_roof >= elemsof(md->digest)) {
-			llog(RC_LOG, log,
-				    "more than %zu payloads in message; ignored",
-				    elemsof(md->digest));
+			llog(RC_LOG, logger, "more than %zu payloads in message; ignored",
+			     elemsof(md->digest));
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
@@ -265,7 +264,8 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
 						 &pd->payload, sizeof(pd->payload), &pd->pbs);
 			if (d != NULL) {
-				llog(RC_LOG, log, "malformed payload in packet: %s", str_diag(d));
+				llog(RC_LOG, logger,
+				     "malformed payload in packet: %s", str_diag(d));
 				pfree_diag(&d);
 				summary.n = v2N_INVALID_SYNTAX;
 				break;
@@ -288,7 +288,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					bad_case(v2_msg_role(md));
 				}
 				name_buf b;
-				llog(RC_LOG, log,
+				llog(RC_LOG, logger,
 				     "message %s contained an unknown critical payload type (%s)",
 				     role, str_enum_long(&ikev2_payload_names, np, &b));
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
@@ -297,7 +297,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 				break;
 			}
 			name_buf eb;
-			llog(RC_LOG, log,
+			llog(RC_LOG, logger,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 			     str_enum_long(&ikev2_payload_names, np, &eb));
 			np = pd->payload.generic.isag_np;
@@ -305,7 +305,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 		}
 
 		if (np >= LELEM_ROOF) {
-			dbg("huge next-payload %u", np);
+			ldbg(logger, "huge next-payload %u", np);
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
@@ -321,15 +321,15 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					 &pd->payload, sizeof(pd->payload),
 					 &pd->pbs);
 		if (d != NULL) {
-			llog(RC_LOG, log, "malformed payload in packet: %s", str_diag(d));
+			llog(RC_LOG, logger, "malformed payload in packet: %s", str_diag(d));
 			pfree_diag(&d);
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
 
-		dbg("processing payload: %s (len=%zu)",
-		    str_enum_long(&ikev2_payload_names, np, &b),
-		    pbs_left(&pd->pbs));
+		ldbg(logger, "processing payload: %s (len=%zu)",
+		     str_enum_long(&ikev2_payload_names, np, &b),
+		     pbs_left(&pd->pbs));
 
 		/*
 		 * Place payload at the end of the chain for this
@@ -359,7 +359,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 
 		switch (np) {
 		case ISAKMP_NEXT_v2N:
-			decode_v2N_payload(log, md, pd);
+			decode_v2N_payload(logger, md, pd);
 			break;
 		default:
 			break;
@@ -1037,6 +1037,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 
 static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike_sa *ike)
 {
+	struct logger *logger = ike->sa.logger;
 	passert(ike->sa.st_state->v2.secured);
 	passert(md->hdr.isa_xchg != ISAKMP_v2_IKE_SA_INIT);
 
@@ -1094,7 +1095,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * Remember, the unprotected IKE_SA_INIT exchange was excluded
 	 * earlier, and the IKE SA is confirmed as secure.
 	 */
-	dbg("unpacking clear payload");
+	ldbg(logger, "unpacking clear payload");
 	passert(!md->message_payloads.parsed);
 	md->message_payloads =
 		ikev2_decode_payloads(ike->sa.logger, md,
@@ -1205,7 +1206,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		case FRAGMENT_IGNORED:
 			return;
 		case FRAGMENTS_MISSING:
-			dbg("waiting for more fragments");
+			ldbg(logger, "waiting for more fragments");
 			return;
 		case FRAGMENTS_COMPLETE:
 			break;
@@ -1240,6 +1241,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 
 void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
 	/*
 	 * The message successfully decrypted and passed integrity
 	 * protected so definitely sent by the other end of the
@@ -1301,7 +1303,7 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 		return;
 	}
 
-	dbg("selected state microcode %s", svm->story);
+	ldbg(logger, "selected state microcode %s", svm->story);
 
 	v2_dispatch(ike, md, svm);
 }
@@ -1325,7 +1327,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
 
-	dbg("calling processor %s", svm->story);
+	ldbg(logger, "calling processor %s", svm->story);
 
 	/*
 	 * XXX: for now pass in NULL for the child.
@@ -1359,6 +1361,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 					struct msg_digest *md,
 					const struct v2_transition *transition)
 {
+	struct logger *logger = ike->sa.logger;
 	passert(ike != NULL);
 
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
@@ -1500,7 +1503,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * indicate that a request is being sent and a
 		 * retransmit should already be scheduled.
 		 */
-		dbg("checking that a retransmit timeout_event was already");
+		ldbg(logger, "checking that a retransmit timeout_event was already");
 		event_delete(EVENT_v2_DISCARD, &ike->sa); /* relying on retransmit */
 		pexpect(ike->sa.st_v2_retransmit_event != NULL);
 		/* reverse polarity */
@@ -1854,7 +1857,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	stf_status (*resume)(struct ike_sa *ike) = arg;
 
 	if (st == NULL) {
-		dbg(" lost state for %s", story);
+		ldbg(&global_logger, " lost state for %s", story);
 		return;
 	}
 
@@ -1903,9 +1906,11 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 		/*
 		 * Danger! Processor did something dodgy like free ST!
+		 *
+		 * DO NOT USE ST; it is broken.
 		 */
-		dbg("processor '%s' for "PRI_SO" suppressed complete st_v2_transition",
-		    story, pri_so(old_st));
+		ldbg(&global_logger, "processor '%s' for "PRI_SO" suppressed complete st_v2_transition",
+		     story, pri_so(old_st));
 	} else {
 		complete_v2_state_transition(ike, NULL, e);
 	}
