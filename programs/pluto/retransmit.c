@@ -24,10 +24,10 @@
 #include "log.h"
 #include "iface.h"
 
-#define dbg_retransmit(ST, FMT, ...)					\
+#define ldbg_retransmit(ST, FMT, ...)					\
 	{								\
-		dbg(PRI_SO" %s: retransmits: "FMT,			\
-		    pri_so(st->st_serialno), st->st_state->name,	\
+		ldbg((ST)->logger, PRI_SO" %s: retransmits: "FMT,	\
+		     pri_so((ST)->st_serialno), st->st_state->name,	\
 		    ##__VA_ARGS__);					\
 	}
 
@@ -84,14 +84,14 @@ bool count_duplicate(struct state *st, unsigned long limit)
 	if (nr_retransmits < limit) {
 		double_delay(rt, nr_retransmits);
 		rt->nr_duplicate_replies++;
-		dbg_retransmit(st, "duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
-			       rt->nr_duplicate_replies, rt->nr_retransmits,
-			       limit, rt->limit);
+		ldbg_retransmit(st, "duplicate reply %lu + retransmit %lu of duplicate limit %lu (retransmit limit %lu)",
+				rt->nr_duplicate_replies, rt->nr_retransmits,
+				limit, rt->limit);
 		return true;
 	} else {
-		dbg_retransmit(st, "total duplicate replies (%lu) + retransmits (%lu) exceeds duplicate limit %lu (retransmit limit %lu)",
-			       rt->nr_duplicate_replies, +rt->nr_retransmits,
-			       limit, rt->limit);
+		ldbg_retransmit(st, "total duplicate replies (%lu) + retransmits (%lu) exceeds duplicate limit %lu (retransmit limit %lu)",
+				rt->nr_duplicate_replies, +rt->nr_retransmits,
+				limit, rt->limit);
 		return false;
 	}
 }
@@ -106,7 +106,7 @@ void clear_retransmits(struct state *st)
 	rt->start = monotime_epoch;
 	rt->timeout = deltatime(0);
 	event_delete(st->st_connection->config->ike_info->retransmit_event, st);
-	dbg_retransmit(st, "cleared");
+	ldbg_retransmit(st, "cleared");
 }
 
 void start_retransmits(struct state *st)
@@ -139,11 +139,11 @@ void start_retransmits(struct state *st)
 	event_schedule(st->st_connection->config->ike_info->retransmit_event, rt->delay, st);
 	deltatime_buf db, tb;
 	monotime_buf mb;
-	dbg_retransmit(st, "first event in %s seconds; timeout in %s seconds; limit of %lu retransmits; current time is %s",
-		       str_deltatime(rt->delay, &db),
-		       str_deltatime(rt->timeout, &tb),
-		       rt->limit,
-		       str_monotime(rt->start, &mb));
+	ldbg_retransmit(st, "first event in %s seconds; timeout in %s seconds; limit of %lu retransmits; current time is %s",
+			str_deltatime(rt->delay, &db),
+			str_deltatime(rt->timeout, &tb),
+			rt->limit,
+			str_monotime(rt->start, &mb));
 }
 
 /*
@@ -177,7 +177,7 @@ enum retransmit_action retransmit(struct state *st)
 	}
 
 	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp) {
-		dbg_retransmit(st, "TCP: retransmit skipped because TCP is handling retransmits");
+		ldbg_retransmit(st, "TCP: retransmit skipped because TCP is handling retransmits");
 		return RETRANSMIT_NO;
 	}
 
@@ -202,20 +202,20 @@ enum retransmit_action retransmit(struct state *st)
 	bool monotime_exceeds_limit = deltatime_cmp(waited, >=, rt->timeout);
 	monotime_buf mb;
 
-	dbg_retransmit(st, "current time %s", str_monotime(now, &mb));
+	ldbg_retransmit(st, "current time %s", str_monotime(now, &mb));
 	/* number of packets so far */
-	dbg_retransmit(st, "retransmit count %lu exceeds limit? %s", nr_retransmits,
-		       retransmit_count_exceeded ? "YES" : "NO");
+	ldbg_retransmit(st, "retransmit count %lu exceeds limit? %s", nr_retransmits,
+			retransmit_count_exceeded ? "YES" : "NO");
 	/* accumulated delay (ignores timewarp) */
 	deltatime_buf dt;
-	dbg_retransmit(st, "deltatime %s exceeds limit? %s",
-		       str_deltatime(rt->delays, &dt),
-		       deltatime_exceeds_limit ? "YES" : "NO");
+	ldbg_retransmit(st, "deltatime %s exceeds limit? %s",
+			str_deltatime(rt->delays, &dt),
+			deltatime_exceeds_limit ? "YES" : "NO");
 	/* waittime, perhaps went to sleep but can warp */
 	deltatime_buf wb;
-	dbg_retransmit(st, "monotime %s exceeds limit? %s",
-		       str_deltatime(waited, &wb),
-		       monotime_exceeds_limit ? "YES" : "NO");
+	ldbg_retransmit(st, "monotime %s exceeds limit? %s",
+			str_deltatime(waited, &wb),
+			monotime_exceeds_limit ? "YES" : "NO");
 
 	if (retransmit_count_exceeded ||
 	    monotime_exceeds_limit ||
