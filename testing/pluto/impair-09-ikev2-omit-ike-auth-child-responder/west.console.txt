@@ -6,26 +6,28 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
+ ipsec whack --impair revival
+west #
  echo "initdone"
 initdone
 west #
- ipsec whack --impair omit_v2_ike_auth_child
-west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request
+ ipsec up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}, initiating IKE_AUTH
-"westnet-eastnet-ipv4-psk-ikev2" #1: omitting CHILD SA payloads
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'
+"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH}
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: as expected, IKE_AUTH response omitted CHILD SA payloads
+"westnet-eastnet-ipv4-psk-ikev2" #2: IKE_AUTH response missing at least one of the Child SA payloads v2SA, v2TSi and v2TSr
+"westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state ESTABLISHED_IKE_SA
+"westnet-eastnet-ipv4-psk-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: revival: skip scheduling revival event
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (established IKE SA)
 west #
  echo done
 done
