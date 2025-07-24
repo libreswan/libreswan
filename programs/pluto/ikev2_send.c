@@ -89,12 +89,11 @@ void record_v2_outgoing_fragment(shunk_t fragment,
 	memcpy((*fragments)->ptr/*array*/, fragment.ptr, fragment.len);
 }
 
-void record_v2_message(struct pbs_out *msg,
-		       const char *what UNUSED,
-		       struct v2_outgoing_fragment **frags)
+void record_v2_message(shunk_t message, struct v2_outgoing_fragment **fragments,
+		       struct logger *logger)
 {
-	free_v2_outgoing_fragments(frags);
-	record_v2_outgoing_fragment(pbs_out_all(msg), frags, &global_logger);
+	free_v2_outgoing_fragments(fragments);
+	record_v2_outgoing_fragment(message, fragments, logger);
 }
 
 /*

@@ -1351,7 +1351,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 			return STF_INTERNAL_ERROR;
 		}
 		ldbg(sk->logger, "recording outgoing fragment failed");
-		record_v2_message(msg, what, outgoing_fragments);
+		record_v2_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
 	}
 	return STF_OK;
 }
@@ -1498,8 +1498,9 @@ bool close_and_record_v2_message(struct v2_message *message)
 		}
 		return true;
 	case UNENCRYPTED_PAYLOAD:
-		record_v2_message(&message->message, message->story,
-				  message->outgoing_fragments);
+		record_v2_message(pbs_out_all(&message->message),
+				  message->outgoing_fragments,
+				  message->logger);
 		return true;
 	}
 	bad_case(message->security);
