@@ -86,6 +86,7 @@ struct proposal_parser {
 struct proposal_policy {
 	enum ike_version version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
+	bool addke;	/* allow ADDKE* algorithms */
 	bool check_pfs_vs_ke;
 	bool ignore_parser_errors;
 	/*

@@ -363,22 +363,23 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	/*
 	 * Parse additional key exchanges.
 	 */
-	for (enum proposal_algorithm proposal_algorithm = PROPOSAL_addke1;
-	     proposal_algorithm <= PROPOSAL_addke7;
-	     proposal_algorithm++) {
-		if (!(parser->protocol->ke || impair.proposal_parser) ||
-		    tokens.this.ptr == NULL) {
-			break;
+	if (parser->policy->addke && tokens.this.ptr != NULL /*more*/) {
+		for (enum proposal_algorithm proposal_algorithm = PROPOSAL_addke1;
+		     proposal_algorithm <= PROPOSAL_addke7;
+		     proposal_algorithm++) {
+			if (tokens.this.ptr == NULL) {
+				break;
+			}
+			PARSE_ALG(tokens, proposal_algorithm, ke);
+			if (parser->diag != NULL) {
+				ldbgf(DBG_PROPOSAL_PARSER, logger,
+				      "...<addke%d> failed '%s'",
+				      proposal_algorithm - PROPOSAL_addke1 + 1,
+				      str_diag(parser->diag));
+				return PROPOSAL_ERROR;
+			}
+			remove_duplicate_algorithms(parser, proposal, proposal_algorithm);
 		}
-		PARSE_ALG(tokens, proposal_algorithm, ke);
-		if (parser->diag != NULL) {
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "...<addke%d> failed '%s'",
-			      proposal_algorithm - PROPOSAL_addke1 + 1,
-			      str_diag(parser->diag));
-			return PROPOSAL_ERROR;
-		}
-		remove_duplicate_algorithms(parser, proposal, proposal_algorithm);
 	}
 
 	/* end of token stream? */
