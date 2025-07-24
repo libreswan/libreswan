@@ -246,7 +246,7 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 		D(encrypt),
 		D(prf),
 		D(integ),
-		D(dh),
+		D(ke),
 #undef D
 	};
 	v1.enckeylen = proposal->algorithms[PROPOSAL_encrypt] != NULL ? proposal->algorithms[PROPOSAL_encrypt]->enckeylen : 0;
@@ -319,8 +319,8 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 		return PROPOSAL_prf;
 	} else if (alg->algo_type == IKE_ALG_INTEG) {
 		return PROPOSAL_integ;
-	} else if (alg->algo_type == IKE_ALG_DH) {
-		return PROPOSAL_dh;
+	} else if (alg->algo_type == IKE_ALG_KE) {
+		return PROPOSAL_ke;
 	} else {
 		llog_passert(&global_logger, HERE,
 			     "unexpected algorithm type %s",
@@ -328,20 +328,20 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 	}
 }
 
-void append_algorithm(struct proposal_parser *parser,
-		      struct proposal *proposal,
-		      const struct ike_alg *alg,
-		      int enckeylen)
+void append_algorithm_for(struct proposal_parser *parser,
+			  struct proposal *proposal,
+			  enum proposal_algorithm proposal_algorithm,
+			  const struct ike_alg *alg,
+			  int enckeylen)
 {
 	struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
 		ldbgf(DBG_PROPOSAL_PARSER, logger, "no algorithm to append");
 		return;
 	}
-	enum proposal_algorithm algorithm = ike_to_proposal_algorithm(alg);
-	passert(algorithm < elemsof(proposal->algorithms));
+	passert(proposal_algorithm < elemsof(proposal->algorithms));
 	/* find end */
-	struct algorithm **end = &proposal->algorithms[algorithm];
+	struct algorithm **end = &proposal->algorithms[proposal_algorithm];
 	while ((*end) != NULL) {
 		end = &(*end)->next;
 	}
@@ -354,6 +354,17 @@ void append_algorithm(struct proposal_parser *parser,
 	      parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
 	      enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
+}
+
+void append_algorithm(struct proposal_parser *parser,
+		      struct proposal *proposal,
+		      const struct ike_alg *alg,
+		      int enckeylen)
+{
+	append_algorithm_for(parser, proposal,
+			     ike_to_proposal_algorithm(alg),
+			     alg,
+			     enckeylen);
 }
 
 void remove_duplicate_algorithms(struct proposal_parser *parser,
@@ -399,74 +410,90 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 	}
 }
 
-void jam_proposal(struct jambuf *log,
-		  const struct proposal *proposal)
+static const char *jam_proposal_algorithm(struct jambuf *buf,
+					  const struct proposal *proposal,
+					  enum proposal_algorithm proposal_algorithm,
+					  const char *algorithm_separator)
 {
-	const char *ps = "";	/* proposal separator */
-	const char *as;	/* attribute separator (within a proposal) */
-#	define startprop() { as = ps; }
-#	define jamsep() { jam_string(log, as); ps = "-"; as = "+"; }
-
-	as = ps;
-	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
-		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
-		jamsep();
-		jam_string(log, encrypt->common.fqn);
-		if (alg->enckeylen != 0) {
-			jam(log, "_%d", alg->enckeylen);
+	size_t s = 0;
+	const char *separator = algorithm_separator;
+	for (struct algorithm *algorithm = next_algorithm(proposal, proposal_algorithm, NULL);
+	     algorithm != NULL; algorithm = next_algorithm(proposal, proposal_algorithm, algorithm)) {
+		jam_string(buf, separator); separator = "+"; algorithm_separator = "-";
+		s += jam_string(buf, algorithm->desc->fqn);
+		if (algorithm->enckeylen != 0) {
+			s += jam(buf, "_%d", algorithm->enckeylen);
 		}
 	}
-
-	startprop();
-	/* ESP, or AEAD */
-	bool print_integ = (impair.proposal_parser ||
-			    /* no PRF */
-			    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL ||
-			    /* AEAD when not NONE */
-			    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)));
-	/* non-AEAD when PRF and INTEG don't match */
-	if (!print_integ && proposal_encrypt_norm(proposal)) {
-		for (struct algorithm *integ = next_algorithm(proposal, PROPOSAL_integ, NULL),
-			     *prf = next_algorithm(proposal, PROPOSAL_prf, NULL);
-		     !print_integ && (integ != NULL || prf != NULL);
-		     integ = next_algorithm(proposal, PROPOSAL_integ, integ),
-			     prf = next_algorithm(proposal, PROPOSAL_prf, prf)) {
-			print_integ = (integ == NULL || prf == NULL ||
-				       &integ_desc(integ->desc)->prf->common != prf->desc);
-		}
-	}
-	if (print_integ) {
-		FOR_EACH_ALGORITHM(proposal, integ, alg) {
-			const struct integ_desc *integ = integ_desc(alg->desc);
-			jamsep();
-			jam_string(log, integ->common.fqn);
-		}
-	}
-
-	startprop();
-	FOR_EACH_ALGORITHM(proposal, prf, alg) {
-		const struct prf_desc *prf = prf_desc(alg->desc);
-		jamsep();
-		jam_string(log, prf->common.fqn);
-	}
-
-	startprop();
-	FOR_EACH_ALGORITHM(proposal, dh, alg) {
-		const struct dh_desc *dh = dh_desc(alg->desc);
-		jamsep();
-		jam_string(log, dh->common.fqn);
-	}
-
-#	undef startprop
-#	undef jamsep
+	return algorithm_separator;
 }
 
-void jam_proposals(struct jambuf *log, const struct proposals *proposals)
+void jam_proposal(struct jambuf *buf,
+		  const struct proposal *proposal)
+{
+	const char *algorithm_separator = "";
+	for (enum proposal_algorithm proposal_algorithm = 0;
+	     proposal_algorithm < PROPOSAL_ALGORITHM_ROOF; proposal_algorithm++) {
+
+		/*
+		 * Should integrity be skipped?
+		 */
+
+		if (!impair.proposal_parser &&
+		    proposal_algorithm == PROPOSAL_integ) {
+
+			/*
+			 * Don't include -NONE- as it gives the
+			 * appearance of no integrity.
+			 *
+			 * But for output compat reasons, do include
+			 * NONE when there's no PRF.
+			 */
+			if (proposal_encrypt_aead(proposal) &&
+			    proposal_integ_none(proposal) &&
+			    next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL) {
+				continue;
+			}
+
+			/*
+			 * Walk INTEG and PRF to see if they are
+			 * consistent; when they are skip integ.
+			 */
+			struct algorithm *integ = NULL;
+			struct algorithm *prf = NULL;
+			bool integ_matches_prf = true;
+			while (true) {
+				prf = next_algorithm(proposal, PROPOSAL_prf, prf);
+				integ = next_algorithm(proposal, PROPOSAL_integ, integ);
+				if (prf == NULL && integ == NULL) {
+					break;
+				}
+				if (prf == NULL || integ == NULL) {
+					/* i.e., only one is present */
+					integ_matches_prf = false;
+					break;
+				}
+				if (&integ_desc(integ->desc)->prf->common != prf->desc) {
+					/* i.e., prf and integ are different */
+					integ_matches_prf = false;
+					break;
+				}
+			}
+			if (integ_matches_prf) {
+				continue;
+			}
+		}
+
+		algorithm_separator = jam_proposal_algorithm(buf, proposal, proposal_algorithm, algorithm_separator);
+	}
+}
+
+void jam_proposals(struct jambuf *buf, const struct proposals *proposals)
 {
 	const char *sep = "";
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		jam_string(log, sep);
-		jam_proposal(log, proposal);
+		jam_string(buf, sep);
+		jam_proposal(buf, proposal);
 		sep = ", ";
 	}
 }
@@ -475,32 +502,32 @@ void jam_proposals(struct jambuf *log, const struct proposals *proposals)
  * When PFS=no ignore any DH algorithms, and when PFS=yes reject
  * mixing implicit and explicit DH.
  */
-static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
+static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				      struct proposals *proposals)
 {
 	/* scrape the proposals for dh algorithms */
 	const struct proposal *first_null = NULL;
 	const struct proposal *first_none = NULL;
-	const struct ike_alg *first_dh = NULL;
-	const struct ike_alg *second_dh = NULL;
+	const struct ike_alg *first_ke = NULL;
+	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		if (proposal->algorithms[PROPOSAL_dh] == NULL) {
+		if (proposal->algorithms[PROPOSAL_ke] == NULL) {
 			if (first_null == NULL) {
 				first_null = proposal;
 			}
-		} else if (proposal->algorithms[PROPOSAL_dh]->desc == &ike_alg_dh_none.common) {
+		} else if (proposal->algorithms[PROPOSAL_ke]->desc == &ike_alg_ke_none.common) {
 			if (first_none == NULL) {
 				first_none = proposal;
 			}
-		} else if (first_dh == NULL) {
-			first_dh = proposal->algorithms[PROPOSAL_dh]->desc;
-		} else if (second_dh == NULL &&
-			   first_dh != proposal->algorithms[PROPOSAL_dh]->desc) {
-			second_dh = proposal->algorithms[PROPOSAL_dh]->desc;
+		} else if (first_ke == NULL) {
+			first_ke = proposal->algorithms[PROPOSAL_ke]->desc;
+		} else if (second_ke == NULL &&
+			   first_ke != proposal->algorithms[PROPOSAL_ke]->desc) {
+			second_ke = proposal->algorithms[PROPOSAL_ke]->desc;
 		}
 	}
 
-	if (first_dh == NULL && first_none == NULL) {
+	if (first_ke == NULL && first_none == NULL) {
 		/* no DH is always ok */
 		return true;
 	}
@@ -517,13 +544,13 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 	 * Check this early so that a conflict with PFS=no code gets
 	 * reported before anything else.
 	 */
-	if (!parser->policy->pfs && (first_dh != NULL || first_none != NULL)) {
+	if (!parser->policy->pfs && (first_ke != NULL || first_none != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *dh = NULL;
-			if (proposal->algorithms[PROPOSAL_dh] != NULL) {
-				dh = proposal->algorithms[PROPOSAL_dh]->desc;
+			if (proposal->algorithms[PROPOSAL_ke] != NULL) {
+				dh = proposal->algorithms[PROPOSAL_ke]->desc;
 			}
-			if (dh == &ike_alg_dh_none.common) {
+			if (dh == &ike_alg_ke_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
 					    "ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
 					    parser->protocol->name);
@@ -532,7 +559,7 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 					    "ignoring %s DH algorithm %s as PFS policy is disabled",
 					    parser->protocol->name, dh->fqn);
 			}
-			free_algorithms(proposal, PROPOSAL_dh);
+			free_algorithms(proposal, PROPOSAL_ke);
 		}
 		return true;
 	}
@@ -559,11 +586,11 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 		/*
 		 * IKEv1 only allows one DH algorithm.
 		 */
-		if (first_dh != NULL && second_dh != NULL) {
+		if (first_ke != NULL && second_ke != NULL) {
 			proposal_error(parser, "more than one IKEv1 %s DH algorithm (%s, %s) is not allowed in quick mode",
 				       parser->protocol->name,
-				       first_dh->fqn,
-				       second_dh->fqn);
+				       first_ke->fqn,
+				       second_ke->fqn);
 			if (!impair_proposal_errors(parser)) {
 				return false;
 			}
@@ -574,11 +601,11 @@ static bool proposals_pfs_vs_dh_check(struct proposal_parser *parser,
 		/*
 		 * IKEv2, only implements one DH algorithm.
 		 */
-		if (first_dh != NULL && second_dh != NULL) {
+		if (first_ke != NULL && second_ke != NULL) {
 			proposal_error(parser, "more than one IKEv2 %s DH algorithm (%s, %s) requires unimplemented CHILD_SA INVALID_KE",
 				       parser->protocol->name,
-				       first_dh->fqn,
-				       second_dh->fqn);
+				       first_ke->fqn,
+				       second_ke->fqn);
 			if (!impair_proposal_errors(parser)) {
 				return false;
 			}
@@ -641,8 +668,8 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 		free_proposals(&proposals);
 		return NULL;
 	}
-	if (parser->policy->check_pfs_vs_dh &&
-	    !proposals_pfs_vs_dh_check(parser, proposals)) {
+	if (parser->policy->check_pfs_vs_ke &&
+	    !proposals_pfs_vs_ke_check(parser, proposals)) {
 		passert(parser->diag != NULL);
 		free_proposals(&proposals);
 		return NULL;

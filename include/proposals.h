@@ -46,9 +46,26 @@ enum stream;
  */
 enum proposal_algorithm {
 	PROPOSAL_encrypt,
-	PROPOSAL_prf,
+
+	/*
+	 * XXX: order INTEG before PRF so it is displayed first.
+	 *
+	 * The parser interprets AES-SHA1-SHA2 as ENCR-INTEG-PRF.
+	 * Putting INTEG before PRF causes jam_proposal() to be
+	 * consistent.
+	 */
 	PROPOSAL_integ,
-	PROPOSAL_dh,
+	PROPOSAL_prf,
+
+	PROPOSAL_ke,
+
+	PROPOSAL_addke1,
+	PROPOSAL_addke2,
+	PROPOSAL_addke3,
+	PROPOSAL_addke4,
+	PROPOSAL_addke5,
+	PROPOSAL_addke6,
+	PROPOSAL_addke7,
 	PROPOSAL_ALGORITHM_ROOF,
 };
 
@@ -69,7 +86,8 @@ struct proposal_parser {
 struct proposal_policy {
 	enum ike_version version;
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
-	bool check_pfs_vs_dh;
+	bool addke;	/* allow ADDKE* algorithms */
+	bool check_pfs_vs_ke;
 	bool ignore_parser_errors;
 	/*
 	 * According to current policy, is the algorithm ok
@@ -102,7 +120,7 @@ struct proposal_defaults {
 	 * Algorithms to add to the proposal when they were not
 	 * specified by the proposal string.
 	 */
-	const struct ike_alg **dh;
+	const struct ike_alg **ke;
 	const struct ike_alg **prf;
 	const struct ike_alg **integ;
 	const struct ike_alg **encrypt;
@@ -136,7 +154,7 @@ struct proposal_protocol {
 	bool encrypt;
 	bool prf;
 	bool integ;
-	bool dh;
+	bool ke;
 };
 
 /*
@@ -170,6 +188,9 @@ void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorith
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
 		      const struct ike_alg *alg, int enckeylen);
+void append_algorithm_for(struct proposal_parser *parser, struct proposal *proposal,
+			  enum proposal_algorithm algorithm,
+			  const struct ike_alg *alg, int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
 				 enum proposal_algorithm algorithm);
@@ -265,7 +286,7 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct dh_desc *dh;
+	const struct dh_desc *ke;
 	const struct proposal_protocol *protocol;
 };
 

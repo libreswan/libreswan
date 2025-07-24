@@ -125,12 +125,13 @@ static bool merge_defaults(struct proposal_parser *parser,
 			}
 		}
 	}
-	merge_algorithms(parser, proposal, PROPOSAL_dh, defaults->dh);
+	merge_algorithms(parser, proposal, PROPOSAL_ke, defaults->ke);
 	return true;
 }
 
 static bool parse_alg(struct proposal_parser *parser,
 		      struct proposal *proposal,
+		      enum proposal_algorithm algorithm,
 		      const struct ike_alg_type *alg_type,
 		      shunk_t token)
 {
@@ -146,7 +147,7 @@ static bool parse_alg(struct proposal_parser *parser,
 	if (alg == NULL) {
 		return warning_or_false(parser, ike_alg_type_name(alg_type), token);
 	}
-	append_algorithm(parser, proposal, alg, 0/*enckeylen*/);
+	append_algorithm_for(parser, proposal, algorithm, alg, 0/*enckeylen*/);
 	return true;
 }
 
@@ -225,15 +226,15 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	}
 
 	/* Error left in parser->diag */
-#define PARSE_ALG(TOKENS, ALG)						\
+#define PARSE_ALG(TOKENS, PROPOSAL_ALG, ALG)				\
 	passert(parser->diag == NULL); /* so far so good */		\
 	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing "#ALG":");		\
-	if (parse_alg(parser, proposal,					\
+	if (parse_alg(parser, proposal, PROPOSAL_ALG,			\
 		      &ike_alg_##ALG, TOKENS.this)) {			\
 		passert(parser->diag == NULL);				\
 		proposal_next_token(&TOKENS);				\
 		while (TOKENS.prev_term == '+' &&			\
-		       parse_alg(parser, proposal,			\
+		       parse_alg(parser, proposal, PROPOSAL_ALG,	\
 				 &ike_alg_##ALG, TOKENS.this)) {	\
 			passert(parser->diag == NULL);			\
 			proposal_next_token(&TOKENS);			\
@@ -265,7 +266,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.prev_term != ';' /*!DH*/) {
 		/* not impaired */
 		struct proposal_tokenizer prf_tokens = tokens;
-		PARSE_ALG(prf_tokens, prf);
+		PARSE_ALG(prf_tokens, PROPOSAL_prf, prf);
 		if (parser->diag == NULL) {
 			/* advance */
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
@@ -294,7 +295,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.prev_term != ';' /*!DH*/ &&
 	    /* <encr>-<PRF> either failed or wasn't needed */
 	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
-		PARSE_ALG(tokens, integ);
+		PARSE_ALG(tokens, PROPOSAL_integ, integ);
 		if (parser->diag != NULL) {
 			if (prf_diag != NULL) {
 				ldbgf(DBG_PROPOSAL_PARSER, logger,
@@ -328,7 +329,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.prev_term != ';' /*!DH*/ &&
 	    /* above parsed integrity */
 	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
-		PARSE_ALG(tokens, prf);
+		PARSE_ALG(tokens, PROPOSAL_prf, prf);
 		if (parser->diag != NULL) {
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
@@ -348,15 +349,37 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 *
 	 * But only when <encr>-<PRF> didn't succeed.
 	 */
-	if ((parser->protocol->dh || impair.proposal_parser) &&
+	if ((parser->protocol->ke || impair.proposal_parser) &&
 	    tokens.this.ptr != NULL /*more*/) {
-		PARSE_ALG(tokens, dh);
+		PARSE_ALG(tokens, PROPOSAL_ke, ke);
 		if (parser->diag != NULL) {
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "...<dh> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
 		}
-		remove_duplicate_algorithms(parser, proposal, PROPOSAL_dh);
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_ke);
+	}
+
+	/*
+	 * Parse additional key exchanges.
+	 */
+	if (parser->policy->addke && tokens.this.ptr != NULL /*more*/) {
+		for (enum proposal_algorithm proposal_algorithm = PROPOSAL_addke1;
+		     proposal_algorithm <= PROPOSAL_addke7;
+		     proposal_algorithm++) {
+			if (tokens.this.ptr == NULL) {
+				break;
+			}
+			PARSE_ALG(tokens, proposal_algorithm, ke);
+			if (parser->diag != NULL) {
+				ldbgf(DBG_PROPOSAL_PARSER, logger,
+				      "...<addke%d> failed '%s'",
+				      proposal_algorithm - PROPOSAL_addke1 + 1,
+				      str_diag(parser->diag));
+				return PROPOSAL_ERROR;
+			}
+			remove_duplicate_algorithms(parser, proposal, proposal_algorithm);
+		}
 	}
 
 	/* end of token stream? */

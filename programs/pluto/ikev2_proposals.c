@@ -2125,12 +2125,12 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 				 force_dh->common.id[IKEv2_ALG_ID], 0);
-	} else if (next_algorithm(proposal, PROPOSAL_dh, NULL) != NULL) {
+	} else if (next_algorithm(proposal, PROPOSAL_ke, NULL) != NULL) {
 		/*
 		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
 		 * DH was specified on the esp= line.
 		 */
-		FOR_EACH_ALGORITHM(proposal, dh, alg) {
+		FOR_EACH_ALGORITHM(proposal, ke, alg) {
 			const struct dh_desc *dh = dh_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
@@ -2285,7 +2285,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * pass=2.
 			 */
 			if (pass == 2 && default_dh == &ike_alg_dh_none &&
-			    next_algorithm(proposal, PROPOSAL_dh, NULL) == NULL) {
+			    next_algorithm(proposal, PROPOSAL_ke, NULL) == NULL) {
 				/*
 				 * First pass didn't include DH.
 				 */
@@ -2534,7 +2534,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * the need to only look at the first proposal.
 	 */
 	struct proposal *proposal = next_proposal(cc->config->child.proposals.p, NULL);
-	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_dh, NULL);
+	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_ke, NULL);
 
 	struct ikev2_proposals *proposals;
 	if (ike_auth_child_rekey_needs_dh && cc->config->pfs_rekey_workaround) {
