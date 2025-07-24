@@ -19,6 +19,7 @@ static enum ike_version ike_version = IKEv2;
 static bool ignore_parser_errors = false;
 static bool fips = false;
 static bool pfs = false;
+static bool addke = false;
 static int failures = 0;
 
 #define ERROR 124
@@ -79,6 +80,9 @@ static void check(const struct protocol *protocol,
 	if (fips) {
 		printf("-fips ");
 	}
+	if (addke) {
+		printf("-addke ");
+	}
 	switch (ike_version) {
 	case IKEv1: printf("-v1 "); break;
 	case IKEv2: printf("-v2 "); break;
@@ -105,6 +109,7 @@ static void check(const struct protocol *protocol,
 		.version = ike_version,
 		.alg_is_ok = protocol->alg_is_ok,
 		.pfs = pfs,
+		.addke = addke,
 		.stream = WHACK_STREAM,
 		.logger = logger,
 		.check_pfs_vs_ke = protocol->pfs_vs_dh,
@@ -405,6 +410,8 @@ static void test_esp(struct logger *logger)
 	esp(true, "3des-sha1;modp8192,3des-sha2;modp8192");
 	esp(!pfs, "3des-sha1-modp8192,3des-sha2-modp2048");
 
+	esp(addke && ike_version == IKEv2, "aes_gcm;modp2048-modp2048");
+
 #undef esp
 }
 
@@ -456,6 +463,8 @@ static void test_ah(struct logger *logger)
 	ah(impaired, "aes_ccm");
 #endif
 	ah(false, "ripemd"); /* support removed */
+
+	ah(addke && ike_version == IKEv2, "sha2;modp2048-modp2048");
 
 #undef ah
 }
@@ -541,6 +550,8 @@ static void test_ike(struct logger *logger)
 	ike(false, "aes+;"); /* empty algorithm */
 	ike(false, "aes++"); /* empty algorithm */
 
+	ike(addke && ike_version == IKEv2, "aes_gcm-sha2;modp2048-modp2048");
+
 #undef ike
 }
 
@@ -578,6 +589,8 @@ static void usage(void)
 		"    -v2 | -ikev2: configure for IKEv2 (default)\n"
 		"    -v1 | -ikev1: configure for IKEv1\n"
 		"    -pfs | -pfs=yes | -pfs=no: specify PFS (perfect forward privicy)\n"
+		"         default: no\n"
+		"    -addke | -addke=yes | -addke=no: specify additional Key Exchange algorithms\n"
 		"         default: no\n"
 		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
 		"         default: determined by system environment\n"
@@ -638,6 +651,10 @@ int main(int argc, char *argv[])
 			pfs = true;
 		} else if (streq(arg, "pfs=no") || streq(arg, "pfs=off")) {
 			pfs = false;
+		} else if (streq(arg, "addke") || streq(arg, "addke=yes") || streq(arg, "addke=on")) {
+			addke = true;
+		} else if (streq(arg, "addke=no") || streq(arg, "addke=off")) {
+			addke = false;
 		} else if (streq(arg, "fips") || streq(arg, "fips=yes") || streq(arg, "fips=on")) {
 			set_fips_mode(FIPS_MODE_ON);
 		} else if (streq(arg, "fips=no") || streq(arg, "fips=off")) {
