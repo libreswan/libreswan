@@ -145,20 +145,18 @@ void process_md(struct msg_digest *md)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		llog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
+		limited_llog_md(md, "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 	{
 		if (global_ikev1_policy == GLOBAL_IKEv1_DROP) {
-			llog_md(md,
-			     "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
+			limited_llog_md(md, "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
 		if (global_ikev1_policy == GLOBAL_IKEv1_REJECT) {
-			llog_md(md,
-			     "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
+			limited_llog_md(md, "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
 			return;
 		}
@@ -178,8 +176,7 @@ void process_md(struct msg_digest *md)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			llog_md(md,
-			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
+			limited_llog_md(md, "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
 			return;
 		}
@@ -203,8 +200,7 @@ void process_md(struct msg_digest *md)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			llog_md(md,
-			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
+			limited_llog_md(md, "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
 		name_buf xb;
 		ldbg(md->logger,
@@ -460,8 +456,8 @@ void llog_msg_digest(enum stream stream, struct logger *logger, const char *pref
 	}
 }
 
-void llog_md(const struct msg_digest *md,
-	     const char *message, ...)
+void limited_llog_md(const struct msg_digest *md,
+		     const char *message, ...)
 {
 	enum stream stream = log_limiter_stream(md->logger, MD_LOG_LIMITER);
 	if (stream != NO_STREAM) {

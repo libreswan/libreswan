@@ -302,7 +302,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	if (pluto_drop_oppo_null) {
 		for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2V]; p != NULL; p = p->next) {
 			if (vid_is_oppo(pbs_in_left(&p->pbs))) {
-				llog_md(md, "dropped IKE request for Opportunistic IPsec by global policy");
+				limited_llog_md(md, "dropped IKE request for Opportunistic IPsec by global policy");
 				return;
 			}
 		}
@@ -387,7 +387,7 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 	 * i.e., in the response I must be clear
 	 */
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
-		llog_md(md, "IKE_SA_INIT response has I (IKE Initiator) flag set; dropping packet");
+		limited_llog_md(md, "IKE_SA_INIT response has I (IKE Initiator) flag set; dropping packet");
 		return;
 	}
 
@@ -567,7 +567,7 @@ void process_v2_UNSECURED_message(struct msg_digest *md)
 	 * zero.
 	 */
 	if (md->hdr.isa_msgid != 0) {
-		llog_md(md, "IKE_SA_INIT message has non-zero message ID; dropping packet");
+		limited_llog_md(md, "IKE_SA_INIT message has non-zero message ID; dropping packet");
 		return;
 	}
 	/*

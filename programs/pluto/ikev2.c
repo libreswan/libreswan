@@ -684,10 +684,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * Processing of the response was completed so drop as
 		 * too old.
 		 *
-		 * XXX: Should be llog_md() but that shows up in the
-		 * whack output.  While "correct" it messes with test
-		 * output.  The old log line didn't show up because
-		 * current-state wasn't set.
+		 * XXX: Should be limited_llog_md() but that shows up
+		 * in the whack output.  While "correct" it messes
+		 * with test output.  The old log line didn't show up
+		 * because current-state wasn't set.
 		 *
 		 * Here's roughly why INITIATOR can be non-NULL:
 		 *
@@ -879,9 +879,9 @@ void ikev2_process_packet(struct msg_digest *md)
 					    expected_local_ike_role);
 	if (ike == NULL) {
 		name_buf ixb;
-		llog_md(md, "%s %s has no corresponding IKE SA; message dropped",
-			str_enum_short(&ikev2_exchange_names, ix, &ixb),
-			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		limited_llog_md(md, "%s %s has no corresponding IKE SA; message dropped",
+				str_enum_short(&ikev2_exchange_names, ix, &ixb),
+				v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 
@@ -910,10 +910,10 @@ void ikev2_process_packet(struct msg_digest *md)
 	if (!ike->sa.st_state->v2.secured) {
 		name_buf ixb;
 		/* there's no rate_llog() */
-		llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
-			pri_so(ike->sa.st_serialno),
-			str_enum_short(&ikev2_exchange_names, ix, &ixb),
-			v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
+		limited_llog_md(md, "IKE SA "PRI_SO" for %s %s has not been secured; message dropped",
+				pri_so(ike->sa.st_serialno),
+				str_enum_short(&ikev2_exchange_names, ix, &ixb),
+				v2_msg_role(md) == MESSAGE_REQUEST ? "request" : "response");
 		return;
 	}
 
