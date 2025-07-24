@@ -393,7 +393,10 @@ kvmplutotest	ikev2-impair-06-send-no-ike-ke		good
 kvmplutotest	ikev1-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-07-send-empty-ike-ke	good
 kvmplutotest	ikev2-impair-08-ignore-reserved		good
-kvmplutotest	ikev2-impair-09-omit-first-child	good
+
+kvmplutotest	impair-09-ikev2-omit-ike-auth-child-initiator		good
+kvmplutotest	impair-09-ikev2-omit-ike-auth-child-responder		good
+
 kvmplutotest	ikev2-impair-10-nr-ts-selectors		good
 
 kvmplutotest	impair-08-ikev1-key-length-attribute	good

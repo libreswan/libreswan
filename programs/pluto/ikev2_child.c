@@ -1069,22 +1069,10 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
 		if (has_v2_IKE_AUTH_child_payloads(md)) {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "IMPAIR: IKE_AUTH request should have omitted CHILD SA payloads");
-			return false; /* fatal */
+			llog(RC_LOG, ike->sa.logger, "IMPAIR: ignoring Child SA payloads");
+		} else {
+			llog(RC_LOG, ike->sa.logger, "IMPAIR: no Child SA payloads to ignore");
 		}
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: as expected, IKE_AUTH request omitted CHILD SA payloads");
-		return true;
-	}
-
-	if (impair.ignore_v2_ike_auth_child) {
-		/* try to ignore the child */
-		if (!has_v2_IKE_AUTH_child_payloads(md)) {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "IMPAIR: IKE_AUTH request should have included CHILD_SA payloads");
-			return false; /* fatal */
-		}
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: as expected, IKE_AUTH request included CHILD SA payloads; ignoring them");
 		return true;
 	}
 
@@ -1140,17 +1128,6 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 							      struct msg_digest *response_md)
 {
 	v2_notification_t n;
-
-	if (impair.ignore_v2_ike_auth_child) {
-		/* Try to ignore the CHILD SA payloads. */
-		if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
-			llog_pexpect(ike->sa.logger, HERE,
-				     "IMPAIR: IKE_AUTH response should have included CHILD SA payloads");
-			return v2N_INVALID_SYNTAX; /* fatal */
-		}
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: as expected, IKE_AUTH response includes CHILD SA payloads; ignoring them");
-		return v2N_NOTHING_WRONG;
-	}
 
 	if (impair.omit_v2_ike_auth_child) {
 		/* Try to ignore missing CHILD SA payloads. */
@@ -1236,19 +1213,13 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 	}
 
 	/*
-	 * XXX: remote approved the Child SA; now check that what was
-	 * approved is acceptable to this local end.  If it isn't
-	 * return a notification.
-	 *
-	 * Code should be initiating a new exchange that contains the
-	 * notification; later.
+	 * Requested a Child SA, since peer didn't reject it (see
+	 * above), there should be Child SA payloads in the response.
 	 */
 
-	/* Expect CHILD SA payloads. */
 	if (!has_v2_IKE_AUTH_child_payloads(response_md)) {
-		llog_sa(RC_LOG, child,
-			"IKE_AUTH response missing v2SA, v2TSi or v2TSr: not attempting to setup CHILD SA");
-		return v2N_TS_UNACCEPTABLE;
+		llog_sa(RC_LOG, child, "IKE_AUTH response missing at least one of the Child SA payloads v2SA, v2TSi and v2TSr");
+		return v2N_INVALID_SYNTAX;	/* fatal */
 	}
 
 	/* AUTH is ok, we can trust the notify payloads */

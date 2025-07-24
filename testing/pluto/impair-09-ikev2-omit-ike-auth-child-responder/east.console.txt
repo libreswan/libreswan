@@ -1,0 +1,18 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec whack --impair omit_v2_ike_auth_child
+east #
+ ipsec add westnet-eastnet-ipv4-psk-ikev2
+"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && grep "byte at offset" /tmp/pluto.log
+east #

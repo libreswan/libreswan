@@ -323,7 +323,6 @@ struct impairment impairments[] = {
 	  "force the use of the specified IKEv2 AUTH method"),
 
 	B(omit_v2_ike_auth_child, "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
-	B(ignore_v2_ike_auth_child, "ignore, but do expect, CHILD SA payloads in the IKE_AUTH message"),
 
 	/*
 	 * Trigger global event.
