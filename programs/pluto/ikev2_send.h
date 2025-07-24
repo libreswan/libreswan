@@ -99,9 +99,9 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 			      emit_v2_response_fn *emit_v2_response,
 			      struct emit_v2_response_context *context);
 
-void record_v2_outgoing_fragment(struct pbs_out *pbs,
-				 const char *what,
-				 struct v2_outgoing_fragment **frags);
+void record_v2_outgoing_fragment(shunk_t fragment,
+				 struct v2_outgoing_fragment **fragments,
+				 struct logger *logger);
 void record_v2_message(struct pbs_out *msg,
 		       const char *what,
 		       struct v2_outgoing_fragment **outgoing_fragments);

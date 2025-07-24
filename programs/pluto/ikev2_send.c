@@ -78,24 +78,23 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	return true;
 }
 
-void record_v2_outgoing_fragment(struct pbs_out *pbs,
-				 const char *what UNUSED,
-				 struct v2_outgoing_fragment **frags)
+void record_v2_outgoing_fragment(shunk_t fragment,
+				 struct v2_outgoing_fragment **fragments,
+				 struct logger *logger)
 {
-	pexpect(*frags == NULL);
-	shunk_t frag = pbs_out_all(pbs);
-	*frags = overalloc_thing(struct v2_outgoing_fragment, frag.len);
-	ldbg_alloc(&global_logger, "frags", *frags, HERE);
-	(*frags)->len = frag.len;
-	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
+	pexpect((*fragments) == NULL);
+	(*fragments) = overalloc_thing(struct v2_outgoing_fragment, fragment.len);
+	ldbg_alloc(logger, "fragments", (*fragments), HERE);
+	(*fragments)->len = fragment.len;
+	memcpy((*fragments)->ptr/*array*/, fragment.ptr, fragment.len);
 }
 
 void record_v2_message(struct pbs_out *msg,
-		       const char *what,
+		       const char *what UNUSED,
 		       struct v2_outgoing_fragment **frags)
 {
 	free_v2_outgoing_fragments(frags);
-	record_v2_outgoing_fragment(msg, what, frags);
+	record_v2_outgoing_fragment(pbs_out_all(msg), frags, &global_logger);
 }
 
 /*

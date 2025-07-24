@@ -1194,7 +1194,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	}
 
 	ldbg(ike->sa.logger, "recording fragment %u", number);
-	record_v2_outgoing_fragment(&message_fragment.pbs, desc, fragp);
+	record_v2_outgoing_fragment(pbs_out_all(&message_fragment.pbs), fragp, logger);
 	return true;
 }
 
