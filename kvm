@@ -353,11 +353,19 @@ while test $# -gt 0 ; do
 
 	# wrappers
 	modified )
-	    modified=$(git status testing/pluto/ \
-			   | awk '/(modified|deleted|renamed|new file):/ { print $NF }' \
-			   | grep '/.*/.*/' \
-			   | cut -d/ -f1-3 \
-			   | sort -u)
+	    modified=$({
+			  git status testing/pluto/*/
+		      } | {
+			  awk '/(modified|deleted|renamed|new file):/ { print $NF }'
+		      } | {
+			  cut -d/ -f1-3
+		      } | {
+			  sort -u
+		      } | {
+			  while read d ; do
+			      test -d $d && echo $d;
+			  done
+		      })
 	    if test -z "${modified}" ; then
 		echo "no modified tests" 1>&2
 		exit 1
