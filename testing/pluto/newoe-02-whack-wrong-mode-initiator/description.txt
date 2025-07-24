@@ -1,1 +1,8 @@
-basic OE test triggered by whack (not a packet) but with wrong mode
+OE on-demand but with initiator trying to use transport mode
+
+- responder declines transport mode, falling back to tunnel mode
+
+- initiator rejects response as it isn't transport mode
+
+- since Child SA was rejected and IKE SA is on-demand (lacks +UP),
+  delete IKE SA and send notification
