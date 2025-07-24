@@ -139,12 +139,12 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	 * function (PRF) (We can check for minimum 128bit length).
 	 */
 	if (md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
-		llog_md(md, "DDOS cookie requires Ni paylod - dropping message");
+		limited_llog_md(md, "DDOS cookie requires Ni paylod - dropping message");
 		return true; /* reject cookie */
 	}
 	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
-		llog_md(md, "DOS cookie failed as Ni payload invalid - dropping message");
+		limited_llog_md(md, "DOS cookie failed as Ni payload invalid - dropping message");
 		return true; /* reject cookie */
 	}
 
@@ -177,7 +177,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	if (cookie_header->isan_protoid != 0 ||
 	    cookie_header->isan_spisize != 0 ||
 	    cookie_header->isan_length != sizeof(v2_cookie_t) + sizeof(struct ikev2_notify)) {
-		llog_md(md, "DOS cookie notification corrupt, or invalid - dropping message");
+		limited_llog_md(md, "DOS cookie notification corrupt, or invalid - dropping message");
 		return true; /* reject cookie */
 	}
 	shunk_t remote_cookie = pbs_in_left(&cookie_digest->pbs);
@@ -188,7 +188,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	}
 
 	if (!hunk_eq(local_cookie, remote_cookie)) {
-		llog_md(md, "DOS cookies do not match - dropping message");
+		limited_llog_md(md, "DOS cookies do not match - dropping message");
 		return true; /* reject cookie */
 	}
 	ldbg(logger, "cookies match");

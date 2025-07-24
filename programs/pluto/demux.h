@@ -258,7 +258,7 @@ void llog_msg_digest(enum stream stream, struct logger *logger,
 		     const char *prefix, const struct msg_digest *md);
 
 /* rate limited logging */
-void llog_md(const struct msg_digest *md, const char *message, ...) PRINTF_LIKE(2);
+void limited_llog_md(const struct msg_digest *md, const char *message, ...) PRINTF_LIKE(2);
 
 void process_md(struct msg_digest *md);
 

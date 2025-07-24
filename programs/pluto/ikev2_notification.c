@@ -121,8 +121,8 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 			md->v2N_error = n;
 		} else {
 			/* XXX: is this allowed? */
-			dbg("message contains multiple error notifications: %d %d",
-			    md->v2N_error, n);
+			ldbg(logger, "message contains multiple error notifications: %d %d",
+			     md->v2N_error, n);
 		}
 	} else {
 		type = "status";
@@ -130,7 +130,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 
 	name_buf name;
 	if (!enum_long(&v2_notification_names, n, &name)) {
-		dbg("%s notification %d is unknown", type, n);
+		ldbg(logger, "%s notification %d is unknown", type, n);
 		return;
 	}
 	enum v2_pd v2_pd = v2_pd_from_notification(n);
@@ -382,7 +382,7 @@ void record_v2N_spi_response(struct logger *logger,
 	/*
 	 * Never send a response to a response.
 	 */
-	if (!pexpect(v2_msg_role(md) == MESSAGE_REQUEST)) {
+	if (!PEXPECT(logger, v2_msg_role(md) == MESSAGE_REQUEST)) {
 		/* always responding */
 		return;
 	}
@@ -440,7 +440,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			       const shunk_t *ndata,
 			       const char *details, ...)
 {
-	passert(md != NULL); /* always a response */
+	PASSERT(&global_logger, md != NULL); /* always a response */
 
 	name_buf notify_name;
 	PASSERT(md->logger, enum_short(&v2_notification_names, ntype, &notify_name));
@@ -450,8 +450,8 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	if (!enum_short(&ikev2_exchange_names, exchange_type, &exchange_name)) {
 		/* when responding to crud, name may not be known */
 		exchange_name.buf = "UNKNOWN";
-		dbg("message request contains unknown exchange type %d",
-		    exchange_type);
+		ldbg(md->logger, "message request contains unknown exchange type %d",
+		     exchange_type);
 	}
 
 	enum stream stream = log_limiter_stream(md->logger, UNSECURED_LOG_LIMITER);

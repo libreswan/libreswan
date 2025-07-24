@@ -88,18 +88,18 @@ bool emit_v2VID(struct pbs_out *outs, enum known_vendorid id)
 	shunk_t vid = shunk_from_vendorid(id);
 	name_buf eb;
 	const char *descr = str_vendorid(id, &eb);
-	dbg("%s(): sending [%s]", __func__, descr);
+	ldbg(outs->logger, "%s(): sending [%s]", __func__, descr);
 	return emit_v2V_raw(outs, vid, descr);
 }
 
 /*
  * The VID table or entries are static
  */
-bool vid_is_oppo(const char *vid, size_t len)
+
+bool vid_is_oppo(shunk_t vid)
 {
 	shunk_t oppo = shunk_from_vendorid(VID_OPPORTUNISTIC);
-	if (oppo.len == len && memeq(vid, oppo.ptr, len)) {
-		dbg("VID_OPPORTUNISTIC received");
+	if (hunk_eq(oppo, vid)) {
 		return true;
 	} else {
 		return false;

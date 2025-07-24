@@ -28,6 +28,6 @@ void handle_v2_vendorid(shunk_t vid, struct logger *logger);
 bool emit_v2V(struct pbs_out *outs, const char *vid);
 bool emit_v2VID(struct pbs_out *outs, enum known_vendorid);
 
-bool vid_is_oppo(const char *vid, size_t len);
+bool vid_is_oppo(shunk_t vid);
 
 #endif
