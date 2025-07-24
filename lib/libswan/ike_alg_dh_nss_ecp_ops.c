@@ -76,8 +76,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	SECITEM_FreeItem(ec_params, PR_TRUE/*also-free-SECItem*/);
 
 	if (*pubk == NULL || *privk == NULL) {
-		passert_nss_error(logger, HERE,
-				  "DH ECP private key creation failed");
+		passert_nss_error(logger, HERE, "ECP private key creation failed");
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {

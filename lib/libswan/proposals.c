@@ -505,19 +505,23 @@ void jam_proposals(struct jambuf *buf, const struct proposals *proposals)
 static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				      struct proposals *proposals)
 {
-	/* scrape the proposals for dh algorithms */
-	const struct proposal *first_null = NULL;
-	const struct proposal *first_none = NULL;
+	/*
+	 * Scrape the proposals searching for a Key Exchange
+	 * algorithms of interest.
+	 */
+
+	const struct proposal *first_null_ke = NULL;
+	const struct proposal *first_none_ke = NULL;
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
 		if (proposal->algorithms[PROPOSAL_ke] == NULL) {
-			if (first_null == NULL) {
-				first_null = proposal;
+			if (first_null_ke == NULL) {
+				first_null_ke = proposal;
 			}
 		} else if (proposal->algorithms[PROPOSAL_ke]->desc == &ike_alg_ke_none.common) {
-			if (first_none == NULL) {
-				first_none = proposal;
+			if (first_none_ke == NULL) {
+				first_none_ke = proposal;
 			}
 		} else if (first_ke == NULL) {
 			first_ke = proposal->algorithms[PROPOSAL_ke]->desc;
@@ -527,7 +531,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 		}
 	}
 
-	if (first_ke == NULL && first_none == NULL) {
+	if (first_ke == NULL && first_none_ke == NULL) {
 		/* no DH is always ok */
 		return true;
 	}
@@ -544,20 +548,20 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	 * Check this early so that a conflict with PFS=no code gets
 	 * reported before anything else.
 	 */
-	if (!parser->policy->pfs && (first_ke != NULL || first_none != NULL)) {
+	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
-			const struct ike_alg *dh = NULL;
+			const struct ike_alg *ke = NULL;
 			if (proposal->algorithms[PROPOSAL_ke] != NULL) {
-				dh = proposal->algorithms[PROPOSAL_ke]->desc;
+				ke = proposal->algorithms[PROPOSAL_ke]->desc;
 			}
-			if (dh == &ike_alg_ke_none.common) {
+			if (ke == &ike_alg_ke_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
-					    "ignoring redundant %s DH algorithm NONE as PFS policy is disabled",
-					    parser->protocol->name);
-			} else if (dh != NULL) {
+				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
+				     parser->protocol->name);
+			} else if (ke != NULL) {
 				llog(parser->policy->stream, parser->policy->logger,
-					    "ignoring %s DH algorithm %s as PFS policy is disabled",
-					    parser->protocol->name, dh->fqn);
+				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
+				     parser->protocol->name, ke->fqn);
 			}
 			free_algorithms(proposal, PROPOSAL_ke);
 		}
@@ -565,15 +569,16 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	}
 
 	/*
-	 * Since at least one proposal included DH, all proposals
-	 * should.  A proposal without DH is an error.
+	 * Since at least one proposal included KE, all proposals
+	 * should.  Having a proposal with no KE (i.e., NULL pointer)
+	 * is an error.
 	 *
-	 * (The converse, no proposals including DH was handled right
+	 * (The converse, no proposals including KE was handled right
 	 * at the start).
 	 */
-	if (first_null != NULL) {
-		/* DH was specified */
-		proposal_error(parser, "either all or no %s proposals should specify DH",
+	if (first_null_ke != NULL) {
+		/* KE was specified */
+		proposal_error(parser, "either all or no %s proposals should specify Key Exchange",
 			       parser->protocol->name);
 		if (!impair_proposal_errors(parser)) {
 			return false;
@@ -584,10 +589,10 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 
 	case IKEv1:
 		/*
-		 * IKEv1 only allows one DH algorithm.
+		 * IKEv1 only allows one KE algorithm.
 		 */
 		if (first_ke != NULL && second_ke != NULL) {
-			proposal_error(parser, "more than one IKEv1 %s DH algorithm (%s, %s) is not allowed in quick mode",
+			proposal_error(parser, "more than one IKEv1 %s Key Exchange algorithm (%s, %s) is not allowed in quick mode",
 				       parser->protocol->name,
 				       first_ke->fqn,
 				       second_ke->fqn);
@@ -599,10 +604,10 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 
 	case IKEv2:
 		/*
-		 * IKEv2, only implements one DH algorithm.
+		 * IKEv2, only implements one KE algorithm for Child SAs.
 		 */
 		if (first_ke != NULL && second_ke != NULL) {
-			proposal_error(parser, "more than one IKEv2 %s DH algorithm (%s, %s) requires unimplemented CHILD_SA INVALID_KE",
+			proposal_error(parser, "more than one IKEv2 %s Key Exchange algorithm (%s, %s) requires unimplemented CREATE_CHILD_SA INVALID_KE",
 				       parser->protocol->name,
 				       first_ke->fqn,
 				       second_ke->fqn);

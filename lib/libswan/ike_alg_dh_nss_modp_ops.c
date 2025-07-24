@@ -69,8 +69,7 @@ static void nss_modp_calc_local_secret(const struct dh_desc *group,
 		*privk = SECKEY_CreateDHPrivateKey(&dh_params, pubk,
 						   lsw_nss_get_password_context(logger));
 		if (*pubk == NULL || *privk == NULL) {
-			passert_nss_error(logger, HERE,
-					  "DH MODP private key creation failed");
+			passert_nss_error(logger, HERE, "MODP private key creation failed");
 		}
 	} while (group->bytes != (*pubk)->u.dh.publicValue.len);
 
@@ -93,7 +92,7 @@ static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
 					  PK11SymKey **shared_secret,
 					  struct logger *logger)
 {
-	ldbgf(DBG_CRYPT, logger, "Started DH shared-secret computation in NSS:");
+	ldbgf(DBG_CRYPT, logger, "NSS: started MODP shared-secret computation");
 
 	/*
 	 * See NSS's SSL code for how this gets constructed on the
