@@ -7,6 +7,8 @@ ipsec algparse -tp -fips -v1 -pfs
 ipsec algparse -tp -fips -v2
 ipsec algparse -tp -fips -v2 -pfs
 
+ipsec algparse -tp -fips -v2 -pfs -addke
+
 # Run the algorithm tests; there should be no fails.
 
 ipsec algparse -ta > /dev/null
