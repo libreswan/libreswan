@@ -109,7 +109,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 	*body = (struct pbs_out) {0};
 
 	/* at least one, possibly both */
-	passert(ike != NULL || md != NULL);
+	PASSERT(ike->sa.logger, ike != NULL || md != NULL);
 
 	struct isakmp_hdr hdr = {
 		.isa_flags = impair.send_bogus_isakmp_flag ? ISAKMP_FLAGS_RESERVED_BIT6 : LEMPTY,
@@ -175,7 +175,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 		 * or "Informational Messages outside of an IKE SA".
 		 * Use the IKE SPIs from the request.
 		 */
-		passert(md != NULL);
+		PASSERT(ike->sa.logger, md != NULL);
 		hdr.isa_ike_initiator_spi = md->hdr.isa_ike_initiator_spi;
 		hdr.isa_ike_responder_spi = md->hdr.isa_ike_responder_spi;
 	}
@@ -201,7 +201,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 		 * will be updated as part of finishing the state
 		 * transition and sending the message.
 		 */
-		passert(ike != NULL);
+		PASSERT(md->logger, ike != NULL);
 		hdr.isa_msgid = ike->sa.st_v2_msgid_windows.initiator.sent + 1;
 	}
 
@@ -295,13 +295,13 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 	sk->cleartext.ptr = sk->pbs.cur;
 	sk->cleartext.len = 0; /* to be determined */
 
-	passert(sk->wire_iv.ptr <= sk->cleartext.ptr);
+	PASSERT(sk->logger, sk->wire_iv.ptr <= sk->cleartext.ptr);
 
 	/*
 	 * XXX: coverity thinks .container (set to E by
 	 * pbs_out_struct() above) can be NULL.
 	 */
-	passert(sk->pbs.container != NULL && sk->pbs.container->name == container->name);
+	PASSERT(sk->logger, sk->pbs.container != NULL && sk->pbs.container->name == container->name);
 
 	ldbg(sk->logger, "%s() %s=[%zu,%zu) %s=[%zu,%zu)",
 	     __func__,
@@ -426,7 +426,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 	/* encrypt and authenticate the block */
 	if (encrypt_desc_is_aead(ike->sa.st_oakley.ta_encrypt)) {
-		pexpect(sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
+		PEXPECT(sk->logger, sk->integrity.len == ike->sa.st_oakley.ta_encrypt->aead_tag_size);
 		chunk_t text_and_tag = chunk2(enc.ptr, enc.len + sk->integrity.len);
 
 		/* now, encrypt */
@@ -456,7 +456,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 							      "authkey", authkey, sk->logger);
 		chunk_t message = chunk2(sk->aad.ptr, sk->integrity.ptr - sk->aad.ptr);
 		crypt_prf_update_bytes(ctx, "message", message.ptr, message.len);
-		passert(sk->integrity.len == ike->sa.st_oakley.ta_integ->integ_output_size);
+		PASSERT(sk->logger, sk->integrity.len == ike->sa.st_oakley.ta_integ->integ_output_size);
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 		memcpy_hunk(sk->integrity.ptr, mac, sk->integrity.len);
 
@@ -852,14 +852,14 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	/* save the fragment */
 
-	passert((*frags)->count < (*frags)->total);
+	PASSERT(ike->sa.logger, (*frags)->count < (*frags)->total);
 	(*frags)->count++;
 	struct v2_incoming_fragment *frag = &(*frags)->frags[skf_hdr->isaskf_number];
-	passert(skf_hdr->isaskf_number < elemsof((*frags)->frags));
-	passert(frag->text.ptr == NULL);
-	passert(frag->plain.ptr == NULL);
-	passert(frag->text.len == 0);
-	passert(frag->plain.len == 0);
+	PASSERT(ike->sa.logger, skf_hdr->isaskf_number < elemsof((*frags)->frags));
+	PASSERT(ike->sa.logger, frag->text.ptr == NULL);
+	PASSERT(ike->sa.logger, frag->plain.ptr == NULL);
+	PASSERT(ike->sa.logger, frag->text.len == 0);
+	PASSERT(ike->sa.logger, frag->plain.len == 0);
 	frag->text = clone_hunk(text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
@@ -974,10 +974,10 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 {
 	ldbg(logger, "reassembling incoming fragments");
 	struct msg_digest *md = md_addref((*frags)->md);
-	passert(md->chain[ISAKMP_NEXT_v2SK] == NULL);
-	passert(md->chain[ISAKMP_NEXT_v2SKF] != NULL);
-	pexpect(md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_number == 1);
-	passert(md->digest_roof < elemsof(md->digest));
+	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SK] == NULL);
+	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SKF] != NULL);
+	PEXPECT(logger, md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_number == 1);
+	PASSERT(logger, md->digest_roof < elemsof(md->digest));
 
 	/*
 	 * Pass 1: Compute the total payload size.
@@ -985,7 +985,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	unsigned size = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
-		pexpect(frag->plain.ptr != NULL);
+		PEXPECT(logger, frag->plain.ptr != NULL);
 		size += frag->plain.len;
 	}
 
@@ -993,12 +993,12 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * Pass 2: Re-assemble the fragments into the .raw_packet
 	 * buffer.
 	 */
-	pexpect(md->raw_packet.ptr == NULL); /* empty */
+	PEXPECT(logger, md->raw_packet.ptr == NULL); /* empty */
 	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
-		passert(offset + frag->plain.len <= size);
+		PASSERT(logger, offset + frag->plain.len <= size);
 		memcpy(md->raw_packet.ptr + offset,
 		       frag->plain.ptr, frag->plain.len);
 		offset += frag->plain.len;
@@ -1194,7 +1194,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	}
 
 	ldbg(ike->sa.logger, "recording fragment %u", number);
-	record_v2_outgoing_fragment(&message_fragment.pbs, desc, fragp);
+	record_v2_outgoing_fragment(pbs_out_all(&message_fragment.pbs), fragp, logger);
 	return true;
 }
 
@@ -1203,7 +1203,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 				      const char *desc,
 				      struct v2_outgoing_fragment **frags)
 {
-	free_v2_outgoing_fragments(frags);
+	free_v2_outgoing_fragments(frags, sk->logger);
 
 	/*
 	 * fragment contents:
@@ -1241,7 +1241,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 
 	len -= 2;	/* ??? what's this? */
 
-	passert(sk->cleartext.len != 0);
+	PASSERT(sk->logger, sk->cleartext.len != 0);
 
 	unsigned int nfrags = (sk->cleartext.len + len - 1) / len;
 
@@ -1294,7 +1294,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 
 	struct v2_outgoing_fragment **frag = frags;
 	while (true) {
-		passert(*frag == NULL);
+		PASSERT(sk->logger, *frag == NULL);
 		chunk_t fragment = chunk2(sk->cleartext.ptr + offset,
 					  PMIN(sk->cleartext.len - offset, len));
 		if (!record_outbound_fragment(sk->logger, sk->ike, &hdr, skf_np, frag,
@@ -1332,7 +1332,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	 * this message for ESP, each message needs a non-ESP_Marker
 	 * prefix.
 	 */
-	if (!pexpect(sk->ike->sa.st_iface_endpoint != NULL) &&
+	if (!PEXPECT(sk->logger, sk->ike->sa.st_iface_endpoint != NULL) &&
 	    sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled)
 		len += NON_ESP_MARKER_SIZE;
 
@@ -1351,7 +1351,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 			return STF_INTERNAL_ERROR;
 		}
 		ldbg(sk->logger, "recording outgoing fragment failed");
-		record_v2_message(msg, what, outgoing_fragments);
+		record_v2_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
 	}
 	return STF_OK;
 }
@@ -1498,8 +1498,9 @@ bool close_and_record_v2_message(struct v2_message *message)
 		}
 		return true;
 	case UNENCRYPTED_PAYLOAD:
-		record_v2_message(&message->message, message->story,
-				  message->outgoing_fragments);
+		record_v2_message(pbs_out_all(&message->message),
+				  message->outgoing_fragments,
+				  message->logger);
 		return true;
 	}
 	bad_case(message->security);

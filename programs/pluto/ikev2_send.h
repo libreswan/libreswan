@@ -99,16 +99,17 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 			      emit_v2_response_fn *emit_v2_response,
 			      struct emit_v2_response_context *context);
 
-void record_v2_outgoing_fragment(struct pbs_out *pbs,
-				 const char *what,
-				 struct v2_outgoing_fragment **frags);
-void record_v2_message(struct pbs_out *msg,
-		       const char *what,
-		       struct v2_outgoing_fragment **outgoing_fragments);
+void record_v2_outgoing_fragment(shunk_t fragment,
+				 struct v2_outgoing_fragment **fragments,
+				 struct logger *logger);
+void record_v2_message(shunk_t message,
+		       struct v2_outgoing_fragment **fragments,
+		       struct logger *logger);
 
 void free_v2_message_queues(struct state *st);
 void free_v2_incoming_fragments(struct v2_incoming_fragments **frags);
-void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
+void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags,
+				struct logger *logger);
 
 /*
  * Emit an IKEv2 payload.
