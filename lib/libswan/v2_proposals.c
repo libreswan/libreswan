@@ -354,7 +354,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		PARSE_ALG(tokens, PROPOSAL_ke, ke);
 		if (parser->diag != NULL) {
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "...<dh> failed '%s'", str_diag(parser->diag));
+			      "...<ke> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
 		}
 		remove_duplicate_algorithms(parser, proposal, PROPOSAL_ke);

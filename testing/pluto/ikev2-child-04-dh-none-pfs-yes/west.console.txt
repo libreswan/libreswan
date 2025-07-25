@@ -41,7 +41,7 @@ west #
 "westnet-eastnet-ikev2-pfs=no-esp=aes": added IKEv2 connection
 west #
  ipsec auto --add 'westnet-eastnet-ikev2-pfs=no-esp=aes;none'
-"westnet-eastnet-ikev2-pfs=no-esp=aes;none": ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+"westnet-eastnet-ikev2-pfs=no-esp=aes;none": ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 "westnet-eastnet-ikev2-pfs=no-esp=aes;none": added IKEv2 connection
 west #
  ipsec auto --add 'westnet-eastnet-ikev2-pfs=yes-esp=aes'

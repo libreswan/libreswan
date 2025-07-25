@@ -75,7 +75,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 		const struct dh_desc *dh = dh_desc(alg->desc);
 		passert(ike_alg_is_ike(&dh->common));
 		if (dh == &ike_alg_dh_none) {
-			proposal_error(parser, "IKE DH algorithm 'none' not permitted");
+			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");
 			if (!impair_proposal_errors(parser)) {
 				return false;
 			}
