@@ -70,11 +70,11 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	     frag != NULL; frag = frag->next) {
 		nr_frags++;
 		if (!send_hunk_using_state(&ike->sa, where, *frag)) {
-			dbg("send of %s fragment %u failed", where, nr_frags);
+			ldbg(ike->sa.logger, "send of %s fragment %u failed", where, nr_frags);
 			return false;
 		}
 	}
-	dbg("sent %u messages", nr_frags);
+	ldbg(ike->sa.logger, "sent %u messages", nr_frags);
 	return true;
 }
 
@@ -82,7 +82,7 @@ void record_v2_outgoing_fragment(shunk_t fragment,
 				 struct v2_outgoing_fragment **fragments,
 				 struct logger *logger)
 {
-	pexpect((*fragments) == NULL);
+	PEXPECT(logger, (*fragments) == NULL);
 	(*fragments) = overalloc_thing(struct v2_outgoing_fragment, fragment.len);
 	ldbg_alloc(logger, "fragments", (*fragments), HERE);
 	(*fragments)->len = fragment.len;
@@ -92,7 +92,7 @@ void record_v2_outgoing_fragment(shunk_t fragment,
 void record_v2_message(shunk_t message, struct v2_outgoing_fragment **fragments,
 		       struct logger *logger)
 {
-	free_v2_outgoing_fragments(fragments);
+	free_v2_outgoing_fragments(fragments, logger);
 	record_v2_outgoing_fragment(message, fragments, logger);
 }
 
@@ -133,7 +133,7 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 			      emit_v2_response_fn *emit_v2_response,
 			      struct emit_v2_response_context *context)
 {
-	passert(md != NULL); /* always a response */
+	PASSERT(md->logger, md != NULL); /* always a response */
 
 	enum ikev2_exchange exchange = md->hdr.isa_xchg;
 
@@ -190,13 +190,14 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 	return true;
 }
 
-void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags)
+void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags,
+				struct logger *logger)
 {
 	if (*frags != NULL) {
 		struct v2_outgoing_fragment *frag = *frags;
 		do {
 			struct v2_outgoing_fragment *next = frag->next;
-			ldbg_free(&global_logger, "frags", frag, HERE);
+			ldbg_free(logger, "frags", frag, HERE);
 			pfree(frag);
 			frag = next;
 		} while (frag != NULL);
@@ -221,6 +222,6 @@ void free_v2_message_queues(struct state *st)
 {
 	FOR_EACH_THING(window, &st->st_v2_msgid_windows.initiator, &st->st_v2_msgid_windows.responder) {
 		free_v2_incoming_fragments(&window->incoming_fragments);
-		free_v2_outgoing_fragments(&window->outgoing_fragments);
+		free_v2_outgoing_fragments(&window->outgoing_fragments, st->logger);
 	}
 }

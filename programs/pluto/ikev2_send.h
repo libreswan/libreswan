@@ -108,7 +108,8 @@ void record_v2_message(shunk_t message,
 
 void free_v2_message_queues(struct state *st);
 void free_v2_incoming_fragments(struct v2_incoming_fragments **frags);
-void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags);
+void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags,
+				struct logger *logger);
 
 /*
  * Emit an IKEv2 payload.
