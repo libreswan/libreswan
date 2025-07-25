@@ -104,16 +104,16 @@ static bool has_v2_IKE_AUTH_child_payloads(const struct msg_digest *md)
 
 static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 {
+	struct logger *logger = larval_child->sa.logger;
 	const struct connection *cc = larval_child->sa.st_connection;
-	pexpect(larval_child->sa.st_ipcomp.inbound.spi == 0);
+	PEXPECT(logger, larval_child->sa.st_ipcomp.inbound.spi == 0);
 	/* CPI is stored in network low order end of an ipsec_spi_t */
 	ipsec_spi_t n_ipcomp_cpi = get_ipsec_cpi(cc, larval_child->sa.logger);
 	ipsec_spi_t h_ipcomp_cpi = (uint16_t)ntohl(n_ipcomp_cpi);
-	dbg("calculated compression CPI=%d", h_ipcomp_cpi);
+	ldbg(logger, "calculated compression CPI=%d", h_ipcomp_cpi);
 	if (h_ipcomp_cpi < IPCOMP_FIRST_NEGOTIATED) {
 		/* get_my_cpi() failed */
-		llog_sa(RC_LOG, larval_child,
-			"kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
+		llog(RC_LOG, logger, "kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
 		return false;
 	}
 	larval_child->sa.st_ipcomp.inbound.spi = n_ipcomp_cpi;
@@ -122,6 +122,7 @@ static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 
 static bool compute_v2_child_spi(struct child_sa *larval_child)
 {
+	struct logger *logger = larval_child->sa.logger;
 	struct connection *cc = larval_child->sa.st_connection;
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 	/* hack until esp/ah merged */
@@ -136,28 +137,27 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 		return false;
 	}
 	/* XXX: should "avoid" be set to the peer's SPI when known? */
-	pexpect(proto_info->inbound.spi == 0);
-	proto_info->inbound.spi = get_ipsec_spi(cc, protocol,
-						0 /* avoid this # */,
-						larval_child->sa.logger);
+	PEXPECT(logger, proto_info->inbound.spi == 0);
+	proto_info->inbound.spi = get_ipsec_spi(cc, protocol, 0 /* avoid this # */, logger);
 	return (proto_info->inbound.spi != 0);
 }
 
 static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_out *outs)
 {
-	ldbg(outs->logger, "initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
+	struct logger *logger = child->sa.logger;
+	ldbg(logger, "initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
 
 	v2_notification_t ntype = v2N_IPCOMP_SUPPORTED;
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, outs->logger, "IMPAIR: omitting %s notification",
+		llog(RC_LOG, logger, "IMPAIR: omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}
 
 	ipsec_spi_t h_cpi = (uint16_t)ntohl(child->sa.st_ipcomp.inbound.spi);
-	if (!pexpect(h_cpi != 0)) {
+	if (!PEXPECT(logger, h_cpi != 0)) {
 		return false;
 	}
 
@@ -202,12 +202,13 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 				    bool ike_auth_exchange,
 				    struct pbs_out *pbs)
 {
-	if (!pexpect(larval_child->sa.st_state == &state_v2_NEW_CHILD_I0 ||
-		     larval_child->sa.st_state == &state_v2_REKEY_CHILD_I0)) {
+	struct logger *logger = larval_child->sa.logger;
+	if (!PEXPECT(logger, (larval_child->sa.st_state == &state_v2_NEW_CHILD_I0 ||
+			      larval_child->sa.st_state == &state_v2_REKEY_CHILD_I0))) {
 		return false;
 	}
 
-	if (!pexpect(larval_child->sa.st_sa_kind_when_established == CHILD_SA)) {
+	if (!PEXPECT(logger, larval_child->sa.st_sa_kind_when_established == CHILD_SA)) {
 		return false;
 	}
 
@@ -225,7 +226,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	if (!ike_auth_exchange) {
 		struct ikev2_generic in = {
-			.isag_critical = build_ikev2_critical(false, larval_child->sa.logger),
+			.isag_critical = build_ikev2_critical(false, logger),
 		};
 		struct pbs_out pb_nr;
 		if (!pbs_out_struct(pbs, in, &ikev2_nonce_desc, &pb_nr)) {
@@ -250,7 +251,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	/* CP[CFG_REQUEST) - only IKE_AUTH exchange for now */
 
 	if (!ike_auth_exchange) {
-		dbg("skipping CP, not IKE_AUTH request");
+		ldbg(logger, "skipping CP, not IKE_AUTH request");
 	} else if (send_v2CP_request(cc, ike->sa.hidden_variables.st_nated_host)) {
 		if (!emit_v2CP_request(larval_child, pbs)) {
 			return false;
@@ -273,8 +274,8 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	/* Transport based on policy */
 
 	bool send_use_transport = (cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
-	dbg("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE? %s",
-	    bool_str(send_use_transport));
+	ldbg(logger, "initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE? %s",
+	     bool_str(send_use_transport));
 	if (send_use_transport &&
 	    !emit_v2N(v2N_USE_TRANSPORT_MODE, pbs)) {
 		return false;
@@ -324,9 +325,10 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 						    struct msg_digest *request_md,
 						    struct pbs_out *sk_pbs)
 {
+	struct logger *logger = larval_child->sa.logger;
 	struct connection *cc = larval_child->sa.st_connection;
 
-	pexpect(larval_child->sa.st_v2_accepted_proposal != NULL);
+	PEXPECT(logger, larval_child->sa.st_v2_accepted_proposal != NULL);
 
 	/*
 	 * Verify if transport / tunnel mode matches; update the
@@ -334,14 +336,13 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 */
 
 	bool transport_mode_accepted =
-		accept_v2_notification(v2N_USE_TRANSPORT_MODE,
-				       larval_child->sa.logger, request_md,
+		accept_v2_notification(v2N_USE_TRANSPORT_MODE, logger, request_md,
 				       cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT);
 
 	enum kernel_mode required_mode =
 		(cc->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
 		 cc->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
-		 pexpect(0));
+		 PEXPECT(logger, 0));
 	enum kernel_mode requested_mode =
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
 		 KERNEL_MODE_TUNNEL);
@@ -384,10 +385,10 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	bool expecting_compression = cc->config->child.ipcomp;
 	if (request_md->pd[PD_v2N_IPCOMP_SUPPORTED] != NULL) {
 		if (!expecting_compression) {
-			dbg("Ignored IPCOMP request as connection has compress=no");
-			pexpect(larval_child->sa.st_ipcomp.protocol == NULL);
+			ldbg(logger, "Ignored IPCOMP request as connection has compress=no");
+			PEXPECT(logger, larval_child->sa.st_ipcomp.protocol == NULL);
 		} else {
-			dbg("received v2N_IPCOMP_SUPPORTED");
+			ldbg(logger, "received v2N_IPCOMP_SUPPORTED");
 
 			struct pbs_in pbs = request_md->pd[PD_v2N_IPCOMP_SUPPORTED]->pbs;
 			struct ikev2_notify_ipcomp_data n_ipcomp;
@@ -412,7 +413,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 				return v2N_NO_PROPOSAL_CHOSEN;
 			}
 
-			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
+			ldbg(logger, "received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
 			//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
 			name_buf ignore;
 			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
@@ -429,7 +430,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			}
 		}
 	} else if (expecting_compression) {
-		dbg("policy suggested compression, but peer did not offer support");
+		ldbg(logger, "policy suggested compression, but peer did not offer support");
 	}
 
 	/* is not not negotiated */
@@ -449,7 +450,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 */
 
 	/* re-check IKE, child about to be updated */
-	pexpect(ike->sa.st_connection->established_ike_sa == ike->sa.st_serialno);
+	PEXPECT(logger, ike->sa.st_connection->established_ike_sa == ike->sa.st_serialno);
 
 	/* install inbound and outbound SPI info */
 	if (!connection_establish_child(ike, larval_child, HERE)) {
@@ -482,7 +483,8 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 				     const struct msg_digest *request_md,
 				     struct pbs_out *outpbs)
 {
-	pexpect(larval_child->sa.st_sa_kind_when_established == CHILD_SA); /* never grow up */
+	struct logger *logger = larval_child->sa.logger;
+	PEXPECT(logger, larval_child->sa.st_sa_kind_when_established == CHILD_SA); /* never grow up */
 	enum ikev2_exchange isa_xchg = request_md->hdr.isa_xchg;
 	struct connection *cc = larval_child->sa.st_connection;
 
@@ -506,7 +508,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		if (!emit_v2SA_proposal(outpbs,
 					larval_child->sa.st_v2_accepted_proposal,
 					local_spi)) {
-			dbg("problem emitting accepted proposal");
+			ldbg(logger, "problem emitting accepted proposal");
 			return false;
 		}
 	}
@@ -595,9 +597,8 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 				 child_proposals, verbose);
 	if (n != v2N_NOTHING_WRONG) {
 		name_buf nb;
-		llog_sa(RC_LOG, child,
-			"%s failed, responder SA processing returned %s",
-			what, str_enum_short(&v2_notification_names, n, &nb));
+		vlog("%s failed, responder SA processing returned %s",
+		     what, str_enum_short(&v2_notification_names, n, &nb));
 		return n;
 	}
 
@@ -618,8 +619,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	proto_info->protocol = protocol;
 	if (!ikev2_proposal_to_proto_info(child->sa.st_v2_accepted_proposal, proto_info,
 					  child->sa.logger)) {
-		llog_sa(RC_LOG, child,
-			"%s proposed/accepted a proposal we don't actually support!", what);
+		vlog("%s proposed/accepted a proposal we don't actually support!", what);
 		return v2N_NO_PROPOSAL_CHOSEN; /* lie */
 	}
 
@@ -639,20 +639,19 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 		: proto_info->trans_attrs.ta_dh;
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
-		pexpect(expect_accepted_proposal);
+		vexpect(expect_accepted_proposal);
 		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
-			llog_sa(RC_LOG, child,
-				"expecting %s but remote's accepted proposal includes %s",
-				child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
-				accepted_dh->common.fqn);
+			vlog("expecting %s but remote's accepted proposal includes %s",
+			     child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
+			     accepted_dh->common.fqn);
 			return v2N_NO_PROPOSAL_CHOSEN;
 		}
 		child->sa.st_pfs_group = accepted_dh;
 		break;
 	case SA_RESPONDER:
-		pexpect(!expect_accepted_proposal);
-		pexpect(child->sa.st_sa_role == SA_RESPONDER);
-		pexpect(child->sa.st_pfs_group == NULL);
+		vexpect(!expect_accepted_proposal);
+		vexpect(child->sa.st_sa_role == SA_RESPONDER);
+		vexpect(child->sa.st_pfs_group == NULL);
 		child->sa.st_pfs_group = accepted_dh;
 		break;
 	default:
@@ -671,10 +670,10 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	 * re-key?
 	 */
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_group != NULL) {
-		dbg("updating "PRI_SO"'s .st_oakley with preserved PRF, but why update?",
-		    pri_so(child->sa.st_serialno));
+		vdbg("updating "PRI_SO"'s .st_oakley with preserved PRF, but why update?",
+		     pri_so(child->sa.st_serialno));
 		struct trans_attrs accepted_oakley = proto_info->trans_attrs;
-		pexpect(accepted_oakley.ta_prf == NULL);
+		vexpect(accepted_oakley.ta_prf == NULL);
 		accepted_oakley.ta_prf = child->sa.st_oakley.ta_prf;
 		child->sa.st_oakley = accepted_oakley;
 	}
@@ -779,7 +778,8 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
-	pexpect(child->sa.st_v2_transition->to == &state_v2_ESTABLISHED_CHILD_SA);
+	struct logger *logger = child->sa.logger;
+	PEXPECT(logger, child->sa.st_v2_transition->to == &state_v2_ESTABLISHED_CHILD_SA);
 	change_v2_state(&child->sa);
 
 	pstat_sa_established(&child->sa);
@@ -793,7 +793,7 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	 * once when moving from I2->I3 or R1->R2
 	 */
 	if (dpd_active_locally(child->sa.st_connection)) {
-		dbg("dpd enabled, scheduling ikev2 liveness checks");
+		ldbg(logger, "dpd enabled, scheduling ikev2 liveness checks");
 		deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay,
 						  deltatime(MIN_LIVENESS));
 		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
@@ -810,6 +810,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 						     struct msg_digest *md)
 {
 	struct connection *c = child->sa.st_connection;
+	struct logger *logger = child->sa.logger;
 
 	if (!process_v2TS_response_payloads(child, md)) {
 		return v2N_TS_UNACCEPTABLE;
@@ -847,7 +848,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	enum kernel_mode required_mode =
 		(c->config->child.encap_mode == ENCAP_MODE_TRANSPORT ? KERNEL_MODE_TRANSPORT :
 		 c->config->child.encap_mode == ENCAP_MODE_TUNNEL ? KERNEL_MODE_TUNNEL :
-		 pexpect(0));
+		 PEXPECT(logger, 0));
 	enum kernel_mode accepted_mode =
 		(transport_mode_accepted ? KERNEL_MODE_TRANSPORT :
 		 KERNEL_MODE_TUNNEL);
@@ -881,7 +882,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		size_t len = pbs_left(&pbs);
 		struct ikev2_notify_ipcomp_data n_ipcomp;
 
-		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
+		ldbg(logger, "received v2N_IPCOMP_SUPPORTED of length %zd", len);
 		if (!c->config->child.ipcomp) {
 			llog_sa(RC_LOG, child,
 				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
@@ -908,7 +909,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 				  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
-		dbg("Received compression CPI=%d", n_ipcomp.ikev2_cpi);
+		ldbg(logger, "Received compression CPI=%d", n_ipcomp.ikev2_cpi);
 
 		//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
 		child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
@@ -945,7 +946,9 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 								       struct msg_digest *md,
 								       struct pbs_out *sk_pbs)
 {
-	v2_notification_t n;	/*
+	struct logger *logger = child->sa.logger;
+	v2_notification_t n;
+	/*
 	 * Parse the CP payloads if needed (need child so that rants
 	 * can be logged against child).
 	 *
@@ -981,7 +984,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 * behave like a server when the peer is the one initiating.
 	 */
 
-	pexpect(ike->sa.st_connection == child->sa.st_connection);
+	PEXPECT(logger, ike->sa.st_connection == child->sa.st_connection);
 	const struct host_end_config *local = ike->sa.st_connection->local->host.config;
 	const struct ip_info *pool_afi =
 		(child->sa.st_connection->pool[IPv4] != NULL ? &ipv4_info :
@@ -1087,7 +1090,7 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 	 * this function fails call will clean it up.
 	 */
 
-	pexpect(ike->sa.st_v2_msgid_windows.responder.wip_sa == NULL);
+	PEXPECT(ike->sa.logger, ike->sa.st_v2_msgid_windows.responder.wip_sa == NULL);
 	struct child_sa *child =
 		ike->sa.st_v2_msgid_windows.responder.wip_sa =
 		new_v2_child_sa(ike->sa.st_connection, ike,
