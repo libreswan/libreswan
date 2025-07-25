@@ -22,9 +22,9 @@ algparse -fips -v1 'esp=aes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
@@ -33,14 +33,14 @@ algparse -fips -v1 'esp=aes-sha1' (expect SUCCESS)
 algparse -fips -v1 'esp=aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
@@ -53,7 +53,7 @@ algparse -fips -v1 'esp=3des-sha1;modp1024' (expect ERROR)
 algparse -fips -v1 'esp=3des-sha1;modp1536' (expect ERROR)
 	ERROR: ESP DH algorithm 'modp1536' is not supported
 algparse -fips -v1 'esp=3des-sha1;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=3des-sha1;dh21' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh21' is not supported by IKEv1
@@ -232,25 +232,25 @@ algparse -fips -v1 'esp=aes_ctr256' (expect SUCCESS)
 algparse -fips -v1 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect ERROR)
 	ERROR: ESP encryption algorithm 'camellia_cbc_256' is not supported
 algparse -fips -v1 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	NULL_AUTH_AES_GMAC_256-NONE
 algparse -fips -v1 'esp=3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1,3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes;none' (expect ERROR)
 	ERROR: ESP DH algorithm 'none' is not supported by IKEv1
@@ -317,36 +317,36 @@ algparse -fips -v1 'esp=aes_gcm-123456789012345' (expect ERROR)
 algparse -fips -v1 'esp=3des-sha1;dh22' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v1 'esp=3des-sha1;modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=3des-sha1-modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=3des-sha1-modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v1 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
@@ -362,7 +362,7 @@ algparse -fips -v1 'ah=md5' (expect ERROR)
 algparse -fips -v1 'ah=sha' (expect SUCCESS)
 	HMAC_SHA1_96
 algparse -fips -v1 'ah=sha;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -fips -v1 'ah=sha1' (expect SUCCESS)
 	HMAC_SHA1_96
@@ -387,7 +387,7 @@ algparse -fips -v1 'ah=sha2-none' (expect ERROR)
 algparse -fips -v1 'ah=sha2;none' (expect ERROR)
 	ERROR: AH DH algorithm 'none' is not supported by IKEv1
 algparse -fips -v1 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -fips -v1 'ah=aes-sha1' (expect ERROR)
 	ERROR: AH integrity algorithm 'aes' is not recognized
@@ -769,7 +769,7 @@ algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v1 -pfs 'esp=aes-sha1,3des-sha1;modp8192' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v1 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -840,9 +840,9 @@ algparse -fips -v1 -pfs 'esp=aes_gcm-123456789012345' (expect ERROR)
 algparse -fips -v1 -pfs 'esp=3des-sha1;dh22' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
@@ -856,7 +856,7 @@ algparse -fips -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCC
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -fips -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv1 ESP DH algorithm (MODP8192, MODP2048) is not allowed in quick mode
+	ERROR: more than one IKEv1 ESP Key Exchange algorithm (MODP8192, MODP2048) is not allowed in quick mode
 algparse -fips -v1 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposals contain unexpected 'modp2048'
 algparse -fips -v1 -pfs 'ah' (expect SUCCESS)
@@ -1059,21 +1059,21 @@ algparse -fips -v2 'esp=' (expect ERROR)
 algparse -fips -v2 'esp=aes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-128-sha1' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC_128-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
@@ -1084,13 +1084,13 @@ algparse -fips -v2 'esp=3des-sha1;modp1024' (expect ERROR)
 algparse -fips -v2 'esp=3des-sha1;modp1536' (expect ERROR)
 	ERROR: ESP DH algorithm 'modp1536' is not supported
 algparse -fips -v2 'esp=3des-sha1;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=3des-sha1;dh21' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm DH21 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=3des-sha1;ecp_521' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm DH21 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=3des-sha1;dh23' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh23' is not supported
@@ -1253,43 +1253,43 @@ algparse -fips -v2 'esp=aes_ctr256' (expect SUCCESS)
 algparse -fips -v2 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect ERROR)
 	ERROR: ESP encryption algorithm 'camellia_cbc_256' is not supported
 algparse -fips -v2 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	NULL_AUTH_AES_GMAC_256-NONE
 algparse -fips -v2 'esp=3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1,3des-sha1;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes;none' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;none,aes' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;none,aes;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-sha1-none' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes-sha1;none' (expect SUCCESS)
-ipsec algparse: ignoring redundant ESP DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=3des168-sha1' (expect ERROR)
 	ERROR: ESP encryption algorithm 3DES_CBC does not allow a key lengths
@@ -1346,36 +1346,36 @@ algparse -fips -v2 'esp=aes_gcm-123456789012345' (expect ERROR)
 algparse -fips -v2 'esp=3des-sha1;dh22' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect SUCCESS)
-ipsec algparse: ignoring ESP DH algorithm MODP8192 as PFS policy is disabled
-ipsec algparse: ignoring ESP DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
@@ -1390,7 +1390,7 @@ algparse -fips -v2 'ah=md5' (expect ERROR)
 algparse -fips -v2 'ah=sha' (expect SUCCESS)
 	HMAC_SHA1_96
 algparse -fips -v2 'ah=sha;modp2048' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP2048 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -fips -v2 'ah=sha1' (expect SUCCESS)
 	HMAC_SHA1_96
@@ -1411,13 +1411,13 @@ algparse -fips -v2 'ah=sha2_512' (expect SUCCESS)
 algparse -fips -v2 'ah=aes_xcbc' (expect ERROR)
 	ERROR: AH integrity algorithm 'aes_xcbc' is not supported
 algparse -fips -v2 'ah=sha2-none' (expect SUCCESS)
-ipsec algparse: ignoring redundant AH DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant AH Key Exchange algorithm 'NONE' as PFS policy is disabled
 	HMAC_SHA2_256_128
 algparse -fips -v2 'ah=sha2;none' (expect SUCCESS)
-ipsec algparse: ignoring redundant AH DH algorithm NONE as PFS policy is disabled
+ipsec algparse: ignoring redundant AH Key Exchange algorithm 'NONE' as PFS policy is disabled
 	HMAC_SHA2_256_128
 algparse -fips -v2 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
-ipsec algparse: ignoring AH DH algorithm MODP8192 as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -fips -v2 'ah=aes-sha1' (expect ERROR)
 	ERROR: AH integrity algorithm 'aes' is not recognized
@@ -1461,7 +1461,7 @@ algparse -fips -v2 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 algparse -fips -v2 'ike=3des+aes' (expect SUCCESS)
 	3DES_CBC+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -fips -v2 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -fips -v2 'ike=id2' (expect ERROR)
 	ERROR: IKE encryption algorithm 'id2' is not recognized
 algparse -fips -v2 'ike=3des-id2' (expect ERROR)
@@ -1780,7 +1780,7 @@ algparse -fips -v2 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 algparse -fips -v2 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -v2 -pfs 'esp=aes-sha1,3des-sha1;modp8192' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -1789,7 +1789,7 @@ algparse -fips -v2 -pfs 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp81
 algparse -fips -v2 -pfs 'esp=aes;none' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 algparse -fips -v2 -pfs 'esp=aes;none,aes' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v2 -pfs 'esp=aes;none,aes;modp2048' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP2048
@@ -1852,9 +1852,9 @@ algparse -fips -v2 -pfs 'esp=aes_gcm-123456789012345' (expect ERROR)
 algparse -fips -v2 -pfs 'esp=3des-sha1;dh22' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
@@ -1868,7 +1868,7 @@ algparse -fips -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCC
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -fips -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv2 ESP DH algorithm (MODP8192, MODP2048) requires unimplemented CHILD_SA INVALID_KE
+	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
 algparse -fips -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected 'modp2048'
 algparse -fips -v2 -pfs 'ah' (expect SUCCESS)
@@ -1948,7 +1948,7 @@ algparse -fips -v2 -pfs 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 algparse -fips -v2 -pfs 'ike=3des+aes' (expect SUCCESS)
 	3DES_CBC+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -fips -v2 -pfs 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -fips -v2 -pfs 'ike=id2' (expect ERROR)
 	ERROR: IKE encryption algorithm 'id2' is not recognized
 algparse -fips -v2 -pfs 'ike=3des-id2' (expect ERROR)
@@ -2267,7 +2267,7 @@ algparse -fips -addke -v2 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 algparse -fips -addke -v2 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -fips -addke -v2 -pfs 'esp=aes-sha1,3des-sha1;modp8192' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -addke -v2 -pfs 'esp=aes-sha1-modp8192,3des-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA1_96-MODP8192
@@ -2276,7 +2276,7 @@ algparse -fips -addke -v2 -pfs 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1
 algparse -fips -addke -v2 -pfs 'esp=aes;none' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 algparse -fips -addke -v2 -pfs 'esp=aes;none,aes' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -addke -v2 -pfs 'esp=aes;none,aes;modp2048' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-NONE
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP2048
@@ -2339,9 +2339,9 @@ algparse -fips -addke -v2 -pfs 'esp=aes_gcm-123456789012345' (expect ERROR)
 algparse -fips -addke -v2 -pfs 'esp=3des-sha1;dh22' (expect ERROR)
 	ERROR: ESP DH algorithm 'dh22' is not supported
 algparse -fips -addke -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2' (expect ERROR)
-	ERROR: either all or no ESP proposals should specify DH
+	ERROR: either all or no ESP proposals should specify Key Exchange
 algparse -fips -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
@@ -2355,7 +2355,7 @@ algparse -fips -addke -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expe
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 	3DES_CBC-HMAC_SHA2_256_128-MODP8192
 algparse -fips -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
-	ERROR: more than one IKEv2 ESP DH algorithm (MODP8192, MODP2048) requires unimplemented CHILD_SA INVALID_KE
+	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
 algparse -fips -addke -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect SUCCESS)
 	AES_GCM_16-NONE-MODP2048-MODP2048
 algparse -fips -addke -v2 -pfs 'ah' (expect SUCCESS)
@@ -2435,7 +2435,7 @@ algparse -fips -addke -v2 -pfs 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 algparse -fips -addke -v2 -pfs 'ike=3des+aes' (expect SUCCESS)
 	3DES_CBC+AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 algparse -fips -addke -v2 -pfs 'ike=aes;none' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -fips -addke -v2 -pfs 'ike=id2' (expect ERROR)
 	ERROR: IKE encryption algorithm 'id2' is not recognized
 algparse -fips -addke -v2 -pfs 'ike=3des-id2' (expect ERROR)
@@ -2509,9 +2509,9 @@ algparse -fips -addke -v2 -pfs 'ike=aes_gcm-none-modp2048' (expect ERROR)
 algparse -fips -addke -v2 -pfs 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -fips -addke -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -fips -addke -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE DH algorithm 'none' not permitted
+	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -fips -addke -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -fips -addke -v2 -pfs 'ike=,' (expect ERROR)
