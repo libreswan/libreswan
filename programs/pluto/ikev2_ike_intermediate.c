@@ -98,6 +98,8 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 				     shunk_t plain,
 				     chunk_t *int_auth_ir)
 {
+	struct logger *logger = ike->sa.logger;
+
 	/*
 	 * Define variables that match the naming scheme used by the
 	 * RFC's ASCII diagram above.
@@ -170,7 +172,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 				 + unencrypted_payloads.len
 				 + encrypted_payload_header.len
 				 + inner_payloads.len);
-	dbg("adjusted payload length: %zu", adjusted_payload_length);
+	ldbg(logger, "adjusted payload length: %zu", adjusted_payload_length);
 	memcpy(&adjusted_message_header, header.ptr, header.len);
 	hton_thing(adjusted_payload_length, adjusted_message_header.isa_length);
 	crypt_prf_update_thing(prf, "Adjusted Message Header", adjusted_message_header);
@@ -180,7 +182,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 
 	/* encrypted payload header needs its Length adjusted */
 	size_t adjusted_encrypted_payload_length = encrypted_payload_header.len + inner_payloads.len;
-	dbg("adjusted encrypted payload length: %zu", adjusted_encrypted_payload_length);
+	ldbg(logger, "adjusted encrypted payload length: %zu", adjusted_encrypted_payload_length);
 	memcpy(&adjusted_encrypted_payload_header, encrypted_payload_header.ptr, encrypted_payload_header.len);
 	hton_thing(adjusted_encrypted_payload_length, adjusted_encrypted_payload_header.isag_length);
 	crypt_prf_update_thing(prf, "Adjusted Encrypted (SK) Header", adjusted_encrypted_payload_header);
@@ -207,7 +209,7 @@ static chunk_t calc_ppk_confirmation(const struct prf_desc *prf_desc,
 				     const ike_spis_t *ike_spis,
 				     struct logger *logger)
 {
-	dbg("calculating PPK Confirmation for PPK_IDENTITY_KEY Notify");
+	ldbg(logger, "calculating PPK Confirmation for PPK_IDENTITY_KEY Notify");
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
 
 	/* prf(PPK, ... */
@@ -241,7 +243,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 {
 	PEXPECT(ike->sa.logger, null_child == NULL);
 	PEXPECT(ike->sa.logger, null_md == NULL);
-	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
+	PEXPECT(ike->sa.logger, ike->sa.st_sa_role == SA_INITIATOR);
 	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending INTERMEDIATE",
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
@@ -408,9 +410,13 @@ static bool recalc_v2_ppk_interm_keymat(struct ike_sa *ike,
 }
 
 stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
-					       struct child_sa *unused_child UNUSED,
+					       struct child_sa *null_child,
 					       struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
+
+	PEXPECT(logger, null_child == NULL);
+
 	/*
 	 * All systems are go.
 	 *
@@ -467,10 +473,10 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		const struct payload_digest *ppk_id_key_payls = md->pd[PD_v2N_PPK_IDENTITY_KEY];
 
 		while (ppk_id_key_payls != NULL && ppk == NULL) {
-			dbg("received PPK_IDENTITY_KEY");
+			ldbg(logger, "received PPK_IDENTITY_KEY");
 			struct ppk_id_key_payload payl;
 			if (!extract_v2N_ppk_id_key(&ppk_id_key_payls->pbs, &payl, ike)) {
-				dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+				ldbg(logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 				return STF_FATAL;
 			}
 
@@ -487,7 +493,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 							      &ike->sa.st_ike_spis,
 							      ike->sa.logger);
 				if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
-					dbg("found matching PPK, send PPK_IDENTITY back");
+					ldbg(logger, "found matching PPK, send PPK_IDENTITY back");
 					ppk = ppk_candidate;
 					/* we have a match, send PPK_IDENTITY back */
 					const struct ppk_id_payload ppk_id_p =
@@ -558,9 +564,12 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 }
 
 static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
-						       struct child_sa *unused_child UNUSED,
+						       struct child_sa *null_child,
 						       struct msg_digest *md)
 {
+	struct logger *logger = ike->sa.logger;
+	PEXPECT(logger, null_child == NULL);
+
 	/*
 	 * The function below always schedules a dh calculation - even
 	 * when it's been performed earlier (there's something in the
@@ -568,7 +577,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 *
 	 * So that things don't pexpect, blow away the old shared secret.
 	 */
-	dbg("HACK: blow away old shared secret as going to re-compute it");
+	ldbg(logger, "HACK: blow away old shared secret as going to re-compute it");
 	symkey_delref(ike->sa.logger, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
 	struct connection *c = ike->sa.st_connection;
 
@@ -611,7 +620,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	dbg("No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
+	ldbg(logger, "No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
 
 	/*
 	 * Initiate the calculation of g^xy.
@@ -622,7 +631,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 * IKE SPIr be updated.
 	 */
 
-	pexpect(!ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
+	PEXPECT(logger, !ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
 	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
 		.initiator = ike->sa.st_ike_spis.initiator,
 		.responder = md->hdr.isa_ike_responder_spi,
@@ -641,6 +650,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struct msg_digest *md)
 {
 	struct ike_sa *ike = pexpect_ike_sa(st);
+	struct logger *logger = ike->sa.logger;
 	if (ike->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: this is the initiator so returning a
@@ -657,7 +667,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		struct ppk_id_payload payl;
 		if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
-			dbg("failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+			ldbg(logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
 			return STF_FATAL;
 		}
 		const struct secret_ppk_stuff *ppk =
