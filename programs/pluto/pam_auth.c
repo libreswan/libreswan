@@ -51,7 +51,7 @@ static void pam_auth_free(struct pam_auth **p)
 	*p = NULL;
 	pfree(x->ptarg.name);
 	pfree(x->ptarg.password);
-	pfree(x->ptarg.c_name);
+	pfree(x->ptarg.connection.base_name);
 	pfree(x);
 }
 
@@ -194,10 +194,10 @@ bool pam_auth_fork_request(struct ike_sa *ike,
 	pamauth->ptarg.name = clone_str(name, "pam name");
 
 	pamauth->ptarg.password = clone_str(password, "pam password");
-	pamauth->ptarg.c_name = clone_str(ike->sa.st_connection->base_name, "pam connection name");
-	pamauth->ptarg.rhost = endpoint_address(ike->sa.st_remote_endpoint);
+	pamauth->ptarg.connection.base_name = clone_str(ike->sa.st_connection->base_name, "pam connection name");
+	pamauth->ptarg.connection.instance_serial = ike->sa.st_connection->instance_serial;
+	pamauth->ptarg.peer_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	pamauth->ptarg.st_serialno = serialno;
-	pamauth->ptarg.c_instance_serial = ike->sa.st_connection->instance_serial;
 	pamauth->ptarg.atype = atype;
 
 	ldbg(ike->sa.logger, "PAM: "PRI_SO": main-process starting PAM-process for authenticating user '%s'",

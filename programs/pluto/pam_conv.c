@@ -108,10 +108,21 @@ static int pam_conversation(int nr_messages,
 
 static void dbg_pam_step(const struct pam_thread_arg *arg, const char *what)
 {
-	dbg("%s helper thread %s for state "PRI_SO", %s[%lu] user=%s.",
+	dbg("%s helper thread %s for state "PRI_SO", %s["PRI_CO"] user=%s.",
 	    arg->atype, what,
-	    pri_so(arg->st_serialno), arg->c_name,
-	    arg->c_instance_serial, arg->name);
+	    pri_so(arg->st_serialno),
+	    arg->connection.base_name,
+	    pri_co(arg->connection.instance_serial), arg->name);
+}
+
+static int pam_step_putenv(pam_handle_t *pamh, const struct pam_thread_arg *arg,
+			   const char *key, const char *value)
+{
+	char *env = alloc_printf("%s=%s", key, value); /* must-free */
+	dbg_pam_step(arg, env);
+	int s = pam_putenv(pamh, env);
+	pfree(env);
+	return s;
 }
 
 /*
@@ -138,45 +149,69 @@ bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger)
 			.appdata_ptr = arg,
 		};
 
-		what = "pam_start";
+		what = "pam_start(pluto)";
+		dbg_pam_step(arg, what);
 		retval = pam_start("pluto", arg->name, &conv, &pamh);
 		if (retval != PAM_SUCCESS)
 			break;
-		dbg_pam_step(arg, what);
+
+		/*
+		 * Send some additional environment variables; names
+		 * from UPDOWN.
+		 */
+
+		what = "pam_putenv(PLUTO_CONNECTION)";
+		retval = pam_step_putenv(pamh, arg, "PLUTO_CONNECTION", arg->connection.base_name);
+		if (retval != PAM_SUCCESS) {
+			break;
+		}
 
 		/* Send the remote host address to PAM */
-		what = "pam_set_item";
+
+		what = "pam_set_item(PAM_RHOST)";
 		address_buf rhb;
-		retval = pam_set_item(pamh, PAM_RHOST, str_address(&arg->rhost, &rhb));
-		if (retval != PAM_SUCCESS)
-			break;
 		dbg_pam_step(arg, what);
+		retval = pam_set_item(pamh, PAM_RHOST, str_address(&arg->peer_addr, &rhb));
+		if (retval != PAM_SUCCESS) {
+			break;
+		}
 
 		/* Two factor authentication - Check that the user is valid,
 		 * and then check if they are permitted access
 		 */
-		what = "pam_authenticate";
+		what = "pam_authenticate(PAM_SILENT)";
+		dbg_pam_step(arg, what);
 		retval = pam_authenticate(pamh, PAM_SILENT); /* is user really user? */
-		if (retval != PAM_SUCCESS)
+		if (retval != PAM_SUCCESS) {
 			break;
-		dbg_pam_step(arg, what);
+		}
 
-		what = "pam_acct_mgmt";
-		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
-		if (retval != PAM_SUCCESS)
-			break;
+		what = "pam_acct_mgmt(0)";
 		dbg_pam_step(arg, what);
+		retval = pam_acct_mgmt(pamh, 0); /* permitted access? */
+		if (retval != PAM_SUCCESS) {
+			break;
+		}
 
 		/* success! */
-		pam_end(pamh, PAM_SUCCESS);
+		what = "pam_end()";
+		dbg_pam_step(arg, what);
+		retval = pam_end(pamh, PAM_SUCCESS);
+		if (retval != PAM_SUCCESS) {
+			break;
+		}
+
 		return true;
+
 	} while (false);
 
 	/* common failure code */
 	llog(RC_LOG, logger,
-	     "%s FAILED during %s with '%s' for state "PRI_SO", %s[%lu] user=%s.",
+	     "%s FAILED during %s with '%s' for state "PRI_SO", %s["PRI_CO"] user=%s.",
 	     arg->atype, what, pam_strerror(pamh, retval),
-	     pri_so(arg->st_serialno), arg->c_name, arg->c_instance_serial,
+	     pri_so(arg->st_serialno),
+	     arg->connection.base_name,
+	     pri_co(arg->connection.instance_serial),
 	     arg->name);
 	pam_end(pamh, retval);
 	return false;

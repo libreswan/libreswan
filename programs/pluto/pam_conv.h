@@ -27,11 +27,13 @@
 struct pam_thread_arg {
 	char *name;
 	char *password;
-	char *c_name;
-	ip_address rhost;
 	so_serial_t st_serialno;
-	unsigned long c_instance_serial;
+	ip_address peer_addr;
 	const char *atype;  /* string XAUTH or IKEv2 */
+	struct {
+		char *base_name;
+		co_serial_t instance_serial;
+	} connection;
 };
 
 extern bool do_pam_authentication(struct pam_thread_arg *arg, struct logger *logger);
