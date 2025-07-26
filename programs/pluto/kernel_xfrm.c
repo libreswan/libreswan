@@ -765,7 +765,7 @@ static void set_xfrm_selectors(struct xfrm_selector *sel,
 			       struct logger *logger)
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
-	pexpect(selector_protocol(*dst_client) == client_proto);
+	PEXPECT(logger, selector_protocol(*dst_client) == client_proto);
 
 	const struct ip_info *dst_client_afi  = selector_type(dst_client);
 	const int family = dst_client_afi->af;
@@ -884,7 +884,7 @@ static void add_sec_label(struct nlmsghdr *n,
 		struct rtattr *attr = (struct rtattr *)((uint8_t *)n + n->nlmsg_len);
 		struct xfrm_user_sec_ctx *uctx;
 
-		passert(sec_label.len <= MAX_SECCTX_LEN);
+		PASSERT(logger, sec_label.len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
 		ldbg(logger, "%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
@@ -914,7 +914,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	enum_short(&direction_names, dir, &dir_str);
 
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
-	pexpect(selector_protocol(*dst_client) == client_proto);
+	PEXPECT(logger, selector_protocol(*dst_client) == client_proto);
 
 	unsigned xfrm_action = UINT_MAX;
 	const char *policy_name = NULL;
@@ -1006,10 +1006,10 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 * is needed.  Lets find out.
 	 */
 	if (policy->nr_rules > 0 &&
-	    pexpect(policy->shunt != SHUNT_PASS)) {
+	    PEXPECT(logger, policy->shunt != SHUNT_PASS)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
-		passert(policy->nr_rules <= (int)elemsof(tmpls));
+		PASSERT(logger, policy->nr_rules <= (int)elemsof(tmpls));
 		/* only the first rule gets the worm; er tunnel flag */
 		unsigned mode = (policy->mode == KERNEL_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
 				 XFRM_MODE_TRANSPORT);
@@ -1067,8 +1067,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			((char *)&req + req.n.nlmsg_len);
 		struct xfrm_user_offload *xuo;
 
-		dbg("packet offload enabled via interface %s for IPsec policy",
-			nic_offload->dev);
+		ldbg(logger, "packet offload enabled via interface %s for IPsec policy",
+		     nic_offload->dev);
 		attr->rta_type = XFRMA_OFFLOAD_DEV;
 		attr->rta_len = RTA_LENGTH(sizeof(*xuo));
 		xuo = RTA_DATA(attr);
@@ -1138,13 +1138,13 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 				   struct logger *logger, const char *func)
 {
 	const struct ip_protocol *child_proto = selector_protocol(*src_child);
-	pexpect(selector_protocol(*dst_child) == child_proto);
+	PEXPECT(logger, selector_protocol(*dst_child) == child_proto);
 
 	/* XXX: notice how this ignores KERNEL_OP_REPLACE!?! */
 	const unsigned xfrm_dir =
 		(direction == DIRECTION_INBOUND ? XFRM_POLICY_IN :
 		 direction == DIRECTION_OUTBOUND ? XFRM_POLICY_OUT :
-		 pexpect(0));
+		 PEXPECT(logger, 0));
 
 	struct {
 		struct nlmsghdr n;
@@ -1245,16 +1245,18 @@ struct kernel_migrate {
 };
 
 static bool init_xfrm_kernel_migrate(struct child_sa *child,
-				     const int xfrm_policy_dir,	/* netkey SA direction XFRM_POLICY_{IN,OUT,FWD} */
+				     const int xfrm_policy_dir,
+				     /* netkey SA direction XFRM_POLICY_{IN,OUT,FWD} */
 				     struct kernel_migrate *migrate)
 {
+	struct logger *logger = child->sa.logger;
 	const struct connection *const c = child->sa.st_connection;
 
 	const struct ip_encap *encap_type =
 		(child->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
 		nat_traversal_detected(&child->sa) ? &ip_encap_esp_in_udp :
 		NULL;
-	ldbg_sa(child, "TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
+	ldbg(logger, "TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
 
 	const struct ip_protocol *proto;
 	const struct ipsec_proto_info *proto_info;
@@ -1327,7 +1329,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 		/* WWW what about sec_label? */
 	};
 
-	passert(endpoint_is_specified(child->sa.st_v2_mobike.local_endpoint) !=
+	PASSERT(logger, endpoint_is_specified(child->sa.st_v2_mobike.local_endpoint) !=
 		endpoint_is_specified(child->sa.st_v2_mobike.remote_endpoint));
 
 	struct jambuf story_jb = ARRAY_AS_JAMBUF(migrate->story);
@@ -1362,7 +1364,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	    migrate->reqid);
 	jam_enum_long(&story_jb, &xfrm_policy_names, xfrm_policy_dir);
 
-	ldbg_sa(child, "%s", migrate->story);
+	ldbg(logger, "%s", migrate->story);
 	return true;
 }
 
@@ -1817,7 +1819,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 */
 	if (sa->proto == &ip_protocol_ipcomp) {
 
-		if (!pexpect(sa->ipcomp != NULL)) {
+		if (!PEXPECT(logger, sa->ipcomp != NULL)) {
 			return false;
 		}
 
@@ -1929,9 +1931,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	}
 
 	if (sa->encap_type != NULL) {
-		dbg("adding xfrm-encap-tmpl when adding sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
-		    pri_ip_encap(sa->encap_type),
-		    sa->src.encap_port, sa->dst.encap_port);
+		ldbg(logger, "adding xfrm-encap-tmpl when adding sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+		     pri_ip_encap(sa->encap_type),
+		     sa->src.encap_port, sa->dst.encap_port);
 		struct xfrm_encap_tmpl natt;
 
 		natt.encap_type = sa->encap_type->encap_type;
@@ -1951,8 +1953,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 #ifdef USE_XFRM_INTERFACE
 	if (sa->ipsec_interface != 0) {
 		uint32_t xfrm_if_id = sa->ipsec_interface->if_id;
-		dbg("%s xfrm: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
-		    __func__, xfrm_if_id, req.n.nlmsg_type);
+		ldbg(logger, "%s xfrm: XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+		     __func__, xfrm_if_id, req.n.nlmsg_type);
 		nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrm_if_id);
 		if (sa->sa_mark_out != NULL) {
 			/* manually configured mark-out=mark/mask */
@@ -2170,7 +2172,7 @@ static const void *nlmsg_data(struct nlmsghdr *n, size_t size, struct logger *lo
 		     n->nlmsg_len, size);
 		return NULL;
 	}
-	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
+	ldbg(logger, "xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
 	return NLMSG_DATA(n);
 }
 
@@ -2268,7 +2270,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
 
 	while (remaining > 0) {
-		dbg("xfrm acquire rtattribute type %u ...", attr->rta_type);
+		ldbg(logger, "xfrm acquire rtattribute type %u ...", attr->rta_type);
 		switch (attr->rta_type) {
 		case XFRMA_TMPL:
 		{
@@ -2306,7 +2308,7 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 			/* length of text of label */
 			size_t len = xuctx->ctx_len;
 
-			dbg("... xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
+			ldbg(logger, "... xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
 			    xuctx->exttype, xuctx->len,
 			    xuctx->ctx_doi, xuctx->ctx_alg,
 			    len);

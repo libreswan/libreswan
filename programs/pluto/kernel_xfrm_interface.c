@@ -885,7 +885,9 @@ static err_t xfrm_ipsec_interface_init(struct verbose verbose)
 }
 
 
-void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
+void set_ike_mark_out(const struct connection *c,
+		      ip_endpoint *ike_remote,
+		      struct logger *logger)
 {
 	bool set_mark = false;
 	const struct spds *spds = &c->child.spds;
@@ -909,7 +911,7 @@ void set_ike_mark_out(const struct connection *c, ip_endpoint *ike_remote)
 		mark_out = c->ipsec_interface->if_id;
 
 	if (ike_remote->mark_out != 0)
-		passert(ike_remote->mark_out == mark_out);
+		PASSERT(logger, ike_remote->mark_out == mark_out);
 
 	ike_remote->mark_out = mark_out;
 }

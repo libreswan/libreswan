@@ -62,7 +62,8 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	}
 
 #ifdef USE_XFRM_INTERFACE
-	set_ike_mark_out(ike->sa.st_connection, &ike->sa.st_remote_endpoint);
+	set_ike_mark_out(ike->sa.st_connection, &ike->sa.st_remote_endpoint,
+			 ike->sa.logger);
 #endif
 
 	unsigned nr_frags = 0;
