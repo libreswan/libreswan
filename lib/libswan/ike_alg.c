@@ -45,8 +45,8 @@
 #include "ike_alg_prf_ikev2_ops.h"
 #include "ike_alg_hash.h"
 #include "ike_alg_hash_ops.h"
-#include "ike_alg_dh.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem.h"
+#include "ike_alg_kem_ops.h"
 #include "ike_alg_ipcomp.h"
 #include "ike_alg_ipcomp_ops.h"
 

@@ -48,7 +48,7 @@
 #include "pluto_x509.h"
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "packet.h"

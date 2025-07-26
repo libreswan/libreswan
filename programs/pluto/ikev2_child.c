@@ -58,7 +58,7 @@
 #include "ipsec_interface.h"
 #include "ikev2_cp.h"
 #include "ikev2_child.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "pluto_stats.h"
 #include "pending.h"
 #include "kernel.h"			/* for get_my_cpi() hack */

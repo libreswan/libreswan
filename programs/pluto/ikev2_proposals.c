@@ -50,7 +50,7 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "demux.h"
 #include "ikev2.h"
 #include "rnd.h"

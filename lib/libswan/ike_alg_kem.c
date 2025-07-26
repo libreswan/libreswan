@@ -23,8 +23,8 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 
-#include "ike_alg_dh.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem.h"
+#include "ike_alg_kem_ops.h"
 
 /*
  * Oakley group description

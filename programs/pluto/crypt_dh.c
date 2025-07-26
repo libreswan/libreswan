@@ -56,7 +56,7 @@
 #include "id.h"
 #include "keys.h"
 #include "crypt_dh.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 #include <pk11pub.h>
 #include <keyhi.h>

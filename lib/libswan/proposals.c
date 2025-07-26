@@ -26,7 +26,7 @@
 #include "proposals.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "alg_byname.h"
 
 struct proposal {

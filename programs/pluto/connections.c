@@ -101,7 +101,7 @@
 #include "routing.h"
 #include "timescale.h"
 #include "connection_event.h"
-#include "ike_alg_dh.h"		/* for ike_alg_dh_none; */
+#include "ike_alg_kem.h"		/* for ike_alg_dh_none; */
 #include "sparse_names.h"
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
 #include "whack_pubkey.h"

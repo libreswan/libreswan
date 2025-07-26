@@ -41,7 +41,7 @@
 #include "lswnss.h"
 #include "lswlog.h"
 #include "secrets.h"
-#include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
+#include "ike_alg_kem.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
