@@ -106,7 +106,7 @@ struct trans_attrs {
 	const struct ipcomp_desc *ta_ipcomp;	/* package of ipcomp routines */
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
-	const struct dh_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
+	const struct kem_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
 };
 
 /*
@@ -258,7 +258,7 @@ struct state {
 
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
-	const struct dh_desc *st_pfs_group;   /*group for Phase 2 PFS */
+	const struct kem_desc *st_pfs_group;   /*group for Phase 2 PFS */
 	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */

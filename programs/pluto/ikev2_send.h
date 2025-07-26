@@ -22,7 +22,7 @@
 #include "connections.h"
 
 struct msg_digest;
-struct dh_desc;
+struct kem_desc;
 struct ike_sa;
 struct child_sa;
 enum payload_security;

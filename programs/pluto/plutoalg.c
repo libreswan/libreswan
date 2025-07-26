@@ -105,7 +105,7 @@ void show_kernel_alg_connection(struct show *s,
 #ifdef USE_IKEv1
 		case IKEv1:
 		{
-			const struct dh_desc *dh = ikev1_quick_pfs(c->config->child.proposals);
+			const struct kem_desc *dh = ikev1_quick_pfs(c->config->child.proposals);
 			if (dh != NULL) {
 				pfsbuf = dh->common.fqn;
 			} else {

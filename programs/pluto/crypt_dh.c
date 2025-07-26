@@ -64,7 +64,7 @@
 
 struct dh_local_secret {
 	refcnt_t refcnt;
-	const struct dh_desc *group;
+	const struct kem_desc *group;
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 };
@@ -74,7 +74,7 @@ static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secr
 	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
-struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger)
+struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *group, struct logger *logger)
 {
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
@@ -98,7 +98,7 @@ shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret)
 							    local_secret->pubk);
 }
 
-const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
+const struct kem_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 {
 	return local_secret->group;
 }

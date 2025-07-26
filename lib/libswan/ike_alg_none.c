@@ -104,7 +104,7 @@ const struct integ_desc ike_alg_integ_none = {
 /*
  * Blame RFC7296!
  */
-const struct dh_desc ike_alg_dh_none = {
+const struct kem_desc ike_alg_dh_none = {
 	.common = {
 		.fqn = "NONE",
 		.names = "none,null,dh0",

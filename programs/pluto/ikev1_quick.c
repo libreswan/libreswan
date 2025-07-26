@@ -130,7 +130,7 @@ static void update_quick_iv(struct child_sa *child,
 	child->sa.st_v1_phase_2_iv = iv;
 }
 
-const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
+const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 {
 	if (proposals.p == NULL) {
 		return NULL;

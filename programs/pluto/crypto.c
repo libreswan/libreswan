@@ -173,9 +173,9 @@ void show_ike_alg_status(struct show *s)
 		}
 	}
 
-	for (const struct dh_desc **gdescp = next_dh_desc(NULL);
-	     gdescp != NULL; gdescp = next_dh_desc(gdescp)) {
-		const struct dh_desc *gdesc = *gdescp;
+	for (const struct kem_desc **gdescp = next_kem_desc(NULL);
+	     gdescp != NULL; gdescp = next_kem_desc(gdescp)) {
+		const struct kem_desc *gdesc = *gdescp;
 		if (gdesc->bytes > 0) {
 			/* nothing crazy like 'none' */
 			show(s,

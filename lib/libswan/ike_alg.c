@@ -143,9 +143,9 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 						   (const struct ike_alg**)last);
 }
 
-const struct dh_desc **next_dh_desc(const struct dh_desc **last)
+const struct kem_desc **next_kem_desc(const struct kem_desc **last)
 {
-	return (const struct dh_desc**)next_alg(&ike_alg_dh,
+	return (const struct kem_desc**)next_alg(&ike_alg_dh,
 						(const struct ike_alg**)last);
 }
 
@@ -286,7 +286,7 @@ const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, name_buf
 	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id, b));
 }
 
-const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh id, name_buf *b)
+const struct kem_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh id, name_buf *b)
 {
 	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id, b));
 }
@@ -337,7 +337,7 @@ const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct
 	return integ_desc(ikev2_lookup(&ike_alg_integ, id, b));
 }
 
-const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh id, struct name_buf *b)
+const struct kem_desc *ikev2_dh_desc(enum ike_trans_type_dh id, struct name_buf *b)
 {
 	return dh_desc(ikev2_lookup(&ike_alg_dh, id, b));
 }
@@ -851,7 +851,7 @@ const struct ike_alg_type ike_alg_encrypt = {
  * DH group
  */
 
-static const struct dh_desc *dh_descriptors[] = {
+static const struct kem_desc *dh_descriptors[] = {
 	&ike_alg_dh_none,
 #ifdef USE_DH2
 	&ike_alg_dh_modp1024,
@@ -881,7 +881,7 @@ static const struct dh_desc *dh_descriptors[] = {
 
 static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
-	const struct dh_desc *dh = dh_desc(alg);
+	const struct kem_desc *dh = dh_desc(alg);
 	pexpect_ike_alg(logger, alg, dh->group > 0);
 	pexpect_ike_alg(logger, alg, dh->bytes > 0);
 	pexpect_ike_alg(logger, alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
@@ -906,7 +906,7 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct dh_desc *dh = dh_desc(alg);
+	const struct kem_desc *dh = dh_desc(alg);
 	return dh->kem_ops != NULL;
 }
 
@@ -1148,7 +1148,7 @@ static const char *backend_name(const struct ike_alg *alg)
 			return encrypt->encrypt_ops->backend;
 		}
 	} else if (alg->algo_type == &ike_alg_dh) {
-		const struct dh_desc *dh = dh_desc(alg);
+		const struct kem_desc *dh = dh_desc(alg);
 		if (dh->kem_ops != NULL) {
 			return dh->kem_ops->backend;
 		}

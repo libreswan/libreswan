@@ -114,7 +114,7 @@ void kernel_alg_add(const struct ike_alg *alg)
 	}
 }
 
-bool kernel_alg_dh_ok(const struct dh_desc *dh)
+bool kernel_alg_dh_ok(const struct kem_desc *dh)
 {
 	if (dh == NULL) {
 		llog_pexpect(&global_logger, HERE,

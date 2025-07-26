@@ -28,7 +28,7 @@
 #include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_modp_calc_local_secret(const struct dh_desc *group,
+static void nss_modp_calc_local_secret(const struct kem_desc *group,
 				       SECKEYPrivateKey **privk,
 				       SECKEYPublicKey **pubk,
 				       struct logger *logger)
@@ -77,7 +77,7 @@ static void nss_modp_calc_local_secret(const struct dh_desc *group,
 	free_chunk_content(&base);
 }
 
-static shunk_t nss_modp_local_secret_ke(const struct dh_desc *group,
+static shunk_t nss_modp_local_secret_ke(const struct kem_desc *group,
 					const SECKEYPublicKey *local_pubk)
 {
 	/* clone secitem as chunk()? */
@@ -85,7 +85,7 @@ static shunk_t nss_modp_local_secret_ke(const struct dh_desc *group,
 	return shunk2(local_pubk->u.dh.publicValue.data, group->bytes);
 }
 
-static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
+static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 					  SECKEYPrivateKey *local_privk,
 					  const SECKEYPublicKey *local_pubk,
 					  chunk_t remote_ke,
@@ -129,7 +129,7 @@ static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
 	return NULL;
 }
 
-static void nss_modp_check(const struct dh_desc *dhmke, struct logger *logger)
+static void nss_modp_check(const struct kem_desc *dhmke, struct logger *logger)
 {
 	const struct ike_alg *alg = &dhmke->common;
 	pexpect_ike_alg(logger, alg, dhmke->gen != NULL);

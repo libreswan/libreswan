@@ -37,7 +37,7 @@
 #include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_ecp_calc_local_secret(const struct dh_desc *group,
+static void nss_ecp_calc_local_secret(const struct kem_desc *group,
 				      SECKEYPrivateKey **privk,
 				      SECKEYPublicKey **pubk,
 				      struct logger *logger)
@@ -96,7 +96,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
  * what is needed is the plain EC coordinate without that prefix (see
  * documentation in pk11_get_EC_PointLenInBytes()).
  */
-static shunk_t nss_ecp_local_secret_ke(const struct dh_desc *group,
+static shunk_t nss_ecp_local_secret_ke(const struct kem_desc *group,
 				       const SECKEYPublicKey *local_pubk)
 {
 	struct logger *logger = &global_logger;
@@ -116,7 +116,7 @@ static shunk_t nss_ecp_local_secret_ke(const struct dh_desc *group,
 	return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
 }
 
-static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
+static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *group,
 					 SECKEYPrivateKey *local_privk,
 					 const SECKEYPublicKey *local_pubk,
 					 chunk_t remote_ke,
@@ -209,7 +209,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 	return NULL;
 }
 
-static void nss_ecp_check(const struct dh_desc *dhmke, struct logger *logger)
+static void nss_ecp_check(const struct kem_desc *dhmke, struct logger *logger)
 {
 	const struct ike_alg *alg = &dhmke->common;
 	pexpect_ike_alg(logger, alg, dhmke->nss_oid > 0);

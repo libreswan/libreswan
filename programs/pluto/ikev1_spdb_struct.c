@@ -2361,7 +2361,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	lset_t seen_attrs = LEMPTY;
 	lset_t seen_durations = LEMPTY;
 	enum ikev1_sa_life_type life_type = 0;		/* 0 invalid */
-	const struct dh_desc *pfs_group = NULL;
+	const struct kem_desc *pfs_group = NULL;
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;

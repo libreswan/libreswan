@@ -1719,7 +1719,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			case IKEv2_TRANS_TYPE_KE:
 			{
 				name_buf b;
-				const struct dh_desc *group = ikev2_dh_desc(transform->id, &b);
+				const struct kem_desc *group = ikev2_dh_desc(transform->id, &b);
 				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
@@ -1826,12 +1826,12 @@ static void force_transform(struct ikev2_proposal *proposal,
 
 static struct ikev2_proposals *proposals_from_accepted(const char *story,
 						       const struct ikev2_proposal *accepted_proposal,
-						       const struct dh_desc *default_dh,
+						       const struct kem_desc *default_dh,
 						       bool ms_dh_downgrade/*aka add none*/,
 						       struct verbose verbose)
 {
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, story);
-	const struct dh_desc *dh[3] = {NULL}; /*[0] is ignored*/
+	const struct kem_desc *dh[3] = {NULL}; /*[0] is ignored*/
 
 	/*
 	 * Figure out the DH; or NONE when not specified.
@@ -2059,8 +2059,8 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal *proposal,
 								enum ikev2_sec_proto_id protoid,
 								struct ikev2_proposals *v2_proposals,
-								const struct dh_desc *force_dh,
-								const struct dh_desc *default_dh,
+								const struct kem_desc *force_dh,
+								const struct kem_desc *default_dh,
 								struct verbose verbose)
 {
 	/*
@@ -2131,7 +2131,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * DH was specified on the esp= line.
 		 */
 		FOR_EACH_ALGORITHM(proposal, ke, alg) {
-			const struct dh_desc *dh = dh_desc(alg->desc);
+			const struct kem_desc *dh = dh_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
 			 * omitted when emitted.
@@ -2217,7 +2217,7 @@ static void add_esn_transforms(struct ikev2_proposal *proposal,
 static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 						      const char *why,
 						      bool strip_dh,
-						      const struct dh_desc *default_dh,
+						      const struct kem_desc *default_dh,
 						      struct verbose verbose)
 {
 	if (!pexpect(c->config->child.proposals.p != NULL)) {
@@ -2300,7 +2300,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * The second pass (for ms-dh-downgrade)
 			 * forces the DH to &ike_alg_none.
 			 */
-			const struct dh_desc *force_dh =
+			const struct kem_desc *force_dh =
 				(pass == 2 ? &ike_alg_dh_none :
 				 strip_dh ? default_dh :
 				 NULL);
@@ -2326,14 +2326,14 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
  * Return the first valid DH proposal that is supported.
  */
 
-const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
+const struct kem_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
 					      struct verbose verbose)
 {
 	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_KE];
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
 		int groupnum = transforms->transform[t].id;
 		name_buf b;
-		const struct dh_desc *group = ikev2_dh_desc(groupnum, &b);
+		const struct kem_desc *group = ikev2_dh_desc(groupnum, &b);
 		if (pbad(group == NULL)) {
 			/*
 			 * Things screwed up (this group should have
@@ -2354,13 +2354,13 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 	return NULL;
 }
 
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
+const struct kem_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
 					       struct verbose verbose)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		const struct dh_desc *dh = ikev2_proposal_first_dh(proposal, verbose);
+		const struct kem_desc *dh = ikev2_proposal_first_dh(proposal, verbose);
 		if (dh != NULL) {
 			return dh;
 		}
@@ -2423,7 +2423,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 								   struct verbose verbose)
 {
 	struct connection *cc = larval_child->sa.st_connection; /*not IKE's connection*/
-	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+	const struct kem_desc *ike_dh = ike->sa.st_oakley.ta_dh;
 
 	struct ikev2_proposals *proposals;
 	if (cc->config->pfs_rekey_workaround &&
@@ -2498,7 +2498,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * proposal does not specify DH, this will be used.
 	 */
 
-	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+	const struct kem_desc *ike_dh = ike->sa.st_oakley.ta_dh;
 
 	/*
 	 * A rekeing Child SA should use the proposals accepted
@@ -2512,7 +2512,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 
 	const struct ikev2_proposal *accepted_proposal =
 		established_child->sa.st_v2_accepted_proposal;
-	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal, verbose);
+	const struct kem_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal, verbose);
 
 	/*
 	 * Normally, with PFS=YES, the Child SA's previously accepted

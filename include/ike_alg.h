@@ -700,7 +700,7 @@ struct integ_desc {
  * and "oakley_group" is too long.
  */
 
-struct dh_desc {
+struct kem_desc {
 	struct ike_alg common;		/* must be first */
 	uint16_t group;
 	size_t bytes;			/* raw bytes to be put on wire */
@@ -729,7 +729,7 @@ struct dh_desc {
 	const struct kem_ops *kem_ops;
 };
 
-extern const struct dh_desc unset_group;      /* magic signifier */
+extern const struct kem_desc unset_group;      /* magic signifier */
 
 /*
  * IPCOMP, like encryption, re-aranges the bits.
@@ -781,7 +781,7 @@ void test_ike_alg(struct logger *logger);
 const struct encrypt_desc **next_encrypt_desc(const struct encrypt_desc **last);
 const struct prf_desc **next_prf_desc(const struct prf_desc **last);
 const struct integ_desc **next_integ_desc(const struct integ_desc **last);
-const struct dh_desc **next_dh_desc(const struct dh_desc **last);
+const struct kem_desc **next_kem_desc(const struct kem_desc **last);
 const struct ipcomp_desc **next_ipcomp_desc(const struct ipcomp_desc **last);
 
 /*
@@ -820,7 +820,7 @@ const struct hash_desc *hash_desc(const struct ike_alg *alg);
 const struct prf_desc *prf_desc(const struct ike_alg *alg);
 const struct integ_desc *integ_desc(const struct ike_alg *alg);
 const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg);
-const struct dh_desc *dh_desc(const struct ike_alg *alg);
+const struct kem_desc *dh_desc(const struct ike_alg *alg);
 const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg);
 
 /*
@@ -841,7 +841,7 @@ const struct prf_desc *ikev2_prf_desc(enum ikev2_trans_type_prf,
 				      struct name_buf *b);
 const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ,
 					  struct name_buf *b);
-const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh,
+const struct kem_desc *ikev2_dh_desc(enum ike_trans_type_dh,
 				    struct name_buf *b);
 const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo,
 					    struct name_buf *b);
@@ -862,7 +862,7 @@ const struct encrypt_desc *ikev1_ike_encrypt_desc(enum ikev1_encr_attribute,
 						  struct name_buf *b);
 const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute,
 					  struct name_buf *b);
-const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh,
+const struct kem_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh,
 					struct name_buf *b);
 const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo,
 						struct name_buf *b);
