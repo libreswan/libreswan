@@ -140,7 +140,7 @@ const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 	if (dh == NULL) {
 		return NULL;
 	}
-	return dh_desc(dh->desc);
+	return kem_desc(dh->desc);
 }
 
 /* accept_PFS_KE

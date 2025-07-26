@@ -1029,7 +1029,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
 	name_buf ignore;
-	const struct kem_desc *new_group = ikev2_dh_desc(sg.sg_group, &ignore);
+	const struct kem_desc *new_group = ikev2_kem_desc(sg.sg_group, &ignore);
 	passert(new_group != NULL);
 	llog_sa(RC_LOG, ike,
 		  "received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",

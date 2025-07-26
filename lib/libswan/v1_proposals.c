@@ -37,7 +37,7 @@ typedef struct v1_proposal merge_alg_default_t(struct v1_proposal proposal,
 static struct v1_proposal merge_dh_default(struct v1_proposal proposal,
 					   const struct ike_alg *default_alg)
 {
-	proposal.kem = dh_desc(default_alg);
+	proposal.kem = kem_desc(default_alg);
 	return proposal;
 }
 
@@ -336,7 +336,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	bool lookup_ke = parser->protocol->kem || impair.proposal_parser;
 	if (lookup_ke && tokens->this.ptr != NULL) {
 		shunk_t ke = tokens[0].this;
-		proposal.kem = dh_desc(alg_byname(parser, IKE_ALG_KEM, ke, ke));
+		proposal.kem = kem_desc(alg_byname(parser, IKE_ALG_KEM, ke, ke));
 		if (parser->diag != NULL) {
 			return false;
 		}

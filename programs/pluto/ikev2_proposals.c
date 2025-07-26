@@ -1719,7 +1719,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			case IKEv2_TRANS_TYPE_KE:
 			{
 				name_buf b;
-				const struct kem_desc *group = ikev2_dh_desc(transform->id, &b);
+				const struct kem_desc *group = ikev2_kem_desc(transform->id, &b);
 				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
@@ -2131,7 +2131,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * DH was specified on the esp= line.
 		 */
 		FOR_EACH_ALGORITHM(proposal, kem, alg) {
-			const struct kem_desc *dh = dh_desc(alg->desc);
+			const struct kem_desc *dh = kem_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
 			 * omitted when emitted.
@@ -2333,7 +2333,7 @@ const struct kem_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *prop
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
 		int groupnum = transforms->transform[t].id;
 		name_buf b;
-		const struct kem_desc *group = ikev2_dh_desc(groupnum, &b);
+		const struct kem_desc *group = ikev2_kem_desc(groupnum, &b);
 		if (pbad(group == NULL)) {
 			/*
 			 * Things screwed up (this group should have

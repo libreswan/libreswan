@@ -72,7 +72,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	impaired_passert(proposal_parser, parser->policy->logger,
 			 next_algorithm(proposal, PROPOSAL_kem, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, kem, alg) {
-		const struct kem_desc *kem = dh_desc(alg->desc);
+		const struct kem_desc *kem = kem_desc(alg->desc);
 		passert(ike_alg_is_ike(&kem->common));
 		if (kem == &ike_alg_kem_none) {
 			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");

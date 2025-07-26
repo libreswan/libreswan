@@ -1940,7 +1940,7 @@ rsasig_common:
 			case OAKLEY_GROUP_DESCRIPTION:
 			{
 				name_buf b;
-				ta.ta_dh = ikev1_ike_dh_desc(value, &b);
+				ta.ta_dh = ikev1_ike_kem_desc(value, &b);
 				if (ta.ta_dh == NULL) {
 					UGH("OAKLEY_GROUP %s not supported", b.buf);
 					break;
@@ -2231,7 +2231,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	ta.auth = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.ta_dh = ikev1_ike_dh_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
+	ta.ta_dh = ikev1_ike_kem_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
 	passert(ta.ta_dh != NULL);
 
 	ike->sa.st_oakley = ta;
@@ -2536,7 +2536,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
 			name_buf b;
-			pfs_group = ikev1_ike_dh_desc(value, &b);
+			pfs_group = ikev1_ike_kem_desc(value, &b);
 			if (pfs_group == NULL) {
 				llog(RC_LOG, child->sa.logger,
 				     "OAKLEY_GROUP %s not supported for PFS", b.buf);
