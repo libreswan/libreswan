@@ -726,7 +726,7 @@ struct dh_desc {
 	 */
 	bool nss_adds_ec_point_form_uncompressed;
 
-	const struct dh_ops *dh_ops;
+	const struct kem_ops *kem_ops;
 };
 
 extern const struct dh_desc unset_group;      /* magic signifier */

@@ -55,7 +55,7 @@ const struct dh_desc ike_alg_dh_modp1024 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP1024_MODULUS,
 	.bytes = BYTES_FOR_BITS(1024),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 #endif
 
@@ -74,7 +74,7 @@ const struct dh_desc ike_alg_dh_modp1536 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP1536_MODULUS,
 	.bytes = BYTES_FOR_BITS(1536),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_modp2048 = {
@@ -93,7 +93,7 @@ const struct dh_desc ike_alg_dh_modp2048 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP2048_MODULUS,
 	.bytes = BYTES_FOR_BITS(2048),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_modp3072 = {
@@ -112,7 +112,7 @@ const struct dh_desc ike_alg_dh_modp3072 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP3072_MODULUS,
 	.bytes = BYTES_FOR_BITS(3072),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_modp4096 = {
@@ -131,7 +131,7 @@ const struct dh_desc ike_alg_dh_modp4096 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP4096_MODULUS,
 	.bytes = BYTES_FOR_BITS(4096),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_modp6144 = {
@@ -150,7 +150,7 @@ const struct dh_desc ike_alg_dh_modp6144 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP6144_MODULUS,
 	.bytes = BYTES_FOR_BITS(6144),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_modp8192 = {
@@ -169,7 +169,7 @@ const struct dh_desc ike_alg_dh_modp8192 = {
 	.gen = MODP_GENERATOR,
 	.modp = MODP8192_MODULUS,
 	.bytes = BYTES_FOR_BITS(8192),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_secp256r1 = {
@@ -188,7 +188,7 @@ const struct dh_desc ike_alg_dh_secp256r1 = {
 	.bytes = BYTES_FOR_BITS(256) * 2,
 	.nss_oid = SEC_OID_SECG_EC_SECP256R1,
 	.nss_adds_ec_point_form_uncompressed = true,
-	.dh_ops = &ike_alg_dh_nss_ecp_ops,
+	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_secp384r1 = {
@@ -207,7 +207,7 @@ const struct dh_desc ike_alg_dh_secp384r1 = {
 	.bytes = BYTES_FOR_BITS(384) * 2,
 	.nss_oid = SEC_OID_SECG_EC_SECP384R1,
 	.nss_adds_ec_point_form_uncompressed = true,
-	.dh_ops = &ike_alg_dh_nss_ecp_ops,
+	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 
 const struct dh_desc ike_alg_dh_secp521r1 = {
@@ -226,7 +226,7 @@ const struct dh_desc ike_alg_dh_secp521r1 = {
 	.bytes = BYTES_FOR_BITS(521) * 2,
 	.nss_oid = SEC_OID_SECG_EC_SECP521R1,
 	.nss_adds_ec_point_form_uncompressed = true,
-	.dh_ops = &ike_alg_dh_nss_ecp_ops,
+	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 
 #ifdef USE_DH22
@@ -246,7 +246,7 @@ const struct dh_desc ike_alg_dh_dh22 = {
 	.gen = MODP_GENERATOR_DH22,
 	.modp = MODP1024_MODULUS_DH22,
 	.bytes = BYTES_FOR_BITS(1024),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 #endif
 
@@ -267,7 +267,7 @@ const struct dh_desc ike_alg_dh_dh23 = {
 	.gen = MODP_GENERATOR_DH23,
 	.modp = MODP2048_MODULUS_DH23,
 	.bytes = BYTES_FOR_BITS(2048),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 #endif
 
@@ -288,7 +288,7 @@ const struct dh_desc ike_alg_dh_dh24 = {
 	.gen = MODP_GENERATOR_DH24,
 	.modp = MODP2048_MODULUS_DH24,
 	.bytes = BYTES_FOR_BITS(2048),
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };
 #endif
 
@@ -309,6 +309,6 @@ const struct dh_desc ike_alg_dh_curve25519 = {
 	.group = OAKLEY_GROUP_CURVE25519,
 	.bytes = 32 /* octets */,
 	.nss_oid = SEC_OID_CURVE25519,
-	.dh_ops = &ike_alg_dh_nss_ecp_ops,
+	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 #endif

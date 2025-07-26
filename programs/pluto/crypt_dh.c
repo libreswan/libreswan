@@ -78,7 +78,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 {
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
-	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
+	group->kem_ops->calc_local_secret(group, &privk, &pubk, logger);
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, logger, HERE);
@@ -94,7 +94,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 
 shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret)
 {
-	return local_secret->group->dh_ops->local_secret_ke(local_secret->group,
+	return local_secret->group->kem_ops->local_secret_ke(local_secret->group,
 							    local_secret->pubk);
 }
 
@@ -142,7 +142,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 {
 
 	struct dh_local_secret *secret = task->local_secret;
-	diag_t diag = secret->group->dh_ops->calc_shared_secret(secret->group,
+	diag_t diag = secret->group->kem_ops->calc_shared_secret(secret->group,
 								secret->privk,
 								secret->pubk,
 								task->remote_ke,

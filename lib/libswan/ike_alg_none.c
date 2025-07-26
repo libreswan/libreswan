@@ -128,5 +128,5 @@ const struct dh_desc ike_alg_dh_none = {
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };

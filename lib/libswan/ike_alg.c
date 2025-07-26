@@ -887,18 +887,18 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg(logger, alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	pexpect_ike_alg(logger, alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
 	/* always implemented */
-	pexpect_ike_alg(logger, alg, dh->dh_ops != NULL);
-	if (dh->dh_ops != NULL) {
-		pexpect_ike_alg(logger, alg, dh->dh_ops->backend != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->check != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_local_secret != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_shared_secret != NULL);
+	pexpect_ike_alg(logger, alg, dh->kem_ops != NULL);
+	if (dh->kem_ops != NULL) {
+		pexpect_ike_alg(logger, alg, dh->kem_ops->backend != NULL);
+		pexpect_ike_alg(logger, alg, dh->kem_ops->check != NULL);
+		pexpect_ike_alg(logger, alg, dh->kem_ops->calc_local_secret != NULL);
+		pexpect_ike_alg(logger, alg, dh->kem_ops->calc_shared_secret != NULL);
 		/* more? */
-		dh->dh_ops->check(dh, logger);
+		dh->kem_ops->check(dh, logger);
 		/* IKEv1 supports MODP groups but not ECC. */
-		pexpect_ike_alg(logger, alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
+		pexpect_ike_alg(logger, alg, (dh->kem_ops == &ike_alg_kem_modp_nss_ops
 				      ? dh->common.id[IKEv1_IPSEC_ID] == dh->group
-				      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
+				      : dh->kem_ops == &ike_alg_kem_ecp_nss_ops
 				      ? dh->common.id[IKEv1_IPSEC_ID] < 0
 				      : false));
 	}
@@ -907,7 +907,7 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
 	const struct dh_desc *dh = dh_desc(alg);
-	return dh->dh_ops != NULL;
+	return dh->kem_ops != NULL;
 }
 
 static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dh_descriptors);
@@ -1149,8 +1149,8 @@ static const char *backend_name(const struct ike_alg *alg)
 		}
 	} else if (alg->algo_type == &ike_alg_dh) {
 		const struct dh_desc *dh = dh_desc(alg);
-		if (dh->dh_ops != NULL) {
-			return dh->dh_ops->backend;
+		if (dh->kem_ops != NULL) {
+			return dh->kem_ops->backend;
 		}
 	} else if (alg->algo_type == &ike_alg_ipcomp) {
 		const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);

@@ -136,7 +136,7 @@ static void nss_modp_check(const struct dh_desc *dhmke, struct logger *logger)
 	pexpect_ike_alg(logger, alg, dhmke->modp != NULL);
 }
 
-const struct dh_ops ike_alg_dh_nss_modp_ops = {
+const struct kem_ops ike_alg_kem_modp_nss_ops = {
 	.backend = "NSS(MODP)",
 	.check = nss_modp_check,
 	.calc_local_secret = nss_modp_calc_local_secret,

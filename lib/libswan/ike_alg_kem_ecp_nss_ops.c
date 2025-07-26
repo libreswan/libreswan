@@ -215,7 +215,7 @@ static void nss_ecp_check(const struct dh_desc *dhmke, struct logger *logger)
 	pexpect_ike_alg(logger, alg, dhmke->nss_oid > 0);
 }
 
-const struct dh_ops ike_alg_dh_nss_ecp_ops = {
+const struct kem_ops ike_alg_kem_ecp_nss_ops = {
 	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
 	.calc_local_secret = nss_ecp_calc_local_secret,

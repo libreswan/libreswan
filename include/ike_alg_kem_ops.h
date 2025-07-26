@@ -20,7 +20,7 @@
 
 struct logger;
 
-struct dh_ops {
+struct kem_ops {
 	const char *backend;
 
 	/*
@@ -53,7 +53,7 @@ struct dh_ops {
 				     struct logger *logger) MUST_USE_RESULT;
 };
 
-extern const struct dh_ops ike_alg_dh_nss_ecp_ops;
-extern const struct dh_ops ike_alg_dh_nss_modp_ops;
+extern const struct kem_ops ike_alg_kem_ecp_nss_ops;
+extern const struct kem_ops ike_alg_kem_modp_nss_ops;
 
 #endif
