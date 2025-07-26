@@ -74,7 +74,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	FOR_EACH_ALGORITHM(proposal, ke, alg) {
 		const struct kem_desc *dh = dh_desc(alg->desc);
 		passert(ike_alg_is_ike(&dh->common));
-		if (dh == &ike_alg_dh_none) {
+		if (dh == &ike_alg_kem_none) {
 			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");
 			if (!impair_proposal_errors(parser)) {
 				return false;
@@ -116,10 +116,10 @@ static const struct ike_alg *default_ikev1_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_ikev1_groups[] = {
-	&ike_alg_dh_modp2048.common,
-	&ike_alg_dh_modp1536.common,
-	&ike_alg_dh_secp256r1.common,
-	&ike_alg_dh_curve25519.common,
+	&ike_alg_kem_modp2048.common,
+	&ike_alg_kem_modp1536.common,
+	&ike_alg_kem_secp256r1.common,
+	&ike_alg_kem_curve25519.common,
 	NULL,
 };
 
@@ -182,16 +182,16 @@ static const struct ike_alg *default_ikev2_ike_prfs[] = {
 };
 
 static const struct ike_alg *default_ikev2_groups[] = {
-	&ike_alg_dh_secp256r1.common,
-	&ike_alg_dh_secp384r1.common,
-	&ike_alg_dh_secp521r1.common,
+	&ike_alg_kem_secp256r1.common,
+	&ike_alg_kem_secp384r1.common,
+	&ike_alg_kem_secp521r1.common,
 #ifdef USE_DH31
-	&ike_alg_dh_curve25519.common,
+	&ike_alg_kem_curve25519.common,
 #endif
-	&ike_alg_dh_modp4096.common,
-	&ike_alg_dh_modp3072.common,
-	&ike_alg_dh_modp2048.common,
-	&ike_alg_dh_modp8192.common,
+	&ike_alg_kem_modp4096.common,
+	&ike_alg_kem_modp3072.common,
+	&ike_alg_kem_modp2048.common,
+	&ike_alg_kem_modp8192.common,
 	NULL,
 };
 

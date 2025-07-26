@@ -631,11 +631,11 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	 * sent.
 	 *
 	 * Because code expects .st_pfs_group to use NULL, and not
-	 * &ike_alg_dh_none, to indicate no-DH algorithm, the value
+	 * &ike_alg_kem_none, to indicate no-DH algorithm, the value
 	 * returned by the proposal parser needs to be patched up.
 	 */
 	const struct kem_desc *accepted_dh =
-		proto_info->trans_attrs.ta_dh == &ike_alg_dh_none ? NULL
+		proto_info->trans_attrs.ta_dh == &ike_alg_kem_none ? NULL
 		: proto_info->trans_attrs.ta_dh;
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:

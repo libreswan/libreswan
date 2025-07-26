@@ -852,30 +852,30 @@ const struct ike_alg_type ike_alg_encrypt = {
  */
 
 static const struct kem_desc *dh_descriptors[] = {
-	&ike_alg_dh_none,
+	&ike_alg_kem_none,
 #ifdef USE_DH2
-	&ike_alg_dh_modp1024,
+	&ike_alg_kem_modp1024,
 #endif
-	&ike_alg_dh_modp1536,
-	&ike_alg_dh_modp2048,
-	&ike_alg_dh_modp3072,
-	&ike_alg_dh_modp4096,
-	&ike_alg_dh_modp6144,
-	&ike_alg_dh_modp8192,
-	&ike_alg_dh_secp256r1,
-	&ike_alg_dh_secp384r1,
-	&ike_alg_dh_secp521r1,
+	&ike_alg_kem_modp1536,
+	&ike_alg_kem_modp2048,
+	&ike_alg_kem_modp3072,
+	&ike_alg_kem_modp4096,
+	&ike_alg_kem_modp6144,
+	&ike_alg_kem_modp8192,
+	&ike_alg_kem_secp256r1,
+	&ike_alg_kem_secp384r1,
+	&ike_alg_kem_secp521r1,
 #ifdef USE_DH22
-	&ike_alg_dh_dh22,
+	&ike_alg_kem_dh22,
 #endif
 #ifdef USE_DH23
-	&ike_alg_dh_dh23,
+	&ike_alg_kem_dh23,
 #endif
 #ifdef USE_DH24
-	&ike_alg_dh_dh24,
+	&ike_alg_kem_dh24,
 #endif
 #ifdef USE_DH31
-	&ike_alg_dh_curve25519,
+	&ike_alg_kem_curve25519,
 #endif
 };
 
@@ -1041,7 +1041,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_dh_none.common) {
+		    alg != &ike_alg_kem_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				int id = alg->id[key];
@@ -1117,7 +1117,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_dh_none.common) {
+		    alg != &ike_alg_kem_none.common) {
 			pexpect_ike_alg(logger, alg, type->desc_check != NULL);
 			type->desc_check(alg, logger);
 		}

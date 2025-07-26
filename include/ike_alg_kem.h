@@ -16,32 +16,32 @@
  */
 
 #ifdef USE_DH2
-extern const struct kem_desc ike_alg_dh_modp1024;
+extern const struct kem_desc ike_alg_kem_modp1024;
 #endif
-extern const struct kem_desc ike_alg_dh_modp1536;
-extern const struct kem_desc ike_alg_dh_modp2048;
-extern const struct kem_desc ike_alg_dh_modp3072;
-extern const struct kem_desc ike_alg_dh_modp4096;
-extern const struct kem_desc ike_alg_dh_modp6144;
-extern const struct kem_desc ike_alg_dh_modp8192;
-extern const struct kem_desc ike_alg_dh_secp256r1;
-extern const struct kem_desc ike_alg_dh_secp384r1;
-extern const struct kem_desc ike_alg_dh_secp521r1;
+extern const struct kem_desc ike_alg_kem_modp1536;
+extern const struct kem_desc ike_alg_kem_modp2048;
+extern const struct kem_desc ike_alg_kem_modp3072;
+extern const struct kem_desc ike_alg_kem_modp4096;
+extern const struct kem_desc ike_alg_kem_modp6144;
+extern const struct kem_desc ike_alg_kem_modp8192;
+extern const struct kem_desc ike_alg_kem_secp256r1;
+extern const struct kem_desc ike_alg_kem_secp384r1;
+extern const struct kem_desc ike_alg_kem_secp521r1;
 #ifdef USE_DH22
-extern const struct kem_desc ike_alg_dh_dh22;
+extern const struct kem_desc ike_alg_kem_dh22;
 #endif
 #ifdef USE_DH23
-extern const struct kem_desc ike_alg_dh_dh23;
+extern const struct kem_desc ike_alg_kem_dh23;
 #endif
 #ifdef USE_DH24
-extern const struct kem_desc ike_alg_dh_dh24;
+extern const struct kem_desc ike_alg_kem_dh24;
 #endif
 #ifdef USE_DH31
-extern const struct kem_desc ike_alg_dh_curve25519;
+extern const struct kem_desc ike_alg_kem_curve25519;
 #endif
 
 /*
  * IKEv2 RFC 7296 uses the term "NONE" when referring to no DH
  * algorithm.
  */
-extern const struct kem_desc ike_alg_dh_none;
+extern const struct kem_desc ike_alg_kem_none;

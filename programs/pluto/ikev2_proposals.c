@@ -1839,7 +1839,7 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 	unsigned dhc = 0;
 	FOR_EACH_THING(d,
 		       ikev2_proposal_first_dh(accepted_proposal, verbose),
-		       default_dh, &ike_alg_dh_none) {
+		       default_dh, &ike_alg_kem_none) {
 		if (d != NULL) {
 			dhc++;
 			vassert(dhc < elemsof(dh));
@@ -1850,11 +1850,11 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 	}
 
 	/* also add ms-downgrade if needed */
-	if (ms_dh_downgrade && dh[0] != &ike_alg_dh_none) {
+	if (ms_dh_downgrade && dh[0] != &ike_alg_kem_none) {
 		/* space for duplicate proposal with none */
 		dhc++;
 		vassert(dhc < elemsof(dh));
-		dh[dhc] = &ike_alg_dh_none;
+		dh[dhc] = &ike_alg_kem_none;
 		vdbg("XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
 	}
 
@@ -2239,7 +2239,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	 * proposal[0] is empty so +1
 	 */
 	unsigned nr_passes =
-		(strip_dh && default_dh == &ike_alg_dh_none ? 1 :
+		(strip_dh && default_dh == &ike_alg_kem_none ? 1 :
 		 c->config->ms_dh_downgrade ? 2 :
 		 1);
 	int v2_proposals_roof =
@@ -2284,7 +2284,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * no point duplicating it with no DH during
 			 * pass=2.
 			 */
-			if (pass == 2 && default_dh == &ike_alg_dh_none &&
+			if (pass == 2 && default_dh == &ike_alg_kem_none &&
 			    next_algorithm(proposal, PROPOSAL_ke, NULL) == NULL) {
 				/*
 				 * First pass didn't include DH.
@@ -2301,7 +2301,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * forces the DH to &ike_alg_none.
 			 */
 			const struct kem_desc *force_dh =
-				(pass == 2 ? &ike_alg_dh_none :
+				(pass == 2 ? &ike_alg_kem_none :
 				 strip_dh ? default_dh :
 				 NULL);
 
@@ -2344,7 +2344,7 @@ const struct kem_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *prop
 			continue;
 		}
 
-		if (group == &ike_alg_dh_none) {
+		if (group == &ike_alg_kem_none) {
 			vdbg("ignoring DH=none when looking for first DH");
 			continue;
 		}
@@ -2403,7 +2403,7 @@ struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	return get_v2_child_proposals(c, "loading config",
 				      /*strip_dh*/true,
-				      /*default_dh*/&ike_alg_dh_none,
+				      /*default_dh*/&ike_alg_kem_none,
 				      verbose);
 }
 
@@ -2463,7 +2463,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		 */
 		proposals = get_v2_child_proposals(cc, "new Child SA",
 						   /*strip-dh*/true,
-						   &ike_alg_dh_none,
+						   &ike_alg_kem_none,
 						   verbose);
 	}
 
@@ -2576,7 +2576,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		vexpect(proposal_dh != NULL);
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
 						   /*strip_dh*/false,
-						   /*default-ignored*/&ike_alg_dh_none,
+						   /*default-ignored*/&ike_alg_kem_none,
 						   verbose);
 	} else {
 		/*
@@ -2589,7 +2589,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		vexpect(cc->config->child.pfs == (accepted_dh != NULL));
 		proposals = proposals_from_accepted("rekey CHILD",
 						    accepted_proposal,
-						    &ike_alg_dh_none,
+						    &ike_alg_kem_none,
 						    cc->config->ms_dh_downgrade,
 						    verbose);
 	}
@@ -2606,7 +2606,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
 {
 	return proposals_from_accepted("rekey IKE",
 				       established_ike->sa.st_v2_accepted_proposal,
-				       /*default_dh-ignored*/&ike_alg_dh_none,
+				       /*default_dh-ignored*/&ike_alg_kem_none,
 				       /*ms_dh_downgrade*/false,
 				       verbose);
 }

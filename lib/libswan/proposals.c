@@ -519,7 +519,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 			if (first_null_ke == NULL) {
 				first_null_ke = proposal;
 			}
-		} else if (proposal->algorithms[PROPOSAL_ke]->desc == &ike_alg_ke_none.common) {
+		} else if (proposal->algorithms[PROPOSAL_ke]->desc == &ike_alg_kem_none.common) {
 			if (first_none_ke == NULL) {
 				first_none_ke = proposal;
 			}
@@ -554,7 +554,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 			if (proposal->algorithms[PROPOSAL_ke] != NULL) {
 				ke = proposal->algorithms[PROPOSAL_ke]->desc;
 			}
-			if (ke == &ike_alg_ke_none.common) {
+			if (ke == &ike_alg_kem_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
 				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
 				     parser->protocol->name);
