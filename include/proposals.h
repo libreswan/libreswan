@@ -57,7 +57,7 @@ enum proposal_algorithm {
 	PROPOSAL_integ,
 	PROPOSAL_prf,
 
-	PROPOSAL_ke,
+	PROPOSAL_kem,
 
 	PROPOSAL_addke1,
 	PROPOSAL_addke2,
@@ -120,7 +120,7 @@ struct proposal_defaults {
 	 * Algorithms to add to the proposal when they were not
 	 * specified by the proposal string.
 	 */
-	const struct ike_alg **ke;
+	const struct ike_alg **kem;
 	const struct ike_alg **prf;
 	const struct ike_alg **integ;
 	const struct ike_alg **encrypt;
@@ -154,7 +154,7 @@ struct proposal_protocol {
 	bool encrypt;
 	bool prf;
 	bool integ;
-	bool ke;
+	bool kem;
 };
 
 /*
@@ -286,7 +286,7 @@ struct v1_proposal {
 	const struct encrypt_desc *encrypt;
 	const struct prf_desc *prf;
 	const struct integ_desc *integ;
-	const struct dh_desc *ke;
+	const struct kem_desc *kem;
 	const struct proposal_protocol *protocol;
 };
 

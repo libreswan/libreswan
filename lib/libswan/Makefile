@@ -212,13 +212,13 @@ OBJS += jam_nss_secitem.o
 
 OBJS += test_buffer.o
 OBJS += ike_alg.o
-OBJS += ike_alg_dh.o
 OBJS += ike_alg_hash_identity.o
 OBJS += ike_alg_ipcomp.o
 OBJS += ike_alg_test.o
-OBJS += ike_alg_dh_nss_ecp_ops.o
-OBJS += ike_alg_dh_nss_modp_ops.o
 OBJS += ike_alg_hash_nss_ops.o
+OBJS += ike_alg_kem.o
+OBJS += ike_alg_kem_ecp_nss_ops.o
+OBJS += ike_alg_kem_modp_nss_ops.o
 OBJS += ike_alg_prf_mac_hmac_ops.o
 OBJS += ike_alg_prf_mac_nss_ops.o
 OBJS += ike_alg_prf_mac_xcbc_ops.o

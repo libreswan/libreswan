@@ -10,7 +10,7 @@ struct ike_proposals;
 
 /* ikev1.c */
 
-const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals);
+const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals);
 
 void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 				    struct pbs_out *output_stream,

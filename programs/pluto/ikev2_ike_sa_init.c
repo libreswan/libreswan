@@ -327,7 +327,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals, verbose);
+	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_kem(ike_proposals, verbose);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
 		llog_sa(RC_LOG, ike, "proposals do not contain a valid DH");
 		delete_ike_sa(&ike);
@@ -1029,7 +1029,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
 	name_buf ignore;
-	const struct dh_desc *new_group = ikev2_dh_desc(sg.sg_group, &ignore);
+	const struct kem_desc *new_group = ikev2_kem_desc(sg.sg_group, &ignore);
 	passert(new_group != NULL);
 	llog_sa(RC_LOG, ike,
 		  "received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",

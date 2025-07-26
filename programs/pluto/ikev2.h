@@ -30,7 +30,7 @@ struct state;
 struct ike_sa;
 struct child_sa;
 struct pbs_in;
-struct dh_desc;
+struct kem_desc;
 struct connection;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
@@ -206,7 +206,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
 			       struct msg_digest *md,
-			       const struct dh_desc *accepted_dh,
+			       const struct kem_desc *accepted_dh,
 			       enum payload_security security);
 /*
  * See 2.21. Error Handling.  In particular the IKE_AUTH discussion.

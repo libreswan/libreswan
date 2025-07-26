@@ -41,17 +41,17 @@
 #include "lswnss.h"
 #include "lswlog.h"
 #include "secrets.h"
-#include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
+#include "ike_alg_kem.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
 						     struct pubkey_content *pkc,
 						     const struct logger *logger)
 {
-	static const struct dh_desc *dh[] = {
-		&ike_alg_dh_secp256r1,
-		&ike_alg_dh_secp384r1,
-		&ike_alg_dh_secp521r1,
+	static const struct kem_desc *kem[] = {
+		&ike_alg_kem_secp256r1,
+		&ike_alg_kem_secp384r1,
+		&ike_alg_kem_secp521r1,
 	};
 
 	/*
@@ -61,10 +61,10 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 	 * Raw EC pubkeys contain the EC point (or points).
 	 */
 
-	const struct dh_desc *group = NULL;
+	const struct kem_desc *group = NULL;
 	shunk_t raw = null_shunk;
 	const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
-	FOR_EACH_ELEMENT(e, dh) {
+	FOR_EACH_ELEMENT(e, kem) {
 		/*
 		 * A simple match, the buffer cnotains just the key.
 		 */

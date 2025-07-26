@@ -50,7 +50,7 @@
 #include "kernel_alg.h"
 #include "ike_alg.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "demux.h"
 #include "ikev2.h"
 #include "rnd.h"
@@ -199,8 +199,8 @@ struct ikev2_proposal_match {
 	 * Set of local transform types to expect in the remote
 	 * proposal.
 	 *
-	 * If the local proposal includes INTEG=NONE and/or DH=NONE
-	 * then including INTEG and/or DH transforms in the remote
+	 * If the local proposal includes INTEG=NONE and/or KEM=NONE
+	 * then including INTEG and/or KEM transforms in the remote
 	 * proposal is OPTIONAL.  When the transform is missing, NONE
 	 * is implied.
 	 */
@@ -858,7 +858,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					all_transform_types |= LELEM(type);
 					/*
 					 * When INTEG=NONE and/or
-					 * DH=NONE is included in a
+					 * KEM=NONE is included in a
 					 * local proposal, the
 					 * transform is optional and,
 					 * when missing from a remote
@@ -885,8 +885,8 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 			 * A proposal's transform type can't be both
 			 * required an optional.
 			 *
-			 * Since a proposal containing DH=NONE +
-			 * DH=MODP2048 is valid, REQUIRED gets
+			 * Since a proposal containing KEM=NONE +
+			 * KEM=MODP2048 is valid, REQUIRED gets
 			 * computed (INTEG=NONE + INTEG=SHA1 isn't
 			 * valid but that should only happen when
 			 * impaired).
@@ -1098,7 +1098,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 				if (!matching_transform->valid &&
 				    LHAS(matching_local_proposal->optional_transform_types, type)) {
 					/*
-					 * DH=NONE and/or INTEG=NONE
+					 * KEM=NONE and/or INTEG=NONE
 					 * is implied.
 					 */
 					unsigned id;
@@ -1421,8 +1421,8 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			case IKEv2_TRANS_TYPE_KE:
 				/*
 				 * CHILD SA proposals are allowed to
-				 * include the transform DH=NONE to
-				 * indicate that there is no DH.  If
+				 * include the transform KEM=NONE to
+				 * indicate that there is no KEM.  If
 				 * selected, the responder should then
 				 * also include it in the response.
 				 */
@@ -1719,17 +1719,17 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			case IKEv2_TRANS_TYPE_KE:
 			{
 				name_buf b;
-				const struct dh_desc *group = ikev2_dh_desc(transform->id, &b);
+				const struct kem_desc *group = ikev2_kem_desc(transform->id, &b);
 				if (group == NULL) {
 					/*
 					 * Assuming pluto, and not the
 					 * kernel, is going to do the
-					 * DH calculation, then not
-					 * finding the DH group is
+					 * KEM calculation, then not
+					 * finding the KEM group is
 					 * likely really bad.
 					 */
 					llog_pexpect(logger, HERE,
-						     "accepted IKEv2 proposal contains unexpected DH %s",
+						     "accepted IKEv2 proposal contains unexpected KEM %s",
 						     b.buf);
 					return false;
 				}
@@ -1805,7 +1805,7 @@ static void add_missing_transform(struct ikev2_proposal *proposal,
 	name_buf ttb;
 	vdbg("XXX: adding missing %s?", str_enum_short(&ikev2_trans_type_names, trans_type, &ttb));
 
-	/* fill in DH=NULL when missing */
+	/* fill in KEM=NULL when missing */
 	const struct ikev2_transform *accepted_transform =
 		&accepted_proposal->transforms[trans_type].transform[0];
 	if (accepted_transform->valid) {
@@ -1826,36 +1826,36 @@ static void force_transform(struct ikev2_proposal *proposal,
 
 static struct ikev2_proposals *proposals_from_accepted(const char *story,
 						       const struct ikev2_proposal *accepted_proposal,
-						       const struct dh_desc *default_dh,
+						       const struct kem_desc *default_kem,
 						       bool ms_dh_downgrade/*aka add none*/,
 						       struct verbose verbose)
 {
 	struct ikev2_proposals *proposals = alloc_thing(struct ikev2_proposals, story);
-	const struct dh_desc *dh[3] = {NULL}; /*[0] is ignored*/
+	const struct kem_desc *kem[3] = {NULL}; /*[0] is ignored*/
 
 	/*
-	 * Figure out the DH; or NONE when not specified.
+	 * Figure out the KEM; or NONE when not specified.
 	 */
 	unsigned dhc = 0;
 	FOR_EACH_THING(d,
-		       ikev2_proposal_first_dh(accepted_proposal, verbose),
-		       default_dh, &ike_alg_dh_none) {
+		       ikev2_proposal_first_kem(accepted_proposal, verbose),
+		       default_kem, &ike_alg_kem_none) {
 		if (d != NULL) {
 			dhc++;
-			vassert(dhc < elemsof(dh));
-			dh[dhc] = d;
-			vdbg("XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
+			vassert(dhc < elemsof(kem));
+			kem[dhc] = d;
+			vdbg("XXX: using KEM[%u] %s", dhc, kem[dhc]->common.fqn);
 			break;
 		}
 	}
 
 	/* also add ms-downgrade if needed */
-	if (ms_dh_downgrade && dh[0] != &ike_alg_dh_none) {
+	if (ms_dh_downgrade && kem[0] != &ike_alg_kem_none) {
 		/* space for duplicate proposal with none */
 		dhc++;
-		vassert(dhc < elemsof(dh));
-		dh[dhc] = &ike_alg_dh_none;
-		vdbg("XXX: using DH[%u] %s", dhc, dh[dhc]->common.fqn);
+		vassert(dhc < elemsof(kem));
+		kem[dhc] = &ike_alg_kem_none;
+		vdbg("XXX: using KEM[%u] %s", dhc, kem[dhc]->common.fqn);
 	}
 
 
@@ -1873,7 +1873,7 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 		proposal->propnum = 0; /* auto assign */
 		zero_thing(proposal->remote_spi); /* will negotiate */
 		/*
-		 * Fill in INTEG=NONE and DH=NONE when there are no
+		 * Fill in INTEG=NONE and KEM=NONE when there are no
 		 * transforms of that type.
 		 *
 		 * By being present they can match a proposal that has
@@ -1885,8 +1885,8 @@ static struct ikev2_proposals *proposals_from_accepted(const char *story,
 				      IKEv2_TRANS_TYPE_INTEG,
 				      &ike_alg_integ_none.common,
 				      verbose);
-		/* ... and forcing DH */
-		force_transform(proposal, IKEv2_TRANS_TYPE_KE, &dh[p]->common);
+		/* ... and forcing KEM */
+		force_transform(proposal, IKEv2_TRANS_TYPE_KE, &kem[p]->common);
 	}
 
 	VDBG_JAMBUF(buf) {
@@ -2059,8 +2059,8 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct proposal *proposal,
 								enum ikev2_sec_proto_id protoid,
 								struct ikev2_proposals *v2_proposals,
-								const struct dh_desc *force_dh,
-								const struct dh_desc *default_dh,
+								const struct kem_desc *force_kem,
+								const struct kem_desc *default_kem,
 								struct verbose verbose)
 {
 	/*
@@ -2111,7 +2111,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	/*
 	 * DH.
 	 */
-	if (force_dh != NULL) {
+	if (force_kem != NULL) {
 		/*
 		 * For instance, since the IKE_AUTH Child SA proposal
 		 * does not include DH it is forced to NONE (the emit
@@ -2124,14 +2124,14 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * previously negotiated DH.
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
-				 force_dh->common.id[IKEv2_ALG_ID], 0);
-	} else if (next_algorithm(proposal, PROPOSAL_ke, NULL) != NULL) {
+				 force_kem->common.id[IKEv2_ALG_ID], 0);
+	} else if (next_algorithm(proposal, PROPOSAL_kem, NULL) != NULL) {
 		/*
 		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
 		 * DH was specified on the esp= line.
 		 */
-		FOR_EACH_ALGORITHM(proposal, ke, alg) {
-			const struct dh_desc *dh = dh_desc(alg->desc);
+		FOR_EACH_ALGORITHM(proposal, kem, alg) {
+			const struct kem_desc *dh = kem_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
 			 * omitted when emitted.
@@ -2139,7 +2139,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 			append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 					 dh->common.id[IKEv2_ALG_ID], 0);
 		}
-	} else if (default_dh != NULL) {
+	} else if (default_kem != NULL) {
 		/*
 		 * For instance, either a CREATE_CHILD_SA(NEW) where
 		 * the esp= line does not specify DH, or a
@@ -2147,7 +2147,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * DH wasn't negotiated.
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
-				 default_dh->common.id[IKEv2_ALG_ID], 0);
+				 default_kem->common.id[IKEv2_ALG_ID], 0);
 	}
 
 	return v2_proposal;
@@ -2191,8 +2191,8 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 			ikev2_proposal_from_proposal_info(proposal,
 							  protoid,
 							  v2_proposals,
-							  /*force_dh*/NULL,
-							  /*default_dh*/NULL,
+							  /*force_kem*/NULL,
+							  /*default_kem*/NULL,
 							  verbose);
 		if (v2_proposal != NULL) {
 			vdbg_ikev2_proposal(verbose, "... ", v2_proposal);
@@ -2216,17 +2216,17 @@ static void add_esn_transforms(struct ikev2_proposal *proposal,
 
 static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 						      const char *why,
-						      bool strip_dh,
-						      const struct dh_desc *default_dh,
+						      bool strip_kem,
+						      const struct kem_desc *default_kem,
 						      struct verbose verbose)
 {
 	if (!pexpect(c->config->child.proposals.p != NULL)) {
 		return NULL;
 	}
 
-	vdbg("constructing ESP/AH proposals for %s with strip_dh=%s ms_dh_downgrade=%s default_dh=%s",
-	     why, bool_str(strip_dh), bool_str(c->config->ms_dh_downgrade),
-	     default_dh->common.fqn);
+	vdbg("constructing ESP/AH proposals for %s with strip_kem=%s ms_dh_downgrade=%s default_kem=%s",
+	     why, bool_str(strip_kem), bool_str(c->config->ms_dh_downgrade),
+	     default_kem->common.fqn);
 	verbose.level++;
 
 	struct ikev2_proposals *v2_proposals = alloc_thing(struct ikev2_proposals,
@@ -2239,7 +2239,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 	 * proposal[0] is empty so +1
 	 */
 	unsigned nr_passes =
-		(strip_dh && default_dh == &ike_alg_dh_none ? 1 :
+		(strip_kem && default_kem == &ike_alg_kem_none ? 1 :
 		 c->config->ms_dh_downgrade ? 2 :
 		 1);
 	int v2_proposals_roof =
@@ -2284,8 +2284,8 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * no point duplicating it with no DH during
 			 * pass=2.
 			 */
-			if (pass == 2 && default_dh == &ike_alg_dh_none &&
-			    next_algorithm(proposal, PROPOSAL_ke, NULL) == NULL) {
+			if (pass == 2 && default_kem == &ike_alg_kem_none &&
+			    next_algorithm(proposal, PROPOSAL_kem, NULL) == NULL) {
 				/*
 				 * First pass didn't include DH.
 				 */
@@ -2293,24 +2293,24 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			}
 
 			/*
-			 * The first pass, when strip_dh, forces DH to
+			 * The first pass, when strip_kem, forces DH to
 			 * the default (it is probably the IKE SAs
 			 * DH).
 			 *
 			 * The second pass (for ms-dh-downgrade)
 			 * forces the DH to &ike_alg_none.
 			 */
-			const struct dh_desc *force_dh =
-				(pass == 2 ? &ike_alg_dh_none :
-				 strip_dh ? default_dh :
+			const struct kem_desc *force_kem =
+				(pass == 2 ? &ike_alg_kem_none :
+				 strip_kem ? default_kem :
 				 NULL);
 
 			struct ikev2_proposal *v2_proposal =
 				ikev2_proposal_from_proposal_info(proposal,
 								  protoid,
 								  v2_proposals,
-								  force_dh,
-								  default_dh,
+								  force_kem,
+								  default_kem,
 								  verbose);
 			if (v2_proposal != NULL) {
 				add_esn_transforms(v2_proposal, c);
@@ -2326,14 +2326,14 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
  * Return the first valid DH proposal that is supported.
  */
 
-const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
-					      struct verbose verbose)
+const struct kem_desc *ikev2_proposal_first_kem(const struct ikev2_proposal *proposal,
+						struct verbose verbose)
 {
 	const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_KE];
 	for (unsigned t = 0; t < transforms->transform[t].valid; t++) {
 		int groupnum = transforms->transform[t].id;
 		name_buf b;
-		const struct dh_desc *group = ikev2_dh_desc(groupnum, &b);
+		const struct kem_desc *group = ikev2_kem_desc(groupnum, &b);
 		if (pbad(group == NULL)) {
 			/*
 			 * Things screwed up (this group should have
@@ -2344,7 +2344,7 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 			continue;
 		}
 
-		if (group == &ike_alg_dh_none) {
+		if (group == &ike_alg_kem_none) {
 			vdbg("ignoring DH=none when looking for first DH");
 			continue;
 		}
@@ -2354,13 +2354,13 @@ const struct dh_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *propo
 	return NULL;
 }
 
-const struct dh_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
-					       struct verbose verbose)
+const struct kem_desc *ikev2_proposals_first_kem(const struct ikev2_proposals *proposals,
+						 struct verbose verbose)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
 	FOR_EACH_V2_PROPOSAL(propnum, proposal, proposals) {
-		const struct dh_desc *dh = ikev2_proposal_first_dh(proposal, verbose);
+		const struct kem_desc *dh = ikev2_proposal_first_kem(proposal, verbose);
 		if (dh != NULL) {
 			return dh;
 		}
@@ -2402,8 +2402,8 @@ struct ikev2_proposals *get_v2_IKE_AUTH_new_child_proposals(struct connection *c
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, NULL);
 	return get_v2_child_proposals(c, "loading config",
-				      /*strip_dh*/true,
-				      /*default_dh*/&ike_alg_dh_none,
+				      /*strip_kem*/true,
+				      /*default_kem*/&ike_alg_kem_none,
 				      verbose);
 }
 
@@ -2423,7 +2423,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 								   struct verbose verbose)
 {
 	struct connection *cc = larval_child->sa.st_connection; /*not IKE's connection*/
-	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+	const struct kem_desc *ike_dh = ike->sa.st_oakley.ta_dh;
 
 	struct ikev2_proposals *proposals;
 	if (cc->config->pfs_rekey_workaround &&
@@ -2450,7 +2450,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		 * This is the old 4.x behaviour.
 		 */
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
-						   /*strip_dh*/false,
+						   /*strip_kem*/false,
 						   ike_dh, verbose);
 	} else {
 		/*
@@ -2463,7 +2463,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa
 		 */
 		proposals = get_v2_child_proposals(cc, "new Child SA",
 						   /*strip-dh*/true,
-						   &ike_alg_dh_none,
+						   &ike_alg_kem_none,
 						   verbose);
 	}
 
@@ -2498,7 +2498,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * proposal does not specify DH, this will be used.
 	 */
 
-	const struct dh_desc *ike_dh = ike->sa.st_oakley.ta_dh;
+	const struct kem_desc *ike_dh = ike->sa.st_oakley.ta_dh;
 
 	/*
 	 * A rekeing Child SA should use the proposals accepted
@@ -2512,7 +2512,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 
 	const struct ikev2_proposal *accepted_proposal =
 		established_child->sa.st_v2_accepted_proposal;
-	const struct dh_desc *accepted_dh = ikev2_proposal_first_dh(accepted_proposal, verbose);
+	const struct kem_desc *accepted_dh = ikev2_proposal_first_kem(accepted_proposal, verbose);
 
 	/*
 	 * Normally, with PFS=YES, the Child SA's previously accepted
@@ -2534,7 +2534,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * the need to only look at the first proposal.
 	 */
 	struct proposal *proposal = next_proposal(cc->config->child.proposals.p, NULL);
-	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_ke, NULL);
+	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_kem, NULL);
 
 	struct ikev2_proposals *proposals;
 	if (ike_auth_child_rekey_needs_dh && cc->config->pfs_rekey_workaround) {
@@ -2575,8 +2575,8 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		 */
 		vexpect(proposal_dh != NULL);
 		proposals = get_v2_child_proposals(cc, "pfs-rekey-workaround",
-						   /*strip_dh*/false,
-						   /*default-ignored*/&ike_alg_dh_none,
+						   /*strip_kem*/false,
+						   /*default-ignored*/&ike_alg_kem_none,
 						   verbose);
 	} else {
 		/*
@@ -2589,7 +2589,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 		vexpect(cc->config->child.pfs == (accepted_dh != NULL));
 		proposals = proposals_from_accepted("rekey CHILD",
 						    accepted_proposal,
-						    &ike_alg_dh_none,
+						    &ike_alg_kem_none,
 						    cc->config->ms_dh_downgrade,
 						    verbose);
 	}
@@ -2606,7 +2606,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
 {
 	return proposals_from_accepted("rekey IKE",
 				       established_ike->sa.st_v2_accepted_proposal,
-				       /*default_dh-ignored*/&ike_alg_dh_none,
+				       /*default_kem-ignored*/&ike_alg_kem_none,
 				       /*ms_dh_downgrade*/false,
 				       verbose);
 }

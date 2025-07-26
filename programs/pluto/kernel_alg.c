@@ -114,7 +114,7 @@ void kernel_alg_add(const struct ike_alg *alg)
 	}
 }
 
-bool kernel_alg_dh_ok(const struct dh_desc *dh)
+bool kernel_alg_dh_ok(const struct kem_desc *dh)
 {
 	if (dh == NULL) {
 		llog_pexpect(&global_logger, HERE,
@@ -158,8 +158,8 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 		llog_pexpect(&global_logger, HERE,
 			     "algorithm needs to be valid (non-NULL)");
 		return false;
-	} else if (alg->algo_type == &ike_alg_dh) {
-		return kernel_alg_dh_ok(dh_desc(alg));
+	} else if (alg->algo_type == &ike_alg_kem) {
+		return kernel_alg_dh_ok(kem_desc(alg));
 	} else if (alg->algo_type == &ike_alg_encrypt) {
 		return kernel_alg_encrypt_ok(encrypt_desc(alg));
 	} else if (alg->algo_type == &ike_alg_integ) {

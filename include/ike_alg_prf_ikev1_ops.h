@@ -41,7 +41,7 @@ struct prf_ikev1_ops {
 	 */
 	PK11SymKey *(*signature_skeyid)(const struct prf_desc *prf_desc,
 					const chunk_t Ni_b, const chunk_t Nr_b,
-					PK11SymKey *dh_secret,
+					PK11SymKey *ke_secret,
 					struct logger *logger);
 	PK11SymKey *(*pre_shared_key_skeyid)(const struct prf_desc *prf_desc,
 					     const struct secret_preshared_stuff *pre_shared_key,
@@ -70,7 +70,7 @@ struct prf_ikev1_ops {
 	 */
 	PK11SymKey *(*skeyid_d)(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyid,
-				PK11SymKey *dh_secret,
+				PK11SymKey *ke_secret,
 				chunk_t cky_i, chunk_t cky_r,
 				struct logger *logger);
 
@@ -86,7 +86,7 @@ struct prf_ikev1_ops {
 	 */
 	PK11SymKey *(*skeyid_a)(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyid,
-				PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
+				PK11SymKey *skeyid_d, PK11SymKey *ke_secret,
 				chunk_t cky_i, chunk_t cky_r,
 				struct logger *logger);
 
@@ -103,7 +103,7 @@ struct prf_ikev1_ops {
 	 */
 	PK11SymKey *(*skeyid_e)(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyid,
-				PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
+				PK11SymKey *skeyid_a, PK11SymKey *ke_secret,
 				chunk_t cky_i, chunk_t cky_r,
 				struct logger *logger);
 

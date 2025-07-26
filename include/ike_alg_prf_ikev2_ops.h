@@ -37,12 +37,12 @@ struct prf_ikev2_ops {
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
 	PK11SymKey *(*ike_sa_skeyseed)(const struct prf_desc *prf_desc,
 				       const chunk_t Ni, const chunk_t Nr,
-				       PK11SymKey *dh_secret,
+				       PK11SymKey *ke_secret,
 				       struct logger *logger);
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
 	PK11SymKey *(*ike_sa_rekey_skeyseed)(const struct prf_desc *prf_desc,
 					     PK11SymKey *old_SK_d,
-					     PK11SymKey *new_dh_secret,
+					     PK11SymKey *new_ke_secret,
 					     const chunk_t Ni, const chunk_t Nr,
 					     struct logger *logger);
 	/*
@@ -63,7 +63,7 @@ struct prf_ikev2_ops {
 	/* KEYMAT = prf+(SK_d, [ g^ir (new) | ] Ni | Nr) */
 	PK11SymKey *(*child_sa_keymat)(const struct prf_desc *prf_desc,
 				       PK11SymKey *SK_d,
-				       PK11SymKey *new_dh_secret,
+				       PK11SymKey *new_ke_secret,
 				       const chunk_t Ni, const chunk_t Nr,
 				       size_t required_bytes,
 				       struct logger *logger);

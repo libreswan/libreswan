@@ -18,9 +18,9 @@
 #include "ike_alg.h"
 #include "ike_alg_encrypt.h"
 #include "ike_alg_integ.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "ike_alg_encrypt_ops.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem_ops.h"
 #include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
 /*
@@ -104,11 +104,11 @@ const struct integ_desc ike_alg_integ_none = {
 /*
  * Blame RFC7296!
  */
-const struct dh_desc ike_alg_dh_none = {
+const struct kem_desc ike_alg_kem_none = {
 	.common = {
 		.fqn = "NONE",
 		.names = "none,null,dh0",
-		.algo_type = IKE_ALG_DH,
+		.algo_type = IKE_ALG_KEM,
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_IPSEC_ID] = -1,
@@ -118,7 +118,7 @@ const struct dh_desc ike_alg_dh_none = {
 		 * IKEv2, during the initial exchanges, negotiates a
 		 * child SA without DH (or if screwing with the RFC,
 		 * DH=NONE).  Either way, the result is a child state
-		 * with .ta_dh == &ike_alg_dh_none.
+		 * with .ta_dh == &ike_alg_kem_none.
 		 *
 		 * Other code gets the job of rejecting "none".
 		 */
@@ -128,5 +128,5 @@ const struct dh_desc ike_alg_dh_none = {
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */
-	.dh_ops = &ike_alg_dh_nss_modp_ops,
+	.kem_ops = &ike_alg_kem_modp_nss_ops,
 };

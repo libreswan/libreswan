@@ -56,7 +56,7 @@
 #include "id.h"
 #include "keys.h"
 #include "crypt_dh.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 #include <pk11pub.h>
 #include <keyhi.h>
@@ -64,7 +64,7 @@
 
 struct dh_local_secret {
 	refcnt_t refcnt;
-	const struct dh_desc *group;
+	const struct kem_desc *group;
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
 };
@@ -74,11 +74,11 @@ static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secr
 	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
-struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger)
+struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *group, struct logger *logger)
 {
 	SECKEYPrivateKey *privk;
 	SECKEYPublicKey *pubk;
-	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
+	group->kem_ops->calc_local_secret(group, &privk, &pubk, logger);
 	passert(privk != NULL);
 	passert(pubk != NULL);
 	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, logger, HERE);
@@ -94,11 +94,11 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 
 shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret)
 {
-	return local_secret->group->dh_ops->local_secret_ke(local_secret->group,
+	return local_secret->group->kem_ops->local_secret_ke(local_secret->group,
 							    local_secret->pubk);
 }
 
-const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
+const struct kem_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
 {
 	return local_secret->group;
 }
@@ -142,7 +142,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 {
 
 	struct dh_local_secret *secret = task->local_secret;
-	diag_t diag = secret->group->dh_ops->calc_shared_secret(secret->group,
+	diag_t diag = secret->group->kem_ops->calc_shared_secret(secret->group,
 								secret->privk,
 								secret->pubk,
 								task->remote_ke,

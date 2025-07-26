@@ -574,18 +574,18 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		passert(algs.encrypt != NULL);
 		passert(algs.prf != NULL);
-		passert(algs.ke != NULL);
+		passert(algs.kem != NULL);
 
 		unsigned ealg = algs.encrypt->common.ikev1_oakley_id;
 		unsigned halg = algs.prf->common.ikev1_oakley_id;
-		unsigned modp = algs.ke->group;
+		unsigned modp = algs.kem->group;
 		unsigned eklen = algs.enckeylen;
 
 		ldbg(logger, "%s() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
 		     __func__,
 		     algs.encrypt->common.fqn, ealg,
 		     algs.prf->common.fqn, halg,
-		     algs.ke->common.fqn, modp,
+		     algs.kem->common.fqn, modp,
 		     eklen);
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
@@ -671,7 +671,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    algs.ke->group != last_modp) {
+		    algs.kem->group != last_modp) {
 			if (
 #ifdef USE_DH2
 			    last_modp == OAKLEY_GROUP_MODP1024 ||
@@ -695,7 +695,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					      algs.encrypt->common.ikev1_oakley_id, &eb),
 				     str_enum_long(&oakley_hash_names,
 					      algs.prf->common.ikev1_oakley_id, &hb),
-				     algs.ke->common.fqn,
+				     algs.kem->common.fqn,
 				     algs.enckeylen);
 				free_sa(&emp_sp);
 			} else {
@@ -796,7 +796,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = algs.ke->group;
+			last_modp = algs.kem->group;
 		}
 
 		pexpect(emp_sp == NULL);
@@ -1020,11 +1020,11 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 				 * in every transform.  Except IPCOMP.
 				 */
 				if (p->protoid != PROTO_IPCOMP &&
-				    st->st_pfs_group != NULL) {
+				    st->st_pfs_kem != NULL) {
 					passert(!oakley_mode);
-					passert(st->st_pfs_group != &unset_group);
+					passert(st->st_pfs_kem != &unset_group);
 					if (!out_attr(GROUP_DESCRIPTION,
-						      st->st_pfs_group->group,
+						      st->st_pfs_kem->group,
 						      attr_desc,
 						      attr_value_names,
 						      &trans_pbs))
@@ -1481,7 +1481,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		     ta->enckeylen == 0 ||
 		     algs.enckeylen == ta->enckeylen) &&
 		    algs.prf == ta->ta_prf &&
-		    algs.ke == ta->ta_dh) {
+		    algs.kem == ta->ta_dh) {
 			if (ealg_insecure) {
 				llog(RC_LOG, logger,
 					    "You should NOT use insecure/broken IKE algorithms (%s)!",
@@ -1940,7 +1940,7 @@ rsasig_common:
 			case OAKLEY_GROUP_DESCRIPTION:
 			{
 				name_buf b;
-				ta.ta_dh = ikev1_ike_dh_desc(value, &b);
+				ta.ta_dh = ikev1_ike_kem_desc(value, &b);
 				if (ta.ta_dh == NULL) {
 					UGH("OAKLEY_GROUP %s not supported", b.buf);
 					break;
@@ -2231,7 +2231,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	ta.auth = auth->val;         /* OAKLEY_AUTHENTICATION_METHOD */
 
 	passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-	ta.ta_dh = ikev1_ike_dh_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
+	ta.ta_dh = ikev1_ike_kem_desc(grp->val, &ignore); /* OAKLEY_GROUP_DESCRIPTION */
 	passert(ta.ta_dh != NULL);
 
 	ike->sa.st_oakley = ta;
@@ -2259,7 +2259,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
  * Only IPsec DOI is accepted (what is the ISAKMP DOI?).
  * Error response is rudimentary.
  *
- * Since all ISAKMP groups in all SA Payloads must match, st->st_pfs_group
+ * Since all ISAKMP groups in all SA Payloads must match, st->st_pfs_kem
  * holds this across multiple payloads.
  * &unset_group signifies not yet "set"; NULL signifies NONE.
  *
@@ -2361,7 +2361,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	lset_t seen_attrs = LEMPTY;
 	lset_t seen_durations = LEMPTY;
 	enum ikev1_sa_life_type life_type = 0;		/* 0 invalid */
-	const struct dh_desc *pfs_group = NULL;
+	const struct kem_desc *pfs_group = NULL;
 
 	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
@@ -2536,7 +2536,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					  "IPCA (IPcomp SA) contains GROUP_DESCRIPTION.  Ignoring inappropriate attribute.");
 			}
 			name_buf b;
-			pfs_group = ikev1_ike_dh_desc(value, &b);
+			pfs_group = ikev1_ike_kem_desc(value, &b);
 			if (pfs_group == NULL) {
 				llog(RC_LOG, child->sa.logger,
 				     "OAKLEY_GROUP %s not supported for PFS", b.buf);
@@ -2636,10 +2636,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * See draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 	 */
 	if (proto != PROTO_IPCOMP || pfs_group != NULL) {
-		if (child->sa.st_pfs_group == &unset_group)
-			child->sa.st_pfs_group = pfs_group;
+		if (child->sa.st_pfs_kem == &unset_group)
+			child->sa.st_pfs_kem = pfs_group;
 
-		if (child->sa.st_pfs_group != pfs_group) {
+		if (child->sa.st_pfs_kem != pfs_group) {
 			llog(RC_LOG, child->sa.logger,
 				  "GROUP_DESCRIPTION inconsistent with that of %s in IPsec SA",
 				  selection ? "the Proposal" : "a previous Transform");

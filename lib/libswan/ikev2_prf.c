@@ -53,11 +53,11 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				  const chunk_t Ni, const chunk_t Nr,
-				  PK11SymKey *dh_secret,
+				  PK11SymKey *ke_secret,
 				  struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->ike_sa_skeyseed(prf_desc, Ni, Nr,
-							dh_secret, logger);
+							ke_secret, logger);
 }
 
 /*
@@ -65,12 +65,12 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					PK11SymKey *SK_d_old,
-					PK11SymKey *new_dh_secret,
+					PK11SymKey *new_ke_secret,
 					const chunk_t Ni, const chunk_t Nr,
 					struct logger *logger)
 {
 	return prf_desc->prf_ikev2_ops->ike_sa_rekey_skeyseed(prf_desc, SK_d_old,
-							      new_dh_secret,
+							      new_ke_secret,
 							      Ni, Nr, logger);
 }
 
@@ -110,12 +110,12 @@ PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
  */
 PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_d,
-				  PK11SymKey *new_dh_secret,
+				  PK11SymKey *new_ke_secret,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes,
 				  struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_dh_secret,
+	return prf_desc->prf_ikev2_ops->child_sa_keymat(prf_desc, SK_d, new_ke_secret,
 							Ni, Nr, required_bytes,
 							logger);
 }

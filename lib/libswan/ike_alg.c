@@ -45,8 +45,8 @@
 #include "ike_alg_prf_ikev2_ops.h"
 #include "ike_alg_hash.h"
 #include "ike_alg_hash_ops.h"
-#include "ike_alg_dh.h"
-#include "ike_alg_dh_ops.h"
+#include "ike_alg_kem.h"
+#include "ike_alg_kem_ops.h"
 #include "ike_alg_ipcomp.h"
 #include "ike_alg_ipcomp_ops.h"
 
@@ -93,7 +93,7 @@ static const struct ike_alg_type *const ike_alg_types[] = {
 	&ike_alg_hash,
 	&ike_alg_prf,
 	&ike_alg_integ,
-	&ike_alg_dh,
+	&ike_alg_kem,
 	&ike_alg_ipcomp,
 };
 
@@ -143,9 +143,9 @@ const struct integ_desc **next_integ_desc(const struct integ_desc **last)
 						   (const struct ike_alg**)last);
 }
 
-const struct dh_desc **next_dh_desc(const struct dh_desc **last)
+const struct kem_desc **next_kem_desc(const struct kem_desc **last)
 {
-	return (const struct dh_desc**)next_alg(&ike_alg_dh,
+	return (const struct kem_desc**)next_alg(&ike_alg_kem,
 						(const struct ike_alg**)last);
 }
 
@@ -286,9 +286,9 @@ const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, name_buf
 	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id, b));
 }
 
-const struct dh_desc *ikev1_ike_dh_desc(enum ike_trans_type_dh id, name_buf *b)
+const struct kem_desc *ikev1_ike_kem_desc(enum ike_trans_type_dh id, name_buf *b)
 {
-	return dh_desc(ikev1_oakley_lookup(&ike_alg_dh, id, b));
+	return kem_desc(ikev1_oakley_lookup(&ike_alg_kem, id, b));
 }
 
 const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo id, name_buf *b)
@@ -337,9 +337,9 @@ const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct
 	return integ_desc(ikev2_lookup(&ike_alg_integ, id, b));
 }
 
-const struct dh_desc *ikev2_dh_desc(enum ike_trans_type_dh id, struct name_buf *b)
+const struct kem_desc *ikev2_kem_desc(enum ike_trans_type_dh id, struct name_buf *b)
 {
-	return dh_desc(ikev2_lookup(&ike_alg_dh, id, b));
+	return kem_desc(ikev2_lookup(&ike_alg_kem, id, b));
 }
 
 const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo id, struct name_buf *b)
@@ -851,54 +851,54 @@ const struct ike_alg_type ike_alg_encrypt = {
  * DH group
  */
 
-static const struct dh_desc *dh_descriptors[] = {
-	&ike_alg_dh_none,
+static const struct kem_desc *dh_descriptors[] = {
+	&ike_alg_kem_none,
 #ifdef USE_DH2
-	&ike_alg_dh_modp1024,
+	&ike_alg_kem_modp1024,
 #endif
-	&ike_alg_dh_modp1536,
-	&ike_alg_dh_modp2048,
-	&ike_alg_dh_modp3072,
-	&ike_alg_dh_modp4096,
-	&ike_alg_dh_modp6144,
-	&ike_alg_dh_modp8192,
-	&ike_alg_dh_secp256r1,
-	&ike_alg_dh_secp384r1,
-	&ike_alg_dh_secp521r1,
+	&ike_alg_kem_modp1536,
+	&ike_alg_kem_modp2048,
+	&ike_alg_kem_modp3072,
+	&ike_alg_kem_modp4096,
+	&ike_alg_kem_modp6144,
+	&ike_alg_kem_modp8192,
+	&ike_alg_kem_secp256r1,
+	&ike_alg_kem_secp384r1,
+	&ike_alg_kem_secp521r1,
 #ifdef USE_DH22
-	&ike_alg_dh_dh22,
+	&ike_alg_kem_dh22,
 #endif
 #ifdef USE_DH23
-	&ike_alg_dh_dh23,
+	&ike_alg_kem_dh23,
 #endif
 #ifdef USE_DH24
-	&ike_alg_dh_dh24,
+	&ike_alg_kem_dh24,
 #endif
 #ifdef USE_DH31
-	&ike_alg_dh_curve25519,
+	&ike_alg_kem_curve25519,
 #endif
 };
 
 static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
-	const struct dh_desc *dh = dh_desc(alg);
+	const struct kem_desc *dh = kem_desc(alg);
 	pexpect_ike_alg(logger, alg, dh->group > 0);
 	pexpect_ike_alg(logger, alg, dh->bytes > 0);
 	pexpect_ike_alg(logger, alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
 	pexpect_ike_alg(logger, alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
 	/* always implemented */
-	pexpect_ike_alg(logger, alg, dh->dh_ops != NULL);
-	if (dh->dh_ops != NULL) {
-		pexpect_ike_alg(logger, alg, dh->dh_ops->backend != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->check != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_local_secret != NULL);
-		pexpect_ike_alg(logger, alg, dh->dh_ops->calc_shared_secret != NULL);
+	pexpect_ike_alg(logger, alg, dh->kem_ops != NULL);
+	if (dh->kem_ops != NULL) {
+		pexpect_ike_alg(logger, alg, dh->kem_ops->backend != NULL);
+		pexpect_ike_alg(logger, alg, dh->kem_ops->check != NULL);
+		pexpect_ike_alg(logger, alg, dh->kem_ops->calc_local_secret != NULL);
+		pexpect_ike_alg(logger, alg, dh->kem_ops->calc_shared_secret != NULL);
 		/* more? */
-		dh->dh_ops->check(dh, logger);
+		dh->kem_ops->check(dh, logger);
 		/* IKEv1 supports MODP groups but not ECC. */
-		pexpect_ike_alg(logger, alg, (dh->dh_ops == &ike_alg_dh_nss_modp_ops
+		pexpect_ike_alg(logger, alg, (dh->kem_ops == &ike_alg_kem_modp_nss_ops
 				      ? dh->common.id[IKEv1_IPSEC_ID] == dh->group
-				      : dh->dh_ops == &ike_alg_dh_nss_ecp_ops
+				      : dh->kem_ops == &ike_alg_kem_ecp_nss_ops
 				      ? dh->common.id[IKEv1_IPSEC_ID] < 0
 				      : false));
 	}
@@ -906,13 +906,13 @@ static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
 
 static bool dh_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct dh_desc *dh = dh_desc(alg);
-	return dh->dh_ops != NULL;
+	const struct kem_desc *dh = kem_desc(alg);
+	return dh->kem_ops != NULL;
 }
 
 static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dh_descriptors);
 
-const struct ike_alg_type ike_alg_dh = {
+const struct ike_alg_type ike_alg_kem = {
 	.name = "DH",
 	.Name = "DH",
 	.algorithms = &dh_algorithms,
@@ -1041,7 +1041,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_dh_none.common) {
+		    alg != &ike_alg_kem_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				int id = alg->id[key];
@@ -1117,7 +1117,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_dh_none.common) {
+		    alg != &ike_alg_kem_none.common) {
 			pexpect_ike_alg(logger, alg, type->desc_check != NULL);
 			type->desc_check(alg, logger);
 		}
@@ -1147,10 +1147,10 @@ static const char *backend_name(const struct ike_alg *alg)
 		if (encrypt->encrypt_ops != NULL) {
 			return encrypt->encrypt_ops->backend;
 		}
-	} else if (alg->algo_type == &ike_alg_dh) {
-		const struct dh_desc *dh = dh_desc(alg);
-		if (dh->dh_ops != NULL) {
-			return dh->dh_ops->backend;
+	} else if (alg->algo_type == &ike_alg_kem) {
+		const struct kem_desc *dh = kem_desc(alg);
+		if (dh->kem_ops != NULL) {
+			return dh->kem_ops->backend;
 		}
 	} else if (alg->algo_type == &ike_alg_ipcomp) {
 		const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);
@@ -1226,7 +1226,7 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		/* NULL not allowed for AH */
 		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_transform > 0;
-	} else if (alg->algo_type == &ike_alg_dh) {
+	} else if (alg->algo_type == &ike_alg_kem) {
 		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else if (alg->algo_type == &ike_alg_ipcomp) {

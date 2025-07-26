@@ -84,7 +84,7 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 				   const chunk_t Ni, const chunk_t Nr,
-				   PK11SymKey *dh_secret,
+				   PK11SymKey *ke_secret,
 				   struct logger *logger)
 {
 	/*
@@ -126,7 +126,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	/* seed = g^ir */
-	crypt_prf_update_symkey(prf, "g^ir", dh_secret);
+	crypt_prf_update_symkey(prf, "g^ir", ke_secret);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }
@@ -136,7 +136,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					PK11SymKey *SK_d_old,
-					PK11SymKey *new_dh_secret,
+					PK11SymKey *new_ke_secret,
 					const chunk_t Ni, const chunk_t Nr,
 					 struct logger *logger)
 {
@@ -151,7 +151,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 	}
 
 	/* seed: g^ir (new) | Ni | Nr) */
-	crypt_prf_update_symkey(prf, "g^ir (new)", new_dh_secret);
+	crypt_prf_update_symkey(prf, "g^ir (new)", new_ke_secret);
 	crypt_prf_update_hunk(prf, "Ni", Ni);
 	crypt_prf_update_hunk(prf, "Nr", Nr);
 	/* generate */
@@ -213,7 +213,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 				   PK11SymKey *SK_d,
-				   PK11SymKey *new_dh_secret,
+				   PK11SymKey *new_ke_secret,
 				   const chunk_t Ni, const chunk_t Nr,
 				   size_t required_bytes,
 				   struct logger *logger)
@@ -228,12 +228,12 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 		return NULL;
 	}
 	PK11SymKey *data;
-	if (new_dh_secret == NULL) {
+	if (new_ke_secret == NULL) {
 		data = symkey_from_hunk("data=Ni", Ni, logger);
 		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	} else {
 		/* make a local "readonly copy" and manipulate that */
-		data = symkey_addref(logger, "new_dh_secret", new_dh_secret);
+		data = symkey_addref(logger, "new_ke_secret", new_ke_secret);
 		append_symkey_hunk("data+=Ni", &data, Ni, logger);
 		append_symkey_hunk("data+=Nr", &data, Nr, logger);
 	}

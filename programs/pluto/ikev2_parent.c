@@ -48,7 +48,7 @@
 #include "pluto_x509.h"
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
-#include "ike_alg_dh.h"
+#include "ike_alg_kem.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "packet.h"
@@ -204,7 +204,7 @@ void v2_ike_sa_established(struct ike_sa *ike, where_t where)
 bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct state *st,
 			       struct msg_digest *md,
-			       const struct dh_desc *accepted_dh,
+			       const struct kem_desc *accepted_dh,
 			       enum payload_security security)
 {
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
@@ -295,7 +295,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
  * package up the calculated KE value, and emit it as a KE payload.
  * used by IKEv2: parent, child (PFS)
  */
-bool emit_v2KE(chunk_t g, const struct dh_desc *group,
+bool emit_v2KE(chunk_t g, const struct kem_desc *group,
 	       struct pbs_out *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
