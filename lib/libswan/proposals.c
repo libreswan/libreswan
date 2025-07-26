@@ -246,7 +246,7 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 		D(encrypt),
 		D(prf),
 		D(integ),
-		D(ke),
+		D(kem),
 #undef D
 	};
 	v1.enckeylen = proposal->algorithms[PROPOSAL_encrypt] != NULL ? proposal->algorithms[PROPOSAL_encrypt]->enckeylen : 0;
@@ -320,7 +320,7 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 	} else if (alg->algo_type == IKE_ALG_INTEG) {
 		return PROPOSAL_integ;
 	} else if (alg->algo_type == IKE_ALG_KEM) {
-		return PROPOSAL_ke;
+		return PROPOSAL_kem;
 	} else {
 		llog_passert(&global_logger, HERE,
 			     "unexpected algorithm type %s",
@@ -515,19 +515,19 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		if (proposal->algorithms[PROPOSAL_ke] == NULL) {
+		if (proposal->algorithms[PROPOSAL_kem] == NULL) {
 			if (first_null_ke == NULL) {
 				first_null_ke = proposal;
 			}
-		} else if (proposal->algorithms[PROPOSAL_ke]->desc == &ike_alg_kem_none.common) {
+		} else if (proposal->algorithms[PROPOSAL_kem]->desc == &ike_alg_kem_none.common) {
 			if (first_none_ke == NULL) {
 				first_none_ke = proposal;
 			}
 		} else if (first_ke == NULL) {
-			first_ke = proposal->algorithms[PROPOSAL_ke]->desc;
+			first_ke = proposal->algorithms[PROPOSAL_kem]->desc;
 		} else if (second_ke == NULL &&
-			   first_ke != proposal->algorithms[PROPOSAL_ke]->desc) {
-			second_ke = proposal->algorithms[PROPOSAL_ke]->desc;
+			   first_ke != proposal->algorithms[PROPOSAL_kem]->desc) {
+			second_ke = proposal->algorithms[PROPOSAL_kem]->desc;
 		}
 	}
 
@@ -551,8 +551,8 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			if (proposal->algorithms[PROPOSAL_ke] != NULL) {
-				ke = proposal->algorithms[PROPOSAL_ke]->desc;
+			if (proposal->algorithms[PROPOSAL_kem] != NULL) {
+				ke = proposal->algorithms[PROPOSAL_kem]->desc;
 			}
 			if (ke == &ike_alg_kem_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
@@ -563,7 +563,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
 				     parser->protocol->name, ke->fqn);
 			}
-			free_algorithms(proposal, PROPOSAL_ke);
+			free_algorithms(proposal, PROPOSAL_kem);
 		}
 		return true;
 	}

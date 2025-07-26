@@ -111,8 +111,8 @@ extern const struct ike_alg_type ike_alg_ipcomp;
 #define IKE_ALG_KEM &ike_alg_dh
 #define IKE_ALG_IPCOMP &ike_alg_ipcomp
 
-#define ike_alg_ke ike_alg_dh
-#define ke_desc dh_desc
+#define ike_alg_kem ike_alg_dh
+#define kem_desc(ARG) dh_desc(ARG)
 
 /*
  * User frendly string representing the algorithm type (family).

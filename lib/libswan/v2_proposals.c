@@ -125,7 +125,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 			}
 		}
 	}
-	merge_algorithms(parser, proposal, PROPOSAL_ke, defaults->ke);
+	merge_algorithms(parser, proposal, PROPOSAL_kem, defaults->kem);
 	return true;
 }
 
@@ -349,15 +349,15 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 *
 	 * But only when <encr>-<PRF> didn't succeed.
 	 */
-	if ((parser->protocol->ke || impair.proposal_parser) &&
+	if ((parser->protocol->kem || impair.proposal_parser) &&
 	    tokens.this.ptr != NULL /*more*/) {
-		PARSE_ALG(tokens, PROPOSAL_ke, ke);
+		PARSE_ALG(tokens, PROPOSAL_kem, kem);
 		if (parser->diag != NULL) {
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "...<ke> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
 		}
-		remove_duplicate_algorithms(parser, proposal, PROPOSAL_ke);
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_kem);
 	}
 
 	/*
@@ -370,7 +370,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 			if (tokens.this.ptr == NULL) {
 				break;
 			}
-			PARSE_ALG(tokens, proposal_algorithm, ke);
+			PARSE_ALG(tokens, proposal_algorithm, kem);
 			if (parser->diag != NULL) {
 				ldbgf(DBG_PROPOSAL_PARSER, logger,
 				      "...<addke%d> failed '%s'",
