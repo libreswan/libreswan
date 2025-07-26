@@ -106,10 +106,10 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_ike_proposals(struct ike_sa
  * Return the first valid DH proposal that is supported.
  */
 
-const struct kem_desc *ikev2_proposal_first_dh(const struct ikev2_proposal *proposal,
-					      struct verbose verbose);
-const struct kem_desc *ikev2_proposals_first_dh(const struct ikev2_proposals *proposals,
-					       struct verbose verbose);
+const struct kem_desc *ikev2_proposal_first_kem(const struct ikev2_proposal *proposal,
+						struct verbose verbose);
+const struct kem_desc *ikev2_proposals_first_kem(const struct ikev2_proposals *proposals,
+						 struct verbose verbose);
 
 /*
  * Is the modp group in the proposal set?

@@ -150,9 +150,9 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		}
 		jam(buf, "-%s", st->st_esp.trans_attrs.ta_integ->common.fqn);
 
-		if ((st->st_ike_version == IKEv2) && st->st_pfs_group != NULL) {
+		if ((st->st_ike_version == IKEv2) && st->st_pfs_kem != NULL) {
 			jam_string(buf, "-");
-			jam_string(buf, st->st_pfs_group->common.fqn);
+			jam_string(buf, st->st_pfs_kem->common.fqn);
 		}
 
 		/*

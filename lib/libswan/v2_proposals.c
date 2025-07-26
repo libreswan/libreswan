@@ -247,8 +247,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 *
 	 *     <encr>-<PRF>...
 	 *
-	 * If it succeeds, assume the proposal is <encr>-<prf>-<dh>
-	 * and not <encr>-<integ>-<prf>-<dh>.  The merge code will
+	 * If it succeeds, assume the proposal is <encr>-<prf>-<kem>
+	 * and not <encr>-<integ>-<prf>-<kem>.  The merge code will
 	 * fill <integ> in with either NONE (AEAD) or the <prf>s
 	 * converted to integ.
 	 *

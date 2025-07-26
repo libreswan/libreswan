@@ -258,7 +258,7 @@ struct state {
 
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
-	const struct kem_desc *st_pfs_group;   /*group for Phase 2 PFS */
+	const struct kem_desc *st_pfs_kem;   /*group for Phase 2 PFS */
 	struct child_policy st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */

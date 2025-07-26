@@ -108,7 +108,7 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
 	PK11SymKey *shared = NULL;
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		ldbgf(DBG_CRYPT, child->sa.logger,
 		      PRI_SO" %s add g^ir to child key %p",
 		      pri_so(child->sa.st_serialno),

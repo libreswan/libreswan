@@ -243,8 +243,8 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	/* KEi - only for CREATE_CHILD_SA; and then only sometimes. */
 
-	if (larval_child->sa.st_pfs_group != NULL &&
-	    !emit_v2KE(larval_child->sa.st_gi, larval_child->sa.st_pfs_group, pbs)) {
+	if (larval_child->sa.st_pfs_kem != NULL &&
+	    !emit_v2KE(larval_child->sa.st_gi, larval_child->sa.st_pfs_kem, pbs)) {
 		return false;
 	}
 
@@ -630,7 +630,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	 * the initiator, check what was negotiated against what was
 	 * sent.
 	 *
-	 * Because code expects .st_pfs_group to use NULL, and not
+	 * Because code expects .st_pfs_kem to use NULL, and not
 	 * &ike_alg_kem_none, to indicate no-DH algorithm, the value
 	 * returned by the proposal parser needs to be patched up.
 	 */
@@ -640,19 +640,19 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		vexpect(expect_accepted_proposal);
-		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_group) {
+		if (accepted_dh != NULL && accepted_dh != child->sa.st_pfs_kem) {
 			vlog("expecting %s but remote's accepted proposal includes %s",
-			     child->sa.st_pfs_group == NULL ? "no DH" : child->sa.st_pfs_group->common.fqn,
+			     child->sa.st_pfs_kem == NULL ? "no DH" : child->sa.st_pfs_kem->common.fqn,
 			     accepted_dh->common.fqn);
 			return v2N_NO_PROPOSAL_CHOSEN;
 		}
-		child->sa.st_pfs_group = accepted_dh;
+		child->sa.st_pfs_kem = accepted_dh;
 		break;
 	case SA_RESPONDER:
 		vexpect(!expect_accepted_proposal);
 		vexpect(child->sa.st_sa_role == SA_RESPONDER);
-		vexpect(child->sa.st_pfs_group == NULL);
-		child->sa.st_pfs_group = accepted_dh;
+		vexpect(child->sa.st_pfs_kem == NULL);
+		child->sa.st_pfs_kem = accepted_dh;
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);
@@ -669,7 +669,7 @@ v2_notification_t process_childs_v2SA_payload(const char *what,
 	 * SA; or perhaps it is getting things ready for an IKE SA
 	 * re-key?
 	 */
-	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_group != NULL) {
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA && child->sa.st_pfs_kem != NULL) {
 		vdbg("updating "PRI_SO"'s .st_oakley with preserved PRF, but why update?",
 		     pri_so(child->sa.st_serialno));
 		struct trans_attrs accepted_oakley = proto_info->trans_attrs;

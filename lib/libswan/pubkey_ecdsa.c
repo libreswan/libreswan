@@ -48,7 +48,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 						     struct pubkey_content *pkc,
 						     const struct logger *logger)
 {
-	static const struct kem_desc *dh[] = {
+	static const struct kem_desc *kem[] = {
 		&ike_alg_kem_secp256r1,
 		&ike_alg_kem_secp384r1,
 		&ike_alg_kem_secp521r1,
@@ -64,7 +64,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 	const struct kem_desc *group = NULL;
 	shunk_t raw = null_shunk;
 	const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
-	FOR_EACH_ELEMENT(e, dh) {
+	FOR_EACH_ELEMENT(e, kem) {
 		/*
 		 * A simple match, the buffer cnotains just the key.
 		 */

@@ -156,14 +156,14 @@ static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
 
 	if (ke_pd == NULL) {
-		if (child->sa.st_pfs_group != NULL) {
+		if (child->sa.st_pfs_kem != NULL) {
 			llog(RC_LOG, child->sa.logger,
 			     "missing KE payload in %s message", msg_name);
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
 	} else {
-		if (child->sa.st_pfs_group == NULL) {
+		if (child->sa.st_pfs_kem == NULL) {
 			llog(RC_LOG, child->sa.logger,
 			     "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
 			     msg_name);
@@ -175,7 +175,7 @@ static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest
 			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!unpack_KE(dest, val_name, child->sa.st_pfs_group,
+		if (!unpack_KE(dest, val_name, child->sa.st_pfs_kem,
 			       ke_pd, child->sa.logger)) {
 			return v1N_INVALID_KEY_INFORMATION;
 		}
@@ -614,13 +614,13 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 		 * use that group.
 		 * if not, fallback to old use-same-as-P1 behaviour
 		 */
-		child->sa.st_pfs_group = ikev1_quick_pfs(c->config->child.proposals);
+		child->sa.st_pfs_kem = ikev1_quick_pfs(c->config->child.proposals);
 		/* otherwise, use the same group as during Phase 1:
 		 * since no negotiation is possible, we pick one that is
 		 * very likely supported.
 		 */
-		if (child->sa.st_pfs_group == NULL)
-			child->sa.st_pfs_group = ike->sa.st_oakley.ta_dh;
+		if (child->sa.st_pfs_kem == NULL)
+			child->sa.st_pfs_kem = ike->sa.st_oakley.ta_dh;
 	}
 
 	LLOG_JAMBUF(RC_LOG, child->sa.logger, buf) {
@@ -638,8 +638,8 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 			jam(buf, "defaults");
 		}
 		jam(buf, " pfsgroup=");
-		if (child->sa.st_pfs_group != NULL) {
-			jam_string(buf, child->sa.st_pfs_group->common.fqn);
+		if (child->sa.st_pfs_kem != NULL) {
+			jam_string(buf, child->sa.st_pfs_kem->common.fqn);
 		} else {
 			jam_string(buf, "no-pfs");
 		}
@@ -656,7 +656,7 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 	submit_ke_and_nonce(/*callback*/&child->sa,
 			    /*task*/&child->sa,
 			    /*no-md*/NULL,
-			    child->sa.st_pfs_group/*could-be-null*/,
+			    child->sa.st_pfs_kem/*could-be-null*/,
 			    quick_outI1_continue,
 			    /*detach_whack*/false, HERE);
 	return child;
@@ -792,7 +792,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		if (!ikev1_ship_KE(&child->sa, local_secret, &child->sa.st_gi, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1385,7 +1385,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		 * tail(). XXX: Huh, this is the tail
 		 * function!
 		 */
-		child->sa.st_pfs_group = &unset_group;
+		child->sa.st_pfs_kem = &unset_group;
 		RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&in_pbs,
 							   &sapd->payload.
 							   sa,
@@ -1401,10 +1401,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gi,
 					     "Gi", "Quick Mode I1"));
 
-	passert(child->sa.st_pfs_group != &unset_group);
+	passert(child->sa.st_pfs_kem != &unset_group);
 
 	submit_ke_and_nonce(/*callback*/&child->sa, /*task*/&child->sa, md,
-			    child->sa.st_pfs_group/*possibly-null*/,
+			    child->sa.st_pfs_kem/*possibly-null*/,
 			    quick_inI1_outR1_continue1,
 			    /*detach_whack*/false, HERE);
 
@@ -1437,7 +1437,7 @@ static stf_status quick_inI1_outR1_continue1(struct state *child_sa,
 	/* we always calculate a nonce */
 	unpack_nonce(&child->sa.st_nr, nonce);
 
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		/* PFS is on: do a new DH */
 		unpack_KE_from_helper(&child->sa, local_secret, &child->sa.st_gr);
 		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
@@ -1643,9 +1643,9 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 					       &r_sa_pbs,
 					       false, child));
 
-	passert(child->sa.st_pfs_group != &unset_group);
+	passert(child->sa.st_pfs_kem != &unset_group);
 
-	if (child->sa.st_connection->config->child.pfs && child->sa.st_pfs_group == NULL) {
+	if (child->sa.st_connection->config->child.pfs && child->sa.st_pfs_kem == NULL) {
 		llog(RC_LOG, child->sa.logger,
 		     "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
 		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */
@@ -1670,7 +1670,7 @@ stf_status quick_inI1_outR1_continue_tail(struct ike_sa *ike,
 	}
 
 	/* [ KE ] out (for PFS) */
-	if (child->sa.st_pfs_group != NULL && child->sa.st_gr.ptr != NULL) {
+	if (child->sa.st_pfs_kem != NULL && child->sa.st_gr.ptr != NULL) {
 		if (!ikev1_justship_KE(child->sa.logger, &child->sa.st_gr, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1760,7 +1760,7 @@ stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gr, "Gr",
 					     "Quick Mode R1"));
 
-	if (child->sa.st_pfs_group != NULL) {
+	if (child->sa.st_pfs_kem != NULL) {
 		/* set up DH calculation */
 		submit_dh_shared_secret(/*callback*/&child->sa, /*task*/&child->sa, md,
 					child->sa.st_gr,

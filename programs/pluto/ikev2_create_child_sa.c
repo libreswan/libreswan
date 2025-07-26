@@ -499,8 +499,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike, child_being_replaced, verbose);
-	larval_child->sa.st_pfs_group =
-		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
+	larval_child->sa.st_pfs_kem =
+		ikev2_proposals_first_kem(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
 
 	/*
 	 * Note: this will callback with the larval SA.
@@ -516,12 +516,12 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	     pri_so(child_being_replaced->sa.st_serialno),
 	     pri_so(ike->sa.st_serialno),
 	     str_child_policy(&larval_child->sa.st_policy, &pb),
-	     (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
-	      larval_child->sa.st_pfs_group->common.fqn),
+	     (larval_child->sa.st_pfs_kem == NULL ? "no-pfs" :
+	      larval_child->sa.st_pfs_kem->common.fqn),
 	     pri_shunk(c->child.sec_label));
 
 	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
-			    larval_child->sa.st_pfs_group /*possibly-null*/,
+			    larval_child->sa.st_pfs_kem /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_rekey_child_request,
 			    detach_whack, HERE);
 
@@ -902,8 +902,8 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child, verbose);
-	larval_child->sa.st_pfs_group =
-		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
+	larval_child->sa.st_pfs_kem =
+		ikev2_proposals_first_kem(larval_child->sa.st_v2_create_child_sa_proposals, verbose);
 
 	/*
 	 * Note: this will callback with the larval SA.
@@ -918,10 +918,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	     pri_so(larval_child->sa.st_serialno),
 	     pri_so(ike->sa.st_serialno),
 	     str_child_policy(policy, &pb),
-	     larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
+	     larval_child->sa.st_pfs_kem == NULL ? "no-pfs" : larval_child->sa.st_pfs_kem->common.fqn);
 
 	submit_ke_and_nonce(/*callback*/&larval_child->sa, /*task*/&larval_child->sa, /*no-md*/NULL,
-			    larval_child->sa.st_pfs_group /*possibly-null*/,
+			    larval_child->sa.st_pfs_kem /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_new_child_request,
 			    detach_whack, HERE);
 	return larval_child;
@@ -1194,10 +1194,10 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	 * replacement has KE or has SA processor handled that by only
 	 * accepting a proposal with KE?
 	 */
-	if (larval_child->sa.st_pfs_group != NULL) {
-		pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
+	if (larval_child->sa.st_pfs_kem != NULL) {
+		pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_kem);
 		if(!v2_accept_ke_for_proposal(ike, &larval_child->sa, md,
-					      larval_child->sa.st_pfs_group,
+					      larval_child->sa.st_pfs_kem,
 					      ENCRYPTED_PAYLOAD)) {
 			/* passert(reply-recorded) */
 			delete_child_sa(&larval_child);
@@ -1207,7 +1207,7 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	}
 
 	submit_ke_and_nonce(/*callback*/&ike->sa, /*task*/&larval_child->sa, md,
-			    (larval_child->sa.st_pfs_group != NULL ? larval_child->sa.st_oakley.ta_dh : NULL),
+			    (larval_child->sa.st_pfs_kem != NULL ? larval_child->sa.st_oakley.ta_dh : NULL),
 			    process_v2_CREATE_CHILD_SA_request_continue_1,
 			    /*detach_whack*/false, HERE);
 	return STF_SUSPEND;
@@ -1457,7 +1457,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	/*
 	 * XXX: only for rekey child?
 	 */
-	if (larval_child->sa.st_pfs_group == NULL) {
+	if (larval_child->sa.st_pfs_kem == NULL) {
 		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child, response_md);
 		if (n != v2N_NOTHING_WRONG) {
 			return reject_CREATE_CHILD_SA_response(ike, &larval_child,
@@ -1479,11 +1479,11 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	/*
 	 * This is the initiator, accept responder's KE.
 	 *
-	 * XXX: Above checks st_pfs_group but this uses
+	 * XXX: Above checks st_pfs_kem but this uses
 	 * st_oakley.ta_dh, presumably they are the same? Lets find
 	 * out.
 	 */
-	pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_group);
+	pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_kem);
 	if (!unpack_KE(&larval_child->sa.st_gr, "Gr", larval_child->sa.st_oakley.ta_dh,
 		       response_md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.logger)) {
 		/*
@@ -1850,7 +1850,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	 * accepted_oakley for IKE.
 	 */
 	pexpect(larval_ike->sa.st_oakley.ta_dh != NULL);
-	pexpect(larval_ike->sa.st_pfs_group == NULL);
+	pexpect(larval_ike->sa.st_pfs_kem == NULL);
 	if (!v2_accept_ke_for_proposal(ike, &larval_ike->sa, request_md,
 				       larval_ike->sa.st_oakley.ta_dh,
 				       ENCRYPTED_PAYLOAD)) {

@@ -1020,11 +1020,11 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 				 * in every transform.  Except IPCOMP.
 				 */
 				if (p->protoid != PROTO_IPCOMP &&
-				    st->st_pfs_group != NULL) {
+				    st->st_pfs_kem != NULL) {
 					passert(!oakley_mode);
-					passert(st->st_pfs_group != &unset_group);
+					passert(st->st_pfs_kem != &unset_group);
 					if (!out_attr(GROUP_DESCRIPTION,
-						      st->st_pfs_group->group,
+						      st->st_pfs_kem->group,
 						      attr_desc,
 						      attr_value_names,
 						      &trans_pbs))
@@ -2259,7 +2259,7 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
  * Only IPsec DOI is accepted (what is the ISAKMP DOI?).
  * Error response is rudimentary.
  *
- * Since all ISAKMP groups in all SA Payloads must match, st->st_pfs_group
+ * Since all ISAKMP groups in all SA Payloads must match, st->st_pfs_kem
  * holds this across multiple payloads.
  * &unset_group signifies not yet "set"; NULL signifies NONE.
  *
@@ -2636,10 +2636,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * See draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 	 */
 	if (proto != PROTO_IPCOMP || pfs_group != NULL) {
-		if (child->sa.st_pfs_group == &unset_group)
-			child->sa.st_pfs_group = pfs_group;
+		if (child->sa.st_pfs_kem == &unset_group)
+			child->sa.st_pfs_kem = pfs_group;
 
-		if (child->sa.st_pfs_group != pfs_group) {
+		if (child->sa.st_pfs_kem != pfs_group) {
 			llog(RC_LOG, child->sa.logger,
 				  "GROUP_DESCRIPTION inconsistent with that of %s in IPsec SA",
 				  selection ? "the Proposal" : "a previous Transform");
