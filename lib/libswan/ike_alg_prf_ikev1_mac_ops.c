@@ -33,7 +33,7 @@
 static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 				    const chunk_t Ni,
 				    const chunk_t Nr,
-				    /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */,
+				    /*const*/ PK11SymKey *ke_secret /* NSS doesn't do const */,
 				    struct logger *logger)
 {
 	/* key = Ni|Nr */
@@ -44,7 +44,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 						    logger);
 	free_chunk_content(&key);
 	/* seed = g^xy */
-	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
+	crypt_prf_update_symkey(prf, "g^xy", ke_secret);
 	/* generate */
 	return crypt_prf_final_symkey(&prf);
 }
@@ -73,7 +73,7 @@ static PK11SymKey *pre_shared_key_skeyid(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
-			    PK11SymKey *dh_secret,
+			    PK11SymKey *ke_secret,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
@@ -82,7 +82,7 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
 						      "SKEYID", skeyid,
 						      logger);
 	/* seed = g^xy | CKY-I | CKY-R | 0 */
-	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
+	crypt_prf_update_symkey(prf, "g^xy", ke_secret);
 	crypt_prf_update_hunk(prf, "CKI_i", cky_i);
 	crypt_prf_update_hunk(prf, "CKI_r", cky_r);
 	crypt_prf_update_byte(prf, "0", 0);
@@ -95,7 +95,7 @@ static PK11SymKey *skeyid_d(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
-			    PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
+			    PK11SymKey *skeyid_d, PK11SymKey *ke_secret,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
@@ -105,7 +105,7 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
 						      logger);
 	/* seed = SKEYID_d | g^xy | CKY-I | CKY-R | 1 */
 	crypt_prf_update_symkey(prf, "SKEYID_d", skeyid_d);
-	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
+	crypt_prf_update_symkey(prf, "g^xy", ke_secret);
 	crypt_prf_update_hunk(prf, "CKI_i", cky_i);
 	crypt_prf_update_hunk(prf, "CKI_r", cky_r);
 	crypt_prf_update_byte(prf, "1", 1);
@@ -118,7 +118,7 @@ static PK11SymKey *skeyid_a(const struct prf_desc *prf_desc,
  */
 static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 			    PK11SymKey *skeyid,
-			    PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
+			    PK11SymKey *skeyid_a, PK11SymKey *ke_secret,
 			    chunk_t cky_i, chunk_t cky_r,
 			    struct logger *logger)
 {
@@ -128,7 +128,7 @@ static PK11SymKey *skeyid_e(const struct prf_desc *prf_desc,
 						      logger);
 	/* seed = SKEYID_a | g^xy | CKY-I | CKY-R | 2 */
 	crypt_prf_update_symkey(prf, "SKEYID_a", skeyid_a);
-	crypt_prf_update_symkey(prf, "g^xy", dh_secret);
+	crypt_prf_update_symkey(prf, "g^xy", ke_secret);
 	crypt_prf_update_hunk(prf, "CKI_i", cky_i);
 	crypt_prf_update_hunk(prf, "CKI_r", cky_r);
 	crypt_prf_update_byte(prf, "2", 2);
