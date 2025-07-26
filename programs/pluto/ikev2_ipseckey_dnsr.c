@@ -66,24 +66,24 @@ void free_ipseckey_dns(struct p_dns_req *d)
 }
 
 static void dbg_log_dns_question(struct p_dns_req *dnsr,
-		ldns_pkt *ldnspkt)
+				 ldns_pkt *ldnspkt)
 {
 	ldns_buffer *output = ldns_buffer_new(dnsr->wire_len * 2);
 	size_t i;
 
 	for (i = 0; i < ldns_pkt_qdcount(ldnspkt); i++) {
-		ldns_status status = ldns_rr2buffer_str_fmt(output,
-				ldns_output_format_default,
-				ldns_rr_list_rr(
-					ldns_pkt_question(ldnspkt), i));
+		ldns_status status =
+			ldns_rr2buffer_str_fmt(output,
+					       ldns_output_format_default,
+					       ldns_rr_list_rr(ldns_pkt_question(ldnspkt), i));
 		if (status != LDNS_STATUS_OK) {
-			llog(DEBUG_STREAM, dnsr->logger,
+			llog(RC_LOG, dnsr->logger,
 			     "could not parse DNS QUESTION section");
 			return;
 		}
 	}
 
-	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, dnsr->logger, buf) {
 		jam(buf, "DNS QUESTION ");
 		jam_sanitized_bytes(buf, ldns_buffer_begin(output),
 				    ldns_buffer_position(output));
@@ -194,7 +194,8 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 			break;
 		}
 
-		dbg("algorithm type '%s' is %d", algorithm_type_str, algorithm_type);
+		ldbg(dnsr->logger, "algorithm type '%s' is %d",
+		     algorithm_type_str, algorithm_type);
 		switch (algorithm_type) {
 		case IPSECKEY_ALGORITHM_RSA:
 		case IPSECKEY_ALGORITHM_ECDSA:
@@ -290,15 +291,15 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 		output = ldns_buffer_new((dnsr->wire_len * 8/6 + 2 +1) * 2);
 
 		if (qclass != dnsr->qclass) {
-			dbg("dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
-			    i, class_e->name, class->name);
+			ldbg(dnsr->logger, "dns answer %zu qclass mismatch expect %s vs %s ignore the answer now",
+			     i, class_e->name, class->name);
 			/* unexpected qclass. possibly malfuctioning dns */
 			continue;
 		}
 
 		rdf = ldns_rr_rdf(ans, 0);
 		if (rdf == NULL) {
-			dbg("dns answer %zu did not convert to rdf ignore this answer", i);
+			ldbg(dnsr->logger, "dns answer %zu did not convert to rdf ignore this answer", i);
 			continue;
 		}
 
@@ -350,7 +351,7 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 			continue;
 		}
 
-		dbg("%s", ldns_buffer_begin(output));
+		ldbg(dnsr->logger, "%s", ldns_buffer_begin(output));
 		ldns_buffer_free(output);
 		output = NULL;
 
@@ -364,8 +365,8 @@ static err_t parse_rr(struct p_dns_req *dnsr, ldns_pkt *ldnspkt)
 
 		if (atype != dnsr->qtype) {
 			/* dns server stuffed extra rr types, ignore */
-			dbg("dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
-			    i, dnsr->qtype, atype);
+			ldbg(dnsr->logger, "dns answer %zu qtype mismatch expect %d vs %d ignore this answer",
+			     i, dnsr->qtype, atype);
 		}
 	}
 
@@ -483,9 +484,8 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 	int ub_ret;
 	dns_status ret;
 
-	passert(get_unbound_ctx() != NULL);
-
-	llog(DEBUG_STREAM, dnsr->logger, "start %s", dnsr->log_buf);
+	PASSERT(dnsr->logger, get_unbound_ctx() != NULL);
+	ldbg(dnsr->logger, "start %s", dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 
