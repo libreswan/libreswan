@@ -108,11 +108,10 @@ extern const struct ike_alg_type ike_alg_ipcomp;
 #define IKE_ALG_HASH &ike_alg_hash
 #define IKE_ALG_PRF &ike_alg_prf
 #define IKE_ALG_INTEG &ike_alg_integ
-#define IKE_ALG_DH &ike_alg_dh
+#define IKE_ALG_KEM &ike_alg_dh
 #define IKE_ALG_IPCOMP &ike_alg_ipcomp
 
 #define ike_alg_ke ike_alg_dh
-#define IKE_ALG_KE IKE_ALG_DH
 #define ke_desc dh_desc
 
 /*

@@ -319,7 +319,7 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 		return PROPOSAL_prf;
 	} else if (alg->algo_type == IKE_ALG_INTEG) {
 		return PROPOSAL_integ;
-	} else if (alg->algo_type == IKE_ALG_KE) {
+	} else if (alg->algo_type == IKE_ALG_KEM) {
 		return PROPOSAL_ke;
 	} else {
 		llog_passert(&global_logger, HERE,

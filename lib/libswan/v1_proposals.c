@@ -336,7 +336,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	bool lookup_ke = parser->protocol->ke || impair.proposal_parser;
 	if (lookup_ke && tokens->this.ptr != NULL) {
 		shunk_t ke = tokens[0].this;
-		proposal.ke = dh_desc(alg_byname(parser, IKE_ALG_KE, ke, ke));
+		proposal.ke = dh_desc(alg_byname(parser, IKE_ALG_KEM, ke, ke));
 		if (parser->diag != NULL) {
 			return false;
 		}

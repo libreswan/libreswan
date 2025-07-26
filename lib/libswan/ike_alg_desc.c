@@ -51,7 +51,7 @@ const struct encrypt_desc *encrypt_desc(const struct ike_alg *alg)
 
 const struct kem_desc *dh_desc(const struct ike_alg *alg)
 {
-	passert(alg == NULL || alg->algo_type == IKE_ALG_DH);
+	passert(alg == NULL || alg->algo_type == IKE_ALG_KEM);
 	return (const struct kem_desc *)alg;
 }
 

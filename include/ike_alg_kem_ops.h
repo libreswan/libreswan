@@ -12,8 +12,8 @@
  * for more details.
  */
 
-#ifndef IKE_ALG_DH_OPS_H
-#define IKE_ALG_DH_OPS_H
+#ifndef IKE_ALG_KEM_OPS_H
+#define IKE_ALG_KEM_OPS_H
 
 #include "diag.h"
 #include "chunk.h"
