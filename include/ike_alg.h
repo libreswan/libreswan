@@ -100,7 +100,7 @@ extern const struct ike_alg_type ike_alg_encrypt;
 extern const struct ike_alg_type ike_alg_hash;
 extern const struct ike_alg_type ike_alg_prf;
 extern const struct ike_alg_type ike_alg_integ;
-extern const struct ike_alg_type ike_alg_dh;
+extern const struct ike_alg_type ike_alg_kem;
 extern const struct ike_alg_type ike_alg_ipcomp;
 
 /* keep old code working */
@@ -108,10 +108,8 @@ extern const struct ike_alg_type ike_alg_ipcomp;
 #define IKE_ALG_HASH &ike_alg_hash
 #define IKE_ALG_PRF &ike_alg_prf
 #define IKE_ALG_INTEG &ike_alg_integ
-#define IKE_ALG_KEM &ike_alg_dh
+#define IKE_ALG_KEM &ike_alg_kem
 #define IKE_ALG_IPCOMP &ike_alg_ipcomp
-
-#define ike_alg_kem ike_alg_dh
 
 /*
  * User frendly string representing the algorithm type (family).

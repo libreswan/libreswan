@@ -157,7 +157,7 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 	    defaults != NULL && defaults->kem != NULL) {
 		return add_alg_defaults(parser, defaults,
 					proposals, proposal,
-					&ike_alg_dh, defaults->kem,
+					&ike_alg_kem, defaults->kem,
 					merge_dh_default);
 	} else if (proposal->encrypt == NULL &&
 		   defaults != NULL && defaults->encrypt != NULL) {
