@@ -1,6 +1,6 @@
 #!/bin/sh
 
-printenv | grep PAM
+printenv | grep -e PAM -e PLUTO
 
 echo HI from $0 PAM_USER=${PAM_USER} PAM_TYPE=${PAM_TYPE}
 
