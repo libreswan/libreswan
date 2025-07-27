@@ -690,7 +690,8 @@ bool add_ipsec_interface(struct connection *c,
 	return true;
 }
 
-reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger)
+reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id,
+			      const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s:%s() if_id=%d",

@@ -768,7 +768,7 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
-					    struct logger *logger)
+					    const struct logger *logger)
 {
 	passert(cert != NULL);
 	const char *nickname = cert->nickname;
@@ -2643,7 +2643,7 @@ bool connections_can_share_parent(const struct connection *c, const struct conne
 	return true;
 }
 
-reqid_t child_reqid(const struct config *config, struct logger *logger)
+reqid_t child_reqid(const struct config *config, const struct logger *logger)
 {
 	reqid_t reqid = (config->sa_reqid != 0 ? config->sa_reqid :
 			 gen_reqid());

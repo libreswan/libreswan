@@ -1130,7 +1130,7 @@ diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
 			 uint32_t ttl,
 			 const shunk_t dnssec_pubkey,
 			 struct pubkey **pubkey,
-			 struct logger *logger)
+			 const struct logger *logger)
 {
 
 	/*
@@ -1232,7 +1232,8 @@ static err_t add_private_key(struct secret **secrets,
 }
 
 static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCertificate *cert,
-						struct secret_pubkey_stuff **pks, struct logger *logger,
+						struct secret_pubkey_stuff **pks,
+						const struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss,
 						const struct pubkey_type *type)
 {
@@ -1249,7 +1250,7 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 
 static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCertificate *cert,
 						struct secret_pubkey_stuff **pks, bool *load_needed,
-						struct logger *logger,
+						const struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
 
@@ -1278,7 +1279,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCertificate *cert,
 						struct secret_pubkey_stuff **pks,
 						bool *load_needed,
-						struct logger *logger,
+						const struct logger *logger,
 						SECKEYPublicKey *pubk)
 {
 	/*
@@ -1302,7 +1303,7 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
 				       struct secret_pubkey_stuff **pks, bool *load_needed,
-				       struct logger *logger)
+				       const struct logger *logger)
 {
 	*load_needed = false;
 
@@ -1345,7 +1346,7 @@ static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
 					struct secret_pubkey_stuff **pks, bool *load_needed,
-					struct logger *logger)
+					const struct logger *logger)
 {
 	*load_needed = false;
 	passert(ckaid != NULL);
@@ -1388,7 +1389,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 					CERTCertificate *cert,
 					SECKEYPublicKey *pubkey_nss,
 					struct pubkey **pk,
-					struct logger *logger)
+					const struct logger *logger)
 {
 	const struct pubkey_type *type = pubkey_type_nss(pubkey_nss);
 	if (type == NULL) {
@@ -1438,7 +1439,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 
 diag_t create_pubkey_from_cert(const struct id *id,
 			       CERTCertificate *cert, struct pubkey **pk,
-			       struct logger *logger)
+			       const struct logger *logger)
 {
 	if (!pexpect(cert != NULL)) {
 		return NULL;

@@ -277,7 +277,7 @@ diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
 			 uint32_t ttl,
 			 shunk_t dnssec_pubkey,
 			 struct pubkey **pubkey,
-			 struct logger *logger);
+			 const struct logger *logger);
 
 void add_pubkey(struct pubkey *pubkey, struct pubkey_list **pubkey_db);
 /*add+delete-using-content*/
@@ -310,13 +310,13 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
 				       struct secret_pubkey_stuff **pks, bool *load_needed,
-				       struct logger *logger);
+				       const struct logger *logger);
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
 					struct secret_pubkey_stuff **pks, bool *load_needed,
-					struct logger *logger);
+					const struct logger *logger);
 
 diag_t create_pubkey_from_cert(const struct id *id,
 			       CERTCertificate *cert, struct pubkey **pk,
-			       struct logger *logger) MUST_USE_RESULT;
+			       const struct logger *logger) MUST_USE_RESULT;
 
 #endif /* _SECRETS_H */

@@ -97,7 +97,7 @@ extern chunk_t get_dercert_from_nss_cert(CERTCertificate *cert);
 extern bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 				     const struct id *keyid,
 				     CERTCertificate *cert,
-				     struct logger *logger);
+				     const struct logger *logger);
 extern bool trusted_ca(asn1_t a, asn1_t b, int *pathlen,
 		       struct verbose verbose);
 extern CERTCertList *get_all_certificates(struct logger *logger);

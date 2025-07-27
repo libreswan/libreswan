@@ -96,7 +96,7 @@ void del_kernel_ipsec_interface_address(struct connection *c, struct logger *log
 size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t if_id);
 const char *str_ipsec_interface_id(ipsec_interface_id_t if_id, ipsec_interface_buf *buf);
 
-reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger);
+reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, const struct logger *logger);
 
 void config_ipsec_interface(enum yn_options managed, struct logger *logger);
 enum yn_options init_ipsec_interface(struct logger *logger);

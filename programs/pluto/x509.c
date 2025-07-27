@@ -325,7 +325,7 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 /*
  *  Converts a X.500 generalName into an ID
  */
-static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger)
+static void gntoid(struct id *id, const generalName_t *gn, const struct logger *logger)
 {
 	*id = empty_id; /* aka ID_NONE */
 
@@ -416,7 +416,7 @@ static void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn
 
 static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
 				 CERTCertificate *cert,
-				 struct logger *logger)
+				 const struct logger *logger)
 {
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 
@@ -456,7 +456,7 @@ static void add_cert_san_pubkeys(struct pubkey_list **pubkey_db,
  */
 bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 			      const struct id *keyid, CERTCertificate *cert,
-			      struct logger *logger)
+			      const struct logger *logger)
 {
 	/*
 	 * Create a pubkey with ID set to the subject and add it.

@@ -1012,7 +1012,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st);
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
-					    struct logger *logger);
+					    const struct logger *logger);
 
 ip_port end_host_port(const struct host_end *this, const struct host_end *that);
 ip_port local_host_port(const struct connection *c);
@@ -1220,6 +1220,6 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *c,
 						       struct verbose verbose);
 void delete_connection_proposals(struct connection *c);
 
-reqid_t child_reqid(const struct config *config, struct logger *logger);
+reqid_t child_reqid(const struct config *config, const struct logger *logger);
 
 #endif
