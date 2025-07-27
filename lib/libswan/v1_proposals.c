@@ -75,7 +75,7 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 			     const struct ike_alg **default_algs,
 			     merge_alg_default_t *merge_alg_default)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
 	 */
@@ -361,7 +361,7 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t alg_str)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	ldbgf(DBG_PROPOSAL_PARSER, logger,
 	      "parsing '"PRI_SHUNK"' for %s",
 	      pri_shunk(alg_str), parser->protocol->name);

@@ -334,7 +334,7 @@ void append_algorithm_for(struct proposal_parser *parser,
 			  const struct ike_alg *alg,
 			  int enckeylen)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
 		ldbgf(DBG_PROPOSAL_PARSER, logger, "no algorithm to append");
 		return;
@@ -723,7 +723,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 			    const struct ike_alg **encrypt,
 			    int *encrypt_keylen)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	if (tokens->this.len == 0) {
 		proposal_error(parser, "%s encryption algorithm is empty",
 			       parser->protocol->name);

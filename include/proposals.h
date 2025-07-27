@@ -100,7 +100,7 @@ struct proposal_policy {
 	/*
 	 * logging context
 	 */
-	struct logger *logger;
+	const struct logger *logger;
 	enum stream stream;
 };
 

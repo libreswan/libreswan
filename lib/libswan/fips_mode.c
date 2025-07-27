@@ -34,7 +34,7 @@ static enum fips_mode fips_mode = FIPS_MODE_UNSET;
  * Only called by lsw_nss_setup().
  */
 
-enum fips_mode get_fips_mode(struct logger *logger)
+enum fips_mode get_fips_mode(const struct logger *logger)
 {
 	/*
 	 * NSS returns bogus results for the FIPS check if you did not

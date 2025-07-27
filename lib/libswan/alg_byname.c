@@ -71,7 +71,7 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 				 const struct ike_alg_type *type,
 				 shunk_t name, shunk_t print_name)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	passert(parser->diag == NULL);
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct ike_alg *alg = ike_alg_byname(type, name);

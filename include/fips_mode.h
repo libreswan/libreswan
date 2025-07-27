@@ -36,7 +36,7 @@ enum fips_mode {
 extern const struct enum_names fips_mode_names;
 
 void set_fips_mode(enum fips_mode fips);
-enum fips_mode get_fips_mode(struct logger *logger);
+enum fips_mode get_fips_mode(const struct logger *logger);
 
 bool is_fips_mode(void);
 
