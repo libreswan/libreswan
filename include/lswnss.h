@@ -50,9 +50,13 @@ void shutdown_nss(void);
  * pass in a context parameter - the logger is it.  Otherwise the
  * password code can't log!
  *
- * Just a wrapper but type checked.
+ * Just a wrapper but type checked.  However, does strip const!
  */
-#define lsw_nss_get_password_context(LOGGER) ({ struct logger *l_ = LOGGER; l_; })
+#define lsw_nss_get_password_context(LOGGER)		\
+	({						\
+		const struct logger *l_ = LOGGER;	\
+		(void*)l_;				\
+	})
 
 PK11SlotInfo *lsw_nss_get_authenticated_slot(struct logger *logger);
 
