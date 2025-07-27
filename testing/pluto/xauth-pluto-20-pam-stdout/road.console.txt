@@ -99,5 +99,5 @@ src 192.1.3.209/32 dst 192.0.2.0/24
 	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 road #
- grep 'HI from ' /tmp/pluto.log
+ grep -E -e 'pamauth: (HI from|PAM_|PLUTO_)' /tmp/pluto.log
 road #
