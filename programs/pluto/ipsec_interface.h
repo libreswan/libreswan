@@ -80,7 +80,7 @@ const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if, ipsec_in
 
 diag_t parse_ipsec_interface(const char *ipsec_interface,
 			     struct ipsec_interface_config *config,
-			     struct logger *logger);
+			     const struct logger *logger);
 bool add_ipsec_interface(struct connection *c, const struct iface_device *iface);
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 					       struct logger *logger, where_t where);

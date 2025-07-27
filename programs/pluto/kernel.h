@@ -261,7 +261,7 @@ struct kernel_ops {
 	 */
 	bool (*add_sa)(const struct kernel_state *sa,
 		       bool replace,
-		       struct logger *logger);
+		       const struct logger *logger);
 	bool (*get_kernel_state)(const struct kernel_state *sa,
 				 uint64_t *bytes,
 				 uint64_t *add_time,
@@ -296,14 +296,14 @@ struct kernel_ops {
 			      const ip_address *src,
 			      const ip_address *dst,
 			      const char *story,	/* often SAID string */
-			      struct logger *logger);
+			      const struct logger *logger);
 
 	/*
 	 * Returns NULL(ok) or what needs to be enabled.
 	 */
-	err_t (*migrate_ipsec_sa_is_enabled)(struct logger *);
+	err_t (*migrate_ipsec_sa_is_enabled)(const struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
-	err_t (*iptfs_ipsec_sa_is_enabled)(struct logger *);
+	err_t (*iptfs_ipsec_sa_is_enabled)(const struct logger *);
 	bool (*iptfs_ipsec_sa)(struct child_sa *child);
 	err_t (*directional_ipsec_sa_is_enabled)(struct logger *);
 	bool (*directional_ipsec_sa)(struct child_sa *child);
