@@ -69,7 +69,7 @@ static bool is_never_negotiate_wm(const struct whack_message *wm)
 	return (wm->never_negotiate_shunt != SHUNT_UNSET);
 }
 
-static void llog_never_negotiate_option(struct logger *logger,
+static void llog_never_negotiate_option(struct verbose verbose,
 					const struct whack_message *wm,
 					const char *leftright,
 					const char *name,
@@ -77,23 +77,22 @@ static void llog_never_negotiate_option(struct logger *logger,
 {
 	/* need to reverse engineer type= */
 	enum shunt_policy shunt = wm->never_negotiate_shunt;
-	llog(WARNING_STREAM, logger,
-	     "%s%s=%s ignored for never-negotiate (type=%s) connection",
-	     leftright, name, value,
-	     (shunt == SHUNT_PASS ? "passthrough" :
-	      shunt == SHUNT_DROP ? "drop" :
-	      "???"));
+	vwarning("%s%s=%s ignored for never-negotiate (type=%s) connection",
+		 leftright, name, value,
+		 (shunt == SHUNT_PASS ? "passthrough" :
+		  shunt == SHUNT_DROP ? "drop" :
+		  "???"));
 }
 
 static bool never_negotiate_string_option(const char *leftright,
 					  const char *name,
 					  const char *value,
 					  const struct whack_message *wm,
-					  struct logger *logger)
+					  struct verbose verbose)
 {
 	if (is_never_negotiate_wm(wm)) {
 		if (value != NULL) {
-			llog_never_negotiate_option(logger, wm, leftright, name, value);
+			llog_never_negotiate_option(verbose, wm, leftright, name, value);
 		}
 		return true;
 	}
@@ -106,12 +105,12 @@ static bool never_negotiate_sparse_option(const char *leftright,
 					  unsigned value,
 					  const struct sparse_names *names,
 					  const struct whack_message *wm,
-					  struct logger *logger)
+					  struct verbose verbose)
 {
 	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
 			name_buf sb;
-			llog_never_negotiate_option(logger, wm, leftright, name,
+			llog_never_negotiate_option(verbose, wm, leftright, name,
 						    str_sparse_long(names, value, &sb));
 		}
 		return true;
@@ -124,12 +123,12 @@ static bool never_negotiate_enum_option(const char *leftright,
 					unsigned value,
 					const struct enum_names *names,
 					const struct whack_message *wm,
-					struct logger *logger)
+					struct verbose verbose)
 {
 	if (is_never_negotiate_wm(wm)) {
 		if (value != 0) {
 			name_buf sb;
-			llog_never_negotiate_option(logger, wm, leftright, name,
+			llog_never_negotiate_option(verbose, wm, leftright, name,
 						    str_enum_short(names, value, &sb));
 		}
 		return true;
@@ -494,10 +493,10 @@ static unsigned extract_sparse(const char *leftright, const char *name,
 			       unsigned value_when_never_negotiate,
 			       const struct sparse_names *names,
 			       const struct whack_message *wm,
-			       struct logger *logger)
+			       struct verbose verbose)
 {
 	if (never_negotiate_sparse_option(leftright, name, value,
-					  names, wm, logger)) {
+					  names, wm, verbose)) {
 		return value_when_never_negotiate;
 	}
 
@@ -510,17 +509,17 @@ static unsigned extract_sparse(const char *leftright, const char *name,
 
 static bool extract_yn(const char *leftright, const char *name,
 		       enum yn_options value, enum yn_options value_when_unset,
-		       const struct whack_message *wm, struct logger *logger)
+		       const struct whack_message *wm, struct verbose verbose)
 {
 	enum yn_options yn = extract_sparse(leftright, name, value,
 					    value_when_unset, /*never*/YN_NO,
-					    &yn_option_names, wm, logger);
+					    &yn_option_names, wm, verbose);
 
 	switch (yn) {
 	case YN_NO: return false;
 	case YN_YES: return true;
 	default:
-		bad_sparse(logger, &yn_option_names, yn);
+		bad_sparse(verbose.logger, &yn_option_names, yn);
 	}
 }
 
@@ -536,7 +535,7 @@ static bool extract_yn(const char *leftright, const char *name,
 
 static bool extract_yn_p(const char *leftright, const char *name, enum yn_options yn,
 			 enum yn_options value_when_unset,
-			 const struct whack_message *wm, struct logger *logger,
+			 const struct whack_message *wm, struct verbose verbose,
 			 const char *p_leftright, const char *p_name, enum yn_options p)
 {
 	const struct sparse_names *names = &yn_option_names;
@@ -551,25 +550,25 @@ static bool extract_yn_p(const char *leftright, const char *name, enum yn_option
 	case YN_NO: value = false; break;
 	case YN_YES: value = true; break;
 	default:
-		bad_sparse(logger, &yn_option_names, yn);
+		bad_sparse(verbose.logger, &yn_option_names, yn);
 	}
 
 	/* complain? */
 	if (never_negotiate_sparse_option(leftright, name, yn,
-					  &yn_option_names, wm, logger)) {
+					  &yn_option_names, wm, verbose)) {
 		return value;
 	}
 
 	if (p == YN_UNSET) {
 		name_buf sb;
-		llog(WARNING_STREAM, logger, "%s%s=%s ignored without %s%s=yes",
-		     leftright, name, str_sparse_long(names, value, &sb),
-		     p_leftright, p_name);
+		vwarning("%s%s=%s ignored without %s%s=yes",
+			 leftright, name, str_sparse_long(names, value, &sb),
+			 p_leftright, p_name);
 	} else if (p == YN_NO) {
 		name_buf sb;
-		llog(WARNING_STREAM, logger, "%s%s=%s ignored when %s%s=no",
-		     leftright, name, str_sparse_long(names, value, &sb),
-		     p_leftright, p_name);
+		vwarning("%s%s=%s ignored when %s%s=no",
+			 leftright, name, str_sparse_long(names, value, &sb),
+			 p_leftright, p_name);
 	}
 
 	return value;
@@ -580,12 +579,12 @@ static enum yna_options extract_yna(const char *leftright, const char *name,
 				    enum yna_options value_when_unset,
 				    enum yna_options value_when_never_negotiate,
 				    const struct whack_message *wm,
-				    struct logger *logger)
+				    struct verbose verbose)
 {
 	return extract_sparse(leftright, name, yna,
 			      value_when_unset,
 			      value_when_never_negotiate,
-			      &yna_option_names, wm, logger);
+			      &yna_option_names, wm, verbose);
 }
 
 /* terrible name */
@@ -594,9 +593,9 @@ static bool can_extract_string(const char *leftright,
 			       const char *name,
 			       const char *value,
 			       const struct whack_message *wm,
-			       struct logger *logger)
+			       struct verbose verbose)
 {
-	if (never_negotiate_string_option(leftright, name, value, wm, logger)) {
+	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
 		return false;
 	}
 
@@ -610,9 +609,9 @@ static bool can_extract_string(const char *leftright,
 static char *extract_string(const char *leftright, const char *name,
 			    const char *string,
 			    const struct whack_message *wm,
-			    struct logger *logger)
+			    struct verbose verbose)
 {
-	if (!can_extract_string(leftright, name, string, wm, logger)) {
+	if (!can_extract_string(leftright, name, string, wm, verbose)) {
 		return NULL;
 	}
 
@@ -625,9 +624,9 @@ static deltatime_t extract_deltatime(const char *leftright,
 				     enum timescale default_timescale,
 				     deltatime_t value_when_unset,
 				     const struct whack_message *wm,
-				     diag_t *d, struct logger *logger)
+				     diag_t *d, struct verbose verbose)
 {
-	if (!can_extract_string(leftright, name, value, wm, logger)) {
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
 
@@ -648,11 +647,11 @@ static unsigned extract_enum_name(const char *leftright,
 				  const struct enum_names *names,
 				  const struct whack_message *wm,
 				  diag_t *d,
-				  struct logger *logger)
+				  struct verbose verbose)
 {
 	(*d) = NULL;
 
-	if (never_negotiate_string_option(leftright, name, value, wm, logger)) {
+	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
 		return unset;
 	}
 
@@ -678,11 +677,11 @@ static unsigned extract_sparse_name(const char *leftright,
 				    const struct sparse_names *names,
 				    const struct whack_message *wm,
 				    diag_t *d,
-				    struct logger *logger)
+				    struct verbose verbose)
 {
 	(*d) = NULL;
 
-	if (never_negotiate_string_option(leftright, name, value, wm, logger)) {
+	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
 
@@ -719,12 +718,12 @@ static uintmax_t check_range(const char *story,
 			     uintmax_t value,
 			     struct range range,
 			     diag_t *d,
-			     struct logger *logger)
+			     struct verbose verbose)
 {
 
 	if (range.clamp.min != 0 && value < range.clamp.min) {
 		humber_buf hb;
-		llog(RC_LOG, logger, "%s%s%s%s=%ju clamped to the minimum %s",
+		vlog("%s%s%s%s=%ju clamped to the minimum %s",
 		     story, (strlen(story) > 0 ? " " : ""),
 		     leftright, name, value,
 		     str_humber(range.clamp.min, &hb));
@@ -733,7 +732,7 @@ static uintmax_t check_range(const char *story,
 
 	if (range.clamp.max != 0 && value > range.clamp.max) {
 		humber_buf hb;
-		llog(RC_LOG, logger, "%s%s%s%s=%ju clamped to the maximum %s",
+		vlog("%s%s%s%s=%ju clamped to the maximum %s",
 		     story, (strlen(story) > 0 ? " " : ""),
 		     leftright, name, value,
 		     str_humber(range.clamp.min, &hb));
@@ -774,10 +773,10 @@ static uintmax_t extract_uintmax(const char *story,
 				 struct range range,
 				 const struct whack_message *wm,
 				 diag_t *d,
-				 struct logger *logger)
+				 struct verbose verbose)
 {
 	(*d) = NULL;
-	if (!can_extract_string(leftright, name, value, wm, logger)) {
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
 	}
 
@@ -788,7 +787,7 @@ static uintmax_t extract_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	return check_range(story, leftright, name, number, range, d, logger);
+	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
@@ -799,11 +798,11 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 					struct range range,
 					const struct whack_message *wm,
 					diag_t *d,
-					struct logger *logger)
+					struct verbose verbose)
 {
 	(*d) = NULL;
 
-	if (!can_extract_string(leftright, name, value, wm, logger)) {
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
 	}
 
@@ -814,18 +813,18 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	return check_range(story, leftright, name, number, range, d, logger);
+	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
 static uintmax_t extract_percent(const char *leftright, const char *name, const char *value,
 				 uintmax_t value_when_unset,
 				 const struct whack_message *wm,
 				 diag_t *d,
-				 struct logger *logger)
+				 struct verbose verbose)
 {
 	(*d) = NULL;
 
-	if (!can_extract_string(leftright, name, value, wm, logger)) {
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
 
@@ -845,7 +844,7 @@ static uintmax_t extract_percent(const char *leftright, const char *name, const 
 	}
 
 	if (percent > INT_MAX - 100) {
-		llog(RC_LOG, logger, "%s%s=%s is way to large, using %ju%%",
+		vlog("%s%s=%s is way to large, using %ju%%",
 		     leftright, name, value, value_when_unset);
 		return value_when_unset;
 	}
@@ -858,12 +857,12 @@ static ip_cidr extract_cidr_num(const char *leftright,
 				const char *value,
 				const struct whack_message *wm,
 				diag_t *d,
-				struct logger *logger)
+				struct verbose verbose)
 {
 	err_t err;
 	(*d) = NULL;
 
-	if (!can_extract_string(leftright, name, value, wm, logger)) {
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return unset_cidr;
 	}
 
@@ -885,7 +884,7 @@ static ip_cidr extract_cidr_num(const char *leftright,
 static diag_t extract_host_ckaid(struct host_end_config *host_config,
 				 const struct whack_end *src,
 				 bool *same_ca,
-				 struct logger *logger/*connection "..."*/)
+				 struct verbose verbose/*connection "..."*/)
 {
 	const char *leftright = src->leftright;
 	ckaid_t ckaid;
@@ -906,11 +905,11 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 	 * assume things will later find the private key (or cert on a
 	 * later attempt).
 	 */
-	CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
+	CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, verbose.logger);
 	if (cert != NULL) {
 		diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
 								   *same_ca/*preserve_ca*/,
-								   logger);
+								   verbose.logger);
 		if (diag != NULL) {
 			CERT_DestroyCertificate(cert);
 			return diag;
@@ -918,21 +917,21 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 		return NULL;
 	}
 
-	ldbg(logger, "%s-ckaid=%s did not match a certificate in the NSS database",
+	vdbg("%s-ckaid=%s did not match a certificate in the NSS database",
 	     leftright, src->ckaid);
 
 	/* try to pre-load the private key */
 	bool load_needed;
-	err = preload_private_key_by_ckaid(&ckaid, &load_needed, logger);
+	err = preload_private_key_by_ckaid(&ckaid, &load_needed, verbose.logger);
 	if (err != NULL) {
 		ckaid_buf ckb;
-		ldbg(logger, "no private key matching %s-ckaid=%s: %s",
+		vdbg("no private key matching %s-ckaid=%s: %s",
 		     leftright, str_ckaid(host_config->ckaid, &ckb), err);
 		return NULL;
 	}
 
 	ckaid_buf ckb;
-	llog(LOG_STREAM/*not-whack-for-now*/, logger,
+	llog(LOG_STREAM/*not-whack-for-now*/, verbose.logger,
 	     "loaded private key matching %s-ckaid=%s",
 	     leftright,
 	     str_ckaid(host_config->ckaid, &ckb));
@@ -1055,14 +1054,14 @@ static diag_t extract_host_end(struct host_end *host,
 			       enum ike_version ike_version,
 			       struct authby whack_authby,
 			       bool *same_ca,
-			       struct logger *logger/*connection "..."*/)
+			       struct verbose verbose/*connection "..."*/)
 {
 	err_t err;
 	diag_t d = NULL;
 	const char *leftright = host_config->leftright;
 
 	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
-				    /*value_when_unset*/YN_NO, wm, logger);
+				    /*value_when_unset*/YN_NO, wm, verbose);
 	if (groundhog) {
 		if (is_fips_mode()) {
 			return diag("%sgroundhog=yes is invalid in FIPS mode",
@@ -1070,9 +1069,9 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 		host_config->groundhog = groundhog;
 		groundhogday |= groundhog;
-		llog(RC_LOG, logger, "WARNING: %s is a groundhog", leftright);
+		vlog("WARNING: %s is a groundhog", leftright);
 	} else {
-		ldbg(logger, "connection is not a groundhog");
+		vdbg("connection is not a groundhog");
 	}
 
 	/*
@@ -1086,8 +1085,8 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Else it remains unset and acts like a wildcard.
 	 */
 	struct id id = { .kind = ID_NONE, };
-	PEXPECT(logger, host_config->id.kind == ID_NONE);
-	if (can_extract_string(leftright, "id", src->id, wm, logger)) {
+	vexpect(host_config->id.kind == ID_NONE);
+	if (can_extract_string(leftright, "id", src->id, wm, verbose)) {
 		/*
 		 * Treat any atoid() failure as fatal.  One wart is
 		 * something like id=foo.  ttoaddress_dns() fails
@@ -1102,7 +1101,7 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		id_buf idb;
-		ldbg(logger, "setting %s-id='%s' as wm->%s->id=%s",
+		vdbg("setting %s-id='%s' as wm->%s->id=%s",
 		     leftright, str_id(&host_config->id, &idb),
 		     leftright, (src->id != NULL ? src->id : "NULL"));
 
@@ -1120,7 +1119,7 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		id_buf idb;
-		ldbg(logger, "setting %s-id='%s' as resolve.%s.host.kind=KH_IPADDR",
+		vdbg("setting %s-id='%s' as resolve.%s.host.kind=KH_IPADDR",
 		     leftright, str_id(&host_config->id, &idb),
 		     leftright);
 
@@ -1140,17 +1139,15 @@ static diag_t extract_host_end(struct host_end *host,
 			/* convert the CA into a DN blob */
 			ugh = atodn(src->ca, &host_config->ca);
 			if (ugh != NULL) {
-				llog(RC_LOG, logger,
-				     "bad %s CA string '%s': %s (ignored)",
+				vlog("bad %s CA string '%s': %s (ignored)",
 				     leftright, src->ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
 				ugh = parse_dn(ASN1(host_config->ca));
 				if (ugh != NULL) {
-					llog(RC_LOG, logger,
-					     "error parsing %s CA converted to DN: %s",
+					vlog("error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					LDBG_hunk(logger, host_config->ca);
+					llog_hunk(RC_LOG, verbose.logger, host_config->ca);
 				}
 			}
 
@@ -1183,30 +1180,29 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->cert != NULL) {
 
 		if (src->ckaid != NULL) {
-			llog(WARNING_STREAM, logger,
-			     "ignoring %s ckaid '%s' and using %s certificate '%s'",
-			     leftright, src->cert,
-			     leftright, src->cert);
+			vwarning("ignoring %s ckaid '%s' and using %s certificate '%s'",
+				 leftright, src->cert,
+				 leftright, src->cert);
 		}
 
 		if (pubkey != NULL) {
 			name_buf pkb;
-			llog(WARNING_STREAM, logger,
-			     "ignoring %s %s '%s' and using %s certificate '%s'",
-			     leftright,
-			     str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-			     pubkey,
-			     leftright, src->cert);
+			vwarning("ignoring %s %s '%s' and using %s certificate '%s'",
+				 leftright,
+				 str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+				 pubkey,
+				 leftright, src->cert);
 		}
 
-		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert, logger);
+		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert,
+								      verbose.logger);
 		if (cert == NULL) {
 			return diag("%s certificate '%s' not found in the NSS database",
 				    leftright, src->cert);
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
 								   *same_ca/*preserve_ca*/,
-								   logger);
+								   verbose.logger);
 		if (diag != NULL) {
 			CERT_DestroyCertificate(cert);
 			return diag;
@@ -1239,10 +1235,9 @@ static diag_t extract_host_end(struct host_end *host,
 
 		if (src->ckaid != NULL) {
 			name_buf pkb;
-			llog(WARNING_STREAM, logger,
-			     "ignoring %sckaid=%s and using %s%s",
-			     leftright, src->ckaid,
-			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+			vwarning("ignoring %sckaid=%s and using %s%s",
+				 leftright, src->ckaid,
+				 leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
@@ -1260,7 +1255,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 			struct pubkey_content pubkey_content; /* must free_pubkey_content() */
 			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(keyspace),
-						      &pubkey_content, logger);
+						      &pubkey_content, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				name_buf pkb;
@@ -1269,17 +1264,17 @@ static diag_t extract_host_end(struct host_end *host,
 			}
 
 			/* must free keyspace pubkey_content */
-			passert(pubkey_content.type != NULL);
+			vassert(pubkey_content.type != NULL);
 
 			ckaid_buf ckb;
 			name_buf pkb;
-			ldbg(logger, "saving CKAID %s extracted from %s%s",
+			vdbg("saving CKAID %s extracted from %s%s",
 			     str_ckaid(&pubkey_content.ckaid, &ckb),
 			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 			host_config->ckaid = clone_const_thing(pubkey_content.ckaid, "raw pubkey's ckaid");
 
 			free_chunk_content(&keyspace);
-			free_pubkey_content(&pubkey_content, logger);
+			free_pubkey_content(&pubkey_content, verbose.logger);
 
 			/* must-free keyspace */
 
@@ -1295,7 +1290,7 @@ static diag_t extract_host_end(struct host_end *host,
 						     /*until_time*/realtime_epoch,
 						     /*ttl*/0,
 						     HUNK_AS_SHUNK(keyspace),
-						     &pubkey, logger);
+						     &pubkey, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				return d;
@@ -1312,21 +1307,22 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 
 		/* saved */
-		PEXPECT(logger, host_config->ckaid != NULL);
+		vexpect(host_config->ckaid != NULL);
 
 		/* must-free keyspace */
 
 		/* try to pre-load the private key */
 		bool load_needed;
-		err = preload_private_key_by_ckaid(host_config->ckaid, &load_needed, logger);
+		err = preload_private_key_by_ckaid(host_config->ckaid, &load_needed,
+						   verbose.logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
-			dbg("no private key matching %s CKAID %s: %s",
-			    leftright, str_ckaid(host_config->ckaid, &ckb), err);
+			vdbg("no private key matching %s CKAID %s: %s",
+			     leftright, str_ckaid(host_config->ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			name_buf pkb;
-			llog(LOG_STREAM/*not-whack-for-now*/, logger,
+			llog(LOG_STREAM/*not-whack-for-now*/, verbose.logger,
 			     "loaded private key matching %s%s CKAID %s",
 			     leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 			     str_ckaid(host_config->ckaid, &ckb));
@@ -1335,7 +1331,7 @@ static diag_t extract_host_end(struct host_end *host,
 		free_chunk_content(&keyspace);
 
 	} else if (src->ckaid != NULL) {
-		diag_t d = extract_host_ckaid(host_config, src, same_ca, logger);
+		diag_t d = extract_host_ckaid(host_config, src, same_ca, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -1345,11 +1341,11 @@ static diag_t extract_host_end(struct host_end *host,
 	    host_config->cert.nss_cert != NULL) {
 		host->id = id_from_cert(&host_config->cert);
 		id_buf idb;
-		ldbg(logger, "setting %s-id='%s' as host->config->id=%%fromcert",
+		vdbg("setting %s-id='%s' as host->config->id=%%fromcert",
 		     leftright, str_id(&host->id, &idb));
 	} else {
 		id_buf idb;
-		ldbg(logger, "setting %s-id='%s' as host->config->id)",
+		vdbg("setting %s-id='%s' as host->config->id)",
 		     leftright, str_id(&host_config->id, &idb));
 		host->id = clone_id(&host_config->id, __func__);
 	}
@@ -1357,16 +1353,16 @@ static diag_t extract_host_end(struct host_end *host,
 	/* the rest is simple copying of corresponding fields */
 
 	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
-					       YN_NO, wm, logger);
+					       YN_NO, wm, verbose);
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
-					       YN_NO, wm, logger);
+					       YN_NO, wm, verbose);
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->xauthusername,
-						     wm, logger);
+						     wm, verbose);
 	enum eap_options autheap = extract_sparse_name(leftright, "autheap", src->autheap,
 						       /*value_when_unset*/IKE_EAP_NONE,
 						       &eap_option_names,
-						       wm, &d, logger);
+						       wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1376,7 +1372,7 @@ static diag_t extract_host_end(struct host_end *host,
 	enum keyword_auth auth = extract_enum_name(leftright, "auth", src->auth,
 						   /*value_when_unset*/AUTH_UNSET,
 						   &keyword_auth_names,
-						   wm, &d, logger);
+						   wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1481,10 +1477,10 @@ static diag_t extract_host_end(struct host_end *host,
 	name_buf eab;
 	authby_buf wabb;
 	authby_buf eabb;
-	dbg("fake %sauth=%s %sauthby=%s from whack authby %s",
-	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
-	    src->leftright, str_authby(authby, &eabb),
-	    str_authby(whack_authby, &wabb));
+	vdbg("fake %sauth=%s %sauthby=%s from whack authby %s",
+	     src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
+	     src->leftright, str_authby(authby, &eabb),
+	     str_authby(whack_authby, &wabb));
 	host_config->auth = auth;
 	host_config->authby = authby;
 
@@ -1496,12 +1492,12 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->sendcert = extract_sparse_name(leftright, "sendcert", src->sendcert,
 						    cert_defaultcertpolicy, &sendcert_policy_names,
-						    wm, &d, logger);
+						    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, logger)) {
+	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, verbose)) {
 		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
 		if (err != NULL) {
 			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
@@ -1535,7 +1531,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -1545,7 +1541,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -1555,7 +1551,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -1565,7 +1561,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -1582,7 +1578,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(wm)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 #endif
@@ -1593,7 +1589,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -1603,7 +1599,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -1630,9 +1626,9 @@ static diag_t extract_host_end(struct host_end *host,
 	if (src->addresspool != NULL) {
 		other_host_config->modecfg.server = true;
 		host_config->modecfg.client = true;
-		dbg("forced %s modecfg client=%s %s modecfg server=%s",
-		    host_config->leftright, bool_str(host_config->modecfg.client),
-		    other_host_config->leftright, bool_str(other_host_config->modecfg.server));
+		vdbg("forced %s modecfg client=%s %s modecfg server=%s",
+		     host_config->leftright, bool_str(host_config->modecfg.client),
+		     other_host_config->leftright, bool_str(other_host_config->modecfg.server));
 	}
 
 	return NULL;
@@ -1645,7 +1641,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				       enum ike_version ike_version,
 				       struct connection *c,
 				       struct child_end_config *child_config,
-				       struct logger *logger)
+				       struct verbose verbose)
 {
 	diag_t d = NULL;
 	const char *leftright = src->leftright;
@@ -1659,9 +1655,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	case IKEv1:
 		if (src->cat != YN_UNSET) {
 			name_buf nb;
-			llog(WARNING_STREAM, logger,
-			     "IKEv1, ignoring %scat=%s (client address translation)",
-			     leftright, str_sparse_long(&yn_option_names, src->cat, &nb));
+			vwarning("IKEv1, ignoring %scat=%s (client address translation)",
+				 leftright, str_sparse_long(&yn_option_names, src->cat, &nb));
 		}
 		break;
 	default:
@@ -1669,13 +1664,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	}
 
 	child_config->vti_ip =
-		extract_cidr_num(leftright, "vti", src->vti, wm, &d, logger);
+		extract_cidr_num(leftright, "vti", src->vti, wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	child_config->ipsec_interface_ip =
-		extract_cidr_num(leftright, "interface-ip", src->interface_ip, wm, &d, logger);
+		extract_cidr_num(leftright, "interface-ip", src->interface_ip, wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1688,8 +1683,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
 	 */
-	if (never_negotiate_string_option(leftright, "updown", src->updown, wm, logger)) {
-		ldbg(logger, "never-negotiate updown");
+	if (never_negotiate_string_option(leftright, "updown", src->updown, wm, verbose)) {
+		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
 		child_config->updown =
@@ -1712,7 +1707,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		 * checked).
 		 */
 		FOR_EACH_ELEMENT(pool, c->pool) {
-			PASSERT(logger, (*pool) == NULL);
+			vassert((*pool) == NULL);
 		}
 
 		if (src->subnets != NULL) {
@@ -1761,7 +1756,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			 * This also detetects and rejects multiple
 			 * pools with the same address family.
 			 */
-			diag_t d = install_addresspool((*range), child_config->addresspool, logger);
+			diag_t d = install_addresspool((*range), child_config->addresspool,
+						       verbose.logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);
@@ -1777,7 +1773,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
-		ldbg(logger, "%s child selectors from %ssubnet (selector); %s.config.has_client=true",
+		vdbg("%s child selectors from %ssubnet (selector); %s.config.has_client=true",
 		     leftright, leftright, leftright);
 		ip_address nonzero_host;
 		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL,
@@ -1797,7 +1793,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					    leftright, leftright);
 			}
 			ip_subnet subnet = selector_subnet(child_config->selectors.list[0]);
-			ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
+			vdbg("%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 			     leftright, leftright, leftright, leftright);
 			child_selectors->list[0] =
 				selector_from_subnet_protoport(subnet, protoport);
@@ -1805,13 +1801,12 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 		if (nonzero_host.ip.is_set) {
 			address_buf hb;
-			llog(RC_LOG, logger,
-			     "zeroing non-zero address identifier %s in %ssubnet=%s",
+			vlog("zeroing non-zero address identifier %s in %ssubnet=%s",
 			     str_address(&nonzero_host, &hb), leftright, src->subnet);
 		}
 
 	} else {
-		ldbg(logger, "%s child selectors unknown; probably derived from host?!?",
+		vdbg("%s child selectors unknown; probably derived from host?!?",
 		     leftright);
 	}
 
@@ -1829,7 +1824,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			return diag("IKEv%d does not support virtual subnets",
 				    ike_version);
 		}
-		dbg("%s %s child has a virt-end", wm->name, leftright);
+		vdbg("%s %s child has a virt-end", wm->name, leftright);
 		diag_t d = create_virtual(leftright, src->virt,
 					  &child_config->virt);
 		if (d != NULL) {
@@ -1869,7 +1864,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 			/* i.e., not 1::1,1::2 */
 			const struct ip_info *afi = address_type(sourceip);
-			PASSERT(logger, afi != NULL); /* since specified */
+			vassert(afi != NULL); /* since specified */
 			if (seen[afi->ip.version].ip.is_set) {
 				address_buf sb, ipb;
 				return diag("%ssourceip=%s invalid, multiple %s addresses (%s and %s) specified",
@@ -2018,7 +2013,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 			       deltatime_t lifetime_fips,
 			       deltatime_t rekeymargin,
 			       uintmax_t rekeyfuzz_percent,
-			       struct logger *logger,
+			       struct verbose verbose,
 			       const struct whack_message *wm)
 {
 	const char *source;
@@ -2046,7 +2041,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 	}
 
 	if (impair.lifetime) {
-		llog(RC_LOG, logger, "IMPAIR: skipping %s=%jd checks",
+		vlog("IMPAIR: skipping %s=%jd checks",
 		     lifetime_name, deltasecs(*lifetime));
 		return NULL;
 	}
@@ -2073,16 +2068,14 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 	}
 
 	if (deltatime_cmp(*lifetime, >, max_lifetime)) {
-		llog(RC_LOG, logger,
-		     "%s%s=%ju seconds exceeds maximum of %ju seconds, setting to the maximum allowed",
+		vlog("%s%s=%ju seconds exceeds maximum of %ju seconds, setting to the maximum allowed",
 		     fips,
 		     lifetime_name, deltasecs(*lifetime),
 		     deltasecs(max_lifetime));
 		source = "max";
 		*lifetime = max_lifetime;
 	} else if (deltatime_cmp(*lifetime, <, min_lifetime)) {
-		llog(RC_LOG, logger,
-		     "%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%%, setting to %jd seconds",
+		vlog("%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%%, setting to %jd seconds",
 		     lifetime_name, deltasecs(*lifetime),
 		     deltasecs(wm->rekeymargin),
 		     rekeyfuzz_percent,
@@ -2092,7 +2085,7 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 	}
 
 	deltatime_buf db;
-	ldbg(logger, "%s=%s (%s)", lifetime_name, source, str_deltatime(*lifetime, &db));
+	vdbg("%s=%s (%s)", lifetime_name, source, str_deltatime(*lifetime, &db));
 	return NULL;
 }
 
@@ -2100,24 +2093,24 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 							enum end this_end,
 							const struct host_addr_config *const host_addrs[END_ROOF],
 							const ip_protoport protoport[END_ROOF],
-							struct logger *logger)
+							struct verbose verbose)
 {
 	const struct whack_end *this = &wm->end[this_end];
 	enum end that_end = !this_end;
 	const struct whack_end *that = &wm->end[that_end];
 
 	if (is_group_wm(host_addrs)) {
-		ldbg(logger, "%s connection is CK_GROUP: by is_group_wm()",
+		vdbg("%s connection is CK_GROUP: by is_group_wm()",
 		     this->leftright);
 		return CK_GROUP;
 	}
 	if (wm->sec_label != NULL) {
-		ldbg(logger, "%s connection is CK_LABELED_TEMPLATE: has security label: %s",
+		vdbg("%s connection is CK_LABELED_TEMPLATE: has security label: %s",
 		     this->leftright, wm->sec_label);
 		return CK_LABELED_TEMPLATE;
 	}
 	if(wm->narrowing == YN_YES) {
-		ldbg(logger, "%s connection is CK_TEMPLATE: narrowing=yes",
+		vdbg("%s connection is CK_TEMPLATE: narrowing=yes",
 		     this->leftright);
 		return CK_TEMPLATE;
 	}
@@ -2126,18 +2119,18 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		 * A peer with subnet=vnet:.. needs instantiation so
 		 * we can accept multiple subnets from that peer.
 		 */
-		ldbg(logger, "%s connection is CK_TEMPLATE: %s has vnets at play",
+		vdbg("%s connection is CK_TEMPLATE: %s has vnets at play",
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
 	if (that->addresspool != NULL) {
-		ldbg(logger, "%s connection is CK_TEMPLATE: %s has an address pool",
+		vdbg("%s connection is CK_TEMPLATE: %s has an address pool",
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
 	if (protoport[that_end].ip.is_set /*technically redundant but good form*/ &&
 	    protoport[that_end].has_port_wildcard) {
-		ldbg(logger, "%s connection is CK_TEMPLATE: %s child has protoport wildcard port",
+		vdbg("%s connection is CK_TEMPLATE: %s child has protoport wildcard port",
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
@@ -2149,7 +2142,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 			    re->type != KH_DEFAULTROUTE &&
 			    re->type != KH_IPHOSTNAME) {
 				name_buf tb;
-				ldbg(logger, "%s connection is CK_TEMPLATE: has policy negotiate yet %s address is %s",
+				vdbg("%s connection is CK_TEMPLATE: has policy negotiate yet %s address is %s",
 				     this->leftright,
 				     wm->end[lr].leftright,
 				     str_sparse_short(&keyword_host_names, re->type, &tb));
@@ -2157,7 +2150,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 			}
 		}
 	}
-	ldbg(logger, "%s connection is CK_PERMANENT: by default",
+	vdbg("%s connection is CK_PERMANENT: by default",
 	     this->leftright);
 	return CK_PERMANENT;
 }
@@ -2211,7 +2204,7 @@ static diag_t extract_shunt(struct config *config,
 
 static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 					const struct whack_message *wm,
-					struct logger *logger)
+					struct verbose verbose)
 {
 	diag_t d = NULL;
 
@@ -2219,7 +2212,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 								     wm->remote_peer_type,
 								     REMOTE_PEER_IETF,
 								     &remote_peer_type_names,
-								     wm, &d, logger);
+								     wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2227,7 +2220,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
-							  wm, &d, logger);
+							  wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2235,7 +2228,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 	enum yn_options nm_configured = extract_sparse_name("", "nm-configured", wm->nm_configured,
 							    /*value_when_unset*/YN_NO,
 							    &yn_option_names,
-							    wm, &d, logger);
+							    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2243,7 +2236,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 	enum yn_options cisco_split = extract_sparse_name("", "cisco-split", wm->cisco_split,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
-							  wm, &d, logger);
+							  wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2263,12 +2256,12 @@ static const struct ike_info *const ike_info[] = {
 };
 
 static enum ike_version extract_ike_version(const struct whack_message *wm,
-					    diag_t *d, struct logger *logger)
+					    diag_t *d, struct verbose verbose)
 {
 	enum ike_version keyexchange = extract_sparse_name("", "keyexchange", wm->keyexchange,
 							   /*value_when_unset*/0,
 							   &keyexchange_option_names,
-							   wm, d, logger);
+							   wm, d, verbose);
 	if ((*d) != NULL) {
 		return 0;
 	}
@@ -2276,7 +2269,7 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 	enum yn_options ikev2 = extract_sparse_name("", "ikev2", wm->ikev2,
 						    /*value_when_unset*/0,
 						    &ikev2_option_names,
-						    wm, d, logger);
+						    wm, d, verbose);
 	if ((*d) != NULL) {
 		return 0;
 	}
@@ -2293,13 +2286,12 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 		/* can only get conflict when both keyexchange= and
 		 * ikev2= are specified */
 		name_buf ib, ivb;
-		llog(RC_LOG, logger,
-		     "ignoring ikev2=%s which conflicts with keyexchange=%s",
+		vlog("ignoring ikev2=%s which conflicts with keyexchange=%s",
 		     str_sparse_short(&ikev2_option_names, ikev2, &ib),
 		     str_sparse_short(&keyexchange_option_names, ike_version, &ivb));
 	} else if (ikev2 != 0) {
 		name_buf ib, ivb;
-		llog(RC_LOG, logger, "ikev2=%s has been replaced by keyexchange=%s",
+		vlog("ikev2=%s has been replaced by keyexchange=%s",
 		     str_sparse_short(&ikev2_option_names, ikev2, &ib),
 		     str_sparse_short(&keyexchange_option_names, ike_version, &ivb));
 	}
@@ -2324,11 +2316,11 @@ static diag_t extract_encap_alg(const char **encap_alg,
 }
 
 static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **encap_alg,
-				  const struct whack_message *wm, struct logger *logger)
+				  const struct whack_message *wm, struct verbose verbose)
 {
 	if (never_negotiate_enum_option("", "phase2", wm->phase2,
-					&encap_proto_story, wm, logger)) {
-		ldbg(logger, "never-negotiate phase2");
+					&encap_proto_story, wm, verbose)) {
+		vdbg("never-negotiate phase2");
 		(*encap_proto) = ENCAP_PROTO_UNSET;
 		(*encap_alg) = NULL;
 		return NULL;
@@ -2382,7 +2374,7 @@ diag_t extract_connection(const struct whack_message *wm,
 {
 	diag_t d = NULL;
 
-	enum ike_version ike_version = extract_ike_version(wm, &d, c->logger);
+	enum ike_version ike_version = extract_ike_version(wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2411,7 +2403,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	const struct ip_info *host_afi = config->host.afi;
-	PASSERT(c->logger, host_afi != NULL);
+	vassert(host_afi != NULL);
 
 	const struct host_addr_config *const host_addrs[END_ROOF] = {
 		[LEFT_END] = &config->end[LEFT_END].host.host,
@@ -2447,7 +2439,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				     host_addrs,
 				     ike_version, whack_authby,
 				     &same_ca[this],
-				     c->logger);
+				     verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -2490,10 +2482,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		c->end[end].kind = extract_connection_end_kind(wm, end,
 							       host_addrs,
 							       protoport,
-							       c->logger);
+							       verbose);
 	}
 
-	passert(c->base_name != NULL); /* see alloc_connection() */
+	vassert(c->base_name != NULL); /* see alloc_connection() */
 
 	/*
 	 * Extract policy bits.
@@ -2501,12 +2493,12 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	bool pfs = extract_yn("", "pfs", wm->pfs,
 			      /*value_when_unset*/YN_YES,
-			      wm, c->logger);
+			      wm, verbose);
 	config->child.pfs = pfs;
 
 	bool compress = extract_yn("", "compress", wm->compress,
 				   /*value_when_unset*/YN_NO,
-				   wm, c->logger);
+				   wm, verbose);
 	config->child.ipcomp = compress;
 
 	/*
@@ -2515,7 +2507,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum encap_proto encap_proto = ENCAP_PROTO_UNSET;
 	const char *encap_alg = NULL;
-	d = extract_encap_proto(&encap_proto, &encap_alg, wm, c->logger);
+	d = extract_encap_proto(&encap_proto, &encap_alg, wm, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2532,7 +2524,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} else {
 		if (!is_never_negotiate_wm(wm)) {
 			name_buf sb;
-			llog_pexpect(c->logger, HERE,
+			vlog_pexpect(HERE,
 				     "type=%s should be never-negotiate",
 				     str_sparse_long(&type_option_names, wm->type, &sb));
 		}
@@ -2578,15 +2570,15 @@ diag_t extract_connection(const struct whack_message *wm,
 #endif
 	}
 
-	PASSERT(c->logger, ike_version < elemsof(ike_info));
-	PASSERT(c->logger, ike_info[ike_version] != NULL);
+	vassert(ike_version < elemsof(ike_info));
+	vassert(ike_info[ike_version] != NULL);
 	config->ike_info = ike_info[ike_version];
-	PASSERT(c->logger, config->ike_info->version > 0);
+	vassert(config->ike_info->version > 0);
 
 #if 0
-	PASSERT(c->logger,
+	PASSERT(verbose,
 		is_opportunistic_wm(host_addr) == ((wm->policy & POLICY_OPPORTUNISTIC) != LEMPTY));
-	PASSERT(c->logger, is_group_wm(host_addr) == wm->is_connection_group);
+	vassert(is_group_wm(host_addr) == wm->is_connection_group);
 #endif
 
 	if (is_opportunistic_wm(host_addrs) && c->config->ike_version < IKEv2) {
@@ -2610,7 +2602,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->intermediate = extract_yn("", "intermediate", wm->intermediate,
 					  /*value_when_unset*/YN_NO,
-					  wm, c->logger);
+					  wm, verbose);
 	if (config->intermediate) {
 		if (ike_version < IKEv2) {
 			return diag("intermediate requires IKEv2");
@@ -2619,7 +2611,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->session_resumption = extract_yn("", "session_resumption", wm->session_resumption,
 						/*value_when_unset*/YN_NO,
-						wm, c->logger);
+						wm, verbose);
 	if (config->session_resumption) {
 		if (ike_version < IKEv2) {
 			return diag("session resumption requires IKEv2");
@@ -2628,17 +2620,17 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug,
 					   /*value_when_unset*/YN_NO,
-					   wm, c->logger);
+					   wm, verbose);
 	config->share_lease = extract_yn("", "share_lease", wm->share_lease,
 					   /*value_when_unset*/YN_YES,
-					   wm, c->logger);
+					   wm, verbose);
 	config->overlapip = extract_yn("", "overlapip", wm->overlapip,
-				       /*value_when_unset*/YN_NO, wm, c->logger);
+				       /*value_when_unset*/YN_NO, wm, verbose);
 
 	bool ms_dh_downgrade = extract_yn("", "ms-dh-downgrade", wm->ms_dh_downgrade,
-					  /*value_when_unset*/YN_NO, wm, c->logger);
+					  /*value_when_unset*/YN_NO, wm, verbose);
 	bool pfs_rekey_workaround = extract_yn("", "pfs-rekey-workaround", wm->pfs_rekey_workaround,
-					       /*value_when_unset*/YN_NO, wm, c->logger);
+					       /*value_when_unset*/YN_NO, wm, verbose);
 	if (ms_dh_downgrade && pfs_rekey_workaround) {
 		return diag("cannot specify both ms-dh-downgrade=yes and pfs-rekey-workaround=yes");
 	}
@@ -2646,15 +2638,15 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
 	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id,
-					  /*value_when_unset*/YN_NO, wm, c->logger);
+					  /*value_when_unset*/YN_NO, wm, verbose);
 	/* IKEv2 only; IKEv1 uses xauth=pam */
 	config->ikev2_pam_authorize = extract_yn("", "pam-authorize", wm->pam_authorize,
-						 /*value_when_unset*/YN_NO, wm, c->logger);
+						 /*value_when_unset*/YN_NO, wm, verbose);
 
 	if (ike_version >= IKEv2) {
 		if (wm->ikepad != YNA_UNSET) {
 			name_buf vn, pn;
-			llog(WARNING_STREAM, c->logger, "%s connection ignores ikepad=%s",
+			vwarning("%s connection ignores ikepad=%s",
 			     str_enum_long(&ike_version_names, ike_version, &vn),
 			     str_sparse_long(&yna_option_names, wm->ikepad, &pn));
 		}
@@ -2667,7 +2659,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
-						       /*value_when_unset*/YN_YES,wm, c->logger);
+						       /*value_when_unset*/YN_YES,wm, verbose);
 
 	if (wm->aggressive == YN_YES && ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
@@ -2677,23 +2669,23 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->aggressive = extract_yn("", "aggressive", wm->aggressive,
 					/*value_when_unset*/YN_NO,
-					wm, c->logger);
+					wm, verbose);
 
 	config->decap_dscp = extract_yn("", "decap-dscp", wm->decap_dscp,
 					/*value_when_unset*/YN_NO,
-					wm, c->logger);
+					wm, verbose);
 
 	config->encap_dscp = extract_yn("", "encap-dscp", wm->encap_dscp,
 					/*value_when_unset*/YN_YES,
-					wm, c->logger);
+					wm, verbose);
 
 	config->nopmtudisc = extract_yn("", "nopmtudisc", wm->nopmtudisc,
 					/*value_when_unset*/YN_NO,
-					wm, c->logger);
+					wm, verbose);
 
 	bool mobike = extract_yn("", "mobike", wm->mobike,
 				 /*value_when_unset*/YN_NO,
-				 wm, c->logger);
+				 wm, verbose);
 	config->mobike = mobike;
 	if (mobike) {
 		if (ike_version < IKEv2) {
@@ -2707,7 +2699,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				    kernel_ops->interface_name);
 		}
 		/* probe the interface */
-		err_t err = kernel_ops->migrate_ipsec_sa_is_enabled(c->logger);
+		err_t err = kernel_ops->migrate_ipsec_sa_is_enabled(verbose.logger);
 		if (err != NULL) {
 			return diag("MOBIKE support is not enabled for %s kernel interface: %s",
 				    kernel_ops->interface_name, err);
@@ -2719,7 +2711,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						.value_when_unset = 0,
 						.limit.max = UINT32_MAX,
 					},
-					wm, &d, c->logger);
+					wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -2738,7 +2730,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	/* this warns when never_negotiate() */
 	bool iptfs = extract_yn("", "iptfs", wm->iptfs,
 				/*value_when_unset*/YN_NO,
-				wm, c->logger);
+				wm, verbose);
 	if (iptfs) {
 		/* lots of incompatibility */
 		if (ike_version < IKEv2) {
@@ -2764,7 +2756,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				    str_enum_short(&encap_proto_story, encap_proto, &eb));
 		}
 
-		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(c->logger);
+		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(verbose.logger);
 		if (err != NULL) {
 			return diag("IPTFS is not supported by the kernel: %s", err);
 		}
@@ -2779,7 +2771,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
 					       },
-					       wm, &d, c->logger);
+					       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -2791,7 +2783,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
 					       },
-					       wm, &d, c->logger);
+					       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -2818,7 +2810,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						       .value_when_unset = 0/*i.e., disable*/,
 						       .limit.max = 65535,
 					       },
-					       wm, &d, c->logger);
+					       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -2832,7 +2824,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->child.iptfs.fragmentation =
 		extract_yn_p("", "iptfs-fragmentation", wm->iptfs_fragmentation,
 			     /*value_when_unset*/YN_YES,
-			     wm, c->logger,
+			     wm, verbose,
 			     "", "iptfs", wm->iptfs);
 
 	/*
@@ -2842,15 +2834,13 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 	if (ike_version == IKEv1) {
 		if (wm->send_redirect != YNA_UNSET) {
-			llog(WARNING_STREAM, c->logger,
-			     "IKEv1 connection ignores send-redirect=");
+			vwarning("IKEv1 connection ignores send-redirect=");
 		}
 	} else {
 		switch (wm->send_redirect) {
 		case YNA_YES:
 			if (wm->redirect_to == NULL) {
-				llog(WARNING_STREAM, c->logger,
-				     "send-redirect=yes ignored, redirect-to= was not specified");
+				vwarning("send-redirect=yes ignored, redirect-to= was not specified");
 			}
 			/* set it anyway!?!  the code checking it
 			 * issues a second warning */
@@ -2859,8 +2849,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		case YNA_NO:
 			if (wm->redirect_to != NULL) {
-				llog(WARNING_STREAM, c->logger,
-				     "send-redirect=no, redirect-to= is ignored");
+				vwarning("send-redirect=no, redirect-to= is ignored");
 			}
 			config->redirect.send_never = true;
 			break;
@@ -2873,14 +2862,13 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (ike_version == IKEv1) {
 		if (wm->accept_redirect != YN_UNSET) {
-			llog(WARNING_STREAM, c->logger,
-			     "IKEv1 connection ignores accept-redirect=");
+			vwarning("IKEv1 connection ignores accept-redirect=");
 		}
 	} else {
 		config->redirect.accept =
 			extract_yn("", "acceept-redirect", wm->accept_redirect,
 				   /*value_when_unset*/YN_NO,
-				   wm, c->logger);
+				   wm, verbose);
 	}
 
 	/* fragmentation */
@@ -2890,13 +2878,12 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * some make no sense for shunts, so remove those again
 	 */
 	if (never_negotiate_sparse_option("", "fragmentation", wm->fragmentation,
-					  &ynf_option_names, wm, c->logger)) {
-		ldbg(c->logger, "never-negotiate fragmentation");
+					  &ynf_option_names, wm, verbose)) {
+		vdbg("never-negotiate fragmentation");
 	} else if (ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
 		name_buf fb;
-		llog(WARNING_STREAM, c->logger,
-		     "IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
-		     str_sparse_long(&ynf_option_names, wm->fragmentation, &fb));
+		vwarning("IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
+			 str_sparse_long(&ynf_option_names, wm->fragmentation, &fb));
 		config->ike_frag.allow = true;
 	} else {
 		switch (wm->fragmentation) {
@@ -2916,9 +2903,9 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	enum tcp_options iketcp;
 	if (never_negotiate_sparse_option("", "enable-tcp", wm->enable_tcp,
-					  &tcp_option_names, wm, c->logger)) {
+					  &tcp_option_names, wm, verbose)) {
 		/* cleanup inherited default; XXX: ? */
-		ldbg(c->logger, "never-negotiate enable-tcp");
+		vdbg("never-negotiate enable-tcp");
 		iketcp = IKE_TCP_NO;
 	} else if (c->config->ike_version < IKEv2) {
 		if (wm->enable_tcp != 0 &&
@@ -2936,9 +2923,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	switch (iketcp) {
 	case IKE_TCP_NO:
 		if (wm->tcp_remoteport != 0) {
-			llog(WARNING_STREAM, c->logger,
-			     "tcp-remoteport=%ju ignored for non-TCP connections",
-			     wm->tcp_remoteport);
+			vwarning("tcp-remoteport=%ju ignored for non-TCP connections",
+				 wm->tcp_remoteport);
 		}
 		/* keep tests happy, value ignored */
 		config->remote_tcpport = ip_hport(NAT_IKE_UDP_PORT);
@@ -2957,16 +2943,16 @@ diag_t extract_connection(const struct whack_message *wm,
 		break;
 	default:
 		/* must  have been set */
-		bad_sparse(c->logger, &tcp_option_names, iketcp);
+		bad_sparse(verbose.logger, &tcp_option_names, iketcp);
 	}
 
 
 	/* authentication (proof of identity) */
 
 	if (is_never_negotiate_wm(wm)) {
-		dbg("ignore sighash, never negotiate");
+		vdbg("ignore sighash, never negotiate");
 	} else if (c->config->ike_version == IKEv1) {
-		dbg("ignore sighash, IKEv1");
+		vdbg("ignore sighash, IKEv1");
 	} else {
 		config->sighash_policy = sighash_policy;
 	}
@@ -3001,7 +2987,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						wm->end[LEFT_END].addresspool != NULL ? YN_YES :
 						wm->end[RIGHT_END].addresspool != NULL ? YN_YES :
 						YN_NO),
-			   wm, c->logger);
+			   wm, verbose);
 #if 0
 	/*
 	 * Not yet: tcp/%any means narrow past the selector and down
@@ -3017,17 +3003,17 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->rekey = extract_yn("", "rekey", wm->rekey,
 				   /*value_when_unset*/YN_YES,
-				   wm, c->logger);
+				   wm, verbose);
 	config->reauth = extract_yn("", "reauth", wm->reauth,
 				    /*value_when_unset*/YN_NO,
-				    wm, c->logger);
+				    wm, verbose);
 
 	switch (wm->autostart) {
 	case AUTOSTART_UP:
 	case AUTOSTART_START:
 	{
 		name_buf nb;
-		ldbg(c->logger, "autostart=%s implies +UP",
+		vdbg("autostart=%s implies +UP",
 		     str_sparse_long(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.up);
 		break;
@@ -3036,7 +3022,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	case AUTOSTART_ONDEMAND:
 	{
 		name_buf nb;
-		ldbg(c->logger, "autostart=%s implies +ROUTE",
+		vdbg("autostart=%s implies +ROUTE",
 		     str_sparse_long(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.route);
 		break;
@@ -3044,7 +3030,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	case AUTOSTART_KEEP:
 	{
 		name_buf nb;
-		ldbg(c->logger, "autostart=%s implies +KEEP",
+		vdbg("autostart=%s implies +KEEP",
 		     str_sparse_long(&autostart_names, wm->autostart, &nb));
 		add_policy(c, policy.keep);
 		break;
@@ -3073,8 +3059,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (is_fips_mode() && config->negotiation_shunt == SHUNT_PASS) {
 		name_buf sb;
-		llog(RC_LOG, c->logger,
-		     "FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
+		vlog("FIPS: ignored negotiationshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_sparse_short(&negotiation_shunt_names, config->negotiation_shunt, &sb));
 		config->negotiation_shunt = SHUNT_DROP;
 	}
@@ -3092,15 +3077,14 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	if (is_fips_mode() && config->failure_shunt != SHUNT_NONE) {
 		name_buf eb;
-		llog(RC_LOG, c->logger,
-		     "FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
+		vlog("FIPS: ignored failureshunt=%s - packets MUST be blocked in FIPS mode",
 		     str_sparse_short(&failure_shunt_names, config->failure_shunt, &eb));
 		config->failure_shunt = SHUNT_NONE;
 	}
 
 	for (enum shunt_kind sk = SHUNT_KIND_FLOOR; sk < SHUNT_KIND_ROOF; sk++) {
-		PASSERT(c->logger, sk < elemsof(config->shunt));
-		PASSERT(c->logger, shunt_ok(sk, config->shunt[sk]));
+		vassert(sk < elemsof(config->shunt));
+		vassert(shunt_ok(sk, config->shunt[sk]));
 	}
 
 	/*
@@ -3116,15 +3100,15 @@ diag_t extract_connection(const struct whack_message *wm,
 					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 					.limit.max = kernel_ops->max_replay_window,
 				},
-				wm, &d, c->logger);
+				wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 	config->child.replay_window = replay_window;
 
 	if (never_negotiate_sparse_option("", "esn", wm->esn,
-					  &yne_option_names, wm, c->logger)) {
-		ldbg(c->logger, "never-negotiate esn");
+					  &yne_option_names, wm, verbose)) {
+		vdbg("never-negotiate esn");
 	} else if (replay_window == 0) {
 		/*
 		 * RFC 4303 states:
@@ -3140,10 +3124,9 @@ diag_t extract_connection(const struct whack_message *wm,
 		 * anti-replay for an SA.
 		 */
 		if (wm->esn != YNE_UNSET && wm->esn != YNE_NO) {
-			llog(WARNING_STREAM, c->logger,
-			     "forcing esn=no as replay-window=0");
+			vwarning("forcing esn=no as replay-window=0");
 		} else {
-			dbg("ESN: disabled as replay-window=0"); /* XXX: log? */
+			vdbg("ESN: disabled as replay-window=0"); /* XXX: log? */
 		}
 		config->esn.no = true;
 	} else if (!kernel_ops->esn_supported) {
@@ -3153,10 +3136,9 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (wm->esn == YNE_YES ||
 		    wm->esn == YNE_EITHER) {
 			name_buf nb;
-			llog(WARNING_STREAM, c->logger,
-			     "%s kernel interface does not support ESN, ignoring esn=%s",
-			     kernel_ops->interface_name,
-			     str_sparse_long(&yne_option_names, wm->esn, &nb));
+			vwarning("%s kernel interface does not support ESN, ignoring esn=%s",
+				 kernel_ops->interface_name,
+				 str_sparse_long(&yne_option_names, wm->esn, &nb));
 		}
 		config->esn.no = true;
 #ifdef USE_IKEv1
@@ -3167,13 +3149,12 @@ diag_t extract_connection(const struct whack_message *wm,
 		 * XXX: except it isn't; it still gets decoded and
 		 * stuffed into the config.  It just isn't acted on.
 		 */
-		dbg("ESN: ignored as not implemented with IKEv1");
+		vdbg("ESN: ignored as not implemented with IKEv1");
 #if 0
 		if (wm->esn != YNE_UNSET) {
 			name_buf nb;
-			llog(WARNING_STREAM, c->logger,
-			     "ignoring esn=%s as not implemented with IKEv1",
-			     str_sparse_long(yne_option_names, wm->esn, &nb));
+			vwarning("ignoring esn=%s as not implemented with IKEv1",
+				 str_sparse_long(yne_option_names, wm->esn, &nb));
 		}
 #endif
 		switch (wm->esn) {
@@ -3209,9 +3190,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (ike_version == IKEv1) {
 		if (wm->ppk != NPPI_UNSET) {
 			name_buf sb;
-			llog(WARNING_STREAM, c->logger,
-			     "ignoring ppk=%s as IKEv1",
-			     str_sparse_long(&nppi_option_names, wm->ppk, &sb));
+			vwarning("ignoring ppk=%s as IKEv1",
+				 str_sparse_long(&nppi_option_names, wm->ppk, &sb));
 		}
 	} else {
 		switch (wm->ppk) {
@@ -3230,14 +3210,14 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	policy_buf pb;
-	dbg("added new %s connection %s with policy %s",
-	    c->config->ike_info->version_name,
-	    c->name, str_connection_policies(c, &pb));
+	vdbg("added new %s connection %s with policy %s",
+	     c->config->ike_info->version_name,
+	     c->name, str_connection_policies(c, &pb));
 
 	/* IKE cipher suites */
 
-	if (never_negotiate_string_option("", "ike", wm->ike, wm, c->logger)) {
-		ldbg(c->logger, "never-negotiate ike");
+	if (never_negotiate_string_option("", "ike", wm->ike, wm, verbose)) {
+		vdbg("never-negotiate ike");
 	} else {
 		const struct proposal_policy proposal_policy = {
 			/* logic needs to match pick_initiator() */
@@ -3246,7 +3226,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.pfs = pfs,
 			.check_pfs_vs_ke = false,
 			.stream = ALL_STREAMS,
-			.logger = c->logger, /* on-stack */
+			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (wm->ike == NULL),
 		};
@@ -3255,26 +3235,26 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->ike_proposals.p = proposals_from_str(parser, wm->ike);
 
 		if (c->config->ike_proposals.p == NULL) {
-			pexpect(parser->diag != NULL); /* something */
+			vexpect(parser->diag != NULL); /* something */
 			diag_t d = parser->diag; parser->diag = NULL;
 			free_proposal_parser(&parser);
 			return d;
 		}
 		free_proposal_parser(&parser);
 
-		LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
+		VDBG_JAMBUF(buf) {
 			jam_string(buf, "ike (phase1) algorithm values: ");
 			jam_proposals(buf, c->config->ike_proposals.p);
 		}
 
 		if (c->config->ike_version == IKEv2) {
-			dbg("constructing local IKE proposals for %s",
-			    c->name);
+			vdbg("constructing local IKE proposals for %s",
+			     c->name);
 			config->v2_ike_proposals =
 				ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
 							       config->ike_proposals.p,
 							       verbose);
-			llog_v2_proposals(LOG_STREAM/*not-whack*/, c->logger,
+			llog_v2_proposals(LOG_STREAM/*not-whack*/, verbose.logger,
 					  config->v2_ike_proposals,
 					  "IKE SA proposals (connection add)");
 		}
@@ -3298,7 +3278,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.pfs = pfs,
 			.check_pfs_vs_ke = true,
 			.stream = ALL_STREAMS,
-			.logger = c->logger, /* on-stack */
+			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (encap_alg == NULL),
 		};
@@ -3313,18 +3293,18 @@ diag_t extract_connection(const struct whack_message *wm,
 			(encap_proto == ENCAP_PROTO_ESP) ? esp_proposal_parser :
 			(encap_proto == ENCAP_PROTO_AH) ? ah_proposal_parser :
 			NULL;
-		passert(fn != NULL);
+		vassert(fn != NULL);
 		struct proposal_parser *parser = fn(&proposal_policy);
 		config->child.proposals.p = proposals_from_str(parser, encap_alg);
 		if (c->config->child.proposals.p == NULL) {
-			pexpect(parser->diag != NULL);
+			vexpect(parser->diag != NULL);
 			diag_t d = parser->diag; parser->diag = NULL;
 			free_proposal_parser(&parser);
 			return d;
 		}
 		free_proposal_parser(&parser);
 
-		LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
+		VDBG_JAMBUF(buf) {
 			jam_string(buf, "ESP/AH string values: ");
 			jam_proposals(buf, c->config->child.proposals.p);
 		};
@@ -3347,7 +3327,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (c->config->ike_version == IKEv2) {
 			config->child.v2_ike_auth_proposals =
 				get_v2_IKE_AUTH_new_child_proposals(c);
-			llog_v2_proposals(LOG_STREAM/*not-whack*/, c->logger,
+			llog_v2_proposals(LOG_STREAM/*not-whack*/, verbose.logger,
 					  config->child.v2_ike_auth_proposals,
 					  "Child SA proposals (connection add)");
 		}
@@ -3356,23 +3336,22 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->encapsulation = extract_yna("", "encapsulation", wm->encapsulation,
 					    /*value_when_unset*/YNA_AUTO,
 					    /*value_when_never_negotiate*/YNA_NO,
-					    wm, c->logger);
+					    wm, verbose);
 
 	config->vti.shared = extract_yn("", "vti-shared", wm->vti_shared,
-					/*value_when_unset*/YN_NO, wm, c->logger);
+					/*value_when_unset*/YN_NO, wm, verbose);
 	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing,
-					 /*value_when_unset*/YN_NO, wm, c->logger);
+					 /*value_when_unset*/YN_NO, wm, verbose);
 	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
-		llog(WARNING_STREAM, c->logger,
-		     "length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
-		     wm->vti_interface, (unsigned) IFNAMSIZ);
+		vwarning("length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
+			 wm->vti_interface, (unsigned) IFNAMSIZ);
 	}
 	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
-					       wm, c->logger);
+					       wm, verbose);
 
 	if (never_negotiate_sparse_option("", "nic-offload", wm->nic_offload,
-					  &nic_offload_option_names, wm, c->logger)) {
-		ldbg(c->logger, "never-negotiate nic-offload");
+					  &nic_offload_option_names, wm, verbose)) {
+		vdbg("never-negotiate nic-offload");
 		/* keep <<ipsec connectionstatus>> simple */
 		config->nic_offload = NIC_OFFLOAD_NO;
 	} else {
@@ -3411,7 +3390,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
 					return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
 				}
-				ldbg(c->logger, "kernel >= 6.7 is GTG for h/w offload");
+				vdbg("kernel >= 6.7 is GTG for h/w offload");
 			}
 
 			/* limited replay windows supported for packet offload */
@@ -3420,7 +3399,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			case 64:
 			case 128:
 			case 256:
-				ldbg(c->logger, "packet offload replay-window compatible with all known hardware and Linux kernels");
+				vdbg("packet offload replay-window compatible with all known hardware and Linux kernels");
 				break;
 			default:
 				return diag("current packet offload hardware only supports replay-window of 32, 64, 128 or 256");
@@ -3433,17 +3412,17 @@ diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * Cisco interop: remote peer type.
 	 */
-	d = extract_cisco_host_config(&config->host.cisco, wm, c->logger);
+	d = extract_cisco_host_config(&config->host.cisco, wm, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz", wm->rekeyfuzz,
 						      SA_REPLACEMENT_FUZZ_DEFAULT,
-						      wm, &d, c->logger);
+						      wm, &d, verbose);
 
 	if (is_never_negotiate_wm(wm)) {
-		dbg("skipping over misc settings as NEVER_NEGOTIATE");
+		vdbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 
 		if (d != NULL) {
@@ -3468,7 +3447,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				     IKE_SA_LIFETIME_MAXIMUM,
 				     FIPS_IKE_SA_LIFETIME_MAXIMUM,
 				     rekeymargin, rekeyfuzz_percent,
-				     c->logger, wm);
+				     verbose, wm);
 		if (d != NULL) {
 			return d;
 		}
@@ -3478,7 +3457,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				     IPSEC_SA_LIFETIME_MAXIMUM,
 				     FIPS_IPSEC_SA_LIFETIME_MAXIMUM,
 				     rekeymargin, rekeyfuzz_percent,
-				     c->logger, wm);
+				     verbose, wm);
 		if (d != NULL) {
 			return d;
 		}
@@ -3492,7 +3471,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			extract_deltatime("", "retransmit-interval", wm->retransmit_interval,
 					  TIMESCALE_MILLISECONDS,
 					  /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
-					  wm, &d, c->logger);
+					  wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3524,7 +3503,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
 						       .clamp.max = IPSEC_SA_MAX_OPERATIONS,
 					       },
-					       wm, &d, c->logger);
+					       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3537,7 +3516,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
 						       .clamp.max = IPSEC_SA_MAX_OPERATIONS,
 					       },
-					       wm, &d, c->logger);
+					       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3545,8 +3524,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (deltatime_cmp(config->sa_rekey_margin, >=, config->sa_ipsec_max_lifetime)) {
 			deltatime_t new_rkm = deltatime_scale(config->sa_ipsec_max_lifetime, 1, 2);
 
-			llog(RC_LOG, c->logger,
-			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
+			vlog("rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
 			     deltasecs(config->sa_rekey_margin),
 			     deltasecs(config->sa_ipsec_max_lifetime),
 			     deltasecs(new_rkm));
@@ -3576,13 +3554,12 @@ diag_t extract_connection(const struct whack_message *wm,
 							 wm->dpdtimeout);
 				}
 				deltatime_buf db, tb;
-				ldbg(c->logger, "IKEv1 dpd.timeout=%s dpd.delay=%s",
+				vdbg("IKEv1 dpd.timeout=%s dpd.delay=%s",
 				     str_deltatime(config->dpd.timeout, &db),
 				     str_deltatime(config->dpd.delay, &tb));
 			} else if (wm->dpddelay != NULL  ||
 				   wm->dpdtimeout != NULL) {
-				llog(WARNING_STREAM, c->logger,
-				     "IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
+				vwarning("IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
 		case IKEv2:
@@ -3598,8 +3575,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			}
 			if (wm->dpdtimeout != NULL) {
 				/* actual values don't matter */
-				llog(WARNING_STREAM, c->logger,
-				     "IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
+				vwarning("IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
 			}
 			break;
 		}
@@ -3612,14 +3588,14 @@ diag_t extract_connection(const struct whack_message *wm,
 							      (struct range) {
 								      .value_when_unset = 0,
 							      },
-							      wm, &d, c->logger);
+							      wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
 		config->nat_keepalive = extract_yn("", "nat-keepalive", wm->nat_keepalive,
 						   /*value_when_unset*/YN_YES,
-						   wm, c->logger);
+						   wm, verbose);
 		if (wm->nat_ikev1_method == 0) {
 			config->ikev1_natt = NATT_BOTH;
 		} else {
@@ -3627,27 +3603,27 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 		config->send_initial_contact = extract_yn("", "initial-contact", wm->initial_contact,
 							  /*value_when_unset*/YN_NO,
-							  wm, c->logger);
+							  wm, verbose);
 		config->send_vid_fake_strongswan = extract_yn("", "fake-strongswan", wm->fake_strongswan,
 							      /*value_when_unset*/YN_NO,
-							      wm, c->logger);
+							      wm, verbose);
 		config->send_vendorid = extract_yn("", "send-vendorid", wm->send_vendorid,
 						   /*value_when_unset*/YN_NO,
-						   wm, c->logger);
+						   wm, verbose);
 
 		config->send_ca = extract_enum_name("", "sendca", wm->sendca,
 						    CA_SEND_ALL,
 						    &send_ca_policy_names,
-						    wm, &d, c->logger);
+						    wm, &d, verbose);
 
 		config->xauthby = extract_sparse("", "xauthby", wm->xauthby,
 						 /*value_when_unset*/XAUTHBY_FILE,
 						 /*value_when_never_negotiate*/XAUTHBY_FILE,
-						 &xauthby_names, wm, c->logger);
+						 &xauthby_names, wm, verbose);
 		config->xauthfail = extract_sparse("", "xauthfail", wm->xauthfail,
 						   /*value_when_unset*/XAUTHFAIL_HARD,
 						   /*value_when_never_negotiate*/XAUTHFAIL_HARD,
-						   &xauthfail_names, wm, c->logger);
+						   &xauthfail_names, wm, verbose);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
@@ -3664,9 +3640,9 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->modecfg.pull = extract_yn("", "modecfgpull", wm->modecfgpull,
 					  /*value_when_unset*/YN_NO,
-					  wm, c->logger);
+					  wm, verbose);
 
-	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, c->logger)) {
+	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, verbose)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (ike_version == IKEv1 ? &ipv4_info : NULL),
@@ -3676,21 +3652,20 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (can_extract_string("", "modecfgdomains", wm->modecfgdomains, wm, c->logger)) {
+	if (can_extract_string("", "modecfgdomains", wm->modecfgdomains, wm, verbose)) {
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
 							     ", ", HERE);
 		if (ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
-			llog(RC_LOG, c->logger,
-			     "IKEv1 only uses the first domain in modecfgdomain=%s",
+			vlog("IKEv1 only uses the first domain in modecfgdomain=%s",
 			     wm->modecfgdomains);
 			config->modecfg.domains[1] = null_shunk;
 		}
 	}
 
 	config->modecfg.banner = extract_string("", "modecfgbanner", wm->modecfgbanner,
-						wm, c->logger);
+						wm, verbose);
 
 	/*
 	 * Marks.
@@ -3710,7 +3685,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_string("", "mark", wm->mark, wm, c->logger)) {
+	if (can_extract_string("", "mark", wm->mark, wm, verbose)) {
 		d = mark_parse("", "mark", wm->mark, &c->sa_marks.in);
 		if (d != NULL) {
 			return d;
@@ -3721,10 +3696,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (can_extract_string("", "mark-in", wm->mark_in, wm, c->logger)) {
+	if (can_extract_string("", "mark-in", wm->mark_in, wm, verbose)) {
 		if (wm->mark != NULL) {
-			llog(WARNING_STREAM, c->logger, "mark-in=%s overrides mark=%s",
-			     wm->mark_in, wm->mark);
+			vwarning("mark-in=%s overrides mark=%s",
+				 wm->mark_in, wm->mark);
 		}
 		d = mark_parse("", "mark-in", wm->mark_in, &c->sa_marks.in);
 		if (d != NULL) {
@@ -3732,10 +3707,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (can_extract_string("", "mark-out", wm->mark_out, wm, c->logger)) {
+	if (can_extract_string("", "mark-out", wm->mark_out, wm, verbose)) {
 		if (wm->mark != NULL) {
-			llog(WARNING_STREAM, c->logger, "mark-out=%s overrides mark=%s",
-			     wm->mark_out, wm->mark);
+			vwarning("mark-out=%s overrides mark=%s",
+				 wm->mark_out, wm->mark);
 		}
 		d = mark_parse("", "mark-out", wm->mark_out, &c->sa_marks.out);
 		if (d != NULL) {
@@ -3748,9 +3723,9 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_string("", "ipsec-interface", wm->ipsec_interface, wm, c->logger)) {
+	if (can_extract_string("", "ipsec-interface", wm->ipsec_interface, wm, verbose)) {
 		diag_t d;
-		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, c->logger);
+		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, verbose.logger);
 		if (d != NULL) {
 			return d;
 		}
@@ -3764,7 +3739,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						 .limit.min = 1,
 						 .limit.max = 65535,
 					 },
-					 wm, &d, c->logger);
+					 wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3775,7 +3750,7 @@ diag_t extract_connection(const struct whack_message *wm,
 							 .value_when_unset = 0,
 							 .limit.max = UINT32_MAX,
 						 },
-						 wm, &d, c->logger);
+						 wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3783,7 +3758,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->child.send.esp_tfc_padding_not_supported =
 		extract_yn("", "send-esp-tfc-padding-not-supported",
 			   wm->send_esp_tfc_padding_not_supported,
-			   YN_NO, wm, c->logger);
+			   YN_NO, wm, verbose);
 
 	/*
 	 * Since security labels use the same REQID for everything,
@@ -3798,18 +3773,17 @@ diag_t extract_connection(const struct whack_message *wm,
 						  .limit.min = 1,
 						  .limit.max = IPSEC_MANUAL_REQID_MAX,
 					  },
-					  wm, &d, c->logger);
+					  wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	config->sa_reqid = (reqid != 0 ? reqid :
 			    wm->sec_label != NULL ? gen_reqid() :
-			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, c->logger) :
+			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, verbose.logger) :
 			    /*generated later*/0);
 
-	ldbg(c->logger,
-	     "c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
+	vdbg("c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
 	     pri_reqid(config->sa_reqid),
 	     (wm->reqid != NULL ? wm->reqid : "n/a"),
 	     (wm->sec_label != NULL ? wm->sec_label : "n/a"));
@@ -3819,7 +3793,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (wm->sec_label != NULL) {
-		ldbg(c->logger, "received sec_label '%s' from whack", wm->sec_label);
+		vdbg("received sec_label '%s' from whack", wm->sec_label);
 		if (ike_version == IKEv1) {
 			return diag("IKEv1 does not support Labeled IPsec");
 		}
@@ -3847,7 +3821,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -3857,7 +3831,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -3866,7 +3840,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -3905,7 +3879,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -3915,7 +3889,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
 		}
-		llog(RC_LOG, c->logger, "opportunistic: %s", str_diag(d));
+		vlog("opportunistic: %s", str_diag(d));
 		pfree_diag(&d);
 	}
 
@@ -3924,8 +3898,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	if (never_negotiate(c)) {
-		if (!PEXPECT(c->logger,
-			     c->local->host.config->auth == AUTH_NEVER &&
+		if (!vexpect(c->local->host.config->auth == AUTH_NEVER &&
 			     c->remote->host.config->auth == AUTH_NEVER)) {
 			return diag("internal error");
 		}
@@ -3978,7 +3951,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					     protoport[end],
 					     ike_version,
 					     c, &config->end[end].child,
-					     c->logger);
+					     verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -4008,8 +3981,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			}
 			if (config->host.cisco.split &&
 			    config->end[lr].host.modecfg.server) {
-				llog(RC_LOG, c->logger,
-				     "allowing IKEv1 %ssubnet= with multiple selectors as cisco-split=yes and %smodecfgserver=yes",
+				vlog("allowing IKEv1 %ssubnet= with multiple selectors as cisco-split=yes and %smodecfgserver=yes",
 				     leftright, leftright);
 				continue;
 			}
@@ -4050,7 +4022,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				const struct ip_info *afi = range_type(range);
 				/* only one for now */
 				struct end_family *family = &end_family[end][afi->ip.version];
-				passert(family->used == false);
+				vassert(family->used == false);
 				family->used = true;
 				family->field = "addresspool";
 				family->value = whack_ends[end]->addresspool;
@@ -4078,11 +4050,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		enum ip_version j = (i == IPv4 ? IPv6 : IPv4);
 		if (end_family[LEFT_END][i].used) {
 			/* oops, no winner */
-			pexpect(end_family[RIGHT_END][j].used);
+			vexpect(end_family[RIGHT_END][j].used);
 		} else {
 			swap(i, j);
-			pexpect(end_family[LEFT_END][i].used);
-			pexpect(end_family[RIGHT_END][j].used);
+			vexpect(end_family[LEFT_END][i].used);
+			vexpect(end_family[RIGHT_END][j].used);
 		}
 		/*
 		 * Both ends used child AFIs.
@@ -4104,7 +4076,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * Is spd.reqid necessary for all c?  CK_INSTANCE or
 	 * CK_PERMANENT need one.  Does CK_TEMPLATE need one?
 	 */
-	c->child.reqid = child_reqid(c->config, c->logger);
+	c->child.reqid = child_reqid(c->config, verbose.logger);
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
@@ -4142,8 +4114,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 *
 	 * This function holds the just allocated reference.
 	 */
-	PASSERT(c->logger, !oriented(c));
-	orient(c, c->logger);
+	vassert(!oriented(c));
+	orient(c, verbose.logger);
 
 	if (VDBGP()) {
 		VDBG_log("oriented; maybe");
