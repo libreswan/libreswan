@@ -190,7 +190,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	pubkey_delref(&pubkey);
 	err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
 	if (err != NULL) {
-		dbg("no private key: %s", err);
+		ldbg(logger, "no private key: %s", err);
 	} else if (load_needed) {
 		ckaid_buf ckb;
 		llog(LOG_STREAM/*not-whack-for-now*/, logger,

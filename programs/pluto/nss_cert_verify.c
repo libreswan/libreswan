@@ -57,13 +57,16 @@ static bool crl_is_current(CERTSignedCrl *crl)
 }
 
 static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
-					CERTCertificate *cert)
+					CERTCertificate *cert,
+					struct logger *logger)
 {
-	if (!pexpect(handle != NULL) || !pexpect(cert != NULL))
+	if (!PEXPECT(logger, handle != NULL) ||
+	    !PEXPECT(logger, cert != NULL)) {
 		return false;
+	}
 
-	dbg("%s: looking for a CRL issued by %s",
-	    __func__, cert->issuerName);
+	ldbg(logger, "%s: looking for a CRL issued by %s",
+	     __func__, cert->issuerName);
 
 	/*
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
@@ -85,8 +88,8 @@ static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
 		if (crl != NULL &&
 		    SECITEM_ItemsAreEqual(&cert->derIssuer, &crl->crl.derName)) {
 			current = crl_is_current(crl);
-			dbg("%s: %s CRL found",
-				__func__, current ? "current" : "expired");
+			ldbg(logger, "%s: %s CRL found",
+			     __func__, current ? "current" : "expired");
 			break;
 		}
 	}
@@ -144,16 +147,16 @@ static unsigned int rev_val_flags(void)
 	return flags;
 }
 
-static void set_rev_params(CERTRevocationFlags *rev)
+static void set_rev_params(CERTRevocationFlags *rev, struct logger *logger)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
 	name_buf omb;
-	dbg("crl_strict: %s, ocsp: %s, ocsp_strict: %s, ocsp_post: %s",
-	    bool_str(x509_crl.strict),
-	    bool_str(x509_ocsp.enable),
-	    bool_str(x509_ocsp.strict),
-	    str_sparse_long(&ocsp_method_names, x509_ocsp.method, &omb));
+	ldbg(logger, "crl_strict: %s, ocsp: %s, ocsp_strict: %s, ocsp_post: %s",
+	     bool_str(x509_crl.strict),
+	     bool_str(x509_ocsp.enable),
+	     bool_str(x509_ocsp.strict),
+	     str_sparse_long(&ocsp_method_names, x509_ocsp.method, &omb));
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
@@ -183,7 +186,7 @@ static bool verify_end_cert(struct logger *logger,
 	PRUint64 revFlagsChain[2] = { 0, 0 };
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
-	set_rev_params(&rev);
+	set_rev_params(&rev, logger);
 
 	ldbg(logger, "groundhogtime is %ju", (uintmax_t)groundhogtime);
 
@@ -243,7 +246,7 @@ static bool verify_end_cert(struct logger *logger,
 	bool keep_trying = true;
 	for (unsigned pi = 0; pi < elemsof(usages) && keep_trying; pi++) {
 		const struct usage_desc *p = &usages[pi];
-		dbg("verify_end_cert trying profile %s", p->usageName);
+		ldbg(logger, "verify_end_cert trying profile %s", p->usageName);
 
 		/*
 		 * WARNING: cvout[] points at cvout_error_log.  Both vfy_log's
@@ -274,9 +277,10 @@ static bool verify_end_cert(struct logger *logger,
 
 		if (rv == SECSuccess) {
 			/* success! */
-			pexpect(cvout_error_log.count == 0 && cvout_error_log.head == NULL);
+			PEXPECT(logger, (cvout_error_log.count == 0 &&
+					 cvout_error_log.head == NULL));
 			PORT_FreeArena(cvout_error_log.arena, PR_FALSE);
-			dbg("certificate is valid (profile %s)", p->usageName);
+			ldbg(logger, "certificate is valid (profile %s)", p->usageName);
 			return true;
 		}
 
@@ -284,7 +288,7 @@ static bool verify_end_cert(struct logger *logger,
 		 * Deal with failure; log; cleanup; and maybe try
 		 * again!
 		 */
-		pexpect(rv == SECFailure);
+		PEXPECT(logger, rv == SECFailure);
 		/* XXX: cvout_error_log.head can be NULL */
 
 		/*
@@ -320,11 +324,12 @@ static bool verify_end_cert(struct logger *logger,
  * XXX: Why isn't NSS doing this for us?
  */
 static bool crl_update_check(CERTCertDBHandle *handle,
-			     struct certs *certs)
+			     struct certs *certs,
+			     struct logger *logger)
 {
 	for (struct certs *entry = certs; entry != NULL;
 	     entry = entry->next) {
-		if (!cert_issuer_has_current_crl(handle, entry->cert)) {
+		if (!cert_issuer_has_current_crl(handle, entry->cert, logger)) {
 			return true;
 		}
 	}
@@ -356,7 +361,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	 * is considered "cheap".
 	 */
 	if (CERT_IsRootDERCert(&der_cert)) {
-		dbg("ignoring root certificate");
+		ldbg(logger, "ignoring root certificate");
 		return;
 	}
 
@@ -394,7 +399,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 		}
 		return;
 	}
-	dbg("decoded cert: %s", cert->subjectName);
+	ldbg(logger, "decoded cert: %s", cert->subjectName);
 
 	/*
 	 * Currently only a check for RSA is needed, as the only ECDSA
@@ -405,7 +410,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	 */
 	if (is_fips_mode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
-		passert(pk != NULL);
+		PASSERT(logger, pk != NULL);
 		unsigned key_bit_size = pk->u.rsa.modulus.len * BITS_IN_BYTE;
 		if (pk->keyType == rsaKey && key_bit_size < FIPS_MIN_RSA_KEY_SIZE) {
 			llog(RC_LOG, logger,
@@ -442,7 +447,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 {
 	struct certs *certs = NULL;
 	/* accumulate the known certificates */
-	dbg("checking for known CERT payloads");
+	ldbg(logger, "checking for known CERT payloads");
 	for (struct payload_digest *p = cert_payloads; p != NULL; p = p->next) {
 		enum ike_cert_type cert_type;
 		const struct enum_names *cert_names;
@@ -529,8 +534,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 		.groundhog = false,
 	};
 
-	if (!pexpect(cert_payloads != NULL)) {
-		/* logged by pexpect() */
+	if (!PEXPECT(logger, cert_payloads != NULL)) {
 		return result;
 	}
 
@@ -550,7 +554,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	 * never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 
 	/*
 	 * In order for NSS to verify an entire chain, down to a
@@ -586,7 +590,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 
 	logtime_t crl_time = logtime_start(logger);
-	bool crl_update_needed = crl_update_check(handle, result.cert_chain);
+	bool crl_update_needed = crl_update_check(handle, result.cert_chain, logger);
 	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
 		if (x509_crl.strict) {
@@ -662,7 +666,8 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 
 diag_t cert_verify_subject_alt_name(const char *who,
 				    const CERTCertificate *cert,
-				    const struct id *id)
+				    const struct id *id,
+				    struct logger *logger)
 {
 	/*
 	 * Get a handle on the certificate's subject alt name.
@@ -683,7 +688,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	 * the ID can be compared against it.
 	 */
 	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	passert(arena != NULL);
+	PASSERT(logger, arena != NULL);
 	CERTGeneralName *nameList = CERT_DecodeAltNameExtension(arena, &subAltName);
 	if (nameList == NULL) {
 		PORT_FreeArena(arena, PR_FALSE);
@@ -716,10 +721,11 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	id_buf ascii_id_buf;
 	const char *ascii_id = str_id_bytes(id, jam_raw_bytes, &ascii_id_buf);
 	if (id->kind == ID_FQDN) {
-		if (pexpect(ascii_id[0] == '@'))
+		if (PEXPECT(logger, ascii_id[0] == '@')) {
 			ascii_id++;
+		}
 	} else {
-		pexpect(ascii_id[0] != '@');
+		PEXPECT(logger, ascii_id[0] != '@');
 	}
 
 	/*
@@ -774,7 +780,7 @@ diag_t cert_verify_subject_alt_name(const char *who,
 			}
 
 			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
-				LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
+				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 					jam(buf, "peer certificate subjectAltname '%s' matched '", ascii_id),
 					jam_sanitized_bytes(buf, current->name.other.data,
 							    current->name.other.len);
@@ -798,14 +804,14 @@ diag_t cert_verify_subject_alt_name(const char *who,
 			if (hunk_memeq(as, current->name.other.data,
 				       current->name.other.len)) {
 				address_buf b;
-				dbg("%s certificate subjectAltname matches address %s",
-				    who, str_address(&myip, &b));
+				ldbg(logger, "%s certificate subjectAltname matches address %s",
+				     who, str_address(&myip, &b));
 				PORT_FreeArena(arena, PR_FALSE);
 				return NULL;
 			}
 			address_buf b;
-			dbg("peer certificate subjectAltname does not match address %s",
-			    str_address(&myip, &b));
+			ldbg(logger, "peer certificate subjectAltname does not match address %s",
+			     str_address(&myip, &b));
 			break;
 		}
 
@@ -825,7 +831,8 @@ diag_t cert_verify_subject_alt_name(const char *who,
 		    ascii_id);
 }
 
-SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain)
+SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain,
+			struct logger *logger)
 {
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -834,7 +841,7 @@ SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain)
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 	SEC_PKCS7ContentInfo *content
 		= SEC_PKCS7CreateCertsOnly(cert->nss_cert,
 					   send_full_chain ? PR_TRUE : PR_FALSE,

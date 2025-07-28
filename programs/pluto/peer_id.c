@@ -62,7 +62,7 @@ static bool idr_wildmatch(const struct host_end *this, const struct id *idr, str
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
 		diag_t d = cert_verify_subject_alt_name("our",
 							this->config->cert.nss_cert,
-							idr);
+							idr, logger);
 		if (d == NULL) {
 			return true;
 		}

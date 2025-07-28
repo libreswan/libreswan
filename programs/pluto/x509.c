@@ -662,7 +662,8 @@ diag_t match_peer_id_cert(const struct certs *peer_certs,
 	{
 		/* simple match */
 		/* this logs errors; no need for duplication */
-		return cert_verify_subject_alt_name("peer", end_cert, peer_id);
+		return cert_verify_subject_alt_name("peer", end_cert, peer_id,
+						    logger);
 	}
 
 	case ID_FROMCERT:
