@@ -1009,7 +1009,8 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 	/* CERT out */
 	if (send_cert && impair.send_pkcs7_thingie) {
 		llog(RC_LOG, ike->sa.logger, "IMPAIR: sending cert as pkcs7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts);
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts,
+						ike->sa.logger);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
@@ -1236,7 +1237,8 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 	/* CERT out, if we have one */
 	if (send_cert && impair.send_pkcs7_thingie) {
 		llog(RC_LOG, ike->sa.logger, "IMPAIR: sending cert as pkcs7 blob");
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts);
+		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts,
+						ike->sa.logger);
 		if (!pexpect(pkcs7 != NULL)) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_INTERNAL_ERROR;
