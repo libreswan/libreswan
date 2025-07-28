@@ -60,8 +60,10 @@ const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
 extern void load_preshared_secrets(struct logger *logger);
 extern void free_preshared_secrets(struct logger *logger);
 extern void free_remembered_public_keys(void);
-err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger);
-err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger);
+err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed,
+				  const struct logger *logger);
+err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed,
+				   const struct logger *logger);
 
 extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xauthname);
 

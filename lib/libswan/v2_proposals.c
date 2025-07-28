@@ -34,7 +34,7 @@
 static bool warning_or_false(struct proposal_parser *parser,
 			     const char *what, shunk_t print)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	passert(parser->diag != NULL);
 	bool result;
 	if (parser->policy->ignore_parser_errors) {
@@ -160,7 +160,7 @@ enum proposal_status {
 static enum proposal_status parse_proposal(struct proposal_parser *parser,
 					   struct proposal *proposal, shunk_t input)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
 		LDBG_log(logger, "proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
@@ -407,7 +407,7 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
 			    shunk_t input)
 {
-	struct logger *logger = parser->policy->logger;
+	const struct logger *logger = parser->policy->logger;
 	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing '"PRI_SHUNK"' for %s",
 	      pri_shunk(input), parser->protocol->name);
 

@@ -536,7 +536,7 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 
 diag_t parse_ipsec_interface(const char *ipsec_interface,
 			     struct ipsec_interface_config *config,
-			     struct logger *logger)
+			     const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() adding %s to config", __func__, ipsec_interface);
@@ -690,7 +690,8 @@ bool add_ipsec_interface(struct connection *c,
 	return true;
 }
 
-reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger)
+reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id,
+			      const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s:%s() if_id=%d",

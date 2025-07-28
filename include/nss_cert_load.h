@@ -22,7 +22,7 @@
 #include "ckaid.h"
 #include "secrets.h"
 
-extern CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname, struct logger *logger);
-extern CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid, struct logger *logger);
+CERTCertificate *get_cert_by_nickname_from_nss(const char *nickname, const struct logger *logger);
+CERTCertificate *get_cert_by_ckaid_from_nss(const ckaid_t *ckaid, const struct logger *logger);
 
 #endif /* _NSS_CERT_LOAD_H */

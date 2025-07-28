@@ -80,7 +80,7 @@ const char *str_ipsec_interface(const struct ipsec_interface *ipsec_if, ipsec_in
 
 diag_t parse_ipsec_interface(const char *ipsec_interface,
 			     struct ipsec_interface_config *config,
-			     struct logger *logger);
+			     const struct logger *logger);
 bool add_ipsec_interface(struct connection *c, const struct iface_device *iface);
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 					       struct logger *logger, where_t where);
@@ -96,7 +96,7 @@ void del_kernel_ipsec_interface_address(struct connection *c, struct logger *log
 size_t jam_ipsec_interface_id(struct jambuf *buf, ipsec_interface_id_t if_id);
 const char *str_ipsec_interface_id(ipsec_interface_id_t if_id, ipsec_interface_buf *buf);
 
-reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, struct logger *logger);
+reqid_t ipsec_interface_reqid(ipsec_interface_id_t if_id, const struct logger *logger);
 
 void config_ipsec_interface(enum yn_options managed, struct logger *logger);
 enum yn_options init_ipsec_interface(struct logger *logger);
