@@ -415,14 +415,13 @@ static const char *jam_proposal_algorithm(struct jambuf *buf,
 					  enum proposal_algorithm proposal_algorithm,
 					  const char *algorithm_separator)
 {
-	size_t s = 0;
 	const char *separator = algorithm_separator;
 	for (struct algorithm *algorithm = next_algorithm(proposal, proposal_algorithm, NULL);
 	     algorithm != NULL; algorithm = next_algorithm(proposal, proposal_algorithm, algorithm)) {
 		jam_string(buf, separator); separator = "+"; algorithm_separator = "-";
-		s += jam_string(buf, algorithm->desc->fqn);
+		jam_string(buf, algorithm->desc->fqn);
 		if (algorithm->enckeylen != 0) {
-			s += jam(buf, "_%d", algorithm->enckeylen);
+			jam(buf, "_%d", algorithm->enckeylen);
 		}
 	}
 	return algorithm_separator;

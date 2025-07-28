@@ -784,7 +784,7 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 				  const ip_address *src_address,
 				  const ip_address *dst_address,
 				  const char *story UNUSED,
-				  struct logger *logger)
+				  const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() ...", __func__);
@@ -826,7 +826,7 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 
 static bool pfkeyv2_add_sa(const struct kernel_state *k,
 			   bool replace,
-			   struct logger *logger)
+			   const struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() ...", __func__);
@@ -1795,13 +1795,13 @@ static err_t kernel_directional_ipsec_is_enabled(struct logger *logger)
 	return "not supported";
 }
 
-static err_t kernel_iptfs_ipsec_sa_is_enabled(struct logger *logger)
+static err_t kernel_iptfs_ipsec_sa_is_enabled(const struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 	return "not supported";
 }
 
-static err_t kernel_migrate_ipsec_sa_is_enabled(struct logger *logger)
+static err_t kernel_migrate_ipsec_sa_is_enabled(const struct logger *logger)
 {
 	ldbg(logger, "%s() called; nothing to do", __func__);
 	return "not supported";
