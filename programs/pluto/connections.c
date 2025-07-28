@@ -377,7 +377,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		.clonedfrom = c,
 		.search = {
 			.order = OLD2NEW,
-			.verbose.logger = logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
@@ -399,7 +399,7 @@ static bool connection_ok_to_delete(struct connection *c, where_t where)
 		.connection_serialno = c->serialno,
 		.search = {
 			.order = NEW2OLD,
-			.verbose.logger = &global_logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
@@ -459,14 +459,14 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (c->pool[afi->ip.version] != NULL) {
-			free_that_address_lease(c, afi, c->logger);
-			addresspool_delref(&c->pool[afi->ip.version], c->logger);
+			free_that_address_lease(c, afi, logger);
+			addresspool_delref(&c->pool[afi->ip.version], logger);
 		}
 	}
 
 	/* find and delete c from the host pair list */
 #if 0
-	PEXPECT(c->logger, !oriented(c));
+	PEXPECT(logger, !oriented(c));
 #endif
 	disorient(c);
 
@@ -475,8 +475,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 * unrouting should have released the
 	 * .ipsec_interface_address.
 	 */
-	PEXPECT(c->logger, c->ipsec_interface == NULL);
-	PEXPECT(c->logger, c->ipsec_interface_address == NULL);
+	PEXPECT(logger, c->ipsec_interface == NULL);
+	PEXPECT(logger, c->ipsec_interface_address == NULL);
 
 	remove_from_group(c);
 
@@ -510,7 +510,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 	 */
 	struct config *config = c->root_config;
 	if (config != NULL) {
-		passert(c->clonedfrom == NULL); /*i.e., root */
+		PASSERT(logger, c->clonedfrom == NULL); /*i.e., root */
 		pfreeany(config->vti.interface);
 		free_chunk_content(&config->sec_label);
 		free_proposals(&config->ike_proposals.p);
@@ -770,7 +770,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    bool preserve_ca,
 					    const struct logger *logger)
 {
-	passert(cert != NULL);
+	PASSERT(logger, cert != NULL);
 	const char *nickname = cert->nickname;
 	const char *leftright = host_end_config->leftright;
 
@@ -783,7 +783,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 */
 	if (is_fips_mode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
-		passert(pk != NULL);
+		PASSERT(logger, pk != NULL);
 		if (pk->keyType == rsaKey &&
 		    ((pk->u.rsa.modulus.len * BITS_IN_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 			SECKEY_DestroyPublicKey(pk);
@@ -856,7 +856,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 * update is ok (when reloading certs it is never ok).
 	 */
 	if (preserve_ca || host_end_config->ca.ptr != NULL) {
-		dbg("preserving existing %s ca", leftright);
+		ldbg(logger, "preserving existing %s ca", leftright);
 	} else {
 		host_end_config->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
@@ -872,12 +872,12 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 * That case is handled by refine_host_connection /
 	 * get_psk.
 	 */
-	dbg("preload cert/secret for connection: %s", cert->nickname);
+	ldbg(logger, "preload cert/secret for connection: %s", cert->nickname);
 	bool load_needed;
 	err_t ugh = preload_private_key_by_cert(&host_end_config->cert, &load_needed, logger);
 	if (ugh != NULL) {
-		dbg("no private key matching %s certificate %s: %s",
-		    leftright, nickname, ugh);
+		ldbg(logger, "no private key matching %s certificate %s: %s",
+		     leftright, nickname, ugh);
 	} else if (load_needed) {
 		llog(LOG_STREAM/*not-whack-for-now*/, logger,
 		     "loaded private key matching %s certificate '%s'",
@@ -1259,7 +1259,7 @@ struct connection *alloc_connection(const char *name,
 	 */
 	static co_serial_t connection_serialno;
 	connection_serialno++;
-	passert(connection_serialno > 0); /* can't overflow */
+	PASSERT(logger, connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
 	c->clonedfrom = connection_addref(t, c->logger);
 
@@ -1807,7 +1807,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		bool instance_initiation_ok =
 			(is_opportunistic(c) &&
 			 is_instance(c) &&
-			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
+			 PEXPECT(logger, c->clonedfrom != NULL) /* because instance */ &&
 			 kernel_route_installed(c->clonedfrom));
 		if (!kernel_route_installed(c) &&
 		    !instance_initiation_ok &&
@@ -1939,10 +1939,10 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 	}
 
 	name_buf kb;
-	dbg("  concluding with %s priority %" PRIu32 " kind=%s",
-	    best_connection->name,
-	    best_priority,
-	    str_enum_short(&connection_kind_names, best_connection->local->kind, &kb));
+	ldbg(logger, "  concluding with %s priority %" PRIu32 " kind=%s",
+	     best_connection->name,
+	     best_priority,
+	     str_enum_short(&connection_kind_names, best_connection->local->kind, &kb));
 	return best_connection;
 }
 
