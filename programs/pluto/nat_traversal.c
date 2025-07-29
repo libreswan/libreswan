@@ -78,14 +78,14 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 {
 	/* only responder's IKE SPI can be zero */
 	if (ike_spi_is_zero(&spis->initiator)) {
-		dbg("nat: IKE.SPIi is unexpectedly zero");
+		ldbg(logger, "nat: IKE.SPIi is unexpectedly zero");
 		/* presumably because it was impaired?!? */
-		pexpect(impair.ike_initiator_spi.enabled &&
-			impair.ike_initiator_spi.value == 0);
+		PEXPECT(logger, (impair.ike_initiator_spi.enabled &&
+				 impair.ike_initiator_spi.value == 0));
 	}
 	if (ike_spi_is_zero(&spis->responder)) {
 		/* IKE_SA_INIT exchange */
-		dbg("nat: IKE.SPIr is zero");
+		ldbg(logger, "nat: IKE.SPIr is zero");
 	}
 
 	/*
@@ -124,35 +124,36 @@ void natd_lookup_common(struct state *st,
 			const ip_endpoint sender,
 			bool found_me, bool found_peer)
 {
+	struct logger *logger = st->logger;
 	st->hidden_variables.st_natd = ipv4_info.address.zero;
 
 	/* update NAT-T settings for local policy */
 	switch (st->st_connection->config->encapsulation) {
 	case YNA_UNSET:
 	case YNA_AUTO:
-		dbg("NAT_TRAVERSAL encaps using auto-detect");
+		ldbg(logger, "NAT_TRAVERSAL encaps using auto-detect");
 		if (!found_me) {
-			dbg("NAT_TRAVERSAL this end is behind NAT");
+			ldbg(logger, "NAT_TRAVERSAL this end is behind NAT");
 			st->hidden_variables.st_nated_host = true;
 			st->hidden_variables.st_natd = endpoint_address(sender);
 		} else {
-			dbg("NAT_TRAVERSAL this end is NOT behind NAT");
+			ldbg(logger, "NAT_TRAVERSAL this end is NOT behind NAT");
 		}
 
 		if (!found_peer) {
 			endpoint_buf b;
-			dbg("NAT_TRAVERSAL that end is behind NAT %s",
-			    str_endpoint(&sender, &b));
+			ldbg(logger, "NAT_TRAVERSAL that end is behind NAT %s",
+			     str_endpoint(&sender, &b));
 			st->hidden_variables.st_nated_peer = true;
 			st->hidden_variables.st_natd = endpoint_address(sender);
 		} else {
-			dbg("NAT_TRAVERSAL that end is NOT behind NAT");
+			ldbg(logger, "NAT_TRAVERSAL that end is NOT behind NAT");
 		}
 		break;
 
 	case YNA_NO:
 		st->hidden_variables.st_nat_traversal |= LEMPTY;
-		dbg("NAT_TRAVERSAL local policy prohibits encapsulation");
+		ldbg(logger, "NAT_TRAVERSAL local policy prohibits encapsulation");
 		break;
 
 	case YNA_YES:
@@ -165,7 +166,7 @@ void natd_lookup_common(struct state *st,
 
 	if (st->st_connection->config->nat_keepalive) {
 		endpoint_buf b;
-		dbg("NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
+		ldbg(logger, "NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
 	}
 }
 
@@ -360,13 +361,14 @@ struct new_mapp_nfo {
 
 static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 {
+	struct logger *logger = st->logger;
 	struct new_mapp_nfo *nfo = data;
-	if (pexpect(st->st_serialno == nfo->clonedfrom /*parent*/ ||
-		    st->st_clonedfrom == nfo->clonedfrom /*sibling*/)) {
+	if (PEXPECT(logger, (st->st_serialno == nfo->clonedfrom /*parent*/ ||
+			     st->st_clonedfrom == nfo->clonedfrom /*sibling*/))) {
 		endpoint_buf b1;
 		endpoint_buf b2;
 		ip_endpoint st_remote_endpoint = st->st_remote_endpoint;
-		ldbg(st->logger, "new NAT mapping for "PRI_SO", was %s, now %s",
+		ldbg(logger, "new NAT mapping for "PRI_SO", was %s, now %s",
 		     pri_so(st->st_serialno),
 		     str_endpoint(&st_remote_endpoint, &b1),
 		     str_endpoint(&nfo->new_remote_endpoint, &b2));
@@ -394,9 +396,11 @@ static bool nat_traversal_update_family_mapp_state(struct state *st, void *data)
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 {
-
-	if (st == NULL)
+	if (st == NULL) {
 		return;
+	}
+
+	struct logger *logger = st->logger;
 
 	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
 	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
@@ -432,10 +436,10 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		 */
 		if (md->iface != st->st_iface_endpoint) {
 			endpoint_buf b1, b2;
-			dbg("NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
-			    pri_so(st->st_serialno),
-			    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
-			    str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+			ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
+			     pri_so(st->st_serialno),
+			     str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
+			     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
 			iface_endpoint_delref(&st->st_iface_endpoint);
 			st->st_iface_endpoint = iface_endpoint_addref(md->iface);
 		}
