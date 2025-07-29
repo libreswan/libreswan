@@ -1,4 +1,4 @@
-#!@@SHELL_BINARY@@
+#!/bin/sh
 # -*- mode: sh; sh-shell: sh -*-
 #
 # default updown script for use with NETKEY(XFRM)
@@ -242,15 +242,15 @@ export LC_ALL
 #
 
 # rpm based systems
-if [ -f @@SYSCONFDIR@@/sysconfig/pluto_updown ]; then
-    . @@SYSCONFDIR@@/sysconfig/pluto_updown
+if [ -f /etc/sysconfig/pluto_updown ]; then
+    . /etc/sysconfig/pluto_updown
 # deb based systems
-elif [ -f @@SYSCONFDIR@@/default/pluto_updown ]; then
-    . @@SYSCONFDIR@@/default/pluto_updown
+elif [ -f /etc/default/pluto_updown ]; then
+    . /etc/default/pluto_updown
 fi
 
-BACKUP_RESOLV_CONF=@@RUNDIR@@/libreswan-resolv-conf-backup
-ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
+BACKUP_RESOLV_CONF=/run/pluto/libreswan-resolv-conf-backup
+ETC_RESOLV_CONF=/etc/resolv.conf
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)
@@ -337,8 +337,26 @@ downrule() {
     fi
 }
 
+
 updateresolvconf() {
-    local domain
+    # Check for systemd-resolved
+    if systemctl is-active --quiet systemd-resolved && [ -x "$(command -v resolvectl)" ]; then
+        echo "[updown.xfrm] Detected systemd-resolved, applying DNS via resolvectl"
+
+        if [ -n "$PLUTO_PEER_DNS_INFO" ]; then
+            echo "[updown.xfrm] Setting DNS: $PLUTO_PEER_DNS_INFO on $PLUTO_INTERFACE"
+            resolvectl dns "$PLUTO_INTERFACE" $PLUTO_PEER_DNS_INFO
+        fi
+
+        if [ -n "$PLUTO_PEER_DOMAIN_INFO" ]; then
+            echo "[updown.xfrm] Setting domain: $PLUTO_PEER_DOMAIN_INFO on $PLUTO_INTERFACE"
+            resolvectl domain "$PLUTO_INTERFACE" $PLUTO_PEER_DOMAIN_INFO
+        fi
+        return 0
+    fi
+
+    # Fallback for non-systemd systems
+	local domain
     local nameserver
     local new_nameserver
     local new_resolv_conf
@@ -425,13 +443,20 @@ nameserver ${nameserver}"
 	done
 
 	echo "${new_resolv_conf}" > "${ETC_RESOLV_CONF}"
-	rc=$?
+
     fi
     return ${rc}
+  
 }
 
 restoreresolvconf() {
-    local domain
+    if systemctl is-active --quiet systemd-resolved && [ -x "$(command -v resolvectl)" ]; then
+        echo "[updown.xfrm] Reverting systemd-resolved DNS for $PLUTO_INTERFACE"
+        resolvectl revert "$PLUTO_INTERFACE"
+        return 0
+    fi
+	
+	local domain
     local rc
     rc=0
     if [ 0${PLUTO_CFG_CLIENT} -eq 0 ]; then
@@ -463,7 +488,10 @@ restoreresolvconf() {
 	rc=0
     fi
     return ${rc}
+
 }
+
+
 
 notifyNM() {
     # This will be called whenever a connection is established or
@@ -835,8 +863,8 @@ doroute() {
 }
 
 firewall_cmd() {
-    USE_IPTABLES=@@USE_IPTABLES@@
-    USE_NFTABLES=@@USE_NFTABLES@@
+    USE_IPTABLES=false
+    USE_NFTABLES=true
 
     if [ "${USE_NFTABLES}" = true ]; then
 	FIREWALL=nftables
