@@ -294,45 +294,41 @@ void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
 	struct logger *logger = ike->sa.logger;
 
 	if (ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
-	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
-		/* XXX: when is MD NULL? */
+	    md->iface->io->protocol == &ip_protocol_tcp) {
 		return;
 	}
 
-	if (md != NULL) {
+	/*
+	 * If source port/address has changed, update the family.
+	 *
+	 * Since IKEv1 allows orphans - parent deleted but
+	 * children live on.
+	 */
+	if (!endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
+		struct new_mapp_nfo nfo = {
+			.clonedfrom = (ike->sa.st_clonedfrom != SOS_NOBODY ? ike->sa.st_clonedfrom : ike->sa.st_serialno),
+			.new_remote_endpoint = md->sender,
+		};
+		state_by_ike_spis(ike->sa.st_ike_version,
+				  NULL /* clonedfrom */,
+				  NULL /* v1_msgid */,
+				  NULL /* role */,
+				  &ike->sa.st_ike_spis,
+				  ikev2_nat_update_family_mapp_state,
+				  &nfo,
+				  __func__);
+	}
 
-		/*
-		 * If source port/address has changed, update the family.
-		 *
-		 * Since IKEv1 allows orphans - parent deleted but
-		 * children live on.
-		 */
-		if (!endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
-			struct new_mapp_nfo nfo = {
-				.clonedfrom = (ike->sa.st_clonedfrom != SOS_NOBODY ? ike->sa.st_clonedfrom : ike->sa.st_serialno),
-				.new_remote_endpoint = md->sender,
-			};
-			state_by_ike_spis(ike->sa.st_ike_version,
-					  NULL /* clonedfrom */,
-					  NULL /* v1_msgid */,
-					  NULL /* role */,
-					  &ike->sa.st_ike_spis,
-					  ikev2_nat_update_family_mapp_state,
-					  &nfo,
-					  __func__);
-		}
-
-		/*
-		 * If interface type has changed, update local port (500/4500)
-		 */
-		if (md->iface != ike->sa.st_iface_endpoint) {
-			endpoint_buf b1, b2;
-			ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
-			     pri_so(ike->sa.st_serialno),
-			     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
-			     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
-			iface_endpoint_delref(&ike->sa.st_iface_endpoint);
-			ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
-		}
+	/*
+	 * If interface type has changed, update local port (500/4500)
+	 */
+	if (md->iface != ike->sa.st_iface_endpoint) {
+		endpoint_buf b1, b2;
+		ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+		ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 	}
 }
