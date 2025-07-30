@@ -289,15 +289,11 @@ static bool ikev2_nat_update_family_mapp_state(struct state *st, void *data)
  * update the IKE SA and seems to do it using update_ike_endpoints().
  */
 
-void ikev2_nat_change_port_lookup(struct msg_digest *md, struct state *st)
+void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
 {
-	if (st == NULL) {
-		return;
-	}
+	struct logger *logger = ike->sa.logger;
 
-	struct logger *logger = st->logger;
-
-	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
+	if (ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
 	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
 		/* XXX: when is MD NULL? */
 		return;
@@ -311,16 +307,16 @@ void ikev2_nat_change_port_lookup(struct msg_digest *md, struct state *st)
 		 * Since IKEv1 allows orphans - parent deleted but
 		 * children live on.
 		 */
-		if (!endpoint_eq_endpoint(md->sender, st->st_remote_endpoint)) {
+		if (!endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
 			struct new_mapp_nfo nfo = {
-				.clonedfrom = (st->st_clonedfrom != SOS_NOBODY ? st->st_clonedfrom : st->st_serialno),
+				.clonedfrom = (ike->sa.st_clonedfrom != SOS_NOBODY ? ike->sa.st_clonedfrom : ike->sa.st_serialno),
 				.new_remote_endpoint = md->sender,
 			};
-			state_by_ike_spis(st->st_ike_version,
+			state_by_ike_spis(ike->sa.st_ike_version,
 					  NULL /* clonedfrom */,
 					  NULL /* v1_msgid */,
 					  NULL /* role */,
-					  &st->st_ike_spis,
+					  &ike->sa.st_ike_spis,
 					  ikev2_nat_update_family_mapp_state,
 					  &nfo,
 					  __func__);
@@ -329,14 +325,14 @@ void ikev2_nat_change_port_lookup(struct msg_digest *md, struct state *st)
 		/*
 		 * If interface type has changed, update local port (500/4500)
 		 */
-		if (md->iface != st->st_iface_endpoint) {
+		if (md->iface != ike->sa.st_iface_endpoint) {
 			endpoint_buf b1, b2;
 			ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
-			     pri_so(st->st_serialno),
-			     str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
+			     pri_so(ike->sa.st_serialno),
+			     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
 			     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
-			iface_endpoint_delref(&st->st_iface_endpoint);
-			st->st_iface_endpoint = iface_endpoint_addref(md->iface);
+			iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+			ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 		}
 	}
 }

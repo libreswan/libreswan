@@ -535,7 +535,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		update_ike_endpoints(ike, md);
 	}
 
-	ikev2_nat_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
+	ikev2_nat_change_port_lookup(md, ike); /* why? */
 
 	/*
 	 * Decode any certificate requests sent by the initiator.
