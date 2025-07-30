@@ -391,9 +391,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			}
 
 			const struct secret_ppk_stuff *ppk_candidate =
-				get_connection_ppk(ike->sa.st_connection,
-						   payl.ppk_id_payl.ppk_id,
-						   /*index*/0);
+				get_ppk_stuff_by_id(payl.ppk_id_payl.ppk_id,
+						    ike->sa.logger);
 			if (ppk_candidate == NULL) {
 				continue;
 			}
@@ -597,9 +596,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 			return STF_FATAL;
 		}
 		const struct secret_ppk_stuff *ppk =
-			get_connection_ppk(ike->sa.st_connection,
-					   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
-					   /*index*/0);
+			get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+					    ike->sa.logger);
 
 		recalc_v2_ppk_interm_keymat(ike, ppk->key,
 					    &ike->sa.st_ike_spis,

@@ -54,8 +54,6 @@ extern void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_sho
 
 const struct secret_preshared_stuff *get_connection_psk(const struct connection *c);
 const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connection *c);
-const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
-						  shunk_t ppk_id, unsigned int index);
 const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger *logger);
 
 extern void load_preshared_secrets(struct logger *logger);

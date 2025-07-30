@@ -617,31 +617,6 @@ const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger
 	return secret_ppk_stuff_by_id(pluto_secrets, ppk_id);
 }
 
-const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
-						  shunk_t ppk_id,
-						  unsigned int index)
-{
-	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
-
-	if (ppk_id.len > 0) {
-		/* try to find PPK with PPK_ID ppk_id */
-		return get_ppk_stuff_by_id(ppk_id, c->logger);
-	}
-
-	passert(index < ppk_ids_shunks->len);
-
-	ldbg(c->logger, "looking for PPK with PPK ID in list %s at place: %u",
-	     c->config->ppk_ids, index);
-
-	shunk_t id = ppk_ids_shunks->item[index];
-
-	ldbg(c->logger, "try to find PPK with PPK_ID:");
-	ldbg_hunk(c->logger, id);
-
-	return get_ppk_stuff_by_id(id, c->logger);
-
-}
-
 /*
  * Find the appropriate private key (see get_secret).  Failure is
  * indicated by a NULL pointer.

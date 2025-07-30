@@ -701,9 +701,8 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			}
 
 			const struct secret_ppk_stuff *ppk =
-				get_connection_ppk(ike->sa.st_connection,
-						   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
-						   /*index*/0);
+				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+						    ike->sa.logger);
 			if (ppk != NULL) {
 				found_ppk = true;
 			}
