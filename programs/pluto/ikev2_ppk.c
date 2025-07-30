@@ -26,6 +26,7 @@
 #include "demux.h"
 #include "packet.h"
 #include "ikev2_prf.h"
+#include "crypt_prf.h"
 
 #include "ike_alg.h"
 #include "crypt_symkey.h"
@@ -36,6 +37,7 @@
 #include "ikev2_auth.h"
 #include "log.h"
 #include "ikev2_psk.h"
+#include "ikev2_notification.h"
 
 /*
  * Used by initiator, to properly construct struct from chunk_t we got
@@ -370,4 +372,82 @@ void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
 	ppk_recalc_one(sk_pr, ppk_key, prf_desc, "sk_pr", logger);
 
 	symkey_delref(logger, "PPK chunk", &ppk_key);
+}
+
+/*
+ * Calculate PPK Confirmation = prf(PPK, Ni | Nr | SPIi | SPIr).
+ *
+ * It is used in draft-ietf-ipsecme-ikev2-qr-alt-04 and only in
+ * IKE_INTERMEDIATE exchange.  It is called both by initiator and by
+ * the responder.
+ */
+
+chunk_t calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
+					   const struct secret_ppk_stuff *ppk,
+					   const chunk_t Ni,
+					   const chunk_t Nr,
+					   const ike_spis_t *ike_spis,
+					   struct logger *logger)
+{
+	ldbg(logger, "calculating PPK Confirmation for PPK_IDENTITY_KEY Notify");
+	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk->key, logger);
+
+	/* prf(PPK, ... */
+	struct crypt_prf *prf = crypt_prf_init_symkey("prf(PPK,)",
+						      prf_desc,
+						      "PPK", ppk_key,
+						      logger);
+
+	crypt_prf_update_hunk(prf, "Ni", Ni);
+	crypt_prf_update_hunk(prf, "Nr", Nr);
+	crypt_prf_update_hunk(prf, "SPIi", THING_AS_SHUNK(ike_spis->initiator));
+	crypt_prf_update_hunk(prf, "SPIr", THING_AS_SHUNK(ike_spis->responder));
+	struct crypt_mac ppk_confirmation = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
+
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log(logger,"prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)");
+		LDBG_dump(logger, ppk_confirmation.ptr, prf_desc->prf_output_size);
+	}
+
+	symkey_delref(logger, "PPK Keying material", &ppk_key);
+
+	/* NOTE: caller should free this */
+	chunk_t ret = clone_bytes_as_chunk(ppk_confirmation.ptr, PPK_CONFIRMATION_LEN, "PPK Confirmation data");
+
+	return ret;
+}
+
+bool emit_v2N_PPK_IDENTITY_KEY(struct pbs_out *pbs, struct ike_sa *ike,
+			       const struct secret_ppk_stuff *ppk)
+{
+	struct pbs_out ppks;
+	if (!open_v2N_output_pbs(pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
+		return false;
+	}
+
+	const struct ppk_id_payload payl = ppk_id_payload(PPK_ID_FIXED,
+							  HUNK_AS_SHUNK(ppk->id),
+							  ike->sa.logger);
+	if (!emit_unified_ppk_id(&payl, &ppks)) {
+		return false;
+	}
+
+	/* must free_chunk_content() */
+	chunk_t ppk_confirmation = calc_PPK_IDENTITY_KEY_confirmation(ike->sa.st_oakley.ta_prf,
+								      ppk,
+								      ike->sa.st_ni,
+								      ike->sa.st_nr,
+								      &ike->sa.st_ike_spis,
+								      ike->sa.logger);
+	if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
+		free_chunk_content(&ppk_confirmation);
+		return false;
+	}
+
+	free_chunk_content(&ppk_confirmation);
+	if (!close_pbs_out(&ppks)) {
+		return false;
+	}
+
+	return true;
 }
