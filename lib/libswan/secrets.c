@@ -94,6 +94,10 @@ struct secret {
 
 const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret *secret)
 {
+	if (secret == NULL) {
+		return NULL;
+	}
+
 	switch (secret->kind) {
 	case SECRET_PSK:
 	case SECRET_XAUTH:
@@ -106,6 +110,10 @@ const struct secret_preshared_stuff *secret_preshared_stuff(const struct secret 
 
 struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *secret)
 {
+	if (secret == NULL) {
+		return NULL;
+	}
+
 	switch (secret->kind) {
 	case SECRET_RSA:
 	case SECRET_ECDSA:
@@ -118,6 +126,10 @@ struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *secret)
 
 const struct secret_ppk_stuff *secret_ppk_stuff(const struct secret *secret)
 {
+	if (secret == NULL) {
+		return NULL;
+	}
+
 	switch (secret->kind) {
 	case SECRET_PPK:
 		return secret->u.ppk;
