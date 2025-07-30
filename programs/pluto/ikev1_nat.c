@@ -38,6 +38,7 @@
 #include "ip_info.h"
 #include "pending.h"
 #include "ikev1_vendorid.h"
+#include "state_db.h"		/* for state_by_ike_spis() */
 
 /*
  * Add NAT-Traversal VIDs (supported ones)
@@ -433,7 +434,7 @@ void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
  */
 static void v1_natify_initiator_endpoints(struct state *st, where_t where);
 
-void v1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
+void ikev1_maybe_natify_initiator_endpoints(struct state *st, where_t where)
 {
 	/*
 	 * If we're initiator and NAT-T is detected, we
@@ -507,4 +508,103 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	     str_endpoint(&new_endpoint, &nep),
 	     pri_where(where));
 	st->st_remote_endpoint = new_endpoint;
+}
+
+/*
+ * Re-map entire family.
+ *
+ * In IKEv1 this code needs to handle orphans - the children are
+ * around but the IKE (ISAKMP) SA is gone.
+ */
+
+struct new_mapp_nfo {
+	so_serial_t clonedfrom;
+	const ip_endpoint new_remote_endpoint;
+};
+
+static bool ikev1_nat_update_family_mapp_state(struct state *st, void *data)
+{
+	struct logger *logger = st->logger;
+	struct new_mapp_nfo *nfo = data;
+	if (PEXPECT(logger, (st->st_serialno == nfo->clonedfrom /*parent*/ ||
+			     st->st_clonedfrom == nfo->clonedfrom /*sibling*/))) {
+		endpoint_buf b1;
+		endpoint_buf b2;
+		ip_endpoint st_remote_endpoint = st->st_remote_endpoint;
+		ldbg(logger, "new NAT mapping for "PRI_SO", was %s, now %s",
+		     pri_so(st->st_serialno),
+		     str_endpoint(&st_remote_endpoint, &b1),
+		     str_endpoint(&nfo->new_remote_endpoint, &b2));
+
+		/* update it */
+		st->st_remote_endpoint = nfo->new_remote_endpoint;
+		st->hidden_variables.st_natd = endpoint_address(nfo->new_remote_endpoint);
+		struct connection *c = st->st_connection;
+		if (is_instance(c)) {
+			/* update remote */
+			c->remote->host.addr = endpoint_address(nfo->new_remote_endpoint);
+			/* then rebuild local<>remote host-pair */
+		}
+	}
+	return false; /* search for more */
+}
+
+/*
+ * this should only be called after packet has been
+ * verified/authenticated! (XXX: IKEv1?)
+ *
+ * XXX: Is this solving an IKEv1 only problem?  IKEv2 only needs to
+ * update the IKE SA and seems to do it using update_ike_endpoints().
+ */
+
+void ikev1_nat_change_port_lookup(struct msg_digest *md, struct state *st)
+{
+	if (st == NULL) {
+		return;
+	}
+
+	struct logger *logger = st->logger;
+
+	if (st->st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
+	    (md != NULL && md->iface->io->protocol == &ip_protocol_tcp)) {
+		/* XXX: when is MD NULL? */
+		return;
+	}
+
+	if (md != NULL) {
+
+		/*
+		 * If source port/address has changed, update the family.
+		 *
+		 * Since IKEv1 allows orphans - parent deleted but
+		 * children live on.
+		 */
+		if (!endpoint_eq_endpoint(md->sender, st->st_remote_endpoint)) {
+			struct new_mapp_nfo nfo = {
+				.clonedfrom = (st->st_clonedfrom != SOS_NOBODY ? st->st_clonedfrom : st->st_serialno),
+				.new_remote_endpoint = md->sender,
+			};
+			state_by_ike_spis(st->st_ike_version,
+					  NULL /* clonedfrom */,
+					  NULL /* v1_msgid */,
+					  NULL /* role */,
+					  &st->st_ike_spis,
+					  ikev1_nat_update_family_mapp_state,
+					  &nfo,
+					  __func__);
+		}
+
+		/*
+		 * If interface type has changed, update local port (500/4500)
+		 */
+		if (md->iface != st->st_iface_endpoint) {
+			endpoint_buf b1, b2;
+			ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
+			     pri_so(st->st_serialno),
+			     str_endpoint(&st->st_iface_endpoint->local_endpoint, &b1),
+			     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+			iface_endpoint_delref(&st->st_iface_endpoint);
+			st->st_iface_endpoint = iface_endpoint_addref(md->iface);
+		}
+	}
 }

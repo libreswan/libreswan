@@ -157,7 +157,7 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	return nat_traversal_detected(&ike->sa);
 }
 
-bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
+bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 {
 	/*
 	 * Float the local port to :PLUTO_NAT_PORT (:4500).  This
@@ -239,4 +239,56 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 	}
 
 	return true;
+}
+
+/*
+ * this should only be called after packet has been
+ * verified/authenticated! (XXX: IKEv1?)
+ *
+ * Only called by IKE_AUTH.  Should IKE_SA_INIT have done this?
+ */
+
+void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
+{
+	struct logger *logger = ike->sa.logger;
+
+	if (ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_tcp ||
+	    md->iface->io->protocol == &ip_protocol_tcp) {
+		return;
+	}
+
+	/*
+	 * If source port/address has changed, update the IKE SA.
+	 */
+	if (!endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
+
+		endpoint_buf b1;
+		endpoint_buf b2;
+		ldbg(logger, "new NAT mapping for "PRI_SO", was %s, now %s",
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_remote_endpoint, &b1),
+		     str_endpoint(&md->sender, &b2));
+
+		/* update it */
+		ike->sa.st_remote_endpoint = md->sender;
+		ike->sa.hidden_variables.st_natd = endpoint_address(md->sender);
+		struct connection *c = ike->sa.st_connection;
+		if (is_instance(c)) {
+			/* update remote */
+			c->remote->host.addr = endpoint_address(md->sender);
+		}
+	}
+
+	/*
+	 * If interface type has changed, update local port (500/4500)
+	 */
+	if (md->iface != ike->sa.st_iface_endpoint) {
+		endpoint_buf b1, b2;
+		ldbg(logger, "NAT-T: "PRI_SO" updating local interface from %s to %s (using md->iface in %s())",
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &b1),
+		     str_endpoint(&md->iface->local_endpoint, &b2), __func__);
+		iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+		ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
+	}
 }

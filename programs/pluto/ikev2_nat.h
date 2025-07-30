@@ -25,7 +25,9 @@ extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
 /*
  * move initiator endpoints (src, dst) to NAT ports.
  */
-bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
+
+void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike);
+bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where);
 
 bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 		    const ip_endpoint *remote_endpoint,

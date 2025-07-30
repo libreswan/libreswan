@@ -1662,7 +1662,7 @@ stf_status next_v2_exchange(struct ike_sa *ike, struct msg_digest *md,
  *     -svm->flags, story
  *   - find from_state (st might be gone)
  *   - ikev2_update_msgid_counters(md);
- *   - nat_traversal_change_port_lookup(md, st)
+ *   - ikev2_nat_change_port_lookup(md, st)
  * - !(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) to gate Notify payloads/exchanges [WRONG]
  * - find note for STF_INTERNAL_ERROR
  * - find note for STF_FAIL_v1N (might not be part of result (STF_FAIL_v1N+note))
