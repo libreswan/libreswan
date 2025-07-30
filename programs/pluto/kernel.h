@@ -308,7 +308,7 @@ struct kernel_ops {
 	err_t (*directional_ipsec_sa_is_enabled)(struct logger *);
 	bool (*directional_ipsec_sa)(struct child_sa *child);
 	bool (*poke_ipsec_policy_hole)(int fd, const struct ip_info *afi, struct logger *logger);
-	bool (*detect_nic_offload)(const char *name, struct logger *logger);
+	bool (*detect_nic_offload)(const char *name, const struct logger *logger);
 	bool (*poke_ipsec_offload_policy_hole)(struct nic_offload *nic_offload, struct logger *logger);
 
 	/* extensions */
@@ -381,7 +381,7 @@ bool kernel_ops_migrate_ipsec_sa(struct child_sa *child);
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);
 
-extern bool kernel_ops_detect_nic_offload(const char *name, struct logger *logger);
+extern bool kernel_ops_detect_nic_offload(const char *name, const struct logger *logger);
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 			     bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time,
 			     struct logger *logger);
@@ -406,7 +406,7 @@ struct kernel_acquire {
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
 void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   const struct connection *c,
-			   struct logger *logger);
+			   const struct logger *logger);
 
 struct spd_owner spd_owner(const struct spd *spd, enum routing new_routing,
 			   struct logger *logger, where_t where);
