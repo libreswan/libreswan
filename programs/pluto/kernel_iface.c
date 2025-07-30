@@ -49,10 +49,9 @@
  * for any address so this should also work for IPv6.
  */
 
-struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger *logger)
+struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct verbose verbose)
 {
 	/* Get a UDP socket */
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "iface");
 	vdbg("finding raw interfaces of type %s", afi->ip_name);
 	verbose.level++;
 	const unsigned base_level = verbose.level;
