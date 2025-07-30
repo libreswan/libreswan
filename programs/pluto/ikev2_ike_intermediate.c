@@ -235,9 +235,9 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				}
 			}
 		} else {
-			for (unsigned i = 0; i < ppk_ids_shunks->len; i++) {
+			ITEMS_FOR_EACH(ppk_id, ppk_ids_shunks) {
 				const struct secret_ppk_stuff *ppk =
-					get_connection_ppk(c, null_shunk, /*index*/i);
+					get_ppk_stuff_by_id(*ppk_id, ike->sa.logger);
 				if (ppk != NULL) {
 					found_one = true;
 					if (!emit_v2N_PPK_IDENTITY_KEY(request.pbs, ike, ppk)) {
