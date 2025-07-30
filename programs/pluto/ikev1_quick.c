@@ -728,7 +728,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* Duplicate nat_traversal status in new state */
 		child->sa.hidden_variables.st_nat_traversal =
 			ike->sa.hidden_variables.st_nat_traversal;
-		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
+		ikev1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
 		child->sa.hidden_variables.st_nat_traversal = LEMPTY;
 	}
@@ -1359,8 +1359,8 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		/* ??? this partially overwrites what was done via hv */
 		child->sa.hidden_variables.st_nat_traversal =
 			ike->sa.hidden_variables.st_nat_traversal;
-		nat_traversal_change_port_lookup(md, md->v1_st);
-		v1_maybe_natify_initiator_endpoints(&child->sa, HERE);
+		ikev1_nat_change_port_lookup(md, md->v1_st);
+		ikev1_maybe_natify_initiator_endpoints(&child->sa, HERE);
 	} else {
 		/* ??? this partially overwrites what was done via hv */
 		child->sa.hidden_variables.st_nat_traversal = LEMPTY;

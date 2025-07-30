@@ -76,6 +76,7 @@
 #include "ikev2_notification.h"
 #include "peer_id.h"
 #include "ddos.h"
+#include "ikev2_nat.h"
 
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 
@@ -534,7 +535,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		update_ike_endpoints(ike, md);
 	}
 
-	nat_traversal_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
+	ikev2_nat_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
 
 	/*
 	 * Decode any certificate requests sent by the initiator.

@@ -1259,7 +1259,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	if (v2_nat_detected(ike, md)) {
 		PEXPECT(ike->sa.logger, nat_traversal_detected(&ike->sa));
-		if (!v2_natify_initiator_endpoints(ike, HERE)) {
+		if (!ikev2_natify_initiator_endpoints(ike, HERE)) {
 			/* already logged */
 			return STF_FATAL;
 		}

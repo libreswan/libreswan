@@ -2262,8 +2262,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		if (st->st_connection->config->ikev1_natt != NATT_NONE) {
 			/* adjust our destination port if necessary */
-			nat_traversal_change_port_lookup(md, st);
-			v1_maybe_natify_initiator_endpoints(st, HERE);
+			ikev1_nat_change_port_lookup(md, st);
+			ikev1_maybe_natify_initiator_endpoints(st, HERE);
 		}
 
 		/*

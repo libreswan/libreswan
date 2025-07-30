@@ -410,8 +410,8 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			     (self_inflicted ? "self-" : ""),
 			     pri_so(dst->sa.st_serialno));
 			if (dst->sa.st_connection->config->ikev1_natt != NATT_NONE) {
-				nat_traversal_change_port_lookup(md, &dst->sa);
-				v1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
+				ikev1_nat_change_port_lookup(md, &dst->sa);
+				ikev1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
 			}
 			/*
 			 * IKEv1 semantics: when an ISAKMP is deleted
@@ -462,8 +462,8 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			}
 
 			if (p2d->sa.st_connection->config->ikev1_natt != NATT_NONE) {
-				nat_traversal_change_port_lookup(md, &p2d->sa);
-				v1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
+				ikev1_nat_change_port_lookup(md, &p2d->sa);
+				ikev1_maybe_natify_initiator_endpoints(&(*ike)->sa, HERE);
 			}
 
 			llog_sa(RC_LOG, p2d,
