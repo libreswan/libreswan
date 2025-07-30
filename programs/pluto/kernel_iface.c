@@ -36,6 +36,7 @@
 #include "defs.h"
 #include "log.h"
 #include "kernel_iface.h"
+#include "verbose.h"
 
 /*
  * Process the updated list of interfaces.
@@ -48,17 +49,18 @@
  * for any address so this should also work for IPv6.
  */
 
-struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger *logger)
+struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct verbose verbose)
 {
 	/* Get a UDP socket */
-	dbg("finding raw interfaces of type %s", afi->ip_name);
-
+	vdbg("finding raw interfaces of type %s", afi->ip_name);
+	verbose.level++;
+	const unsigned base_level = verbose.level;
 
 	int udp_sock = cloexec_socket(afi->socket.domain, SOCK_DGRAM, IPPROTO_UDP);
 	if (udp_sock == -1) {
-		fatal(PLUTO_EXIT_FAIL, logger, errno,
-		      "find %s interfaces failed calling cloexec_socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
-		      afi->ip_name, afi->socket.domain_name);
+		vfatal(PLUTO_EXIT_FAIL, errno,
+		       "find %s interfaces failed calling cloexec_socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
+		       afi->ip_name, afi->socket.domain_name);
 	}
 
 	/*
@@ -68,9 +70,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	static const int on = true;     /* by-reference parameter; constant, we hope */
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		fatal(PLUTO_EXIT_FAIL, logger, errno,
-		      "find %s interfaces failed calling setsockopt(SOL_SOCKET, SO_REUSEADDR)",
-		      afi->ip_name);
+		vfatal(PLUTO_EXIT_FAIL, errno,
+		       "find %s interfaces failed calling setsockopt(SOL_SOCKET, SO_REUSEADDR)",
+		       afi->ip_name);
 	}
 
 	/*
@@ -82,9 +84,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
 	if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
 		endpoint_buf eb;
-		fatal(PLUTO_EXIT_FAIL, logger, errno,
-		      "find %s interfaces failed calling bind(%s)",
-		      afi->ip_name, str_endpoint(&any_ep, &eb));
+		vfatal(PLUTO_EXIT_FAIL, errno,
+		       "find %s interfaces failed calling bind(%s)",
+		       afi->ip_name, str_endpoint(&any_ep, &eb));
 	}
 
 	/*
@@ -104,7 +106,7 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	void *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	for (; num < (1024 * 1024); num *= 2) {
 		int len = num * sizeof(struct ifreq);
-		dbg("  allocated %d buffer for SIOCGIFCONF", len);
+		vdbg("allocated %d buffer for SIOCGIFCONF", len);
 		realloc_bytes(&buf, ifconf.ifc_len, len, "ifreq");
 
 		ifconf = (struct ifconf) {
@@ -113,9 +115,9 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		};
 
 		if (ioctl(udp_sock, SIOCGIFCONF, &ifconf) == -1) {
-			fatal(PLUTO_EXIT_FAIL, logger, errno,
-			      "find %s interfaces failed calling ioctl(SIOCGIFCONF)",
-			      afi->ip_name);
+			vfatal(PLUTO_EXIT_FAIL, errno,
+			       "find %s interfaces failed calling ioctl(SIOCGIFCONF)",
+			       afi->ip_name);
 		}
 
 		/* if we got back less than we asked for, we have them all */
@@ -132,8 +134,8 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	 * Code below gets to figure out the true size.
 	 */
 	unsigned nr_req = (ifconf.ifc_len / sizeof(struct ifreq));
-	dbg("  ioctl(SIOCGIFCONF) returned %u bytes (roughly %u %s interfaces)",
-	    ifconf.ifc_len, nr_req, afi->ip_name);
+	vdbg("ioctl(SIOCGIFCONF) returned %u bytes (roughly %u %s interfaces)",
+	     ifconf.ifc_len, nr_req, afi->ip_name);
 
 	/*
 	 * For each interesting interface, add an entry to rifaces.
@@ -141,6 +143,8 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 	struct kernel_iface *rifaces = NULL;
 	const void *ifrp = buf;
 	while (ifrp < buf + ifconf.ifc_len) {
+
+		verbose.level = base_level+1;
 
 		/*
 		 * Current offset into the buffer.
@@ -176,7 +180,7 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 
 		/* ignore all but AF_INET interfaces */
 		if (ifr->ifr_addr.sa_family != afi->af) {
-			dbg("  ignoring non-%s interface %s with family %d",
+			vdbg("ignoring non-%s interface %s with family %d",
 			    afi->ip_name, ifname, ifr->ifr_addr.sa_family);
 			continue; /* not interesting */
 		}
@@ -186,31 +190,31 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 						   ifrp - (const void*)&ifr->ifr_addr,
 						   &addr, NULL/*port*/);
 		if (e != NULL) {
-			dbg("  ignoring %s interface %s: %s",
-			    afi->ip_name, ifname, e);
+			vdbg("ignoring %s interface %s: %s",
+			     afi->ip_name, ifname, e);
 			continue; /* ignore slave interfaces; they share IPs with their master */
 		}
 
 		/* ignore all but AF_INET interfaces (redundant) */
-		if (!pexpect(address_info(addr) == afi)) {
-			dbg("  ignoring non-%s interface %s",
-			    afi->ip_name, ifname);
+		if (!vexpect(address_info(addr) == afi)) {
+			vdbg("ignoring non-%s interface %s",
+			     afi->ip_name, ifname);
 			continue; /* not interesting */
 		}
 
 		/* ignore unconfigured interfaces */
 		if (!address_is_specified(addr)) {
 			address_buf ab;
-			dbg("  ignoring %s interface %s with unspecified address %s",
-			    afi->ip_name, ifname, str_address(&addr, &ab));
+			vdbg("ignoring %s interface %s with unspecified address %s",
+			     afi->ip_name, ifname, str_address(&addr, &ab));
 			continue;
 		}
 
 #if 0
 		if (address_is_loopback(addr)) {
 			address_buf ab;
-			dbg("  ignoring %s interface %s with loopback address %s",
-			    afi->ip_name, ifname, str_address(&addr, &ab));
+			vdbg("ignoring %s interface %s with loopback address %s",
+			     afi->ip_name, ifname, str_address(&addr, &ab));
 			continue;
 		}
 #endif
@@ -220,25 +224,24 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		 * netdevice(7) or netintro(4).
 		 */
 		struct ifreq auxinfo = {0};
-		passert(sizeof(auxinfo.ifr_name) == sizeof(ifr->ifr_name)); /* duh! */
+		vassert(sizeof(auxinfo.ifr_name) == sizeof(ifr->ifr_name)); /* duh! */
 		memcpy(auxinfo.ifr_name, ifr->ifr_name, IFNAMSIZ);
 		if (ioctl(udp_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
-			llog_errno(ERROR_STREAM, logger, errno,
-				   "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed: ",
-				   afi->ip_name, ifname);
+			verror(errno, "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed: ",
+			       afi->ip_name, ifname);
 			continue; /* happens when using device with label? */
 		}
 
 		if (!(auxinfo.ifr_flags & IFF_UP)) {
-			dbg("  ignoring non-up %s interface %s",
-			    afi->ip_name, ifname);
+			vdbg("ignoring non-up %s interface %s",
+			     afi->ip_name, ifname);
 			continue; /* ignore an interface that isn't UP */
 		}
 #ifdef IFF_SLAVE
 		/* only linux ... */
 		if (auxinfo.ifr_flags & IFF_SLAVE) {
-			dbg("  ignoring slave %s interface %s",
-			    afi->ip_name, ifname);
+			vdbg("ignoring slave %s interface %s",
+			     afi->ip_name, ifname);
 			continue; /* ignore slave interfaces; they share IPs with their master */
 		}
 #endif
@@ -250,10 +253,11 @@ struct kernel_iface *find_kernel_ifaces(const struct ip_info *afi, struct logger
 		ri->next = rifaces;
 		rifaces = ri;
 		address_buf b;
-		dbg("  found %s interface %s with address %s",
-		    afi->ip_name, ri->name, str_address(&ri->addr, &b));
+		vdbg("found %s interface %s with address %s",
+		     afi->ip_name, ri->name, str_address(&ri->addr, &b));
 	}
 
+	verbose.level = base_level;
 	pfree(buf);
 	close(udp_sock);
 	return rifaces;

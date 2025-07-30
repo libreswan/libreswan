@@ -103,9 +103,6 @@ struct verbose {
 /*
  * Normal logging: the message is always logged (no indentation); just
  * a wrapper around llog(verbose.logger)
- *
- * vfatal() and verror(), like perror() add ": ", before FMT when
- * ERRNO is non-zero.
  */
 
 #define vlog(FMT, ...)						\
@@ -127,7 +124,7 @@ struct verbose {
 	llog(WARNING_STREAM, verbose.logger, FMT, ##__VA_ARGS__)
 
 #define verror(ERROR, FMT, ...)					\
-	llog_error(verbose.logger, ERROR, FMT, ##__VA_ARGS__)
+	llog_errno(ERROR_STREAM, verbose.logger, ERROR, FMT, ##__VA_ARGS__)
 
 #define vfatal(EXIT_CODE, ERRNO, FMT, ...)				\
 	fatal(EXIT_CODE, verbose.logger, ERRNO, FMT, ##__VA_ARGS__)

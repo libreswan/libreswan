@@ -148,7 +148,7 @@ static void sort_ifaces(struct kernel_iface **rifaces)
  * rtnetlink(7) should be used for IPv6.
  */
 
-struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
+struct kernel_iface *find_kernel_ifaces6(struct verbose verbose)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
 	 *
@@ -169,7 +169,7 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 	FILE *proc_sock = fopen(proc_name, "r");
 
 	if (proc_sock == NULL) {
-		dbg("could not open %s", proc_name);
+		vdbg("could not open %s", proc_name);
 	} else {
 		for (;; ) {
 			unsigned short xb[8];           /* IPv6 address as 8 16-bit chunks */
@@ -222,7 +222,7 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 				ri->next = rifaces;
 				rifaces = ri;
 				address_buf ab;
-				dbg("found %s with address %s", ri->name, str_address(&ri->addr, &ab));
+				vdbg("found %s with address %s", ri->name, str_address(&ri->addr, &ab));
 			}
 		}
 		fclose(proc_sock);
@@ -241,7 +241,7 @@ struct kernel_iface *find_kernel_ifaces6(struct logger *unused_logger UNUSED)
 	return rifaces;
 }
 
-struct kernel_iface *find_kernel_ifaces4(struct logger *logger)
+struct kernel_iface *find_kernel_ifaces4(struct verbose verbose)
 {
-	return find_kernel_ifaces(&ipv4_info, logger);
+	return find_kernel_ifaces(&ipv4_info, verbose);
 }

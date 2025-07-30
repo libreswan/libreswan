@@ -240,7 +240,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		 * Possibly too if the NAT mapping vanished on the initiator NAT gw ?
 		 */
 		endpoint_buf eb;
-		dbg("NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
+		ldbg(logger, "NAT-T keep-alive (bogus ?) should not reach this point. Ignored. Sender: %s",
 		    str_endpoint(&sender, &eb)); /* sensitive? */
 		return NULL;
 	}
@@ -299,7 +299,7 @@ static ssize_t udp_write_packet(const struct iface_endpoint *ifp,
 };
 
 static void udp_listen(struct iface_endpoint *ifp,
-		       struct logger *unused_logger UNUSED)
+		       const struct logger *unused_logger UNUSED)
 {
 	if (ifp->udp.read_listener == NULL) {
 		attach_fd_read_listener(&ifp->udp.read_listener, ifp->fd,
@@ -307,7 +307,7 @@ static void udp_listen(struct iface_endpoint *ifp,
 	}
 }
 
-static void udp_cleanup(struct iface_endpoint *ifp)
+static void udp_cleanup(struct iface_endpoint *ifp, const struct logger *logger UNUSED)
 {
 	detach_fd_read_listener(&ifp->udp.read_listener);
 }
@@ -376,7 +376,8 @@ const struct iface_io udp_iface_io = {
  */
 
 static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
-					size_t sizeof_buffer)
+					size_t sizeof_buffer,
+					struct logger *logger)
 {
 	if (packet_len > sizeof_buffer) {
 		/*
@@ -384,7 +385,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		 * what about the returned packet length?  Force
 		 * truncation.
 		 */
-		dbg("MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
+		ldbg(logger, "MSG_ERRQUEUE packet longer than %zu bytes; truncated", sizeof_buffer);
 		packet_len = sizeof_buffer;
 	}
 
@@ -394,11 +395,11 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		buffer += sizeof(non_ESP_marker);
 		packet_len -= sizeof(non_ESP_marker);
 		sizeof_buffer -= sizeof(non_ESP_marker);
-		dbg("MSG_ERRQUEUE packet has leading ESP:0 marker - discarded");
+		ldbg(logger, "MSG_ERRQUEUE packet has leading ESP:0 marker - discarded");
 	}
 
 	if (packet_len < sizeof(struct isakmp_hdr)) {
-		dbg("MSG_ERRQUEUE packet is smaller than an IKE header");
+		ldbg(logger, "MSG_ERRQUEUE packet is smaller than an IKE header");
 		return NULL;
 	}
 
@@ -447,12 +448,12 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 		break;
 	}
 	default:
-		dbg("MSG_ERRQUEUE packet IKE header version unknown");
+		ldbg(logger, "MSG_ERRQUEUE packet IKE header version unknown");
 		return NULL;
 	}
 	if (st == NULL) {
 		name_buf ib;
-		dbg("MSG_ERRQUEUE packet has no matching %s SA",
+		ldbg(logger, "MSG_ERRQUEUE packet has no matching %s SA",
 		    str_enum_long(&ike_version_names, ike_version, &ib));
 		return NULL;
 	}
@@ -537,7 +538,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 				   ifp->ip_dev->real_device_name, before);
 			break;
 		}
-		passert(packet_len >= 0);
+		PASSERT(logger, packet_len >= 0);
 
 		/*
 		 * Getting back a truncated IKE datagram isn't a big
@@ -560,7 +561,8 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		}
 
 		struct state *sender = find_likely_sender((size_t) packet_len,
-							  buffer, sizeof(buffer));
+							  buffer, sizeof(buffer),
+							  logger);
 
 		/* ??? Andi Kleen <ak@suse.de> and misc documentation
 		 * suggests that name will have the original destination
@@ -568,7 +570,7 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 		 * Andi says that this is a kernel bug and has fixed it.
 		 * Perhaps in 2.2.18/2.4.0.
 		 */
-		passert(emh.msg_name == &from.sa);
+		PASSERT(logger, emh.msg_name == &from.sa);
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "name:");
 			LDBG_dump(logger, emh.msg_name, emh.msg_namelen);

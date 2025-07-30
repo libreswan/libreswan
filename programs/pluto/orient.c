@@ -425,7 +425,7 @@ bool orient(struct connection *c, const struct logger *logger)
  * interfaces.
  */
 
-void check_orientations(struct logger *logger)
+void check_orientations(const struct logger *logger)
 {
 	/*
 	 * Try to orient unoriented connections by re-building the

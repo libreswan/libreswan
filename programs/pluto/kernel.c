@@ -1167,7 +1167,7 @@ void clear_narrow_holds(const ip_selector *src_client,
 
 void setup_esp_nic_offload(struct nic_offload *nic_offload,
 			   const struct connection *c,
-			   struct logger *logger)
+			   const struct logger *logger)
 {
 	if (PBAD(logger, c->iface == NULL) /* aka oriented() */ ||
 	    PBAD(logger, c->iface->real_device_name == NULL)) {

@@ -28,7 +28,7 @@ bool oriented(const struct connection *c);
  */
 bool orient(struct connection *c, const struct logger *logger);
 void disorient(struct connection *c);
-void check_orientations(struct logger *logger);
+void check_orientations(const struct logger *logger);
 
 void jam_orientation(struct jambuf *buf, struct connection *c, bool oriented_details);
 

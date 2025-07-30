@@ -1480,7 +1480,8 @@ static struct {
 	enum nic_offload_state state;
 } netlink_esp_hw_offload;
 
-static bool siocethtool(const char *ifname, void *data, const char *action, struct logger *logger)
+static bool siocethtool(const char *ifname, void *data, const char *action,
+			const struct logger *logger)
 {
 	struct ifreq ifr = { .ifr_data = data };
 	jam_str(ifr.ifr_name, sizeof(ifr.ifr_name), ifname);
@@ -1501,7 +1502,7 @@ static bool siocethtool(const char *ifname, void *data, const char *action, stru
 }
 
 static void netlink_find_offload_feature(const char *ifname,
-					 struct logger *logger)
+					 const struct logger *logger)
 {
 	netlink_esp_hw_offload.state = NIC_OFFLOAD_UNSUPPORTED;
 
@@ -1554,7 +1555,7 @@ static void netlink_find_offload_feature(const char *ifname,
 	}
 }
 
-static bool xfrm_detect_nic_offload(const char *ifname, struct logger *logger)
+static bool xfrm_detect_nic_offload(const char *ifname, const struct logger *logger)
 {
 	/*
 	 * Kernel requires a real interface in order to query the kernel-wide
