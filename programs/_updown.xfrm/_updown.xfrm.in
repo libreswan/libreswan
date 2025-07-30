@@ -356,7 +356,7 @@ updateresolvconf() {
     fi
 
     # Fallback for non-systemd systems
-	local domain
+    local domain
     local nameserver
     local new_nameserver
     local new_resolv_conf
