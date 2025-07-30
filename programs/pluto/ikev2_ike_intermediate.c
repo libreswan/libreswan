@@ -399,21 +399,18 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			}
 
 			/* must free_chunk_content() */
-			chunk_t ppk_confirmation = calc_PPK_IDENTITY_KEY_confirmation(ike->sa.st_oakley.ta_prf,
-										      ppk_candidate,
-										      ike->sa.st_ni,
-										      ike->sa.st_nr,
-										      &ike->sa.st_ike_spis,
-										      ike->sa.logger);
-			if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
+			struct ppk_confirmation ppk_confirmation = calc_PPK_IDENTITY_KEY_confirmation(ike->sa.st_oakley.ta_prf,
+												      ppk_candidate,
+												      ike->sa.st_ni,
+												      ike->sa.st_nr,
+												      &ike->sa.st_ike_spis,
+												      ike->sa.logger);
+			if (hunk_eq(ppk_confirmation, payl.confirmation)) {
 				ldbg(logger, "found matching PPK, send PPK_IDENTITY back");
 				ppk = ppk_candidate;
-				free_chunk_content(&ppk_confirmation);
 				PEXPECT(logger, hunk_eq(ppk->id, payl.ppk_id_payl.ppk_id));
 				break;
 			}
-
-			free_chunk_content(&ppk_confirmation);
 		}
 
 		if (ppk == NULL) {

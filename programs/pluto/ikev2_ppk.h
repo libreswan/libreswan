@@ -19,7 +19,16 @@
 #ifndef IKEV2_PPK_H
 #define IKEV2_PPK_H
 
+/*
+ * PPK Confirmation (8 octets) hunk-like.
+ */
+
 #define PPK_CONFIRMATION_LEN 8
+
+struct ppk_confirmation {
+	unsigned len;
+	uint8_t ptr[PPK_CONFIRMATION_LEN];
+};
 
 struct ppk_id_payload {
 	enum ikev2_ppk_id_type type;
@@ -30,7 +39,7 @@ struct ppk_id_payload {
 struct ppk_id_key_payload {
 	struct ppk_id_payload ppk_id_payl;
 	/* points into the PBS */
-	shunk_t ppk_confirmation;
+	struct ppk_confirmation confirmation;
 };
 
 /*
@@ -55,12 +64,12 @@ extern bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				   const struct crypt_mac *id_hash,
 				   chunk_t *no_ppk_auth /* output */);
 
-chunk_t calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
-					   const struct secret_ppk_stuff *ppk,
-					   const chunk_t Ni,
-					   const chunk_t Nr,
-					   const ike_spis_t *ike_spis,
-					   struct logger *logger);
+struct ppk_confirmation calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
+							   const struct secret_ppk_stuff *ppk,
+							   const chunk_t Ni,
+							   const chunk_t Nr,
+							   const ike_spis_t *ike_spis,
+							   struct logger *logger);
 
 extern void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf,
 			    PK11SymKey **sk_d,	/* updated */

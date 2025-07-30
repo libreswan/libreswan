@@ -150,6 +150,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
  * |                                                               |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
+
 bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 			    struct ppk_id_key_payload *payl,
 			    struct ike_sa *ike)
@@ -193,25 +194,38 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 	}
 
 	size_t ppk_id_len = id_and_confirmation.len - PPK_CONFIRMATION_LEN;
-	shunk_t ppk_id = hunk_slice(id_and_confirmation, 0, ppk_id_len);
+
+	shunk_t ppk_id;
+	d = pbs_in_shunk(&pbs, ppk_id_len, &ppk_id, "PPK_ID");
+	if (d != NULL) {
+		llog_pexpect(ike->sa.logger, HERE, "failed to read PPK_ID: %s", str_diag(d));
+		pfree_diag(&d);
+		return false;
+	}
+
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
 		LDBG_hunk(ike->sa.logger, ppk_id);
 	}
 
-	shunk_t ppk_confirmation = hunk_slice(id_and_confirmation, ppk_id_len, id_and_confirmation.len);
+	struct ppk_confirmation ppk_confirmation = { .len = PPK_CONFIRMATION_LEN, };
+	PASSERT(ike->sa.logger, ppk_confirmation.len == elemsof(ppk_confirmation.ptr/*array*/));
+
+	d = pbs_in_bytes(&pbs, ppk_confirmation.ptr, ppk_confirmation.len, "PPK Confirmation");
+	if (d != NULL) {
+		llog_pexpect(ike->sa.logger, HERE, "failed to read PPK Confirmation: %s", str_diag(d));
+		pfree_diag(&d);
+		return false;
+	}
+
 	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK Confirmation:");
 		LDBG_hunk(ike->sa.logger, ppk_confirmation);
 	}
-	if (!PEXPECT(ike->sa.logger, ppk_confirmation.len == PPK_CONFIRMATION_LEN)) {
-		/* above math screwed up */
-		return false;
-	}
 
 	/* clone ppk id and ppk confirmation data */
 	payl->ppk_id_payl = ppk_id_payload(id_type, ppk_id, ike->sa.logger);
-	payl->ppk_confirmation = ppk_confirmation;
+	payl->confirmation = ppk_confirmation;
 
 	return true;
 }
@@ -382,12 +396,12 @@ void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
  * the responder.
  */
 
-chunk_t calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
-					   const struct secret_ppk_stuff *ppk,
-					   const chunk_t Ni,
-					   const chunk_t Nr,
-					   const ike_spis_t *ike_spis,
-					   struct logger *logger)
+struct ppk_confirmation calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
+							   const struct secret_ppk_stuff *ppk,
+							   const chunk_t Ni,
+							   const chunk_t Nr,
+							   const ike_spis_t *ike_spis,
+							   struct logger *logger)
 {
 	ldbg(logger, "calculating PPK Confirmation for PPK_IDENTITY_KEY Notify");
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk->key, logger);
@@ -402,19 +416,18 @@ chunk_t calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc *prf_desc,
 	crypt_prf_update_hunk(prf, "Nr", Nr);
 	crypt_prf_update_hunk(prf, "SPIi", THING_AS_SHUNK(ike_spis->initiator));
 	crypt_prf_update_hunk(prf, "SPIr", THING_AS_SHUNK(ike_spis->responder));
-	struct crypt_mac ppk_confirmation = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
+
+	struct ppk_confirmation ppk_confirmation = { .len = PPK_CONFIRMATION_LEN, };
+	PASSERT(logger, ppk_confirmation.len == elemsof(ppk_confirmation.ptr/*array*/));
+	crypt_prf_final_bytes(&prf, ppk_confirmation.ptr, ppk_confirmation.len);
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger,"prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)");
-		LDBG_dump(logger, ppk_confirmation.ptr, prf_desc->prf_output_size);
+		LDBG_hunk(logger, ppk_confirmation);
 	}
 
 	symkey_delref(logger, "PPK Keying material", &ppk_key);
-
-	/* NOTE: caller should free this */
-	chunk_t ret = clone_bytes_as_chunk(ppk_confirmation.ptr, PPK_CONFIRMATION_LEN, "PPK Confirmation data");
-
-	return ret;
+	return ppk_confirmation;
 }
 
 bool emit_v2N_PPK_IDENTITY_KEY(struct pbs_out *pbs, struct ike_sa *ike,
@@ -433,18 +446,16 @@ bool emit_v2N_PPK_IDENTITY_KEY(struct pbs_out *pbs, struct ike_sa *ike,
 	}
 
 	/* must free_chunk_content() */
-	chunk_t ppk_confirmation = calc_PPK_IDENTITY_KEY_confirmation(ike->sa.st_oakley.ta_prf,
-								      ppk,
-								      ike->sa.st_ni,
-								      ike->sa.st_nr,
-								      &ike->sa.st_ike_spis,
-								      ike->sa.logger);
+	struct ppk_confirmation ppk_confirmation = calc_PPK_IDENTITY_KEY_confirmation(ike->sa.st_oakley.ta_prf,
+										      ppk,
+										      ike->sa.st_ni,
+										      ike->sa.st_nr,
+										      &ike->sa.st_ike_spis,
+										      ike->sa.logger);
 	if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
-		free_chunk_content(&ppk_confirmation);
 		return false;
 	}
 
-	free_chunk_content(&ppk_confirmation);
 	if (!close_pbs_out(&ppks)) {
 		return false;
 	}
