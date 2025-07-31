@@ -103,57 +103,73 @@ bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 	passert(ike != NULL);
 	passert(md->iface != NULL);
 
-	/* must have both */
-	if (md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP] == NULL ||
-	    md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP] == NULL) {
-		return false;
-	}
-	/* table of both */
-	const struct pbs_in *(detection_payloads[]) = {
-		&md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP]->pbs,
-		&md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP]->pbs,
+	enum { SOURCE, DESTINATION, };
+
+	struct detection {
+		const struct payload_digest *pd;
+		const ip_endpoint endpoint;
+		bool matched;
+	} detect[] = {
+		[SOURCE] = {
+			/* the peer sent from this source address */
+			md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP],
+			md->sender,
+			false,
+		},
+		[DESTINATION] = {
+			/* ... to this destination address */
+			md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP],
+			md->iface->local_endpoint,
+			false,
+		},
 	};
 
-	/*
-	 * XXX: use the the IKE SPIs from the message header.
-	 *
-	 * The IKE_SA_INIT initiator doesn't know the responder's SPI
-	 * so will have sent hashes using a responder SPI of 0.
-	 *
-	 * On the other hand, the responder does no its own SPI and so
-	 * hashes against that.
-	 */
-
-	/* First: one with my IP & port. */
-	struct crypt_mac hash_local = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						md->iface->local_endpoint,
-						ike->sa.logger);
-	/* Second: one with sender IP & port */
-	struct crypt_mac hash_remote = natd_hash(hasher, &md->hdr.isa_ike_spis,
-						 md->sender, ike->sa.logger);
-
-	bool found_local = false;
-	bool found_remote = false;
-
-	for (const struct pbs_in **p = detection_payloads;
-	     p < detection_payloads + elemsof(detection_payloads);
-	     p++) {
-		passert(*p != NULL);
-		shunk_t hash = pbs_in_left(*p);
-		/* redundant, also checked by hunk_eq() */
-		if (hash.len != hasher->hash_digest_size)
-			continue;
-		/* ??? do we know from the isan_type which of these to test? */
-		/* XXX: should this check pbs_left(), see other code */
-		if (hunk_eq(hash, hash_local)) {
-			found_local = true;
-		}
-		if (hunk_eq(hash, hash_remote)) {
-			found_remote = true;
+	/* must have both */
+	FOR_EACH_ELEMENT(d, detect) {
+		if (d->pd == NULL) {
+			return false;
 		}
 	}
 
-	detect_nat_common(ike, md->sender, found_local, found_remote);
+	FOR_EACH_ELEMENT(d, detect) {
+
+		/*
+		 * XXX: use the the IKE SPIs from the message header.
+		 *
+		 * The IKE_SA_INIT initiator doesn't know the
+		 * responder's SPI so will use 0 for the responder's
+		 * SPI when computing the hash (which is what is in
+		 * the HEADER).
+		 *
+		 * The IKE_SA_INIT responder does know its own (and
+		 * peer) hash, hence, will use that when computing the
+		 * hash (again found in the header).
+		 */
+		struct crypt_mac computed_hash = natd_hash(hasher, &md->hdr.isa_ike_spis,
+							   d->endpoint, ike->sa.logger);
+		/*
+		 * Now extract what the peer sent over the wire.
+		 */
+		const struct pbs_in *pbs = &d->pd->pbs;
+		shunk_t wire_hash = pbs_in_left(pbs);
+		if (wire_hash.len != hasher->hash_digest_size) {
+			/* should this give up instead?  */
+			continue;
+		}
+
+		/*
+		 * Does what what the peer used for source /
+		 * destination address match what is found in the
+		 * message header?
+		 *
+		 * A mismatch indicates that the end is behind NAT.
+		 */
+		d->matched = hunk_eq(wire_hash, computed_hash);
+	}
+
+	detect_nat_common(ike, md->sender,
+			  /*found_me*/detect[DESTINATION].matched,
+			  /*found_peer*/detect[SOURCE].matched);
 	return nat_traversal_detected(&ike->sa);
 }
 

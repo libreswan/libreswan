@@ -120,6 +120,12 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	return hash;
 }
 
+/*
+ * XXX: FOUND_ME and FOUND_PEER are true when the hash in the NAT
+ * detection payload that the peer computed for that end matches what
+ * was computed locally (i.e., the end isn't behind a NAT).
+ */
+
 void detect_nat_common(struct ike_sa *ike,
 		       const ip_endpoint sender,
 		       bool found_me, bool found_peer)
