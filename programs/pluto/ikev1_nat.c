@@ -137,7 +137,7 @@ void check_nat_traversal_vid(struct ike_sa *ike, const struct msg_digest *md)
 	}
 }
 
-static void ikev1_natd_lookup(struct msg_digest *md, struct ike_sa *ike)
+static void detect_ikev1_natd(struct msg_digest *md, struct ike_sa *ike)
 {
 	const struct hash_desc *const hasher = ike->sa.st_oakley.ta_prf->hasher;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
@@ -197,7 +197,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct ike_sa *ike)
 			break;
 	}
 
-	natd_lookup_common(ike, md->sender, found_local, found_remote);
+	detect_nat_common(ike, md->sender, found_local, found_remote);
 }
 
 bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
@@ -417,7 +417,7 @@ void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
 			     "cannot compute NATD payloads without valid PRF");
 			return;
 		}
-		ikev1_natd_lookup(md, ike);
+		detect_ikev1_natd(md, ike);
 
 		if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(&ike->sa, endpoint_hport(md->sender));

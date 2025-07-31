@@ -82,11 +82,11 @@ void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logg
  */
 bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
-/* NAT-T IKEv2 v2N */
 
-void natd_lookup_common(struct ike_sa *ike,
-			const ip_endpoint sender,
-			bool found_me, bool found_peer);
+/* Update settings based on detection */
+void detect_nat_common(struct ike_sa *ike,
+		       const ip_endpoint sender,
+		       bool found_me, bool found_peer);
 
 struct crypt_mac natd_hash(const struct hash_desc *hasher,
 			   const ike_spis_t *spis,

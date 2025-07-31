@@ -95,7 +95,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	return true;
 }
 
-bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
+bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* TODO: This use must be allowed even with USE_SHA1=false */
 	static const struct hash_desc *hasher = &ike_alg_hash_sha1;
@@ -153,7 +153,7 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 		}
 	}
 
-	natd_lookup_common(ike, md->sender, found_local, found_remote);
+	detect_nat_common(ike, md->sender, found_local, found_remote);
 	return nat_traversal_detected(&ike->sa);
 }
 

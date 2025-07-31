@@ -120,9 +120,9 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	return hash;
 }
 
-void natd_lookup_common(struct ike_sa *ike,
-			const ip_endpoint sender,
-			bool found_me, bool found_peer)
+void detect_nat_common(struct ike_sa *ike,
+		       const ip_endpoint sender,
+		       bool found_me, bool found_peer)
 {
 	struct logger *logger = ike->sa.logger;
 	ike->sa.hidden_variables.st_natd = ipv4_info.address.zero;
@@ -168,6 +168,7 @@ void natd_lookup_common(struct ike_sa *ike,
 		endpoint_buf b;
 		ldbg(logger, "NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
 	}
+
 }
 
 bool nat_traversal_detected(struct state *st)

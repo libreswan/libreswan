@@ -727,7 +727,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * It is the initiator that will switch to port 4500 (float
 	 * away) when necessary.
 	 */
-	if (v2_nat_detected(ike, md)) {
+	if (detect_ikev2_nat(ike, md)) {
+		PEXPECT(ike->sa.logger, nat_traversal_detected(&ike->sa));
 		ldbg(ike->sa.logger, "NAT: responder so initiator gets to switch ports");
 		/* should this check that a port is available? */
 	}
@@ -1257,7 +1258,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * can't support NAT, give up.
 	 */
 
-	if (v2_nat_detected(ike, md)) {
+	if (detect_ikev2_nat(ike, md)) {
 		PEXPECT(ike->sa.logger, nat_traversal_detected(&ike->sa));
 		if (!ikev2_natify_initiator_endpoints(ike, HERE)) {
 			/* already logged */
