@@ -607,35 +607,14 @@ const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connec
  * - With a PPK_ID that is at place 'index' in the ppk-ids=
  * conn option list.
  */
-const struct secret_ppk_stuff *get_connection_ppk(const struct connection *c,
-						  shunk_t ppk_id,
-						  unsigned int index)
+
+const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger *logger)
 {
-	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
-
-	if (ppk_id.len > 0) {
-		/* try to find PPK with PPK_ID ppk_id */
-		ldbg(c->logger, "looking for PPK with ID:");
-		ldbg_hunk(c->logger, ppk_id);
-		return secret_ppk_stuff_by_id(pluto_secrets, ppk_id);
-	} else {
-		passert(index < ppk_ids_shunks->len);
-
-		ldbg(c->logger, "looking for PPK with PPK ID in list %s at place: %u",
-		     c->config->ppk_ids, index);
-
-		shunk_t id = ppk_ids_shunks->item[index];
-
-		ldbg(c->logger, "try to find PPK with PPK_ID:");
-		ldbg_hunk(c->logger, id);
-
-		const struct secret_ppk_stuff *ppk =
-			secret_ppk_stuff_by_id(pluto_secrets, id);
-		if (ppk != NULL) {
-			return ppk;
-		}
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "looking for PPK with ID:");
+		LDBG_hunk(logger, ppk_id);
 	}
-	return NULL;
+	return secret_ppk_stuff_by_id(pluto_secrets, ppk_id);
 }
 
 /*

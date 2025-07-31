@@ -198,45 +198,6 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
 }
 
-/*
- * Calculate PPK Confirmation = prf(PPK, Ni | Nr | SPIi | SPIr). It is used in
- * draft-ietf-ipsecme-ikev2-qr-alt-04 and only in IKE_INTERMEDIATE exchange.
- * It is called both by initiator and by the responder.
- */
-static chunk_t calc_ppk_confirmation(const struct prf_desc *prf_desc,
-				     const shunk_t *ppk,
-				     const chunk_t Ni, const chunk_t Nr,
-				     const ike_spis_t *ike_spis,
-				     struct logger *logger)
-{
-	ldbg(logger, "calculating PPK Confirmation for PPK_IDENTITY_KEY Notify");
-	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", *ppk, logger);
-
-	/* prf(PPK, ... */
-	struct crypt_prf *prf = crypt_prf_init_symkey("prf(PPK,)",
-						      prf_desc,
-						      "PPK", ppk_key,
-						      logger);
-
-	crypt_prf_update_hunk(prf, "Ni", Ni);
-	crypt_prf_update_hunk(prf, "Nr", Nr);
-	crypt_prf_update_hunk(prf, "SPIi", THING_AS_SHUNK(ike_spis->initiator));
-	crypt_prf_update_hunk(prf, "SPIr", THING_AS_SHUNK(ike_spis->responder));
-	struct crypt_mac ppk_confirmation = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
-
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger,"prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)");
-		LDBG_dump(logger, ppk_confirmation.ptr, prf_desc->prf_output_size);
-	}
-
-	symkey_delref(logger, "PPK Keying material", &ppk_key);
-
-	/* NOTE: caller should free this */
-	chunk_t ret = clone_bytes_as_chunk(ppk_confirmation.ptr, PPK_CONFIRMATION_LEN, "PPK Confirmation data");
-
-	return ret;
-}
-
 static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 						       struct child_sa *null_child,
 						       struct msg_digest *null_md)
@@ -268,58 +229,20 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			const struct secret_ppk_stuff *ppk =
 				get_connection_ppk_and_ppk_id(c);
 			if (ppk != NULL) {
-				shunk_t ppk_id = HUNK_AS_SHUNK(ppk->id);
 				found_one = true;
-				chunk_t ppk_confirmation =
-					calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
-							      &ppk->key,
-							      ike->sa.st_ni, ike->sa.st_nr,
-							      &ike->sa.st_ike_spis,
-							      ike->sa.logger);
-				const struct ppk_id_payload payl =
-					ppk_id_payload(PPK_ID_FIXED, ppk_id, ike->sa.logger);
-				struct pbs_out ppks;
-				if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
+				if (!emit_v2N_PPK_IDENTITY_KEY(request.pbs, ike, ppk)) {
 					return STF_INTERNAL_ERROR;
 				}
-				if (!emit_unified_ppk_id(&payl, &ppks)) {
-					return STF_INTERNAL_ERROR;
-				}
-				if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
-					return STF_INTERNAL_ERROR;
-				}
-				close_pbs_out(&ppks);
-				free_chunk_content(&ppk_confirmation);
 			}
 		} else {
-			for (unsigned i = 0; i < ppk_ids_shunks->len; i++) {
+			ITEMS_FOR_EACH(ppk_id, ppk_ids_shunks) {
 				const struct secret_ppk_stuff *ppk =
-					get_connection_ppk(c, null_shunk, /*index*/i);
+					get_ppk_stuff_by_id(*ppk_id, ike->sa.logger);
 				if (ppk != NULL) {
 					found_one = true;
-					chunk_t ppk_confirmation =
-						calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
-								      &ppk->key,
-								      ike->sa.st_ni, ike->sa.st_nr,
-								      &ike->sa.st_ike_spis,
-								      ike->sa.logger);
-					/* cast away const! */
-					shunk_t ppk_id = ppk_ids_shunks->item[i];
-					const struct ppk_id_payload payl =
-						ppk_id_payload(PPK_ID_FIXED, ppk_id,
-							       ike->sa.logger);
-					struct pbs_out ppks;
-					if (!open_v2N_output_pbs(request.pbs, v2N_PPK_IDENTITY_KEY, &ppks)) {
+					if (!emit_v2N_PPK_IDENTITY_KEY(request.pbs, ike, ppk)) {
 						return STF_INTERNAL_ERROR;
 					}
-					if (!emit_unified_ppk_id(&payl, &ppks)) {
-						return STF_INTERNAL_ERROR;
-					}
-					if (!pbs_out_hunk(&ppks, ppk_confirmation, "PPK Confirmation")) {
-						return STF_INTERNAL_ERROR;
-					}
-					close_pbs_out(&ppks);
-					free_chunk_content(&ppk_confirmation);
 				}
 			}
 		}
@@ -468,28 +391,25 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			}
 
 			const struct secret_ppk_stuff *ppk_candidate =
-				get_connection_ppk(ike->sa.st_connection,
-						   payl.ppk_id_payl.ppk_id,
-						   /*index*/0);
+				get_ppk_stuff_by_id(payl.ppk_id_payl.ppk_id,
+						    ike->sa.logger);
 			if (ppk_candidate == NULL) {
 				continue;
 			}
 
-			chunk_t ppk_confirmation =
-				calc_ppk_confirmation(ike->sa.st_oakley.ta_prf,
-						      &ppk_candidate->key,
-						      ike->sa.st_ni, ike->sa.st_nr,
-						      &ike->sa.st_ike_spis,
-						      ike->sa.logger);
-			if (hunk_eq(ppk_confirmation, payl.ppk_confirmation)) {
+			/* must free_chunk_content() */
+			struct ppk_confirmation ppk_confirmation = calc_PPK_IDENTITY_KEY_confirmation(ike->sa.st_oakley.ta_prf,
+												      ppk_candidate,
+												      ike->sa.st_ni,
+												      ike->sa.st_nr,
+												      &ike->sa.st_ike_spis,
+												      ike->sa.logger);
+			if (hunk_eq(ppk_confirmation, payl.confirmation)) {
 				ldbg(logger, "found matching PPK, send PPK_IDENTITY back");
 				ppk = ppk_candidate;
-				free_chunk_content(&ppk_confirmation);
 				PEXPECT(logger, hunk_eq(ppk->id, payl.ppk_id_payl.ppk_id));
 				break;
 			}
-
-			free_chunk_content(&ppk_confirmation);
 		}
 
 		if (ppk == NULL) {
@@ -676,9 +596,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 			return STF_FATAL;
 		}
 		const struct secret_ppk_stuff *ppk =
-			get_connection_ppk(ike->sa.st_connection,
-					   /*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
-					   /*index*/0);
+			get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+					    ike->sa.logger);
 
 		recalc_v2_ppk_interm_keymat(ike, ppk->key,
 					    &ike->sa.st_ike_spis,
