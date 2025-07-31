@@ -84,7 +84,7 @@ bool nat_traversal_port_float(struct state *st, struct msg_digest *md,
 			      bool in);
 /* NAT-T IKEv2 v2N */
 
-void natd_lookup_common(struct state *st,
+void natd_lookup_common(struct ike_sa *ike,
 			const ip_endpoint sender,
 			bool found_me, bool found_peer);
 

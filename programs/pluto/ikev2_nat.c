@@ -153,7 +153,7 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 		}
 	}
 
-	natd_lookup_common(&ike->sa, md->sender, found_local, found_remote);
+	natd_lookup_common(ike, md->sender, found_local, found_remote);
 	return nat_traversal_detected(&ike->sa);
 }
 
