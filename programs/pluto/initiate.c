@@ -86,10 +86,10 @@ static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,
 					 bool background)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
 	if (!oriented(c)) {
 		address_buf a;
@@ -122,10 +122,10 @@ static bool initiate_connection_2_address(struct connection *c,
 					  bool background,
 					  const threadtime_t inception)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
 	if (remote_host != NULL && !address_is_specified(c->remote->host.addr)) {
 
@@ -232,12 +232,12 @@ static bool initiate_connection_3_template(struct connection *c,
 					    bool background,
 					    const threadtime_t inception)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
-	passert(address_is_specified(c->remote->host.addr));
+	PASSERT(c->logger, address_is_specified(c->remote->host.addr));
 
 	if (is_labeled_template(c)) {
 		struct connection *d =
@@ -281,10 +281,10 @@ static bool initiate_connection_4_fab(struct connection *c,
 				      bool background,
 				      const threadtime_t inception)
 {
-	dbg("%s() for %s in the %s with "PRI_LOGGER,
-	    __func__, c->name,
-	    background ? "background" : "foreground",
-	    pri_logger(c->logger));
+	ldbg(c->logger, "%s() for %s in the %s with "PRI_LOGGER,
+	     __func__, c->name,
+	     background ? "background" : "foreground",
+	     pri_logger(c->logger));
 
 	add_policy(c, policy.up);
 
@@ -441,7 +441,7 @@ void initiate(struct connection *c,
 				child = NULL;
 				break;
 			}
-			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
+			ldbg(logger, "initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
 				cc = labeled_parent_instantiate(ike, sec_label, HERE);
