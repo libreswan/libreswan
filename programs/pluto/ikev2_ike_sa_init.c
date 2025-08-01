@@ -74,8 +74,8 @@ static ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
-static void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike);
-static void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike);
+static ikev2_llog_success_fn llog_process_v2_IKE_SA_INIT_request_success;
+static ikev2_llog_success_fn llog_process_v2_IKE_SA_INIT_response_success;
 
 static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 {
@@ -111,8 +111,10 @@ static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 	jam_string(buf, "}");
 }
 
-void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike)
+void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike,
+						 const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent IKE_SA_INIT response to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
@@ -122,8 +124,10 @@ void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike)
 
 }
 
-void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike)
+void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike,
+						  const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 
 		jam_string(buf, "processed IKE_SA_INIT response from ");
@@ -1363,7 +1367,7 @@ static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	.to = &state_v2_IKE_SA_INIT_I,
 	.exchange   = ISAKMP_v2_IKE_SA_INIT,
 	.processor  = NULL, /* XXX: should be set */
-	.llog_success = llog_v2_success_exchange_sent_to,
+	.llog_success = llog_success_ikev2_exchange_initiator,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
@@ -1396,7 +1400,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_COOKIE,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
@@ -1406,7 +1410,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
@@ -1416,7 +1420,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .message_payloads.required = v2P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 

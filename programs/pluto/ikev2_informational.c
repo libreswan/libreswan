@@ -240,7 +240,7 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
 	  .processor  = process_v2_INFORMATIONAL_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 };

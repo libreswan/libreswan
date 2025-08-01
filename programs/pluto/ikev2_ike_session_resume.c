@@ -1079,7 +1079,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_initiate_transition = {
 	.to = &state_v2_IKE_SESSION_RESUME_I,
 	.exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
 	.processor  = NULL, /* XXX: should be set */
-	.llog_success = llog_v2_success_exchange_sent_to,
+	.llog_success = llog_success_ikev2_exchange_initiator,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
@@ -1091,7 +1091,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_responder_transition[] =
 	  .message_payloads.required = v2P(Ni) | v2P(N),
 	  .message_payloads.notification = v2N_TICKET_OPAQUE,
 	  .processor  = process_v2_IKE_SESSION_RESUME_request,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_responder,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
@@ -1103,7 +1103,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_COOKIE, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_COOKIE,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "received REDIRECT notify response; aborting resumption and start IKE_SA_INIT request to new destination",
@@ -1112,7 +1112,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_REDIRECT, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
@@ -1122,7 +1122,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_TICKET_NACK, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_DISCARD,
 	},
 
@@ -1132,7 +1132,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(Nr),
 	  .processor  = process_v2_IKE_SESSION_RESUME_response,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
 	},
 

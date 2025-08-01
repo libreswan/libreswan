@@ -78,6 +78,9 @@
 #include "ddos.h"
 #include "ikev2_nat.h"
 
+static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_response;
+static ikev2_llog_success_fn llog_success_initiate_v2_IKE_AUTH_request;
+
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
@@ -1576,9 +1579,10 @@ static stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 #define STATE_V2_IKE_AUTH_IR STATE_V2_ESTABLISHED_IKE_SA
 
-/* sent EXCHANGE {request,response} to <address> */
-static void llog_v2_success_sent_IKE_AUTH_request(struct ike_sa *ike)
+void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
+					       const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	const struct connection *c = ike->sa.st_connection;
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent IKE_AUTH request to ");
@@ -1614,7 +1618,7 @@ static const struct v2_transition v2_IKE_AUTH_initiate_transition = {
 	.to = &state_v2_IKE_AUTH_I,
 	.exchange   = ISAKMP_v2_IKE_AUTH,
 	.processor  = initiate_v2_IKE_AUTH_request,
-	.llog_success = llog_v2_success_sent_IKE_AUTH_request,
+	.llog_success = llog_success_initiate_v2_IKE_AUTH_request,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
@@ -1629,10 +1633,19 @@ static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {
 	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
 	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 };
+
+void llog_success_process_v2_IKE_AUTH_response(struct ike_sa *ike,
+					       const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
+ 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
+	}
+}
 
 static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
@@ -1655,7 +1668,7 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 	  .encrypted_payloads.required = v2P(IDr) | v2P(AUTH),
 	  .encrypted_payloads.optional = v2P(CERT) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_response,
-	  .llog_success = ldbg_v2_success,/* logged mid transition */
+	  .llog_success = ldbg_success_ikev2,/* logged mid transition */
 	  .timeout_event = EVENT_v2_REPLACE,
 	},
 
@@ -1666,7 +1679,7 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 	  .message_payloads = { .required = v2P(SK), },
 	  /* .encrypted_payloads = { .required = v2P(N), }, */
 	  .processor  = process_v2_IKE_AUTH_failure_response,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_response,
 	},
 
 };

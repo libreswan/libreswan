@@ -54,6 +54,8 @@
 #include "ikev2_auth.h"
 #include "ikev2_notification.h"
 
+static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_EAP_request;
+
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_start;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_final;
 static ikev2_state_transition_fn process_v2_IKE_AUTH_request_EAP_continue;
@@ -833,6 +835,15 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	return STF_OK;
 }
 
+void llog_success_process_v2_IKE_AUTH_EAP_request(struct ike_sa *ike,
+						  const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
+ 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
+	}
+}
+
 /*
  * EAP responder transitions, there is no initiator code.
  */
@@ -847,7 +858,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .encrypted_payloads.required = v2P(IDi),
 	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "process continuing IKE_AUTH(EAP) request",
@@ -857,7 +868,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(EAP),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 	{ .story      = "process final IKE_AUTH(EAP) request",
@@ -868,7 +879,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(AUTH),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
-	  .llog_success = llog_v2_success_state_story,
+	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
 };

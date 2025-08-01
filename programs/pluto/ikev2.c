@@ -36,7 +36,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 
@@ -129,12 +128,15 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
  *
  */
 
-void ldbg_v2_success(struct ike_sa *ike)
+void ldbg_success_ikev2(struct ike_sa *ike, const struct msg_digest *md)
 {
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam_logger_prefix(buf, ike->sa.logger);
 		jam_string(buf, ike->sa.st_v2_transition->story);
 		jam_string(buf, ":");
+		/* */
+		jam_string(buf, " ");
+		jam_enum_long(buf, &message_role_names, v2_msg_role(md));
 		/* IKE role, not message role */
 		switch (ike->sa.st_sa_role) {
 		case SA_INITIATOR: jam_string(buf, " responder"); break;
@@ -145,51 +147,40 @@ void ldbg_v2_success(struct ike_sa *ike)
 	}
 }
 
-void llog_v2_success_exchange_processed(struct ike_sa *ike)
+/* sent EXCHANGE request to <address> */
+void llog_success_ikev2_exchange_initiator(struct ike_sa *ike,
+					const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		switch (ike->sa.st_v2_transition->recv_role) {
-		case MESSAGE_REQUEST: jam_string(buf, "responder processed"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, "initiator processed"); break;
-		case NO_MESSAGE: jam_string(buf, "initiated"); break;
-		}
-		jam_string(buf, " ");
+		jam_string(buf, "sent ");
+		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_string(buf, " request to ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+	}
+}
+
+void llog_success_ikev2_exchange_responder(struct ike_sa *ike,
+					const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "responder processed ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
 		jam_string(buf, "; ");
 		jam_string(buf, ike->sa.st_state->story);
 	}
 }
 
-/* sent EXCHANGE {request,response} to <address> */
-void llog_v2_success_exchange_sent_to(struct ike_sa *ike)
+void llog_success_ikev2_exchange_response(struct ike_sa *ike,
+					  const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam_string(buf, "sent ");
+		jam_string(buf, "initiator processed ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
-		jam_string(buf, " ");
-		switch (ike->sa.st_v2_transition->recv_role) {
-		case NO_MESSAGE: jam_string(buf, "request"); break; /* new exchange */
-		case MESSAGE_REQUEST: jam_string(buf, "response"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, "request"); break;
-		}
-		jam_string(buf, " to ");
-		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
-	}
-}
-
-void llog_v2_success_state_story(struct ike_sa *ike)
-{
- 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "; ");
 		jam_string(buf, ike->sa.st_state->story);
-	}
-}
-
-void llog_v2_success_state_story_to(struct ike_sa *ike)
-{
-	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam_string(buf, ike->sa.st_state->story);
-		jam_string(buf, " to ");
-		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 	}
 }
 
@@ -961,7 +952,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		.story = "suspect message",
 		.to = finite_states[STATE_UNDEFINED],
 		.recv_role = recv_role,
-		.llog_success = ldbg_v2_success,
+		.llog_success = ldbg_success_ikev2,
 	};
 	const struct v2_transition *transition = &undefined_transition;
 
@@ -1574,9 +1565,9 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 
         if (PBAD(ike->sa.logger, transition->llog_success == NULL)) {
-		ldbg_v2_success(ike);
+		ldbg_success_ikev2(ike, md);
 	} else {
-		transition->llog_success(ike);
+		transition->llog_success(ike, md);
 	}
 
 	if (just_established) {

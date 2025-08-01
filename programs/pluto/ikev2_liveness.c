@@ -371,7 +371,7 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition 
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_liveness_request,
-	.llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	.llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	.timeout_event =  EVENT_RETAIN,
 };
 
@@ -386,7 +386,7 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition
 	  .encrypted_payloads.optional = LEMPTY,
 	  .encrypted_payloads.required = LEMPTY,
 	  .processor  = process_v2_INFORMATIONAL_liveness_request,
-	  .llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	  .llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	  .timeout_event = EVENT_RETAIN, },
 };
 
@@ -402,7 +402,7 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .processor  = process_v2_INFORMATIONAL_liveness_response,
-	  .llog_success = ldbg_v2_success, /* shhh, don't clutter up logs with LIVENESS */
+	  .llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	  .timeout_event = EVENT_RETAIN, },
 };
 

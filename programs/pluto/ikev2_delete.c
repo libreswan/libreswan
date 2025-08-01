@@ -29,6 +29,7 @@
 static bool process_v2DELETE_requests(bool *del_ike, struct ike_sa *ike,
 				      struct msg_digest *md, struct pbs_out *pbs);
 
+static ikev2_llog_success_fn llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request;
 static emit_v2_INFORMATIONAL_request_payload_fn emit_v2DELETE;
 static ikev2_state_transition_fn initiate_v2_INFORMATIONAL_v2DELETE_request;
 static ikev2_state_transition_fn process_v2_INFORMATIONAL_v2DELETE_request;
@@ -209,8 +210,10 @@ static stf_status process_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static void llog_v2_success_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike)
+void llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
+							     const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	/*
 	 * XXX: should this, when there are children, also mention
 	 * that they are being deleted?
@@ -555,7 +558,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition 
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
-	.llog_success = llog_v2_success_v2_INFORMATIONAL_v2DELETE_request,
+	.llog_success = llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.timeout_event =  EVENT_RETAIN,
 };
 
@@ -567,7 +570,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_responder_transition
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(D),
 	  .processor  = process_v2_INFORMATIONAL_v2DELETE_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 };
 
@@ -584,7 +587,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(D),
 	  .processor = process_v2_INFORMATIONAL_v2DELETE_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 };
