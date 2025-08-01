@@ -120,22 +120,28 @@ struct crypt_mac natd_hash(const struct hash_desc *hasher,
 	return hash;
 }
 
-void natd_lookup_common(struct state *st,
-			const ip_endpoint sender,
-			bool found_me, bool found_peer)
+/*
+ * XXX: FOUND_ME and FOUND_PEER are true when the hash in the NAT
+ * detection payload that the peer computed for that end matches what
+ * was computed locally (i.e., the end isn't behind a NAT).
+ */
+
+void detect_nat_common(struct ike_sa *ike,
+		       const ip_endpoint sender,
+		       bool found_me, bool found_peer)
 {
-	struct logger *logger = st->logger;
-	st->hidden_variables.st_natd = ipv4_info.address.zero;
+	struct logger *logger = ike->sa.logger;
+	ike->sa.hidden_variables.st_natd = ipv4_info.address.zero;
 
 	/* update NAT-T settings for local policy */
-	switch (st->st_connection->config->encapsulation) {
+	switch (ike->sa.st_connection->config->encapsulation) {
 	case YNA_UNSET:
 	case YNA_AUTO:
 		ldbg(logger, "NAT_TRAVERSAL encaps using auto-detect");
 		if (!found_me) {
 			ldbg(logger, "NAT_TRAVERSAL this end is behind NAT");
-			st->hidden_variables.st_nated_host = true;
-			st->hidden_variables.st_natd = endpoint_address(sender);
+			ike->sa.hidden_variables.st_nated_host = true;
+			ike->sa.hidden_variables.st_natd = endpoint_address(sender);
 		} else {
 			ldbg(logger, "NAT_TRAVERSAL this end is NOT behind NAT");
 		}
@@ -144,30 +150,31 @@ void natd_lookup_common(struct state *st,
 			endpoint_buf b;
 			ldbg(logger, "NAT_TRAVERSAL that end is behind NAT %s",
 			     str_endpoint(&sender, &b));
-			st->hidden_variables.st_nated_peer = true;
-			st->hidden_variables.st_natd = endpoint_address(sender);
+			ike->sa.hidden_variables.st_nated_peer = true;
+			ike->sa.hidden_variables.st_natd = endpoint_address(sender);
 		} else {
 			ldbg(logger, "NAT_TRAVERSAL that end is NOT behind NAT");
 		}
 		break;
 
 	case YNA_NO:
-		st->hidden_variables.st_nat_traversal |= LEMPTY;
+		ike->sa.hidden_variables.st_nat_traversal |= LEMPTY;
 		ldbg(logger, "NAT_TRAVERSAL local policy prohibits encapsulation");
 		break;
 
 	case YNA_YES:
-		ldbg(st->logger, "NAT_TRAVERSAL local policy enforces encapsulation");
-		st->hidden_variables.st_nated_peer = true;
-		st->hidden_variables.st_nated_host = true;
-		st->hidden_variables.st_natd = endpoint_address(sender);
+		ldbg(ike->sa.logger, "NAT_TRAVERSAL local policy enforces encapsulation");
+		ike->sa.hidden_variables.st_nated_peer = true;
+		ike->sa.hidden_variables.st_nated_host = true;
+		ike->sa.hidden_variables.st_natd = endpoint_address(sender);
 		break;
 	}
 
-	if (st->st_connection->config->nat_keepalive) {
+	if (ike->sa.st_connection->config->nat_keepalive) {
 		endpoint_buf b;
 		ldbg(logger, "NAT_TRAVERSAL nat-keepalive enabled %s", str_endpoint(&sender, &b));
 	}
+
 }
 
 bool nat_traversal_detected(struct state *st)

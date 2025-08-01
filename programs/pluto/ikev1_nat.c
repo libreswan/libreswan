@@ -137,9 +137,9 @@ void check_nat_traversal_vid(struct ike_sa *ike, const struct msg_digest *md)
 	}
 }
 
-static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
+static void detect_ikev1_natd(struct msg_digest *md, struct ike_sa *ike)
 {
-	const struct hash_desc *const hasher = st->st_oakley.ta_prf->hasher;
+	const struct hash_desc *const hasher = ike->sa.st_oakley.ta_prf->hasher;
 	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
 
 	passert(md->iface != NULL);
@@ -153,29 +153,29 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	 * We need at least 2 NAT-D (1 for us, many for peer)
 	 */
 	if (i < 2) {
-		llog(RC_LOG, st->logger,
+		llog(RC_LOG, ike->sa.logger,
 		     "NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
 		     i);
-		st->hidden_variables.st_nat_traversal = LEMPTY;
+		ike->sa.hidden_variables.st_nat_traversal = LEMPTY;
 		return;
 	}
 
 	/* First: one with my IP & port */
 
-	struct crypt_mac hash_local = natd_hash(hasher, &st->st_ike_spis,
+	struct crypt_mac hash_local = natd_hash(hasher, &ike->sa.st_ike_spis,
 						md->iface->local_endpoint,
-						st->logger);
+						ike->sa.logger);
 
 	/* Second: one with sender IP & port */
 
-	struct crypt_mac hash_remote = natd_hash(hasher, &st->st_ike_spis,
-						 md->sender, st->logger);
+	struct crypt_mac hash_remote = natd_hash(hasher, &ike->sa.st_ike_spis,
+						 md->sender, ike->sa.logger);
 
-	if (LDBGP(DBG_BASE, st->logger)) {
-		LDBG_log(st->logger, "expected NAT-D(local):");
-		LDBG_hunk(st->logger, hash_local);
-		LDBG_log(st->logger, "expected NAT-D(remote):");
-		LDBG_hunk(st->logger, hash_remote);
+	if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		LDBG_log(ike->sa.logger, "expected NAT-D(local):");
+		LDBG_hunk(ike->sa.logger, hash_local);
+		LDBG_log(ike->sa.logger, "expected NAT-D(remote):");
+		LDBG_hunk(ike->sa.logger, hash_remote);
 	}
 
 	bool found_local = false;
@@ -184,9 +184,9 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 	for (const struct payload_digest *p = hd; p != NULL; p = p->next) {
 
 		shunk_t left = pbs_in_left(&p->pbs);
-		if (LDBGP(DBG_BASE, st->logger)) {
-			LDBG_log(st->logger, "received NAT-D:");
-			LDBG_hunk(st->logger, left);
+		if (LDBGP(DBG_BASE, ike->sa.logger)) {
+			LDBG_log(ike->sa.logger, "received NAT-D:");
+			LDBG_hunk(ike->sa.logger, left);
 		}
 
 		if (hunk_eq(left, hash_local))
@@ -197,7 +197,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 			break;
 	}
 
-	natd_lookup_common(st, md->sender, found_local, found_remote);
+	detect_nat_common(ike, md->sender, found_local, found_remote);
 }
 
 bool ikev1_nat_traversal_add_natd(struct pbs_out *outs,
@@ -417,7 +417,7 @@ void ikev1_natd_init(struct ike_sa *ike, struct msg_digest *md)
 			     "cannot compute NATD payloads without valid PRF");
 			return;
 		}
-		ikev1_natd_lookup(md, &ike->sa);
+		detect_ikev1_natd(md, ike);
 
 		if (ike->sa.hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(&ike->sa, endpoint_hport(md->sender));

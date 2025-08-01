@@ -17,10 +17,9 @@
 #define IKEV2_NAT_H
 
 /*
- * NAT-D
+ * Detect IKEv2 NAT, return true when detected.
  */
-
-extern bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md);
+bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md);
 
 /*
  * move initiator endpoints (src, dst) to NAT ports.
