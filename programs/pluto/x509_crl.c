@@ -186,7 +186,7 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t request_url,
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 	SECItem issuer_secitem = same_shunk_as_secitem(issuer_dn, siBuffer);
 	CERTCertificate *ca = CERT_FindCertByName(handle, &issuer_secitem); /* must free */
 	if (ca == NULL) {
@@ -357,14 +357,18 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		return false;
 	}
 
-	ldbg(logger, "CRL: the sleeping dragon returned from %s with %zu gold",
-	     dp->url, output.len);
-	ldbg_hunk(logger, output);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "CRL: the sleeping dragon returned from %s with %zu gold",
+			 dp->url, output.len);
+		LDBG_hunk(logger, output);
+	}
 
 	chunk_t sign_dn = clone_hunk(output, "signer");		/* must free */
 	pemtobin(&sign_dn);
-	ldbg(logger, "CRL: the sleeping dragon returned from %s signs:", dp->url);
-	ldbg_hunk(logger, sign_dn);
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "CRL: the sleeping dragon returned from %s signs:", dp->url);
+		LDBG_hunk(logger, sign_dn);
+	}
 
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
@@ -373,7 +377,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 	SECItem name = {
 		.type = siBuffer,
 		.data = sign_dn.ptr,
@@ -432,7 +436,7 @@ static void event_check_crls(struct logger *logger)
 	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
+	PASSERT(logger, handle != NULL);
 
 	/*
 	 * Add NSS's CRLs.
@@ -451,7 +455,7 @@ static void event_check_crls(struct logger *logger)
 			}
 		}
 
-		dbg("CRL: releasing crl list in %s()", __func__);
+		ldbg(logger, "CRL: releasing crl list in %s()", __func__);
 		PORT_FreeArena(crl_list->arena, PR_FALSE);
 	}
 

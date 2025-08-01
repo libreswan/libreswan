@@ -958,7 +958,9 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
+				       c->config->send_ca,
+				       ike->sa.logger);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested, send_cert, chain_len);
@@ -1186,7 +1188,9 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* Must free_auth_chain(auth_chain, chain_len); */
 	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert, c->config->send_ca);
+	int chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN, mycert,
+				       c->config->send_ca,
+				       ike->sa.logger);
 
 	ldbg_doi_cert_thinking(ike, cert_ike_type(mycert),
 			       cert_requested, send_cert, chain_len);
