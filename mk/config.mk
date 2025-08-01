@@ -286,6 +286,7 @@ WARNING_CFLAGS += -Wformat
 WARNING_CFLAGS += -Wformat-nonliteral
 WARNING_CFLAGS += -Wformat-security
 WARNING_CFLAGS += -Wundef
+WARNING_CFLAGS += -Wmissing-prototypes
 WARNING_CFLAGS += -Wmissing-declarations
 WARNING_CFLAGS += -Wredundant-decls
 WARNING_CFLAGS += -Wnested-externs
