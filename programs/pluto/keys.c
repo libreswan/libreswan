@@ -881,17 +881,3 @@ err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed,
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key using CKAID", __func__);
 	return err;
 }
-
-const struct pubkey *find_pubkey_by_ckaid(const char *ckaid)
-{
-	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
-		dbg("looking at a PUBKEY");
-		struct pubkey *key = p->key;
-		const ckaid_t *key_ckaid = pubkey_ckaid(key);
-		if (ckaid_starts_with(key_ckaid, ckaid)) {
-			dbg("ckaid matching pubkey");
-			return key;
-		}
-	}
-	return NULL;
-}

@@ -69,8 +69,6 @@ extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xau
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
 
-const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
-
 extern diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 					   const struct crypt_mac *hash,
 					   shunk_t signature,
