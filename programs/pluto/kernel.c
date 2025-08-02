@@ -385,6 +385,9 @@ static const char *said_str(const ip_address dst,
 			    ipsec_spi_t spi,
 			    said_buf *buf)
 {
+	if (!log_ip) {
+		return "<prot@address>";
+	}
 	ip_said said = said_from_address_protocol_spi(dst, sa_proto, spi);
 	return str_said(&said, buf);
 }

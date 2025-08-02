@@ -307,6 +307,8 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			jam_enum_short(buf, &direction_names, sa->direction);
 			jam_string(buf, " ");
 			jam_enum_short(buf, &kernel_mode_names, sa->mode);
+			jam_string(buf, " ");
+			jam_string(buf, sa->story);
 		}
 
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
@@ -468,7 +470,7 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 {
 	ip_said said = said_from_address_protocol_spi(*dst, proto, spi);
 	said_buf sbuf;
-	const char *said_story = str_said(&said, &sbuf);
+	const char *said_story = (log_ip ? str_said(&said, &sbuf) : "<said>");
 
 	if (LDBGP(DBG_ROUTING, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
