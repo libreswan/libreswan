@@ -35,6 +35,8 @@ struct connection;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 					struct pluto_crypto_req *r);
+typedef void ikev2_llog_success_fn(struct ike_sa *ike,
+				   const struct msg_digest *md);
 
 void ikev2_process_packet(struct msg_digest *mdp);
 
@@ -106,8 +108,11 @@ struct v2_transition {
 	/*
 	 * When non-NULL, use this to log the IKE SA's successful
 	 * state transition.
+	 *
+	 * Caution! MD is NULL for initiator; then non-NULL for the
+	 * responder, and the response.
 	 */
-	void (*llog_success)(struct ike_sa *ike);
+	ikev2_llog_success_fn *llog_success;
 };
 
 struct v2_transitions {
@@ -216,11 +221,11 @@ bool v2_notification_fatal(v2_notification_t n);
 
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
-void llog_v2_success_exchange_sent_to(struct ike_sa *ike);
-void llog_v2_success_exchange_processed(struct ike_sa *ike);
-void llog_v2_success_state_story(struct ike_sa *ike);
-void ldbg_v2_success(struct ike_sa *ike);
-void llog_v2_success_state_story_to(struct ike_sa *ike);
+ikev2_llog_success_fn llog_success_ikev2_exchange_initiator;
+ikev2_llog_success_fn llog_success_ikev2_exchange_responder;
+ikev2_llog_success_fn llog_success_ikev2_exchange_response;
+
+ikev2_llog_success_fn ldbg_success_ikev2;
 
 bool accept_v2_notification(v2_notification_t n,
 			    struct logger *logger,

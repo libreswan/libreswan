@@ -671,7 +671,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transit
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.processor = send_v2_INFORMATIONAL_v2N_REDIRECT_request,
-	.llog_success = ldbg_v2_success,
+	.llog_success = ldbg_success_ikev2,
 	.timeout_event =  EVENT_RETAIN,
 };
 
@@ -684,7 +684,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transi
 	  .encrypted_payloads.required = v2P(N),
 	  .encrypted_payloads.notification = v2N_REDIRECT,
 	  .processor = process_v2_INFORMATIONAL_v2N_REDIRECT_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 };
 
@@ -700,7 +700,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transit
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_INFORMATIONAL_v2N_REDIRECT_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 };
 

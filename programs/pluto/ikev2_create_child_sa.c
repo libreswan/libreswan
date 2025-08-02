@@ -61,6 +61,9 @@
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
 
+static ikev2_llog_success_fn llog_success_initiate_v2_CREATE_CHILD_SA_child_request;
+static ikev2_llog_success_fn llog_success_ikev2_rekey_ike_request;
+
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
 
 static ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_new_child_request;
@@ -528,8 +531,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-static void llog_v2_success_sent_CREATE_CHILD_SA_child_request(struct ike_sa *ike)
+void llog_success_initiate_v2_CREATE_CHILD_SA_child_request(struct ike_sa *ike,
+							    const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval == NULL) {
@@ -571,7 +576,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_child_initiate_transi
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
-	.llog_success = llog_v2_success_sent_CREATE_CHILD_SA_child_request,
+	.llog_success = llog_success_initiate_v2_CREATE_CHILD_SA_child_request,
 	.timeout_event = EVENT_RETAIN,
 };
 
@@ -602,7 +607,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_child_responder_trans
 	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .encrypted_payloads.notification = v2N_REKEY_SA,
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 };
@@ -621,7 +626,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
 	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) |  v2P(KE),
 	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "process Child SA response (new or rekey) (CREATE_CHILD_SA)",
@@ -633,7 +638,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
 	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
 	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "process CREATE_CHILD_SA failure response (new or rekey Child SA, rekey IKE SA)",
@@ -643,7 +648,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_response_transition[] = {
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
 
@@ -932,7 +937,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_new_child_initiate_transiti
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
-	.llog_success = llog_v2_success_sent_CREATE_CHILD_SA_child_request,
+	.llog_success = llog_success_initiate_v2_CREATE_CHILD_SA_child_request,
 	.timeout_event = EVENT_RETAIN,
 };
 
@@ -962,7 +967,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_new_child_responder_transit
 	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(TSi) | v2P(TSr),
 	  .encrypted_payloads.optional = v2P(KE) | v2P(N) | v2P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN, },
 
 };
@@ -1647,8 +1652,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	return larval_ike;
 }
 
-static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
+void llog_success_ikev2_rekey_ike_request(struct ike_sa *ike,
+					  const struct msg_digest *md)
 {
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	/* XXX: should the lerval SA be a parameter? */
 	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (larval != NULL) {
@@ -1671,7 +1678,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_ike_initiate_transiti
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
 	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
-	.llog_success = llog_v2_success_rekey_ike_request,
+	.llog_success = llog_success_ikev2_rekey_ike_request,
 	.timeout_event = EVENT_RETAIN,
 };
 
@@ -1700,7 +1707,7 @@ static const struct v2_transition v2_CREATE_CHILD_SA_rekey_ike_responder_transit
 	  .encrypted_payloads.required = v2P(SA) | v2P(Ni) | v2P(KE),
 	  .encrypted_payloads.optional = v2P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
-	  .llog_success = ldbg_v2_success,
+	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_RETAIN },
 
 };

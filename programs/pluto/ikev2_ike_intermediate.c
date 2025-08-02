@@ -635,7 +635,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.to = &state_v2_IKE_INTERMEDIATE_I,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
-	.llog_success = llog_v2_success_exchange_sent_to,
+	.llog_success = llog_success_ikev2_exchange_initiator,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
@@ -649,7 +649,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 	  .encrypted_payloads.required = LEMPTY,
 	  .encrypted_payloads.optional = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_responder,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
 };
@@ -662,7 +662,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	  .message_payloads.required = v2P(SK),
 	  .message_payloads.optional = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
-	  .llog_success = llog_v2_success_exchange_processed,
+	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
