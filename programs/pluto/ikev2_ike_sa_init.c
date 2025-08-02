@@ -131,7 +131,7 @@ void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 
 		jam_string(buf, "processed IKE_SA_INIT response from ");
-		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
 		jam_string(buf, " ");
 
 		jam_secured(buf, ike);
