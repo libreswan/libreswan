@@ -24,12 +24,14 @@ west #
 west #
  ipsec whack --impair suppress_retransmits
 west #
- ipsec auto --add westnet-eastnet-ikev2
+ ipsec whack --impair revival
+west #
+ ipsec add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": added IKEv2 connection
 west #
- ipsec status | grep westnet-eastnet-ikev2 | grep policy: | grep -v modecfg
+ ipsec connectionstatus westnet-eastnet-ikev2 | grep IKE
 "westnet-eastnet-ikev2":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
-"westnet-eastnet-ikev2":   v2-auth-hash-policy: none;
+"westnet-eastnet-ikev2":   IKE algorithms: AES_CBC_128-HMAC_SHA2_256-DH31-MODP8192
 west #
  echo "initdone"
 initdone
@@ -39,8 +41,10 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}, initiating IKE_INTERMEDIATE
 "westnet-eastnet-ikev2" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: N(PPK_IDENTITY) not received, continuing without PPK
 "westnet-eastnet-ikev2" #1: initiator processed IKE_INTERMEDIATE; processed IKE_INTERMEDIATE response, initiating IKE_INTERMEDIATE or IKE_AUTH
-"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with rsa-digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3072-bit PKCS#1 1.5 RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
@@ -53,4 +57,3 @@ west #
  echo done
 done
 west #
- 
