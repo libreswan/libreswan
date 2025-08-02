@@ -2600,14 +2600,15 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->intermediate = extract_yn("", "intermediate", wm->intermediate,
-					  /*value_when_unset*/YN_NO,
-					  wm, verbose);
-	if (config->intermediate) {
+	bool intermediate = extract_yn("", "intermediate", wm->intermediate,
+				       /*value_when_unset*/YN_NO,
+				       wm, verbose);
+	if (intermediate) {
 		if (ike_version < IKEv2) {
 			return diag("intermediate requires IKEv2");
 		}
 	}
+	config->intermediate = intermediate;
 
 	config->session_resumption = extract_yn("", "session_resumption", wm->session_resumption,
 						/*value_when_unset*/YN_NO,
@@ -3229,6 +3230,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (wm->ike == NULL),
+			.addke = intermediate,
 		};
 
 		struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
@@ -3281,6 +3283,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (encap_alg == NULL),
+			.addke = intermediate,
 		};
 
 		/*
