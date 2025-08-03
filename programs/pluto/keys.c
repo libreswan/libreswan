@@ -307,7 +307,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 
 		/* should have been logged */
 		vdbg("'%s' failed", keyid_str);
-		pexpect(s->key == NULL);
+		vexpect(s->key == NULL);
 	}
 
 	return false; /* keep searching */
@@ -321,10 +321,11 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 				    const char *signature_payload_name)
 {
 	const struct connection *c = ike->sa.st_connection;
+	struct logger *logger = ike->sa.logger;
 	struct tac_state s = {
 		/* in */
 		.signer = signer,
-		.logger = ike->sa.logger,
+		.logger = logger,
 		.hash = hash,
 		.now = realnow(),
 		.signature = signature,
@@ -340,11 +341,11 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	/* try all appropriate Public keys */
 
 	dn_buf buf;
-	dbg("CA is '%s' for %s key using %s signature",
-	    str_dn_or_null(ASN1(c->remote->host.config->ca), "%any", &buf),
-	    signer->type->name, signer->name);
+	ldbg(logger, "CA is '%s' for %s key using %s signature",
+	     str_dn_or_null(ASN1(c->remote->host.config->ca), "%any", &buf),
+	     signer->type->name, signer->name);
 
-	passert(ike->sa.st_remote_certs.processed);
+	PASSERT(logger, ike->sa.st_remote_certs.processed);
 
 	/*
 	 * Prune the expired public keys from the pre-loaded public
@@ -356,9 +357,9 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		if (!is_realtime_epoch(key->until_time) &&
 		    realtime_cmp(key->until_time, <, s.now)) {
 			id_buf printkid;
-			llog_sa(RC_LOG, ike,
-				  "cached %s public key '%s' has expired and has been deleted",
-				  key->content.type->name, str_id(&key->id, &printkid));
+			llog(RC_LOG, logger,
+			     "cached %s public key '%s' has expired and has been deleted",
+			     key->content.type->name, str_id(&key->id, &printkid));
 			*pp = free_public_keyentry(*(pp));
 			continue; /* continue with next public key */
 		}
@@ -371,7 +372,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	}
 
 	if (s.fatal_diag != NULL) {
-		passert(s.key != NULL);
+		PASSERT(logger, s.key != NULL);
 		id_buf idb;
 		return diag_diag(&s.fatal_diag, "authentication aborted: problem with '%s': ",
 				 str_id(&s.key->id, &idb));
@@ -383,18 +384,18 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 			return diag("authentication failed: no certificate matched %s with %s and '%s'",
 				    signer->name, hash_algo->common.fqn,
 				    str_id(&c->remote->host.id, &idb));
-		} else {
-			id_buf idb;
-			return diag("authentication failed: using %s with %s for '%s' tried%s",
-				    signer->name, hash_algo->common.fqn,
-				    str_id(&c->remote->host.id, &idb),
-				    s.tried);
 		}
+
+		id_buf idb;
+		return diag("authentication failed: using %s with %s for '%s' tried%s",
+			    signer->name, hash_algo->common.fqn,
+			    str_id(&c->remote->host.id, &idb),
+			    s.tried);
 	}
 
-	pexpect(s.key != NULL);
-	pexpect(s.tried_cnt > 0);
-	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+	PEXPECT(logger, s.key != NULL);
+	PEXPECT(logger, s.tried_cnt > 0);
+	LLOG_JAMBUF(RC_LOG, logger, buf) {
 		if (ike->sa.st_ike_version == IKEv2) {
 			/*
 			 * IKEv2 only; IKEv1 logs established as a
@@ -453,6 +454,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 {
 	/* under certain conditions, override that_id to %ANYADDR */
 
+	struct logger *logger = c->logger;
 	struct id rw_id; /* MUST BE AT SAME SCOPE AS THAT_ID */
 	const struct id *const this_id = &c->local->host.id;
 	const struct id *that_id = &c->remote->host.id; /* can change */
@@ -477,21 +479,21 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		 * AFI isn't known; but presumably the local end
 		 * is oriented and known.
 		 */
-		pexpect(address_is_specified(c->local->host.addr));
+		PEXPECT(logger, address_is_specified(c->local->host.addr));
 		/* roadwarrior: replace that with %ANYADDR */
 		rw_id = (struct id) {
 			.kind = address_info(c->local->host.addr)->id_ip_addr,
 			.ip_addr = address_info(c->local->host.addr)->address.zero,
 		};
 		id_buf old_buf, new_buf;
-		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
-		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
+		ldbg(logger, "%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
+		     __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
 		that_id = &rw_id;
 	}
 
 	id_buf this_buf, that_buf;
 	name_buf kb;
-	ldbg(c->logger, "%s() using IDs for %s->%s of kind %s",
+	ldbg(logger, "%s() using IDs for %s->%s of kind %s",
 	     __func__,
 	     str_id(this_id, &this_buf),
 	     str_id(that_id, &that_buf),
@@ -504,9 +506,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 /*
  * find the struct secret associated with an XAUTH username.
  */
-const struct secret_preshared_stuff *xauth_secret_by_xauthname(char *xauthname)
+const struct secret_preshared_stuff *xauth_secret_by_xauthname(char *xauthname,
+							       struct logger *logger)
 {
-	dbg("started looking for xauth secret for %s", xauthname);
+	ldbg(logger, "started looking for xauth secret for %s", xauthname);
 
 	struct id xa_id = {
 		.kind = ID_FQDN,
@@ -587,8 +590,10 @@ const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connec
 		 * list.
 		 */
 		ITEMS_FOR_EACH(ppk_id_shunk, ppk_ids_shunks) {
-			ldbg(c->logger, "try to find PPK with PPK_ID:");
-			ldbg_hunk(c->logger, *ppk_id_shunk);
+			if (LDBGP(DBG_BASE, logger)) {
+				LDBG_log(c->logger, "try to find PPK with PPK_ID:");
+				LDBG_hunk(c->logger, *ppk_id_shunk);
+			}
 
 			const struct secret_ppk_stuff *ppk =
 				secret_ppk_stuff_by_id(pluto_secrets, *ppk_id_shunk);
@@ -631,11 +636,11 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 		const char *nickname = cert_nickname(&c->local->host.config->cert);
 
 		id_buf this_buf, that_buf;
-		dbg("%s() using certificate %s to find private key for %s->%s of kind %s",
-		    __func__, nickname,
-		    str_id(&c->local->host.id, &this_buf),
-		    str_id(&c->remote->host.id, &that_buf),
-		    type->name);
+		ldbg(logger, "%s() using certificate %s to find private key for %s->%s of kind %s",
+		     __func__, nickname,
+		     str_id(&c->local->host.id, &this_buf),
+		     str_id(&c->remote->host.id, &that_buf),
+		     type->name);
 
 		struct secret_pubkey_stuff *pks = NULL;
 		bool load_needed;
@@ -643,10 +648,12 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 							     &c->local->host.config->cert,
 							     &pks, &load_needed, logger);
 		if (err != NULL) {
-			dbg("private key for certificate %s not found in NSS DB",
-			    nickname);
+			ldbg(logger, "private key for certificate %s not found in NSS DB",
+			     nickname);
 			return NULL;
-		} else if (load_needed) {
+		}
+
+		if (load_needed) {
 			/*
 			 * XXX: the private key that was pre-loaded
 			 * during "whack add" may have been deleted
@@ -665,9 +672,9 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		pexpect(pks->content.type == type);
-		dbg("connection %s's %s private key found in NSS DB using cert",
-		    c->name, type->name);
+		PEXPECT(logger, pks->content.type == type);
+		ldbg(logger, "connection %s's %s private key found in NSS DB using cert",
+		     c->name, type->name);
 		return pks;
 	}
 
@@ -675,11 +682,11 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 	if (c->local->host.config->ckaid != NULL) {
 		ckaid_buf ckb;
 		id_buf this_buf, that_buf;
-		dbg("%s() using CKAID %s to find private key for %s->%s of kind %s",
-		    __func__, str_ckaid(c->local->host.config->ckaid, &ckb),
-		    str_id(&c->local->host.id, &this_buf),
-		    str_id(&c->remote->host.id, &that_buf),
-		    type->name);
+		ldbg(logger, "%s() using CKAID %s to find private key for %s->%s of kind %s",
+		     __func__, str_ckaid(c->local->host.config->ckaid, &ckb),
+		     str_id(&c->local->host.id, &this_buf),
+		     str_id(&c->remote->host.id, &that_buf),
+		     type->name);
 
 		struct secret_pubkey_stuff *pks;
 		bool load_needed;
@@ -688,10 +695,12 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 		if (err != NULL) {
 			ckaid_buf ckb;
 			llog(RC_LOG, logger,
-				    "private key matching CKAID '%s' not found: %s",
-				    str_ckaid(c->local->host.config->ckaid, &ckb), err);
+			     "private key matching CKAID '%s' not found: %s",
+			     str_ckaid(c->local->host.config->ckaid, &ckb), err);
 			return NULL;
-		} else if (load_needed) {
+		}
+
+		if (load_needed) {
 			/*
 			 * XXX: the private key that was pre-loaded
 			 * during "whack add" may have been deleted
@@ -703,23 +712,22 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 			 */
 			ckaid_buf ckb;
 			llog(LOG_STREAM/*not-whack-grr*/, logger,
-				    "reloaded private key matching %s CKAID %s",
-				    c->local->config->leftright, str_ckaid(c->local->host.config->ckaid, &ckb));
+			     "reloaded private key matching %s CKAID %s",
+			     c->local->config->leftright, str_ckaid(c->local->host.config->ckaid, &ckb));
 		}
-
 
 		/*
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		pexpect(pks->content.type == type);
-		dbg("connection %s's %s private key found in NSS DB using CKAID",
-		    c->name, type->name);
+		PEXPECT(logger, pks->content.type == type);
+		ldbg(logger, "connection %s's %s private key found in NSS DB using CKAID",
+		     c->name, type->name);
 		return pks;
 	}
 
-	dbg("looking for connection %s's %s private key",
-	    c->name, type->name);
+	ldbg(logger, "looking for connection %s's %s private key",
+	     c->name, type->name);
 	struct secret *s = lsw_get_secret(c, type->private_key_kind, true);
 	if (s == NULL) {
 		llog(RC_LOG, logger, "connection's %s private key not found",
@@ -728,11 +736,11 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 	}
 
 	struct secret_pubkey_stuff *pks = secret_pubkey_stuff(s);
-	passert(pks != NULL);
+	PASSERT(logger, pks != NULL);
 
-	pexpect(pks->content.type == type);
-	dbg("connection %s's %s private key found",
-	    c->name, type->name);
+	PEXPECT(logger, pks->content.type == type);
+	ldbg(logger, "connection %s's %s private key found",
+	     c->name, type->name);
 	return pks;
 }
 

@@ -2480,7 +2480,8 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 
 					if (ike->sa.st_xauth_password.ptr == NULL) {
 						const struct secret_preshared_stuff *pks =
-							xauth_secret_by_xauthname(ike->sa.st_xauth_username);
+							xauth_secret_by_xauthname(ike->sa.st_xauth_username,
+										  ike->sa.logger);
 						ldbg(ike->sa.logger, "looked up username=%s, got=%p",
 						    ike->sa.st_xauth_username,
 						    pks);

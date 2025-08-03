@@ -64,7 +64,8 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed,
 err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed,
 				   const struct logger *logger);
 
-extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xauthname);
+extern const struct secret_preshared_stuff  *xauth_secret_by_xauthname(char *xauthname,
+								       struct logger *logger);
 
 /* keys from ipsec.conf */
 extern struct pubkey_list *pluto_pubkeys;
