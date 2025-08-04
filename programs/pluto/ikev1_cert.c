@@ -128,7 +128,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	/* either something went wrong, or there were no certs */
 	if (certs.cert_chain == NULL) {
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-		if (certs.crl_update_needed && deltasecs(x509_crl.check_interval) > 0) {
+		if (certs.force_crl_update && deltasecs(x509_crl.check_interval) > 0) {
 			/*
 			 * When a strict crl check fails, the certs
 			 * are deleted and CRL_NEEDED is set.

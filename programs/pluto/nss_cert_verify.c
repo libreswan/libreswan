@@ -529,7 +529,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 {
 	struct verified_certs result = {
 		.cert_chain = NULL,
-		.crl_update_needed = false,
+		.force_crl_update = false,
 		.harmless = true,
 		.groundhog = false,
 	};
@@ -597,7 +597,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 			llog(RC_LOG, logger,
 			     "certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing, forcing CRL update");
 			release_certs(&result.cert_chain);
-			result.crl_update_needed = true;
+			result.force_crl_update = true;
 			result.harmless = false;
 			return result;
 		}
