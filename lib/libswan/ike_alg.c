@@ -192,7 +192,8 @@ bool ike_alg_is_valid(const struct ike_alg *alg)
 	return false;
 }
 
-bool ike_alg_is_ike(const struct ike_alg *alg)
+bool ike_alg_is_ike(const struct ike_alg *alg,
+		    const struct logger *logger UNUSED)
 {
 	return alg->algo_type->desc_is_ike(alg);
 }
@@ -269,7 +270,7 @@ static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algo
 {
 	const struct ike_alg *alg = lookup_by_id(algorithms, IKEv1_OAKLEY_ID,
 						 id, b, DBG_CRYPT);
-	if (alg == NULL || !ike_alg_is_ike(alg)) {
+	if (alg == NULL || !ike_alg_is_ike(alg, &global_logger)) {
 		return NULL;
 	}
 
@@ -1202,7 +1203,7 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	 */
 	bool v1_ike;
 	bool v2_ike;
-	if (ike_alg_is_ike(alg)) {
+	if (ike_alg_is_ike(alg, &global_logger)) {
 		v1_ike = alg->id[IKEv1_OAKLEY_ID] >= 0;
 		v2_ike = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {

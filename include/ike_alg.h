@@ -784,7 +784,7 @@ const struct ipcomp_desc **next_ipcomp_desc(const struct ipcomp_desc **last);
  *
  * Code should also filter on ikev1_oakley_id and/or ikev2_id.
  */
-bool ike_alg_is_ike(const struct ike_alg *alg);
+bool ike_alg_is_ike(const struct ike_alg *alg, 	const struct logger *logger);
 
 /*
  * Is the algorithm valid (or did FIPS, say, disable it)?

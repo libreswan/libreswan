@@ -131,6 +131,8 @@ void show_ike_alg_connection(struct show *s,
  */
 void show_ike_alg_status(struct show *s)
 {
+	struct logger *logger = show_logger(s);
+
 	show_separator(s);
 	show(s, "IKE algorithms supported:");
 	show_separator(s);
@@ -138,7 +140,7 @@ void show_ike_alg_status(struct show *s)
 	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = (*algp);
-		if (ike_alg_is_ike(&(alg)->common)) {
+		if (ike_alg_is_ike(&(alg)->common, logger)) {
 			passert(alg->common.ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
 			SHOW_JAMBUF(s, buf) {
 				jam_string(buf, "algorithm IKE encrypt:");
@@ -166,7 +168,7 @@ void show_ike_alg_status(struct show *s)
 	for (const struct prf_desc **algp = next_prf_desc(NULL);
 	     algp != NULL; algp = next_prf_desc(algp)) {
 		const struct prf_desc *alg = (*algp);
-		if (ike_alg_is_ike(&(alg)->common)) {
+		if (ike_alg_is_ike(&(alg)->common, logger)) {
 			show(s,
 			     "algorithm IKE PRF: name=%s, hashlen=%zu",
 			     alg->common.fqn, alg->prf_output_size);

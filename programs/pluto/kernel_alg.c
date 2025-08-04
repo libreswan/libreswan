@@ -48,21 +48,21 @@ static size_t ipcomp_num = 0;
  */
 
 #define ADD(ALG, DESC)							\
-	dbg("adding %s to kernel algorithm db",				\
+	ldbg(logger, "adding %s to kernel algorithm db",			\
 	     alg->common.fqn);						\
 	size_t i;							\
 	for (i = 0; i < DESC##_num; i++) {				\
 		int cmp = strcmp(DESC##_by_fqn[i]->common.fqn,		\
 				 alg->common.fqn);			\
 		if (cmp == 0) {						\
-			dbg("dropping %s kernel algorithm db duplicate found at %zu", \
-			    alg->common.fqn, i);			\
+			ldbg(logger, "dropping %s kernel algorithm db duplicate found at %zu", \
+			     alg->common.fqn, i);			\
 			return;						\
 		} else if (cmp > 0) {					\
 			break; /* insertion point found */		\
 		}							\
 	}								\
-	passert(DESC##_num < elemsof(DESC##_by_fqn));			\
+	PASSERT(logger, DESC##_num < elemsof(DESC##_by_fqn));		\
 	/* make space by moving the overlapping tail */			\
 	memmove(&DESC##_by_fqn[i+1], &DESC##_by_fqn[i],			\
 		(DESC##_num - i) * sizeof(DESC##_by_fqn[0]));		\
@@ -71,35 +71,40 @@ static size_t ipcomp_num = 0;
 	DESC##_by_fqn[i] = ALG;
 
 
-void kernel_integ_add(const struct integ_desc *alg)
+void kernel_integ_add(const struct integ_desc *alg,
+		      const struct logger *logger)
 {
 	ADD(alg, integ);
 }
 
-void kernel_encrypt_add(const struct encrypt_desc *alg)
+void kernel_encrypt_add(const struct encrypt_desc *alg,
+			const struct logger *logger)
 {
 	ADD(alg, encrypt);
 }
 
-void kernel_ipcomp_add(const struct ipcomp_desc *alg)
+void kernel_ipcomp_add(const struct ipcomp_desc *alg,
+		       const struct logger *logger)
 {
 	ADD(alg, ipcomp);
 }
 
-void kernel_alg_add(const struct ike_alg *alg)
+void kernel_alg_add(const struct ike_alg *alg,
+		    const struct logger *logger)
 {
 	if (alg->algo_type == &ike_alg_encrypt) {
-		kernel_encrypt_add(encrypt_desc(alg));
+		kernel_encrypt_add(encrypt_desc(alg), logger);
 	} else if (alg->algo_type == &ike_alg_integ) {
-		kernel_integ_add(integ_desc(alg));
+		kernel_integ_add(integ_desc(alg), logger);
 	} else if (alg->algo_type == &ike_alg_ipcomp) {
-		kernel_ipcomp_add(ipcomp_desc(alg));
+		kernel_ipcomp_add(ipcomp_desc(alg), logger);
 	} else {
-		passert(0);
+		PASSERT(logger, 0);
 	}
 }
 
-bool kernel_alg_dh_ok(const struct kem_desc *dh)
+bool kernel_alg_dh_ok(const struct kem_desc *dh,
+		      const struct logger *logger)
 {
 	if (dh == NULL) {
 		llog_pexpect(&global_logger, HERE,
@@ -107,11 +112,11 @@ bool kernel_alg_dh_ok(const struct kem_desc *dh)
 		return false;
 	}
 	/* require an in-process/ike implementation of DH */
-	return ike_alg_is_ike(&dh->common);
+	return ike_alg_is_ike(&dh->common, logger);
 }
 
-#define KERNEL_ALG_OK(ALG, DESC)\
-	if (!pexpect(ALG != NULL)) {			\
+#define KERNEL_ALG_OK(ALG, DESC)			\
+	if (!PEXPECT(logger, ALG != NULL)) {		\
 		return false;				\
 	}						\
 	for (unsigned i = 0; i < DESC##_num; i++) {	\
@@ -122,44 +127,49 @@ bool kernel_alg_dh_ok(const struct kem_desc *dh)
 	return false;
 
 
-bool kernel_alg_encrypt_ok(const struct encrypt_desc *alg)
+bool kernel_alg_encrypt_ok(const struct encrypt_desc *alg,
+			   const struct logger *logger)
 {
 	KERNEL_ALG_OK(alg, encrypt);
 }
 
-bool kernel_alg_integ_ok(const struct integ_desc *alg)
+bool kernel_alg_integ_ok(const struct integ_desc *alg,
+			 const struct logger *logger)
 {
 	KERNEL_ALG_OK(alg, integ);
 }
 
-bool kernel_alg_ipcomp_ok(const struct ipcomp_desc *alg)
+bool kernel_alg_ipcomp_ok(const struct ipcomp_desc *alg,
+			  const struct logger *logger)
 {
 	KERNEL_ALG_OK(alg, ipcomp);
 }
 
-bool kernel_alg_is_ok(const struct ike_alg *alg)
+bool kernel_alg_is_ok(const struct ike_alg *alg,
+		      const struct logger *logger)
 {
 	if (alg == NULL) {
-		llog_pexpect(&global_logger, HERE,
+		llog_pexpect(logger, HERE,
 			     "algorithm needs to be valid (non-NULL)");
 		return false;
 	} else if (alg->algo_type == &ike_alg_kem) {
-		return kernel_alg_dh_ok(kem_desc(alg));
+		return kernel_alg_dh_ok(kem_desc(alg), logger);
 	} else if (alg->algo_type == &ike_alg_encrypt) {
-		return kernel_alg_encrypt_ok(encrypt_desc(alg));
+		return kernel_alg_encrypt_ok(encrypt_desc(alg), logger);
 	} else if (alg->algo_type == &ike_alg_integ) {
-		return kernel_alg_integ_ok(integ_desc(alg));
+		return kernel_alg_integ_ok(integ_desc(alg), logger);
 	} else if (alg->algo_type == &ike_alg_ipcomp) {
-		return kernel_alg_ipcomp_ok(ipcomp_desc(alg));
+		return kernel_alg_ipcomp_ok(ipcomp_desc(alg), logger);
 	} else {
-		llog_passert(&global_logger, HERE,
+		llog_passert(logger, HERE,
 			     "algorithm %s of type %s is not valid in the kernel",
 			     alg->fqn, ike_alg_type_name(alg->algo_type));
 	}
 }
 
 bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
-				 int keylen, size_t *key_size)
+				 int keylen, size_t *key_size,
+				 const struct logger *logger)
 {
 	/*
 	 * Assume the two ENUMs are the same!
@@ -175,8 +185,8 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	if (keylen == 0) {
 		if (encrypt != &ike_alg_encrypt_null) {
 			keylen = encrypt_min_key_bit_length(encrypt);
-			dbg("XXX: %s has key length of 0, adjusting to %d",
-			    encrypt->common.fqn, keylen);
+			ldbg(logger, "XXX: %s has key length of 0, adjusting to %d",
+			     encrypt->common.fqn, keylen);
 		}
 	}
 
@@ -185,8 +195,8 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	 * much.
 	 */
 	*key_size = keylen / BITS_IN_BYTE;
-	dbg("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
-	    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg);
+	ldbg(logger, "encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
+	     encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg);
 	return true;
 }
 

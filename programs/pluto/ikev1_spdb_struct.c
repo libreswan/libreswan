@@ -140,7 +140,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		ldbg(logger, "ignoring ESP proposal with NULLed or unknown encryption");
 		return false;       /* try another */
 	}
-	if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
+	if (!kernel_alg_encrypt_ok(ta->ta_encrypt, logger)) {
 		/*
 		 * No kernel support.  Needed because ALG_INFO==NULL
 		 * will act as a wild card.  XXX: but is ALG_INFO ever
@@ -176,7 +176,8 @@ static bool ikev1_verify_esp(const struct connection *c,
 		return false;       /* try another */
 	}
 
-	if (ta->ta_integ != &ike_alg_integ_none && !kernel_alg_integ_ok(ta->ta_integ)) {
+	if (ta->ta_integ != &ike_alg_integ_none &&
+	    !kernel_alg_integ_ok(ta->ta_integ, logger)) {
 		/*
 		 * No kernel support.  Needed because ALG_INFO==NULL
 		 * will act as a wild card.
@@ -287,7 +288,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	if (encap_proto == ENCAP_PROTO_ESP) {
 		ealg_i = algs.encrypt->common.id[IKEv1_IPSEC_ID];
 		/* already checked by the parser? */
-		if (!kernel_alg_encrypt_ok(algs.encrypt)) {
+		if (!kernel_alg_encrypt_ok(algs.encrypt, logger)) {
 			llog(RC_LOG, logger,
 			     "requested kernel enc ealg_id=%d not present",
 			     ealg_i);
@@ -298,7 +299,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int aalg_i = algs.integ->integ_ikev1_ah_transform;
 
 	/* already checked by the parser? */
-	if (!kernel_alg_integ_ok(algs.integ)) {
+	if (!kernel_alg_integ_ok(algs.integ, logger)) {
 		ldbg(logger, "kernel_alg_db_add() kernel auth aalg_id=%d not present", aalg_i);
 		return false;
 	}

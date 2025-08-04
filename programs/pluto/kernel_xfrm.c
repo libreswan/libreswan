@@ -415,14 +415,14 @@ static void kernel_xfrm_init(struct logger *logger)
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = *algp;
 		if (alg->encrypt_netlink_xfrm_name != NULL) {
-			kernel_encrypt_add(alg);
+			kernel_encrypt_add(alg, logger);
 		}
 	}
 	for (const struct integ_desc **algp = next_integ_desc(NULL);
 	     algp != NULL; algp = next_integ_desc(algp)) {
 		const struct integ_desc *alg = *algp;
 		if (alg->integ_netlink_xfrm_name != NULL) {
-			kernel_integ_add(alg);
+			kernel_integ_add(alg, logger);
 		}
 	}
 }
