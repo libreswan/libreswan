@@ -85,7 +85,7 @@ static int state_event_cmp(const void *lp, const void *rp)
 	monotime_t r = (*re)->ev_time;
 	int sign = monotime_sub_sign(l, r);
 	monotime_buf lb, rb;
-	dbg("%s - %s = %d", str_monotime(l, &lb), str_monotime(r, &rb), sign);
+	ldbg(&global_logger, "%s - %s = %d", str_monotime(l, &lb), str_monotime(r, &rb), sign);
 	return sign;
 }
 
@@ -172,9 +172,9 @@ void delete_state_event(struct state_event **evp, where_t where)
 	passert(e->ev_state != NULL);
 
 	name_buf tb;
-	dbg(""PRI_SO" deleting %s",
-	    pri_so(e->ev_state->st_serialno),
-	    str_enum_long(&event_type_names, e->ev_type, &tb));
+	ldbg(&global_logger, ""PRI_SO" deleting %s",
+	     pri_so(e->ev_state->st_serialno),
+	     str_enum_long(&event_type_names, e->ev_type, &tb));
 
 	/* first the event */
 	destroy_timeout(&e->timeout);

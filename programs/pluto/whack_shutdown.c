@@ -79,17 +79,18 @@ static bool pluto_leave_state;
  * 10 lock file exists
  */
 
-static void exit_prologue(enum pluto_exit_code code);
+static void exit_prologue(enum pluto_exit_code code, struct logger *logger);
 static void exit_epilogue(void) NEVER_RETURNS;
 static void server_helpers_stopped_callback(void);
 
 void libreswan_exit(enum pluto_exit_code exit_code)
 {
-	exit_prologue(exit_code);
+	struct logger *logger = &global_logger;
+	exit_prologue(exit_code, logger);
 	exit_epilogue();
 }
 
-static void exit_prologue(enum pluto_exit_code exit_code)
+static void exit_prologue(enum pluto_exit_code exit_code, struct logger *logger UNUSED/*sometimes*/)
 {
 	/*
 	 * Tell the world, well actually all the threads, that pluto
@@ -102,7 +103,7 @@ static void exit_prologue(enum pluto_exit_code exit_code)
 
 	/* needed because we may be called in odd state */
  #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_STOPPING, exit_code);
+	pluto_sd(PLUTO_SD_STOPPING, exit_code, logger);
  #endif
 }
 
@@ -157,7 +158,7 @@ void exit_epilogue(void)
 		delete_lock_file();	/* delete any lock files */
 		close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-		pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
+		pluto_sd(PLUTO_SD_EXIT, pluto_exit_code, logger);
 #endif
 		exit(pluto_exit_code);
 	}
@@ -224,7 +225,7 @@ void exit_epilogue(void)
 	}
 	close_log();	/* close the logfiles */
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_EXIT, pluto_exit_code);
+	pluto_sd(PLUTO_SD_EXIT, pluto_exit_code, logger);
 #endif
 	exit(pluto_exit_code);	/* exit, with our error code */
 }
@@ -256,7 +257,7 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * Flag that things are going down and delete anything that
 	 * isn't asynchronous (or depends on something asynchronous).
 	 */
-	exit_prologue(PLUTO_EXIT_OK);
+	exit_prologue(PLUTO_EXIT_OK, logger);
 
 	/*
 	 * Wait for the crypto-helper threads to notice EXITING_PLUTO

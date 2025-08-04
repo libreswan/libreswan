@@ -229,7 +229,7 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 	/* do the deed */
 
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_RELOADING, SD_REPORT_NO_STATUS, logger);
 #endif
 	llog(RC_LOG, logger, "listening for IKE messages");
 	listening = true;
@@ -238,7 +238,7 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 	load_preshared_secrets(logger);
 	load_groups(logger);
 #ifdef USE_SYSTEMD_WATCHDOG
-	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS, logger);
 #endif
 }
 

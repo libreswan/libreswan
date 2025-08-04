@@ -173,7 +173,7 @@ statetime_t statetime_start(struct state *st)
 		 * IKEv1 sometimes doesn't have a state to time, just
 		 * ignore it.
 		 */
-		dbg("in %s() with no state", __func__);
+		ldbg(&global_logger, "in %s() with no state", __func__);
 		return disabled_statetime;
 	}
 	if (st->st_timing.level > 0 && !LDBGP(DBG_CPU_USAGE, logger)) {
@@ -206,13 +206,13 @@ statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 		 * IKEv1 sometimes doesn't have a state to time, just
 		 * ignore it.
 		 */
-		dbg("in %s() with no state", __func__);
+		ldbg(&global_logger, "in %s() with no state", __func__);
 		return disabled_statetime;
 	}
 	passert(inception != NULL);
 	if (st->st_timing.level > 0) {
 		pexpect(st->st_ike_version == IKEv1);
-		dbg("in %s() with non-zero timing level", __func__);
+		ldbg(st->logger, "in %s() with non-zero timing level", __func__);
 		st->st_timing.level = 0;
 	}
 	statetime_t start = start_statetime(st, *inception);
@@ -243,7 +243,8 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	/* state disappeared? */
 	struct state *st = state_by_serialno(start->so);
 	if (st == NULL) {
-		dbg("in %s() and could not find "PRI_SO"", __func__, pri_so(start->so));
+		ldbg(&global_logger, "in %s() and could not find "PRI_SO"",
+		     __func__, pri_so(start->so));
 		return;
 	}
 

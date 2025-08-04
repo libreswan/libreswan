@@ -47,7 +47,7 @@ void pluto_sd_init(struct logger *logger)
 	uintmax_t sd_secs = sd_usecs / 2 / 1000000; /* suggestion from sd_watchdog_enabled(3) */
 	llog(RC_LOG, logger, "watchdog: sending probes every %ju secs", sd_secs);
 	/* tell systemd that we have finished starting up */
-	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS, logger);
 	/* start the keepalive events */
 	enable_periodic_timer(EVENT_SD_WATCHDOG, sd_watchdog_event,
 			      deltatime(sd_secs));
@@ -56,11 +56,11 @@ void pluto_sd_init(struct logger *logger)
 /*
  * Interface for lswsd_notify(3) calls.
  */
-void pluto_sd(int action, int status)
+void pluto_sd(int action, int status, struct logger *logger)
 {
 	name_buf ab;
-	dbg("pluto_sd: executing action %s(%d), status %d",
-	    str_enum_long(&sd_action_names, action, &ab), action, status);
+	ldbg(logger, "pluto_sd: executing action %s(%d), status %d",
+	     str_enum_long(&sd_action_names, action, &ab), action, status);
 
 	switch (action) {
 	case PLUTO_SD_WATCHDOG:
@@ -88,7 +88,7 @@ void pluto_sd(int action, int status)
 	}
 }
 
-void sd_watchdog_event(struct logger *unused_logger UNUSED)
+void sd_watchdog_event(struct logger *logger)
 {
-	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS);
+	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS, logger);
 }
