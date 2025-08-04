@@ -1,0 +1,6 @@
+IKEv2 initiator crlcheckinterval=0+strict=yes with out-of-date CRL
+
+Responder's cert is rejected because CRL is out-of-date
+CRL is not updated because crlcheckinterval=0.
+Manual update then only performs one check
+see ipsec fetchcrl creates an event loop with no delay with default crlcheckinterval=0 #2383

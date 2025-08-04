@@ -1389,7 +1389,7 @@ kvmplutotest	x509-crl-02-old-crl-strict-no-ikev1	good
 kvmplutotest	x509-crl-02-old-crl-strict-no-ikev2	good
 kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev1	good
 kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev2	good
-
+kvmplutotest	x509-crl-02-old-crl-strict-yes-ikev2-manual	good	github/2383
 kvmplutotest	x509-crl-04-additional-crl		wip
 
 kvmplutotest	nss-cert-nosecret		good
