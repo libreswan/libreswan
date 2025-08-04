@@ -299,14 +299,21 @@ void fetch_crl(struct crl_distribution_point *wip, int wstatus, shunk_t output,
 	}
 
 	/*
-	 * Is there a next distribution point?
+	 * Is there a next distribution point?  No!  Then go back to
+	 * sleep.
 	 */
 
 	if ((*current) == NULL) {
 		ldbg(logger, "CRL: the sleeping dragon snores");
 		current = NULL; /* idle */
-		/* schedule the next probe */
-		schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval);
+		/*
+		 * Schedule the next probe when the check interval is
+		 * set / non-zero.  When unset, `ipsec fetchcrls` does
+		 * a single probe.
+		 */
+		if (deltasecs(x509_crl.check_interval) > 0) {
+			schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval);
+		}
 		return;
 	}
 
