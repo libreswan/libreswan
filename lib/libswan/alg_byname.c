@@ -27,6 +27,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 {
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct proposal_policy *policy = parser->policy;
+	const struct logger *logger = policy->logger;
 	if (alg->id[protocol->alg_id] < 0) {
 		name_buf vb;
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by %s",
@@ -44,7 +45,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	 * which is still requires an in-process implementation).
 	 */
 	passert(policy->alg_is_ok != NULL);
-	if (!policy->alg_is_ok(alg)) {
+	if (!policy->alg_is_ok(alg, logger)) {
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
 			       protocol->name, ike_alg_type_name(alg->algo_type),
 			       pri_shunk(print_name));

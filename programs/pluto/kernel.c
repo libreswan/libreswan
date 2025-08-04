@@ -1344,13 +1344,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 * they do then strange things have been going on
 		 * since the connection was loaded).
 		 */
-		if (!kernel_alg_integ_ok(ta->ta_integ)) {
+		if (!kernel_alg_integ_ok(ta->ta_integ, child->sa.logger)) {
 			llog_sa(RC_LOG, child,
 				"ESP integrity algorithm %s is not implemented or allowed",
 				ta->ta_integ->common.fqn);
 			goto fail;
 		}
-		if (!kernel_alg_encrypt_ok(ta->ta_encrypt)) {
+		if (!kernel_alg_encrypt_ok(ta->ta_encrypt, child->sa.logger)) {
 			llog_sa(RC_LOG, child,
 				"ESP encryption algorithm %s is not implemented or allowed",
 				ta->ta_encrypt->common.fqn);
@@ -1362,7 +1362,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		 */
 		size_t encrypt_keymat_size;
 		if (!kernel_alg_encrypt_key_size(ta->ta_encrypt, ta->enckeylen,
-						 &encrypt_keymat_size)) {
+						 &encrypt_keymat_size, child->sa.logger)) {
 			llog_sa(RC_LOG, child,
 				"ESP encryption algorithm %s with key length %d not implemented or allowed",
 				ta->ta_encrypt->common.fqn, ta->enckeylen);

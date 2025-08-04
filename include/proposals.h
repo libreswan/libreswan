@@ -96,7 +96,7 @@ struct proposal_policy {
 	 * For instance, an IKE algorithm requires in-process support;
 	 * while an ESP/AH algorithm requires kernel support.
 	 */
-	bool (*alg_is_ok)(const struct ike_alg *alg);
+	bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
 	/*
 	 * logging context
 	 */

@@ -29,11 +29,12 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 /*
  * Kernel not available so fake it.
  */
-static bool kernel_alg_is_ok(const struct ike_alg *alg)
+static bool kernel_alg_is_ok(const struct ike_alg *alg,
+			     const struct logger *logger)
 {
 	if (alg->algo_type == &ike_alg_kem) {
 		/* require an in-process/ike implementation of DH */
-		return ike_alg_is_ike(alg);
+		return ike_alg_is_ike(alg, logger);
 	} else {
 		/* no kernel to ask! */
 		return true;
@@ -46,7 +47,7 @@ struct protocol {
 	const char *name;
 	struct proposal_parser *(*parser)(const struct proposal_policy *policy);
 	bool pfs_vs_dh;
-	bool (*alg_is_ok)(const struct ike_alg *alg);
+	bool (*alg_is_ok)(const struct ike_alg *alg, const struct logger *logger);
 };
 
 const struct protocol ike_protocol = {
