@@ -1,6 +1,8 @@
 See also https://libreswan.org/
 
 v5.4 (unreleased)
+* X.509:
+  - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
 * config:
   - fix plutodebug=all,add-prefix [Andrew #2338]
 * testing:
