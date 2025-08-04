@@ -12,8 +12,8 @@ static void reread_end_cert(struct host_end_config *host_end_config,
 			    struct logger *logger)
 {
 	if (host_end_config->cert.nss_cert == NULL) {
-		dbg("no cert exists for %s; nothing to do",
-		    host_end_config->leftright);
+		ldbg(logger, "no cert exists for %s; nothing to do",
+		     host_end_config->leftright);
 		return;
 	}
 
@@ -58,7 +58,7 @@ static void reread_end_cert(struct host_end_config *host_end_config,
 
 static void reread_cert(struct connection *c, struct logger *logger)
 {
-	dbg("rereading certificate(s) for connection %s", c->name);
+	ldbg(logger, "rereading certificate(s) for connection %s", c->name);
 
 	connection_attach(c, logger);
 

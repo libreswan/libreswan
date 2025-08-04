@@ -258,7 +258,7 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		llog(RC_LOG, st->logger,
 		     "statsbin= failed to send status update notification");
 	}
-	dbg("%s() for connection %s completed", __func__, conn->name);
+	ldbg(st->logger, "%s() for connection %s completed", __func__, conn->name);
 }
 
 void init_binlog(const struct config_setup *oco, struct logger *logger)

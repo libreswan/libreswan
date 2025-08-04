@@ -413,14 +413,14 @@ void server_fork_sigchld_handler(struct logger *logger)
 		switch (child) {
 		case -1: /* error? */
 			if (errno == ECHILD) {
-				dbg("waitpid returned ECHILD (no child processes left)");
+				ldbg(logger, "waitpid returned ECHILD (no child processes left)");
 			} else {
 				llog_errno(ERROR_STREAM, logger, errno,
 					   "waitpid unexpectedly failed: ");
 			}
 			return;
 		case 0: /* nothing to do */
-			dbg("waitpid returned nothing left to do (all child processes are busy)");
+			ldbg(logger, "waitpid returned nothing left to do (all child processes are busy)");
 			return;
 		default:
 			LDBGP_JAMBUF(DBG_BASE, logger, buf) {

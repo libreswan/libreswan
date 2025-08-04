@@ -84,13 +84,13 @@ void handle_v1_vendorid(struct msg_digest *md,
 	case VID_NATT_RFC:
 		if (md->v1_quirks.qnat_traversal_vid < id) {
 			name_buf idb;
-			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", id,
-			    str_vendorid(id, &idb));
+			ldbg(logger, "quirks.qnat_traversal_vid set to=%d [%s]", id,
+			     str_vendorid(id, &idb));
 			md->v1_quirks.qnat_traversal_vid = id;
 		} else {
 			name_buf idb;
-			dbg("ignoring older NAT-T Vendor ID payload [%s]",
-			    str_vendorid(id, &idb));
+			ldbg(logger, "ignoring older NAT-T Vendor ID payload [%s]",
+			     str_vendorid(id, &idb));
 			vid_useful = false;
 		}
 		break;
@@ -145,7 +145,7 @@ bool out_v1VID(struct pbs_out *outs, unsigned int id)
 	shunk_t blob = shunk_from_vendorid(id);
 	name_buf eb;
 	const char *descr = str_vendorid(id, &eb);
-	dbg("%s(): sending [%s]", __func__, descr);
+	ldbg(outs->logger, "%s(): sending [%s]", __func__, descr);
 	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 				     blob.ptr, blob.len, "V_ID");
 }
