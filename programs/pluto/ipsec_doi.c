@@ -130,9 +130,11 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		bool iptfs = st->st_seen_and_use_iptfs;
 		bool tcp = st->st_iface_endpoint->io->protocol == &ip_protocol_tcp;
 
-		if (nat)
-			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
+		if (nat) {
+			ldbg(st->logger,
+			     "NAT-T: NAT Traversal detected - their IKE port is '%d'",
 			     c->remote->host.port);
+		}
 
 		jam(buf, "ESP%s%s%s%s=>0x%08" PRIx32 " <0x%08" PRIx32 "",
 		    tcp ? "inTCP" : nat ? "inUDP" : "",

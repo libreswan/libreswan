@@ -1453,9 +1453,10 @@ static bool v2_spi_predicate(struct state *st, void *context)
 #if 0
 		/* see function description above */
 		if (pr->inbound.spi == filter->outbound_spi) {
-			dbg("v2 CHILD SA "PRI_SO" found using our inbound (their outbound) !?! SPI, in %s",
-			    st->st_serialno,
-			    st->st_state->name);
+			ldbg(st->logger,
+			     "v2 CHILD SA "PRI_SO" found using our inbound (their outbound) !?! SPI, in %s",
+			     st->st_serialno,
+			     st->st_state->name);
 			return true;
 		}
 #endif

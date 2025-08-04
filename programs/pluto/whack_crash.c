@@ -45,6 +45,7 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 	/* note: peer_buf and peerstr at same scope */
 	address_buf peer_buf;
 	const char *peerstr = str_address(peer, &peer_buf);
+	struct logger *logger = show_logger(s);
 
 	show(s, "restarting peer %s", peerstr);
 
@@ -61,9 +62,9 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 			struct state *st = sf.st;
 			const struct connection *c = st->st_connection;
 			endpoint_buf b;
-			dbg("comparing %s to %s",
-			    str_endpoint(&st->st_remote_endpoint, &b),
-			    peerstr);
+			ldbg(logger, "comparing %s to %s",
+			     str_endpoint(&st->st_remote_endpoint, &b),
+			     peerstr);
 
 			if (peer != NULL /* ever false? */ &&
 			    endpoint_address_eq_address(st->st_remote_endpoint, *peer)) {

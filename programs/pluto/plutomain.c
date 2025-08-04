@@ -232,8 +232,8 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 	}
 
 	ndone = 0;
-	dbg("need %d bits random for extra seeding of the NSS PRNG",
-	    (int) nbytes * BITS_IN_BYTE);
+	ldbg(logger, "need %d bits random for extra seeding of the NSS PRNG",
+	     (int) nbytes * BITS_IN_BYTE);
 
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
@@ -246,7 +246,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 		ndone += got;
 	}
 	close(dev);
-	dbg("read %zu bytes from /dev/random for NSS PRNG", nbytes);
+	ldbg(logger, "read %zu bytes from /dev/random for NSS PRNG", nbytes);
 }
 
 static void pluto_init_nss(const char *nssdir, struct logger *logger)

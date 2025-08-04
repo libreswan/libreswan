@@ -246,8 +246,8 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	close_pbs_out(pbs);
 
 	/* XXX: not ldbg(pbs->logger) as can be NULL */
-	dbg("encrypt unpadded %zu padding %zu padded %zu bytes",
-	    unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
+	ldbg(ike->sa.logger, "encrypt unpadded %zu padding %zu padded %zu bytes",
+	     unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "encrypting:");
 		LDBG_hunk(logger, padded_encrypt);

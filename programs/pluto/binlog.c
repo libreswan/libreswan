@@ -169,18 +169,18 @@ void binlog_state(struct state *st, enum state_kind new_state)
 		return;
 
 	if (st == NULL) {
-		dbg("%s() called without state", __func__);
+		ldbg(&global_logger, "%s() called without state", __func__);
 		return;
 	}
 
 	struct connection *conn = st->st_connection;
 
 	if (conn == NULL || st->st_connection->base_name == NULL) {
-		dbg("%s() called without st->st_connection or without st->st_connection->name", __func__);
+		ldbg(st->logger, "%s() called without st->st_connection or without st->st_connection->name", __func__);
 		return;
 	}
 
-	dbg("%s() called for state update for connection %s ", __func__, conn->name);
+	ldbg(st->logger, "%s() called for state update for connection %s ", __func__, conn->name);
 
 	struct log_conn_info lc = {
 		.conn = conn,
@@ -236,8 +236,8 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	case p2_up:	p2 = "up";	break;
 	default:	p2 = "down";	break;
 	}
-	dbg("%s() calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
-	    __func__, pluto_stats_binary, conn->name, tun, p1, p2);
+	ldbg(st->logger, "%s() calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
+	     __func__, pluto_stats_binary, conn->name, tun, p1, p2);
 
 	char buf[1024];
 

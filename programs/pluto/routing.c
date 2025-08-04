@@ -616,7 +616,7 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	}
 
 	if (PBAD(logger, kernel_policy_installed(c))) {
-		dbg("kernel: %s() connection already routed", __func__);
+		ldbg(logger, "kernel: %s() connection already routed", __func__);
 		return true;
 	}
 

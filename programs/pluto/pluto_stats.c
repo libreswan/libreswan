@@ -491,9 +491,10 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	show_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
 }
 
-void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s UNUSED)
+void whack_clearstats(const struct whack_message *wm UNUSED, struct show *s)
 {
-	dbg("clearing pluto stats");
+	struct logger *logger = show_logger(s);
+	ldbg(logger, "clearing pluto stats");
 
 	pstats_ipsec_sa = pstats_ikev1_sa = pstats_ikev2_sa = 0;
 	pstats_ikev1_fail = pstats_ikev2_fail = 0;

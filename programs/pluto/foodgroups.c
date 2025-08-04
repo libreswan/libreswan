@@ -178,7 +178,8 @@ static void read_foodgroup(struct file_lex_position *oflp,
 	struct file_lex_position *flp;
 	if (!lexopen(&flp, fg_path, true, oflp)) {
 		char cwd[PATH_MAX];
-		dbg("no group file \"%s\" (pwd:%s)", fg_path, getcwd(cwd, sizeof(cwd)));
+		ldbg(g->logger, "no group file \"%s\" (pwd:%s)",
+		     fg_path, getcwd(cwd, sizeof(cwd)));
 		pfreeany(fg_path);
 		return;
 	}
@@ -488,7 +489,7 @@ void load_groups(struct logger *logger)
 						 * name may already
 						 * exist.
 						 */
-						dbg("add group instance failed");
+						ldbg(g->logger, "add group instance failed");
 						/* free new; advance new */
 						*npp = np->next;
 						pfree_target(&np);
