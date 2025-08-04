@@ -44,21 +44,6 @@ static size_t encrypt_num = 0;
 static size_t ipcomp_num = 0;
 
 /*
- *      Forget previous registration
- *
- * XXX: Needed????
- */
-void kernel_alg_init(void)
-{
-	dbg("kernel_alg_init()");
-	/* ??? do these zero calls do anything useful? */
-	zero(&integ_by_fqn);
-	zero(&encrypt_by_fqn);
-	zero(&ipcomp_by_fqn);
-	encrypt_num = integ_num = ipcomp_num = 0;
-}
-
-/*
  * Make use of the fact that the table is kept sorted.
  */
 

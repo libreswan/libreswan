@@ -82,8 +82,6 @@ const struct encrypt_desc **next_kernel_encrypt_desc(const struct encrypt_desc *
 const struct integ_desc **next_kernel_integ_desc(const struct integ_desc **last);
 const struct ipcomp_desc **next_kernel_ipcomp_desc(const struct ipcomp_desc **last);
 
-void kernel_alg_init(void);
-
 void kernel_alg_add(const struct ike_alg *alg);
 void kernel_integ_add(const struct integ_desc *integ);
 void kernel_encrypt_add(const struct encrypt_desc *encrypt);
