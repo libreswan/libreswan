@@ -594,11 +594,16 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	logtime_stop(&crl_time, "%s() calling crl_update_check()", __func__);
 	if (crl_update_needed) {
 		if (x509_crl.strict) {
-			llog(RC_LOG, logger,
-			     "certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing, forcing CRL update");
-			release_certs(&result.cert_chain);
-			result.force_crl_update = true;
+			result.force_crl_update =  (deltasecs(x509_crl.check_interval) > 0);
 			result.harmless = false;
+			release_certs(&result.cert_chain);
+			if (result.force_crl_update) {
+				llog(RC_LOG, logger,
+				     "certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing, forcing CRL update");
+			} else {
+				llog(RC_LOG, logger, "certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing");
+				llog(WARNING_STREAM, logger, "automatic update of Certificate Revocation List (CRL) is disabled; see \"crlcheckinterval=\"");
+			}
 			return result;
 		}
 		ldbg(logger, "missing or expired CRL");

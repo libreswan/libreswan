@@ -111,8 +111,7 @@ static stf_status cert_decode_completed(struct state *st,
 	/* if there's an error, log it */
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-	if (task->verified.force_crl_update &&
-	    deltasecs(x509_crl.check_interval) > 0) {
+	if (task->verified.force_crl_update) {
 		/*
 		 * When a strict crl check fails, the certs are
 		 * deleted and X509_CRL.NEEDED is set.
