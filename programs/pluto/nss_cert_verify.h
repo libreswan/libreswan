@@ -36,7 +36,7 @@ struct logger;
 struct verified_certs {
 	struct certs *cert_chain;
 	struct pubkey_list *pubkey_db;
-	bool crl_update_needed;
+	bool force_crl_update;
 	bool harmless;
 	bool groundhog;
 };
