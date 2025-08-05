@@ -3283,7 +3283,9 @@ diag_t extract_connection(const struct whack_message *wm,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
 			.ignore_parser_errors = (encap_alg == NULL),
+#if 0
 			.addke = intermediate,
+#endif
 		};
 
 		/*

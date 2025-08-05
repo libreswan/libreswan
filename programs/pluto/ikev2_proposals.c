@@ -867,6 +867,8 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					if ((type == IKEv2_TRANS_TYPE_INTEG &&
 					     sentinel_transform->id == IKEv2_INTEG_NONE) ||
 					    (type == IKEv2_TRANS_TYPE_KE &&
+					     sentinel_transform->id == OAKLEY_GROUP_NONE) ||
+					    (IKEv2_TRANS_TYPE_ADDKE1 <= type && type <= IKEv2_TRANS_TYPE_ADDKE7 &&
 					     sentinel_transform->id == OAKLEY_GROUP_NONE)) {
 						optional_transform_types |= LELEM(type);
 					}
@@ -1107,6 +1109,13 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 						id = IKEv2_INTEG_NONE;
 						break;
 					case IKEv2_TRANS_TYPE_KE:
+					case IKEv2_TRANS_TYPE_ADDKE1:
+					case IKEv2_TRANS_TYPE_ADDKE2:
+					case IKEv2_TRANS_TYPE_ADDKE3:
+					case IKEv2_TRANS_TYPE_ADDKE4:
+					case IKEv2_TRANS_TYPE_ADDKE5:
+					case IKEv2_TRANS_TYPE_ADDKE6:
+					case IKEv2_TRANS_TYPE_ADDKE7:
 						id = OAKLEY_GROUP_NONE;
 						break;
 					default:
@@ -1752,6 +1761,55 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					return false;
 				}
 				break;
+			case IKEv2_TRANS_TYPE_ADDKE1:
+			case IKEv2_TRANS_TYPE_ADDKE2:
+			case IKEv2_TRANS_TYPE_ADDKE3:
+			case IKEv2_TRANS_TYPE_ADDKE4:
+			case IKEv2_TRANS_TYPE_ADDKE5:
+			case IKEv2_TRANS_TYPE_ADDKE6:
+			case IKEv2_TRANS_TYPE_ADDKE7:
+			{
+				name_buf b;
+				const struct kem_desc *kem = ikev2_kem_desc(transform->id, &b);
+				if (kem == NULL) {
+					/*
+					 * Assuming pluto, and not the
+					 * kernel, is going to do the
+					 * DH calculation, then not
+					 * finding the DH group is
+					 * likely really bad.
+					 */
+					llog_pexpect(logger, HERE,
+						     "accepted IKEv2 proposal contains unexpected KEM %s",
+						     b.buf);
+					return false;
+				}
+				/*
+				 * Pack the ADDKE into ta_addke.list[]
+				 * so that there are no gaps (each
+				 * ADDKE is optional, for instance
+				 * proposing just ADDKE1-ADDKE3 is
+				 * valid).
+				 *
+				 * XXX: still need to ensure that all
+				 * KEMs are unique.
+				 *
+				 * XXX: need to allow KEM=NONE which
+				 * means perform an IKE_INTERMEDIATE
+				 * exchange with no KE payload.
+				 */
+				size_t max_addke = elemsof(ta.ta_addke.list);
+				if (ta.ta_addke.len >= max_addke) {
+					llog_pexpect(logger, HERE,
+						     "accepted IKEv2 proposal contains more than %zu KEMs",
+						     max_addke);
+					return false;
+				}
+				ta.ta_addke.list[ta.ta_addke.len].type = type;
+				ta.ta_addke.list[ta.ta_addke.len].kem = kem;
+				ta.ta_addke.len++;
+				break;
+			}
 			default:
 				llog_pexpect(logger, HERE,
 					     "accepted IKEv2 proposal contains unexpected trans type %d",
@@ -2148,6 +2206,23 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 				 default_kem->common.id[IKEv2_ALG_ID], 0);
+	}
+
+	/*
+	 * Additional key exchanges.
+	 */
+	for (enum ikev2_trans_type type = IKEv2_TRANS_TYPE_ADDKE1;
+	     type <= IKEv2_TRANS_TYPE_ADDKE7; type++) {
+		/* map TYPE onto PROPOSAL algorithm */
+		enum proposal_algorithm ptype =
+			PROPOSAL_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
+		/* Can't use FOR_EACH_ALGORITHM(addkeN) */
+		for (struct algorithm *alg = next_algorithm(proposal, ptype, NULL);
+		     alg != NULL; alg = next_algorithm(proposal, ptype, alg)) {
+			const struct kem_desc *kem = kem_desc(alg->desc);
+			append_transform(v2_proposal, type,
+					 kem->common.id[IKEv2_ALG_ID], 0);
+		}
 	}
 
 	return v2_proposal;
