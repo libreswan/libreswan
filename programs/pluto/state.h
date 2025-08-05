@@ -85,11 +85,6 @@ typedef struct {
 size_t jam_child_policy(struct jambuf *buf, const struct child_policy *policy);
 const char *str_child_policy(const struct child_policy *policy, child_policy_buf *buf);
 
-struct additional_ke {
-	enum ikev2_trans_type type;
-	const struct kem_desc *group;
-};
-
 /* Oakley (Phase 1 / Main Mode) transform and attributes
  * This is a flattened/decoded version of what is represented
  * in the Transaction Payload.
@@ -111,7 +106,18 @@ struct trans_attrs {
 	const struct prf_desc *ta_prf;		/* package of prf routines */
 	const struct integ_desc *ta_integ;	/* package of integrity routines */
 	const struct kem_desc *ta_dh;	/* Diffie-Helman-Merkel routines */
-	struct additional_ke ta_addke[7]; /* additional key exchange */
+	/*
+	 * For ADDKE, pack the valid KEMs into an array - negotiation
+	 * can leave holes but they are removed here.
+	 */
+	struct {
+		unsigned len;
+		struct {
+			enum ikev2_trans_type type; /*ADDKE1..ADDKE8*/
+			const struct kem_desc *kem;
+		} list[8/*magic*/];
+	} ta_addke;
+
 };
 
 /*

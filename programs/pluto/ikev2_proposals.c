@@ -1659,8 +1659,6 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 	 */
 	*ta_out = ta;
 
-	size_t additional_ke_index = 0;
-	struct additional_ke *additional_ke_map[7] = { 0, };
 	enum ikev2_trans_type type;
 	const struct ikev2_transforms *transforms;
 	FOR_EACH_TRANSFORMS_TYPE(type, transforms, proposal) {
@@ -1772,8 +1770,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 			case IKEv2_TRANS_TYPE_ADDKE7:
 			{
 				name_buf b;
-				const struct kem_desc *group = ikev2_kem_desc(transform->id, &b);
-				if (group == NULL) {
+				const struct kem_desc *kem = ikev2_kem_desc(transform->id, &b);
+				if (kem == NULL) {
 					/*
 					 * Assuming pluto, and not the
 					 * kernel, is going to do the
@@ -1782,26 +1780,34 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * likely really bad.
 					 */
 					llog_pexpect(logger, HERE,
-						     "accepted IKEv2 proposal contains unexpected DH %s",
+						     "accepted IKEv2 proposal contains unexpected KEM %s",
 						     b.buf);
 					return false;
 				}
 				/*
-				 * Initiator is free to select any
-				 * transform type for additional key
-				 * exchange, though the responder must
-				 * select one per transform type. Use
-				 * a map (additional_ke_map) to ensure that.
+				 * Pack the ADDKE into ta_addke.list[]
+				 * so that there are no gaps (each
+				 * ADDKE is optional, for instance
+				 * proposing just ADDKE1-ADDKE3 is
+				 * valid).
+				 *
+				 * XXX: still need to ensure that all
+				 * KEMs are unique.
+				 *
+				 * XXX: need to allow KEM=NONE which
+				 * means perform an IKE_INTERMEDIATE
+				 * exchange with no KE payload.
 				 */
-				unsigned n = type - IKEv2_TRANS_TYPE_ADDKE1;
-				if (additional_ke_map[n]) {
-					passert(additional_ke_map[n]->type == type);
-					additional_ke_map[n]->group = group;
-				} else {
-					ta.ta_addke[additional_ke_index].type = type;
-					ta.ta_addke[additional_ke_index].group = group;
-					additional_ke_map[n] = &ta.ta_addke[additional_ke_index];
+				size_t max_addke = elemsof(ta.ta_addke.list);
+				if (ta.ta_addke.len >= max_addke) {
+					llog_pexpect(logger, HERE,
+						     "accepted IKEv2 proposal contains more than %zu KEMs",
+						     max_addke);
+					return false;
 				}
+				ta.ta_addke.list[ta.ta_addke.len].type = type;
+				ta.ta_addke.list[ta.ta_addke.len].kem = kem;
+				ta.ta_addke.len++;
 				break;
 			}
 			default:
@@ -2207,8 +2213,10 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	 */
 	for (enum ikev2_trans_type type = IKEv2_TRANS_TYPE_ADDKE1;
 	     type <= IKEv2_TRANS_TYPE_ADDKE7; type++) {
+		/* map TYPE onto PROPOSAL algorithm */
 		enum proposal_algorithm ptype =
 			PROPOSAL_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
+		/* Can't use FOR_EACH_ALGORITHM(addkeN) */
 		for (struct algorithm *alg = next_algorithm(proposal, ptype, NULL);
 		     alg != NULL; alg = next_algorithm(proposal, ptype, alg)) {
 			const struct kem_desc *kem = kem_desc(alg->desc);
