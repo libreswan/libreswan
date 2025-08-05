@@ -46,7 +46,8 @@ west #
 "nss-cert-crl" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "nss-cert-crl" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "nss-cert-crl" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
-"nss-cert-crl" #1: certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing, forcing CRL update
+"nss-cert-crl" #1: certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing
+warning: "nss-cert-crl" #1: automatic update of Certificate Revocation List (CRL) is disabled; see "crlcheckinterval="
 "nss-cert-crl" #1: X509: certificate payload rejected for this connection
 "nss-cert-crl" #1: encountered fatal error in state IKE_AUTH_I
 "nss-cert-crl" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
