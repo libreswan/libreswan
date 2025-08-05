@@ -1505,14 +1505,13 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
 
-			/* XXX: sec_label connections all look a-like, include CO */
 			policy_buf pb;
 			name_buf kb;
 			verbose.level = base_level + 2;
 			vdbg("evaluating %s connection %s "PRI_CO" with policy <%s>:",
-			       str_enum_short(&connection_kind_names, cc->local->kind, &kb),
-			       d->name, pri_co(d->serialno),
-			       str_connection_policies(d, &pb));
+			     str_enum_short(&connection_kind_names, d->local->kind, &kb),
+			     d->name, pri_co(d->serialno),
+			     str_connection_policies(d, &pb));
 			verbose.level++;
 
 			/*
