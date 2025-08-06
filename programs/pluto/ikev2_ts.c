@@ -1505,14 +1505,13 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 		while (next_connection(&hpf)) {
 			struct connection *d = hpf.c;
 
-			/* XXX: sec_label connections all look a-like, include CO */
 			policy_buf pb;
 			name_buf kb;
 			verbose.level = base_level + 2;
 			vdbg("evaluating %s connection %s "PRI_CO" with policy <%s>:",
-			       str_enum_short(&connection_kind_names, cc->local->kind, &kb),
-			       d->name, pri_co(d->serialno),
-			       str_connection_policies(d, &pb));
+			     str_enum_short(&connection_kind_names, d->local->kind, &kb),
+			     d->name, pri_co(d->serialno),
+			     str_connection_policies(d, &pb));
 			verbose.level++;
 
 			/*
@@ -1652,89 +1651,53 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 */
 
 	struct best best = find_best_connection_for_v2TS_request(child, &tsps, md);
-	if (best.connection == NULL) {
-		vdbg("connection %s "PRI_CO" is as good as it gets",
-		     cc->name, pri_so(cc->serialno));
-	} else {
-		vdbg("connection %s "PRI_CO" best by %s "PRI_CO"%s%s",
-		     cc->name, pri_so(cc->serialno),
+	if (best.connection != NULL) {
+		vdbg("best connection matching TS is %s "PRI_CO";%s%s; will replace %s "PRI_CO,
 		     best.connection->name, pri_so(best.connection->serialno),
 		     (is_template(best.connection) ? " needs instantiating!" : ""),
-		     (is_group_instance(best.connection) ? " group-instance!" : ""));
+		     (is_group_instance(best.connection) ? " group-instance!" : ""),
+		     cc->name, pri_so(cc->serialno));
 	}
 
-	/*
-	 * Did the the search fail badly?
-	 *
-	 * = no existing connection (or connection template) matched
-	 *   the proposed traffic selectors.
-	 *
-	 * = more importantly, the existing connection is "permanent"
-	 *   (or permanent like) so there isn't the option of
-	 *   instantiating something better (switching away from
-	 *   permanent connections isn't allowed; explaining why might
-	 *   be helpful here).
-	 */
 	if (best.connection == NULL && is_permanent(cc)) {
 		/*
-		 * Don't try to look for something else to
-		 * 'instantiate' when the current connection is
-		 * permanent.
+		 * The search for a connection matching TS failed!
 		 *
-		 * XXX: What about CK_TEMPLATE?
-		 *
-		 * Only when the connection also has a SEC_LABEL so is
-		 * more like an instance.  Non-SEC_LABEL templates get
-		 * instantiated before this code is called.
-		 *
-		 * XXX: Is this missing an opportunity?  Could there
-		 * be a better connection to instantiate when the
-		 * current one is permanent?
-		 *
-		 * XXX: 'instantiate', not really?  The code below
-		 * sometimes blats the current instance with new
-		 * values - something that should not be done to a
-		 * permanent connection.
+		 * Since the existing connection is "permanent" (or
+		 * permanent like) there isn't the option of
+		 * instantiating something better (switching away from
+		 * permanent connections isn't allowed; explaining why
+		 * might be helpful here).
 		 */
+		vdbg("no connection matching TS found; existing connection %s "PRI_CO" is permanent so can't try instantiating templates",
+		     cc->name, pri_so(cc->serialno));
 		llog_ts(child, &tsps, "does not match any permanent IKEv2 connection; responding with TS_UNACCEPTABLE");
 		return false;
 	}
 
-	/*
-	 *
-	 * Now retry the search looking for group instances, perhaps
-	 * it can be instantiated.
-	 *
-	 * Why?
-	 *
-	 * Who knows, but I suspect it goes back to the original
-	 * choice made during IKE_SA_INIT where:
-	 *
-	 * - OE templates (group instances?!?) connections
-	 *
-	 *   During IKE_SA_INIT, the OE connection with the narrowest
-	 *   <remote.client> subnet that contained <remote.address>
-	 *   was chosen; so now it is looking to see if one of the
-	 *   other OE connections does better
-	 *
-	 * SEC_LABLES and other connections, by this point, are locked
-	 * in.
-	 */
-
 	if (best.connection == NULL && is_group_instance(cc)) {
 		/*
-		 * Is there something better than the current
-		 * connection?
+		 * The search for a connection matching TS failed!
 		 *
-		 * Rather than overwrite the current INSTANCE; would
-		 * it be better to instantiate a new instance, and
-		 * then replace it?
+		 * Since the existing connection is a group instance
+		 * it might be a better group template that can be
+		 * instantiated.
 		 *
-		 * Would also address the above.
+		 * Why?
 		 *
-		 * If the connection seems to be shared, this happens.
+		 * Who knows, but I suspect it goes back to the original
+		 * choice made during IKE_SA_INIT where:
+		 *
+		 * - OE templates (group instances?!?) connections
+		 *
+		 *   During IKE_SA_INIT, the OE connection with the narrowest
+		 *   <remote.client> subnet that contained <remote.address>
+		 *   was chosen; so now it is looking to see if one of the
+		 *   other OE connections does better
 		 */
-		vdbg("no best spd route; looking for a better template connection to instantiate");
+		vdbg("no connection matching TS found; existing connection %s "PRI_CO" is a group-instance, trying other templates",
+		     cc->name, pri_so(cc->serialno));
+		vdbg("no connection matching TS found; best spd route; looking for a better template connection to instantiate");
 
 		struct connection_filter cf = {
 			.kind = CK_TEMPLATE /* require a template */,
@@ -1747,7 +1710,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		};
 		while (next_connection(&cf)) {
 			struct connection *t = cf.c;
-			verbose.level = base_level + 1;
+			verbose = cf.search.verbose;
 
 			VDBG_JAMBUF(buf) {
 				jam(buf, "investigating template %s;", t->name);
@@ -1786,6 +1749,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 				vdbg("skipping; wrong foodgroup");
 				continue;
 			}
+
 			/*
 			 * ??? why require current connection->name
 			 * and t->name to be different.
@@ -1794,7 +1758,8 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			 * connection template?!?
 			 *
 			 * XXX: check is skipping connections that
-			 * share a common ancestry!?!
+			 * share a common ancestry?!? No.  .base_name
+			 * consists of parent's .base_name + OE-Guff.
 			 */
 			if (streq(cc->base_name, t->base_name)) {
 				vdbg("skipping; name same as current connection");
@@ -1817,6 +1782,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 				vdbg("skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
+
 			/* require responder address match; why? */
 			ip_address cc_this_client_address =
 				selector_prefix(cc->child.spds.list->local->client);
@@ -1861,6 +1827,10 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			/*
 			 * XXX: isn't this a template, or are group
 			 * instances shared?
+			 *
+			 * XXX: yes, it's CK_TEMPLATE, per search.
+			 * And when is_shared() connection fails code
+			 * that follows will instantiate.
 			 */
 			struct connection *s;
 			bool instantiated;
@@ -1872,6 +1842,10 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 				s = child->sa.st_connection;
 				instantiated = false;
 			}
+			/*
+			 * Doesn't this scribble all over a group-instance aka
+			 * template?
+			 */
 			scribble_ts_request_on_responder(child, s, &nsps, verbose);
 
 			/* switch */
