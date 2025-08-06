@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@@SHELL_BINARY@@
 # -*- mode: sh; sh-shell: sh -*-
 #
 # default updown script for use with NETKEY(XFRM)
@@ -242,15 +242,15 @@ export LC_ALL
 #
 
 # rpm based systems
-if [ -f /etc/sysconfig/pluto_updown ]; then
-    . /etc/sysconfig/pluto_updown
+if [ -f @@SYSCONFDIR@@/sysconfig/pluto_updown ]; then
+    . @@SYSCONFDIR@@/sysconfig/pluto_updown
 # deb based systems
-elif [ -f /etc/default/pluto_updown ]; then
-    . /etc/default/pluto_updown
+elif [ -f @@SYSCONFDIR@@/default/pluto_updown ]; then
+    . @@SYSCONFDIR@@/default/pluto_updown
 fi
 
-BACKUP_RESOLV_CONF=/run/pluto/libreswan-resolv-conf-backup
-ETC_RESOLV_CONF=/etc/resolv.conf
+BACKUP_RESOLV_CONF=@@RUNDIR@@/libreswan-resolv-conf-backup
+ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)
@@ -896,8 +896,8 @@ doroute() {
 }
 
 firewall_cmd() {
-    USE_IPTABLES=false
-    USE_NFTABLES=true
+    USE_IPTABLES=@@USE_IPTABLES@@
+    USE_NFTABLES=@@USE_NFTABLES@@
 
     if [ "${USE_NFTABLES}" = true ]; then
 	FIREWALL=nftables
