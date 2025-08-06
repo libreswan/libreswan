@@ -1,4 +1,4 @@
-#!@@SHELL_BINARY@@
+#!/bin/sh
 # -*- mode: sh; sh-shell: sh -*-
 #
 # default updown script for use with NETKEY(XFRM)
@@ -242,15 +242,15 @@ export LC_ALL
 #
 
 # rpm based systems
-if [ -f @@SYSCONFDIR@@/sysconfig/pluto_updown ]; then
-    . @@SYSCONFDIR@@/sysconfig/pluto_updown
+if [ -f /etc/sysconfig/pluto_updown ]; then
+    . /etc/sysconfig/pluto_updown
 # deb based systems
-elif [ -f @@SYSCONFDIR@@/default/pluto_updown ]; then
-    . @@SYSCONFDIR@@/default/pluto_updown
+elif [ -f /etc/default/pluto_updown ]; then
+    . /etc/default/pluto_updown
 fi
 
-BACKUP_RESOLV_CONF=@@RUNDIR@@/libreswan-resolv-conf-backup
-ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
+BACKUP_RESOLV_CONF=/run/pluto/libreswan-resolv-conf-backup
+ETC_RESOLV_CONF=/etc/resolv.conf
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)
@@ -340,20 +340,34 @@ downrule() {
 
 updateresolvconf() {
     # Check for systemd-resolved
-    if command -v resolvectl >/dev/null 2>&1 && \
-       systemctl is-active --quiet systemd-resolved; then
+    if command -v resolvectl >/dev/null 2>&1 && systemctl is-active --quiet systemd-resolved; then
         echo "[updown.xfrm] Detected systemd-resolved, applying DNS via resolvectl"
 
-        if [ -n "$PLUTO_PEER_DNS_INFO" ]; then
-            echo "[updown.xfrm] Setting DNS: $PLUTO_PEER_DNS_INFO on $PLUTO_INTERFACE"
-            resolvectl dns "$PLUTO_INTERFACE" $PLUTO_PEER_DNS_INFO
-        fi
+	DNS_BACKUP="/run/libreswan-prev-dns-$PLUTO_INTERFACE"
+	DOMAIN_BACKUP="/run/libreswan-prev-domain-$PLUTO_INTERFACE"
 
-        if [ -n "$PLUTO_PEER_DOMAIN_INFO" ]; then
-            echo "[updown.xfrm] Setting domain: $PLUTO_PEER_DOMAIN_INFO on $PLUTO_INTERFACE"
-            resolvectl domain "$PLUTO_INTERFACE" $PLUTO_PEER_DOMAIN_INFO
-        fi
-        return 0
+	if [ ! -f "$DNS_BACKUP" ]; then
+		resolvectl dns "$PLUTO_INTERFACE" | sed -E 's/^Link[^:]*: *//' | grep -v '^[[:space:]]*$' | xargs > "$DNS_BACKUP" 2>/dev/null
+	else
+		echo "[updown.xfrm] DNS backup already exists, skipping backup"
+	fi
+
+	if [ ! -f "$DOMAIN_BACKUP" ]; then
+		resolvectl domain "$PLUTO_INTERFACE" | sed -E 's/^Link[^:]*: *//' | grep -v '^[[:space:]]*$' | xargs > "$DOMAIN_BACKUP" 2>/dev/null
+	else
+		echo "[updown.xfrm] Domain backup already exists, skipping backup"
+	fi
+
+	if [ -n "$PLUTO_PEER_DNS_INFO" ]; then
+		echo "[updown.xfrm] Setting DNS: $PLUTO_PEER_DNS_INFO on $PLUTO_INTERFACE"
+		resolvectl dns "$PLUTO_INTERFACE" $PLUTO_PEER_DNS_INFO
+	fi
+
+	if [ -n "$PLUTO_PEER_DOMAIN_INFO" ]; then
+		echo "[updown.xfrm] Setting domain: $PLUTO_PEER_DOMAIN_INFO on $PLUTO_INTERFACE"
+		resolvectl domain "$PLUTO_INTERFACE" $PLUTO_PEER_DOMAIN_INFO
+	fi
+	return 0
     fi
 
     # Fallback for non-systemd systems
@@ -452,14 +466,30 @@ nameserver ${nameserver}"
 }
 
 restoreresolvconf() {
-    local domain
-    if command -v resolvectl >/dev/null 2>&1 && \
-    systemctl is-active --quiet systemd-resolved; then
-        echo "[updown.xfrm] Reverting systemd-resolved DNS for $PLUTO_INTERFACE"
-        resolvectl revert "$PLUTO_INTERFACE"
+    if command -v resolvectl >/dev/null 2>&1 && systemctl is-active --quiet systemd-resolved; then
+    	echo "[updown.xfrm] Reverting systemd-resolved DNS for $PLUTO_INTERFACE"
+
+    	# Restore previous DNS if backup exists
+        if [ -f "/run/libreswan-prev-dns-$PLUTO_INTERFACE" ]; then
+            PREV_DNS=$(cat "/run/libreswan-prev-dns-$PLUTO_INTERFACE")
+            if [ -n "$PREV_DNS" ]; then
+                resolvectl dns "$PLUTO_INTERFACE" $PREV_DNS
+            fi
+	    rm -f "/run/libreswan-prev-dns-$PLUTO_INTERFACE"
+        fi
+
+        # Restore backed up domain if present
+        if [ -f "/run/libreswan-prev-domain-$PLUTO_INTERFACE" ]; then
+            PREV_DOMAIN=$(cat "/run/libreswan-prev-domain-$PLUTO_INTERFACE")
+            if [ -n "$PREV_DOMAIN" ]; then
+                resolvectl domain "$PLUTO_INTERFACE" $PREV_DOMAIN
+            fi
+   	    rm -f "/run/libreswan-prev-domain-$PLUTO_INTERFACE"
+        fi
         return 0
     fi
-	
+    # Fallback for non-systemd system
+    local domain
     local rc
     rc=0
     if [ 0${PLUTO_CFG_CLIENT} -eq 0 ]; then
@@ -866,8 +896,8 @@ doroute() {
 }
 
 firewall_cmd() {
-    USE_IPTABLES=@@USE_IPTABLES@@
-    USE_NFTABLES=@@USE_NFTABLES@@
+    USE_IPTABLES=false
+    USE_NFTABLES=true
 
     if [ "${USE_NFTABLES}" = true ]; then
 	FIREWALL=nftables
