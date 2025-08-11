@@ -363,13 +363,13 @@ void deschedule_oneshot_timer(enum global_timer type,
 	PASSERT(logger, event_del(&gt->ev) >= 0);
 }
 
-static void free_global_timers(void)
+static void free_global_timers(const struct logger *logger)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer_desc *gt = &global_timers[u];
 		if (event_initialized(&gt->ev)) {
 			EVENT_DEL(gt);
-			dbg("global timer %s uninitialized", gt->name);
+			ldbg(logger, "global timer %s uninitialized", gt->name);
 		}
 	}
 }
@@ -426,17 +426,17 @@ static struct signal_handler signal_handlers[] = {
 static void signal_handler_handler(evutil_socket_t fd UNUSED,
 				   const short event, void *arg)
 {
-	passert(in_main_thread());
-	passert(event & EV_SIGNAL);
 	struct logger logger[1] = { global_logger, }; /* event-handler */
+	PASSERT(logger, in_main_thread());
+	PASSERT(logger, event & EV_SIGNAL);
 	struct signal_handler *se = arg;
-	dbg("processing signal %s", se->name);
+	ldbg(logger, "processing signal %s", se->name);
 	threadtime_t start = threadtime_start();
 	se->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "signal handler %s", se->name);
 }
 
-static void install_signal_handlers(void)
+static void install_signal_handlers(const struct logger *logger)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
@@ -444,16 +444,16 @@ static void install_signal_handlers(void)
 			  (evutil_socket_t)se->signal,
 			  (struct timeval*)NULL,
 			  signal_handler_handler);
-		dbg("signal event handler %s installed", se->name);
+		ldbg(logger, "signal event handler %s installed", se->name);
 	}
 }
 
-static void free_signal_handlers(void)
+static void free_signal_handlers(const struct logger *logger)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
 		EVENT_DEL(se);
-		dbg("signal event handler %s uninstalled", se->name);
+		ldbg(logger, "signal event handler %s uninstalled", se->name);
 	}
 }
 
@@ -480,7 +480,7 @@ struct fd_read_listener {
 	struct fd_read_listener *next;
 };
 
-void free_server(void)
+void free_server(struct logger *logger)
 {
 	if (pluto_eb == NULL) {
 		/*
@@ -488,7 +488,7 @@ void free_server(void)
 		 * init_server(); mumble something about using
 		 * atexit().
 		 */
-		dbg("server event base not initialized");
+		ldbg(logger, "server event base not initialized");
 		return;
 	}
 
@@ -498,10 +498,10 @@ void free_server(void)
 		tbd->next = NULL;
 		detach_fd_read_listener(&tbd);
 	}
-	free_global_timers();
-	free_signal_handlers();
+	free_global_timers(logger);
+	free_signal_handlers(logger);
 
-	dbg("releasing event base");
+	ldbg(logger, "releasing event base");
 	event_base_free(pluto_eb);
 	pluto_eb = NULL;
 #if LIBEVENT_VERSION_NUMBER >= 0x02010100
@@ -518,10 +518,10 @@ void free_server(void)
 	 * function: RHEL 7.6 / CentOS 7.x (2.0.21-stable); Ubuntu
 	 * 16.04.6 LTS (Xenial Xerus) (2.0.21-stable).
 	 */
-	dbg("releasing global libevent data");
+	ldbg(logger, "releasing global libevent data");
 	libevent_global_shutdown();
 #else
-	dbg("leaking global libevent data (libevent is old)");
+	ldbg(logger, "leaking global libevent data (libevent is old)");
 #endif
 }
 
@@ -1042,7 +1042,7 @@ void run_server(const char *conffile, struct logger *logger)
 
 	add_fd_read_listener(ctl_fd, "PLUTO_CTL_FD", whack_handle_cb, NULL);
 
-	install_signal_handlers();
+	install_signal_handlers(logger);
 
 	/* do_whacklisten() is now done by the addconn fork */
 

@@ -89,7 +89,7 @@ void add_fd_read_listener(int fd, const char *name,
 			  fd_read_listener_cb *cb, void *arg);
 
 extern void init_server(struct logger *logger);
-extern void free_server(void);
+extern void free_server(struct logger *logger);
 
 extern struct event_base *get_pluto_event_base(void);
 

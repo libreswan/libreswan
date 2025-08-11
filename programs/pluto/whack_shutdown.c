@@ -214,7 +214,7 @@ void exit_epilogue(void)
 	/*
 	 * No libevent events beyond this point.
 	 */
-	free_server();
+	free_server(logger);
 
 	free_virtual_ip();	/* virtual_private= */
 	free_pluto_main();	/* our static chars */
