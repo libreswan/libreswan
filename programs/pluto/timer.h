@@ -72,7 +72,7 @@ extern char *revive_conn;
 
 typedef void (global_timer_cb)(struct logger *logger);
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
-			   deltatime_t period);
+			   deltatime_t period, const struct logger *logger);
 
 void init_oneshot_timer(enum global_timer type, global_timer_cb *cb);
 void schedule_oneshot_timer(enum global_timer type, deltatime_t delay);

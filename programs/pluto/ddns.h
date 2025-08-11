@@ -19,8 +19,9 @@
 
 struct show;
 struct whack_message;
+struct logger;
 
-void init_ddns(void);
+void init_ddns(const struct logger *logger);
 void whack_ddns(const struct whack_message *wm, struct show *s);
 
 #endif

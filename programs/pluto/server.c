@@ -304,12 +304,12 @@ void whack_impair_call_global_event_handler(enum global_timer timer,
 }
 
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
-			   deltatime_t period)
+			   deltatime_t period, const struct logger *logger)
 {
-	passert(in_main_thread());
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, in_main_thread());
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	passert(gt->name != NULL);
+	PASSERT(logger, gt->name != NULL);
 	gt->cb = cb;
 	struct timeval t = timeval_from_deltatime(period);
 	EVENT_ADD(gt, EV_TIMEOUT|EV_PERSIST,
@@ -317,8 +317,8 @@ void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 		  global_timer_event_cb);
 	/* log */
 	deltatime_buf buf;
-	dbg("global periodic timer %s enabled with interval of %s seconds",
-	    gt->name, str_deltatime(period, &buf));
+	ldbg(logger, "global periodic timer %s enabled with interval of %s seconds",
+	     gt->name, str_deltatime(period, &buf));
 }
 
 void init_oneshot_timer(enum global_timer type, global_timer_cb *cb)

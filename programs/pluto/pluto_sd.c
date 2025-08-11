@@ -50,7 +50,7 @@ void pluto_sd_init(struct logger *logger)
 	pluto_sd(PLUTO_SD_START, SD_REPORT_NO_STATUS, logger);
 	/* start the keepalive events */
 	enable_periodic_timer(EVENT_SD_WATCHDOG, sd_watchdog_event,
-			      deltatime(sd_secs));
+			      deltatime(sd_secs), logger);
 }
 
 /*

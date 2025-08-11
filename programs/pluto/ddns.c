@@ -195,8 +195,8 @@ void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)
 	connection_check_ddns(logger);
 }
 
-void init_ddns(void)
+void init_ddns(const struct logger *logger)
 {
 	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
-			      deltatime(PENDING_DDNS_INTERVAL));
+			      deltatime(PENDING_DDNS_INTERVAL), logger);
 }

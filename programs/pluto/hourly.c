@@ -42,6 +42,6 @@ static void refresh_secrets(struct logger *logger)
 void init_secret_timer(struct logger *logger)
 {
 	enable_periodic_timer(EVENT_REINIT_SECRET, refresh_secrets,
-			      deltatime(EVENT_REINIT_SECRET_DELAY));
+			      deltatime(EVENT_REINIT_SECRET_DELAY), logger);
 	refresh_secrets(logger);
 }

@@ -2461,7 +2461,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	kernel_ops->poke_holes(logger);
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
-			      pluto_expire_shunt_interval);
+			      pluto_expire_shunt_interval, logger);
 }
 
 void show_kernel_interface(struct show *s)

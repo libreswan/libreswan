@@ -148,5 +148,6 @@ void init_log_limiter(struct logger *logger)
 	}
 	enable_periodic_timer(EVENT_RESET_LOG_LIMITER,
 			      reset_log_limiter,
-			      RESET_LOG_LIMITER_FREQUENCY);
+			      RESET_LOG_LIMITER_FREQUENCY,
+			      logger);
 }

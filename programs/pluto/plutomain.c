@@ -1465,7 +1465,7 @@ int main(int argc, char **argv)
 	init_log_limiter(logger);
 	deltatime_t keep_alive = config_setup_deltatime(oco, KBF_KEEP_ALIVE);
 	init_nat_traversal_timer(keep_alive, logger);
-	init_ddns();
+	init_ddns(logger);
 
 	const char *virtual_private = config_setup_string(oco, KSF_VIRTUAL_PRIVATE);
 	init_virtual_ip(virtual_private, logger);
