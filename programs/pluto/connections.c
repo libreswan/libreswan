@@ -1593,7 +1593,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	CT(reauth, REAUTH);
 
 	CNN(is_opportunistic(c), OPPORTUNISTIC);
-	CNN(is_group_instance(c), GROUPINSTANCE);
+	CNN(is_from_group(c), GROUPINSTANCE);
 	CNN(c->policy.route, ROUTE);
 	CP(c->policy.up, UP);
 	CP(c->policy.keep, KEEP);
@@ -2385,7 +2385,7 @@ bool is_group(const struct connection *c)
 	bad_case(c->local->kind);
 }
 
-bool is_group_instance(const struct connection *c)
+bool is_from_group(const struct connection *c)
 {
 	if (c == NULL) {
 		return false;

@@ -1655,7 +1655,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		vdbg("best connection matching TS is %s "PRI_CO";%s%s; will replace %s "PRI_CO,
 		     best.connection->name, pri_so(best.connection->serialno),
 		     (is_template(best.connection) ? " needs instantiating!" : ""),
-		     (is_group_instance(best.connection) ? " group-instance!" : ""),
+		     (is_from_group(best.connection) ? " from group!" : ""),
 		     cc->name, pri_so(cc->serialno));
 	}
 
@@ -1675,7 +1675,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (best.connection == NULL && is_group_instance(cc)) {
+	if (best.connection == NULL && is_from_group(cc)) {
 		/*
 		 * The search for a connection matching TS failed!
 		 *
@@ -1729,14 +1729,14 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			 */
 
 			/*
-			 * XXX: only replace is_group_instance(cc)
+			 * XXX: only replace is_from_group(cc)
 			 * with another group instance.
 			 *
 			 * clonedfrom== test below makes this somewhat
 			 * redundant.
 			 */
-			if (!is_group_instance(t)) {
-				vdbg("skipping; not a group instance");
+			if (!is_from_group(t)) {
+				vdbg("skipping; not from group");
 				continue;
 			}
 
