@@ -261,12 +261,12 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 					struct verbose verbose)
 {
 	if (selectors->len > 0) {
-		pexpect(selectors->len > 0);
-		pexpect(selectors->list != NULL);
+		vexpect(selectors->len > 0);
+		vexpect(selectors->list != NULL);
 		vdbg("skipping scribble as already scribbled");
 	} else {
-		pexpect(selectors->len == 0);
-		pexpect(selectors->list == NULL);
+		vexpect(selectors->len == 0);
+		vexpect(selectors->list == NULL);
 		*selectors = (ip_selectors) {
 			.len = nsp->nr,
 			.list = alloc_things(ip_selector, nsp->nr, "accepted-selectors"),
@@ -578,7 +578,7 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 
 bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *child)
 {
-	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+	PEXPECT(child->sa.logger, child->sa.st_sa_role == SA_INITIATOR);
 	struct connection *c = child->sa.st_connection;
 
 	if (!emit_v2TS_payload(out, child, &ikev2_ts_i_desc,
@@ -1042,7 +1042,7 @@ static bool score_narrowed_selector(struct score *score,
 				    const struct narrowed_selector *ts,
 				    struct verbose verbose)
 {
-	if (!pexpect(ts->selector.ip.is_set)) {
+	if (!vexpect(ts->selector.ip.is_set)) {
 		return false;
 	}
 
@@ -1629,10 +1629,10 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		vdbg("connection %s "PRI_CO" is a sec_label; sticking with it",
 		     cc->name, pri_so(cc->serialno));
 		verbose.level++;
-		pexpect(nsps.i.sec_label.len > 0);
-		pexpect(nsps.r.sec_label.len > 0);
-		pexpect(cc->child.sec_label.len == 0);
-		pexpect(address_is_specified(cc->remote->host.addr));
+		vexpect(nsps.i.sec_label.len > 0);
+		vexpect(nsps.r.sec_label.len > 0);
+		vexpect(cc->child.sec_label.len == 0);
+		vexpect(address_is_specified(cc->remote->host.addr));
 		/* must delref */
 		struct connection *s = labeled_parent_instantiate(ike, nsps.i.sec_label, HERE);
 		scribble_ts_request_on_responder(child, s, &nsps, verbose);
@@ -1655,7 +1655,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		vdbg("best connection matching TS is %s "PRI_CO";%s%s; will replace %s "PRI_CO,
 		     best.connection->name, pri_so(best.connection->serialno),
 		     (is_template(best.connection) ? " needs instantiating!" : ""),
-		     (is_group_instance(best.connection) ? " group-instance!" : ""),
+		     (is_from_group(best.connection) ? " from group!" : ""),
 		     cc->name, pri_so(cc->serialno));
 	}
 
@@ -1675,7 +1675,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (best.connection == NULL && is_group_instance(cc)) {
+	if (best.connection == NULL && is_from_group(cc)) {
 		/*
 		 * The search for a connection matching TS failed!
 		 *
@@ -1729,14 +1729,14 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			 */
 
 			/*
-			 * XXX: only replace is_group_instance(cc)
+			 * XXX: only replace is_from_group(cc)
 			 * with another group instance.
 			 *
 			 * clonedfrom== test below makes this somewhat
 			 * redundant.
 			 */
-			if (!is_group_instance(t)) {
-				vdbg("skipping; not a group instance");
+			if (!is_from_group(t)) {
+				vdbg("skipping; not from group");
 				continue;
 			}
 
@@ -1744,7 +1744,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			 * Group instances must have a parent group
 			 * and that group needs to be shared.
 			 */
-			PEXPECT(t->logger, t->clonedfrom != NULL);
+			vexpect(t->clonedfrom != NULL);
 			if (cc->clonedfrom != t->clonedfrom) {
 				vdbg("skipping; wrong foodgroup");
 				continue;
@@ -1800,15 +1800,15 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			enum fit responder_sec_label_fit = END_EQUALS_TS;
 
 			/* responder so cross streams */
-			pexpect(t->remote->child.selectors.proposed.list == t->remote->child.selectors.assigned ||
+			vexpect(t->remote->child.selectors.proposed.list == t->remote->child.selectors.assigned ||
 				t->remote->child.selectors.proposed.list == t->remote->config->child.selectors.list);
-			pexpect(t->local->child.selectors.proposed.list == t->local->child.selectors.assigned ||
+			vexpect(t->local->child.selectors.proposed.list == t->local->child.selectors.assigned ||
 				t->local->child.selectors.proposed.list == t->local->config->child.selectors.list);
-			pexpect(selector_eq_selector(t->child.spds.list->remote->client,
+			vexpect(selector_eq_selector(t->child.spds.list->remote->client,
 						     t->remote->child.selectors.proposed.list[0]));
-			pexpect(selector_eq_selector(t->child.spds.list->local->client,
+			vexpect(selector_eq_selector(t->child.spds.list->local->client,
 						     t->local->child.selectors.proposed.list[0]));
-			pexpect(!is_labeled(t));
+			vexpect(!is_labeled(t));
 			struct child_selector_ends ends = {
 				.i.selectors = &t->remote->child.selectors.proposed,
 				.i.sec_label = t->config->sec_label,
@@ -1884,8 +1884,8 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	if (is_template(best.connection)) {
 		vdbg("instantiating the template connection");
 		verbose.level++;
-		pexpect(best.nsps.i.sec_label.len == 0);
-		pexpect(best.nsps.r.sec_label.len == 0);
+		vexpect(best.nsps.i.sec_label.len == 0);
+		vexpect(best.nsps.r.sec_label.len == 0);
 		struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
 		/* switch to instantiated instance; same score */
@@ -1933,13 +1933,13 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	/* initiator so don't cross streams */
-	pexpect(c->remote->child.selectors.proposed.list == c->remote->child.selectors.assigned ||
+	vexpect(c->remote->child.selectors.proposed.list == c->remote->child.selectors.assigned ||
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
-	pexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
+	vexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
-	pexpect(selector_eq_selector(c->child.spds.list->remote->client,
+	vexpect(selector_eq_selector(c->child.spds.list->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
-	pexpect(selector_eq_selector(c->child.spds.list->local->client,
+	vexpect(selector_eq_selector(c->child.spds.list->local->client,
 				     c->local->child.selectors.proposed.list[0]));
 
 	/* the return needs to match what was proposed */
@@ -2008,7 +2008,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
 	vdbg("%s() ...", __func__);
 
-	if (!pexpect(child->sa.st_state == &state_v2_REKEY_CHILD_R0))
+	if (!vexpect(child->sa.st_state == &state_v2_REKEY_CHILD_R0))
 		return false;
 
 	const struct connection *c = child->sa.st_connection;
@@ -2020,13 +2020,13 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	}
 
 	/* responder so cross streams */
-	pexpect(c->remote->child.selectors.proposed.list == c->remote->child.selectors.assigned ||
+	vexpect(c->remote->child.selectors.proposed.list == c->remote->child.selectors.assigned ||
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
-	pexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
+	vexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
-	pexpect(selector_eq_selector(c->child.spds.list->remote->client,
+	vexpect(selector_eq_selector(c->child.spds.list->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
-	pexpect(selector_eq_selector(c->child.spds.list->local->client,
+	vexpect(selector_eq_selector(c->child.spds.list->local->client,
 				     c->local->child.selectors.proposed.list[0]));
 	const struct child_selector_ends ends = {
 		.i.selectors = &c->remote->child.selectors.proposed,

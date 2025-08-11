@@ -85,8 +85,8 @@ static bool match_v1_connection(const struct connection *c,
 		 * shunt match - stop the search for another conn if
 		 * we are groupinstance.
 		 */
-		if (is_group_instance(c)) {
-			ldbg(logger, "  choosing %s, never negotiate + group instance",
+		if (is_from_group(c)) {
+			ldbg(logger, "  choosing %s, never negotiate + from group",
 			     c->name);
 			return true;
 		}

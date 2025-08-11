@@ -1463,8 +1463,8 @@ void connection_route(struct connection *c, where_t where)
 	if (is_template(c)) {
 		if (is_opportunistic(c)) {
 			ldbg(c->logger, "template-route-possible: opportunistic");
-		} else if (is_group_instance(c)) {
-			ldbg(c->logger, "template-route-possible: groupinstance");
+		} else if (is_from_group(c)) {
+			ldbg(c->logger, "template-route-possible: from group");
 		} else if (is_labeled(c)) {
 			ldbg(c->logger, "template-route-possible: has sec-label");
 		} else if (c->local->config->child.virt != NULL) {
