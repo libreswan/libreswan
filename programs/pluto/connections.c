@@ -2390,25 +2390,14 @@ bool is_from_group(const struct connection *c)
 	if (c == NULL) {
 		return false;
 	}
-	switch (c->local->kind) {
-	case CK_INVALID:
-		break;
-	case CK_GROUP:
-	case CK_PERMANENT:
-	case CK_LABELED_TEMPLATE:
-	case CK_LABELED_PARENT:
-	case CK_LABELED_CHILD:
+	if (is_group(c)) {
 		return false;
-	case CK_TEMPLATE:
-		/* cloned from could be null; is_group() handles
-		 * that */
-		return is_group(c->clonedfrom);
-	case CK_INSTANCE:
-		/* cloned from could be null; is_group() handles
-		 * that */
-		return is_group(c->clonedfrom->clonedfrom);
 	}
-	bad_enum(c->logger, &connection_kind_names, c->local->kind);
+	/* is the root a group? */
+	while (c->clonedfrom != NULL) {
+		c = c->clonedfrom;
+	}
+	return is_group(c);
 }
 
 bool is_labeled_where(const struct connection *c, where_t where)
