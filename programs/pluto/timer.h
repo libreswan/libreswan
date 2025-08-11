@@ -74,8 +74,11 @@ typedef void (global_timer_cb)(struct logger *logger);
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 			   deltatime_t period, const struct logger *logger);
 
-void init_oneshot_timer(enum global_timer type, global_timer_cb *cb);
-void schedule_oneshot_timer(enum global_timer type, deltatime_t delay);
-void deschedule_oneshot_timer(enum global_timer type);
+void init_oneshot_timer(enum global_timer type, global_timer_cb *cb,
+			const struct logger *logger);
+void schedule_oneshot_timer(enum global_timer type, deltatime_t delay,
+			    const struct logger *logger);
+void deschedule_oneshot_timer(enum global_timer type,
+			      const struct logger *logger);
 
 #endif /* _TIMER_H */

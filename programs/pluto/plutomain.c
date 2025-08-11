@@ -1478,7 +1478,7 @@ int main(int argc, char **argv)
 	      "!?!"));
 
 	/* require NSS */
-	init_root_certs();
+	init_root_certs(logger);
 	init_secret_timer(logger);
 	init_ike_alg(logger);
 	test_ike_alg(logger);

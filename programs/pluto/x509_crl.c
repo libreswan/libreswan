@@ -314,7 +314,7 @@ void fetch_crl(struct crl_distribution_point *wip, int wstatus, shunk_t output,
 		 * a single probe.
 		 */
 		if (deltasecs(x509_crl.check_interval) > 0) {
-			schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval);
+			schedule_oneshot_timer(EVENT_CHECK_CRLS, x509_crl.check_interval, logger);
 		}
 		return;
 	}
@@ -520,7 +520,7 @@ bool init_x509_crl_queue(struct logger *logger)
 	 * further fetches are defined by the config(?) file (is that
 	 * loaded before this function was called? yes).
 	 */
-	init_oneshot_timer(EVENT_CHECK_CRLS, event_check_crls);
+	init_oneshot_timer(EVENT_CHECK_CRLS, event_check_crls, logger);
 	if (deltasecs(x509_crl.check_interval) <= 0) {
 		ldbg(logger, "CRL: checking disabled as check-interval is zero");
 		return false;
@@ -538,7 +538,7 @@ bool init_x509_crl_queue(struct logger *logger)
 	 * before the CRL fetch list has been refreshed (for the
 	 * latter, use impair.event_check_crls).
 	 */
-	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5));
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5), logger);
 	return true;
 }
 

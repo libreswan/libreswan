@@ -321,43 +321,46 @@ void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 	     gt->name, str_deltatime(period, &buf));
 }
 
-void init_oneshot_timer(enum global_timer type, global_timer_cb *cb)
+void init_oneshot_timer(enum global_timer type, global_timer_cb *cb,
+			const struct logger *logger)
 {
-	passert(in_main_thread());
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, in_main_thread());
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
 	/* initialize */
-	passert(gt->name != NULL);
-	passert(!event_initialized(&gt->ev));
+	PASSERT(logger, gt->name != NULL);
+	PASSERT(logger, !event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
 		     EV_TIMEOUT,
 		     global_timer_event_cb, gt/*arg*/);
 	gt->cb = cb;
-	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
-	dbg("global one-shot timer %s initialized", gt->name);
+	PASSERT(logger, event_get_events(&gt->ev) == (EV_TIMEOUT));
+	ldbg(logger, "global one-shot timer %s initialized", gt->name);
 }
 
-void schedule_oneshot_timer(enum global_timer type, deltatime_t delay)
+void schedule_oneshot_timer(enum global_timer type, deltatime_t delay,
+			    const struct logger *logger)
 {
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
 	deltatime_buf buf;
-	dbg("global one-shot timer %s scheduled in %s seconds",
-	    gt->name, str_deltatime(delay, &buf));
-	passert(event_initialized(&gt->ev));
-	passert(event_get_events(&gt->ev) == (EV_TIMEOUT));
+	ldbg(logger, "global one-shot timer %s scheduled in %s seconds",
+	     gt->name, str_deltatime(delay, &buf));
+	PASSERT(logger, event_initialized(&gt->ev));
+	PASSERT(logger, event_get_events(&gt->ev) == (EV_TIMEOUT));
 	struct timeval t = timeval_from_deltatime(delay);
-	passert(event_add(&gt->ev, &t) >= 0);
+	PASSERT(logger, event_add(&gt->ev, &t) >= 0);
 }
 
 /* urban dictionary says deschedule is a word */
-void deschedule_oneshot_timer(enum global_timer type)
+void deschedule_oneshot_timer(enum global_timer type,
+			      const struct logger *logger)
 {
-	passert(type < elemsof(global_timers));
+	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	dbg("global one-shot timer %s disabled", gt->name);
-	passert(event_initialized(&gt->ev));
-	passert(event_del(&gt->ev) >= 0);
+	ldbg(logger, "global one-shot timer %s disabled", gt->name);
+	PASSERT(logger, event_initialized(&gt->ev));
+	PASSERT(logger, event_del(&gt->ev) >= 0);
 }
 
 static void free_global_timers(void)

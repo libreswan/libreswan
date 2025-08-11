@@ -20,7 +20,7 @@
 #include "refcnt.h"
 #include "where.h"
 
-void init_root_certs(void);
+void init_root_certs(const struct logger *logger);
 void free_root_certs(struct logger *logger);
 
 struct root_certs {
