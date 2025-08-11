@@ -1338,7 +1338,6 @@ static bool fit_tsps_to_ends(struct narrowed_selector_payloads *nsps,
 
 struct best {
 	struct connection *connection;
-	bool instantiated;
 	struct narrowed_selector_payloads nsps;
 };
 
@@ -1528,7 +1527,6 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 				     d->name);
 				best = (struct best) {
 					.connection = d,
-					.instantiated = false,
 					.nsps = nsps,
 				};
 			}
@@ -1544,7 +1542,6 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, "ts");
 	vdbg("%s() ...", __func__);
 	verbose.level++;
-	const unsigned base_level = verbose.level;
 
 	vassert(v2_msg_role(md) == MESSAGE_REQUEST);
 	vassert(child->sa.st_sa_role == SA_RESPONDER);
@@ -1810,54 +1807,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	/*
-	 * Is best.connection is a template:
-	 *
-	 * - a hybrid template-instance sec_label connection
-	 *
-	 *   XXX:
-	 *
-	 *   If it is then, expect it to be the connection we started
-	 *   with.  All the above achieved nothing (other than check
-	 *   that this isn't already instantiated???, and set
-	 *   best_sec_label).  All that's needed here is for the
-	 *   hybrid template-instance to be instantiated.
-	 *
-	 * - a more straight forward template that needs narrowing
-	 */
-
-	if (is_template(best.connection)) {
-		vdbg("instantiating the template connection");
-		verbose.level++;
-		vexpect(best.nsps.i.sec_label.len == 0);
-		vexpect(best.nsps.r.sec_label.len == 0);
-		struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
-		scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
-		/* switch to instantiated instance; same score */
-		best.connection = s;
-		best.instantiated = true;
-	}
-
-	verbose.level = base_level;
-
-	/*
-	 * If needed, replace the child's connection.
-	 *
-	 * switch_state_connection(), if the connection changes,
-	 * de-references the old connection; which is what really
-	 * matters.
-	 *
-	 * If above instantiated connection then also need to delete
-	 * local reference (state is given its own reference).
-	 */
-	if (best.connection != child->sa.st_connection) {
-		connswitch_state_and_log(&child->sa, best.connection);
-		if (best.instantiated) {
-			connection_delref(&best.connection, child->sa.logger);
-		}
-	}
-
-	return true;
+	return false;
 }
 
 /* check TS payloads, response */
