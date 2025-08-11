@@ -1330,51 +1330,6 @@ static bool fit_tsps_to_ends(struct narrowed_selector_payloads *nsps,
 	return true;
 }
 
-static bool v2_child_connection_probably_shared(struct child_sa *child,
-						struct verbose verbose)
-{
-	struct connection *c = child->sa.st_connection;
-
-	if (connection_is_pending(c)) {
-		vdbg(PRI_SO" connection is also pending; but what about pending for this state???",
-		       pri_so(child->sa.st_serialno));
-		return true;
-	}
-
-	struct ike_sa *ike = ike_sa(&child->sa, HERE);
-	struct state_filter sf = {
-		.search = {
-			.order = NEW2OLD,
-			.verbose = verbose,
-			.where = HERE,
-		},
-	};
-	while (next_state(&sf)) {
-		struct state *st = sf.st;
-		if (st->st_connection != c) {
-			continue;
-		}
-		if (st == &child->sa) {
-			vdbg("ignoring ourselves "PRI_SO" sharing connection %s",
-			       pri_so(st->st_serialno), c->name);
-			continue;
-		}
-		if (st == &ike->sa) {
-			vdbg("ignoring IKE SA "PRI_SO" sharing connection %s with "PRI_SO,
-			       pri_so(st->st_serialno), c->name,
-			       pri_so(child->sa.st_serialno));
-			continue;
-		}
-		vdbg(PRI_SO" and "PRI_SO" share connection %s",
-		       pri_so(child->sa.st_serialno),
-		       pri_so(st->st_serialno),
-		       c->name);
-		return true;
-	}
-
-	return false;
-}
-
 /*
  * Find the best connection: possibly scribbling on the just
  * instantiated child; possibly instantiating a new connection;
@@ -1700,29 +1655,30 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (is_from_group(cc)) {
+	if (is_template(cc) && is_from_group(cc)) {
+
 		/*
 		 * The search for a connection matching TS failed!
 		 *
-		 * Since the existing connection is a group instance
-		 * it might be a better group template that can be
-		 * instantiated.
+		 * Since the existing connection is a template
+		 * instantiated from a group there might be a better
+		 * template instantiated from that same group.
 		 *
 		 * Why?
 		 *
-		 * Who knows, but I suspect it goes back to the original
-		 * choice made during IKE_SA_INIT where:
+		 * Who knows, but I suspect it goes back to the
+		 * original choice made during IKE_SA_INIT where:
 		 *
 		 * - OE templates (group instances?!?) connections
 		 *
-		 *   During IKE_SA_INIT, the OE connection with the narrowest
-		 *   <remote.client> subnet that contained <remote.address>
-		 *   was chosen; so now it is looking to see if one of the
-		 *   other OE connections does better
+		 *   During IKE_SA_INIT, the OE connection with the
+		 *   narrowest <remote.client> subnet that contained
+		 *   <remote.address> was chosen; so now it is looking
+		 *   to see if one of the other OE connections does
+		 *   better
 		 */
-		vdbg("no connection matching TS found; existing connection %s "PRI_CO" is a group-instance, trying other templates",
+		vdbg("no connection matching TS found; existing connection %s "PRI_CO" is a template instantiated from a group, trying other templates from same group",
 		     cc->name, pri_so(cc->serialno));
-		vdbg("no connection matching TS found; best spd route; looking for a better template connection to instantiate");
 
 		struct connection_filter cf = {
 			.kind = CK_TEMPLATE /* require a template */,
@@ -1735,7 +1691,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		};
 		while (next_connection(&cf)) {
 			struct connection *t = cf.c;
-			verbose = cf.search.verbose;
+			struct verbose verbose = cf.search.verbose;
 
 			VDBG_JAMBUF(buf) {
 				jam(buf, "investigating template %s;", t->name);
@@ -1745,82 +1701,68 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			}
 			verbose.level++;
 
-			/*
-			 * Is it worth looking at the template.
-			 *
-			 * XXX: treat the combination the same as
-			 * group instance, like the old code did; is
-			 * this valid?
-			 */
-
-			/*
-			 * XXX: only replace is_from_group(cc)
-			 * with another group instance.
-			 *
-			 * clonedfrom== test below makes this somewhat
-			 * redundant.
-			 */
-			if (!is_from_group(t)) {
-				vdbg("skipping; not from group");
+			if (t == cc) {
+				vdbg("skipping; self");
 				continue;
 			}
 
 			/*
-			 * Group instances must have a parent group
-			 * and that group needs to be shared.
+			 * XXX: is this template from the same group
+			 * as the existing connection (which is a
+			 * template from a group).
 			 */
-			vexpect(t->clonedfrom != NULL);
+
+			vexpect(is_template(t)); /* from lookup */
+
 			if (cc->clonedfrom != t->clonedfrom) {
-				vdbg("skipping; wrong foodgroup");
+				vdbg("skipping; wrong group");
 				continue;
 			}
 
-			/*
-			 * ??? why require current connection->name
-			 * and t->name to be different.
-			 *
-			 * XXX: don't re-instantiate the same
-			 * connection template?!?
-			 *
-			 * XXX: check is skipping connections that
-			 * share a common ancestry?!? No.  .base_name
-			 * consists of parent's .base_name + OE-Guff.
-			 */
-			if (streq(cc->base_name, t->base_name)) {
-				vdbg("skipping; name same as current connection");
-				continue;
-			}
+			vexpect(t->clonedfrom != NULL); /* template from group */
+			vexpect(is_group(t->clonedfrom)); /* original group */
 
 			/*
-			 * Require that the connection instantiated
-			 * during IKE_SA_INIT has a client that falls
-			 * within T.
+			 * Require remote subnet CC is within T.
 			 *
 			 * Why?
 			 *
-			 * Something to do with the IKE_SA_INIT client
-			 * being chosen because it had the narrowest
-			 * client selector?
+			 * Something to do with CC, the connection
+			 * chosen during IKE_SA_INIT, being the
+			 * narrowest client that matches the host
+			 * addresses?
+			 *
+			 * XXX: but is this too strict? Should it
+			 * instead just check that the host addr is
+			 * within the client?
 			 */
 			if (!selector_in_selector(cc->child.spds.list->remote->client,
 						  t->child.spds.list->remote->client)) {
-				vdbg("skipping; current connection's initiator subnet is not <= template");
+				vdbg("skipping; current connection's initiator (remote) subnet is not <= template");
 				continue;
 			}
 
-			/* require responder address match; why? */
+			/*
+			 * Require local subnet address match.
+			 *
+			 * XXX: why?
+			 */
 			ip_address cc_this_client_address =
 				selector_prefix(cc->child.spds.list->local->client);
 			ip_address t_this_client_address =
 				selector_prefix(t->child.spds.list->local->client);
 			if (!address_eq_address(cc_this_client_address,
 						t_this_client_address)) {
-				vdbg("skipping; responder addresses don't match");
+				vdbg("skipping; responder (local) subnet addresses don't match");
 				continue;
 			}
 
-			/* require a valid narrowed port? */
-			/* exact match; XXX: 'cos that is what old code did */
+			/*
+			 * Require a valid narrowed port?
+			 *
+			 * exact match; XXX: 'cos that is what old
+			 * code did.
+			 */
 			enum fit responder_selector_fit = END_EQUALS_TS;
 			enum fit responder_sec_label_fit = END_EQUALS_TS;
 
@@ -1847,43 +1789,21 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 				continue;
 			}
 
-			verbose.level--;
-
 			/*
-			 * XXX: isn't this a template, or are group
-			 * instances shared?
-			 *
-			 * XXX: yes, it's CK_TEMPLATE, per search.
-			 * And when is_shared() connection fails code
-			 * that follows will instantiate.
+			 * Switch; transfering new connections
+			 * ownership to Child SA.
 			 */
-			struct connection *s;
-			bool instantiated;
-			if (v2_child_connection_probably_shared(child, verbose)) {
-				/* instantiate it, filling in peer's ID */
-				s = spd_instantiate(t, child->sa.st_connection->remote->host.addr, HERE);
-				instantiated = true;
-			} else {
-				s = child->sa.st_connection;
-				instantiated = false;
-			}
-			/*
-			 * Doesn't this scribble all over a group-instance aka
-			 * template?
-			 */
+			struct connection *s = spd_instantiate(t, child->sa.st_connection->remote->host.addr, HERE);
 			scribble_ts_request_on_responder(child, s, &nsps, verbose);
-
-			/* switch */
-			best = (struct best) {
-				.connection = s,
-				.instantiated = instantiated,
-				.nsps = nsps,
-			};
-			break;
+			connswitch_state_and_log(&child->sa, s);
+			connection_delref(&s, child->sa.logger);
+			return true;
 		}
-	}
 
-	verbose.level = base_level;
+		llog_ts(child, &tsps, "does not match any IKEv2 group template; responding with TS_UNACCEPTABLE");
+		return false;
+
+	}
 
 	if (best.connection == NULL) {
 		llog_ts(child, &tsps, "does not match any IKEv2 connection; responding with TS_UNACCEPTABLE");
