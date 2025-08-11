@@ -1651,15 +1651,40 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 */
 
 	struct best best = find_best_connection_for_v2TS_request(child, &tsps, md);
+
 	if (best.connection != NULL) {
-		vdbg("best connection matching TS is %s "PRI_CO";%s%s; will replace %s "PRI_CO,
+
+		if (is_template(best.connection)) {
+			vdbg("best connection matching TS is template %s "PRI_CO"%s; will instantiate and replace %s "PRI_CO,
+			     best.connection->name, pri_so(best.connection->serialno),
+			     (is_from_group(best.connection) ? " from group" : ""),
+			     cc->name, pri_so(cc->serialno));
+			struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
+			scribble_ts_request_on_responder(child, s, &best.nsps, verbose);
+			connswitch_state_and_log(&child->sa, s);
+			connection_delref(&s, child->sa.logger);
+			return true;
+		}
+
+		if (best.connection != child->sa.st_connection) {
+			vdbg("best connection matching TS is %s "PRI_CO"%s; will replace %s "PRI_CO,
+			     best.connection->name, pri_so(best.connection->serialno),
+			     (is_from_group(best.connection) ? " from group" : ""),
+			     cc->name, pri_so(cc->serialno));
+			connswitch_state_and_log(&child->sa, best.connection);
+			return true;
+		}
+
+		vdbg("best connection matching TS is existing %s "PRI_CO"%s",
 		     best.connection->name, pri_so(best.connection->serialno),
-		     (is_template(best.connection) ? " needs instantiating!" : ""),
-		     (is_from_group(best.connection) ? " from group!" : ""),
-		     cc->name, pri_so(cc->serialno));
+		     (is_from_group(best.connection) ? " from group!" : ""));
+
+		return true;
 	}
 
-	if (best.connection == NULL && is_permanent(cc)) {
+	vassert(best.connection == NULL);
+
+	if (is_permanent(cc)) {
 		/*
 		 * The search for a connection matching TS failed!
 		 *
@@ -1675,7 +1700,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (best.connection == NULL && is_from_group(cc)) {
+	if (is_from_group(cc)) {
 		/*
 		 * The search for a connection matching TS failed!
 		 *
