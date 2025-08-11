@@ -211,7 +211,7 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 	*pathlen = 0;
 
 	/* CA a equals CA b => we have a match */
-	if (same_dn(a, b)) {
+	if (same_dn(a, b, verbose)) {
 		return true;
 	}
 
@@ -240,7 +240,7 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 
 		/* does the issuer of CA a match CA b? */
 		asn1_t i_dn = same_secitem_as_shunk(cacert->derIssuer);
-		match = same_dn(i_dn, b);
+		match = same_dn(i_dn, b, verbose);
 
 		if (match) {
 			/* we have a match: exit the loop */
@@ -266,6 +266,8 @@ bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 generalName_t *collect_rw_ca_candidates(ip_address local_address,
 					enum ike_version ike_version)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	generalName_t *top = NULL;
 	/* i.e., from anywhere to here - a host-pair search */
 	struct connection_filter hpf = {
@@ -313,7 +315,7 @@ generalName_t *collect_rw_ca_candidates(ip_address local_address,
 				top = gn;
 				break;
 			}
-			if (same_dn(ASN1(gn->name), ASN1(d->remote->host.config->ca))) {
+			if (same_dn(ASN1(gn->name), ASN1(d->remote->host.config->ca), verbose)) {
 				/* D's CA already in list */
 				break;
 			}

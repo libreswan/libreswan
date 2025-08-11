@@ -77,8 +77,10 @@ struct generalName {
  * check periodically for expired crls
  */
 
-extern bool same_dn(asn1_t a, asn1_t b);
-extern bool match_dn(asn1_t a, asn1_t b, int *wildcards);
+extern bool same_dn(asn1_t a, asn1_t b,
+		    struct verbose verbose);
+extern bool match_dn(asn1_t a, asn1_t b, int *wildcards,
+		     struct verbose verbose);
 extern bool match_dn_any_order_wild(asn1_t a, asn1_t b, int *wildcards,
 				    struct verbose verbose);
 extern bool dn_has_wildcards(asn1_t dn);

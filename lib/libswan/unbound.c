@@ -84,7 +84,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 			    "error reading hosts: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
-		dbg("/etc/hosts lookups activated");
+		ldbg(logger, "/etc/hosts lookups activated");
 	}
 
 	/*
@@ -108,7 +108,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 			    "error reading /etc/resolv.conf: %s: [errno: %s]",
 			    ub_strerror(ugh), strerror(e));
 	} else {
-		dbg("/etc/resolv.conf usage activated");
+		ldbg(logger, "/etc/resolv.conf usage activated");
 	}
 
 	/*
@@ -121,7 +121,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 			    "error setting outgoing-port-avoid: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
-		dbg("outgoing-port-avoid set 0-65535");
+		ldbg(logger, "outgoing-port-avoid set 0-65535");
 	}
 
 	errno = 0;
@@ -131,12 +131,12 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 			    "error setting outgoing-port-permit: %s: %s",
 			    ub_strerror(ugh), strerror(errno));
 	} else {
-		dbg("outgoing-port-permit set 32768-60999");
+		ldbg(logger, "outgoing-port-permit set 32768-60999");
 	}
 
 	if (!do_dnssec) {
 		/* No DNSSEC - nothing more to configure */
-		dbg("dnssec validation disabled by configuration");
+		ldbg(logger, "dnssec validation disabled by configuration");
 		return;
 	}
 
@@ -153,7 +153,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 				    "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
-		dbg("loading dnssec root key from:%s", rootfile);
+		ldbg(logger, "loading dnssec root key from:%s", rootfile);
 		errno = 0;
 		ugh = ub_ctx_add_ta_file(dns_ctx, rootfile);
 		if (ugh != 0) {
@@ -168,7 +168,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	}
 
 	if (trusted == NULL) {
-		dbg("no additional dnssec trust anchors defined via dnssec-trusted= option");
+		ldbg(logger, "no additional dnssec trust anchors defined via dnssec-trusted= option");
 		return;
 	}
 
@@ -186,7 +186,7 @@ diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
 			  const char *rootfile, const char *trusted,
 			  struct logger *logger)
 {
-	passert(dns_ctx == NULL); /* block re-entry to the function */
+	PASSERT(logger, dns_ctx == NULL); /* block re-entry to the function */
 	dns_ctx = ub_ctx_create_event(eb);
 	if (dns_ctx == NULL) {
 		return diag("failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
@@ -203,9 +203,9 @@ diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
 void unbound_sync_init(bool do_dnssec, const char *rootfile,
 		       const char *trusted, struct logger *logger)
 {
-	passert(dns_ctx == NULL); /* block re-entry to the function */
+	PASSERT(logger, dns_ctx == NULL); /* block re-entry to the function */
 	dns_ctx = ub_ctx_create();
-	passert(dns_ctx != NULL);
+	PASSERT(logger, dns_ctx != NULL);
 	unbound_ctx_config(do_dnssec, rootfile, trusted, logger);
 }
 
@@ -220,7 +220,7 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 	/* 28 = AAAA record, 1 = A record */
 	const int qtype = (afi == &ipv6_info) ? 28/*AAAA*/ : 1/*A*/;
 
-	passert(dns_ctx != NULL);
+	PASSERT(logger, dns_ctx != NULL);
 
 	if (strlen(src) == 0) {
 		return diag("empty hostname in host lookup");
@@ -242,10 +242,10 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 
 	if (!result->havedata) {
 		if (result->secure) {
-			dbg("validated reply proves '%s' does not exist",
+			ldbg(logger, "validated reply proves '%s' does not exist",
 				src);
 		} else {
-			dbg("failed to resolve '%s' (%s)", src,
+			ldbg(logger, "failed to resolve '%s' (%s)", src,
 				result->bogus ? "BOGUS" : "insecure");
 		}
 		ub_resolve_free(result);
@@ -253,7 +253,7 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 	}
 
 	if (!result->secure) {
-		dbg("%s lookup was not protected by DNSSEC!", result->qname);
+		ldbg(logger, "%s lookup was not protected by DNSSEC!", result->qname);
 	}
 
 	if (LDBGP(DBG_TMI, logger)) {
@@ -275,9 +275,9 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 	}
 
 	/* XXX: for now pick the first one and return that */
-	passert(result->data != NULL);
-	passert(result->data[0] != NULL);
-	passert(result->len != NULL);
+	PASSERT(logger, result->data != NULL);
+	PASSERT(logger, result->data[0] != NULL);
+	PASSERT(logger, result->len != NULL);
 
 	/*
 	 * XXX: data_to_address() only requires the length >=
