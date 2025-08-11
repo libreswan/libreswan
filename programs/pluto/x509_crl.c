@@ -93,6 +93,8 @@ static void free_crl_distribution_point(struct crl_distribution_point **tbd)
 
 static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	/*
 	 * Find the distribution point.
 	 */
@@ -118,7 +120,7 @@ static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 	 */
 	struct crl_issuer **issuer;
 	for (issuer = &(*dp)->issuers; (*issuer) != NULL; issuer = &(*issuer)->next) {
-		if (same_dn(issuer_dn, ASN1((*issuer)->dn))) {
+		if (same_dn(issuer_dn, ASN1((*issuer)->dn), verbose)) {
 			break;
 		}
 	}

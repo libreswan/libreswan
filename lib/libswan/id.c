@@ -336,6 +336,8 @@ bool id_is_any(const struct id *a)
 
 bool id_eq(const struct id *a, const struct id *b)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	if (a->kind != b->kind) {
 		return false;
 	}
@@ -376,11 +378,11 @@ bool id_eq(const struct id *a, const struct id *b)
 	}
 
 	case ID_FROMCERT:
-		dbg("%s() received ID_FROMCERT - unexpected", __func__);
-		return same_dn(a->name, b->name);
+		vdbg("%s() received ID_FROMCERT - unexpected", __func__);
+		return same_dn(a->name, b->name, verbose);
 
 	case ID_DER_ASN1_DN:
-		return same_dn(a->name, b->name);
+		return same_dn(a->name, b->name, verbose);
 
 	case ID_KEY_ID:
 		return hunk_eq(a->name, b->name);
