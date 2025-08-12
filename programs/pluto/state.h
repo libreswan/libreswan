@@ -731,7 +731,7 @@ struct state {
 
 void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom);
 void update_st_ike_spis(struct child_sa *child, const ike_spis_t *ike_spis);
-void update_st_ike_spis_responder(struct ike_sa *ike, const ike_spi_t *ike_responder_spi);
+void update_IKE_responder_SPI_on_initiator(struct ike_sa *ike, const ike_spi_t *ike_responder_spi);
 
 /*
  * The IKE and CHILD SAs.
