@@ -48,7 +48,7 @@ struct kem_ops {
 	diag_t (*calc_shared_secret)(const struct kem_desc *group,
 				     SECKEYPrivateKey *local_privk,
 				     const SECKEYPublicKey *local_pubk,
-				     chunk_t remote_ke,
+				     shunk_t remote_ke,
 				     PK11SymKey **shared_secret,
 				     struct logger *logger) MUST_USE_RESULT;
 };
