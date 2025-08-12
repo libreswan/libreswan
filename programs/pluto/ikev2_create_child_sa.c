@@ -185,7 +185,7 @@ static void migrate_v2_child(struct ike_sa *from, struct child_sa *to,
 	 * XXX: this is to keep code that still uses
 	 * state_by_ike_spis() to find children working.
 	 */
-	update_st_ike_spis(child, &to->sa.st_ike_spis);
+	update_IKE_SPIs_of_sa(child, &to->sa.st_ike_spis);
 }
 
 static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
@@ -221,8 +221,8 @@ static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *ne
 
 	v2_msgid_init_ike(pexpect_ike_sa(&new_ike->sa));
 
-	/* Switch to the new IKE SPIs */
-	update_st_ike_spis(new_ike, &new_ike->sa.st_ike_rekey_spis);
+	/* Switch to the larval IKE SA to the new IKE SPIs */
+	update_IKE_SPIs_of_sa(new_ike, &new_ike->sa.st_ike_rekey_spis);
 
 	migrate_v2_children(old_ike, new_ike);
 

@@ -322,13 +322,13 @@ void update_IKE_responder_SPI_on_initiator(struct ike_sa *ike,
 }
 
 /*
- * Re-insert the state in the database after updating the RCOOKIE, and
- * possibly the ICOOKIE.
+ * Re-insert the Child SA in the database after updating the IKE SPIs.
  *
- * ICOOKIE is only updated if icookie != NULL
+ * Used when migrating a Child SA to a new IKE SA / emancipaing an IKE
+ * SA.
  */
 
-void update_st_ike_spis(struct child_sa *new_ike, const ike_spis_t *ike_spis)
+void update_IKE_SPIs_of_sa(struct child_sa *new_ike, const ike_spis_t *ike_spis)
 {
 	/* update the responder's SPI */
 	new_ike->sa.st_ike_spis = *ike_spis;
