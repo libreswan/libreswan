@@ -74,8 +74,8 @@ static ikev2_state_transition_fn process_v2_IKE_SA_INIT_request;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
 static ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
-static ikev2_llog_success_fn llog_process_v2_IKE_SA_INIT_request_success;
-static ikev2_llog_success_fn llog_process_v2_IKE_SA_INIT_response_success;
+static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_request;
+static ikev2_llog_success_fn llog_success_process_v2_IKE_SA_INIT_response;
 
 static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 {
@@ -111,7 +111,7 @@ static void jam_secured(struct jambuf *buf, struct ike_sa *ike)
 	jam_string(buf, "}");
 }
 
-void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike,
+void llog_success_process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 						 const struct msg_digest *md)
 {
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
@@ -124,7 +124,7 @@ void llog_process_v2_IKE_SA_INIT_request_success(struct ike_sa *ike,
 
 }
 
-void llog_process_v2_IKE_SA_INIT_response_success(struct ike_sa *ike,
+void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 						  const struct msg_digest *md)
 {
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
@@ -1382,7 +1382,7 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
-	  .llog_success = llog_process_v2_IKE_SA_INIT_request_success,
+	  .llog_success = llog_success_process_v2_IKE_SA_INIT_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
@@ -1437,7 +1437,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Nr),
 	  .message_payloads.optional = v2P(CERTREQ),
 	  .processor  = process_v2_IKE_SA_INIT_response,
-	  .llog_success = llog_process_v2_IKE_SA_INIT_response_success,
+	  .llog_success = llog_success_process_v2_IKE_SA_INIT_response,
 	  .timeout_event = EVENT_v2_DISCARD, /* timeout set by next transition */
 	},
 
