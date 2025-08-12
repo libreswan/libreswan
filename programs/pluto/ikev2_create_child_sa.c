@@ -176,7 +176,7 @@ static void migrate_v2_child(struct ike_sa *from, struct child_sa *to,
 	/*
 	 * Migrate the Child SA to the new IKE SA.
 	 */
-	update_st_clonedfrom(&child->sa, to->sa.st_serialno);
+	update_sa_clonedfrom(child, to->sa.st_serialno);
 	/*
 	 * Delete the old IKE_SPI hash entries (both for I and I+R
 	 * and), and then inserts new ones using ST's current IKE SPI
@@ -217,7 +217,7 @@ static void migrate_v2_children(struct ike_sa *from, struct child_sa *to)
 static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
-	update_st_clonedfrom(&new_ike->sa, SOS_NOBODY);
+	update_sa_clonedfrom(new_ike, SOS_NOBODY);
 
 	v2_msgid_init_ike(pexpect_ike_sa(&new_ike->sa));
 

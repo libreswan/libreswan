@@ -282,10 +282,10 @@ static REHASH_DB_ENTRY(state, clonedfrom, .st_clonedfrom);
  * emancipate a Child SA (IKE -> SOS_NOBODY).
  */
 
-void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom)
+void update_sa_clonedfrom(struct child_sa *sa, so_serial_t clonedfrom)
 {
-	st->st_clonedfrom = clonedfrom;
-	state_db_rehash_clonedfrom(st);
+	sa->sa.st_clonedfrom = clonedfrom;
+	state_db_rehash_clonedfrom(&sa->sa);
 }
 
 /*
