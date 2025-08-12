@@ -90,7 +90,6 @@
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
-static void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange);
 static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ike_sa *ike);
 
 /*
@@ -164,6 +163,7 @@ void llog_success_ikev2_exchange_initiator(struct ike_sa *ike,
 void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange)
 {
 	jam_enum_short(buf, &ikev2_exchange_names, exchange->type);
+	jam_string(buf, exchange->exchange_subplot);
 }
 
 void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges)
@@ -2042,8 +2042,12 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_exchange *exchange)
 {
 	const struct finite_state *state = ike->sa.st_state;
-	ldbg(ike->sa.logger, "looking for exchange '%s' in state '%s'",
-	     exchange->subplot, state->short_name);
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
+		jam_string(buf, "looking for exchange ");
+		jam_v2_exchange(buf, exchange);
+		jam_string(buf, " in state ");
+		jam_string(buf, state->short_name);
+	}
 	FOR_EACH_ELEMENT(f, exchange->initiate.from) {
 		if (*f == state) {
 			return true;
