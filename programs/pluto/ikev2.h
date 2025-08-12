@@ -130,8 +130,8 @@ struct v2_exchange {
 	} initiate;
 	struct {
 		struct v2_transitions responder;
+		struct v2_transitions response;
 	} transitions;
-	const struct v2_transitions *response;
 };
 
 #define V2_EXCHANGE(KIND,						\
@@ -139,10 +139,6 @@ struct v2_exchange {
 		    NEXT_STORY,						\
 		    I_CAT, IR_CAT, SECURED,				\
 		    ...)						\
-									\
-	static const struct v2_transitions v2_##KIND##_response_transitions = { \
-		ARRAY_REF(v2_##KIND##_response_transition),		\
-	};								\
 									\
 	const struct finite_state state_v2_##KIND##_I = {		\
 		.kind = STATE_V2_##KIND##_I,				\
@@ -173,7 +169,9 @@ struct v2_exchange {
 		.transitions.responder = {				\
 			ARRAY_REF(v2_##KIND##_responder_transition),	\
 		},							\
-		.response = &v2_##KIND##_response_transitions,		\
+		.transitions.response = {				\
+			ARRAY_REF(v2_##KIND##_response_transition),	\
+		},							\
 	}
 
 #define V2_STATE(KIND,							\

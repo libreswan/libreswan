@@ -700,10 +700,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transit
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "redirect IKE SA",
@@ -713,7 +709,9 @@ const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.transitions.responder = {
 		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
 	},
-	.response = &v2_INFORMATIONAL_v2N_REDIRECT_response_transitions,
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
+	},
 };
 
 void find_and_active_redirect_states(const char *conn_name,

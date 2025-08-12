@@ -588,11 +588,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[
 
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_v2DELETE_response_transitions =
-{
-	ARRAY_REF(v2_INFORMATIONAL_v2DELETE_response_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "delete IKE or Child SA",
@@ -602,5 +597,7 @@ const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange = {
 	.transitions.responder = {
 		ARRAY_REF(v2_INFORMATIONAL_v2DELETE_responder_transition),
 	},
-	.response = &v2_INFORMATIONAL_v2DELETE_response_transitions,
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_v2DELETE_response_transition),
+	},
 };

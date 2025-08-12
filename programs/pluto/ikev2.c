@@ -980,9 +980,9 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		{
 			const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 			if (exchange != NULL) {
-				const struct v2_transitions *transitions = exchange->response;
-				if (transitions != NULL &&
-				    transitions->len > 0) {
+				const struct v2_transitions *transitions =
+					&exchange->transitions.response;
+				if (transitions->len > 0) {
 					transition = &transitions->list[transitions->len - 1];
 					break;
 				}

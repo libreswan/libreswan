@@ -572,7 +572,7 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		vassert(exchange != NULL);
 		const struct v2_transition *t =
 			find_v2_transition(verbose, md,
-					   exchange->response,
+					   &exchange->transitions.response,
 					   &message_payload_status,
 					   &encrypted_payload_status);
 		if (t != NULL) {
@@ -669,7 +669,8 @@ diag_t find_v2_unsecured_response_transition(struct ike_sa *ike,
 
 	const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 	vassert(exchange != NULL);
-	(*transition) = find_v2_transition(verbose, md, exchange->response,
+	(*transition) = find_v2_transition(verbose, md,
+					   &exchange->transitions.response,
 					   &message_payload_status, NULL);
 	if (*transition != NULL) {
 		return NULL;
@@ -993,10 +994,10 @@ static void validate_state_exchange(struct verbose verbose,
 	}
 
 	verbose.level = level;
-	if (exchange->response != NULL) {
+	if (exchange->transitions.response.len > 0) {
 		vdbg("response:");
 		verbose.level++;
-		FOR_EACH_ITEM(t, exchange->response) {
+		FOR_EACH_ITEM(t, &exchange->transitions.response) {
 			validate_state_exchange_transition(verbose, t, MESSAGE_RESPONSE, exchange);
 		}
 	}
