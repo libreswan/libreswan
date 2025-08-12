@@ -198,6 +198,22 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
 }
 
+const struct kem_desc *next_additional_kem_desc(struct ike_sa *ike)
+{
+	unsigned ke_index = ike->sa.st_v2_ike_intermediate.ke_index;
+	if (ke_index >= ike->sa.st_oakley.ta_addke.len) {
+		return NULL;
+	}
+
+	/* none is allowed, not NULL?!? */
+	const struct kem_desc *kem = ike->sa.st_oakley.ta_addke.list[ke_index].kem;
+	if (PBAD(ike->sa.logger, kem == NULL)) {
+		return NULL;
+	}
+
+	return kem;
+}
+
 static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 						       struct child_sa *null_child,
 						       struct msg_digest *null_md)
