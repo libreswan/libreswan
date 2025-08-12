@@ -592,4 +592,5 @@ void process_v2_UNSECURED_message(struct msg_digest *md)
 V2_STATE(UNSECURED_R,
 	 "larval unsecured IKE SA responder",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/false,
-	 &v2_IKE_SA_INIT_exchange, &v2_IKE_SESSION_RESUME_exchange);
+	 &v2_IKE_SA_INIT_exchange,
+	 &v2_IKE_SESSION_RESUME_exchange);

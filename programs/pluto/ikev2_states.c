@@ -249,7 +249,8 @@ V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
  * IKEv2 established states.
  */
 
-V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
+V2_STATE(ESTABLISHED_IKE_SA,
+	 "established IKE SA",
 	 CAT_ESTABLISHED_IKE_SA, /*secured*/true,
 	 /*
 	  * Informational.  Order is important.
@@ -270,12 +271,15 @@ V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
 	 &v2_CREATE_CHILD_SA_rekey_child_exchange,
 	 &v2_CREATE_CHILD_SA_new_child_exchange);
 
-V2_STATE(ESTABLISHED_CHILD_SA, "established Child SA",
+V2_STATE(ESTABLISHED_CHILD_SA,
+	 "established Child SA",
 	 CAT_ESTABLISHED_CHILD_SA, /*secured*/true);
 
 /* ??? better story needed for these */
 
-V2_STATE(ZOMBIE, "deleted state", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
+V2_STATE(ZOMBIE,
+	 "deleted state",
+	 CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
