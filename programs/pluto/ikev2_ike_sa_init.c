@@ -120,8 +120,9 @@ void llog_success_process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_string(buf, " ");
 		jam_secured(buf, ike);
+		jam_string(buf, ", expecting ");
+		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 	}
-
 }
 
 void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,

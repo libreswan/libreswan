@@ -841,6 +841,8 @@ void llog_success_process_v2_IKE_AUTH_EAP_request(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
  	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, ike->sa.st_state->story);
+		jam_string(buf, ", expecting ");
+		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 	}
 }
 
