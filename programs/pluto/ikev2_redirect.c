@@ -688,10 +688,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transi
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
-};
-
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transition[] = {
 	{ .story      = "Informational Response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
@@ -704,18 +700,18 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transit
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_v2N_REDIRECT_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "redirect IKE SA",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition,
-	.responder = &v2_INFORMATIONAL_v2N_REDIRECT_responder_transitions,
-	.response = &v2_INFORMATIONAL_v2N_REDIRECT_response_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_responder_transition),
+	},
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_v2N_REDIRECT_response_transition),
+	},
 };
 
 void find_and_active_redirect_states(const char *conn_name,

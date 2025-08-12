@@ -249,7 +249,8 @@ V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
  * IKEv2 established states.
  */
 
-V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
+V2_STATE(ESTABLISHED_IKE_SA,
+	 "established IKE SA",
 	 CAT_ESTABLISHED_IKE_SA, /*secured*/true,
 	 /*
 	  * Informational.  Order is important.
@@ -270,12 +271,15 @@ V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
 	 &v2_CREATE_CHILD_SA_rekey_child_exchange,
 	 &v2_CREATE_CHILD_SA_new_child_exchange);
 
-V2_STATE(ESTABLISHED_CHILD_SA, "established Child SA",
+V2_STATE(ESTABLISHED_CHILD_SA,
+	 "established Child SA",
 	 CAT_ESTABLISHED_CHILD_SA, /*secured*/true);
 
 /* ??? better story needed for these */
 
-V2_STATE(ZOMBIE, "deleted state", CAT_ESTABLISHED_IKE_SA, /*secured*/true);
+V2_STATE(ZOMBIE,
+	 "deleted state",
+	 CAT_ESTABLISHED_IKE_SA, /*secured*/true);
 
 static const struct finite_state *v2_states[] = {
 #define S(KIND, ...) [STATE_V2_##KIND - STATE_IKEv2_FLOOR] = &state_v2_##KIND
@@ -515,7 +519,7 @@ static const struct v2_transition *find_v2_exchange_transition(struct verbose ve
 		}
 		const struct v2_transition *t =
 			find_v2_transition(verbose, md,
-					   exchange->responder,
+					   &exchange->transitions.responder,
 					   message_payload_status,
 					   encrypted_payload_status);
 		if (t != NULL) {
@@ -550,9 +554,11 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		break;
 	case MESSAGE_REQUEST:
 	{
+		const struct v2_exchanges *responder_exchanges =
+			&ike->sa.st_state->v2.ike_responder_exchanges;
 		const struct v2_transition *t =
 			find_v2_exchange_transition(verbose, md,
-						    ike->sa.st_state->v2.ike_exchanges,
+						    responder_exchanges,
 						    &message_payload_status,
 						    &encrypted_payload_status);
 		if (t != NULL) {
@@ -566,7 +572,7 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		vassert(exchange != NULL);
 		const struct v2_transition *t =
 			find_v2_transition(verbose, md,
-					   exchange->response,
+					   &exchange->transitions.response,
 					   &message_payload_status,
 					   &encrypted_payload_status);
 		if (t != NULL) {
@@ -626,7 +632,7 @@ diag_t find_v2_unsecured_request_transition(struct logger *logger,
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	(*transition) = find_v2_exchange_transition(verbose, md,
-						    state->v2.ike_exchanges,
+						    &state->v2.ike_responder_exchanges,
 						    &message_payload_status, NULL);
 	if ((*transition) != NULL) {
 		return NULL; /*no-diag*/
@@ -663,7 +669,8 @@ diag_t find_v2_unsecured_response_transition(struct ike_sa *ike,
 
 	const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 	vassert(exchange != NULL);
-	(*transition) = find_v2_transition(verbose, md, exchange->response,
+	(*transition) = find_v2_transition(verbose, md,
+					   &exchange->transitions.response,
 					   &message_payload_status, NULL);
 	if (*transition != NULL) {
 		return NULL;
@@ -714,7 +721,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	case NO_MESSAGE:
 		bad_case(role);
 	case MESSAGE_REQUEST:
-		FOR_EACH_ITEM(e, ike->sa.st_state->v2.ike_exchanges) {
+		FOR_EACH_ITEM(e, &ike->sa.st_state->v2.ike_responder_exchanges) {
 			if ((*e)->type == md->hdr.isa_xchg) {
 				exchange = (*e);
 				break;
@@ -978,19 +985,19 @@ static void validate_state_exchange(struct verbose verbose,
 	}
 
 	verbose.level = level;
-	if (exchange->responder != NULL) {
+	if (exchange->transitions.responder.len > 0) {
 		vdbg("responder:");
 		verbose.level++;
-		FOR_EACH_ITEM(t, exchange->responder) {
+		FOR_EACH_ITEM(t, &exchange->transitions.responder) {
 			validate_state_exchange_transition(verbose, t, MESSAGE_REQUEST, exchange);
 		}
 	}
 
 	verbose.level = level;
-	if (exchange->response != NULL) {
+	if (exchange->transitions.response.len > 0) {
 		vdbg("response:");
 		verbose.level++;
-		FOR_EACH_ITEM(t, exchange->response) {
+		FOR_EACH_ITEM(t, &exchange->transitions.response) {
 			validate_state_exchange_transition(verbose, t, MESSAGE_RESPONSE, exchange);
 		}
 	}
@@ -1001,7 +1008,7 @@ static void validate_state_exchange(struct verbose verbose,
 
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;
-	FOR_EACH_ITEM(t, exchange->responder) {
+	FOR_EACH_ITEM(t, &exchange->transitions.responder) {
 		if (t->exchange == exchange->type) {
 			found_transition = true;
 			break;
@@ -1023,7 +1030,7 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 	 */
 
 	vassert((from->v2.child_transition == NULL) ||
-		(from->v2.ike_exchanges == NULL));
+		(from->v2.ike_responder_exchanges.len == 0));
 
 	if (from->v2.child_transition != NULL) {
 		verbose.level = level;
@@ -1035,7 +1042,7 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 	verbose.level = level;
 	vdbg("exchanges:");
 	verbose.level++;
-	FOR_EACH_ITEM(exchange, from->v2.ike_exchanges) {
+	FOR_EACH_ITEM(exchange, &from->v2.ike_responder_exchanges) {
 		validate_state_exchange(verbose, from, *exchange);
 	}
 }

@@ -532,17 +532,15 @@ static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] 
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_mobike_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_mobike_response_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "MOBIKE probe",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_mobike_initiate_transition,
-	.response = &v2_INFORMATIONAL_mobike_response_transitions,
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_mobike_response_transition),
+	},
 };
 
 static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)

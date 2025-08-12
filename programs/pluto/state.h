@@ -207,7 +207,10 @@ struct finite_state {
 		} v1;
 		struct {
 			const struct v2_transition *child_transition;
-			const struct v2_exchanges *ike_exchanges;
+			const struct v2_exchanges {
+				const struct v2_exchange *const *list;
+				size_t len;
+			} ike_responder_exchanges;
 			bool secured; /* hence, exchanges must be integrity protected */
 		} v2;
 	};

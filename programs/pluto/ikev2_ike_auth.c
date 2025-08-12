@@ -1684,7 +1684,9 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
 };
 
-V2_EXCHANGE(IKE_AUTH, "authenticate IKE SA", "",
+V2_EXCHANGE(IKE_AUTH,
+	    "authenticate IKE SA",
+	    "",
 	    CAT_OPEN_IKE_SA, CAT_ESTABLISHED_IKE_SA, /*secured*/true,
 	    &state_v2_IKE_SA_INIT_IR,
 	    &state_v2_IKE_INTERMEDIATE_IR,

@@ -1138,9 +1138,12 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 
 };
 
-V2_STATE(IKE_SESSION_RESUME_I0, "waiting for KE to finish", CAT_IGNORE, /*secured*/false);
+V2_STATE(IKE_SESSION_RESUME_I0,
+	 "waiting for KE to finish",
+	 CAT_IGNORE, /*secured*/false);
 
-V2_STATE(IKE_SESSION_RESUME_R0, "processing IKE_SESSION_RESUME request",
+V2_STATE(IKE_SESSION_RESUME_R0,
+	 "processing IKE_SESSION_RESUME request",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/false,
 	 &v2_IKE_SESSION_RESUME_exchange);
 
@@ -1149,7 +1152,8 @@ V2_STATE(IKE_SESSION_RESUME_R,
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_exchange);
 
-V2_EXCHANGE(IKE_SESSION_RESUME, "initiate IKE SESSION RESUME",
+V2_EXCHANGE(IKE_SESSION_RESUME,
+	    "initiate IKE SESSION RESUME",
 	    ", preparing IKE_AUTH request",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
 

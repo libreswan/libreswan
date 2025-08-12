@@ -390,10 +390,6 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_liveness_responder_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_liveness_responder_transition),
-};
-
 static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[] = {
 	{ .story      = "Informational Response (liveness probe)",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
@@ -406,16 +402,16 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[
 	  .timeout_event = EVENT_RETAIN, },
 };
 
-static const struct v2_transitions v2_INFORMATIONAL_liveness_response_transitions = {
-	ARRAY_REF(v2_INFORMATIONAL_liveness_response_transition),
-};
-
 const struct v2_exchange v2_INFORMATIONAL_liveness_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.subplot = "liveness probe",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_liveness_initiate_transition,
-	.responder = &v2_INFORMATIONAL_liveness_responder_transitions,
-	.response = &v2_INFORMATIONAL_liveness_response_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_INFORMATIONAL_liveness_responder_transition),
+	},
+	.transitions.response = {
+		ARRAY_REF(v2_INFORMATIONAL_liveness_response_transition),
+	},
 };

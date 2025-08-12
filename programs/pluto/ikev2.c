@@ -959,12 +959,12 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	switch (recv_role) {
 	case MESSAGE_REQUEST:
 	{
-		const struct v2_exchanges *exchanges = state->v2.ike_exchanges;
-		if (exchanges != NULL &&
-		    exchanges->len > 0) {
-			const struct v2_transitions *transitions = exchanges->list[0]->responder;
-			if (transitions != NULL &&
-			    transitions->len > 0) {
+		const struct v2_exchanges *responder_exchanges =
+			&state->v2.ike_responder_exchanges;
+		if (responder_exchanges->len > 0) {
+			const struct v2_transitions *transitions =
+				&responder_exchanges->list[0]->transitions.responder;
+			if (transitions->len > 0) {
 				transition = &transitions->list[transitions->len - 1];
 				break;
 			}
@@ -980,9 +980,9 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		{
 			const struct v2_exchange *exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
 			if (exchange != NULL) {
-				const struct v2_transitions *transitions = exchange->response;
-				if (transitions != NULL &&
-				    transitions->len > 0) {
+				const struct v2_transitions *transitions =
+					&exchange->transitions.response;
+				if (transitions->len > 0) {
 					transition = &transitions->list[transitions->len - 1];
 					break;
 				}
