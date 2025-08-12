@@ -554,9 +554,11 @@ const struct v2_transition *find_v2_secured_transition(struct ike_sa *ike,
 		break;
 	case MESSAGE_REQUEST:
 	{
+		const struct v2_exchanges *responder_exchanges =
+			&ike->sa.st_state->v2.ike_responder_exchanges;
 		const struct v2_transition *t =
 			find_v2_exchange_transition(verbose, md,
-						    ike->sa.st_state->v2.ike_exchanges,
+						    responder_exchanges,
 						    &message_payload_status,
 						    &encrypted_payload_status);
 		if (t != NULL) {
@@ -630,7 +632,7 @@ diag_t find_v2_unsecured_request_transition(struct logger *logger,
 
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	(*transition) = find_v2_exchange_transition(verbose, md,
-						    state->v2.ike_exchanges,
+						    &state->v2.ike_responder_exchanges,
 						    &message_payload_status, NULL);
 	if ((*transition) != NULL) {
 		return NULL; /*no-diag*/
@@ -718,7 +720,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	case NO_MESSAGE:
 		bad_case(role);
 	case MESSAGE_REQUEST:
-		FOR_EACH_ITEM(e, ike->sa.st_state->v2.ike_exchanges) {
+		FOR_EACH_ITEM(e, &ike->sa.st_state->v2.ike_responder_exchanges) {
 			if ((*e)->type == md->hdr.isa_xchg) {
 				exchange = (*e);
 				break;
@@ -1027,7 +1029,7 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 	 */
 
 	vassert((from->v2.child_transition == NULL) ||
-		(from->v2.ike_exchanges == NULL));
+		(from->v2.ike_responder_exchanges.len == 0));
 
 	if (from->v2.child_transition != NULL) {
 		verbose.level = level;
@@ -1039,7 +1041,7 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 	verbose.level = level;
 	vdbg("exchanges:");
 	verbose.level++;
-	FOR_EACH_ITEM(exchange, from->v2.ike_exchanges) {
+	FOR_EACH_ITEM(exchange, &from->v2.ike_responder_exchanges) {
 		validate_state_exchange(verbose, from, *exchange);
 	}
 }

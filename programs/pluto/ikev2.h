@@ -132,11 +132,6 @@ struct v2_exchange {
 	const struct v2_transitions *response;
 };
 
-struct v2_exchanges {
-	const struct v2_exchange *const *list;
-	size_t len;
-};
-
 #define V2_EXCHANGE(KIND,						\
 		    SUBPLOT,						\
 		    NEXT_STORY,						\
@@ -190,10 +185,6 @@ struct v2_exchanges {
 		__VA_ARGS__						\
 	};								\
 									\
-	static const struct v2_exchanges v2_##KIND##_responder_exchanges = { \
-		ARRAY_REF(v2_##KIND##_responder_exchange),		\
-	};								\
-									\
 	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
 		.name = #KIND,						\
@@ -201,7 +192,9 @@ struct v2_exchanges {
 		.story = STORY,						\
 		.category = CATEGORY,					\
 		.ike_version = IKEv2,					\
-		.v2.ike_exchanges = &v2_##KIND##_responder_exchanges,	\
+		.v2.ike_responder_exchanges = {				\
+			ARRAY_REF(v2_##KIND##_responder_exchange),	\
+		},							\
 		.v2.secured = SECURED,					\
 	}
 
