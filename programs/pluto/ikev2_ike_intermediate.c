@@ -387,12 +387,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
 
-	/*
-	 * Since systems are go, start updating the state, starting
-	 * with SPIr.
-	 */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
-
 	const struct secret_ppk_stuff *ppk = NULL;
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
 
