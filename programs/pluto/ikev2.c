@@ -963,9 +963,8 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 			&state->v2.ike_responder_exchanges;
 		if (responder_exchanges->len > 0) {
 			const struct v2_transitions *transitions =
-				responder_exchanges->list[0]->responder;
-			if (transitions != NULL &&
-			    transitions->len > 0) {
+				&responder_exchanges->list[0]->transitions.responder;
+			if (transitions->len > 0) {
 				transition = &transitions->list[transitions->len - 1];
 				break;
 			}

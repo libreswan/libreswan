@@ -519,7 +519,7 @@ static const struct v2_transition *find_v2_exchange_transition(struct verbose ve
 		}
 		const struct v2_transition *t =
 			find_v2_transition(verbose, md,
-					   exchange->responder,
+					   &exchange->transitions.responder,
 					   message_payload_status,
 					   encrypted_payload_status);
 		if (t != NULL) {
@@ -984,10 +984,10 @@ static void validate_state_exchange(struct verbose verbose,
 	}
 
 	verbose.level = level;
-	if (exchange->responder != NULL) {
+	if (exchange->transitions.responder.len > 0) {
 		vdbg("responder:");
 		verbose.level++;
-		FOR_EACH_ITEM(t, exchange->responder) {
+		FOR_EACH_ITEM(t, &exchange->transitions.responder) {
 			validate_state_exchange_transition(verbose, t, MESSAGE_REQUEST, exchange);
 		}
 	}
@@ -1007,7 +1007,7 @@ static void validate_state_exchange(struct verbose verbose,
 
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;
-	FOR_EACH_ITEM(t, exchange->responder) {
+	FOR_EACH_ITEM(t, &exchange->transitions.responder) {
 		if (t->exchange == exchange->type) {
 			found_transition = true;
 			break;

@@ -884,10 +884,6 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 };
 
-static const struct v2_transitions v2_IKE_AUTH_EAP_responder_transitions = {
-	ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),
-};
-
 V2_STATE(IKE_AUTH_EAP_R,
 	 "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request",
 	 CAT_OPEN_IKE_SA, /*secured*/true,
@@ -897,5 +893,7 @@ const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
 	.subplot = "EAP",
 	.secured = true,
-	.responder = &v2_IKE_AUTH_EAP_responder_transitions,
+	.transitions.responder = {
+		ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),
+	},
 };
