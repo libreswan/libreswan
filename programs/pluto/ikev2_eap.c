@@ -884,8 +884,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 };
 
-V2_STATE(IKE_AUTH_EAP_R,
-	 "sent IKE_AUTH(EAP) response, waiting for IKE_AUTH(EAP) request",
+V2_STATE(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response",
 	 CAT_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_EAP_exchange);
 

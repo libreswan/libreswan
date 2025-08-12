@@ -1443,12 +1443,10 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 };
 
-V2_STATE(IKE_SA_INIT_I0,
-	 "waiting for KE to finish",
+V2_STATE(IKE_SA_INIT_I0, "waiting for KE to finish",
 	 CAT_IGNORE, /*secured*/false);
 
-V2_STATE(IKE_SA_INIT_R,
-	 "sent IKE_SA_INIT response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
+V2_STATE(IKE_SA_INIT_R, "sent IKE_SA_INIT response",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_exchange,
 	 &v2_IKE_INTERMEDIATE_exchange,

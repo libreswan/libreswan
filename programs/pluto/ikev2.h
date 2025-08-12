@@ -174,8 +174,7 @@ struct v2_exchange {
 		},							\
 	}
 
-#define V2_STATE(KIND,							\
-		 STORY,							\
+#define V2_STATE(KIND, STORY,						\
 		 CATEGORY, SECURED,					\
 		 ...)							\
 									\

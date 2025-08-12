@@ -666,8 +666,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
 
-V2_STATE(IKE_INTERMEDIATE_R,
-	 "sent IKE_INTERMEDIATE response, waiting for IKE_INTERMEDIATE or IKE_AUTH request",
+V2_STATE(IKE_INTERMEDIATE_R, "sent IKE_INTERMEDIATE response",
 	 CAT_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_INTERMEDIATE_exchange,
 	 &v2_IKE_AUTH_exchange,
