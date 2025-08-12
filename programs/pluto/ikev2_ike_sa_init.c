@@ -1461,6 +1461,5 @@ V2_STATE(IKE_SA_INIT_R, "sent IKE_SA_INIT response",
 	 &v2_IKE_AUTH_EAP_exchange);
 
 V2_EXCHANGE(IKE_SA_INIT, "",
-	    ", preparing IKE_INTERMEDIATE or IKE_AUTH request",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false,
 	    &state_v2_IKE_SA_INIT_I0);

@@ -135,7 +135,6 @@ struct v2_exchange {
 };
 
 #define V2_EXCHANGE(KIND, SUBPLOT,					\
-		    NEXT_STORY,						\
 		    I_CAT, IR_CAT, SECURED,				\
 		    ...)						\
 									\
@@ -143,7 +142,7 @@ struct v2_exchange {
 		.kind = STATE_V2_##KIND##_I,				\
 		.name = #KIND"_I",					\
 		.short_name = #KIND"_I",				\
-		.story = "sent "#KIND" request",			\
+		.story = "sent "#KIND""SUBPLOT" request",		\
 		.category = I_CAT,					\
 		.ike_version = IKEv2,					\
 		.v2.secured = SECURED,					\
@@ -153,7 +152,7 @@ struct v2_exchange {
 		.kind = STATE_V2_##KIND##_IR,				\
 		.name = #KIND"_IR",					\
 		.short_name = #KIND"_IR",				\
-		.story = "processed "#KIND" response"NEXT_STORY,	\
+		.story = "processed "#KIND""SUBPLOT " response",	\
 		.category = IR_CAT,					\
 		.ike_version = IKEv2,					\
 		.v2.secured = SECURED,					\
