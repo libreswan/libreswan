@@ -119,7 +119,7 @@ static shunk_t nss_ecp_local_secret_ke(const struct kem_desc *group,
 static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *group,
 					 SECKEYPrivateKey *local_privk,
 					 const SECKEYPublicKey *local_pubk,
-					 chunk_t remote_ke,
+					 shunk_t remote_ke,
 					 PK11SymKey **shared_secret,
 					 struct logger *logger)
 {

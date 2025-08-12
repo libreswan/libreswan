@@ -143,11 +143,11 @@ static void compute_dh_shared_secret(struct logger *logger,
 
 	struct dh_local_secret *secret = task->local_secret;
 	diag_t diag = secret->group->kem_ops->calc_shared_secret(secret->group,
-								secret->privk,
-								secret->pubk,
-								task->remote_ke,
-								&task->shared_secret,
-								logger);
+								 secret->privk,
+								 secret->pubk,
+								 HUNK_AS_SHUNK(task->remote_ke),
+								 &task->shared_secret,
+								 logger);
 	if (diag != NULL) {
 		llog(RC_LOG, logger, "%s", str_diag(diag));
 		pfree_diag(&diag);

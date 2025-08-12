@@ -88,7 +88,7 @@ static shunk_t nss_modp_local_secret_ke(const struct kem_desc *group,
 static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 					  SECKEYPrivateKey *local_privk,
 					  const SECKEYPublicKey *local_pubk,
-					  chunk_t remote_ke,
+					  shunk_t remote_ke,
 					  PK11SymKey **shared_secret,
 					  struct logger *logger)
 {
@@ -103,11 +103,7 @@ static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 		.u.dh = {
 			.prime = local_pubk->u.dh.prime,
 			.base = local_pubk->u.dh.base,
-			.publicValue = {
-				.data = remote_ke.ptr,/*NSS-doesn't do const*/
-				.len = remote_ke.len,
-				.type = siBuffer
-			},
+			.publicValue = same_shunk_as_secitem(remote_ke, siBuffer), /*NSS-doesn't do const*/
 		},
 	};
 
