@@ -274,6 +274,7 @@ OBJS += crypt_hash.o
 OBJS += crypt_mac.o
 OBJS += crypt_prf.o
 OBJS += crypt_symkey.o
+OBJS += crypt_kem.o
 
 ifeq ($(USE_IKEv1),true)
 OBJS += ikev1_prf.o
