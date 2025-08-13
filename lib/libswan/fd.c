@@ -32,27 +32,25 @@ struct fd {
 	refcnt_t refcnt;
 };
 
-struct fd *fd_addref_where(struct fd *fd, const struct where *where)
+struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_t where)
 {
-	struct logger *logger = &global_logger;
 	pexpect(fd == NULL || fd->magic == FD_MAGIC);
-	return addref_where(fd, logger, where);
+	return addref_where(fd, new_owner, where);
 }
 
-void fd_delref_where(struct fd **fdp, where_t where)
+void fd_delref_where(struct fd **fdp, const struct logger *ex_owner, where_t where)
 {
-	const struct logger *logger = &global_logger;
-	struct fd *fd = delref_where(fdp, logger, where);
+	struct fd *fd = delref_where(fdp, ex_owner, where);
 	if (fd != NULL) {
-		pexpect(fd->magic == FD_MAGIC);
+		PEXPECT(ex_owner, fd->magic == FD_MAGIC);
 		if (close(fd->fd) != 0) {
-			if (LDBGP(DBG_BASE, logger)) {
-				llog_errno(DEBUG_STREAM, logger, errno,
+			if (LDBGP(DBG_BASE, ex_owner)) {
+				llog_errno(DEBUG_STREAM, ex_owner, errno,
 					   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
 					   pri_fd(fd), pri_where(where));
 			}
 		} else {
-			ldbg(logger, "freeref "PRI_FD" "PRI_WHERE"",
+			ldbg(ex_owner, "freeref "PRI_FD" "PRI_WHERE"",
 			     pri_fd(fd), pri_where(where));
 		}
 		fd->magic = ~FD_MAGIC;
@@ -60,10 +58,10 @@ void fd_delref_where(struct fd **fdp, where_t where)
 	}
 }
 
-void fd_leak(struct fd *fd, where_t where)
+void fd_leak(struct fd *fd, struct logger *logger, where_t where)
 {
-	dbg("leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
-	    pri_fd(fd), pri_where(where));
+	ldbg(logger, "leaking "PRI_FD"'s FD; will be closed when pluto exits "PRI_WHERE"",
+	     pri_fd(fd), pri_where(where));
 	/* leave the old underlying file descriptor open */
 	if (fd != NULL) {
 		fd->fd = dup(fd->fd);
@@ -84,31 +82,31 @@ ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)
 	return s < 0 ? -errno : s;
 }
 
-struct fd *fd_accept(int socket, const struct where *where, struct logger *logger)
+struct fd *fd_accept(int socket, const struct logger *owner, where_t where)
 {
 	struct sockaddr_un addr;
 	socklen_t addrlen = sizeof(addr);
 
 	int fd = accept(socket, (struct sockaddr *)&addr, &addrlen);
 	if (fd < 0) {
-		llog_errno(ERROR_STREAM, logger, errno,
+		llog_errno(ERROR_STREAM, owner, errno,
 			   "accept() failed in "PRI_WHERE": ",
 			   pri_where(where));
 		return NULL;
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
-		llog_errno(ERROR_STREAM, logger, errno,
+		llog_errno(ERROR_STREAM, owner, errno,
 			   "failed to set CLOEXEC in "PRI_WHERE": ", pri_where(where));
 		close(fd);
 		return NULL;
 	}
 
-	struct fd *fdt = refcnt_alloc(struct fd, logger, where);
+	struct fd *fdt = refcnt_alloc(struct fd, owner, where);
 	fdt->fd = fd;
 	fdt->magic = FD_MAGIC;
-	dbg("%s: new "PRI_FD" "PRI_WHERE"",
-	    __func__, pri_fd(fdt), pri_where(where));
+	ldbg(owner, "%s: new "PRI_FD" "PRI_WHERE"",
+	     __func__, pri_fd(fdt), pri_where(where));
 	return fdt;
 }
 

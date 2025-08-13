@@ -249,7 +249,7 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * See also whack_handle_cb() sets whackfd[0] to the current
 	 * whack's FD before, indirectly, calling this function.
 	 */
-	fd_leak(logger->whackfd[0], HERE);
+	fd_leak(logger->whackfd[0], logger, HERE);
 
 	/*
 	 * Start the shutdown process.
