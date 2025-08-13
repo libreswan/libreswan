@@ -43,6 +43,7 @@
 
 static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
+static bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed);
 
 /*
  * Without this the code makes little sense.
@@ -301,10 +302,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static bool recalc_v2_ppk_interm_keymat(struct ike_sa *ike,
-					shunk_t ppk,
-					const ike_spis_t *new_ike_spis,
-					where_t where)
+static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t ppk, where_t where)
 {
 	struct logger *logger = ike->sa.logger;
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
@@ -325,6 +323,13 @@ static bool recalc_v2_ppk_interm_keymat(struct ike_sa *ike,
 		return false;
 	}
 
+	return recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+}
+
+bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
+{
+	struct logger *logger = ike->sa.logger;
+
 	/* release old keys, salts and cipher contexts */
 
 	symkey_delref(logger, "SK_d", &ike->sa.st_skey_d_nss);
@@ -343,7 +348,7 @@ static bool recalc_v2_ppk_interm_keymat(struct ike_sa *ike,
 
 	/* now we have to generate the keys for everything */
 
-	calc_v2_ike_keymat(&ike->sa, skeyseed, new_ike_spis);
+	calc_v2_ike_keymat(&ike->sa, skeyseed, &ike->sa.st_ike_spis);
 	symkey_delref(logger, "skeyseed", &skeyseed);
 	return true;
 }
@@ -488,11 +493,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			  response.logger);
 
 	if (ppk != NULL) {
-		recalc_v2_ppk_interm_keymat(ike, ppk->key,
-					    &ike->sa.st_ike_spis,
-					    HERE);
-		llog(RC_LOG, ike->sa.logger,
-		     "PPK used in IKE_INTERMEDIATE as responder");
+		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
+		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as responder");
 	}
 
 	return STF_OK;
@@ -609,11 +611,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 			get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 					    ike->sa.logger);
 
-		recalc_v2_ppk_interm_keymat(ike, ppk->key,
-					    &ike->sa.st_ike_spis,
-					    HERE);
-		llog(RC_LOG, ike->sa.logger,
-		     "PPK used in IKE_INTERMEDIATE as initiator");
+		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
+		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as initiator");
 	}
 	if (md->pd[PD_v2N_PPK_IDENTITY] == NULL) {
 		if (ike->sa.st_connection->config->ppk.insist) {
