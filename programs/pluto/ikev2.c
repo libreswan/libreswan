@@ -1934,7 +1934,8 @@ void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 {
 	schedule_callback("reinitiating IKE_SA_INIT", deltatime(0),
 			  ike->sa.st_serialno,
-			  reinitiate_v2_ike_sa_init, resume);
+			  reinitiate_v2_ike_sa_init, resume,
+			  ike->sa.logger);
 }
 
 bool v2_notification_fatal(v2_notification_t n)

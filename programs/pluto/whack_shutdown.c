@@ -275,7 +275,8 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_server_helpers(server_helpers_stopped_callback);
+	stop_server_helpers(server_helpers_stopped_callback, logger);
+
 	/*
 	 * helper_threads_stopped_callback() is called once both all
 	 * helper-threads have exited, and all helper-thread events

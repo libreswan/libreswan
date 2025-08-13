@@ -790,9 +790,11 @@ static void callback_handler(void *arg, const struct timer_event *event)
 	threadtime_stop(&start, SOS_NOBODY, "callback %s", e.story);
 }
 
-void schedule_callback(const char *story, deltatime_t delay,
+void schedule_callback(const char *story,
+		       deltatime_t delay,
 		       so_serial_t serialno,
-		       callback_cb *callback, void *context)
+		       callback_cb *callback, void *context,
+		       struct logger *logger)
 {
 	struct callback_event tmp = {
 		.serialno = serialno,
@@ -801,8 +803,8 @@ void schedule_callback(const char *story, deltatime_t delay,
 		.story = story,
 	};
 	struct callback_event *e = clone_thing(tmp, story);
-	dbg("scheduling callback %s ("PRI_SO")",
-	    e->story, pri_so(e->serialno));
+	ldbg(logger, "scheduling callback %s ("PRI_SO")",
+	     e->story, pri_so(e->serialno));
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
 	 * Event may have even run on another thread before the below

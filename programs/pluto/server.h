@@ -138,7 +138,8 @@ void schedule_resume(const char *name,
 typedef void callback_cb(const char *story, struct state *st, void *context);
 void schedule_callback(const char *story, deltatime_t delay,
 		       so_serial_t serialno,
-		       callback_cb *callback, void *context);
+		       callback_cb *callback, void *context,
+		       struct logger *logger);
 
 void whack_impair_call_global_event_handler(enum global_timer type,
 					    struct logger *logger);

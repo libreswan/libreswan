@@ -272,9 +272,9 @@ static void *helper_thread(void *arg)
 		do_job(job, w->helper_id);
 	}
 
-	dbg("helper %u: telling main thread that it is exiting", w->helper_id);
+	ldbg(w->logger, "helper %u: telling main thread that it is exiting", w->helper_id);
 	schedule_callback("helper stopped", deltatime(0), SOS_NOBODY,
-			  helper_thread_stopped_callback, NULL);
+			  helper_thread_stopped_callback, NULL, w->logger);
 	return NULL;
 }
 
@@ -418,7 +418,8 @@ void submit_task(struct state *callback_sa,
 		}
 
 		schedule_callback("inline crypto", delay,
-				  SOS_NOBODY, inline_worker, job);
+				  SOS_NOBODY, inline_worker, job,
+				  job->logger);
 		return;
 	}
 
@@ -630,7 +631,7 @@ static void call_server_helpers_stopped_callback(const char *story UNUSED,
 	server_helpers_stopped_callback();
 }
 
-void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
+void stop_server_helpers(void (*server_helpers_stopped_cb)(void), struct logger *logger)
 {
 	server_helpers_stopped_callback = server_helpers_stopped_cb;
 	if (helper_threads_started > 0) {
@@ -641,10 +642,10 @@ void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
 		 * Always finish things using a callback so this call stack
 		 * can cleanup all its allocated data.
 		 */
-		dbg("no helper threads to shutdown");
+		ldbg(logger, "no helper threads to shutdown");
 		pexpect(helper_threads == NULL);
 		schedule_callback("no helpers to stop", deltatime(0), SOS_NOBODY,
-				  call_server_helpers_stopped_callback, NULL);
+				  call_server_helpers_stopped_callback, NULL, logger);
 	}
 }
 
