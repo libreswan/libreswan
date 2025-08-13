@@ -275,7 +275,7 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 	passert(event & EV_TIMEOUT);
 	passert(gt >= global_timers);
 	passert(gt < global_timers + elemsof(global_timers));
-	dbg("processing global timer %s", gt->name);
+	ldbg(logger, "processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
@@ -960,7 +960,7 @@ static stf_status addconn_exited(struct state *null_st UNUSED,
 				 void *context UNUSED,
 				 struct logger *logger UNUSED)
 {
-	dbg("reaped addconn helper child (status %d)", status);
+	ldbg(logger, "reaped addconn helper child (status %d)", status);
 	return STF_OK;
 }
 
@@ -999,9 +999,9 @@ void init_server(struct logger *logger)
 #ifdef EVENT_SET_MEM_FUNCTIONS_IMPLEMENTED
 	event_set_mem_functions(libevent_malloc, libevent_realloc,
 				libevent_free);
-	dbg("libevent is using pluto's memory allocator");
+	ldbg(logger, "libevent is using pluto's memory allocator");
 #else
-	dbg("libevent is using its own memory allocator");
+	ldbg(logger, "libevent is using its own memory allocator");
 #endif
 	llog(RC_LOG, logger,
 		    "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
@@ -1014,12 +1014,12 @@ void init_server(struct logger *logger)
 	int r = evthread_use_pthreads();
 	passert(r >= 0);
 	/* now do anything */
-	dbg("creating event base");
+	ldbg(logger, "creating event base");
 	pluto_eb = event_base_new();
 	passert(pluto_eb != NULL);
 	int s = evthread_make_base_notifiable(pluto_eb);
 	passert(s >= 0);
-	dbg("libevent initialized");
+	ldbg(logger, "libevent initialized");
 }
 
 /*
@@ -1040,7 +1040,7 @@ void run_server(const char *conffile, struct logger *logger)
 	 * setup basic events, CTL and SIGNALs
 	 */
 
-	dbg("Setting up events, loop start");
+	ldbg(logger, "Setting up events, loop start");
 
 	add_fd_read_listener(ctl_fd, "PLUTO_CTL_FD", whack_handle_cb, NULL);
 
