@@ -41,7 +41,6 @@
 #include "ikev2_prf.h"
 #include "ikev2_notification.h"
 
-static dh_shared_secret_cb process_v2_IKE_INTERMEDIATE_response_continue;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
 static bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed);
 
@@ -573,29 +572,6 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 		.initiator = ike->sa.st_ike_spis.initiator,
 		.responder = md->hdr.isa_ike_responder_spi,
 	};
-
-	/*
-	 * For now, do only one Intermediate Exchange round and
-	 * proceed with IKE_AUTH.
-	 */
-	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa, md,
-				ike->sa.st_gr/*initiator needs responder KE*/,
-				process_v2_IKE_INTERMEDIATE_response_continue, HERE);
-	return STF_SUSPEND;
-}
-
-stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struct msg_digest *md)
-{
-	struct ike_sa *ike = pexpect_ike_sa(st);
-	struct logger *logger = ike->sa.logger;
-	if (ike->sa.st_dh_shared_secret == NULL) {
-		/*
-		 * XXX: this is the initiator so returning a
-		 * notification is kind of useless.
-		 */
-		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
-		return STF_FATAL;
-	}
 
 	/*
 	 * XXX: does the keymat need to be re-computed here?
