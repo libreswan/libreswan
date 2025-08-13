@@ -282,10 +282,10 @@ static REHASH_DB_ENTRY(state, clonedfrom, .st_clonedfrom);
  * emancipate a Child SA (IKE -> SOS_NOBODY).
  */
 
-void update_st_clonedfrom(struct state *st, so_serial_t clonedfrom)
+void update_sa_clonedfrom(struct child_sa *sa, so_serial_t clonedfrom)
 {
-	st->st_clonedfrom = clonedfrom;
-	state_db_rehash_clonedfrom(st);
+	sa->sa.st_clonedfrom = clonedfrom;
+	state_db_rehash_clonedfrom(&sa->sa);
 }
 
 /*
@@ -307,8 +307,8 @@ HASH_DB(state,
  * rehash the DB entries.
  */
 
-void update_st_ike_spis_responder(struct ike_sa *ike,
-			       const ike_spi_t *ike_responder_spi)
+void update_IKE_responder_SPI_on_initiator(struct ike_sa *ike,
+					   const ike_spi_t *ike_responder_spi)
 {
 	/* update the responder's SPI */
 	ike->sa.st_ike_spis.responder = *ike_responder_spi;
@@ -322,13 +322,13 @@ void update_st_ike_spis_responder(struct ike_sa *ike,
 }
 
 /*
- * Re-insert the state in the database after updating the RCOOKIE, and
- * possibly the ICOOKIE.
+ * Re-insert the Child SA in the database after updating the IKE SPIs.
  *
- * ICOOKIE is only updated if icookie != NULL
+ * Used when migrating a Child SA to a new IKE SA / emancipaing an IKE
+ * SA.
  */
 
-void update_st_ike_spis(struct child_sa *new_ike, const ike_spis_t *ike_spis)
+void update_IKE_SPIs_of_sa(struct child_sa *new_ike, const ike_spis_t *ike_spis)
 {
 	/* update the responder's SPI */
 	new_ike->sa.st_ike_spis = *ike_spis;

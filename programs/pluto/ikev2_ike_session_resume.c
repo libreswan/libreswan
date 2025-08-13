@@ -1022,7 +1022,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 	 * Since systems are go, start updating the state, starting
 	 * with SPIr.
 	 */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	return next_v2_exchange(ike, md, &v2_IKE_AUTH_exchange, HERE);
 }

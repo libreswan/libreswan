@@ -791,7 +791,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	 * Reinsert the state, using the responder cookie we just
 	 * received.
 	 */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	ikev1_natd_init(ike, md);
 

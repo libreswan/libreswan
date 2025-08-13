@@ -1339,7 +1339,7 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * Since systems are go, start updating the state, starting
 	 * with SPIr.
 	 */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	/*
 	 * Parse any CERTREQ in the IKE_SA_INIT response so that it is

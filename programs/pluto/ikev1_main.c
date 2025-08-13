@@ -626,7 +626,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
-	update_st_ike_spis_responder(ike, &md->hdr.isa_ike_responder_spi);
+	update_IKE_responder_SPI_on_initiator(ike, &md->hdr.isa_ike_responder_spi);
 
 	/* outI2 is not encrypted */
 	PEXPECT(ike->sa.logger, ike->sa.st_v1_phase_1_iv.len == 0); /*outI2*/
