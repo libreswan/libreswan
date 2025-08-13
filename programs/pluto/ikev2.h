@@ -174,8 +174,7 @@ struct v2_exchange {
 		},							\
 	}
 
-#define V2_STATE(KIND,							\
-		 STORY,							\
+#define V2_STATE(KIND, STORY,						\
 		 CATEGORY, SECURED,					\
 		 ...)							\
 									\
@@ -224,6 +223,8 @@ ikev2_llog_success_fn llog_success_ikev2_exchange_responder;
 ikev2_llog_success_fn llog_success_ikev2_exchange_response;
 
 ikev2_llog_success_fn ldbg_success_ikev2;
+
+void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges);
 
 bool accept_v2_notification(v2_notification_t n,
 			    struct logger *logger,

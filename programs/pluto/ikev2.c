@@ -90,6 +90,7 @@
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
+static void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange);
 static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ike_sa *ike);
 
 /*
@@ -160,6 +161,25 @@ void llog_success_ikev2_exchange_initiator(struct ike_sa *ike,
 	}
 }
 
+void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange)
+{
+	jam_enum_short(buf, &ikev2_exchange_names, exchange->type);
+}
+
+void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges)
+{
+	for (unsigned i = 0; i < exchanges->len; i++) {
+		const struct v2_exchange *exchange = exchanges->list[i];
+		if (i > 0) {
+			jam_string(buf, ", ");
+		}
+		if (i == exchanges->len - 1) {
+			jam_string(buf, "or ");
+		}
+		jam_v2_exchange(buf, exchange);
+	}
+}
+
 void llog_success_ikev2_exchange_responder(struct ike_sa *ike,
 					const struct msg_digest *md)
 {
@@ -167,8 +187,9 @@ void llog_success_ikev2_exchange_responder(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "responder processed ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
-		jam_string(buf, "; ");
-		jam_string(buf, ike->sa.st_state->story);
+		jam_string(buf, ", expecting ");
+		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
+		jam_string(buf, " request");
 	}
 }
 
