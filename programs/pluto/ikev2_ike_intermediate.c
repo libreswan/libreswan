@@ -559,21 +559,6 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	ldbg(logger, "No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
 
 	/*
-	 * Initiate the calculation of g^xy.
-	 *
-	 * Form and pass in the full SPI[ir] that will eventually be
-	 * used by this IKE SA.  Only once DH has been computed and
-	 * the SA is secure (but not authenticated) should the state's
-	 * IKE SPIr be updated.
-	 */
-
-	PEXPECT(logger, !ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
-	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
-		.initiator = ike->sa.st_ike_spis.initiator,
-		.responder = md->hdr.isa_ike_responder_spi,
-	};
-
-	/*
 	 * XXX: does the keymat need to be re-computed here?
 	 */
 
