@@ -39,7 +39,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: authentication failed: no PSK found for '@west'
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state IKE_SA_INIT_IR
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request)
+"westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (processed IKE_SA_INIT response)
 west #
  # expect block/trap (even when reviving)
 west #
