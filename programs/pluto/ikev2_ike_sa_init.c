@@ -66,6 +66,7 @@
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
 #include "config_setup.h"
+#include "ikev2_ke.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */

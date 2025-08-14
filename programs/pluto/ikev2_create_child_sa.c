@@ -60,6 +60,7 @@
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
+#include "ikev2_ke.h"
 
 static ikev2_llog_success_fn llog_success_initiate_v2_CREATE_CHILD_SA_child_request;
 static ikev2_llog_success_fn llog_success_ikev2_rekey_ike_request;

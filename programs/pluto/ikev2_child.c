@@ -68,6 +68,7 @@
 #include "ikev2_notification.h"
 #include "iface.h"
 #include "nat_traversal.h"
+#include "ikev2_ke.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,

@@ -291,51 +291,6 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 	return false;
 }
 
-/*
- * package up the calculated KE value, and emit it as a KE payload.
- * used by IKEv2: parent, child (PFS)
- */
-bool emit_v2KE(chunk_t g, const struct kem_desc *group,
-	       struct pbs_out *outs)
-{
-	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
-		llog(RC_LOG, outs->logger, "IMPAIR: omitting KE payload");
-		return true;
-	}
-
-	struct pbs_out kepbs;
-
-	struct ikev2_ke v2ke = {
-		.isak_group = group->common.id[IKEv2_ALG_ID],
-	};
-
-	if (!pbs_out_struct(outs, v2ke, &ikev2_ke_desc, &kepbs))
-		return false;
-
-	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
-		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, outs->logger,
-		     "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
-		/* Only used to test sending/receiving bogus g^x */
-		if (!pbs_out_repeated_byte(&kepbs, byte, g.len, "ikev2 impair KE (g^x) == 0")) {
-			/* already logged */
-			return false; /*fatal*/
-		}
-	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		llog(RC_LOG, outs->logger, "IMPAIR: sending an empty KE value");
-		if (!pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty")) {
-			/* already logged */
-			return false; /*fatal*/
-		}
-	} else {
-		if (!pbs_out_hunk(&kepbs, g, "ikev2 g^x"))
-			return false;
-	}
-
-	close_pbs_out(&kepbs);
-	return true;
-}
-
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t pred)
 {
 	struct state *rst = state_by_serialno(pred);
