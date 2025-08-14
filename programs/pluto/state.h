@@ -483,6 +483,10 @@ struct state {
 	 * copy the underlying keying material using NSS, hmm, NSS).
 	 */
 	struct dh_local_secret *st_dh_local_secret;
+	struct {
+		struct kem_initiator *initiator;
+		struct kem_responder *responder;
+	} st_kem;
 
 	PK11SymKey *st_dh_shared_secret;	/* Derived shared secret
 						 * Note: during Quick Mode,
