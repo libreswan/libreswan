@@ -506,16 +506,6 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(logger, null_child == NULL);
-
-	/*
-	 * The function below always schedules a dh calculation - even
-	 * when it's been performed earlier (there's something in the
-	 * intermediate echange about this?).
-	 *
-	 * So that things don't pexpect, blow away the old shared secret.
-	 */
-	ldbg(logger, "HACK: blow away old shared secret as going to re-compute it");
-	symkey_delref(ike->sa.logger, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
 	struct connection *c = ike->sa.st_connection;
 
 	/* save the most recent ID */
