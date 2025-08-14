@@ -322,7 +322,9 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 		return false;
 	}
 
-	return recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+	bool ok = recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	return ok;
 }
 
 bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
@@ -348,7 +350,6 @@ bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
 	/* now we have to generate the keys for everything */
 
 	calc_v2_ike_keymat(&ike->sa, skeyseed, &ike->sa.st_ike_spis);
-	symkey_delref(logger, "skeyseed", &skeyseed);
 	return true;
 }
 
