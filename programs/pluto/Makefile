@@ -63,6 +63,7 @@ OBJS += ikev2_create_child_sa.o
 OBJS += ikev2_informational.o
 
 # payloads
+OBJS += ikev2_ke.o
 OBJS += ikev2_cert.o
 OBJS += ikev2_certreq.o
 OBJS += ikev2_notification.o

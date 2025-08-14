@@ -66,6 +66,7 @@
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
 #include "config_setup.h"
+#include "ikev2_ke.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
@@ -466,7 +467,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 */
 
 	/* send KE */
-	if (!emit_v2KE(ike->sa.st_gi, ike->sa.st_oakley.ta_dh, request.pbs))
+	if (!emit_v2KE(HUNK_AS_SHUNK(ike->sa.st_gi), ike->sa.st_oakley.ta_dh, request.pbs))
 		return false;
 
 	/* send NONCE */
@@ -836,7 +837,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	pexpect(ike->sa.st_oakley.ta_dh == dh_local_secret_desc(local_secret));
 	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gr);
-	if (!emit_v2KE(ike->sa.st_gr, dh_local_secret_desc(local_secret), response.pbs)) {
+	if (!emit_v2KE(HUNK_AS_SHUNK(ike->sa.st_gr), dh_local_secret_desc(local_secret), response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
