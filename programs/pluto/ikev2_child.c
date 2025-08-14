@@ -245,7 +245,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 	/* KEi - only for CREATE_CHILD_SA; and then only sometimes. */
 
 	if (larval_child->sa.st_pfs_kem != NULL &&
-	    !emit_v2KE(larval_child->sa.st_gi, larval_child->sa.st_pfs_kem, pbs)) {
+	    !emit_v2KE(HUNK_AS_SHUNK(larval_child->sa.st_gi), larval_child->sa.st_pfs_kem, pbs)) {
 		return false;
 	}
 
@@ -538,7 +538,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		 * having computed KE and not what the remote sent?
 		 */
 		if (request_md->chain[ISAKMP_NEXT_v2KE] != NULL &&
-		    !emit_v2KE(larval_child->sa.st_gr, larval_child->sa.st_oakley.ta_dh, outpbs)) {
+		    !emit_v2KE(HUNK_AS_SHUNK(larval_child->sa.st_gr), larval_child->sa.st_oakley.ta_dh, outpbs)) {
 			return false;
 		}
 	}

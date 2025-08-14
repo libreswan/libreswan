@@ -19,11 +19,11 @@
 
 #include <stdbool.h>
 
-#include "chunk.h"
+#include "shunk.h"
 
 struct kem_desc;
 struct pbs_out;
 
-bool emit_v2KE(chunk_t ke, const struct kem_desc *kem, struct pbs_out *outs);
+bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs);
 
 #endif
