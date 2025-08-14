@@ -611,7 +611,7 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 		if (*sfd != NULL) {
 			ldbg(l, "attach whack "PRI_FD" to logger %p slot %u "PRI_WHERE,
 			     pri_fd(*sfd), l, h, pri_where(where));
-			l->whackfd[h++] = fd_addref_where(*sfd, where);
+			l->whackfd[h++] = fd_addref_where(*sfd, l, where);
 		}
 	}
 	return l;
@@ -652,7 +652,7 @@ void release_whack(struct logger *logger, where_t where)
 			whacked = true;
 			ldbg(logger, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
 			     pri_fd(logger->whackfd[i]), logger, i, pri_where(where));
-			fd_delref_where(&logger->whackfd[i], where);
+			fd_delref_where(&logger->whackfd[i], logger, where);
 		}
 	}
 	if (!whacked) {
@@ -729,7 +729,7 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 	/* attach to spare slot */
 	for (unsigned i = 0; i < elemsof(dst->whackfd); i++) {
 		if (dst->whackfd[i] == NULL) {
-			dst->whackfd[i] = fd_addref_where(src_fd, where);
+			dst->whackfd[i] = fd_addref_where(src_fd, dst, where);
 			ldbg(dst, "attach whack "PRI_FD" to empty logger %p slot %u",
 			     pri_fd(src_fd), dst, i);
 			return;
@@ -739,8 +739,8 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 	/* replace first aka global */
 	ldbg(dst, "attach whack "PRI_FD" to logger %p slot 0 (global)",
 	     pri_fd(src_fd), dst);
-	fd_delref_where(dst->whackfd, where);
-	dst->whackfd[0] = fd_addref_where(src_fd, where);
+	fd_delref_where(&dst->whackfd[0], dst, where);
+	dst->whackfd[0] = fd_addref_where(src_fd, dst, where);
 }
 
 void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
@@ -785,7 +785,7 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 		if (dst->whackfd[i] == src_fd) {
 			ldbg(dst, "detach whack "PRI_FD" from logger %p slot %u "PRI_WHERE,
 			     pri_fd(src_fd), dst, i, pri_where(where));
-			fd_delref_where(&dst->whackfd[i], where);
+			fd_delref_where(&dst->whackfd[i], dst, where);
 			return;
 		}
 	}

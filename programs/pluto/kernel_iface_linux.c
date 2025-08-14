@@ -107,11 +107,11 @@ static int cmp_iface(const void *lv, const void *rv)
 	}
 	/* Interface addresses don't have ports. */
 	/* what else */
-	dbg("interface sort not stable or duplicate");
+	ldbg(&global_logger, "interface sort not stable or duplicate");
 	return 0;
 }
 
-static void sort_ifaces(struct kernel_iface **rifaces)
+static void sort_ifaces(struct kernel_iface **rifaces, struct verbose verbose)
 {
 	/* how many? */
 	unsigned nr_ifaces = 0;
@@ -119,18 +119,18 @@ static void sort_ifaces(struct kernel_iface **rifaces)
 		nr_ifaces++;
 	}
 	if (nr_ifaces == 0) {
-		dbg("no interfaces to sort");
+		vdbg("no interfaces to sort");
 		return;
 	}
 	/* turn the list into an array */
 	struct kernel_iface **ifaces = alloc_things(struct kernel_iface *, nr_ifaces,
-						 "ifaces for sorting");
+						    "ifaces for sorting");
 	ifaces[0] = *rifaces;
 	for (unsigned i = 1; i < nr_ifaces; i++) {
 		ifaces[i] = ifaces[i-1]->next;
 	}
 	/* sort */
-	dbg("sorting %u interfaces", nr_ifaces);
+	vdbg("sorting %u interfaces", nr_ifaces);
 	qsort(ifaces, nr_ifaces, sizeof(ifaces[0]), cmp_iface);
 	/* turn the array back into a list */
 	for (unsigned i = 0; i < nr_ifaces - 1; i++) {
@@ -235,7 +235,7 @@ struct kernel_iface *find_kernel_ifaces6(struct verbose verbose)
 		 * (scattered between kernel_*.c files) instead
 		 * maintain the "interfaces" structure?
 		 */
-		sort_ifaces(&rifaces);
+		sort_ifaces(&rifaces, verbose);
 	}
 
 	return rifaces;

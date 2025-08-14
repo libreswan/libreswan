@@ -637,7 +637,7 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 {
 	threadtime_t start = threadtime_start();
 	{
-		struct fd *whackfd = fd_accept(fd, HERE, global_logger);
+		struct fd *whackfd = fd_accept(fd, global_logger, HERE);
 		if (whackfd == NULL) {
 			/* already logged */
 			return;
@@ -657,7 +657,7 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 
 		whack_handle(whackfd, &whack_logger);
 
-		fd_delref(&whackfd);
+		fd_delref(&whackfd, &whack_logger);
 	}
 	threadtime_stop(&start, SOS_NOBODY, "whack");
 }
