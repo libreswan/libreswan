@@ -42,7 +42,7 @@ west #
 west #
  ipsec up west-east
 "west-east" #3: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
-"west-east" #3: initiator processed IKE_SESSION_RESUME; processed IKE_SESSION_RESUME response, preparing IKE_AUTH request
+"west-east" #3: initiator processed IKE_SESSION_RESUME; processed IKE_SESSION_RESUME response
 "west-east" #3: asking for session resume ticket
 "west-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
 "west-east" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(TICKET_LT_OPAQUE),IDr,AUTH,SA,TSi,TSr}
