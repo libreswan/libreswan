@@ -1149,8 +1149,7 @@ V2_STATE(IKE_SESSION_RESUME_R, "sent IKE_SESSION_RESUME response",
 	 CAT_HALF_OPEN_IKE_SA, /*secured*/true,
 	 &v2_IKE_AUTH_exchange);
 
-V2_EXCHANGE(IKE_SESSION_RESUME,
-	    "initiate IKE SESSION RESUME",
+V2_EXCHANGE(IKE_SESSION_RESUME, "",
 	    ", preparing IKE_AUTH request",
 	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
 

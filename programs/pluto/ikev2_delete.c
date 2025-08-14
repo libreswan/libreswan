@@ -590,7 +590,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[
 
 const struct v2_exchange v2_INFORMATIONAL_v2DELETE_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
-	.subplot = "delete IKE or Child SA",
+	.exchange_subplot = " (delete IKE or Child SA)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_v2DELETE_initiate_transition,

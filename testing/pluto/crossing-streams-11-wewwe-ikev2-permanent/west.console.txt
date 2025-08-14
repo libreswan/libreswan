@@ -41,7 +41,7 @@ west #
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
-"east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH
+"east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 west #
  ../../guestbin/wait-for-inbound.sh 3
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3

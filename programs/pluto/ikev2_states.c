@@ -507,7 +507,11 @@ static const struct v2_transition *find_v2_exchange_transition(struct verbose ve
 		const struct v2_exchange *exchange = (*exchangep);
 
 		verbose.level = level;
-		vdbg("trying exchange %s ...", exchange->subplot);
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "trying exchange ");
+			jam_v2_exchange(buf, exchange);
+			jam_string(buf, " ...");
+		}
 		verbose.level++;
 
 		if (exchange->type != md->hdr.isa_xchg) {
@@ -730,8 +734,10 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb));
 			return false;
 		}
-		vdbg("plausible; exchange type matches responder %s exchange",
-			exchange->subplot);
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "plausible; exchange type matches responder exchange ");
+			jam_v2_exchange(buf, exchange);
+		}
 		break;
 	case MESSAGE_RESPONSE:
 		exchange = ike->sa.st_v2_msgid_windows.initiator.exchange;
@@ -739,15 +745,19 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 			return false;
 		}
 		if (exchange->type != md->hdr.isa_xchg) {
-			name_buf xb, eb;
-			llog(RC_LOG, ike->sa.logger, "unexpected %s response, expecting %s (%s); message dropped",
-			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb),
-			     str_enum_short(&ikev2_exchange_names, exchange->type, &eb),
-			     exchange->subplot);
+			LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+				jam_string(buf, "unexpected ");
+				jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
+				jam_string(buf, " response, expecting ");
+				jam_v2_exchange(buf, exchange);
+				jam_string(buf, "; message dropped");
+			}
 			return false;
 		}
-		vdbg("plausible; exchange type matches outstanding %s exchange",
-		     exchange->subplot);
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "plausible; exchange type matches outstanding exchange ");
+			jam_v2_exchange(buf, exchange);
+		}
 		break;
 	}
 
@@ -755,12 +765,12 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	 * Double check that the matching exchange is secured.
 	 */
 	if (!exchange->secured) {
-		name_buf rb;
-		name_buf xb;
-		llog_pexpect(ike->sa.logger, HERE, "%s %s (%s) exchange should be secured",
-			     str_enum_short(&ikev2_exchange_names, exchange->type, &xb),
-			     str_enum_short(&message_role_names, role, &rb),
-			     exchange->subplot);
+		LLOG_PEXPECT_JAMBUF(ike->sa.logger, HERE, buf) {
+			jam_v2_exchange(buf, exchange);
+			jam_string(buf, " (");
+			jam_enum_short(buf, &message_role_names, role);
+			jam_string(buf, ") exchange should be secured");
+		}
 		return false;
 	}
 
@@ -955,11 +965,12 @@ static void validate_state_exchange(struct verbose verbose,
 				    const struct finite_state *from,
 				    const struct v2_exchange *exchange)
 {
-	name_buf ixb;
-	vdbg("=>%s (%s); secured: %s",
-	     str_enum_short(&ikev2_exchange_names, exchange->type, &ixb),
-	     (exchange->subplot == NULL ? "<subplot>" : exchange->subplot),
-	     bool_str(exchange->secured));
+	VDBG_JAMBUF(buf) {
+		jam_string(buf, "=>");
+		jam_v2_exchange(buf, exchange);
+		jam_string(buf, "; secured: ");
+		jam_bool(buf, exchange->secured);
+	}
 	const unsigned level = ++verbose.level;
 
 	verbose.level = level;
@@ -1000,7 +1011,12 @@ static void validate_state_exchange(struct verbose verbose,
 	}
 
 	verbose.level = level;
-	vassert(exchange->subplot != NULL);
+	vassert(exchange->exchange_subplot != NULL);
+	if (strlen(exchange->exchange_subplot) > 0) {
+		/* " (...)" */
+		vassert(startswith(exchange->exchange_subplot, " ("));
+		vassert(strchr(exchange->exchange_subplot, ')') == strchr(exchange->exchange_subplot, '\0') - 1);
+	}
 	vassert(from->v2.secured == exchange->secured);
 
 	/* does the exchange appear in the state's transitions? */

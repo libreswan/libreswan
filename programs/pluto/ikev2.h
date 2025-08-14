@@ -122,7 +122,7 @@ struct v2_transitions {
 
 struct v2_exchange {
 	const enum ikev2_exchange type;
-	const char *subplot;
+	const char *exchange_subplot;
 	bool secured;
 	struct {
 		const struct v2_transition *transition;
@@ -134,8 +134,7 @@ struct v2_exchange {
 	} transitions;
 };
 
-#define V2_EXCHANGE(KIND,						\
-		    SUBPLOT,						\
+#define V2_EXCHANGE(KIND, SUBPLOT,					\
 		    NEXT_STORY,						\
 		    I_CAT, IR_CAT, SECURED,				\
 		    ...)						\
@@ -162,7 +161,7 @@ struct v2_exchange {
 									\
 	const struct v2_exchange v2_##KIND##_exchange = {		\
 		.type = ISAKMP_v2_##KIND,				\
-		.subplot = SUBPLOT,					\
+		.exchange_subplot = SUBPLOT,				\
 		.secured = SECURED,					\
 		.initiate.transition = &v2_##KIND##_initiate_transition, \
 		.initiate.from = { __VA_ARGS__ },			\
@@ -224,6 +223,7 @@ ikev2_llog_success_fn llog_success_ikev2_exchange_response;
 
 ikev2_llog_success_fn ldbg_success_ikev2;
 
+void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange);
 void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges);
 
 bool accept_v2_notification(v2_notification_t n,
