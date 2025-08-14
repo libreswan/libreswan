@@ -70,7 +70,7 @@ west #
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
-"east-west" #3: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH
+"east-west" #3: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 west #
  ../../guestbin/drip-inbound.sh 4 '#4: responder established Child SA'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
