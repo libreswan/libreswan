@@ -158,8 +158,8 @@ bool calc_v2_new_ike_keymat(struct ike_sa *ike,
 	     __func__, prf->common.fqn);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, ike->sa.st_ni, ike->sa.st_nr,
-						     shared, logger);
+	PK11SymKey *skeyseed = ikev2_IKE_SA_INIT_skeyseed(prf, ike->sa.st_ni, ike->sa.st_nr,
+							  shared, logger);
 	if (skeyseed == NULL) {
 		llog_pexpect(logger, where, "rekey SKEYSEED failed");
 		return false;

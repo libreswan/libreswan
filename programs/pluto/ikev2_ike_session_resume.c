@@ -613,11 +613,11 @@ bool skeyseed_v2_sr(struct ike_sa *ike,
 	pexpect(ike->sa.st_skey_d_nss != NULL);
 
 	PK11SymKey *skeyseed_k =
-		ikev2_ike_sa_resume_skeyseed(ike->sa.st_oakley.ta_prf,
-					     ike->sa.st_skey_d_nss,
-					     ike->sa.st_ni,
-					     ike->sa.st_nr,
-					     logger);
+		ikev2_IKE_SESSION_RESUME_skeyseed(ike->sa.st_oakley.ta_prf,
+						  ike->sa.st_skey_d_nss,
+						  ike->sa.st_ni,
+						  ike->sa.st_nr,
+						  logger);
 	if (skeyseed_k == NULL) {
 		llog_pexpect(ike->sa.logger, where, "KEYSEED failed");
 		return false;

@@ -1585,11 +1585,11 @@ static bool calc_v2_rekey_ike_keymat(struct ike_sa *old_ike,
 	     __func__, old_prf->common.fqn);
 
 	PK11SymKey *skeyseed =
-		ikev2_ike_sa_rekey_skeyseed(old_prf, old_d,
-					    shared,
-					    larval_ike->sa.st_ni,
-					    larval_ike->sa.st_nr,
-					    logger);
+		ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(old_prf, old_d,
+							 shared,
+							 larval_ike->sa.st_ni,
+							 larval_ike->sa.st_nr,
+							 logger);
 	if (skeyseed == NULL) {
 		llog_pexpect(logger, where, "rekey SKEYSEED failed");
 		return false;
