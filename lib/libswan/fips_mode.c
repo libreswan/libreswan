@@ -105,7 +105,7 @@ int libreswan_selinux(struct logger *logger)
 		/* try new location first, then old location */
 		fd = fopen("/selinux/enforce", "r");
 		if (fd == NULL) {
-			dbg("SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
+			ldbg(logger, "SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
 			return 0;
 		}
 	}

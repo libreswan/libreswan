@@ -20,7 +20,7 @@
 
 #include "jambuf.h"
 #include "ip_address.h"
-#include "lswlog.h"		/* for dbg() */
+#include "lswlog.h"		/* for ldbg() */
 #include "ip_info.h"
 
 const ip_address unset_address; /* all zeros */

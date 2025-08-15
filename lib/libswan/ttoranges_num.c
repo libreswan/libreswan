@@ -17,7 +17,7 @@
 
 #include "lswalloc.h"
 #include "passert.h"
-#include "lswlog.h"		/* for dbg() */
+#include "lswlog.h"		/* for ldbg() */
 #include "ip_range.h"
 #include "ip_info.h"
 
@@ -34,7 +34,7 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 		return NULL;
 	}
 
-	dbg("%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
+	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
 	struct shunks *tokens = ttoshunks(input, delims, KEEP_EMPTY_SHUNKS); /* must free */
 	if (tokens->kept_empty_shunks) {
@@ -47,7 +47,7 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 		return NULL;
 	}
 
-	dbg("%s() nr tokens %u", __func__, tokens->len);
+	ldbg(&global_logger, "%s() nr tokens %u", __func__, tokens->len);
 	output->list = alloc_things(ip_token, tokens->len, "selectors");
 	output->len = 0;
 

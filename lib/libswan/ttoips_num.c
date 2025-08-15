@@ -59,8 +59,8 @@ diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
 
 	ITEMS_FOR_EACH(token, tokens) {
 		passert(token->len > 0);
-		dbg("parsing "PRI_SHUNK" %p %u",
-		    pri_shunk(*token), *ptr, (*len));
+		ldbg(&global_logger, "parsing "PRI_SHUNK" %p %u",
+		     pri_shunk(*token), *ptr, (*len));
 		err_t e = parse_token(*token, afi, ptr, (*len)++);
 		/* validate during first pass */
 		if (e != NULL) {

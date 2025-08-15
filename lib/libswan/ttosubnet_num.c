@@ -19,8 +19,8 @@
 
 #include "ip_subnet.h"
 #include "ip_info.h" 	/* ipv6_info */
-#include "lswlog.h"	/* for dbg() */
 #include "ip_protocol.h"
+#include "passert.h"
 
 #ifndef DEFAULTSUBNET
 #define DEFAULTSUBNET "%default"

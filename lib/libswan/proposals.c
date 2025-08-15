@@ -228,7 +228,7 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 			}
 		}
 		if (same) {
-			dbg("discarding duplicate proposal");
+			ldbg(&global_logger, "discarding duplicate proposal");
 			free_proposal(proposal);
 			return;
 		}

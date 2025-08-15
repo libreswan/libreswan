@@ -17,7 +17,6 @@
 
 #include "lswalloc.h"
 #include "passert.h"
-#include "lswlog.h"		/* for dbg() */
 #include "ip_subnet.h"
 #include "ip_info.h"
 

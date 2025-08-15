@@ -17,7 +17,7 @@
 
 #include "lswalloc.h"
 #include "passert.h"
-#include "lswlog.h"		/* for dbg() */
+#include "lswlog.h"		/* for ldbg() */
 
 shunk_t *clone_shunk_tokens(shunk_t input, const char *delims, where_t where)
 {
@@ -25,7 +25,7 @@ shunk_t *clone_shunk_tokens(shunk_t input, const char *delims, where_t where)
 		return NULL;
 	}
 
-	dbg("%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
+	ldbg(&global_logger, "%s() input: "PRI_SHUNK, __func__, pri_shunk(input));
 
 	/*
 	 * Pass 1: determine the number of tokens.
@@ -52,7 +52,7 @@ shunk_t *clone_shunk_tokens(shunk_t input, const char *delims, where_t where)
 	void *buf = alloc_bytes(sizeof_tokens + input.len, where->func);
 	shunk_t *tokens = buf;
 	char *strings = buf + sizeof_tokens;
-	dbg("%s() nr tokens %u, sizeof-tokens %zu sizeof-strings %zu",
+	ldbg(&global_logger, "%s() nr tokens %u, sizeof-tokens %zu sizeof-strings %zu",
 	    __func__, nr_tokens, sizeof_tokens, input.len);
 
 	/*
@@ -70,7 +70,7 @@ shunk_t *clone_shunk_tokens(shunk_t input, const char *delims, where_t where)
 			continue;
 		}
 		tokens[nr] = token;
-		dbg("%s() %d: "PRI_SHUNK, __func__, nr, pri_shunk(token));
+		ldbg(&global_logger, "%s() %d: "PRI_SHUNK, __func__, nr, pri_shunk(token));
 		nr++;
 	}
 	tokens[nr] = null_shunk;

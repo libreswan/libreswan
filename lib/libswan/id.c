@@ -347,7 +347,7 @@ bool id_eq(const struct id *a, const struct id *b)
 		return true; /* repeat of above for completeness */
 
 	case ID_NULL:
-		dbg("ID_NULL: id kind matches");
+		ldbg(&global_logger, "ID_NULL: id kind matches");
 		return true;
 
 	case ID_IPV4_ADDR:
@@ -395,7 +395,7 @@ bool id_eq(const struct id *a, const struct id *b)
 bool same_id(const struct id *a, const struct id *b)
 {
 	if (b->kind == ID_NONE || a->kind == ID_NONE) {
-		dbg("id type with ID_NONE means wildcard match");
+		ldbg(&global_logger, "id type with ID_NONE means wildcard match");
 		return true; /* it's the wildcard */
 	}
 
@@ -464,7 +464,7 @@ bool id_has_wildcards(const struct id *id)
 	}
 
 	id_buf b;
-	dbg("id %s has wildcards: %s", str_id(id, &b), bool_str(has_wildcards));
+	ldbg(&global_logger, "id %s has wildcards: %s", str_id(id, &b), bool_str(has_wildcards));
 
 	return has_wildcards;
 }

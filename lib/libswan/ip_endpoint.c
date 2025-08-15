@@ -73,7 +73,7 @@ int endpoint_hport(const ip_endpoint endpoint)
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		dbg("%s has unspecified type", __func__);
+		ldbg(&global_logger, "%s has unspecified type", __func__);
 		return -1;
 	}
 
@@ -86,7 +86,7 @@ ip_port endpoint_port(const ip_endpoint endpoint)
 	if (afi == NULL) {
 		/* NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		dbg("%s has unspecified type", __func__);
+		ldbg(&global_logger, "%s has unspecified type", __func__);
 		return unset_port;
 	}
 
@@ -99,7 +99,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 	if (afi == NULL) {
 		/* includes NULL+unset+unknown */
 		/* not asserting, who knows what nonsense a user can generate */
-		dbg("endpoint has unspecified type");
+		ldbg(&global_logger, "endpoint has unspecified type");
 		return unset_endpoint;
 	}
 
