@@ -216,6 +216,8 @@ bool listening = false;  /* should we pay attention to IKE messages? */
  * For instance, a timer with delay 0 will likely start running in the
  * main thread before this macro has finished.
  *
+ * DANGER: on a helper thread, LOGGER MUST BE GLOBAL!
+ *
  * Deleting:
  *
  * "If the event has already executed or has never been added the
@@ -225,23 +227,24 @@ bool listening = false;  /* should we pay attention to IKE messages? */
  * Libevent that an event should no longer be considered as assigned."
  */
 
-#define EVENT_ADD(EVP, EVENTS, FD, TIME, CB)				\
+#define EVENT_ADD(EVP, EVENTS, FD, TIME, CB, LOGGER)			\
 	{								\
 		struct event *ev = &(EVP)->ev;				\
 		short events = EVENTS;					\
-		passert(!event_initialized(ev));			\
+		PASSERT(LOGGER, !event_initialized(ev));		\
 		event_assign(ev, pluto_eb, FD, events, CB, EVP);	\
-		passert(event_get_events(ev) == events);		\
-		passert(event_add(ev, TIME) >= 0);			\
+		PASSERT(LOGGER, event_get_events(ev) == events);	\
+		PASSERT(LOGGER, event_add(ev, TIME) >= 0);		\
 	}
 
-#define EVENT_DEL(EVP)							\
-	{								\
-		struct event *ev = &(EVP)->ev;				\
-		passert(event_initialized(ev));				\
-		passert(event_del(ev) >= 0);				\
-		event_debug_unassign(ev);				\
-		zero(ev);						\
+#define EVENT_DEL(EVP, LOGGER)				\
+	{						\
+		PASSERT(LOGGER, in_main_thread());	\
+		struct event *ev = &(EVP)->ev;		\
+		PASSERT(LOGGER, event_initialized(ev));	\
+		PASSERT(LOGGER, event_del(ev) >= 0);	\
+		event_debug_unassign(ev);		\
+		zero(ev);				\
 	}
 
 /*
@@ -314,7 +317,8 @@ void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 	struct timeval t = timeval_from_deltatime(period);
 	EVENT_ADD(gt, EV_TIMEOUT|EV_PERSIST,
 		  (evutil_socket_t)-1, &t,
-		  global_timer_event_cb);
+		  global_timer_event_cb,
+		  logger);
 	/* log */
 	deltatime_buf buf;
 	ldbg(logger, "global periodic timer %s enabled with interval of %s seconds",
@@ -368,7 +372,7 @@ static void free_global_timers(const struct logger *logger)
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer_desc *gt = &global_timers[u];
 		if (event_initialized(&gt->ev)) {
-			EVENT_DEL(gt);
+			EVENT_DEL(gt, logger);
 			ldbg(logger, "global timer %s uninitialized", gt->name);
 		}
 	}
@@ -443,7 +447,8 @@ static void install_signal_handlers(const struct logger *logger)
 		EVENT_ADD(se, EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
 			  (evutil_socket_t)se->signal,
 			  (struct timeval*)NULL,
-			  signal_handler_handler);
+			  signal_handler_handler,
+			  logger);
 		ldbg(logger, "signal event handler %s installed", se->name);
 	}
 }
@@ -452,7 +457,7 @@ static void free_signal_handlers(const struct logger *logger)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
-		EVENT_DEL(se);
+		EVENT_DEL(se, logger);
 		ldbg(logger, "signal event handler %s uninstalled", se->name);
 	}
 }
@@ -566,19 +571,25 @@ void schedule_timeout(const char *name,
 	(*tt)->cb = cb;
 	(*tt)->arg = arg;
 	/*
+	 * This code is executed on a helper thread.
+	 *
 	 * When DELAY is zero, the photon torpedo may have hit its
 	 * target before this function even returns.  Hence TT is a
 	 * parameter and is stored before the timer.
+	 *
+	 * DANGER: do not pass in a local logger, target may delete it
+	 * before it is used.
 	 */
 	struct timeval t = timeval_from_deltatime(delay);
-	EVENT_ADD(*tt, EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout);
+	EVENT_ADD(*tt, EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout,
+		  &global_logger);
 }
 
 void destroy_timeout(struct timeout **tt)
 {
 	passert(in_main_thread());
 	if (*tt != NULL) {
-		EVENT_DEL(*tt);
+		EVENT_DEL(*tt, &global_logger);
 		ldbg_free(&global_logger, "tt", *tt, HERE);
 		pfree(*tt);
 		*tt = NULL;
@@ -729,8 +740,8 @@ void schedule_resume(const char *name, so_serial_t serialno,
 		.md = md,
 	};
 	struct resume_event *e = clone_thing(tmp, name);
-	dbg("scheduling resume %s for "PRI_SO"",
-	    e->name, pri_so(e->serialno));
+	ldbg(&global_logger, "scheduling resume %s for "PRI_SO"",
+	     e->name, pri_so(e->serialno));
 
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
@@ -837,13 +848,14 @@ void attach_fd_read_listener(struct fd_read_listener **fdl,
 	EVENT_ADD(*fdl, EV_READ|EV_PERSIST,
 		  (evutil_socket_t)fd,
 		  (struct timeval*)NULL,
-		  fd_read_listener_event_handler);
+		  fd_read_listener_event_handler,
+		  &global_logger);
 }
 
 void detach_fd_read_listener(struct fd_read_listener **fdl)
 {
 	if (*fdl != NULL) {
-		EVENT_DEL(*fdl);
+		EVENT_DEL(*fdl, &global_logger);
 		ldbg_free(&global_logger, "fdl", *fdl, HERE);
 		pfree(*fdl);
 		*fdl = NULL;
