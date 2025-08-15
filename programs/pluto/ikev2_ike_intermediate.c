@@ -322,7 +322,9 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 		return false;
 	}
 
-	return recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+	bool ok = recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+	return ok;
 }
 
 bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
@@ -348,7 +350,6 @@ bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
 	/* now we have to generate the keys for everything */
 
 	calc_v2_ike_keymat(&ike->sa, skeyseed, &ike->sa.st_ike_spis);
-	symkey_delref(logger, "skeyseed", &skeyseed);
 	return true;
 }
 
@@ -505,16 +506,6 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(logger, null_child == NULL);
-
-	/*
-	 * The function below always schedules a dh calculation - even
-	 * when it's been performed earlier (there's something in the
-	 * intermediate echange about this?).
-	 *
-	 * So that things don't pexpect, blow away the old shared secret.
-	 */
-	ldbg(logger, "HACK: blow away old shared secret as going to re-compute it");
-	symkey_delref(ike->sa.logger, "st_dh_shared_secret", &ike->sa.st_dh_shared_secret);
 	struct connection *c = ike->sa.st_connection;
 
 	/* save the most recent ID */
@@ -557,21 +548,6 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	}
 
 	ldbg(logger, "No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
-
-	/*
-	 * Initiate the calculation of g^xy.
-	 *
-	 * Form and pass in the full SPI[ir] that will eventually be
-	 * used by this IKE SA.  Only once DH has been computed and
-	 * the SA is secure (but not authenticated) should the state's
-	 * IKE SPIr be updated.
-	 */
-
-	PEXPECT(logger, !ike_spi_is_zero(&ike->sa.st_ike_spis.responder));
-	ike->sa.st_ike_rekey_spis = (ike_spis_t) {
-		.initiator = ike->sa.st_ike_spis.initiator,
-		.responder = md->hdr.isa_ike_responder_spi,
-	};
 
 	/*
 	 * XXX: does the keymat need to be re-computed here?
