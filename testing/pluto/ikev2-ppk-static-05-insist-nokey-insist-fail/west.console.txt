@@ -53,7 +53,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: connection requires PPK, but we didn't find one
 "westnet-eastnet-ipv4-psk-ppk" #1: encountered fatal error in state IKE_SA_INIT_IR
 "westnet-eastnet-ipv4-psk-ppk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (processed IKE_SA_INIT response, preparing IKE_INTERMEDIATE or IKE_AUTH request)
+"westnet-eastnet-ipv4-psk-ppk" #1: deleting IKE SA (processed IKE_SA_INIT response)
 west #
  echo done
 done
