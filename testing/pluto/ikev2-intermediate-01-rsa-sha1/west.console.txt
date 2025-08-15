@@ -40,7 +40,7 @@ west #
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_INTERMEDIATE
 "westnet-eastnet-ikev2" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: N(PPK_IDENTITY) not received, continuing without PPK
-"westnet-eastnet-ikev2" #1: initiator processed IKE_INTERMEDIATE; processed IKE_INTERMEDIATE response
+"westnet-eastnet-ikev2" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with rsa-digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3072-bit PKCS#1 1.5 RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

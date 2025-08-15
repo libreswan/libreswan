@@ -42,7 +42,7 @@ west #
 west #
  ipsec up west-east
 "west-east" #3: sent IKE_SESSION_RESUME request to 192.1.2.23:UDP/500
-"west-east" #3: initiator processed IKE_SESSION_RESUME; processed IKE_SESSION_RESUME response
+"west-east" #3: initiator processed IKE_SESSION_RESUME, initiating IKE_AUTH
 "west-east" #3: asking for session resume ticket
 "west-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #4 {ESP <0xESPESP}
 "west-east" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(TICKET_LT_OPAQUE),IDr,AUTH,SA,TSi,TSr}

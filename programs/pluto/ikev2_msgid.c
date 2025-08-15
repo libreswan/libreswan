@@ -683,3 +683,18 @@ struct v2_msgid_window *v2_msgid_window(struct ike_sa *ike, enum message_role me
 	}
 	bad_enum(ike->sa.logger, &message_role_names, message_role);
 }
+
+void jam_v2_msgid_pending(struct jambuf *buf, struct ike_sa *ike)
+{
+	const struct v2_msgid_pending *const pending_requests =
+		ike->sa.st_v2_msgid_windows.pending_requests;
+	for (const struct v2_msgid_pending *p = pending_requests; p != NULL; p = p->next) {
+		if (p != pending_requests) {
+			jam_string(buf, ", ");
+			if (p->next == NULL) {
+				jam_string(buf, ", and ");
+			}
+		}
+		jam_v2_exchange(buf, p->exchange);
+	}
+}
