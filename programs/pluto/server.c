@@ -1030,7 +1030,7 @@ void init_server(struct logger *logger)
  * shutdown code).
  */
 
-static server_stopped_cb server_stopped;
+static server_stopped_cb *server_stopped NEVER_RETURNS;
 
 void run_server(const char *conffile, struct logger *logger)
 {
@@ -1081,14 +1081,14 @@ void run_server(const char *conffile, struct logger *logger)
 
 	int r = event_base_loop(pluto_eb, 0);
 	pexpect(r >= 0);
-	server_stopped(r);
+	server_stopped(r, logger);
 }
 
 /*
  * Indicate to libevent that the event-loop should be shutdown.  Once
  * shutdown has completed CB is called.
  */
-void stop_server(server_stopped_cb cb)
+void stop_server(server_stopped_cb *cb NEVER_RETURNS)
 {
 	server_stopped = cb;
 	event_base_loopbreak(pluto_eb);

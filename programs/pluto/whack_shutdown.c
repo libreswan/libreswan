@@ -65,6 +65,8 @@
 #include "connection_event.h"
 #include "terminate.h"
 
+server_stopped_cb server_stopped_callback NEVER_RETURNS;
+
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;
 static bool pluto_leave_state;
@@ -80,14 +82,14 @@ static bool pluto_leave_state;
  */
 
 static void exit_prologue(enum pluto_exit_code code, struct logger *logger);
-static void exit_epilogue(void) NEVER_RETURNS;
+static void exit_epilogue(struct logger *logger) NEVER_RETURNS;
 static void server_helpers_stopped_callback(void);
 
 void libreswan_exit(enum pluto_exit_code exit_code)
 {
 	struct logger *logger = &global_logger;
 	exit_prologue(exit_code, logger);
-	exit_epilogue();
+	exit_epilogue(logger);
 }
 
 static void exit_prologue(enum pluto_exit_code exit_code, struct logger *logger UNUSED/*sometimes*/)
@@ -148,10 +150,8 @@ static void delete_every_connection(struct logger *logger)
 	}
 }
 
-void exit_epilogue(void)
+void exit_epilogue(struct logger *logger)
 {
-	struct logger logger[1] = { global_logger, };
-
 	if (pluto_leave_state) {
 		shutdown_nss();
 		free_preshared_secrets(logger);
@@ -284,8 +284,6 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 */
 }
 
-static void server_stopped_callback(int r) NEVER_RETURNS;
-
 void server_helpers_stopped_callback(void)
 {
 	/*
@@ -302,12 +300,12 @@ void server_helpers_stopped_callback(void)
 	 */
 }
 
-void server_stopped_callback(int r)
+void server_stopped_callback(int r, struct logger *logger)
 {
-	dbg("event loop exited: %s",
-	    r < 0 ? "an error occurred" :
-	    r > 0 ? "no pending or active events" :
-	    "success");
+	ldbg(logger, "event loop exited: %s",
+	     r < 0 ? "an error occurred" :
+	     r > 0 ? "no pending or active events" :
+	     "success");
 
-	exit_epilogue();
+	exit_epilogue(logger);
 }
