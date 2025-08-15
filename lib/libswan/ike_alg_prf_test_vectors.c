@@ -285,8 +285,8 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
 	PK11SymKey *gir = symkey_from_hunk("gir symkey", chunk_gir, logger);
-	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, chunk_ni, chunk_nr,
-						     gir, logger);
+	PK11SymKey *skeyseed = ikev2_IKE_SA_INIT_skeyseed(prf, chunk_ni, chunk_nr,
+							  gir, logger);
 	if (!verify_symkey(test->description, "skeyseed",
 			   chunk_skeyseed, skeyseed,
 			   logger, HERE)) {
@@ -318,9 +318,9 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 	PK11SymKey *gir_new = symkey_from_hunk("gir_new symkey", chunk_gir_new,
 					       logger);
 	PK11SymKey *skeyseed_rekey =
-		ikev2_ike_sa_rekey_skeyseed(prf, skd, gir_new,
-					    chunk_ni, chunk_nr,
-					    logger);
+		ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(prf, skd, gir_new,
+							 chunk_ni, chunk_nr,
+							 logger);
 	if (!verify_symkey(test->description, "skeyseed_rekey",
 			   chunk_skeyseed_rekey, skeyseed_rekey,
 			   logger, HERE)) {

@@ -46,7 +46,7 @@ void init_crypt_symkey(struct logger *logger)
 	}
 }
 
-void symkey_delref_where(struct logger *logger, const char *name,
+void symkey_delref_where(const struct logger *logger, const char *name,
 			 PK11SymKey **key, where_t where)
 {
 	ldbg_delref_where(logger, name, (*key), where);

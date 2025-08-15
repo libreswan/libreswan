@@ -36,16 +36,40 @@ PK11SymKey *ikev2_prfplus(const struct prf_desc *prf_desc,
 			  size_t required_keymat,
 			  struct logger *logger);
 
-PK11SymKey *ikev2_ike_sa_skeyseed(const struct prf_desc *prf_desc,
-				  const chunk_t Ni, const chunk_t Nr,
-				  PK11SymKey *ke_secret,
-				  struct logger *logger);
+/*
+ * Generate IKE SA's SKEYSEED for different exchanges.
+ */
 
-PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
-					PK11SymKey *old_SK_d,
-					PK11SymKey *new_ke_secret,
-					const chunk_t Ni, const chunk_t Nr,
-					struct logger *logger);
+PK11SymKey *ikev2_IKE_SA_INIT_skeyseed(const struct prf_desc *prf_desc,
+				       const chunk_t Ni, const chunk_t Nr,
+				       PK11SymKey *ke_secret,
+				       struct logger *logger);
+
+PK11SymKey *ikev2_CREATE_CHILD_SA_ike_rekey_skeyseed(const struct prf_desc *prf_desc,
+						     PK11SymKey *old_SK_d,
+						     PK11SymKey *new_ke_secret,
+						     const chunk_t Ni, const chunk_t Nr,
+						     struct logger *logger);
+
+PK11SymKey *ikev2_IKE_INTERMEDIATE_ppk_skeyseed(const struct prf_desc *prf_desc,
+						shunk_t ppk,
+						PK11SymKey *old_SK_d,
+						struct logger *logger);
+
+PK11SymKey *ikev2_IKE_INTERMEDIATE_kem_skeyseed(const struct prf_desc *prf_desc,
+						PK11SymKey *old_SK_d,
+						PK11SymKey *ke_secret,
+						const chunk_t Ni, const chunk_t Nr,
+						struct logger *logger);
+
+PK11SymKey *ikev2_IKE_SESSION_RESUME_skeyseed(const struct prf_desc *prf_desc,
+					      PK11SymKey *old_SK_d,
+					      const chunk_t Ni, const chunk_t Nr,
+					      struct logger *logger);
+
+/*
+ * IKE SA's keymat.
+ */
 
 PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				PK11SymKey *skeyseed,
@@ -54,19 +78,10 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct prf_desc *prf_desc,
 				size_t required_bytes,
 				struct logger *logger);
 
-PK11SymKey *ikev2_ike_sa_ppk_interm_skeyseed(const struct prf_desc *prf_desc,
-					     PK11SymKey *old_SK_d,
-					     shunk_t ppk,
-					     struct logger *logger);
-
-PK11SymKey *ikev2_ike_sa_resume_skeyseed(const struct prf_desc *prf_desc,
-					 PK11SymKey *old_SK_d,
-					 const chunk_t Ni, const chunk_t Nr,
-					 struct logger *logger);
-
 /*
  * Child SA
  */
+
 PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_d,
 				  PK11SymKey *new_ke_secret,

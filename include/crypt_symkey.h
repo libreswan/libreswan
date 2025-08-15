@@ -46,7 +46,7 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
 
 PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
 				PK11SymKey *key, where_t where);
-void symkey_delref_where(struct logger *logger, const char *name,
+void symkey_delref_where(const struct logger *logger, const char *name,
 			 PK11SymKey **key, where_t where);
 
 #define symkey_addref(LOGGER, NAME, KEY) symkey_addref_where(LOGGER, NAME, KEY, HERE)

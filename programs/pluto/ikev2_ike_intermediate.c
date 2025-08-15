@@ -314,9 +314,9 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 	 */
 
 	PK11SymKey *skeyseed =
-		ikev2_ike_sa_ppk_interm_skeyseed(prf,
-						 /*old*/ike->sa.st_skey_d_nss,
-						 ppk, logger);
+		ikev2_IKE_INTERMEDIATE_ppk_skeyseed(prf, ppk,
+						    /*old*/ike->sa.st_skey_d_nss,
+						    logger);
 	if (skeyseed == NULL) {
 		llog_pexpect(logger, where, "ppk SKEYSEED failed");
 		return false;
