@@ -46,7 +46,7 @@ err_t vet_seclabel(shunk_t sl)
 
 	return NULL;
 #else
-	dbg("%s() not implemented: %zu", __func__, sl.len);
+	ldbg(&global_logger, "%s() not implemented: %zu", __func__, sl.len);
 	return "Labeled IPsec not supported";
 #endif
 }
@@ -126,7 +126,7 @@ bool sec_label_within_range(const char *source, shunk_t label, chunk_t range,
 		llog_errno(RC_LOG, logger, errno, "getcon(): ");
 		return false;
 	}
-	dbg("our SElinux context is '%s'", domain);
+	ldbg(&global_logger, "our SElinux context is '%s'", domain);
 
 	/*
 	 * Check if `pluto`'s SELinux domain can `setcontext` against the child/IPsec SA label.

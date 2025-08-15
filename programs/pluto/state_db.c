@@ -141,11 +141,11 @@ struct state *state_by_reqid(reqid_t reqid,
 		    !predicate(st, predicate_context)) {
 			continue;
 		}
-		dbg("State DB: found state "PRI_SO" in %s (%s)",
+		ldbg(&global_logger, "State DB: found state "PRI_SO" in %s (%s)",
 		    pri_so(st->st_serialno), st->st_state->short_name, reason);
 		return st;
 	}
-	dbg("State DB: state not found (%s)", reason);
+	ldbg(&global_logger, "State DB: state not found (%s)", reason);
 	return NULL;
 }
 
@@ -185,13 +185,13 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 		if (!ike_spi_eq(&st->st_ike_spis.initiator, ike_initiator_spi)) {
 			continue;
 		}
-		dbg("State DB: found %s state "PRI_SO" in %s (%s)",
+		ldbg(&global_logger, "State DB: found %s state "PRI_SO" in %s (%s)",
 		    st->st_connection->config->ike_info->version_name,
 		    pri_so(st->st_serialno), st->st_state->short_name, name);
 		return st;
 	}
 	name_buf vb;
-	dbg("State DB: %s state not found (%s)",
+	ldbg(&global_logger, "State DB: %s state not found (%s)",
 	    str_enum_long(&ike_version_names, ike_version, &vb), name);
 	return NULL;
 }
@@ -251,13 +251,13 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 				continue;
 			}
 		}
-		dbg("State DB: found %s state "PRI_SO" in %s (%s)",
+		ldbg(&global_logger, "State DB: found %s state "PRI_SO" in %s (%s)",
 		    st->st_connection->config->ike_info->version_name,
 		    pri_so(st->st_serialno), st->st_state->short_name, name);
 		return st;
 	}
 	name_buf vb;
-	dbg("State DB: %s state not found (%s)",
+	ldbg(&global_logger, "State DB: %s state not found (%s)",
 	    str_enum_long(&ike_version_names, ike_version, &vb), name);
 	return NULL;
 }
