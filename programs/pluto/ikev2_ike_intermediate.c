@@ -40,6 +40,9 @@
 #include "crypt_cipher.h"
 #include "ikev2_prf.h"
 #include "ikev2_notification.h"
+#include "crypt_kem.h"
+#include "ikev2_parent.h"		/* for emit_v2KE() */
+#include "ikev2_ke.h"
 
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
 static bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed);
@@ -214,6 +217,44 @@ const struct kem_desc *next_additional_kem_desc(struct ike_sa *ike)
 	return kem;
 }
 
+static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
+					  struct msg_digest *md,
+					  shunk_t *ke,
+					  struct logger *logger)
+{
+	const struct payload_digest *v2ke = md->chain[ISAKMP_NEXT_v2KE];
+
+	if (v2ke == NULL) {
+		name_buf rb;
+		llog(RC_LOG, logger,
+		     "ADDKE missing from IKE_INTERMEDIATE %s",
+		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+		return false;
+	}
+
+	if (v2ke->payload.v2ke.isak_group != kem->common.ikev2_alg_id) {
+		name_buf rb;
+		name_buf gb;
+		llog(RC_LOG, logger,
+		     "expecting %s ADDKE but received %s in IKE_INTERMEDIATE %s",
+		     kem->common.fqn,
+		     str_enum_short(&oakley_group_names, v2ke->payload.v2ke.isak_group, &gb),
+		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+		return false;
+	}
+
+	*ke = pbs_in_left(&v2ke->pbs);
+	if (ke->len == 0) {
+		name_buf rb;
+		llog(RC_LOG, logger,
+		     "ADDKE in IKE_INTERMEDIATE %s is really really small",
+		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+		return false;
+	}
+
+	return true;
+}
+
 static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 						       struct child_sa *null_child,
 						       struct msg_digest *null_md)
@@ -224,6 +265,17 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending INTERMEDIATE",
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
+	const struct kem_desc *kem = next_additional_kem_desc(ike);
+	if (kem != NULL) {
+		diag_t d = crypt_kem_key_gen(kem, &ike->sa.st_kem.initiator, ike->sa.logger);
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
+		}
+		ldbg_hunk(ike->sa.logger, ike->sa.st_kem.initiator->ke);
+	}
+
 	/* beginning of data going out */
 
 	struct v2_message request;
@@ -233,6 +285,12 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			     reply_buffer, sizeof(reply_buffer), &request,
 			     ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
+	}
+
+	if (ike->sa.st_kem.initiator != NULL) {
+		if (!emit_v2KE(ike->sa.st_kem.initiator->ke, kem, request.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
 	}
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
@@ -353,6 +411,37 @@ bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
 	return true;
 }
 
+static bool recalc_v2_ike_intermediate_kem_keymat(struct ike_sa *ike,
+						  PK11SymKey *shared_key,
+						  where_t where)
+{
+	struct logger *logger = ike->sa.logger;
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
+
+	ldbg(logger, "%s() calculating skeyseed using prf %s",
+	     __func__, prf->common.fqn);
+
+	/*
+	 * We need old_skey_d to recalculate SKEYSEED'.
+	 */
+
+	PK11SymKey *skeyseed =
+		ikev2_IKE_INTERMEDIATE_kem_skeyseed(prf,
+						    /*old*/ike->sa.st_skey_d_nss,
+						    shared_key,
+						    ike->sa.st_ni, ike->sa.st_nr,
+						    logger);
+	if (skeyseed == NULL) {
+		llog_pexpect(logger, where, "ppk SKEYSEED failed");
+		return false;
+	}
+
+	bool ok = recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+	symkey_delref(logger, "skeyseed", &skeyseed);
+
+	return ok;
+}
+
 stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					       struct child_sa *null_child,
 					       struct msg_digest *md)
@@ -391,6 +480,25 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
+
+	const struct kem_desc *kem = next_additional_kem_desc(ike);
+	if (kem != NULL) {
+		shunk_t initiator_ke;
+		if (!extract_ike_intermediate_v2KE(kem, md, &initiator_ke, ike->sa.logger)) {
+			/* already logged */
+			return STF_FATAL;
+		}
+		diag_t d = crypt_kem_encapsulate(kem, initiator_ke,
+						 &ike->sa.st_kem.responder,
+						 ike->sa.logger);
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "IKE_INTERMEDIATE encapsulate failed: %s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
+		}
+
+		ldbg_hunk(ike->sa.logger, ike->sa.st_kem.responder->ke);
+	}
 
 	const struct secret_ppk_stuff *ppk = NULL;
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
@@ -455,6 +563,12 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	if (ike->sa.st_kem.responder != NULL) {
+		if (!emit_v2KE(ike->sa.st_kem.responder->ke, kem, response.pbs)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	if (ppk != NULL) {
 		struct pbs_out ppks;
 		if (!open_v2N_output_pbs(response.pbs, v2N_PPK_IDENTITY, &ppks)) {
@@ -492,10 +606,19 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			  response.outgoing_fragments,
 			  response.logger);
 
+	if (ike->sa.st_kem.responder != NULL) {
+		if (!recalc_v2_ike_intermediate_kem_keymat(ike, ike->sa.st_kem.responder->shared_key, HERE)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
+
 	if (ppk != NULL) {
 		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
 		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as responder");
 	}
+
+	/* failure paths cleanup in delete_state() */
+	free_kem_responder(&ike->sa.st_kem.responder, ike->sa.logger);
 
 	return STF_OK;
 }
@@ -547,11 +670,26 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	ldbg(logger, "No KE payload in INTERMEDIATE RESPONSE, not calculating keys, going to AUTH by completing state transition");
+	const struct kem_desc *kem = next_additional_kem_desc(ike);
+	if (kem != NULL) {
+		shunk_t responder_ke = null_shunk;
+		if (!extract_ike_intermediate_v2KE(kem, md, &responder_ke, ike->sa.logger)) {
+			/* already logged */
+			return STF_FATAL;
+		}
+		diag_t d = crypt_kem_decapsulate(ike->sa.st_kem.initiator, responder_ke, ike->sa.logger);
+		if (d != NULL) {
+			llog(RC_LOG, ike->sa.logger, "IKE_INTERMEDIATE decapsulate failed: %s", str_diag(d));
+			pfree_diag(&d);
+			return STF_FATAL;
+		}
+	}
 
-	/*
-	 * XXX: does the keymat need to be re-computed here?
-	 */
+	if (ike->sa.st_kem.initiator != NULL) {
+		if (!recalc_v2_ike_intermediate_kem_keymat(ike, ike->sa.st_kem.initiator->shared_key, HERE)) {
+			return STF_INTERNAL_ERROR;
+		}
+	}
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		struct ppk_id_payload payl;
@@ -576,6 +714,10 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 				"N(PPK_IDENTITY) not received, continuing without PPK");
 		}
 	}
+
+	/* failure paths cleanup in delete_state() */
+	free_kem_initiator(&ike->sa.st_kem.initiator, ike->sa.logger);
+
 	/*
 	 * We've done one intermediate exchange round, now proceed to
 	 * IKE AUTH.
@@ -607,8 +749,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
-	  .encrypted_payloads.required = LEMPTY,
-	  .encrypted_payloads.optional = LEMPTY,
+	  .encrypted_payloads.optional = v2P(KE)|v2P(N/*PPK_IDENTITY*/),
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .llog_success = llog_success_ikev2_exchange_responder,
 	  .timeout_event = EVENT_v2_DISCARD, },
@@ -621,7 +762,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
-	  .message_payloads.optional = LEMPTY,
+	  .encrypted_payloads.optional = v2P(KE)|v2P(N/*PPK_IDENTITY*/),
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
 	  .llog_success = llog_success_ikev2_exchange_response,
 	  .timeout_event = EVENT_v2_DISCARD, },

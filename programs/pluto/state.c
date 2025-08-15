@@ -48,6 +48,7 @@
 #include "pending.h"
 #include "ipsec_doi.h"	/* needs demux.h and state.h */
 #include "crypt_symkey.h"
+#include "crypt_kem.h"		/* for free_kem_initiator(), free_kem_responder() */
 #include "ikev2.h"
 #include "secrets.h"    	/* for pubkey_delref() */
 #include "enum_names.h"
@@ -1172,6 +1173,9 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_skey_responder_salt);
 	free_chunk_content(&st->st_skey_chunk_SK_pi);
 	free_chunk_content(&st->st_skey_chunk_SK_pr);
+
+	free_kem_initiator(&st->st_kem.initiator, st->logger);
+	free_kem_responder(&st->st_kem.responder, st->logger);
 
 #define wipe_any_chunk(C)				\
 	{						\

@@ -16,62 +16,89 @@
 #include <keyhi.h>
 
 #include "crypt_kem.h"
+#include "crypt_symkey.h"
+
 #include "ike_alg.h"
 #include "ike_alg_kem_ops.h"
 #include "passert.h"
+#include "lswalloc.h"
 
-void crypt_kem_key_gen(const struct kem_desc *kem,
-		       SECKEYPrivateKey **initiator_private_key,
-		       SECKEYPublicKey **initiator_public_key,
-		       struct logger *logger)
+diag_t crypt_kem_key_gen(const struct kem_desc *kem,
+			 struct kem_initiator **initiator,
+			 struct logger *logger)
 {
-	kem->kem_ops->calc_local_secret(kem, initiator_private_key, initiator_public_key, logger);
-	PASSERT(logger, (*initiator_private_key) != NULL);
-	PASSERT(logger, (*initiator_public_key) != NULL);
-}
-
-chunk_t crypt_kem_public_ke(const struct kem_desc *kem,
-			    SECKEYPublicKey *public_key,
-			    struct logger *logger UNUSED)
-{
-	shunk_t initiator_ke = kem->kem_ops->local_secret_ke(kem, public_key);
-	return clone_hunk(initiator_ke, "initiator-ke");
-}
-
-diag_t crypt_kem_encaps(const struct kem_desc *kem,
-			shunk_t initiator_ke,
-			chunk_t *responder_ke_out,
-			PK11SymKey **shared_secret,
-			struct logger *logger)
-{
-	diag_t d = NULL;
-	SECKEYPrivateKey *responder_private_key = NULL;
-	SECKEYPublicKey *responder_public_key = NULL;
-	kem->kem_ops->calc_local_secret(kem, &responder_private_key, &responder_public_key, logger);
-	PASSERT(logger, responder_private_key != NULL);
-	PASSERT(logger, responder_public_key != NULL);
-	d = kem->kem_ops->calc_shared_secret(kem, responder_private_key, responder_public_key,
-					     initiator_ke, shared_secret, logger);
-	if (d != NULL) {
-		SECKEY_DestroyPublicKey(responder_public_key);
-		SECKEY_DestroyPrivateKey(responder_private_key);
-		return d;
-	}
-	shunk_t responder_ke = kem->kem_ops->local_secret_ke(kem, responder_public_key);
-	(*responder_ke_out) = clone_hunk(responder_ke, "responder-ke");
-	SECKEY_DestroyPublicKey(responder_public_key);
-	SECKEY_DestroyPrivateKey(responder_private_key);
+	(*initiator) = alloc_thing(struct kem_initiator, "kem-responder");
+	(*initiator)->kem = kem;
+	kem->kem_ops->calc_local_secret(kem,
+					&(*initiator)->internal.private_key,
+					&(*initiator)->internal.public_key,
+					logger);
+	PASSERT(logger, (*initiator)->internal.private_key != NULL);
+	PASSERT(logger, (*initiator)->internal.public_key != NULL);
+	(*initiator)->ke = kem->kem_ops->local_secret_ke(kem, (*initiator)->internal.public_key);
 	return NULL;
 }
 
-diag_t crypt_kem_decaps(const struct kem_desc *kem,
-			SECKEYPrivateKey *initiator_private_key,
-			const SECKEYPublicKey *initiator_public_key,
-			shunk_t responder_ke,
-			PK11SymKey **shared_secret,
-			struct logger *logger)
+diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
+			     shunk_t initiator_ke,
+			     struct kem_responder **responder,
+			     struct logger *logger)
 {
-	return kem->kem_ops->calc_shared_secret(kem, initiator_private_key, initiator_public_key,
-						responder_ke, shared_secret, logger);
+	(*responder) = alloc_thing(struct kem_responder, "kem-responder");
+	(*responder)->kem = kem;
+	diag_t d = NULL;
+	kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key, &(*responder)->internal.public_key, logger);
+	PASSERT(logger, (*responder)->internal.private_key != NULL);
+	PASSERT(logger, (*responder)->internal.public_key != NULL);
+	d = kem->kem_ops->calc_shared_secret(kem,
+					     (*responder)->internal.private_key,
+					     (*responder)->internal.public_key,
+					     initiator_ke,
+					     &(*responder)->shared_key,
+					     logger);
+	if (d != NULL) {
+		free_kem_responder(responder, logger);
+		return d;
+	}
+
+	(*responder)->ke = kem->kem_ops->local_secret_ke(kem, (*responder)->internal.public_key);
+	return NULL;
 }
 
+diag_t crypt_kem_decapsulate(struct kem_initiator *initiator,
+			     shunk_t responder_ke,
+			     struct logger *logger)
+{
+	return initiator->kem->kem_ops->calc_shared_secret(initiator->kem,
+							   initiator->internal.private_key,
+							   initiator->internal.public_key,
+							   responder_ke,
+							   &initiator->shared_key,
+							   logger);
+}
+
+void free_kem_initiator(struct kem_initiator **initiator,
+			const struct logger *logger)
+{
+	if (*initiator == NULL) {
+		return;
+	}
+
+	SECKEY_DestroyPublicKey((*initiator)->internal.public_key);
+	SECKEY_DestroyPrivateKey((*initiator)->internal.private_key);
+	symkey_delref(logger, "initiator shared key", &(*initiator)->shared_key);
+	pfreeany((*initiator));
+}
+
+void free_kem_responder(struct kem_responder **responder,
+			const struct logger *logger)
+{
+	if (*responder == NULL) {
+		return;
+	}
+
+	SECKEY_DestroyPublicKey((*responder)->internal.public_key);
+	SECKEY_DestroyPrivateKey((*responder)->internal.private_key);
+	symkey_delref(logger, "responder shared key", &(*responder)->shared_key);
+	pfreeany((*responder));
+}
