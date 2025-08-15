@@ -51,7 +51,8 @@ typedef stf_status task_completed_cb(struct state *st,
 				     struct msg_digest *md,
 				     struct task *task);
 /* always called */
-typedef void task_cleanup_cb(struct task **task);
+typedef void task_cleanup_cb(struct task **task,
+			     struct logger *logger);
 
 struct task_handler {
 	const char *name;

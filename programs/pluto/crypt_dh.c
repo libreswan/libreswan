@@ -166,11 +166,11 @@ static void compute_dh_shared_secret(struct logger *logger,
 	}
 }
 
-static void cleanup_dh_shared_secret(struct task **task)
+static void cleanup_dh_shared_secret(struct task **task, struct logger *logger)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->remote_ke);
-	symkey_delref(&global_logger, "DH secret", &(*task)->shared_secret);
+	symkey_delref(logger, "DH secret", &(*task)->shared_secret);
 	pfreeany(*task);
 }
 

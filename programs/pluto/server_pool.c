@@ -456,7 +456,7 @@ static void free_job(struct job **jobp)
 {
 	struct job *job = *jobp;
 	passert(job->handler->cleanup_cb != NULL);
-	job->handler->cleanup_cb(&job->task);
+	job->handler->cleanup_cb(&job->task, job->logger);
 	pexpect(job->task == NULL); /* did your job */
 	md_delref(&job->md);
 	/* now free up the continuation */

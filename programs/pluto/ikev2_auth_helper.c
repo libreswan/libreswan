@@ -126,7 +126,7 @@ static stf_status v2_auth_signature_completed(struct state *st,
 	return status;
 }
 
-static void v2_auth_signature_cleanup(struct task **task)
+static void v2_auth_signature_cleanup(struct task **task, struct logger *logger UNUSED)
 {
 	secret_pubkey_stuff_delref(&(*task)->pks, HERE);
 	pfreeany(*task);
