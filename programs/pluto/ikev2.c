@@ -200,8 +200,10 @@ void llog_success_ikev2_exchange_response(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "initiator processed ");
 		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
-		jam_string(buf, "; ");
-		jam_string(buf, ike->sa.st_state->story);
+		if (v2_msgid_request_pending(ike)) {
+			jam_string(buf, ", initiating ");
+			jam_v2_msgid_pending(buf, ike);
+		}
 	}
 }
 
