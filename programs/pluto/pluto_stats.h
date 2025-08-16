@@ -94,7 +94,7 @@ extern void whack_clearstats(const struct whack_message *wm, struct show *s);
 		if (__pstat < elemsof(pstats_##TYPE)) {			\
 			pstats_##TYPE[__pstat]++;			\
 		} else {						\
-			dbg("pstats %s %d", #TYPE, __pstat);		\
+			ldbg(&global_logger, "pstats %s %d", #TYPE, __pstat); \
 		}							\
 	}
 

@@ -245,7 +245,7 @@ static void *helper_thread(void *arg)
 					job->helper_id = w->helper_id;
 					break;
 				}
-				dbg("helper %u: waiting for work", w->helper_id);
+				ldbg(&global_logger, "helper %u: waiting for work", w->helper_id);
 				pthread_cond_wait(&backlog_cond, &backlog_mutex);
 			}
 			if (job == NULL) {
@@ -603,7 +603,7 @@ static void helper_thread_stopped_callback(const char *story UNUSED,
 					   void *context UNUSED)
 {
 	helper_threads_stopped++;
-	dbg("one helper thread exited, %u remaining",
+	ldbg(&global_logger, "one helper thread exited, %u remaining",
 	    helper_threads_started-helper_threads_stopped);
 
 	/* wait for more? */

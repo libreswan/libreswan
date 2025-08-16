@@ -56,9 +56,8 @@ extern bool listening;  /* should we pay attention to IKE messages? */
 extern void show_debug_status(struct show *s);
 extern void run_server(const char *conffile, struct logger *logger) NEVER_RETURNS;
 
-/* XXX: grr, need pointer to function else NEVER_RETURNS is ignored */
-typedef void (*server_stopped_cb)(int r) NEVER_RETURNS;
-extern void stop_server(server_stopped_cb cb);
+typedef void (server_stopped_cb)(int r, struct logger *logger);
+extern void stop_server(server_stopped_cb *cb NEVER_RETURNS);
 
 struct timer_event {
 	threadtime_t inception;

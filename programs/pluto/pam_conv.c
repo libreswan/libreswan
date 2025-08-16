@@ -108,7 +108,7 @@ static int pam_conversation(int nr_messages,
 
 static void dbg_pam_step(const struct pam_thread_arg *arg, const char *what)
 {
-	dbg("%s helper thread %s for state "PRI_SO", %s["PRI_CO"] user=%s.",
+	ldbg(&global_logger, "%s helper thread %s for state "PRI_SO", %s["PRI_CO"] user=%s.",
 	    arg->atype, what,
 	    pri_so(arg->st_serialno),
 	    arg->connection.base_name,
