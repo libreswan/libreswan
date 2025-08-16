@@ -7,6 +7,7 @@ v5.4 (unreleased)
   - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
 * config:
   - fix plutodebug=all,add-prefix [Andrew #2338]
+  - fix per-connection debug= option (experimental in v5.0) [Andrew]
 * testing:
   - FreeBSD upgraded to 14.3 [Andrew #2341]
 
