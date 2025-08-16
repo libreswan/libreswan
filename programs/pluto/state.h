@@ -569,8 +569,6 @@ struct state {
 
 	chunk_t st_skey_initiator_salt;	/* v2 */
 	chunk_t st_skey_responder_salt;	/* v2 */
-	chunk_t st_skey_chunk_SK_pi;	/* v2 */
-	chunk_t st_skey_chunk_SK_pr;	/* v2 */
 
 	/*
 	 * Post-quantum Preshared Key variables (v2)
