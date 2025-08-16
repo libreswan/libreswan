@@ -32,7 +32,7 @@ packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward pack
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
 packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
-"westnet-eastnet" #1: received IKE_AUTH request fragment 1 (1 of 2), computing DH in the background
+"westnet-eastnet" #1: received IKE_AUTH containing SKF fragment 1 (1 of 2) from 192.1.2.45:UDP/500, computing DH in the background
 packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
 packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message

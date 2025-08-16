@@ -470,6 +470,25 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
+static void llog_v2_request_no_skeyseed(struct ike_sa *ike, const struct msg_digest *md,
+					const char *content, ...)
+{
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "received ");
+		jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
+		jam_string(buf, " containing ");
+		{
+			va_list ap;
+			va_start(ap, content);
+			jam_va_list(buf, content, ap);
+			va_end(ap);
+		}
+		jam_string(buf, " from ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
+		jam_string(buf, ", computing DH in the background");
+	}
+}
+
 void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 {
 	if (!PEXPECT(md->logger, v2_msg_role(md) == MESSAGE_REQUEST)) {
@@ -549,10 +568,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
-		name_buf xb;
-		llog(RC_LOG, ike->sa.logger,
-		     "received %s request, computing DH in the background",
-		     str_enum_short(&ikev2_exchange_names, ix, &xb));
+		llog_v2_request_no_skeyseed(ike, md, "SK payload");
 	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
@@ -563,14 +579,10 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		case FRAGMENTS_COMPLETE:
 			break;
 		}
-		name_buf xb;
-		llog(RC_LOG, ike->sa.logger,
-		     "received %s request fragment %u (1 of %u), computing DH in the background",
-		     str_enum_short(&ikev2_exchange_names, ix, &xb),
-		     skf->isaskf_number, (*frags)->total);
+		llog_v2_request_no_skeyseed(ike, md, "SKF fragment %u (1 of %u)",
+					    skf->isaskf_number, (*frags)->total);
 	} else {
-		llog_pexpect(ike->sa.logger, HERE,
-			     "message has neither SK nor SKF payload");
+		llog_pexpect(ike->sa.logger, HERE, "message has neither SK nor SKF payload");
 		return;
 	}
 
