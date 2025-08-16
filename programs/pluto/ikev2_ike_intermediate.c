@@ -43,9 +43,33 @@
 #include "crypt_kem.h"
 #include "ikev2_parent.h"		/* for emit_v2KE() */
 #include "ikev2_ke.h"
+#include "ikev2_helper.h"
 
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
 static bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed);
+
+static ikev2_helper_fn initiate_v2_IKE_INTERMEDIATE_request_helper;
+static ikev2_helper_fn process_v2_IKE_INTERMEDIATE_request_helper;
+static ikev2_helper_fn process_v2_IKE_INTERMEDIATE_response_helper;
+
+static ikev2_resume_fn initiate_v2_IKE_INTERMEDIATE_request_continue;
+static ikev2_resume_fn process_v2_IKE_INTERMEDIATE_request_continue;
+static ikev2_resume_fn process_v2_IKE_INTERMEDIATE_response_continue;
+
+static ikev2_cleanup_fn cleanup_IKE_INTERMEDIATE_task;
+
+struct ikev2_task {
+	const struct kem_desc *kem;
+	struct kem_initiator *initiator;
+	struct kem_responder *responder;
+};
+
+void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logger)
+{
+	free_kem_initiator(&(*task)->initiator, logger);
+	free_kem_responder(&(*task)->responder, logger);
+	pfreeany(*task);
+}
 
 /*
  * Without this the code makes little sense.
@@ -262,19 +286,51 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, null_child == NULL);
 	PEXPECT(ike->sa.logger, null_md == NULL);
 	PEXPECT(ike->sa.logger, ike->sa.st_sa_role == SA_INITIATOR);
+
 	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending INTERMEDIATE",
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
-	const struct kem_desc *kem = next_additional_kem_desc(ike);
-	if (kem != NULL) {
-		diag_t d = crypt_kem_key_gen(kem, &ike->sa.st_kem.initiator, ike->sa.logger);
+	struct ikev2_task task = {
+		.kem = next_additional_kem_desc(ike),
+	};
+
+	submit_ikev2_task(ike, null_md,
+			  clone_thing(task, "initiator task"),
+			  initiate_v2_IKE_INTERMEDIATE_request_helper,
+			  initiate_v2_IKE_INTERMEDIATE_request_continue,
+			  cleanup_IKE_INTERMEDIATE_task,
+			  HERE);
+
+	return STF_SUSPEND;
+}
+
+stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
+						       struct msg_digest *null_md,
+						       struct logger *logger)
+{
+	PEXPECT(logger, null_md == NULL);
+
+	if (task->kem != NULL) {
+		diag_t d = crypt_kem_key_gen(task->kem, &task->initiator, logger);
 		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
+			llog(RC_LOG, logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
-		ldbg_hunk(ike->sa.logger, ike->sa.st_kem.initiator->ke);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "initiator ADDKE:");
+			LDBG_hunk(logger, task->initiator->ke);
+		}
 	}
+
+	return STF_OK;
+}
+
+stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
+							 struct msg_digest *null_md,
+							 struct ikev2_task *task)
+{
+	PEXPECT(ike->sa.logger, null_md == NULL);
 
 	/* beginning of data going out */
 
@@ -287,8 +343,8 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (ike->sa.st_kem.initiator != NULL) {
-		if (!emit_v2KE(ike->sa.st_kem.initiator->ke, kem, request.pbs)) {
+	if (task->initiator != NULL) {
+		if (!emit_v2KE(task->initiator->ke, task->initiator->kem, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -355,6 +411,10 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	record_v2_message(pbs_out_all(&request.message),
 			  request.outgoing_fragments,
 			  request.logger);
+
+	/* save initiator for response processor */
+	ike->sa.st_kem.initiator = task->initiator;
+	task->initiator = NULL;
 
 	return STF_OK;
 }
@@ -447,7 +507,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 					       struct msg_digest *md)
 {
 	struct logger *logger = ike->sa.logger;
-
 	PEXPECT(logger, null_child == NULL);
 
 	/*
@@ -481,24 +540,54 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
 
-	const struct kem_desc *kem = next_additional_kem_desc(ike);
-	if (kem != NULL) {
+	struct ikev2_task task = {
+		.kem = next_additional_kem_desc(ike),
+	};
+
+	submit_ikev2_task(ike, md,
+			  clone_thing(task, "initiator task"),
+			  process_v2_IKE_INTERMEDIATE_request_helper,
+			  process_v2_IKE_INTERMEDIATE_request_continue,
+			  cleanup_IKE_INTERMEDIATE_task,
+			  HERE);
+
+	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
+						      struct msg_digest *md,
+						      struct logger *logger)
+{
+	if (task->kem != NULL) {
 		shunk_t initiator_ke;
-		if (!extract_ike_intermediate_v2KE(kem, md, &initiator_ke, ike->sa.logger)) {
-			/* already logged */
+		if (!extract_ike_intermediate_v2KE(task->kem, md,
+						   &initiator_ke, logger)) {
 			return STF_FATAL;
 		}
-		diag_t d = crypt_kem_encapsulate(kem, initiator_ke,
-						 &ike->sa.st_kem.responder,
-						 ike->sa.logger);
+		diag_t d = crypt_kem_encapsulate(task->kem, initiator_ke,
+						 &task->responder,
+						 logger);
 		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "IKE_INTERMEDIATE encapsulate failed: %s", str_diag(d));
+			llog(RC_LOG, logger, "IKE_INTERMEDIATE encapsulate failed: %s", str_diag(d));
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
 
-		ldbg_hunk(ike->sa.logger, ike->sa.st_kem.responder->ke);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "responder ADDKE:");
+			LDBG_hunk(logger, task->responder->ke);
+		}
 	}
+
+	return STF_OK;
+}
+
+stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
+							struct msg_digest *md,
+							struct ikev2_task *task)
+{
+	struct logger *logger = ike->sa.logger;
+	PEXPECT(ike->sa.logger, md != NULL);
 
 	const struct secret_ppk_stuff *ppk = NULL;
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
@@ -563,8 +652,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (ike->sa.st_kem.responder != NULL) {
-		if (!emit_v2KE(ike->sa.st_kem.responder->ke, kem, response.pbs)) {
+	if (task->responder != NULL) {
+		if (!emit_v2KE(task->responder->ke, task->kem, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -606,8 +695,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 			  response.outgoing_fragments,
 			  response.logger);
 
-	if (ike->sa.st_kem.responder != NULL) {
-		if (!recalc_v2_ike_intermediate_kem_keymat(ike, ike->sa.st_kem.responder->shared_key, HERE)) {
+	if (task->responder != NULL) {
+		if (!recalc_v2_ike_intermediate_kem_keymat(ike, task->responder->shared_key, HERE)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -616,9 +705,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
 		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as responder");
 	}
-
-	/* failure paths cleanup in delete_state() */
-	free_kem_responder(&ike->sa.st_kem.responder, ike->sa.logger);
 
 	return STF_OK;
 }
@@ -670,23 +756,59 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	const struct kem_desc *kem = next_additional_kem_desc(ike);
-	if (kem != NULL) {
+	/* transfer ownership to task */
+	struct ikev2_task task = {
+		.initiator = ike->sa.st_kem.initiator,
+	};
+	ike->sa.st_kem.initiator = NULL;
+
+	submit_ikev2_task(ike, md,
+			  clone_thing(task, "initiator task"),
+			  process_v2_IKE_INTERMEDIATE_response_helper,
+			  process_v2_IKE_INTERMEDIATE_response_continue,
+			  cleanup_IKE_INTERMEDIATE_task,
+			  HERE);
+
+	return STF_SUSPEND;
+}
+
+stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
+						       struct msg_digest *md,
+						       struct logger *logger)
+{
+	if (task->initiator != NULL) {
 		shunk_t responder_ke = null_shunk;
-		if (!extract_ike_intermediate_v2KE(kem, md, &responder_ke, ike->sa.logger)) {
+		if (!extract_ike_intermediate_v2KE(task->initiator->kem, md,
+						   &responder_ke, logger)) {
 			/* already logged */
 			return STF_FATAL;
 		}
-		diag_t d = crypt_kem_decapsulate(ike->sa.st_kem.initiator, responder_ke, ike->sa.logger);
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "responder ADDKE:");
+			LDBG_hunk(logger, responder_ke);
+		}
+		diag_t d = crypt_kem_decapsulate(task->initiator, responder_ke, logger);
 		if (d != NULL) {
-			llog(RC_LOG, ike->sa.logger, "IKE_INTERMEDIATE decapsulate failed: %s", str_diag(d));
+			llog(RC_LOG, logger, "IKE_INTERMEDIATE decapsulate failed: %s", str_diag(d));
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
 	}
 
-	if (ike->sa.st_kem.initiator != NULL) {
-		if (!recalc_v2_ike_intermediate_kem_keymat(ike, ike->sa.st_kem.initiator->shared_key, HERE)) {
+	return STF_OK;
+}
+
+stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
+							 struct msg_digest *md,
+							 struct ikev2_task *task)
+{
+	struct logger *logger = ike->sa.logger;
+	PEXPECT(ike->sa.logger, md != NULL);
+
+	if (task->initiator != NULL) {
+		if (!recalc_v2_ike_intermediate_kem_keymat(ike,
+							   task->initiator->shared_key,
+							   HERE)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -714,9 +836,6 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 				"N(PPK_IDENTITY) not received, continuing without PPK");
 		}
 	}
-
-	/* failure paths cleanup in delete_state() */
-	free_kem_initiator(&ike->sa.st_kem.initiator, ike->sa.logger);
 
 	/*
 	 * We've done one intermediate exchange round, now proceed to

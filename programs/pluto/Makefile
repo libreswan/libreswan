@@ -54,6 +54,7 @@ OBJS += impair_message.o
 OBJS += ddos.o
 
 # exchanges
+OBJS += ikev2_helper.o
 OBJS += ikev2_unsecured.o
 OBJS += ikev2_ike_sa_init.o
 OBJS += ikev2_ike_session_resume.o

@@ -1175,7 +1175,6 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_skey_chunk_SK_pr);
 
 	free_kem_initiator(&st->st_kem.initiator, st->logger);
-	free_kem_responder(&st->st_kem.responder, st->logger);
 
 #define wipe_any_chunk(C)				\
 	{						\

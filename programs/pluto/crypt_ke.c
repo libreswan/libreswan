@@ -77,7 +77,8 @@ static void compute_ke_and_nonce(struct logger *logger,
 	}
 }
 
-static void cleanup_ke_and_nonce(struct task **task)
+static void cleanup_ke_and_nonce(struct task **task,
+				 struct logger *logger UNUSED)
 {
 	dh_local_secret_delref(&(*task)->local_secret, HERE);
 	free_chunk_content(&(*task)->nonce);

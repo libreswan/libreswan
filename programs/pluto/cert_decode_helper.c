@@ -181,11 +181,11 @@ static stf_status cert_decode_completed(struct state *st,
 	return task->cb(st, md);
 }
 
-static void cert_decode_cleanup(struct task **task)
+static void cert_decode_cleanup(struct task **task, struct logger *logger)
 {
 	release_certs(&(*task)->verified.cert_chain);	/* may be NULL */
 	free_public_keys(&(*task)->verified.pubkey_db);	/* may be NULL */
 	md_delref(&(*task)->md);
-	root_certs_delref(&(*task)->root_certs, GLOBAL_LOGGER);
+	root_certs_delref(&(*task)->root_certs, logger);
 	pfreeany((*task));
 }
