@@ -126,14 +126,14 @@ void calc_v2_ike_keymat(struct state *st,
 	 * PPK and AUTH NULL
 	 */
 
-	st->st_skey_pi_nss = key_from_symkey_bytes("SK_pi", finalkey,
-						   next_byte, skp_bytes,
-						   HERE, logger);
+	st->st_skey_pi_nss = prf_key_from_symkey_bytes("SK_pi", prf,
+						       next_byte, skp_bytes,
+						       finalkey, HERE, logger);
 	next_byte += skp_bytes;
 
-	st->st_skey_pr_nss = key_from_symkey_bytes("SK_pr", finalkey,
-						   next_byte, skp_bytes,
-						   HERE, logger);
+	st->st_skey_pr_nss = prf_key_from_symkey_bytes("SK_pr", prf,
+						       next_byte, skp_bytes,
+						       finalkey, HERE, logger);
 	next_byte += skp_bytes;
 
 	ldbgf(DBG_CRYPT, logger, "NSS ikev2: finished computing individual keys for IKEv2 SA");
