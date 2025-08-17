@@ -137,13 +137,15 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 							logger);
 }
 
-struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc, shunk_t pss,
-				chunk_t first_packet, chunk_t nonce,
+struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc,
+				PK11SymKey *psk,
+				chunk_t first_packet,
+				chunk_t nonce,
 				const struct crypt_mac *id_hash,
 				chunk_t intermediate_packet,
 				struct logger *logger)
 {
-	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, pss, first_packet, nonce,
+	return prf_desc->prf_ikev2_ops->psk_auth(prf_desc, psk, first_packet, nonce,
 						 id_hash, intermediate_packet, logger);
 }
 

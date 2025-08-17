@@ -203,8 +203,9 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 }
 
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
-				 shunk_t pss,
-				 chunk_t first_packet, chunk_t nonce,
+				 PK11SymKey *psk,
+				 chunk_t first_packet,
+				 chunk_t nonce,
 				 const struct crypt_mac *id_hash,
 				 chunk_t intermediate_packet,
 				 struct logger *logger)
@@ -214,17 +215,6 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 	{
 		static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* RFC 4306  2:15 */
 		CK_MECHANISM_TYPE prf_mech = prf_desc->nss.mechanism;
-		PK11SymKey *pss_key = prf_key_from_hunk("pss", prf_desc, pss, logger);
-		if (pss_key == NULL) {
-			if (is_fips_mode()) {
-				llog_passert(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
-					     prf_desc->common.fqn);
-			}
-			llog_pexpect(logger, HERE, "failure creating %s PRF context for digesting PSK",
-				     prf_desc->common.fqn);
-			return empty_mac;
-		}
-
 		CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 			.prfMechanism = prf_mech,
 			.bDataAsKey = CK_FALSE,
@@ -238,11 +228,10 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 			.data = (unsigned char *)&ike_prf_params,
 			.len = sizeof(ike_prf_params),
 		};
-		prf_psk = crypt_derive(pss_key, CKM_NSS_IKE_PRF_DERIVE, &params,
+		prf_psk = crypt_derive(psk, CKM_NSS_IKE_PRF_DERIVE, &params,
 				       "prf(Shared Secret, \"Key Pad for IKEv2\")", prf_mech,
 				       CKA_SIGN, 0/*key-size*/, 0/*flags*/,
 				       HERE, logger);
-		symkey_delref(logger, "psk pss_key", &pss_key);
 	}
 
 	/* calculate outer prf */

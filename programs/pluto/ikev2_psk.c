@@ -63,6 +63,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   struct crypt_mac *sighash)
 {
 	struct logger *logger = ike->sa.logger;
+	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
 	const struct connection *c = ike->sa.st_connection;
 	*sighash = empty_mac;
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
@@ -130,7 +131,6 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
          *     AUTH = prf(SK_px, <message octets>)
 	 */
 
-	chunk_t nullauth_pss;
 	const chunk_t *nonce;
 	const char *nonce_name;
 	PK11SymKey *SK_px;
@@ -142,14 +142,12 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 			/* we are initiator verifying PSK */
 			nonce_name = "Ni: initiator re-generating hash from responder";
 			nonce = &ike->sa.st_ni;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pr;
 			SK_px = ike->sa.st_skey_pr_nss;
 			break;
 		case LOCAL_PERSPECTIVE:
 			/* we are initiator sending PSK */
 			nonce_name = "Nr: initiator generating hash for responder";
 			nonce = &ike->sa.st_nr;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pi;
 			SK_px = ike->sa.st_skey_pi_nss;
 			break;
 		case NO_PERSPECTIVE:
@@ -164,14 +162,12 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 			/* we are responder verifying PSK */
 			nonce_name = "Nr: responder re-generating hash from initiator";
 			nonce = &ike->sa.st_nr;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pi;
 			SK_px = ike->sa.st_skey_pi_nss;
 			break;
 		case LOCAL_PERSPECTIVE:
 			/* we are responder sending PSK */
 			nonce_name = "Ni: create: responder generating hash for initiator";
 			nonce = &ike->sa.st_ni;
-			nullauth_pss = ike->sa.st_skey_chunk_SK_pr;
 			SK_px = ike->sa.st_skey_pr_nss;
 			break;
 		case NO_PERSPECTIVE:
@@ -193,25 +189,24 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		 * RFC 5723 6.2:
 		 * AUTH = prf(SK_px, <message octets>)
 		 */
-		(*sighash) = ikev2_psk_resume(ike->sa.st_oakley.ta_prf, SK_px,
-					      firstpacket, logger);
+		(*sighash) = ikev2_psk_resume(prf, SK_px, firstpacket, logger);
 		PASSERT(logger, sighash->len > 0);
 		return NULL;
 	}
 
 	/* pick pss */
 
-	shunk_t pss;
+	PK11SymKey *pss;
 
 	if (auth_sig != NULL) {
 		/*
 		 * Use the auth sig passed in, presumably accumulated
 		 * by repeated EAP-TLS exchanges?
 		 */
-		if (!pexpect(auth_sig->len > 0)) {
+		if (PBAD(logger, auth_sig->len == 0)) {
 			return diag(PEXPECT_PREFIX"missing auth_sig");
 		}
-		pss = HUNK_AS_SHUNK(*auth_sig);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(*auth_sig), logger);
 	} else if (authby != AUTH_NULL) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
@@ -225,14 +220,14 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		}
 
 		/* XXX: this should happen during connection load */
-		const size_t key_size_min = crypt_prf_fips_key_size_min(ike->sa.st_oakley.ta_prf);
+		const size_t key_size_min = crypt_prf_fips_key_size_min(prf);
 		if (psk->len < key_size_min) {
 			if (is_fips_mode()) {
 				id_buf idb;
 				return diag("FIPS: authentication failed: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
 					    str_id(&c->local->host.id, &idb),
 					    psk->len,
-					    ike->sa.st_oakley.ta_prf->common.fqn,
+					    prf->common.fqn,
 					    key_size_min);
 			}
 
@@ -241,32 +236,45 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				  "WARNING: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
 				  str_id(&c->local->host.id, &idb),
 				  psk->len,
-				  ike->sa.st_oakley.ta_prf->common.fqn,
+				  prf->common.fqn,
 				  key_size_min);
 		}
-		pss = HUNK_AS_SHUNK(*psk);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(*psk), logger);
+		if (pss == NULL) {
+			/*
+			 * XXX: seems that this could, in theory,
+			 * happen.
+			 */
+			if (is_fips_mode()) {
+				llog_passert(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
+					     prf->common.fqn);
+			}
+			return diag("failure creating %s PRF context for digesting PSK", prf->common.fqn);
+		}
 	} else {
-		pss = HUNK_AS_SHUNK(nullauth_pss);
+		pss = symkey_addref(logger, "SK_px", SK_px);
 	}
-
-	passert(pss.len != 0);
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
+		LDBG_log_hunk(logger, "%s:", *nonce, nonce_name);
 		LDBG_log_hunk(logger, "%s:", *nonce, nonce_name);
 		LDBG_log_hunk(logger, "idhash:", *idhash);
+		LDBG_log_hunk(logger, "idhash:", *idhash);
 		LDBG_log_hunk(logger, "IntAuth:", intermediate_auth);
-		LDBG_log_hunk(logger, "PSK:", pss);
+		LDBG_symkey(logger, "", "PSS:", pss);
 	}
 
 	/*
 	 * RFC 4306 2.15:
 	 * AUTH = prf(prf(Shared Secret, "Key Pad for IKEv2"), <msg octets>)
 	 */
-	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	*sighash = ikev2_psk_auth(ike->sa.st_oakley.ta_prf, pss,
+	passert(idhash->len == prf->prf_output_size);
+	*sighash = ikev2_psk_auth(prf, pss,
 				  firstpacket, *nonce, idhash,
 				  intermediate_auth, ike->sa.logger);
+	symkey_delref(logger, "pss", &pss);
 	free_chunk_content(&intermediate_auth);
 	return NULL;
 }
