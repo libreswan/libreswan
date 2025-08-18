@@ -468,11 +468,14 @@ static const struct hash_desc *hash_descriptors[] = {
 static void hash_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct hash_desc *hash = hash_desc(alg);
+	/* sizes */
+	struct crypt_mac mac;
 	size_t min_size = (hash == &ike_alg_hash_identity ? 0 : 1);
 	pexpect_ike_alg(logger, alg, hash->hash_digest_size >= min_size);
 	pexpect_ike_alg(logger, alg, hash->hash_block_size >= min_size);
-	struct crypt_mac mac;
 	pexpect_ike_alg(logger, alg, hash->hash_digest_size <= sizeof(mac.ptr/*an array*/));
+	pexpect_ike_alg(logger, alg, hash->hash_block_size <= sizeof(mac.ptr/*an array*/));
+	/* ops */
 	if (hash->hash_ops != NULL) {
 		pexpect_ike_alg(logger, alg, hash->hash_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, hash->hash_ops->check != NULL);
@@ -530,18 +533,21 @@ static const struct prf_desc *prf_descriptors[] = {
 static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct prf_desc *prf = prf_desc(alg);
+	/* sizes */
+	struct crypt_mac mac;
 	pexpect_ike_alg(logger, alg, prf->prf_key_size > 0);
 	pexpect_ike_alg(logger, alg, prf->prf_output_size > 0);
-	struct crypt_mac mac;
-	pexpect_ike_alg(logger, alg, prf->prf_output_size <= sizeof(mac.ptr/*an array*/));
+	pexpect_ike_alg(logger, alg, prf->prf_key_size <= sizeof(mac.ptr/*array*/));
+	pexpect_ike_alg(logger, alg, prf->prf_output_size <= sizeof(mac.ptr/*array*/));
+	/* names */
 	pexpect_ike_alg_has_name(logger, HERE, alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
 	/* all or none */
 	pexpect_ike_alg(logger, alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev1_ops != NULL));
 	pexpect_ike_alg(logger, alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev2_ops != NULL));
 	/* Using NSS implies mechanism */
 	pexpect_ike_alg(logger, alg,
-			(prf->prf_mac_ops == &ike_alg_prf_mac_nss_ops) /*implies*/<= (prf->nss.mechanism > 0))
-
+			(prf->prf_mac_ops == &ike_alg_prf_mac_nss_ops) /*implies*/<= (prf->nss.mechanism > 0));
+	/* ops */
 	if (prf->prf_mac_ops != NULL) {
 		pexpect_ike_alg(logger, alg, prf->prf_mac_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, prf->prf_mac_ops->check != NULL);
@@ -640,10 +646,13 @@ static const struct integ_desc *integ_descriptors[] = {
 static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct integ_desc *integ = integ_desc(alg);
+	/* sizes */
+	struct crypt_mac mac;
 	pexpect_ike_alg(logger, alg, integ->integ_keymat_size > 0);
 	pexpect_ike_alg(logger, alg, integ->integ_output_size > 0);
-	struct crypt_mac mac;
+	pexpect_ike_alg(logger, alg, integ->integ_keymat_size <= sizeof(mac.ptr/*an array*/));
 	pexpect_ike_alg(logger, alg, integ->integ_output_size <= sizeof(mac.ptr/*an array*/));
+	/*names*/
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
