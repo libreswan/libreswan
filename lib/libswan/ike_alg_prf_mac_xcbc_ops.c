@@ -27,6 +27,7 @@
 #include "ike_alg.h"
 #include "ike_alg_prf_mac_ops.h"
 #include "crypt_symkey.h"
+#include "crypt_prf.h"
 #include "lswnss.h"
 
 struct prf_context {
@@ -36,6 +37,64 @@ struct prf_context {
 	chunk_t bytes;
 	struct logger *logger;
 };
+
+static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
+				 shunk_t bytes, struct logger *logger);
+
+static PK11SymKey *xcbc_prf_key_from_bytes(const struct prf_desc *prf,
+					   const char *key_name, const void *key_ptr, size_t key_len,
+					   struct logger *logger, where_t where)
+{
+	/*
+	 * Build a key of the correct size.
+	 */
+	PK11SymKey *draft_key;
+
+	if (key_len < prf->prf_key_size) {
+		/*
+		 * The key is too small, pad it to size with zeroes.
+		 */
+		ldbgf(DBG_CRYPT, logger, "%s() key %s %zd<%zd is too small, padding with zeros",
+		      __func__, key_name, key_len, prf->prf_key_size);
+		struct crypt_mac raw_key = { .len = prf->prf_key_size, };
+		memcpy(raw_key.ptr/*array*/, key_ptr, key_len);
+		draft_key = symkey_from_hunk(key_name, raw_key, logger);
+	} else if (key_len > prf->prf_key_size) {
+		ldbgf(DBG_CRYPT, logger, "%s() key %s %zd>%zd is too big, rehashing to size",
+		      __func__, key_name, key_len, prf->prf_key_size);
+		/*
+		 * The key is too big, hash it down to size using the
+		 * HASH that the PRF's HMAC is built from.
+		 *
+		 * XXX: XCBC needs the zero key used to do the hashing
+		 * to have the correct mechanism and flags (usage).
+		 */
+		PK11SymKey *raw_zeros = symkey_from_bytes("raw-zeroes",
+							  empty_mac.ptr, prf->prf_key_size,
+							  logger);
+		PK11SymKey *prf_zeros = prf_key_from_symkey_bytes("prf-zeroes", prf,
+								  0, prf->prf_key_size,
+								  raw_zeros,
+								  where, logger);
+		struct crypt_mac raw_key = xcbc_mac(prf, prf_zeros, shunk2(key_ptr, key_len), logger);
+		draft_key = symkey_from_hunk(key_name, raw_key, logger);
+		/* free all in reverse order */
+		symkey_delref(logger, "prf-zeros", &prf_zeros);
+		symkey_delref(logger, "raw-zeros", &raw_zeros);
+	} else {
+		ldbgf(DBG_CRYPT, logger, "%s() key %s %zd=%zd is just right",
+		      __func__, key_name, key_len, prf->prf_key_size);
+		draft_key = symkey_from_bytes(key_name, key_ptr, key_len, logger);
+	}
+
+	/* now typecast the key into what the PRF needs */
+	PK11SymKey *key = prf_key_from_symkey_bytes(key_name, prf,
+						    0, prf->prf_key_size,
+						    draft_key, where, logger);
+	PASSERT(logger, key != NULL);
+	symkey_delref(logger, "key", &draft_key);
+	return key;
+}
 
 static void encrypt(const char *name, chunk_t out, chunk_t in,
 		    const struct prf_desc *prf, PK11SymKey *key,
@@ -64,13 +123,15 @@ static chunk_t derive_ki(const struct prf_desc *prf,
 	return out;
 }
 
-static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
-			chunk_t bytes, struct logger *logger)
+static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
+				 shunk_t bytes, struct logger *logger)
 {
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "XCBC: data:"); LDBG_hunk(logger, bytes);
+		LDBG_log(logger, "XCBC: data:");
+		LDBG_hunk(logger, bytes);
 		chunk_t k = chunk_from_symkey("K", key, logger);
-		LDBG_log(logger, "XCBC: K:"); LDBG_hunk(logger, k);
+		LDBG_log(logger, "XCBC: K:");
+		LDBG_hunk(logger, k);
 		free_chunk_content(&k);
 	}
 
@@ -84,7 +145,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	/*
 	 * (2)  Define E[0] = 0x00000000000000000000000000000000
 	 */
-	chunk_t e = alloc_chunk(prf->prf_key_size, "e");
+	struct crypt_mac e = { .len = prf->prf_key_size, };
 
 	/*
 	 * (3)  For each block M[i], where i = 1 ... n-1:
@@ -93,12 +154,13 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 	 */
 	chunk_t t = alloc_chunk(prf->prf_key_size, "t");
 	int n = (bytes.len + prf->prf_key_size - 1) / prf->prf_key_size;
-	chunk_t m = chunk2(bytes.ptr, prf->prf_key_size);
+	shunk_t m = shunk2(bytes.ptr, prf->prf_key_size);
 	for (int i = 1; i <= n - 1; i++) {
 		for (unsigned j = 0; j < prf->prf_key_size; j++) {
-			t.ptr[j] = m.ptr[j] ^ e.ptr[j];
+			const uint8_t *m_ptr = m.ptr;
+			t.ptr[j] = m_ptr[j] ^ e.ptr[j];
 		}
-		encrypt("XCBC: K1(M[i]^E[i-1])", e, t, prf, k1, logger);
+		encrypt("XCBC: K1(M[i]^E[i-1])", HUNK_AS_CHUNK(e), t, prf, k1, logger);
 		m.ptr += prf->prf_key_size;
 	}
 
@@ -124,7 +186,8 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		 *          Key K1, yielding E[n].
 		 */
 		for (unsigned j = 0; j < prf->prf_key_size; j++) {
-			t.ptr[j] = m.ptr[j] ^ e.ptr[j] ^ k2.ptr[j];
+			const uint8_t *m_ptr = m.ptr;
+			t.ptr[j] = m_ptr[j] ^ e.ptr[j] ^ k2.ptr[j];
 		}
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "XCBC: M[n]^E[n-1]^K2:"); LDBG_hunk(logger, t);
@@ -149,7 +212,8 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		 */
 		unsigned j = 0;
 		for (; j < m.len; j++) {
-			t.ptr[j] = m.ptr[j] ^ e.ptr[j] ^ k3.ptr[j];
+			const uint8_t *m_ptr = m.ptr;
+			t.ptr[j] = m_ptr[j] ^ e.ptr[j] ^ k3.ptr[j];
 		}
 		t.ptr[j] = 0x80 ^ e.ptr[j] ^ k3.ptr[j];
 		j++;
@@ -163,7 +227,7 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		free_chunk_content(&k3);
 	}
 
-	encrypt("K1(M[n]^E[n-1]^K2)", e, t, prf, k1, logger);
+	encrypt("K1(M[n]^E[n-1]^K2)", HUNK_AS_CHUNK(e), t, prf, k1, logger);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: MAC:"); LDBG_hunk(logger, e);
 	}
@@ -177,84 +241,38 @@ static chunk_t xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
  * Create a PRF ready to consume data.
  */
 
-static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
-						const char *name,
-						const char *key_name, PK11SymKey *draft_key,
-						struct logger *logger)
+static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
+					       const char *name,
+					       const char *key_name, const uint8_t *key_ptr, size_t key_len,
+					       struct logger *logger)
 {
 	/*
-	 * Need to turn the key into something of the right size.
+	 * Need a key of the correct type and size.
+	 *
+	 * This key has both the mechanism and flags set.
 	 */
-	PK11SymKey *key;
-	size_t dkey_sz = sizeof_symkey(draft_key);
-	if (dkey_sz < prf_desc->prf_key_size) {
-		ldbgf(DBG_CRYPT, logger, "XCBC: Key %zd<%zd too small, padding with zeros",
-		      dkey_sz, prf_desc->prf_key_size);
-		/*
-		 * right pad with zeros
-		 *
-		 * make a local reference to the the (read-only)
-		 * draft_key and manipulate that
-		 */
-		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size - dkey_sz, "zeros");
-		PK11SymKey *local_draft_key = symkey_addref(logger, "local_draft_key", draft_key);
-		append_symkey_hunk("local_draft_key+=0", &local_draft_key, zeros, logger);
-		key = prf_key_from_symkey_bytes(name, prf_desc,
-						0, prf_desc->prf_key_size,
-						local_draft_key,
-						HERE, logger);
-		/* free all in reverse order */
-		symkey_delref(logger, "local_draft_key", &local_draft_key);
-		free_chunk_content(&zeros);
-	} else if (dkey_sz > prf_desc->prf_key_size) {
-		ldbgf(DBG_CRYPT, logger, "XCBC: Key %zd>%zd too big, rehashing to size",
-		      dkey_sz, prf_desc->prf_key_size);
-		/*
-		 * put the key through the mac with a zero key
-		 */
-		chunk_t zeros = alloc_chunk(prf_desc->prf_key_size, "zeros");
-		PK11SymKey *zero_key = prf_key_from_hunk("zero_key", prf_desc,
-							 zeros, logger);
-		chunk_t draft_chunk = chunk_from_symkey("draft_chunk", draft_key, logger);
-		chunk_t key_chunk = xcbc_mac(prf_desc, zero_key, draft_chunk, logger);
-		key = prf_key_from_hunk(key_name, prf_desc, key_chunk, logger);
-		/* free all in reverse order */
-		free_chunk_content(&key_chunk);
-		free_chunk_content(&draft_chunk);
-		symkey_delref(logger, "zero_key", &zero_key);
-		free_chunk_content(&zeros);
-	} else {
-		ldbgf(DBG_CRYPT, logger, "XCBC: Key %zd=%zd just right",
-		      dkey_sz, prf_desc->prf_key_size);
-		key = prf_key_from_symkey_bytes(key_name, prf_desc,
-						0, prf_desc->prf_key_size,
-						draft_key, HERE, logger);
-	}
-	struct prf_context prf = {
-		.key = key,
+	struct prf_context context = {
+		.key = xcbc_prf_key_from_bytes(prf_desc,
+					       key_name, key_ptr, key_len,
+					       logger, HERE),
 		.name = name,
 		.desc = prf_desc,
 		.logger = logger,
 	};
-	return clone_thing(prf, name);
+	return clone_thing(context, name);
 }
 
-static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
-					       const char *name,
-					       const char *key_name,
-					       const uint8_t *key, size_t sizeof_key,
-					       struct logger *logger)
+static struct prf_context *nss_xcbc_init_symkey(const struct prf_desc *prf_desc,
+						const char *name,
+						const char *key_name, PK11SymKey *key,
+						struct logger *logger)
 {
-	/*
-	 * Need a key of the correct type.
-	 *
-	 * This key has both the mechanism and flags set.
-	 */
-	PK11SymKey *clone = symkey_from_bytes(key_name, key, sizeof_key, logger);
-	struct prf_context *context = nss_xcbc_init_symkey(prf_desc, name,
-							   key_name, clone,
-							   logger);
-	symkey_delref(logger, "clone", &clone);
+	/* Don't assume the key is the correct size. */
+	chunk_t raw_key = chunk_from_symkey(key_name, key, logger);
+	struct prf_context *context = nss_xcbc_init_bytes(prf_desc, name,
+							  key_name, raw_key.ptr, raw_key.len,
+							  logger);
+	free_chunk_content(&raw_key);
 	return context;
 }
 
@@ -279,9 +297,10 @@ static void nss_xcbc_digest_bytes(struct prf_context *prf, const char *name,
 static void nss_xcbc_final_bytes(struct prf_context **prf,
 				 uint8_t *bytes, size_t sizeof_bytes)
 {
-	chunk_t mac = xcbc_mac((*prf)->desc, (*prf)->key, (*prf)->bytes, (*prf)->logger);
+	struct crypt_mac mac = xcbc_mac((*prf)->desc, (*prf)->key,
+					HUNK_AS_SHUNK((*prf)->bytes),
+					(*prf)->logger);
 	memcpy(bytes, mac.ptr, sizeof_bytes);
-	free_chunk_content(&mac);
 	free_chunk_content(&(*prf)->bytes);
 	symkey_delref((*prf)->logger, "key", &(*prf)->key);
 	pfree(*prf);
@@ -289,9 +308,10 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 
 static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 {
-	chunk_t mac = xcbc_mac((*prf)->desc, (*prf)->key, (*prf)->bytes, (*prf)->logger);
+	struct crypt_mac mac = xcbc_mac((*prf)->desc, (*prf)->key,
+					HUNK_AS_SHUNK((*prf)->bytes),
+					(*prf)->logger);
 	PK11SymKey *key = symkey_from_hunk("xcbc", mac, (*prf)->logger);
-	free_chunk_content(&mac);
 	free_chunk_content(&(*prf)->bytes);
 	symkey_delref((*prf)->logger, "key", &(*prf)->key);
 	pfree(*prf);
