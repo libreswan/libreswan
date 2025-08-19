@@ -19,6 +19,7 @@ struct logger;
 
 struct prf_mac_ops {
 	const char *backend;
+	bool bespoke;
 
 	/*
 	 * Delegate responsibility for checking OPS specific fields.

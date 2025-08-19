@@ -324,6 +324,7 @@ static void nss_xcbc_check(const struct prf_desc *prf, struct logger *logger)
 
 const struct prf_mac_ops ike_alg_prf_mac_nss_xcbc_ops = {
 	"native(XCBC)",
+	/*bespoke*/true,
 	nss_xcbc_check,
 	nss_xcbc_init_symkey,
 	nss_xcbc_init_bytes,
