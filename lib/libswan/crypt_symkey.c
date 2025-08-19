@@ -244,12 +244,12 @@ static PK11SymKey *merge_symkey_symkey(const char *result_name,
 /*
  * Extract a SYMKEY from an existing SYMKEY.
  */
-static PK11SymKey *symkey_from_symkey(const char *result_name,
-				      PK11SymKey *base_key,
-				      CK_MECHANISM_TYPE target,
-				      CK_FLAGS flags,
-				      size_t key_offset, size_t key_size,
-				      where_t where, struct logger *logger)
+PK11SymKey *symkey_from_symkey(const char *result_name,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target,
+			       CK_FLAGS flags,
+			       size_t key_offset, size_t key_size,
+			       where_t where, struct logger *logger)
 {
 	/* spell out all the parameters */
 	CK_EXTRACT_PARAMS bs = key_offset * BITS_IN_BYTE;
