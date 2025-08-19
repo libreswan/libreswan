@@ -96,7 +96,7 @@ static diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 static char *cisco_stringify(shunk_t str, bool *ok);
 
-/* see emit_mode_cfg_attrs() */
+/* see emit_mode_cfg_attr() */
 
 struct attrs {
 	bool ikev1_internal_ip4_address;
@@ -1693,7 +1693,6 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MODECFG]->payload.mode_attribute;
 	struct pbs_in *attrs = &md->chain[ISAKMP_NEXT_MODECFG]->pbs;
-	struct attrs recv;
 
 	ldbg(ike->sa.logger, "arrived in modecfg_inR0");
 
@@ -1702,6 +1701,8 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 	switch (ma->isama_type) {
 
 	case ISAKMP_CFG_REQUEST:
+	{
+		struct attrs recv = {0};
 		while (pbs_left(attrs) >= isakmp_xauth_attribute_desc.size) {
 			/* ??? this looks kind of fishy:
 			 * - what happens if attributes are repeated (resp cannot record that)?
@@ -1745,6 +1746,7 @@ stf_status modecfg_inR0(struct state *ike_sa, struct msg_digest *md)
 		ike->sa.st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 		zero(&ike->sa.st_v1_phase_2_iv);
 		break;
+	}
 
 	default:
 	{
