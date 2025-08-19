@@ -57,7 +57,7 @@ static struct crypt_mac hmac_prf_key_from_bytes(const struct prf_desc *prf,
 						struct logger *logger)
 {
 	struct crypt_mac key = { .len = prf->hasher->hash_block_size, };
-	PASSERT(logger, sizeof(key.ptr) <= prf->hasher->hash_block_size);
+	PASSERT(logger, sizeof(key.ptr) >= prf->hasher->hash_block_size);
 
 	if (key_len <= prf->hasher->hash_block_size) {
 		/*
