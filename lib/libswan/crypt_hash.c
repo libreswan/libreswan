@@ -124,17 +124,3 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 	*hashp = hash = NULL;
 	return output;
 }
-
-PK11SymKey *crypt_hash_symkey(const char *name, const struct hash_desc *hash_desc,
-			      const char *symkey_name, PK11SymKey *symkey,
-			      struct logger *logger)
-{
-	ldbgf(DBG_CRYPT, logger, "%s hash %s %s-key@%p (size %zu)",
-	      name, hash_desc->common.fqn,
-	      symkey_name, symkey, sizeof_symkey(symkey));
-	struct crypt_hash *hash = crypt_hash_init(name, hash_desc, logger);
-	crypt_hash_digest_symkey(hash, symkey_name, symkey);
-	struct crypt_mac out = crypt_hash_final_mac(&hash);
-	PK11SymKey *key = symkey_from_hunk(name, out, logger);
-	return key;
-}

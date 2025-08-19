@@ -64,14 +64,4 @@ void crypt_hash_final_bytes(struct crypt_hash **hashp,
 
 struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp);
 
-
-
-/*
- * Short cut for symkeys.
- */
-PK11SymKey *crypt_hash_symkey(const char *hash_name,
-			      const struct hash_desc *hash_desc,
-			      const char *symkey_name, PK11SymKey *symkey,
-			      struct logger *logger);
-
 #endif

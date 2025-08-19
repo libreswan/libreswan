@@ -177,12 +177,6 @@ PK11SymKey *key_from_symkey_bytes(const char *result_name,
 				  where_t where, struct logger *logger);
 
 /*
- * XOR a symkey with a chunk.
- */
-PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs,
-			     struct logger *logger);
-
-/*
  * Generic operation.
  */
 PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem *params,
