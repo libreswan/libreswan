@@ -539,6 +539,7 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg(logger, alg, prf->prf_output_size > 0);
 	pexpect_ike_alg(logger, alg, prf->prf_key_size <= sizeof(mac.ptr/*array*/));
 	pexpect_ike_alg(logger, alg, prf->prf_output_size <= sizeof(mac.ptr/*array*/));
+	pexpect_ike_alg(logger, alg, DEFAULT_NONCE_SIZE >= prf->prf_key_size / 2); /* see 2.10 Nonces */
 	/* names */
 	pexpect_ike_alg_has_name(logger, HERE, alg, prf->prf_ike_audit_name, ".prf_ike_audit_name");
 	/* all or none */
