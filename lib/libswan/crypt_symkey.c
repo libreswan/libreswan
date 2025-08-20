@@ -244,12 +244,12 @@ static PK11SymKey *merge_symkey_symkey(const char *result_name,
 /*
  * Extract a SYMKEY from an existing SYMKEY.
  */
-static PK11SymKey *symkey_from_symkey(const char *result_name,
-				      PK11SymKey *base_key,
-				      CK_MECHANISM_TYPE target,
-				      CK_FLAGS flags,
-				      size_t key_offset, size_t key_size,
-				      where_t where, struct logger *logger)
+PK11SymKey *symkey_from_symkey(const char *result_name,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target,
+			       CK_FLAGS flags,
+			       size_t key_offset, size_t key_size,
+			       where_t where, struct logger *logger)
 {
 	/* spell out all the parameters */
 	CK_EXTRACT_PARAMS bs = key_offset * BITS_IN_BYTE;
@@ -497,43 +497,6 @@ void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 			struct logger *logger)
 {
 	append_symkey_bytes("result", lhs, &rhs, sizeof(rhs), logger);
-}
-
-/*
- * Extract SIZEOF_SYMKEY bytes of keying material as a PRF key.
- *
- * Offset into the SYMKEY is in BYTES.
- */
-
-PK11SymKey *prf_key_from_symkey_bytes(const char *name,
-				      const struct prf_desc *prf,
-				      size_t symkey_start_byte, size_t sizeof_symkey,
-				      PK11SymKey *source_key,
-				      where_t where, struct logger *logger)
-{
-	/*
-	 * NSS expects a key's mechanism to match the NSS algorithm
-	 * the key is intended for.  If this is wrong then the
-	 * operation fails.
-	 *
-	 * Unfortunately, some algorithms are not implemented by NSS,
-	 * so the correct key type can't always be specified.  For
-	 * those specify CKM_VENDOR_DEFINED.
-	 *
-	 * XXX: this function should be part of prf_ops.
-	 */
-	CK_FLAGS flags;
-	CK_MECHANISM_TYPE mechanism;
-	if (prf->nss.mechanism == 0) {
-		flags = 0;
-		mechanism = CKM_VENDOR_DEFINED;
-	} else {
-		flags = CKF_SIGN;
-		mechanism = prf->nss.mechanism;
-	}
-	return symkey_from_symkey(name, source_key, mechanism, flags,
-				  symkey_start_byte, sizeof_symkey,
-				  where, logger);
 }
 
 /*

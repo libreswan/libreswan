@@ -146,6 +146,13 @@ PK11SymKey *symkey_from_bytes(const char *name,
 #define symkey_from_hunk(NAME, HUNK, LOGGER)		\
 	symkey_from_bytes(NAME, (HUNK).ptr, (HUNK).len, LOGGER)
 
+PK11SymKey *symkey_from_symkey(const char *result_name,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target,
+			       CK_FLAGS flags,
+			       size_t key_offset, size_t key_size,
+			       where_t where, struct logger *logger);
+
 PK11SymKey *encrypt_key_from_bytes(const char *name,
 				   const struct encrypt_desc *encrypt,
 				   const uint8_t *bytes, size_t sizeof_bytes,

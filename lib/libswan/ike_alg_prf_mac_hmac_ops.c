@@ -57,7 +57,7 @@ static struct crypt_mac hmac_prf_key_from_bytes(const struct prf_desc *prf,
 						struct logger *logger)
 {
 	struct crypt_mac key = { .len = prf->hasher->hash_block_size, };
-	PASSERT(logger, sizeof(key.ptr) <= prf->hasher->hash_block_size);
+	PASSERT(logger, sizeof(key.ptr) >= prf->hasher->hash_block_size);
 
 	if (key_len <= prf->hasher->hash_block_size) {
 		/*
@@ -241,6 +241,7 @@ static void hmac_prf_check(const struct prf_desc *prf, struct logger *logger)
 
 const struct prf_mac_ops ike_alg_prf_mac_hmac_ops = {
 	"native(HMAC)",
+	/*bespoke*/true,
 	hmac_prf_check,
 	init_symkey,
 	init_bytes,
