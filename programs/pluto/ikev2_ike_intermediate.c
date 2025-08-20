@@ -458,8 +458,6 @@ bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
 	symkey_delref(logger, "SK_er", &ike->sa.st_skey_er_nss);
 	symkey_delref(logger, "SK_pi", &ike->sa.st_skey_pi_nss);
 	symkey_delref(logger, "SK_pr", &ike->sa.st_skey_pr_nss);
-	free_chunk_content(&ike->sa.st_skey_chunk_SK_pi);
-	free_chunk_content(&ike->sa.st_skey_chunk_SK_pr);
 	free_chunk_content(&ike->sa.st_skey_initiator_salt);
 	free_chunk_content(&ike->sa.st_skey_responder_salt);
 	cipher_context_destroy(&ike->sa.st_ike_encrypt_cipher_context, logger);

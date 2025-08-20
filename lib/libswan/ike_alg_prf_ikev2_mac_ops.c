@@ -246,8 +246,9 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 }
 
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
-				 shunk_t pss,
-				 chunk_t first_packet, chunk_t nonce,
+				 PK11SymKey *psk,
+				 chunk_t first_packet,
+				 chunk_t nonce,
 				 const struct crypt_mac *id_hash,
 				 chunk_t intermediate_packet,
 				 struct logger *logger)
@@ -257,8 +258,8 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 
 	{
 		struct crypt_prf *prf =
-			crypt_prf_init_hunk("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-					    prf_desc, "shared secret", pss, logger);
+			crypt_prf_init_symkey("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
+					      prf_desc, "shared secret", psk, logger);
 		if (prf == NULL) {
 			if (is_fips_mode()) {
 				llog_passert(logger, HERE,
