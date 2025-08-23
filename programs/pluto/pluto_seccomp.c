@@ -98,6 +98,8 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(getpgrp);
 		LSW_SECCOMP_ADD(getppid);
 		LSW_SECCOMP_ADD(getrandom); /* for unbound */
+		LSW_SECCOMP_ADD(getresgid);
+		LSW_SECCOMP_ADD(getresuid);
 		LSW_SECCOMP_ADD(getrlimit);
 		LSW_SECCOMP_ADD(getsockname);
 		LSW_SECCOMP_ADD(getsockopt);
