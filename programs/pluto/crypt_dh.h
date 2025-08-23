@@ -74,5 +74,8 @@ struct crypt_mac calc_v1_skeyid_and_iv(struct ike_sa *ike);
 void calc_v2_ike_keymat(struct state *larval_ike,
 			PK11SymKey *skeyseed,
 			const ike_spis_t *ike_spis);
+size_t nr_ikev2_ike_keymat_bytes(struct state *st);
+void extract_ikev2_ike_keys(struct state *larval_sa,
+			    PK11SymKey *keymat);
 
 #endif

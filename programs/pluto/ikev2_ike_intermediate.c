@@ -46,7 +46,7 @@
 #include "ikev2_helper.h"
 
 static ikev2_state_transition_fn process_v2_IKE_INTERMEDIATE_request;	/* type assertion */
-static bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed);
+void extract_v2_ike_intermediate_keys(struct ike_sa *ike, PK11SymKey *keymat);
 
 static ikev2_helper_fn initiate_v2_IKE_INTERMEDIATE_request_helper;
 static ikev2_helper_fn process_v2_IKE_INTERMEDIATE_request_helper;
@@ -59,15 +59,29 @@ static ikev2_resume_fn process_v2_IKE_INTERMEDIATE_response_continue;
 static ikev2_cleanup_fn cleanup_IKE_INTERMEDIATE_task;
 
 struct ikev2_task {
+	/* for ADDKE */
 	const struct kem_desc *kem;
 	struct kem_initiator *initiator;
 	struct kem_responder *responder;
+	/* for SKEYSEED */
+	chunk_t ni;
+	chunk_t nr;
+	PK11SymKey *d;
+	/* for KEYMAT */
+	ike_spis_t ike_spis;
+	size_t nr_keymat_bytes;
+	PK11SymKey *keymat;
+	const struct prf_desc *prf;
 };
 
 void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logger)
 {
 	free_kem_initiator(&(*task)->initiator, logger);
 	free_kem_responder(&(*task)->responder, logger);
+	free_chunk_content(&(*task)->ni);
+	free_chunk_content(&(*task)->nr);
+	symkey_delref(logger, "d", &(*task)->d);
+	symkey_delref(logger, "skeyseed", &(*task)->keymat);
 	pfreeany(*task);
 }
 
@@ -291,6 +305,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	struct ikev2_task task = {
+		/* for ADDKE */
 		.kem = next_additional_kem_desc(ike),
 	};
 
@@ -440,12 +455,21 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 		return false;
 	}
 
-	bool ok = recalc_v2_ike_intermediate_keymat(ike, skeyseed);
+	size_t nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&ike->sa);
+	PK11SymKey *keymat = ikev2_ike_sa_keymat(prf, skeyseed,
+						 ike->sa.st_ni, ike->sa.st_nr,
+						 &ike->sa.st_ike_spis,
+						 nr_keymat_bytes,
+						 logger);
+
+	extract_v2_ike_intermediate_keys(ike, keymat);
+
+	symkey_delref(logger, "skeyseed", &keymat);
 	symkey_delref(logger, "skeyseed", &skeyseed);
-	return ok;
+	return true;
 }
 
-bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
+void extract_v2_ike_intermediate_keys(struct ike_sa *ike, PK11SymKey *keymat)
 {
 	struct logger *logger = ike->sa.logger;
 
@@ -465,39 +489,7 @@ bool recalc_v2_ike_intermediate_keymat(struct ike_sa *ike, PK11SymKey *skeyseed)
 
 	/* now we have to generate the keys for everything */
 
-	calc_v2_ike_keymat(&ike->sa, skeyseed, &ike->sa.st_ike_spis);
-	return true;
-}
-
-static bool recalc_v2_ike_intermediate_kem_keymat(struct ike_sa *ike,
-						  PK11SymKey *shared_key,
-						  where_t where)
-{
-	struct logger *logger = ike->sa.logger;
-	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
-
-	ldbg(logger, "%s() calculating skeyseed using prf %s",
-	     __func__, prf->common.fqn);
-
-	/*
-	 * We need old_skey_d to recalculate SKEYSEED'.
-	 */
-
-	PK11SymKey *skeyseed =
-		ikev2_IKE_INTERMEDIATE_kem_skeyseed(prf,
-						    /*old*/ike->sa.st_skey_d_nss,
-						    shared_key,
-						    ike->sa.st_ni, ike->sa.st_nr,
-						    logger);
-	if (skeyseed == NULL) {
-		llog_pexpect(logger, where, "ppk SKEYSEED failed");
-		return false;
-	}
-
-	bool ok = recalc_v2_ike_intermediate_keymat(ike, skeyseed);
-	symkey_delref(logger, "skeyseed", &skeyseed);
-
-	return ok;
+	extract_ikev2_ike_keys(&ike->sa, keymat);
 }
 
 stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
@@ -539,7 +531,16 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
 
 	struct ikev2_task task = {
+		/* for ADDKE */
 		.kem = next_additional_kem_desc(ike),
+		/* for SKEYSEED */
+		.ni = clone_hunk(ike->sa.st_ni, "Ni"),
+		.nr = clone_hunk(ike->sa.st_nr, "Nr"),
+		.d = symkey_addref(logger, "d", ike->sa.st_skey_d_nss),
+		.prf = ike->sa.st_oakley.ta_prf,
+		/* for KEYMAT */
+		.nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&ike->sa),
+		.ike_spis = ike->sa.st_ike_spis,
 	};
 
 	submit_ikev2_task(ike, md,
@@ -562,6 +563,11 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 						   &initiator_ke, logger)) {
 			return STF_FATAL;
 		}
+		if (LDBGP(DBG_BASE, logger)) {
+			LDBG_log(logger, "ADDKE: responder encapsulating using initiator KE:");
+			LDBG_hunk(logger, initiator_ke);
+		}
+
 		diag_t d = crypt_kem_encapsulate(task->kem, initiator_ke,
 						 &task->responder,
 						 logger);
@@ -570,11 +576,27 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
-
 		if (LDBGP(DBG_BASE, logger)) {
-			LDBG_log(logger, "responder ADDKE:");
+			LDBG_log(logger, "ADDKE: responder KE:");
 			LDBG_hunk(logger, task->responder->ke);
 		}
+
+		ldbg(logger, "ADDKE: responder calculating skeyseed using prf %s",
+		     task->prf->common.fqn);
+		PK11SymKey *skeyseed =
+			ikev2_IKE_INTERMEDIATE_kem_skeyseed(task->prf,
+							    /*old*/task->d,
+							    task->responder->shared_key,
+							    task->ni, task->nr,
+							    logger);
+		ldbg(logger, "ADDKE: responder calculating KEYMAT using prf %s",
+		     task->prf->common.fqn);
+		task->keymat = ikev2_ike_sa_keymat(task->prf, skeyseed,
+						   task->ni, task->nr,
+						   &task->ike_spis,
+						   task->nr_keymat_bytes,
+						   logger);
+		symkey_delref(logger, "skeyseed", &skeyseed);
 	}
 
 	return STF_OK;
@@ -693,10 +715,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 			  response.outgoing_fragments,
 			  response.logger);
 
-	if (task->responder != NULL) {
-		if (!recalc_v2_ike_intermediate_kem_keymat(ike, task->responder->shared_key, HERE)) {
-			return STF_INTERNAL_ERROR;
-		}
+	if (task->keymat != NULL) {
+		extract_v2_ike_intermediate_keys(ike, task->keymat);
 	}
 
 	if (ppk != NULL) {
@@ -756,7 +776,16 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 
 	/* transfer ownership to task */
 	struct ikev2_task task = {
+		/* for ADDKE decapsulate() */
 		.initiator = ike->sa.st_kem.initiator,
+		/* for skeyseed */
+		.ni = clone_hunk(ike->sa.st_ni, "Ni"),
+		.nr = clone_hunk(ike->sa.st_nr, "Nr"),
+		.d = symkey_addref(logger, "d", ike->sa.st_skey_d_nss),
+		.prf = ike->sa.st_oakley.ta_prf,
+		/* for KEYMAT */
+		.nr_keymat_bytes = nr_ikev2_ike_keymat_bytes(&ike->sa),
+		.ike_spis = ike->sa.st_ike_spis,
 	};
 	ike->sa.st_kem.initiator = NULL;
 
@@ -782,7 +811,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 			return STF_FATAL;
 		}
 		if (LDBGP(DBG_BASE, logger)) {
-			LDBG_log(logger, "responder ADDKE:");
+			LDBG_log(logger, "ADDKE: decapsulating using responder KE:");
 			LDBG_hunk(logger, responder_ke);
 		}
 		diag_t d = crypt_kem_decapsulate(task->initiator, responder_ke, logger);
@@ -791,6 +820,23 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
+
+		ldbg(logger, "ADDKE: initiator calculating skeyseed using prf %s",
+		     task->prf->common.fqn);
+		PK11SymKey *skeyseed =
+			ikev2_IKE_INTERMEDIATE_kem_skeyseed(task->prf,
+							    /*old*/task->d,
+							    task->initiator->shared_key,
+							    task->ni, task->nr,
+							    logger);
+		ldbg(logger, "ADDKE: initiator calculating KEYMAT using prf %s",
+		     task->prf->common.fqn);
+		task->keymat = ikev2_ike_sa_keymat(task->prf, skeyseed,
+						   task->ni, task->nr,
+						   &task->ike_spis,
+						   task->nr_keymat_bytes,
+						   logger);
+		symkey_delref(logger, "skeyseed", &skeyseed);
 	}
 
 	return STF_OK;
@@ -803,12 +849,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(ike->sa.logger, md != NULL);
 
-	if (task->initiator != NULL) {
-		if (!recalc_v2_ike_intermediate_kem_keymat(ike,
-							   task->initiator->shared_key,
-							   HERE)) {
-			return STF_INTERNAL_ERROR;
-		}
+	if (task->keymat != NULL) {
+		extract_v2_ike_intermediate_keys(ike, task->keymat);
 	}
 
 	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {

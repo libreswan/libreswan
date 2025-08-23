@@ -41,14 +41,25 @@ void calc_v2_ike_keymat(struct state *st,
 {
 	struct logger *logger = st->logger;
 
-	/* now we have to generate the keys for everything */
+	PASSERT(logger, st->st_ni.len > 0);
+	PASSERT(logger, st->st_nr.len > 0);
 
+	size_t total_keysize = nr_ikev2_ike_keymat_bytes(st);
+	PK11SymKey *keymat = ikev2_ike_sa_keymat(st->st_oakley.ta_prf,
+						 skeyseed,
+						 st->st_ni, st->st_nr,
+						 ike_spis,
+						 total_keysize, logger);
+
+	extract_ikev2_ike_keys(st, keymat);
+	symkey_delref(st->logger, "keymat", &keymat);
+}
+
+size_t nr_ikev2_ike_keymat_bytes(struct state *st)
+{
 	const struct encrypt_desc *cipher = st->st_oakley.ta_encrypt;
 	const struct prf_desc *prf = st->st_oakley.ta_prf;
 	const struct integ_desc *integ = st->st_oakley.ta_integ;
-
-	size_t key_size = st->st_oakley.enckeylen / BITS_IN_BYTE;
-	size_t salt_size = cipher->salt_size;
 
 	/* need to know how many bits to generate */
 	/* SK_d needs PRF hasher key bytes */
@@ -57,31 +68,47 @@ void calc_v2_ike_keymat(struct state *st,
 	/* ..._salt needs salt_size*2 bytes */
 	/* SK_a needs integ's key size*2 bytes */
 
-	PASSERT(logger, st->st_ni.len > 0);
-	PASSERT(logger, st->st_nr.len > 0);
+ 	int skd_size = prf->prf_key_size;
+ 	int integ_size = integ != NULL ? integ->integ_keymat_size : 0;
+	size_t key_size = st->st_oakley.enckeylen / BITS_IN_BYTE;
+	size_t salt_size = cipher->salt_size;
+ 	int skp_size = prf->prf_key_size;
+
+	return (skd_size +
+		2 * integ_size +
+		2 * (key_size + salt_size) +
+		2 * skp_size);
+}
+
+void extract_ikev2_ike_keys(struct state *st,
+			    PK11SymKey *keymat)
+{
+	struct logger *logger = st->logger;
+
+	const struct encrypt_desc *cipher = st->st_oakley.ta_encrypt;
+	const struct prf_desc *prf = st->st_oakley.ta_prf;
+	const struct integ_desc *integ = st->st_oakley.ta_integ;
+
+	size_t key_size = st->st_oakley.enckeylen / BITS_IN_BYTE;
+	size_t salt_size = cipher->salt_size;
 
 	int skd_bytes = prf->prf_key_size;
 	int skp_bytes = prf->prf_key_size;
 	int integ_size = integ != NULL ? integ->integ_keymat_size : 0;
-	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
-	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf, skeyseed,
-						   st->st_ni, st->st_nr,
-						   ike_spis,
-						   total_keysize, logger);
 
 	size_t next_byte = 0;
 
-	st->st_skey_d_nss = key_from_symkey_bytes("SK_d", finalkey,
+	st->st_skey_d_nss = key_from_symkey_bytes("SK_d", keymat,
 						  next_byte, skd_bytes,
 						  HERE, logger);
 	next_byte += skd_bytes;
 
-	st->st_skey_ai_nss = key_from_symkey_bytes("SK_ai", finalkey,
+	st->st_skey_ai_nss = key_from_symkey_bytes("SK_ai", keymat,
 						   next_byte, integ_size,
 						   HERE, logger);
 	next_byte += integ_size;
 
-	st->st_skey_ar_nss = key_from_symkey_bytes("SK_ar", finalkey,
+	st->st_skey_ar_nss = key_from_symkey_bytes("SK_ar", keymat,
 						   next_byte, integ_size,
 						   HERE, logger);
 	next_byte += integ_size;
@@ -94,12 +121,12 @@ void calc_v2_ike_keymat(struct state *st,
 	st->st_skey_ei_nss = encrypt_key_from_symkey_bytes("SK_ei",
 							   cipher,
 							   next_byte, key_size,
-							   finalkey,
+							   keymat,
 							   HERE, logger);
 	next_byte += key_size;
 
 	st->st_skey_initiator_salt = chunk_from_symkey_bytes("initiator salt",
-							     finalkey,
+							     keymat,
 							     next_byte, salt_size,
 							     logger, HERE);
 	next_byte += salt_size;
@@ -112,12 +139,12 @@ void calc_v2_ike_keymat(struct state *st,
 	st->st_skey_er_nss = encrypt_key_from_symkey_bytes("SK_er_k",
 						   cipher,
 						   next_byte, key_size,
-						   finalkey,
+						   keymat,
 						   HERE, logger);
 	next_byte += key_size;
 
 	st->st_skey_responder_salt = chunk_from_symkey_bytes("responder salt",
-							     finalkey, next_byte,
+							     keymat, next_byte,
 							     salt_size,
 							     logger, HERE);
 	next_byte += salt_size;
@@ -128,16 +155,13 @@ void calc_v2_ike_keymat(struct state *st,
 
 	st->st_skey_pi_nss = prf_key_from_symkey_bytes("SK_pi", prf,
 						       next_byte, skp_bytes,
-						       finalkey, HERE, logger);
+						       keymat, HERE, logger);
 	next_byte += skp_bytes;
 
 	st->st_skey_pr_nss = prf_key_from_symkey_bytes("SK_pr", prf,
 						       next_byte, skp_bytes,
-						       finalkey, HERE, logger);
+						       keymat, HERE, logger);
 	next_byte += skp_bytes;
-
-	ldbgf(DBG_CRYPT, logger, "NSS ikev2: finished computing individual keys for IKEv2 SA");
-	symkey_delref(logger, "finalkey", &finalkey);
 
 	switch (st->st_sa_role) {
 	case SA_INITIATOR:
