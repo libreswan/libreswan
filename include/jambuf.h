@@ -27,6 +27,15 @@
 
 #define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
 
+#define MAX_JSON_STATES 5	/* maximum depth of a JSON structure */
+
+enum json_state {
+	JSON_NONE = 0,
+	JSON_OBJECT,
+	JSON_ARRAY,
+	JSON_FIELD,
+};
+
 /*
  * struct jambuf provides a mechanism for accumulating formatted
  * strings into a string buffer, vis:
@@ -81,6 +90,14 @@ struct jambuf {
 	size_t total;
 	size_t roof;
 	const char *dots;
+
+	/* Whether the next call of jam require a separator to be inserted */
+	bool separator;
+
+	/* Fields for JSON formatting */
+	bool json;
+	enum json_state json_states[MAX_JSON_STATES];
+	size_t json_state_index;
 };
 
 bool jambuf_ok(struct jambuf *buf);
@@ -235,6 +252,14 @@ size_t jam_string_uppercase(struct jambuf *buf, const char *string);
 jam_bytes_fn jam_human_bytes;
 size_t jam_string_human(struct jambuf *buf, const char *string);
 
+/* escape as JSON string */
+jam_bytes_fn jam_json_quoted_bytes;
+#define jam_json_quoted_hunk(BUF, HUNK)				\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_json_quoted_bytes(BUF, hunk_.ptr, hunk_.len);	\
+	})
+
 /*
  * jam_humber():
  *
@@ -288,5 +313,17 @@ extern int (*jambuf_debugf)(const char *format, ...) PRINTF_LIKE(1);
 
 /* <strerror(ERROR)> (errno ERROR) */
 size_t jam_errno(struct jambuf *buf, int error);
+
+size_t jam_object_start(struct jambuf *buf);
+size_t jam_object_end(struct jambuf *buf);
+
+size_t jam_array_start(struct jambuf *buf);
+size_t jam_array_end(struct jambuf *buf);
+
+size_t jam_field_start(struct jambuf *buf, const char *name);
+size_t jam_field_end(struct jambuf *buf);
+
+size_t jam_value_string(struct jambuf *buf, const char *format, ...) PRINTF_LIKE(2);
+#define jam_value_integer jam
 
 #endif
