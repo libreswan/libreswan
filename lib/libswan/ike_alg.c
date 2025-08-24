@@ -904,6 +904,9 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg(logger, alg, kem->kem_ops->check != NULL);
 		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_local_secret != NULL);
 		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_shared_secret != NULL);
+		/* all-in or none-in! */
+		pexpect_ike_alg(logger, alg, ((kem->kem_ops->kem_encapsulate != NULL) ==
+					      (kem->kem_ops->kem_decapsulate != NULL)));
 		/* more? */
 		kem->kem_ops->check(kem, logger);
 		/* IKEv1 supports MODP groups but not ECC. */

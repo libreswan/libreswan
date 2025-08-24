@@ -19,6 +19,8 @@
 #include "chunk.h"
 
 struct logger;
+struct kem_initiator;
+struct kem_responder;
 
 struct kem_ops {
 	const char *backend;
@@ -51,6 +53,14 @@ struct kem_ops {
 				     shunk_t remote_ke,
 				     PK11SymKey **shared_secret,
 				     struct logger *logger) MUST_USE_RESULT;
+
+	diag_t (*kem_encapsulate)(struct kem_responder *responder,
+				  shunk_t initiator_ke,
+				  struct logger *logger);
+
+	diag_t (*kem_decapsulate)(struct kem_initiator *initiator,
+				  shunk_t responder_ke,
+				  struct logger *logger);
 };
 
 extern const struct kem_ops ike_alg_kem_ecp_nss_ops;
