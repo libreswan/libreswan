@@ -862,7 +862,7 @@ const struct ike_alg_type ike_alg_encrypt = {
  * DH group
  */
 
-static const struct kem_desc *dh_descriptors[] = {
+static const struct kem_desc *kem_descriptors[] = {
 	&ike_alg_kem_none,
 #ifdef USE_DH2
 	&ike_alg_kem_modp1024,
@@ -890,50 +890,49 @@ static const struct kem_desc *dh_descriptors[] = {
 #endif
 };
 
-static void dh_desc_check(const struct ike_alg *alg, struct logger *logger)
+static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
-	const struct kem_desc *dh = kem_desc(alg);
-	pexpect_ike_alg(logger, alg, dh->group > 0);
-	pexpect_ike_alg(logger, alg, dh->bytes > 0);
-	pexpect_ike_alg(logger, alg, dh->common.id[IKEv2_ALG_ID] == dh->group);
-	pexpect_ike_alg(logger, alg, dh->common.id[IKEv1_OAKLEY_ID] == dh->group);
+	const struct kem_desc *kem = kem_desc(alg);
+	pexpect_ike_alg(logger, alg, kem->group > 0);
+	pexpect_ike_alg(logger, alg, kem->bytes > 0);
+	pexpect_ike_alg(logger, alg, kem->common.id[IKEv2_ALG_ID] == kem->group);
+	pexpect_ike_alg(logger, alg, kem->common.id[IKEv1_OAKLEY_ID] == kem->group);
 	/* always implemented */
-	pexpect_ike_alg(logger, alg, dh->kem_ops != NULL);
-	if (dh->kem_ops != NULL) {
-		pexpect_ike_alg(logger, alg, dh->kem_ops->backend != NULL);
-		pexpect_ike_alg(logger, alg, dh->kem_ops->check != NULL);
-		pexpect_ike_alg(logger, alg, dh->kem_ops->calc_local_secret != NULL);
-		pexpect_ike_alg(logger, alg, dh->kem_ops->calc_shared_secret != NULL);
+	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
+	if (kem->kem_ops != NULL) {
+		pexpect_ike_alg(logger, alg, kem->kem_ops->backend != NULL);
+		pexpect_ike_alg(logger, alg, kem->kem_ops->check != NULL);
+		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_local_secret != NULL);
+		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_shared_secret != NULL);
 		/* more? */
-		dh->kem_ops->check(dh, logger);
+		kem->kem_ops->check(kem, logger);
 		/* IKEv1 supports MODP groups but not ECC. */
-		pexpect_ike_alg(logger, alg, (dh->kem_ops == &ike_alg_kem_modp_nss_ops
-				      ? dh->common.id[IKEv1_IPSEC_ID] == dh->group
-				      : dh->kem_ops == &ike_alg_kem_ecp_nss_ops
-				      ? dh->common.id[IKEv1_IPSEC_ID] < 0
-				      : false));
+		pexpect_ike_alg(logger, alg,
+				(kem->kem_ops == &ike_alg_kem_modp_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] == kem->group :
+				 kem->kem_ops == &ike_alg_kem_ecp_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] < 0 :
+				 false));
 	}
 }
 
-static bool dh_desc_is_ike(const struct ike_alg *alg)
+static bool kem_desc_is_ike(const struct ike_alg *alg)
 {
-	const struct kem_desc *dh = kem_desc(alg);
-	return dh->kem_ops != NULL;
+	const struct kem_desc *kem = kem_desc(alg);
+	return kem->kem_ops != NULL;
 }
 
-static struct algorithm_table dh_algorithms = ALGORITHM_TABLE(dh_descriptors);
+static struct algorithm_table kem_algorithms = ALGORITHM_TABLE(kem_descriptors);
 
 const struct ike_alg_type ike_alg_kem = {
 	.name = "DH",
 	.Name = "DH",
-	.algorithms = &dh_algorithms,
+	.algorithms = &kem_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
 		[IKEv1_IPSEC_ID] = &oakley_group_names,
 		[IKEv2_ALG_ID] = &oakley_group_names,
 	},
-	.desc_check = dh_desc_check,
-	.desc_is_ike = dh_desc_is_ike,
+	.desc_check = kem_desc_check,
+	.desc_is_ike = kem_desc_is_ike,
 };
 
 /*
@@ -1159,9 +1158,9 @@ static const char *backend_name(const struct ike_alg *alg)
 			return encrypt->encrypt_ops->backend;
 		}
 	} else if (alg->algo_type == &ike_alg_kem) {
-		const struct kem_desc *dh = kem_desc(alg);
-		if (dh->kem_ops != NULL) {
-			return dh->kem_ops->backend;
+		const struct kem_desc *kem = kem_desc(alg);
+		if (kem->kem_ops != NULL) {
+			return kem->kem_ops->backend;
 		}
 	} else if (alg->algo_type == &ike_alg_ipcomp) {
 		const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);
