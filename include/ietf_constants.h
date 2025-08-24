@@ -1465,6 +1465,13 @@ enum ike_trans_type_dh {
 	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
 	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
 
+	OAKLEY_GROUP_GOST3410_2012_256,	/* RFC 9385, Sec. 6.1 */
+	OAKLEY_GROUP_GOST3410_2012_512,	/* RFC 9385, Sec. 6.1 */
+
+	OAKLEY_GROUP_ML_KEM_512 = 35,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	OAKLEY_GROUP_ML_KEM_768 = 36,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	OAKLEY_GROUP_ML_KEM_1024 = 37,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+
 	OAKLEY_GROUP_PSTATS_ROOF
 
 	/* 33 - 32767 Unassigned */
