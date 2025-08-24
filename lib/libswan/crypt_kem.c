@@ -124,5 +124,6 @@ void free_kem_responder(struct kem_responder **responder,
 	SECKEY_DestroyPublicKey((*responder)->internal.public_key);
 	SECKEY_DestroyPrivateKey((*responder)->internal.private_key);
 	symkey_delref(logger, "responder shared key", &(*responder)->shared_key);
+	free_chunk_content(&(*responder)->internal.ke);
 	pfreeany((*responder));
 }

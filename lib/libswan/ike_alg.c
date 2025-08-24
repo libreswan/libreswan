@@ -888,6 +888,16 @@ static const struct kem_desc *kem_descriptors[] = {
 #ifdef USE_DH31
 	&ike_alg_kem_curve25519,
 #endif
+
+#ifdef USE_ML_KEM_512
+	&ike_alg_kem_ml_kem_512,
+#endif
+#ifdef USE_ML_KEM_768
+	&ike_alg_kem_ml_kem_768,
+#endif
+#ifdef USE_ML_KEM_1024
+	&ike_alg_kem_ml_kem_1024,
+#endif
 };
 
 static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
@@ -896,14 +906,18 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->group > 0);
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->common.id[IKEv2_ALG_ID] == kem->group);
-	pexpect_ike_alg(logger, alg, kem->common.id[IKEv1_OAKLEY_ID] == kem->group);
+	pexpect_ike_alg(logger, alg,
+			(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->common.id[IKEv1_OAKLEY_ID] == -1 :
+			 kem->common.id[IKEv1_OAKLEY_ID] == kem->group));
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
 	if (kem->kem_ops != NULL) {
 		pexpect_ike_alg(logger, alg, kem->kem_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, kem->kem_ops->check != NULL);
 		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_local_secret != NULL);
-		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_shared_secret != NULL);
+		pexpect_ike_alg(logger, alg,
+				(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->kem_ops->calc_shared_secret == NULL :
+				 kem->kem_ops->calc_shared_secret != NULL));
 		/* all-in or none-in! */
 		pexpect_ike_alg(logger, alg, ((kem->kem_ops->kem_encapsulate != NULL) ==
 					      (kem->kem_ops->kem_decapsulate != NULL)));
@@ -913,6 +927,7 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 		pexpect_ike_alg(logger, alg,
 				(kem->kem_ops == &ike_alg_kem_modp_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] == kem->group :
 				 kem->kem_ops == &ike_alg_kem_ecp_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] < 0 :
+				 kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] < 0 :
 				 false));
 	}
 }

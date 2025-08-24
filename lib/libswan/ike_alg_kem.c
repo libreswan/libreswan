@@ -312,3 +312,59 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 #endif
+
+/* https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-mlkem/ */
+
+#ifdef USE_ML_KEM_512
+const struct kem_desc ike_alg_kem_ml_kem_512 = {
+	.common = {
+		.algo_type = IKE_ALG_KEM,
+		.fqn = "ML_KEM_512",
+		.names = "ml_kem_512,mlkem512",
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_512,
+		},
+	},
+	.group = OAKLEY_GROUP_ML_KEM_512,
+	.bytes = 1 /* XXX: BOGUS */,
+	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
+};
+#endif
+
+#ifdef USE_ML_KEM_768
+const struct kem_desc ike_alg_kem_ml_kem_768 = {
+	.common = {
+		.algo_type = IKE_ALG_KEM,
+		.fqn = "ML_KEM_768",
+		.names = "ml_kem_768,mlkem768",
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_768,
+		},
+	},
+	.group = OAKLEY_GROUP_ML_KEM_768,
+	.bytes = 1 /* XXX: BOGUS */,
+	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
+};
+#endif
+
+#ifdef USE_ML_KEM_1024
+const struct kem_desc ike_alg_kem_ml_kem_1024 = {
+	.common = {
+		.algo_type = IKE_ALG_KEM,
+		.fqn = "ML_KEM_1024",
+		.names = "ml_kem_1024,mlkem1024",
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
+			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_1024,
+		},
+	},
+	.group = OAKLEY_GROUP_ML_KEM_1024,
+	.bytes = 1 /* XXX: BOGUS */,
+	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
+};
+#endif
