@@ -563,8 +563,8 @@ static bool register_alg(const struct sadb_msg *b,
 		if (ike_alg != NULL) {
 			kernel_alg_add(ike_alg, verbose.logger);
 		} else {
-			vdbg("%s algorithm %d not recognized",
-			     ike_alg_type_name(type),
+			vdbg("%s %d not recognized",
+			     type->story,
 			     alg->sadb_alg_id);
 		}
 	}

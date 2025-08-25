@@ -32,7 +32,8 @@
  * failed, or 'true' and warn because forced parsing is enabled.
  */
 static bool warning_or_false(struct proposal_parser *parser,
-			     const char *what, shunk_t print)
+			     const struct ike_alg_type *alg_type,
+			     shunk_t print)
 {
 	const struct logger *logger = parser->policy->logger;
 	passert(parser->diag != NULL);
@@ -44,15 +45,17 @@ static bool warning_or_false(struct proposal_parser *parser,
 		 */
 		name_buf vb;
 		llog(RC_LOG, logger,
-		     "ignoring %s %s %s algorithm '"PRI_SHUNK"'",
+		     "ignoring %s %s %s '"PRI_SHUNK"'",
 		     str_enum_long(&ike_version_names, parser->policy->version, &vb),
 		     parser->protocol->name, /* ESP|IKE|AH */
-		     what, pri_shunk(print));
+		     alg_type->story,
+		     pri_shunk(print));
 		result = true;
 	} else {
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "lookup for %s algorithm '"PRI_SHUNK"' failed",
-		      what, pri_shunk(print));
+		      "lookup for %s '"PRI_SHUNK"' failed",
+		      alg_type->story,
+		      pri_shunk(print));
 		result = false;
 	}
 	return result;
@@ -137,15 +140,15 @@ static bool parse_alg(struct proposal_parser *parser,
 {
 	passert(parser->diag == NULL);
 	if (token.len == 0) {
-		proposal_error(parser, "%s %s algorithm is empty",
+		proposal_error(parser, "%s %s is empty",
 			       parser->protocol->name,
-			       ike_alg_type_name(alg_type));
+			       alg_type->story);
 		return false;
 	}
 	const struct ike_alg *alg = alg_byname(parser, alg_type, token,
 					       token/*print*/);
 	if (alg == NULL) {
-		return warning_or_false(parser, ike_alg_type_name(alg_type), token);
+		return warning_or_false(parser, alg_type, token);
 	}
 	append_algorithm_for(parser, proposal, algorithm, alg, 0/*enckeylen*/);
 	return true;

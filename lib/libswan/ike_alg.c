@@ -185,18 +185,6 @@ bool ike_alg_is_ike(const struct ike_alg *alg,
 	return alg->type->desc_is_ike(alg);
 }
 
-const char *ike_alg_type_name(const struct ike_alg_type *type)
-{
-	passert(type != NULL);
-	return type->name;
-}
-
-const char *ike_alg_type_Name(const struct ike_alg_type *type)
-{
-	passert(type != NULL);
-	return type->Name;
-}
-
 bool encrypt_desc_is_aead(const struct encrypt_desc *enc_desc)
 {
 	return enc_desc != NULL && enc_desc->aead_tag_size > 0;
@@ -483,7 +471,7 @@ static struct algorithm_table hash_algorithms = ALGORITHM_TABLE(hash_descriptors
 
 const struct ike_alg_type ike_alg_hash = {
 	.name = "hash",
-	.Name = "Hash",
+	.story = "Hashing Algorithm",
 	.algorithms = &hash_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
@@ -596,7 +584,7 @@ static struct algorithm_table prf_algorithms = ALGORITHM_TABLE(prf_descriptors);
 
 const struct ike_alg_type ike_alg_prf = {
 	.name = "PRF",
-	.Name = "PRF",
+	.story = "Pseudorandom Function (KDF)",
 	.algorithms = &prf_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
@@ -669,7 +657,7 @@ static struct algorithm_table integ_algorithms = ALGORITHM_TABLE(integ_descripto
 
 const struct ike_alg_type ike_alg_integ = {
 	.name = "integrity",
-	.Name = "Integrity",
+	.story = "Integrity Algorithm",
 	.algorithms = &integ_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_hash_names,
@@ -834,7 +822,7 @@ static struct algorithm_table encrypt_algorithms = ALGORITHM_TABLE(encrypt_descr
 
 const struct ike_alg_type ike_alg_encrypt = {
 	.name = "encryption",
-	.Name = "Encryption",
+	.story = "Encryption Algorithm (cipher)",
 	.algorithms = &encrypt_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_enc_names,
@@ -928,8 +916,8 @@ static bool kem_desc_is_ike(const struct ike_alg *alg)
 static struct algorithm_table kem_algorithms = ALGORITHM_TABLE(kem_descriptors);
 
 const struct ike_alg_type ike_alg_kem = {
-	.name = "DH",
-	.Name = "DH",
+	.name = "KEM",
+	.story = "Key Exchange Method (DH)",
 	.algorithms = &kem_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
@@ -966,7 +954,7 @@ static struct algorithm_table ipcomp_algorithms = ALGORITHM_TABLE(ipcomp_descrip
 
 const struct ike_alg_type ike_alg_ipcomp = {
 	.name = "IPCOMP",
-	.Name = "IPCOMP",
+	.story = "IP Compression",
 	.algorithms = &ipcomp_algorithms,
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &ipsec_ipcomp_algo_names,
@@ -1016,8 +1004,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 	 * Anything going wrong here results in an abort.
 	 */
 	passert(type->name != NULL);
-	passert(type->Name != NULL);
-	passert(strcasecmp(type->name, type->Name) == 0);
+	passert(type->story != NULL);
 
 	ldbgf(DBG_CRYPT, logger, "%s algorithm assertion checks", type->name);
 	FOR_EACH_IKE_ALGP(type, algp) {
@@ -1327,9 +1314,9 @@ static void log_ike_algs(struct logger *logger)
 	 */
 	FOR_EACH_IKE_ALG_TYPEP(typep) {
 		const struct ike_alg_type *type = *typep;
-		llog(RC_LOG, logger, "%s%s algorithms:",
-			    is_fips_mode() ? "FIPS " : "",
-			    type->Name);
+		llog(RC_LOG, logger, "%s%s:",
+		     (is_fips_mode() ? "FIPS " : ""),
+		     type->story);
 		FOR_EACH_IKE_ALGP(type, algp) {
 			LLOG_JAMBUF(RC_LOG, logger, buf) {
 				jam_string(buf, "  ");
@@ -1354,8 +1341,8 @@ static void strip_nonfips(const struct ike_alg_type *type, struct logger *logger
 		 */
 		if (!alg->fips.approved) {
 			llog(RC_LOG, logger,
-				    "%s algorithm %s disabled; not FIPS compliant",
-				    type->Name, alg->fqn);
+			     "%s %s disabled; not FIPS compliant",
+			     type->story, alg->fqn);
 			continue;
 		}
 		*end++ = alg;

@@ -93,7 +93,7 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		/* add it */
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
 		      "adding default %s %s",
-		      ike_alg_type_name(type), alg->fqn);
+		      type->story, alg->fqn);
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
 									 *default_alg);
 		if (!add_proposal_defaults(parser, defaults,
