@@ -1645,6 +1645,11 @@ static const char *const oakley_group_name[] = {
 	S(OAKLEY_GROUP_BRAINPOOL_P512R1), /* RFC 6932 */
 	S(OAKLEY_GROUP_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
 	S(OAKLEY_GROUP_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(OAKLEY_GROUP_GOST3410_2012_256),	/* RFC 9385, Sec. 6.1 */
+	S(OAKLEY_GROUP_GOST3410_2012_512),	/* RFC 9385, Sec. 6.1 */
+	S(OAKLEY_GROUP_ML_KEM_512),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(OAKLEY_GROUP_ML_KEM_768),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(OAKLEY_GROUP_ML_KEM_1024),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 #undef S
@@ -1652,7 +1657,7 @@ static const char *const oakley_group_name[] = {
 
 enum_names oakley_group_names = {
 	OAKLEY_GROUP_NONE,
-	OAKLEY_GROUP_CURVE448,
+	OAKLEY_GROUP_ML_KEM_1024,
 	ARRAY_REF(oakley_group_name),
 	"OAKLEY_GROUP_", /* prefix */
 	NULL

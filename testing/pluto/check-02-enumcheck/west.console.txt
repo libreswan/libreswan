@@ -5137,7 +5137,7 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-  oakley_group_names: [0..33)
+  oakley_group_names: [0..38)
     0 -> OAKLEY_GROUP_NONE
          jam_enum 0: OAKLEY_GROUP_NONE OK
          search OAKLEY_GROUP_NONE: OK
@@ -5402,6 +5402,46 @@ name for -1 present (should be absent)
          jam_enum_short 32: CURVE448 OK
          jam_enum_human 32: curve448 OK
          match CURVE448 [short]: OK
+   33 -> OAKLEY_GROUP_GOST3410_2012_256
+         jam_enum 33: OAKLEY_GROUP_GOST3410_2012_256 OK
+         search OAKLEY_GROUP_GOST3410_2012_256: OK
+         match OAKLEY_GROUP_GOST3410_2012_256: OK
+         short_name 33: GOST3410_2012_256 OK
+         jam_enum_short 33: GOST3410_2012_256 OK
+         jam_enum_human 33: gost3410-2012-256 OK
+         match GOST3410_2012_256 [short]: OK
+   34 -> OAKLEY_GROUP_GOST3410_2012_512
+         jam_enum 34: OAKLEY_GROUP_GOST3410_2012_512 OK
+         search OAKLEY_GROUP_GOST3410_2012_512: OK
+         match OAKLEY_GROUP_GOST3410_2012_512: OK
+         short_name 34: GOST3410_2012_512 OK
+         jam_enum_short 34: GOST3410_2012_512 OK
+         jam_enum_human 34: gost3410-2012-512 OK
+         match GOST3410_2012_512 [short]: OK
+   35 -> OAKLEY_GROUP_ML_KEM_512
+         jam_enum 35: OAKLEY_GROUP_ML_KEM_512 OK
+         search OAKLEY_GROUP_ML_KEM_512: OK
+         match OAKLEY_GROUP_ML_KEM_512: OK
+         short_name 35: ML_KEM_512 OK
+         jam_enum_short 35: ML_KEM_512 OK
+         jam_enum_human 35: ml-kem-512 OK
+         match ML_KEM_512 [short]: OK
+   36 -> OAKLEY_GROUP_ML_KEM_768
+         jam_enum 36: OAKLEY_GROUP_ML_KEM_768 OK
+         search OAKLEY_GROUP_ML_KEM_768: OK
+         match OAKLEY_GROUP_ML_KEM_768: OK
+         short_name 36: ML_KEM_768 OK
+         jam_enum_short 36: ML_KEM_768 OK
+         jam_enum_human 36: ml-kem-768 OK
+         match ML_KEM_768 [short]: OK
+   37 -> OAKLEY_GROUP_ML_KEM_1024
+         jam_enum 37: OAKLEY_GROUP_ML_KEM_1024 OK
+         search OAKLEY_GROUP_ML_KEM_1024: OK
+         match OAKLEY_GROUP_ML_KEM_1024: OK
+         short_name 37: ML_KEM_1024 OK
+         jam_enum_short 37: ML_KEM_1024 OK
+         jam_enum_human 37: ml-kem-1024 OK
+         match ML_KEM_1024 [short]: OK
   oakley_hash_names: [1..7)
     1 -> OAKLEY_MD5
          jam_enum 1: OAKLEY_MD5 OK
