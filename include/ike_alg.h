@@ -36,7 +36,7 @@ struct name_buf;
 
 #define PRI_IKE_ALG "IKE_ALG %s algorithm '%s'"
 #define pri_ike_alg(ALG)						\
-		ike_alg_type_name((ALG)->algo_type),			\
+	ike_alg_type_name((ALG)->type),					\
 			((ALG)->fqn != NULL ? (ALG)->fqn		\
 			 : "NULL")
 
@@ -85,7 +85,7 @@ struct name_buf;
 			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
 				     pri_ike_alg(ALG),			\
-				     ike_alg_type_name((ALG)->algo_type), \
+				     ike_alg_type_name((ALG)->type),	\
 				     (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
 		}							\
 	}
@@ -313,7 +313,7 @@ struct ike_alg {
 #define ikev1_ipsec_id id[IKEv1_IPSEC_ID]
 #define ikev2_alg_id id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
-	const struct ike_alg_type *algo_type;
+	const struct ike_alg_type *type;
 
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in

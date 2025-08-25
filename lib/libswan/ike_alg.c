@@ -171,7 +171,7 @@ bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name)
 
 bool ike_alg_is_valid(const struct ike_alg *alg)
 {
-	FOR_EACH_IKE_ALGP(alg->algo_type, algp) {
+	FOR_EACH_IKE_ALGP(alg->type, algp) {
 		if (*algp == alg) {
 			return true;
 		}
@@ -182,7 +182,7 @@ bool ike_alg_is_valid(const struct ike_alg *alg)
 bool ike_alg_is_ike(const struct ike_alg *alg,
 		    const struct logger *logger UNUSED)
 {
-	return alg->algo_type->desc_is_ike(alg);
+	return alg->type->desc_is_ike(alg);
 }
 
 const char *ike_alg_type_name(const struct ike_alg_type *type)
@@ -362,7 +362,7 @@ const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id)
 
 static bool ike_alg_in_table(const struct ike_alg *alg)
 {
-	const struct ike_alg_type *alg_type = alg->algo_type;
+	const struct ike_alg_type *alg_type = alg->type;
 	FOR_EACH_IKE_ALGP(alg_type, algp) {
 		if (alg == *algp) {
 			return true;
@@ -988,7 +988,7 @@ static void check_enum_name(const char *what,
 	if (id >= 0) {
 		if (enum_names == NULL) {
 			llog_passert(logger, HERE, "%s %s %s has no enum names",
-				     alg->algo_type->name,
+				     alg->type->name,
 				     alg->fqn, what);
 		}
 		name_buf enum_name;
@@ -1141,33 +1141,33 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 
 static const char *backend_name(const struct ike_alg *alg)
 {
-	if (alg->algo_type == &ike_alg_hash) {
+	if (alg->type == &ike_alg_hash) {
 		const struct hash_desc *hash = hash_desc(alg);
 		if (hash->hash_ops != NULL) {
 			return hash->hash_ops->backend;
 		}
-	} else if (alg->algo_type == &ike_alg_prf) {
+	} else if (alg->type == &ike_alg_prf) {
 		const struct prf_desc *prf = prf_desc(alg);
 		if (prf->prf_mac_ops != NULL) {
 			return prf->prf_mac_ops->backend;
 		}
-	} else if (alg->algo_type == &ike_alg_integ) {
+	} else if (alg->type == &ike_alg_integ) {
 		const struct integ_desc *integ = integ_desc(alg);
 		if (integ->prf != NULL &&
 		    integ->prf->prf_mac_ops != NULL) {
 			return integ->prf->prf_mac_ops->backend;
 		}
-	} else if (alg->algo_type == &ike_alg_encrypt) {
+	} else if (alg->type == &ike_alg_encrypt) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg);
 		if (encrypt->encrypt_ops != NULL) {
 			return encrypt->encrypt_ops->backend;
 		}
-	} else if (alg->algo_type == &ike_alg_kem) {
+	} else if (alg->type == &ike_alg_kem) {
 		const struct kem_desc *kem = kem_desc(alg);
 		if (kem->kem_ops != NULL) {
 			return kem->kem_ops->backend;
 		}
-	} else if (alg->algo_type == &ike_alg_ipcomp) {
+	} else if (alg->type == &ike_alg_ipcomp) {
 		const struct ipcomp_desc *ipcomp = ipcomp_desc(alg);
 		if (ipcomp->ipcomp_ops != NULL) {
 			return ipcomp->ipcomp_ops->backend;
@@ -1189,7 +1189,7 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	 * Concatenate [key,...] or {key,...} with default
 	 * marked with '*'.
 	 */
-	if (alg->algo_type == IKE_ALG_ENCRYPT) {
+	if (alg->type == IKE_ALG_ENCRYPT) {
 #define MAX_KEYSIZES (int)strlen("{256,192,*128}")
 		name_width -= MAX_KEYSIZES;
 		jam(buf, "%*s", (int) name_width, "");
@@ -1228,23 +1228,23 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	bool v2_esp;
 	bool v1_ah;
 	bool v2_ah;
-	if (alg->algo_type == &ike_alg_hash ||
-	    alg->algo_type == &ike_alg_prf) {
+	if (alg->type == &ike_alg_hash ||
+	    alg->type == &ike_alg_prf) {
 		v1_esp = v2_esp = v1_ah = v2_ah = false;
-	} else if (alg->algo_type == &ike_alg_encrypt) {
+	} else if (alg->type == &ike_alg_encrypt) {
 		v1_esp = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		v1_ah = false;
 		v2_ah = false;
-	} else if (alg->algo_type == &ike_alg_integ) {
+	} else if (alg->type == &ike_alg_integ) {
 		v1_esp = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = alg->id[IKEv2_ALG_ID] >= 0;
 		/* NULL not allowed for AH */
 		v1_ah = v2_ah = integ_desc(alg)->integ_ikev1_ah_transform > 0;
-	} else if (alg->algo_type == &ike_alg_kem) {
+	} else if (alg->type == &ike_alg_kem) {
 		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
-	} else if (alg->algo_type == &ike_alg_ipcomp) {
+	} else if (alg->type == &ike_alg_ipcomp) {
 		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {
@@ -1309,7 +1309,7 @@ static void log_ike_algs(struct logger *logger)
 		const struct ike_alg_type *type = *typep;
 		FOR_EACH_IKE_ALGP(type, algp) {
 			size_t s = strlen((*algp)->fqn);
-			if ((*algp)->algo_type == IKE_ALG_ENCRYPT) {
+			if ((*algp)->type == IKE_ALG_ENCRYPT) {
 				s += MAX_KEYSIZES + 1;
 			}
 			name_width = max(s, name_width);

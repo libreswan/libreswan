@@ -42,7 +42,7 @@ static struct cavp_entry config[] = {
 static struct prf_desc ike_alg_prf_sha2_224 = {
 	.common = {
 		.fqn = "SHA2_224",
-		.algo_type = IKE_ALG_PRF,
+		.type = IKE_ALG_PRF,
 		.fips.approved = true,
 	},
 	.prf_key_size = 64, /* 224/8 */
