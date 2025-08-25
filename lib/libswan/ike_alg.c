@@ -70,19 +70,6 @@ struct algorithm_table {
 		.end = (const struct ike_alg **)(TABLE) + elemsof(TABLE),	\
 	}
 
-struct ike_alg_type {
-	/*
-	 * Having the full capitalized name might make localization
-	 * easier.
-	 */
-	const char *name;
-	const char *Name; /* capitalized */
-	struct algorithm_table *algorithms;
-	enum_names *const enum_names[IKE_ALG_KEY_ROOF];
-	void (*desc_check)(const struct ike_alg*, struct logger *logger);
-	bool (*desc_is_ike)(const struct ike_alg*);
-};
-
 #define FOR_EACH_IKE_ALG_TYPEP(TYPEP)					\
 	for (const struct ike_alg_type *const *TYPEP = ike_alg_types;	\
 	     TYPEP < ike_alg_types + elemsof(ike_alg_types);		\

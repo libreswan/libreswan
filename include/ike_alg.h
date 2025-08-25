@@ -91,10 +91,33 @@ struct name_buf;
 	}
 
 /*
+ * Different lookup KEYs used by IKEv1/IKEv2
+ */
+enum ike_alg_key {
+	IKEv1_OAKLEY_ID,	/* i.e., ISAKAMP/IKE */
+	IKEv1_IPSEC_ID,		/* either ESP or AH */
+	IKEv2_ALG_ID,		/* IKE or Child */
+	SADB_ALG_ID,
+};
+#define IKE_ALG_KEY_ROOF (SADB_ALG_ID+1)
+#define IKE_ALG_KEY_FLOOR IKEv1_OAKLEY_ID
+
+/*
  * Different algorithm classes used by IKEv1/IKEv2 protocols.
  */
 
-struct ike_alg_type;
+struct ike_alg_type {
+	/*
+	 * Having the full capitalized name might make localization
+	 * easier.
+	 */
+	const char *name;
+	const char *Name; /* capitalized */
+	struct algorithm_table *algorithms;
+	const struct enum_names *const enum_names[IKE_ALG_KEY_ROOF];
+	void (*desc_check)(const struct ike_alg*, struct logger *logger);
+	bool (*desc_is_ike)(const struct ike_alg*);
+};
 
 extern const struct ike_alg_type ike_alg_encrypt;
 extern const struct ike_alg_type ike_alg_hash;
@@ -117,18 +140,6 @@ extern const struct ike_alg_type ike_alg_ipcomp;
  */
 const char *ike_alg_type_name(const struct ike_alg_type *type);
 const char *ike_alg_type_Name(const struct ike_alg_type *type);
-
-/*
- * Different lookup KEYs used by IKEv1/IKEv2
- */
-enum ike_alg_key {
-	IKEv1_OAKLEY_ID,	/* i.e., ISAKAMP/IKE */
-	IKEv1_IPSEC_ID,		/* either ESP or AH */
-	IKEv2_ALG_ID,		/* IKE or Child */
-	SADB_ALG_ID,
-};
-#define IKE_ALG_KEY_ROOF (SADB_ALG_ID+1)
-#define IKE_ALG_KEY_FLOOR IKEv1_OAKLEY_ID
 
 /*
  * User friendly string representing the key (protocol family).
