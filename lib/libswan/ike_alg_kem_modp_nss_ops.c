@@ -119,9 +119,7 @@ static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 		return diag_nss_error("shared key calculation using MODP failed");
 	}
 
-	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_symkey(logger, "newref ", "g_ir", *shared_secret);
-	}
+	symkey_newref(logger, "shared-key", *shared_secret);
 	return NULL;
 }
 

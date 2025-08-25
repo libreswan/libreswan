@@ -46,14 +46,10 @@ void init_crypt_symkey(struct logger *logger)
 	}
 }
 
-void symkey_delref_where(const struct logger *logger, const char *name,
-			 PK11SymKey **key, where_t where)
+void symkey_newref_where(struct logger *logger, const char *name,
+			 PK11SymKey *key, where_t where)
 {
-	ldbg_delref_where(logger, name, (*key), where);
-	if (*key != NULL) {
-		PK11_FreeSymKey(*key);
-	}
-	*key = NULL;
+	ldbg_newref_where(logger, name, key, where);
 }
 
 PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
@@ -64,6 +60,16 @@ PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
 		PK11_ReferenceSymKey(key);
 	}
 	return key;
+}
+
+void symkey_delref_where(const struct logger *logger, const char *name,
+			 PK11SymKey **key, where_t where)
+{
+	ldbg_delref_where(logger, name, (*key), where);
+	if (*key != NULL) {
+		PK11_FreeSymKey(*key);
+	}
+	*key = NULL;
 }
 
 size_t sizeof_symkey(PK11SymKey *key)
@@ -171,13 +177,19 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 			jam_nss_error_code(buf, PR_GetError());
 		}
 		DBG_DERIVE();
-	} else if (LDBGP(DBG_REFCNT, logger)) {
+		return NULL;
+	}
+
+	symkey_newref(logger, target_name, target_key);
+
+	if (LDBGP(DBG_CRYPT, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, SPACES"result: newref ");
+			jam_string(buf, SPACES"result: ");
 			jam_symkey(buf, target_name, target_key);
 			jam_where(buf, where);
 		}
 	}
+
 	return target_key;
 #undef DBG_DERIVE
 }
@@ -308,14 +320,11 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *symkey,
 		PK11_FreeSlot(slot); /* reference counted */
 		passert(slot_key != NULL);
 	}
-	if (LDBGP(DBG_REFCNT, logger)) {
-	    if (slot_key == symkey) {
-		    /* output should mimic symkey_addref() */
-		    LDBG_log(logger, "%s: slot-key@%p: addref sym-key@%p",
-			     name, slot_key, symkey);
-	    } else {
-		    LDBG_symkey(logger, name, "newref slot", slot_key);
-	    }
+	/* output should mimic symkey_addref() */
+	if (slot_key == symkey) {
+		symkey_addref(logger, name, slot_key);
+	} else {
+		symkey_newref(logger, name, slot_key);
 	}
 
 	SECItem wrapped_key;
