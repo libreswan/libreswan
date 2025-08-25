@@ -170,12 +170,16 @@ void ldbg_free(const struct logger *logger,
 	       const char *what, const void *pointer, where_t where)
 	NONNULL(1,2);
 
-void ldbg_addref_where(const struct logger *logger,
-		       const char *what, const void *pointer, where_t where)
+void ldbg_newref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
 	NONNULL(1,2);
 
-void ldbg_delref_where(const struct logger *logger,
-		       const char *what, const void *pointer, where_t where)
+void ldbg_addref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
+	NONNULL(1,2);
+
+void ldbg_delref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
 	NONNULL(1,2);
 
 #endif

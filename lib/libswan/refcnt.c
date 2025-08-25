@@ -65,6 +65,15 @@ void ldbg_free(const struct logger *logger, const char *what, const void *pointe
 	ldbg_ref(logger, NULL, "del", what, pointer, where, 1, 0);
 }
 
+void ldbg_newref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
+{
+	if (LDBGP(DBG_REFCNT, logger)) {
+		LDBG_log(logger, "newref %s@%p "PRI_WHERE,
+			 what, pointer, pri_where(where));
+	}
+}
+
 void ldbg_addref_where(const struct logger *logger, const char *what,
 		       const void *pointer, where_t where)
 {
