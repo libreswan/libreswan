@@ -3,6 +3,7 @@ See also https://libreswan.org/
 v5.4 (unreleased)
 * IKEv2:
   - update multiple key exchanges using IKE_INTERMEDIATE to RFC 9370 [Daiki Ueno, Andrew]
+  - support ML_KEM_768 in IKE_INTERMEDIATE exchanges [Andrew]
 * X.509:
   - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
 * config:
