@@ -61,7 +61,7 @@ const struct kem_desc ike_alg_kem_modp1024 = {
 
 const struct kem_desc ike_alg_kem_modp1536 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "MODP1536",
 		.names = "modp1536,dh5",
 		.id = {
@@ -79,7 +79,7 @@ const struct kem_desc ike_alg_kem_modp1536 = {
 
 const struct kem_desc ike_alg_kem_modp2048 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "MODP2048",
 		.names = "modp2048,dh14",
 		.id = {
@@ -98,7 +98,7 @@ const struct kem_desc ike_alg_kem_modp2048 = {
 
 const struct kem_desc ike_alg_kem_modp3072 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "MODP3072",
 		.names = "modp3072,dh15",
 		.id = {
@@ -117,7 +117,7 @@ const struct kem_desc ike_alg_kem_modp3072 = {
 
 const struct kem_desc ike_alg_kem_modp4096 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "MODP4096",
 		.names = "modp4096,dh16",
 		.id = {
@@ -136,7 +136,7 @@ const struct kem_desc ike_alg_kem_modp4096 = {
 
 const struct kem_desc ike_alg_kem_modp6144 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "MODP6144",
 		.names = "modp6144,dh17",
 		.id = {
@@ -155,7 +155,7 @@ const struct kem_desc ike_alg_kem_modp6144 = {
 
 const struct kem_desc ike_alg_kem_modp8192 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "MODP8192",
 		.names = "modp8192,dh18",
 		.id = {
@@ -174,7 +174,7 @@ const struct kem_desc ike_alg_kem_modp8192 = {
 
 const struct kem_desc ike_alg_kem_secp256r1 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH19",
 		.names = "dh19,ecp_256,ecp256",
 		.id = {
@@ -193,7 +193,7 @@ const struct kem_desc ike_alg_kem_secp256r1 = {
 
 const struct kem_desc ike_alg_kem_secp384r1 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH20",
 		.names = "dh20,ecp_384,ecp384",
 		.id = {
@@ -212,7 +212,7 @@ const struct kem_desc ike_alg_kem_secp384r1 = {
 
 const struct kem_desc ike_alg_kem_secp521r1 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH21",
 		.names = "dh21,ecp_521,ecp521",
 		.id = {
@@ -232,7 +232,7 @@ const struct kem_desc ike_alg_kem_secp521r1 = {
 #ifdef USE_DH22
 const struct kem_desc ike_alg_kem_dh22 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH22",
 		.names = "dh22",
 		.id = {
@@ -253,7 +253,7 @@ const struct kem_desc ike_alg_kem_dh22 = {
 #ifdef USE_DH23
 const struct kem_desc ike_alg_kem_dh23 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH23",
 		.names = "dh23",
 		.id = {
@@ -274,7 +274,7 @@ const struct kem_desc ike_alg_kem_dh23 = {
 #ifdef USE_DH24
 const struct kem_desc ike_alg_kem_dh24 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH24",
 		.names = "dh24",
 		.id = {
@@ -297,7 +297,7 @@ const struct kem_desc ike_alg_kem_dh24 = {
 #ifdef USE_DH31
 const struct kem_desc ike_alg_kem_curve25519 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "DH31",
 		.names = "dh31,curve25519",
 		.id = {
@@ -318,7 +318,7 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 #ifdef USE_ML_KEM_512
 const struct kem_desc ike_alg_kem_ml_kem_512 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "ML_KEM_512",
 		.names = "ml_kem_512,mlkem512",
 		.id = {
@@ -336,7 +336,7 @@ const struct kem_desc ike_alg_kem_ml_kem_512 = {
 #ifdef USE_ML_KEM_768
 const struct kem_desc ike_alg_kem_ml_kem_768 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "ML_KEM_768",
 		.names = "ml_kem_768,mlkem768",
 		.id = {
@@ -354,7 +354,7 @@ const struct kem_desc ike_alg_kem_ml_kem_768 = {
 #ifdef USE_ML_KEM_1024
 const struct kem_desc ike_alg_kem_ml_kem_1024 = {
 	.common = {
-		.type = IKE_ALG_KEM,
+		.type = &ike_alg_kem,
 		.fqn = "ML_KEM_1024",
 		.names = "ml_kem_1024,mlkem1024",
 		.id = {

@@ -1189,7 +1189,7 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	 * Concatenate [key,...] or {key,...} with default
 	 * marked with '*'.
 	 */
-	if (alg->type == IKE_ALG_ENCRYPT) {
+	if (alg->type == &ike_alg_encrypt) {
 #define MAX_KEYSIZES (int)strlen("{256,192,*128}")
 		name_width -= MAX_KEYSIZES;
 		jam(buf, "%*s", (int) name_width, "");
@@ -1309,7 +1309,7 @@ static void log_ike_algs(struct logger *logger)
 		const struct ike_alg_type *type = *typep;
 		FOR_EACH_IKE_ALGP(type, algp) {
 			size_t s = strlen((*algp)->fqn);
-			if ((*algp)->type == IKE_ALG_ENCRYPT) {
+			if ((*algp)->type == &ike_alg_encrypt) {
 				s += MAX_KEYSIZES + 1;
 			}
 			name_width = max(s, name_width);

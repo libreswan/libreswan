@@ -29,7 +29,7 @@
 
 const struct ipcomp_desc ike_alg_ipcomp_deflate = {
 	.common = {
-		.type = IKE_ALG_IPCOMP,
+		.type = &ike_alg_ipcomp,
 		.fqn = "DEFLATE",
 		.names = "deflate",
 		.id = {
@@ -49,7 +49,7 @@ const struct ipcomp_desc ike_alg_ipcomp_deflate = {
 
 const struct ipcomp_desc ike_alg_ipcomp_lzs = {
 	.common = {
-		.type = IKE_ALG_IPCOMP,
+		.type = &ike_alg_ipcomp,
 		.fqn = "LZS",
 		.names = "lzs",
 		.id = {
@@ -70,7 +70,7 @@ const struct ipcomp_desc ike_alg_ipcomp_lzs = {
 
 const struct ipcomp_desc ike_alg_ipcomp_lzjh = {
 	.common = {
-		.type = IKE_ALG_IPCOMP,
+		.type = &ike_alg_ipcomp,
 		.fqn = "LZJH",
 		.names = "lzjh",
 		.id = {

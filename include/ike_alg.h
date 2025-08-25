@@ -126,14 +126,6 @@ extern const struct ike_alg_type ike_alg_integ;
 extern const struct ike_alg_type ike_alg_kem;
 extern const struct ike_alg_type ike_alg_ipcomp;
 
-/* keep old code working */
-#define IKE_ALG_ENCRYPT &ike_alg_encrypt
-#define IKE_ALG_HASH &ike_alg_hash
-#define IKE_ALG_PRF &ike_alg_prf
-#define IKE_ALG_INTEG &ike_alg_integ
-#define IKE_ALG_KEM &ike_alg_kem
-#define IKE_ALG_IPCOMP &ike_alg_ipcomp
-
 /*
  * User frendly string representing the algorithm type (family).
  * "...Name()" returns the capitalized name.

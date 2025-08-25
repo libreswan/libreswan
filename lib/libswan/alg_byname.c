@@ -115,7 +115,7 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 					 shunk_t name, size_t key_bit_length,
 					 shunk_t print_name)
 {
-	const struct ike_alg *alg = alg_byname(parser, IKE_ALG_ENCRYPT, name,
+	const struct ike_alg *alg = alg_byname(parser, &ike_alg_encrypt, name,
 					       print_name);
 	if (alg == NULL) {
 		return NULL;

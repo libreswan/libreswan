@@ -217,7 +217,7 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 				 * duplicate as 0 generates all keys.
 				 * Ignore reverse vis aes128,aes.
 				 */
-				if (old->desc->type == IKE_ALG_ENCRYPT &&
+				if (old->desc->type == &ike_alg_encrypt &&
 				    (old->enckeylen != 0 &&
 				     new->enckeylen != old->enckeylen)) {
 					same = false;
@@ -313,13 +313,13 @@ void free_proposal(struct proposal **proposals)
  */
 static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *alg)
 {
-	if (alg->type == IKE_ALG_ENCRYPT) {
+	if (alg->type == &ike_alg_encrypt) {
 		return PROPOSAL_encrypt;
-	} else if (alg->type == IKE_ALG_PRF) {
+	} else if (alg->type == &ike_alg_prf) {
 		return PROPOSAL_prf;
-	} else if (alg->type == IKE_ALG_INTEG) {
+	} else if (alg->type == &ike_alg_integ) {
 		return PROPOSAL_integ;
-	} else if (alg->type == IKE_ALG_KEM) {
+	} else if (alg->type == &ike_alg_kem) {
 		return PROPOSAL_kem;
 	} else {
 		llog_passert(&global_logger, HERE,
@@ -384,7 +384,7 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			 * latter picks up 192 and 256.
 			 */
 			if (alg->desc == (*dup)->desc &&
-			    (alg->desc->type != IKE_ALG_ENCRYPT ||
+			    (alg->desc->type != &ike_alg_encrypt ||
 			     alg->enckeylen == 0 ||
 			     alg->enckeylen == (*dup)->enckeylen)) {
 				struct algorithm *dead = (*dup);
