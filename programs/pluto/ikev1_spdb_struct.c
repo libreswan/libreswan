@@ -54,7 +54,7 @@
 #include "ikev1_message.h"
 #include "ip_endpoint.h"
 #include "nat_traversal.h"
-#include "refcnt.h"		/* for ldbg_alloc()+ldbg_free() */
+#include "refcnt.h"		/* for ldbg_newref()+ldbg_delref() */
 #include "secrets.h"
 
 /** output an attribute (within an SA) */

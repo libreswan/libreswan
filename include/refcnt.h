@@ -159,16 +159,9 @@ void *refcnt_delref_where(const char *what,
 	})
 
 /*
- * For code wanting to use refcnt checks but with normal allocs.
+ * For code wanting to use refcnt checks but with normal allocs; or
+ * internal reference counting (e.g., NSS).
  */
-
-void ldbg_alloc(const struct logger *logger,
-		const char *what, const void *pointer, where_t where)
-	NONNULL(1,2);
-
-void ldbg_free(const struct logger *logger,
-	       const char *what, const void *pointer, where_t where)
-	NONNULL(1,2);
 
 void ldbg_newref_where(const struct logger *logger, const char *what,
 		       const void *pointer, where_t where)
@@ -181,5 +174,13 @@ void ldbg_addref_where(const struct logger *logger, const char *what,
 void ldbg_delref_where(const struct logger *logger, const char *what,
 		       const void *pointer, where_t where)
 	NONNULL(1,2);
+
+#define ldbg_newref(LOGGER, POINTER) ldbg_newref_where(LOGGER, #POINTER, POINTER, HERE)
+#define ldbg_addref(LOGGER, POINTER) ldbg_addref_where(LOGGER, #POINTER, POINTER, HERE)
+#define ldbg_delref(LOGGER, POINTER) ldbg_delref_where(LOGGER, #POINTER, POINTER, HERE)
+
+#define vdbg_newref(POINTER) ldbg_newref_where(verbose.logger, #POINTER, POINTER, HERE)
+#define vdbg_addref(POINTER) ldbg_addref_where(verbose.logger, #POINTER, POINTER, HERE)
+#define vdbg_delref(POINTER) ldbg_delref_where(verbose.logger, #POINTER, POINTER, HERE)
 
 #endif

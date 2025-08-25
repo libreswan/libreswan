@@ -162,7 +162,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	bad_case(type);
 }
 
-void delete_state_event(struct state_event **evp, where_t where)
+void delete_state_event(struct state_event **evp, where_t where UNUSED)
 {
 	struct state_event *e = (*evp);
 	if (e == NULL) {
@@ -179,7 +179,7 @@ void delete_state_event(struct state_event **evp, where_t where)
 	/* first the event */
 	destroy_timeout(&e->timeout);
 	/* then the structure */
-	ldbg_free(&global_logger, "state-event", e, where);
+	ldbg_delref(&global_logger, e);
 	pfree(e);
 	*evp = NULL;
 
@@ -626,6 +626,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	}
 
 	struct state_event *ev = alloc_thing(struct state_event, __func__);
+	ldbg_newref(st->logger, ev);
 	ev->ev_type = type;
 	ev->ev_state = st;
 	ev->ev_epoch = mononow();
@@ -634,8 +635,9 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 	*evp = ev;
 
 	deltatime_buf buf;
-	ldbg(st->logger, "%s: newref %s-pe@%p timeout in %s seconds for "PRI_SO"",
-	     __func__, event_name.buf, ev, str_deltatime(delay, &buf),
+	ldbg(st->logger, "%s: %s@%p timeout in %s seconds for "PRI_SO"",
+	     __func__, event_name.buf, ev,
+	     str_deltatime(delay, &buf),
 	     pri_so(ev->ev_state->st_serialno));
 
 	schedule_timeout(event_name.buf, &ev->timeout, delay, timer_event_cb, ev);

@@ -345,7 +345,7 @@ void submit_task(struct state *callback_sa,
 	}
 
 	struct job *job = alloc_thing(struct job, where->func);
-	ldbg_alloc(&global_logger, "job", job, HERE);
+	ldbg_newref(&global_logger, job);
 	job->cancelled = false;
 	job->where = where;
 	init_list_entry(&backlog_info, job, &job->backlog);
@@ -461,7 +461,7 @@ static void free_job(struct job **jobp)
 	md_delref(&job->md);
 	/* now free up the continuation */
 	free_logger(&job->logger, HERE);
-	ldbg_free(&global_logger, "job", job, HERE);
+	ldbg_delref(&global_logger, job);
 	pfree(job);
 	*jobp = NULL;
 }

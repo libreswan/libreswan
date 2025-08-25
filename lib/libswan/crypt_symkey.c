@@ -560,11 +560,11 @@ PK11SymKey *key_from_symkey_bytes(const char *result_name,
 	}
 }
 
-PK11SymKey *cipher_symkey(const char *name,
+PK11SymKey *cipher_symkey(const char *name UNUSED,
 			  const struct encrypt_desc *cipher,
 			  unsigned bits,
 			  struct logger *logger,
-			  where_t where)
+			  where_t where UNUSED)
 {
 	bool valid_key_length = false;
 	FOR_EACH_ELEMENT(key, cipher->key_bit_lengths) {
@@ -582,6 +582,6 @@ PK11SymKey *cipher_symkey(const char *name,
 					 /*param*/NULL, BYTES_FOR_BITS(bits),
 					 /*wincx*/NULL);
 
-	ldbg_alloc(logger, name, symkey, where);
+	ldbg_newref(logger, symkey);
 	return symkey;
 }
