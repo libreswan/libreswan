@@ -2674,6 +2674,7 @@ DH algorithms:
   DH20                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_384, ecp384
   DH21                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)     ecp_521, ecp521
   DH31                              IKEv1: IKE         IKEv2: IKE ESP AH       NSS(ECP)     curve25519
+  ML_KEM_768                        IKEv1:             IKEv2: IKE ESP AH       NSS(MLKEM)   mlkem768
 IPCOMP algorithms:
   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS             
   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS             

@@ -130,6 +130,7 @@ algorithm IKE DH Key Exchange: name=DH19, bits=512
 algorithm IKE DH Key Exchange: name=DH20, bits=768
 algorithm IKE DH Key Exchange: name=DH21, bits=1056
 algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE DH Key Exchange: name=ML_KEM_768, bits=8
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
@@ -265,6 +266,7 @@ algorithm IKE DH Key Exchange: name=DH19, bits=512
 algorithm IKE DH Key Exchange: name=DH20, bits=768
 algorithm IKE DH Key Exchange: name=DH21, bits=1056
 algorithm IKE DH Key Exchange: name=DH31, bits=256
+algorithm IKE DH Key Exchange: name=ML_KEM_768, bits=8
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
