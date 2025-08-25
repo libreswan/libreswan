@@ -219,6 +219,9 @@ OBJS += ike_alg_hash_nss_ops.o
 OBJS += ike_alg_kem.o
 OBJS += ike_alg_kem_ecp_nss_ops.o
 OBJS += ike_alg_kem_modp_nss_ops.o
+ifeq ($(filter true, $(sort $(USE_ML_KEM_512) $(USE_ML_KEM_768) $(USE_ML_KEM_1024))),true)
+OBJS += ike_alg_kem_ml_kem_nss_ops.o
+endif
 OBJS += ike_alg_prf_mac_hmac_ops.o
 OBJS += ike_alg_prf_mac_nss_ops.o
 OBJS += ike_alg_prf_mac_xcbc_ops.o

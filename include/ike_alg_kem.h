@@ -40,6 +40,16 @@ extern const struct kem_desc ike_alg_kem_dh24;
 extern const struct kem_desc ike_alg_kem_curve25519;
 #endif
 
+#ifdef USE_ML_KEM_512
+extern const struct kem_desc ike_alg_kem_ml_kem_512;
+#endif
+#ifdef USE_ML_KEM_768
+extern const struct kem_desc ike_alg_kem_ml_kem_768;
+#endif
+#ifdef USE_ML_KEM_1024
+extern const struct kem_desc ike_alg_kem_ml_kem_1024;
+#endif
+
 /*
  * IKEv2 RFC 7296 uses the term "NONE" when referring to no DH
  * algorithm.

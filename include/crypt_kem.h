@@ -48,6 +48,7 @@ struct kem_responder {
 		/* only used by legacy code, may be NULL, do not touch */
 		SECKEYPrivateKey *private_key;
 		SECKEYPublicKey *public_key;
+		chunk_t ke;
 	} internal;
 };
 

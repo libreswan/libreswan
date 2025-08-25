@@ -896,6 +896,21 @@ ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS += -DUSE_DH31
 endif
 
+USE_ML_KEM_512 ?= false
+ifeq ($(USE_ML_KEM_512),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM_512
+endif
+
+USE_ML_KEM_768 ?= true
+ifeq ($(USE_ML_KEM_768),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM_768
+endif
+
+USE_ML_KEM_1024 ?= false
+ifeq ($(USE_ML_KEM_1024),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM_1024
+endif
+
 USE_MD5 ?= true
 ifeq ($(USE_MD5),true)
 USERLAND_CFLAGS += -DUSE_MD5
