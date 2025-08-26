@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ah
-"westnet-eastnet-ah": failed to add connection: AH integrity algorithm 'des' is not recognized
+"westnet-eastnet-ah": failed to add connection: AH Integrity Algorithm 'des' is not recognized
 west #
  echo "initdone"
 initdone
