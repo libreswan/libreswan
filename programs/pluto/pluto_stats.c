@@ -232,7 +232,7 @@ static void pstat_ike_sa_established(struct state *st)
 		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
 	} else {
 		pstats_ikev1_sa++;
-		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
+		pstats(ikev1_encr, st->st_oakley.ta_encrypt->ikev1_oakley_id);
 		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
 		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}

@@ -576,8 +576,8 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		PASSERT(logger, algs.prf != NULL);
 		PASSERT(logger, algs.kem != NULL);
 
-		unsigned ealg = algs.encrypt->common.ikev1_oakley_id;
-		unsigned halg = algs.prf->common.ikev1_oakley_id;
+		unsigned ealg = algs.encrypt->ikev1_oakley_id;
+		unsigned halg = algs.prf->ikev1_oakley_id;
 		unsigned modp = algs.kem->group;
 		unsigned eklen = algs.enckeylen;
 
@@ -692,9 +692,9 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 				llog(RC_LOG, logger,
 				     "transform (%s,%s,%s keylen %d) ignored.",
 				     str_enum_long(&oakley_enc_names,
-					      algs.encrypt->common.ikev1_oakley_id, &eb),
+					      algs.encrypt->ikev1_oakley_id, &eb),
 				     str_enum_long(&oakley_hash_names,
-					      algs.prf->common.ikev1_oakley_id, &hb),
+					      algs.prf->ikev1_oakley_id, &hb),
 				     algs.kem->common.fqn,
 				     algs.enckeylen);
 				free_sa(&emp_sp);

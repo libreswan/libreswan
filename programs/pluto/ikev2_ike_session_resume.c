@@ -341,7 +341,7 @@ static bool ike_responder_to_ticket(const struct ike_sa *ike,
 	free_chunk_content(&sk);
 
 	/*Algorithm description*/
-#define ID(ALG) ((ALG) != NULL ? (ALG)->common.ikev2_alg_id : 0);
+#define ID(ALG) ((ALG) != NULL ? (ALG)->ikev2_alg_id : 0);
 	ticket->secured.state.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
 	ticket->secured.state.sr_prf = ID(ike->sa.st_oakley.ta_prf);
 	ticket->secured.state.sr_integ = ID(ike->sa.st_oakley.ta_integ);
@@ -1063,7 +1063,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 					     ike->sa.st_skey_d_nss);
 
 #define ID(ALG) (ike->sa.st_oakley.ALG == NULL ? 0 :		\
-		 ike->sa.st_oakley.ALG->common.ikev2_alg_id)
+		 ike->sa.st_oakley.ALG->ikev2_alg_id)
 	c->session->sr_encr = ID(ta_encrypt);
 	c->session->sr_prf = ID(ta_prf);
 	c->session->sr_dh = ID(ta_dh);

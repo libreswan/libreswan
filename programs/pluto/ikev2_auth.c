@@ -267,7 +267,7 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
 	ldbg(ike->sa.logger, "digsig: selecting negotiated hash algorithm");
 	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
-		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->common.ikev2_alg_id)) {
+		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->ikev2_alg_id)) {
 			ldbg(ike->sa.logger, "digsig:   selected hash algorithm %s",
 			     (*hash)->common.fqn);
 			return (*hash);
@@ -363,7 +363,7 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	struct connection *c = ike->sa.st_connection;
 
-	if (hash_algo->common.ikev2_alg_id < 0) {
+	if (hash_algo->ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
@@ -380,7 +380,7 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 	 * to determine if SHA1 is allowed at all would be cleaner.
 	 */
 
-	lset_t hash_bit = LELEM(hash_algo->common.ikev2_alg_id);
+	lset_t hash_bit = LELEM(hash_algo->ikev2_alg_id);
 	if (authby.rsasig_v1_5 && hash_algo == &ike_alg_hash_sha1) {
 		pexpect(!(c->config->sighash_policy & hash_bit));
 		ldbg(ike->sa.logger, "skipping sighash check as PKCS#1 1.5 RSA + SHA1");
@@ -517,7 +517,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
 			if ((ike->sa.st_connection->config->sighash_policy &
-			     LELEM((*hash)->common.ikev2_alg_id)) == LEMPTY) {
+			     LELEM((*hash)->ikev2_alg_id)) == LEMPTY) {
 				ldbg(ike->sa.logger, "digsig:   skipping %s as not negotiated",
 				     (*hash)->common.fqn);
 				continue;

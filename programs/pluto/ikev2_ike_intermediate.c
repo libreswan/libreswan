@@ -270,7 +270,7 @@ static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
 		return false;
 	}
 
-	if (v2ke->payload.v2ke.isak_group != kem->common.ikev2_alg_id) {
+	if (v2ke->payload.v2ke.isak_group != kem->ikev2_alg_id) {
 		name_buf rb;
 		name_buf gb;
 		llog(RC_LOG, logger,
