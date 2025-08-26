@@ -141,20 +141,20 @@ void show_ike_alg_status(struct show *s)
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = (*algp);
 		if (ike_alg_is_ike(&(alg)->common, logger)) {
-			passert(alg->ikev1_oakley_id >= 0 || alg->common.id[IKEv2_ALG_ID] >= 0);
+			passert(alg->ikev1_oakley_id >= 0 || alg->ikev2_alg_id >= 0);
 			SHOW_JAMBUF(s, buf) {
 				jam_string(buf, "algorithm IKE encrypt:");
 				jam(buf, " v1id=%d, v1name=", alg->ikev1_oakley_id);
-				if (alg->common.id[IKEv1_OAKLEY_ID] >= 0) {
+				if (alg->ikev1_oakley_id >= 0) {
 					jam_enum_long(buf, &oakley_enc_names, alg->ikev1_oakley_id);
 				} else {
 					jam_string(buf, "n/a");
 				}
 				jam_string(buf, ",");
-				jam(buf, " v2id=%d, v2name=", alg->common.id[IKEv2_ALG_ID]);
-				if (alg->common.id[IKEv2_ALG_ID] >= 0) {
+				jam(buf, " v2id=%d, v2name=", alg->ikev2_alg_id);
+				if (alg->ikev2_alg_id >= 0) {
 					jam_enum_short(buf, &ikev2_trans_type_encr_names,
-						       alg->common.id[IKEv2_ALG_ID]);
+						       alg->ikev2_alg_id);
 				} else {
 					jam_string(buf, "n/a");
 				}

@@ -286,7 +286,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 	struct v1_proposal algs = v1_proposal(proposal);
 	if (encap_proto == ENCAP_PROTO_ESP) {
-		ealg_i = algs.encrypt->common.id[IKEv1_IPSEC_ID];
+		ealg_i = algs.encrypt->ikev1_ipsec_id;
 		/* already checked by the parser? */
 		if (!kernel_alg_encrypt_ok(algs.encrypt, logger)) {
 			llog(RC_LOG, logger,
@@ -312,7 +312,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		if (algs.integ != &ike_alg_integ_none) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   algs.integ->common.id[IKEv1_IPSEC_ID]);
+					   algs.integ->ikev1_ipsec_id);
 		}
 
 		/* add keylength if specified in esp= string */
@@ -334,7 +334,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 					if (algs.integ != &ike_alg_integ_none) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							algs.integ->common.id[IKEv1_IPSEC_ID]);
+							algs.integ->ikev1_ipsec_id);
 					}
 					db_attr_add_values(db_ctx,
 							   KEY_LENGTH,
@@ -348,7 +348,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx, AUTH_ALGORITHM,
-				   algs.integ->common.id[IKEv1_IPSEC_ID]);
+				   algs.integ->ikev1_ipsec_id);
 	}
 
 	return true;

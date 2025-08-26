@@ -100,7 +100,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 	 */
 	chunk_t key;
 	const char *key_name;
-	switch (prf_desc->common.id[IKEv2_ALG_ID]) {
+	switch (prf_desc->ikev2_alg_id) {
 	case IKEv2_PRF_AES128_CMAC:
 	case IKEv2_PRF_AES128_XCBC:
 	{

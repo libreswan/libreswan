@@ -2022,7 +2022,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			     protocol.buf);
 		return false;
 	}
-	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
+	if (encrypt->ikev2_alg_id == 0) {
 		vlog("IKEv2 %s %s ENCRYPT transform is not supported",
 		     protocol.buf, encrypt->common.fqn);
 		return false;
@@ -2035,7 +2035,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 
 	if (keylen > 0) {
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.id[IKEv2_ALG_ID], keylen);
+				 encrypt->ikev2_alg_id, keylen);
 	} else if (encrypt->keylen_omitted) {
 		/*
 		 * 3DES and NULL do not expect the key length
@@ -2045,13 +2045,13 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		vdbg("omitting IKEv2 %s %s ENCRYPT transform key-length",
 		     protocol.buf, encrypt->common.fqn);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.id[IKEv2_ALG_ID], 0);
+				 encrypt->ikev2_alg_id, 0);
 	} else if (encrypt->keydeflen == encrypt_max_key_bit_length(encrypt)) {
 		vassert(encrypt->keydeflen > 0);
 		vdbg("forcing IKEv2 %s %s ENCRYPT transform key length: %u",
 		     protocol.buf, encrypt->common.fqn, encrypt->keydeflen);
 		append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-				 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
+				 encrypt->ikev2_alg_id, encrypt->keydeflen);
 	} else {
 		/*
 		 * XXX:
@@ -2091,18 +2091,18 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 			     protocol.buf, encrypt->common.fqn,
 			     keymaxlen, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
+					 encrypt->ikev2_alg_id, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
+					 encrypt->ikev2_alg_id, encrypt->keydeflen);
 			break;
 		case IKEv2_SEC_PROTO_ESP:
 			vdbg("forcing IKEv2 %s %s ENCRYPT transform low-to-high key lengths: %u %u",
 			     protocol.buf, encrypt->common.fqn,
 			     encrypt->keydeflen, keymaxlen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.id[IKEv2_ALG_ID], encrypt->keydeflen);
+					 encrypt->ikev2_alg_id, encrypt->keydeflen);
 			append_transform(proposal, IKEv2_TRANS_TYPE_ENCR,
-					 encrypt->common.id[IKEv2_ALG_ID], keymaxlen);
+					 encrypt->ikev2_alg_id, keymaxlen);
 			break;
 		default:
 			/* presumably AH */
@@ -2149,7 +2149,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_PRF,
-				 prf->common.id[IKEv2_ALG_ID], 0);
+				 prf->ikev2_alg_id, 0);
 	}
 
 	/*
@@ -2163,7 +2163,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * accepted.
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_INTEG,
-				 integ->common.id[IKEv2_ALG_ID], 0);
+				 integ->ikev2_alg_id, 0);
 	}
 
 	/*
@@ -2182,7 +2182,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * previously negotiated DH.
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
-				 force_kem->common.id[IKEv2_ALG_ID], 0);
+				 force_kem->ikev2_alg_id, 0);
 	} else if (next_algorithm(proposal, PROPOSAL_kem, NULL) != NULL) {
 		/*
 		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
@@ -2195,7 +2195,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 			 * omitted when emitted.
 			 */
 			append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
-					 dh->common.id[IKEv2_ALG_ID], 0);
+					 dh->ikev2_alg_id, 0);
 		}
 	} else if (default_kem != NULL) {
 		/*
@@ -2205,7 +2205,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * DH wasn't negotiated.
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
-				 default_kem->common.id[IKEv2_ALG_ID], 0);
+				 default_kem->ikev2_alg_id, 0);
 	}
 
 	/*
@@ -2221,7 +2221,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		     alg != NULL; alg = next_algorithm(proposal, ptype, alg)) {
 			const struct kem_desc *kem = kem_desc(alg->desc);
 			append_transform(v2_proposal, type,
-					 kem->common.id[IKEv2_ALG_ID], 0);
+					 kem->ikev2_alg_id, 0);
 		}
 	}
 
