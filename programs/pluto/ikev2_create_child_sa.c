@@ -2174,7 +2174,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				}
 
 				pstats(invalidke_recv_s, sg.sg_group);
-				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
+				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
 				name_buf nb, sgb;
 				llog_sa(RC_LOG, (*larval_child),

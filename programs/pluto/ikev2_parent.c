@@ -219,7 +219,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		pstats(invalidke_sent_u, ke_group);
 		pstats(invalidke_sent_s, accepted_dh->ikev2_alg_id);
 		/* convert group to a raw buffer */
-		uint16_t gr = htons(accepted_dh->group);
+		uint16_t gr = htons(accepted_dh->ikev2_alg_id);
 		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_KE_PAYLOAD, THING_AS_SHUNK(gr),
 				    security);
