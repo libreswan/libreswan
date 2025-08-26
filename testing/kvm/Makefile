@@ -1048,7 +1048,7 @@ KVM_LINUX_OSINFO   ?= $(strip $(shell osinfo-query -f short-id os | grep ' fedor
 KVM_LINUX_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_LINUX_RELEASE)/Server/x86_64/iso
 KVM_LINUX_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_LINUX_RELEASE)-$(KVM_LINUX_BUILD).iso
 KVM_LINUX_ISO_HASH ?= SHA256
-KVM_LINUX_ISO_CKSUM ?= 32d9ab1798fc8106a0b06e873bdcd83a3efea8412c9401dfe4097347ed0cfc65
+KVM_LINUX_ISO_CKSUM ?= 6037e489103401a6ad4e54a4bcb2df7525693bdc3f2ce4aa895838b65647e551
 KVM_LINUX_ISO_URL ?= $(KVM_LINUX_URL)/$(notdir $(KVM_LINUX_ISO))
 
 KVM_LINUX_KICKSTART_FILE ?= linux/base.ks
