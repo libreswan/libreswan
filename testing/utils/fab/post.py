@@ -71,6 +71,7 @@ class Issues:
     PRINTF_NULL = "PRINTF_NULL"
     KERNEL = "KERNEL"
     LEAK = "LEAK"
+    REFCNT = "REFCNT"
 
     TIMEOUT = "TIMEOUT"
     EOF = "EOF"
@@ -333,6 +334,9 @@ class TestResult:
                 self.resolution.failed()
             if self._grub(raw_output_filename, r"\(null\)"):
                 self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.resolution.failed()
+            if self._grub(raw_output_filename, r"FAIL: reference counts"):
+                self.issues.add(Issues.REFCNT, guest.host.name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.

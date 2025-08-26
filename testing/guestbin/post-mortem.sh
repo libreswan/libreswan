@@ -118,11 +118,10 @@ else
 fi
 
 
-CHECK reference leaks
+CHECK reference counts
 
-# For moment don't fail when this fails.  The check is still
-# experimental.  OTOH, when leaks, above, fails, this might prove
-# useful.
+# The check is still somewhat experimental.  OTOH, when leaks, above,
+# fails, this might prove useful.
 #
 # Skip this when there's a core dump (little point as refcnt failure
 # is guaranteed).
