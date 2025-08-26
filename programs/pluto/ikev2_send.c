@@ -85,7 +85,7 @@ void record_v2_outgoing_fragment(shunk_t fragment,
 {
 	PEXPECT(logger, (*fragments) == NULL);
 	(*fragments) = overalloc_thing(struct v2_outgoing_fragment, fragment.len);
-	ldbg_alloc(logger, "fragments", (*fragments), HERE);
+	ldbg_newref(logger, (*fragments));
 	(*fragments)->len = fragment.len;
 	memcpy((*fragments)->ptr/*array*/, fragment.ptr, fragment.len);
 }
@@ -198,7 +198,7 @@ void free_v2_outgoing_fragments(struct v2_outgoing_fragment **frags,
 		struct v2_outgoing_fragment *frag = *frags;
 		do {
 			struct v2_outgoing_fragment *next = frag->next;
-			ldbg_free(logger, "frags", frag, HERE);
+			ldbg_delref(logger, frag);
 			pfree(frag);
 			frag = next;
 		} while (frag != NULL);

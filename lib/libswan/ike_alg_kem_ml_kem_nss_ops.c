@@ -145,9 +145,7 @@ static diag_t nss_ml_kem_encapsulate_1(struct kem_responder *responder,
 		return diag_nss_error("encapsulate %s() initiator pubkey", __func__);
 	}
 
-	if (LDBGP(DBG_REFCNT, logger)) {
-		LDBG_symkey(logger, "newref ", "responder-shared-key", responder->shared_key);
-	}
+	symkey_newref(logger, "responder-shared-key", responder->shared_key);
 
 	responder->internal.ke = clone_bytes_as_chunk(responder_ke->data, responder_ke->len, "responder-ke");
 	SECITEM_FreeItem(responder_ke, /*free-item?*/PR_TRUE);
@@ -192,10 +190,7 @@ static diag_t nss_ml_kem_decapsulate(struct kem_initiator *initiator,
 		return diag_nss_error("decapsulating %s() responder KE", __func__);
 	}
 
-	if (LDBGP(DBG_REFCNT, logger)) {
-		LDBG_symkey(logger, "newref ", "initiator-shared-key", initiator->shared_key);
-	}
-
+	symkey_newref(logger, "initiator-shared-key", initiator->shared_key);
 	return NULL;
 }
 

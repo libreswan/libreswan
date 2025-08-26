@@ -191,7 +191,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *group,
 		return diag_nss_error("shared key calculation using ECP failed");
 	}
 
-	ldbg_alloc(logger, "temp", temp, HERE);
+	ldbg_newref(logger, temp);
 
 	/*
 	 * The key returned above doesn't play well with PK11_Derive()

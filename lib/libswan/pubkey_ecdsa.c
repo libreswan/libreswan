@@ -181,7 +181,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 
 	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = seckey;
-	ldbg_alloc(logger, "pkc->public_key(ecdsa)", seckey, HERE);
+	ldbg_newref(logger, pkc->public_key);
 
 	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
@@ -211,7 +211,7 @@ static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content 
 static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa,
 				      const struct logger *logger)
 {
-	ldbg_free(logger, "ecdsa->public_key", ecdsa->public_key, HERE);
+	ldbg_delref(logger, ecdsa->public_key);
 	SECKEY_DestroyPublicKey(ecdsa->public_key);
 	ecdsa->public_key = NULL;
 }
@@ -223,7 +223,7 @@ static err_t ECDSA_extract_pubkey_content(struct pubkey_content *pkc,
 {
 	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
-	ldbg_alloc(logger, "pkc->public_key(ecdsa)", pkc->public_key, HERE);
+	ldbg_newref(logger, pkc->public_key);
 	pkc->ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(pkc->ckaid.ptr, pkc->ckaid.len, &pkc->keyid);

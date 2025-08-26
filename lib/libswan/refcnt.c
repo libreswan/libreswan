@@ -55,14 +55,13 @@ static void ldbg_ref(const struct logger *logger,
  * So existing code can use the refcnt tracer.
  */
 
-void ldbg_alloc(const struct logger *logger, const char *what, const void *pointer, where_t where)
+void ldbg_newref_where(const struct logger *logger, const char *what,
+		       const void *pointer, where_t where)
 {
-	ldbg_ref(logger, NULL, "new", what, pointer, where, 0, 1);
-}
-
-void ldbg_free(const struct logger *logger, const char *what, const void *pointer, where_t where)
-{
-	ldbg_ref(logger, NULL, "del", what, pointer, where, 1, 0);
+	if (LDBGP(DBG_REFCNT, logger)) {
+		LDBG_log(logger, "newref %s@%p "PRI_WHERE,
+			 what, pointer, pri_where(where));
+	}
 }
 
 void ldbg_addref_where(const struct logger *logger, const char *what,

@@ -139,7 +139,7 @@ static struct pid_entry *add_pid(const char *name,
 {
 	ldbg(logger, "forked child %s %d", name, pid);
 	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "(ignore) fork pid");
-	ldbg_alloc(&global_logger, "pid", new_pid, HERE);
+	ldbg_newref(&global_logger, new_pid);
 	new_pid->magic = PID_MAGIC;
 	new_pid->pid = pid;
 	new_pid->callback = callback;
@@ -159,7 +159,7 @@ static void free_pid_entry(struct pid_entry **p)
 	free_logger(&(*p)->logger, HERE);
 	free_chunk_content(&(*p)->output);
 	md_delref(&(*p)->md);
-	ldbg_free(&global_logger, "pid", *p, HERE);
+	ldbg_delref(&global_logger, *p);
 	pfree(*p);
 	*p = NULL;
 }

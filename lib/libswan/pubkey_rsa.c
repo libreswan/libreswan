@@ -236,7 +236,7 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 
 	pkc->type = &pubkey_type_rsa;
 	pkc->public_key = seckey;
-	ldbg_alloc(logger, "rsa->public_key", pkc->public_key, HERE);
+	ldbg_newref(logger, pkc->public_key);
 
 	/* generate the CKAID */
 
@@ -255,7 +255,7 @@ static void RSA_free_pubkey_content(struct pubkey_content *rsa,
 				    const struct logger *logger)
 {
 	SECKEY_DestroyPublicKey(rsa->public_key);
-	ldbg_free(logger, "rsa->public_key", rsa->public_key, HERE);
+	ldbg_delref(logger, rsa->public_key);
 	rsa->public_key = NULL;
 }
 
@@ -290,7 +290,7 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 	/* now allocate */
 	pkc->type = &pubkey_type_rsa;
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
-	ldbg_alloc(logger, "rsa->public_key", pkc->public_key, HERE);
+	ldbg_newref(logger, pkc->public_key);
 	pkc->ckaid = ckaid_from_secitem(cert_ckaid);
 	return NULL;
 }

@@ -125,7 +125,7 @@ void switch_log(const struct config_setup *oco, struct logger **logger)
 	 * that the refcnt checker doesn't get confused) and update
 	 * the log file and direct LOGGER at GLOBAL_LOGGER.
 	 */
-	ldbg_alloc(&global_logger, "logger", logger, HERE);
+	ldbg_newref(&global_logger, logger);
 	free_logger(logger, HERE);
 	*logger = &global_logger;
 	pluto_log_file = log_file;
@@ -579,7 +579,7 @@ struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
 		.debugging = debugging,
 	};
 	struct logger *l = clone_thing(logger, "logger");
-	ldbg_alloc(&global_logger, "alloc logger", l, where);
+	ldbg_newref(&global_logger, l);
 	return l;
 }
 
@@ -604,7 +604,7 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	};
 	/* and clone it */
 	struct logger *l = clone_thing(heap, "heap logger");
-	ldbg_alloc(&global_logger, "clone logger", l, where);
+	ldbg_newref(&global_logger, l);
 	/* copy over whacks */
 	unsigned h = 0;
 	FOR_EACH_ELEMENT(sfd, stack->whackfd) {
@@ -640,7 +640,7 @@ struct logger *string_logger(where_t where, const char *fmt, ...)
 	};
 	/* and clone it */
 	struct logger *l = clone_thing(logger, "string logger");
-	ldbg_alloc(&global_logger, "string logger", l, where);
+	ldbg_newref(&global_logger, l);
 	return l;
 }
 
@@ -668,7 +668,7 @@ void free_logger(struct logger **logp, where_t where)
 	 * For instance the string allocated by clone_logger().  More
 	 * complex objects are freed by other means.
 	 */
-	ldbg_free(&global_logger, "logger", *logp, where);
+	ldbg_delref(&global_logger, *logp);
 	if ((*logp)->object_vec->free_object) {
 		pfree((void*) (*logp)->object);
 	}

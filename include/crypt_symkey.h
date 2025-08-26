@@ -14,8 +14,8 @@
  * for more details.
  */
 
-#ifndef crypt_symkey_h
-#define crypt_symkey_h
+#ifndef CRYPT_SYMKEY_H
+#define CRYPT_SYMKEY_H
 
 #include <stdio.h>
 #include <pk11pub.h>
@@ -44,11 +44,14 @@ void jam_symkey(struct jambuf *buf, const char *name, PK11SymKey *key);
  * Add/delete references to a reference-countered PK11SymKey.
  */
 
+void symkey_newref_where(struct logger *logger, const char *name,
+			 PK11SymKey *key, where_t where);
 PK11SymKey *symkey_addref_where(struct logger *logger, const char *name,
 				PK11SymKey *key, where_t where);
 void symkey_delref_where(const struct logger *logger, const char *name,
 			 PK11SymKey **key, where_t where);
 
+#define symkey_newref(LOGGER, NAME, KEY) symkey_newref_where(LOGGER, NAME, KEY, HERE)
 #define symkey_addref(LOGGER, NAME, KEY) symkey_addref_where(LOGGER, NAME, KEY, HERE)
 #define symkey_delref(LOGGER, NAME, KEY) symkey_delref_where(LOGGER, NAME, KEY, HERE)
 
