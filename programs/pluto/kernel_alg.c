@@ -92,11 +92,11 @@ void kernel_ipcomp_add(const struct ipcomp_desc *alg,
 void kernel_alg_add(const struct ike_alg *alg,
 		    const struct logger *logger)
 {
-	if (alg->algo_type == &ike_alg_encrypt) {
+	if (alg->type == &ike_alg_encrypt) {
 		kernel_encrypt_add(encrypt_desc(alg), logger);
-	} else if (alg->algo_type == &ike_alg_integ) {
+	} else if (alg->type == &ike_alg_integ) {
 		kernel_integ_add(integ_desc(alg), logger);
-	} else if (alg->algo_type == &ike_alg_ipcomp) {
+	} else if (alg->type == &ike_alg_ipcomp) {
 		kernel_ipcomp_add(ipcomp_desc(alg), logger);
 	} else {
 		PASSERT(logger, 0);
@@ -152,18 +152,18 @@ bool kernel_alg_is_ok(const struct ike_alg *alg,
 		llog_pexpect(logger, HERE,
 			     "algorithm needs to be valid (non-NULL)");
 		return false;
-	} else if (alg->algo_type == &ike_alg_kem) {
+	} else if (alg->type == &ike_alg_kem) {
 		return kernel_alg_dh_ok(kem_desc(alg), logger);
-	} else if (alg->algo_type == &ike_alg_encrypt) {
+	} else if (alg->type == &ike_alg_encrypt) {
 		return kernel_alg_encrypt_ok(encrypt_desc(alg), logger);
-	} else if (alg->algo_type == &ike_alg_integ) {
+	} else if (alg->type == &ike_alg_integ) {
 		return kernel_alg_integ_ok(integ_desc(alg), logger);
-	} else if (alg->algo_type == &ike_alg_ipcomp) {
+	} else if (alg->type == &ike_alg_ipcomp) {
 		return kernel_alg_ipcomp_ok(ipcomp_desc(alg), logger);
 	} else {
 		llog_passert(logger, HERE,
 			     "algorithm %s of type %s is not valid in the kernel",
-			     alg->fqn, ike_alg_type_name(alg->algo_type));
+			     alg->fqn, ike_alg_type_name(alg->type));
 	}
 }
 

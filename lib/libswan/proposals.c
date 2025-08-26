@@ -217,7 +217,7 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 				 * duplicate as 0 generates all keys.
 				 * Ignore reverse vis aes128,aes.
 				 */
-				if (old->desc->algo_type == IKE_ALG_ENCRYPT &&
+				if (old->desc->type == &ike_alg_encrypt &&
 				    (old->enckeylen != 0 &&
 				     new->enckeylen != old->enckeylen)) {
 					same = false;
@@ -313,18 +313,18 @@ void free_proposal(struct proposal **proposals)
  */
 static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *alg)
 {
-	if (alg->algo_type == IKE_ALG_ENCRYPT) {
+	if (alg->type == &ike_alg_encrypt) {
 		return PROPOSAL_encrypt;
-	} else if (alg->algo_type == IKE_ALG_PRF) {
+	} else if (alg->type == &ike_alg_prf) {
 		return PROPOSAL_prf;
-	} else if (alg->algo_type == IKE_ALG_INTEG) {
+	} else if (alg->type == &ike_alg_integ) {
 		return PROPOSAL_integ;
-	} else if (alg->algo_type == IKE_ALG_KEM) {
+	} else if (alg->type == &ike_alg_kem) {
 		return PROPOSAL_kem;
 	} else {
 		llog_passert(&global_logger, HERE,
 			     "unexpected algorithm type %s",
-			     ike_alg_type_name(alg->algo_type));
+			     ike_alg_type_name(alg->type));
 	}
 }
 
@@ -351,7 +351,7 @@ void append_algorithm_for(struct proposal_parser *parser,
 		.enckeylen = enckeylen,
 	};
 	ldbgf(DBG_PROPOSAL_PARSER, logger, "appending %s %s algorithm %s[_%d]",
-	      parser->protocol->name, ike_alg_type_name(alg->algo_type), alg->fqn,
+	      parser->protocol->name, ike_alg_type_name(alg->type), alg->fqn,
 	      enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
 }
@@ -384,7 +384,7 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			 * latter picks up 192 and 256.
 			 */
 			if (alg->desc == (*dup)->desc &&
-			    (alg->desc->algo_type != IKE_ALG_ENCRYPT ||
+			    (alg->desc->type != &ike_alg_encrypt ||
 			     alg->enckeylen == 0 ||
 			     alg->enckeylen == (*dup)->enckeylen)) {
 				struct algorithm *dead = (*dup);
@@ -395,7 +395,7 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 				}
 				LLOG_JAMBUF(parser->policy->stream, parser->policy->logger, buf) {
 					jam(buf, "discarding duplicate %s %s algorithm %s",
-					    parser->protocol->name, ike_alg_type_name(dead->desc->algo_type),
+					    parser->protocol->name, ike_alg_type_name(dead->desc->type),
 					    dead->desc->fqn);
 					if (dead->enckeylen != 0) {
 						jam(buf, "_%d", dead->enckeylen);

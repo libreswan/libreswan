@@ -274,14 +274,14 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		shunk_t prf = tokens->this;
 		shunk_t integ = tokens->next;
 		if (prf.ptr != NULL && integ.ptr != NULL) {
-			lookup_prf = (alg_byname(parser, IKE_ALG_INTEG, integ, integ)
+			lookup_prf = (alg_byname(parser, &ike_alg_integ, integ, integ)
 				      != NULL);
 			pfree_diag(&parser->diag);
 		}
 	}
 	if (lookup_prf && tokens->this.ptr != NULL && tokens->prev_term != ';') {
 		shunk_t prf = tokens[0].this;
-		proposal.prf = prf_desc(alg_byname(parser, IKE_ALG_PRF, prf, prf));
+		proposal.prf = prf_desc(alg_byname(parser, &ike_alg_prf, prf, prf));
 		if (parser->diag != NULL) {
 			return false;
 		}
@@ -306,7 +306,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	}
 	if (lookup_integ && tokens->this.ptr != NULL && tokens->prev_term != ';') {
 		shunk_t integ = tokens[0].this;
-		proposal.integ = integ_desc(alg_byname(parser, IKE_ALG_INTEG, integ, integ));
+		proposal.integ = integ_desc(alg_byname(parser, &ike_alg_integ, integ, integ));
 		if (parser->diag != NULL) {
 			if (tokens->next.ptr != NULL) {
 				/*
@@ -336,7 +336,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	bool lookup_ke = parser->protocol->kem || impair.proposal_parser;
 	if (lookup_ke && tokens->this.ptr != NULL) {
 		shunk_t ke = tokens[0].this;
-		proposal.kem = kem_desc(alg_byname(parser, IKE_ALG_KEM, ke, ke));
+		proposal.kem = kem_desc(alg_byname(parser, &ike_alg_kem, ke, ke));
 		if (parser->diag != NULL) {
 			return false;
 		}

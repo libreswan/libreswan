@@ -31,7 +31,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	if (alg->id[protocol->alg_id] < 0) {
 		name_buf vb;
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by %s",
-			       protocol->name, ike_alg_type_name(alg->algo_type),
+			       protocol->name, ike_alg_type_name(alg->type),
 			       pri_shunk(print_name),
 			       str_enum_long(&ike_version_names, policy->version, &vb));
 		return false;
@@ -47,7 +47,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	passert(policy->alg_is_ok != NULL);
 	if (!policy->alg_is_ok(alg, logger)) {
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
-			       protocol->name, ike_alg_type_name(alg->algo_type),
+			       protocol->name, ike_alg_type_name(alg->type),
 			       pri_shunk(print_name));
 		return false;
 	}
@@ -61,7 +61,7 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	 */
 	if (!ike_alg_is_valid(alg)) {
 		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not valid",
-			       protocol->name, ike_alg_type_name(alg->algo_type),
+			       protocol->name, ike_alg_type_name(alg->type),
 			       pri_shunk(print_name));
 		return false;
 	}
@@ -115,7 +115,7 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 					 shunk_t name, size_t key_bit_length,
 					 shunk_t print_name)
 {
-	const struct ike_alg *alg = alg_byname(parser, IKE_ALG_ENCRYPT, name,
+	const struct ike_alg *alg = alg_byname(parser, &ike_alg_encrypt, name,
 					       print_name);
 	if (alg == NULL) {
 		return NULL;

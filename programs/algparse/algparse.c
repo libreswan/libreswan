@@ -32,7 +32,7 @@ enum expect { FAIL = false, PASS = true, COUNT, };
 static bool kernel_alg_is_ok(const struct ike_alg *alg,
 			     const struct logger *logger)
 {
-	if (alg->algo_type == &ike_alg_kem) {
+	if (alg->type == &ike_alg_kem) {
 		/* require an in-process/ike implementation of DH */
 		return ike_alg_is_ike(alg, logger);
 	} else {

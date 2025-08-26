@@ -36,7 +36,7 @@ struct name_buf;
 
 #define PRI_IKE_ALG "IKE_ALG %s algorithm '%s'"
 #define pri_ike_alg(ALG)						\
-		ike_alg_type_name((ALG)->algo_type),			\
+	ike_alg_type_name((ALG)->type),					\
 			((ALG)->fqn != NULL ? (ALG)->fqn		\
 			 : "NULL")
 
@@ -85,38 +85,10 @@ struct name_buf;
 			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
 				     pri_ike_alg(ALG),			\
-				     ike_alg_type_name((ALG)->algo_type), \
+				     ike_alg_type_name((ALG)->type),	\
 				     (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
 		}							\
 	}
-
-/*
- * Different algorithm classes used by IKEv1/IKEv2 protocols.
- */
-
-struct ike_alg_type;
-
-extern const struct ike_alg_type ike_alg_encrypt;
-extern const struct ike_alg_type ike_alg_hash;
-extern const struct ike_alg_type ike_alg_prf;
-extern const struct ike_alg_type ike_alg_integ;
-extern const struct ike_alg_type ike_alg_kem;
-extern const struct ike_alg_type ike_alg_ipcomp;
-
-/* keep old code working */
-#define IKE_ALG_ENCRYPT &ike_alg_encrypt
-#define IKE_ALG_HASH &ike_alg_hash
-#define IKE_ALG_PRF &ike_alg_prf
-#define IKE_ALG_INTEG &ike_alg_integ
-#define IKE_ALG_KEM &ike_alg_kem
-#define IKE_ALG_IPCOMP &ike_alg_ipcomp
-
-/*
- * User frendly string representing the algorithm type (family).
- * "...Name()" returns the capitalized name.
- */
-const char *ike_alg_type_name(const struct ike_alg_type *type);
-const char *ike_alg_type_Name(const struct ike_alg_type *type);
 
 /*
  * Different lookup KEYs used by IKEv1/IKEv2
@@ -129,6 +101,37 @@ enum ike_alg_key {
 };
 #define IKE_ALG_KEY_ROOF (SADB_ALG_ID+1)
 #define IKE_ALG_KEY_FLOOR IKEv1_OAKLEY_ID
+
+/*
+ * Different algorithm classes used by IKEv1/IKEv2 protocols.
+ */
+
+struct ike_alg_type {
+	/*
+	 * Having the full capitalized name might make localization
+	 * easier.
+	 */
+	const char *name;
+	const char *Name; /* capitalized */
+	struct algorithm_table *algorithms;
+	const struct enum_names *const enum_names[IKE_ALG_KEY_ROOF];
+	void (*desc_check)(const struct ike_alg*, struct logger *logger);
+	bool (*desc_is_ike)(const struct ike_alg*);
+};
+
+extern const struct ike_alg_type ike_alg_encrypt;
+extern const struct ike_alg_type ike_alg_hash;
+extern const struct ike_alg_type ike_alg_prf;
+extern const struct ike_alg_type ike_alg_integ;
+extern const struct ike_alg_type ike_alg_kem;
+extern const struct ike_alg_type ike_alg_ipcomp;
+
+/*
+ * User frendly string representing the algorithm type (family).
+ * "...Name()" returns the capitalized name.
+ */
+const char *ike_alg_type_name(const struct ike_alg_type *type);
+const char *ike_alg_type_Name(const struct ike_alg_type *type);
 
 /*
  * User friendly string representing the key (protocol family).
@@ -302,7 +305,7 @@ struct ike_alg {
 #define ikev1_ipsec_id id[IKEv1_IPSEC_ID]
 #define ikev2_alg_id id[IKEv2_ALG_ID]
 	int id[IKE_ALG_KEY_ROOF];
-	const struct ike_alg_type *algo_type;
+	const struct ike_alg_type *type;
 
 	/*
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
