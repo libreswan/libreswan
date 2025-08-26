@@ -36,6 +36,7 @@ diag_t crypt_kem_key_gen(const struct kem_desc *kem,
 	PASSERT(logger, (*initiator)->internal.private_key != NULL);
 	PASSERT(logger, (*initiator)->internal.public_key != NULL);
 	(*initiator)->ke = kem->kem_ops->local_secret_ke(kem, (*initiator)->internal.public_key);
+	PASSERT(logger, (*initiator)->ke.len == kem->initiator_bytes);
 	return NULL;
 }
 
@@ -44,6 +45,7 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 			     struct kem_responder **responder,
 			     struct logger *logger)
 {
+	PASSERT(logger, initiator_ke.len == kem->initiator_bytes);
 	(*responder) = alloc_thing(struct kem_responder, "kem-responder");
 	(*responder)->kem = kem;
 
@@ -73,7 +75,7 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 	}
 
 	PASSERT(logger, (*responder)->shared_key != NULL);
-	PASSERT(logger, (*responder)->ke.len > 0);
+	PASSERT(logger, (*responder)->ke.len == kem->responder_bytes);
 	return NULL;
 }
 
@@ -81,6 +83,7 @@ diag_t crypt_kem_decapsulate(struct kem_initiator *initiator,
 			     shunk_t responder_ke,
 			     struct logger *logger)
 {
+	PASSERT(logger, responder_ke.len == initiator->kem->responder_bytes);
 	diag_t d;
 	if (initiator->kem->kem_ops->kem_decapsulate != NULL) {
 		d = initiator->kem->kem_ops->kem_decapsulate(initiator, responder_ke, logger);

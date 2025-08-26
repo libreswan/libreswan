@@ -879,11 +879,22 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct kem_desc *kem = kem_desc(alg);
 	pexpect_ike_alg(logger, alg, kem->group > 0);
-	pexpect_ike_alg(logger, alg, kem->bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev2_alg_id == kem->group);
 	pexpect_ike_alg(logger, alg,
 			(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->ikev1_oakley_id == -1 :
 			 kem->ikev1_oakley_id == kem->group));
+	if (kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops) {
+		pexpect_ike_alg(logger, alg, kem->bytes == 1); /* XXX: bogus */
+		pexpect_ike_alg(logger, alg, kem->initiator_bytes > 0);
+		pexpect_ike_alg(logger, alg, kem->responder_bytes > 0);
+	} else {
+		pexpect_ike_alg(logger, alg, kem->bytes > 0);
+		pexpect_ike_alg(logger, alg, kem->initiator_bytes == kem->bytes);
+		pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);
+	}
+	if (kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops) {
+		pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id == -1);
+	}
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
 	if (kem->kem_ops != NULL) {
