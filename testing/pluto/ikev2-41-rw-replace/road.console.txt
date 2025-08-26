@@ -189,13 +189,13 @@ road #
 up
 road #
  grep -E  'EVENT_v2_EXPIRE|EVENT_v2_REPLACE' OUTPUT/road.pluto.log | grep '#' | sed -e 's/ timeout in [1-9][^ ]* / timeout in N.N /' -e 's/@0x[0-9a-f]*/@0xXXX/' -e 's/ (.*//'
-| event_schedule_where: newref EVENT_v2_REPLACE-pe@0xXXX timeout in N.N seconds for #2
-| event_schedule_where: newref EVENT_v2_REPLACE-pe@0xXXX timeout in N.N seconds for #1
+| event_schedule_where: EVENT_v2_REPLACE@0xXXX timeout in N.N seconds for #2
+| event_schedule_where: EVENT_v2_REPLACE@0xXXX timeout in N.N seconds for #1
 | #1 is retaining EVENT_v2_REPLACE with is previously set timeout
 | #1 requesting EVENT_v2_REPLACE-event@0xXXX be deleted
 | #1 deleting EVENT_v2_REPLACE
-| event_schedule_where: newref EVENT_v2_EXPIRE-pe@0xXXX timeout in N.N seconds for #1
-| event_schedule_where: newref EVENT_v2_REPLACE-pe@0xXXX timeout in N.N seconds for #3
+| event_schedule_where: EVENT_v2_EXPIRE@0xXXX timeout in N.N seconds for #1
+| event_schedule_where: EVENT_v2_REPLACE@0xXXX timeout in N.N seconds for #3
 | #1 is retaining EVENT_v2_EXPIRE with is previously set timeout
 | timer_event_cb: processing EVENT_v2_EXPIRE-event@0xXXX for IKE SA #1 in state ESTABLISHED_IKE_SA
 | #1 deleting EVENT_v2_EXPIRE
