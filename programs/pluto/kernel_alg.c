@@ -162,8 +162,9 @@ bool kernel_alg_is_ok(const struct ike_alg *alg,
 		return kernel_alg_ipcomp_ok(ipcomp_desc(alg), logger);
 	} else {
 		llog_passert(logger, HERE,
-			     "algorithm %s of type %s is not valid in the kernel",
-			     alg->fqn, ike_alg_type_name(alg->type));
+			     "%s %s is not valid in the kernel",
+			     alg->type->story,
+			     alg->fqn);
 	}
 }
 

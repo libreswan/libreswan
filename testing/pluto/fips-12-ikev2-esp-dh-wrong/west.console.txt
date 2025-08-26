@@ -41,7 +41,7 @@ west #
 up
 west #
  ../../guestbin/libreswan-up-down.sh ikev2-esp=aes-sha1-modp1536 -I 192.0.100.254 192.0.200.254
-"ikev2-esp=aes-sha1-modp1536": failed to add connection: ESP DH algorithm 'modp1536' is not supported
+"ikev2-esp=aes-sha1-modp1536": failed to add connection: ESP Key Exchange Method (DH) 'modp1536' is not supported
 west #
  ipsec auto --delete ikev2-base
 "ikev2-base": terminating SAs using this connection

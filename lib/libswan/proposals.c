@@ -324,7 +324,7 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 	} else {
 		llog_passert(&global_logger, HERE,
 			     "unexpected algorithm type %s",
-			     ike_alg_type_name(alg->type));
+			     alg->type->name);
 	}
 }
 
@@ -350,8 +350,10 @@ void append_algorithm_for(struct proposal_parser *parser,
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
-	ldbgf(DBG_PROPOSAL_PARSER, logger, "appending %s %s algorithm %s[_%d]",
-	      parser->protocol->name, ike_alg_type_name(alg->type), alg->fqn,
+	ldbgf(DBG_PROPOSAL_PARSER, logger, "appending %s %s %s[_%d]",
+	      parser->protocol->name,
+	      alg->type->story,
+	      alg->fqn,
 	      enckeylen);
 	*end = clone_thing(new_algorithm, "alg");
 }
@@ -394,8 +396,9 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 					return;
 				}
 				LLOG_JAMBUF(parser->policy->stream, parser->policy->logger, buf) {
-					jam(buf, "discarding duplicate %s %s algorithm %s",
-					    parser->protocol->name, ike_alg_type_name(dead->desc->type),
+					jam(buf, "discarding duplicate %s %s %s",
+					    parser->protocol->name,
+					    dead->desc->type->story,
 					    dead->desc->fqn);
 					if (dead->enckeylen != 0) {
 						jam(buf, "_%d", dead->enckeylen);

@@ -36,9 +36,9 @@ struct name_buf;
 
 #define PRI_IKE_ALG "IKE_ALG %s algorithm '%s'"
 #define pri_ike_alg(ALG)						\
-	ike_alg_type_name((ALG)->type),					\
-			((ALG)->fqn != NULL ? (ALG)->fqn		\
-			 : "NULL")
+	(ALG)->type->name,						\
+		((ALG)->fqn != NULL ? (ALG)->fqn			\
+		 : "NULL")
 
 #define pexpect_ike_alg(LOGGER, ALG, ASSERTION)				\
 	{								\
@@ -85,7 +85,7 @@ struct name_buf;
 			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
 				     pri_ike_alg(ALG),			\
-				     ike_alg_type_name((ALG)->type),	\
+				     (ALG)->type->story,		\
 				     (ALG)->fqn, lhs, rhs, #RHS, #LHS);	\
 		}							\
 	}
@@ -107,12 +107,8 @@ enum ike_alg_key {
  */
 
 struct ike_alg_type {
-	/*
-	 * Having the full capitalized name might make localization
-	 * easier.
-	 */
 	const char *name;
-	const char *Name; /* capitalized */
+	const char *story;
 	struct algorithm_table *algorithms;
 	const struct enum_names *const enum_names[IKE_ALG_KEY_ROOF];
 	void (*desc_check)(const struct ike_alg*, struct logger *logger);
@@ -125,13 +121,6 @@ extern const struct ike_alg_type ike_alg_prf;
 extern const struct ike_alg_type ike_alg_integ;
 extern const struct ike_alg_type ike_alg_kem;
 extern const struct ike_alg_type ike_alg_ipcomp;
-
-/*
- * User frendly string representing the algorithm type (family).
- * "...Name()" returns the capitalized name.
- */
-const char *ike_alg_type_name(const struct ike_alg_type *type);
-const char *ike_alg_type_Name(const struct ike_alg_type *type);
 
 /*
  * User friendly string representing the key (protocol family).

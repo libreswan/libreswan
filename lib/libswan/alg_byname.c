@@ -23,15 +23,17 @@
 #include "impair.h"
 
 bool alg_byname_ok(struct proposal_parser *parser,
-		   const struct ike_alg *alg, shunk_t print_name)
+		   const struct ike_alg *alg,
+		   shunk_t print_name)
 {
 	const struct proposal_protocol *protocol = parser->protocol;
 	const struct proposal_policy *policy = parser->policy;
 	const struct logger *logger = policy->logger;
 	if (alg->id[protocol->alg_id] < 0) {
 		name_buf vb;
-		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported by %s",
-			       protocol->name, ike_alg_type_name(alg->type),
+		proposal_error(parser, "%s %s '"PRI_SHUNK"' is not supported by %s",
+			       protocol->name,
+			       alg->type->story,
 			       pri_shunk(print_name),
 			       str_enum_long(&ike_version_names, policy->version, &vb));
 		return false;
@@ -46,8 +48,9 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	 */
 	passert(policy->alg_is_ok != NULL);
 	if (!policy->alg_is_ok(alg, logger)) {
-		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
-			       protocol->name, ike_alg_type_name(alg->type),
+		proposal_error(parser, "%s %s '"PRI_SHUNK"' is not supported",
+			       protocol->name,
+			       alg->type->story,
 			       pri_shunk(print_name));
 		return false;
 	}
@@ -60,8 +63,9 @@ bool alg_byname_ok(struct proposal_parser *parser,
 	 * Since it likely involves a lookup, it is left until last.
 	 */
 	if (!ike_alg_is_valid(alg)) {
-		proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not valid",
-			       protocol->name, ike_alg_type_name(alg->type),
+		proposal_error(parser, "%s %s '"PRI_SHUNK"' is not valid",
+			       protocol->name,
+			       alg->type->story,
 			       pri_shunk(print_name));
 		return false;
 	}
@@ -82,12 +86,14 @@ const struct ike_alg *alg_byname(struct proposal_parser *parser,
 		 * see if it turns up.
 		 */
 		if (ike_alg_enum_matched(type, name)) {
-			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not supported",
-				       protocol->name, ike_alg_type_name(type),
+			proposal_error(parser, "%s %s '"PRI_SHUNK"' is not supported",
+				       protocol->name,
+				       type->story,
 				       pri_shunk(print_name));
 		} else {
-			proposal_error(parser, "%s %s algorithm '"PRI_SHUNK"' is not recognized",
-				       protocol->name, ike_alg_type_name(type),
+			proposal_error(parser, "%s %s '"PRI_SHUNK"' is not recognized",
+				       protocol->name,
+				       type->story,
 				       pri_shunk(print_name));
 		}
 		passert(parser->diag != NULL);
