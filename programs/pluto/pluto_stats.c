@@ -226,14 +226,14 @@ static void pstat_ike_sa_established(struct state *st)
 	/* keep IKE SA statistics */
 	if (st->st_ike_version == IKEv2) {
 		pstats_ikev2_sa++;
-		pstats(ikev2_encr, st->st_oakley.ta_encrypt->common.id[IKEv2_ALG_ID]);
+		pstats(ikev2_encr, st->st_oakley.ta_encrypt->ikev2_alg_id);
 		if (st->st_oakley.ta_integ != NULL)
-			pstats(ikev2_integ, st->st_oakley.ta_integ->common.id[IKEv2_ALG_ID]);
+			pstats(ikev2_integ, st->st_oakley.ta_integ->ikev2_alg_id);
 		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
 	} else {
 		pstats_ikev1_sa++;
-		pstats(ikev1_encr, st->st_oakley.ta_encrypt->common.ikev1_oakley_id);
-		pstats(ikev1_integ, st->st_oakley.ta_prf->common.id[IKEv1_OAKLEY_ID]);
+		pstats(ikev1_encr, st->st_oakley.ta_encrypt->ikev1_oakley_id);
+		pstats(ikev1_integ, st->st_oakley.ta_prf->ikev1_oakley_id);
 		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
 	}
 }
@@ -278,11 +278,11 @@ static void pstat_child_sa_established(struct state *st)
 
 		pstats_ipsec_esp++;
 		pstatsv(ipsec_encrypt, (st->st_ike_version == IKEv2),
-			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv1_IPSEC_ID],
-			st->st_esp.trans_attrs.ta_encrypt->common.id[IKEv2_ALG_ID]);
+			st->st_esp.trans_attrs.ta_encrypt->ikev1_ipsec_id,
+			st->st_esp.trans_attrs.ta_encrypt->ikev2_alg_id);
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_esp.trans_attrs.ta_integ->common.id[IKEv1_IPSEC_ID],
-			st->st_esp.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
+			st->st_esp.trans_attrs.ta_integ->ikev1_ipsec_id,
+			st->st_esp.trans_attrs.ta_integ->ikev2_alg_id);
 		pstats_sa(nat, tfc, esn);
 	}
 	if (st->st_ah.protocol == &ip_protocol_ah) {
@@ -290,8 +290,8 @@ static void pstat_child_sa_established(struct state *st)
 		bool esn = st->st_esp.trans_attrs.esn_enabled;
 		pstats_ipsec_ah++;
 		pstatsv(ipsec_integ, (st->st_ike_version == IKEv2),
-			st->st_ah.trans_attrs.ta_integ->common.id[IKEv1_IPSEC_ID],
-			st->st_ah.trans_attrs.ta_integ->common.id[IKEv2_ALG_ID]);
+			st->st_ah.trans_attrs.ta_integ->ikev1_ipsec_id,
+			st->st_ah.trans_attrs.ta_integ->ikev2_alg_id);
 		pstats_sa(false, false, esn);
 	}
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {

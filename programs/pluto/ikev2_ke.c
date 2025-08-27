@@ -39,7 +39,7 @@ bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
 
 
 	struct ikev2_ke v2ke = {
-		.isak_group = kem->common.id[IKEv2_ALG_ID],
+		.isak_group = kem->ikev2_alg_id,
 	};
 
 	struct pbs_out ke_pbs;

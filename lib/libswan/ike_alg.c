@@ -537,7 +537,7 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 		 * IKEv1 IKE algorithms must have a hasher - used for
 		 * things like computing IV.
 		 */
-		pexpect_ike_alg(logger, alg, prf->common.id[IKEv1_OAKLEY_ID] < 0 ||
+		pexpect_ike_alg(logger, alg, prf->ikev1_oakley_id < 0 ||
 				     prf->hasher != NULL);
 		prf->prf_mac_ops->check(prf, logger);
 	}
@@ -632,11 +632,11 @@ static void integ_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_tcpdump_name, ".integ_tcpdump_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_ike_audit_name, ".integ_ike_audit_name");
 	pexpect_ike_alg_has_name(logger, HERE, alg, integ->integ_kernel_audit_name, ".integ_kernel_audit_name");
-	if (integ->common.id[IKEv1_IPSEC_ID] >= 0) {
+	if (integ->ikev1_ipsec_id >= 0) {
 		name_buf esb;
 		pexpect_ike_alg_streq(logger, alg, integ->integ_kernel_audit_name,
 				      str_enum_short(&auth_alg_names,
-						     integ->common.id[IKEv1_IPSEC_ID],
+						     integ->ikev1_ipsec_id,
 						     &esb));
 	}
 	if (integ->prf != NULL) {
@@ -783,8 +783,8 @@ static void encrypt_desc_check(const struct ike_alg *alg, struct logger *logger)
 	 */
 	if (encrypt == &ike_alg_encrypt_null) {
 		pexpect_ike_alg(logger, alg, encrypt->keydeflen == 0);
-		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv1_IPSEC_ID] == IKEv1_ESP_NULL);
-		pexpect_ike_alg(logger, alg, encrypt->common.id[IKEv2_ALG_ID] == IKEv2_ENCR_NULL);
+		pexpect_ike_alg(logger, alg, encrypt->ikev1_ipsec_id == IKEv1_ESP_NULL);
+		pexpect_ike_alg(logger, alg, encrypt->ikev2_alg_id == IKEv2_ENCR_NULL);
 		pexpect_ike_alg(logger, alg, encrypt->enc_blocksize == 1);
 		pexpect_ike_alg(logger, alg, encrypt->wire_iv_size == 0);
 		pexpect_ike_alg(logger, alg, encrypt->key_bit_lengths[0] == 0);
@@ -880,10 +880,10 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 	const struct kem_desc *kem = kem_desc(alg);
 	pexpect_ike_alg(logger, alg, kem->group > 0);
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);
-	pexpect_ike_alg(logger, alg, kem->common.id[IKEv2_ALG_ID] == kem->group);
+	pexpect_ike_alg(logger, alg, kem->ikev2_alg_id == kem->group);
 	pexpect_ike_alg(logger, alg,
-			(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->common.id[IKEv1_OAKLEY_ID] == -1 :
-			 kem->common.id[IKEv1_OAKLEY_ID] == kem->group));
+			(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->ikev1_oakley_id == -1 :
+			 kem->ikev1_oakley_id == kem->group));
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
 	if (kem->kem_ops != NULL) {
@@ -900,9 +900,9 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 		kem->kem_ops->check(kem, logger);
 		/* IKEv1 supports MODP groups but not ECC. */
 		pexpect_ike_alg(logger, alg,
-				(kem->kem_ops == &ike_alg_kem_modp_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] == kem->group :
-				 kem->kem_ops == &ike_alg_kem_ecp_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] < 0 :
-				 kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->common.id[IKEv1_IPSEC_ID] < 0 :
+				(kem->kem_ops == &ike_alg_kem_modp_nss_ops ? kem->ikev1_ipsec_id == kem->group :
+				 kem->kem_ops == &ike_alg_kem_ecp_nss_ops ? kem->ikev1_ipsec_id < 0 :
+				 kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->ikev1_ipsec_id < 0 :
 				 false));
 	}
 }

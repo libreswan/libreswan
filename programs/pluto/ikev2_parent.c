@@ -210,16 +210,16 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	passert(md->chain[ISAKMP_NEXT_v2KE] != NULL);
 	int ke_group = md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke.isak_group;
 
-	if (accepted_dh->common.id[IKEv2_ALG_ID] != ke_group) {
+	if (accepted_dh->ikev2_alg_id != ke_group) {
 		name_buf ke_esb;
 		llog(RC_LOG, st->logger,
 		     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
 		     str_enum_short(&oakley_group_names, ke_group, &ke_esb),
 		     accepted_dh->common.fqn);
 		pstats(invalidke_sent_u, ke_group);
-		pstats(invalidke_sent_s, accepted_dh->common.id[IKEv2_ALG_ID]);
+		pstats(invalidke_sent_s, accepted_dh->ikev2_alg_id);
 		/* convert group to a raw buffer */
-		uint16_t gr = htons(accepted_dh->group);
+		uint16_t gr = htons(accepted_dh->ikev2_alg_id);
 		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_KE_PAYLOAD, THING_AS_SHUNK(gr),
 				    security);

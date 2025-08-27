@@ -1020,7 +1020,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	}
 
 	pstats(invalidke_recv_s, sg.sg_group);
-	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->group);
+	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
