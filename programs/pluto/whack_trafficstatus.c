@@ -50,33 +50,49 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 		return;
 	}
 
-	jam_so(buf, child->sa.st_serialno);
-	jam_string(buf, ": ");
+	JAMBUF(buf2) {
+		jam_value_string(buf2, PRI_SO, child->sa.st_serialno);
+		jam_field_start(buf, buf2->array);
+	}
+
+	jam_object_start(buf);
 
 	const struct connection *c = child->sa.st_connection;
-	jam_connection(buf, c);
+	jam_field_start(buf, "connection");
+	connection_buf cb;
+	jam_value_string(buf, "%s%s", c->name, str_connection_suffix(c, &cb));
+	jam_field_end(buf);
 
 	if (child->sa.st_xauth_username[0] != '\0') {
-		jam(buf, ", username=%s", child->sa.st_xauth_username);
+		jam_field_start(buf, "username");
+		jam_value_string(buf, "%s", child->sa.st_xauth_username);
+		jam_field_end(buf);
 	}
 
 	/* traffic */
-	jam(buf, ", type=%s",
-	    (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" :
-	     child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" :
-	     child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
-	     "UNKNOWN"));
+	jam_field_start(buf, "type");
+	jam_value_string(buf, "%s",
+			 (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" :
+			  child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" :
+			  child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
+			  "UNKNOWN"));
+	jam_field_end(buf);
 
-	if (c->iface->nic_offload) {
+	if (c->iface->nic_offload && c->config->nic_offload != NIC_OFFLOAD_NO) {
+		jam_field_start(buf, "nic-offload");
 		switch (c->config->nic_offload) {
-		case NIC_OFFLOAD_PACKET: jam(buf, "(nic-offload=packet)"); break;
-		case NIC_OFFLOAD_CRYPTO: jam(buf, "(nic-offload=crypto)"); break;
-		case NIC_OFFLOAD_NO: break;
-		case NIC_OFFLOAD_UNSET: jam(buf, "(nic-offload=UNSET)"); break;
+		case NIC_OFFLOAD_PACKET: jam_value_string(buf, "%s", "packet"); break;
+		case NIC_OFFLOAD_CRYPTO: jam_value_string(buf, "%s", "crypto"); break;
+		case NIC_OFFLOAD_UNSET: jam_value_string(buf, "%s", "UNSET"); break;
+		default:
+			break;
 		}
+		jam_field_end(buf);
 	}
 
-	jam(buf, ", add_time=%"PRIu64, child->sa.st_esp.add_time);
+	jam_field_start(buf, "add_time");
+	jam_value_integer(buf, "%"PRIu64, child->sa.st_esp.add_time);
+	jam_field_end(buf);
 
 	struct ipsec_proto_info *first_ipsec_proto =
 		(child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
@@ -86,20 +102,30 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	passert(first_ipsec_proto != NULL);
 
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
-		jam(buf, ", inBytes=%ju", first_ipsec_proto->inbound.bytes);
+		jam_field_start(buf, "inBytes");
+		jam_value_integer(buf, "%ju", first_ipsec_proto->inbound.bytes);
+		jam_field_end(buf);
 	}
 
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_OUTBOUND)) {
-		jam(buf, ", outBytes=%ju", first_ipsec_proto->outbound.bytes);
+		jam_field_start(buf, "outBytes");
+		jam_value_integer(buf, "%ju", first_ipsec_proto->outbound.bytes);
+		jam_field_end(buf);
 		if (c->config->sa_ipsec_max_bytes != 0) {
-			jam_humber_uintmax(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
+			humber_buf hb;
+
+			jam_field_start(buf, "maxBytes");
+			jam_value_string(buf, "%s", str_humber(c->config->sa_ipsec_max_bytes, &hb));
+			jam_field_end(buf);
 		}
 	}
 
 	if (child->sa.st_xauth_username[0] == '\0') {
-		jam(buf, ", id='");
-		jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
-		jam(buf, "'");
+		id_buf ib;
+
+		jam_field_start(buf, "id");
+		jam_value_string(buf, "%s", str_id_bytes(&c->remote->host.id, jam_sanitized_bytes, &ib));
+		jam_field_end(buf);
 	}
 
 	/*
@@ -114,21 +140,25 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 			* pool. */
 		       &c->local) {
 		if (nr_child_leases(*end) > 0) {
-			jam(buf, ", lease=");
-			const char *sep = "";
+			jam_field_start(buf, "lease");
+			jam_array_start(buf);
 			FOR_EACH_ELEMENT(lease, (*end)->child.lease) {
 				if (lease->ip.is_set) {
-					jam_string(buf, sep); sep = ",";
 					/* XXX: lease should be CIDR */
 					ip_subnet s = subnet_from_address(*lease);
-					jam_subnet(buf, &s);
+					subnet_buf sb;
+					jam_value_string(buf, "%s", str_subnet(&s, &sb));
 				}
 			}
+			jam_array_end(buf);
+			jam_field_end(buf);
 		}
 	}
+	jam_object_end(buf);
+	jam_field_end(buf);
 }
 
-static unsigned whack_trafficstatus_connection(const struct whack_message *m UNUSED,
+static unsigned whack_trafficstatus_connection(const struct whack_message *m,
 					       struct show *s,
 					       struct connection *c)
 {
@@ -153,26 +183,29 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 			.where = HERE,
 		},
 	};
+
 	unsigned nr = 0;
-	while (next_state(&state_by_connection)) {
+	SHOW_JAMBUF(s, buf) {
+		buf->json = m->whack_json;
+		jam_object_start(buf);
+		while (next_state(&state_by_connection)) {
+			struct state *st = state_by_connection.st;
 
-		struct state *st = state_by_connection.st;
+			if (IS_IKE_SA(st)) {
+				continue;
+			}
 
-		if (IS_IKE_SA(st)) {
-			continue;
-		}
+			if (!IS_IPSEC_SA_ESTABLISHED(st)) {
+				continue;
+			}
 
-		if (!IS_IPSEC_SA_ESTABLISHED(st)) {
-			continue;
-		}
-
-		/* whack-log-global - no prefix */
-		nr++;
-		SHOW_JAMBUF(s, buf) {
+			/* whack-log-global - no prefix */
+			nr++;
 			/* note: this mutates *st by calling
 			 * get_sa_bundle_info */
 			jam_child_sa_traffic(buf, pexpect_child_sa(st));
 		}
+		jam_object_end(buf);
 	}
 
 	return nr; /* return count */
