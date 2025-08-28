@@ -30,7 +30,7 @@ const char *str_nss_oid(SECOidTag oidtag, name_buf *b)
 			 "SEC_OID_%d", oidtag);
 		b->buf = b->tmp;
 	}
-	return b->tmp;
+	return b->buf;
 }
 
 size_t jam_nss_oid(struct jambuf *buf, SECOidTag oidtag)
