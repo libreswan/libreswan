@@ -129,6 +129,7 @@ void show_ike_alg_connection(struct show *s,
 /*
  * Show registered IKE algorithms
  */
+
 void show_ike_alg_status(struct show *s)
 {
 	struct logger *logger = show_logger(s);
@@ -175,15 +176,29 @@ void show_ike_alg_status(struct show *s)
 		}
 	}
 
-	for (const struct kem_desc **gdescp = next_kem_desc(NULL);
-	     gdescp != NULL; gdescp = next_kem_desc(gdescp)) {
-		const struct kem_desc *gdesc = *gdescp;
-		if (gdesc->bytes > 0) {
-			/* nothing crazy like 'none' */
-			show(s,
-			     "algorithm IKE DH Key Exchange: name=%s, bits=%d",
-			     gdesc->common.fqn,
-			     (int)gdesc->bytes * BITS_IN_BYTE);
+	for (const struct kem_desc **kemp = next_kem_desc(NULL);
+	     kemp != NULL; kemp = next_kem_desc(kemp)) {
+		const struct kem_desc *kem = *kemp;
+		/* nothing crazy like 'none' */
+		if (kem->bytes == 0 &&
+		    kem->initiator_bytes == 0 &&
+		    kem->responder_bytes == 0) {
+			continue;
+		}
+		SHOW_JAMBUF(s, buf) {
+			jam(buf, "algorithm IKE %s:", kem->common.type->story);
+			jam(buf, " name=%s", kem->common.fqn);
+			if (kem->bytes > 0) {
+				jam(buf, ", bits=%zu", kem->bytes * BITS_IN_BYTE);
+			}
+			if (kem->initiator_bytes > 0 &&
+			    kem->initiator_bytes != kem->bytes) {
+				jam(buf, ", initiator-bytes=%zu", kem->initiator_bytes);
+			}
+			if (kem->responder_bytes > 0 &&
+			    kem->responder_bytes != kem->bytes) {
+				jam(buf, ", responder-bytes=%zu", kem->responder_bytes);
+			}
 		}
 	}
 }
