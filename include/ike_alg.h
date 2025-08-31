@@ -695,14 +695,15 @@ struct kem_desc {
 	size_t initiator_bytes;		/* ML_KEM has different sizes */
 	size_t responder_bytes;		/* ML_KEM has different sizes */
 
-	/*
-	 * For MODP groups, the base and prime used when generating
-	 * the KE.
-	 */
-	const char *gen;
-	const char *modp;
-
 	struct {
+		struct {
+			/*
+			 * For MODP groups, the base and prime used
+			 * when generating the KE.
+			 */
+			const char *base;
+			const char *prime;
+		} modp;
 		struct {
 			/*
 			 * For ECP groups, the NSS ASN.1 OID that
