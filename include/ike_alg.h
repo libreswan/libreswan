@@ -20,6 +20,7 @@
 #include <pk11pub.h>
 #include "shunk.h"
 #include "ietf_constants.h"
+#include "lswnss.h"	/* for ML_KEM hack */
 
 struct ike_alg;
 struct jambuf;
@@ -721,6 +722,10 @@ struct kem_desc {
 			 */
 			bool includes_ec_point_form_uncompressed;
 		} ecp;
+		struct {
+			LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter;
+			KyberParams encapsulate_parameter;
+		} ml_kem;
 	} nss;
 
 	const struct kem_ops *kem_ops;

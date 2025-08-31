@@ -26,44 +26,25 @@
 #include "passert.h"
 #include "lswalloc.h"
 
-static void nss_ml_kem_calc_local_secret(const struct kem_desc *kem UNUSED,
+static void nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
 					 SECKEYPrivateKey **private_key,
 					 SECKEYPublicKey **public_key,
 					 struct logger *logger)
 {
-    CK_MECHANISM_TYPE mechanism = LSW_CKM_ML_KEM_KEY_PAIR_GEN;
-    LSW_CK_ML_KEM_PARAMETER_SET_TYPE param = LSW_CKP_ML_KEM_768;
+    CK_MECHANISM_TYPE ml_kem_mechanism = LSW_CKM_ML_KEM_KEY_PAIR_GEN;
+    LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter =
+	    kem->nss.ml_kem.generate_key_pair_parameter;
 
     void *password_context = lsw_nss_get_password_context(logger);
-    PK11SlotInfo *slot = PK11_GetBestSlot(mechanism, password_context);
+    PK11SlotInfo *slot = PK11_GetBestSlot(ml_kem_mechanism, password_context);
     PASSERT(logger, slot != NULL);
 
-#if 0
-    /*
-     * Also sets the usage.
-     */
-    (*private_key) = PK11_GenerateKeyPairWithOpFlags(slot, mechanism, &param,
-						     public_key,
-						     /*attrFlags*/PK11_ATTR_SESSION | PK11_ATTR_INSENSITIVE | PK11_ATTR_PUBLIC,
-						     /*opFlags*/CKF_DERIVE,
-						     /*opFlagsMask*/CKF_DERIVE,
-						     password_context);
-
-    if ((*private_key) == NULL) {
-	    *private_key = PK11_GenerateKeyPairWithOpFlags(slot, mechanism, &param,
-							   public_key,
-							   /*attrFlags*/PK11_ATTR_SESSION | PK11_ATTR_SENSITIVE | PK11_ATTR_PRIVATE,
-							   /*opFlags*/CKF_DERIVE,
-							   /*opFlagsMask*/CKF_DERIVE,
-							   password_context);
-    }
-#else
-    (*private_key) = PK11_GenerateKeyPair(slot, mechanism, &param,
+    (*private_key) = PK11_GenerateKeyPair(slot, ml_kem_mechanism,
+					  &generate_key_pair_parameter,
 					  public_key,
 					  /*isPerm*/PR_FALSE,
 					  /*isSensitive*/PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
 					  password_context);
-#endif
 
     PK11_FreeSlot(slot);
 
@@ -86,6 +67,7 @@ static diag_t nss_ml_kem_encapsulate_1(struct kem_responder *responder,
 				       struct logger *logger,
 				       PRArenaPool *arena)
 {
+	const struct kem_desc *kem = responder->kem;
 	void *password_context = lsw_nss_get_password_context(logger);
 	SECStatus status;
 
@@ -104,9 +86,10 @@ static diag_t nss_ml_kem_encapsulate_1(struct kem_responder *responder,
 	 */
 
 	SECKEYKyberPublicKey *kyber = &initiator_pubkey->u.kyber;
-	kyber->params = params_ml_kem768;
+	kyber->params = kem->nss.ml_kem.encapsulate_parameter;
 
-	status = SECITEM_MakeItem(arena, &kyber->publicValue, initiator_ke.ptr, initiator_ke.len);
+	status = SECITEM_MakeItem(arena, &kyber->publicValue,
+				  initiator_ke.ptr, initiator_ke.len);
 	if (status != SECSuccess) {
 		return diag_nss_error("allocating %s() publicValue", __func__);
 	}
@@ -202,6 +185,8 @@ static void nss_ml_kem_check(const struct kem_desc *kem, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->bytes == 1); /* XXX: bogus */
 	pexpect_ike_alg(logger, alg, kem->initiator_bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->responder_bytes > 0);
+	pexpect_ike_alg(logger, alg, kem->nss.ml_kem.generate_key_pair_parameter > 0);
+	pexpect_ike_alg(logger, alg, kem->nss.ml_kem.encapsulate_parameter > 0);
 }
 
 
