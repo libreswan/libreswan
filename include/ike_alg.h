@@ -702,19 +702,25 @@ struct kem_desc {
 	const char *gen;
 	const char *modp;
 
-	/*
-	 * For ECP groups, the NSS ASN.1 OID that identifies the ECP.
-	 */
-	SECOidTag nss_oid;
-	/*
-	 * For most EC algorithms, NSS's public key value consists of
-	 * the one byte EC_POINT_FORM_UNCOMPRESSED prefix followed by
-	 * two equal-sized points.
-	 *
-	 * There's one exception (curve25519) which contains no prefix
-	 * and just a single point.
-	 */
-	bool nss_adds_ec_point_form_uncompressed;
+	struct {
+		struct {
+			/*
+			 * For ECP groups, the NSS ASN.1 OID that
+			 * identifies the ECP.
+			 */
+			SECOidTag oid;
+			/*
+			 * For most EC algorithms, NSS's public key
+			 * value consists of the one byte
+			 * EC_POINT_FORM_UNCOMPRESSED prefix followed
+			 * by two equal-sized points.
+			 *
+			 * There's one exception (curve25519) which
+			 * contains no prefix and just a single point.
+			 */
+			bool includes_ec_point_form_uncompressed;
+		} ecp;
+	} nss;
 
 	const struct kem_ops *kem_ops;
 };

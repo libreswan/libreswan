@@ -202,8 +202,8 @@ const struct kem_desc ike_alg_kem_secp256r1 = {
 	.bytes = BYTES_FOR_BITS(256) * 2,
 	.initiator_bytes = BYTES_FOR_BITS(256) * 2,
 	.responder_bytes = BYTES_FOR_BITS(256) * 2,
-	.nss_oid = SEC_OID_SECG_EC_SECP256R1,
-	.nss_adds_ec_point_form_uncompressed = true,
+	.nss.ecp.oid = SEC_OID_SECG_EC_SECP256R1,
+	.nss.ecp.includes_ec_point_form_uncompressed = true,
 	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 
@@ -223,8 +223,8 @@ const struct kem_desc ike_alg_kem_secp384r1 = {
 	.bytes = BYTES_FOR_BITS(384) * 2,
 	.initiator_bytes = BYTES_FOR_BITS(384) * 2,
 	.responder_bytes = BYTES_FOR_BITS(384) * 2,
-	.nss_oid = SEC_OID_SECG_EC_SECP384R1,
-	.nss_adds_ec_point_form_uncompressed = true,
+	.nss.ecp.oid = SEC_OID_SECG_EC_SECP384R1,
+	.nss.ecp.includes_ec_point_form_uncompressed = true,
 	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 
@@ -244,8 +244,8 @@ const struct kem_desc ike_alg_kem_secp521r1 = {
 	.bytes = BYTES_FOR_BITS(521) * 2,
 	.initiator_bytes = BYTES_FOR_BITS(521) * 2,
 	.responder_bytes = BYTES_FOR_BITS(521) * 2,
-	.nss_oid = SEC_OID_SECG_EC_SECP521R1,
-	.nss_adds_ec_point_form_uncompressed = true,
+	.nss.ecp.oid = SEC_OID_SECG_EC_SECP521R1,
+	.nss.ecp.includes_ec_point_form_uncompressed = true,
 	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 
@@ -336,7 +336,7 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 	.bytes = 32 /* octets */,
 	.initiator_bytes = 32 /* octets */,
 	.responder_bytes = 32 /* octets */,
-	.nss_oid = SEC_OID_CURVE25519,
+	.nss.ecp.oid = SEC_OID_CURVE25519,
 	.kem_ops = &ike_alg_kem_ecp_nss_ops,
 };
 #endif
