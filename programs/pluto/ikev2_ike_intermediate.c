@@ -265,7 +265,8 @@ static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
 	if (v2ke == NULL) {
 		name_buf rb;
 		llog(RC_LOG, logger,
-		     "ADDKE missing from IKE_INTERMEDIATE %s",
+		     "%s KE missing from IKE_INTERMEDIATE %s",
+		     kem->common.fqn,
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
 		return false;
 	}
@@ -274,19 +275,24 @@ static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
 		name_buf rb;
 		name_buf gb;
 		llog(RC_LOG, logger,
-		     "expecting %s ADDKE but received %s in IKE_INTERMEDIATE %s",
+		     "expecting KE for %s in IKE_INTERMEDIATE %s received KE for %s",
 		     kem->common.fqn,
-		     str_enum_short(&oakley_group_names, v2ke->payload.v2ke.isak_group, &gb),
-		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
+		     str_enum_short(&oakley_group_names, v2ke->payload.v2ke.isak_group, &gb));
 		return false;
 	}
 
 	*ke = pbs_in_left(&v2ke->pbs);
-	if (ke->len == 0) {
+
+	size_t ke_bytes = (v2_msg_role(md) == MESSAGE_REQUEST ? kem->initiator_bytes :
+			   kem->responder_bytes);
+	if (ke->len != ke_bytes) {
 		name_buf rb;
 		llog(RC_LOG, logger,
-		     "ADDKE in IKE_INTERMEDIATE %s is really really small",
-		     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
+		     "%s KE in IKE_INTERMEDIATE %s is %zu bytes long but should be %zu bytes",
+		     kem->common.fqn,
+		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
+		     ke->len, ke_bytes);
 		return false;
 	}
 

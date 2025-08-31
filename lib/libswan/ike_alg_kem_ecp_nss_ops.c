@@ -215,6 +215,9 @@ static void nss_ecp_check(const struct kem_desc *kem, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->nss_oid > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id == kem->group);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id < 0);
+	pexpect_ike_alg(logger, alg, kem->bytes > 0);
+	pexpect_ike_alg(logger, alg, kem->initiator_bytes == kem->bytes);
+	pexpect_ike_alg(logger, alg, kem->responder_bytes == kem->bytes);
 }
 
 const struct kem_ops ike_alg_kem_ecp_nss_ops = {

@@ -879,7 +879,6 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct kem_desc *kem = kem_desc(alg);
 	pexpect_ike_alg(logger, alg, kem->group > 0);
-	pexpect_ike_alg(logger, alg, kem->bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev2_alg_id == kem->group);
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
