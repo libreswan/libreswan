@@ -134,6 +134,9 @@ KVM_LINUX_USE_SECCOMP ?= true
 # On Alpine, do a cutdown build
 KVM_ALPINE_USE_DNSSEC ?= false
 
+# On Debian, don't try to build ML_KEM
+KVM_DEBIAN_USE_ML_KEM_768 ?= false
+
 # from <FLAG> return KVM_<OS>_<FLAG> or KVM_<FLAG>
 kvm-flag = \
 	$(firstword \
@@ -160,7 +163,9 @@ KVM_MAKEFLAGS ?= $(strip \
 	$(call KVM-MAKEFLAG, KVM_USE_LTO) \
 	$(call KVM-MAKEFLAG, KVM_USE_NSS_KDF) \
 	$(call KVM-MAKEFLAG, KVM_USE_SECCOMP) \
-	$(call KVM-MAKEFLAG, KVM_USE_DNSSEC) \
+	$(call KVM-MAKEFLAG, KVM_USE_ML_KEM_512) \
+	$(call KVM-MAKEFLAG, KVM_USE_ML_KEM_768) \
+	$(call KVM-MAKEFLAG, KVM_USE_ML_KEM_1024) \
 	$(call KVM-MAKEFLAG, KVM_CC) \
 	)
 
