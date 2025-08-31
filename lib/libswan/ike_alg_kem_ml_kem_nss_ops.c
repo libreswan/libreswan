@@ -214,7 +214,8 @@ static diag_t nss_ml_kem_decapsulate(struct kem_initiator *initiator,
 
 static void nss_ml_kem_check(const struct kem_desc *kem, struct logger *logger)
 {
-	ldbg(logger, "ignoring %s", kem->common.fqn);
+	const struct ike_alg *alg = &kem->common;
+	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id < 0);
 }
 
 

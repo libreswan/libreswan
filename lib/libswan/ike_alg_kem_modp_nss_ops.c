@@ -123,11 +123,13 @@ static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 	return NULL;
 }
 
-static void nss_modp_check(const struct kem_desc *dhmke, struct logger *logger)
+static void nss_modp_check(const struct kem_desc *kem, struct logger *logger)
 {
-	const struct ike_alg *alg = &dhmke->common;
-	pexpect_ike_alg(logger, alg, dhmke->gen != NULL);
-	pexpect_ike_alg(logger, alg, dhmke->modp != NULL);
+	const struct ike_alg *alg = &kem->common;
+	pexpect_ike_alg(logger, alg, kem->gen != NULL);
+	pexpect_ike_alg(logger, alg, kem->modp != NULL);
+	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id == kem->group);
+	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id == kem->group);
 }
 
 const struct kem_ops ike_alg_kem_modp_nss_ops = {

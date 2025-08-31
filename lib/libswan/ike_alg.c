@@ -881,29 +881,20 @@ static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 	pexpect_ike_alg(logger, alg, kem->group > 0);
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev2_alg_id == kem->group);
-	pexpect_ike_alg(logger, alg,
-			(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->ikev1_oakley_id == -1 :
-			 kem->ikev1_oakley_id == kem->group));
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
 	if (kem->kem_ops != NULL) {
 		pexpect_ike_alg(logger, alg, kem->kem_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, kem->kem_ops->check != NULL);
 		pexpect_ike_alg(logger, alg, kem->kem_ops->calc_local_secret != NULL);
-		pexpect_ike_alg(logger, alg,
-				(kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->kem_ops->calc_shared_secret == NULL :
-				 kem->kem_ops->calc_shared_secret != NULL));
 		/* all-in or none-in! */
+		pexpect_ike_alg(logger, alg, ((kem->kem_ops->calc_shared_secret == NULL) ==
+					      ((kem->kem_ops->kem_encapsulate != NULL) &&
+					       (kem->kem_ops->kem_decapsulate != NULL))));
 		pexpect_ike_alg(logger, alg, ((kem->kem_ops->kem_encapsulate != NULL) ==
 					      (kem->kem_ops->kem_decapsulate != NULL)));
 		/* more? */
 		kem->kem_ops->check(kem, logger);
-		/* IKEv1 supports MODP groups but not ECC. */
-		pexpect_ike_alg(logger, alg,
-				(kem->kem_ops == &ike_alg_kem_modp_nss_ops ? kem->ikev1_ipsec_id == kem->group :
-				 kem->kem_ops == &ike_alg_kem_ecp_nss_ops ? kem->ikev1_ipsec_id < 0 :
-				 kem->kem_ops == &ike_alg_kem_ml_kem_nss_ops ? kem->ikev1_ipsec_id < 0 :
-				 false));
 	}
 }
 
