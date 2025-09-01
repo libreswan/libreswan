@@ -33,8 +33,8 @@ static void nss_modp_calc_local_secret(const struct kem_desc *group,
 				       SECKEYPublicKey **pubk,
 				       struct logger *logger)
 {
-	chunk_t prime = chunk_from_hex(group->modp, group->modp);
-	chunk_t base = chunk_from_hex(group->gen, group->gen);
+	chunk_t prime = chunk_from_hex(group->nss.modp.prime, group->nss.modp.prime);
+	chunk_t base = chunk_from_hex(group->nss.modp.base, group->nss.modp.base);
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "NSS: Value of Prime:"); LDBG_hunk(logger, prime);
@@ -126,8 +126,8 @@ static diag_t nss_modp_calc_shared_secret(const struct kem_desc *group,
 static void nss_modp_check(const struct kem_desc *kem, struct logger *logger)
 {
 	const struct ike_alg *alg = &kem->common;
-	pexpect_ike_alg(logger, alg, kem->gen != NULL);
-	pexpect_ike_alg(logger, alg, kem->modp != NULL);
+	pexpect_ike_alg(logger, alg, kem->nss.modp.base != NULL);
+	pexpect_ike_alg(logger, alg, kem->nss.modp.prime != NULL);
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id == kem->group);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id == kem->group);
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);

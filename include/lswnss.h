@@ -17,6 +17,34 @@
 #ifndef LSWNSS_H
 #define LSWNSS_H
 
+/*
+ * The official ML-KEM constants from PKCS#11 3.2 are only supported
+ * in NSS 3.116 or later.  Use the vendor-specific constants
+ * otherwise.
+ *
+ * It's assumed that <nss.h> contains the version constants.
+ *
+ * XXX: note CONSTANTS not MACROs.  NSS has had the macro CKM_ML_KEM
+ * et.al.  defined for sometime, it's that the internal code didn't
+ * know what to do with the value.  Hence the need for LSW_ prefix.
+ */
+
+#include <nss.h>
+
+#if (defined(NSS_VMAJOR) ? NSS_VMAJOR : 0) > 3 || \
+	((defined(NSS_VMAJOR) ? NSS_VMAJOR : 0) >= 3 && \
+	 (defined(NSS_VMINOR) ? NSS_VMINOR : 0) >= 116)
+#define LSW_CKM_ML_KEM_KEY_PAIR_GEN CKM_ML_KEM_KEY_PAIR_GEN
+#define LSW_CKM_ML_KEM CKM_ML_KEM
+#define LSW_CKP_ML_KEM_768 CKP_ML_KEM_768
+#define LSW_CK_ML_KEM_PARAMETER_SET_TYPE CK_ML_KEM_PARAMETER_SET_TYPE
+#else
+#define LSW_CKM_ML_KEM_KEY_PAIR_GEN CKM_NSS_ML_KEM_KEY_PAIR_GEN
+#define LSW_CKM_ML_KEM CKM_NSS_ML_KEM
+#define LSW_CKP_ML_KEM_768 CKP_NSS_ML_KEM_768
+#define LSW_CK_ML_KEM_PARAMETER_SET_TYPE CK_NSS_KEM_PARAMETER_SET_TYPE
+#endif
+
 #include <prerror.h>		/* for PRErrorCode, for PR_GetError() */
 #include <pk11pub.h>
 

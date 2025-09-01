@@ -20,6 +20,7 @@
 #include <pk11pub.h>
 #include "shunk.h"
 #include "ietf_constants.h"
+#include "lswnss.h"	/* for ML_KEM hack */
 
 struct ike_alg;
 struct jambuf;
@@ -695,26 +696,37 @@ struct kem_desc {
 	size_t initiator_bytes;		/* ML_KEM has different sizes */
 	size_t responder_bytes;		/* ML_KEM has different sizes */
 
-	/*
-	 * For MODP groups, the base and prime used when generating
-	 * the KE.
-	 */
-	const char *gen;
-	const char *modp;
-
-	/*
-	 * For ECP groups, the NSS ASN.1 OID that identifies the ECP.
-	 */
-	SECOidTag nss_oid;
-	/*
-	 * For most EC algorithms, NSS's public key value consists of
-	 * the one byte EC_POINT_FORM_UNCOMPRESSED prefix followed by
-	 * two equal-sized points.
-	 *
-	 * There's one exception (curve25519) which contains no prefix
-	 * and just a single point.
-	 */
-	bool nss_adds_ec_point_form_uncompressed;
+	struct {
+		struct {
+			/*
+			 * For MODP groups, the base and prime used
+			 * when generating the KE.
+			 */
+			const char *base;
+			const char *prime;
+		} modp;
+		struct {
+			/*
+			 * For ECP groups, the NSS ASN.1 OID that
+			 * identifies the ECP.
+			 */
+			SECOidTag oid;
+			/*
+			 * For most EC algorithms, NSS's public key
+			 * value consists of the one byte
+			 * EC_POINT_FORM_UNCOMPRESSED prefix followed
+			 * by two equal-sized points.
+			 *
+			 * There's one exception (curve25519) which
+			 * contains no prefix and just a single point.
+			 */
+			bool includes_ec_point_form_uncompressed;
+		} ecp;
+		struct {
+			LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter;
+			KyberParams encapsulate_parameter;
+		} ml_kem;
+	} nss;
 
 	const struct kem_ops *kem_ops;
 };

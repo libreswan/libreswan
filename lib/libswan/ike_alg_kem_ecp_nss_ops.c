@@ -37,7 +37,7 @@
 #include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_ecp_calc_local_secret(const struct kem_desc *group,
+static void nss_ecp_calc_local_secret(const struct kem_desc *kem,
 				      SECKEYPrivateKey **privk,
 				      SECKEYPublicKey **pubk,
 				      struct logger *logger)
@@ -46,7 +46,7 @@ static void nss_ecp_calc_local_secret(const struct kem_desc *group,
 	 * Get the PK11 formatted EC parameters (stored in static
 	 * data) from NSS.
 	 */
-	ldbgf(DBG_CRYPT, logger, "oid %d %x", group->nss_oid, group->nss_oid);
+	ldbgf(DBG_CRYPT, logger, "oid %d %x", kem->nss.ecp.oid, kem->nss.ecp.oid);
 
 	/*
 	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a
@@ -54,11 +54,11 @@ static void nss_ecp_calc_local_secret(const struct kem_desc *group,
 	 *
 	 * See also ECDSA code.
 	 */
-	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
+	const SECOidData *ec_oid = SECOID_FindOIDByTag(kem->nss.ecp.oid); /*static*/
 	if (ec_oid == NULL) {
 		llog_passert(logger, HERE,
 			     "lookup of OID %d for EC group %s parameters failed",
-			     group->nss_oid, group->common.fqn);
+			     kem->nss.ecp.oid, kem->common.fqn);
 	}
 	SECKEYECParams *ec_params = SEC_ASN1EncodeItem(NULL/*must-double-free*/,
 						       NULL, &ec_oid->oid,
@@ -66,7 +66,7 @@ static void nss_ecp_calc_local_secret(const struct kem_desc *group,
 	if (ec_params == NULL) {
 		llog_passert(logger, HERE,
 			     "wrapping of OID %d EC group %s parameters failed",
-			     group->nss_oid, group->common.fqn);
+			     kem->nss.ecp.oid, kem->common.fqn);
 	}
 
 
@@ -96,27 +96,27 @@ static void nss_ecp_calc_local_secret(const struct kem_desc *group,
  * what is needed is the plain EC coordinate without that prefix (see
  * documentation in pk11_get_EC_PointLenInBytes()).
  */
-static shunk_t nss_ecp_local_secret_ke(const struct kem_desc *group,
+static shunk_t nss_ecp_local_secret_ke(const struct kem_desc *kem,
 				       const SECKEYPublicKey *local_pubk)
 {
 	struct logger *logger = &global_logger;
 
-	if (group->nss_adds_ec_point_form_uncompressed) {
+	if (kem->nss.ecp.includes_ec_point_form_uncompressed) {
 		passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
-		passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
-		return shunk2(local_pubk->u.ec.publicValue.data + 1, group->bytes);
+		passert(local_pubk->u.ec.publicValue.len == kem->bytes + 1);
+		return shunk2(local_pubk->u.ec.publicValue.data + 1, kem->bytes);
 	}
 	/*
 	 * NSS returns the plain EC X-point (see documentation
 	 * in pk11_get_EC_PointLenInBytes(), and that is what
 	 * needs to go over the wire.
 	 */
-	passert(local_pubk->u.ec.publicValue.len == group->bytes);
+	passert(local_pubk->u.ec.publicValue.len == kem->bytes);
 	ldbg(logger, "putting NSS raw CURVE25519 public key blob on wire");
 	return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
 }
 
-static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *group,
+static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *kem,
 					 SECKEYPrivateKey *local_privk,
 					 const SECKEYPublicKey *local_pubk,
 					 shunk_t remote_ke,
@@ -140,14 +140,14 @@ static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *group,
 	};
 
 	/* Allocate same space for remote key as local key */
-	passert(remote_ke.len == group->bytes);
+	passert(remote_ke.len == kem->bytes);
 	if (SECITEM_AllocItem(NULL, &remote_pubk.u.ec.publicValue,
 			      local_pubk->u.ec.publicValue.len) == NULL) {
 		return diag_nss_error("location of ECC public key failed");
 	}
 	/* must NSS-free remote_pubk.u.ec.publicValue */
 
-	if (group->nss_adds_ec_point_form_uncompressed) {
+	if (kem->nss.ecp.includes_ec_point_form_uncompressed) {
 		/*
 		 * NSS returns and expects the encoded EC X-point pair
 		 * as the public part; but prefixed by
@@ -212,7 +212,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct kem_desc *group,
 static void nss_ecp_check(const struct kem_desc *kem, struct logger *logger)
 {
 	const struct ike_alg *alg = &kem->common;
-	pexpect_ike_alg(logger, alg, kem->nss_oid > 0);
+	pexpect_ike_alg(logger, alg, kem->nss.ecp.oid > 0);
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id == kem->group);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id < 0);
 	pexpect_ike_alg(logger, alg, kem->bytes > 0);

@@ -80,7 +80,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		 *
 		 * Allow for and strip that off when necessary.
 		 */
-		if ((*e)->nss_adds_ec_point_form_uncompressed &&
+		if ((*e)->nss.ecp.includes_ec_point_form_uncompressed &&
 		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
 		    ipseckey_pubkey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			/* ignore prefix */
@@ -140,7 +140,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 	 *
 	 * See also DH code.
 	 */
-	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
+	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss.ecp.oid); /*static*/
 	if (ec_oid == NULL) {
 		diag_t d = diag_nss_error("lookup of EC OID failed");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
