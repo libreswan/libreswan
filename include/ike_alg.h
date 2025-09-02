@@ -690,7 +690,6 @@ struct integ_desc {
 
 struct kem_desc {
 	struct ike_alg common;		/* must be first */
-	uint16_t group;
 
 	size_t bytes;			/* raw bytes to be put on wire */
 	size_t initiator_bytes;		/* ML_KEM has different sizes */
