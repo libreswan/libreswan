@@ -35,9 +35,7 @@
  */
 
 /* magic signifier */
-const struct kem_desc unset_group = {
-	.group = 65535, /* Reserved for private use */
-};
+const struct kem_desc unset_group;
 
 #ifdef USE_DH2
 const struct kem_desc ike_alg_kem_modp1024 = {
@@ -51,7 +49,6 @@ const struct kem_desc ike_alg_kem_modp1024 = {
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP1024,
 		},
 	},
-	.group = OAKLEY_GROUP_MODP1024,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP1024_MODULUS,
 	.bytes = BYTES_FOR_BITS(1024),
@@ -72,7 +69,6 @@ const struct kem_desc ike_alg_kem_modp1536 = {
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP1536,
 		},
 	},
-	.group = OAKLEY_GROUP_MODP1536,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP1536_MODULUS,
 	.bytes = BYTES_FOR_BITS(1536),
@@ -93,7 +89,6 @@ const struct kem_desc ike_alg_kem_modp2048 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_MODP2048,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP2048_MODULUS,
 	.bytes = BYTES_FOR_BITS(2048),
@@ -114,7 +109,6 @@ const struct kem_desc ike_alg_kem_modp3072 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_MODP3072,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP3072_MODULUS,
 	.bytes = BYTES_FOR_BITS(3072),
@@ -135,7 +129,6 @@ const struct kem_desc ike_alg_kem_modp4096 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_MODP4096,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP4096_MODULUS,
 	.bytes = BYTES_FOR_BITS(4096),
@@ -156,7 +149,6 @@ const struct kem_desc ike_alg_kem_modp6144 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_MODP6144,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP6144_MODULUS,
 	.bytes = BYTES_FOR_BITS(6144),
@@ -177,7 +169,6 @@ const struct kem_desc ike_alg_kem_modp8192 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_MODP8192,
 	.nss.modp.base = MODP_GENERATOR,
 	.nss.modp.prime = MODP8192_MODULUS,
 	.bytes = BYTES_FOR_BITS(8192),
@@ -198,7 +189,6 @@ const struct kem_desc ike_alg_kem_secp256r1 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_ECP_256,
 	.bytes = BYTES_FOR_BITS(256) * 2,
 	.initiator_bytes = BYTES_FOR_BITS(256) * 2,
 	.responder_bytes = BYTES_FOR_BITS(256) * 2,
@@ -219,7 +209,6 @@ const struct kem_desc ike_alg_kem_secp384r1 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_ECP_384,
 	.bytes = BYTES_FOR_BITS(384) * 2,
 	.initiator_bytes = BYTES_FOR_BITS(384) * 2,
 	.responder_bytes = BYTES_FOR_BITS(384) * 2,
@@ -240,7 +229,6 @@ const struct kem_desc ike_alg_kem_secp521r1 = {
 		},
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_ECP_521,
 	.bytes = BYTES_FOR_BITS(521) * 2,
 	.initiator_bytes = BYTES_FOR_BITS(521) * 2,
 	.responder_bytes = BYTES_FOR_BITS(521) * 2,
@@ -262,7 +250,6 @@ const struct kem_desc ike_alg_kem_dh22 = {
 		},
 		.fips.approved = false, /* SP 800-56A rev 3 */
 	},
-	.group = OAKLEY_GROUP_DH22,
 	.nss.modp.base = MODP_GENERATOR_DH22,
 	.nss.modp.prime = MODP1024_MODULUS_DH22,
 	.bytes = BYTES_FOR_BITS(1024),
@@ -285,7 +272,6 @@ const struct kem_desc ike_alg_kem_dh23 = {
 		},
 		.fips.approved = false, /* SP 800-56A rev 3 */
 	},
-	.group = OAKLEY_GROUP_DH23,
 	.nss.modp.base = MODP_GENERATOR_DH23,
 	.nss.modp.prime = MODP2048_MODULUS_DH23,
 	.bytes = BYTES_FOR_BITS(2048),
@@ -308,7 +294,6 @@ const struct kem_desc ike_alg_kem_dh24 = {
 		},
 		.fips.approved = false, /* SP 800-56A rev 3 */
 	},
-	.group = OAKLEY_GROUP_DH24,
 	.nss.modp.base = MODP_GENERATOR_DH24,
 	.nss.modp.prime = MODP2048_MODULUS_DH24,
 	.bytes = BYTES_FOR_BITS(2048),
@@ -332,7 +317,6 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_CURVE25519,
 		},
 	},
-	.group = OAKLEY_GROUP_CURVE25519,
 	.bytes = 32 /* octets */,
 	.initiator_bytes = 32 /* octets */,
 	.responder_bytes = 32 /* octets */,
@@ -355,7 +339,6 @@ const struct kem_desc ike_alg_kem_ml_kem_512 = {
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_512,
 		},
 	},
-	.group = OAKLEY_GROUP_ML_KEM_512,
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 800,
 	.responder_bytes = 768,
@@ -377,7 +360,6 @@ const struct kem_desc ike_alg_kem_ml_kem_768 = {
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_768,
 		},
 	},
-	.group = OAKLEY_GROUP_ML_KEM_768,
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 1184,
 	.responder_bytes = 1088,
@@ -399,7 +381,6 @@ const struct kem_desc ike_alg_kem_ml_kem_1024 = {
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_1024,
 		},
 	},
-	.group = OAKLEY_GROUP_ML_KEM_1024,
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 1568,
 	.responder_bytes = 1568,

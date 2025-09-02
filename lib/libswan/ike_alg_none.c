@@ -124,7 +124,6 @@ const struct kem_desc ike_alg_kem_none = {
 		 */
 		.fips.approved = true,
 	},
-	.group = OAKLEY_GROUP_NONE,
 	/*
 	 * While patently untrue, this does keep things happy.
 	 */

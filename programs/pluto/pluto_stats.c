@@ -227,14 +227,15 @@ static void pstat_ike_sa_established(struct state *st)
 	if (st->st_ike_version == IKEv2) {
 		pstats_ikev2_sa++;
 		pstats(ikev2_encr, st->st_oakley.ta_encrypt->ikev2_alg_id);
-		if (st->st_oakley.ta_integ != NULL)
+		if (st->st_oakley.ta_integ != NULL) {
 			pstats(ikev2_integ, st->st_oakley.ta_integ->ikev2_alg_id);
-		pstats(ikev2_groups, st->st_oakley.ta_dh->group);
+		}
+		pstats(ikev2_groups, st->st_oakley.ta_dh->ikev2_alg_id);
 	} else {
 		pstats_ikev1_sa++;
 		pstats(ikev1_encr, st->st_oakley.ta_encrypt->ikev1_oakley_id);
 		pstats(ikev1_integ, st->st_oakley.ta_prf->ikev1_oakley_id);
-		pstats(ikev1_groups, st->st_oakley.ta_dh->group);
+		pstats(ikev1_groups, st->st_oakley.ta_dh->ikev1_oakley_id);
 	}
 }
 

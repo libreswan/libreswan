@@ -791,8 +791,8 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 	 * actually just doing work in the background.  md will not be
 	 * retained.
 	 */
-	ldbg(ike->sa.logger, "%s() starting async DH calculation (group=%d)",
-	     __func__, ike->sa.st_oakley.ta_dh->group);
+	ldbg(ike->sa.logger, "%s() starting async DH calculation (group=%s)",
+	     __func__, ike->sa.st_oakley.ta_dh->common.fqn);
 	submit_dh_shared_secret(/*callback*/&ike->sa, /*task*/&ike->sa,
 				/*no-md:in-background*/NULL,
 				ike->sa.st_gi/*responder needs initiator's KE*/,

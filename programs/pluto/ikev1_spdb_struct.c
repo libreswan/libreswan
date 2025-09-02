@@ -557,7 +557,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 	struct db_sa *gsp = NULL;
 
 	/* Next two are for multiple proposals in aggressive mode... */
-	unsigned last_modp = 0;
+	signed last_modp = 0;
 	bool warned_dropped_dhgr = false;
 
 	int transcnt = 0;
@@ -578,7 +578,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		unsigned ealg = algs.encrypt->ikev1_oakley_id;
 		unsigned halg = algs.prf->ikev1_oakley_id;
-		unsigned modp = algs.kem->group;
+		unsigned modp = algs.kem->ikev1_oakley_id;
 		unsigned eklen = algs.enckeylen;
 
 		ldbg(logger, "%s() processing ealg=%s=%u halg=%s=%u modp=%s=%u eklen=%u",
@@ -671,7 +671,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    algs.kem->group != last_modp) {
+		    algs.kem->ikev1_oakley_id != last_modp) {
 			if (
 #ifdef USE_DH2
 			    last_modp == OAKLEY_GROUP_MODP1024 ||
@@ -796,7 +796,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 					emp_sp = NULL;
 				}
 			}
-			last_modp = algs.kem->group;
+			last_modp = algs.kem->ikev1_oakley_id;
 		}
 
 		PEXPECT(logger, emp_sp == NULL);
@@ -1024,8 +1024,15 @@ static bool ikev1_out_sa(struct pbs_out *outs,
 				    st->st_pfs_kem != NULL) {
 					PASSERT(logger, !oakley_mode);
 					PASSERT(logger, st->st_pfs_kem != &unset_group);
+					/*
+					 * XXX: Use .ikev1_oakley_id
+					 * and not .ikev1_ipsec_id.
+					 * Key Exchange something
+					 * between IKEs and not
+					 * something between kernel.
+					 */
 					if (!out_attr(GROUP_DESCRIPTION,
-						      st->st_pfs_kem->group,
+						      st->st_pfs_kem->ikev1_oakley_id, /*NOT .ikev1_ipsec_id*/
 						      attr_desc,
 						      attr_value_names,
 						      &trans_pbs))
@@ -2548,6 +2555,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				     "OAKLEY_GROUP %s not supported for PFS", b.buf);
 				return false;
 			}
+			ldbg(child->sa.logger, "accepting OAKLEY_GROUP %s", pfs_group->common.fqn);
 			break;
 		}
 
