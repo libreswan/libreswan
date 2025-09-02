@@ -92,7 +92,7 @@ algorithm IKE Key Exchange Method (DH): name=DH19, bits=512
 algorithm IKE Key Exchange Method (DH): name=DH20, bits=768
 algorithm IKE Key Exchange Method (DH): name=DH21, bits=1056
 algorithm IKE Key Exchange Method (DH): name=DH31, bits=256
-algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, bits=8, initiator-bytes=1184, responder-bytes=1088
+algorithm IKE Key Exchange Method (DH): name=ML_KEM_768, initiator-bytes=1184, responder-bytes=1088
  
 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
  
