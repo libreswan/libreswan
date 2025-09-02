@@ -356,7 +356,6 @@ const struct kem_desc ike_alg_kem_ml_kem_512 = {
 		},
 	},
 	.group = OAKLEY_GROUP_ML_KEM_512,
-	.bytes = 1 /* XXX: BOGUS */,
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 800,
 	.responder_bytes = 768,
@@ -379,7 +378,6 @@ const struct kem_desc ike_alg_kem_ml_kem_768 = {
 		},
 	},
 	.group = OAKLEY_GROUP_ML_KEM_768,
-	.bytes = 1 /* XXX: BOGUS */,
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 1184,
 	.responder_bytes = 1088,
@@ -402,7 +400,6 @@ const struct kem_desc ike_alg_kem_ml_kem_1024 = {
 		},
 	},
 	.group = OAKLEY_GROUP_ML_KEM_1024,
-	.bytes = 1 /* XXX: BOGUS */,
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 1568,
 	.responder_bytes = 1568,

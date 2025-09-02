@@ -54,10 +54,10 @@ void show_kernel_alg_status(struct show *s)
 		const struct encrypt_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack gives us no algos */
 			show(s,
-				"algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
-				alg->common.fqn,
-				encrypt_min_key_bit_length(alg),
-				encrypt_max_key_bit_length(alg));
+			     "algorithm ESP encrypt: name=%s, keysizemin=%d, keysizemax=%d",
+			     alg->common.fqn,
+			     encrypt_min_key_bit_length(alg),
+			     encrypt_max_key_bit_length(alg));
 	}
 
 	for (const struct integ_desc **alg_p = next_kernel_integ_desc(NULL);
@@ -65,9 +65,9 @@ void show_kernel_alg_status(struct show *s)
 		const struct integ_desc *alg = *alg_p;
 		if (alg != NULL) /* nostack doesn't give us algos */
 			show(s,
-				"algorithm AH/ESP auth: name=%s, key-length=%zu",
-				alg->common.fqn,
-				alg->integ_keymat_size * BITS_IN_BYTE);
+			     "algorithm AH/ESP auth: name=%s, key-length=%zu",
+			     alg->common.fqn,
+			     alg->integ_keymat_size * BITS_IN_BYTE);
 	}
 }
 

@@ -182,7 +182,7 @@ static void nss_ml_kem_check(const struct kem_desc *kem, struct logger *logger)
 	const struct ike_alg *alg = &kem->common;
 	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id < 0);
 	pexpect_ike_alg(logger, alg, kem->ikev1_ipsec_id < 0);
-	pexpect_ike_alg(logger, alg, kem->bytes == 1); /* XXX: bogus */
+	pexpect_ike_alg(logger, alg, kem->bytes == 0);
 	pexpect_ike_alg(logger, alg, kem->initiator_bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->responder_bytes > 0);
 	pexpect_ike_alg(logger, alg, kem->nss.ml_kem.generate_key_pair_parameter > 0);
