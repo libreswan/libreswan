@@ -896,6 +896,8 @@ ifeq ($(USE_DH31),true)
 USERLAND_CFLAGS += -DUSE_DH31
 endif
 
+# ML-KEM
+
 USE_ML_KEM_512 ?= false
 ifeq ($(USE_ML_KEM_512),true)
 USERLAND_CFLAGS += -DUSE_ML_KEM_512
@@ -910,6 +912,14 @@ USE_ML_KEM_1024 ?= false
 ifeq ($(USE_ML_KEM_1024),true)
 USERLAND_CFLAGS += -DUSE_ML_KEM_1024
 endif
+
+# XXX: do not set this!
+USE_ML_KEM = $(sort $(filter true, $(USE_ML_KEM_512) $(USE_ML_KEM_768) $(USE_ML_KEM_1024)))
+ifeq ($(USE_ML_KEM),true)
+USERLAND_CFLAGS += -DUSE_ML_KEM
+endif
+
+# PRFs
 
 USE_MD5 ?= true
 ifeq ($(USE_MD5),true)

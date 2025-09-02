@@ -721,10 +721,12 @@ struct kem_desc {
 			 */
 			bool includes_ec_point_form_uncompressed;
 		} ecp;
+#ifdef USE_ML_KEM
 		struct {
 			LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter;
 			KyberParams encapsulate_parameter;
 		} ml_kem;
+#endif
 	} nss;
 
 	const struct kem_ops *kem_ops;

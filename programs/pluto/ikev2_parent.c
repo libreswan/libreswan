@@ -470,6 +470,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
+PRINTF_LIKE(3)
 static void llog_v2_request_no_skeyseed(struct ike_sa *ike, const struct msg_digest *md,
 					const char *content, ...)
 {
