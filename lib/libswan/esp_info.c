@@ -37,17 +37,12 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 			    const struct proposal *proposal)
 {
 	if (!proposal_aead_none_ok(parser, proposal)) {
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return false;
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 	return true;
 }
 

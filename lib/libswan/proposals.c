@@ -390,11 +390,6 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			     alg->enckeylen == 0 ||
 			     alg->enckeylen == (*dup)->enckeylen)) {
 				struct algorithm *dead = (*dup);
-				if (impair.proposal_parser) {
-					llog(parser->policy->stream, parser->policy->logger,
-						    "IMPAIR: ignoring duplicate algorithms");
-					return;
-				}
 				LLOG_JAMBUF(parser->policy->stream, parser->policy->logger, buf) {
 					jam(buf, "discarding duplicate %s %s %s",
 					    parser->protocol->name,
@@ -441,8 +436,7 @@ void jam_proposal(struct jambuf *buf,
 		 * Should integrity be skipped?
 		 */
 
-		if (!impair.proposal_parser &&
-		    proposal_algorithm == PROPOSAL_integ) {
+		if (proposal_algorithm == PROPOSAL_integ) {
 
 			/*
 			 * Don't include -NONE- as it gives the
@@ -582,9 +576,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 		/* KE was specified */
 		proposal_error(parser, "either all or no %s proposals should specify Key Exchange",
 			       parser->protocol->name);
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return false;
 	}
 
 	switch (parser->policy->version) {
@@ -598,9 +590,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				       parser->protocol->name,
 				       first_ke->fqn,
 				       second_ke->fqn);
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
+			return false;
 		}
 		break;
 
@@ -613,9 +603,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				       parser->protocol->name,
 				       first_ke->fqn,
 				       second_ke->fqn);
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
+			return false;
 		}
 		break;
 
@@ -634,19 +622,6 @@ void proposal_error(struct proposal_parser *parser, const char *fmt, ...)
 	passert(parser->diag == NULL);
 	parser->diag = diag_va_list(fmt, ap);
 	va_end(ap);
-}
-
-bool impair_proposal_errors(struct proposal_parser *parser)
-{
-	passert(parser->diag != NULL);
-	if (impair.proposal_parser) {
-		llog(parser->policy->stream, parser->policy->logger,
-		     "IMPAIR: ignoring proposal error: %s", str_diag(parser->diag));
-		pfree_diag(&parser->diag);
-		return true;
-	}
-
-	return false;
 }
 
 struct proposals *proposals_from_str(struct proposal_parser *parser,

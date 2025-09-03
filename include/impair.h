@@ -143,7 +143,6 @@ struct impair {
 
 	bool replay_encrypted;
 	bool corrupt_encrypted;
-	bool proposal_parser;
 
 	bool allow_dns_insecure;
 	bool send_pkcs7_thingie;

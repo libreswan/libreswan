@@ -241,45 +241,22 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				 struct v1_proposal proposal,
 				 struct proposals *proposals)
 {
-	bool lookup_encrypt = parser->protocol->encrypt;
-	if (!lookup_encrypt && impair.proposal_parser) {
-		/* Force lookup, will discard any error. */
-		lookup_encrypt = true;
-	}
-	if (lookup_encrypt && tokens->this.ptr != NULL && tokens->prev_term != ';') {
+	if (parser->protocol->encrypt &&
+	    tokens->this.ptr != NULL &&
+	    tokens->prev_term != ';'/*not ;KEM*/) {
 		const struct ike_alg *encrypt;
 		int encrypt_keylen;
 		if (!proposal_parse_encrypt(parser, tokens, &encrypt, &encrypt_keylen)) {
-			if (impair.proposal_parser) {
-				/* ignore the lookup and stumble on */
-				pfree_diag(&parser->diag);
-			} else {
-				passert(parser->diag != NULL);
-				return false;
-			}
+			passert(parser->diag != NULL);
+			return false;
 		}
 		proposal.encrypt = encrypt_desc(encrypt);
 		proposal.enckeylen = encrypt_keylen;
 	}
 
-	bool lookup_prf = parser->protocol->prf;
-	if (!lookup_prf && impair.proposal_parser) {
-		/*
-		 * When impaired, only force PRF lookup when the the
-		 * token after this one is a valid INTEG algorithm.
-		 * Otherwise something like ah=sha1 gets parsed as
-		 * ah=[encr]-sha1-[integ]-[dh] instead of
-		 * ah=[encr]-[prf]-sha1-[dh].
-		 */
-		shunk_t prf = tokens->this;
-		shunk_t integ = tokens->next;
-		if (prf.ptr != NULL && integ.ptr != NULL) {
-			lookup_prf = (alg_byname(parser, &ike_alg_integ, integ, integ)
-				      != NULL);
-			pfree_diag(&parser->diag);
-		}
-	}
-	if (lookup_prf && tokens->this.ptr != NULL && tokens->prev_term != ';') {
+	if (parser->protocol->prf &&
+	    tokens->this.ptr != NULL &&
+	    tokens->prev_term != ';'/*not ;KEM*/) {
 		shunk_t prf = tokens[0].this;
 		proposal.prf = prf_desc(alg_byname(parser, &ike_alg_prf, prf, prf));
 		if (parser->diag != NULL) {
@@ -300,11 +277,9 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	 * clarify this but that makes for a fun parse.
 	 */
 	bool lookup_integ = (!parser->protocol->prf && parser->protocol->integ);
-	if (!lookup_integ && impair.proposal_parser) {
-		/* force things */
-		lookup_integ = true;
-	}
-	if (lookup_integ && tokens->this.ptr != NULL && tokens->prev_term != ';') {
+	if (lookup_integ &&
+	    tokens->this.ptr != NULL &&
+	    tokens->prev_term != ';'/*not ;KEM*/) {
 		shunk_t integ = tokens[0].this;
 		proposal.integ = integ_desc(alg_byname(parser, &ike_alg_integ, integ, integ));
 		if (parser->diag != NULL) {
@@ -333,8 +308,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	bool lookup_ke = parser->protocol->kem || impair.proposal_parser;
-	if (lookup_ke && tokens->this.ptr != NULL) {
+	if (parser->protocol->kem && tokens->this.ptr != NULL) {
 		shunk_t ke = tokens[0].this;
 		proposal.kem = kem_desc(alg_byname(parser, &ike_alg_kem, ke, ke));
 		if (parser->diag != NULL) {
@@ -350,11 +324,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		return false;
 	}
 
-	if (impair.proposal_parser) {
-		return add_proposal(parser, proposals, &proposal);
-	} else {
-		return merge_default_proposals(parser, proposals, &proposal);
-	}
+	return merge_default_proposals(parser, proposals, &proposal);
 }
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,

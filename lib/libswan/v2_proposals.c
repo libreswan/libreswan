@@ -217,13 +217,11 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 				passert(parser->diag == NULL);
 				return PROPOSAL_IGNORE;
 			}
-			if (!impair.proposal_parser) {
-				llog_pexpect(parser->policy->logger, HERE,
-					     "all encryption algorithms skipped");
-				proposal_error(parser, "all encryption algorithms discarded");
-				passert(parser->diag != NULL);
-				return PROPOSAL_ERROR;
-			}
+			llog_pexpect(parser->policy->logger, HERE,
+				     "all encryption algorithms skipped");
+			proposal_error(parser, "all encryption algorithms discarded");
+			passert(parser->diag != NULL);
+			return PROPOSAL_ERROR;
 		}
 		remove_duplicate_algorithms(parser, proposal, PROPOSAL_encrypt);
 	}
@@ -266,7 +264,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	diag_t prf_diag = NULL; /* must free or transfer */
 	if (parser->protocol->prf &&
 	    tokens.this.ptr != NULL /*more*/ &&
-	    tokens.prev_term != ';' /*!DH*/) {
+	    tokens.prev_term != ';' /*!;KEM*/) {
 		/* not impaired */
 		struct proposal_tokenizer prf_tokens = tokens;
 		PARSE_ALG(prf_tokens, PROPOSAL_prf, prf);
@@ -293,9 +291,9 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 *    <encr>-<INTEG>... (if above fails)
 	 *    <INTEG>...
 	 */
-	if ((parser->protocol->integ || impair.proposal_parser) &&
+	if (parser->protocol->integ &&
 	    tokens.this.ptr != NULL /*more*/ &&
-	    tokens.prev_term != ';' /*!DH*/ &&
+	    tokens.prev_term != ';' /*!;KEM*/ &&
 	    /* <encr>-<PRF> either failed or wasn't needed */
 	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
 		PARSE_ALG(tokens, PROPOSAL_integ, integ);
@@ -327,9 +325,9 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 *
 	 * But only when <encr>-<PRF> didn't succeed.
 	 */
-	if ((parser->protocol->prf || impair.proposal_parser) &&
+	if (parser->protocol->prf &&
 	    tokens.this.ptr != NULL /*more*/ &&
-	    tokens.prev_term != ';' /*!DH*/ &&
+	    tokens.prev_term != ';' /*!;KEM*/ &&
 	    /* above parsed integrity */
 	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
 		PARSE_ALG(tokens, PROPOSAL_prf, prf);
@@ -352,7 +350,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 *
 	 * But only when <encr>-<PRF> didn't succeed.
 	 */
-	if ((parser->protocol->kem || impair.proposal_parser) &&
+	if (parser->protocol->kem &&
 	    tokens.this.ptr != NULL /*more*/) {
 		PARSE_ALG(tokens, PROPOSAL_kem, kem);
 		if (parser->diag != NULL) {
@@ -393,8 +391,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		passert(parser->diag != NULL);
 		return PROPOSAL_ERROR;
 	}
-	if (!impair.proposal_parser &&
-	    !merge_defaults(parser, proposal)) {
+	if (!merge_defaults(parser, proposal)) {
 		passert(parser->diag != NULL);
 		return PROPOSAL_ERROR;
 	}

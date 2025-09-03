@@ -14,7 +14,6 @@ static bool test_proposals = false;
 static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
-static bool impaired = false;
 static enum ike_version ike_version = IKEv2;
 static bool ignore_parser_errors = false;
 static bool fips = false;
@@ -75,9 +74,6 @@ static void check(const struct protocol *protocol,
 {
 	/* print the test */
 	printf("algparse ");
-	if (impaired) {
-		printf("-impair ");
-	}
 	if (fips) {
 		printf("-fips ");
 	}
@@ -374,19 +370,19 @@ static void test_esp(struct logger *logger)
 	/* ESP tests that should fail */
 	/* So these do not require ifdef's to prevent bad exit code */
 
-	esp(impaired, "3des168-sha1"); /* wrong keylen */
-	esp(impaired, "3des-null"); /* non-null integ */
-	esp(impaired, "aes128-null"); /* non-null-integ */
-	esp(impaired, "aes224-sha1"); /* wrong keylen */
-	esp(impaired, "aes-224-sha1"); /* wrong keylen */
+	esp(false, "3des168-sha1"); /* wrong keylen */
+	esp(false, "3des-null"); /* non-null integ */
+	esp(false, "aes128-null"); /* non-null-integ */
+	esp(false, "aes224-sha1"); /* wrong keylen */
+	esp(false, "aes-224-sha1"); /* wrong keylen */
 	esp(false, "aes0-sha1"); /* wrong keylen */
 	esp(false, "aes-0-sha1"); /* wrong keylen */
-	esp(impaired, "aes512-sha1"); /* wrong keylen */
+	esp(false, "aes512-sha1"); /* wrong keylen */
 	esp(false, "aes-sha1555"); /* unknown integ */
-	esp(impaired, "camellia666-sha1"); /* wrong keylen */
+	esp(false, "camellia666-sha1"); /* wrong keylen */
 	esp(false, "blowfish"); /* obsoleted */
 	esp(false, "des-sha1"); /* obsoleted */
-	esp(impaired, "aes_ctr666"); /* bad key size */
+	esp(false, "aes_ctr666"); /* bad key size */
 	esp(false, "aes128-sha2_128"); /* _128 does not exist */
 	esp(false, "aes256-sha2_256-4096"); /* double keysize */
 	esp(false, "aes256-sha2_256-128"); /* now what?? */
@@ -395,9 +391,9 @@ static void test_esp(struct logger *logger)
 	esp(false, "aes-sah1"); /* should get rejected */
 	esp(false, "id3"); /* should be rejected; idXXX removed */
 	esp(false, "aes-id3"); /* should be rejected; idXXX removed */
-	esp(impaired, "aes_gcm-md5"); /* AEAD must have auth null */
+	esp(false, "aes_gcm-md5"); /* AEAD must have auth null */
 	esp(false, "mars"); /* support removed */
-	esp(impaired, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
+	esp(false, "aes_gcm-16"); /* don't parse as aes_gcm_16 */
 	esp(false, "aes_gcm-0"); /* invalid keylen */
 	esp(false, "aes_gcm-123456789012345"); /* huge keylen */
 	esp(false, "3des-sha1;dh22"); /* support for dh22 removed */
@@ -448,20 +444,20 @@ static void test_ah(struct logger *logger)
 #endif
 #ifdef USE_SHA1
 	ah(true, "sha1-modp8192,sha1-modp8192,sha1-modp8192"); /* suppress duplicates */
-	ah(impaired, "aes-sha1");
+	ah(false, "aes-sha1");
 #endif
 	ah(false, "vanityhash1");
 #ifdef USE_AES
-	ah(impaired, "aes_gcm_c-256");
+	ah(false, "aes_gcm_c-256");
 #endif
 	ah(false, "id3"); /* should be rejected; idXXX removed */
 #ifdef USE_3DES
-	ah(impaired, "3des");
+	ah(false, "3des");
 #endif
-	ah(impaired, "null");
+	ah(false, "null");
 #ifdef USE_AES
-	ah(impaired, "aes_gcm");
-	ah(impaired, "aes_ccm");
+	ah(false, "aes_gcm");
+	ah(false, "aes_ccm");
 #endif
 	ah(false, "ripemd"); /* support removed */
 
@@ -667,8 +663,6 @@ int main(int argc, char *argv[])
 			debug = true;
 		} else if (streq(arg, "ignore")) {
 			ignore_parser_errors = true;
-		} else if (streq(arg, "impair")) {
-			impaired = true;
 		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
 			nss.password = *++argp;
 			if (nss.password == NULL) {
@@ -704,9 +698,6 @@ int main(int argc, char *argv[])
 	 */
 	if (debug) {
 		cur_debugging |= DBG_PROPOSAL_PARSER | DBG_CRYPT;
-	}
-	if (impaired) {
-		impair.proposal_parser = true;
 	}
 
 	if (test_algs) {

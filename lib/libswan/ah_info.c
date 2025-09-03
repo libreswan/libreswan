@@ -32,12 +32,9 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
 
 	/* ah=null is invalid */
 	if (!impair.allow_null_none) {
@@ -46,9 +43,7 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
 			const struct integ_desc *integ = integ_desc(alg->desc);
 			if (integ == &ike_alg_integ_none) {
 				proposal_error(parser, "AH cannot have 'none' as the integrity algorithm");
-				if (!impair_proposal_errors(parser)) {
-					return false;
-				}
+				return false;
 			}
 		}
 	}

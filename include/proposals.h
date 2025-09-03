@@ -275,8 +275,6 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 void proposal_error(struct proposal_parser *parser,
 		    const char *message, ...) PRINTF_LIKE(2);
 
-bool impair_proposal_errors(struct proposal_parser *parser);
-
 /*
  * Convert a generic proposal back into something the IKEv1 code can
  * digest.
