@@ -5,5 +5,6 @@ ipsec certutil -D -n west
 /testing/x509/import.sh real/mainca/north.p12
 ipsec start
 ../../guestbin/wait-until-pluto-started
-../../guestbin/ipsec-add.sh main-north main-east
+ipsec add main-north
+ipsec add main-east
 echo "initdone"

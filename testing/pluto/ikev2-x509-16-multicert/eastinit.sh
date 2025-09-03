@@ -9,5 +9,6 @@ ipsec certutil -L
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-../../guestbin/ipsec-add.sh main other
+ipsec add main
+ipsec add other
 echo "initdone"

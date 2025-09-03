@@ -2,5 +2,7 @@
 ipsec certutil -D -n west
 ipsec start
 ../../guestbin/wait-until-pluto-started
-../../guestbin/ipsec-add.sh distraction resume-distraction any-east
+ipsec add distraction
+ipsec add resume-distraction
+ipsec add any-east
 echo "initdone"
