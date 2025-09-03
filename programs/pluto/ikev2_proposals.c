@@ -2214,7 +2214,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	for (enum ikev2_trans_type type = IKEv2_TRANS_TYPE_ADDKE1;
 	     type <= IKEv2_TRANS_TYPE_ADDKE7; type++) {
 		/* map TYPE onto PROPOSAL algorithm */
-		enum proposal_algorithm ptype =
+		enum proposal_transform ptype =
 			PROPOSAL_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
 		/* Can't use FOR_EACH_ALGORITHM(addkeN) */
 		for (struct algorithm *alg = next_algorithm(proposal, ptype, NULL);

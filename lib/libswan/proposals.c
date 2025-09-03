@@ -195,7 +195,7 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 	/* check for duplicates */
 	while ((*end) != NULL) {
 		bool same = true;
-		for (enum proposal_algorithm pa = 0;
+		for (enum proposal_transform pa = 0;
 		     same && pa < PROPOSAL_ALGORITHM_ROOF; pa++) {
 			struct algorithm *old = (*end)->algorithms[pa];
 			struct algorithm *new = (*proposal)->algorithms[pa];
@@ -255,7 +255,7 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 }
 
 struct algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_algorithm algorithm,
+				 enum proposal_transform algorithm,
 				 struct algorithm *last)
 {
 	if (last == NULL) {
@@ -271,7 +271,7 @@ struct algorithm *next_algorithm(const struct proposal *proposal,
 }
 
 void free_algorithms(struct proposal *proposal,
-		     enum proposal_algorithm algorithm)
+		     enum proposal_transform algorithm)
 {
 	passert(algorithm < elemsof(proposal->algorithms));
 	struct algorithm *alg = proposal->algorithms[algorithm];
@@ -296,7 +296,7 @@ void free_proposal(struct proposal **proposals)
 	while (proposal != NULL) {
 		struct proposal *del = proposal;
 		proposal = proposal->next;
-		for (enum proposal_algorithm algorithm = 0;
+		for (enum proposal_transform algorithm = 0;
 		     algorithm < PROPOSAL_ALGORITHM_ROOF;
 		     algorithm++) {
 			free_algorithms(del, algorithm);
@@ -311,7 +311,7 @@ void free_proposal(struct proposal **proposals)
  * XXX: hack, need to come up with a type safe way of mapping an
  * ike_alg onto an index.
  */
-static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *alg)
+static enum proposal_transform ike_to_proposal_algorithm(const struct ike_alg *alg)
 {
 	if (alg->type == &ike_alg_encrypt) {
 		return PROPOSAL_encrypt;
@@ -330,7 +330,7 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 
 void append_algorithm_for(struct proposal_parser *parser,
 			  struct proposal *proposal,
-			  enum proposal_algorithm proposal_algorithm,
+			  enum proposal_transform proposal_algorithm,
 			  const struct ike_alg *alg,
 			  int enckeylen)
 {
@@ -371,7 +371,7 @@ void append_algorithm(struct proposal_parser *parser,
 
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 enum proposal_algorithm algorithm)
+				 enum proposal_transform algorithm)
 {
 	passert(algorithm < elemsof(proposal->algorithms));
 	/* XXX: not efficient */
@@ -410,7 +410,7 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 
 static const char *jam_proposal_algorithm(struct jambuf *buf,
 					  const struct proposal *proposal,
-					  enum proposal_algorithm proposal_algorithm,
+					  enum proposal_transform proposal_algorithm,
 					  const char *algorithm_separator)
 {
 	const char *separator = algorithm_separator;
@@ -429,7 +429,7 @@ void jam_proposal(struct jambuf *buf,
 		  const struct proposal *proposal)
 {
 	const char *algorithm_separator = "";
-	for (enum proposal_algorithm proposal_algorithm = 0;
+	for (enum proposal_transform proposal_algorithm = 0;
 	     proposal_algorithm < PROPOSAL_ALGORITHM_ROOF; proposal_algorithm++) {
 
 		/*

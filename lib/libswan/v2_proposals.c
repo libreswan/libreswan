@@ -68,7 +68,7 @@ static bool warning_or_false(struct proposal_parser *parser,
 
 static void merge_algorithms(struct proposal_parser *parser,
 			     struct proposal *proposal,
-			     enum proposal_algorithm algorithm,
+			     enum proposal_transform algorithm,
 			     const struct ike_alg **defaults)
 {
 	if (defaults == NULL) {
@@ -134,7 +134,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 
 static bool parse_alg(struct proposal_parser *parser,
 		      struct proposal *proposal,
-		      enum proposal_algorithm algorithm,
+		      enum proposal_transform algorithm,
 		      const struct ike_alg_type *alg_type,
 		      shunk_t token)
 {
@@ -365,7 +365,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 * Parse additional key exchanges.
 	 */
 	if (parser->policy->addke && tokens.this.ptr != NULL /*more*/) {
-		for (enum proposal_algorithm proposal_algorithm = PROPOSAL_addke1;
+		for (enum proposal_transform proposal_algorithm = PROPOSAL_addke1;
 		     proposal_algorithm <= PROPOSAL_addke7;
 		     proposal_algorithm++) {
 			if (tokens.this.ptr == NULL) {
