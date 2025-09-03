@@ -1,0 +1,17 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add east-ikev1
+"east-ikev1": added IKEv1 connection
+east #
+ ipsec add east-ikev2
+"east-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #

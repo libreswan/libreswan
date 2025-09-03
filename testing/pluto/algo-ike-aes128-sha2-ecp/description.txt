@@ -1,0 +1,3 @@
+test {ikev1,ikev2} ike=aes128-sha2-{ecp256,ecp384,ecp521}
+
+aka DH19, DH20, DH21
