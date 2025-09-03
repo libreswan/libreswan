@@ -733,8 +733,10 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 * It is the initiator that will switch to port 4500 (float
 	 * away) when necessary.
 	 */
-	if (detect_ikev2_nat(ike, md)) {
-		PEXPECT(ike->sa.logger, nat_traversal_detected(&ike->sa));
+
+	detect_ikev2_nat(ike, md);
+
+	if (nat_traversal_detected(&ike->sa)) {
 		ldbg(ike->sa.logger, "NAT: responder so initiator gets to switch ports");
 		/* should this check that a port is available? */
 	}
@@ -1264,15 +1266,16 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * can't support NAT, give up.
 	 */
 
-	if (detect_ikev2_nat(ike, md)) {
-		PEXPECT(ike->sa.logger, nat_traversal_detected(&ike->sa));
+	detect_ikev2_nat(ike, md);
+
+	if (nat_traversal_detected(&ike->sa)) {
 		if (!ikev2_natify_initiator_endpoints(ike, HERE)) {
 			/* already logged */
 			return STF_FATAL;
 		}
 		if (ike->sa.st_connection->config->nic_offload == NIC_OFFLOAD_PACKET) {
 			llog_sa(RC_LOG, ike,
-			"connection is NATed but nic-offload=packet does not support NAT");
+				"connection is NATed but nic-offload=packet does not support NAT");
 			return STF_FATAL;
 		}
 	}

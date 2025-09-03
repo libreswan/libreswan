@@ -17,9 +17,14 @@
 #define IKEV2_NAT_H
 
 /*
- * Detect IKEv2 NAT, return true when detected.
+ * Detect IKEv2 NAT.
+ *
+ * Call nat_traversal_detected() to determine if there's a NAT.
+ *
+ * XXX: while the probe for nat can happen early, the address float
+ * should happen late, after the packet has been fully processed.
  */
-bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md);
+void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md);
 
 /*
  * move initiator endpoints (src, dst) to NAT ports.

@@ -95,7 +95,7 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 	return true;
 }
 
-bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
+void detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* TODO: This use must be allowed even with USE_SHA1=false */
 	static const struct hash_desc *hasher = &ike_alg_hash_sha1;
@@ -106,28 +106,33 @@ bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 	enum { SOURCE, DESTINATION, };
 
 	struct detection {
-		const struct payload_digest *pd;
+		const enum v2_notification n;
 		const ip_endpoint endpoint;
+		const struct payload_digest *pd;
 		bool matched;
 	} detect[] = {
 		[SOURCE] = {
 			/* the peer sent from this source address */
-			md->pd[PD_v2N_NAT_DETECTION_SOURCE_IP],
-			md->sender,
-			false,
+			.n = v2N_NAT_DETECTION_SOURCE_IP,
+			.endpoint = md->sender,
 		},
 		[DESTINATION] = {
 			/* ... to this destination address */
-			md->pd[PD_v2N_NAT_DETECTION_DESTINATION_IP],
-			md->iface->local_endpoint,
-			false,
+			.n = v2N_NAT_DETECTION_DESTINATION_IP,
+			.endpoint = md->iface->local_endpoint,
 		},
 	};
 
-	/* must have both */
+	/* check both payloads are present */
+
 	FOR_EACH_ELEMENT(d, detect) {
+		enum v2_pd pd = v2_pd_from_notification(d->n);
+		d->pd = md->pd[pd];
 		if (d->pd == NULL) {
-			return false;
+			name_buf nb;
+			ldbg(ike->sa.logger, "NAT: missing %s payload, NAT ignored",
+			     str_enum_short(&v2_notification_names, d->n, &nb));
+			return;
 		}
 	}
 
@@ -170,7 +175,6 @@ bool detect_ikev2_nat(struct ike_sa *ike, struct msg_digest *md)
 	detect_nat_common(ike, md->sender,
 			  /*found_me*/detect[DESTINATION].matched,
 			  /*found_peer*/detect[SOURCE].matched);
-	return nat_traversal_detected(&ike->sa);
 }
 
 bool ikev2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
