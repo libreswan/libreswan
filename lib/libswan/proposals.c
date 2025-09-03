@@ -33,7 +33,7 @@ struct proposal {
 	/*
 	 * The algorithm entries.
 	 */
-	struct algorithm *algorithms[PROPOSAL_ALGORITHM_ROOF];
+	struct algorithm *algorithms[PROPOSAL_TRANSFORM_ROOF];
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -195,8 +195,8 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 	/* check for duplicates */
 	while ((*end) != NULL) {
 		bool same = true;
-		for (enum proposal_transform pa = 0;
-		     same && pa < PROPOSAL_ALGORITHM_ROOF; pa++) {
+		for (enum proposal_transform pa = PROPOSAL_TRANSFORM_FLOOR;
+		     same && pa < PROPOSAL_TRANSFORM_ROOF; pa++) {
 			struct algorithm *old = (*end)->algorithms[pa];
 			struct algorithm *new = (*proposal)->algorithms[pa];
 			while (same) {
@@ -296,9 +296,8 @@ void free_proposal(struct proposal **proposals)
 	while (proposal != NULL) {
 		struct proposal *del = proposal;
 		proposal = proposal->next;
-		for (enum proposal_transform algorithm = 0;
-		     algorithm < PROPOSAL_ALGORITHM_ROOF;
-		     algorithm++) {
+		for (enum proposal_transform algorithm = PROPOSAL_TRANSFORM_FLOOR;
+		     algorithm < PROPOSAL_TRANSFORM_ROOF; algorithm++) {
 			free_algorithms(del, algorithm);
 		}
 		pfree(del);
@@ -429,8 +428,8 @@ void jam_proposal(struct jambuf *buf,
 		  const struct proposal *proposal)
 {
 	const char *algorithm_separator = "";
-	for (enum proposal_transform proposal_algorithm = 0;
-	     proposal_algorithm < PROPOSAL_ALGORITHM_ROOF; proposal_algorithm++) {
+	for (enum proposal_transform proposal_algorithm = PROPOSAL_TRANSFORM_FLOOR;
+	     proposal_algorithm < PROPOSAL_TRANSFORM_ROOF; proposal_algorithm++) {
 
 		/*
 		 * Should integrity be skipped?

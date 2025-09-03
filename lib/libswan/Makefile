@@ -128,6 +128,7 @@ OBJS += datatot.o
 OBJS += vendorid.o
 
 OBJS += proposals.o
+OBJS += proposal_transform_names.o
 OBJS += v1_proposals.o
 OBJS += v2_proposals.o
 OBJS += esp_info.o

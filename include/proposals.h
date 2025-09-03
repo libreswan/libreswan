@@ -45,6 +45,7 @@ enum stream;
  * Can this be merged with IKEv2's transform type?
  */
 enum proposal_transform {
+#define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_encrypt)
 	PROPOSAL_encrypt,
 
 	/*
@@ -66,8 +67,10 @@ enum proposal_transform {
 	PROPOSAL_addke5,
 	PROPOSAL_addke6,
 	PROPOSAL_addke7,
-	PROPOSAL_ALGORITHM_ROOF,
+#define PROPOSAL_TRANSFORM_ROOF (PROPOSAL_addke7+1)
 };
+
+extern const struct enum_names proposal_transform_names;
 
 /*
  * Everything combined.
