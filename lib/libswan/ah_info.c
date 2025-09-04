@@ -32,9 +32,9 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL);
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt, NULL) == NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) == NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_integ, NULL) != NULL);
 
 	/* ah=null is invalid */
 	if (!impair.allow_null_none) {

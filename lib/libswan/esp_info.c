@@ -40,9 +40,9 @@ static bool esp_proposal_ok(struct proposal_parser *parser,
 		return false;
 	}
 
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL);
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) == NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_integ, NULL) != NULL);
 	return true;
 }
 

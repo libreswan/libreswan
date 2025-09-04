@@ -45,8 +45,8 @@ enum stream;
  * Can this be merged with IKEv2's transform type?
  */
 enum proposal_transform {
-#define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_encrypt)
-	PROPOSAL_encrypt,
+#define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_TRANSFORM_encrypt)
+	PROPOSAL_TRANSFORM_encrypt,
 
 	/*
 	 * XXX: order INTEG before PRF so it is displayed first.
@@ -55,19 +55,19 @@ enum proposal_transform {
 	 * Putting INTEG before PRF causes jam_proposal() to be
 	 * consistent.
 	 */
-	PROPOSAL_integ,
-	PROPOSAL_prf,
+	PROPOSAL_TRANSFORM_integ,
+	PROPOSAL_TRANSFORM_prf,
 
-	PROPOSAL_kem,
+	PROPOSAL_TRANSFORM_kem,
 
-	PROPOSAL_addke1,
-	PROPOSAL_addke2,
-	PROPOSAL_addke3,
-	PROPOSAL_addke4,
-	PROPOSAL_addke5,
-	PROPOSAL_addke6,
-	PROPOSAL_addke7,
-#define PROPOSAL_TRANSFORM_ROOF (PROPOSAL_addke7+1)
+	PROPOSAL_TRANSFORM_addke1,
+	PROPOSAL_TRANSFORM_addke2,
+	PROPOSAL_TRANSFORM_addke3,
+	PROPOSAL_TRANSFORM_addke4,
+	PROPOSAL_TRANSFORM_addke5,
+	PROPOSAL_TRANSFORM_addke6,
+	PROPOSAL_TRANSFORM_addke7,
+#define PROPOSAL_TRANSFORM_ROOF (PROPOSAL_TRANSFORM_addke7+1)
 };
 
 extern const struct enum_names proposal_transform_names;
@@ -240,8 +240,8 @@ struct algorithm *next_algorithm(const struct proposal *proposal,
 				 struct algorithm *last);
 
 #define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
-	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_##TYPE, NULL); \
-	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_##TYPE, ALGORITHM))
+	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \
+	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, ALGORITHM))
 
 /*
  * Error indicated by err_buf[0] != '\0'.

@@ -20,22 +20,22 @@
 
 static const char *proposal_transform_name[] = {
 #define S(E) [E-PROPOSAL_TRANSFORM_FLOOR] = #E
-	S(PROPOSAL_encrypt),
-	S(PROPOSAL_prf),
-	S(PROPOSAL_integ),
-	S(PROPOSAL_kem),
-	S(PROPOSAL_addke1),
-	S(PROPOSAL_addke2),
-	S(PROPOSAL_addke3),
-	S(PROPOSAL_addke4),
-	S(PROPOSAL_addke5),
-	S(PROPOSAL_addke6),
-	S(PROPOSAL_addke7),
+	S(PROPOSAL_TRANSFORM_encrypt),
+	S(PROPOSAL_TRANSFORM_prf),
+	S(PROPOSAL_TRANSFORM_integ),
+	S(PROPOSAL_TRANSFORM_kem),
+	S(PROPOSAL_TRANSFORM_addke1),
+	S(PROPOSAL_TRANSFORM_addke2),
+	S(PROPOSAL_TRANSFORM_addke3),
+	S(PROPOSAL_TRANSFORM_addke4),
+	S(PROPOSAL_TRANSFORM_addke5),
+	S(PROPOSAL_TRANSFORM_addke6),
+	S(PROPOSAL_TRANSFORM_addke7),
 #undef S
 };
 
 const struct enum_names proposal_transform_names = {
 	PROPOSAL_TRANSFORM_FLOOR, PROPOSAL_TRANSFORM_ROOF-1,
 	ARRAY_REF(proposal_transform_name),
-	.en_prefix = "PARSER_",
+	.en_prefix = "PROPOSAL_TRANSFORM_",
 };

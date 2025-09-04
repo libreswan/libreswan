@@ -86,9 +86,9 @@ static bool merge_defaults(struct proposal_parser *parser,
 			   struct proposal *proposal)
 {
 	const struct proposal_defaults *defaults = parser->protocol->defaults;
-	merge_algorithms(parser, proposal, PROPOSAL_encrypt, defaults->encrypt);
-	merge_algorithms(parser, proposal, PROPOSAL_prf, defaults->prf);
-	if (next_algorithm(proposal, PROPOSAL_integ, NULL) == NULL) {
+	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_encrypt, defaults->encrypt);
+	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf, defaults->prf);
+	if (next_algorithm(proposal, PROPOSAL_TRANSFORM_integ, NULL) == NULL) {
 		if (proposal_encrypt_aead(proposal)) {
 			/*
 			 * Since AEAD, integrity is always 'none'.
@@ -99,9 +99,9 @@ static bool merge_defaults(struct proposal_parser *parser,
 			/*
 			 * Merge in the defaults.
 			 */
-			merge_algorithms(parser, proposal, PROPOSAL_integ,
+			merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_integ,
 					 defaults->integ);
-		} else if (next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL &&
+		} else if (next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) != NULL &&
 			   proposal_encrypt_norm(proposal)) {
 			/*
 			 * Since non-AEAD, use integrity algorithms
@@ -128,7 +128,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 			}
 		}
 	}
-	merge_algorithms(parser, proposal, PROPOSAL_kem, defaults->kem);
+	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_kem, defaults->kem);
 	return true;
 }
 
@@ -156,13 +156,13 @@ static bool parse_transform_algorithm(struct proposal_parser *parser,
 }
 
 static const struct ike_alg_type *transform_types[] = {
-#define S(E) [PROPOSAL_##E] = &ike_alg_##E
+#define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_##E
 	S(encrypt),
 	S(prf),
 	S(integ),
 	S(kem),
 #undef S
-#define S(E) [PROPOSAL_##E] = &ike_alg_kem
+#define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_kem
 	S(addke1),
 	S(addke2),
 	S(addke3),
@@ -263,7 +263,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 			append_algorithm(parser, proposal, encrypt, encrypt_keylen);
 		}
 		/* deal with all encryption algorithm tokens being discarded */
-		if (next_algorithm(proposal, PROPOSAL_encrypt, NULL) == NULL) {
+		if (next_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt, NULL) == NULL) {
 			if (parser->policy->ignore_parser_errors) {
 				ldbgf(DBG_PROPOSAL_PARSER, logger,
 				      "all encryption algorithms skipped; stumbling on");
@@ -276,7 +276,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 			passert(parser->diag != NULL);
 			return PROPOSAL_ERROR;
 		}
-		remove_duplicate_algorithms(parser, proposal, PROPOSAL_encrypt);
+		remove_duplicate_algorithms(parser, proposal, PROPOSAL_TRANSFORM_encrypt);
 	}
 
 	/*
@@ -303,12 +303,12 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.prev_term != ';' /*!;KEM*/) {
 		/* not impaired */
 		struct proposal_tokenizer prf_tokens = tokens;
-		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_prf, &prf_tokens)) {
+		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf, &prf_tokens)) {
 			/* toss the result, but save the error */
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "<encr>-<PRF> failed, saving error '%s' and tossing result",
 			      str_diag(parser->diag));
-			free_algorithms(proposal, PROPOSAL_prf);
+			free_algorithms(proposal, PROPOSAL_TRANSFORM_prf);
 			prf_diag = parser->diag;
 			parser->diag = NULL;
 		} else {
@@ -329,8 +329,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.this.ptr != NULL /*more*/ &&
 	    tokens.prev_term != ';' /*!;KEM*/ &&
 	    /* <encr>-<PRF> either failed or wasn't needed */
-	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
-		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_integ, &tokens)) {
+	    next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) == NULL) {
+		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_integ, &tokens)) {
 			if (prf_diag != NULL) {
 				ldbgf(DBG_PROPOSAL_PARSER, logger,
 				      "<encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
@@ -361,8 +361,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	    tokens.this.ptr != NULL /*more*/ &&
 	    tokens.prev_term != ';' /*!;KEM*/ &&
 	    /* above parsed integrity */
-	    next_algorithm(proposal, PROPOSAL_prf, NULL) == NULL) {
-		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_prf, &tokens)) {
+	    next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) == NULL) {
+		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf, &tokens)) {
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
@@ -382,7 +382,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 */
 	if (parser->protocol->kem &&
 	    tokens.this.ptr != NULL /*more*/) {
-		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_kem, &tokens)) {
+		if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_kem, &tokens)) {
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "...<ke> failed '%s'", str_diag(parser->diag));
 			return PROPOSAL_ERROR;
@@ -393,8 +393,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	 * Parse additional key exchanges.
 	 */
 	if (parser->policy->addke && tokens.this.ptr != NULL /*more*/) {
-		for (enum proposal_transform proposal_transform = PROPOSAL_addke1;
-		     proposal_transform <= PROPOSAL_addke7;
+		for (enum proposal_transform proposal_transform = PROPOSAL_TRANSFORM_addke1;
+		     proposal_transform <= PROPOSAL_TRANSFORM_addke7;
 		     proposal_transform++) {
 			if (tokens.this.ptr == NULL) {
 				break;
