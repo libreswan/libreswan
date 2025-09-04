@@ -274,7 +274,7 @@ void yyerror(struct parser *parser, const char *s)
 	}
 }
 
-static struct ipsec_conf *alloc_ipsec_conf(void)
+struct ipsec_conf *alloc_ipsec_conf(void)
 {
 	struct ipsec_conf *cfgp = alloc_thing(struct ipsec_conf, __func__);
 	TAILQ_INIT(&cfgp->config_setup);
@@ -319,11 +319,13 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	return parser.cfg;
 }
 
-struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
-				   struct logger *logger)
+bool ipsec_conf_add_argv_conn(struct ipsec_conf *ipsec_conf,
+			      const char *name,
+			      char *argv[], int start,
+			      struct logger *logger)
 {
 	struct parser parser = {
-		.cfg = alloc_ipsec_conf(),
+		.cfg = ipsec_conf,
 		.logger = logger,
 		.setuponly = false,
 	};
@@ -401,8 +403,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 			/* only allow --KEY VALUE when whack compat */
 			if (argp[1] == NULL) {
 				llog(ERROR_STREAM, logger, "missing argument for %s", arg);
-				pfree_ipsec_conf(&parser.cfg);
-				return NULL;
+				return false;
 			}
 			/* skip/use next arg */
 			argp++;
@@ -435,8 +436,7 @@ struct ipsec_conf *argv_ipsec_conf(const char *name, char *argv[], int start,
 	}
 
 	scanner_close(&parser);
-
-	return parser.cfg;
+	return true;
 }
 
 static void pfree_keyval_list(struct keyval_list *list)
