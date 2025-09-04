@@ -1,0 +1,1 @@
+test {ikev1,ikev2} ike=aes-md5 esp=3des-sha1

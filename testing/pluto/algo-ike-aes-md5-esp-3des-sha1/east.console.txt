@@ -6,13 +6,12 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec add west-east
-"west-east": added IKEv1 connection
+ ipsec add east-ikev1
+"east-ikev1": added IKEv1 connection
+east #
+ ipsec add east-ikev2
+"east-ikev2": added IKEv2 connection
 east #
  echo "initdone"
 initdone
-east #
- # both east and west should still have one IKE SA #1
-east #
- ipsec showstates
 east #

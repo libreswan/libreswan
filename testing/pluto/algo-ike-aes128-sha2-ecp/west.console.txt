@@ -1,0 +1,120 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/algo.sh keyexchange=ikev1 ike=aes128-sha2-ecp256
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev1 ike=aes128-sha2-ecp256
+"algo": added IKEv1 connection
+ ipsec up algo
+"algo" #1: initiating IKEv1 Main Mode connection
+"algo" #1: sent Main Mode request
+"algo" #1: sent Main Mode I2
+"algo" #1: sent Main Mode I3
+"algo" #1: Peer ID is FQDN: '@east'
+"algo" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA2_256 group=DH19}
+"algo" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=DH19 192.0.1.0/24===192.0.2.0/24}
+"algo" #2: sent Quick Mode request
+"algo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/algo.sh keyexchange=ikev1 ike=aes128-sha2-ecp384
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev1 ike=aes128-sha2-ecp384
+"algo": added IKEv1 connection
+ ipsec up algo
+"algo" #1: initiating IKEv1 Main Mode connection
+"algo" #1: sent Main Mode request
+"algo" #1: sent Main Mode I2
+"algo" #1: sent Main Mode I3
+"algo" #1: Peer ID is FQDN: '@east'
+"algo" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA2_256 group=DH20}
+"algo" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=DH20 192.0.1.0/24===192.0.2.0/24}
+"algo" #2: sent Quick Mode request
+"algo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/algo.sh keyexchange=ikev1 ike=aes128-sha2-ecp521
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev1 ike=aes128-sha2-ecp521
+"algo": added IKEv1 connection
+ ipsec up algo
+"algo" #1: initiating IKEv1 Main Mode connection
+"algo" #1: sent Main Mode request
+"algo" #1: sent Main Mode I2
+"algo" #1: sent Main Mode I3
+"algo" #1: Peer ID is FQDN: '@east'
+"algo" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA2_256 group=DH21}
+"algo" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128-NONE, AES_GCM_16_256-NONE, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=DH21 192.0.1.0/24===192.0.2.0/24}
+"algo" #2: sent Quick Mode request
+"algo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/algo.sh keyexchange=ikev2 ike=aes128-sha2-ecp256
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev2 ike=aes128-sha2-ecp256
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/algo.sh keyexchange=ikev2 ike=aes128-sha2-ecp384
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev2 ike=aes128-sha2-ecp384
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH20}, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/algo.sh keyexchange=ikev2 ike=aes128-sha2-ecp521
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev2 ike=aes128-sha2-ecp521
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH21}, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #

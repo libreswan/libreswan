@@ -1,5 +1,7 @@
 /testing/guestbin/swan-prep --hostkeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-../../guestbin/ipsec-add.sh west-east-c west-east-b west-east
+ipsec add west-east-c
+ipsec add west-east-b
+ipsec add west-east
 echo "initdone"

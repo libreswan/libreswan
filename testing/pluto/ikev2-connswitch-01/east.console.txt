@@ -8,9 +8,11 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ../../guestbin/ipsec-add.sh distraction westnet-eastnet
+ ipsec add distraction
 "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
 "distraction": added IKEv2 connection
+east #
+ ipsec add westnet-eastnet
 "westnet-eastnet": added IKEv2 connection
 east #
  echo "initdone"

@@ -6,11 +6,15 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ../../guestbin/ipsec-add.sh westnet-east west-eastnet west-east
+ ipsec add westnet-east
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
 "westnet-east": added IKEv1 connection
+east #
+ ipsec add west-eastnet
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
 "west-eastnet": added IKEv1 connection
+east #
+ ipsec add west-east
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
 "west-east": added IKEv1 connection
 east #

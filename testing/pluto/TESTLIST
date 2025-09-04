@@ -914,16 +914,10 @@ kvmplutotest	ikev1-algo-ike-aes-01	good
 kvmplutotest	ikev1-algo-ike-aes-02	good
 
 # ECP DH tests
-kvmplutotest	algo-ikev1-aes128-sha1-ecp256		good
-kvmplutotest	algo-ikev2-aes128-sha1-ecp256		good
-kvmplutotest	algo-ikev1-aes128-sha1-ecp384		good
-kvmplutotest	algo-ikev2-aes128-sha1-ecp384		good
-kvmplutotest	algo-ikev1-aes128-sha1-ecp521		good
-kvmplutotest	algo-ikev2-aes128-sha1-ecp521		good
+kvmplutotest	algo-ike-aes128-sha2-ecp		good
 
 # MD5 as PRF (regression in 4.8)
-kvmplutotest	algo-ikev1-aes-md5-esp-3des-sha1	good
-kvmplutotest	algo-ikev2-aes-md5-esp-3des-sha1	good
+kvmplutotest	algo-ike-aes-md5-esp-3des-sha1	good
 
 # CAP_DAC_OVERRIDE
 kvmplutotest	basic-pluto-06		good

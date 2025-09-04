@@ -1,0 +1,44 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/algo.sh keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
+"algo": added IKEv1 connection
+ ipsec up algo
+"algo" #1: initiating IKEv1 Main Mode connection
+"algo" #1: sent Main Mode request
+"algo" #1: sent Main Mode I2
+"algo" #1: sent Main Mode I3
+"algo" #1: Peer ID is FQDN: '@east'
+"algo" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_MD5 group=MODP2048}
+"algo" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=3DES_CBC-HMAC_SHA1_96 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
+"algo" #2: sent Quick Mode request
+"algo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/algo.sh keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_MD5_96 prf=HMAC_MD5 group=DH19}, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
