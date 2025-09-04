@@ -128,9 +128,10 @@ void parser_fatal(struct parser *parser, int eerror/*can be 0*/,
 
 struct ipsec_conf *alloc_ipsec_conf(void);
 
-struct ipsec_conf *load_ipsec_conf(const char *file,
-				   struct logger *logger,
-				   unsigned verbosity);
+bool ipsec_conf_add_file(struct ipsec_conf *ipsec_conf,
+			 const char *file,
+			 struct logger *logger,
+			 unsigned verbosity);
 
 bool ipsec_conf_add_argv_conn(struct ipsec_conf *ipsec_conf,
 			      const char *name, char *argv[], int start,

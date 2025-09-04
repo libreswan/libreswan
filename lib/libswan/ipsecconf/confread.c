@@ -530,30 +530,32 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, verbosity);
-	if (cfgp == NULL)
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
+	}
 
 	struct starter_config *cfg = alloc_starter_config();
 
 	/**
 	 * Load setup
 	 */
-	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
-		pfree_ipsec_conf(&cfgp);
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		confread_free(cfg);
 		return NULL;
 	}
 
 	if (!setuponly) {
-		if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
-			pfree_ipsec_conf(&cfgp);
+		if (!parse_ipsec_conf_config_conn(cfg, ipsec_conf, logger)) {
+			pfree_ipsec_conf(&ipsec_conf);
 			confread_free(cfg);
 			return NULL;
 		}
 	}
 
-	pfree_ipsec_conf(&cfgp);
+	pfree_ipsec_conf(&ipsec_conf);
 	return cfg;
 }
 

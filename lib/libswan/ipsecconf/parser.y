@@ -283,21 +283,21 @@ struct ipsec_conf *alloc_ipsec_conf(void)
 	return cfgp;
 }
 
-struct ipsec_conf *load_ipsec_conf(const char *file,
-				   struct logger *logger,
-				   unsigned verbosity)
+bool ipsec_conf_add_file(struct ipsec_conf *ipsec_conf,
+			 const char *file,
+			 struct logger *logger,
+			 unsigned verbosity)
 {
 	struct parser parser = {
 		.logger = logger,
 		.stream.warning = WARNING_STREAM,
 		.stream.error = ERROR_STREAM,
 		.verbosity = verbosity,
-		.cfg = alloc_ipsec_conf(),
+		.cfg = ipsec_conf,
 	};
 
 	if (!scanner_open(&parser, file)) {
-		pfree_ipsec_conf(&parser.cfg);
-		return NULL;
+		return false;
 	}
 
 	if (yyparse(&parser) != 0) {
@@ -306,9 +306,8 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 		parser.stream.warning = stream;
 		parser.stream.error = stream;
 		do {} while (yyparse(&parser) != 0);
-		pfree_ipsec_conf(&parser.cfg);
 		scanner_close(&parser);
-		return NULL;
+		return false;
 	}
 
 	scanner_close(&parser);
@@ -316,7 +315,7 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 	/**
 	 * Config valid
 	 */
-	return parser.cfg;
+	return true;
 }
 
 bool ipsec_conf_add_argv_conn(struct ipsec_conf *ipsec_conf,
