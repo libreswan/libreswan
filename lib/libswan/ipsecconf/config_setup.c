@@ -387,7 +387,7 @@ bool load_config_setup(const char *file,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, /*setuponly*/true, verbosity);
+	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, verbosity);
 	if (cfgp == NULL) {
 		return false;
 	}

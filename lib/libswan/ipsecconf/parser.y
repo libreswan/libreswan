@@ -285,7 +285,6 @@ static struct ipsec_conf *alloc_ipsec_conf(void)
 
 struct ipsec_conf *load_ipsec_conf(const char *file,
 				   struct logger *logger,
-				   bool setuponly,
 				   unsigned verbosity)
 {
 	struct parser parser = {
@@ -293,7 +292,6 @@ struct ipsec_conf *load_ipsec_conf(const char *file,
 		.stream.warning = WARNING_STREAM,
 		.stream.error = ERROR_STREAM,
 		.verbosity = verbosity,
-		.setuponly = setuponly,
 		.cfg = alloc_ipsec_conf(),
 	};
 

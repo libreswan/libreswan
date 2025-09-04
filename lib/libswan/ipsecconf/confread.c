@@ -530,7 +530,7 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, setuponly, verbosity);
+	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, verbosity);
 	if (cfgp == NULL)
 		return NULL;
 
