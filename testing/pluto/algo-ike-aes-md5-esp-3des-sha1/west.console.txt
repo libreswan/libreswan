@@ -4,10 +4,10 @@ west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/algo.sh keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
+ ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
 "algo": added IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
@@ -24,10 +24,10 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/algo.sh keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
  ipsec start
 Redirecting to: [initsystem]
- ipsec addconn --name algo authby=secret leftid=@west rightid=@east left=192.1.2.45 right=192.1.2.23 leftsubnet=192.0.1.0/24 rightsubnet=192.0.2.0/24 keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
+ ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
 "algo": added IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
