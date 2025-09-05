@@ -613,17 +613,29 @@ bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
 	return true;
 }
 
-struct starter_config *confread_argv(const char *name,
-				     char *argv[], int start,
-				     struct logger *logger)
+struct starter_config *confread_load_argv(const char *file,
+					  const char *name,
+					  char *argv[], int start,
+					  struct logger *logger,
+					  unsigned verbosity)
 {
 	check_ipsec_conf_keywords(logger);
 
-	/**
-	 * Load file
-	 */
+	/* Load file */
 	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return NULL;
+	}
+
+	/* append the ARGV conn */
 	if (!ipsec_conf_add_argv_conn(ipsec_conf, name, argv, start, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return NULL;
+	}
+
+	/* load setup */
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
 		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
 	}

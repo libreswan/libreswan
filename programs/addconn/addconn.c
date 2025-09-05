@@ -490,7 +490,7 @@ int main(int argc, char *argv[])
 			llog(ERROR_STREAM, logger, "--conn %s conflicts with --autoall", name);
 			exit(1);
 		}
-		cfg = confread_argv(name, argv, optind, logger);
+		cfg = confread_load_argv(configfile, name, argv, optind, logger, verbose);
 		if (cfg == NULL) {
 			llog(RC_LOG, logger, "parsing config arguments failed");
 			exit(3);
@@ -590,7 +590,7 @@ int main(int argc, char *argv[])
 
 	} else if (name != NULL) {
 
-		struct starter_conn *conn = TAILQ_FIRST(&cfg->conns);
+		struct starter_conn *conn = TAILQ_LAST(&cfg->conns, conns_head);
 		if (conn == NULL) {
 			llog(ERROR_STREAM, logger, "no conn %s to load", name);
 			exit(1);
