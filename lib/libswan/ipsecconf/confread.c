@@ -530,30 +530,32 @@ struct starter_config *confread_load(const char *file,
 	/**
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, setuponly, verbosity);
-	if (cfgp == NULL)
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
+	}
 
 	struct starter_config *cfg = alloc_starter_config();
 
 	/**
 	 * Load setup
 	 */
-	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
-		pfree_ipsec_conf(&cfgp);
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		confread_free(cfg);
 		return NULL;
 	}
 
 	if (!setuponly) {
-		if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
-			pfree_ipsec_conf(&cfgp);
+		if (!parse_ipsec_conf_config_conn(cfg, ipsec_conf, logger)) {
+			pfree_ipsec_conf(&ipsec_conf);
 			confread_free(cfg);
 			return NULL;
 		}
 	}
 
-	pfree_ipsec_conf(&cfgp);
+	pfree_ipsec_conf(&ipsec_conf);
 	return cfg;
 }
 
@@ -611,22 +613,36 @@ bool parse_ipsec_conf_config_conn(struct starter_config *cfg,
 	return true;
 }
 
-struct starter_config *confread_argv(const char *name,
-				     char *argv[], int start,
-				     struct logger *logger)
+struct starter_config *confread_load_argv(const char *file,
+					  const char *name,
+					  char *argv[], int start,
+					  struct logger *logger,
+					  unsigned verbosity)
 {
 	check_ipsec_conf_keywords(logger);
 
-	/**
-	 * Load file
-	 */
-	struct ipsec_conf *cfgp = argv_ipsec_conf(name, argv, start, logger);
-	if (cfgp == NULL)
+	/* Load file */
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
+	}
+
+	/* append the ARGV conn */
+	if (!ipsec_conf_add_argv_conn(ipsec_conf, name, argv, start, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return NULL;
+	}
+
+	/* load setup */
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
+		return NULL;
+	}
 
 	struct starter_config *cfg = alloc_starter_config();
 	if (cfg == NULL) {
-		pfree_ipsec_conf(&cfgp);
+		pfree_ipsec_conf(&ipsec_conf);
 		return NULL;
 	}
 
@@ -634,12 +650,12 @@ struct starter_config *confread_argv(const char *name,
 	 * Load other conns
 	 */
 
-	if (!parse_ipsec_conf_config_conn(cfg, cfgp, logger)) {
-		pfree_ipsec_conf(&cfgp);
+	if (!parse_ipsec_conf_config_conn(cfg, ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		confread_free(cfg);
 	}
 
-	pfree_ipsec_conf(&cfgp);
+	pfree_ipsec_conf(&ipsec_conf);
 	return cfg;
 }
 

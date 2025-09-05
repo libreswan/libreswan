@@ -384,23 +384,24 @@ bool load_config_setup(const char *file,
 		       struct logger *logger,
 		       unsigned verbosity)
 {
-	/**
+
+	/*
 	 * Load file
 	 */
-	struct ipsec_conf *cfgp = load_ipsec_conf(file, logger, /*setuponly*/true, verbosity);
-	if (cfgp == NULL) {
+	struct ipsec_conf *ipsec_conf = alloc_ipsec_conf();
+	if (!ipsec_conf_add_file(ipsec_conf, file, logger, verbosity)) {
 		return false;
 	}
 
 	/**
 	 * Load setup
 	 */
-	if (!parse_ipsec_conf_config_setup(cfgp, logger)) {
-		pfree_ipsec_conf(&cfgp);
+	if (!parse_ipsec_conf_config_setup(ipsec_conf, logger)) {
+		pfree_ipsec_conf(&ipsec_conf);
 		return false;
 	}
 
-	pfree_ipsec_conf(&cfgp);
+	pfree_ipsec_conf(&ipsec_conf);
 	return true;
 }
 
