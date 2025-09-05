@@ -128,7 +128,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	bool none = proposal_integ_none(proposal);
 
 	if (aead && !none) {
-		const struct ike_alg *encrypt = proposal->algorithms[PROPOSAL_TRANSFORM_encrypt]->desc;
+		const struct ike_alg *encrypt = first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt)->desc;
 		/*
 		 * At least one of the integrity algorithms wasn't
 		 * NONE.  For instance, esp=aes_gcm-sha1" is invalid.
@@ -140,7 +140,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	}
 
 	if (norm && none) {
-		const struct ike_alg *encrypt = proposal->algorithms[PROPOSAL_TRANSFORM_encrypt]->desc;
+		const struct ike_alg *encrypt = first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt)->desc;
 		/*
 		 * Not AEAD and either there was no integrity
 		 * algorithm (implying NONE) or at least one integrity
@@ -515,19 +515,19 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) == NULL) {
+		struct transform_algorithm *first_kem = first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem);
+		if (first_kem == NULL) {
 			if (first_null_ke == NULL) {
 				first_null_ke = proposal;
 			}
-		} else if (proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc == &ike_alg_kem_none.common) {
+		} else if (first_kem->desc == &ike_alg_kem_none.common) {
 			if (first_none_ke == NULL) {
 				first_none_ke = proposal;
 			}
 		} else if (first_ke == NULL) {
-			first_ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
-		} else if (second_ke == NULL &&
-			   first_ke != proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc) {
-			second_ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
+			first_ke = first_kem->desc;
+		} else if (second_ke == NULL && first_ke != first_kem->desc) {
+			second_ke = first_kem->desc;
 		}
 	}
 
@@ -551,8 +551,9 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) != NULL) {
-				ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
+			struct transform_algorithm *first_kem = first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem);
+			if (first_kem != NULL) {
+				ke = first_kem->desc;
 			}
 			if (ke == &ike_alg_kem_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
