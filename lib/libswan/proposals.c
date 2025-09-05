@@ -33,7 +33,7 @@ struct proposal {
 	/*
 	 * The algorithm entries.
 	 */
-	struct algorithm *algorithms[PROPOSAL_TRANSFORM_ROOF];
+	struct transform_algorithm *algorithms[PROPOSAL_TRANSFORM_ROOF];
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -197,8 +197,8 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 		bool same = true;
 		for (enum proposal_transform pa = PROPOSAL_TRANSFORM_FLOOR;
 		     same && pa < PROPOSAL_TRANSFORM_ROOF; pa++) {
-			struct algorithm *old = (*end)->algorithms[pa];
-			struct algorithm *new = (*proposal)->algorithms[pa];
+			struct transform_algorithm *old = (*end)->algorithms[pa];
+			struct transform_algorithm *new = (*proposal)->algorithms[pa];
 			while (same) {
 				if (new == NULL && old == NULL) {
 					break;
@@ -254,9 +254,9 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 	return v1;
 }
 
-struct algorithm *next_algorithm(const struct proposal *proposal,
+struct transform_algorithm *next_algorithm(const struct proposal *proposal,
 				 enum proposal_transform algorithm,
-				 struct algorithm *last)
+				 struct transform_algorithm *last)
 {
 	if (last == NULL) {
 		/*
@@ -274,9 +274,9 @@ void free_algorithms(struct proposal *proposal,
 		     enum proposal_transform algorithm)
 {
 	passert(algorithm < elemsof(proposal->algorithms));
-	struct algorithm *alg = proposal->algorithms[algorithm];
+	struct transform_algorithm *alg = proposal->algorithms[algorithm];
 	while (alg != NULL) {
-		struct algorithm *del = alg;
+		struct transform_algorithm *del = alg;
 		alg = alg->next;
 		pfree(del);
 	}
@@ -340,12 +340,12 @@ void append_algorithm_for(struct proposal_parser *parser,
 	}
 	passert(proposal_algorithm < elemsof(proposal->algorithms));
 	/* find end */
-	struct algorithm **end = &proposal->algorithms[proposal_algorithm];
+	struct transform_algorithm **end = &proposal->algorithms[proposal_algorithm];
 	while ((*end) != NULL) {
 		end = &(*end)->next;
 	}
 	/* append */
-	struct algorithm new_algorithm = {
+	struct transform_algorithm new_algorithm = {
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
@@ -374,9 +374,9 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 {
 	passert(algorithm < elemsof(proposal->algorithms));
 	/* XXX: not efficient */
-	for (struct algorithm *alg = proposal->algorithms[algorithm];
+	for (struct transform_algorithm *alg = proposal->algorithms[algorithm];
 	     alg != NULL; alg = alg->next) {
-		struct algorithm **dup = &alg->next;
+		struct transform_algorithm **dup = &alg->next;
 		while ((*dup) != NULL) {
 			/*
 			 * Since enckeylen=0 is a wildcard there's no
@@ -388,7 +388,7 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			    (alg->desc->type != &ike_alg_encrypt ||
 			     alg->enckeylen == 0 ||
 			     alg->enckeylen == (*dup)->enckeylen)) {
-				struct algorithm *dead = (*dup);
+				struct transform_algorithm *dead = (*dup);
 				LLOG_JAMBUF(parser->policy->stream, parser->policy->logger, buf) {
 					jam(buf, "discarding duplicate %s %s %s",
 					    parser->protocol->name,
@@ -413,7 +413,7 @@ static const char *jam_proposal_algorithm(struct jambuf *buf,
 					  const char *algorithm_separator)
 {
 	const char *separator = algorithm_separator;
-	for (struct algorithm *algorithm = next_algorithm(proposal, proposal_algorithm, NULL);
+	for (struct transform_algorithm *algorithm = next_algorithm(proposal, proposal_algorithm, NULL);
 	     algorithm != NULL; algorithm = next_algorithm(proposal, proposal_algorithm, algorithm)) {
 		jam_string(buf, separator); separator = "+"; algorithm_separator = "-";
 		jam_string(buf, algorithm->desc->fqn);
@@ -454,8 +454,8 @@ void jam_proposal(struct jambuf *buf,
 			 * Walk INTEG and PRF to see if they are
 			 * consistent; when they are skip integ.
 			 */
-			struct algorithm *integ = NULL;
-			struct algorithm *prf = NULL;
+			struct transform_algorithm *integ = NULL;
+			struct transform_algorithm *prf = NULL;
 			bool integ_matches_prf = true;
 			while (true) {
 				prf = next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, prf);

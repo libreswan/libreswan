@@ -164,14 +164,14 @@ struct proposal_protocol {
  * A proposal as decoded by the parser.
  */
 
-struct algorithm {
+struct transform_algorithm {
 	const struct ike_alg *desc;
 	/*
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
-	struct algorithm *next;
+	struct transform_algorithm *next;
 };
 
 /* return counts of encrypt=aead and integ=none */
@@ -235,12 +235,12 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL != NULL;						\
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
-struct algorithm *next_algorithm(const struct proposal *proposal,
+struct transform_algorithm *next_algorithm(const struct proposal *proposal,
 				 enum proposal_transform algorithm,
-				 struct algorithm *last);
+				 struct transform_algorithm *last);
 
 #define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
-	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \
+	for (struct transform_algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \
 	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, ALGORITHM))
 
 /*
