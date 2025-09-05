@@ -173,7 +173,11 @@ struct transform_algorithm {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
-	struct transform_algorithm *next;
+};
+
+struct transform_algorithms {
+	unsigned len;
+	struct transform_algorithm item[];
 };
 
 /* return counts of encrypt=aead and integ=none */
@@ -237,17 +241,14 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL != NULL;						\
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
-struct transform_algorithm *next_algorithm(const struct proposal *proposal,
-					   enum proposal_transform algorithm,
-					   struct transform_algorithm *last);
-
 /* the first algorithm, or NULL */
 struct transform_algorithm *first_transform_algorithm(const struct proposal *proposal,
 						      enum proposal_transform transform);
+struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
+						  enum proposal_transform transform);
 
-#define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
-	for (struct transform_algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \
-	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, ALGORITHM))
+#define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)			\
+	ITEMS_FOR_EACH(ALGORITHM, transform_algorithms(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE))
 
 /*
  * Error indicated by err_buf[0] != '\0'.

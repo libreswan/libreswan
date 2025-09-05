@@ -2217,8 +2217,8 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		enum proposal_transform ptype =
 			PROPOSAL_TRANSFORM_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
 		/* Can't use FOR_EACH_ALGORITHM(addkeN) */
-		for (struct transform_algorithm *alg = next_algorithm(proposal, ptype, NULL);
-		     alg != NULL; alg = next_algorithm(proposal, ptype, alg)) {
+		struct transform_algorithms *algs = transform_algorithms(proposal, ptype);
+		ITEMS_FOR_EACH(alg, algs) {
 			const struct kem_desc *kem = kem_desc(alg->desc);
 			append_transform(v2_proposal, type,
 					 kem->ikev2_alg_id, 0);
