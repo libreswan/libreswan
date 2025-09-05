@@ -238,8 +238,12 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
 struct transform_algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_transform algorithm,
-				 struct transform_algorithm *last);
+					   enum proposal_transform algorithm,
+					   struct transform_algorithm *last);
+
+/* the first algorithm, or NULL */
+struct transform_algorithm *first_transform_algorithm(const struct proposal *proposal,
+						      enum proposal_transform transform);
 
 #define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
 	for (struct transform_algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \

@@ -255,8 +255,8 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 }
 
 struct transform_algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_transform algorithm,
-				 struct transform_algorithm *last)
+					   enum proposal_transform algorithm,
+					   struct transform_algorithm *last)
 {
 	if (last == NULL) {
 		/*
@@ -268,6 +268,12 @@ struct transform_algorithm *next_algorithm(const struct proposal *proposal,
 	} else {
 		return last->next;
 	}
+}
+
+struct transform_algorithm *first_transform_algorithm(const struct proposal *proposal,
+						      enum proposal_transform transform)
+{
+	return next_algorithm(proposal, transform, NULL);
 }
 
 void free_algorithms(struct proposal *proposal,
@@ -443,7 +449,7 @@ void jam_proposal(struct jambuf *buf,
 			 */
 			if (proposal_encrypt_aead(proposal) &&
 			    proposal_integ_none(proposal) &&
-			    next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) != NULL) {
+			    first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) != NULL) {
 				continue;
 			}
 

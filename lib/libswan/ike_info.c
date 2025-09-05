@@ -43,7 +43,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	 * Check that the ALG_INFO spec is implemented.
 	 */
 
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt, NULL) != NULL);
+	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) != NULL);
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&encrypt->common, logger));
@@ -52,20 +52,20 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 							    alg->enckeylen)));
 	}
 
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) != NULL);
+	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) != NULL);
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&prf->common, logger));
 	}
 
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_integ, NULL) != NULL);
+	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_integ) != NULL);
 	FOR_EACH_ALGORITHM(proposal, integ, alg) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
 		PASSERT(logger, (integ == &ike_alg_integ_none ||
 				 ike_alg_is_ike(&integ->common, logger)));
 	}
 
-	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_kem, NULL) != NULL);
+	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) != NULL);
 	FOR_EACH_ALGORITHM(proposal, kem, alg) {
 		const struct kem_desc *kem = kem_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
