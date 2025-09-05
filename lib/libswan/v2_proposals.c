@@ -68,17 +68,17 @@ static bool warning_or_false(struct proposal_parser *parser,
 
 static void merge_algorithms(struct proposal_parser *parser,
 			     struct proposal *proposal,
-			     enum proposal_transform algorithm,
+			     enum proposal_transform transform,
 			     const struct ike_alg **defaults)
 {
 	if (defaults == NULL) {
 		return;
 	}
-	if (next_algorithm(proposal, algorithm, NULL) != NULL) {
+	if (next_algorithm(proposal, transform, NULL) != NULL) {
 		return;
 	}
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
-		append_algorithm(parser, proposal, *alg, 0);
+		append_transform_algorithm(parser, proposal, transform, *alg, 0);
 	}
 }
 
@@ -93,8 +93,9 @@ static bool merge_defaults(struct proposal_parser *parser,
 			/*
 			 * Since AEAD, integrity is always 'none'.
 			 */
-			append_algorithm(parser, proposal,
-					 &ike_alg_integ_none.common, 0);
+			append_transform_algorithm(parser, proposal,
+						   PROPOSAL_TRANSFORM_integ,
+						   &ike_alg_integ_none.common, 0);
 		} else if (defaults->integ != NULL) {
 			/*
 			 * Merge in the defaults.
@@ -123,8 +124,9 @@ static bool merge_defaults(struct proposal_parser *parser,
 						       prf->desc->fqn);
 					return false;
 				}
-				append_algorithm(parser, proposal,
-						 &integ->common, 0);
+				append_transform_algorithm(parser, proposal,
+							   PROPOSAL_TRANSFORM_integ,
+							   &integ->common, 0);
 			}
 		}
 	}
@@ -151,27 +153,9 @@ static bool parse_transform_algorithm(struct proposal_parser *parser,
 	if (alg == NULL) {
 		return warning_or_false(parser, transform_type, token);
 	}
-	append_algorithm_for(parser, proposal, transform, alg, 0/*enckeylen*/);
+	append_transform_algorithm(parser, proposal, transform, alg, 0/*enckeylen*/);
 	return true;
 }
-
-static const struct ike_alg_type *transform_types[] = {
-#define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_##E
-	S(encrypt),
-	S(prf),
-	S(integ),
-	S(kem),
-#undef S
-#define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_kem
-	S(addke1),
-	S(addke2),
-	S(addke3),
-	S(addke4),
-	S(addke5),
-	S(addke6),
-	S(addke7),
-#undef S
-};
 
 static bool parse_transform_algorithms(struct proposal_parser *parser,
 				       struct proposal *proposal,
@@ -179,7 +163,7 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 				       struct proposal_tokenizer *tokens)
 {
 	const struct logger *logger = parser->policy->logger;
-	const struct ike_alg_type *transform_type = transform_types[transform];
+	const struct ike_alg_type *transform_type = proposal_transform_type[transform];
 	PASSERT(logger, transform_type != NULL);
 	name_buf tb;
 	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing %s(%d) of type %s",
@@ -252,7 +236,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 			return PROPOSAL_ERROR;
 		}
 		passert(parser->diag == NULL);
-		append_algorithm(parser, proposal, encrypt, encrypt_keylen);
+		append_transform_algorithm(parser, proposal, PROPOSAL_TRANSFORM_encrypt,
+					   encrypt, encrypt_keylen);
 		/* further encryption algorithm tokens are optional */
 		while (tokens.prev_term == '+') {
 			if (!proposal_parse_encrypt(parser, &tokens, &encrypt, &encrypt_keylen)) {
@@ -260,7 +245,8 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 				return PROPOSAL_ERROR;
 			}
 			passert(parser->diag == NULL);
-			append_algorithm(parser, proposal, encrypt, encrypt_keylen);
+			append_transform_algorithm(parser, proposal, PROPOSAL_TRANSFORM_encrypt,
+						   encrypt, encrypt_keylen);
 		}
 		/* deal with all encryption algorithm tokens being discarded */
 		if (next_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt, NULL) == NULL) {

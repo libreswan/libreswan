@@ -305,67 +305,64 @@ void free_proposal(struct proposal **proposals)
 	*proposals = NULL;
 }
 
+const struct ike_alg_type *proposal_transform_type[PROPOSAL_TRANSFORM_ROOF] = {
+#define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_##E
+	S(encrypt),
+	S(prf),
+	S(integ),
+	S(kem),
+#undef S
+#define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_kem
+	S(addke1),
+	S(addke2),
+	S(addke3),
+	S(addke4),
+	S(addke5),
+	S(addke6),
+	S(addke7),
+#undef S
+};
 
-/*
- * XXX: hack, need to come up with a type safe way of mapping an
- * ike_alg onto an index.
- */
-static enum proposal_transform ike_to_proposal_algorithm(const struct ike_alg *alg)
-{
-	if (alg->type == &ike_alg_encrypt) {
-		return PROPOSAL_TRANSFORM_encrypt;
-	} else if (alg->type == &ike_alg_prf) {
-		return PROPOSAL_TRANSFORM_prf;
-	} else if (alg->type == &ike_alg_integ) {
-		return PROPOSAL_TRANSFORM_integ;
-	} else if (alg->type == &ike_alg_kem) {
-		return PROPOSAL_TRANSFORM_kem;
-	} else {
-		llog_passert(&global_logger, HERE,
-			     "unexpected algorithm type %s",
-			     alg->type->name);
-	}
-}
-
-void append_algorithm_for(struct proposal_parser *parser,
-			  struct proposal *proposal,
-			  enum proposal_transform proposal_algorithm,
-			  const struct ike_alg *alg,
-			  int enckeylen)
+void append_transform_algorithm(struct proposal_parser *parser,
+				struct proposal *proposal,
+				enum proposal_transform transform,
+				const struct ike_alg *alg,
+				int enckeylen)
 {
 	const struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
-		ldbgf(DBG_PROPOSAL_PARSER, logger, "no algorithm to append");
+		name_buf tb;
+		llog_pexpect(logger, HERE,
+			     "no %s %s algorithm to append",
+			     parser->protocol->name,
+			     str_enum_short(&proposal_transform_names, transform, &tb));
 		return;
 	}
-	passert(proposal_algorithm < elemsof(proposal->algorithms));
+
+	PASSERT(logger, transform < elemsof(proposal_transform_type));
+	PASSERT(logger, proposal_transform_type[transform] == alg->type);
+
 	/* find end */
-	struct transform_algorithm **end = &proposal->algorithms[proposal_algorithm];
+	PASSERT(logger, transform < elemsof(proposal->algorithms));
+	struct transform_algorithm **end = &proposal->algorithms[transform];
 	while ((*end) != NULL) {
 		end = &(*end)->next;
 	}
+
 	/* append */
 	struct transform_algorithm new_algorithm = {
 		.desc = alg,
 		.enckeylen = enckeylen,
 	};
-	ldbgf(DBG_PROPOSAL_PARSER, logger, "appending %s %s %s[_%d]",
+	*end = clone_thing(new_algorithm, "alg");
+
+	name_buf tb;
+	ldbgf(DBG_PROPOSAL_PARSER, logger, "append %s %s %s %s[_%d]",
 	      parser->protocol->name,
+	      str_enum_short(&proposal_transform_names, transform, &tb),
 	      alg->type->story,
 	      alg->fqn,
 	      enckeylen);
-	*end = clone_thing(new_algorithm, "alg");
-}
-
-void append_algorithm(struct proposal_parser *parser,
-		      struct proposal *proposal,
-		      const struct ike_alg *alg,
-		      int enckeylen)
-{
-	append_algorithm_for(parser, proposal,
-			     ike_to_proposal_algorithm(alg),
-			     alg,
-			     enckeylen);
 }
 
 void remove_duplicate_algorithms(struct proposal_parser *parser,
