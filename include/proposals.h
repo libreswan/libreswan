@@ -42,10 +42,11 @@ struct proposal_parser;
 enum stream;
 
 /*
- * XXX: needs to be merged with IKE_ALG_TYPE.
+ * Can this be merged with IKEv2's transform type?
  */
-enum proposal_algorithm {
-	PROPOSAL_encrypt,
+enum proposal_transform {
+#define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_TRANSFORM_encrypt)
+	PROPOSAL_TRANSFORM_encrypt,
 
 	/*
 	 * XXX: order INTEG before PRF so it is displayed first.
@@ -54,20 +55,22 @@ enum proposal_algorithm {
 	 * Putting INTEG before PRF causes jam_proposal() to be
 	 * consistent.
 	 */
-	PROPOSAL_integ,
-	PROPOSAL_prf,
+	PROPOSAL_TRANSFORM_integ,
+	PROPOSAL_TRANSFORM_prf,
 
-	PROPOSAL_kem,
+	PROPOSAL_TRANSFORM_kem,
 
-	PROPOSAL_addke1,
-	PROPOSAL_addke2,
-	PROPOSAL_addke3,
-	PROPOSAL_addke4,
-	PROPOSAL_addke5,
-	PROPOSAL_addke6,
-	PROPOSAL_addke7,
-	PROPOSAL_ALGORITHM_ROOF,
+	PROPOSAL_TRANSFORM_addke1,
+	PROPOSAL_TRANSFORM_addke2,
+	PROPOSAL_TRANSFORM_addke3,
+	PROPOSAL_TRANSFORM_addke4,
+	PROPOSAL_TRANSFORM_addke5,
+	PROPOSAL_TRANSFORM_addke6,
+	PROPOSAL_TRANSFORM_addke7,
+#define PROPOSAL_TRANSFORM_ROOF (PROPOSAL_TRANSFORM_addke7+1)
 };
+
+extern const struct enum_names proposal_transform_names;
 
 /*
  * Everything combined.
@@ -184,16 +187,16 @@ void free_proposals(struct proposals **proposals);
 extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
-void free_algorithms(struct proposal *proposal, enum proposal_algorithm algorithm);
+void free_algorithms(struct proposal *proposal, enum proposal_transform algorithm);
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
 		      const struct ike_alg *alg, int enckeylen);
 void append_algorithm_for(struct proposal_parser *parser, struct proposal *proposal,
-			  enum proposal_algorithm algorithm,
+			  enum proposal_transform algorithm,
 			  const struct ike_alg *alg, int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 enum proposal_algorithm algorithm);
+				 enum proposal_transform algorithm);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
@@ -233,12 +236,12 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
 struct algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_algorithm algorithm,
+				 enum proposal_transform algorithm,
 				 struct algorithm *last);
 
 #define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
-	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_##TYPE, NULL); \
-	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_##TYPE, ALGORITHM))
+	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \
+	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, ALGORITHM))
 
 /*
  * Error indicated by err_buf[0] != '\0'.
@@ -274,8 +277,6 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 
 void proposal_error(struct proposal_parser *parser,
 		    const char *message, ...) PRINTF_LIKE(2);
-
-bool impair_proposal_errors(struct proposal_parser *parser);
 
 /*
  * Convert a generic proposal back into something the IKEv1 code can

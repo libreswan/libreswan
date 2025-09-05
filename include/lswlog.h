@@ -349,18 +349,4 @@ void bad_sparse_where(const struct logger *logger,
 		      unsigned long val, where_t where) NEVER_RETURNS;
 #define bad_sparse(LOGGER, SPARSE_NAMES, VALUE) bad_sparse_where(LOGGER, SPARSE_NAMES, VALUE, HERE)
 
-#define impaired_passert(BEHAVIOUR, LOGGER, ASSERTION)			\
-	{								\
-		if (impair.BEHAVIOUR) {					\
-			bool assertion_ = ASSERTION;			\
-			if (!assertion_) {				\
-				llog(RC_LOG, LOGGER,		\
-					    "IMPAIR: assertion '%s' failed", \
-					    #ASSERTION);		\
-			}						\
-		} else {						\
-			passert(ASSERTION);				\
-		}							\
-	}
-
 #endif /* _LSWLOG_H_ */

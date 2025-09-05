@@ -33,7 +33,7 @@ struct proposal {
 	/*
 	 * The algorithm entries.
 	 */
-	struct algorithm *algorithms[PROPOSAL_ALGORITHM_ROOF];
+	struct algorithm *algorithms[PROPOSAL_TRANSFORM_ROOF];
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -65,7 +65,7 @@ void free_proposal_parser(struct proposal_parser **parser)
 
 bool proposal_encrypt_aead(const struct proposal *proposal)
 {
-	if (proposal->algorithms[PROPOSAL_encrypt] == NULL) {
+	if (proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] == NULL) {
 		return false;
 	}
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
@@ -79,7 +79,7 @@ bool proposal_encrypt_aead(const struct proposal *proposal)
 
 bool proposal_encrypt_norm(const struct proposal *proposal)
 {
-	if (proposal->algorithms[PROPOSAL_encrypt] == NULL) {
+	if (proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] == NULL) {
 		return false;
 	}
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
@@ -110,7 +110,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		return true;
 	}
 
-	if (proposal->algorithms[PROPOSAL_encrypt] == NULL) {
+	if (proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] == NULL) {
 		return true;
 	}
 
@@ -128,7 +128,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	bool none = proposal_integ_none(proposal);
 
 	if (aead && !none) {
-		const struct ike_alg *encrypt = proposal->algorithms[PROPOSAL_encrypt]->desc;
+		const struct ike_alg *encrypt = proposal->algorithms[PROPOSAL_TRANSFORM_encrypt]->desc;
 		/*
 		 * At least one of the integrity algorithms wasn't
 		 * NONE.  For instance, esp=aes_gcm-sha1" is invalid.
@@ -140,7 +140,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	}
 
 	if (norm && none) {
-		const struct ike_alg *encrypt = proposal->algorithms[PROPOSAL_encrypt]->desc;
+		const struct ike_alg *encrypt = proposal->algorithms[PROPOSAL_TRANSFORM_encrypt]->desc;
 		/*
 		 * Not AEAD and either there was no integrity
 		 * algorithm (implying NONE) or at least one integrity
@@ -195,8 +195,8 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 	/* check for duplicates */
 	while ((*end) != NULL) {
 		bool same = true;
-		for (enum proposal_algorithm pa = 0;
-		     same && pa < PROPOSAL_ALGORITHM_ROOF; pa++) {
+		for (enum proposal_transform pa = PROPOSAL_TRANSFORM_FLOOR;
+		     same && pa < PROPOSAL_TRANSFORM_ROOF; pa++) {
 			struct algorithm *old = (*end)->algorithms[pa];
 			struct algorithm *new = (*proposal)->algorithms[pa];
 			while (same) {
@@ -242,20 +242,20 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 {
 	struct v1_proposal v1 = {
 		.protocol = proposal->protocol,
-#define D(ALG) .ALG = proposal->algorithms[PROPOSAL_##ALG] != NULL ? ALG##_desc(proposal->algorithms[PROPOSAL_##ALG]->desc) : NULL
+#define D(ALG) .ALG = proposal->algorithms[PROPOSAL_TRANSFORM_##ALG] != NULL ? ALG##_desc(proposal->algorithms[PROPOSAL_TRANSFORM_##ALG]->desc) : NULL
 		D(encrypt),
 		D(prf),
 		D(integ),
 		D(kem),
 #undef D
 	};
-	v1.enckeylen = proposal->algorithms[PROPOSAL_encrypt] != NULL ? proposal->algorithms[PROPOSAL_encrypt]->enckeylen : 0;
+	v1.enckeylen = proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] != NULL ? proposal->algorithms[PROPOSAL_TRANSFORM_encrypt]->enckeylen : 0;
 
 	return v1;
 }
 
 struct algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_algorithm algorithm,
+				 enum proposal_transform algorithm,
 				 struct algorithm *last)
 {
 	if (last == NULL) {
@@ -271,7 +271,7 @@ struct algorithm *next_algorithm(const struct proposal *proposal,
 }
 
 void free_algorithms(struct proposal *proposal,
-		     enum proposal_algorithm algorithm)
+		     enum proposal_transform algorithm)
 {
 	passert(algorithm < elemsof(proposal->algorithms));
 	struct algorithm *alg = proposal->algorithms[algorithm];
@@ -296,9 +296,8 @@ void free_proposal(struct proposal **proposals)
 	while (proposal != NULL) {
 		struct proposal *del = proposal;
 		proposal = proposal->next;
-		for (enum proposal_algorithm algorithm = 0;
-		     algorithm < PROPOSAL_ALGORITHM_ROOF;
-		     algorithm++) {
+		for (enum proposal_transform algorithm = PROPOSAL_TRANSFORM_FLOOR;
+		     algorithm < PROPOSAL_TRANSFORM_ROOF; algorithm++) {
 			free_algorithms(del, algorithm);
 		}
 		pfree(del);
@@ -311,16 +310,16 @@ void free_proposal(struct proposal **proposals)
  * XXX: hack, need to come up with a type safe way of mapping an
  * ike_alg onto an index.
  */
-static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *alg)
+static enum proposal_transform ike_to_proposal_algorithm(const struct ike_alg *alg)
 {
 	if (alg->type == &ike_alg_encrypt) {
-		return PROPOSAL_encrypt;
+		return PROPOSAL_TRANSFORM_encrypt;
 	} else if (alg->type == &ike_alg_prf) {
-		return PROPOSAL_prf;
+		return PROPOSAL_TRANSFORM_prf;
 	} else if (alg->type == &ike_alg_integ) {
-		return PROPOSAL_integ;
+		return PROPOSAL_TRANSFORM_integ;
 	} else if (alg->type == &ike_alg_kem) {
-		return PROPOSAL_kem;
+		return PROPOSAL_TRANSFORM_kem;
 	} else {
 		llog_passert(&global_logger, HERE,
 			     "unexpected algorithm type %s",
@@ -330,7 +329,7 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 
 void append_algorithm_for(struct proposal_parser *parser,
 			  struct proposal *proposal,
-			  enum proposal_algorithm proposal_algorithm,
+			  enum proposal_transform proposal_algorithm,
 			  const struct ike_alg *alg,
 			  int enckeylen)
 {
@@ -371,7 +370,7 @@ void append_algorithm(struct proposal_parser *parser,
 
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 enum proposal_algorithm algorithm)
+				 enum proposal_transform algorithm)
 {
 	passert(algorithm < elemsof(proposal->algorithms));
 	/* XXX: not efficient */
@@ -390,11 +389,6 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 			     alg->enckeylen == 0 ||
 			     alg->enckeylen == (*dup)->enckeylen)) {
 				struct algorithm *dead = (*dup);
-				if (impair.proposal_parser) {
-					llog(parser->policy->stream, parser->policy->logger,
-						    "IMPAIR: ignoring duplicate algorithms");
-					return;
-				}
 				LLOG_JAMBUF(parser->policy->stream, parser->policy->logger, buf) {
 					jam(buf, "discarding duplicate %s %s %s",
 					    parser->protocol->name,
@@ -415,7 +409,7 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 
 static const char *jam_proposal_algorithm(struct jambuf *buf,
 					  const struct proposal *proposal,
-					  enum proposal_algorithm proposal_algorithm,
+					  enum proposal_transform proposal_algorithm,
 					  const char *algorithm_separator)
 {
 	const char *separator = algorithm_separator;
@@ -434,15 +428,14 @@ void jam_proposal(struct jambuf *buf,
 		  const struct proposal *proposal)
 {
 	const char *algorithm_separator = "";
-	for (enum proposal_algorithm proposal_algorithm = 0;
-	     proposal_algorithm < PROPOSAL_ALGORITHM_ROOF; proposal_algorithm++) {
+	for (enum proposal_transform proposal_algorithm = PROPOSAL_TRANSFORM_FLOOR;
+	     proposal_algorithm < PROPOSAL_TRANSFORM_ROOF; proposal_algorithm++) {
 
 		/*
 		 * Should integrity be skipped?
 		 */
 
-		if (!impair.proposal_parser &&
-		    proposal_algorithm == PROPOSAL_integ) {
+		if (proposal_algorithm == PROPOSAL_TRANSFORM_integ) {
 
 			/*
 			 * Don't include -NONE- as it gives the
@@ -453,7 +446,7 @@ void jam_proposal(struct jambuf *buf,
 			 */
 			if (proposal_encrypt_aead(proposal) &&
 			    proposal_integ_none(proposal) &&
-			    next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL) {
+			    next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) != NULL) {
 				continue;
 			}
 
@@ -465,8 +458,8 @@ void jam_proposal(struct jambuf *buf,
 			struct algorithm *prf = NULL;
 			bool integ_matches_prf = true;
 			while (true) {
-				prf = next_algorithm(proposal, PROPOSAL_prf, prf);
-				integ = next_algorithm(proposal, PROPOSAL_integ, integ);
+				prf = next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, prf);
+				integ = next_algorithm(proposal, PROPOSAL_TRANSFORM_integ, integ);
 				if (prf == NULL && integ == NULL) {
 					break;
 				}
@@ -517,19 +510,19 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		if (proposal->algorithms[PROPOSAL_kem] == NULL) {
+		if (proposal->algorithms[PROPOSAL_TRANSFORM_kem] == NULL) {
 			if (first_null_ke == NULL) {
 				first_null_ke = proposal;
 			}
-		} else if (proposal->algorithms[PROPOSAL_kem]->desc == &ike_alg_kem_none.common) {
+		} else if (proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc == &ike_alg_kem_none.common) {
 			if (first_none_ke == NULL) {
 				first_none_ke = proposal;
 			}
 		} else if (first_ke == NULL) {
-			first_ke = proposal->algorithms[PROPOSAL_kem]->desc;
+			first_ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
 		} else if (second_ke == NULL &&
-			   first_ke != proposal->algorithms[PROPOSAL_kem]->desc) {
-			second_ke = proposal->algorithms[PROPOSAL_kem]->desc;
+			   first_ke != proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc) {
+			second_ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
 		}
 	}
 
@@ -553,8 +546,8 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			if (proposal->algorithms[PROPOSAL_kem] != NULL) {
-				ke = proposal->algorithms[PROPOSAL_kem]->desc;
+			if (proposal->algorithms[PROPOSAL_TRANSFORM_kem] != NULL) {
+				ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
 			}
 			if (ke == &ike_alg_kem_none.common) {
 				llog(parser->policy->stream, parser->policy->logger,
@@ -565,7 +558,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
 				     parser->protocol->name, ke->fqn);
 			}
-			free_algorithms(proposal, PROPOSAL_kem);
+			free_algorithms(proposal, PROPOSAL_TRANSFORM_kem);
 		}
 		return true;
 	}
@@ -582,9 +575,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 		/* KE was specified */
 		proposal_error(parser, "either all or no %s proposals should specify Key Exchange",
 			       parser->protocol->name);
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return false;
 	}
 
 	switch (parser->policy->version) {
@@ -598,9 +589,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				       parser->protocol->name,
 				       first_ke->fqn,
 				       second_ke->fqn);
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
+			return false;
 		}
 		break;
 
@@ -613,9 +602,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				       parser->protocol->name,
 				       first_ke->fqn,
 				       second_ke->fqn);
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
+			return false;
 		}
 		break;
 
@@ -634,19 +621,6 @@ void proposal_error(struct proposal_parser *parser, const char *fmt, ...)
 	passert(parser->diag == NULL);
 	parser->diag = diag_va_list(fmt, ap);
 	va_end(ap);
-}
-
-bool impair_proposal_errors(struct proposal_parser *parser)
-{
-	passert(parser->diag != NULL);
-	if (impair.proposal_parser) {
-		llog(parser->policy->stream, parser->policy->logger,
-		     "IMPAIR: ignoring proposal error: %s", str_diag(parser->diag));
-		pfree_diag(&parser->diag);
-		return true;
-	}
-
-	return false;
 }
 
 struct proposals *proposals_from_str(struct proposal_parser *parser,

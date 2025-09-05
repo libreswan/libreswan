@@ -36,51 +36,42 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	const struct logger *logger = parser->policy->logger;
 
 	if (!proposal_aead_none_ok(parser, proposal)) {
-		if (!impair_proposal_errors(parser)) {
-			return false;
-		}
+		return false;
 	}
 
 	/*
 	 * Check that the ALG_INFO spec is implemented.
 	 */
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_encrypt, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&encrypt->common, logger));
-		PASSERT(logger, (impair.proposal_parser ||
-				 alg->enckeylen == 0 ||
+		PASSERT(logger, (alg->enckeylen == 0 ||
 				 encrypt_has_key_bit_length(encrypt,
 							    alg->enckeylen)));
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_prf, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_prf, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, prf, alg) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&prf->common, logger));
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_integ, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_integ, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, integ, alg) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
 		PASSERT(logger, (integ == &ike_alg_integ_none ||
 				 ike_alg_is_ike(&integ->common, logger)));
 	}
 
-	impaired_passert(proposal_parser, parser->policy->logger,
-			 next_algorithm(proposal, PROPOSAL_kem, NULL) != NULL);
+	PASSERT(parser->policy->logger, next_algorithm(proposal, PROPOSAL_TRANSFORM_kem, NULL) != NULL);
 	FOR_EACH_ALGORITHM(proposal, kem, alg) {
 		const struct kem_desc *kem = kem_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
 		if (kem == &ike_alg_kem_none) {
 			proposal_error(parser, "IKE Key Exchange algorithm 'NONE' not permitted");
-			if (!impair_proposal_errors(parser)) {
-				return false;
-			}
+			return false;
 		}
 	}
 

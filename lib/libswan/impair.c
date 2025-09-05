@@ -232,7 +232,6 @@ struct impairment impairments[] = {
 	B(minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
 	B(childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
 
-	B(proposal_parser, "impair algorithm parser - what you see is what you get"),
 	B(rekey_initiate_supernet, "impair IPsec SA rekey initiator TSi and TSR to 0/0 ::0, emulate Windows client"),
 	B(rekey_initiate_subnet, "impair IPsec SA rekey initiator TSi and TSR to X/32 or X/128"),
 	B(rekey_respond_supernet, "impair IPsec SA rekey responder TSi and TSR to 0/0 ::0"),

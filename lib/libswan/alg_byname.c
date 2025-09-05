@@ -132,9 +132,7 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 			proposal_error(parser, "%s encryption algorithm %s does not allow a key lengths",
 				       parser->protocol->name,
 				       encrypt->common.fqn);
-			if (!impair_proposal_errors(parser)) {
-				return NULL;
-			}
+			return NULL;
 		}
 		if (!encrypt_has_key_bit_length(encrypt, key_bit_length)) {
 			JAMBUF(buf) {
@@ -152,9 +150,7 @@ const struct ike_alg *encrypt_alg_byname(struct proposal_parser *parser,
 				}
 				proposal_error(parser, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 			}
-			if (!impair_proposal_errors(parser)) {
-				return NULL;
-			}
+			return NULL;
 		}
 	}
 	return alg;
