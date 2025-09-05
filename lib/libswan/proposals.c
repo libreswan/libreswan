@@ -65,7 +65,7 @@ void free_proposal_parser(struct proposal_parser **parser)
 
 bool proposal_encrypt_aead(const struct proposal *proposal)
 {
-	if (proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] == NULL) {
+	if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL) {
 		return false;
 	}
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
@@ -79,7 +79,7 @@ bool proposal_encrypt_aead(const struct proposal *proposal)
 
 bool proposal_encrypt_norm(const struct proposal *proposal)
 {
-	if (proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] == NULL) {
+	if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL) {
 		return false;
 	}
 	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
@@ -110,7 +110,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 		return true;
 	}
 
-	if (proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] == NULL) {
+	if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL) {
 		return true;
 	}
 
@@ -242,15 +242,17 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 {
 	struct v1_proposal v1 = {
 		.protocol = proposal->protocol,
-#define D(ALG) .ALG = proposal->algorithms[PROPOSAL_TRANSFORM_##ALG] != NULL ? ALG##_desc(proposal->algorithms[PROPOSAL_TRANSFORM_##ALG]->desc) : NULL
+#define D(ALG) .ALG = (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_##ALG) == NULL ? NULL : \
+		       ALG##_desc(first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_##ALG)->desc))
 		D(encrypt),
 		D(prf),
 		D(integ),
 		D(kem),
 #undef D
-	};
-	v1.enckeylen = proposal->algorithms[PROPOSAL_TRANSFORM_encrypt] != NULL ? proposal->algorithms[PROPOSAL_TRANSFORM_encrypt]->enckeylen : 0;
+		.enckeylen = (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL ? 0 :
+			      first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt)->enckeylen),
 
+	};
 	return v1;
 }
 
@@ -513,7 +515,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		if (proposal->algorithms[PROPOSAL_TRANSFORM_kem] == NULL) {
+		if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) == NULL) {
 			if (first_null_ke == NULL) {
 				first_null_ke = proposal;
 			}
@@ -549,7 +551,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			if (proposal->algorithms[PROPOSAL_TRANSFORM_kem] != NULL) {
+			if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) != NULL) {
 				ke = proposal->algorithms[PROPOSAL_TRANSFORM_kem]->desc;
 			}
 			if (ke == &ike_alg_kem_none.common) {
