@@ -71,6 +71,8 @@ enum proposal_transform {
 };
 
 extern const struct enum_names proposal_transform_names;
+/* map transform onto its type */
+extern const struct ike_alg_type *proposal_transform_type[PROPOSAL_TRANSFORM_ROOF];
 
 /*
  * Everything combined.
@@ -164,14 +166,18 @@ struct proposal_protocol {
  * A proposal as decoded by the parser.
  */
 
-struct algorithm {
+struct transform_algorithm {
 	const struct ike_alg *desc;
 	/*
 	 * Because struct encrypt_desc still specifies multiple key
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
-	struct algorithm *next;
+};
+
+struct transform_algorithms {
+	unsigned len;
+	struct transform_algorithm item[];
 };
 
 /* return counts of encrypt=aead and integ=none */
@@ -189,11 +195,11 @@ extern void free_proposal(struct proposal **proposal);
 
 void free_algorithms(struct proposal *proposal, enum proposal_transform algorithm);
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
-void append_algorithm(struct proposal_parser *parser, struct proposal *proposal,
-		      const struct ike_alg *alg, int enckeylen);
-void append_algorithm_for(struct proposal_parser *parser, struct proposal *proposal,
-			  enum proposal_transform algorithm,
-			  const struct ike_alg *alg, int enckeylen);
+void append_transform_algorithm(struct proposal_parser *parser,
+				struct proposal *proposal,
+				enum proposal_transform transform,
+				const struct ike_alg *alg,
+				int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
 				 enum proposal_transform algorithm);
@@ -235,13 +241,14 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL != NULL;						\
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
-struct algorithm *next_algorithm(const struct proposal *proposal,
-				 enum proposal_transform algorithm,
-				 struct algorithm *last);
+/* the first algorithm, or NULL */
+struct transform_algorithm *first_transform_algorithm(const struct proposal *proposal,
+						      enum proposal_transform transform);
+struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
+						  enum proposal_transform transform);
 
-#define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)	\
-	for (struct algorithm *ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, NULL); \
-	     ALGORITHM != NULL; ALGORITHM = next_algorithm(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE, ALGORITHM))
+#define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)			\
+	ITEMS_FOR_EACH(ALGORITHM, transform_algorithms(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE))
 
 /*
  * Error indicated by err_buf[0] != '\0'.

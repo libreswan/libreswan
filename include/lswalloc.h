@@ -90,29 +90,6 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define alloc_things(THING, COUNT, NAME)			\
 	((THING*) alloc_bytes(sizeof(THING) * (COUNT), (NAME)))
 
-#define alloc_items(ITEMS, COUNT)					\
-	({								\
-		size_t _new = (sizeof(ITEMS) + sizeof((ITEMS){0}.item[0]) * (COUNT)); \
-		ITEMS *_items = alloc_bytes(_new, "alloc-"#ITEMS"-items"); \
-		_items->len = (COUNT);					\
-		_items;							\
-	})
-
-#define realloc_items(ITEMS, COUNT)					\
-	({								\
-		void *_items = (ITEMS);					\
-		size_t _old = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * (ITEMS)->len); \
-		size_t _new = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * (COUNT)); \
-		realloc_bytes(&_items, _old, _new, "realloc-"#ITEMS"-items"); \
-		(ITEMS) = _items;					\
-		(ITEMS)->len = (COUNT);					\
-	})
-
-#define ITEMS_FOR_EACH(ITEM, ITEMS)					\
-	for (typeof((ITEMS)->item[0]) *ITEM = ((ITEMS) != NULL ? (ITEMS)->item : NULL); \
-	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
-	     ITEM++)
-
 #define realloc_things(THINGS, OLD_COUNT, NEW_COUNT, NAME)		\
 	{								\
 		void *things_ = THINGS;					\
@@ -137,6 +114,47 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 
 #define clone_const_things(ORIG, COUNT, NAME) \
 	clone_bytes((ORIG), (COUNT) * sizeof((ORIG)[0]), (NAME))
+
+/*
+ * Items:
+ *
+ * Use C's feature of open ended array:
+ *
+ *   struct whatever {
+ *     unsigned len;
+ *     <TYPE> items[];
+ *   }
+ *
+ * XXX: should this be made HUNK like, as in call the items[] ptr[]?
+ */
+
+#define alloc_items(ITEMS, COUNT)					\
+	({								\
+		size_t _new = (sizeof(ITEMS) + sizeof((ITEMS){0}.item[0]) * (COUNT)); \
+		ITEMS *_items = alloc_bytes(_new, "alloc-"#ITEMS"-items"); \
+		_items->len = (COUNT);					\
+		_items;							\
+	})
+
+#define grow_items(ITEMS)						\
+	({								\
+		unsigned _old_nr = ((ITEMS) == NULL ? 0 : (ITEMS)->len); \
+		unsigned _new_nr = _old_nr + 1;				\
+		size_t _old_size = ((ITEMS) == NULL ? 0 :		\
+				    sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * _old_nr); \
+		size_t _new_size = (sizeof(*ITEMS) + sizeof((ITEMS)->item[0]) * _new_nr); \
+		void *_items = (ITEMS);					\
+		realloc_bytes(&_items, _old_size, _new_size, "grow-"#ITEMS"-items"); \
+		(ITEMS) = _items;					\
+		(ITEMS)->len = _new_nr;					\
+		/* return pointer to new element */			\
+		&(ITEMS)->item[_new_nr-1];				\
+	})
+
+#define ITEMS_FOR_EACH(ITEM, ITEMS)					\
+	for (typeof((ITEMS)->item[0]) *ITEM = ((ITEMS) != NULL ? (ITEMS)->item : NULL); \
+	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
+	     ITEM++)
 
 char *clone_str(const char *str, const char *name);
 void append_str(char **sentence, const char *sep, const char *word);

@@ -311,10 +311,9 @@ struct shunks *ttoshunks(shunk_t input, const char *delims, enum shunks_opt opt)
 		ldbgf(DBG_TMI, &global_logger,
 		      "%s() [%u] \""PRI_SHUNK"\"",
 		      __func__, tokens->len, pri_shunk(token));
-		/* grow by one shunk_t */
-		realloc_items(tokens, tokens->len + 1);
-		/* save */
-		tokens->item[tokens->len - 1] = token;
+		/* grow by one shunk_t; and save the token */
+		shunk_t *end = grow_items(tokens);
+		(*end) = token;
 	}
 
 	return tokens;

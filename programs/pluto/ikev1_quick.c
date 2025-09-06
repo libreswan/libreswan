@@ -136,7 +136,7 @@ const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
 		return NULL;
 	}
 	struct proposal *proposal = next_proposal(proposals.p, NULL);
-	struct algorithm *dh = next_algorithm(proposal, PROPOSAL_TRANSFORM_kem, NULL);
+	struct transform_algorithm *dh = first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem);
 	if (dh == NULL) {
 		return NULL;
 	}

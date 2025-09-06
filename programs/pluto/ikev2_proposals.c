@@ -2183,7 +2183,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 */
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_KE,
 				 force_kem->ikev2_alg_id, 0);
-	} else if (next_algorithm(proposal, PROPOSAL_TRANSFORM_kem, NULL) != NULL) {
+	} else if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) != NULL) {
 		/*
 		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
 		 * DH was specified on the esp= line.
@@ -2217,8 +2217,8 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		enum proposal_transform ptype =
 			PROPOSAL_TRANSFORM_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
 		/* Can't use FOR_EACH_ALGORITHM(addkeN) */
-		for (struct algorithm *alg = next_algorithm(proposal, ptype, NULL);
-		     alg != NULL; alg = next_algorithm(proposal, ptype, alg)) {
+		struct transform_algorithms *algs = transform_algorithms(proposal, ptype);
+		ITEMS_FOR_EACH(alg, algs) {
 			const struct kem_desc *kem = kem_desc(alg->desc);
 			append_transform(v2_proposal, type,
 					 kem->ikev2_alg_id, 0);
@@ -2360,7 +2360,7 @@ static struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 			 * pass=2.
 			 */
 			if (pass == 2 && default_kem == &ike_alg_kem_none &&
-			    next_algorithm(proposal, PROPOSAL_TRANSFORM_kem, NULL) == NULL) {
+			    first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem) == NULL) {
 				/*
 				 * First pass didn't include DH.
 				 */
@@ -2609,7 +2609,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * the need to only look at the first proposal.
 	 */
 	struct proposal *proposal = next_proposal(cc->config->child.proposals.p, NULL);
-	const struct algorithm *proposal_dh = next_algorithm(proposal, PROPOSAL_TRANSFORM_kem, NULL);
+	const struct transform_algorithm *proposal_dh = first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_kem);
 
 	struct ikev2_proposals *proposals;
 	if (ike_auth_child_rekey_needs_dh && cc->config->pfs_rekey_workaround) {
