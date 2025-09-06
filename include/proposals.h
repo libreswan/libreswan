@@ -320,9 +320,19 @@ struct proposal_tokenizer {
 struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delim);
 void proposal_next_token(struct proposal_tokenizer *token);
 
-bool proposal_parse_encrypt(struct proposal_parser *parser,
-			    struct proposal_tokenizer *tokens,
-			    const struct ike_alg **encrypt,
-			    int *enckeylen);
+bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
+				      struct proposal *proposal,
+				      struct proposal_tokenizer *tokens);
+
+bool parse_proposal_transform(struct proposal_parser *parser,
+			      struct proposal *proposal,
+			      enum proposal_transform transform,
+			      shunk_t token);
+
+void discard_proposal_transform(const char *what,
+				struct proposal_parser *parser,
+				struct proposal *proposal,
+				enum proposal_transform transform,
+				diag_t *diag);
 
 #endif /* PROPOSALS_H */

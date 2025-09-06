@@ -245,29 +245,21 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	if (parser->protocol->encrypt &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
-		const struct ike_alg *encrypt;
-		int encrypt_keylen;
-		if (!proposal_parse_encrypt(parser, tokens, &encrypt, &encrypt_keylen)) {
+		if (!parse_proposal_encrypt_transform(parser, scratch_proposal, tokens)) {
 			passert(parser->diag != NULL);
 			return false;
 		}
-		append_transform_algorithm(parser, scratch_proposal,
-					   PROPOSAL_TRANSFORM_encrypt,
-					   encrypt, encrypt_keylen);
 	}
 
 	if (parser->protocol->prf &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
-		shunk_t prf_token = tokens[0].curr.token;
-		const struct ike_alg *prf = alg_byname(parser, &ike_alg_prf,
-						       prf_token, prf_token);
-		if (parser->diag != NULL) {
+		if (!parse_proposal_transform(parser, scratch_proposal,
+					      PROPOSAL_TRANSFORM_prf,
+					      tokens->curr.token)) {
 			return false;
 		}
-		append_transform_algorithm(parser, scratch_proposal,
-					   PROPOSAL_TRANSFORM_prf,
-					   prf, 0);
+		passert(parser->diag == NULL); /* still good */
 		proposal_next_token(tokens);
 	}
 
@@ -286,10 +278,9 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	if (lookup_integ &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
-		shunk_t integ_token = tokens[0].curr.token;
-		const struct ike_alg *integ = alg_byname(parser, &ike_alg_integ,
-							 integ_token, integ_token);
-		if (parser->diag != NULL) {
+		if (!parse_proposal_transform(parser, scratch_proposal,
+					      PROPOSAL_TRANSFORM_integ,
+					      tokens->curr.token)) {
 			if (tokens->next.token.ptr != NULL) {
 				/*
 				 * This alg should have been
@@ -309,25 +300,24 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 				return false;
 			}
 			/* let DH try */
-			pfree_diag(&parser->diag);
-		} else {
-			append_transform_algorithm(parser, scratch_proposal,
+			discard_proposal_transform("<integ>",
+						   parser, scratch_proposal,
 						   PROPOSAL_TRANSFORM_integ,
-						   integ, 0);
+						   /*discard-diag*/NULL);
+		} else {
+			passert(parser->diag == NULL); /* still good */
 			proposal_next_token(tokens);
 		}
 	}
 
-	if (parser->protocol->kem && tokens->curr.token.ptr != NULL) {
-		shunk_t kem_token = tokens[0].curr.token;
-		const struct ike_alg *kem = alg_byname(parser, &ike_alg_kem,
-						       kem_token, kem_token);
-		if (parser->diag != NULL) {
+	if (parser->protocol->kem &&
+	    tokens->curr.token.ptr != NULL) {
+		if (!parse_proposal_transform(parser, scratch_proposal,
+					      PROPOSAL_TRANSFORM_kem,
+					      tokens->curr.token)) {
 			return false;
 		}
-		append_transform_algorithm(parser, scratch_proposal,
-					   PROPOSAL_TRANSFORM_kem,
-					   kem, 0);
+		passert(parser->diag == NULL); /* still good */
 		proposal_next_token(tokens);
 	}
 
