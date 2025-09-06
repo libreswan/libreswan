@@ -26,9 +26,15 @@
 
 #include "whack_redirect.h"
 
+#include "defs.h"
+#include "verbose.h"
+#include "log.h"
 #include "whack.h"
 #include "show.h"
 #include "jambuf.h"
+#include "passert.h"
+#include "state.h"
+#include "connections.h"
 
 #include "ikev2_redirect.h"
 
@@ -53,7 +59,55 @@ void whack_active_redirect(const struct whack_message *wm, struct show *s)
 	 * Whack's --redirect-to is ambitious - is it part of an ADD
 	 * or a global op?  Checking .whack_add.
 	 */
-	find_and_active_redirect_states(wm->name, wm->redirect_to, logger);
+	PASSERT(logger, wm->redirect_to != NULL);
+	struct redirect_dests active_dests = {0};
+	if (!set_redirect_dests(wm->redirect_to, &active_dests)) {
+		show(s, "redirect-to='%s' is empty", wm->redirect_to);
+		return;
+	}
+
+	int cnt = 0;
+
+	struct state_filter sf = {
+		.search = {
+			.order = NEW2OLD,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
+			.where = HERE,
+		},
+	};
+
+	while (next_state(&sf)) {
+		struct state *st = sf.st;
+		if (IS_IKE_SA_ESTABLISHED(st) &&
+		    (wm->name == NULL || streq(wm->name, st->st_connection->base_name))) {
+			struct ike_sa *ike = pexpect_ike_sa(st);
+			/* cycle through the list of redirects */
+			shunk_t active_dest = next_redirect_dest(&active_dests);
+			/* not whack; there could be thousands? */
+			llog(LOG_STREAM/*not-whack*/, logger, "redirecting to: "PRI_SHUNK, pri_shunk(active_dest));
+			pfreeany(ike->sa.st_active_redirect_gw);
+			ike->sa.st_active_redirect_gw = clone_hunk_as_string(active_dest, "redirect");
+			cnt++;
+			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
+		}
+	}
+
+	if (cnt == 0) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "no active tunnels found");
+			if (wm->name != NULL) {
+				jam(buf, " for connection \"%s\"", wm->name);
+			}
+		}
+	} else {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam(buf, "redirections sent for %d tunnels", cnt);
+			if (wm->name != NULL) {
+				jam(buf, " of connection \"%s\"", wm->name);
+			}
+		}
+	}
+	free_redirect_dests(&active_dests);
 }
 
 void whack_global_redirect(const struct whack_message *wm, struct show *s)
