@@ -336,11 +336,11 @@ const struct ike_alg_type *proposal_transform_type[PROPOSAL_TRANSFORM_ROOF] = {
 #undef S
 };
 
-void append_transform_algorithm(struct proposal_parser *parser,
-				struct proposal *proposal,
-				enum proposal_transform transform,
-				const struct ike_alg *alg,
-				int enckeylen)
+void append_proposal_transform(struct proposal_parser *parser,
+			       struct proposal *proposal,
+			       enum proposal_transform transform,
+			       const struct ike_alg *alg,
+			       int enckeylen)
 {
 	const struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
@@ -758,9 +758,9 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 			      pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
 			return false;
 		}
-		append_transform_algorithm(parser, proposal,
-					   PROPOSAL_TRANSFORM_encrypt,
-					   alg, enckeylen);
+		append_proposal_transform(parser, proposal,
+					  PROPOSAL_TRANSFORM_encrypt,
+					  alg, enckeylen);
 		/* consume <ealg>-<eklen> */
 		proposal_next_token(tokens);
 		proposal_next_token(tokens);
@@ -775,9 +775,9 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 	const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 						       0/*enckeylen*/, print);
 	if (alg != NULL) {
-		append_transform_algorithm(parser, proposal,
-					   PROPOSAL_TRANSFORM_encrypt,
-					   alg, 0);
+		append_proposal_transform(parser, proposal,
+					  PROPOSAL_TRANSFORM_encrypt,
+					  alg, 0);
 		/* consume <ealg> */
 		proposal_next_token(tokens);
 		return true;
@@ -835,9 +835,9 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 		return false; // warning_or_false(parser, "encryption", print);
 	}
 
-	append_transform_algorithm(parser, proposal,
-				   PROPOSAL_TRANSFORM_encrypt,
-				   alg, enckeylen);
+	append_proposal_transform(parser, proposal,
+				  PROPOSAL_TRANSFORM_encrypt,
+				  alg, enckeylen);
 	/* consume <ealg> */
 	proposal_next_token(tokens);
 	return true;
@@ -903,7 +903,7 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 	if (alg == NULL) {
 		return warning_or_false(parser, transform, token);
 	}
-	append_transform_algorithm(parser, proposal, transform, alg, 0/*enckeylen*/);
+	append_proposal_transform(parser, proposal, transform, alg, 0/*enckeylen*/);
 	return true;
 }
 

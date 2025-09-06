@@ -44,7 +44,7 @@ static void merge_algorithms(struct proposal_parser *parser,
 		return;
 	}
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
-		append_transform_algorithm(parser, proposal, transform, *alg, 0);
+		append_proposal_transform(parser, proposal, transform, *alg, 0);
 	}
 }
 
@@ -59,9 +59,9 @@ static bool merge_defaults(struct proposal_parser *parser,
 			/*
 			 * Since AEAD, integrity is always 'none'.
 			 */
-			append_transform_algorithm(parser, proposal,
-						   PROPOSAL_TRANSFORM_integ,
-						   &ike_alg_integ_none.common, 0);
+			append_proposal_transform(parser, proposal,
+						  PROPOSAL_TRANSFORM_integ,
+						  &ike_alg_integ_none.common, 0);
 		} else if (defaults->integ != NULL) {
 			/*
 			 * Merge in the defaults.
@@ -90,9 +90,9 @@ static bool merge_defaults(struct proposal_parser *parser,
 						       prf->desc->fqn);
 					return false;
 				}
-				append_transform_algorithm(parser, proposal,
-							   PROPOSAL_TRANSFORM_integ,
-							   &integ->common, 0);
+				append_proposal_transform(parser, proposal,
+							  PROPOSAL_TRANSFORM_integ,
+							  &integ->common, 0);
 			}
 		}
 	}

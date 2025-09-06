@@ -195,11 +195,11 @@ extern void free_proposal(struct proposal **proposal);
 
 void free_algorithms(struct proposal *proposal, enum proposal_transform algorithm);
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
-void append_transform_algorithm(struct proposal_parser *parser,
-				struct proposal *proposal,
-				enum proposal_transform transform,
-				const struct ike_alg *alg,
-				int enckeylen);
+void append_proposal_transform(struct proposal_parser *parser,
+			       struct proposal *proposal,
+			       enum proposal_transform transform,
+			       const struct ike_alg *alg,
+			       int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
 				 enum proposal_transform algorithm);
