@@ -814,12 +814,12 @@ void show_global_redirect(struct show *s)
 	}
 }
 
-void whack_global_redirect(const struct whack_message *wm, struct show *s)
+void set_global_redirect(enum global_redirect redirect, const char *dests,
+			 struct logger *logger)
 {
-	struct logger *logger = show_logger(s);
-	if (wm->redirect_to != NULL) {
-		if (set_global_redirect_dests(wm->redirect_to)) {
-			llog(RC_LOG, logger, "set global redirect target to %s", wm->redirect_to);
+	if (dests != NULL) {
+		if (set_global_redirect_dests(dests)) {
+			llog(RC_LOG, logger, "set global redirect target to %s", dests);
 		} else {
 			global_redirect = GLOBAL_REDIRECT_NO;
 			llog(RC_LOG, logger,
@@ -827,7 +827,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 		}
 	}
 
-	switch (wm->global_redirect) {
+	switch (redirect) {
 	case GLOBAL_REDIRECT_NO:
 		global_redirect = GLOBAL_REDIRECT_NO;
 		llog(RC_LOG, logger, "set global redirect to 'no'");
@@ -839,7 +839,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 			     "ipsec whack: --global-redirect set to no as there are no active redirect targets");
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
-			global_redirect = wm->global_redirect;
+			global_redirect = redirect;
 			name_buf rn;
 			llog(RC_LOG, logger,
 			     "set global redirect to %s",

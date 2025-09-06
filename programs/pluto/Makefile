@@ -112,6 +112,7 @@ OBJS += whack_showstates.o
 OBJS += whack_shutdown.o
 OBJS += whack_status.o
 OBJS += whack_suspend.o
+OBJS += whack_redirect.o
 OBJS += whack_trafficstatus.o
 OBJS += whack_unroute.o
 

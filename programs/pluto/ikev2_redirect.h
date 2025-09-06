@@ -14,8 +14,13 @@
  * for more details.
  */
 
-#ifndef _IKEV2_REDIRECT_H
-#define _IKEV2_REDIRECT_H
+#ifndef IKEV2_REDIRECT_H
+#define IKEV2_REDIRECT_H
+
+struct msg_digest;
+struct pbs_out;
+struct ike_sa;
+struct child_sa;
 
 extern void free_global_redirect_dests(void);
 
@@ -71,6 +76,8 @@ extern const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange;
 
 void init_global_redirect(enum global_redirect redirect, const char *redirect_to, struct logger *logger);
 void show_global_redirect(struct show *s);
-void whack_global_redirect(const struct whack_message *wm, struct show *s);
+void set_global_redirect(enum global_redirect redirect,
+			 const char *dests,
+			 struct logger *logger);
 
 #endif
