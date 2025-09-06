@@ -172,15 +172,15 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 
 	PASSERT(logger, parser->diag == NULL); /* so far so good */
 	if (!parse_transform_algorithm(parser, proposal, transform,
-				       transform_type, tokens->this)) {
+				       transform_type, tokens->curr.token)) {
 		return false;
 	}
 
 	passert(parser->diag == NULL); /* still good */
 	proposal_next_token(tokens);
-	while (tokens->prev_term == '+') {
+	while (tokens->prev.delim == '+') {
 		if (!parse_transform_algorithm(parser, proposal, transform,
-					       transform_type, tokens->this)) {
+					       transform_type, tokens->curr.token)) {
 			return false;
 		}
 		passert(parser->diag == NULL);
@@ -251,7 +251,7 @@ static enum proposal_status parse_encrypt_transforms(struct proposal_parser *par
 				   encrypt, encrypt_keylen);
 
 	/* further encryption algorithm tokens are optional */
-	while (tokens->prev_term == '+') {
+	while (tokens->prev.delim == '+') {
 		if (!proposal_parse_encrypt(parser, tokens, &encrypt, &encrypt_keylen)) {
 			passert(parser->diag != NULL);
 			return PROPOSAL_ERROR;
@@ -343,8 +343,8 @@ static enum proposal_status parse_prf_transforms(struct proposal_parser *parser,
 
 	pfree_diag(&prf_diag);
 
-	if (tokens->this.ptr == NULL /*more?*/ ||
-	    tokens->prev_term == ';' /*;KEM>*/) {
+	if (tokens->curr.token.ptr == NULL /*more?*/ ||
+	    tokens->prev.delim == ';' /*;KEM>*/) {
 		return PROPOSAL_OK;
 	}
 
@@ -461,12 +461,12 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
 	     transform <= ceiling; transform++) {
 
-		if (tokens.this.ptr == NULL) {
+		if (tokens.curr.token.ptr == NULL) {
 			break;
 		}
 
 		/* when ';' skip forward to KEM */
-		if (tokens.prev_term == ';') {
+		if (tokens.prev.delim == ';') {
 			if (transform > PROPOSAL_TRANSFORM_kem) {
 				name_buf tb;
 				proposal_error(parser, "unexpected ';', expecting '-' followed by %s transform",
@@ -483,10 +483,10 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 	}
 
 	/* end of token stream? */
-	if (tokens.this.ptr != NULL) {
+	if (tokens.curr.token.ptr != NULL) {
 		proposal_error(parser, "%s proposal contains unexpected '"PRI_SHUNK"'",
 			       parser->protocol->name,
-			       pri_shunk(tokens.this));
+			       pri_shunk(tokens.curr.token));
 		passert(parser->diag != NULL);
 		return PROPOSAL_ERROR;
 	}

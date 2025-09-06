@@ -725,7 +725,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 			    int *encrypt_keylen)
 {
 	const struct logger *logger = parser->policy->logger;
-	if (tokens->this.len == 0) {
+	if (tokens->curr.token.len == 0) {
 		proposal_error(parser, "%s encryption algorithm is empty",
 			       parser->protocol->name);
 		return false;
@@ -738,12 +738,12 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 * it starts with a digit then just assume <ealg>-<ealg> and
 	 * error out if it is not so.
 	 */
-	if (tokens->this_term == '-' &&
-	    tokens->next.len > 0 &&
-	    char_isdigit(hunk_char(tokens->next, 0))) {
+	if (tokens->curr.delim == '-' &&
+	    tokens->next.token.len > 0 &&
+	    char_isdigit(hunk_char(tokens->next.token, 0))) {
 		/* assume <ealg>-<eklen> */
-		shunk_t ealg = tokens->this;
-		shunk_t eklen = tokens->next;
+		shunk_t ealg = tokens->curr.token;
+		shunk_t eklen = tokens->next.token;
 		/* print "<ealg>-<eklen>" in errors */
 		shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		int enckeylen = parse_proposal_eklen(parser, print, eklen);
@@ -770,8 +770,8 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	/*
 	 * Does it match <ealg> (without any _<eklen> suffix?)
 	 */
-	const shunk_t print = tokens->this;
-	shunk_t ealg = tokens->this;
+	const shunk_t print = tokens->curr.token;
+	shunk_t ealg = tokens->curr.token;
 	const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 						       0/*enckeylen*/, print);
 	if (alg != NULL) {
@@ -854,47 +854,48 @@ struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims
 	return token;
 }
 
+static void jam_token(struct jambuf *buf, const char *wrap,
+		      struct proposal_term term)
+{
+	jam_string(buf, " ");
+	jam_string(buf, wrap);
+	if (term.token.ptr == NULL) {
+		jam_string(buf, "<null>");
+	} else {
+		jam_string(buf, "\"");
+		jam_shunk(buf, term.token);
+		jam_string(buf, "\"");
+	}
+	jam_string(buf, "'");
+	if (term.delim != '\0') {
+		jam_char(buf, term.delim);
+	}
+	jam_string(buf, "'");
+	jam_string(buf, wrap);
+}
+
 void proposal_next_token(struct proposal_tokenizer *tokens)
 {
 	struct logger *logger = &global_logger;
 
-	/* shuffle terminators */
-	tokens->prev_term = tokens->this_term;
-	tokens->this_term = tokens->next_term;
 	/* shuffle tokens */
-	tokens->this = tokens->next;
-	tokens->next = shunk_token(&tokens->input, &tokens->next_term, tokens->delims);
+	tokens->prev = tokens->curr;
+	tokens->curr = tokens->next;
+	/* parse new next */
+	tokens->next.token = shunk_token(&tokens->input, &tokens->next.delim, tokens->delims);
 	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "token: ");
-			if (tokens->prev_term != '\0') {
-				jam(buf, "'%c'", tokens->prev_term);
+			jam_string(buf, "tokens:");
+			jam_token(buf, "", tokens->prev);
+			jam_token(buf, "*", tokens->curr);
+			jam_token(buf, "", tokens->next);
+			jam_string(buf, " ");
+			if (tokens->input.ptr == NULL) {
+				jam_string(buf, "<null>");
 			} else {
-				jam(buf, "''");
-			}
-			jam(buf, " ");
-			if (tokens->this.ptr == NULL) {
-				jam(buf, "<null>");
-			} else {
-				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->this));
-			}
-			jam(buf, " ");
-			if (tokens->this_term != '\0') {
-				jam(buf, "'%c'", tokens->this_term);
-			} else {
-				jam(buf, "''");
-			}
-			jam(buf, " ");
-			if (tokens->next.ptr == NULL) {
-				jam(buf, "<null>");
-			} else {
-				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->next));
-			}
-			jam(buf, " ");
-			if (tokens->next_term != '\0') {
-				jam(buf, "'%c'", tokens->next_term);
-			} else {
-				jam(buf, "''");
+				jam_string(buf, "\"");
+				jam_shunk(buf, tokens->input);
+				jam_string(buf, "\"");
 			}
 		}
 	}

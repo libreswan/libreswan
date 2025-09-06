@@ -243,8 +243,8 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				 struct proposals *proposals)
 {
 	if (parser->protocol->encrypt &&
-	    tokens->this.ptr != NULL &&
-	    tokens->prev_term != ';'/*not ;KEM*/) {
+	    tokens->curr.token.ptr != NULL &&
+	    tokens->prev.delim != ';'/*not ;KEM*/) {
 		const struct ike_alg *encrypt;
 		int encrypt_keylen;
 		if (!proposal_parse_encrypt(parser, tokens, &encrypt, &encrypt_keylen)) {
@@ -256,9 +256,9 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	}
 
 	if (parser->protocol->prf &&
-	    tokens->this.ptr != NULL &&
-	    tokens->prev_term != ';'/*not ;KEM*/) {
-		shunk_t prf = tokens[0].this;
+	    tokens->curr.token.ptr != NULL &&
+	    tokens->prev.delim != ';'/*not ;KEM*/) {
+		shunk_t prf = tokens[0].curr.token;
 		proposal.prf = prf_desc(alg_byname(parser, &ike_alg_prf, prf, prf));
 		if (parser->diag != NULL) {
 			return false;
@@ -279,12 +279,12 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	 */
 	bool lookup_integ = (!parser->protocol->prf && parser->protocol->integ);
 	if (lookup_integ &&
-	    tokens->this.ptr != NULL &&
-	    tokens->prev_term != ';'/*not ;KEM*/) {
-		shunk_t integ = tokens[0].this;
+	    tokens->curr.token.ptr != NULL &&
+	    tokens->prev.delim != ';'/*not ;KEM*/) {
+		shunk_t integ = tokens[0].curr.token;
 		proposal.integ = integ_desc(alg_byname(parser, &ike_alg_integ, integ, integ));
 		if (parser->diag != NULL) {
-			if (tokens->next.ptr != NULL) {
+			if (tokens->next.token.ptr != NULL) {
 				/*
 				 * This alg should have been
 				 * integrity, since the next would be
@@ -293,7 +293,7 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 				passert(parser->diag != NULL);
 				return false;
 			}
-			if (tokens->next.ptr == NULL &&
+			if (tokens->next.token.ptr == NULL &&
 			    !parser->protocol->prf) {
 				/*
 				 * Only one arg, integrity is preferred
@@ -309,8 +309,8 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		}
 	}
 
-	if (parser->protocol->kem && tokens->this.ptr != NULL) {
-		shunk_t ke = tokens[0].this;
+	if (parser->protocol->kem && tokens->curr.token.ptr != NULL) {
+		shunk_t ke = tokens[0].curr.token;
 		proposal.kem = kem_desc(alg_byname(parser, &ike_alg_kem, ke, ke));
 		if (parser->diag != NULL) {
 			return false;
@@ -318,10 +318,10 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		proposal_next_token(tokens);
 	}
 
-	if (tokens->this.ptr != NULL) {
+	if (tokens->curr.token.ptr != NULL) {
 		proposal_error(parser, "%s proposals contain unexpected '"PRI_SHUNK"'",
 			       parser->protocol->name,
-			       pri_shunk(tokens[0].this));
+			       pri_shunk(tokens[0].curr.token));
 		return false;
 	}
 
