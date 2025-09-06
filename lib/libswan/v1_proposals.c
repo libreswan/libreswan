@@ -237,10 +237,10 @@ static bool merge_default_proposals(struct proposal_parser *parser,
 				     proposals, proposal);
 }
 
-static bool parser_proposals_add(struct proposal_parser *parser,
-				 struct proposal_tokenizer *tokens,
-				 struct v1_proposal proposal,
-				 struct proposals *proposals)
+static bool parse_ikev1_proposal(struct proposal_parser *parser,
+				 struct proposals *proposals,
+				 struct proposal *scratch_proposal,
+				 struct proposal_tokenizer *tokens)
 {
 	if (parser->protocol->encrypt &&
 	    tokens->curr.token.ptr != NULL &&
@@ -251,18 +251,23 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 			passert(parser->diag != NULL);
 			return false;
 		}
-		proposal.encrypt = encrypt_desc(encrypt);
-		proposal.enckeylen = encrypt_keylen;
+		append_transform_algorithm(parser, scratch_proposal,
+					   PROPOSAL_TRANSFORM_encrypt,
+					   encrypt, encrypt_keylen);
 	}
 
 	if (parser->protocol->prf &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
-		shunk_t prf = tokens[0].curr.token;
-		proposal.prf = prf_desc(alg_byname(parser, &ike_alg_prf, prf, prf));
+		shunk_t prf_token = tokens[0].curr.token;
+		const struct ike_alg *prf = alg_byname(parser, &ike_alg_prf,
+						       prf_token, prf_token);
 		if (parser->diag != NULL) {
 			return false;
 		}
+		append_transform_algorithm(parser, scratch_proposal,
+					   PROPOSAL_TRANSFORM_prf,
+					   prf, 0);
 		proposal_next_token(tokens);
 	}
 
@@ -281,8 +286,9 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 	if (lookup_integ &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
-		shunk_t integ = tokens[0].curr.token;
-		proposal.integ = integ_desc(alg_byname(parser, &ike_alg_integ, integ, integ));
+		shunk_t integ_token = tokens[0].curr.token;
+		const struct ike_alg *integ = alg_byname(parser, &ike_alg_integ,
+							 integ_token, integ_token);
 		if (parser->diag != NULL) {
 			if (tokens->next.token.ptr != NULL) {
 				/*
@@ -305,16 +311,23 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 			/* let DH try */
 			pfree_diag(&parser->diag);
 		} else {
+			append_transform_algorithm(parser, scratch_proposal,
+						   PROPOSAL_TRANSFORM_integ,
+						   integ, 0);
 			proposal_next_token(tokens);
 		}
 	}
 
 	if (parser->protocol->kem && tokens->curr.token.ptr != NULL) {
-		shunk_t ke = tokens[0].curr.token;
-		proposal.kem = kem_desc(alg_byname(parser, &ike_alg_kem, ke, ke));
+		shunk_t kem_token = tokens[0].curr.token;
+		const struct ike_alg *kem = alg_byname(parser, &ike_alg_kem,
+						       kem_token, kem_token);
 		if (parser->diag != NULL) {
 			return false;
 		}
+		append_transform_algorithm(parser, scratch_proposal,
+					   PROPOSAL_TRANSFORM_kem,
+					   kem, 0);
 		proposal_next_token(tokens);
 	}
 
@@ -325,7 +338,16 @@ static bool parser_proposals_add(struct proposal_parser *parser,
 		return false;
 	}
 
-	return merge_default_proposals(parser, proposals, &proposal);
+	/*
+	 * Merge is a misnomer.
+	 *
+	 * Because IKEv1 does not allow multiple algorithms for a
+	 * transform this call gets to expand all combinations of the
+	 * defaults into lots of little proposals.
+	 */
+
+	struct v1_proposal v1 = v1_proposal(scratch_proposal);
+	return merge_default_proposals(parser, proposals, &v1);
 }
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
@@ -349,13 +371,13 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 		shunk_t prop = shunk_token(&prop_ptr, NULL, ",");
 		/* parse it */
 		struct proposal_tokenizer tokens = proposal_first_token(prop, "-;");
-		struct v1_proposal proposal = {
-			.protocol = parser->protocol,
-		};
-		if (!parser_proposals_add(parser, &tokens, proposal, proposals)) {
+		struct proposal *scratch_proposal = alloc_proposal(parser);
+		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, &tokens)) {
+			free_proposal(&scratch_proposal);
 			passert(parser->diag != NULL);
 			return false;
 		}
+		free_proposal(&scratch_proposal);
 	} while (prop_ptr.ptr != NULL);
 	return true;
 }
