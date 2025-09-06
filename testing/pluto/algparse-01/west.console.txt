@@ -2566,7 +2566,7 @@ algparse -addke -v2 -pfs 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
+	ERROR: unexpected ';', expecting '-' followed by addke1 transform
 algparse -addke -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -addke -v2 -pfs 'ike=,' (expect ERROR)
