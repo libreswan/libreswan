@@ -38,16 +38,20 @@ the pre-built version of the distribution you are using.
 
 ## Installing from Source
 
-### Requirements
+### Dependencies
 
-There are a few packages required for Libreswan to compile from source:
+There are a few packages required for Libreswan to compile from
+source:
 
-For Debian/Ubuntu
+For Debian / Ubuntu / Mint
 
-    apt-get install net-tools make build-essential \
-      libnss3-dev pkg-config libevent-dev libunbound-dev \
-      bison flex libsystemd-dev libcurl4-nss-dev \
-      libpam0g-dev libcap-ng-dev libldns-dev xmlto
+    apt-get install build-essential pkg-config \
+      bison flex libnss3-dev libevent-dev libunbound-dev \
+      libpam0g-dev libcap-ng-dev libldns-dev xmlto \
+      libcurl4-openssl-dev
+
+apt-get install build-essential pkg-config \
+      bison fles
 
 For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
 
@@ -82,6 +86,18 @@ OpenBSD:
     pkg_add gmake nss libevent libunbound bison libldns xmlto \
       curl git llvm%16
 
+### Building from scratch into /usr/local
+
+GNU Make is used:
+
+    gmake
+    sudo gmake install
+
+If you want to build without creating and installing manual pages, run:
+
+    gmake base
+    sudo gmake install-base
+
 ### Building for RPM based systems
 
 Install requirements for rpm package building:
@@ -104,18 +120,6 @@ The packaging/debian directory is used to build deb files.  Simply
 issue the command:
 
     make deb
-
-### Building from scratch into /usr/local
-
-GNU Make is used:
-
-    gmake
-    sudo gmake install
-
-If you want to build without creating and installing manual pages, run:
-
-    gmake base
-    sudo gmake install-base
 
 ## Starting Libreswan
 
