@@ -48,12 +48,6 @@ static emit_v2_INFORMATIONAL_request_payload_fn add_redirect_payload; /* type ch
 
 static enum global_redirect global_redirect; /* see config_setup.[hc] and init_global_redirect() */
 
-struct redirect_dests {
-	char *whole;
-	unsigned next;	/* points into whole */
-	struct shunks *splits;
-};
-
 static struct redirect_dests global_dests = {0};
 
 static const char *global_redirect_to(void)
@@ -63,7 +57,7 @@ static const char *global_redirect_to(void)
 	return global_dests.whole;
 }
 
-static void free_redirect_dests(struct redirect_dests *dests)
+void free_redirect_dests(struct redirect_dests *dests)
 {
 	pfreeany(dests->whole);
 	dests->next = 0;
@@ -75,7 +69,7 @@ void free_global_redirect_dests(void)
 	free_redirect_dests(&global_dests);
 }
 
-static bool set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
+bool set_redirect_dests(const char *rd_str, struct redirect_dests *dests)
 {
 	free_redirect_dests(dests);
 
@@ -113,7 +107,7 @@ static bool set_global_redirect_dests(const char *grd_str)
  * @return shunk_t string to be shipped.
  */
 
-static shunk_t next_redirect_dest(struct redirect_dests *rl)
+shunk_t next_redirect_dest(struct redirect_dests *rl)
 {
 	if (rl->next >= rl->splits->len) {
 		rl->next = 0;
@@ -714,61 +708,6 @@ const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	},
 };
 
-void find_and_active_redirect_states(const char *conn_name,
-				     const char *active_redirect_dests,
-				     struct logger *logger)
-{
-	PASSERT(logger, active_redirect_dests != NULL);
-	struct redirect_dests active_dests = {0};
-	if (!set_redirect_dests(active_redirect_dests, &active_dests)) {
-		llog(RC_LOG, logger, "redirect-to='%s' is empty", active_redirect_dests);
-		return;
-	}
-
-	int cnt = 0;
-
-	struct state_filter sf = {
-		.search = {
-			.order = NEW2OLD,
-			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
-			.where = HERE,
-		},
-	};
-	while (next_state(&sf)) {
-		struct state *st = sf.st;
-		if (IS_IKE_SA_ESTABLISHED(st) &&
-		    (conn_name == NULL || streq(conn_name, st->st_connection->base_name))) {
-			struct ike_sa *ike = pexpect_ike_sa(st);
-			/* cycle through the list of redirects */
-			shunk_t active_dest = next_redirect_dest(&active_dests);
-			/* not whack; there could be thousands? */
-			llog(LOG_STREAM/*not-whack*/, logger, "redirecting to: "PRI_SHUNK, pri_shunk(active_dest));
-			pfreeany(ike->sa.st_active_redirect_gw);
-			ike->sa.st_active_redirect_gw = clone_hunk_as_string(active_dest, "redirect");
-			cnt++;
-			PEXPECT(logger, v2_INFORMATIONAL_v2N_REDIRECT_exchange.initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL);
-			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
-		}
-	}
-
-	if (cnt == 0) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "no active tunnels found");
-			if (conn_name != NULL) {
-				jam(buf, " for connection \"%s\"", conn_name);
-			}
-		}
-	} else {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "redirections sent for %d tunnels", cnt);
-			if (conn_name != NULL) {
-				jam(buf, " of connection \"%s\"", conn_name);
-			}
-		}
-	}
-	free_redirect_dests(&active_dests);
-}
-
 stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 							struct child_sa *child,
 							struct msg_digest *md)
@@ -814,12 +753,12 @@ void show_global_redirect(struct show *s)
 	}
 }
 
-void whack_global_redirect(const struct whack_message *wm, struct show *s)
+void set_global_redirect(enum global_redirect redirect, const char *dests,
+			 struct logger *logger)
 {
-	struct logger *logger = show_logger(s);
-	if (wm->redirect_to != NULL) {
-		if (set_global_redirect_dests(wm->redirect_to)) {
-			llog(RC_LOG, logger, "set global redirect target to %s", wm->redirect_to);
+	if (dests != NULL) {
+		if (set_global_redirect_dests(dests)) {
+			llog(RC_LOG, logger, "set global redirect target to %s", dests);
 		} else {
 			global_redirect = GLOBAL_REDIRECT_NO;
 			llog(RC_LOG, logger,
@@ -827,7 +766,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 		}
 	}
 
-	switch (wm->global_redirect) {
+	switch (redirect) {
 	case GLOBAL_REDIRECT_NO:
 		global_redirect = GLOBAL_REDIRECT_NO;
 		llog(RC_LOG, logger, "set global redirect to 'no'");
@@ -839,7 +778,7 @@ void whack_global_redirect(const struct whack_message *wm, struct show *s)
 			     "ipsec whack: --global-redirect set to no as there are no active redirect targets");
 			global_redirect = GLOBAL_REDIRECT_NO;
 		} else {
-			global_redirect = wm->global_redirect;
+			global_redirect = redirect;
 			name_buf rn;
 			llog(RC_LOG, logger,
 			     "set global redirect to %s",

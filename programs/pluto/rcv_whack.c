@@ -50,11 +50,13 @@
 #include "iface.h"			/* for find_ifaces() */
 #include "foodgroups.h"			/* for load_groups() */
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
-#include "ikev2_redirect.h"		/* for find_and_active_redirect_states() */
 #include "addresspool.h"		/* for show_addresspool_status() */
 #include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
+#include "config_setup.h"
+#include "ddos.h"
+
 #include "visit_connection.h"
 #include "whack_add.h"
 #include "whack_briefconnectionstatus.h"
@@ -70,6 +72,7 @@
 #include "whack_initiate.h"
 #include "whack_pubkey.h"
 #include "whack_route.h"
+#include "whack_redirect.h"
 #include "whack_sa.h"
 #include "whack_showstates.h"
 #include "whack_shutdown.h"
@@ -77,8 +80,6 @@
 #include "whack_suspend.h"
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
-#include "config_setup.h"
-#include "ddos.h"
 
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
@@ -240,30 +241,6 @@ static void whack_listen(const struct whack_message *wm, struct show *s)
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS, logger);
 #endif
-}
-
-static void jam_redirect(struct jambuf *buf, const struct whack_message *wm)
-{
-	if (wm->redirect_to != NULL) {
-		jam_string(buf, " redirect-to=");
-		jam_string(buf, wm->redirect_to);
-	}
-	if (wm->global_redirect != 0) {
-		jam_string(buf, " redirect_to=");
-		jam_sparse_long(buf, &yna_option_names, wm->global_redirect);
-	}
-}
-
-static void whack_active_redirect(const struct whack_message *wm, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	/*
-	 * We are redirecting all peers of one or all connections.
-	 *
-	 * Whack's --redirect-to is ambitious - is it part of an ADD
-	 * or a global op?  Checking .whack_add.
-	 */
-	find_and_active_redirect_states(wm->name, wm->redirect_to, logger);
 }
 
 static void whack_checkpubkeys(const struct whack_message *wm, struct show *s)
@@ -512,12 +489,12 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 			.op = whack_shutdown_leave_state,
 		},
 		[WHACK_GLOBAL_REDIRECT] = {
-			.jam = jam_redirect,
+			.jam = jam_whack_redirect,
 			.name = "global-redirect",
 			.op = whack_global_redirect,
 		},
 		[WHACK_ACTIVE_REDIRECT] = {
-			.jam = jam_redirect,
+			.jam = jam_whack_redirect,
 			.name = "active-redirect",
 			.op = whack_active_redirect,
 		},
