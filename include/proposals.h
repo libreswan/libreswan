@@ -195,11 +195,11 @@ extern void free_proposal(struct proposal **proposal);
 
 void free_algorithms(struct proposal *proposal, enum proposal_transform algorithm);
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
-void append_transform_algorithm(struct proposal_parser *parser,
-				struct proposal *proposal,
-				enum proposal_transform transform,
-				const struct ike_alg *alg,
-				int enckeylen);
+void append_proposal_transform(struct proposal_parser *parser,
+			       struct proposal *proposal,
+			       enum proposal_transform transform,
+			       const struct ike_alg *alg,
+			       int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
 				 enum proposal_transform algorithm);
@@ -304,12 +304,15 @@ struct v1_proposal v1_proposal(const struct proposal *proposal);
  * INTERNAL: tokenize <input> into <delim_before><current><delim_after><input>
  */
 
+struct proposal_term {
+	shunk_t token;
+	char delim;
+};
+
 struct proposal_tokenizer {
-	char prev_term;
-	shunk_t this;
-	char this_term;
-	shunk_t next;
-	char next_term;
+	struct proposal_term prev;
+	struct proposal_term curr;
+	struct proposal_term next;
 	shunk_t input;
 	const char *delims;
 };
@@ -317,9 +320,19 @@ struct proposal_tokenizer {
 struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delim);
 void proposal_next_token(struct proposal_tokenizer *token);
 
-bool proposal_parse_encrypt(struct proposal_parser *parser,
-			    struct proposal_tokenizer *tokens,
-			    const struct ike_alg **encrypt,
-			    int *enckeylen);
+bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
+				      struct proposal *proposal,
+				      struct proposal_tokenizer *tokens);
+
+bool parse_proposal_transform(struct proposal_parser *parser,
+			      struct proposal *proposal,
+			      enum proposal_transform transform,
+			      shunk_t token);
+
+void discard_proposal_transform(const char *what,
+				struct proposal_parser *parser,
+				struct proposal *proposal,
+				enum proposal_transform transform,
+				diag_t *diag);
 
 #endif /* PROPOSALS_H */

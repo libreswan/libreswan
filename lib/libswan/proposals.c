@@ -336,11 +336,11 @@ const struct ike_alg_type *proposal_transform_type[PROPOSAL_TRANSFORM_ROOF] = {
 #undef S
 };
 
-void append_transform_algorithm(struct proposal_parser *parser,
-				struct proposal *proposal,
-				enum proposal_transform transform,
-				const struct ike_alg *alg,
-				int enckeylen)
+void append_proposal_transform(struct proposal_parser *parser,
+			       struct proposal *proposal,
+			       enum proposal_transform transform,
+			       const struct ike_alg *alg,
+			       int enckeylen)
 {
 	const struct logger *logger = parser->policy->logger;
 	if (alg == NULL) {
@@ -719,13 +719,12 @@ static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, s
 	return eklen;
 }
 
-bool proposal_parse_encrypt(struct proposal_parser *parser,
-			    struct proposal_tokenizer *tokens,
-			    const struct ike_alg **encrypt,
-			    int *encrypt_keylen)
+bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
+				      struct proposal *proposal,
+				      struct proposal_tokenizer *tokens)
 {
 	const struct logger *logger = parser->policy->logger;
-	if (tokens->this.len == 0) {
+	if (tokens->curr.token.len == 0) {
 		proposal_error(parser, "%s encryption algorithm is empty",
 			       parser->protocol->name);
 		return false;
@@ -738,12 +737,12 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 * it starts with a digit then just assume <ealg>-<ealg> and
 	 * error out if it is not so.
 	 */
-	if (tokens->this_term == '-' &&
-	    tokens->next.len > 0 &&
-	    char_isdigit(hunk_char(tokens->next, 0))) {
+	if (tokens->curr.delim == '-' &&
+	    tokens->next.token.len > 0 &&
+	    char_isdigit(hunk_char(tokens->next.token, 0))) {
 		/* assume <ealg>-<eklen> */
-		shunk_t ealg = tokens->this;
-		shunk_t eklen = tokens->next;
+		shunk_t ealg = tokens->curr.token;
+		shunk_t eklen = tokens->next.token;
 		/* print "<ealg>-<eklen>" in errors */
 		shunk_t print = shunk2(ealg.ptr, eklen.ptr + eklen.len - ealg.ptr);
 		int enckeylen = parse_proposal_eklen(parser, print, eklen);
@@ -759,26 +758,28 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 			      pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
 			return false;
 		}
+		append_proposal_transform(parser, proposal,
+					  PROPOSAL_TRANSFORM_encrypt,
+					  alg, enckeylen);
 		/* consume <ealg>-<eklen> */
 		proposal_next_token(tokens);
 		proposal_next_token(tokens);
-		// append_algorithm(parser, proposal, alg, enckeylen);
-		*encrypt = alg; *encrypt_keylen = enckeylen;
 		return true;
 	}
 
 	/*
 	 * Does it match <ealg> (without any _<eklen> suffix?)
 	 */
-	const shunk_t print = tokens->this;
-	shunk_t ealg = tokens->this;
+	const shunk_t print = tokens->curr.token;
+	shunk_t ealg = tokens->curr.token;
 	const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 						       0/*enckeylen*/, print);
 	if (alg != NULL) {
+		append_proposal_transform(parser, proposal,
+					  PROPOSAL_TRANSFORM_encrypt,
+					  alg, 0);
 		/* consume <ealg> */
 		proposal_next_token(tokens);
-		// append_algorithm(parser, proposal, alg, 0/*enckeylen*/);
-		*encrypt = alg; *encrypt_keylen = 0;
 		return true;
 	}
 
@@ -834,11 +835,95 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 		return false; // warning_or_false(parser, "encryption", print);
 	}
 
+	append_proposal_transform(parser, proposal,
+				  PROPOSAL_TRANSFORM_encrypt,
+				  alg, enckeylen);
 	/* consume <ealg> */
 	proposal_next_token(tokens);
-	// append_algorithm(parser, proposal, alg, enckeylen);
-	*encrypt = alg; *encrypt_keylen = enckeylen;
 	return true;
+}
+
+/*
+ * No questions hack to either return 'false' for parsing token
+ * failed, or 'true' and warn because forced parsing is enabled.
+ */
+static bool warning_or_false(struct proposal_parser *parser,
+			     enum proposal_transform transform,
+			     shunk_t print)
+{
+	const struct logger *logger = parser->policy->logger;
+	passert(parser->diag != NULL);
+	bool result;
+	if (parser->policy->ignore_parser_errors) {
+		/*
+		 * XXX: the algorithm might be unknown, or might be
+		 * known but not enabled due to FIPS, or ...?
+		 */
+		name_buf vb, tb;
+		llog(RC_LOG, logger,
+		     "ignoring %s %s %s '"PRI_SHUNK"'",
+		     str_enum_long(&ike_version_names, parser->policy->version, &vb),
+		     parser->protocol->name, /* ESP|IKE|AH */
+		     str_enum_short(&proposal_transform_names, transform, &tb),
+		     pri_shunk(print));
+		result = true;
+	} else {
+		name_buf tb;
+		ldbgf(DBG_PROPOSAL_PARSER, logger,
+		      "lookup for %s '"PRI_SHUNK"' failed",
+		      str_enum_short(&proposal_transform_names, transform, &tb),
+		      pri_shunk(print));
+		result = false;
+	}
+	return result;
+}
+
+bool parse_proposal_transform(struct proposal_parser *parser,
+			      struct proposal *proposal,
+			      enum proposal_transform transform,
+			      shunk_t token)
+{
+	passert(parser->diag == NULL);
+	const struct ike_alg_type *transform_type = proposal_transform_type[transform];
+	if (token.len == 0) {
+		if (parser->policy->version == IKEv1) {
+			/* test compat hack */
+			proposal_error(parser, "%s %s '' is not recognized",
+				       parser->protocol->name,
+				       transform_type->story);
+		} else {
+			proposal_error(parser, "%s %s is empty",
+				       parser->protocol->name,
+				       transform_type->story);
+		}
+		return false;
+	}
+	const struct ike_alg *alg = alg_byname(parser, transform_type,
+					       token, token/*print*/);
+	if (alg == NULL) {
+		return warning_or_false(parser, transform, token);
+	}
+	append_proposal_transform(parser, proposal, transform, alg, 0/*enckeylen*/);
+	return true;
+}
+
+void discard_proposal_transform(const char *what, struct proposal_parser *parser,
+				struct proposal *proposal,
+				enum proposal_transform transform,
+				diag_t *diag)
+{
+	const struct logger *logger = parser->policy->logger;
+	/* toss the result, but save the error */
+	ldbgf(DBG_PROPOSAL_PARSER, logger,
+	      "%s failed, saving error '%s' and tossing result",
+	      what, str_diag(parser->diag));
+	free_algorithms(proposal, transform);
+	if (diag != NULL) {
+		(*diag) = parser->diag;
+		parser->diag = NULL;
+	} else {
+		pfree_diag(&parser->diag);
+	}
 }
 
 struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims)
@@ -854,47 +939,48 @@ struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims
 	return token;
 }
 
+static void jam_token(struct jambuf *buf, const char *wrap,
+		      struct proposal_term term)
+{
+	jam_string(buf, " ");
+	jam_string(buf, wrap);
+	if (term.token.ptr == NULL) {
+		jam_string(buf, "<null>");
+	} else {
+		jam_string(buf, "\"");
+		jam_shunk(buf, term.token);
+		jam_string(buf, "\"");
+	}
+	jam_string(buf, "'");
+	if (term.delim != '\0') {
+		jam_char(buf, term.delim);
+	}
+	jam_string(buf, "'");
+	jam_string(buf, wrap);
+}
+
 void proposal_next_token(struct proposal_tokenizer *tokens)
 {
 	struct logger *logger = &global_logger;
 
-	/* shuffle terminators */
-	tokens->prev_term = tokens->this_term;
-	tokens->this_term = tokens->next_term;
 	/* shuffle tokens */
-	tokens->this = tokens->next;
-	tokens->next = shunk_token(&tokens->input, &tokens->next_term, tokens->delims);
+	tokens->prev = tokens->curr;
+	tokens->curr = tokens->next;
+	/* parse new next */
+	tokens->next.token = shunk_token(&tokens->input, &tokens->next.delim, tokens->delims);
 	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "token: ");
-			if (tokens->prev_term != '\0') {
-				jam(buf, "'%c'", tokens->prev_term);
+			jam_string(buf, "tokens:");
+			jam_token(buf, "", tokens->prev);
+			jam_token(buf, "*", tokens->curr);
+			jam_token(buf, "", tokens->next);
+			jam_string(buf, " ");
+			if (tokens->input.ptr == NULL) {
+				jam_string(buf, "<null>");
 			} else {
-				jam(buf, "''");
-			}
-			jam(buf, " ");
-			if (tokens->this.ptr == NULL) {
-				jam(buf, "<null>");
-			} else {
-				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->this));
-			}
-			jam(buf, " ");
-			if (tokens->this_term != '\0') {
-				jam(buf, "'%c'", tokens->this_term);
-			} else {
-				jam(buf, "''");
-			}
-			jam(buf, " ");
-			if (tokens->next.ptr == NULL) {
-				jam(buf, "<null>");
-			} else {
-				jam(buf, "\""PRI_SHUNK"\"", pri_shunk(tokens->next));
-			}
-			jam(buf, " ");
-			if (tokens->next_term != '\0') {
-				jam(buf, "'%c'", tokens->next_term);
-			} else {
-				jam(buf, "''");
+				jam_string(buf, "\"");
+				jam_shunk(buf, tokens->input);
+				jam_string(buf, "\"");
 			}
 		}
 	}
