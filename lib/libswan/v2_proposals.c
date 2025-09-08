@@ -417,6 +417,17 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 		return PROPOSAL_ERROR;
 	}
 
+	return PROPOSAL_OK;
+}
+
+static enum proposal_status parse_ikev2_proposal(struct proposal_parser *parser,
+						 struct proposal *proposal, shunk_t input)
+{
+	enum proposal_status status = parse_proposal(parser, proposal, input);
+	if (status != PROPOSAL_OK) {
+		return status;
+	}
+
 	if (!merge_defaults(parser, proposal)) {
 		passert(parser->diag != NULL);
 		return PROPOSAL_ERROR;
@@ -450,7 +461,7 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 		/* find the next proposal */
 		shunk_t raw_proposal = shunk_token(&input, NULL, ",");
 		struct proposal *proposal = alloc_proposal(parser);
-		switch (parse_proposal(parser, proposal, raw_proposal)) {
+		switch (parse_ikev2_proposal(parser, proposal, raw_proposal)) {
 		case PROPOSAL_ERROR:
 			passert(parser->diag != NULL);
 			free_proposal(&proposal);
