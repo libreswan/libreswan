@@ -64,9 +64,11 @@ typedef unsigned (connection_visitor_cb)
  * INSTANCES would corrupt the search list.
  */
 
-void visit_root_connection(const struct whack_message *wm, struct show *s,
-			   connection_visitor_cb *connection_visitor,
-			   enum chrono order, struct each each);
+void whack_connection_roots(const struct whack_message *wm,
+			    struct show *s,
+			    enum chrono order,
+			    connection_visitor_cb *connection_visitor,
+			    struct each each);
 
 /*
  * Visit the connection "tree" matching WM.name.
@@ -85,11 +87,11 @@ void visit_root_connection(const struct whack_message *wm, struct show *s,
  * INSTANCES would corrupt the search list.
  */
 
-void visit_connection_tree(const struct whack_message *wm,
-			   struct show *s,
-			   enum chrono order,
-			   connection_visitor_cb *connection_visitor,
-			   struct each each);
+void whack_connection_trees(const struct whack_message *wm,
+			    struct show *s,
+			    enum chrono order,
+			    connection_visitor_cb *connection_visitor,
+			    struct each each);
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,
 					   struct connection *c,
@@ -118,6 +120,11 @@ enum connection_visit_kind {
 	 * This callback MUST NOT delete the IKE SA: IKEv1 needs the
 	 * IKE SA so it can send out the Child SA deletes; and IKEv2
 	 * never creates orphans.
+	 *
+	 * A CROSSSED IKE SA, while established, isn't the
+	 * connection's owner (principal).  Presumably because its
+	 * been double-CROSSED by some other IKE SA that
+	 * crossed-streams.
 	 */
 	NUDGE_CONNECTION_PRINCIPAL_IKE_SA,
 	NUDGE_CONNECTION_CROSSED_IKE_SA,
@@ -143,7 +150,7 @@ enum connection_visit_kind {
 	 * SA is using an established IKE SA that shares the
 	 * connection, however that IKE SA is not principal (aka
 	 * owner); most likely because the current principal IKE SA
-	 * double-crossed it
+	 * double-CROSSED it
 	 *
 	 * CHILD_OF_CUCKOLD_IKE_SA: the connection's principal Child
 	 * SA's established IKE SA is for some other connection that

@@ -93,8 +93,9 @@ void whack_route(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	visit_connection_tree(m, s, OLD2NEW, whack_route_connection,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_route_connection,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

@@ -429,10 +429,11 @@ static void visit_connections(const struct whack_message *m,
 #undef MESSAGE
 }
 
-void visit_root_connection(const struct whack_message *wm,
-			   struct show *s,
-			   connection_visitor_cb *connection_visitor,
-			   enum chrono order, struct each each)
+void whack_connection_roots(const struct whack_message *wm,
+			    struct show *s,
+			    enum chrono order,
+			    connection_visitor_cb *connection_visitor,
+			    struct each each)
 {
 	/*
 	 * Danger:
@@ -449,11 +450,11 @@ void visit_root_connection(const struct whack_message *wm,
 			  connection_visitor, &each);
 }
 
-void visit_connection_tree(const struct whack_message *wm,
-			   struct show *s,
-			   enum chrono order,
-			   connection_visitor_cb *connection_visitor,
-			   struct each each)
+void whack_connection_trees(const struct whack_message *wm,
+			    struct show *s,
+			    enum chrono order,
+			    connection_visitor_cb *connection_visitor,
+			    struct each each)
 {
 	/*
 	 * Danger:
@@ -599,13 +600,14 @@ bool visit_connection_principal_child(struct connection *c,
 
 	if (ike_of_child->sa.st_connection == c) {
 		/*
-		 * The Child SA has an established IKE SA with the same
-		 * connection yet, somehow, that IKE SA isn't the connection's
-		 * owner.
+		 * The Child SA has an established IKE SA with the
+		 * same connection yet, somehow, that IKE SA isn't the
+		 * connection's owner.
 		 *
-		 * Presumably it once was but then some other IKE SA
-		 * established stealing the connection, leaving IKE_OF_CHILD
-		 * lurking i.e., the IKE SA was double crossed.
+		 * Presumably it was once but then some other IKE SA
+		 * established, stealing the connection, and leaving
+		 * IKE_OF_CHILD lurking i.e., the IKE SA was double
+		 * CROSSED.
 		 */
 		vdbg("dispatch %s principal Child SA "PRI_SO" with double-crossed established IKE SA "PRI_SO,
 		     child_state ,pri_so(child->sa.st_serialno),

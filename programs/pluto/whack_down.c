@@ -451,11 +451,11 @@ void whack_down(const struct whack_message *m, struct show *s)
 	 * IKE SA has -UP and initiate an IKE SA delete.
 	 */
 
-	visit_root_connection(m, s, whack_down_connection,
-			      /*alias_order*/NEW2OLD,
-			      (struct each) {
-				      .future_tense = "terminating",
-				      .past_tense = "terminated",
-				      .log_unknown_name = true,
-			      });
+	whack_connection_roots(m, s, /*alias_order*/NEW2OLD,
+			       whack_down_connection,
+			       (struct each) {
+				       .future_tense = "terminating",
+				       .past_tense = "terminated",
+				       .log_unknown_name = true,
+			       });
 }

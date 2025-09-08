@@ -198,8 +198,8 @@ void whack_briefconnectionstatus(const struct whack_message *m, struct show *s)
 	 * callback if found, which directly calls
 	 * show_brief_connection_status().
 	 */
-	visit_connection_tree(m, s, OLD2NEW, whack_briefconnectionstatus_cb,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW, whack_briefconnectionstatus_cb,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

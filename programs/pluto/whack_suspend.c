@@ -56,7 +56,7 @@ void whack_suspend(const struct whack_message *m, struct show *s)
 	 * XXX: this isn't true; but does it matter?  A suspended
 	 * connection should stick around.
 	 */
-	visit_root_connection(m, s, whack_suspend_connection,
-			      /*alias_order*/OLD2NEW,
-			      (struct each) {0});
+	whack_connection_roots(m, s, /*alias_order*/OLD2NEW,
+			       whack_suspend_connection,
+			       (struct each) {0});
 }

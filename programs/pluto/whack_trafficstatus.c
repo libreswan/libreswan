@@ -189,8 +189,9 @@ void whack_trafficstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	visit_connection_tree(m, s, OLD2NEW, whack_trafficstatus_connection,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_trafficstatus_connection,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

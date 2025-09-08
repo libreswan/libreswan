@@ -132,8 +132,8 @@ void whack_sa(const struct whack_message *m, struct show *s)
 	 * Order doesn't matter as actual operation put on the event
 	 * queue.
 	 */
-	visit_connection_tree(m, s, OLD2NEW, whack_connection_sa,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW, whack_connection_sa,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

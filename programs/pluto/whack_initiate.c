@@ -86,13 +86,13 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 	 * Initiate alias connections OLD2NEW so that they start in
 	 * the same order that they were generated.
 	 */
-	visit_root_connection(m, s, whack_initiate_connection,
-			      /*alias_order*/OLD2NEW,
-			      (struct each) {
-				      .future_tense = "initiating",
-				      .past_tense = "initiating",
-				      .log_unknown_name = true,
-			      });
+	whack_connection_roots(m, s, /*alias_order*/OLD2NEW,
+			       whack_initiate_connection,
+			       (struct each) {
+				       .future_tense = "initiating",
+				       .past_tense = "initiating",
+				       .log_unknown_name = true,
+			       });
 }
 
 void whack_acquire(const struct whack_message *wm, struct show *s)
