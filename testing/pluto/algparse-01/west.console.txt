@@ -357,7 +357,7 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is 
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
-	ERROR: ESP proposals contain unexpected 'modp2048'
+	ERROR: ESP proposal contains unexpected 'modp2048'
 algparse -v1 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -415,7 +415,7 @@ algparse -v1 'ah=aes_ccm' (expect ERROR)
 algparse -v1 'ah=ripemd' (expect ERROR)
 	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
 algparse -v1 'ah=sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: AH proposals contain unexpected 'modp2048'
+	ERROR: AH proposal contains unexpected 'modp2048'
 algparse -v1 'ike' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
@@ -889,7 +889,7 @@ algparse -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 algparse -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
 	ERROR: more than one IKEv1 ESP Key Exchange algorithm (MODP8192, MODP2048) is not allowed in quick mode
 algparse -v1 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
-	ERROR: ESP proposals contain unexpected 'modp2048'
+	ERROR: ESP proposal contains unexpected 'modp2048'
 algparse -v1 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -945,7 +945,7 @@ algparse -v1 -pfs 'ah=aes_ccm' (expect ERROR)
 algparse -v1 -pfs 'ah=ripemd' (expect ERROR)
 	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
 algparse -v1 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: AH proposals contain unexpected 'modp2048'
+	ERROR: AH proposal contains unexpected 'modp2048'
 algparse -v1 -pfs 'ike' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
