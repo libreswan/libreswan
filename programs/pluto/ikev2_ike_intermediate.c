@@ -59,8 +59,8 @@ static ikev2_resume_fn process_v2_IKE_INTERMEDIATE_response_continue;
 static ikev2_cleanup_fn cleanup_IKE_INTERMEDIATE_task;
 
 struct ikev2_task {
+	struct ikev2_ike_intermediate_exchange exchange;
 	/* for ADDKE */
-	const struct kem_desc *kem;
 	struct kem_initiator *initiator;
 	struct kem_responder *responder;
 	/* for SKEYSEED */
@@ -255,6 +255,51 @@ const struct kem_desc *next_additional_kem_desc(struct ike_sa *ike)
 	return kem;
 }
 
+/*
+ * Return the IKE_INTERMEDIATE exchange being worked on.
+ */
+
+struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
+{
+	struct ikev2_ike_intermediate_exchange exchange = {
+		.required = false,
+	};
+
+	if (!ike->sa.st_v2_ike_intermediate.enabled) {
+		ldbg(ike->sa.logger, "IKE_INTERMEDIATE: no; not negotiated");
+		exchange.required = false;
+		return exchange;
+	}
+
+	unsigned ke_index = ike->sa.st_v2_ike_intermediate.ke_index;
+
+	if (ke_index < ike->sa.st_oakley.ta_addke.len) {
+		exchange.required = true;
+		exchange.addke.type = ike->sa.st_oakley.ta_addke.list[ke_index].type;
+		exchange.addke.kem = ike->sa.st_oakley.ta_addke.list[ke_index].kem;
+		/* NONE is allowed, not NULL?!? */
+		PASSERT(ike->sa.logger, exchange.addke.kem != NULL);
+	}
+
+	if ((ike->sa.st_oakley.ta_addke.len == 0 /*none*/||
+	     ike->sa.st_oakley.ta_addke.len == ke_index + 1 /*last*/) &&
+	    ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		exchange.required = true;
+		exchange.ppk = true;
+	}
+
+	name_buf tn;
+	ldbg(ike->sa.logger, "IKE_INTERMEDIATE %s; index %d len %d; %s=%s, ppk=%s",
+	     bool_str(exchange.required),
+	     ke_index, ike->sa.st_oakley.ta_addke.len,
+	     (exchange.addke.type == 0 ? "addke" :
+	      str_enum_short(&ikev2_trans_type_names, exchange.addke.type, &tn)),
+	     (exchange.addke.kem == NULL ? "no" : exchange.addke.kem->common.fqn),
+	     bool_str(exchange.ppk));
+
+	return exchange;
+}
+
 static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
 					  struct msg_digest *md,
 					  shunk_t *ke,
@@ -311,8 +356,7 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
 
 	struct ikev2_task task = {
-		/* for ADDKE */
-		.kem = next_additional_kem_desc(ike),
+		.exchange = current_ikev2_ike_intermediate_exchange(ike),
 	};
 
 	submit_ikev2_task(ike, null_md,
@@ -331,8 +375,8 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 {
 	PEXPECT(logger, null_md == NULL);
 
-	if (task->kem != NULL) {
-		diag_t d = crypt_kem_key_gen(task->kem, &task->initiator, logger);
+	if (task->exchange.addke.kem != NULL) {
+		diag_t d = crypt_kem_key_gen(task->exchange.addke.kem, &task->initiator, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
 			pfree_diag(&d);
@@ -370,7 +414,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		}
 	}
 
-	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+	if (task->exchange.ppk) {
 		struct connection *const c = ike->sa.st_connection;
 		struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;
 		bool found_one = false;
@@ -537,8 +581,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
 
 	struct ikev2_task task = {
-		/* for ADDKE */
-		.kem = next_additional_kem_desc(ike),
+		.exchange = current_ikev2_ike_intermediate_exchange(ike),
 		/* for SKEYSEED */
 		.ni = clone_hunk(ike->sa.st_ni, "Ni"),
 		.nr = clone_hunk(ike->sa.st_nr, "Nr"),
@@ -563,9 +606,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 						      struct msg_digest *md,
 						      struct logger *logger)
 {
-	if (task->kem != NULL) {
+	if (task->exchange.addke.kem != NULL) {
 		shunk_t initiator_ke;
-		if (!extract_ike_intermediate_v2KE(task->kem, md,
+		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
 						   &initiator_ke, logger)) {
 			return STF_FATAL;
 		}
@@ -574,7 +617,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 			LDBG_hunk(logger, initiator_ke);
 		}
 
-		diag_t d = crypt_kem_encapsulate(task->kem, initiator_ke,
+		diag_t d = crypt_kem_encapsulate(task->exchange.addke.kem, initiator_ke,
 						 &task->responder,
 						 logger);
 		if (d != NULL) {
@@ -616,7 +659,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, md != NULL);
 
 	const struct secret_ppk_stuff *ppk = NULL;
-	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+	if (task->exchange.ppk) {
 
 		for (const struct payload_digest *ppk_id_key_payls = md->pd[PD_v2N_PPK_IDENTITY_KEY];
 		     ppk_id_key_payls != NULL; ppk_id_key_payls = ppk_id_key_payls->next) {
@@ -679,7 +722,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (task->responder != NULL) {
-		if (!emit_v2KE(task->responder->ke, task->kem, response.pbs)) {
+		if (!emit_v2KE(task->responder->ke, task->exchange.addke.kem, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -782,6 +825,7 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 
 	/* transfer ownership to task */
 	struct ikev2_task task = {
+		.exchange = current_ikev2_ike_intermediate_exchange(ike),
 		/* for ADDKE decapsulate() */
 		.initiator = ike->sa.st_kem.initiator,
 		/* for skeyseed */
@@ -859,7 +903,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 		extract_v2_ike_intermediate_keys(ike, task->keymat);
 	}
 
-	if (ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
+	if (task->exchange.ppk && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		struct ppk_id_payload payl;
 		if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
 			ldbg(logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");

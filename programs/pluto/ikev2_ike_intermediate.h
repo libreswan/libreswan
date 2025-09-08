@@ -16,7 +16,20 @@
 #ifndef IKEV2_IKE_INTERMEDIATE_H
 #define IKEV2_IKE_INTERMEDIATE_H
 
+struct ike_sa;
+
 const struct kem_desc *next_additional_kem_desc(struct ike_sa *ike);
+
+struct ikev2_ike_intermediate_exchange {
+	bool required;
+	struct {
+		const struct kem_desc *kem;
+		enum ikev2_trans_type type;
+	} addke;
+	bool ppk;
+};
+
+struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
 
 extern const struct v2_exchange v2_IKE_INTERMEDIATE_exchange;
 
