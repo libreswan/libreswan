@@ -29,6 +29,10 @@
 #include "ike_alg_kem.h"
 #include "alg_byname.h"
 
+static bool ignore_transform_lookup_error(struct proposal_parser *parser,
+					  enum proposal_transform transform,
+					  shunk_t token);
+
 struct proposal {
 	/*
 	 * The algorithm entries.
@@ -723,7 +727,6 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 				      struct proposal *proposal,
 				      struct proposal_tokenizer *tokens)
 {
-	const struct logger *logger = parser->policy->logger;
 	if (tokens->curr.token.len == 0) {
 		proposal_error(parser, "%s encryption algorithm is empty",
 			       parser->protocol->name);
@@ -753,11 +756,9 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 							       enckeylen, print);
 		if (alg == NULL) {
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "<ealg>byname('"PRI_SHUNK"') with <eklen>='"PRI_SHUNK"' failed: %s",
-			      pri_shunk(ealg), pri_shunk(eklen), str_diag(parser->diag));
-			return false;
+			return ignore_transform_lookup_error(parser, PROPOSAL_TRANSFORM_encrypt, print);
 		}
+
 		append_proposal_transform(parser, proposal,
 					  PROPOSAL_TRANSFORM_encrypt,
 					  alg, enckeylen);
@@ -768,12 +769,12 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 	}
 
 	/*
-	 * Does it match <ealg> (without any _<eklen> suffix?)
+	 * Does the token match <ealg> (without any _<eklen> suffix?)
 	 */
-	const shunk_t print = tokens->curr.token;
-	shunk_t ealg = tokens->curr.token;
-	const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
-						       0/*enckeylen*/, print);
+	shunk_t token = tokens->curr.token;
+	const struct ike_alg *alg = encrypt_alg_byname(parser, token,
+						       0/*enckeylen*/,
+						       /*print*/token);
 	if (alg != NULL) {
 		append_proposal_transform(parser, proposal,
 					  PROPOSAL_TRANSFORM_encrypt,
@@ -790,49 +791,56 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 	 * See if there's a trailing <eklen> in <ealg>.  If there
 	 * isn't then the lookup error above can be returned.
 	 */
-	size_t end = ealg.len;
-	while (end > 0 && char_isdigit(hunk_char(ealg, end-1))) {
+	size_t end = token.len;
+	while (end > 0 && char_isdigit(hunk_char(token, end-1))) {
 		end--;
 	}
-	if (end == ealg.len) {
+	if (end == token.len) {
 		/*
-		 * no trailing <eklen> digits and <ealg> was rejected
+		 * No trailing <eklen> digits and <ealg> was rejected
 		 * by above); error still contains message from not
 		 * finding just <ealg>.
 		 */
 		passert(parser->diag != NULL);
-		return false; // warning_or_false(parser, "encryption", print);
+		return ignore_transform_lookup_error(parser, PROPOSAL_TRANSFORM_encrypt,
+						     tokens->curr.token);
 	}
 
-	/* buffer still contains error from <ealg> lookup */
+	/*
+	 * Buffer still contains error from simple <ealg> lookup;
+	 * discard it.
+	 */
 	passert(parser->diag != NULL);
 	pfree_diag(&parser->diag);
 
 	/*
-	 * Try parsing the <eklen> found in <ealg>.  For something
+	 * Try parsing the <eklen> found in <token>.  For something
 	 * like aes_gcm_16, above lookup should have found the
 	 * algorithm so isn't a problem here.
+	 *
+	 * Always treat this as an error.
 	 */
-	shunk_t eklen = hunk_slice(ealg, end, ealg.len);
-	int enckeylen = parse_proposal_eklen(parser, print, eklen);
+	shunk_t eklen = hunk_slice(token, end, token.len);
+	int enckeylen = parse_proposal_eklen(parser, token, eklen);
 	if (enckeylen <= 0) {
 		passert(parser->diag != NULL);
 		return false;
 	}
 
+	passert(parser->diag == NULL);
+
 	/*
 	 * The <eklen> in <ealg><eklen> or <ealg>_<eklen> parsed; trim
 	 * <eklen> from <ealg> and then try the lookup.
 	 */
-	ealg = hunk_slice(ealg, 0, end);
+	shunk_t ealg = hunk_slice(token, 0, end);
 	if (hunk_char(ealg, ealg.len-1) == '_') {
-		ealg = hunk_slice(ealg, 0, end-1);
+		ealg = hunk_slice(ealg, 0, ealg.len-1);
 	}
-	pfree_diag(&parser->diag); /* zap old error */
-	alg = encrypt_alg_byname(parser, ealg, enckeylen, print);
+	alg = encrypt_alg_byname(parser, ealg, enckeylen, /*print*/token);
 	if (alg == NULL) {
 		passert(parser->diag != NULL);
-		return false; // warning_or_false(parser, "encryption", print);
+		return ignore_transform_lookup_error(parser, PROPOSAL_TRANSFORM_encrypt, token);
 	}
 
 	append_proposal_transform(parser, proposal,
@@ -844,38 +852,41 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 }
 
 /*
- * No questions hack to either return 'false' for parsing token
- * failed, or 'true' and warn because forced parsing is enabled.
+ * No questions hack to either return 'false' for parsing a transform
+ * failed (because it isn't known), or 'true' and warn because forced
+ * parsing is enabled.
  */
-static bool warning_or_false(struct proposal_parser *parser,
-			     enum proposal_transform transform,
-			     shunk_t print)
+
+bool ignore_transform_lookup_error(struct proposal_parser *parser,
+				   enum proposal_transform transform,
+				   shunk_t token)
 {
 	const struct logger *logger = parser->policy->logger;
 	passert(parser->diag != NULL);
-	bool result;
-	if (parser->policy->ignore_parser_errors) {
+	if (parser->policy->ignore_transform_lookup_error) {
 		/*
 		 * XXX: the algorithm might be unknown, or might be
 		 * known but not enabled due to FIPS, or ...?
 		 */
 		name_buf vb, tb;
 		llog(RC_LOG, logger,
-		     "ignoring %s %s %s '"PRI_SHUNK"'",
+		     "ignoring %s %s %s '"PRI_SHUNK"': %s",
 		     str_enum_long(&ike_version_names, parser->policy->version, &vb),
 		     parser->protocol->name, /* ESP|IKE|AH */
 		     str_enum_short(&proposal_transform_names, transform, &tb),
-		     pri_shunk(print));
-		result = true;
-	} else {
-		name_buf tb;
-		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "lookup for %s '"PRI_SHUNK"' failed",
-		      str_enum_short(&proposal_transform_names, transform, &tb),
-		      pri_shunk(print));
-		result = false;
+		     pri_shunk(token),
+		     str_diag(parser->diag));
+		pfree_diag(&parser->diag);
+		return true;
 	}
-	return result;
+
+	name_buf tb;
+	ldbgf(DBG_PROPOSAL_PARSER, logger,
+	      "lookup for %s '"PRI_SHUNK"' failed: %s",
+	      str_enum_short(&proposal_transform_names, transform, &tb),
+	      pri_shunk(token),
+	      str_diag(parser->diag));
+	return false;
 }
 
 bool parse_proposal_transform(struct proposal_parser *parser,
@@ -901,8 +912,9 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 	const struct ike_alg *alg = alg_byname(parser, transform_type,
 					       token, token/*print*/);
 	if (alg == NULL) {
-		return warning_or_false(parser, transform, token);
+		return ignore_transform_lookup_error(parser, transform, token);
 	}
+
 	append_proposal_transform(parser, proposal, transform, alg, 0/*enckeylen*/);
 	return true;
 }

@@ -3229,7 +3229,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.stream = ALL_STREAMS,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
-			.ignore_parser_errors = (wm->ike == NULL),
+			.ignore_transform_lookup_error = (wm->ike == NULL),
 			.addke = intermediate,
 		};
 
@@ -3282,7 +3282,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			.stream = ALL_STREAMS,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
-			.ignore_parser_errors = (encap_alg == NULL),
+			.ignore_transform_lookup_error = (encap_alg == NULL),
 #if 0
 			.addke = intermediate,
 #endif

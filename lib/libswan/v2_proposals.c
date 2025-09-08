@@ -134,18 +134,10 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 	return true;
 }
 
-enum proposal_status {
-	PROPOSAL_OK = 1,
-	PROPOSAL_IGNORE,
-	PROPOSAL_ERROR,
-};
-
-static enum proposal_status parse_encrypt_transforms(struct proposal_parser *parser,
-						     struct proposal *proposal,
-						     struct proposal_tokenizer *tokens)
+static bool parse_encrypt_transforms(struct proposal_parser *parser,
+				     struct proposal *proposal,
+				     struct proposal_tokenizer *tokens)
 {
-	const struct logger *logger = parser->policy->logger;
-
 	/*
 	 * Encryption.
 	 *
@@ -170,7 +162,7 @@ static enum proposal_status parse_encrypt_transforms(struct proposal_parser *par
 	/* first encryption algorithm token is expected */
 	if (!parse_proposal_encrypt_transform(parser, proposal, tokens)) {
 		passert(parser->diag != NULL);
-		return PROPOSAL_ERROR;
+		return false;
 	}
 	passert(parser->diag == NULL);
 
@@ -178,34 +170,18 @@ static enum proposal_status parse_encrypt_transforms(struct proposal_parser *par
 	while (tokens->prev.delim == '+') {
 		if (!parse_proposal_encrypt_transform(parser, proposal, tokens)) {
 			passert(parser->diag != NULL);
-			return PROPOSAL_ERROR;
+			return false;
 		}
 		passert(parser->diag == NULL);
 	}
 
 	remove_duplicate_algorithms(parser, proposal, PROPOSAL_TRANSFORM_encrypt);
-
-	/* deal with all encryption algorithm tokens being discarded */
-	if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL) {
-		if (parser->policy->ignore_parser_errors) {
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "all encryption algorithms skipped; stumbling on");
-			passert(parser->diag == NULL);
-			return PROPOSAL_IGNORE;
-		}
-		llog_pexpect(parser->policy->logger, HERE,
-			     "all encryption algorithms skipped");
-		proposal_error(parser, "all encryption algorithms discarded");
-		passert(parser->diag != NULL);
-		return PROPOSAL_ERROR;
-	}
-
-	return PROPOSAL_OK;
+	return true;
 }
 
-static enum proposal_status parse_prf_transforms(struct proposal_parser *parser,
-						 struct proposal *proposal,
-						 struct proposal_tokenizer *tokens)
+static bool parse_prf_transforms(struct proposal_parser *parser,
+				 struct proposal *proposal,
+				 struct proposal_tokenizer *tokens)
 {
 	const struct logger *logger = parser->policy->logger;
 
@@ -234,12 +210,12 @@ static enum proposal_status parse_prf_transforms(struct proposal_parser *parser,
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
 		      "<encr>-<PRF> succeeded, advancing tokens");
 		(*tokens) = prf_tokens;
-		return PROPOSAL_OK;
+		return true;
 	}
 
 	if (!PEXPECT(logger, parser->protocol->integ)) {
 		/* doesn't actually happen */
-		return PROPOSAL_ERROR;
+		return false;
 	}
 
 	/*
@@ -263,29 +239,29 @@ static enum proposal_status parse_prf_transforms(struct proposal_parser *parser,
 		      str_diag(prf_diag), str_diag(parser->diag));
 		pfree_diag(&parser->diag);
 		parser->diag = prf_diag;
-		return PROPOSAL_ERROR;
+		return false;
 	}
 
 	pfree_diag(&prf_diag);
 
 	if (tokens->curr.token.ptr == NULL /*more?*/ ||
 	    tokens->prev.delim == ';' /*;KEM>*/) {
-		return PROPOSAL_OK;
+		return true;
 	}
 
 	if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf, tokens)) {
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
 		      "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
-		return PROPOSAL_ERROR;
+		return false;
 	}
 
-	return PROPOSAL_OK;
+	return true;
 }
 
-static enum proposal_status parse_ikev2_transform(struct proposal_parser *parser,
-						  struct proposal *proposal,
-						  enum proposal_transform transform,
-						  struct proposal_tokenizer *tokens)
+static bool parse_ikev2_transform(struct proposal_parser *parser,
+				  struct proposal *proposal,
+				  enum proposal_transform transform,
+				  struct proposal_tokenizer *tokens)
 {
 	const struct logger *logger = parser->policy->logger;
 
@@ -293,18 +269,16 @@ static enum proposal_status parse_ikev2_transform(struct proposal_parser *parser
 
 	case PROPOSAL_TRANSFORM_encrypt:
 		if (parser->protocol->encrypt) {
-			enum proposal_status status = parse_encrypt_transforms(parser, proposal, tokens);
-			if (status != PROPOSAL_OK) {
-				return status;
+			if (!parse_encrypt_transforms(parser, proposal, tokens)) {
+				return false;
 			}
 		}
 		break;
 
 	case PROPOSAL_TRANSFORM_prf:
 		if (parser->protocol->prf) {
-			enum proposal_status status = parse_prf_transforms(parser, proposal, tokens);
-			if (status != PROPOSAL_OK) {
-				return status;
+			if (!parse_prf_transforms(parser, proposal, tokens)) {
+				return false;
 			}
 		}
 		break;
@@ -316,7 +290,7 @@ static enum proposal_status parse_ikev2_transform(struct proposal_parser *parser
 				ldbgf(DBG_PROPOSAL_PARSER, logger,
 				      "either <encr>-<INTEG>... or <INTEG>... or failed: %s",
 				      str_diag(parser->diag));
-				return PROPOSAL_ERROR;
+				return false;
 			}
 		}
 		break;
@@ -337,7 +311,7 @@ static enum proposal_status parse_ikev2_transform(struct proposal_parser *parser
 			if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_kem, tokens)) {
 				ldbgf(DBG_PROPOSAL_PARSER, logger,
 				      "...<kem> failed: %s", str_diag(parser->diag));
-				return PROPOSAL_ERROR;
+				return false;
 			}
 		}
 		break;
@@ -359,17 +333,17 @@ static enum proposal_status parse_ikev2_transform(struct proposal_parser *parser
 				      "...<%s> failed: %s",
 				      str_enum_short(&proposal_transform_names, transform, &tb),
 				      str_diag(parser->diag));
-				return PROPOSAL_ERROR;
+				return false;
 			}
 		}
 		break;
 	}
 
-	return PROPOSAL_OK;
+	return true;
 }
 
-static enum proposal_status parse_proposal(struct proposal_parser *parser,
-					   struct proposal *proposal, shunk_t input)
+static bool parse_proposal(struct proposal_parser *parser,
+			   struct proposal *proposal, shunk_t input)
 {
 	const struct logger *logger = parser->policy->logger;
 
@@ -396,15 +370,13 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 				name_buf tb;
 				proposal_error(parser, "unexpected ';', expecting '-' followed by %s transform",
 					       str_enum_short(&proposal_transform_names, transform, &tb));
-				return PROPOSAL_ERROR;
+				return false;
 			}
 			transform = PROPOSAL_TRANSFORM_kem;
 		}
 
-		enum proposal_status status = parse_ikev2_transform(parser, proposal,
-								    transform, &tokens);
-		if (status != PROPOSAL_OK) {
-			return status;
+		if (!parse_ikev2_transform(parser, proposal, transform, &tokens)) {
+			return false;
 		}
 	}
 
@@ -414,32 +386,31 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 			       parser->protocol->name,
 			       pri_shunk(tokens.curr.token));
 		passert(parser->diag != NULL);
-		return PROPOSAL_ERROR;
+		return false;
 	}
 
-	return PROPOSAL_OK;
+	return true;
 }
 
-static enum proposal_status parse_ikev2_proposal(struct proposal_parser *parser,
-						 struct proposal *proposal, shunk_t input)
+static bool parse_ikev2_proposal(struct proposal_parser *parser,
+				 struct proposal *proposal, shunk_t input)
 {
-	enum proposal_status status = parse_proposal(parser, proposal, input);
-	if (status != PROPOSAL_OK) {
-		return status;
+	if (!parse_proposal(parser, proposal, input)) {
+		return false;
 	}
 
 	if (!merge_defaults(parser, proposal)) {
 		passert(parser->diag != NULL);
-		return PROPOSAL_ERROR;
+		return false;
 	}
 
 	/* back end? */
 	if (!parser->protocol->proposal_ok(parser, proposal)) {
 		passert(parser->diag != NULL);
-		return PROPOSAL_ERROR;
+		return false;
 	}
 
-	return PROPOSAL_OK;
+	return true;
 }
 
 bool v2_proposals_parse_str(struct proposal_parser *parser,
@@ -461,20 +432,17 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 		/* find the next proposal */
 		shunk_t raw_proposal = shunk_token(&input, NULL, ",");
 		struct proposal *proposal = alloc_proposal(parser);
-		switch (parse_ikev2_proposal(parser, proposal, raw_proposal)) {
-		case PROPOSAL_ERROR:
+		if (!parse_ikev2_proposal(parser, proposal, raw_proposal)) {
 			passert(parser->diag != NULL);
 			free_proposal(&proposal);
 			return false;
-		case PROPOSAL_IGNORE:
-			passert(parser->diag == NULL);
-			free_proposal(&proposal);
-			break;
-		case PROPOSAL_OK:
-			passert(parser->diag == NULL);
-			append_proposal(proposals, &proposal);
-			break;
 		}
+		/*
+		 * XXX: should check that the proposal hasn't ended up
+		 * empty.
+		 */
+		passert(parser->diag == NULL);
+		append_proposal(proposals, &proposal);
 	} while (input.ptr != NULL);
 	return true;
 }
