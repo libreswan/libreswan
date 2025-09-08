@@ -337,6 +337,9 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 			      enum proposal_transform transform,
 			      shunk_t token);
 
+bool parse_proposal(struct proposal_parser *parser,
+		    struct proposal *proposal, shunk_t input);
+
 void discard_proposal_transform(const char *what,
 				struct proposal_parser *parser,
 				struct proposal *proposal,
