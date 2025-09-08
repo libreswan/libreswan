@@ -942,12 +942,38 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
  * IKE_INTERMEDIATE exchange and transitions.
  */
 
+static void llog_success_initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
+							      const struct msg_digest *md)
+{
+	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "sent ");
+		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_string(buf, " request to ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
+		jam_string(buf, " {");
+		struct ikev2_ike_intermediate_exchange exchange = current_ikev2_ike_intermediate_exchange(ike);
+		const char *sep = "";
+		if (exchange.addke.kem != 0) {
+			jam_string(buf, sep); sep = ", ";
+			jam_enum_human(buf, &ikev2_trans_type_names, exchange.addke.type);
+			jam_string(buf, "=");
+			jam_string(buf, exchange.addke.kem->common.fqn);
+		}
+		if (exchange.ppk) {
+			jam_string(buf, sep); sep = ", ";
+			jam_string(buf, "PPK");
+		}
+		jam_string(buf, "}");
+	}
+}
+
 static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.to = &state_v2_IKE_INTERMEDIATE_I,
 	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
-	.llog_success = llog_success_ikev2_exchange_initiator,
+	.llog_success = llog_success_initiate_v2_IKE_INTERMEDIATE_request,
 	.timeout_event = EVENT_v2_RETRANSMIT,
 };
 
