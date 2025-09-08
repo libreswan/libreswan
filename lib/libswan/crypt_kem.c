@@ -27,7 +27,7 @@ diag_t crypt_kem_key_gen(const struct kem_desc *kem,
 			 struct kem_initiator **initiator,
 			 struct logger *logger)
 {
-	(*initiator) = alloc_thing(struct kem_initiator, "kem-responder");
+	(*initiator) = alloc_thing(struct kem_initiator, "kem-initiator");
 	(*initiator)->kem = kem;
 	kem->kem_ops->calc_local_secret(kem,
 					&(*initiator)->internal.private_key,
