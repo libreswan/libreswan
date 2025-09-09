@@ -15,7 +15,7 @@ static bool test_algs = false;
 static bool verbose = false;
 static bool debug = false;
 static enum ike_version ike_version = IKEv2;
-static bool ignore_parser_errors = false;
+static bool ignore_transform_lookup_error = false;
 static bool fips = false;
 static bool pfs = false;
 static bool addke = false;
@@ -110,7 +110,7 @@ static void check(const struct protocol *protocol,
 		.stream = WHACK_STREAM,
 		.logger = logger,
 		.check_pfs_vs_ke = protocol->pfs_vs_dh,
-		.ignore_parser_errors = ignore_parser_errors,
+		.ignore_transform_lookup_error = ignore_transform_lookup_error,
 	};
 	struct proposal_parser *parser =
 		protocol->parser(&policy);
@@ -662,7 +662,7 @@ int main(int argc, char *argv[])
 			/* -d <NSSDB> is reserved */
 			debug = true;
 		} else if (streq(arg, "ignore")) {
-			ignore_parser_errors = true;
+			ignore_transform_lookup_error = true;
 		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
 			nss.password = *++argp;
 			if (nss.password == NULL) {

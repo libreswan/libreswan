@@ -93,7 +93,15 @@ struct proposal_policy {
 	bool pfs; /* For CHILD SA, use DH from IKE SA */
 	bool addke;	/* allow ADDKE* algorithms */
 	bool check_pfs_vs_ke;
-	bool ignore_parser_errors;
+
+	/*
+	 * Ignore (but log) when an algorithm lookup fails.
+	 *
+	 * For instance, an algorithm may be compiled out, or FIPS may
+	 * have stripped an algorithm.
+	 */
+	bool ignore_transform_lookup_error;
+
 	/*
 	 * According to current policy, is the algorithm ok
 	 * (supported)?  If it isn't return FALSE.
@@ -328,6 +336,9 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 			      struct proposal *proposal,
 			      enum proposal_transform transform,
 			      shunk_t token);
+
+bool parse_proposal(struct proposal_parser *parser,
+		    struct proposal *proposal, shunk_t input);
 
 void discard_proposal_transform(const char *what,
 				struct proposal_parser *parser,
