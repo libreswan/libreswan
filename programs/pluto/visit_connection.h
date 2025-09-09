@@ -25,7 +25,6 @@ struct ike_sa;
 struct connection;
 struct whack_message;
 struct show;
-struct visit_connection_state_context;
 enum chrono;
 
 struct each {
@@ -43,10 +42,10 @@ struct each {
  *
  */
 
-typedef unsigned (connection_visitor_cb)
-(const struct whack_message *m,
- struct show *s,
- struct connection *c);
+typedef unsigned (connection_visitor)
+	(const struct whack_message *m,
+	 struct show *s,
+	 struct connection *c);
 
 /*
  * Find and visit "root" connection matching WM.name.
@@ -67,7 +66,7 @@ typedef unsigned (connection_visitor_cb)
 void whack_connection_roots(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
-			    connection_visitor_cb *connection_visitor,
+			    connection_visitor *visitor,
 			    struct each each);
 
 /*
@@ -90,12 +89,12 @@ void whack_connection_roots(const struct whack_message *wm,
 void whack_connection_trees(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
-			    connection_visitor_cb *connection_visitor,
+			    connection_visitor *visitor,
 			    struct each each);
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,
 					   struct connection *c,
-					   connection_visitor_cb *visit_connection);
+					   connection_visitor *visitor);
 
 /*
  * Visit each of a connection's states in turn.
@@ -201,16 +200,18 @@ enum connection_visit_kind {
 	FINISH_CONNECTION_PRINCIPAL_IKE_SA,
 };
 
-typedef void (visit_connection_state_cb)
+struct connection_state_visitor_context;
+
+typedef void (connection_state_visitor)
 	(struct connection *c,
 	 struct ike_sa **ike,
 	 struct child_sa **child,
 	 enum connection_visit_kind visit_kind,
-	 struct visit_connection_state_context *context);
+	 struct connection_state_visitor_context *context);
 
 void visit_connection_states(struct connection *c,
-			     visit_connection_state_cb *visitor,
-			     struct visit_connection_state_context *context,
+			     connection_state_visitor *state_visitor,
+			     struct connection_state_visitor_context *context,
 			     where_t where);
 
 #endif

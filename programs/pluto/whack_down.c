@@ -178,7 +178,7 @@ static void down_ikev1_connection_state(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct visit_connection_state_context *context UNUSED)
+					struct connection_state_visitor_context *context UNUSED)
 {
 	switch (visit_kind) {
 
@@ -255,7 +255,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct visit_connection_state_context *context UNUSED)
+					struct connection_state_visitor_context *context UNUSED)
 {
 	switch (visit_kind) {
 
