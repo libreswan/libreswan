@@ -6106,16 +6106,18 @@ name for -1 present (should be absent)
          jam_enum 1: SA_INITIATOR OK
          search SA_INITIATOR: OK
          match SA_INITIATOR: OK
-         short_name 1: SA_INITIATOR OK
-         jam_enum_short 1: SA_INITIATOR OK
-         jam_enum_human 1: sa-initiator OK
+         short_name 1: INITIATOR OK
+         jam_enum_short 1: INITIATOR OK
+         jam_enum_human 1: initiator OK
+         match INITIATOR [short]: OK
     2 -> SA_RESPONDER
          jam_enum 2: SA_RESPONDER OK
          search SA_RESPONDER: OK
          match SA_RESPONDER: OK
-         short_name 2: SA_RESPONDER OK
-         jam_enum_short 2: SA_RESPONDER OK
-         jam_enum_human 2: sa-responder OK
+         short_name 2: RESPONDER OK
+         jam_enum_short 2: RESPONDER OK
+         jam_enum_human 2: responder OK
+         match RESPONDER [short]: OK
   sd_action_names: [1..7)
     1 -> action: exit
          jam_enum 1: action: exit OK
