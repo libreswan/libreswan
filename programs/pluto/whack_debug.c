@@ -33,7 +33,8 @@
 
 static unsigned whack_debug_connection(const struct whack_message *m,
 				       struct show *s,
-				       struct connection *c)
+				       struct connection *c,
+				       struct connection_visitor_context *context UNUSED)
 {
 	connection_attach(c, show_logger(s));
 	c->logger->debugging = lmod(c->logger->debugging, m->whack_debugging);
@@ -87,7 +88,7 @@ void whack_debug(const struct whack_message *m, struct show *s)
 		set_debugging(new_debugging);
 	} else if (m->whack_command != WHACK_ADD) {
 		whack_connection_roots(m, s, /*alias_order*/OLD2NEW,
-				       whack_debug_connection,
+				       whack_debug_connection, NULL,
 				       (struct each) {
 					       .log_unknown_name = true,
 				       });

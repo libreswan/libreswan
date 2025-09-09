@@ -70,7 +70,8 @@ static unsigned maybe_route_connection(struct connection *c)
 
 static unsigned whack_route_connection(const struct whack_message *m UNUSED,
 				       struct show *s,
-				       struct connection *c)
+				       struct connection *c,
+				       struct connection_visitor_context *context UNUSED)
 {
 	connection_attach(c, show_logger(s));
 	unsigned rc = maybe_route_connection(c);
@@ -94,7 +95,7 @@ void whack_route(const struct whack_message *m, struct show *s)
 	}
 
 	whack_connection_trees(m, s, OLD2NEW,
-			       whack_route_connection,
+			       whack_route_connection, NULL,
 			       (struct each) {
 				       .log_unknown_name = true,
 			       });

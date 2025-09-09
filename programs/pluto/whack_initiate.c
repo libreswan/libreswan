@@ -39,7 +39,8 @@
 
 static unsigned whack_initiate_connection(const struct whack_message *m,
 					  struct show *s,
-					  struct connection *c)
+					  struct connection *c,
+					  struct connection_visitor_context *context UNUSED)
 {
 	struct logger *logger = show_logger(s);
 	switch (c->local->kind) {
@@ -87,7 +88,7 @@ void whack_initiate(const struct whack_message *m, struct show *s)
 	 * the same order that they were generated.
 	 */
 	whack_connection_roots(m, s, /*alias_order*/OLD2NEW,
-			       whack_initiate_connection,
+			       whack_initiate_connection, NULL,
 			       (struct each) {
 				       .future_tense = "initiating",
 				       .past_tense = "initiating",

@@ -42,10 +42,13 @@ struct each {
  *
  */
 
+struct connection_visitor_context;
+
 typedef unsigned (connection_visitor)
 	(const struct whack_message *m,
 	 struct show *s,
-	 struct connection *c);
+	 struct connection *c,
+	 struct connection_visitor_context *context);
 
 /*
  * Find and visit "root" connection matching WM.name.
@@ -67,6 +70,7 @@ void whack_connection_roots(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
 			    connection_visitor *visitor,
+			    struct connection_visitor_context *context,
 			    struct each each);
 
 /*
@@ -90,11 +94,13 @@ void whack_connection_trees(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
 			    connection_visitor *visitor,
+			    struct connection_visitor_context *context,
 			    struct each each);
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,
 					   struct connection *c,
-					   connection_visitor *visitor);
+					   connection_visitor *visitor,
+					   struct connection_visitor_context *context);
 
 /*
  * Visit each of a connection's states in turn.

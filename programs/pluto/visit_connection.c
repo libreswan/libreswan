@@ -36,6 +36,7 @@ struct connection_visitor_param {
 	struct show *s;
 	enum chrono order;
 	connection_visitor *connection_visitor;
+	struct connection_visitor_context *visitor_context;
 	const struct each *each;
 };
 
@@ -267,13 +268,15 @@ static unsigned visit_connection_node(struct connection *c,
 {
 	return param->connection_visitor(param->wm,
 					 param->s,
-					 c);
+					 c,
+					 param->visitor_context);
 }
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m,
 					   struct show *s,
 					   struct connection *c,
-					   connection_visitor *connection_visitor)
+					   connection_visitor *connection_visitor,
+					   struct connection_visitor_context *visitor_context)
 {
 	PEXPECT(c->logger, (is_template(c) ||
 			    is_labeled_template(c) ||
@@ -298,7 +301,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 
 		/* abuse bool */
 		connection_addref(instances.c, c->logger);
-		nr += connection_visitor(m, s, instances.c);
+		nr += connection_visitor(m, s, instances.c, visitor_context);
 		connection_delref(&instances.c, c->logger);
 	}
 
@@ -306,7 +309,7 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 }
 
 static unsigned visit_connection_tree(struct connection *c,
-				     const struct connection_visitor_param *param)
+				      const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
 	connection_addref(c, logger); /* must delref */
@@ -405,6 +408,7 @@ void whack_connection_roots(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
 			    connection_visitor *connection_visitor,
+			    struct connection_visitor_context *visitor_context,
 			    struct each each)
 {
 	/*
@@ -423,6 +427,7 @@ void whack_connection_roots(const struct whack_message *wm,
 		.s = s,
 		.order = order,
 		.connection_visitor = connection_visitor,
+		.visitor_context = visitor_context,
 		.each = &each,
 	};
 	visit_connection_roots(visit_connection_node, &param);
@@ -432,6 +437,7 @@ void whack_connection_trees(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
 			    connection_visitor *connection_visitor,
+			    struct connection_visitor_context *visitor_context,
 			    struct each each)
 {
 	/*
@@ -451,6 +457,7 @@ void whack_connection_trees(const struct whack_message *wm,
 		.order = order,
 		.connection_visitor = connection_visitor,
 		.each = &each,
+		.visitor_context = visitor_context,
 	};
 	visit_connection_roots(visit_connection_tree, &param);
 }

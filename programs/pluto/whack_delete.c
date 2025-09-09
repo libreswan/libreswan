@@ -33,7 +33,8 @@
 
 static unsigned whack_delete_connections(const struct whack_message *m UNUSED,
 					 struct show *s,
-					 struct connection *c)
+					 struct connection *c,
+					 struct connection_visitor_context *context UNUSED)
 {
 	terminate_and_delete_connections(&c, show_logger(s), HERE);
 	return 1;
@@ -46,7 +47,7 @@ void whack_addconn_delete(const struct whack_message *m, struct show *s)
 	 * before their template.
 	 */
 	whack_connection_roots(m, s, /*alias_order*/NEW2OLD,
-			       whack_delete_connections,
+			       whack_delete_connections, NULL,
 			       (struct each) {
 				       .log_unknown_name = false,
 			       });
@@ -65,7 +66,7 @@ void whack_delete(const struct whack_message *m, struct show *s)
 	 * before their template.
 	 */
 	whack_connection_roots(m, s, /*alias_order*/NEW2OLD,
-			       whack_delete_connections,
+			       whack_delete_connections, NULL,
 			       (struct each) {
 				       .log_unknown_name = true,
 			       });

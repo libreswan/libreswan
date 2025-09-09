@@ -388,7 +388,8 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 }
 
 static unsigned whack_down_connection(const struct whack_message *m UNUSED,
-				      struct show *s, struct connection *c)
+				      struct show *s, struct connection *c,
+				      struct connection_visitor_context *context UNUSED)
 {
 	/*
 	 * Stop the connection coming back.
@@ -410,7 +411,7 @@ static unsigned whack_down_connection(const struct whack_message *m UNUSED,
 	case CK_LABELED_TEMPLATE:
 	case CK_TEMPLATE:
 	case CK_GROUP:
-		return whack_connection_instance_new2old(m, s, c, whack_down_connection);
+		return whack_connection_instance_new2old(m, s, c, whack_down_connection, NULL);
 
 	case CK_LABELED_CHILD:
 		ldbg(show_logger(s), "skipping %s", c->name);
@@ -452,7 +453,7 @@ void whack_down(const struct whack_message *m, struct show *s)
 	 */
 
 	whack_connection_roots(m, s, /*alias_order*/NEW2OLD,
-			       whack_down_connection,
+			       whack_down_connection, NULL,
 			       (struct each) {
 				       .future_tense = "terminating",
 				       .past_tense = "terminated",
