@@ -17,6 +17,7 @@
 
 #include "defs.h"
 
+#include "ike_alg_kem.h"		/* for ike_alg_kem_none; */
 #include "state.h"
 #include "demux.h"
 #include "keys.h"
@@ -359,7 +360,8 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 {
 	PEXPECT(logger, null_md == NULL);
 
-	if (task->exchange.addke.kem != NULL) {
+	if (task->exchange.addke.kem != NULL &&
+	    task->exchange.addke.kem != &ike_alg_kem_none) {
 		diag_t d = crypt_kem_key_gen(task->exchange.addke.kem, &task->initiator, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
@@ -590,7 +592,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 						      struct msg_digest *md,
 						      struct logger *logger)
 {
-	if (task->exchange.addke.kem != NULL) {
+	if (task->exchange.addke.kem != NULL &&
+	    task->exchange.addke.kem != &ike_alg_kem_none) {
 		shunk_t initiator_ke;
 		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
 						   &initiator_ke, logger)) {
@@ -932,7 +935,7 @@ static void jam_ike_intermediate_details(struct jambuf *buf,
 	jam_string(buf, " {");
 	struct ikev2_ike_intermediate_exchange exchange = current_ikev2_ike_intermediate_exchange(ike);
 	const char *sep = "";
-	if (exchange.addke.kem != 0) {
+	if (exchange.addke.kem != NULL) {
 		jam_string(buf, sep); sep = ", ";
 		jam_enum_human(buf, &ikev2_trans_type_names, exchange.addke.type);
 		jam_string(buf, "=");
