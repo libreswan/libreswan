@@ -244,39 +244,58 @@ static void compute_intermediate_mac(struct ike_sa *ike,
  * Return the IKE_INTERMEDIATE exchange being worked on.
  */
 
+bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
+{
+	if (!ike->sa.st_v2_ike_intermediate.enabled) {
+		ldbg(ike->sa.logger, "IKE_INTERMEDIATE? no; not negotiated");
+		return false;
+	}
+
+	unsigned next_exchange = ike->sa.st_v2_ike_intermediate.next_exchange;
+	unsigned nr_exchanges = ike->sa.st_oakley.ta_addke.len;
+	if (nr_exchanges == 0 && ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
+		nr_exchanges++;
+	}
+
+	return (next_exchange < nr_exchanges);
+
+}
+
+bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
+{
+	if (!PEXPECT(ike->sa.logger, next_is_ikev2_ike_intermediate_exchange(ike))) {
+		return false;
+	}
+	ike->sa.st_v2_ike_intermediate.next_exchange++;
+	return true;
+}
+
 struct ikev2_ike_intermediate_exchange current_ikev2_ike_intermediate_exchange(struct ike_sa *ike)
 {
-	struct ikev2_ike_intermediate_exchange exchange = {
-		.required = false,
-	};
+	struct ikev2_ike_intermediate_exchange exchange = {0};
 
-	if (!ike->sa.st_v2_ike_intermediate.enabled) {
-		ldbg(ike->sa.logger, "IKE_INTERMEDIATE: no; not negotiated");
-		exchange.required = false;
+	unsigned next_exchange = ike->sa.st_v2_ike_intermediate.next_exchange;
+	if (PBAD(ike->sa.logger, next_exchange == 0)) {
 		return exchange;
 	}
 
-	unsigned ke_index = ike->sa.st_v2_ike_intermediate.ke_index;
-
-	if (ke_index < ike->sa.st_oakley.ta_addke.len) {
-		exchange.required = true;
-		exchange.addke.type = ike->sa.st_oakley.ta_addke.list[ke_index].type;
-		exchange.addke.kem = ike->sa.st_oakley.ta_addke.list[ke_index].kem;
+	unsigned current_exchange = next_exchange - 1;
+	if (current_exchange < ike->sa.st_oakley.ta_addke.len) {
+		exchange.addke.type = ike->sa.st_oakley.ta_addke.list[current_exchange].type;
+		exchange.addke.kem = ike->sa.st_oakley.ta_addke.list[current_exchange].kem;
 		/* NONE is allowed, not NULL?!? */
 		PASSERT(ike->sa.logger, exchange.addke.kem != NULL);
 	}
 
 	if ((ike->sa.st_oakley.ta_addke.len == 0 /*none*/||
-	     ike->sa.st_oakley.ta_addke.len == ke_index + 1 /*last*/) &&
+	     current_exchange + 1 == ike->sa.st_oakley.ta_addke.len /*last*/) &&
 	    ike->sa.st_v2_ike_ppk == PPK_IKE_INTERMEDIATE) {
-		exchange.required = true;
 		exchange.ppk = true;
 	}
 
 	name_buf tn;
-	ldbg(ike->sa.logger, "IKE_INTERMEDIATE %s; index %d len %d; %s=%s, ppk=%s",
-	     bool_str(exchange.required),
-	     ke_index, ike->sa.st_oakley.ta_addke.len,
+	ldbg(ike->sa.logger, "IKE_INTERMEDIATE index %d len %d; %s=%s, ppk=%s",
+	     current_exchange, ike->sa.st_oakley.ta_addke.len,
 	     (exchange.addke.type == 0 ? "addke" :
 	      str_enum_short(&ikev2_trans_type_names, exchange.addke.type, &tn)),
 	     (exchange.addke.kem == NULL ? "no" : exchange.addke.kem->common.fqn),
@@ -339,6 +358,11 @@ static stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s: g^{xy} calculated, sending INTERMEDIATE",
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
+
+	/* advance to the next ike intermediate exchange */
+	if (!next_ikev2_ike_intermediate_exchange(ike)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
@@ -565,6 +589,10 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
+
+	if (!next_ikev2_ike_intermediate_exchange(ike)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
@@ -915,14 +943,14 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 	}
 
 	/*
-	 * We've done one intermediate exchange round, now proceed to
-	 * IKE AUTH.
+	 * We've done an intermediate exchange round, if required
+	 * perform another.
 	 */
-#if 0
-	return next_v2_transition(ike, md, &initiate_v2_IKE_INTERMEDIATE_transition, HERE);
-#else
-	return next_v2_exchange(ike, md, &v2_IKE_AUTH_exchange, HERE);
-#endif
+
+	const struct v2_exchange *next_exchange =
+		(next_is_ikev2_ike_intermediate_exchange(ike) ? &v2_IKE_INTERMEDIATE_exchange
+		 : &v2_IKE_AUTH_exchange);
+	return next_v2_exchange(ike, md, next_exchange, HERE);
 }
 
 /*
