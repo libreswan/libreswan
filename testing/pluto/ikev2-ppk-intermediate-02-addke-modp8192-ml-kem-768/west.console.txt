@@ -61,7 +61,6 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
-"westnet-eastnet-ipv4-psk-ppk" #1: N(PPK_IDENTITY) not received, continuing without PPK
 "westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
 "westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
