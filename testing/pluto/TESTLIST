@@ -1515,7 +1515,8 @@ kvmplutotest	ikev2-ppk-static-08-no_ppk-responder		good
 kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
 kvmplutotest	ikev2-ppk-static-10-yes-no			good
 kvmplutotest	ikev2-ppk-static-11-multiple-ppk-ids		good
-kvmplutotest	ikev2-ppk-intermediate-01-insist-yes		good
+kvmplutotest	ikev2-ppk-intermediate-01-insist-yes			good
+vkmplutotest	ikev2-ppk-intermediate-02-addke-modp8192-ml-kem-768	good
 
 # REDIRECT
 kvmplutotest	ikev2-redirect-02-auth				good

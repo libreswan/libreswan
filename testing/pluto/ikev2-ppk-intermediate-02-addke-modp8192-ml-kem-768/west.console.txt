@@ -1,0 +1,98 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ # confirm that newtwork is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec pluto --config /etc/ipsec.conf --leak-detective
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ppk
+"westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
+west #
+ ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
+"westnet-eastnet-ipv4-psk-ppk": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"westnet-eastnet-ipv4-psk-ppk":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"westnet-eastnet-ipv4-psk-ppk":   my_updown=ipsec _updown;
+"westnet-eastnet-ipv4-psk-ppk":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"westnet-eastnet-ipv4-psk-ppk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"westnet-eastnet-ipv4-psk-ppk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"westnet-eastnet-ipv4-psk-ppk":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"westnet-eastnet-ipv4-psk-ppk":   sec_label:unset;
+"westnet-eastnet-ipv4-psk-ppk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"westnet-eastnet-ipv4-psk-ppk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"westnet-eastnet-ipv4-psk-ppk":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"westnet-eastnet-ipv4-psk-ppk":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+PPK_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
+"westnet-eastnet-ipv4-psk-ppk":   v2-auth-hash-policy: none;
+"westnet-eastnet-ipv4-psk-ppk":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"westnet-eastnet-ipv4-psk-ppk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"westnet-eastnet-ipv4-psk-ppk":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"westnet-eastnet-ipv4-psk-ppk":   sendca: all; our sendcert: always; their sendcert: always;
+"westnet-eastnet-ipv4-psk-ppk":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"westnet-eastnet-ipv4-psk-ppk":   nat-traversal: encapsulation:auto; keepalive:20s
+"westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
+"westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
+"westnet-eastnet-ipv4-psk-ppk":   IKE algorithms: AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH20-MODP8192-ML_KEM_768
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair revival
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ipv4-psk-ppk
+"westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
+"westnet-eastnet-ipv4-psk-ppk" #1: N(PPK_IDENTITY) not received, continuing without PPK
+"westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
+"westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ipv4-psk-ppk" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"westnet-eastnet-ipv4-psk-ppk" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"westnet-eastnet-ipv4-psk-ppk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#2: "westnet-eastnet-ipv4-psk-ppk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ echo done
+done
+west #
+ # confirm PPK was used
+west #
+ grep "PPK used in IKE_INTERMEDIATE" /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
+west #
+ # confirm west sent 2 different PPK_IDENTITY_KEY notifies
+west #
+ hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
+| PPK_ID: 50 50 4b 49  44 41
+west #
+ hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
+| PPK_ID: 50 50 4b 49  44 42
+west #
+ ipsec whack --shutdown
+Pluto is shutting down
+west #
