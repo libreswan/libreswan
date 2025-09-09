@@ -494,7 +494,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t ppk, where_t where)
+static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike,
+						  const struct secret_ppk_stuff *ppk,
+						  where_t where)
 {
 	struct logger *logger = ike->sa.logger;
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
@@ -507,7 +509,7 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 	 */
 
 	PK11SymKey *skeyseed =
-		ikev2_IKE_INTERMEDIATE_ppk_skeyseed(prf, ppk,
+		ikev2_IKE_INTERMEDIATE_ppk_skeyseed(prf, ppk->key,
 						    /*old*/ike->sa.st_skey_d_nss,
 						    logger);
 	if (skeyseed == NULL) {
@@ -526,6 +528,13 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 
 	symkey_delref(logger, "skeyseed", &keymat);
 	symkey_delref(logger, "skeyseed", &skeyseed);
+
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "PPK '");
+		jam_sanitized_hunk(buf, ppk->id);
+		jam_string(buf, "' used in IKE_INTERMEDIATE by ");
+		jam_enum_human(buf, &sa_role_names, ike->sa.st_sa_role);
+	}
 	return true;
 }
 
@@ -782,8 +791,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (ppk != NULL) {
-		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
-		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as responder");
+		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk, HERE);
 	}
 
 	return STF_OK;
@@ -939,8 +947,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
 						    ike->sa.logger);
 
-			recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
-			llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as initiator");
+			recalc_v2_ike_intermediate_ppk_keymat(ike, ppk, HERE);
 		}
 	}
 
