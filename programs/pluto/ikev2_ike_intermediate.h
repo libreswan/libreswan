@@ -18,8 +18,6 @@
 
 struct ike_sa;
 
-const struct kem_desc *next_additional_kem_desc(struct ike_sa *ike);
-
 struct ikev2_ike_intermediate_exchange {
 	bool required;
 	struct {
