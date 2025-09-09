@@ -1,0 +1,59 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec add west
+"west": added IKEv2 connection
+west #
+ ipsec connectionstatus | grep ' policy: '
+"west":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up west
+"west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"west" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
+"west" #1: N(PPK_IDENTITY) not received, continuing without PPK
+"west" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"west" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768}
+"west" #1: N(PPK_IDENTITY) not received, continuing without PPK
+"west" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"west" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with rsa-digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"west" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
+"west" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3072-bit PKCS#1 1.5 RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ echo done
+done
+west #

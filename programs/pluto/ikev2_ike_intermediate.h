@@ -18,8 +18,18 @@
 
 struct ike_sa;
 
+/* should the next exchange be IKE_INTERMEDIATE? */
+bool next_is_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
+
+/*
+ * Make next IKE_INTERMEDIATE exchange current.
+ *
+ * Call at start of exchange, then call current*() to get the exchange
+ * details.
+ */
+bool next_ikev2_ike_intermediate_exchange(struct ike_sa *ike);
+
 struct ikev2_ike_intermediate_exchange {
-	bool required;
 	struct {
 		const struct kem_desc *kem;
 		enum ikev2_trans_type type;

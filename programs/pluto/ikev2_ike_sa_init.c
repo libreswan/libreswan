@@ -140,7 +140,7 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 		jam_string(buf, ", initiating ");
 		enum ikev2_exchange ix =
-			(current_ikev2_ike_intermediate_exchange(ike).required ? ISAKMP_v2_IKE_INTERMEDIATE :
+			(next_is_ikev2_ike_intermediate_exchange(ike) ? ISAKMP_v2_IKE_INTERMEDIATE :
 			 ISAKMP_v2_IKE_AUTH);
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 	}
@@ -1352,7 +1352,7 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 */
 
 	const struct v2_exchange *next_exchange =
-		(current_ikev2_ike_intermediate_exchange(ike).required ? &v2_IKE_INTERMEDIATE_exchange
+		(next_is_ikev2_ike_intermediate_exchange(ike) ? &v2_IKE_INTERMEDIATE_exchange
 		 : &v2_IKE_AUTH_exchange);
 	return next_v2_exchange(ike, md, next_exchange, HERE);
 }

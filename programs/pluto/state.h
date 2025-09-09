@@ -393,7 +393,7 @@ struct state {
 		chunk_t responder;	/* calculated from peers last Intermediate Exchange packet */
 		bool enabled;		/* both ends agree/use Intermediate Exchange */
 		uint32_t id;		/* ID of last IKE_INTERMEDIATE exchange */
-		unsigned ke_index;	/* current index of additional key exchanges in st_oakley.ta_addke */
+		unsigned next_exchange;
 	} st_v2_ike_intermediate;
 
 	/** end of IKEv2-only things **/
