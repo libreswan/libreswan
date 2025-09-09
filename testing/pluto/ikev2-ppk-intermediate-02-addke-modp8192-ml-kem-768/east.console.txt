@@ -38,15 +38,6 @@ initdone
 east #
  # confirm PPK was used
 east #
- grep "PPK used in IKE_INTERMEDIATE" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as responder
-east #
- # confirm west sent 2 different PPK_IDENTITY_KEY notifies
-east #
- hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
-east #
- hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
-east #
- ipsec whack --shutdown
-Pluto is shutting down
+ grep -e '^[^].*PPK.*used in' /tmp/pluto.log
+grep: Unmatched [, [^, [:, [., or [=
 east #

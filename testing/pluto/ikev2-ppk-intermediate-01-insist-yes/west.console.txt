@@ -60,7 +60,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_INTERMEDIATE
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDB' used in IKE_INTERMEDIATE by initiator
 "westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ppk" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
@@ -78,17 +78,14 @@ done
 west #
  # confirm PPK was used
 west #
- grep "PPK used in IKE_INTERMEDIATE" /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK used in IKE_INTERMEDIATE as initiator
+ grep -e '^[^|].*PPK.*used in' /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDB' used in IKE_INTERMEDIATE by initiator
 west #
  # confirm west sent 2 different PPK_IDENTITY_KEY notifies
 west #
- hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
+ grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
 | PPK_ID: 50 50 4b 49  44 41
 west #
- hostname | grep west > /dev/null && grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
+ grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
 | PPK_ID: 50 50 4b 49  44 42
-west #
- ipsec whack --shutdown
-Pluto is shutting down
 west #
