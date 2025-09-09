@@ -432,7 +432,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		if (ppk_ids_shunks == NULL) {
 			/* find any matching PPK and PPK_ID */
 			const struct secret_ppk_stuff *ppk =
-				get_connection_ppk_and_ppk_id(c);
+				get_connection_ppk_stuff(c);
 			if (ppk != NULL) {
 				found_one = true;
 				if (!emit_v2N_PPK_IDENTITY_KEY(request.pbs, ike, ppk)) {
@@ -494,7 +494,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t ppk, where_t where)
+static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike,
+						  const struct secret_ppk_stuff *ppk,
+						  where_t where)
 {
 	struct logger *logger = ike->sa.logger;
 	const struct prf_desc *prf = ike->sa.st_oakley.ta_prf;
@@ -507,7 +509,7 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 	 */
 
 	PK11SymKey *skeyseed =
-		ikev2_IKE_INTERMEDIATE_ppk_skeyseed(prf, ppk,
+		ikev2_IKE_INTERMEDIATE_ppk_skeyseed(prf, ppk->key,
 						    /*old*/ike->sa.st_skey_d_nss,
 						    logger);
 	if (skeyseed == NULL) {
@@ -526,6 +528,13 @@ static bool recalc_v2_ike_intermediate_ppk_keymat(struct ike_sa *ike, shunk_t pp
 
 	symkey_delref(logger, "skeyseed", &keymat);
 	symkey_delref(logger, "skeyseed", &skeyseed);
+
+	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
+		jam_string(buf, "PPK '");
+		jam_sanitized_hunk(buf, ppk->id);
+		jam_string(buf, "' used in IKE_INTERMEDIATE by ");
+		jam_enum_human(buf, &sa_role_names, ike->sa.st_sa_role);
+	}
 	return true;
 }
 
@@ -701,7 +710,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 												      &ike->sa.st_ike_spis,
 												      ike->sa.logger);
 			if (hunk_eq(ppk_confirmation, payl.confirmation)) {
-				ldbg(logger, "found matching PPK, send PPK_IDENTITY back");
+				ldbg(logger, "found matching PPK, will send PPK_IDENTITY back");
 				ppk = ppk_candidate;
 				PEXPECT(logger, hunk_eq(ppk->id, payl.ppk_id_payl.ppk_id));
 				break;
@@ -710,16 +719,14 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 
 		if (ppk == NULL) {
 			if (ike->sa.st_connection->config->ppk.insist) {
-				llog_sa(RC_LOG, ike, "No matching (PPK_ID, PPK) found and connection requires \
-					      a valid PPK. Abort!");
+				llog_sa(RC_LOG, ike, "no matching (PPK_ID, PPK) found and connection requires a valid PPK, terminating connection");
 				record_v2N_response(ike->sa.logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
 						    ENCRYPTED_PAYLOAD);
 				return STF_FATAL;
-			} else {
-				llog_sa(RC_LOG, ike,
-					"failed to find a matching PPK, continuing without PPK");
 			}
+			llog_sa(RC_LOG, ike,
+				"failed to find a matching PPK, continuing without PPK");
 		}
 	}
 
@@ -784,8 +791,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (ppk != NULL) {
-		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
-		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as responder");
+		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk, HERE);
 	}
 
 	return STF_OK;
@@ -918,27 +924,30 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 		extract_v2_ike_intermediate_keys(ike, task->keymat);
 	}
 
-	if (task->exchange.ppk && md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
-		struct ppk_id_payload payl;
-		if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
-			ldbg(logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
-			return STF_FATAL;
-		}
-		const struct secret_ppk_stuff *ppk =
-			get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
-					    ike->sa.logger);
+	/*
+	 * When there's PPK it must be performed last in the last
+	 * IKE_INTERMEDIATE exchange.
+	 */
 
-		recalc_v2_ike_intermediate_ppk_keymat(ike, ppk->key, HERE);
-		llog(RC_LOG, ike->sa.logger, "PPK used in IKE_INTERMEDIATE as initiator");
-	}
-	if (md->pd[PD_v2N_PPK_IDENTITY] == NULL) {
-		if (ike->sa.st_connection->config->ppk.insist) {
-			llog_sa(RC_LOG, ike, "N(PPK_IDENTITY) not received and connection \
+	if (task->exchange.ppk) {
+		if (md->pd[PD_v2N_PPK_IDENTITY] == NULL) {
+			if (ike->sa.st_connection->config->ppk.insist) {
+				llog_sa(RC_LOG, ike, "N(PPK_IDENTITY) not received and connection \
 					      insists on PPK. Abort!");
-			return STF_FATAL;
+				return STF_FATAL;
+			}
+			llog_sa(RC_LOG, ike, "N(PPK_IDENTITY) not received, continuing without PPK");
 		} else {
-			llog_sa(RC_LOG, ike,
-				"N(PPK_IDENTITY) not received, continuing without PPK");
+			struct ppk_id_payload payl;
+			if (!extract_v2N_ppk_identity(&md->pd[PD_v2N_PPK_IDENTITY]->pbs, &payl, ike)) {
+				ldbg(logger, "failed to extract PPK_ID from PPK_IDENTITY payload. Abort!");
+				return STF_FATAL;
+			}
+			const struct secret_ppk_stuff *ppk =
+				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+						    ike->sa.logger);
+
+			recalc_v2_ike_intermediate_ppk_keymat(ike, ppk, HERE);
 		}
 	}
 

@@ -37,7 +37,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
 "westnet-eastnet-ipv4-psk-ppk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "westnet-eastnet-ipv4-psk-ppk":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"westnet-eastnet-ipv4-psk-ppk":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+PPK_ALLOW+PPK_INSIST+ESN_NO+ESN_YES+INTERMEDIATE;
+"westnet-eastnet-ipv4-psk-ppk":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+PPK_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
 "westnet-eastnet-ipv4-psk-ppk":   v2-auth-hash-policy: none;
 "westnet-eastnet-ipv4-psk-ppk":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 "westnet-eastnet-ipv4-psk-ppk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -47,6 +47,7 @@ west #
 "westnet-eastnet-ipv4-psk-ppk":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ppk":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ppk":   conn serial: $1;
+"westnet-eastnet-ipv4-psk-ppk":   IKE algorithms: AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH20-MODP8192-ML_KEM_768
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -58,9 +59,11 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_INTERMEDIATE
-"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDB' used in IKE_INTERMEDIATE by initiator
+"westnet-eastnet-ipv4-psk-ppk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
+"westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
+"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "westnet-eastnet-ipv4-psk-ppk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "westnet-eastnet-ipv4-psk-ppk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ppk" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
@@ -78,14 +81,6 @@ done
 west #
  # confirm PPK was used
 west #
- grep -e '^[^|].*PPK.*used in' /tmp/pluto.log
-"westnet-eastnet-ipv4-psk-ppk" #1: PPK 'PPKIDB' used in IKE_INTERMEDIATE by initiator
-west #
- # confirm west sent 2 different PPK_IDENTITY_KEY notifies
-west #
- grep "PPK_ID: 50 50 4b 49  44 41" /tmp/pluto.log
-| PPK_ID: 50 50 4b 49  44 41
-west #
- grep "PPK_ID: 50 50 4b 49  44 42" /tmp/pluto.log
-| PPK_ID: 50 50 4b 49  44 42
+ grep -e '^[^].*PPK.*used in' /tmp/pluto.log
+grep: Unmatched [, [^, [:, [., or [=
 west #

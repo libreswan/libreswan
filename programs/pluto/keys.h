@@ -53,7 +53,7 @@ enum keys_to_show { SHOW_ALL_KEYS = 1, SHOW_EXPIRED_KEYS, };
 extern void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show);
 
 const struct secret_preshared_stuff *get_connection_psk(const struct connection *c);
-const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connection *c);
+const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection *c);
 const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger *logger);
 
 extern void load_preshared_secrets(struct logger *logger);

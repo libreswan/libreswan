@@ -27,6 +27,6 @@ const char *sa_role_name[] = {
 const struct enum_names sa_role_names = {
 	SA_ROLE_FLOOR, SA_ROLE_ROOF-1,
 	ARRAY_REF(sa_role_name),
-	"SA_ROLE_",
+	"SA_",
 	NULL,
 };

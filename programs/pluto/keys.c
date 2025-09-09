@@ -557,7 +557,7 @@ const struct secret_preshared_stuff *get_connection_psk(const struct connection 
  * Get connection PPK and store corresponding ppk_id in *ppk_id.
  */
 
-const struct secret_ppk_stuff *get_connection_ppk_and_ppk_id(const struct connection *c)
+const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection *c)
 {
 	struct logger *logger = c->logger;
 	struct shunks *ppk_ids_shunks = c->config->ppk_ids_shunks;

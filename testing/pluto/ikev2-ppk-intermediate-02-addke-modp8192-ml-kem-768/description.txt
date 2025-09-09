@@ -1,0 +1,1 @@
+PPK should only be exchanged on the second ADDKE in modp8192-ml_kem_768
