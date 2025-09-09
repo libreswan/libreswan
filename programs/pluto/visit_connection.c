@@ -31,12 +31,17 @@
 #include "ikev1.h"		/* for send_n_log_v1_delete() */
 #include "ikev2_delete.h"
 
+struct connection_visitor_param {
+	const struct whack_message *wm;
+	struct show *s;
+	enum chrono order;
+	connection_visitor *connection_visitor;
+	const struct each *each;
+};
+
 typedef unsigned (connection_node_visitor)
 (struct connection *c,
- const struct whack_message *m,
- struct show *s,
- enum chrono order,
- connection_visitor *connection_visitor);
+ const struct connection_visitor_param *param);
 
 static connection_node_visitor visit_connection_node;
 static connection_node_visitor visit_connection_tree;
@@ -60,12 +65,8 @@ static struct ike_sa *nudge_connection_established_parents(struct connection *c,
  * ugh).  WHACK_CONNECTIONS() will then visit it any any instances.
  */
 
-static bool whack_connection_by_base_name(const struct whack_message *m,
-					  struct show *s,
-					  enum chrono order,
-					  connection_node_visitor *connection_node_visitor,
-					  connection_visitor *connection_visitor,
-					  const struct each *each UNUSED)
+static bool whack_connection_by_base_name(connection_node_visitor *connection_node_visitor,
+					  const struct connection_visitor_param *param)
 {
 #if 0
 	/*
@@ -78,48 +79,44 @@ static bool whack_connection_by_base_name(const struct whack_message *m,
 #endif
 
 	struct connection_filter by_base_name = {
-		.base_name = m->name,
+		.base_name = param->wm->name,
 		.search = {
 			.order = OLD2NEW, /* find template before
 					   * instance */
-			.verbose.logger = show_logger(s),
+			.verbose.logger = show_logger(param->s),
 			.where = HERE,
 		},
 	};
 	if (next_connection(&by_base_name)) {
-		connection_node_visitor(by_base_name.c, m, s, order, connection_visitor);
+		connection_node_visitor(by_base_name.c, param);
 		return true; /* found something, stop */
 	}
 	return false; /* keep looking */
 }
 
-static bool whack_connection_by_name(const struct whack_message *m,
-				     struct show *s,
-				     enum chrono order,
-				     connection_node_visitor *connection_node_visitor,
-				     connection_visitor *connection_visitor,
-				     const struct each *each UNUSED)
+static bool whack_connection_by_name(connection_node_visitor *connection_node_visitor,
+				     const struct connection_visitor_param *param)
 {
 	/*
 	 * Fully qualified names, such as '"conn#1.2.3.0/24"[1]',
 	 * always start with a quote, so no point searching when there
 	 * isn't one.
 	 */
-	if (m->name[0] != '"') {
+	if (param->wm->name[0] != '"') {
 		return false;
 	}
 
 	struct connection_filter by_name = {
-		.name = m->name,
+		.name = param->wm->name,
 		.search = {
 			.order = OLD2NEW, /* only one, order doesn't
 					   * matter! */
-			.verbose.logger = show_logger(s),
+			.verbose.logger = show_logger(param->s),
 			.where = HERE,
 		},
 	};
 	if (next_connection(&by_name)) {
-		connection_node_visitor(by_name.c, m, s, order, connection_visitor);
+		connection_node_visitor(by_name.c, param);
 		return true; /* only one, stop */
 	}
 	return false; /* keep looking */
@@ -141,12 +138,8 @@ static bool whack_connection_by_name(const struct whack_message *m,
  * connection tree, it will in turn call connection_visitor().
  */
 
-static bool whack_connections_by_alias(const struct whack_message *m,
-				       struct show *s,
-				       enum chrono order,
-				       connection_node_visitor *connection_node_visitor,
-				       connection_visitor *connection_visitor,
-				       const struct each *each)
+static bool whack_connections_by_alias(connection_node_visitor *connection_node_visitor,
+				       const struct connection_visitor_param *param)
 {
 #if 0
 	/*
@@ -158,11 +151,11 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 	}
 #endif
 
-	struct logger *logger = show_logger(s);
+	struct logger *logger = show_logger(param->s);
 	struct connection_filter by_alias_root = {
-		.alias_root = m->name,
+		.alias_root = param->wm->name,
 		.search = {
-			.order = order,
+			.order = param->order,
 			.verbose.logger = logger,
 			.where = HERE,
 		},
@@ -181,7 +174,7 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 	 */
 	if (all_connections(&by_alias_root)) {
 		/* header */
-		if (each->future_tense != NULL) {
+		if (param->each->future_tense != NULL) {
 			/*
 			 * The config option is connalias= but, given
 			 * we want this to go away, better to not
@@ -190,20 +183,21 @@ static bool whack_connections_by_alias(const struct whack_message *m,
 			 * "aliases: ...".
 			 */
 			llog(RC_LOG, logger, "%s all connections with alias \"%s\"",
-			     each->future_tense, m->name);
+			     param->each->future_tense,
+			     param->wm->name);
 		}
 		unsigned nr = 0;
 		do {
-			nr += connection_node_visitor(by_alias_root.c, m, s, order, connection_visitor);
+			nr += connection_node_visitor(by_alias_root.c, param);
 		} while (all_connections(&by_alias_root));
 		/* footer */
-		if (each->past_tense != NULL) {
+		if (param->each->past_tense != NULL) {
 			if (nr == 1) {
 				llog(RC_LOG, logger, "%s %u connection",
-				     each->past_tense, nr);
+				     param->each->past_tense, nr);
 			} else {
 				llog(RC_LOG, logger, "%s %u connections",
-				     each->past_tense, nr);
+				     param->each->past_tense, nr);
 			}
 		}
 		return true; /* found something, stop */
@@ -219,34 +213,30 @@ static bool whack_connections_by_alias(const struct whack_message *m,
  * the search was successful.
  */
 
-static bool whack_connection_by_serialno(const struct whack_message *m,
-					 struct show *s,
-					 enum chrono order,
-					 connection_node_visitor *connection_node_visitor,
-					 connection_visitor *connection_visitor,
-					 const struct each *each UNUSED)
+static bool whack_connection_by_serialno(connection_node_visitor *connection_node_visitor,
+					 const struct connection_visitor_param *param)
 {
-	struct logger *logger = show_logger(s);
-	if (m->name[0] == '$' ||
-	    m->name[0] == '#') {
-		ldbg(logger, "looking up '%s' by serialno", m->name);
+	struct logger *logger = show_logger(param->s);
+	if (param->wm->name[0] == '$' ||
+	    param->wm->name[0] == '#') {
+		ldbg(logger, "looking up '%s' by serialno", param->wm->name);
 		uintmax_t serialno = 0;
-		err_t e = shunk_to_uintmax(shunk1(m->name + 1), NULL, /*base*/0, &serialno);
+		err_t e = shunk_to_uintmax(shunk1(param->wm->name + 1), NULL, /*base*/0, &serialno);
 		if (e != NULL) {
 			llog(RC_LOG, logger, "invalid serial number '%s': %s",
-			     m->name, e);
+			     param->wm->name, e);
 			return true; /* found something, stop */
 		}
 		if (serialno >= INT_MAX) {/* arbitrary limit */
-			llog(RC_LOG, logger, "serial number '%s' is huge", m->name);
+			llog(RC_LOG, logger, "serial number '%s' is huge", param->wm->name);
 			return true; /* found something, stop */
 		}
-		switch (m->name[0]) {
+		switch (param->wm->name[0]) {
 		case '$':
 		{
 			struct connection *c = connection_by_serialno(serialno);
 			if (c != NULL) {
-				connection_node_visitor(c, m, s, order, connection_visitor);
+				connection_node_visitor(c, param);
 				return true; /* found something, stop */
 			}
 			break;
@@ -256,13 +246,13 @@ static bool whack_connection_by_serialno(const struct whack_message *m,
 			struct state *st = state_by_serialno(serialno);
 			if (st != NULL) {
 				struct connection *c = st->st_connection;
-				connection_node_visitor(c, m, s, order, connection_visitor);
+				connection_node_visitor(c, param);
 				return true; /* found something, stop */
 			}
 			break;
 		}
 		}
-		llog(RC_LOG, logger, "serialno '%s' not found", m->name);
+		llog(RC_LOG, logger, "serialno '%s' not found", param->wm->name);
 		return true; /* found something, stop (YES!) */
 	}
 	return false; /* keep looking */
@@ -271,13 +261,13 @@ static bool whack_connection_by_serialno(const struct whack_message *m,
 /*
  * Just visit the NODE.
  */
+
 static unsigned visit_connection_node(struct connection *c,
-				      const struct whack_message *m,
-				      struct show *s,
-				      enum chrono order UNUSED,
-				      connection_visitor *connection_visitor)
+				      const struct connection_visitor_param *param)
 {
-	return connection_visitor(m, s, c);
+	return param->connection_visitor(param->wm,
+					 param->s,
+					 c);
 }
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m,
@@ -316,39 +306,36 @@ unsigned whack_connection_instance_new2old(const struct whack_message *m,
 }
 
 static unsigned visit_connection_tree(struct connection *c,
-				      const struct whack_message *m,
-				      struct show *s,
-				      enum chrono order,
-				      connection_visitor *connection_visitor)
+				     const struct connection_visitor_param *param)
 {
-	struct logger *logger = show_logger(s);
+	struct logger *logger = show_logger(param->s);
 	connection_addref(c, logger); /* must delref */
 
 	unsigned nr = 0;
 
 	/* prefix tree walk */
-	if (order == OLD2NEW) {
+	if (param->order == OLD2NEW) {
 		/* abuse bool */
-		nr += connection_visitor(m, s, c);
+		nr += visit_connection_node(c, param);
 	}
 
 	struct connection_filter instances = {
 		.clonedfrom = c,
 		.ike_version = c->config->ike_version, /*redundant but meh*/
 		.search = {
-			.order = order,
+			.order = param->order,
 			.verbose.logger = logger,
 			.where = HERE,
 		},
 	};
 	while (next_connection(&instances)) {
-		nr += visit_connection_tree(instances.c, m, s, order, connection_visitor);
+		nr += visit_connection_tree(instances.c, param);
 	}
 
 	/* postfix tree walk */
-	if (order == NEW2OLD) {
+	if (param->order == NEW2OLD) {
 		/* abuse bool */
-		nr += connection_visitor(m, s, c);
+		nr += visit_connection_node(c, param);
 	}
 
 	/* kill addref() and caller's pointer */
@@ -356,30 +343,20 @@ static unsigned visit_connection_tree(struct connection *c,
 	return nr;
 }
 
-static void visit_connections(const struct whack_message *m,
-			      struct show *s,
-			      enum chrono order,
-			      connection_node_visitor *connection_node_visitor,
-			      connection_visitor *connection_visitor,
-			      const struct each *each)
+static void visit_connection_roots(connection_node_visitor *node_visitor,
+				   const struct connection_visitor_param *param)
 {
-	struct logger *logger = show_logger(s);
+	struct logger *logger = show_logger(param->s);
 
 	/*
 	 * Try by base_name, name, alias, then serial no.
 	 */
 
-	if (whack_connection_by_base_name(m, s, order,
-					  connection_node_visitor,
-					  connection_visitor,
-					  each)) {
+	if (whack_connection_by_base_name(node_visitor, param)) {
 		return;
 	}
 
-	if (whack_connection_by_name(m, s, order,
-				     connection_node_visitor,
-				     connection_visitor,
-				     each)) {
+	if (whack_connection_by_name(node_visitor, param)) {
 		return;
 	}
 
@@ -394,17 +371,11 @@ static void visit_connections(const struct whack_message *m,
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	if (whack_connections_by_alias(m, s, order,
-				       connection_node_visitor,
-				       connection_visitor,
-				       each)) {
+	if (whack_connections_by_alias(node_visitor, param)) {
 		return;
 	}
 
-	if (whack_connection_by_serialno(m, s, order,
-					 connection_node_visitor,
-					 connection_visitor,
-					 each)) {
+	if (whack_connection_by_serialno(node_visitor, param)) {
 		return;
 	}
 
@@ -418,13 +389,13 @@ static void visit_connections(const struct whack_message *m,
 	 * logged as it A. is confusing and B. would cause whack to
 	 * detach stopping the KEYS from being added.
 	 */
-	if (each->log_unknown_name) {
-#define MESSAGE "no connection or alias named \"%s\"'", m->name
+	if (param->each->log_unknown_name) {
+#define MESSAGE "no connection or alias named \"%s\"'", param->wm->name
 		/* what means leave more breadcrumbs */
-		if (each->past_tense != NULL) {
+		if (param->each->past_tense != NULL) {
 			llog_rc(RC_UNKNOWN_NAME, logger, MESSAGE);
 		} else {
-			show_rc(RC_UNKNOWN_NAME, s, MESSAGE);
+			show_rc(RC_UNKNOWN_NAME, param->s, MESSAGE);
 		}
 	}
 #undef MESSAGE
@@ -447,8 +418,14 @@ void whack_connection_roots(const struct whack_message *wm,
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	visit_connections(wm, s, order, visit_connection_node,
-			  connection_visitor, &each);
+	struct connection_visitor_param param = {
+		.wm = wm,
+		.s = s,
+		.order = order,
+		.connection_visitor = connection_visitor,
+		.each = &each,
+	};
+	visit_connection_roots(visit_connection_node, &param);
 }
 
 void whack_connection_trees(const struct whack_message *wm,
@@ -468,9 +445,14 @@ void whack_connection_trees(const struct whack_message *wm,
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	visit_connections(wm, s, order,
-			  visit_connection_tree,
-			  connection_visitor, &each);
+	struct connection_visitor_param param = {
+		.wm = wm,
+		.s = s,
+		.order = order,
+		.connection_visitor = connection_visitor,
+		.each = &each,
+	};
+	visit_connection_roots(visit_connection_tree, &param);
 }
 
 /*
