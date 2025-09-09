@@ -322,7 +322,7 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	}
 
 	if (tokens->curr.token.ptr != NULL) {
-		proposal_error(parser, "%s proposals contain unexpected '"PRI_SHUNK"'",
+		proposal_error(parser, "%s proposal contains unexpected '"PRI_SHUNK"'",
 			       parser->protocol->name,
 			       pri_shunk(tokens[0].curr.token));
 		return false;
