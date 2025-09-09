@@ -432,7 +432,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		if (ppk_ids_shunks == NULL) {
 			/* find any matching PPK and PPK_ID */
 			const struct secret_ppk_stuff *ppk =
-				get_connection_ppk_and_ppk_id(c);
+				get_connection_ppk_stuff(c);
 			if (ppk != NULL) {
 				found_one = true;
 				if (!emit_v2N_PPK_IDENTITY_KEY(request.pbs, ike, ppk)) {
