@@ -140,7 +140,7 @@ void llog_success_process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 		jam_string(buf, ", initiating ");
 		enum ikev2_exchange ix =
-			(ike->sa.st_v2_ike_intermediate.enabled ? ISAKMP_v2_IKE_INTERMEDIATE :
+			(current_ikev2_ike_intermediate_exchange(ike).required ? ISAKMP_v2_IKE_INTERMEDIATE :
 			 ISAKMP_v2_IKE_AUTH);
 		jam_enum_short(buf, &ikev2_exchange_names, ix);
 	}
@@ -948,10 +948,6 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (ike->sa.st_v2_ike_intermediate.enabled && next_additional_kem_desc(ike) == NULL) {
-		ldbg(ike->sa.logger, "IKE INTERMEDIATE is enabled, but no additional KE is configured");
-	}
-
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
 		      pbs_out_all(&response.message),
@@ -1355,16 +1351,9 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * and dispatch the next request.
 	 */
 
-	const struct v2_exchange *next_exchange;
-	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		if (next_additional_kem_desc(ike) == NULL) {
-			ldbg(ike->sa.logger, "IKE INTERMEDIATE is enabled, but no additional KE is configured");
-		}
-		next_exchange = &v2_IKE_INTERMEDIATE_exchange;
-	} else {
-		next_exchange = &v2_IKE_AUTH_exchange;
-	}
-
+	const struct v2_exchange *next_exchange =
+		(current_ikev2_ike_intermediate_exchange(ike).required ? &v2_IKE_INTERMEDIATE_exchange
+		 : &v2_IKE_AUTH_exchange);
 	return next_v2_exchange(ike, md, next_exchange, HERE);
 }
 
