@@ -242,6 +242,14 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 				 struct proposal *scratch_proposal,
 				 shunk_t proposal)
 {
+	const struct logger *logger = parser->policy->logger;
+
+	if (proposal.len > 0 &&
+	    memchr(proposal.ptr, '+', proposal.len) != NULL) {
+		proposal_error(parser, "IKEv1 does not support multiple transform algorithms separated by '+'");
+		return false;
+	}
+
 	struct proposal_tokenizer tokens[1] = { proposal_first_token(proposal, "-;"), };
 
 	if (parser->protocol->encrypt &&
@@ -328,6 +336,15 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 			       parser->protocol->name,
 			       pri_shunk(tokens[0].curr.token));
 		return false;
+	}
+
+	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
+	     transform < PROPOSAL_TRANSFORM_ROOF; transform++) {
+		struct transform_algorithms *algorithms =
+			transform_algorithms(scratch_proposal, transform);
+		if (PBAD(logger, algorithms != NULL && algorithms->len > 1)) {
+			return false;
+		}
 	}
 
 	/*
