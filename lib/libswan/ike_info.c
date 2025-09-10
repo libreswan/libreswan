@@ -206,8 +206,12 @@ static const struct proposal_protocol ikev1_ike_proposal_protocol = {
 	.defaults = &ikev1_ike_defaults,
 	.proposal_ok = ike_proposal_ok,
 	.encrypt = true,
+	/*
+	 * IKEv1 IKE proposals only have the PRF, i.e., 
+	 * <encr>-<prf>-<integ> isn't acceptable.
+	 */
 	.prf = true,
-	.integ = true,
+	.integ = false,
 	.kem = true,
 };
 
