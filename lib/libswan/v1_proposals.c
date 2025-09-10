@@ -240,8 +240,10 @@ static bool merge_default_proposals(struct proposal_parser *parser,
 static bool parse_ikev1_proposal(struct proposal_parser *parser,
 				 struct proposals *proposals,
 				 struct proposal *scratch_proposal,
-				 struct proposal_tokenizer *tokens)
+				 shunk_t proposal)
 {
+	struct proposal_tokenizer tokens[1] = { proposal_first_token(proposal, "-;"), };
+
 	if (parser->protocol->encrypt &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
@@ -358,11 +360,10 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 	shunk_t prop_ptr = alg_str;
 	do {
 		/* find the next proposal */
-		shunk_t prop = shunk_token(&prop_ptr, NULL, ",");
+		shunk_t proposal = shunk_token(&prop_ptr, NULL, ",");
 		/* parse it */
-		struct proposal_tokenizer tokens = proposal_first_token(prop, "-;");
 		struct proposal *scratch_proposal = alloc_proposal(parser);
-		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, &tokens)) {
+		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, proposal)) {
 			free_proposal(&scratch_proposal);
 			passert(parser->diag != NULL);
 			return false;
