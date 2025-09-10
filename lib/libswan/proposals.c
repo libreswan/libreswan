@@ -1111,8 +1111,13 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 		return true;
 	}
 
-	if (!PEXPECT(logger, parser->protocol->integ)) {
-		/* doesn't actually happen */
+	/*
+	 * XXX: IKEv1 IKE proposals only allow a PRF (i.e., not
+	 * ike=<encr>-<integ> or ike=<encr>-<prf>-<integ>.  Hence,
+	 * when the PRF lookup fails, reject the proposal.
+	 */
+	if (!parser->protocol->integ) {
+		PEXPECT(logger, parser->diag != NULL);
 		return false;
 	}
 
