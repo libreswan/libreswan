@@ -1094,7 +1094,8 @@ void show_connection_statuses(struct show *s)
 
 static unsigned whack_connection_status(const struct whack_message *m UNUSED,
 					struct show *s,
-					struct connection *c)
+					struct connection *c,
+					struct connection_visitor_context *context UNUSED)
 {
 	show_connection_status(s, c);
 	return 1; /* the connection counts */
@@ -1107,8 +1108,9 @@ void whack_connectionstatus(const struct whack_message *m, struct show *s)
 		return;
 	}
 
-	visit_connection_tree(m, s, OLD2NEW, whack_connection_status,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_connection_status, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

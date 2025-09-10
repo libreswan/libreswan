@@ -176,8 +176,9 @@ static void show_brief_connection_statuses(struct show *s)
 
 /* Callback function from whack_briefconnectionstatus() -> walk_connection_tree() */
 static unsigned whack_briefconnectionstatus_cb(const struct whack_message *m UNUSED,
-					struct show *s,
-					struct connection *c)
+					       struct show *s,
+					       struct connection *c,
+					       struct connection_visitor_context *context UNUSED)
 {
 	show_brief_connection_status(s, c);
 	return 1; /* the connection counts */
@@ -198,8 +199,9 @@ void whack_briefconnectionstatus(const struct whack_message *m, struct show *s)
 	 * callback if found, which directly calls
 	 * show_brief_connection_status().
 	 */
-	visit_connection_tree(m, s, OLD2NEW, whack_briefconnectionstatus_cb,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_briefconnectionstatus_cb, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

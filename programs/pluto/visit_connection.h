@@ -25,7 +25,6 @@ struct ike_sa;
 struct connection;
 struct whack_message;
 struct show;
-struct visit_connection_state_context;
 enum chrono;
 
 struct each {
@@ -43,10 +42,13 @@ struct each {
  *
  */
 
-typedef unsigned (connection_visitor_cb)
-(const struct whack_message *m,
- struct show *s,
- struct connection *c);
+struct connection_visitor_context;
+
+typedef unsigned (connection_visitor)
+	(const struct whack_message *m,
+	 struct show *s,
+	 struct connection *c,
+	 struct connection_visitor_context *context);
 
 /*
  * Find and visit "root" connection matching WM.name.
@@ -64,9 +66,12 @@ typedef unsigned (connection_visitor_cb)
  * INSTANCES would corrupt the search list.
  */
 
-void visit_root_connection(const struct whack_message *wm, struct show *s,
-			   connection_visitor_cb *connection_visitor,
-			   enum chrono order, struct each each);
+void whack_connection_roots(const struct whack_message *wm,
+			    struct show *s,
+			    enum chrono order,
+			    connection_visitor *visitor,
+			    struct connection_visitor_context *context,
+			    struct each each);
 
 /*
  * Visit the connection "tree" matching WM.name.
@@ -85,15 +90,17 @@ void visit_root_connection(const struct whack_message *wm, struct show *s,
  * INSTANCES would corrupt the search list.
  */
 
-void visit_connection_tree(const struct whack_message *wm,
-			   struct show *s,
-			   enum chrono order,
-			   connection_visitor_cb *connection_visitor,
-			   struct each each);
+void whack_connection_trees(const struct whack_message *wm,
+			    struct show *s,
+			    enum chrono order,
+			    connection_visitor *visitor,
+			    struct connection_visitor_context *context,
+			    struct each each);
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m, struct show *s,
 					   struct connection *c,
-					   connection_visitor_cb *visit_connection);
+					   connection_visitor *visitor,
+					   struct connection_visitor_context *context);
 
 /*
  * Visit each of a connection's states in turn.
@@ -118,6 +125,11 @@ enum connection_visit_kind {
 	 * This callback MUST NOT delete the IKE SA: IKEv1 needs the
 	 * IKE SA so it can send out the Child SA deletes; and IKEv2
 	 * never creates orphans.
+	 *
+	 * A CROSSSED IKE SA, while established, isn't the
+	 * connection's owner (principal).  Presumably because its
+	 * been double-CROSSED by some other IKE SA that
+	 * crossed-streams.
 	 */
 	NUDGE_CONNECTION_PRINCIPAL_IKE_SA,
 	NUDGE_CONNECTION_CROSSED_IKE_SA,
@@ -143,7 +155,7 @@ enum connection_visit_kind {
 	 * SA is using an established IKE SA that shares the
 	 * connection, however that IKE SA is not principal (aka
 	 * owner); most likely because the current principal IKE SA
-	 * double-crossed it
+	 * double-CROSSED it
 	 *
 	 * CHILD_OF_CUCKOLD_IKE_SA: the connection's principal Child
 	 * SA's established IKE SA is for some other connection that
@@ -194,16 +206,18 @@ enum connection_visit_kind {
 	FINISH_CONNECTION_PRINCIPAL_IKE_SA,
 };
 
-typedef void (visit_connection_state_cb)
+struct connection_state_visitor_context;
+
+typedef void (connection_state_visitor)
 	(struct connection *c,
 	 struct ike_sa **ike,
 	 struct child_sa **child,
 	 enum connection_visit_kind visit_kind,
-	 struct visit_connection_state_context *context);
+	 struct connection_state_visitor_context *context);
 
 void visit_connection_states(struct connection *c,
-			     visit_connection_state_cb *visitor,
-			     struct visit_connection_state_context *context,
+			     connection_state_visitor *state_visitor,
+			     struct connection_state_visitor_context *context,
 			     where_t where);
 
 #endif

@@ -178,7 +178,7 @@ static void down_ikev1_connection_state(struct connection *c,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct visit_connection_state_context *context UNUSED)
+					struct connection_state_visitor_context *context UNUSED)
 {
 	switch (visit_kind) {
 
@@ -255,7 +255,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 					struct ike_sa **ike,
 					struct child_sa **child,
 					enum connection_visit_kind visit_kind,
-					struct visit_connection_state_context *context UNUSED)
+					struct connection_state_visitor_context *context UNUSED)
 {
 	switch (visit_kind) {
 
@@ -388,7 +388,8 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 }
 
 static unsigned whack_down_connection(const struct whack_message *m UNUSED,
-				      struct show *s, struct connection *c)
+				      struct show *s, struct connection *c,
+				      struct connection_visitor_context *context UNUSED)
 {
 	/*
 	 * Stop the connection coming back.
@@ -410,7 +411,7 @@ static unsigned whack_down_connection(const struct whack_message *m UNUSED,
 	case CK_LABELED_TEMPLATE:
 	case CK_TEMPLATE:
 	case CK_GROUP:
-		return whack_connection_instance_new2old(m, s, c, whack_down_connection);
+		return whack_connection_instance_new2old(m, s, c, whack_down_connection, NULL);
 
 	case CK_LABELED_CHILD:
 		ldbg(show_logger(s), "skipping %s", c->name);
@@ -451,11 +452,11 @@ void whack_down(const struct whack_message *m, struct show *s)
 	 * IKE SA has -UP and initiate an IKE SA delete.
 	 */
 
-	visit_root_connection(m, s, whack_down_connection,
-			      /*alias_order*/NEW2OLD,
-			      (struct each) {
-				      .future_tense = "terminating",
-				      .past_tense = "terminated",
-				      .log_unknown_name = true,
-			      });
+	whack_connection_roots(m, s, /*alias_order*/NEW2OLD,
+			       whack_down_connection, NULL,
+			       (struct each) {
+				       .future_tense = "terminating",
+				       .past_tense = "terminated",
+				       .log_unknown_name = true,
+			       });
 }

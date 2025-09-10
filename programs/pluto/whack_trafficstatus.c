@@ -130,7 +130,8 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 
 static unsigned whack_trafficstatus_connection(const struct whack_message *m UNUSED,
 					       struct show *s,
-					       struct connection *c)
+					       struct connection *c,
+					       struct connection_visitor_context *context UNUSED)
 {
 	if (!can_have_sa(c, CHILD_SA)) {
 		return 0; /* the connection doesn't count */
@@ -183,14 +184,15 @@ void whack_trafficstatus(const struct whack_message *m, struct show *s)
 	if (m->name == NULL) {
 		struct connections *connections = sort_connections();
 		ITEMS_FOR_EACH(cp, connections) {
-			whack_trafficstatus_connection(m, s, (*cp));
+			whack_trafficstatus_connection(m, s, (*cp), NULL);
 		}
 		pfree(connections);
 		return;
 	}
 
-	visit_connection_tree(m, s, OLD2NEW, whack_trafficstatus_connection,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_trafficstatus_connection, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }

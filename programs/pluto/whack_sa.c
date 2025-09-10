@@ -32,7 +32,8 @@
 
 static unsigned whack_connection_sa(const struct whack_message *m,
 				    struct show *s,
-				    struct connection *c)
+				    struct connection *c,
+				    struct connection_visitor_context *context UNUSED)
 {
 	enum sa_kind sa_kind = whack_sa_kind(m->whack_command);
 	struct logger *logger = show_logger(s);
@@ -132,8 +133,9 @@ void whack_sa(const struct whack_message *m, struct show *s)
 	 * Order doesn't matter as actual operation put on the event
 	 * queue.
 	 */
-	visit_connection_tree(m, s, OLD2NEW, whack_connection_sa,
-			      (struct each) {
-				      .log_unknown_name = true,
-			      });
+	whack_connection_trees(m, s, OLD2NEW,
+			       whack_connection_sa, NULL,
+			       (struct each) {
+				       .log_unknown_name = true,
+			       });
 }
