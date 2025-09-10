@@ -80,17 +80,6 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	{
-		printf(PREFIX "search %s: ", name.buf);
-		int e = enum_search(enum_test, name.buf);
-		if (e != i) {
-			printf("%d ERROR\n", e);
-			errors++;
-		} else {
-			printf("OK\n");
-		}
-	}
-
-	{
 		printf(PREFIX "match %s: ", name.buf);
 		int e = enum_match(enum_test, shunk1(name.buf));
 		if (e != i) {

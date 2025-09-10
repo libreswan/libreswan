@@ -124,8 +124,6 @@ bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b)
  */
 extern long next_enum(const struct enum_names *en, long last);
 
-extern int enum_search(const struct enum_names *ed, const char *string);
-
 /*
  * Search ED for an enum matching STRING.  Return -1 if no match is
  * found.

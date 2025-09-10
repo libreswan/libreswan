@@ -242,21 +242,6 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
  * ??? the table contains unsigned long values BUT the function returns an
  * int so there is some potential for overflow.
  */
-int enum_search(enum_names *ed, const char *str)
-{
-	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
-		passert(p->en_last - p->en_first + 1 == p->en_checklen);
-		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
-			const char *ptr = p->en_names[en - p->en_first];
-
-			if (ptr != NULL && strcaseeq(ptr, str)) {
-				passert(en <= INT_MAX);
-				return en;
-			}
-		}
-	}
-	return -1;
-}
 
 int enum_match(enum_names *ed, shunk_t string)
 {
