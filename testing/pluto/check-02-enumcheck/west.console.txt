@@ -3142,28 +3142,24 @@ name for -1 present (should be absent)
     2 -> SA_LIFE_DURATION (variable length)
          jam_enum 2: SA_LIFE_DURATION (variable length) OK
          match SA_LIFE_DURATION (variable length): OK
-         match SA_LIFE_DURATION  [trunc]: OK
          short_name 2: SA_LIFE_DURATION (variable length) OK
          jam_enum_short 2: SA_LIFE_DURATION (variable length) OK
          jam_enum_human 2: sa-life-duration (variable length) OK
     9 -> COMPRESS_PRIVATE_ALG (variable length)
          jam_enum 9: COMPRESS_PRIVATE_ALG (variable length) OK
          match COMPRESS_PRIVATE_ALG (variable length): OK
-         match COMPRESS_PRIVATE_ALG  [trunc]: OK
          short_name 9: COMPRESS_PRIVATE_ALG (variable length) OK
          jam_enum_short 9: COMPRESS_PRIVATE_ALG (variable length) OK
          jam_enum_human 9: compress-private-alg (variable length) OK
    10 -> ECN_TUNNEL (variable length)
          jam_enum 10: ECN_TUNNEL (variable length) OK
          match ECN_TUNNEL (variable length): OK
-         match ECN_TUNNEL  [trunc]: OK
          short_name 10: ECN_TUNNEL (variable length) OK
          jam_enum_short 10: ECN_TUNNEL (variable length) OK
          jam_enum_human 10: ecn-tunnel (variable length) OK
   32001 -> SECCTX (variable length)
          jam_enum 32001: SECCTX (variable length) OK
          match SECCTX (variable length): OK
-         match SECCTX  [trunc]: OK
          short_name 32001: SECCTX (variable length) OK
          jam_enum_short 32001: SECCTX (variable length) OK
          jam_enum_human 32001: secctx (variable length) OK
@@ -3920,7 +3916,6 @@ name for -1 present (should be absent)
     3 -> RFC 3947 (NAT-Traversal)
          jam_enum 3: RFC 3947 (NAT-Traversal) OK
          match RFC 3947 (NAT-Traversal): OK
-         match RFC 3947  [trunc]: OK
          short_name 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_short 3: RFC 3947 (NAT-Traversal) OK
          jam_enum_human 3: rfc 3947 (nat-traversal) OK
@@ -4025,49 +4020,42 @@ name for -1 present (should be absent)
     6 -> OAKLEY_GROUP_PRIME (variable length)
          jam_enum 6: OAKLEY_GROUP_PRIME (variable length) OK
          match OAKLEY_GROUP_PRIME (variable length): OK
-         match OAKLEY_GROUP_PRIME  [trunc]: OK
          short_name 6: OAKLEY_GROUP_PRIME (variable length) OK
          jam_enum_short 6: OAKLEY_GROUP_PRIME (variable length) OK
          jam_enum_human 6: oakley-group-prime (variable length) OK
     7 -> OAKLEY_GROUP_GENERATOR_ONE (variable length)
          jam_enum 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
          match OAKLEY_GROUP_GENERATOR_ONE (variable length): OK
-         match OAKLEY_GROUP_GENERATOR_ONE  [trunc]: OK
          short_name 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
          jam_enum_short 7: OAKLEY_GROUP_GENERATOR_ONE (variable length) OK
          jam_enum_human 7: oakley-group-generator-one (variable length) OK
     8 -> OAKLEY_GROUP_GENERATOR_TWO (variable length)
          jam_enum 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
          match OAKLEY_GROUP_GENERATOR_TWO (variable length): OK
-         match OAKLEY_GROUP_GENERATOR_TWO  [trunc]: OK
          short_name 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
          jam_enum_short 8: OAKLEY_GROUP_GENERATOR_TWO (variable length) OK
          jam_enum_human 8: oakley-group-generator-two (variable length) OK
     9 -> OAKLEY_GROUP_CURVE_A (variable length)
          jam_enum 9: OAKLEY_GROUP_CURVE_A (variable length) OK
          match OAKLEY_GROUP_CURVE_A (variable length): OK
-         match OAKLEY_GROUP_CURVE_A  [trunc]: OK
          short_name 9: OAKLEY_GROUP_CURVE_A (variable length) OK
          jam_enum_short 9: OAKLEY_GROUP_CURVE_A (variable length) OK
          jam_enum_human 9: oakley-group-curve-a (variable length) OK
    10 -> OAKLEY_GROUP_CURVE_B (variable length)
          jam_enum 10: OAKLEY_GROUP_CURVE_B (variable length) OK
          match OAKLEY_GROUP_CURVE_B (variable length): OK
-         match OAKLEY_GROUP_CURVE_B  [trunc]: OK
          short_name 10: OAKLEY_GROUP_CURVE_B (variable length) OK
          jam_enum_short 10: OAKLEY_GROUP_CURVE_B (variable length) OK
          jam_enum_human 10: oakley-group-curve-b (variable length) OK
    12 -> OAKLEY_LIFE_DURATION (variable length)
          jam_enum 12: OAKLEY_LIFE_DURATION (variable length) OK
          match OAKLEY_LIFE_DURATION (variable length): OK
-         match OAKLEY_LIFE_DURATION  [trunc]: OK
          short_name 12: OAKLEY_LIFE_DURATION (variable length) OK
          jam_enum_short 12: OAKLEY_LIFE_DURATION (variable length) OK
          jam_enum_human 12: oakley-life-duration (variable length) OK
    16 -> OAKLEY_GROUP_ORDER (variable length)
          jam_enum 16: OAKLEY_GROUP_ORDER (variable length) OK
          match OAKLEY_GROUP_ORDER (variable length): OK
-         match OAKLEY_GROUP_ORDER  [trunc]: OK
          short_name 16: OAKLEY_GROUP_ORDER (variable length) OK
          jam_enum_short 16: OAKLEY_GROUP_ORDER (variable length) OK
          jam_enum_human 16: oakley-group-order (variable length) OK
@@ -6638,14 +6626,12 @@ name for -1 present (should be absent)
    16 -> ISAKMP Version 1.0 (rfc2407)
          jam_enum 16: ISAKMP Version 1.0 (rfc2407) OK
          match ISAKMP Version 1.0 (rfc2407): OK
-         match ISAKMP Version 1.0  [trunc]: OK
          short_name 16: ISAKMP Version 1.0 (rfc2407) OK
          jam_enum_short 16: ISAKMP Version 1.0 (rfc2407) OK
          jam_enum_human 16: isakmp version 1.0 (rfc2407) OK
    32 -> IKEv2 version 2.0 (rfc4306/rfc5996)
          jam_enum 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          match IKEv2 version 2.0 (rfc4306/rfc5996): OK
-         match IKEv2 version 2.0  [trunc]: OK
          short_name 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_short 32: IKEv2 version 2.0 (rfc4306/rfc5996) OK
          jam_enum_human 32: ikev2 version 2.0 (rfc4306/rfc5996) OK

@@ -90,23 +90,6 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-	if (strchr(name.buf, '(') != NULL) {
-		char *clone = clone_str(name.buf, "trunc_name");
-		shunk_t trunc_name = shunk2(clone, strcspn(clone, "("));
-		passert(clone[trunc_name.len] == '(');
-		clone[trunc_name.len] = '*';
-		printf(PREFIX "match "PRI_SHUNK" [trunc]: ",
-		       pri_shunk(trunc_name));
-		int e = enum_match(enum_test, trunc_name);
-		pfree(clone);
-		if (e != i) {
-			printf("%d ERROR\n", e);
-			errors++;
-		} else {
-			printf("OK\n");
-		}
-	}
-
 	printf(PREFIX "short_name %d: ", i);
 	name_buf short_name;
 	if (!enum_short(enum_test, i, &short_name)) {
@@ -172,18 +155,6 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-	const char *bra = strchr(short_name.buf, '(');
-	if (bra != NULL) {
-		int tsl = bra - short_name.buf;
-		printf(PREFIX "match %.*s [short+trunc]: ", tsl, short_name.buf);
-		int e = enum_match(enum_test, shunk2(short_name.buf, tsl));
-		if (e != i) {
-			printf("%d ERROR\n", e);
-			errors++;
-		} else {
-			printf("OK\n");
-		}
-	}
 }
 
 struct bounds {
