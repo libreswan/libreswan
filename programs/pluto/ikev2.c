@@ -1391,7 +1391,26 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
 	v2_msgid_finish(ike, md, HERE);
 
-	bool established_before = IS_IKE_SA_ESTABLISHED(&ike->sa);
+	/*
+	 * XXX:
+	 *
+	 * The IKE SA "establishes" midway through processing the
+	 * IKE_AUTH exchange.  That is, after the IKE SA has been
+	 * authenticated and before any Child SA payloads are
+	 * processed.  Hence, this isn't the place to handle a
+	 * JUST-ESTABLISHED transition.
+	 *
+	 * Specifically, NATed addresses need to be updated BEFORE
+	 * Child SA payloads can be processed and Child SA kernel
+	 * state/policy installed (if it doesn't happen, they use the
+	 * wrong value).
+	 *
+	 * Suspect code trying to handle non-MOBIKE NAT (where packet
+	 * from new address triggers address change) will need to
+	 * update addresses BEFORE processing the triggering packet -
+	 * again that packet could be for a new Child SA and, hence,
+	 * needs up-to-date address information.
+	 */
 
 	change_v2_state(&ike->sa);
 	v2_msgid_schedule_next_initiator(ike);
@@ -1488,9 +1507,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		transition->llog_success(ike, md);
 	}
 
-	if (just_established) {
-		release_whack(ike->sa.logger, HERE);
-	} else if (transition->flags.release_whack) {
+	if (transition->flags.release_whack) {
 		release_whack(ike->sa.logger, HERE);
 	}
 }
