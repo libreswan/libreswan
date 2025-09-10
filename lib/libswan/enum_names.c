@@ -249,6 +249,8 @@ int enum_match(enum_names *ed, shunk_t string)
 	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
 		passert(p->en_last - p->en_first + 1 == p->en_checklen);
 		prefix = (p->en_prefix == NULL ? prefix : p->en_prefix);
+		size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
+
 		for (unsigned long en = p->en_first; en <= p->en_last; en++) {
 			const char *name = p->en_names[en - p->en_first];
 
@@ -259,18 +261,9 @@ int enum_match(enum_names *ed, shunk_t string)
 			passert(en <= INT_MAX);
 
 			/*
-			 * try matching all four variants of name:
-			 * with and without prefix en->en_prefix and
-			 * with and without suffix '(...)'
+			 * Try matching with and without prefix.
 			 */
 			size_t name_len = strlen(name);
-			size_t prefix_len = (prefix == NULL ? 0 : strlen(prefix));
-
-			/* suffix must not and will not overlap prefix */
-			const char *suffix = strchr(name + prefix_len, '(');
-
-			size_t suffix_len = (suffix != NULL && name[name_len - 1] == ')' ?
-					     &name[name_len] - suffix : 0);
 
 #			define try(guard, f, b) ( \
 				(guard) && \
@@ -278,12 +271,10 @@ int enum_match(enum_names *ed, shunk_t string)
 				strncaseeq(name + (f), string.ptr, string.len))
 
 			if (try(true, 0, 0) ||
-			    try(suffix_len > 0, 0, suffix_len) ||
-			    try(prefix_len > 0, prefix_len, 0) ||
-			    try(prefix_len > 0 && suffix_len > 0, prefix_len, suffix_len))
-			{
+			    try(prefix_len > 0, prefix_len, 0)) {
 				return en;
 			}
+
 #			undef try
 		}
 	}
