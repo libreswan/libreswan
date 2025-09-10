@@ -81,7 +81,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s: ", name.buf);
-		int e = enum_match(enum_test, shunk1(name.buf));
+		int e = enum_byname(enum_test, shunk1(name.buf));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -140,7 +140,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s [short]: ", short_name.buf);
-		int e = enum_match(enum_test, shunk1(short_name.buf));
+		int e = enum_byname(enum_test, shunk1(short_name.buf));
 		int short_match = (clash == NULL ? -1 : clash->short_match);
 		if (short_match >= 0 && e == short_match) {
 			printf("OK (clashed with %d)\n", short_match);

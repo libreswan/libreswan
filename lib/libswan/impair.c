@@ -574,7 +574,7 @@ enum impair_status parse_impair(const char *optarg,
 	}
 
 	if (impairment->how_enum_names != NULL) {
-		long e = enum_match(impairment->how_enum_names, how);
+		long e = enum_byname(impairment->how_enum_names, how);
 		if (e >= 0) {
 			*whack_impair = (struct whack_impair) {
 				.what = ci,

@@ -659,7 +659,7 @@ static unsigned extract_enum_name(const char *leftright,
 		return unset;
 	}
 
-	int match = enum_match(names, shunk1(value));
+	int match = enum_byname(names, shunk1(value));
 	if (match < 0) {
 		/* include allowed names? */
 		(*d) = diag("%s%s=%s invalid, '%s' unrecognized",

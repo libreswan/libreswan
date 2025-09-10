@@ -243,7 +243,7 @@ size_t jam_enum_human(struct jambuf *buf, enum_names *en, unsigned long val)
  * int so there is some potential for overflow.
  */
 
-int enum_match(enum_names *ed, shunk_t string)
+int enum_byname(enum_names *ed, shunk_t string)
 {
 	const char *prefix = NULL;
 	for (enum_names *p = ed; p != NULL; p = p->en_next_range) {
