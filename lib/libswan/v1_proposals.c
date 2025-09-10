@@ -240,8 +240,18 @@ static bool merge_default_proposals(struct proposal_parser *parser,
 static bool parse_ikev1_proposal(struct proposal_parser *parser,
 				 struct proposals *proposals,
 				 struct proposal *scratch_proposal,
-				 struct proposal_tokenizer *tokens)
+				 shunk_t proposal)
 {
+	const struct logger *logger = parser->policy->logger;
+
+	if (proposal.len > 0 &&
+	    memchr(proposal.ptr, '+', proposal.len) != NULL) {
+		proposal_error(parser, "IKEv1 does not support multiple transform algorithms separated by '+'");
+		return false;
+	}
+
+	struct proposal_tokenizer tokens[1] = { proposal_first_token(proposal, "-;"), };
+
 	if (parser->protocol->encrypt &&
 	    tokens->curr.token.ptr != NULL &&
 	    tokens->prev.delim != ';'/*not ;KEM*/) {
@@ -328,6 +338,15 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 		return false;
 	}
 
+	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
+	     transform < PROPOSAL_TRANSFORM_ROOF; transform++) {
+		struct transform_algorithms *algorithms =
+			transform_algorithms(scratch_proposal, transform);
+		if (PBAD(logger, algorithms != NULL && algorithms->len > 1)) {
+			return false;
+		}
+	}
+
 	/*
 	 * Merge is a misnomer.
 	 *
@@ -358,11 +377,10 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 	shunk_t prop_ptr = alg_str;
 	do {
 		/* find the next proposal */
-		shunk_t prop = shunk_token(&prop_ptr, NULL, ",");
+		shunk_t proposal = shunk_token(&prop_ptr, NULL, ",");
 		/* parse it */
-		struct proposal_tokenizer tokens = proposal_first_token(prop, "-;");
 		struct proposal *scratch_proposal = alloc_proposal(parser);
-		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, &tokens)) {
+		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, proposal)) {
 			free_proposal(&scratch_proposal);
 			passert(parser->diag != NULL);
 			return false;
