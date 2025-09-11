@@ -34,7 +34,7 @@ struct xfrm_sec_ctx {
 	__u8	ctx_alg;
 	__u16	ctx_len;
 	__u32	ctx_sid;
-	char	ctx_str[] __counted_by(ctx_len);
+	char	ctx_str[] /*__counted_by(ctx_len)*/;
 };
 
 /* Security Context Domains of Interpretation */
