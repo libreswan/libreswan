@@ -1285,8 +1285,11 @@ bool parse_proposal(struct proposal_parser *parser,
 
 	/* end of token stream? */
 	if (tokens.curr.token.ptr != NULL) {
-		proposal_error(parser, "%s proposal contains unexpected '"PRI_SHUNK"'",
+		/* just in-case DELIM is NUL */
+		char prev_delim[2] = { tokens.prev.delim, '\0', };
+		proposal_error(parser, "%s proposal contains unexpected trailing '%s"PRI_SHUNK"'",
 			       parser->protocol->name,
+			       prev_delim,
 			       pri_shunk(tokens.curr.token));
 		passert(parser->diag != NULL);
 		return false;
