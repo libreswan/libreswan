@@ -326,17 +326,58 @@ void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
  * The probe bool is used to signify we are answering a MOBIKE
  * probe request (basically a informational without UPDATE_ADDRESS
  */
+
 void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike,
 					  const struct msg_digest *md)
 {
-	/* caller must ensure we are not behind NAT */
+	struct logger *logger = ike->sa.logger;
+
+	/*
+	 * Only message responder.
+	 */
+	if (PBAD(logger, v2_msg_role(md) != MESSAGE_REQUEST)) {
+		return;
+	}
+
+	if (ike->sa.hidden_variables.st_nated_host) {
+		ldbg(logger, "NAT: skip update, IKE SA responder is behind NAT");
+	}
+
+	/* is there something to change? */
+	if (endpoint_eq_endpoint(ike->sa.st_remote_endpoint, md->sender) &&
+	    ike->sa.st_iface_endpoint == md->iface) {
+		ldbg(logger, "NAT: skip update, nothing changed");
+		return;
+	}
+
+	/* is the change allowed? */
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+		ldbg(logger, "NAT: can update, IKE SA responder hasn't yet established");
+	} else if (IS_IKE_SA_ESTABLISHED(&ike->sa) &&
+		   ike->sa.st_v2_mobike.enabled &&
+		   md->pd[PD_v2N_UPDATE_SA_ADDRESSES] != NULL) {
+		ldbg(logger, "NAT: can update, established MOBIKE responder");
+	} else {
+		/*
+		 * See above; would need to also update all SAs like
+		 * MOBIKE.
+		 */
+		llog_pexpect(logger, HERE, "NAT: can not update, established non-MOBIKE IKE SA isn't implemented");
+		return;
+	}
+
+	endpoint_buf osb, odb, nsb, ndb;
+	llog(RC_LOG, logger, "updating IKE SA endpoint from %s:%s->%s to %s:%s->%s",
+	     /*old*/
+	     ike->sa.st_iface_endpoint->ip_dev->real_device_name,
+	     str_endpoint_sensitive(&ike->sa.st_iface_endpoint->local_endpoint, &osb),
+	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &odb),
+	     /*new*/
+	     md->iface->ip_dev->real_device_name,
+	     str_endpoint_sensitive(&md->iface->local_endpoint, &nsb),
+	     str_endpoint_sensitive(&md->sender, &ndb));
+
 	ike->sa.st_remote_endpoint = md->sender;
-	endpoint_buf eb1, eb2;
-	ldbg(ike->sa.logger, PRI_SO" updating local interface from %s to %s using md->iface "PRI_WHERE,
-	     pri_so(ike->sa.st_serialno),
-	     (ike->sa.st_iface_endpoint != NULL ? str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb1) : "<none>"),
-	     str_endpoint(&md->iface->local_endpoint, &eb2),
-	     pri_where(HERE));
 	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
 	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 }
