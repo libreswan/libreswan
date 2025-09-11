@@ -80,36 +80,8 @@ static void test_enum(enum_names *enum_test, int i,
 	}
 
 	{
-		printf(PREFIX "search %s: ", name.buf);
-		int e = enum_search(enum_test, name.buf);
-		if (e != i) {
-			printf("%d ERROR\n", e);
-			errors++;
-		} else {
-			printf("OK\n");
-		}
-	}
-
-	{
 		printf(PREFIX "match %s: ", name.buf);
-		int e = enum_match(enum_test, shunk1(name.buf));
-		if (e != i) {
-			printf("%d ERROR\n", e);
-			errors++;
-		} else {
-			printf("OK\n");
-		}
-	}
-
-	if (strchr(name.buf, '(') != NULL) {
-		char *clone = clone_str(name.buf, "trunc_name");
-		shunk_t trunc_name = shunk2(clone, strcspn(clone, "("));
-		passert(clone[trunc_name.len] == '(');
-		clone[trunc_name.len] = '*';
-		printf(PREFIX "match "PRI_SHUNK" [trunc]: ",
-		       pri_shunk(trunc_name));
-		int e = enum_match(enum_test, trunc_name);
-		pfree(clone);
+		int e = enum_byname(enum_test, shunk1(name.buf));
 		if (e != i) {
 			printf("%d ERROR\n", e);
 			errors++;
@@ -168,7 +140,7 @@ static void test_enum(enum_names *enum_test, int i,
 
 	{
 		printf(PREFIX "match %s [short]: ", short_name.buf);
-		int e = enum_match(enum_test, shunk1(short_name.buf));
+		int e = enum_byname(enum_test, shunk1(short_name.buf));
 		int short_match = (clash == NULL ? -1 : clash->short_match);
 		if (short_match >= 0 && e == short_match) {
 			printf("OK (clashed with %d)\n", short_match);
@@ -183,18 +155,6 @@ static void test_enum(enum_names *enum_test, int i,
 		}
 	}
 
-	const char *bra = strchr(short_name.buf, '(');
-	if (bra != NULL) {
-		int tsl = bra - short_name.buf;
-		printf(PREFIX "match %.*s [short+trunc]: ", tsl, short_name.buf);
-		int e = enum_match(enum_test, shunk2(short_name.buf, tsl));
-		if (e != i) {
-			printf("%d ERROR\n", e);
-			errors++;
-		} else {
-			printf("OK\n");
-		}
-	}
 }
 
 struct bounds {

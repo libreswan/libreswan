@@ -162,7 +162,7 @@ bool ike_alg_enum_matched(const struct ike_alg_type *type, shunk_t name)
 	passert(type != NULL);
 	for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR; key < IKE_ALG_KEY_ROOF; key++) {
 		if (type->enum_names[key] != NULL &&
-		    enum_match(type->enum_names[key], name) >= 0) {
+		    enum_byname(type->enum_names[key], name) >= 0) {
 			return true;
 		}
 	}

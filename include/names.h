@@ -124,18 +124,11 @@ bool sparse_short(const struct sparse_names *sd, unsigned long val, name_buf *b)
  */
 extern long next_enum(const struct enum_names *en, long last);
 
-extern int enum_search(const struct enum_names *ed, const char *string);
-
 /*
  * Search ED for an enum matching STRING.  Return -1 if no match is
  * found.
- *
- * Unlike enum_search() this compares strings both with and without
- * any prefix or suffix.  For instance, given the enum_name entry
- * "ESP_BLOWFISH(OBSOLETE)" with prefix "ESP_", any of
- * "esp_blowfish(obsolete)", "esp_blowfish" and "blowfish" will match.
  */
-extern int enum_match(const struct enum_names *ed, shunk_t string);
+extern int enum_byname(const struct enum_names *ed, shunk_t string);
 
 /*
  * primitives:
