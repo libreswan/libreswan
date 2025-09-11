@@ -35,11 +35,17 @@
 #include "passert.h"
 #include "state.h"
 #include "connections.h"
-
+#include "visit_connection.h"
 #include "ikev2_redirect.h"
+
+static connection_state_visitor whack_active_redirect_state;
 
 void jam_whack_redirect(struct jambuf *buf, const struct whack_message *wm)
 {
+	if (wm->name != NULL) {
+		jam_string(buf, " name=");
+		jam_string(buf, wm->name);
+	}
 	if (wm->redirect_to != NULL) {
 		jam_string(buf, " redirect-to=");
 		jam_string(buf, wm->redirect_to);
@@ -47,6 +53,36 @@ void jam_whack_redirect(struct jambuf *buf, const struct whack_message *wm)
 	if (wm->global_redirect != 0) {
 		jam_string(buf, " redirect_to=");
 		jam_sparse_long(buf, &yna_option_names, wm->global_redirect);
+	}
+}
+
+struct connection_state_visitor_context {
+	struct redirect_dests active_dests;
+	unsigned count;
+};
+
+void whack_active_redirect_state(struct connection *c UNUSED,
+				 struct ike_sa **ike_sa,
+				 struct child_sa **child UNUSED,
+				 enum connection_visit_kind visit_kind,
+				 struct connection_state_visitor_context *context)
+{
+	switch (visit_kind) {
+	case FINISH_CONNECTION_PRINCIPAL_IKE_SA:
+	{
+		struct ike_sa *ike = (*ike_sa);
+		/* cycle through the list of redirects */
+		shunk_t active_dest = next_redirect_dest(&context->active_dests);
+		/* not whack; there could be thousands? */
+		llog(LOG_STREAM/*not-whack*/, ike->sa.logger,
+		     "redirecting to: "PRI_SHUNK, pri_shunk(active_dest));
+		pfreeany(ike->sa.st_active_redirect_gw);
+		ike->sa.st_active_redirect_gw = clone_hunk_as_string(active_dest, "redirect");
+		v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
+		context->count++;
+	}
+	default:
+		break;
 	}
 }
 
@@ -60,39 +96,20 @@ void whack_active_redirect(const struct whack_message *wm, struct show *s)
 	 * or a global op?  Checking .whack_add.
 	 */
 	PASSERT(logger, wm->redirect_to != NULL);
-	struct redirect_dests active_dests = {0};
-	if (!set_redirect_dests(wm->redirect_to, &active_dests)) {
+	struct connection_state_visitor_context context = {0};
+	if (!set_redirect_dests(wm->redirect_to, &context.active_dests)) {
 		show(s, "redirect-to='%s' is empty", wm->redirect_to);
 		return;
 	}
 
-	int cnt = 0;
-
-	struct state_filter sf = {
-		.search = {
-			.order = NEW2OLD,
-			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
-			.where = HERE,
-		},
-	};
-
-	while (next_state(&sf)) {
-		struct state *st = sf.st;
-		if (IS_IKE_SA_ESTABLISHED(st) &&
-		    (wm->name == NULL || streq(wm->name, st->st_connection->base_name))) {
-			struct ike_sa *ike = pexpect_ike_sa(st);
-			/* cycle through the list of redirects */
-			shunk_t active_dest = next_redirect_dest(&active_dests);
-			/* not whack; there could be thousands? */
-			llog(LOG_STREAM/*not-whack*/, logger, "redirecting to: "PRI_SHUNK, pri_shunk(active_dest));
-			pfreeany(ike->sa.st_active_redirect_gw);
-			ike->sa.st_active_redirect_gw = clone_hunk_as_string(active_dest, "redirect");
-			cnt++;
-			v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
-		}
-	}
-
-	if (cnt == 0) {
+	whack_connection_states(wm, s, /*order*/OLD2NEW,
+				whack_active_redirect_state, &context,
+				(struct each) {
+					.future_tense = "redirecting",
+					.past_tense = "redirected",
+					.log_unknown_name = false,
+				});
+	if (context.count == 0) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "no active tunnels found");
 			if (wm->name != NULL) {
@@ -101,13 +118,13 @@ void whack_active_redirect(const struct whack_message *wm, struct show *s)
 		}
 	} else {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "redirections sent for %d tunnels", cnt);
+			jam(buf, "redirections sent for %d tunnels", context.count);
 			if (wm->name != NULL) {
 				jam(buf, " of connection \"%s\"", wm->name);
 			}
 		}
 	}
-	free_redirect_dests(&active_dests);
+	free_redirect_dests(&context.active_dests);
 }
 
 void whack_global_redirect(const struct whack_message *wm, struct show *s)
