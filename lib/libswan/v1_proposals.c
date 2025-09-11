@@ -244,9 +244,18 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 {
 	const struct logger *logger = parser->policy->logger;
 
-	if (proposal.len > 0 &&
-	    memchr(proposal.ptr, '+', proposal.len) != NULL) {
-		proposal_error(parser, "IKEv1 does not support multiple transform algorithms separated by '+'");
+	/*
+	 * Catch the obvious case of a proposal containing '+' early.
+	 * Vis:
+	 *
+	 *   ike=aes-sha1+sha2
+	 *
+	 * Complaining about '+' is hopefully less confusing then,
+	 * later, complaining about duplicate transform types or bad
+	 * lookups.
+	 */
+	if (proposal.len > 0 && memchr(proposal.ptr, '+', proposal.len) != NULL) {
+		proposal_error(parser, "'+' invalid, IKEv1 proposals do not support multiple transforms of the same type");
 		return false;
 	}
 
