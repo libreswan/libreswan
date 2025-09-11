@@ -201,8 +201,6 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 				 struct proposal *scratch_proposal,
 				 shunk_t proposal)
 {
-	const struct logger *logger = parser->policy->logger;
-
 	/*
 	 * Catch the obvious case of a proposal containing '+' early.
 	 * Vis:
@@ -212,6 +210,12 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	 * Complaining about '+' is hopefully less confusing then,
 	 * later, complaining about duplicate transform types or bad
 	 * lookups.
+	 *
+	 * Note that this doesn't catch all cases.  For instance:
+	 *
+	 *   ike=aes-prf=sha1;prf=sha2
+	 *
+	 * That's handled further down.
 	 */
 	if (proposal.len > 0 && memchr(proposal.ptr, '+', proposal.len) != NULL) {
 		proposal_error(parser, "'+' invalid, IKEv1 proposals do not support multiple transforms of the same type");
@@ -222,11 +226,21 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 		return false;
 	}
 
+	/*
+	 * Catch:
+	 *
+	 *   ike=aes-prf=sha1;prf=sha2
+	 *
+	 * Here, it's assumed that the only way to get multiple
+	 * transforms of the same type is to use '='.  Don't reject
+	 * '=' outright though as correct use of '=' is reasonable.
+	 */
 	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
 	     transform < PROPOSAL_TRANSFORM_ROOF; transform++) {
 		struct transform_algorithms *algorithms =
 			transform_algorithms(scratch_proposal, transform);
-		if (PBAD(logger, algorithms != NULL && algorithms->len > 1)) {
+		if (algorithms != NULL && algorithms->len > 1) {
+			proposal_error(parser, "IKEv1 does not support multiple transforms of the same type ('=' invalid)");
 			return false;
 		}
 	}
