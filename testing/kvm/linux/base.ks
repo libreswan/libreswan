@@ -33,7 +33,7 @@ bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,11520
 # MBR?); required machine dependent partitions; add /; don't add swap!
 
 clearpart --all --initlabel
-reqpart
+reqpart --add-boot
 part / --asprimary --grow
 # part swap --size 1024
 
