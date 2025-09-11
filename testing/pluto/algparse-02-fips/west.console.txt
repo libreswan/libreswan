@@ -441,7 +441,7 @@ algparse -fips -v1 'ike=3des-sha1;dh21' (expect SUCCESS)
 algparse -fips -v1 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -fips -v1 'ike=3des+aes' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes;none' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -fips -v1 'ike=id2' (expect ERROR)
@@ -459,19 +459,19 @@ algparse -fips -v1 'ike=aes-sha1_96-sha2-ecp_521' (expect ERROR)
 algparse -fips -v1 'ike=aes-sha1_96-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -fips -v1 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes+aes128+aes256' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes128+aes+aes256' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes128+aes256+aes' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -fips -v1 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192' (expect SUCCESS)
@@ -506,7 +506,7 @@ algparse -fips -v1 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 algparse -fips -v1 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -fips -v1 'ike=aes+aes_gcm' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=,' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=aes,' (expect ERROR)
@@ -518,27 +518,27 @@ algparse -fips -v1 'ike=,aes' (expect ERROR)
 algparse -fips -v1 'ike=-' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=+' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=aes-' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) '' is not recognized
 algparse -fips -v1 'ike=aes+' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes;' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) '' is not recognized
 algparse -fips -v1 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=+aes' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=;aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=aes+-' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes+;' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes++' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes_gcm-sha2;modp2048-modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 west #
@@ -947,7 +947,7 @@ algparse -fips -v1 -pfs 'ike=3des-sha1;dh21' (expect SUCCESS)
 algparse -fips -v1 -pfs 'ike=3des-sha1-ecp_521' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1-DH21
 algparse -fips -v1 -pfs 'ike=3des+aes' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes;none' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=id2' (expect ERROR)
@@ -965,19 +965,19 @@ algparse -fips -v1 -pfs 'ike=aes-sha1_96-sha2-ecp_521' (expect ERROR)
 algparse -fips -v1 -pfs 'ike=aes-sha1_96-sha2;ecp_521' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) 'sha1_96' is not recognized
 algparse -fips -v1 -pfs 'ike=aes+aes-sha1+sha1-modp8192+modp8192' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=3des+aes+aes-sha2+sha1+sha1-modp4096+modp8192+modp8192' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes+3des+aes-sha1+sha2+sha1-modp8192+modp4096+modp8192' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes+aes+3des-sha1+sha1+sha2-modp8192+modp8192+modp4096' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes+aes128+aes256' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes128+aes+aes256' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes128+aes256+aes' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-MODP8192
 algparse -fips -v1 -pfs 'ike=aes-sha1-modp8192,aes-sha2-modp8192,aes-sha1-modp8192' (expect SUCCESS)
@@ -1012,7 +1012,7 @@ algparse -fips -v1 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 algparse -fips -v1 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 algparse -fips -v1 -pfs 'ike=aes+aes_gcm' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=,' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=aes,' (expect ERROR)
@@ -1024,27 +1024,27 @@ algparse -fips -v1 -pfs 'ike=,aes' (expect ERROR)
 algparse -fips -v1 -pfs 'ike=-' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=+' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=aes-' (expect ERROR)
 	ERROR: IKE Pseudorandom Function (KDF) '' is not recognized
 algparse -fips -v1 -pfs 'ike=aes+' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes;' (expect ERROR)
 	ERROR: IKE Key Exchange Method (DH) '' is not recognized
 algparse -fips -v1 -pfs 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=+aes' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=;aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=aes+-' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes+;' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes++' (expect ERROR)
-	ERROR: IKEv1 does not support multiple transform algorithms separated by '+'
+	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes_gcm-sha2;modp2048-modp2048' (expect ERROR)
 	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
 west #
