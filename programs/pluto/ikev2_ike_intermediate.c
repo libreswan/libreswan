@@ -568,6 +568,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(logger, null_child == NULL);
 
+	natify_ikev2_ike_responder_endpoints(ike, md);
+
 	/*
 	 * All systems are go.
 	 *
