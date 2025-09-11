@@ -28,7 +28,9 @@ struct show;
 enum chrono;
 
 struct each {
+	/* "terminating", "deleting", ... */
 	const char *future_tense;
+	/* "terminated", "deleted", ... */
 	const char *past_tense;
 	bool log_unknown_name;
 };
@@ -219,5 +221,12 @@ void visit_connection_states(struct connection *c,
 			     connection_state_visitor *state_visitor,
 			     struct connection_state_visitor_context *context,
 			     where_t where);
+
+void whack_connection_states(const struct whack_message *wm,
+			     struct show *s,
+			     enum chrono order,
+			     connection_state_visitor *visitor,
+			     struct connection_state_visitor_context *context,
+			     struct each each);
 
 #endif

@@ -31,31 +31,48 @@
 #include "ikev1.h"		/* for send_n_log_v1_delete() */
 #include "ikev2_delete.h"
 
+struct connection_visitor_param;
+
+typedef unsigned (connection_node_visitor)
+	(struct connection *c,
+	 const struct connection_visitor_param *param);
+
 struct connection_visitor_param {
 	const struct whack_message *wm;
 	struct show *s;
 	enum chrono order;
-	connection_visitor *connection_visitor;
-	struct connection_visitor_context *visitor_context;
 	const struct each *each;
+	/* for tree walker */
+	struct {
+		connection_node_visitor *visitor;
+	} root;
+	/* for tree walker */
+	struct {
+		connection_node_visitor *visitor;
+	} tree;
+	/* for visit connection */
+	struct {
+		connection_visitor *visitor;
+		struct connection_visitor_context *context;
+	} node;
+	/* for vist connection state */
+	struct connection_state_visitor_param {
+		connection_state_visitor *visitor;
+		struct connection_state_visitor_context *context;
+	} state;
 };
 
-typedef unsigned (connection_node_visitor)
-(struct connection *c,
- const struct connection_visitor_param *param);
-
 static connection_node_visitor visit_connection_node;
+static connection_node_visitor visit_connection_state;
 static connection_node_visitor visit_connection_tree;
 
 bool visit_connection_principal_child(struct connection *c,
 				      struct ike_sa **ike,
-				      connection_state_visitor *state_visitor,
-				      struct connection_state_visitor_context *context,
+				      struct connection_state_visitor_param *param,
 				      struct verbose verbose);
 
 static struct ike_sa *nudge_connection_established_parents(struct connection *c,
-							   connection_state_visitor *state_visitor,
-							   struct connection_state_visitor_context *context,
+							   struct connection_state_visitor_param *param,
 							   struct verbose verbose);
 
 /*
@@ -66,8 +83,7 @@ static struct ike_sa *nudge_connection_established_parents(struct connection *c,
  * ugh).  WHACK_CONNECTIONS() will then visit it any any instances.
  */
 
-static bool whack_connection_by_base_name(connection_node_visitor *connection_node_visitor,
-					  const struct connection_visitor_param *param)
+static bool whack_connection_root_by_base_name(const struct connection_visitor_param *param)
 {
 #if 0
 	/*
@@ -89,14 +105,13 @@ static bool whack_connection_by_base_name(connection_node_visitor *connection_no
 		},
 	};
 	if (next_connection(&by_base_name)) {
-		connection_node_visitor(by_base_name.c, param);
+		param->root.visitor(by_base_name.c, param);
 		return true; /* found something, stop */
 	}
 	return false; /* keep looking */
 }
 
-static bool whack_connection_by_name(connection_node_visitor *connection_node_visitor,
-				     const struct connection_visitor_param *param)
+static bool whack_connection_root_by_name(const struct connection_visitor_param *param)
 {
 	/*
 	 * Fully qualified names, such as '"conn#1.2.3.0/24"[1]',
@@ -117,7 +132,7 @@ static bool whack_connection_by_name(connection_node_visitor *connection_node_vi
 		},
 	};
 	if (next_connection(&by_name)) {
-		connection_node_visitor(by_name.c, param);
+		param->root.visitor(by_name.c, param);
 		return true; /* only one, stop */
 	}
 	return false; /* keep looking */
@@ -139,8 +154,7 @@ static bool whack_connection_by_name(connection_node_visitor *connection_node_vi
  * connection tree, it will in turn call connection_visitor().
  */
 
-static bool whack_connections_by_alias(connection_node_visitor *connection_node_visitor,
-				       const struct connection_visitor_param *param)
+static bool whack_connection_roots_by_alias(const struct connection_visitor_param *param)
 {
 #if 0
 	/*
@@ -189,7 +203,7 @@ static bool whack_connections_by_alias(connection_node_visitor *connection_node_
 		}
 		unsigned nr = 0;
 		do {
-			nr += connection_node_visitor(by_alias_root.c, param);
+			nr += param->root.visitor(by_alias_root.c, param);
 		} while (all_connections(&by_alias_root));
 		/* footer */
 		if (param->each->past_tense != NULL) {
@@ -214,8 +228,7 @@ static bool whack_connections_by_alias(connection_node_visitor *connection_node_
  * the search was successful.
  */
 
-static bool whack_connection_by_serialno(connection_node_visitor *connection_node_visitor,
-					 const struct connection_visitor_param *param)
+static bool whack_connection_root_by_serialno(const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
 	if (param->wm->name[0] == '$' ||
@@ -237,7 +250,7 @@ static bool whack_connection_by_serialno(connection_node_visitor *connection_nod
 		{
 			struct connection *c = connection_by_serialno(serialno);
 			if (c != NULL) {
-				connection_node_visitor(c, param);
+				param->root.visitor(c, param);
 				return true; /* found something, stop */
 			}
 			break;
@@ -247,7 +260,7 @@ static bool whack_connection_by_serialno(connection_node_visitor *connection_nod
 			struct state *st = state_by_serialno(serialno);
 			if (st != NULL) {
 				struct connection *c = st->st_connection;
-				connection_node_visitor(c, param);
+				param->root.visitor(c, param);
 				return true; /* found something, stop */
 			}
 			break;
@@ -266,10 +279,9 @@ static bool whack_connection_by_serialno(connection_node_visitor *connection_nod
 static unsigned visit_connection_node(struct connection *c,
 				      const struct connection_visitor_param *param)
 {
-	return param->connection_visitor(param->wm,
-					 param->s,
-					 c,
-					 param->visitor_context);
+	return param->node.visitor(param->wm, param->s,
+				   c,
+				   param->node.context);
 }
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m,
@@ -319,7 +331,7 @@ static unsigned visit_connection_tree(struct connection *c,
 	/* prefix tree walk */
 	if (param->order == OLD2NEW) {
 		/* abuse bool */
-		nr += visit_connection_node(c, param);
+		nr += param->tree.visitor(c, param);
 	}
 
 	struct connection_filter instances = {
@@ -338,7 +350,7 @@ static unsigned visit_connection_tree(struct connection *c,
 	/* postfix tree walk */
 	if (param->order == NEW2OLD) {
 		/* abuse bool */
-		nr += visit_connection_node(c, param);
+		nr += param->tree.visitor(c, param);
 	}
 
 	/* kill addref() and caller's pointer */
@@ -346,8 +358,7 @@ static unsigned visit_connection_tree(struct connection *c,
 	return nr;
 }
 
-static void visit_connection_roots(connection_node_visitor *node_visitor,
-				   const struct connection_visitor_param *param)
+static void visit_connection_roots(const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
 
@@ -355,11 +366,11 @@ static void visit_connection_roots(connection_node_visitor *node_visitor,
 	 * Try by base_name, name, alias, then serial no.
 	 */
 
-	if (whack_connection_by_base_name(node_visitor, param)) {
+	if (whack_connection_root_by_base_name(param)) {
 		return;
 	}
 
-	if (whack_connection_by_name(node_visitor, param)) {
+	if (whack_connection_root_by_name(param)) {
 		return;
 	}
 
@@ -374,11 +385,11 @@ static void visit_connection_roots(connection_node_visitor *node_visitor,
 	 * This way deleting an alias connection tree can't corrupt
 	 * the search list.
 	 */
-	if (whack_connections_by_alias(node_visitor, param)) {
+	if (whack_connection_roots_by_alias(param)) {
 		return;
 	}
 
-	if (whack_connection_by_serialno(node_visitor, param)) {
+	if (whack_connection_root_by_serialno(param)) {
 		return;
 	}
 
@@ -408,7 +419,7 @@ void whack_connection_roots(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
 			    connection_visitor *connection_visitor,
-			    struct connection_visitor_context *visitor_context,
+			    struct connection_visitor_context *connection_context,
 			    struct each each)
 {
 	/*
@@ -426,18 +437,19 @@ void whack_connection_roots(const struct whack_message *wm,
 		.wm = wm,
 		.s = s,
 		.order = order,
-		.connection_visitor = connection_visitor,
-		.visitor_context = visitor_context,
 		.each = &each,
+		.root.visitor = visit_connection_node,
+		.node.visitor = connection_visitor,
+		.node.context = connection_context,
 	};
-	visit_connection_roots(visit_connection_node, &param);
+	visit_connection_roots(&param);
 }
 
 void whack_connection_trees(const struct whack_message *wm,
 			    struct show *s,
 			    enum chrono order,
 			    connection_visitor *connection_visitor,
-			    struct connection_visitor_context *visitor_context,
+			    struct connection_visitor_context *connection_context,
 			    struct each each)
 {
 	/*
@@ -455,11 +467,43 @@ void whack_connection_trees(const struct whack_message *wm,
 		.wm = wm,
 		.s = s,
 		.order = order,
-		.connection_visitor = connection_visitor,
 		.each = &each,
-		.visitor_context = visitor_context,
+		.root.visitor = visit_connection_tree,
+		.tree.visitor = visit_connection_node,
+		.node.visitor = connection_visitor,
+		.node.context = connection_context,
 	};
-	visit_connection_roots(visit_connection_tree, &param);
+	visit_connection_roots(&param);
+}
+
+unsigned visit_connection_state(struct connection *c,
+				const struct connection_visitor_param *param)
+{
+	struct logger *logger = show_logger(param->s);
+	connection_attach(c, logger);
+	visit_connection_states(c, param->state.visitor, param->state.context, HERE);
+	connection_detach(c, logger);
+	return 1;
+}
+
+void whack_connection_states(const struct whack_message *wm,
+			     struct show *s,
+			     enum chrono order,
+			     connection_state_visitor *state_visitor,
+			     struct connection_state_visitor_context *state_context,
+			     struct each each)
+{
+	struct connection_visitor_param param = {
+		.wm = wm,
+		.s = s,
+		.order = order,
+		.each = &each,
+		.root.visitor = visit_connection_tree,
+		.tree.visitor = visit_connection_state,
+		.state.visitor = state_visitor,
+		.state.context = state_context,
+	};
+	visit_connection_roots(&param);
 }
 
 /*
@@ -475,8 +519,7 @@ void whack_connection_trees(const struct whack_message *wm,
  */
 
 struct ike_sa *nudge_connection_established_parents(struct connection *c,
-						    connection_state_visitor *state_visitor,
-						    struct connection_state_visitor_context *context,
+						    struct connection_state_visitor_param *param,
 						    struct verbose verbose)
 {
 	vdbg("nudging established IKE SAs");
@@ -504,14 +547,18 @@ struct ike_sa *nudge_connection_established_parents(struct connection *c,
 		if (st->st_serialno == c->established_ike_sa) {
 			vdbg("nudging principal established IKE SA "PRI_SO, pri_so(st->st_serialno));
 			principal_ike_sa = pexpect_ike_sa(st);
-			state_visitor(c, &principal_ike_sa, NULL, NUDGE_CONNECTION_PRINCIPAL_IKE_SA, context);
+			param->visitor(c, &principal_ike_sa, NULL,
+				       NUDGE_CONNECTION_PRINCIPAL_IKE_SA,
+				       param->context);
 			vexpect(principal_ike_sa != NULL);
 			continue;
 		}
 
 		vdbg("nudging double-crossed established IKE SA "PRI_SO, pri_so(st->st_serialno));
 		struct ike_sa *parent = pexpect_ike_sa(st);
-		state_visitor(c, &parent, NULL, NUDGE_CONNECTION_CROSSED_IKE_SA, context);
+		param->visitor(c, &parent, NULL,
+			       NUDGE_CONNECTION_CROSSED_IKE_SA,
+			       param->context);
 		vexpect(parent != NULL);
 	}
 
@@ -531,8 +578,7 @@ struct ike_sa *nudge_connection_established_parents(struct connection *c,
 
 bool visit_connection_principal_child(struct connection *c,
 				      struct ike_sa **ike,
-				      connection_state_visitor *state_visitor,
-				      struct connection_state_visitor_context *context,
+				      struct connection_state_visitor_param *param,
 				      struct verbose verbose)
 {
 	/*
@@ -570,7 +616,9 @@ bool visit_connection_principal_child(struct connection *c,
 		vdbg("dispatch %s principal Child SA "PRI_SO" with principal established IKE SA "PRI_SO,
 		     child_state, pri_so(child->sa.st_serialno),
 		     pri_so(child->sa.st_clonedfrom));
-		state_visitor(c, ike, &child, VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA, context);
+		param->visitor(c, ike, &child,
+			       VISIT_CONNECTION_CHILD_OF_PRINCIPAL_IKE_SA,
+			       param->context);
 		return true;
 	}
 
@@ -584,7 +632,9 @@ bool visit_connection_principal_child(struct connection *c,
 		 */
 		vdbg("dispatch %s principal Child SA "PRI_SO" with no IKE SA (IKEv1 orphan)",
 		     child_state, pri_so(child->sa.st_serialno));
-		state_visitor(c, NULL, &child, VISIT_CONNECTION_CHILD_OF_NONE, context);
+		param->visitor(c, NULL, &child,
+			       VISIT_CONNECTION_CHILD_OF_NONE,
+			       param->context);
 		return true;
 	}
 
@@ -602,7 +652,9 @@ bool visit_connection_principal_child(struct connection *c,
 		vdbg("dispatch %s principal Child SA "PRI_SO" with double-crossed established IKE SA "PRI_SO,
 		     child_state ,pri_so(child->sa.st_serialno),
 		     pri_so(ike_of_child->sa.st_serialno));
-		state_visitor(c, &ike_of_child, &child, VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA, context);
+		param->visitor(c, &ike_of_child, &child,
+			       VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA,
+			       param->context);
 		return true;
 	}
 
@@ -615,13 +667,15 @@ bool visit_connection_principal_child(struct connection *c,
 	vdbg("dispatch %s principal Child SA "PRI_SO" (cuckoo) with another connection's established IKE SA "PRI_STATE" (cuckold)",
 	     child_state, pri_so(child->sa.st_serialno),
 	     pri_state(&ike_of_child->sa, &sb));
-	state_visitor(c, &ike_of_child, &child, VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA, context);
+	param->visitor(c, &ike_of_child, &child,
+		       VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA,
+		       param->context);
 	return true;
 }
 
 void visit_connection_states(struct connection *c,
 			     connection_state_visitor *state_visitor,
-			     struct connection_state_visitor_context *context,
+			     struct connection_state_visitor_context *state_context,
 			     where_t where)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "visit");
@@ -634,6 +688,14 @@ void visit_connection_states(struct connection *c,
 	     pri_so(c->established_child_sa));
 	verbose.level++;
 
+	/* hack so param-> works */
+	struct connection_state_visitor_param param[] = {
+		{
+			.visitor = state_visitor,
+			.context = state_context,
+		}
+	};
+
 	/*
 	 * Start by nudging all the connection's IKE SAs (assuming
 	 * they are present).
@@ -643,7 +705,7 @@ void visit_connection_states(struct connection *c,
 	 * the Child SA is using another connection's IKE SA).
 	 */
 
-	struct ike_sa *ike = nudge_connection_established_parents(c, state_visitor, context, verbose);
+	struct ike_sa *ike = nudge_connection_established_parents(c, param, verbose);
 
 	/*
 	 * Notify the connection's Child SA (i.e., negotiating or
@@ -661,8 +723,7 @@ void visit_connection_states(struct connection *c,
 	 */
 
 	bool visited_principal_child = visit_connection_principal_child(c, &ike,
-									state_visitor,
-									context, verbose);
+									param, verbose);
 
 	/* debug-log when callback zapps IKE SA */
 	if (c->established_ike_sa != SOS_NOBODY && ike == NULL) {
@@ -728,7 +789,9 @@ void visit_connection_states(struct connection *c,
 			vdbg("dispatch lurking IKE SA to "PRI_SO,
 			     pri_so(weed.st->st_serialno));
 			struct ike_sa *lingering_ike = pexpect_ike_sa(weed.st);
-			state_visitor(c, &lingering_ike, NULL, VISIT_CONNECTION_LURKING_IKE_SA, context);
+			param->visitor(c, &lingering_ike, NULL,
+				       VISIT_CONNECTION_LURKING_IKE_SA,
+				       param->context);
 			nr_parents++;
 			continue;
 		}
@@ -738,7 +801,9 @@ void visit_connection_states(struct connection *c,
 		struct child_sa *lingering_child = pexpect_child_sa(weed.st);
 		/* may not have IKE as parent? */
 		nr_children++;
-		state_visitor(c, NULL, &lingering_child, VISIT_CONNECTION_LURKING_CHILD_SA, context);
+		param->visitor(c, NULL, &lingering_child,
+			       VISIT_CONNECTION_LURKING_CHILD_SA,
+			       param->context);
 	}
 
 	vdbg("weeded %u parents and %u children", nr_parents, nr_children);
@@ -768,7 +833,9 @@ void visit_connection_states(struct connection *c,
 			state_buf sb;
 			vdbg("dispatching to sibling Child SA "PRI_STATE,
 			     pri_state(&child->sa, &sb));
-			state_visitor(c, &ike, &child, VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA, context);
+			param->visitor(c, &ike, &child,
+				       VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA,
+				       param->context);
 			nr++;
 		}
 		vdbg("poked %u siblings", nr);
@@ -785,12 +852,16 @@ void visit_connection_states(struct connection *c,
 	if (ike != NULL && !visited_principal_child) {
 		vdbg("dispatch to IKE SA "PRI_SO" as child skipped",
 		     pri_so(ike->sa.st_serialno));
-		state_visitor(c, &ike, NULL, VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA, context);
+		param->visitor(c, &ike, NULL,
+			       VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA,
+			       param->context);
 	}
 
 	if (ike != NULL) {
 		vdbg("dispatch STOP as reached end");
-		state_visitor(c, &ike, NULL, FINISH_CONNECTION_PRINCIPAL_IKE_SA, context);
+		param->visitor(c, &ike, NULL,
+			       FINISH_CONNECTION_PRINCIPAL_IKE_SA,
+			       param->context);
 	} else {
 		vdbg("skipping STOP, no IKE");
 	}
