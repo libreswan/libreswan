@@ -118,13 +118,13 @@ OBJS += whack_unroute.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
 ifeq ($(USE_XFRM_HEADER_COPY),true)
-USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-copy
+USERLAND_INCLUDES += -I$(top_srcdir)/external/linux-xfrm-headers
 endif
 
 ifeq ($(USE_XFRM_INTERFACE), true)
 ifeq ($(USE_XFRM_INTERFACE_IFLA_HEADER), true)
 USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE_IFLA_HEADER
-USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-extra-if-link
+USERLAND_INCLUDES += -I$(top_srcdir)/external/linux-if-link-headers
 endif
 endif
 
