@@ -562,8 +562,12 @@ algparse -v1 'ike=aes+;' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes++' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
-algparse -v1 'ike=aes_gcm-sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
+algparse -v1 'ike=aes;modp2048-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+algparse -v1 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v1 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
+	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
 west #
  ipsec algparse -tp -v1 -pfs
 algparse -v1 -pfs 'esp' (expect SUCCESS)
@@ -1092,8 +1096,12 @@ algparse -v1 -pfs 'ike=aes+;' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes++' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
-algparse -v1 -pfs 'ike=aes_gcm-sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: IKE Encryption Algorithm (cipher) 'aes_gcm' is not supported by IKEv1
+algparse -v1 -pfs 'ike=aes;modp2048-modp2048' (expect ERROR)
+	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+algparse -v1 -pfs 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v1 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
+	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
 west #
  ipsec algparse -tp -v2
 algparse -v2 'esp' (expect SUCCESS)
@@ -1623,8 +1631,12 @@ algparse -v2 'ike=aes+;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
-algparse -v2 'ike=aes_gcm-sha2;modp2048-modp2048' (expect ERROR)
+algparse -v2 'ike=aes;modp2048-modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+algparse -v2 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v2 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 west #
  ipsec algparse -tp -v2 -pfs
 algparse -v2 -pfs 'esp' (expect SUCCESS)
@@ -2112,8 +2124,12 @@ algparse -v2 -pfs 'ike=aes+;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
-algparse -v2 -pfs 'ike=aes_gcm-sha2;modp2048-modp2048' (expect ERROR)
+algparse -v2 -pfs 'ike=aes;modp2048-modp2048' (expect ERROR)
 	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+algparse -v2 -pfs 'ike=aes;addke1=modp2048' (expect ERROR)
+	ERROR: transform 'addke1' invalid
+algparse -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 west #
  ipsec algparse -tp -v2 -pfs -addke
 algparse -addke -v2 -pfs 'esp' (expect SUCCESS)
@@ -2601,8 +2617,12 @@ algparse -addke -v2 -pfs 'ike=aes+;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -addke -v2 -pfs 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
-algparse -addke -v2 -pfs 'ike=aes_gcm-sha2;modp2048-modp2048' (expect SUCCESS)
-	AES_GCM_16-HMAC_SHA2_256-MODP2048-MODP2048
+algparse -addke -v2 -pfs 'ike=aes;modp2048-modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048-MODP2048
+algparse -addke -v2 -pfs 'ike=aes;addke1=modp2048' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192-MODP2048
+algparse -addke -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 west #
  # Run the algorithm tests; there should be no fails.
 west #
