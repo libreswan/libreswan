@@ -63,12 +63,10 @@ static struct v1_proposal merge_integ_default(struct v1_proposal proposal,
 }
 
 static bool add_proposal_defaults(struct proposal_parser *parser,
-				  const struct proposal_defaults *defaults,
 				  struct proposals *proposals,
 				  const struct v1_proposal *proposal);
 
 static bool add_alg_defaults(struct proposal_parser *parser,
-			     const struct proposal_defaults *defaults,
 			     struct proposals *proposals,
 			     const struct v1_proposal *proposal,
 			     const struct ike_alg_type *type,
@@ -94,10 +92,8 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
 		      "adding default %s %s",
 		      type->story, alg->fqn);
-		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
-									 *default_alg);
-		if (!add_proposal_defaults(parser, defaults,
-					   proposals, &merged_proposal)) {
+		struct v1_proposal merged_proposal = merge_alg_default(*proposal, *default_alg);
+		if (!add_proposal_defaults(parser, proposals, &merged_proposal)) {
 			passert(parser->diag != NULL);
 			return false;
 		}
@@ -145,31 +141,28 @@ static bool add_proposal(struct proposal_parser *parser,
  */
 
 static bool add_proposal_defaults(struct proposal_parser *parser,
-				  const struct proposal_defaults *defaults,
 				  struct proposals *proposals,
 				  const struct v1_proposal *proposal)
 {
+	const struct proposal_defaults *defaults = parser->protocol->defaults;
 	/*
 	 * Note that the order in which things are recursively added -
 	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
 	 * things like the order of proposals.
 	 */
 	if (proposal->kem == NULL &&
-	    defaults != NULL && defaults->kem != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
+	    defaults->kem != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
 					&ike_alg_kem, defaults->kem,
 					merge_dh_default);
 	} else if (proposal->encrypt == NULL &&
-		   defaults != NULL && defaults->encrypt != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
+		   defaults->encrypt != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
 					&ike_alg_encrypt, defaults->encrypt,
 					merge_encrypt_default);
 	} else if (proposal->prf == NULL &&
-		   defaults != NULL && defaults->prf != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
+		   defaults->prf != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
 					&ike_alg_prf, defaults->prf,
 					merge_prf_default);
 	} else if (proposal->integ == NULL &&
@@ -180,12 +173,10 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 		 */
 		struct v1_proposal merged_proposal = *proposal;
 		merged_proposal.integ = &ike_alg_integ_none;
-		return add_proposal_defaults(parser, defaults,
-					     proposals, &merged_proposal);
+		return add_proposal_defaults(parser, proposals, &merged_proposal);
 	} else if (proposal->integ == NULL &&
-		   defaults != NULL && defaults->integ != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
+		   defaults->integ != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
 					&ike_alg_integ, defaults->integ,
 					merge_integ_default);
 	} else if (proposal->integ == NULL &&
@@ -211,30 +202,10 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 				       proposal->prf->common.fqn);
 			return false;
 		}
-		return add_proposal_defaults(parser, defaults,
-					     proposals, &merged_proposal);
+		return add_proposal_defaults(parser, proposals, &merged_proposal);
 	} else {
 		return add_proposal(parser, proposals, proposal);
 	}
-}
-
-static bool merge_default_proposals(struct proposal_parser *parser,
-				    struct proposals *proposals,
-				    const struct v1_proposal *proposal)
-{
-	/*
-	 * If there's a hint of IKEv1 being enabled then prefer its
-	 * larger set of defaults.
-	 *
-	 * This should increase the odds of both ends interoperating.
-	 *
-	 * For instance, the IKEv2 defaults were preferred and one end
-	 * has ikev2=never then, in aggressive mode, things don't
-	 * work.
-	 */
-	const struct proposal_defaults *defaults = proposal->protocol->defaults;
-	return add_proposal_defaults(parser, defaults,
-				     proposals, proposal);
 }
 
 static bool parse_ikev1_proposal(struct proposal_parser *parser,
@@ -279,9 +250,8 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	 * transform this call gets to expand all combinations of the
 	 * defaults into lots of little proposals.
 	 */
-
 	struct v1_proposal v1 = v1_proposal(scratch_proposal);
-	return merge_default_proposals(parser, proposals, &v1);
+	return add_proposal_defaults(parser, proposals, &v1);
 }
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
