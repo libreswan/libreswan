@@ -535,7 +535,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 {
 	/* going to switch to child st. before that update parent */
 	if (!ike->sa.hidden_variables.st_nated_host) {
-		update_ike_endpoints(ike, md);
+		natify_ikev2_ike_responder_endpoints(ike, md);
 	}
 
 	ikev2_nat_change_port_lookup(md, ike); /* why? */

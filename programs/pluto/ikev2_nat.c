@@ -312,3 +312,31 @@ void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
 		ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 	}
 }
+
+/*
+ * see https://tools.ietf.org/html/rfc7296#section-2.23
+ *
+ * [...] SHOULD store this as the new address and port combination
+ * for the SA (that is, they SHOULD dynamically update the address).
+ * A host behind a NAT SHOULD NOT do this type of dynamic address
+ * update if a validated packet has different port and/or address
+ * values because it opens a possible DoS attack (such as allowing
+ * an attacker to break the connection with a single packet).
+ *
+ * The probe bool is used to signify we are answering a MOBIKE
+ * probe request (basically a informational without UPDATE_ADDRESS
+ */
+void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike,
+					  const struct msg_digest *md)
+{
+	/* caller must ensure we are not behind NAT */
+	ike->sa.st_remote_endpoint = md->sender;
+	endpoint_buf eb1, eb2;
+	ldbg(ike->sa.logger, PRI_SO" updating local interface from %s to %s using md->iface "PRI_WHERE,
+	     pri_so(ike->sa.st_serialno),
+	     (ike->sa.st_iface_endpoint != NULL ? str_endpoint(&ike->sa.st_iface_endpoint->local_endpoint, &eb1) : "<none>"),
+	     str_endpoint(&md->iface->local_endpoint, &eb2),
+	     pri_where(HERE));
+	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
+}

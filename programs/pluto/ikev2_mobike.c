@@ -277,7 +277,8 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		} else {
 			if (!update_mobike_endpoints(ike, md))
 				ntfy_natd = false;
-			update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+			/* update state sender so we can find it for IPsec SA */
+			natify_ikev2_ike_responder_endpoints(ike, md);
 		}
 	}
 

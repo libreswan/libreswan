@@ -616,7 +616,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 */
 
 	struct connection *c = ike->sa.st_connection;
-	update_ike_endpoints(ike, md);
+	natify_ikev2_ike_responder_endpoints(ike, md);
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
