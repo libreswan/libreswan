@@ -785,7 +785,7 @@ KVM_BASE_MEMORY ?= 2048
 
 .PHONY: kvm-base kvm-purge
 kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
-kvm-purge: $(patsubst %, kvm-purge-%, $(KVM_OS))
+kvm-purge: $(patsubst %, kvm-purge-%, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-base-%, $(KVM_PLATFORMS)): \
 kvm-base-%: kvm-purge-%
@@ -1203,7 +1203,7 @@ KVM_UPGRADE_MEMORY ?= 2048
 
 .PHONY: kvm-upgrade kvm-downgrade
 kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
-kvm-downgrade: $(patsubst %, kvm-downgrade-%, $(KVM_OS))
+kvm-downgrade: $(patsubst %, kvm-downgrade-%, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-upgrade-%, $(KVM_PLATFORMS)): \
 kvm-upgrade-%: kvm-downgrade-%
@@ -1267,7 +1267,7 @@ KVM_LINUX_UPGRADE_FLAGS ?= $(KVM_LINUX_INSTALL_PACKAGES) -- $(KVM_LINUX_UPGRADE_
 
 .PHONY: kvm-transmogrify kvm-uninstall
 kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
-kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
+kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORMS))
 
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORMS)): \
 kvm-transmogrify-%: kvm-uninstall-%
