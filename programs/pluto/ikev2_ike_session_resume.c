@@ -724,7 +724,7 @@ static void record_v2N_TICKET_NACK(struct ike_sa *ike, struct msg_digest *md)
 }
 
 stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
-						 struct child_sa *child,
+						 struct child_sa *null_child,
 						 struct msg_digest *md)
 {
 	/*
@@ -734,9 +734,7 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 	 */
 	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
 
-	pexpect(child == NULL);
-	/* set up new state */
-	update_ike_endpoints(ike, md);
+	pexpect(null_child == NULL);
 	passert(ike->sa.st_ike_version == IKEv2);
 	passert(ike->sa.st_state == &state_v2_UNSECURED_R);
 	passert(ike->sa.st_sa_role == SA_RESPONDER);
