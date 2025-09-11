@@ -89,7 +89,7 @@ static const struct ike_alg *default_ikev2_ah_integ[] = {
 const struct proposal_defaults ikev2_ah_defaults = {
 	.proposals[FIPS_MODE_ON] = default_ikev2_ah_proposals,
 	.proposals[FIPS_MODE_OFF] = default_ikev2_ah_proposals,
-	.integ = default_ikev2_ah_integ,
+	.transform[PROPOSAL_TRANSFORM_integ] = default_ikev2_ah_integ,
 };
 
 /*

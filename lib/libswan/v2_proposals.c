@@ -34,12 +34,13 @@
 
 static void merge_algorithms(struct proposal_parser *parser,
 			     struct proposal *proposal,
-			     enum proposal_transform transform,
-			     const struct ike_alg **defaults)
+			     enum proposal_transform transform)
 {
+	const struct ike_alg **defaults = parser->protocol->defaults->transform[transform];
 	if (defaults == NULL) {
 		return;
 	}
+
 	if (first_transform_algorithm(proposal, transform) != NULL) {
 		return;
 	}
@@ -52,8 +53,17 @@ static bool merge_defaults(struct proposal_parser *parser,
 			   struct proposal *proposal)
 {
 	const struct proposal_defaults *defaults = parser->protocol->defaults;
-	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_encrypt, defaults->encrypt);
-	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf, defaults->prf);
+	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
+	     transform < PMIN(PROPOSAL_TRANSFORM_prf, PROPOSAL_TRANSFORM_integ);
+	     transform++) {
+		merge_algorithms(parser, proposal, transform);
+	}
+
+	/*
+	 * PRF/INTEG are weird; and, as of time of writing INTEG was
+	 * ordered before PRF, which is backwards.
+	 */
+	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf);
 	if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_integ) == NULL) {
 		if (proposal_encrypt_aead(proposal)) {
 			/*
@@ -62,12 +72,11 @@ static bool merge_defaults(struct proposal_parser *parser,
 			append_proposal_transform(parser, proposal,
 						  PROPOSAL_TRANSFORM_integ,
 						  &ike_alg_integ_none.common, 0);
-		} else if (defaults->integ != NULL) {
+		} else if (defaults->transform[PROPOSAL_TRANSFORM_integ] != NULL) {
 			/*
 			 * Merge in the defaults.
 			 */
-			merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_integ,
-					 defaults->integ);
+			merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_integ);
 		} else if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) != NULL &&
 			   proposal_encrypt_norm(proposal)) {
 			/*
@@ -96,7 +105,11 @@ static bool merge_defaults(struct proposal_parser *parser,
 			}
 		}
 	}
-	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_kem, defaults->kem);
+
+	for (enum proposal_transform transform = PMAX(PROPOSAL_TRANSFORM_prf, PROPOSAL_TRANSFORM_integ) + 1;
+	     transform < PROPOSAL_TRANSFORM_ROOF; transform++) {
+		merge_algorithms(parser, proposal, transform);
+	}
 	return true;
 }
 

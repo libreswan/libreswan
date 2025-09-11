@@ -31,50 +31,36 @@
  * Add the proposal defaults for the specific algorithm.
  */
 
-typedef struct v1_proposal merge_alg_default_t(struct v1_proposal proposal,
-					       const struct ike_alg *default_alg);
-
-static struct v1_proposal merge_dh_default(struct v1_proposal proposal,
-					   const struct ike_alg *default_alg)
-{
-	proposal.kem = kem_desc(default_alg);
-	return proposal;
-}
-
-static struct v1_proposal merge_encrypt_default(struct v1_proposal proposal,
-						const struct ike_alg *default_alg)
-{
-	proposal.encrypt = encrypt_desc(default_alg);
-	return proposal;
-}
-
-static struct v1_proposal merge_prf_default(struct v1_proposal proposal,
+static struct v1_proposal merge_alg_default(struct v1_proposal proposal,
+					    enum proposal_transform transform,
 					    const struct ike_alg *default_alg)
 {
-	proposal.prf = prf_desc(default_alg);
-	return proposal;
-}
-
-static struct v1_proposal merge_integ_default(struct v1_proposal proposal,
-					      const struct ike_alg *default_alg)
-{
-	proposal.integ = integ_desc(default_alg);
+	switch (transform) {
+#define T(TYPE)								\
+		case PROPOSAL_TRANSFORM_##TYPE:				\
+			proposal.TYPE = TYPE##_desc(default_alg);	\
+			break
+		T(kem);
+		T(encrypt);
+		T(prf);
+		T(integ);
+#undef T
+	default:
+		bad_case(transform);
+	}
 	return proposal;
 }
 
 static bool add_proposal_defaults(struct proposal_parser *parser,
-				  const struct proposal_defaults *defaults,
 				  struct proposals *proposals,
 				  const struct v1_proposal *proposal);
 
 static bool add_alg_defaults(struct proposal_parser *parser,
-			     const struct proposal_defaults *defaults,
 			     struct proposals *proposals,
 			     const struct v1_proposal *proposal,
-			     const struct ike_alg_type *type,
-			     const struct ike_alg **default_algs,
-			     merge_alg_default_t *merge_alg_default)
+			     enum proposal_transform transform)
 {
+	const struct ike_alg **default_algs = parser->protocol->defaults->transform[transform];
 	const struct logger *logger = parser->policy->logger;
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
@@ -91,13 +77,15 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 			continue;
 		}
 		/* add it */
+		name_buf tn;
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "adding default %s %s",
-		      type->story, alg->fqn);
+		      "adding default %s %s %s",
+		      str_enum_short(&proposal_transform_names, transform, &tn),
+		      alg->type->story, alg->fqn);
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
-									 *default_alg);
-		if (!add_proposal_defaults(parser, defaults,
-					   proposals, &merged_proposal)) {
+								       transform,
+								       (*default_alg));
+		if (!add_proposal_defaults(parser, proposals, &merged_proposal)) {
 			passert(parser->diag != NULL);
 			return false;
 		}
@@ -145,33 +133,27 @@ static bool add_proposal(struct proposal_parser *parser,
  */
 
 static bool add_proposal_defaults(struct proposal_parser *parser,
-				  const struct proposal_defaults *defaults,
 				  struct proposals *proposals,
 				  const struct v1_proposal *proposal)
 {
+	const struct proposal_defaults *defaults = parser->protocol->defaults;
 	/*
 	 * Note that the order in which things are recursively added -
 	 * MODP, ENCR, PRF/HASH - affects test results.  It determines
 	 * things like the order of proposals.
 	 */
 	if (proposal->kem == NULL &&
-	    defaults != NULL && defaults->kem != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
-					&ike_alg_kem, defaults->kem,
-					merge_dh_default);
+	    defaults->transform[PROPOSAL_TRANSFORM_kem] != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
+					PROPOSAL_TRANSFORM_kem);
 	} else if (proposal->encrypt == NULL &&
-		   defaults != NULL && defaults->encrypt != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
-					&ike_alg_encrypt, defaults->encrypt,
-					merge_encrypt_default);
+		   defaults->transform[PROPOSAL_TRANSFORM_encrypt] != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
+					PROPOSAL_TRANSFORM_encrypt);
 	} else if (proposal->prf == NULL &&
-		   defaults != NULL && defaults->prf != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
-					&ike_alg_prf, defaults->prf,
-					merge_prf_default);
+		   defaults->transform[PROPOSAL_TRANSFORM_prf] != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
+					PROPOSAL_TRANSFORM_prf);
 	} else if (proposal->integ == NULL &&
 		   proposal->encrypt != NULL &&
 		   encrypt_desc_is_aead(proposal->encrypt)) {
@@ -180,14 +162,11 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 		 */
 		struct v1_proposal merged_proposal = *proposal;
 		merged_proposal.integ = &ike_alg_integ_none;
-		return add_proposal_defaults(parser, defaults,
-					     proposals, &merged_proposal);
+		return add_proposal_defaults(parser, proposals, &merged_proposal);
 	} else if (proposal->integ == NULL &&
-		   defaults != NULL && defaults->integ != NULL) {
-		return add_alg_defaults(parser, defaults,
-					proposals, proposal,
-					&ike_alg_integ, defaults->integ,
-					merge_integ_default);
+		   defaults->transform[PROPOSAL_TRANSFORM_integ] != NULL) {
+		return add_alg_defaults(parser, proposals, proposal,
+					PROPOSAL_TRANSFORM_integ);
 	} else if (proposal->integ == NULL &&
 		   proposal->prf != NULL &&
 		   proposal->encrypt != NULL &&
@@ -211,30 +190,10 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 				       proposal->prf->common.fqn);
 			return false;
 		}
-		return add_proposal_defaults(parser, defaults,
-					     proposals, &merged_proposal);
+		return add_proposal_defaults(parser, proposals, &merged_proposal);
 	} else {
 		return add_proposal(parser, proposals, proposal);
 	}
-}
-
-static bool merge_default_proposals(struct proposal_parser *parser,
-				    struct proposals *proposals,
-				    const struct v1_proposal *proposal)
-{
-	/*
-	 * If there's a hint of IKEv1 being enabled then prefer its
-	 * larger set of defaults.
-	 *
-	 * This should increase the odds of both ends interoperating.
-	 *
-	 * For instance, the IKEv2 defaults were preferred and one end
-	 * has ikev2=never then, in aggressive mode, things don't
-	 * work.
-	 */
-	const struct proposal_defaults *defaults = proposal->protocol->defaults;
-	return add_proposal_defaults(parser, defaults,
-				     proposals, proposal);
 }
 
 static bool parse_ikev1_proposal(struct proposal_parser *parser,
@@ -244,9 +203,18 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 {
 	const struct logger *logger = parser->policy->logger;
 
-	if (proposal.len > 0 &&
-	    memchr(proposal.ptr, '+', proposal.len) != NULL) {
-		proposal_error(parser, "IKEv1 does not support multiple transform algorithms separated by '+'");
+	/*
+	 * Catch the obvious case of a proposal containing '+' early.
+	 * Vis:
+	 *
+	 *   ike=aes-sha1+sha2
+	 *
+	 * Complaining about '+' is hopefully less confusing then,
+	 * later, complaining about duplicate transform types or bad
+	 * lookups.
+	 */
+	if (proposal.len > 0 && memchr(proposal.ptr, '+', proposal.len) != NULL) {
+		proposal_error(parser, "'+' invalid, IKEv1 proposals do not support multiple transforms of the same type");
 		return false;
 	}
 
@@ -270,9 +238,8 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	 * transform this call gets to expand all combinations of the
 	 * defaults into lots of little proposals.
 	 */
-
 	struct v1_proposal v1 = v1_proposal(scratch_proposal);
-	return merge_default_proposals(parser, proposals, &v1);
+	return add_proposal_defaults(parser, proposals, &v1);
 }
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,

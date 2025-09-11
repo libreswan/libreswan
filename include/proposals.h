@@ -133,10 +133,7 @@ struct proposal_defaults {
 	 * Algorithms to add to the proposal when they were not
 	 * specified by the proposal string.
 	 */
-	const struct ike_alg **kem;
-	const struct ike_alg **prf;
-	const struct ike_alg **integ;
-	const struct ike_alg **encrypt;
+	const struct ike_alg **transform[PROPOSAL_TRANSFORM_ROOF];
 };
 
 /*
