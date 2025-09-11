@@ -29,6 +29,7 @@
   /\[ 00.00] .*: performance on this CPU would be suboptimal/ b zap-kernel
   /\[ 00.00] .* used greatest stack depth: [0-9]* bytes left/ b zap-kernel
   /\[ 00.00] clocksource: Long readout interval, skipping watchdog check/ b zap-kernel
+  /\[ 00.00] xfrm_iptfs: IPsec IP-TFS tunnel mode module/ b zap-kernel
 
 b end-kernel
 
