@@ -894,8 +894,11 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 			      enum proposal_transform transform,
 			      shunk_t token)
 {
-	passert(parser->diag == NULL);
+	const struct logger *logger = parser->policy->logger;
+	PASSERT(logger, parser->diag == NULL);
 	const struct ike_alg_type *transform_type = proposal_transform_type[transform];
+	PASSERT(logger, transform_type != NULL);
+
 	if (token.len == 0) {
 		if (parser->policy->version == IKEv1) {
 			/* test compat hack */
@@ -909,6 +912,13 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 		}
 		return false;
 	}
+
+	name_buf tb;
+	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing transform '%s' of type '%s': "PRI_SHUNK,
+	      str_enum_short(&proposal_transform_names, transform, &tb),
+	      transform_type->name,
+	      pri_shunk(token));
+
 	const struct ike_alg *alg = alg_byname(parser, transform_type,
 					       token, token/*print*/);
 	if (alg == NULL) {
@@ -1254,45 +1264,76 @@ bool parse_proposal(struct proposal_parser *parser,
 		LDBG_log(logger, "proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
 
-	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+");
+	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+=");
 
 	/* hack to stop non ADDKE reporting missing ADDKE */
-	enum proposal_transform ceiling = (parser->policy->addke ? PROPOSAL_TRANSFORM_addke7 :
-					   PROPOSAL_TRANSFORM_kem);
+	enum proposal_transform transform_ceiling =
+		(parser->policy->addke ? PROPOSAL_TRANSFORM_addke7 :
+		 PROPOSAL_TRANSFORM_kem);
 
-	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
-	     transform <= ceiling; transform++) {
+	enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
+	while (tokens.curr.token.ptr != NULL) {
 
-		if (tokens.curr.token.ptr == NULL) {
-			break;
-		}
+		if (tokens.curr.delim == '=') {
 
-		/* when ';' skip forward to KEM */
-		if (tokens.prev.delim == ';') {
+			/* when '=' skip to specified transform */
+			int tmp = enum_byname(&proposal_transform_names, tokens.curr.token);
+			if (tmp < 0) {
+				proposal_error(parser, "transform '"PRI_SHUNK"' unrecognized",
+					       pri_shunk(tokens.curr.token));
+				return false;
+			}
+
+			if (tmp > (int)transform_ceiling) {
+				proposal_error(parser, "transform '"PRI_SHUNK"' invalid",
+					       pri_shunk(tokens.curr.token));
+				return false;
+			}
+
+			/* advance to TRANSFORMS after '=' */
+			proposal_next_token(&tokens);
+			name_buf ot, nt;
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "switching from '%s' transforms to '%s' transforms",
+			      str_enum_short(&proposal_transform_names, transform, &ot),
+			      str_enum_short(&proposal_transform_names, tmp, &nt));
+			transform = tmp;
+
+		} else if (transform > transform_ceiling) {
+
+			/* just in-case DELIM is NUL */
+			char prev_delim[2] = { tokens.prev.delim, '\0', };
+			proposal_error(parser, "%s proposal contains unexpected trailing '%s"PRI_SHUNK"'",
+				       parser->protocol->name,
+				       prev_delim,
+				       pri_shunk(tokens.curr.token));
+			return false;
+
+		} else if (tokens.prev.delim == ';') {
+
+			/* when ';' skip forward to KEM */
 			if (transform > PROPOSAL_TRANSFORM_kem) {
 				name_buf tb;
 				proposal_error(parser, "unexpected ';', expecting '-' followed by %s transform",
 					       str_enum_short(&proposal_transform_names, transform, &tb));
 				return false;
 			}
+			name_buf tb;
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "skipping from transform '%s' to ;KEM",
+			      str_enum_short(&proposal_transform_names, transform, &tb));
 			transform = PROPOSAL_TRANSFORM_kem;
+
 		}
+
+		PASSERT(logger, (transform >= PROPOSAL_TRANSFORM_FLOOR &&
+				 transform < PROPOSAL_TRANSFORM_ROOF));
 
 		if (!parse_proposal_transforms(parser, proposal, transform, &tokens)) {
 			return false;
 		}
-	}
 
-	/* end of token stream? */
-	if (tokens.curr.token.ptr != NULL) {
-		/* just in-case DELIM is NUL */
-		char prev_delim[2] = { tokens.prev.delim, '\0', };
-		proposal_error(parser, "%s proposal contains unexpected trailing '%s"PRI_SHUNK"'",
-			       parser->protocol->name,
-			       prev_delim,
-			       pri_shunk(tokens.curr.token));
-		passert(parser->diag != NULL);
-		return false;
+		transform++;
 	}
 
 	return true;
