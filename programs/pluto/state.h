@@ -861,7 +861,6 @@ extern void change_v2_state(struct state *st);
 
 extern unsigned long total_halfopen_ike(void);
 extern void show_globalstate_status(struct show *s);
-extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 
 void append_st_cfg_domain(struct state *st, struct pbs_in *pbs,
 			  char *(*stringify)(shunk_t str, bool *ok));

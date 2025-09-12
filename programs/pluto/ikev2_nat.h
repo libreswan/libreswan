@@ -41,6 +41,6 @@ bool ikev2_out_natd(const ip_endpoint *local_endpoint,
 bool ikev2_out_nat_v2n(struct pbs_out *outs, struct state *st,
 		       const ike_spi_t *ike_responder_spi);
 
+void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike, const struct msg_digest *md);
+
 #endif
-
-

@@ -277,7 +277,8 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		} else {
 			if (!update_mobike_endpoints(ike, md))
 				ntfy_natd = false;
-			update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
+			/* update state sender so we can find it for IPsec SA */
+			natify_ikev2_ike_responder_endpoints(ike, md);
 		}
 	}
 
@@ -328,14 +329,13 @@ static void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *
 		ldbg(logger, "TODO: process v2N_NAT_DETECTION_DESTINATION_IP in MOBIKE response ");
 	}
 
+	llog_sa(RC_LOG, ike, "MOBIKE response: updating IPsec SA");
 	if (ret && !update_mobike_endpoints(ike, md)) {
 		/* IPs already updated from md */
 		ldbg(logger, "MOBIKE response: update MOBIKE failed; not updating IPsec SA");
 		return;
 	}
 
-	llog_sa(RC_LOG, ike, "MOBIKE response: updating IPsec SA");
-	update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
 	return;
 }
 

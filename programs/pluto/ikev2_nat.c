@@ -312,3 +312,72 @@ void ikev2_nat_change_port_lookup(struct msg_digest *md, struct ike_sa *ike)
 		ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
 	}
 }
+
+/*
+ * see https://tools.ietf.org/html/rfc7296#section-2.23
+ *
+ * [...] SHOULD store this as the new address and port combination
+ * for the SA (that is, they SHOULD dynamically update the address).
+ * A host behind a NAT SHOULD NOT do this type of dynamic address
+ * update if a validated packet has different port and/or address
+ * values because it opens a possible DoS attack (such as allowing
+ * an attacker to break the connection with a single packet).
+ *
+ * The probe bool is used to signify we are answering a MOBIKE
+ * probe request (basically a informational without UPDATE_ADDRESS
+ */
+
+void natify_ikev2_ike_responder_endpoints(struct ike_sa *ike,
+					  const struct msg_digest *md)
+{
+	struct logger *logger = ike->sa.logger;
+
+	/*
+	 * Only message responder.
+	 */
+	if (PBAD(logger, v2_msg_role(md) != MESSAGE_REQUEST)) {
+		return;
+	}
+
+	if (ike->sa.hidden_variables.st_nated_host) {
+		ldbg(logger, "NAT: skip update, IKE SA responder is behind NAT");
+	}
+
+	/* is there something to change? */
+	if (endpoint_eq_endpoint(ike->sa.st_remote_endpoint, md->sender) &&
+	    ike->sa.st_iface_endpoint == md->iface) {
+		ldbg(logger, "NAT: skip update, nothing changed");
+		return;
+	}
+
+	/* is the change allowed? */
+	if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+		ldbg(logger, "NAT: can update, IKE SA responder hasn't yet established");
+	} else if (IS_IKE_SA_ESTABLISHED(&ike->sa) &&
+		   ike->sa.st_v2_mobike.enabled &&
+		   md->pd[PD_v2N_UPDATE_SA_ADDRESSES] != NULL) {
+		ldbg(logger, "NAT: can update, established MOBIKE responder");
+	} else {
+		/*
+		 * See above; would need to also update all SAs like
+		 * MOBIKE.
+		 */
+		llog_pexpect(logger, HERE, "NAT: can not update, established non-MOBIKE IKE SA isn't implemented");
+		return;
+	}
+
+	endpoint_buf osb, odb, nsb, ndb;
+	llog(RC_LOG, logger, "updating IKE SA endpoint from %s:%s->%s to %s:%s->%s",
+	     /*old*/
+	     ike->sa.st_iface_endpoint->ip_dev->real_device_name,
+	     str_endpoint_sensitive(&ike->sa.st_iface_endpoint->local_endpoint, &osb),
+	     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &odb),
+	     /*new*/
+	     md->iface->ip_dev->real_device_name,
+	     str_endpoint_sensitive(&md->iface->local_endpoint, &nsb),
+	     str_endpoint_sensitive(&md->sender, &ndb));
+
+	ike->sa.st_remote_endpoint = md->sender;
+	iface_endpoint_delref(&ike->sa.st_iface_endpoint);
+	ike->sa.st_iface_endpoint = iface_endpoint_addref(md->iface);
+}
