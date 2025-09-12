@@ -20,7 +20,7 @@ timezone --utc America/New_York
 # That is handled by transmogrify after systemd-networkd has been
 # installed.
 
-network --hostname fedora
+network --hostname @@PLATFORM@@
 
 # See kernel and dracut documentation:
 #   net.ifnames=0 biosdevname=0: call network interfaces eth0...
