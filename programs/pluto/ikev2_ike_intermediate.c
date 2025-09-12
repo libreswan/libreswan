@@ -77,8 +77,8 @@ struct ikev2_task {
 
 void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logger)
 {
-	free_kem_initiator(&(*task)->initiator, logger);
-	free_kem_responder(&(*task)->responder, logger);
+	pfree_kem_initiator(&(*task)->initiator, logger);
+	pfree_kem_responder(&(*task)->responder, logger);
 	free_chunk_content(&(*task)->ni);
 	free_chunk_content(&(*task)->nr);
 	symkey_delref(logger, "d", &(*task)->d);
@@ -386,7 +386,8 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 
 	if (task->exchange.addke.kem != NULL &&
 	    task->exchange.addke.kem != &ike_alg_kem_none) {
-		diag_t d = crypt_kem_key_gen(task->exchange.addke.kem, &task->initiator, logger);
+		diag_t d = kem_initiator_key_gen(task->exchange.addke.kem,
+						 &task->initiator, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
 			pfree_diag(&d);
@@ -638,9 +639,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 			LDBG_hunk(logger, initiator_ke);
 		}
 
-		diag_t d = crypt_kem_encapsulate(task->exchange.addke.kem, initiator_ke,
-						 &task->responder,
-						 logger);
+		diag_t d = kem_responder_encapsulate(task->exchange.addke.kem, initiator_ke,
+						     &task->responder, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE encapsulate failed: %s", str_diag(d));
 			pfree_diag(&d);
@@ -882,7 +882,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 			LDBG_log(logger, "ADDKE: decapsulating using responder KE:");
 			LDBG_hunk(logger, responder_ke);
 		}
-		diag_t d = crypt_kem_decapsulate(task->initiator, responder_ke, logger);
+		diag_t d = kem_initiator_decapsulate(task->initiator, responder_ke, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE decapsulate failed: %s", str_diag(d));
 			pfree_diag(&d);

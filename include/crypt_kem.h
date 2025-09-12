@@ -52,23 +52,23 @@ struct kem_responder {
 	} internal;
 };
 
-diag_t crypt_kem_key_gen(const struct kem_desc *kem,
-			 struct kem_initiator **kemk,
-			 struct logger *logger);
-
-diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
-			     shunk_t initiator_ke,
-			     struct kem_responder **responder,
+diag_t kem_initiator_key_gen(const struct kem_desc *kem,
+			     struct kem_initiator **kemk,
 			     struct logger *logger);
 
-diag_t crypt_kem_decapsulate(struct kem_initiator *kemk,
-			     shunk_t responder_ke,
-			     struct logger *logger);
+diag_t kem_responder_encapsulate(const struct kem_desc *kem,
+				 shunk_t initiator_ke,
+				 struct kem_responder **responder,
+				 struct logger *logger);
 
-void free_kem_initiator(struct kem_initiator **initiator,
-			const struct logger *logger);
+diag_t kem_initiator_decapsulate(struct kem_initiator *kemk,
+				 shunk_t responder_ke,
+				 struct logger *logger);
 
-void free_kem_responder(struct kem_responder **responder,
-			const struct logger *logger);
+void pfree_kem_initiator(struct kem_initiator **initiator,
+			 const struct logger *logger);
+
+void pfree_kem_responder(struct kem_responder **responder,
+			 const struct logger *logger);
 
 #endif

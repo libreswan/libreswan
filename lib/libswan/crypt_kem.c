@@ -23,9 +23,9 @@
 #include "passert.h"
 #include "lswalloc.h"
 
-diag_t crypt_kem_key_gen(const struct kem_desc *kem,
-			 struct kem_initiator **initiator,
-			 struct logger *logger)
+diag_t kem_initiator_key_gen(const struct kem_desc *kem,
+			     struct kem_initiator **initiator,
+			     struct logger *logger)
 {
 	(*initiator) = alloc_thing(struct kem_initiator, "kem-initiator");
 	(*initiator)->kem = kem;
@@ -40,10 +40,10 @@ diag_t crypt_kem_key_gen(const struct kem_desc *kem,
 	return NULL;
 }
 
-diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
-			     shunk_t initiator_ke,
-			     struct kem_responder **responder,
-			     struct logger *logger)
+diag_t kem_responder_encapsulate(const struct kem_desc *kem,
+				 shunk_t initiator_ke,
+				 struct kem_responder **responder,
+				 struct logger *logger)
 {
 	PASSERT(logger, initiator_ke.len == kem->initiator_bytes);
 	(*responder) = alloc_thing(struct kem_responder, "kem-responder");
@@ -63,14 +63,14 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 						     &(*responder)->shared_key,
 						     logger);
 		if (d != NULL) {
-			free_kem_responder(responder, logger);
+			pfree_kem_responder(responder, logger);
 			return d;
 		}
 		(*responder)->ke = kem->kem_ops->local_secret_ke(kem, (*responder)->internal.public_key);
 	}
 
 	if (d != NULL) {
-		free_kem_responder(responder, logger);
+		pfree_kem_responder(responder, logger);
 		return d;
 	}
 
@@ -79,9 +79,9 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 	return NULL;
 }
 
-diag_t crypt_kem_decapsulate(struct kem_initiator *initiator,
-			     shunk_t responder_ke,
-			     struct logger *logger)
+diag_t kem_initiator_decapsulate(struct kem_initiator *initiator,
+				 shunk_t responder_ke,
+				 struct logger *logger)
 {
 	PASSERT(logger, responder_ke.len == initiator->kem->responder_bytes);
 	diag_t d;
@@ -104,8 +104,8 @@ diag_t crypt_kem_decapsulate(struct kem_initiator *initiator,
 	return NULL;
 }
 
-void free_kem_initiator(struct kem_initiator **initiator,
-			const struct logger *logger)
+void pfree_kem_initiator(struct kem_initiator **initiator,
+			 const struct logger *logger)
 {
 	if (*initiator == NULL) {
 		return;
@@ -117,8 +117,8 @@ void free_kem_initiator(struct kem_initiator **initiator,
 	pfreeany((*initiator));
 }
 
-void free_kem_responder(struct kem_responder **responder,
-			const struct logger *logger)
+void pfree_kem_responder(struct kem_responder **responder,
+			 const struct logger *logger)
 {
 	if (*responder == NULL) {
 		return;
