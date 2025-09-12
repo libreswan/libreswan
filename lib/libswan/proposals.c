@@ -160,6 +160,34 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 	return true;
 }
 
+bool proposal_transform_ok(struct proposal_parser *parser,
+			   const struct proposal *proposal,
+			   enum proposal_transform transform,
+			   bool expected)
+{
+	if (first_transform_algorithm(proposal, transform) != NULL) {
+		if (expected) {
+			return true;
+		}
+
+		name_buf tb;
+		llog_pexpect(parser->policy->logger, HERE,
+			     "%s proposal has unexpected %s transform",
+			     proposal->protocol->name,
+			     str_enum_short(&proposal_transform_names, transform, &tb));
+		return false;
+	}
+
+	if (expected) {
+		name_buf tb;
+		proposal_error(parser, "%s proposal missing %s transform",
+			       proposal->protocol->name,
+			       str_enum_short(&proposal_transform_names, transform, &tb));
+		return false;
+	}
+	return true;
+}
+
 /*
  * Proposals struct can be shared by a connection template and its
  * instances.  Fortunately, the connection template is only deleted

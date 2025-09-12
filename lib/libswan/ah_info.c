@@ -32,9 +32,17 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL);
-	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) == NULL);
-	PASSERT(parser->policy->logger, first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_integ) != NULL);
+	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_encrypt, false)) {
+		return false;
+	}
+
+	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_prf, false)) {
+		return false;
+	}
+
+	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_integ, true)) {
+		return false;
+	}
 
 	/* ah=null is invalid */
 	if (!impair.allow_null_none) {

@@ -409,6 +409,8 @@ static void test_esp(struct logger *logger)
 
 	esp(addke && ike_version == IKEv2, "aes_gcm;modp2048-modp2048");
 
+	esp(false, "kem=modp8192"); /* missing encryption */
+
 #undef esp
 }
 
@@ -462,6 +464,8 @@ static void test_ah(struct logger *logger)
 	ah(false, "ripemd"); /* support removed */
 
 	ah(addke && ike_version == IKEv2, "sha2;modp2048-modp2048");
+
+	ah(ike_version == IKEv2, "kem=modp8192");
 
 #undef ah
 }
@@ -552,7 +556,7 @@ static void test_ike(struct logger *logger)
 	ike(addke && ike_version == IKEv2, "aes;modp2048-modp2048");
 	ike(addke && ike_version == IKEv2, "aes;addke1=modp2048");
 	ike(ike_version == IKEv2, "aes-sha2;prf=sha1;kem=dh20"); /*additive*/
-	ike(false, "kem=dh20"); /* missing encrypt */
+	ike(false, "kem=modp8192"); /* missing encrypt */
 
 #undef ike
 }
