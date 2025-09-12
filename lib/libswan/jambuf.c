@@ -344,3 +344,140 @@ void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos)
 	}
 	assert_jambuf(buf);
 }
+
+static bool json_push_state(struct jambuf *buf, enum json_state state)
+{
+	if (buf->json_state_index > MAX_JSON_STATES) {
+		return false;
+	}
+	buf->json_states[buf->json_state_index++] = state;
+	return true;
+}
+
+static bool json_pop_state(struct jambuf *buf, enum json_state state)
+{
+	if (buf->json_state_index == 0) {
+		return false;
+	}
+	if (buf->json_states[--buf->json_state_index] != state) {
+		return false;
+	}
+	return true;
+}
+
+static void assert_json_state(struct jambuf *buf, enum json_state state)
+{
+#define A(ASSERTION) if (!(ASSERTION)) abort()
+	A(buf->json_state_index > 0);
+	A(buf->json_states[buf->json_state_index - 1] == state);
+#undef A
+}
+
+size_t jam_object_start(struct jambuf *buf)
+{
+	assert_jambuf(buf);
+	size_t n = 0;
+
+	if (buf->separator) {
+		n += jam_string(buf, ", ");
+		buf->separator = false;
+	}
+	if (buf->json) {
+		n += jam_string(buf, "{");
+		json_push_state(buf, JSON_OBJECT);
+	}
+	return n;
+}
+
+size_t jam_object_end(struct jambuf *buf)
+{
+	assert_jambuf(buf);
+	size_t n = 0;
+	if (buf->json) {
+		json_pop_state(buf, JSON_OBJECT);
+		n += jam_string(buf, "}");
+	}
+	buf->separator = true;
+	return n;
+}
+
+size_t jam_array_start(struct jambuf *buf)
+{
+	assert_jambuf(buf);
+	size_t n = 0;
+
+	if (buf->separator) {
+		n += jam_string(buf, ", ");
+		buf->separator = false;
+	}
+	if (buf->json) {
+		n += jam_string(buf, "[");
+		json_push_state(buf, JSON_ARRAY);
+	}
+	return n;
+}
+
+size_t jam_array_end(struct jambuf *buf)
+{
+	assert_jambuf(buf);
+	size_t n = 0;
+	if (buf->json) {
+		json_pop_state(buf, JSON_ARRAY);
+		n += jam_string(buf, "]");
+	}
+	buf->separator = true;
+	return n;
+}
+
+size_t jam_field_start(struct jambuf *buf, const char *name)
+{
+	assert_jambuf(buf);
+	size_t n = 0;
+	if (buf->separator) {
+		n += jam_string(buf, ", ");
+		buf->separator = false;
+	}
+	if (buf->json) {
+		assert_json_state(buf, JSON_OBJECT);
+		n += jam_value_string(buf, "%s", name);
+		n += jam_string(buf, ": ");
+		json_push_state(buf, JSON_FIELD);
+	} else {
+		n += jam(buf, "%s: ", name);
+	}
+	return n;
+}
+
+size_t jam_field_end(struct jambuf *buf)
+{
+	assert_jambuf(buf);
+	size_t n = 0;
+	if (buf->json) {
+		json_pop_state(buf, JSON_FIELD);
+	}
+	buf->separator = true;
+	return n;
+}
+
+size_t jam_value_string(struct jambuf *buf, const char *format, ...)
+{
+	va_list ap;
+	size_t n = 0;
+
+	assert_jambuf(buf);
+
+	va_start(ap, format);
+	JAMBUF(buf2) {
+		n += jam_va_list(buf2, format, ap);
+		if (buf->json) {
+			n += jam_char(buf, '"');
+			n += jam_json_quoted_hunk(buf, jambuf_as_shunk(buf2));
+			n += jam_char(buf, '"');
+		} else{
+			n += jam_jambuf(buf, buf2);
+		}
+	}
+	va_end(ap);
+
+	return n;
+}
