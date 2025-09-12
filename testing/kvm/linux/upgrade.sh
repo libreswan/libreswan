@@ -31,10 +31,10 @@ done
 :
 
 cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}.${VERSION_ID} )
+mkdir -p ${cachedir}
 dnf config-manager setopt keepcache=1
 dnf config-manager setopt cachedir=${cachedir}
-
-#dnf config-manager --save --setopt=makecache=0
+dnf config-manager setopt system_cachedir=${cachedir}
 
 :
 : give network time to come online!
