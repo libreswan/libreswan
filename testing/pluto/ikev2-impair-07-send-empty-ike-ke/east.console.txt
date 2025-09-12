@@ -16,7 +16,7 @@ initdone
 east #
  grep -e "^[^|].* #[0-9]*:" /tmp/pluto.log | grep -v proposal
 "westnet-eastnet-ipv4-psk-ikev2" #1: processing IKE_SA_INIT request from 192.1.2.45:UDP/500 containing SA,KE,Ni,N(IKEV2_FRAGMENTATION_SUPPORTED),N(NAT_DETECTION_SOURCE_IP),N(NAT_DETECTION_DESTINATION_IP)
-"westnet-eastnet-ipv4-psk-ikev2" #1: KE has 0 byte DH public value; 64 required
+"westnet-eastnet-ipv4-psk-ikev2" #1: initiator IKE_SA_INIT KE payload is 0 bytes; 64 required
 "westnet-eastnet-ipv4-psk-ikev2" #1: responding to IKE_SA_INIT message (ID 0) from 192.1.2.45:500 with unencrypted notification INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state UNSECURED_R
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (larval unsecured IKE SA responder)

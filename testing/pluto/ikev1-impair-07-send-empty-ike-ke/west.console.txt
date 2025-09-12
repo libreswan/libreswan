@@ -54,7 +54,7 @@ west #
 "westnet-eastnet-ipv4-psk" #2: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk" #2: sent Main Mode request
 "westnet-eastnet-ipv4-psk" #2: sent Main Mode I2
-"westnet-eastnet-ipv4-psk" #2: KE has 0 byte DH public value; 256 required
+"westnet-eastnet-ipv4-psk" #2: responder IDPROT KE payload is 0 bytes; 256 required
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
 "westnet-eastnet-ipv4-psk" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
