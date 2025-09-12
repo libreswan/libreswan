@@ -568,6 +568,10 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct logger *logger = ike->sa.logger;
 	PEXPECT(logger, null_child == NULL);
 
+	if (!PEXPECT(logger, next_ikev2_ike_intermediate_exchange(ike))) {
+		return STF_INTERNAL_ERROR;
+	}
+
 	natify_ikev2_ike_responder_endpoints(ike, md);
 
 	/*
@@ -580,12 +584,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	 */
 
 	/* save the most recent ID */
-
 	ike->sa.st_v2_ike_intermediate.id = md->hdr.isa_msgid;
-	if (ike->sa.st_v2_ike_intermediate.id > 2/*magic!*/) {
-		llog_sa(RC_LOG, ike, "too many IKE_INTERMEDIATE exchanges");
-		return STF_FATAL;
-	}
 
 	/*
 	 * Now that the payload has been decrypted, perform the
@@ -600,10 +599,6 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
-
-	if (!next_ikev2_ike_intermediate_exchange(ike)) {
-		return STF_INTERNAL_ERROR;
-	}
 
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
