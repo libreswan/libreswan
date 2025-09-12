@@ -1589,12 +1589,13 @@ kvmplutotest	ikev2-tcp-05-transport-mode		wip	github/1133
 kvmplutotest	ikev2-udp-05-transport-mode 		good
 
 # Intermediary Exchange
-kvmplutotest	ikev2-intermediate-01-addke-none-rsa		good
-kvmplutotest	ikev2-intermediate-01-addke-none-psk		good
-kvmplutotest	ikev2-intermediate-03-unsolicited		good
-kvmplutotest	ikev2-intermediate-04-addke-modp8192		good
-kvmplutotest	ikev2-intermediate-04-addke-ml-kem-768		good
-kvmplutotest	ikev2-intermediate-05-addke-modp8192-ml-kem-768	good
+kvmplutotest	ikev2-intermediate-01-addke-none-rsa				good
+kvmplutotest	ikev2-intermediate-01-addke-none-psk				good
+kvmplutotest	ikev2-intermediate-03-unsolicited				good
+kvmplutotest	ikev2-intermediate-04-addke-modp8192				good
+kvmplutotest	ikev2-intermediate-04-addke-ml-kem-768				good
+kvmplutotest	ikev2-intermediate-05-addke-modp8192-ml-kem-768			good
+kvmplutotest	ikev2-intermediate-06-addke2-dh19-addke4-none-addke6-dh20	good
 
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good
