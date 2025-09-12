@@ -552,6 +552,7 @@ static void test_ike(struct logger *logger)
 	ike(addke && ike_version == IKEv2, "aes;modp2048-modp2048");
 	ike(addke && ike_version == IKEv2, "aes;addke1=modp2048");
 	ike(ike_version == IKEv2, "aes-sha2;prf=sha1;kem=dh20"); /*additive*/
+	ike(false, "kem=dh20"); /* missing encrypt */
 
 #undef ike
 }
