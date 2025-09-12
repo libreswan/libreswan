@@ -1181,8 +1181,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	ldbg(ike->sa.logger, "ikev2 parent inR1: calculating g^{xy} in order to send I2");
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		/*
 		 * XXX: Initiator - so this code will not trigger a
 		 * notify.  Since packet isn't trusted, should it be

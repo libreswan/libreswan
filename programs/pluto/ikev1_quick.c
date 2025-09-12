@@ -150,11 +150,9 @@ const struct kem_desc *ikev1_quick_pfs(const struct child_proposals proposals)
  */
 
 static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest *md,
-				       chunk_t *dest, const char *val_name,
 				       const char *msg_name)
 {
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
-
 	if (ke_pd == NULL) {
 		if (child->sa.st_pfs_kem != NULL) {
 			llog(RC_LOG, child->sa.logger,
@@ -175,8 +173,8 @@ static v1_notification_t accept_PFS_KE(struct child_sa *child, struct msg_digest
 			     msg_name);
 			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
-		if (!unpack_KE(dest, val_name, child->sa.st_pfs_kem,
-			       ke_pd, child->sa.logger)) {
+		if (!extract_KE(&child->sa, child->sa.st_pfs_kem, md)) {
+			/* already logged */
 			return v1N_INVALID_KEY_INFORMATION;
 		}
 		return v1N_NOTHING_WRONG;
@@ -1398,8 +1396,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_ni, "Ni"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gi,
-					     "Gi", "Quick Mode I1"));
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, "Quick Mode I1"));
 
 	passert(child->sa.st_pfs_kem != &unset_group);
 
@@ -1757,8 +1754,7 @@ stf_status quick_inR1_outI2(struct state *child_sa, struct msg_digest *md)
 	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(child->sa.logger, md, &child->sa.st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, &child->sa.st_gr, "Gr",
-					     "Quick Mode R1"));
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(child, md, "Quick Mode R1"));
 
 	if (child->sa.st_pfs_kem != NULL) {
 		/* set up DH calculation */
