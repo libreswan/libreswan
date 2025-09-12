@@ -282,10 +282,25 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    shunk_t alg_str);
 
 /*
- * Check that encrypt==AEAD and/or integ==none don't contradict.
+ * Post parsing checks that the proposal is ok (yea *_ok() is a pretty
+ * lame naming schema).
  */
+
+/* encrypt==AEAD and/or integ==none are consistent */
 bool proposal_aead_none_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal);
+
+/* proposal has at least one expected transform */
+bool proposal_transform_ok(struct proposal_parser *parser,
+			   const struct proposal *proposal,
+			   enum proposal_transform transform,
+			   bool expected);
+
+/*
+ * Record a proposal error.
+ *
+ * XXX: now that there's diag_t, perhaps this can be replaced?
+ */
 
 void proposal_error(struct proposal_parser *parser,
 		    const char *message, ...) PRINTF_LIKE(2);
