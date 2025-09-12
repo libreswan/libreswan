@@ -304,6 +304,7 @@ kvmplutotest	ikev2-algo-16-newer-dh			good
 kvmplutotest	ikev2-algo-17-no-sha1-01		good
 kvmplutotest	ikev2-algo-17-chacha20_poly1305-ike-esp	good
 kvmplutotest	ikev2-algo-18-ike-null			good
+kvmplutotest	ikev2-algo-19-ike-aes-kem-ml-kem	wip	github/2368
 kvmplutotest	xfrm-algo-aes_gcm-01			good
 kvmplutotest	xfrm-algo-aes_gcm-02			good
 kvmplutotest	xfrm-algo-aes_gcm-03			good
