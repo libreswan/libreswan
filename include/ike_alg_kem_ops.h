@@ -60,9 +60,12 @@ struct kem_ops {
 				  chunk_t *responder_ke,
 				  struct logger *logger) MUST_USE_RESULT;
 
-	diag_t (*kem_decapsulate)(struct kem_initiator *initiator,
+	diag_t (*kem_decapsulate)(const struct kem_desc *kem,
+				  SECKEYPrivateKey *initiator_private_key,
 				  shunk_t responder_ke,
-				  struct logger *logger);
+				  PK11SymKey**shared_key,
+				  struct logger *logger) MUST_USE_RESULT;
+
 };
 
 extern const struct kem_ops ike_alg_kem_ecp_nss_ops;

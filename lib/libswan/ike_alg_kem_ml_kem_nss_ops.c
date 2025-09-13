@@ -166,22 +166,24 @@ static diag_t nss_ml_kem_encapsulate(const struct kem_desc *kem,
 	return d;
 }
 
-static diag_t nss_ml_kem_decapsulate(struct kem_initiator *initiator,
+static diag_t nss_ml_kem_decapsulate(const struct kem_desc *kem UNUSED,
+				     SECKEYPrivateKey *initiator_private_key,
 				     shunk_t responder_ke,
+				     PK11SymKey**shared_key,
 				     struct logger *logger UNUSED)
 {
-	SECItem responder_ke_item = same_shunk_as_secitem(responder_ke, siBuffer);
-	SECStatus status = PK11_Decapsulate(initiator->internal.private_key,
-					    &responder_ke_item,
+	SECItem nss_ke = same_shunk_as_secitem(responder_ke, siBuffer);
+	SECStatus status = PK11_Decapsulate(initiator_private_key, &nss_ke,
 					    CKM_HKDF_DERIVE,
 					    PK11_ATTR_SESSION | PK11_ATTR_INSENSITIVE,
 					    CKF_DERIVE,
-					    &initiator->shared_key);
+					    shared_key);
 	if (status != SECSuccess) {
 		return diag_nss_error("decapsulating %s() responder KE", __func__);
 	}
 
-	symkey_newref(logger, "initiator-shared-key", initiator->shared_key);
+	/* tell accounting that there's a new key on the scene */
+	symkey_newref(logger, "initiator-shared-key", (*shared_key));
 	return NULL;
 }
 

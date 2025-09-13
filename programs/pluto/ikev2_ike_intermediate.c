@@ -394,8 +394,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 			return STF_FATAL;
 		}
 		if (LDBGP(DBG_BASE, logger)) {
+			shunk_t ke = kem_initiator_ke(task->initiator);
 			LDBG_log(logger, "initiator ADDKE:");
-			LDBG_hunk(logger, task->initiator->ke);
+			LDBG_hunk(logger, ke);
 		}
 	}
 
@@ -420,7 +421,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (task->initiator != NULL) {
-		if (!emit_v2KE(task->initiator->ke, task->initiator->kem, request.pbs)) {
+		if (!emit_v2KE(kem_initiator_ke(task->initiator),
+			       task->exchange.addke.kem,
+			       request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -876,7 +879,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 {
 	if (task->initiator != NULL) {
 		shunk_t responder_ke = null_shunk;
-		if (!extract_ike_intermediate_v2KE(task->initiator->kem, md,
+		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
 						   &responder_ke, logger)) {
 			/* already logged */
 			return STF_FATAL;
@@ -897,7 +900,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 		PK11SymKey *skeyseed =
 			ikev2_IKE_INTERMEDIATE_kem_skeyseed(task->prf,
 							    /*old*/task->d,
-							    task->initiator->shared_key,
+							    kem_initiator_shared_key(task->initiator),
 							    task->ni, task->nr,
 							    logger);
 		ldbg(logger, "ADDKE: initiator calculating KEYMAT using prf %s",

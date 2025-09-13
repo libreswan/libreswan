@@ -23,6 +23,29 @@
 #include "passert.h"
 #include "lswalloc.h"
 
+struct kem_initiator {
+	/* set by crypt_kem_key_gen() */
+	const struct kem_desc *kem;
+	shunk_t ke;
+	/* set by crypt_kem_decapsulate() */
+	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
+	/* internal use only */
+	struct {
+		SECKEYPrivateKey *private_key;
+		SECKEYPublicKey *public_key;
+	} internal;
+};
+
+shunk_t kem_initiator_ke(struct kem_initiator *initiator)
+{
+	return initiator->ke;
+}
+
+PK11SymKey *kem_initiator_shared_key(struct kem_initiator *initiator)
+{
+	return initiator->shared_key;
+}
+
 struct kem_responder {
 	/* set by crypt_kem_encapsulate() */
 	const struct kem_desc *kem;
@@ -118,7 +141,11 @@ diag_t kem_initiator_decapsulate(struct kem_initiator *initiator,
 	PASSERT(logger, responder_ke.len == initiator->kem->responder_bytes);
 	diag_t d;
 	if (initiator->kem->kem_ops->kem_decapsulate != NULL) {
-		d = initiator->kem->kem_ops->kem_decapsulate(initiator, responder_ke, logger);
+		d = initiator->kem->kem_ops->kem_decapsulate(initiator->kem,
+							     initiator->internal.private_key,
+							     responder_ke,
+							     &initiator->shared_key,
+							     logger);
 	} else {
 		d = initiator->kem->kem_ops->calc_shared_secret(initiator->kem,
 								initiator->internal.private_key,
