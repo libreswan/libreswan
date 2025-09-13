@@ -39,6 +39,9 @@ struct msg_digest;
 struct logger;
 struct ike_sa;
 struct child_sa;
+struct kem_initiator;
+struct kem_responder;
+enum sa_role;
 
 /*
  * The DH secret (opaque, but we all know it is implemented using
@@ -46,11 +49,16 @@ struct child_sa;
  */
 struct dh_local_secret;
 
-struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *group, struct logger *logger);
+struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *group,
+					     enum sa_role role,
+					     shunk_t initiator_ke,
+					     struct logger *logger);
+
 shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret);
 const struct kem_desc *dh_local_secret_desc(struct dh_local_secret *local_secret);
 
-struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_secret, where_t where);
+struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_secret,
+					       where_t where);
 void dh_local_secret_delref(struct dh_local_secret **local_secret, where_t where);
 
 /*

@@ -77,8 +77,8 @@ struct ikev2_task {
 
 void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logger)
 {
-	free_kem_initiator(&(*task)->initiator, logger);
-	free_kem_responder(&(*task)->responder, logger);
+	pfree_kem_initiator(&(*task)->initiator, logger);
+	pfree_kem_responder(&(*task)->responder, logger);
 	free_chunk_content(&(*task)->ni);
 	free_chunk_content(&(*task)->nr);
 	symkey_delref(logger, "d", &(*task)->d);
@@ -386,15 +386,17 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 
 	if (task->exchange.addke.kem != NULL &&
 	    task->exchange.addke.kem != &ike_alg_kem_none) {
-		diag_t d = crypt_kem_key_gen(task->exchange.addke.kem, &task->initiator, logger);
+		diag_t d = kem_initiator_key_gen(task->exchange.addke.kem,
+						 &task->initiator, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE key generation failed: %s", str_diag(d));
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
 		if (LDBGP(DBG_BASE, logger)) {
+			shunk_t ke = kem_initiator_ke(task->initiator);
 			LDBG_log(logger, "initiator ADDKE:");
-			LDBG_hunk(logger, task->initiator->ke);
+			LDBG_hunk(logger, ke);
 		}
 	}
 
@@ -419,7 +421,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (task->initiator != NULL) {
-		if (!emit_v2KE(task->initiator->ke, task->initiator->kem, request.pbs)) {
+		if (!emit_v2KE(kem_initiator_ke(task->initiator),
+			       task->exchange.addke.kem,
+			       request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -638,17 +642,17 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 			LDBG_hunk(logger, initiator_ke);
 		}
 
-		diag_t d = crypt_kem_encapsulate(task->exchange.addke.kem, initiator_ke,
-						 &task->responder,
-						 logger);
+		diag_t d = kem_responder_encapsulate(task->exchange.addke.kem, initiator_ke,
+						     &task->responder, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE encapsulate failed: %s", str_diag(d));
 			pfree_diag(&d);
 			return STF_FATAL;
 		}
 		if (LDBGP(DBG_BASE, logger)) {
+			shunk_t ke = kem_responder_ke(task->responder);
 			LDBG_log(logger, "ADDKE: responder KE:");
-			LDBG_hunk(logger, task->responder->ke);
+			LDBG_hunk(logger, ke);
 		}
 
 		ldbg(logger, "ADDKE: responder calculating skeyseed using prf %s",
@@ -656,7 +660,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		PK11SymKey *skeyseed =
 			ikev2_IKE_INTERMEDIATE_kem_skeyseed(task->prf,
 							    /*old*/task->d,
-							    task->responder->shared_key,
+							    kem_responder_shared_key(task->responder),
 							    task->ni, task->nr,
 							    logger);
 		ldbg(logger, "ADDKE: responder calculating KEYMAT using prf %s",
@@ -741,7 +745,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (task->responder != NULL) {
-		if (!emit_v2KE(task->responder->ke, task->exchange.addke.kem, response.pbs)) {
+		if (!emit_v2KE(kem_responder_ke(task->responder),
+			       task->exchange.addke.kem,
+			       response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -873,7 +879,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 {
 	if (task->initiator != NULL) {
 		shunk_t responder_ke = null_shunk;
-		if (!extract_ike_intermediate_v2KE(task->initiator->kem, md,
+		if (!extract_ike_intermediate_v2KE(task->exchange.addke.kem, md,
 						   &responder_ke, logger)) {
 			/* already logged */
 			return STF_FATAL;
@@ -882,7 +888,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 			LDBG_log(logger, "ADDKE: decapsulating using responder KE:");
 			LDBG_hunk(logger, responder_ke);
 		}
-		diag_t d = crypt_kem_decapsulate(task->initiator, responder_ke, logger);
+		diag_t d = kem_initiator_decapsulate(task->initiator, responder_ke, logger);
 		if (d != NULL) {
 			llog(RC_LOG, logger, "IKE_INTERMEDIATE decapsulate failed: %s", str_diag(d));
 			pfree_diag(&d);
@@ -894,7 +900,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 		PK11SymKey *skeyseed =
 			ikev2_IKE_INTERMEDIATE_kem_skeyseed(task->prf,
 							    /*old*/task->d,
-							    task->initiator->shared_key,
+							    kem_initiator_shared_key(task->initiator),
 							    task->ni, task->nr,
 							    logger);
 		ldbg(logger, "ADDKE: initiator calculating KEYMAT using prf %s",

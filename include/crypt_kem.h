@@ -24,51 +24,31 @@
 
 struct logger;
 struct kem_desc;
+struct kem_responder;
+struct kem_initiator;
 
-struct kem_initiator {
-	/* set by crypt_kem_key_gen() */
-	const struct kem_desc *kem;
-	shunk_t ke;
-	/* set by crypt_kem_decapsulate() */
-	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
-	/* internal use only */
-	struct {
-		SECKEYPrivateKey *private_key;
-		SECKEYPublicKey *public_key;
-	} internal;
-};
-
-struct kem_responder {
-	/* set by crypt_kem_encapsulate() */
-	const struct kem_desc *kem;
-	shunk_t ke;
-	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
-	/* internal use only */
-	struct {
-		/* only used by legacy code, may be NULL, do not touch */
-		SECKEYPrivateKey *private_key;
-		SECKEYPublicKey *public_key;
-		chunk_t ke;
-	} internal;
-};
-
-diag_t crypt_kem_key_gen(const struct kem_desc *kem,
-			 struct kem_initiator **kemk,
-			 struct logger *logger);
-
-diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
-			     shunk_t initiator_ke,
-			     struct kem_responder **responder,
+diag_t kem_initiator_key_gen(const struct kem_desc *kem,
+			     struct kem_initiator **kemk,
 			     struct logger *logger);
 
-diag_t crypt_kem_decapsulate(struct kem_initiator *kemk,
-			     shunk_t responder_ke,
-			     struct logger *logger);
+diag_t kem_responder_encapsulate(const struct kem_desc *kem,
+				 shunk_t initiator_ke,
+				 struct kem_responder **responder,
+				 struct logger *logger);
 
-void free_kem_initiator(struct kem_initiator **initiator,
-			const struct logger *logger);
+shunk_t kem_initiator_ke(struct kem_initiator *initiator);
+shunk_t kem_responder_ke(struct kem_responder *responder);
+PK11SymKey *kem_initiator_shared_key(struct kem_initiator *initiator);
+PK11SymKey *kem_responder_shared_key(struct kem_responder *responder);
 
-void free_kem_responder(struct kem_responder **responder,
-			const struct logger *logger);
+diag_t kem_initiator_decapsulate(struct kem_initiator *kemk,
+				 shunk_t responder_ke,
+				 struct logger *logger);
+
+void pfree_kem_initiator(struct kem_initiator **initiator,
+			 const struct logger *logger);
+
+void pfree_kem_responder(struct kem_responder **responder,
+			 const struct logger *logger);
 
 #endif

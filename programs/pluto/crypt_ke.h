@@ -27,6 +27,8 @@
 #ifndef CRYPT_KE_H
 #define CRYPT_KE_H
 
+struct kem_initiator;
+
 typedef stf_status (ke_and_nonce_cb)(struct state *st, struct msg_digest *md,
 				     struct dh_local_secret *local_secret,
 				     chunk_t *nonce/*steal*/);

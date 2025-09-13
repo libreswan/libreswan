@@ -23,9 +23,56 @@
 #include "passert.h"
 #include "lswalloc.h"
 
-diag_t crypt_kem_key_gen(const struct kem_desc *kem,
-			 struct kem_initiator **initiator,
-			 struct logger *logger)
+struct kem_initiator {
+	/* set by crypt_kem_key_gen() */
+	const struct kem_desc *kem;
+	shunk_t ke;
+	/* set by crypt_kem_decapsulate() */
+	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
+	/* internal use only */
+	struct {
+		SECKEYPrivateKey *private_key;
+		SECKEYPublicKey *public_key;
+	} internal;
+};
+
+shunk_t kem_initiator_ke(struct kem_initiator *initiator)
+{
+	return initiator->ke;
+}
+
+PK11SymKey *kem_initiator_shared_key(struct kem_initiator *initiator)
+{
+	return initiator->shared_key;
+}
+
+struct kem_responder {
+	/* set by crypt_kem_encapsulate() */
+	const struct kem_desc *kem;
+	shunk_t ke;
+	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
+	/* internal use only */
+	struct {
+		/* only used by legacy code, may be NULL, do not touch */
+		SECKEYPrivateKey *private_key;
+		SECKEYPublicKey *public_key;
+		chunk_t ke;
+	} internal;
+};
+
+shunk_t kem_responder_ke(struct kem_responder *responder)
+{
+	return responder->ke;
+}
+
+PK11SymKey *kem_responder_shared_key(struct kem_responder *responder)
+{
+	return responder->shared_key;
+}
+
+diag_t kem_initiator_key_gen(const struct kem_desc *kem,
+			     struct kem_initiator **initiator,
+			     struct logger *logger)
 {
 	(*initiator) = alloc_thing(struct kem_initiator, "kem-initiator");
 	(*initiator)->kem = kem;
@@ -40,10 +87,10 @@ diag_t crypt_kem_key_gen(const struct kem_desc *kem,
 	return NULL;
 }
 
-diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
-			     shunk_t initiator_ke,
-			     struct kem_responder **responder,
-			     struct logger *logger)
+diag_t kem_responder_encapsulate(const struct kem_desc *kem,
+				 shunk_t initiator_ke,
+				 struct kem_responder **responder,
+				 struct logger *logger)
 {
 	PASSERT(logger, initiator_ke.len == kem->initiator_bytes);
 	(*responder) = alloc_thing(struct kem_responder, "kem-responder");
@@ -51,7 +98,15 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 
 	diag_t d;
 	if (kem->kem_ops->kem_encapsulate != NULL) {
-		d = kem->kem_ops->kem_encapsulate((*responder), initiator_ke, logger);
+		d = kem->kem_ops->kem_encapsulate(kem, initiator_ke,
+						  &(*responder)->shared_key,
+						  &(*responder)->internal.ke,
+						  logger);
+		if (d != NULL) {
+			pfree_kem_responder(responder, logger);
+			return d;
+		}
+		(*responder)->ke = HUNK_AS_SHUNK((*responder)->internal.ke);
 	} else {
 		kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key, &(*responder)->internal.public_key, logger);
 		PASSERT(logger, (*responder)->internal.private_key != NULL);
@@ -63,14 +118,14 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 						     &(*responder)->shared_key,
 						     logger);
 		if (d != NULL) {
-			free_kem_responder(responder, logger);
+			pfree_kem_responder(responder, logger);
 			return d;
 		}
 		(*responder)->ke = kem->kem_ops->local_secret_ke(kem, (*responder)->internal.public_key);
 	}
 
 	if (d != NULL) {
-		free_kem_responder(responder, logger);
+		pfree_kem_responder(responder, logger);
 		return d;
 	}
 
@@ -79,14 +134,18 @@ diag_t crypt_kem_encapsulate(const struct kem_desc *kem,
 	return NULL;
 }
 
-diag_t crypt_kem_decapsulate(struct kem_initiator *initiator,
-			     shunk_t responder_ke,
-			     struct logger *logger)
+diag_t kem_initiator_decapsulate(struct kem_initiator *initiator,
+				 shunk_t responder_ke,
+				 struct logger *logger)
 {
 	PASSERT(logger, responder_ke.len == initiator->kem->responder_bytes);
 	diag_t d;
 	if (initiator->kem->kem_ops->kem_decapsulate != NULL) {
-		d = initiator->kem->kem_ops->kem_decapsulate(initiator, responder_ke, logger);
+		d = initiator->kem->kem_ops->kem_decapsulate(initiator->kem,
+							     initiator->internal.private_key,
+							     responder_ke,
+							     &initiator->shared_key,
+							     logger);
 	} else {
 		d = initiator->kem->kem_ops->calc_shared_secret(initiator->kem,
 								initiator->internal.private_key,
@@ -104,8 +163,8 @@ diag_t crypt_kem_decapsulate(struct kem_initiator *initiator,
 	return NULL;
 }
 
-void free_kem_initiator(struct kem_initiator **initiator,
-			const struct logger *logger)
+void pfree_kem_initiator(struct kem_initiator **initiator,
+			 const struct logger *logger)
 {
 	if (*initiator == NULL) {
 		return;
@@ -117,8 +176,8 @@ void free_kem_initiator(struct kem_initiator **initiator,
 	pfreeany((*initiator));
 }
 
-void free_kem_responder(struct kem_responder **responder,
-			const struct logger *logger)
+void pfree_kem_responder(struct kem_responder **responder,
+			 const struct logger *logger)
 {
 	if (*responder == NULL) {
 		return;
