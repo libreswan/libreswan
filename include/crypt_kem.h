@@ -24,6 +24,7 @@
 
 struct logger;
 struct kem_desc;
+struct kem_responder;
 
 struct kem_initiator {
 	/* set by crypt_kem_key_gen() */
@@ -38,20 +39,6 @@ struct kem_initiator {
 	} internal;
 };
 
-struct kem_responder {
-	/* set by crypt_kem_encapsulate() */
-	const struct kem_desc *kem;
-	shunk_t ke;
-	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
-	/* internal use only */
-	struct {
-		/* only used by legacy code, may be NULL, do not touch */
-		SECKEYPrivateKey *private_key;
-		SECKEYPublicKey *public_key;
-		chunk_t ke;
-	} internal;
-};
-
 diag_t kem_initiator_key_gen(const struct kem_desc *kem,
 			     struct kem_initiator **kemk,
 			     struct logger *logger);
@@ -60,6 +47,9 @@ diag_t kem_responder_encapsulate(const struct kem_desc *kem,
 				 shunk_t initiator_ke,
 				 struct kem_responder **responder,
 				 struct logger *logger);
+
+shunk_t kem_responder_ke(struct kem_responder *responder);
+PK11SymKey *kem_responder_shared_key(struct kem_responder *responder);
 
 diag_t kem_initiator_decapsulate(struct kem_initiator *kemk,
 				 shunk_t responder_ke,

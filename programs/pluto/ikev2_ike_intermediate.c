@@ -647,8 +647,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 			return STF_FATAL;
 		}
 		if (LDBGP(DBG_BASE, logger)) {
+			shunk_t ke = kem_responder_ke(task->responder);
 			LDBG_log(logger, "ADDKE: responder KE:");
-			LDBG_hunk(logger, task->responder->ke);
+			LDBG_hunk(logger, ke);
 		}
 
 		ldbg(logger, "ADDKE: responder calculating skeyseed using prf %s",
@@ -656,7 +657,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		PK11SymKey *skeyseed =
 			ikev2_IKE_INTERMEDIATE_kem_skeyseed(task->prf,
 							    /*old*/task->d,
-							    task->responder->shared_key,
+							    kem_responder_shared_key(task->responder),
 							    task->ni, task->nr,
 							    logger);
 		ldbg(logger, "ADDKE: responder calculating KEYMAT using prf %s",
@@ -741,7 +742,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	}
 
 	if (task->responder != NULL) {
-		if (!emit_v2KE(task->responder->ke, task->exchange.addke.kem, response.pbs)) {
+		if (!emit_v2KE(kem_responder_ke(task->responder),
+			       task->exchange.addke.kem,
+			       response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}

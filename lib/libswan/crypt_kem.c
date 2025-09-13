@@ -23,6 +23,30 @@
 #include "passert.h"
 #include "lswalloc.h"
 
+struct kem_responder {
+	/* set by crypt_kem_encapsulate() */
+	const struct kem_desc *kem;
+	shunk_t ke;
+	PK11SymKey *shared_key; /* aka SK(N) aka shared-secret */
+	/* internal use only */
+	struct {
+		/* only used by legacy code, may be NULL, do not touch */
+		SECKEYPrivateKey *private_key;
+		SECKEYPublicKey *public_key;
+		chunk_t ke;
+	} internal;
+};
+
+shunk_t kem_responder_ke(struct kem_responder *responder)
+{
+	return responder->ke;
+}
+
+PK11SymKey *kem_responder_shared_key(struct kem_responder *responder)
+{
+	return responder->shared_key;
+}
+
 diag_t kem_initiator_key_gen(const struct kem_desc *kem,
 			     struct kem_initiator **initiator,
 			     struct logger *logger)
@@ -51,7 +75,15 @@ diag_t kem_responder_encapsulate(const struct kem_desc *kem,
 
 	diag_t d;
 	if (kem->kem_ops->kem_encapsulate != NULL) {
-		d = kem->kem_ops->kem_encapsulate((*responder), initiator_ke, logger);
+		d = kem->kem_ops->kem_encapsulate(kem, initiator_ke,
+						  &(*responder)->shared_key,
+						  &(*responder)->internal.ke,
+						  logger);
+		if (d != NULL) {
+			pfree_kem_responder(responder, logger);
+			return d;
+		}
+		(*responder)->ke = HUNK_AS_SHUNK((*responder)->internal.ke);
 	} else {
 		kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key, &(*responder)->internal.public_key, logger);
 		PASSERT(logger, (*responder)->internal.private_key != NULL);

@@ -54,9 +54,11 @@ struct kem_ops {
 				     PK11SymKey **shared_secret,
 				     struct logger *logger) MUST_USE_RESULT;
 
-	diag_t (*kem_encapsulate)(struct kem_responder *responder,
+	diag_t (*kem_encapsulate)(const struct kem_desc *kem,
 				  shunk_t initiator_ke,
-				  struct logger *logger);
+				  PK11SymKey **shared_key,
+				  chunk_t *responder_ke,
+				  struct logger *logger) MUST_USE_RESULT;
 
 	diag_t (*kem_decapsulate)(struct kem_initiator *initiator,
 				  shunk_t responder_ke,

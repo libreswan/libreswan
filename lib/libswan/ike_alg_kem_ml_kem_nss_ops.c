@@ -52,22 +52,22 @@ static void nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
     PASSERT(logger, (*public_key) != NULL);
 }
 
-static shunk_t nss_ml_kem_local_secret_ke(const struct kem_desc *kem UNUSED,
+static shunk_t nss_ml_kem_local_secret_ke(const struct kem_desc *kem,
 					  const SECKEYPublicKey *public_key)
 {
-#if 0
-	passert(local_pubk->u.kyber.publicValue.len == group->bytes);
-#endif
+	/* this only works on the initiator */
+	passert(public_key->u.kyber.publicValue.len == kem->initiator_bytes);
 	return shunk2(public_key->u.kyber.publicValue.data,
 		      public_key->u.kyber.publicValue.len);
 }
 
-static diag_t nss_ml_kem_encapsulate_1(struct kem_responder *responder,
+static diag_t nss_ml_kem_encapsulate_1(const struct kem_desc *kem,
 				       shunk_t initiator_ke,
+				       PK11SymKey **shared_key,
+				       chunk_t *responder_ke,
 				       struct logger *logger,
 				       PRArenaPool *arena)
 {
-	const struct kem_desc *kem = responder->kem;
 	void *password_context = lsw_nss_get_password_context(logger);
 	SECStatus status;
 
@@ -108,12 +108,12 @@ static diag_t nss_ml_kem_encapsulate_1(struct kem_responder *responder,
 		}
 	}
 
-	SECItem *responder_ke; /* must SECITEM_FreeItem(PR_TRUE); */
+	SECItem *nss_ke = NULL; /* must SECITEM_FreeItem(PR_TRUE); */
 	status = PK11_Encapsulate(initiator_pubkey,
 				  CKM_HKDF_DERIVE, PK11_ATTR_SESSION | PK11_ATTR_INSENSITIVE | PK11_ATTR_PUBLIC,
 				  CKF_DERIVE,
-				  &responder->shared_key,
-				  &responder_ke);
+				  shared_key,
+				  &nss_ke);
 
 	/* Destroy the imported public key */
 	PASSERT(logger, initiator_pubkey->pkcs11Slot != NULL);
@@ -121,24 +121,29 @@ static diag_t nss_ml_kem_encapsulate_1(struct kem_responder *responder,
 	PK11_FreeSlot(initiator_pubkey->pkcs11Slot);
 
 	if (status != SECSuccess) {
+		PEXPECT(logger, (*shared_key) == NULL);
+		PEXPECT(logger, nss_ke == NULL);
 		return diag_nss_error("encapsulate %s() initiator pubkey", __func__);
 	}
 
-	if (responder_ke == NULL) {
+	if (PBAD(logger, nss_ke == NULL) ||
+	    PBAD(logger, (*shared_key) == NULL)) {
 		return diag_nss_error("encapsulate %s() initiator pubkey", __func__);
 	}
 
-	symkey_newref(logger, "responder-shared-key", responder->shared_key);
+	/* let accounting know there's a new key in town */
+	symkey_newref(logger, "responder-shared-key", (*shared_key));
 
-	responder->internal.ke = clone_bytes_as_chunk(responder_ke->data, responder_ke->len, "responder-ke");
-	SECITEM_FreeItem(responder_ke, /*free-item?*/PR_TRUE);
-	responder->ke = HUNK_AS_SHUNK(responder->internal.ke);
+	(*responder_ke) = clone_secitem_as_chunk((*nss_ke), "responder-ke");
+	SECITEM_FreeItem(nss_ke, /*also-free-SECItem?*/PR_TRUE);
 
 	return NULL;
 }
 
-static diag_t nss_ml_kem_encapsulate(struct kem_responder *responder,
+static diag_t nss_ml_kem_encapsulate(const struct kem_desc *kem,
 				     shunk_t initiator_ke,
+				     PK11SymKey **shared_key,
+				     chunk_t *responder_ke,
 				     struct logger *logger)
 {
 	/*
@@ -153,7 +158,10 @@ static diag_t nss_ml_kem_encapsulate(struct kem_responder *responder,
 		return diag_nss_error("allocating %s() arena", __func__);
 	}
 
-	diag_t d = nss_ml_kem_encapsulate_1(responder, initiator_ke, logger, arena);
+	diag_t d = nss_ml_kem_encapsulate_1(kem, initiator_ke,
+					    shared_key,
+					    responder_ke,
+					    logger, arena);
 	PORT_FreeArena(arena, /*zero*/PR_TRUE);
 	return d;
 }
