@@ -55,6 +55,7 @@ Certificate:
         SSL Flags:
             Valid CA
             Trusted CA
+            Netscape Trusted CA
             User
             Trusted Client CA
         Email Flags:
