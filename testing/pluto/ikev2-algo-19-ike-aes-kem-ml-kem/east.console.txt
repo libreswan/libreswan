@@ -5,14 +5,6 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec whack --impair allow_null_none
-east #
- ipsec add algo
-"algo": added IKEv2 connection
-east #
- ../../guestbin/wait-for-pluto.sh '^".*#2: .* established'
-"algo" #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.1.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-east #
- ipsec whack --trafficstatus
-#2: "algo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+ ipsec add east
+"east": added IKEv2 connection
 east #
