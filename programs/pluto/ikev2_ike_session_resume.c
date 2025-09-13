@@ -64,13 +64,7 @@ static bool record_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike);
 static bool emit_v2N_TICKET_OPAQUE(chunk_t ticket, struct pbs_out *pbs);
 static bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike);
 
-static stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
-								 struct msg_digest *md,
-								 struct dh_local_secret *local_secret,
-								 chunk_t *nonce);
-stf_status process_v2_IKE_SESSION_RESUME_response_continue(struct state *ike_sa,
-							   struct msg_digest *md);
-
+static ke_and_nonce_cb process_v2_IKE_SESSION_RESUME_request_continue; /* type assertion */
 static ke_and_nonce_cb initiate_v2_IKE_SESSION_RESUME_request_continue;	/* type assertion */
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK;
 static ikev2_state_transition_fn process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT;

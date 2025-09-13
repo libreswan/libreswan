@@ -68,6 +68,7 @@ Certificate:
         SSL Flags:
             Valid CA
             Trusted CA
+            Netscape Trusted CA
             Trusted Client CA
         Email Flags:
         Object Signing Flags:
@@ -231,6 +232,7 @@ Certificate:
         SSL Flags:
             Valid CA
             Trusted CA
+            Netscape Trusted CA
             Trusted Client CA
         Email Flags:
         Object Signing Flags:

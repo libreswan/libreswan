@@ -34,6 +34,8 @@
 #include "unpack.h"
 #include "log.h"
 #include "packet.h"
+#include "state.h"
+#include "connections.h"
 
 /* accept_KE
  *
@@ -45,27 +47,82 @@
  *  value with zeros.
  */
 
-bool unpack_KE(chunk_t *dest, const char *val_name,
-	       const struct kem_desc *gr,
-	       struct payload_digest *ke_pd,
-	       struct logger *logger)
+bool extract_KE(struct state *st/*ike-or-child*/,
+		const struct kem_desc *kem,
+		struct msg_digest *md)
 {
-	if (ke_pd == NULL) {
-		llog(RC_LOG, logger, "KE missing");
+	const struct logger *logger = st->logger;
+
+	/*
+	 * Cross the streams, initiator expects responder's KE and
+	 * vice-versa.
+	 */
+
+	chunk_t *dest;
+	unsigned bytes;
+	const char *peer;
+	const char *name;
+
+	switch (st->st_sa_role) {
+	case SA_RESPONDER:
+		bytes = kem->initiator_bytes;
+		dest = &st->st_gi;
+		name = "Gi";
+		peer = "initiator";
+		break;
+	case SA_INITIATOR:
+		bytes = kem->responder_bytes;
+		dest = &st->st_gr;
+		name = "Gr";
+		peer = "responder";
+		break;
+	default:
+		bad_case(st->st_sa_role);
+	}
+
+	/*
+	 * basic checks
+	 */
+
+	if (PBAD(logger, kem == NULL)) {
 		return false;
 	}
-	struct pbs_in *pbs = &ke_pd->pbs;
-	if (pbs_left(pbs) != gr->bytes) {
-		llog(RC_LOG, logger,
-			    "KE has %u byte DH public value; %u required",
-			    (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
+
+	unsigned payload_nr = (st->st_ike_version == IKEv1 ? ISAKMP_NEXT_KE :
+			       ISAKMP_NEXT_v2KE);
+	const struct payload_digest *kd = md->chain[payload_nr];
+	if (kd == NULL) {
+		name_buf xn;
+		llog(RC_LOG, logger, "%s %s message missing KE payload",
+		     peer, str_enum_enum_short(&exchange_type_names, st->st_ike_version, md->hdr.isa_xchg, &xn));
 		return false;
 	}
-	replace_chunk(dest, pbs_in_left(pbs), val_name);
+
+	if (kd->next != NULL) {
+		name_buf xn;
+		llog(RC_LOG, logger, "%s %s message contains multiple KE payloads",
+		     peer, str_enum_enum_short(&exchange_type_names, st->st_ike_version, md->hdr.isa_xchg, &xn));
+		return false;
+	}
+
+	shunk_t ke = pbs_in_left(&kd->pbs);
+	if (ke.len != bytes) {
+		name_buf xn;
+		llog(RC_LOG, logger, "%s %s KE payload is %zu bytes; %u required",
+		     peer, str_enum_enum_short(&exchange_type_names, st->st_ike_version, md->hdr.isa_xchg, &xn),
+		     ke.len, bytes);
+		return false;
+	}
+
+	replace_chunk(dest, ke, name);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "DH public value received:");
-		LDBG_hunk(logger, *dest);
+		name_buf xn;
+		LDBG_log(logger, "%s %s contained %u byte KE:",
+			 peer, str_enum_enum_short(&exchange_type_names, st->st_ike_version, md->hdr.isa_xchg, &xn),
+			 bytes);
+		LDBG_hunk(logger, ke);
 	}
+
 	return true;
 }
 

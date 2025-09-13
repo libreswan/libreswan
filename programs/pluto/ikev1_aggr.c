@@ -447,8 +447,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	}
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
@@ -776,8 +775,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	check_nat_traversal_vid(ike, md);
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 

@@ -1486,8 +1486,9 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 * out.
 	 */
 	pexpect(larval_child->sa.st_oakley.ta_dh == larval_child->sa.st_pfs_kem);
-	if (!unpack_KE(&larval_child->sa.st_gr, "Gr", larval_child->sa.st_oakley.ta_dh,
-		       response_md->chain[ISAKMP_NEXT_v2KE], larval_child->sa.logger)) {
+	if (!extract_KE(&larval_child->sa,
+			larval_child->sa.st_oakley.ta_dh,
+			response_md)) {
 		/*
 		 * XXX: Initiator; need to initiate a delete exchange.
 		 */
@@ -2038,8 +2039,9 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	}
 
 	 /* KE in */
-	if (!unpack_KE(&larval_ike->sa.st_gr, "Gr", larval_ike->sa.st_oakley.ta_dh,
-		       response_md->chain[ISAKMP_NEXT_v2KE], larval_ike->sa.logger)) {
+	if (!extract_KE(&larval_ike->sa,
+			larval_ike->sa.st_oakley.ta_dh,
+			response_md)) {
 		/*
 		 * XXX: Initiator so returning this notification will
 		 * go no where.  Need to check RFC for what to do

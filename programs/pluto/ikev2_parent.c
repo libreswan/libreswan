@@ -227,8 +227,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 	}
 
 	/* ike sa init */
-	if (!unpack_KE(&st->st_gi, "Gi", accepted_dh,
-		       md->chain[ISAKMP_NEXT_v2KE], st->logger)) {
+	if (!extract_KE(st, accepted_dh, md)) {
 		/* already logged? */
 		record_v2N_response(st->logger, ike, md,
 				    v2N_INVALID_SYNTAX, empty_shunk,

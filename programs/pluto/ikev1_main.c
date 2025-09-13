@@ -656,8 +656,7 @@ stf_status main_inI2_outR2(struct state *ike_sa, struct msg_digest *md)
 	     __func__, pri_so(ike->sa.st_serialno));
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
@@ -900,8 +899,7 @@ stf_status main_inR2_outI3(struct state *ike_sa, struct msg_digest *md)
 	symkey_delref(ike->sa.logger, "enc_key", &ike->sa.st_enc_key_nss);
 
 	/* KE in */
-	if (!unpack_KE(&ike->sa.st_gr, "Gr", ike->sa.st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], ike->sa.logger)) {
+	if (!extract_KE(&ike->sa, ike->sa.st_oakley.ta_dh, md)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
