@@ -13,7 +13,9 @@ v5.4 (unreleased)
   - on Linux, prefer system's xfrm.h [Andrew Antony #2431 #2396]
     Note: old distros may need USE_XFRM_HEADER_COPY=true
 * testing:
-  - FreeBSD upgraded to 14.3 [Andrew #2341]
+  - FreeBSD test domain upgraded to 14.3 [Andrew #2341]
+  - Alpine test domain upgraded to 3.22.1 [Andrew]
+  - Debian test domain upgraded to 12.12 [Andrew]
 
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)
