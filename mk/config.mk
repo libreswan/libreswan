@@ -694,10 +694,17 @@ USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
 endif
 endif
 
-# Use a local copy of xfrm.h. This can be needed on older systems
-# that do not ship linux/xfrm.h, or when the shipped version is too
-# old. Since we ship some not-yet merged ipsec-next offload code, this
-# is currently true for basically all distro's
+# Use a local copy of xfrm.h.
+#
+# This can be needed on older systems that do not ship linux/xfrm.h,
+# or when libreswan expects header definitions only found in the
+# latest official kernel release (NOT A SNAPSHOT).  Either way, the
+# place to enable it is in linux.mk (based on the distro release) or
+# in the package file.
+#
+# DO NOT ENABLE IT HERE - in 2025/5.1 there was a SNAFU where the
+# bundled header contained experimental constants breaking systems
+# that did have up-to-date and correct headers.
 
 USE_XFRM_HEADER_COPY ?= false
 USE_XFRM_INTERFACE_IFLA_HEADER ?= false
