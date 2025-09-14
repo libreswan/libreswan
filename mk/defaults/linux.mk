@@ -32,17 +32,23 @@ endif
 #(info LINUX_VERSION_CODENAME=$(LINUX_VERSION_CODENAME))
 
 #
-# Debian derived; ubuntu derived
+# Debian derived (Ubuntu, Mint?, ...)
 #
 
 ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
   CKSUM ?= shasum
-  ifeq ($(LINUX_VERSION_CODENAME),buster) # Debian 10 (Buster); until June 2024
-    USE_NSS_KDF ?= false
+  # https://wiki.debian.org/LTS
+  ifeq ($(LINUX_VERSION_CODENAME),bullseye) # Debian 11; until June 30 2026
+    USE_ML_KEM_768 ?= false
+    USE_XFRM_HEADER_COPY ?= true
   endif
-  ifeq ($(LINUX_VERSION_CODENAME),focal)  # Ubuntu 20.04 LTS (Focal Fossa); until April 2025
-    USE_NSS_KDF ?= false
+  ifeq ($(LINUX_VERSION_CODENAME),bookworm) # Debian 12; until June 30 2028
+    USE_ML_KEM_768 ?= false
+    USE_XFRM_HEADER_COPY ?= true
+  endif
+  ifeq ($(LINUX_VERSION_CODENAME),trixie) # Debian 13; until June 30 2030
+    USE_XFRM_HEADER_COPY ?= true
   endif
 endif
 
@@ -109,7 +115,6 @@ endif
 #
 
 USE_XFRM ?= true
-USE_XFRM_HEADER_COPY ?= true
 USE_DNSSEC ?= true
 ifneq ($(USE_IPTABLES), true)
   USE_NFTABLES ?= true
@@ -121,4 +126,3 @@ USE_CAT ?= true
 
 # Linux NFLOG support
 USE_NFLOG ?= true
-

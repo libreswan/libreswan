@@ -9,6 +9,9 @@ v5.4 (unreleased)
 * config:
   - fix plutodebug=all,add-prefix [Andrew #2338]
   - fix per-connection debug= option (experimental in v5.0) [Andrew]
+* building:
+  - on Linux, prefer system's xfrm.h [Andrew Antony #2431 #2396]
+    Note: old distros may need USE_XFRM_HEADER_COPY=true
 * testing:
   - FreeBSD upgraded to 14.3 [Andrew #2341]
 
