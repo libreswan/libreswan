@@ -1027,8 +1027,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 		llog_sa(RC_LOG, ike,
 			"discarding unauthenticated INVALID_KE_PAYLOAD response to KEM %s; suggested KEM %s is not acceptable",
 			ike->sa.st_oakley.ta_dh->common.fqn,
-			str_enum_short(&oakley_group_names,
-				       sk.sk_kem, &esb));
+			str_enum_short(&ikev2_trans_type_kem_names, sk.sk_kem, &esb));
 		return STF_IGNORE;
 	}
 

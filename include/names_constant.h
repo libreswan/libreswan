@@ -52,7 +52,6 @@ extern enum_names ike_cert_type_names;
 extern enum_names oakley_enc_names;
 extern enum_names oakley_hash_names;
 extern enum_names oakley_auth_names;
-extern enum_names oakley_group_names;
 extern enum_names v1_notification_names;
 
 /* IKEv2 */

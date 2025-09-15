@@ -214,7 +214,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 		name_buf ke_esb;
 		llog(RC_LOG, st->logger,
 		     "initiator guessed wrong keying material group (%s); responding with INVALID_KE_PAYLOAD requesting %s",
-		     str_enum_short(&oakley_group_names, ke_kem, &ke_esb),
+		     str_enum_short(&ikev2_trans_type_kem_names, ke_kem, &ke_esb),
 		     accepted_kem->common.fqn);
 		pstats(invalidke_sent_u, ke_kem);
 		pstats(invalidke_sent_s, accepted_kem->ikev2_alg_id);

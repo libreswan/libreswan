@@ -35,6 +35,7 @@ struct pluto_stat {
 
 /* All statistics are totals since pluto daemon startup */
 
+#define OAKLEY_GROUP_PSTATS_ROOF PMAX(OAKLEY_GROUP_ROOF, IKEv2_KEM_ROOF)
 extern unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];

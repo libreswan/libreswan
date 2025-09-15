@@ -327,7 +327,7 @@ static bool extract_ike_intermediate_v2KE(const struct kem_desc *kem,
 		     "expecting KE for %s in IKE_INTERMEDIATE %s received KE for %s",
 		     kem->common.fqn,
 		     str_enum_short(&message_role_names, v2_msg_role(md), &rb),
-		     str_enum_short(&oakley_group_names, v2ke->payload.v2ke.isak_kem, &gb));
+		     str_enum_short(&ikev2_trans_type_kem_names, v2ke->payload.v2ke.isak_kem, &gb));
 		return false;
 	}
 

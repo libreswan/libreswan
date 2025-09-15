@@ -46,7 +46,7 @@ const struct kem_desc ike_alg_kem_modp1024 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP1024,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP1024,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP1024,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP1024,
 		},
 	},
 	.nss.modp.base = MODP_GENERATOR,
@@ -66,7 +66,7 @@ const struct kem_desc ike_alg_kem_modp1536 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP1536,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP1536,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP1536,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP1536,
 		},
 	},
 	.nss.modp.base = MODP_GENERATOR,
@@ -85,7 +85,7 @@ const struct kem_desc ike_alg_kem_modp2048 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP2048,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP2048,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP2048,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP2048,
 		},
 		.fips.approved = true,
 	},
@@ -105,7 +105,7 @@ const struct kem_desc ike_alg_kem_modp3072 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP3072,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP3072,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP3072,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP3072,
 		},
 		.fips.approved = true,
 	},
@@ -125,7 +125,7 @@ const struct kem_desc ike_alg_kem_modp4096 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP4096,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP4096,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP4096,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP4096,
 		},
 		.fips.approved = true,
 	},
@@ -145,7 +145,7 @@ const struct kem_desc ike_alg_kem_modp6144 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP6144,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP6144,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP6144,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP6144,
 		},
 		.fips.approved = true,
 	},
@@ -165,7 +165,7 @@ const struct kem_desc ike_alg_kem_modp8192 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_MODP8192,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_MODP8192,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_MODP8192,
+			[IKEv2_ALG_ID] = IKEv2_KEM_MODP8192,
 		},
 		.fips.approved = true,
 	},
@@ -185,7 +185,7 @@ const struct kem_desc ike_alg_kem_secp256r1 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_256,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_ECP_256,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_256,
+			[IKEv2_ALG_ID] = IKEv2_KEM_ECP_256,
 		},
 		.fips.approved = true,
 	},
@@ -205,7 +205,7 @@ const struct kem_desc ike_alg_kem_secp384r1 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_384,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_ECP_384,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_384,
+			[IKEv2_ALG_ID] = IKEv2_KEM_ECP_384,
 		},
 		.fips.approved = true,
 	},
@@ -225,7 +225,7 @@ const struct kem_desc ike_alg_kem_secp521r1 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_521,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_ECP_521,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_521,
+			[IKEv2_ALG_ID] = IKEv2_KEM_ECP_521,
 		},
 		.fips.approved = true,
 	},
@@ -246,7 +246,7 @@ const struct kem_desc ike_alg_kem_dh22 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH22,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_DH22,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH22,
+			[IKEv2_ALG_ID] = IKEv2_KEM_DH22,
 		},
 		.fips.approved = false, /* SP 800-56A rev 3 */
 	},
@@ -268,7 +268,7 @@ const struct kem_desc ike_alg_kem_dh23 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH23,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_DH23,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH23,
+			[IKEv2_ALG_ID] = IKEv2_KEM_DH23,
 		},
 		.fips.approved = false, /* SP 800-56A rev 3 */
 	},
@@ -290,7 +290,7 @@ const struct kem_desc ike_alg_kem_dh24 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_DH24,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_DH24,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_DH24,
+			[IKEv2_ALG_ID] = IKEv2_KEM_DH24,
 		},
 		.fips.approved = false, /* SP 800-56A rev 3 */
 	},
@@ -314,7 +314,7 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_CURVE25519,
 			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_CURVE25519,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_CURVE25519,
+			[IKEv2_ALG_ID] = IKEv2_KEM_CURVE25519,
 		},
 	},
 	.bytes = 32 /* octets */,
@@ -336,7 +336,7 @@ const struct kem_desc ike_alg_kem_ml_kem_512 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_IPSEC_ID] = -1,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_512,
+			[IKEv2_ALG_ID] = IKEv2_KEM_ML_KEM_512,
 		},
 	},
 	/* Data Size on Octets on wire */
@@ -357,7 +357,7 @@ const struct kem_desc ike_alg_kem_ml_kem_768 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_IPSEC_ID] = -1,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_768,
+			[IKEv2_ALG_ID] = IKEv2_KEM_ML_KEM_768,
 		},
 	},
 	/* Data Size on Octets on wire */
@@ -378,7 +378,7 @@ const struct kem_desc ike_alg_kem_ml_kem_1024 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_IPSEC_ID] = -1,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_ML_KEM_1024,
+			[IKEv2_ALG_ID] = IKEv2_KEM_ML_KEM_1024,
 		},
 	},
 	/* Data Size on Octets on wire */

@@ -912,7 +912,7 @@ const struct ike_alg_type ike_alg_kem = {
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
 		[IKEv1_IPSEC_ID] = &oakley_group_names,
-		[IKEv2_ALG_ID] = &oakley_group_names,
+		[IKEv2_ALG_ID] = &ikev2_trans_type_kem_names,
 	},
 	.desc_check = kem_desc_check,
 	.desc_is_ike = kem_desc_is_ike,

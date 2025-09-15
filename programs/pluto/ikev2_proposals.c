@@ -867,9 +867,9 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					if ((type == IKEv2_TRANS_TYPE_INTEG &&
 					     sentinel_transform->id == IKEv2_INTEG_NONE) ||
 					    (type == IKEv2_TRANS_TYPE_KEM &&
-					     sentinel_transform->id == OAKLEY_GROUP_NONE) ||
+					     sentinel_transform->id == IKEv2_KEM_NONE) ||
 					    (IKEv2_TRANS_TYPE_ADDKE1 <= type && type <= IKEv2_TRANS_TYPE_ADDKE7 &&
-					     sentinel_transform->id == OAKLEY_GROUP_NONE)) {
+					     sentinel_transform->id == IKEv2_KEM_NONE)) {
 						optional_transform_types |= LELEM(type);
 					}
 				}
@@ -1116,7 +1116,7 @@ static int ikev2_process_proposals(struct pbs_in *sa_payload,
 					case IKEv2_TRANS_TYPE_ADDKE5:
 					case IKEv2_TRANS_TYPE_ADDKE6:
 					case IKEv2_TRANS_TYPE_ADDKE7:
-						id = OAKLEY_GROUP_NONE;
+						id = IKEv2_KEM_NONE;
 						break;
 					default:
 						bad_case(type);
@@ -1436,7 +1436,7 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 				 * also include it in the response.
 				 */
 				impairment = impair.v2_proposal_dh;
-				none = OAKLEY_GROUP_NONE; /* always zero */
+				none = IKEv2_KEM_NONE; /* always zero */
 				break;
 			default:
 				impairment = IMPAIR_v2_TRANSFORM_NO;

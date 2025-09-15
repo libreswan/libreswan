@@ -1065,6 +1065,63 @@ enum ikev2_trans_type_integ {
 	IKEv2_INTEG_INVALID = 65536
 };
 
+/*
+ * Transform Type 4 - Key Exchange Method Transform IDs
+ *
+ * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8
+ */
+
+enum ikev2_trans_type_kem {
+#define IKEv2_KEM_FLOOR IKEv2_KEM_NONE
+	IKEv2_KEM_NONE = 0,	/* RFC 7296 */
+	IKEv2_KEM_MODP768 = 1,
+	IKEv2_KEM_MODP1024 = 2,
+	IKEv2_KEM_GP155 = 3, /* IKEv2 reserved */
+	IKEv2_KEM_GP185 = 4, /* IKEv2 reserved */
+	IKEv2_KEM_MODP1536 = 5, /* RFC 3526 */
+	IKEv2_KEM_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	IKEv2_KEM_MODP2048 = 14, /* RFC 3526 */
+	IKEv2_KEM_MODP3072 = 15, /* RFC 3526 */
+	IKEv2_KEM_MODP4096 = 16, /* RFC 3526 */
+	IKEv2_KEM_MODP6144 = 17, /* RFC 3526 */
+	IKEv2_KEM_MODP8192 = 18, /* RFC 3526 */
+	IKEv2_KEM_ECP_256 = 19, /* RFC 5903 */
+	IKEv2_KEM_ECP_384 = 20, /* RFC 5903 */
+	IKEv2_KEM_ECP_521 = 21, /* RFC 5903 */
+	IKEv2_KEM_DH22 = 22, /* RFC 5114 */
+	IKEv2_KEM_DH23 = 23, /* RFC 5114 */
+	IKEv2_KEM_DH24 = 24, /* RFC 5114 */
+	IKEv2_KEM_ECP_192 = 25, /* RFC 5114 */
+	IKEv2_KEM_ECP_224 = 26, /* RFC 5114 */
+	/* From here on, values are only valid for IKEv2 */
+	IKEv2_KEM_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
+	IKEv2_KEM_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
+	IKEv2_KEM_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
+	IKEv2_KEM_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
+	IKEv2_KEM_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
+	IKEv2_KEM_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
+
+	IKEv2_KEM_GOST3410_2012_256 = 33,	/* RFC 9385, Sec. 6.1 */
+	IKEv2_KEM_GOST3410_2012_512 = 34,	/* RFC 9385, Sec. 6.1 */
+
+	IKEv2_KEM_ML_KEM_512 = 35,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	IKEv2_KEM_ML_KEM_768 = 36,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	IKEv2_KEM_ML_KEM_1024 = 37,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+#define IKEv2_KEM_ROOF (IKEv2_KEM_ML_KEM_1024 + 1)
+
+	/* 33 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
+};
+
+extern const struct enum_names ikev2_trans_type_kem_names;
+
 enum ikev2_trans_type_esn {
 #define IKEv2_ESN_FLOOR IKEv2_ESN_NO
 	IKEv2_ESN_NO = 0,
@@ -1392,6 +1449,62 @@ enum ikev1_auth_method {
 	XAUTHRespRSARevisedEncryption = 65010,
 };
 
+/*
+ * IKEv1's oakley key method (aka DH).
+ *
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10
+ */
+
+enum oakley_group {
+#define OAKLEY_GROUP_FLOOR OAKLEY_GROUP_MODP768
+	OAKLEY_GROUP_MODP768 = 1,
+	OAKLEY_GROUP_MODP1024 = 2,
+	OAKLEY_GROUP_GP155 = 3, /* IKEv2 reserved */
+	OAKLEY_GROUP_GP185 = 4, /* IKEv2 reserved */
+	OAKLEY_GROUP_MODP1536 = 5, /* RFC 3526 */
+	OAKLEY_GROUP_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
+	OAKLEY_GROUP_MODP2048 = 14, /* RFC 3526 */
+	OAKLEY_GROUP_MODP3072 = 15, /* RFC 3526 */
+	OAKLEY_GROUP_MODP4096 = 16, /* RFC 3526 */
+	OAKLEY_GROUP_MODP6144 = 17, /* RFC 3526 */
+	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
+	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
+	OAKLEY_GROUP_ECP_521 = 21, /* RFC 5903 */
+	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
+	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
+	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
+	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
+	/* end of IKEv1; should these be deleted? */
+	OAKLEY_GROUP_BRAINPOOL_P224R1 = 27, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_BRAINPOOL_P256R1 = 28, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_BRAINPOOL_P384R1 = 29, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 - NOT FOR RFC 2409 */
+	OAKLEY_GROUP_CURVE25519 = 31,	/* RFC-ietf-ipsecme-safecurves-05 - NOT IN TABLE */
+	OAKLEY_GROUP_CURVE448 = 32,	/* RFC-ietf-ipsecme-safecurves-05 - NOT IN TABLE */
+#define OAKLEY_GROUP_ROOF (OAKLEY_GROUP_CURVE448+1)
+	/* 33 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
+};
+
+extern const struct enum_names oakley_group_names;
+
+/*
+ * IKEv1's Oakley Group Type attribute
+ * draft-ietf-ipsec-ike-01.txt appendix A
+ */
+#define OAKLEY_GROUP_TYPE_MODP 1
+#define OAKLEY_GROUP_TYPE_ECP 2
+#define OAKLEY_GROUP_TYPE_EC2N 3
+
 
 /* typedef to make our life easier */
 typedef uint16_t oakley_auth_t;
@@ -1459,68 +1572,6 @@ enum ikev2_auth_method {
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };
-
-/*	you must also touch: constants.c, crypto.c */
-/* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
-/* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
-
-#define ikev2_trans_type_kem oakley_group
-enum oakley_group {
-	OAKLEY_GROUP_NONE = 0,	/* RFC 7296 */
-	OAKLEY_GROUP_MODP768 = 1,
-	OAKLEY_GROUP_MODP1024 = 2,
-	OAKLEY_GROUP_GP155 = 3, /* IKEv2 reserved */
-	OAKLEY_GROUP_GP185 = 4, /* IKEv2 reserved */
-	OAKLEY_GROUP_MODP1536 = 5, /* RFC 3526 */
-	OAKLEY_GROUP_EC2N_2_1 = 6, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_2 = 7, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_3 = 8, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_4 = 9, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_5 = 10, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_6 = 11, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_7 = 12, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_EC2N_2_8 = 13, /* draft-ietf-ipsec-ike-ecc-groups - IKEv2 reserved */
-	OAKLEY_GROUP_MODP2048 = 14, /* RFC 3526 */
-	OAKLEY_GROUP_MODP3072 = 15, /* RFC 3526 */
-	OAKLEY_GROUP_MODP4096 = 16, /* RFC 3526 */
-	OAKLEY_GROUP_MODP6144 = 17, /* RFC 3526 */
-	OAKLEY_GROUP_MODP8192 = 18, /* RFC 3526 */
-	OAKLEY_GROUP_ECP_256 = 19, /* RFC 5903 */
-	OAKLEY_GROUP_ECP_384 = 20, /* RFC 5903 */
-	OAKLEY_GROUP_ECP_521 = 21, /* RFC 5903 */
-	OAKLEY_GROUP_DH22 = 22, /* RFC 5114 */
-	OAKLEY_GROUP_DH23 = 23, /* RFC 5114 */
-	OAKLEY_GROUP_DH24 = 24, /* RFC 5114 */
-	OAKLEY_GROUP_ECP_192 = 25, /* RFC 5114 */
-	OAKLEY_GROUP_ECP_224 = 26, /* RFC 5114 */
-	/* From here on, values are only valid for IKEv2 */
-	OAKLEY_GROUP_BRAINPOOL_P224R1 = 27, /* RFC 6932 */
-	OAKLEY_GROUP_BRAINPOOL_P256R1 = 28, /* RFC 6932 */
-	OAKLEY_GROUP_BRAINPOOL_P384R1 = 29, /* RFC 6932 */
-	OAKLEY_GROUP_BRAINPOOL_P512R1 = 30, /* RFC 6932 */
-	OAKLEY_GROUP_CURVE25519 = 31, /* RFC-ietf-ipsecme-safecurves-05 */
-	OAKLEY_GROUP_CURVE448 = 32, /* RFC-ietf-ipsecme-safecurves-05 */
-
-	OAKLEY_GROUP_GOST3410_2012_256,	/* RFC 9385, Sec. 6.1 */
-	OAKLEY_GROUP_GOST3410_2012_512,	/* RFC 9385, Sec. 6.1 */
-
-	OAKLEY_GROUP_ML_KEM_512 = 35,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	OAKLEY_GROUP_ML_KEM_768 = 36,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	OAKLEY_GROUP_ML_KEM_1024 = 37,	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-
-	OAKLEY_GROUP_PSTATS_ROOF
-
-	/* 33 - 32767 Unassigned */
-	/* 32768 - 65535 Reserved for private use */
-};
-
-/*
- * Oakley Group Type attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- */
-#define OAKLEY_GROUP_TYPE_MODP 1
-#define OAKLEY_GROUP_TYPE_ECP 2
-#define OAKLEY_GROUP_TYPE_EC2N 3
 
 /*
  * Notify messages -- error types
