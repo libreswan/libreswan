@@ -184,7 +184,7 @@ const struct kem_desc ike_alg_kem_secp256r1 = {
 		.names = "dh19,ecp_256,ecp256",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_256,
-			[IKEv1_IPSEC_ID] = -1,
+			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_ECP_256,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_256,
 		},
 		.fips.approved = true,
@@ -204,7 +204,7 @@ const struct kem_desc ike_alg_kem_secp384r1 = {
 		.names = "dh20,ecp_384,ecp384",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_384,
-			[IKEv1_IPSEC_ID] = -1,
+			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_ECP_384,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_384,
 		},
 		.fips.approved = true,
@@ -224,7 +224,7 @@ const struct kem_desc ike_alg_kem_secp521r1 = {
 		.names = "dh21,ecp_521,ecp521",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_ECP_521,
-			[IKEv1_IPSEC_ID] = -1,
+			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_ECP_521,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_ECP_521,
 		},
 		.fips.approved = true,
@@ -313,7 +313,7 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 		.names = "dh31,curve25519",
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_GROUP_CURVE25519,
-			[IKEv1_IPSEC_ID] = -1,
+			[IKEv1_IPSEC_ID] = OAKLEY_GROUP_CURVE25519,
 			[IKEv2_ALG_ID] = OAKLEY_GROUP_CURVE25519,
 		},
 	},

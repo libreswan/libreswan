@@ -1,3 +1,6 @@
 test {ikev1,ikev2} ike=aes128-sha2-{ecp256,ecp384,ecp521}
 
 aka DH19, DH20, DH21
+
+For IKEv1, when PFS=yes, the Quick Mode also negotiates KEM, test that
+also.  Specifically KEM inherited from IKE, and explicit KEM.

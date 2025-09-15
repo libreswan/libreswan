@@ -878,6 +878,8 @@ static const struct kem_desc *kem_descriptors[] = {
 static void kem_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct kem_desc *kem = kem_desc(alg);
+	/* IKEv1 always supports this */
+	pexpect_ike_alg(logger, alg, kem->ikev1_oakley_id == kem->ikev1_ipsec_id);
 	/* always implemented */
 	pexpect_ike_alg(logger, alg, kem->kem_ops != NULL);
 	if (kem->kem_ops != NULL) {
