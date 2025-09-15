@@ -5207,20 +5207,20 @@ name for -1 present (should be absent)
          jam_enum_short 0: encrypt OK
          jam_enum_human 0: encrypt OK
          match encrypt [short]: OK
-    1 -> PROPOSAL_TRANSFORM_integ
-         jam_enum 1: PROPOSAL_TRANSFORM_integ OK
-         match PROPOSAL_TRANSFORM_integ: OK
-         short_name 1: integ OK
-         jam_enum_short 1: integ OK
-         jam_enum_human 1: integ OK
-         match integ [short]: OK
-    2 -> PROPOSAL_TRANSFORM_prf
-         jam_enum 2: PROPOSAL_TRANSFORM_prf OK
+    1 -> PROPOSAL_TRANSFORM_prf
+         jam_enum 1: PROPOSAL_TRANSFORM_prf OK
          match PROPOSAL_TRANSFORM_prf: OK
-         short_name 2: prf OK
-         jam_enum_short 2: prf OK
-         jam_enum_human 2: prf OK
+         short_name 1: prf OK
+         jam_enum_short 1: prf OK
+         jam_enum_human 1: prf OK
          match prf [short]: OK
+    2 -> PROPOSAL_TRANSFORM_integ
+         jam_enum 2: PROPOSAL_TRANSFORM_integ OK
+         match PROPOSAL_TRANSFORM_integ: OK
+         short_name 2: integ OK
+         jam_enum_short 2: integ OK
+         jam_enum_human 2: integ OK
+         match integ [short]: OK
     3 -> PROPOSAL_TRANSFORM_kem
          jam_enum 3: PROPOSAL_TRANSFORM_kem OK
          match PROPOSAL_TRANSFORM_kem: OK
