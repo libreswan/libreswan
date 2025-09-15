@@ -1,72 +1,64 @@
-/testing/guestbin/swan-prep --nokeys
+/testing/guestbin/swan-prep --nokeys --46
 Creating empty NSS database
-west #
- # confirm that the network is alive
-west #
- ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
-destination -I 192.0.1.254 192.0.2.254 is alive
-west #
- # ensure that clear text does not get through
-west #
- iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-west #
- iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
  ipsec start
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
-west #
- ipsec auto --status |grep westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-"westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown;
-"westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
-"westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
-"westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-"westnet-eastnet-ipv4-psk-ikev2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
-"westnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
-"westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
-"westnet-eastnet-ipv4-psk-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
-"westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-"westnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-"westnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-"westnet-eastnet-ipv4-psk-ikev2":   v2-auth-hash-policy: none;
-"westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-"westnet-eastnet-ipv4-psk-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
-"westnet-eastnet-ipv4-psk-ikev2":   our idtype: IPV4_ADDR; our id=192.1.2.45; their idtype: FQDN; their id=@east
-"westnet-eastnet-ipv4-psk-ikev2":   sendca: all; our sendcert: always; their sendcert: always;
-"westnet-eastnet-ipv4-psk-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
-"westnet-eastnet-ipv4-psk-ikev2":   nat-traversal: encapsulation:auto; keepalive:20s
-"westnet-eastnet-ipv4-psk-ikev2":   routing: unrouted;
-"westnet-eastnet-ipv4-psk-ikev2":   conn serial: $1;
+ ipsec add west-east-psk
+"west-east-psk-ipv4": added IKEv2 connection
+"west-east-psk-ipv6": added IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and IPV4_ADDR '192.1.2.45'; Child SA #2 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
-"westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec up west-east-psk-ipv4
+"west-east-psk-ipv4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"west-east-psk-ipv4" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west-east-psk-ipv4" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-east-psk-ipv4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and IPV4_ADDR '192.1.2.45'; Child SA #2 {ESP <0xESPESP}
+"west-east-psk-ipv4" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"west-east-psk-ipv4" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-east-psk-ipv4" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec whack --trafficstatus
-#2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+ ipsec trafficstatus
+#2: "west-east-psk-ipv4", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec down west-east-psk-ipv4
+"west-east-psk-ipv4": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"west-east-psk-ipv4" #1: sent INFORMATIONAL request to delete IKE SA
+"west-east-psk-ipv4" #2: ESP traffic information: in=84B out=84B
+"west-east-psk-ipv4" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec up west-east-psk-ipv6
+"west-east-psk-ipv6" #3: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
+"west-east-psk-ipv6" #3: sent IKE_SA_INIT request to [2001:db8:1:2::23]:UDP/500
+"west-east-psk-ipv6" #3: processed IKE_SA_INIT response from [2001:db8:1:2::23]:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"west-east-psk-ipv6" #3: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 with shared-key-mac and IPV6_ADDR '2001:db8:1:2::45'; Child SA #4 {ESP <0xESPESP}
+"west-east-psk-ipv6" #3: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"west-east-psk-ipv6" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"west-east-psk-ipv6" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec trafficstatus
+#4: "west-east-psk-ipv6", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec down west-east-psk-ipv6
+"west-east-psk-ipv6": initiating delete of connection's IKE SA #3 (and Child SA #4)
+"west-east-psk-ipv6" #3: sent INFORMATIONAL request to delete IKE SA
+"west-east-psk-ipv6" #4: ESP traffic information: in=84B out=84B
+"west-east-psk-ipv6" #3: deleting IKE SA (established IKE SA)
 west #
  echo done
 done
 west #
  ipsec whack --trafficstatus
-#2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
