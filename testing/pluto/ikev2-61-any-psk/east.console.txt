@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --nokeys
+/testing/guestbin/swan-prep --nokeys --46
 Creating empty NSS database
 east #
  ipsec start
@@ -6,12 +6,12 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add eastnet-any
-"eastnet-any": added IKEv2 connection
+ ipsec add any-east
+"any-east-ipv4": added IKEv2 connection
+"any-east-ipv6": added IKEv2 connection
 east #
  echo "initdone"
 initdone
 east #
  ipsec whack --trafficstatus
-#2: "eastnet-any"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.45'
 east #
