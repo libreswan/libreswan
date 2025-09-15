@@ -47,17 +47,8 @@ enum stream;
 enum proposal_transform {
 #define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_TRANSFORM_encrypt)
 	PROPOSAL_TRANSFORM_encrypt,
-
-	/*
-	 * XXX: order INTEG before PRF so it is displayed first.
-	 *
-	 * The parser interprets AES-SHA1-SHA2 as ENCR-INTEG-PRF.
-	 * Putting INTEG before PRF causes jam_proposal() to be
-	 * consistent.
-	 */
-	PROPOSAL_TRANSFORM_integ,
 	PROPOSAL_TRANSFORM_prf,
-
+	PROPOSAL_TRANSFORM_integ,
 	PROPOSAL_TRANSFORM_kem,
 
 	PROPOSAL_TRANSFORM_addke1,

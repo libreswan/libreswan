@@ -485,58 +485,67 @@ void jam_proposal(struct jambuf *buf,
 		  const struct proposal *proposal)
 {
 	const char *algorithm_separator = "";
-	for (enum proposal_transform proposal_algorithm = PROPOSAL_TRANSFORM_FLOOR;
-	     proposal_algorithm < PROPOSAL_TRANSFORM_ROOF; proposal_algorithm++) {
 
-		/*
-		 * Should integrity be skipped?
-		 */
+	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
+	     transform < PMIN(PROPOSAL_TRANSFORM_prf,
+			      PROPOSAL_TRANSFORM_integ);
+	     transform++) {
+		algorithm_separator = jam_proposal_algorithm(buf, proposal,
+							     transform,
+							     algorithm_separator);
+	}
 
-		if (proposal_algorithm == PROPOSAL_TRANSFORM_integ) {
+	/*
+	 * For output compatibility reasons, the INTEG is shown before
+	 * the PRF; but not it matches the PRF; and not when it is
+	 * NONE (ike=aes_gcm-none gives the impression that there is
+	 * no integrity).  But for output compat reasons, do include
+	 * NONE NONE when there's no PRF (ah=sha1_96,
+	 * esp=aes_gcm-none-sha1?!?).
+	 *
+	 * Skip INTEG when it matches PRF.
+	 */
 
-			/*
-			 * Don't include -NONE- as it gives the
-			 * appearance of no integrity.
-			 *
-			 * But for output compat reasons, do include
-			 * NONE when there's no PRF.
-			 */
-			if (proposal_encrypt_aead(proposal) &&
-			    proposal_integ_none(proposal) &&
-			    first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) != NULL) {
-				continue;
-			}
-
-			/*
-			 * Walk INTEG and PRF to see if they are
-			 * consistent; when they are skip integ.
-			 */
-			struct transform_algorithms *prf_algs = proposal->algorithms[PROPOSAL_TRANSFORM_prf];
-			struct transform_algorithms *integ_algs = proposal->algorithms[PROPOSAL_TRANSFORM_integ];
-			if ((prf_algs == NULL || prf_algs->len == 0) &&
-			    (integ_algs == NULL || integ_algs->len == 0)) {
-				continue;
-			}
-			if (integ_algs != NULL && prf_algs != NULL &&
-			    integ_algs->len == prf_algs->len) {
-				bool integ_matches_prf = true;
-				for (unsigned n = 0; n < integ_algs->len; n++) {
-					struct transform_algorithm *prf  = &prf_algs->item[n];
-					struct transform_algorithm *integ  = &integ_algs->item[n];
-					if (&integ_desc(integ->desc)->prf->common != prf->desc) {
-						/* i.e., prf and integ are different */
-						integ_matches_prf = false;
-						break;
-					}
-				}
-				if (integ_matches_prf) {
-					continue;
-				}
+	struct transform_algorithms *prf_algs = proposal->algorithms[PROPOSAL_TRANSFORM_prf];
+	struct transform_algorithms *integ_algs = proposal->algorithms[PROPOSAL_TRANSFORM_integ];
+	bool prf_is_empty = (prf_algs == NULL || prf_algs->len == 0);
+	bool integ_is_empty = (integ_algs == NULL || integ_algs->len == 0);
+	bool integ_matches_prf = false;
+	if (!prf_is_empty && !integ_is_empty &&
+	    prf_algs->len == integ_algs->len) {
+		integ_matches_prf = true; /* hopefully */
+		for (unsigned n = 0; n < integ_algs->len; n++) {
+			struct transform_algorithm *prf  = &prf_algs->item[n];
+			struct transform_algorithm *integ  = &integ_algs->item[n];
+			if (&integ_desc(integ->desc)->prf->common != prf->desc) {
+				/* i.e., prf and integ are different */
+				integ_matches_prf = false;
+				break;
 			}
 		}
-
-		algorithm_separator = jam_proposal_algorithm(buf, proposal, proposal_algorithm, algorithm_separator);
 	}
+
+	if (prf_is_empty ||
+	    (proposal_encrypt_norm(proposal) && !integ_matches_prf) ||
+	    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal))) {
+		algorithm_separator = jam_proposal_algorithm(buf, proposal,
+							     PROPOSAL_TRANSFORM_integ,
+							     algorithm_separator);
+	}
+
+	algorithm_separator = jam_proposal_algorithm(buf, proposal,
+						     PROPOSAL_TRANSFORM_prf,
+						     algorithm_separator);
+
+	for (enum proposal_transform transform = PMAX(PROPOSAL_TRANSFORM_prf + 1,
+						      PROPOSAL_TRANSFORM_integ + 1);
+	     transform < PROPOSAL_TRANSFORM_ROOF;
+	     transform++) {
+		algorithm_separator = jam_proposal_algorithm(buf, proposal,
+							     transform,
+							     algorithm_separator);
+	}
+
 }
 
 void jam_proposals(struct jambuf *buf, const struct proposals *proposals)
