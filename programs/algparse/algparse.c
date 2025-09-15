@@ -215,8 +215,8 @@ static void test_esp(struct logger *logger)
 # ifdef USE_SHA1
 	esp(!fips, "3des-sha1;modp1536");
 	esp(true, "3des-sha1;modp2048");
-	esp(ike_version == IKEv2, "3des-sha1;dh21");
-	esp(ike_version == IKEv2, "3des-sha1;ecp_521");
+	esp(true, "3des-sha1;dh21");
+	esp(true, "3des-sha1;ecp_521");
 	esp(false, "3des-sha1;dh23");
 	esp(false, "3des-sha1;dh24");
 	esp(true, "3des-sha1");
