@@ -574,6 +574,8 @@ algparse -v1 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
 	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
 algparse -v1 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -v1 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
+	ERROR: IKE proposal contains unexpected explicit integ=
 west #
  ipsec algparse -tp -v1 -pfs
 algparse -v1 -pfs 'esp' (expect SUCCESS)
@@ -1114,6 +1116,8 @@ algparse -v1 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
 	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
 algparse -v1 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -v1 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
+	ERROR: IKE proposal contains unexpected explicit integ=
 west #
  ipsec algparse -tp -v2
 algparse -v2 'esp' (expect SUCCESS)
@@ -1656,6 +1660,8 @@ algparse -v2 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 algparse -v2 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -v2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
 west #
  ipsec algparse -tp -v2 -pfs
 algparse -v2 -pfs 'esp' (expect SUCCESS)
@@ -2155,6 +2161,8 @@ algparse -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 algparse -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
 west #
  ipsec algparse -tp -v2 -pfs -addke
 algparse -addke -v2 -pfs 'esp' (expect SUCCESS)
@@ -2654,6 +2662,8 @@ algparse -addke -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 algparse -addke -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -addke -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
 west #
  # Run the algorithm tests; there should be no fails.
 west #

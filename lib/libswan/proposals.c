@@ -1199,40 +1199,46 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	return true;
 }
 
+enum transform_typed_how {
+	TRANSFORM_TYPE_EXPLICIT,
+	TRANSFORM_TYPE_IMPLICIT,
+};
+
 static bool parse_proposal_transforms(struct proposal_parser *parser,
 				      struct proposal *proposal,
 				      enum proposal_transform transform,
+				      enum transform_typed_how typed_how,
 				      struct proposal_tokenizer *tokens)
 {
 	const struct logger *logger = parser->policy->logger;
+	name_buf tb;
+	ldbgf(DBG_PROPOSAL_PARSER, logger,
+	      "parsing transforms %s%s"PRI_SHUNK"...",
+	      str_enum_short(&proposal_transform_names, transform, &tb),
+	      (typed_how == TRANSFORM_TYPE_IMPLICIT ? ":" :
+	       typed_how == TRANSFORM_TYPE_EXPLICIT ? "=" :
+	       "?"),
+	      pri_shunk(tokens->curr.token));
 
 	switch (transform) {
 
 	case PROPOSAL_TRANSFORM_encrypt:
 		if (parser->protocol->encrypt) {
-			if (!parse_encrypt_transforms(parser, proposal, tokens)) {
-				return false;
-			}
+			return parse_encrypt_transforms(parser, proposal, tokens);
 		}
 		break;
 
 	case PROPOSAL_TRANSFORM_prf:
 		if (parser->protocol->prf) {
-			if (!parse_prf_transforms(parser, proposal, tokens)) {
-				return false;
-			}
+			return parse_prf_transforms(parser, proposal, tokens);
 		}
 		break;
 
 	case PROPOSAL_TRANSFORM_integ:
-		if (parser->protocol->integ &&
-		    !parser->protocol->prf) {
-			if (!parse_transform_algorithms(parser, proposal, transform, tokens)) {
-				ldbgf(DBG_PROPOSAL_PARSER, logger,
-				      "either <encr>-<INTEG>... or <INTEG>... or failed: %s",
-				      str_diag(parser->diag));
-				return false;
-			}
+		if ((parser->protocol->integ && !parser->protocol->prf) ||
+		    (parser->protocol->integ && typed_how == TRANSFORM_TYPE_EXPLICIT)) {
+			return parse_transform_algorithms(parser, proposal,
+							  transform, tokens);
 		}
 		break;
 
@@ -1249,11 +1255,8 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		 * But only when <encr>-<PRF> didn't succeed.
 		 */
 		if (parser->protocol->kem) {
-			if (!parse_transform_algorithms(parser, proposal, PROPOSAL_TRANSFORM_kem, tokens)) {
-				ldbgf(DBG_PROPOSAL_PARSER, logger,
-				      "...<kem> failed: %s", str_diag(parser->diag));
-				return false;
-			}
+			return parse_transform_algorithms(parser, proposal,
+							  PROPOSAL_TRANSFORM_kem, tokens);
 		}
 		break;
 
@@ -1268,16 +1271,19 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		 * Parse additional key exchanges.
 		 */
 		if (parser->policy->addke) {
-			if (!parse_transform_algorithms(parser, proposal, transform, tokens)) {
-				name_buf tb;
-				ldbgf(DBG_PROPOSAL_PARSER, logger,
-				      "...<%s> failed: %s",
-				      str_enum_short(&proposal_transform_names, transform, &tb),
-				      str_diag(parser->diag));
-				return false;
-			}
+			return parse_transform_algorithms(parser, proposal,
+							  transform, tokens);
 		}
 		break;
+	}
+
+	if (typed_how == TRANSFORM_TYPE_EXPLICIT) {
+		/* just in-case DELIM is NUL */
+		proposal_error(parser, "%s proposal contains unexpected explicit "PRI_SHUNK"%c",
+			       parser->protocol->name,
+			       pri_shunk(tokens->prev.token),
+			       tokens->prev.delim);
+		return false;
 	}
 
 	return true;
@@ -1292,7 +1298,7 @@ bool parse_proposal(struct proposal_parser *parser,
 		LDBG_log(logger, "proposal: '"PRI_SHUNK"'", pri_shunk(input));
 	}
 
-	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+=");
+	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+=!");
 
 	/* hack to stop non ADDKE reporting missing ADDKE */
 	enum proposal_transform transform_ceiling =
@@ -1300,11 +1306,13 @@ bool parse_proposal(struct proposal_parser *parser,
 		 PROPOSAL_TRANSFORM_kem);
 
 	enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
+	enum transform_typed_how typed_how = TRANSFORM_TYPE_IMPLICIT;
 	while (tokens.curr.token.ptr != NULL) {
 
 		if (tokens.curr.delim == '=') {
 
-			/* when '=' skip to specified transform */
+			typed_how = TRANSFORM_TYPE_EXPLICIT;
+
 			int tmp = enum_byname(&proposal_transform_names, tokens.curr.token);
 			if (tmp < 0) {
 				proposal_error(parser, "transform '"PRI_SHUNK"' unrecognized",
@@ -1339,6 +1347,9 @@ bool parse_proposal(struct proposal_parser *parser,
 
 		} else if (tokens.prev.delim == ';') {
 
+			/* treat ;... like KEM=... */
+			typed_how = TRANSFORM_TYPE_EXPLICIT;
+
 			/* when ';' skip forward to KEM */
 			if (transform > PROPOSAL_TRANSFORM_kem) {
 				name_buf tb;
@@ -1352,16 +1363,20 @@ bool parse_proposal(struct proposal_parser *parser,
 			      str_enum_short(&proposal_transform_names, transform, &tb));
 			transform = PROPOSAL_TRANSFORM_kem;
 
+
 		}
 
 		PASSERT(logger, (transform >= PROPOSAL_TRANSFORM_FLOOR &&
 				 transform < PROPOSAL_TRANSFORM_ROOF));
 
-		if (!parse_proposal_transforms(parser, proposal, transform, &tokens)) {
+		if (!parse_proposal_transforms(parser, proposal, transform,
+					       typed_how, &tokens)) {
 			return false;
 		}
 
 		transform++;
+		/* next transform type is implicit */
+		typed_how = TRANSFORM_TYPE_IMPLICIT;
 	}
 
 	return true;

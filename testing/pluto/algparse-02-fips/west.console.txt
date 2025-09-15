@@ -551,6 +551,8 @@ algparse -fips -v1 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
 	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
 algparse -fips -v1 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -fips -v1 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
+	ERROR: IKE proposal contains unexpected explicit integ=
 west #
  ipsec algparse -tp -fips -v1 -pfs
 algparse -fips -v1 -pfs 'esp' (expect SUCCESS)
@@ -1067,6 +1069,8 @@ algparse -fips -v1 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
 	ERROR: IKEv1 does not support multiple transforms of the same type ('=' invalid)
 algparse -fips -v1 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -fips -v1 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
+	ERROR: IKE proposal contains unexpected explicit integ=
 west #
  ipsec algparse -tp -fips -v2
 algparse -fips -v2 'esp' (expect SUCCESS)
@@ -1605,6 +1609,8 @@ algparse -fips -v2 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 algparse -fips -v2 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -fips -v2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
 west #
  ipsec algparse -tp -fips -v2 -pfs
 algparse -fips -v2 -pfs 'esp' (expect SUCCESS)
@@ -2102,6 +2108,8 @@ algparse -fips -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 algparse -fips -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -fips -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
 west #
  ipsec algparse -tp -fips -v2 -pfs -addke
 algparse -fips -addke -v2 -pfs 'esp' (expect SUCCESS)
@@ -2599,6 +2607,8 @@ algparse -fips -addke -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256+HMAC_SHA1-DH20
 algparse -fips -addke -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
+algparse -fips -addke -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
 west #
  # Run the algorithm tests; there should be no fails.
 west #
