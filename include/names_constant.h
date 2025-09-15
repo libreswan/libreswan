@@ -61,7 +61,6 @@ extern enum_names ikev2_hash_algorithm_names;
 extern enum_names ikev2_proposal_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_delete_protocol_id_names;	/* 1=IKE SA, 2=AH, 3=ESP */
 extern enum_names ikev2_notify_protocol_id_names;	/* NONE=0, 1=IKE, 2=AH, 3=ESP */
-extern enum_names ikev2_trans_type_names;
 extern enum_names ikev2_trans_type_encr_names;
 extern enum_names ikev2_trans_type_prf_names;
 extern enum_names ikev2_trans_type_integ_names;

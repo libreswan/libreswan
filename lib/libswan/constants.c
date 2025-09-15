@@ -2225,7 +2225,6 @@ enum_names ikev2_trans_type_integ_names = {
 	NULL
 };
 
-/* Transform-type Integrity */
 static const char *const ikev2_trans_type_esn_name[] = {
 #define S(E) [E - IKEv2_ESN_FLOOR] = #E
 	S(IKEv2_ESN_YES),
@@ -2241,8 +2240,40 @@ enum_names ikev2_trans_type_esn_names = {
 	NULL
 };
 
+static const char *const ikev2_trans_type_kwa_name[IKEv2_KWA_ROOF-IKEv2_KWA_FLOOR] = {
+#define S(E) [E - IKEv2_KWA_FLOOR] = #E
+	S(IKEv2_KWA_KW_5649_128),
+	S(IKEv2_KWA_KW_5649_192),
+	S(IKEv2_KWA_KW_5649_256),
+	S(IKEv2_KWA_KW_ARX),
+#undef S
+};
+
+enum_names ikev2_trans_type_kwa_names = {
+	IKEv2_KWA_FLOOR,
+	IKEv2_KWA_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_kwa_name),
+	"IKEv2_KWA_", /* prefix */
+	NULL
+};
+
+static const char *const ikev2_trans_type_gcauth_name[IKEv2_GCAUTH_ROOF-IKEv2_GCAUTH_FLOOR] = {
+#define S(E) [E - IKEv2_GCAUTH_FLOOR] = #E
+	S(IKEv2_GCAUTH_IMPLICIT),
+	S(IKEv2_GCAUTH_DIGITAL_SIGNATURE),
+#undef S
+};
+
+enum_names ikev2_trans_type_gcauth_names = {
+	IKEv2_GCAUTH_FLOOR,
+	IKEv2_GCAUTH_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_gcauth_name),
+	"IKEv2_GCAUTH_", /* prefix */
+	NULL
+};
+
 /* Transform Type */
-static const char *const ikev2_trans_type_name[] = {
+static const char *const ikev2_trans_type_name[IKEv2_TRANS_TYPE_ROOF - IKEv2_TRANS_TYPE_FLOOR] = {
 #define S(E) [E - IKEv2_TRANS_TYPE_FLOOR] = #E
 	S(IKEv2_TRANS_TYPE_ENCR),
 	S(IKEv2_TRANS_TYPE_PRF),
@@ -2256,6 +2287,8 @@ static const char *const ikev2_trans_type_name[] = {
 	S(IKEv2_TRANS_TYPE_ADDKE5),
 	S(IKEv2_TRANS_TYPE_ADDKE6),
 	S(IKEv2_TRANS_TYPE_ADDKE7),
+	S(IKEv2_TRANS_TYPE_KWA),
+	S(IKEv2_TRANS_TYPE_GCAUTH),
 #undef S
 };
 
@@ -2282,6 +2315,8 @@ static enum_names *const ikev2_transid_val_descs[] = {
 	S(IKEv2_TRANS_TYPE_ADDKE5, oakley_group_names),               /* 10 */
 	S(IKEv2_TRANS_TYPE_ADDKE6, oakley_group_names),               /* 11 */
 	S(IKEv2_TRANS_TYPE_ADDKE7, oakley_group_names),               /* 12 */
+	S(IKEv2_TRANS_TYPE_KWA, ikev2_trans_type_kwa_names),          /* 13 */
+	S(IKEv2_TRANS_TYPE_GCAUTH, ikev2_trans_type_gcauth_names),    /* 14 */
 #undef S
 };
 

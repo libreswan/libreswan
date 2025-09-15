@@ -948,22 +948,27 @@ enum ikev2_sec_proto_id {
  * See https://www.iana.org/assignments/ikev2-parameters
  * Assume indexing is [1..IKEv2_TRANS_TYPE_ROOF)
  */
+
 enum ikev2_trans_type {
 #define IKEv2_TRANS_TYPE_FLOOR IKEv2_TRANS_TYPE_ENCR
-	IKEv2_TRANS_TYPE_ENCR = 1,
-	IKEv2_TRANS_TYPE_PRF = 2,
-	IKEv2_TRANS_TYPE_INTEG = 3,
-	IKEv2_TRANS_TYPE_KE = 4, /* same as in IKEv1; nee DH */
-	IKEv2_TRANS_TYPE_ESN = 5,
-	IKEv2_TRANS_TYPE_ADDKE1 = 6,
-	IKEv2_TRANS_TYPE_ADDKE2 = 7,
-	IKEv2_TRANS_TYPE_ADDKE3 = 8,
-	IKEv2_TRANS_TYPE_ADDKE4 = 9,
-	IKEv2_TRANS_TYPE_ADDKE5 = 10,
-	IKEv2_TRANS_TYPE_ADDKE6 = 11,
-	IKEv2_TRANS_TYPE_ADDKE7 = 12,
-#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_ADDKE7+1)
+	IKEv2_TRANS_TYPE_ENCR = 1,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_PRF = 2,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_INTEG = 3,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_KE = 4,	/* RFC 7296 + RFC 9370 */
+	IKEv2_TRANS_TYPE_ESN = 5,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_ADDKE1 = 6,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE2 = 7,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE3 = 8,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE4 = 9,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE5 = 10,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE6 = 11,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_ADDKE7 = 12,	/* RFC 9370 */
+	IKEv2_TRANS_TYPE_KWA = 13,	/* draft-ietf-ipsecme-g-ikev2 */
+	IKEv2_TRANS_TYPE_GCAUTH = 14,	/* draft-ietf-ipsecme-g-ikev2 */
+#define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_GCAUTH+1)
 };
+
+extern const struct enum_names ikev2_trans_type_names;
 
 /*
  * IKE and ESP encryption algorithms (note iana lists two table columns for these)
@@ -1060,6 +1065,35 @@ enum ikev2_trans_type_esn {
 	IKEv2_ESN_YES = 1,
 #define IKEv2_ESN_ROOF (IKEv2_ESN_YES+1)
 };
+
+/*
+ * Transform Type 13 - Key Wrap Algorithm Transform IDs.
+ */
+
+enum ikev2_trans_type_kwa {
+#define IKEv2_KWA_FLOOR IKEv2_KWA_KW_5649_128
+	IKEv2_KWA_KW_5649_128 = 1,
+	IKEv2_KWA_KW_5649_192 = 2,
+	IKEv2_KWA_KW_5649_256 = 3,
+	IKEv2_KWA_KW_ARX = 4,
+#define IKEv2_KWA_ROOF (IKEv2_KWA_KW_ARX+1)
+};
+
+extern const struct enum_names ikev2_trans_type_kwa_names;
+
+/*
+ * Transform Type 14 - Group Controller Authentication Method
+ * Transform IDs.
+ */
+
+enum ikev2_trans_type_gcauth {
+#define IKEv2_GCAUTH_FLOOR IKEv2_GCAUTH_IMPLICIT
+	IKEv2_GCAUTH_IMPLICIT = 1,
+	IKEv2_GCAUTH_DIGITAL_SIGNATURE = 2,
+#define IKEv2_GCAUTH_ROOF (IKEv2_GCAUTH_DIGITAL_SIGNATURE + 1)
+};
+
+extern const struct enum_names ikev2_trans_type_gcauth_names;
 
 /*
  * RFC 4306 Section 3.3.5
