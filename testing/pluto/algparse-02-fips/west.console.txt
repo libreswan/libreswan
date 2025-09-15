@@ -55,10 +55,12 @@ algparse -fips -v1 'esp=3des-sha1;modp1536' (expect ERROR)
 algparse -fips -v1 'esp=3des-sha1;modp2048' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
-algparse -fips -v1 'esp=3des-sha1;dh21' (expect ERROR)
-	ERROR: ESP Key Exchange Method (DH) 'dh21' is not supported by IKEv1
-algparse -fips -v1 'esp=3des-sha1;ecp_521' (expect ERROR)
-	ERROR: ESP Key Exchange Method (DH) 'ecp_521' is not supported by IKEv1
+algparse -fips -v1 'esp=3des-sha1;dh21' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
+algparse -fips -v1 'esp=3des-sha1;ecp_521' (expect SUCCESS)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH21' as PFS policy is disabled
+	3DES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=3des-sha1;dh23' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
 algparse -fips -v1 'esp=3des-sha1;dh24' (expect ERROR)
@@ -598,10 +600,10 @@ algparse -fips -v1 -pfs 'esp=3des-sha1;modp1536' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'modp1536' is not supported
 algparse -fips -v1 -pfs 'esp=3des-sha1;modp2048' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP2048
-algparse -fips -v1 -pfs 'esp=3des-sha1;dh21' (expect ERROR)
-	ERROR: ESP Key Exchange Method (DH) 'dh21' is not supported by IKEv1
-algparse -fips -v1 -pfs 'esp=3des-sha1;ecp_521' (expect ERROR)
-	ERROR: ESP Key Exchange Method (DH) 'ecp_521' is not supported by IKEv1
+algparse -fips -v1 -pfs 'esp=3des-sha1;dh21' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-DH21
+algparse -fips -v1 -pfs 'esp=3des-sha1;ecp_521' (expect SUCCESS)
+	3DES_CBC-HMAC_SHA1_96-DH21
 algparse -fips -v1 -pfs 'esp=3des-sha1;dh23' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'dh23' is not supported
 algparse -fips -v1 -pfs 'esp=3des-sha1;dh24' (expect ERROR)
@@ -2671,9 +2673,9 @@ FIPS Key Exchange Method (DH):
   MODP4096                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP) dh16
   MODP6144                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP) dh17
   MODP8192                          IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(MODP) dh18
-  DH19                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)  ecp_256, ecp256
-  DH20                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)  ecp_384, ecp384
-  DH21                              IKEv1: IKE         IKEv2: IKE ESP AH  FIPS NSS(ECP)  ecp_521, ecp521
+  DH19                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(ECP)  ecp_256, ecp256
+  DH20                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(ECP)  ecp_384, ecp384
+  DH21                              IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS(ECP)  ecp_521, ecp521
 FIPS IP Compression:
   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS          
   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS          
