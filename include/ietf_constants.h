@@ -966,6 +966,12 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_KWA = 13,	/* draft-ietf-ipsecme-g-ikev2 */
 	IKEv2_TRANS_TYPE_GCAUTH = 14,	/* draft-ietf-ipsecme-g-ikev2 */
 #define IKEv2_TRANS_TYPE_ROOF (IKEv2_TRANS_TYPE_GCAUTH+1)
+	/*
+	 * Magic value, used by impair as a generic value for the,
+	 * ever changing, IKEv2_TRANS_TYPE_ROOF.
+	 */
+#define IKEv2_TRANS_TYPE_IMPAIR_ROOF 0xEE
+#define IKEv2_TRANS_TYPE_IMPAIR_ROOF_STRING "0xEE"
 };
 
 extern const struct enum_names ikev2_trans_type_names;
