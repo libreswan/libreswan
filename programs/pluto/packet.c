@@ -1014,18 +1014,18 @@ struct_desc ikev2_trans_attr_desc = {
  *              Figure 10:  Key Exchange Payload Format
  *
  */
-static field_desc ikev2ke_fields[] = {
+static field_desc ikev2_ke_fields[] = {
 	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
 	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
-	{ ft_enum, 16 / BITS_IN_BYTE, "DH group", &oakley_group_names },
+	{ ft_enum, 16 / BITS_IN_BYTE, "KEM", &oakley_group_names },
 	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
 
 struct_desc ikev2_ke_desc = {
 	.name = "IKEv2 Key Exchange Payload",
-	.fields = ikev2ke_fields,
+	.fields = ikev2_ke_fields,
 	.size = sizeof(struct ikev2_ke),
 	.pt = ISAKMP_NEXT_v2KE,
 };
@@ -1661,15 +1661,15 @@ struct_desc ikev2_redirect_desc = {
 	.size = sizeof(struct ikev2_redirect_part),
 };
 
-static field_desc suggested_group_fields[] = {
-	{ ft_enum, 16 / BITS_IN_BYTE, "suggested DH Group", &oakley_group_names },
+static field_desc ikev2_suggested_kem_fields[] = {
+	{ ft_enum, 16 / BITS_IN_BYTE, "suggested KEM", &oakley_group_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
-struct_desc suggested_group_desc = {
-	.name = "Suggested Group",
-	.fields = suggested_group_fields,
-	.size = sizeof(struct suggested_group),
+struct_desc ikev2_suggested_kem_desc = {
+	.name = "Suggested KEM",
+	.fields = ikev2_suggested_kem_fields,
+	.size = sizeof(struct ikev2_suggested_kem),
 	.pt = ISAKMP_NEXT_v2NONE,
 };
 
