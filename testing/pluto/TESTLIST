@@ -177,8 +177,6 @@ kvmplutotest	ikev2-05-basic-psk-oneconf-namespaces	good
 kvmplutotest	ikev2-05-basic-psk-missing-initiator	good
 kvmplutotest	ikev2-05-basic-psk-missing-responder	good
 kvmplutotest	ikev2-05-basic-psk-debian		good
-kvmplutotest	ikev2-06-dual-net			good	github/275
-kvmplutotest	ikev2-06-dual-net-notany		good
 kvmplutotest	ikev2-07-invalid-xchg			good
 kvmplutotest	ikev2-ddos-cookie-01			good
 kvmplutotest	ikev2-ddos-cookie-02-mangle		good
@@ -861,15 +859,19 @@ kvmplutotest	ikev1-27-uniqueid		good
 kvmplutotest	ikev1-28-huge-lifetime		good	github/695
 
 # connection switching tests
+
 kvmplutotest	ikev1-connswitch-01		good
 kvmplutotest	ikev1-connswitch-02		good
 kvmplutotest	ikev1-connswitch-ports-01	good
 kvmplutotest	ikev1-ikev2-connswitch-01	good
 kvmplutotest	ikev1-rekey-connswitch		wip	github/1170
+
 kvmplutotest	ikev2-connswitch-01		good
 kvmplutotest	ikev2-connswitch-02		good
 kvmplutotest	ikev2-connswitch-02-real-mismatch	good
 kvmplutotest	ikev2-connswitch-03		good
+kvmplutotest	ikev2-connswitch-06-net-net-template	good	github/275
+kvmplutotest	ikev2-connswitch-06-net-net-permanent	good
 
 #
 # a test of using X.509 keys
