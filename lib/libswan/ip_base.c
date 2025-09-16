@@ -28,11 +28,22 @@ size_t jam_ip_invalid(struct jambuf *buf,
 		return jam(buf, "<null-%s>", what);
 	}
 
+	(*afi) = ip_version_info(ip->version);
+
 	if (!ip->is_set) {
-		return jam(buf, "<unset-%s>", what);
+		size_t s = 0;
+		s += jam_string(buf, "<unset");
+		if (*afi != NULL) {
+			s += jam_string(buf, "-");
+			s += jam_string(buf, (*afi)->ip_name);
+
+		}
+		s += jam_string(buf, "-");
+		s += jam_string(buf, what);
+		s += jam_string(buf, ">");
+		return s;
 	}
 
-	(*afi) = ip_version_info(ip->version);
 	if (*afi == NULL) {
 		return jam(buf, "<unknown-%s>", what);
 	}
