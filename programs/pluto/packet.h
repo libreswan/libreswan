@@ -1008,9 +1008,10 @@ struct ikev2_ke {
 	uint8_t isak_np;		/* Next payload */
 	uint8_t isak_critical;
 	uint16_t isak_length;		/* Payload length */
-	uint16_t isak_group;		/* transform type */
+	uint16_t isak_kem;		/* transform type */
 	uint16_t isak_res2;
 };
+
 extern struct_desc ikev2_ke_desc;
 
 /* rfc4306, section 3.5 */
@@ -1265,11 +1266,11 @@ union payload {
 	struct ikev2_skf v2skf;
 };
 
-struct suggested_group {
-	uint16_t /*oakley_group_t*/ sg_group;
+struct ikev2_suggested_kem {
+	uint16_t /*oakley_group_t*/ sk_kem;
 };
 
-extern struct_desc suggested_group_desc;
+extern struct_desc ikev2_suggested_kem_desc;
 
 struct ikev2_redirect_part {
 	u_int8_t gw_identity_type;

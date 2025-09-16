@@ -1008,26 +1008,27 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 		ldbg(ike->sa.logger, "ignoring other notify payloads");
 	}
 
-	struct suggested_group sg;
-	diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
-				 &sg, sizeof(sg), NULL);
+	struct ikev2_suggested_kem sk;
+	diag_t d = pbs_in_struct(&invalid_ke_pbs,
+				 &ikev2_suggested_kem_desc,
+				 &sk, sizeof(sk), NULL);
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
 		return STF_IGNORE;
 	}
 
-	pstats(invalidke_recv_s, sg.sg_group);
+	pstats(invalidke_recv_s, sk.sk_kem);
 	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	if (!ikev2_proposals_include_modp(ike_proposals, sg.sg_group)) {
+	if (!ikev2_proposals_include_modp(ike_proposals, sk.sk_kem)) {
 		name_buf esb;
 		llog_sa(RC_LOG, ike,
-			"discarding unauthenticated INVALID_KE_PAYLOAD response to DH %s; suggested DH %s is not acceptable",
+			"discarding unauthenticated INVALID_KE_PAYLOAD response to KEM %s; suggested KEM %s is not acceptable",
 			ike->sa.st_oakley.ta_dh->common.fqn,
 			str_enum_short(&oakley_group_names,
-				       sg.sg_group, &esb));
+				       sk.sk_kem, &esb));
 		return STF_IGNORE;
 	}
 
@@ -1038,13 +1039,14 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 * groups, a lookup of sg.sg_group must succeed.
 	 */
 	name_buf ignore;
-	const struct kem_desc *new_group = ikev2_kem_desc(sg.sg_group, &ignore);
-	passert(new_group != NULL);
+	const struct kem_desc *new_kem = ikev2_kem_desc(sk.sk_kem, &ignore);
+	passert(new_kem != NULL);
 	llog_sa(RC_LOG, ike,
-		  "received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
-		  ike->sa.st_oakley.ta_dh->common.fqn,
-		  new_group->common.fqn);
-	ike->sa.st_oakley.ta_dh = new_group;
+		"received unauthenticated INVALID_KE_PAYLOAD response to %s %s; resending with suggested %s",
+		ike_alg_kem.story,
+		ike->sa.st_oakley.ta_dh->common.fqn,
+		new_kem->common.fqn);
+	ike->sa.st_oakley.ta_dh = new_kem;
 	/* wipe our mismatched KE */
 	dh_local_secret_delref(&ike->sa.st_dh_local_secret, HERE);
 	/*

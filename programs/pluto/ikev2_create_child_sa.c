@@ -2161,9 +2161,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				}
 
 				struct pbs_in invalid_ke_pbs = md->pd[PD_v2N_INVALID_KE_PAYLOAD]->pbs;
-				struct suggested_group sg;
-				diag_t d = pbs_in_struct(&invalid_ke_pbs, &suggested_group_desc,
-							 &sg, sizeof(sg), NULL);
+				struct ikev2_suggested_kem sk;
+				diag_t d = pbs_in_struct(&invalid_ke_pbs,
+							 &ikev2_suggested_kem_desc,
+							 &sk, sizeof(sk), NULL);
 				if (d != NULL) {
 					name_buf nb;
 					llog(RC_LOG, (*larval_child)->sa.logger,
@@ -2175,14 +2176,14 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 					break;
 				}
 
-				pstats(invalidke_recv_s, sg.sg_group);
+				pstats(invalidke_recv_s, sk.sk_kem);
 				pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
 				name_buf nb, sgb;
 				llog_sa(RC_LOG, (*larval_child),
 					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
 					str_enum_short(&v2_notification_names, n, &nb),
-					str_enum_short(&oakley_group_names, sg.sg_group, &sgb),
+					str_enum_short(&oakley_group_names, sk.sk_kem, &sgb),
 					ike->sa.st_oakley.ta_dh->common.fqn);
 				status = STF_OK; /* let IKE stumble on */
 				break;
