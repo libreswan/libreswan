@@ -221,6 +221,7 @@ static void llog_ts(struct child_sa *child,
 }
 
 struct child_selector_end {
+	ip_endpoint host; /* for when subnet= defaults to ${host}/32 */
 	chunk_t sec_label; /*points into config*/
 	const ip_selectors *selectors;
 };
@@ -1230,8 +1231,30 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 	nsp->nr = 0; /*passert?*/
 
 	for (unsigned i = 0; i < end->selectors->len; i++) {
-		const ip_selector selector = end->selectors->list[i];
 		bool match = false;
+
+		/*
+		 * XXX: when the end's subnet= defaults to the end's
+		 * ${host}/32 the end's selector array will contain a
+		 * single "unset" entry, but with .proto set aka
+		 * ip_proto .address .unset.
+		 */
+		ip_selector selector = end->selectors->list[i];
+		if (!selector.ip.is_set) {
+			if (selector.ip.version != end->host.ip.version) {
+				/*
+				 * For instance, host=ipv4, leftsubnet
+				 * unset, but rightsubnet=ipv6?
+				 */
+				continue;
+			}
+			selector_buf sb;
+			endpoint_buf hb;
+			vdbg("selector %s is unset, defaulting to host %s address",
+			     str_selector(&selector, &sb),
+			     str_endpoint(&end->host, &hb));
+			selector = selector_from_address(endpoint_address(end->host));
+		}
 
 		for (unsigned i = 0; i < tsp->nr; i++) {
 			const struct traffic_selector *ts = &tsp->ts[i];
@@ -1341,7 +1364,8 @@ struct best {
 	struct narrowed_selector_payloads nsps;
 };
 
-static bool fit_connection_for_v2TS_request(struct connection *d,
+static bool fit_connection_for_v2TS_request(struct ike_sa *ike,
+					    struct connection *d,
 					    const struct traffic_selector_payloads *tsps,
 					    struct narrowed_selector_payloads *nsps,
 					    struct verbose verbose)
@@ -1379,11 +1403,18 @@ static bool fit_connection_for_v2TS_request(struct connection *d,
 	 */
 	enum fit responder_sec_label_fit = END_WIDER_THAN_TS;
 
-	/* responder so cross the streams */
+	/*
+	 * Responder so cross the streams.
+	 *
+	 * Need to provide the host addresses so that, when subnet= is
+	 * unspecified things can default to ${host}/32.
+	 */
 
 	const struct child_selector_ends ends = {
+		.i.host = ike->sa.st_remote_endpoint,
 		.i.selectors = &d->remote->child.selectors.proposed,
 		.i.sec_label = d->config->sec_label,
+		.r.host = ike->sa.st_iface_endpoint->local_endpoint,
 		.r.selectors = &d->local->child.selectors.proposed,
 		.r.sec_label = d->config->sec_label,
 	};
@@ -1398,7 +1429,8 @@ static bool fit_connection_for_v2TS_request(struct connection *d,
 	return true;
 }
 
-static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
+static struct best find_best_connection_for_v2TS_request(struct ike_sa *ike,
+							 struct child_sa *child,
 							 const struct traffic_selector_payloads *tsps,
 							 const struct msg_digest *md)
 {
@@ -1516,7 +1548,7 @@ static struct best find_best_connection_for_v2TS_request(struct child_sa *child,
 			}
 
 			struct narrowed_selector_payloads nsps = {0};
-			if (!fit_connection_for_v2TS_request(d, tsps, &nsps, verbose)) {
+			if (!fit_connection_for_v2TS_request(ike, d, tsps, &nsps, verbose)) {
 				vdbg("skipping %s does not score at all",
 				     d->name);
 				continue;
@@ -1566,7 +1598,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 		 * Check the child fits into the parent's connection.
 		 */
 		struct narrowed_selector_payloads nsps = {0};
-		if (!fit_connection_for_v2TS_request(cc, &tsps, &nsps, verbose)) {
+		if (!fit_connection_for_v2TS_request(ike, cc, &tsps, &nsps, verbose)) {
 			llog_ts(child, &tsps, "does not match the labeled IKEv2 connection; responding with TS_UNACCEPTABLE");
 			return false;
 		}
@@ -1602,7 +1634,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 	 * excluded).
 	 */
 
-	struct best best = find_best_connection_for_v2TS_request(child, &tsps, md);
+	struct best best = find_best_connection_for_v2TS_request(ike, child, &tsps, md);
 
 	if (best.connection != NULL) {
 
