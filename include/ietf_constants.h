@@ -1460,16 +1460,12 @@ enum ikev2_auth_method {
 	/* 201 - 255 private use */
 };
 
-/*
- * Oakley Group Description attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- */
-typedef enum ike_trans_type_dh oakley_group_t;
-
 /*	you must also touch: constants.c, crypto.c */
 /* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
 /* https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-8 */
-enum ike_trans_type_dh {
+
+#define ikev2_trans_type_kem oakley_group
+enum oakley_group {
 	OAKLEY_GROUP_NONE = 0,	/* RFC 7296 */
 	OAKLEY_GROUP_MODP768 = 1,
 	OAKLEY_GROUP_MODP1024 = 2,
@@ -1517,6 +1513,7 @@ enum ike_trans_type_dh {
 	/* 33 - 32767 Unassigned */
 	/* 32768 - 65535 Reserved for private use */
 };
+
 /*
  * Oakley Group Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A

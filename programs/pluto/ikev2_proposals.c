@@ -2462,8 +2462,8 @@ const struct kem_desc *ikev2_proposals_first_kem(const struct ikev2_proposals *p
  *
  * It's the caller's problem to check that it is actually supported.
  */
-bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
-				  oakley_group_t modp)
+bool ikev2_proposals_include_kem(const struct ikev2_proposals *proposals,
+				 enum ikev2_trans_type_kem kem)
 {
 	int propnum;
 	const struct ikev2_proposal *proposal;
@@ -2471,7 +2471,7 @@ bool ikev2_proposals_include_modp(const struct ikev2_proposals *proposals,
 		const struct ikev2_transforms *transforms = &proposal->transforms[IKEv2_TRANS_TYPE_KEM];
 		const struct ikev2_transform *transform;
 		FOR_EACH_TRANSFORM(transform, transforms) {
-			if (transform->id == modp) {
+			if (transform->id == kem) {
 				return true;
 			}
 		}
@@ -2704,7 +2704,7 @@ void set_ikev2_accepted_proposal(struct ike_sa *ike,
 				 enum ikev2_trans_type_encr encr,
 				 enum ikev2_trans_type_prf prf,
 				 enum ikev2_trans_type_integ integ,
-				 enum ike_trans_type_dh dh,
+				 enum ikev2_trans_type_kem kem,
 				 unsigned enc_keylen)
 {
 	PASSERT(ike->sa.logger, ike->sa.st_v2_accepted_proposal == NULL);
@@ -2716,7 +2716,7 @@ void set_ikev2_accepted_proposal(struct ike_sa *ike,
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->id = encr;
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_PRF].transform->id = prf;
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_INTEG].transform->id = integ;
-	temp_proposal->transforms[IKEv2_TRANS_TYPE_KEM].transform->id = dh;
+	temp_proposal->transforms[IKEv2_TRANS_TYPE_KEM].transform->id = kem;
 	temp_proposal->transforms[IKEv2_TRANS_TYPE_ENCR].transform->attr_keylen = enc_keylen;
 
 	for(int i=1; i<5; i++) {
