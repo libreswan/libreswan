@@ -39,7 +39,7 @@ west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
 "conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
-"conf" #3: IMPAIR: adding transform type 13 (0xd) id 13.0 (0x0)
+"conf" #3: IMPAIR: adding transform type ROOF (0xf) id 0 (0x0)
 "conf" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "conf" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
@@ -63,7 +63,7 @@ west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
 "conf": added IKEv2 connection
 "conf" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
-"conf" #5: IMPAIR: adding transform type INTEG (0x3) id 65535 (0xffff)
+"conf" #5: IMPAIR: adding transform type INTEG (0x3) id IKEv2_INTEG_65535 (0xffff)
 "conf" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "conf" #5: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #6 {ESP <0xESPESP}
@@ -89,7 +89,7 @@ west #
 "conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"conf" #7: IMPAIR: adding transform type 13 (0xd) id 13.0 (0x0)
+"conf" #7: IMPAIR: adding transform type ROOF (0xf) id 0 (0x0)
 "conf" #7: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #8 {ESP <0xESPESP}
 "conf" #7: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "conf" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -113,7 +113,7 @@ west #
 "conf" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #9: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #9: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"conf" #9: IMPAIR: adding transform type INTEG (0x3) id 65535 (0xffff)
+"conf" #9: IMPAIR: adding transform type INTEG (0x3) id IKEv2_INTEG_65535 (0xffff)
 "conf" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #10 {ESP <0xESPESP}
 "conf" #9: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "conf" #9: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'

@@ -138,6 +138,7 @@ struct impair {
 	enum impair_v2_transform v2_proposal_integ;
 	enum impair_v2_transform v2_proposal_dh;
 
+	/* format is <TYPE:8><ID:16> */
 	struct impair_unsigned ikev2_add_ike_transform;
 	struct impair_unsigned ikev2_add_child_transform;
 

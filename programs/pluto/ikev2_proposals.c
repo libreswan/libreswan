@@ -1501,13 +1501,27 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			unsigned transform_id = (type_id & 0xffff);
 			/* adjust the type */
 			unsigned type = (type_id >> 16) & 0xff;
-			enum ikev2_trans_type transform_type = (type == 0xee ? IKEv2_TRANS_TYPE_ROOF : type);
-			name_buf typeb, idb;
-			vlog("IMPAIR: adding transform type %s (0x%x) id %s (0x%x)",
-			     str_enum_short(&ikev2_trans_type_names, transform_type, &typeb),
-			     transform_type,
-			     str_enum_enum(&v2_transform_ID_enums, transform_type, transform_id, &idb),
-			     transform_id);
+			enum ikev2_trans_type transform_type =
+				(type == IKEv2_TRANS_TYPE_IMPAIR_ROOF ? IKEv2_TRANS_TYPE_ROOF : type);
+			VLOG_JAMBUF(buf) {
+				jam_string(buf, "IMPAIR: adding");
+				/* type */
+				jam_string(buf, " transform type ");
+				if (type == IKEv2_TRANS_TYPE_IMPAIR_ROOF) {
+					jam_string(buf, "ROOF");
+				} else {
+					jam_enum_short(buf, &ikev2_trans_type_names, transform_type);
+				}
+				jam(buf, " (0x%x)", transform_type);
+				/* id */
+				jam_string(buf, " id ");
+				if (type == IKEv2_TRANS_TYPE_IMPAIR_ROOF) {
+					jam(buf, "%d", transform_id);
+				} else {
+					jam_enum_enum_short(buf, &v2_transform_ID_enums, transform_type, transform_id);
+				}
+				jam(buf, " (0x%x)", transform_id);
+			}
 			if (!emit_transform_header(proposal_pbs, transform_type, transform_id,
 						   is_last_transform,
 						   NULL/*no nested PBS*/)) {

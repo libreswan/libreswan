@@ -218,10 +218,10 @@ struct impairment impairments[] = {
 	V(v2_proposal_dh, "dh in proposals",
 	  .how_sparse_names = &impair_v2_transform_names),
 
-	U(ikev2_add_ike_transform,
-	  "add an extra (possibly bogus) TYPE transform with ID to the first IKE proposal (<unsigned> is encoded as TYPE<<16|ID; TYPE=0xEE means transform roof)"),
-	U(ikev2_add_child_transform,
-	  "add an extra (possibly bogus) TYPE transform with ID to the first CHILD proposal (<unsigned> is encoded as TYPE<<16|ID; TYPE=0xEE means transform roof))"),
+#define ADD_TRANSFORM(SA) "add a transform to the first "SA" proposal; <unsigned> is <TRANS_TYPE:8><TRANS_TYPE_ID:16>; use "IKEv2_TRANS_TYPE_IMPAIR_ROOF_STRING" for TRANS_TYPE_ROOF"
+	U(ikev2_add_ike_transform, ADD_TRANSFORM("IKE SA")),
+	U(ikev2_add_child_transform, ADD_TRANSFORM("Child SA")),
+#undef ADD_TRANSFORM
 
 	B(jacob_two_two, "cause pluto to send all messages twice."),
 	V(ke_payload, "corrupt the outgoing KE payload",
