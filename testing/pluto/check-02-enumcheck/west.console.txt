@@ -2934,13 +2934,13 @@ name for -1 present (should be absent)
          jam_enum_short 3: INTEG OK
          jam_enum_human 3: integ OK
          match INTEG [short]: OK
-    4 -> IKEv2_TRANS_TYPE_KE
-         jam_enum 4: IKEv2_TRANS_TYPE_KE OK
-         match IKEv2_TRANS_TYPE_KE: OK
-         short_name 4: KE OK
-         jam_enum_short 4: KE OK
-         jam_enum_human 4: ke OK
-         match KE [short]: OK
+    4 -> IKEv2_TRANS_TYPE_KEM
+         jam_enum 4: IKEv2_TRANS_TYPE_KEM OK
+         match IKEv2_TRANS_TYPE_KEM: OK
+         short_name 4: KEM OK
+         jam_enum_short 4: KEM OK
+         jam_enum_human 4: kem OK
+         match KEM [short]: OK
     5 -> IKEv2_TRANS_TYPE_ESN
          jam_enum 5: IKEv2_TRANS_TYPE_ESN OK
          match IKEv2_TRANS_TYPE_ESN: OK

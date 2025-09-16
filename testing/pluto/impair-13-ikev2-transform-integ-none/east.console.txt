@@ -15,18 +15,18 @@ east #
  # integ=none excluded
 east #
  sed -n -e '/^[^|].*chosen from remote proposal/ { s/SPI=[0-9a-z]*/SPI=X/; p }' /tmp/pluto.log
-"integ" #1: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KE=MODP2048[first-match]
+"integ" #1: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KEM=MODP2048[first-match]
 "integ" #2: proposal 1:ESP=AES_GCM_16_128-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;ESN=YES;ESN=NO[first-match]
-"integ" #3: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-NONE-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KE=MODP2048[first-match]
-"integ" #4: proposal 1:ESP=AES_GCM_16_128-NONE-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;KE=MODP2048;ESN=YES[first-match]
-"integ" #5: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KE=MODP2048[first-match]
-"integ" #6: proposal 1:ESP=AES_GCM_16_128-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;KE=MODP2048;ESN=YES[first-match]
-"integ" #7: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-NONE-MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KE=MODP2048[first-match]
+"integ" #3: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-NONE-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KEM=MODP2048[first-match]
+"integ" #4: proposal 1:ESP=AES_GCM_16_128-NONE-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;KEM=MODP2048;ESN=YES[first-match]
+"integ" #5: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KEM=MODP2048[first-match]
+"integ" #6: proposal 1:ESP=AES_GCM_16_128-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;KEM=MODP2048;ESN=YES[first-match]
+"integ" #7: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-NONE-MODP2048 chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KEM=MODP2048[first-match]
 "integ" #8: proposal 1:ESP=AES_GCM_16_128-NONE-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;ESN=YES;ESN=NO[first-match]
-"integ" #9: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KE=MODP2048[first-match]
-"integ" #10: proposal 1:ESP=AES_GCM_16_128-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;KE=MODP2048;ESN=YES[first-match]
-"integ" #11: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-NONE-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KE=MODP2048[first-match]
-"integ" #12: proposal 1:ESP=AES_GCM_16_128-NONE-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;KE=MODP2048;ESN=YES[first-match]
+"integ" #9: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;KEM=MODP2048[first-match]
+"integ" #10: proposal 1:ESP=AES_GCM_16_128-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;KEM=MODP2048;ESN=YES[first-match]
+"integ" #11: proposal 1:IKE=AES_GCM_16_128-HMAC_SHA1-NONE-MODP2048 SPI=X chosen from remote proposals 1:IKE:ENCR=AES_GCM_16_128;PRF=HMAC_SHA1;INTEG=NONE;KEM=MODP2048[first-match]
+"integ" #12: proposal 1:ESP=AES_GCM_16_128-NONE-MODP2048-ESN:YES SPI=X chosen from remote proposals 1:ESP:ENCR=AES_GCM_16_128;INTEG=NONE;KEM=MODP2048;ESN=YES[first-match]
 east #
  # west shows what came back, expect two lines for each of the three
 east #

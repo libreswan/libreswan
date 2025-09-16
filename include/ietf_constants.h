@@ -568,7 +568,7 @@ enum next_payload_types_ikev1 {
 	ISAKMP_NEXT_SA = 1, /* Security Association */
 	ISAKMP_NEXT_P = 2, /* Proposal - See also v2_PROPOSAL_NON_LAST */
 	ISAKMP_NEXT_T = 3, /* Transform */
-	ISAKMP_NEXT_KE = 4, /* Key Exchange */
+	ISAKMP_NEXT_KE = 4, /* Key Exchange (material) */
 	ISAKMP_NEXT_ID = 5, /* Identification */
 	ISAKMP_NEXT_CERT = 6, /* Certificate */
 	ISAKMP_NEXT_CR = 7, /* Certificate Request */
@@ -954,7 +954,7 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_ENCR = 1,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_PRF = 2,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_INTEG = 3,	/* RFC 7296 */
-	IKEv2_TRANS_TYPE_KE = 4,	/* RFC 7296 + RFC 9370 */
+	IKEv2_TRANS_TYPE_KEM = 4,	/* RFC 7296 + RFC 9370; IANA calls it KE but that's the BLOB, grrr */
 	IKEv2_TRANS_TYPE_ESN = 5,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_ADDKE1 = 6,	/* RFC 9370 */
 	IKEv2_TRANS_TYPE_ADDKE2 = 7,	/* RFC 9370 */
