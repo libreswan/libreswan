@@ -391,7 +391,7 @@
       which contains information used when the software is being
       started.
     </para>
-    <programlisting><xi:include  href="configsections.example"  parse="text"
+    <programlisting><xi:include  href="d.ipsec.conf/configsections.example"  parse="text"
     xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
     <para>
       Parameters are optional unless marked &ldquo;(required)&rdquo;.

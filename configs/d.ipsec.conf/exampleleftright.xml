@@ -8,7 +8,7 @@
     example:
   </para>
 
-  <programlisting><xi:include  href="exampleleftright.example"  parse="text"
+  <programlisting><xi:include  href="d.ipsec.conf/exampleleftright.example"  parse="text"
   xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
 
   <para>

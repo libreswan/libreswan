@@ -7,6 +7,6 @@
     special named conns that are used to implement the default policy
     groups. Currently, these names cannot be changed.
   </para>
-  <programlisting><xi:include  href="oe_conns.example"  parse="text"
+  <programlisting><xi:include  href="d.ipsec.conf/oe_conns.example"  parse="text"
   xmlns:xi="http://www.w3.org/2001/XInclude"/></programlisting>
 </refsect1>
