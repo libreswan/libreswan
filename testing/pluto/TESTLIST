@@ -872,6 +872,7 @@ kvmplutotest	ikev2-connswitch-02-real-mismatch	good
 kvmplutotest	ikev2-connswitch-03		good
 kvmplutotest	ikev2-connswitch-06-net-net-template	good	github/275
 kvmplutotest	ikev2-connswitch-06-net-net-permanent	good
+kvmplutotest	ikev2-connswitch-06-host-net-template	good	github/2380
 
 #
 # a test of using X.509 keys
