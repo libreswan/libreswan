@@ -1,3 +1,15 @@
-IKEv2 test X.509 where east has its CA removed.
+IKEv2 test X.509 where EAST/WEST have root cert
 
-the connection should fail
+- WEST signs AUTH(POI) payload using its private key
+- WEST sends AUTH + it's cert to EAST
+- EAST verifies WEST's CERT using the local ROOT-cert
+- EAST verifies WEST's AUTH(POI) using WEST's cert
+
+EAST should then do the reverse; but it has SENDCERT=IFASKED so needs
+to be prompted for the cert.
+
+However, per:
+
+  https://github.com/libreswan/libreswan/issues/2437
+
+WEST only asks for EAST's CERT when rightca=%same

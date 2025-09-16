@@ -1,6 +1,8 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
+ # load east's keypair + root's cert
+east #
  /testing/x509/import.sh real/mainca/east.p12
  ipsec pk12util -w nss-pw -i real/mainca/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
@@ -14,8 +16,8 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
-"ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+ ipsec add east
+"east": added IKEv2 connection
 east #
  echo "initdone"
 initdone

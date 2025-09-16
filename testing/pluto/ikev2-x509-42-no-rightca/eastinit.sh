@@ -1,7 +1,8 @@
 /testing/guestbin/swan-prep --nokeys
+# load east's keypair + root's cert
 /testing/x509/import.sh real/mainca/east.p12
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add ikev2-westnet-eastnet-x509-cr
+ipsec add east
 echo "initdone"
