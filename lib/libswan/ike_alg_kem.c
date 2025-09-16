@@ -342,7 +342,7 @@ const struct kem_desc ike_alg_kem_ml_kem_512 = {
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 800,
 	.responder_bytes = 768,
-	.nss.ml_kem.generate_key_pair_parameter = LSW_CKP_ML_KEM_512,
+	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_512,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem512,
 	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
 };
@@ -384,7 +384,7 @@ const struct kem_desc ike_alg_kem_ml_kem_1024 = {
 	/* Data Size on Octets on wire */
 	.initiator_bytes = 1568,
 	.responder_bytes = 1568,
-	.nss.ml_kem.generate_key_pair_parameter = LSW_CKP_ML_KEM_1024,
+	.nss.ml_kem.generate_key_pair_parameter = CKP_ML_KEM_1024,
 	.nss.ml_kem.encapsulate_parameter = params_ml_kem1024,
 	.kem_ops = &ike_alg_kem_ml_kem_nss_ops,
 };
