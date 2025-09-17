@@ -2633,6 +2633,7 @@ FIPS Pseudorandom Function (KDF):
 FIPS Integrity Algorithm:
 FIPS Key Exchange Method (DH):
 FIPS IP Compression:
+FIPS Sequence Numbers:
 west #
  # Check pluto algorithm list.
 west #
@@ -2680,6 +2681,9 @@ FIPS IP Compression:
   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS          
   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS          
   LZJH                              IKEv1:             IKEv2:     ESP AH  FIPS          
+FIPS Sequence Numbers:
+  32_BIT_SEQUENTIAL                 IKEv1:             IKEv2:     ESP AH  FIPS           no
+  PARTIAL_64_BIT_SEQUENTIAL         IKEv1:             IKEv2:     ESP AH  FIPS           yes
 skipping tests for disabled CAMELLIA_CBC algorithm
 testing AES_GCM_16:
 west #
