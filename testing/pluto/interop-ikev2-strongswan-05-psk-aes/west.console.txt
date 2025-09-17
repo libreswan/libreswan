@@ -31,7 +31,7 @@ west #
  ipsec auto --up westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"westnet-eastnet-ikev2" #1: received unauthenticated INVALID_KE_PAYLOAD response to DH DH19; resending with suggested DH MODP2048
+"westnet-eastnet-ikev2" #1: received unauthenticated INVALID_KE_PAYLOAD response to Key Exchange Method (DH) DH19; resending with suggested MODP2048
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
