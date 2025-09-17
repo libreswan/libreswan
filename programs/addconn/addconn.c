@@ -29,6 +29,8 @@
 #include "lswtool.h"
 #include "whack.h"
 #include "ipsecconf/config_setup.h"
+#include "ipsecconf/config_conn.h"
+#include "ipsecconf/keywords.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
