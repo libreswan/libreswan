@@ -1018,7 +1018,7 @@ static field_desc ikev2_ke_fields[] = {
 	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
 	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
-	{ ft_enum, 16 / BITS_IN_BYTE, "KEM", &oakley_group_names },
+	{ ft_enum, 16 / BITS_IN_BYTE, "KEM", &ikev2_trans_type_kem_names },
 	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
@@ -1662,7 +1662,7 @@ struct_desc ikev2_redirect_desc = {
 };
 
 static field_desc ikev2_suggested_kem_fields[] = {
-	{ ft_enum, 16 / BITS_IN_BYTE, "suggested KEM", &oakley_group_names },
+	{ ft_enum, 16 / BITS_IN_BYTE, "suggested KEM", &ikev2_trans_type_kem_names },
 	{ ft_end,  0, NULL, NULL }
 };
 

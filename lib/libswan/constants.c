@@ -1604,15 +1604,12 @@ enum_names ikev2_auth_method_names = {
 };
 
 /*
- * Oakley Group Description attribute
- * XXX: Shared for IKEv1 and IKEv2 (although technically there could
- * be differences we need to care about)
+ * IKEv1 Oakley Group Description attribute
  */
 
 /* these string names map via a lookup function to configuration strings */
-static const char *const oakley_group_name[] = {
-#define S(E) [E - OAKLEY_GROUP_NONE] = #E
-	S(OAKLEY_GROUP_NONE), /* 0! RFC 7296 */
+static const char *const oakley_group_name[OAKLEY_GROUP_ROOF-OAKLEY_GROUP_FLOOR] = {
+#define S(E) [E - OAKLEY_GROUP_FLOOR] = #E
 	S(OAKLEY_GROUP_MODP768),
 	S(OAKLEY_GROUP_MODP1024),
 	S(OAKLEY_GROUP_GP155),
@@ -1645,19 +1642,12 @@ static const char *const oakley_group_name[] = {
 	S(OAKLEY_GROUP_BRAINPOOL_P512R1), /* RFC 6932 */
 	S(OAKLEY_GROUP_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
 	S(OAKLEY_GROUP_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
-	S(OAKLEY_GROUP_GOST3410_2012_256),	/* RFC 9385, Sec. 6.1 */
-	S(OAKLEY_GROUP_GOST3410_2012_512),	/* RFC 9385, Sec. 6.1 */
-	S(OAKLEY_GROUP_ML_KEM_512),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	S(OAKLEY_GROUP_ML_KEM_768),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	S(OAKLEY_GROUP_ML_KEM_1024),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
-	/* 33 - 32767 Unassigned */
-	/* 32768 - 65535 Reserved for private use */
 #undef S
 };
 
 enum_names oakley_group_names = {
-	OAKLEY_GROUP_NONE,
-	OAKLEY_GROUP_ML_KEM_1024,
+	OAKLEY_GROUP_FLOOR,
+	OAKLEY_GROUP_ROOF - 1,
 	ARRAY_REF(oakley_group_name),
 	"OAKLEY_GROUP_", /* prefix */
 	NULL
@@ -2225,6 +2215,61 @@ enum_names ikev2_trans_type_integ_names = {
 	NULL
 };
 
+/* Key Exchange Method names */
+
+static const char *const ikev2_trans_type_kem_name[IKEv2_KEM_ROOF-IKEv2_KEM_FLOOR] = {
+#define S(E) [E - IKEv2_KEM_FLOOR] = #E
+	S(IKEv2_KEM_NONE), /* 0! RFC 7296 */
+	S(IKEv2_KEM_MODP768),
+	S(IKEv2_KEM_MODP1024),
+	S(IKEv2_KEM_GP155),
+	S(IKEv2_KEM_GP185),
+	S(IKEv2_KEM_MODP1536), /* RFC 3526 */
+	S(IKEv2_KEM_EC2N_2_1), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_2), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_3), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_4), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_5), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_6), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_7), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_EC2N_2_8), /* draft-ietf-ipsec-ike-ecc-groups */
+	S(IKEv2_KEM_MODP2048), /* RFC 3526 */
+	S(IKEv2_KEM_MODP3072), /* RFC 3526 */
+	S(IKEv2_KEM_MODP4096), /* RFC 3526 */
+	S(IKEv2_KEM_MODP6144), /* RFC 3526 */
+	S(IKEv2_KEM_MODP8192), /* RFC 3526 */
+	S(IKEv2_KEM_ECP_256), /* RFC 5903 */
+	S(IKEv2_KEM_ECP_384), /* RFC 5903 */
+	S(IKEv2_KEM_ECP_521), /* RFC 5903 */
+	S(IKEv2_KEM_DH22), /* RFC 5114 */
+	S(IKEv2_KEM_DH23), /* RFC 5114 */
+	S(IKEv2_KEM_DH24), /* RFC 5114 */
+	S(IKEv2_KEM_ECP_192), /* RFC 5114 */
+	S(IKEv2_KEM_ECP_224), /* RFC 5114 */
+	S(IKEv2_KEM_BRAINPOOL_P224R1), /* RFC 6932 */
+	S(IKEv2_KEM_BRAINPOOL_P256R1), /* RFC 6932 */
+	S(IKEv2_KEM_BRAINPOOL_P384R1), /* RFC 6932 */
+	S(IKEv2_KEM_BRAINPOOL_P512R1), /* RFC 6932 */
+	S(IKEv2_KEM_CURVE25519), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(IKEv2_KEM_CURVE448), /* RFC-ietf-ipsecme-safecurves-05 */
+	S(IKEv2_KEM_GOST3410_2012_256),	/* RFC 9385, Sec. 6.1 */
+	S(IKEv2_KEM_GOST3410_2012_512),	/* RFC 9385, Sec. 6.1 */
+	S(IKEv2_KEM_ML_KEM_512),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(IKEv2_KEM_ML_KEM_768),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	S(IKEv2_KEM_ML_KEM_1024),	/* RFC draft-ietf-ipsecme-ikev2-mlkem */
+	/* 33 - 32767 Unassigned */
+	/* 32768 - 65535 Reserved for private use */
+#undef S
+};
+
+enum_names ikev2_trans_type_kem_names = {
+	IKEv2_KEM_FLOOR,
+	IKEv2_KEM_ROOF-1,
+	ARRAY_REF(ikev2_trans_type_kem_name),
+	"IKEv2_KEM_", /* prefix */
+	NULL
+};
+
 static const char *const ikev2_trans_type_esn_name[] = {
 #define S(E) [E - IKEv2_ESN_FLOOR] = #E
 	S(IKEv2_ESN_YES),
@@ -2301,20 +2346,20 @@ enum_names ikev2_trans_type_names = {
 };
 
 /* for each IKEv2 transform attribute, which enum_names describes its values? */
-static enum_names *const ikev2_transid_val_descs[] = {
+static enum_names *const ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ROOF-IKEv2_TRANS_TYPE_FLOOR] = {
 #define S(E,V) [E - IKEv2_TRANS_TYPE_FLOOR] = &V
 	S(IKEv2_TRANS_TYPE_ENCR, ikev2_trans_type_encr_names),        /* 1 */
 	S(IKEv2_TRANS_TYPE_PRF, ikev2_trans_type_prf_names),          /* 2 */
 	S(IKEv2_TRANS_TYPE_INTEG, ikev2_trans_type_integ_names),      /* 3 */
-	S(IKEv2_TRANS_TYPE_KEM, oakley_group_names),                  /* 4 */
+	S(IKEv2_TRANS_TYPE_KEM, ikev2_trans_type_kem_names),          /* 4 */
 	S(IKEv2_TRANS_TYPE_ESN, ikev2_trans_type_esn_names),          /* 5 */
-	S(IKEv2_TRANS_TYPE_ADDKE1, oakley_group_names),               /* 6 */
-	S(IKEv2_TRANS_TYPE_ADDKE2, oakley_group_names),               /* 7 */
-	S(IKEv2_TRANS_TYPE_ADDKE3, oakley_group_names),               /* 8 */
-	S(IKEv2_TRANS_TYPE_ADDKE4, oakley_group_names),               /* 9 */
-	S(IKEv2_TRANS_TYPE_ADDKE5, oakley_group_names),               /* 10 */
-	S(IKEv2_TRANS_TYPE_ADDKE6, oakley_group_names),               /* 11 */
-	S(IKEv2_TRANS_TYPE_ADDKE7, oakley_group_names),               /* 12 */
+	S(IKEv2_TRANS_TYPE_ADDKE1, ikev2_trans_type_kem_names),       /* 6 */
+	S(IKEv2_TRANS_TYPE_ADDKE2, ikev2_trans_type_kem_names),       /* 7 */
+	S(IKEv2_TRANS_TYPE_ADDKE3, ikev2_trans_type_kem_names),       /* 8 */
+	S(IKEv2_TRANS_TYPE_ADDKE4, ikev2_trans_type_kem_names),       /* 9 */
+	S(IKEv2_TRANS_TYPE_ADDKE5, ikev2_trans_type_kem_names),       /* 10 */
+	S(IKEv2_TRANS_TYPE_ADDKE6, ikev2_trans_type_kem_names),       /* 11 */
+	S(IKEv2_TRANS_TYPE_ADDKE7, ikev2_trans_type_kem_names),       /* 12 */
 	S(IKEv2_TRANS_TYPE_KWA, ikev2_trans_type_kwa_names),          /* 13 */
 	S(IKEv2_TRANS_TYPE_GCAUTH, ikev2_trans_type_gcauth_names),    /* 14 */
 #undef S

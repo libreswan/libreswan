@@ -2883,6 +2883,273 @@ name for -1 present (should be absent)
          jam_enum_short 14: HMAC_SHA2_512_256 OK
          jam_enum_human 14: hmac-sha2-512-256 OK
          match HMAC_SHA2_512_256 [short]: OK
+  ikev2_trans_type_kem_names: [0..38)
+    0 -> IKEv2_KEM_NONE
+         jam_enum 0: IKEv2_KEM_NONE OK
+         match IKEv2_KEM_NONE: OK
+         short_name 0: NONE OK
+         jam_enum_short 0: NONE OK
+         jam_enum_human 0: none OK
+         match NONE [short]: OK
+    1 -> IKEv2_KEM_MODP768
+         jam_enum 1: IKEv2_KEM_MODP768 OK
+         match IKEv2_KEM_MODP768: OK
+         short_name 1: MODP768 OK
+         jam_enum_short 1: MODP768 OK
+         jam_enum_human 1: modp768 OK
+         match MODP768 [short]: OK
+    2 -> IKEv2_KEM_MODP1024
+         jam_enum 2: IKEv2_KEM_MODP1024 OK
+         match IKEv2_KEM_MODP1024: OK
+         short_name 2: MODP1024 OK
+         jam_enum_short 2: MODP1024 OK
+         jam_enum_human 2: modp1024 OK
+         match MODP1024 [short]: OK
+    3 -> IKEv2_KEM_GP155
+         jam_enum 3: IKEv2_KEM_GP155 OK
+         match IKEv2_KEM_GP155: OK
+         short_name 3: GP155 OK
+         jam_enum_short 3: GP155 OK
+         jam_enum_human 3: gp155 OK
+         match GP155 [short]: OK
+    4 -> IKEv2_KEM_GP185
+         jam_enum 4: IKEv2_KEM_GP185 OK
+         match IKEv2_KEM_GP185: OK
+         short_name 4: GP185 OK
+         jam_enum_short 4: GP185 OK
+         jam_enum_human 4: gp185 OK
+         match GP185 [short]: OK
+    5 -> IKEv2_KEM_MODP1536
+         jam_enum 5: IKEv2_KEM_MODP1536 OK
+         match IKEv2_KEM_MODP1536: OK
+         short_name 5: MODP1536 OK
+         jam_enum_short 5: MODP1536 OK
+         jam_enum_human 5: modp1536 OK
+         match MODP1536 [short]: OK
+    6 -> IKEv2_KEM_EC2N_2_1
+         jam_enum 6: IKEv2_KEM_EC2N_2_1 OK
+         match IKEv2_KEM_EC2N_2_1: OK
+         short_name 6: EC2N_2_1 OK
+         jam_enum_short 6: EC2N_2_1 OK
+         jam_enum_human 6: ec2n-2-1 OK
+         match EC2N_2_1 [short]: OK
+    7 -> IKEv2_KEM_EC2N_2_2
+         jam_enum 7: IKEv2_KEM_EC2N_2_2 OK
+         match IKEv2_KEM_EC2N_2_2: OK
+         short_name 7: EC2N_2_2 OK
+         jam_enum_short 7: EC2N_2_2 OK
+         jam_enum_human 7: ec2n-2-2 OK
+         match EC2N_2_2 [short]: OK
+    8 -> IKEv2_KEM_EC2N_2_3
+         jam_enum 8: IKEv2_KEM_EC2N_2_3 OK
+         match IKEv2_KEM_EC2N_2_3: OK
+         short_name 8: EC2N_2_3 OK
+         jam_enum_short 8: EC2N_2_3 OK
+         jam_enum_human 8: ec2n-2-3 OK
+         match EC2N_2_3 [short]: OK
+    9 -> IKEv2_KEM_EC2N_2_4
+         jam_enum 9: IKEv2_KEM_EC2N_2_4 OK
+         match IKEv2_KEM_EC2N_2_4: OK
+         short_name 9: EC2N_2_4 OK
+         jam_enum_short 9: EC2N_2_4 OK
+         jam_enum_human 9: ec2n-2-4 OK
+         match EC2N_2_4 [short]: OK
+   10 -> IKEv2_KEM_EC2N_2_5
+         jam_enum 10: IKEv2_KEM_EC2N_2_5 OK
+         match IKEv2_KEM_EC2N_2_5: OK
+         short_name 10: EC2N_2_5 OK
+         jam_enum_short 10: EC2N_2_5 OK
+         jam_enum_human 10: ec2n-2-5 OK
+         match EC2N_2_5 [short]: OK
+   11 -> IKEv2_KEM_EC2N_2_6
+         jam_enum 11: IKEv2_KEM_EC2N_2_6 OK
+         match IKEv2_KEM_EC2N_2_6: OK
+         short_name 11: EC2N_2_6 OK
+         jam_enum_short 11: EC2N_2_6 OK
+         jam_enum_human 11: ec2n-2-6 OK
+         match EC2N_2_6 [short]: OK
+   12 -> IKEv2_KEM_EC2N_2_7
+         jam_enum 12: IKEv2_KEM_EC2N_2_7 OK
+         match IKEv2_KEM_EC2N_2_7: OK
+         short_name 12: EC2N_2_7 OK
+         jam_enum_short 12: EC2N_2_7 OK
+         jam_enum_human 12: ec2n-2-7 OK
+         match EC2N_2_7 [short]: OK
+   13 -> IKEv2_KEM_EC2N_2_8
+         jam_enum 13: IKEv2_KEM_EC2N_2_8 OK
+         match IKEv2_KEM_EC2N_2_8: OK
+         short_name 13: EC2N_2_8 OK
+         jam_enum_short 13: EC2N_2_8 OK
+         jam_enum_human 13: ec2n-2-8 OK
+         match EC2N_2_8 [short]: OK
+   14 -> IKEv2_KEM_MODP2048
+         jam_enum 14: IKEv2_KEM_MODP2048 OK
+         match IKEv2_KEM_MODP2048: OK
+         short_name 14: MODP2048 OK
+         jam_enum_short 14: MODP2048 OK
+         jam_enum_human 14: modp2048 OK
+         match MODP2048 [short]: OK
+   15 -> IKEv2_KEM_MODP3072
+         jam_enum 15: IKEv2_KEM_MODP3072 OK
+         match IKEv2_KEM_MODP3072: OK
+         short_name 15: MODP3072 OK
+         jam_enum_short 15: MODP3072 OK
+         jam_enum_human 15: modp3072 OK
+         match MODP3072 [short]: OK
+   16 -> IKEv2_KEM_MODP4096
+         jam_enum 16: IKEv2_KEM_MODP4096 OK
+         match IKEv2_KEM_MODP4096: OK
+         short_name 16: MODP4096 OK
+         jam_enum_short 16: MODP4096 OK
+         jam_enum_human 16: modp4096 OK
+         match MODP4096 [short]: OK
+   17 -> IKEv2_KEM_MODP6144
+         jam_enum 17: IKEv2_KEM_MODP6144 OK
+         match IKEv2_KEM_MODP6144: OK
+         short_name 17: MODP6144 OK
+         jam_enum_short 17: MODP6144 OK
+         jam_enum_human 17: modp6144 OK
+         match MODP6144 [short]: OK
+   18 -> IKEv2_KEM_MODP8192
+         jam_enum 18: IKEv2_KEM_MODP8192 OK
+         match IKEv2_KEM_MODP8192: OK
+         short_name 18: MODP8192 OK
+         jam_enum_short 18: MODP8192 OK
+         jam_enum_human 18: modp8192 OK
+         match MODP8192 [short]: OK
+   19 -> IKEv2_KEM_ECP_256
+         jam_enum 19: IKEv2_KEM_ECP_256 OK
+         match IKEv2_KEM_ECP_256: OK
+         short_name 19: ECP_256 OK
+         jam_enum_short 19: ECP_256 OK
+         jam_enum_human 19: ecp-256 OK
+         match ECP_256 [short]: OK
+   20 -> IKEv2_KEM_ECP_384
+         jam_enum 20: IKEv2_KEM_ECP_384 OK
+         match IKEv2_KEM_ECP_384: OK
+         short_name 20: ECP_384 OK
+         jam_enum_short 20: ECP_384 OK
+         jam_enum_human 20: ecp-384 OK
+         match ECP_384 [short]: OK
+   21 -> IKEv2_KEM_ECP_521
+         jam_enum 21: IKEv2_KEM_ECP_521 OK
+         match IKEv2_KEM_ECP_521: OK
+         short_name 21: ECP_521 OK
+         jam_enum_short 21: ECP_521 OK
+         jam_enum_human 21: ecp-521 OK
+         match ECP_521 [short]: OK
+   22 -> IKEv2_KEM_DH22
+         jam_enum 22: IKEv2_KEM_DH22 OK
+         match IKEv2_KEM_DH22: OK
+         short_name 22: DH22 OK
+         jam_enum_short 22: DH22 OK
+         jam_enum_human 22: dh22 OK
+         match DH22 [short]: OK
+   23 -> IKEv2_KEM_DH23
+         jam_enum 23: IKEv2_KEM_DH23 OK
+         match IKEv2_KEM_DH23: OK
+         short_name 23: DH23 OK
+         jam_enum_short 23: DH23 OK
+         jam_enum_human 23: dh23 OK
+         match DH23 [short]: OK
+   24 -> IKEv2_KEM_DH24
+         jam_enum 24: IKEv2_KEM_DH24 OK
+         match IKEv2_KEM_DH24: OK
+         short_name 24: DH24 OK
+         jam_enum_short 24: DH24 OK
+         jam_enum_human 24: dh24 OK
+         match DH24 [short]: OK
+   25 -> IKEv2_KEM_ECP_192
+         jam_enum 25: IKEv2_KEM_ECP_192 OK
+         match IKEv2_KEM_ECP_192: OK
+         short_name 25: ECP_192 OK
+         jam_enum_short 25: ECP_192 OK
+         jam_enum_human 25: ecp-192 OK
+         match ECP_192 [short]: OK
+   26 -> IKEv2_KEM_ECP_224
+         jam_enum 26: IKEv2_KEM_ECP_224 OK
+         match IKEv2_KEM_ECP_224: OK
+         short_name 26: ECP_224 OK
+         jam_enum_short 26: ECP_224 OK
+         jam_enum_human 26: ecp-224 OK
+         match ECP_224 [short]: OK
+   27 -> IKEv2_KEM_BRAINPOOL_P224R1
+         jam_enum 27: IKEv2_KEM_BRAINPOOL_P224R1 OK
+         match IKEv2_KEM_BRAINPOOL_P224R1: OK
+         short_name 27: BRAINPOOL_P224R1 OK
+         jam_enum_short 27: BRAINPOOL_P224R1 OK
+         jam_enum_human 27: brainpool-p224r1 OK
+         match BRAINPOOL_P224R1 [short]: OK
+   28 -> IKEv2_KEM_BRAINPOOL_P256R1
+         jam_enum 28: IKEv2_KEM_BRAINPOOL_P256R1 OK
+         match IKEv2_KEM_BRAINPOOL_P256R1: OK
+         short_name 28: BRAINPOOL_P256R1 OK
+         jam_enum_short 28: BRAINPOOL_P256R1 OK
+         jam_enum_human 28: brainpool-p256r1 OK
+         match BRAINPOOL_P256R1 [short]: OK
+   29 -> IKEv2_KEM_BRAINPOOL_P384R1
+         jam_enum 29: IKEv2_KEM_BRAINPOOL_P384R1 OK
+         match IKEv2_KEM_BRAINPOOL_P384R1: OK
+         short_name 29: BRAINPOOL_P384R1 OK
+         jam_enum_short 29: BRAINPOOL_P384R1 OK
+         jam_enum_human 29: brainpool-p384r1 OK
+         match BRAINPOOL_P384R1 [short]: OK
+   30 -> IKEv2_KEM_BRAINPOOL_P512R1
+         jam_enum 30: IKEv2_KEM_BRAINPOOL_P512R1 OK
+         match IKEv2_KEM_BRAINPOOL_P512R1: OK
+         short_name 30: BRAINPOOL_P512R1 OK
+         jam_enum_short 30: BRAINPOOL_P512R1 OK
+         jam_enum_human 30: brainpool-p512r1 OK
+         match BRAINPOOL_P512R1 [short]: OK
+   31 -> IKEv2_KEM_CURVE25519
+         jam_enum 31: IKEv2_KEM_CURVE25519 OK
+         match IKEv2_KEM_CURVE25519: OK
+         short_name 31: CURVE25519 OK
+         jam_enum_short 31: CURVE25519 OK
+         jam_enum_human 31: curve25519 OK
+         match CURVE25519 [short]: OK
+   32 -> IKEv2_KEM_CURVE448
+         jam_enum 32: IKEv2_KEM_CURVE448 OK
+         match IKEv2_KEM_CURVE448: OK
+         short_name 32: CURVE448 OK
+         jam_enum_short 32: CURVE448 OK
+         jam_enum_human 32: curve448 OK
+         match CURVE448 [short]: OK
+   33 -> IKEv2_KEM_GOST3410_2012_256
+         jam_enum 33: IKEv2_KEM_GOST3410_2012_256 OK
+         match IKEv2_KEM_GOST3410_2012_256: OK
+         short_name 33: GOST3410_2012_256 OK
+         jam_enum_short 33: GOST3410_2012_256 OK
+         jam_enum_human 33: gost3410-2012-256 OK
+         match GOST3410_2012_256 [short]: OK
+   34 -> IKEv2_KEM_GOST3410_2012_512
+         jam_enum 34: IKEv2_KEM_GOST3410_2012_512 OK
+         match IKEv2_KEM_GOST3410_2012_512: OK
+         short_name 34: GOST3410_2012_512 OK
+         jam_enum_short 34: GOST3410_2012_512 OK
+         jam_enum_human 34: gost3410-2012-512 OK
+         match GOST3410_2012_512 [short]: OK
+   35 -> IKEv2_KEM_ML_KEM_512
+         jam_enum 35: IKEv2_KEM_ML_KEM_512 OK
+         match IKEv2_KEM_ML_KEM_512: OK
+         short_name 35: ML_KEM_512 OK
+         jam_enum_short 35: ML_KEM_512 OK
+         jam_enum_human 35: ml-kem-512 OK
+         match ML_KEM_512 [short]: OK
+   36 -> IKEv2_KEM_ML_KEM_768
+         jam_enum 36: IKEv2_KEM_ML_KEM_768 OK
+         match IKEv2_KEM_ML_KEM_768: OK
+         short_name 36: ML_KEM_768 OK
+         jam_enum_short 36: ML_KEM_768 OK
+         jam_enum_human 36: ml-kem-768 OK
+         match ML_KEM_768 [short]: OK
+   37 -> IKEv2_KEM_ML_KEM_1024
+         jam_enum 37: IKEv2_KEM_ML_KEM_1024 OK
+         match IKEv2_KEM_ML_KEM_1024: OK
+         short_name 37: ML_KEM_1024 OK
+         jam_enum_short 37: ML_KEM_1024 OK
+         jam_enum_human 37: ml-kem-1024 OK
+         match ML_KEM_1024 [short]: OK
   ikev2_trans_type_kwa_names: [1..5)
     1 -> IKEv2_KWA_KW_5649_128
          jam_enum 1: IKEv2_KWA_KW_5649_128 OK
@@ -4523,14 +4790,7 @@ name for -1 present (should be absent)
          jam_enum_short 65289: TWOFISH_CBC_SSH OK
          jam_enum_human 65289: twofish-cbc-ssh OK
          match TWOFISH_CBC_SSH [short]: OK
-  oakley_group_names: [0..38)
-    0 -> OAKLEY_GROUP_NONE
-         jam_enum 0: OAKLEY_GROUP_NONE OK
-         match OAKLEY_GROUP_NONE: OK
-         short_name 0: NONE OK
-         jam_enum_short 0: NONE OK
-         jam_enum_human 0: none OK
-         match NONE [short]: OK
+  oakley_group_names: [1..33)
     1 -> OAKLEY_GROUP_MODP768
          jam_enum 1: OAKLEY_GROUP_MODP768 OK
          match OAKLEY_GROUP_MODP768: OK
@@ -4755,41 +5015,6 @@ name for -1 present (should be absent)
          jam_enum_short 32: CURVE448 OK
          jam_enum_human 32: curve448 OK
          match CURVE448 [short]: OK
-   33 -> OAKLEY_GROUP_GOST3410_2012_256
-         jam_enum 33: OAKLEY_GROUP_GOST3410_2012_256 OK
-         match OAKLEY_GROUP_GOST3410_2012_256: OK
-         short_name 33: GOST3410_2012_256 OK
-         jam_enum_short 33: GOST3410_2012_256 OK
-         jam_enum_human 33: gost3410-2012-256 OK
-         match GOST3410_2012_256 [short]: OK
-   34 -> OAKLEY_GROUP_GOST3410_2012_512
-         jam_enum 34: OAKLEY_GROUP_GOST3410_2012_512 OK
-         match OAKLEY_GROUP_GOST3410_2012_512: OK
-         short_name 34: GOST3410_2012_512 OK
-         jam_enum_short 34: GOST3410_2012_512 OK
-         jam_enum_human 34: gost3410-2012-512 OK
-         match GOST3410_2012_512 [short]: OK
-   35 -> OAKLEY_GROUP_ML_KEM_512
-         jam_enum 35: OAKLEY_GROUP_ML_KEM_512 OK
-         match OAKLEY_GROUP_ML_KEM_512: OK
-         short_name 35: ML_KEM_512 OK
-         jam_enum_short 35: ML_KEM_512 OK
-         jam_enum_human 35: ml-kem-512 OK
-         match ML_KEM_512 [short]: OK
-   36 -> OAKLEY_GROUP_ML_KEM_768
-         jam_enum 36: OAKLEY_GROUP_ML_KEM_768 OK
-         match OAKLEY_GROUP_ML_KEM_768: OK
-         short_name 36: ML_KEM_768 OK
-         jam_enum_short 36: ML_KEM_768 OK
-         jam_enum_human 36: ml-kem-768 OK
-         match ML_KEM_768 [short]: OK
-   37 -> OAKLEY_GROUP_ML_KEM_1024
-         jam_enum 37: OAKLEY_GROUP_ML_KEM_1024 OK
-         match OAKLEY_GROUP_ML_KEM_1024: OK
-         short_name 37: ML_KEM_1024 OK
-         jam_enum_short 37: ML_KEM_1024 OK
-         jam_enum_human 37: ml-kem-1024 OK
-         match ML_KEM_1024 [short]: OK
   oakley_hash_names: [1..7)
     1 -> OAKLEY_MD5
          jam_enum 1: OAKLEY_MD5 OK

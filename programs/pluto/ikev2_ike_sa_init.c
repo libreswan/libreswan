@@ -1022,13 +1022,12 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	pstats(invalidke_recv_u, ike->sa.st_oakley.ta_dh->ikev2_alg_id);
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	if (!ikev2_proposals_include_modp(ike_proposals, sk.sk_kem)) {
+	if (!ikev2_proposals_include_kem(ike_proposals, sk.sk_kem)) {
 		name_buf esb;
 		llog_sa(RC_LOG, ike,
 			"discarding unauthenticated INVALID_KE_PAYLOAD response to KEM %s; suggested KEM %s is not acceptable",
 			ike->sa.st_oakley.ta_dh->common.fqn,
-			str_enum_short(&oakley_group_names,
-				       sk.sk_kem, &esb));
+			str_enum_short(&ikev2_trans_type_kem_names, sk.sk_kem, &esb));
 		return STF_IGNORE;
 	}
 

@@ -232,7 +232,7 @@ struct ticket {
 			enum ikev2_trans_type_encr sr_encr;
 			enum ikev2_trans_type_prf sr_prf;
 			enum ikev2_trans_type_integ sr_integ;
-			enum ike_trans_type_dh sr_dh;
+			enum ikev2_trans_type_kem sr_kem;
 			unsigned sr_enc_keylen;
 		} state;
 		uint8_t tag[16];
@@ -251,7 +251,7 @@ struct session {
 	enum ikev2_trans_type_encr sr_encr;
 	enum ikev2_trans_type_prf sr_prf;
 	enum ikev2_trans_type_integ sr_integ;
-	enum ike_trans_type_dh sr_dh;
+	enum ikev2_trans_type_kem sr_kem;
 	unsigned sr_enc_keylen;
 
 	/*
@@ -339,7 +339,7 @@ static bool ike_responder_to_ticket(const struct ike_sa *ike,
 	ticket->secured.state.sr_encr = ID(ike->sa.st_oakley.ta_encrypt);
 	ticket->secured.state.sr_prf = ID(ike->sa.st_oakley.ta_prf);
 	ticket->secured.state.sr_integ = ID(ike->sa.st_oakley.ta_integ);
-	ticket->secured.state.sr_dh = ID(ike->sa.st_oakley.ta_dh);
+	ticket->secured.state.sr_kem = ID(ike->sa.st_oakley.ta_dh);
 #undef ID
 
 	ticket->secured.state.sr_enc_keylen = ike->sa.st_oakley.enckeylen;
@@ -522,7 +522,7 @@ bool decrypt_ticket(struct pbs_in pbs, struct ike_sa *ike)
 				    ticket.secured.state.sr_encr,
 				    ticket.secured.state.sr_prf,
 				    ticket.secured.state.sr_integ,
-				    ticket.secured.state.sr_dh,
+				    ticket.secured.state.sr_kem,
 				    ticket.secured.state.sr_enc_keylen);
 
 	/* save what is needed */
@@ -944,7 +944,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 				    c->session->sr_encr,
 				    c->session->sr_prf,
 				    c->session->sr_integ,
-				    c->session->sr_dh,
+				    c->session->sr_kem,
 				    c->session->sr_enc_keylen);
 
 	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
@@ -1058,7 +1058,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 		 ike->sa.st_oakley.ALG->ikev2_alg_id)
 	c->session->sr_encr = ID(ta_encrypt);
 	c->session->sr_prf = ID(ta_prf);
-	c->session->sr_dh = ID(ta_dh);
+	c->session->sr_kem = ID(ta_dh);
 	c->session->sr_integ = ID(ta_integ);
 #undef ID
 	c->session->sr_enc_keylen = ike->sa.st_oakley.enckeylen;

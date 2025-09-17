@@ -262,7 +262,7 @@ const struct prf_desc *ikev1_ike_prf_desc(enum ikev1_auth_attribute id, name_buf
 	return prf_desc(ikev1_oakley_lookup(&ike_alg_prf, id, b));
 }
 
-const struct kem_desc *ikev1_ike_kem_desc(enum ike_trans_type_dh id, name_buf *b)
+const struct kem_desc *ikev1_ike_kem_desc(enum oakley_group id, name_buf *b)
 {
 	return kem_desc(ikev1_oakley_lookup(&ike_alg_kem, id, b));
 }
@@ -313,7 +313,7 @@ const struct integ_desc *ikev2_integ_desc(enum ikev2_trans_type_integ id, struct
 	return integ_desc(ikev2_lookup(&ike_alg_integ, id, b));
 }
 
-const struct kem_desc *ikev2_kem_desc(enum ike_trans_type_dh id, struct name_buf *b)
+const struct kem_desc *ikev2_kem_desc(enum ikev2_trans_type_kem id, struct name_buf *b)
 {
 	return kem_desc(ikev2_lookup(&ike_alg_kem, id, b));
 }
@@ -912,7 +912,7 @@ const struct ike_alg_type ike_alg_kem = {
 	.enum_names = {
 		[IKEv1_OAKLEY_ID] = &oakley_group_names,
 		[IKEv1_IPSEC_ID] = &oakley_group_names,
-		[IKEv2_ALG_ID] = &oakley_group_names,
+		[IKEv2_ALG_ID] = &ikev2_trans_type_kem_names,
 	},
 	.desc_check = kem_desc_check,
 	.desc_is_ike = kem_desc_is_ike,

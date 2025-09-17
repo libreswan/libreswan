@@ -112,7 +112,7 @@ const struct kem_desc ike_alg_kem_none = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_IPSEC_ID] = -1,
-			[IKEv2_ALG_ID] = OAKLEY_GROUP_NONE,
+			[IKEv2_ALG_ID] = IKEv2_KEM_NONE,
 		},
 		/*
 		 * IKEv2, during the initial exchanges, negotiates a

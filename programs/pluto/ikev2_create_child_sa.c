@@ -2183,7 +2183,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 				llog_sa(RC_LOG, (*larval_child),
 					"CREATE_CHILD_SA failed with error notification %s response suggesting %s instead of %s",
 					str_enum_short(&v2_notification_names, n, &nb),
-					str_enum_short(&oakley_group_names, sk.sk_kem, &sgb),
+					str_enum_short(&ikev2_trans_type_kem_names, sk.sk_kem, &sgb),
 					ike->sa.st_oakley.ta_dh->common.fqn);
 				status = STF_OK; /* let IKE stumble on */
 				break;

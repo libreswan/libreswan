@@ -557,7 +557,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 	struct db_sa *gsp = NULL;
 
 	/* Next two are for multiple proposals in aggressive mode... */
-	signed last_modp = 0;
+	enum oakley_group last_modp = 0;
 	bool warned_dropped_dhgr = false;
 
 	int transcnt = 0;
@@ -671,7 +671,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 		 * a different DH group, we try to deal with this.
 		 */
 		if (single_dh && transcnt > 0 &&
-		    algs.kem->ikev1_oakley_id != last_modp) {
+		    algs.kem->ikev1_oakley_id != (int)last_modp) {
 			if (
 #ifdef USE_DH2
 			    last_modp == OAKLEY_GROUP_MODP1024 ||
