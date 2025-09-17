@@ -58,7 +58,7 @@ enum config_conn_keyword {
 	/*
 	 * Generic keywords, add more here.
 	 */
-	KWS_DEBUG = CONFIG_SETUP_KEYWORD_ROOF,
+	KWS_DEBUG = 1,
 	KWS_HOST,
 	KWS_NEXTHOP,
 
