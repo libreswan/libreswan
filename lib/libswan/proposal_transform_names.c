@@ -24,6 +24,7 @@ static const char *proposal_transform_name[] = {
 	S(PROPOSAL_TRANSFORM_prf),
 	S(PROPOSAL_TRANSFORM_integ),
 	S(PROPOSAL_TRANSFORM_kem),
+	S(PROPOSAL_TRANSFORM_sn),
 	S(PROPOSAL_TRANSFORM_addke1),
 	S(PROPOSAL_TRANSFORM_addke2),
 	S(PROPOSAL_TRANSFORM_addke3),
