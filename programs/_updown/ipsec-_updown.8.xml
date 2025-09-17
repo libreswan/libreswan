@@ -257,6 +257,21 @@
 	  </para>
 	</listitem>
       </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <envar>PLUTO_DNS_RESOLVER</envar>
+	</term>
+	<listitem>
+	  <para>
+	    is the name of the system's DNS resolver
+	    (<option>file</option>, or <option>systemd</option>) as
+	    configured by the &ipsec.conf.5; option
+	    <option>dns-resolver=</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+
     </variablelist>
   </refsect1>
 
