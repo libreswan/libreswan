@@ -34,7 +34,7 @@
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "kernel.h"             /* needs connections.h */
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "lex.h"
 #include "log.h"
 #include "whack.h"

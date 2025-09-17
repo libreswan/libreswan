@@ -35,7 +35,7 @@
 
 #include "lock_file.h"
 #include "lswalloc.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"

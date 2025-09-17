@@ -15,7 +15,7 @@
 
 #include <stdbool.h>
 
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/parser.h"

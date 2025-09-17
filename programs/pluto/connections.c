@@ -107,7 +107,7 @@
 #include "whack_pubkey.h"
 #include "binaryscale-iec-60027-2.h"
 #include "addr_lookup.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "extract.h"
 
 static void discard_connection(struct connection **cp, bool connection_valid, where_t where);

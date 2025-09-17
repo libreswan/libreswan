@@ -42,7 +42,7 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
 #include "show.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 static struct fd *logger_fd(const struct logger *logger);
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);

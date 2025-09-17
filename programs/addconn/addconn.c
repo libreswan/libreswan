@@ -28,7 +28,7 @@
 #include "lswalloc.h"
 #include "lswtool.h"
 #include "whack.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"

@@ -47,7 +47,7 @@
 #ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 const char *pluto_stats_binary; /* see init_binlog() */
 

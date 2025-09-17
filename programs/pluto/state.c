@@ -76,7 +76,7 @@
 #include "ikev2_states.h"
 #include "crypt_cipher.h"		/* for cipher_context_destroy() */
 #include "ddos.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 static void delete_state(struct state *st);
 

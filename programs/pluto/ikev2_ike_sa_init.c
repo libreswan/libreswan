@@ -65,7 +65,7 @@
 #include "ikev2_prf.h"
 #include "crypt_symkey.h"
 #include "ikev2_notification.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "ikev2_ke.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
