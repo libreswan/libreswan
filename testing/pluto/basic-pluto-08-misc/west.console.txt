@@ -7,6 +7,7 @@ west #
  ipsec pluto --rundir /tmp/rhbz1313816 --nofork --stderrlog --log-no-time
 Starting Pluto (Libreswan Version ...) pid:PID
 operating system: ...
+using dns-resolver=file
 core dump dir: /run/pluto
 secrets file: /etc/ipsec.secrets
 Initializing NSS using read-only database "sql:/var/lib/ipsec/nss"
