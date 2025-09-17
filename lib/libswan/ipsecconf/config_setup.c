@@ -151,6 +151,9 @@ const struct config_setup *config_setup_singleton(void)
 				    "pfkeyv2"
 #endif
 			);
+
+		update_setup_string(KSF_DNS_RESOLVER, "file");
+
 		/*
 		 * Clear .set, which is set by update_setup*().  Don't
 		 * use k_default as that is intended for 'conn
@@ -477,6 +480,8 @@ static const struct keyword_def config_setup_keyword[] = {
   K("nhelpers",  kt_unsigned,  KBF_NHELPERS),
   K("drop-oppo-null",  kt_sparse_name,  KYN_DROP_OPPO_NULL, .sparse_names = &yn_option_names),
   K("expire-shunt-interval", kt_seconds, KSF_EXPIRE_SHUNT_INTERVAL),
+
+  K("dns-resolver", kt_string, KSF_DNS_RESOLVER),
 
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
 

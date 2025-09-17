@@ -77,4 +77,6 @@ void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct child_sa *child, struct logger *logger,
 			   struct updown_env);
 
+extern const char *pluto_dns_resolver;
+
 #endif

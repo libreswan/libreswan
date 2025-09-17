@@ -1,0 +1,37 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ cp ../../guestbin/updown.sh /tmp
+west #
+ chmod a+x /tmp/updown.sh
+west #
+ show_dns_resolver() { printf "ipsec status: " ; ipsec status | sed -n -e 's/.* \(dns-resolver=[^, ]*\).*/\1/p' ; printf "updown: " ; grep PLUTO_DNS_RESOLVER /tmp/updown.env ; }
+west #
+ cp west.conf /etc/ipsec.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ show_dns_resolver
+ipsec status: dns-resolver=file
+updown: PLUTO_DNS_RESOLVER=file
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ cp west-dns-resolver-systemd.conf /etc/ipsec.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ show_dns_resolver
+ipsec status: dns-resolver=systemd
+updown: PLUTO_DNS_RESOLVER=systemd
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #

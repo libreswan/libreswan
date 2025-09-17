@@ -40,6 +40,8 @@
 #include "secrets.h"		/* for struct pubkey_list */
 #include "server_run.h"
 
+const char *pluto_dns_resolver;
+
 /*
  * Remove all characters but [-_.0-9a-zA-Z] from a character string.
  * Truncates the result if it would be too long.
@@ -197,6 +199,7 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 		  });
 
 	JDstr("PLUTO_STACK", kernel_ops->updown_name);
+	JDstr("PLUTO_DNS_RESOLVER", pluto_dns_resolver);
 
 	if (c->config->child.metric != 0) {
 		JDint("PLUTO_METRIC", c->config->child.metric);
