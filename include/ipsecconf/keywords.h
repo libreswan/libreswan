@@ -32,6 +32,8 @@
 
 #include "lset.h"	/* for LELEM() */
 
+struct logger;
+
 /* these are bits set in a word */
 enum keyword_valid_ix {
 	KV_LEFTRIGHT_IX,        /* comes in left-FOO and right-FOO
@@ -81,5 +83,7 @@ struct keywords_def {
 
 extern const struct keywords_def config_setup_keywords;
 extern const struct keywords_def config_conn_keywords;
+
+void check_ipsec_conf_keywords(struct logger *logger);
 
 #endif /* _KEYWORDS_H_ */
