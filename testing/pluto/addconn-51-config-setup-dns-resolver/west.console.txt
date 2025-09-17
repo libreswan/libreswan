@@ -5,9 +5,7 @@ west #
 west #
  chmod a+x /tmp/updown.sh
 west #
- show_dns_resolver() { ipsec status | sed -n -e 's/.* \(dns-resolver=[^, ]*\).*/\1/p' ; }
-west #
- # show default listen on all IPs
+ show_dns_resolver() { printf "ipsec status: " ; ipsec status | sed -n -e 's/.* \(dns-resolver=[^, ]*\).*/\1/p' ; printf "updown: " ; grep PLUTO_DNS_RESOLVER /tmp/updown.env ; }
 west #
  cp west.conf /etc/ipsec.conf
 west #
@@ -17,7 +15,8 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  show_dns_resolver
-dns-resolver=file
+ipsec status: dns-resolver=file
+updown: PLUTO_DNS_RESOLVER=file
 west #
  ipsec stop
 Redirecting to: [initsystem]
@@ -30,7 +29,8 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  show_dns_resolver
-dns-resolver=systemd
+ipsec status: dns-resolver=systemd
+updown: PLUTO_DNS_RESOLVER=systemd
 west #
  ipsec stop
 Redirecting to: [initsystem]
