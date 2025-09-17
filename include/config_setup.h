@@ -54,6 +54,7 @@ enum config_setup_keyword {
 	KSF_OCSP_URI,
 	KSF_OCSP_TRUSTNAME,
 	KSF_EXPIRE_SHUNT_INTERVAL,
+	KSF_DNS_RESOLVER,
 
 	/*
 	 * By convention, these are global configuration numeric (and

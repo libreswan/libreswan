@@ -80,6 +80,7 @@
 #include "ipsec_interface.h"	/* for config_ipsec_interface()/init_ipsec_interface() */
 #include "lock_file.h"
 #include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
+#include "updown.h"		/* for pluto_dns_resolver; */
 #include "ddos.h"
 
 #ifndef IPSECDIR
@@ -1271,6 +1272,19 @@ int main(int argc, char **argv)
 	init_kernel_info(logger);
 	init_binlog(oco, logger);
 
+	/*
+	 * DNS.
+	 */
+	pluto_dns_resolver = config_setup_string(oco, KSF_DNS_RESOLVER);
+	if (streq(pluto_dns_resolver, "file") ||
+	    streq(pluto_dns_resolver, "systemd")) {
+		llog(RC_LOG, logger, "using dns-resolver=%s",
+		     pluto_dns_resolver);
+	} else {
+		llog(RC_LOG, logger, "using dns-resolver=%s (but it is not recognized)",
+		     pluto_dns_resolver);
+	}
+
 	const char *coredir = config_setup_dumpdir();
 	llog(RC_LOG, logger, "core dump dir: %s", coredir);
 	if (chdir(coredir) == -1) {
@@ -1632,13 +1646,14 @@ void show_setup_plutomain(struct show *s)
 	uintmax_t nflog_all = config_setup_option(oco, KBF_NFLOG_ALL);
 
 	show(s,
-		"ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju",
-		pluto_ike_socket_bufsize,
-		bool_str(pluto_ike_socket_errqueue),
-		bool_str(x509_crl.strict),
-		deltasecs(x509_crl.check_interval),
-		pluto_listen != NULL ? pluto_listen : "<any>",
-		nflog_all
+	     "ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju, dns-resolver=%s,",
+	     pluto_ike_socket_bufsize,
+	     bool_str(pluto_ike_socket_errqueue),
+	     bool_str(x509_crl.strict),
+	     deltasecs(x509_crl.check_interval),
+	     pluto_listen != NULL ? pluto_listen : "<any>",
+	     nflog_all,
+	     pluto_dns_resolver
 		);
 
 	show_x509_ocsp(s);
