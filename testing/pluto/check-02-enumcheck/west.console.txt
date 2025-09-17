@@ -3335,6 +3335,28 @@ name for -1 present (should be absent)
          jam_enum_short 8: AES128_CMAC OK
          jam_enum_human 8: aes128-cmac OK
          match AES128_CMAC [short]: OK
+  ikev2_trans_type_sn_names: [0..3)
+    0 -> IKEv2_SN_32_BIT_SEQUENTIAL
+         jam_enum 0: IKEv2_SN_32_BIT_SEQUENTIAL OK
+         match IKEv2_SN_32_BIT_SEQUENTIAL: OK
+         short_name 0: 32_BIT_SEQUENTIAL OK
+         jam_enum_short 0: 32_BIT_SEQUENTIAL OK
+         jam_enum_human 0: 32-bit-sequential OK
+         match 32_BIT_SEQUENTIAL [short]: OK
+    1 -> IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL
+         jam_enum 1: IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL OK
+         match IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL: OK
+         short_name 1: PARTIAL_64_BIT_SEQUENTIAL OK
+         jam_enum_short 1: PARTIAL_64_BIT_SEQUENTIAL OK
+         jam_enum_human 1: partial-64-bit-sequential OK
+         match PARTIAL_64_BIT_SEQUENTIAL [short]: OK
+    2 -> IKEv2_SN_32_BIT_UNSPECIFIED
+         jam_enum 2: IKEv2_SN_32_BIT_UNSPECIFIED OK
+         match IKEv2_SN_32_BIT_UNSPECIFIED: OK
+         short_name 2: 32_BIT_UNSPECIFIED OK
+         jam_enum_short 2: 32_BIT_UNSPECIFIED OK
+         jam_enum_human 2: 32-bit-unspecified OK
+         match 32_BIT_UNSPECIFIED [short]: OK
   ikev2_ts_type_names: [7..11)
     7 -> IKEv2_TS_IPV4_ADDR_RANGE
          jam_enum 7: IKEv2_TS_IPV4_ADDR_RANGE OK

@@ -956,6 +956,7 @@ enum ikev2_trans_type {
 	IKEv2_TRANS_TYPE_INTEG = 3,	/* RFC 7296 */
 	IKEv2_TRANS_TYPE_KEM = 4,	/* RFC 7296 + RFC 9370; IANA calls it KE but that's the BLOB, grrr */
 	IKEv2_TRANS_TYPE_ESN = 5,	/* RFC 7296 */
+	IKEv2_TRANS_TYPE_SN = 5,	/* RFC 7296 + draft-ietf-ipsecme-ikev2-rename-esn */
 	IKEv2_TRANS_TYPE_ADDKE1 = 6,	/* RFC 9370 */
 	IKEv2_TRANS_TYPE_ADDKE2 = 7,	/* RFC 9370 */
 	IKEv2_TRANS_TYPE_ADDKE3 = 8,	/* RFC 9370 */
@@ -1122,12 +1123,28 @@ enum ikev2_trans_type_kem {
 
 extern const struct enum_names ikev2_trans_type_kem_names;
 
+/*
+ * Transform Type 5 - Sequence Numbers Transform IDs.
+ */
+
 enum ikev2_trans_type_esn {
 #define IKEv2_ESN_FLOOR IKEv2_ESN_NO
 	IKEv2_ESN_NO = 0,
 	IKEv2_ESN_YES = 1,
 #define IKEv2_ESN_ROOF (IKEv2_ESN_YES+1)
 };
+
+extern const struct enum_names ikev2_trans_type_esn_names;
+
+enum ikev2_trans_type_sn {
+#define IKEv2_SN_FLOOR IKEv2_SN_32_BIT_SEQUENTIAL
+	IKEv2_SN_32_BIT_SEQUENTIAL = 0,
+	IKEv2_SN_PARTIAL_64_BIT_SEQUENTIAL = 1,
+	IKEv2_SN_32_BIT_UNSPECIFIED = 2,
+#define IKEv2_SN_ROOF (IKEv2_SN_32_BIT_UNSPECIFIED+1)
+};
+
+extern const struct enum_names ikev2_trans_type_sn_names;
 
 /*
  * Transform Type 13 - Key Wrap Algorithm Transform IDs.

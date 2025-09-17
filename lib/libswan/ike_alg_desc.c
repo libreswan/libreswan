@@ -60,3 +60,9 @@ const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg)
 	passert(alg == NULL || alg->type == &ike_alg_ipcomp);
 	return (const struct ipcomp_desc *)alg;
 }
+
+const struct sn_desc *sn_desc(const struct ike_alg *alg)
+{
+	passert(alg == NULL || alg->type == &ike_alg_sn);
+	return (const struct sn_desc *)alg;
+}
