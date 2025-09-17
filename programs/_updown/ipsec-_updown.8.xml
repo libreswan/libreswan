@@ -37,7 +37,7 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_VERB</emphasis>
+	  <envar>PLUTO_VERB</envar>
 	</term>
 
 	<listitem>
@@ -54,7 +54,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_CONNECTION</emphasis>
+	  <envar>PLUTO_CONNECTION</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -65,7 +65,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_NEXT_HOP</emphasis>
+	  <envar>PLUTO_NEXT_HOP</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -76,7 +76,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_INTERFACE</emphasis>
+	  <envar>PLUTO_INTERFACE</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -87,7 +87,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_ME</emphasis>
+	  <envar>PLUTO_ME</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -98,7 +98,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_MY_CLIENT</emphasis>
+	  <envar>PLUTO_MY_CLIENT</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -111,7 +111,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_MY_CLIENT_NET</emphasis>
+	  <envar>PLUTO_MY_CLIENT_NET</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -123,7 +123,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_MY_CLIENT_MASK</emphasis>
+	  <envar>PLUTO_MY_CLIENT_MASK</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -135,7 +135,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER</emphasis>
+	  <envar>PLUTO_PEER</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -146,7 +146,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_CLIENT</emphasis>
+	  <envar>PLUTO_PEER_CLIENT</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -159,7 +159,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_CLIENT_NET</emphasis>
+	  <envar>PLUTO_PEER_CLIENT_NET</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -171,7 +171,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_CLIENT_MASK</emphasis>
+	  <envar>PLUTO_PEER_CLIENT_MASK</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -183,7 +183,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_MY_PROTOCOL</emphasis>
+	  <envar>PLUTO_MY_PROTOCOL</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -194,7 +194,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_PROTOCOL</emphasis>
+	  <envar>PLUTO_PEER_PROTOCOL</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -205,7 +205,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_MY_PORT</emphasis>
+	  <envar>PLUTO_MY_PORT</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -216,7 +216,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_PORT</emphasis>
+	  <envar>PLUTO_PEER_PORT</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -227,7 +227,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_MY_ID</emphasis>
+	  <envar>PLUTO_MY_ID</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -238,7 +238,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_ID</emphasis>
+	  <envar>PLUTO_PEER_ID</envar>
 	</term>
 	<listitem>
 	  <para>
@@ -249,7 +249,7 @@
 
       <varlistentry>
 	<term>
-	  <emphasis>PLUTO_PEER_CA</emphasis>
+	  <envar>PLUTO_PEER_CA</envar>
 	</term>
 	<listitem>
 	  <para>

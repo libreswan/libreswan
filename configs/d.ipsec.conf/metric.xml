@@ -4,8 +4,9 @@
   </term>
   <listitem>
     <para>
-      Set the metric for added routes. This value is passed to the
-      _updown scripts as PLUTO_METRIC.
+      Set the metric for added routes.  This value is passed to the
+      <command>ipsec _updown</command> scripts as
+      <envar>PLUTO_METRIC</envar> (see &ipsec-updown.8;).
     </para>
     <para>
       Acceptable values are positive numbers, with the default being

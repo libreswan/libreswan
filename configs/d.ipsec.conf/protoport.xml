@@ -35,24 +35,26 @@
 
     <para>
       Some clients, notably older Windows XP and some Mac OSX clients,
-      use a random high port as source port. In those cases
-      <option>rightprotoport=17/%any</option> can be used to allow
-      all UDP traffic on the connection.  Note that this option is
-      part of the proposal, so it cannot be arbitrarily left out if
-      one end does not care about the traffic selection over this
-      connection - both peers have to agree. The Port Selectors show
-      up in the output of <command>ipsec status</command>
-      eg:<option>"l2tp":
-      193.110.157.131[@aivd.libreswan.org]:7/1701...%any:17/1701</option>
+      use a random high port as source port.  In those cases
+      <option>rightprotoport=17/%any</option> can be used to allow all
+      UDP traffic on the connection.  Note that this option is part of
+      the proposal, so it cannot be arbitrarily left out if one end
+      does not care about the traffic selection over this connection -
+      both peers have to agree.  The Port Selectors show up in the
+      output of <command>ipsec status</command> eg:<option>"l2tp":
+      193.110.157.131[@aivd.libreswan.org]:7/1701...%any:17/1701</option>.
       This option only filters outbound traffic.  Inbound traffic
       selection must still be based on firewall rules activated by an
-      updown script. The variables $PLUTO_MY_PROTOCOL,
-      $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and $PLUTO_PEER_PORT are
-      available for use in <option>updown</option> scripts. Older
-      workarounds for bugs involved a setting of
-      <option>17/0</option> to denote <option>any single UDP
-      port</option> (not UDP port 0). Some clients, most notably
-      OSX, uses a random high port, instead of port 1701 for L2TP.
+      updown script.  The environment variables
+      <envar>PLUTO_MY_PROTOCOL</envar>,
+      <envar>PLUTO_PEER_PROTOCOL</envar>,
+      <envar>PLUTO_MY_PORT</envar>, and <envar>PLUTO_PEER_PORT</envar>
+      are available for use in <command>ipsec _updown</command>
+      scripts (see &ipsec-updown.8;).  Older workarounds for bugs
+      involved a setting of <option>17/0</option> to denote
+      <option>any single UDP port</option> (not UDP port 0).  Some
+      clients, most notably OSX, uses a random high port, instead of
+      port 1701 for L2TP.
     </para>
 
     <important>
