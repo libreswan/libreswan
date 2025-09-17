@@ -9,7 +9,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016-2018 Andrew Cagney
+ * Copyright (C) 2016-2025 Andrew Cagney
  * Copyright (C) 2020 Nupur Agrawal <nupur202000@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -49,6 +49,8 @@
 #include "ike_alg_kem_ops.h"
 #include "ike_alg_ipcomp.h"
 #include "ike_alg_ipcomp_ops.h"
+#include "ike_alg_sn.h"
+#include "ike_alg_sn_ops.h"
 
 #define FOR_EACH_IKE_ALGP(TYPE,A)					\
 	for (const struct ike_alg **(A) = (TYPE)->algorithms->start;	\
@@ -82,6 +84,7 @@ static const struct ike_alg_type *const ike_alg_types[] = {
 	&ike_alg_integ,
 	&ike_alg_kem,
 	&ike_alg_ipcomp,
+	&ike_alg_sn,
 };
 
 const char *ike_alg_key_name(enum ike_alg_key key)
@@ -140,6 +143,12 @@ const struct ipcomp_desc **next_ipcomp_desc(const struct ipcomp_desc **last)
 {
 	return (const struct ipcomp_desc**)next_alg(&ike_alg_ipcomp,
 						    (const struct ike_alg**)last);
+}
+
+const struct sn_desc **next_sn_desc(const struct sn_desc **last)
+{
+	return (const struct sn_desc**)next_alg(&ike_alg_sn,
+						(const struct ike_alg**)last);
 }
 
 const struct ike_alg *ike_alg_byname(const struct ike_alg_type *type,
@@ -267,11 +276,6 @@ const struct kem_desc *ikev1_ike_kem_desc(enum oakley_group id, name_buf *b)
 	return kem_desc(ikev1_oakley_lookup(&ike_alg_kem, id, b));
 }
 
-const struct ipcomp_desc *ikev1_ike_ipcomp_desc(enum ipsec_ipcomp_algo id, name_buf *b)
-{
-	return ipcomp_desc(ikev1_oakley_lookup(&ike_alg_ipcomp, id, b));
-}
-
 const struct encrypt_desc *ikev1_kernel_encrypt_desc(enum ikev1_esp_transform id, name_buf *b)
 {
 	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, IKEv1_IPSEC_ID, id, b, DBG_CRYPT));
@@ -321,6 +325,11 @@ const struct kem_desc *ikev2_kem_desc(enum ikev2_trans_type_kem id, struct name_
 const struct ipcomp_desc *ikev2_ipcomp_desc(enum ipsec_ipcomp_algo id, struct name_buf *b)
 {
 	return ipcomp_desc(ikev2_lookup(&ike_alg_ipcomp, id, b));
+}
+
+const struct sn_desc *ikev2_sn_desc(enum ikev2_trans_type_sn id, struct name_buf *b)
+{
+	return sn_desc(ikev2_lookup(&ike_alg_sn, id, b));
 }
 
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)
@@ -956,6 +965,42 @@ const struct ike_alg_type ike_alg_ipcomp = {
 };
 
 /*
+ * ESN
+ */
+
+static const struct sn_desc *sn_descriptors[] = {
+	&ike_alg_sn_32_bit_sequential,
+	&ike_alg_sn_partial_64_bit_sequential,
+#if 0
+	&ike_alg_sn_32_bit_unspecified,
+#endif
+};
+
+static void sn_desc_check(const struct ike_alg *alg, struct logger *logger)
+{
+	const struct sn_desc *esn = sn_desc(alg);
+	pexpect_ike_alg(logger, alg, esn != NULL);
+}
+
+static bool sn_desc_is_ike(const struct ike_alg *alg UNUSED)
+{
+	return false;
+}
+
+static struct algorithm_table sn_algorithms = ALGORITHM_TABLE(sn_descriptors);
+
+const struct ike_alg_type ike_alg_sn = {
+	.name = "SN",
+	.story = "Sequence Numbers",
+	.algorithms = &sn_algorithms,
+	.enum_names = {
+		[IKEv2_ALG_ID] = &ikev2_trans_type_sn_names,
+	},
+	.desc_check = sn_desc_check,
+	.desc_is_ike = sn_desc_is_ike,
+};
+
+/*
  * Check mapping between enums and names.
  */
 static void check_enum_name(const char *what,
@@ -1033,7 +1078,8 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		 * Don't even try to check 'none' algorithms.
 		 */
 		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_kem_none.common) {
+		    alg != &ike_alg_kem_none.common &&
+		    alg != &ike_alg_sn_32_bit_sequential.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
 				int id = alg->id[key];
@@ -1149,6 +1195,11 @@ static const char *backend_name(const struct ike_alg *alg)
 		if (ipcomp->ipcomp_ops != NULL) {
 			return ipcomp->ipcomp_ops->backend;
 		}
+	} else if (alg->type == &ike_alg_sn) {
+		const struct sn_desc *sn = sn_desc(alg);
+		if (sn->sn_ops != NULL) {
+			return sn->sn_ops->backend;
+		}
 	} else {
 		bad_case(0);
 	}
@@ -1222,6 +1273,9 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else if (alg->type == &ike_alg_ipcomp) {
+		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
+		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
+	} else if (alg->type == &ike_alg_sn) {
 		v1_esp = v1_ah = alg->id[IKEv1_IPSEC_ID] >= 0;
 		v2_esp = v2_ah = alg->id[IKEv2_ALG_ID] >= 0;
 	} else {

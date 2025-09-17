@@ -215,6 +215,7 @@ OBJS += test_buffer.o
 OBJS += ike_alg.o
 OBJS += ike_alg_hash_identity.o
 OBJS += ike_alg_ipcomp.o
+OBJS += ike_alg_sn.o
 OBJS += ike_alg_test.o
 OBJS += ike_alg_hash_nss_ops.o
 OBJS += ike_alg_kem.o
