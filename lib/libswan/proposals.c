@@ -1312,7 +1312,7 @@ bool parse_proposal(struct proposal_parser *parser,
 	/* hack to stop non ADDKE reporting missing ADDKE */
 	enum proposal_transform transform_ceiling =
 		(parser->policy->addke ? PROPOSAL_TRANSFORM_addke7 :
-		 PROPOSAL_TRANSFORM_kem);
+		 PROPOSAL_TRANSFORM_addke1 - 1);
 
 	enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
 	enum transform_typed_how typed_how = TRANSFORM_TYPE_IMPLICIT;
@@ -1320,6 +1320,10 @@ bool parse_proposal(struct proposal_parser *parser,
 
 		if (tokens.curr.delim == '=') {
 
+			/*
+			 * Check for '=' before ';' so that ';foo=bar'
+			 * is allowed anywhere.
+			 */
 			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
 			int tmp = enum_byname(&proposal_transform_names, tokens.curr.token);
@@ -1342,37 +1346,32 @@ bool parse_proposal(struct proposal_parser *parser,
 			      "switching from '%s' transforms to '%s' transforms",
 			      str_enum_short(&proposal_transform_names, transform, &ot),
 			      str_enum_short(&proposal_transform_names, tmp, &nt));
+
 			transform = tmp;
 
-		} else if (transform > transform_ceiling) {
+		} else if (transform > transform_ceiling ||
+			   (tokens.prev.delim == ';' && transform > PROPOSAL_TRANSFORM_kem)) {
 
 			/* just in-case DELIM is NUL */
-			char prev_delim[2] = { tokens.prev.delim, '\0', };
-			proposal_error(parser, "%s proposal contains unexpected trailing '%s"PRI_SHUNK"'",
+			const char prev_delim[] = { tokens.prev.delim, '\0', };
+			const char curr_delim[] = { tokens.curr.delim, '\0', };
+			proposal_error(parser,
+				       "%s proposal contains unexpected '%s"PRI_SHUNK"%s', expecting ';<transform>=...'",
 				       parser->protocol->name,
 				       prev_delim,
-				       pri_shunk(tokens.curr.token));
+				       pri_shunk(tokens.curr.token),
+				       curr_delim);
 			return false;
 
 		} else if (tokens.prev.delim == ';') {
 
 			/* treat ;... like KEM=... */
 			typed_how = TRANSFORM_TYPE_EXPLICIT;
-
-			/* when ';' skip forward to KEM */
-			if (transform > PROPOSAL_TRANSFORM_kem) {
-				name_buf tb;
-				proposal_error(parser, "unexpected ';', expecting '-' followed by %s transform",
-					       str_enum_short(&proposal_transform_names, transform, &tb));
-				return false;
-			}
 			name_buf tb;
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "skipping from transform '%s' to ;KEM",
 			      str_enum_short(&proposal_transform_names, transform, &tb));
 			transform = PROPOSAL_TRANSFORM_kem;
-
-
 		}
 
 		PASSERT(logger, (transform >= PROPOSAL_TRANSFORM_FLOOR &&
