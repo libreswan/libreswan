@@ -359,7 +359,7 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is 
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v1 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
-	ERROR: ESP proposal contains unexpected trailing '-modp2048'
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v1 'ah' (expect SUCCESS)
@@ -419,7 +419,7 @@ algparse -v1 'ah=aes_ccm' (expect ERROR)
 algparse -v1 'ah=ripemd' (expect ERROR)
 	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
 algparse -v1 'ah=sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: AH proposal contains unexpected trailing '-modp2048'
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 'ah=kem=modp8192' (expect ERROR)
 	ERROR: AH proposal missing integ transform
 algparse -v1 'ike' (expect SUCCESS)
@@ -569,7 +569,7 @@ algparse -v1 'ike=aes+;' (expect ERROR)
 algparse -v1 'ike=aes++' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 'ike=aes;modp2048-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 'ike=aes;addke1=modp2048' (expect ERROR)
 	ERROR: transform 'addke1' invalid
 algparse -v1 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
@@ -903,7 +903,7 @@ algparse -v1 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 algparse -v1 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
 	ERROR: more than one IKEv1 ESP Key Exchange algorithm (MODP8192, MODP2048) is not allowed in quick mode
 algparse -v1 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
-	ERROR: ESP proposal contains unexpected trailing '-modp2048'
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v1 -pfs 'ah' (expect SUCCESS)
@@ -961,7 +961,7 @@ algparse -v1 -pfs 'ah=aes_ccm' (expect ERROR)
 algparse -v1 -pfs 'ah=ripemd' (expect ERROR)
 	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
 algparse -v1 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: AH proposal contains unexpected trailing '-modp2048'
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 -pfs 'ah=kem=modp8192' (expect ERROR)
 	ERROR: AH proposal missing integ transform
 algparse -v1 -pfs 'ike' (expect SUCCESS)
@@ -1111,7 +1111,7 @@ algparse -v1 -pfs 'ike=aes+;' (expect ERROR)
 algparse -v1 -pfs 'ike=aes++' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -v1 -pfs 'ike=aes;modp2048-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 -pfs 'ike=aes;addke1=modp2048' (expect ERROR)
 	ERROR: transform 'addke1' invalid
 algparse -v1 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect ERROR)
@@ -1455,7 +1455,7 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is 
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_256_128
 algparse -v2 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
-	ERROR: ESP proposal contains unexpected trailing '-modp2048'
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v2 'ah' (expect SUCCESS)
@@ -1516,7 +1516,7 @@ algparse -v2 'ah=aes_ccm' (expect ERROR)
 algparse -v2 'ah=ripemd' (expect ERROR)
 	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
 algparse -v2 'ah=sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: AH proposal contains unexpected trailing '-modp2048'
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'ah=kem=modp8192' (expect SUCCESS)
 ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA2_512_256+HMAC_SHA2_256_128
@@ -1617,9 +1617,9 @@ algparse -v2 'ike=aes_gcm-none-modp2048' (expect ERROR)
 algparse -v2 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -v2 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing ';modp2048'
+	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -v2 'ike=,' (expect ERROR)
@@ -1655,7 +1655,7 @@ algparse -v2 'ike=aes+;' (expect ERROR)
 algparse -v2 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 'ike=aes;modp2048-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'ike=aes;addke1=modp2048' (expect ERROR)
 	ERROR: transform 'addke1' invalid
 algparse -v2 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
@@ -1961,7 +1961,7 @@ algparse -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUCCESS)
 algparse -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
 	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
 algparse -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
-	ERROR: ESP proposal contains unexpected trailing '-modp2048'
+	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v2 -pfs 'ah' (expect SUCCESS)
@@ -2018,7 +2018,7 @@ algparse -v2 -pfs 'ah=aes_ccm' (expect ERROR)
 algparse -v2 -pfs 'ah=ripemd' (expect ERROR)
 	ERROR: AH Integrity Algorithm 'ripemd' is not recognized
 algparse -v2 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
-	ERROR: AH proposal contains unexpected trailing '-modp2048'
+	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ah=kem=modp8192' (expect SUCCESS)
 	HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP8192
 algparse -v2 -pfs 'ike' (expect SUCCESS)
@@ -2118,9 +2118,9 @@ algparse -v2 -pfs 'ike=aes_gcm-none-modp2048' (expect ERROR)
 algparse -v2 -pfs 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 	AES_GCM_16-HMAC_SHA2_512+HMAC_SHA2_256-MODP2048
 algparse -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing ';modp2048'
+	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -v2 -pfs 'ike=,' (expect ERROR)
@@ -2156,7 +2156,7 @@ algparse -v2 -pfs 'ike=aes+;' (expect ERROR)
 algparse -v2 -pfs 'ike=aes++' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -v2 -pfs 'ike=aes;modp2048-modp2048' (expect ERROR)
-	ERROR: IKE proposal contains unexpected trailing '-modp2048'
+	ERROR: IKE proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ike=aes;addke1=modp2048' (expect ERROR)
 	ERROR: transform 'addke1' invalid
 algparse -v2 -pfs 'ike=aes-sha2;prf=sha1;kem=dh20' (expect SUCCESS)
@@ -2621,7 +2621,7 @@ algparse -addke -v2 -pfs 'ike=aes_gcm-none;modp2048' (expect SUCCESS)
 algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none-modp2048' (expect ERROR)
 	ERROR: IKE Key Exchange algorithm 'NONE' not permitted
 algparse -addke -v2 -pfs 'ike=aes_gcm-sha1-none;modp2048' (expect ERROR)
-	ERROR: unexpected ';', expecting '-' followed by addke1 transform
+	ERROR: IKE proposal contains unexpected ';modp2048', expecting ';<transform>=...'
 algparse -addke -v2 -pfs 'ike=aes+aes_gcm' (expect ERROR)
 	ERROR: AEAD and non-AEAD IKE encryption algorithm cannot be combined
 algparse -addke -v2 -pfs 'ike=,' (expect ERROR)
