@@ -20,7 +20,7 @@
 #include <keyhi.h>
 #include <nss.h>	/* for NSS_Initialize() */
 
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "lswnss.h"
 #include "lswalloc.h"
 #include "lswlog.h"

@@ -59,7 +59,7 @@
 #include "lswtool.h"
 #include "lswnss.h"
 #include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 /*
  * We allow 2192 as a minimum, but default to a random value between 3072 and

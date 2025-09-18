@@ -27,7 +27,7 @@
 #include "ikev1_vendorid.h"
 #include "demux.h"
 #include "connections.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 /*
  * Handle IKEv1 Known VendorID's.  This function parses what the remote peer

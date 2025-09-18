@@ -54,7 +54,7 @@
 #include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
 #include "ddns.h"			/* for connection_check_ddns() */
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "ddos.h"
 
 #include "visit_connection.h"

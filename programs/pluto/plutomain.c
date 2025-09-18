@@ -54,7 +54,7 @@
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "hourly.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
 #include "vendorid.h"

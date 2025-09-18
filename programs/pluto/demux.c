@@ -75,7 +75,7 @@
 #include "log_limiter.h"
 #include "ikev1_notification.h"
 #include "ikev2_notification.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 static enum global_ikev1_policy global_ikev1_policy; /* see init_demux() */
 static callback_cb handle_md_event;		/* type assertion */

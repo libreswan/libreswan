@@ -28,7 +28,7 @@
 #include "ddos.h"
 
 #include "constants.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 #include "defs.h"
 #include "log.h"

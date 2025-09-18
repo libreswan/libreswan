@@ -46,7 +46,7 @@
 #include "lswalloc.h"
 
 #include "sysdep.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "constants.h"
 
 #include "defs.h"

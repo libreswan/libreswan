@@ -41,7 +41,7 @@
 #include "passert.h"
 #include "ipsecconf/interfaces.h"
 #include "nss_cert_load.h"
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 #include "scale.h"
 #include "deltatime.h"
 #include "timescale.h"

@@ -27,6 +27,7 @@ struct jambuf;
 struct logger;
 struct parser;
 enum end;
+struct ipsec_conf;
 
 /* Source-And-Line */
 struct ipsec_conf_sal {

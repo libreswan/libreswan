@@ -25,7 +25,9 @@
 #include <sys/queue.h>		/* for TAILQ_ENTRY() */
 #include <stdint.h>
 
-#include "keywords.h"		/* for KW_roof */
+#include "ipsecconf/config_setup.h"
+#include "ipsecconf/config_conn.h"
+
 #include "deltatime.h"
 #include "ip_address.h"
 #include "authby.h"

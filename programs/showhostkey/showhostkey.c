@@ -57,7 +57,7 @@
 #include "optarg.h"
 
 #include "ipsecconf/keywords.h"		/* for KSF_NSSDIR */
-#include "config_setup.h"
+#include "ipsecconf/config_setup.h"
 
 #include <keyhi.h>
 #include <prerror.h>
