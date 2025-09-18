@@ -2742,7 +2742,7 @@ IP Compression:
   DEFLATE                           IKEv1:     ESP AH  IKEv2:     ESP AH  FIPS             
   LZS                               IKEv1:             IKEv2:     ESP AH  FIPS             
   LZJH                              IKEv1:             IKEv2:     ESP AH  FIPS             
-Sequence Numbers:
+Sequence Number:
   32_BIT_SEQUENTIAL                 IKEv1:             IKEv2:     ESP AH  FIPS              no
   PARTIAL_64_BIT_SEQUENTIAL         IKEv1:             IKEv2:     ESP AH  FIPS              yes
 testing CAMELLIA_CBC:
