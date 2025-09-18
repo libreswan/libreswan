@@ -24,16 +24,16 @@
  */
 
 #include "ipsecconf/keywords.h"
+#include "ipsecconf/config_setup.h"
+#include "ipsecconf/config_conn.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-
-#include "ipsecconf/config_conn.h"
-#include "ipsecconf/config_setup.h"
 
 enum config_section { CONFIG_SETUP, CONFIG_CONN };
 
 static void check_config_keywords(struct logger *logger,
 				  const enum config_section section,
+				  size_t config_keyword_roof,
 				  const struct keywords_def *keywords)
 {
 	if (LDBGP(DBG_TMI, logger)) {
@@ -46,22 +46,22 @@ static void check_config_keywords(struct logger *logger,
 		}
 	}
 
-	enum { NAME, ALIAS, OBSOLETE } group = NAME;
+	/* table contains ALIAS and OBSOLETE keywords at the end */
+	pexpect(keywords->len >= config_keyword_roof);
+
+	enum { BLANK, NAME, ALIAS, OBSOLETE } group = BLANK;
 
 	ITEMS_FOR_EACH(k, keywords) {
 
-		/*
-		 * Ignore gaps, happens when #ifdefs are at play.
-		 */
-
-		if (k->keyname == NULL) {
-			continue;
-		}
-
 		bool ok = true;
-		unsigned i = (k - keywords->item);
+		unsigned ki = (k - keywords->item);
 
 		switch (group) {
+		case BLANK:
+			if (ki > 0) {
+				group = NAME;
+			}
+			break;
 		case NAME:
 			if (k->validity & kv_alias) {
 				group = ALIAS;
@@ -82,49 +82,64 @@ static void check_config_keywords(struct logger *logger,
 			break;
 		}
 
-		ok &= pexpect(k->validity & kv_alias ? group == ALIAS :
-			      group == NAME || group == OBSOLETE);
-		ok &= pexpect(k->field == KEYWORD_FIELD_UNSET ? group == OBSOLETE :
-			      group == NAME || group == ALIAS);
-		ok &= pexpect(k->type == kt_obsolete ? group == OBSOLETE :
-			      group == NAME || group == ALIAS);
+		ok &= pexpect(group == BLANK ? ki == 0 :
+			      group == NAME ? ki < config_keyword_roof :
+			      group == ALIAS ? ki < keywords->len :
+			      group == OBSOLETE ? ki < keywords->len :
+			      false);
 
-		ok &= pexpect(group == NAME ? i == k->field : i > k->field);
-		ok &= pexpect(group == OBSOLETE ? k->sparse_names == NULL : true);
+		ok &= pexpect(group == BLANK ? k->field == 0 :
+			      group == NAME ? k->field == ki :
+			      group == ALIAS ? k->field > 0 && k->field < config_keyword_roof :
+			      group == OBSOLETE ? k->field == 0 :
+			      false);
+
+		ok &= pexpect(group == BLANK ? k->keyname == NULL :
+			      group == NAME ? k->keyname != NULL :
+			      group == ALIAS ? (k->keyname != NULL &&
+						/* aliases point back to a real NAME */
+						keywords->item[k->field].keyname != NULL) :
+			      group == OBSOLETE ? k->keyname != NULL :
+			      false);
+
+		ok &= pexpect(group == BLANK ? k->validity == LEMPTY :
+			      group == NAME ? true :
+			      group == ALIAS ? ((k->validity & kv_alias) &&
+						/* alias has same validity as real keyword */
+						keywords->item[k->field].validity == (k->validity & ~kv_alias)) :
+			      group == OBSOLETE ? k->validity == LEMPTY :
+			      false);
+
+		ok &= pexpect(group == BLANK ? k->type == 0 :
+			      group == NAME ? k->type != kt_obsolete :
+			      group == ALIAS ? k->type != kt_obsolete :
+			      group == OBSOLETE ? k->type == kt_obsolete :
+			      false);
+
+		ok &= pexpect(group == BLANK ? k->sparse_names == NULL :
+			      group == NAME ? (k->sparse_names != NULL) == (k->type == kt_sparse_name) :
+			      group == ALIAS ? (k->sparse_names != NULL) == (k->type == kt_sparse_name) :
+			      group == OBSOLETE ? k->sparse_names == NULL :
+			      false);
 
 		switch (section) {
 		case CONFIG_SETUP:
-			ok &= pexpect((k->field >= KEYWORD_FIELD_FLOOR &&
-				       k->field < CONFIG_SETUP_KEYWORD_ROOF) ||
-				      k->field == KEYWORD_FIELD_UNSET);
 			ok &= pexpect((k->validity & (kv_leftright | kv_both)) == LEMPTY);
 			break;
 		case CONFIG_CONN:
-			ok &= pexpect((k->field >= KEYWORD_FIELD_FLOOR &&
-				       k->field < CONFIG_CONN_KEYWORD_ROOF) ||
-				      k->field == KEYWORD_FIELD_UNSET);
 			break;
 		}
 
-		/* above checked k->field in range; check things,
-		 * notably aliases, point back to a real NAME */
-		ok &= pexpect(k->field < keywords->len);
-		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].keyname == NULL/*entry 0*/ :
-			      keywords->item[k->field].keyname != NULL);
-		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].field == 0/*entry 0*/ :
-			      keywords->item[k->field].field == k->field);
-		ok &= pexpect(group == OBSOLETE ? keywords->item[k->field].validity == 0/*entry 0*/ :
-			      keywords->item[k->field].validity == (k->validity & ~kv_alias));
-
 		if (!ok) {
 			llog_pexpect(logger, HERE, "[%u:%u] '%s' (follows '%s') expecting %s-%s",
-				     i, k->field,
+				     ki, k->field,
 				     k->keyname,
-				     (i > 0 ? keywords->item[i-1].keyname : "???"),
+				     (ki > 0 ? keywords->item[ki-1].keyname : "???"),
 				     (section == CONFIG_SETUP ? "setup" :
 				      section == CONFIG_CONN ? "conn" :
 				      "???"),
-				     (group == NAME ? "name" :
+				     (group == BLANK ? "blank" :
+				      group == NAME ? "name" :
 				      group == ALIAS ? "alias" :
 				      group == OBSOLETE ? "obsolete" :
 				      "???"));
@@ -141,6 +156,6 @@ void check_ipsec_conf_keywords(struct logger *logger)
 	}
 	checked = true;
 
-	check_config_keywords(logger, CONFIG_SETUP, &config_setup_keywords);
-	check_config_keywords(logger, CONFIG_CONN, &config_conn_keywords);
+	check_config_keywords(logger, CONFIG_SETUP, CONFIG_SETUP_KEYWORD_ROOF, &config_setup_keywords);
+	check_config_keywords(logger, CONFIG_CONN, CONFIG_CONN_KEYWORD_ROOF, &config_conn_keywords);
 }
