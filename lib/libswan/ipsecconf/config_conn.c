@@ -255,7 +255,8 @@ static const struct keyword_def config_conn_keyword[] = {
 
   /* obsolete config setup options */
 
-#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, .field = KNCF_OBSOLETE, ##__VA_ARGS__ }
+#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, }
+
   O("dpdaction"),
   O("clientaddrfamily"),
   O("keyingtries"),

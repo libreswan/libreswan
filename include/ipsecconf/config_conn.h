@@ -212,8 +212,6 @@ enum config_conn_keyword {
 	KWYN_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
 #define CONFIG_CONN_KEYWORD_ROOF (KWYN_SESSION_RESUMPTION + 1)
-
-	KNCF_OBSOLETE = 0,		/* to ignore but warn obsoleted keywords */
 };
 
 #endif

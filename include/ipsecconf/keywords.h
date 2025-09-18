@@ -35,6 +35,7 @@
 struct logger;
 
 enum keyword_field {
+	KEYWORD_FIELD_UNSET = 0,
 	KEYWORD_FIELD_FLOOR = 1,
 };
 

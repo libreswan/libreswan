@@ -507,7 +507,8 @@ static const struct keyword_def config_setup_keyword[] = {
 
   /* obsolete config setup options */
 
-#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, .field = KNCF_OBSOLETE, ##__VA_ARGS__ }
+#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, }
+
   O("syslog"), /* never went anywhere! */
   O("plutostderrlog"), /* obsolete name, but very common :/ */
   O("virtual_private"), /* obsolete variant, very common */

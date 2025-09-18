@@ -67,13 +67,13 @@ static void check_config_keywords(struct logger *logger,
 				group = ALIAS;
 				break;
 			}
-			if (k->field == KNCF_OBSOLETE) {
+			if (k->field == KEYWORD_FIELD_UNSET) {
 				group = OBSOLETE;
 				break;
 			}
 			break;
 		case ALIAS:
-			if (k->field == KNCF_OBSOLETE) {
+			if (k->field == KEYWORD_FIELD_UNSET) {
 				group = OBSOLETE;
 				break;
 			}
@@ -84,7 +84,7 @@ static void check_config_keywords(struct logger *logger,
 
 		ok &= pexpect(k->validity & kv_alias ? group == ALIAS :
 			      group == NAME || group == OBSOLETE);
-		ok &= pexpect(k->field == KNCF_OBSOLETE ? group == OBSOLETE :
+		ok &= pexpect(k->field == KEYWORD_FIELD_UNSET ? group == OBSOLETE :
 			      group == NAME || group == ALIAS);
 		ok &= pexpect(k->type == kt_obsolete ? group == OBSOLETE :
 			      group == NAME || group == ALIAS);
@@ -96,13 +96,13 @@ static void check_config_keywords(struct logger *logger,
 		case CONFIG_SETUP:
 			ok &= pexpect((k->field >= KEYWORD_FIELD_FLOOR &&
 				       k->field < CONFIG_SETUP_KEYWORD_ROOF) ||
-				      k->field == KNCF_OBSOLETE);
+				      k->field == KEYWORD_FIELD_UNSET);
 			ok &= pexpect((k->validity & (kv_leftright | kv_both)) == LEMPTY);
 			break;
 		case CONFIG_CONN:
 			ok &= pexpect((k->field >= KEYWORD_FIELD_FLOOR &&
 				       k->field < CONFIG_CONN_KEYWORD_ROOF) ||
-				      k->field == KNCF_OBSOLETE);
+				      k->field == KEYWORD_FIELD_UNSET);
 			break;
 		}
 
