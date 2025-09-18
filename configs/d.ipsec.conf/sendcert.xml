@@ -8,22 +8,46 @@
   <listitem>
     <para>
       This option configures when &Libreswan; will send &X.509;
-      certificates to the remote host. Acceptable values are
-      <option>yes|always</option> (signifying that we should always
-      send a certificate), <option>sendifasked</option> (signifying
-      that we should send a certificate if the remote end asks for
-      it), and <option>no|never</option> (signifying that we will
-      never send a X.509 certificate).  The default for this option is
-      <option>always</option>. Note that while <option>always</option>
-      is suboptimal, setting this to <option>sendifasked</option> may
-      break compatibility with other vendor's IPsec implementations,
-      such as &Cisco; and SafeNet. If you find that you are getting
-      errors about no ID/Key found, you likely need to revert this
-      option to <option>always</option>.
+      certificates to the remote host.  Acceptable values are:
+
+      <variablelist spacing="compact">
+
+	<varlistentry>
+	  <term><option>yes</option></term>
+	  <term><option>always</option></term>
+	  <listitem><para>always send a certificate</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>sendifasked</option></term>
+	  <listitem><para>send a certificate when the peer asks for it
+	  (for instance by sending a CERTREQ
+	  payload)</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>no</option></term>
+	  <term><option>never</option></term>
+	  <listitem><para>never send a certificate</para></listitem>
+	</varlistentry>
+
+      </variablelist>
+
+      The default for this option is <option>always</option>.  Note
+      that while <option>always</option> is suboptimal, setting this
+      to <option>sendifasked</option> may break compatibility with
+      other vendor's IPsec implementations, such as &Cisco;.  If you
+      find that you are getting errors about no ID/Key found, you
+      likely need to revert this option to <option>always</option>.
     </para>
+
     <para>
-      This per-conn option replaced the global
-      <option>nocrsend</option> option in &Libreswan; version 3.0.
+      This option was added in &Libreswan; 2.5.14; in &Libreswan;
+      2.28, the default was changed from <option>sendifasked</option>
+      to <option>always</option>; and in &Libreswan; 3.0, the related
+      and obsolete global option <option>nocrsend=</option> was
+      removed.
     </para>
+
   </listitem>
 </varlistentry>
