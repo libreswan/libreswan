@@ -18,7 +18,7 @@
 	</term>
 	<listitem>
 	  <para>ECDSA digital signature based authentication with any
-	  of the hash algorithms SHA2_256, SHA2_385, or
+	  of the hash algorithms SHA2_256, SHA2_384, or
 	  SHA2_512</para>
 	</listitem>
       </varlistentry>
@@ -34,7 +34,7 @@
 	</term>
 	<listitem>
 	  <para>ECDSA digital signature based authentication with the
-	  specified SHA2_256, SHA2_385, or SHA2_512 hash
+	  specified SHA2_256, SHA2_384, or SHA2_512 hash
 	  algorithm</para>
 	</listitem>
       </varlistentry>
@@ -53,7 +53,7 @@
 	</term>
 	<listitem>
 	  <para>RSASSA-PSS digital signature based authentication with
-	  any of the hash algorithms SHA2_256, SHA2_385, or
+	  any of the hash algorithms SHA2_256, SHA2_384, or
 	  SHA2_512</para>
 	</listitem>
       </varlistentry>
@@ -69,7 +69,7 @@
 	</term>
 	<listitem>
 	  <para>RSASSA-PSS digital signature based authentication with
-	  the specified SHA2_256, SHA2_385, or SHA2_512 hash
+	  the specified SHA2_256, SHA2_384, or SHA2_512 hash
 	  algorithm</para>
 	</listitem>
       </varlistentry>
