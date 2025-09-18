@@ -63,6 +63,7 @@ kvmplutotest	check-10-network-fedora		good
 kvmplutotest	check-10-network-freebsd	good
 kvmplutotest	check-10-network-netbsd		good
 kvmplutotest	check-10-network-openbsd	good
+kvmplutotest	check-10-network-alpine		good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
