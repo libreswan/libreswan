@@ -41,9 +41,12 @@ static void merge_algorithms(struct proposal_parser *parser,
 		return;
 	}
 
-	if (first_transform_algorithm(proposal, transform) != NULL) {
+	struct transform_algorithms *algorithms = transform_algorithms(proposal, transform);
+	if (algorithms != NULL) {
+		/* could be empty when impaired */
 		return;
 	}
+
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
 		append_proposal_transform(parser, proposal, transform, *alg, 0);
 	}

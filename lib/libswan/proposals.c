@@ -34,6 +34,7 @@ static bool ignore_transform_lookup_error(struct proposal_parser *parser,
 					  shunk_t token);
 
 struct proposal {
+	bool impaired;
 	/*
 	 * The algorithm entries.
 	 */
@@ -165,27 +166,45 @@ bool proposal_transform_ok(struct proposal_parser *parser,
 			   enum proposal_transform transform,
 			   bool expected)
 {
+	const struct logger *logger = parser->policy->logger;
+
 	if (first_transform_algorithm(proposal, transform) != NULL) {
 		if (expected) {
 			return true;
 		}
 
+		if (proposal->impaired) {
+			name_buf tb;
+			llog(IMPAIR_STREAM, logger, "%s proposal has unexpected %s transform",
+			     proposal->protocol->name,
+			     str_enum_short(&proposal_transform_names, transform, &tb));
+			return true;
+		}
+
 		name_buf tb;
-		llog_pexpect(parser->policy->logger, HERE,
-			     "%s proposal has unexpected %s transform",
+		llog_pexpect(logger, HERE, "%s proposal has unexpected %s transform",
 			     proposal->protocol->name,
 			     str_enum_short(&proposal_transform_names, transform, &tb));
 		return false;
 	}
 
-	if (expected) {
-		name_buf tb;
-		proposal_error(parser, "%s proposal missing %s transform",
-			       proposal->protocol->name,
-			       str_enum_short(&proposal_transform_names, transform, &tb));
-		return false;
+	if (!expected) {
+		return true;
 	}
-	return true;
+
+	if (proposal->impaired) {
+		name_buf tb;
+		llog(IMPAIR_STREAM, logger, "%s proposal missing %s transform",
+		     proposal->protocol->name,
+		     str_enum_short(&proposal_transform_names, transform, &tb));
+		return true;
+	}
+
+	name_buf tb;
+	proposal_error(parser, "%s proposal missing %s transform",
+		       proposal->protocol->name,
+		       str_enum_short(&proposal_transform_names, transform, &tb));
+	return false;
 }
 
 /*
@@ -1340,6 +1359,7 @@ bool parse_proposal(struct proposal_parser *parser,
 			/* advance to TRANSFORMS after '!' */
 			transform = tmp;
 			proposal_next_token(&tokens);
+			proposal->impaired = true;
 
 			/* go directly to the algorithm parser */
 			if (tokens.curr.token.len == 0 &&
