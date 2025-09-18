@@ -991,7 +991,7 @@ static struct algorithm_table sn_algorithms = ALGORITHM_TABLE(sn_descriptors);
 
 const struct ike_alg_type ike_alg_sn = {
 	.name = "SN",
-	.story = "Sequence Numbers",
+	.story = "Sequence Number",
 	.algorithms = &sn_algorithms,
 	.enum_names = {
 		[IKEv2_ALG_ID] = &ikev2_trans_type_sn_names,
