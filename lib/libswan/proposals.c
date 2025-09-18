@@ -1310,13 +1310,66 @@ bool parse_proposal(struct proposal_parser *parser,
 	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+=!");
 
 	/* hack to stop non ADDKE reporting missing ADDKE */
-	enum proposal_transform transform_ceiling =
-		(parser->policy->addke ? PROPOSAL_TRANSFORM_addke7 :
-		 PROPOSAL_TRANSFORM_addke1 - 1);
+	enum proposal_transform transform_roof =
+		(parser->policy->addke ? PROPOSAL_TRANSFORM_ROOF :
+		 PROPOSAL_TRANSFORM_addke1);
 
 	enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
-	enum transform_typed_how typed_how = TRANSFORM_TYPE_IMPLICIT;
+
 	while (tokens.curr.token.ptr != NULL) {
+
+		const char prev_delim[] = { tokens.prev.delim, '\0', };
+		const char curr_delim[] = { tokens.curr.delim, '\0', };
+		name_buf tb;
+		ldbgf(DBG_PROPOSAL_PARSER, logger, "examining '%s' \""PRI_SHUNK"\" '%s', transform=%s",
+		      prev_delim,
+		      pri_shunk(tokens.curr.token),
+		      curr_delim,
+		      str_enum_short(&proposal_transform_names, transform, &tb));
+
+		if (tokens.curr.delim == '!') {
+
+			int tmp = enum_byname(&proposal_transform_names, tokens.curr.token);
+			if (tmp < 0) {
+				proposal_error(parser, "proposal %s transform '"PRI_SHUNK"' unrecognized",
+					       proposal->protocol->name,
+					       pri_shunk(tokens.curr.token));
+				return false;
+			}
+
+			/* advance to TRANSFORMS after '!' */
+			transform = tmp;
+			proposal_next_token(&tokens);
+
+			/* go directly to the algorithm parser */
+			if (tokens.curr.token.len == 0 &&
+			    tokens.curr.token.ptr != NULL &&
+			    proposal->algorithms[transform] == NULL) {
+				name_buf nt;
+				llog(IMPAIR_STREAM, logger, "forcing empty %s proposal %s transform",
+				     proposal->protocol->name,
+				     str_enum_short(&proposal_transform_names, transform, &nt));
+				proposal->algorithms[transform] = alloc_thing(struct transform_algorithms,
+									      "empty transforms");
+				/* skip empty transform */
+				proposal_next_token(&tokens);
+			} else {
+				name_buf nt;
+				llog(IMPAIR_STREAM, logger, "forcing %s proposal %s transform",
+				     proposal->protocol->name,
+				     str_enum_short(&proposal_transform_names, transform, &nt));
+				if (!parse_transform_algorithms(parser, proposal,
+								transform, &tokens)) {
+					return false;
+				}
+			}
+
+			transform++;
+			continue;
+
+		}
+
+		enum transform_typed_how typed_how;
 
 		if (tokens.curr.delim == '=') {
 
@@ -1324,7 +1377,6 @@ bool parse_proposal(struct proposal_parser *parser,
 			 * Check for '=' before ';' so that ';foo=bar'
 			 * is allowed anywhere.
 			 */
-			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
 			int tmp = enum_byname(&proposal_transform_names, tokens.curr.token);
 			if (tmp < 0) {
@@ -1333,28 +1385,41 @@ bool parse_proposal(struct proposal_parser *parser,
 				return false;
 			}
 
-			if (tmp > (int)transform_ceiling) {
+			if ((unsigned)tmp >= transform_roof) {
 				proposal_error(parser, "transform '"PRI_SHUNK"' invalid",
 					       pri_shunk(tokens.curr.token));
 				return false;
 			}
 
-			/* advance to TRANSFORMS after '=' */
-			proposal_next_token(&tokens);
 			name_buf ot, nt;
 			ldbgf(DBG_PROPOSAL_PARSER, logger,
 			      "switching from '%s' transforms to '%s' transforms",
 			      str_enum_short(&proposal_transform_names, transform, &ot),
 			      str_enum_short(&proposal_transform_names, tmp, &nt));
 
+			/* advance to TRANSFORMS after '=' */
+			proposal_next_token(&tokens);
 			transform = tmp;
+			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
-		} else if (transform > transform_ceiling ||
-			   (tokens.prev.delim == ';' && transform > PROPOSAL_TRANSFORM_kem)) {
+		} else if (tokens.prev.delim == ';' &&
+			   transform <= PROPOSAL_TRANSFORM_kem) {
 
-			/* just in-case DELIM is NUL */
-			const char prev_delim[] = { tokens.prev.delim, '\0', };
-			const char curr_delim[] = { tokens.curr.delim, '\0', };
+			name_buf tb;
+			ldbgf(DBG_PROPOSAL_PARSER, logger,
+			      "skipping from transform '%s' to ;KEM",
+			      str_enum_short(&proposal_transform_names, transform, &tb));
+
+			/* treat ;... like KEM=... */
+			transform = PROPOSAL_TRANSFORM_kem;
+			typed_how = TRANSFORM_TYPE_EXPLICIT;
+
+		} else if (tokens.prev.delim != ';' &&
+			   transform < transform_roof) {
+
+			typed_how = TRANSFORM_TYPE_IMPLICIT;
+
+		} else {
 			proposal_error(parser,
 				       "%s proposal contains unexpected '%s"PRI_SHUNK"%s', expecting ';<transform>=...'",
 				       parser->protocol->name,
@@ -1362,16 +1427,6 @@ bool parse_proposal(struct proposal_parser *parser,
 				       pri_shunk(tokens.curr.token),
 				       curr_delim);
 			return false;
-
-		} else if (tokens.prev.delim == ';') {
-
-			/* treat ;... like KEM=... */
-			typed_how = TRANSFORM_TYPE_EXPLICIT;
-			name_buf tb;
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "skipping from transform '%s' to ;KEM",
-			      str_enum_short(&proposal_transform_names, transform, &tb));
-			transform = PROPOSAL_TRANSFORM_kem;
 		}
 
 		PASSERT(logger, (transform >= PROPOSAL_TRANSFORM_FLOOR &&
@@ -1383,8 +1438,6 @@ bool parse_proposal(struct proposal_parser *parser,
 		}
 
 		transform++;
-		/* next transform type is implicit */
-		typed_how = TRANSFORM_TYPE_IMPLICIT;
 	}
 
 	return true;
