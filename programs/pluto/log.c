@@ -348,6 +348,10 @@ void jam_stream_prefix(struct jambuf *buf, const struct logger *logger, enum str
 		jam_string(buf, PASSERT_PREFIX);
 		jam_logger_prefix(buf, logger);
 		return;
+	case IMPAIR_STREAM:
+		jam_string(buf, IMPAIR_PREFIX);
+		jam_logger_prefix(buf, logger);
+		return;
 	case WARNING_STREAM:
 		jam_string(buf, WARNING_PREFIX);
 		jam_logger_prefix(buf, logger);
@@ -390,6 +394,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 		}
 		log_whacks(0, logger, buf);
 		return;
+	case IMPAIR_STREAM:
 	case WARNING_STREAM:
 		log_raw(LOG_WARNING, "", buf);
 		log_whacks(0, logger, buf);

@@ -33,6 +33,7 @@ struct logger;
 enum stream;
 
 #define DEBUG_PREFIX		"| "
+#define IMPAIR_PREFIX		"IMPAIR: "
 #define WARNING_PREFIX		"warning: "
 #define ERROR_PREFIX		"ERROR: "
 #define PEXPECT_PREFIX		"EXPECTATION FAILED: "
