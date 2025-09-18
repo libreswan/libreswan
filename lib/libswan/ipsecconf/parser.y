@@ -677,10 +677,6 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 			continue;
 		}
 
-		if (k->validity & kv_ignore) {
-			continue;
-		}
-
 		if (parser->section == SECTION_CONN_DEFAULT &&
 		    k->field == KSCF_ALSO) {
 			continue;
@@ -753,6 +749,13 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 	/* if we still found nothing */
 	if (found == NULL) {
 		parser_fatal(parser, /*errno*/0, "unrecognized '%s' keyword '"PRI_SHUNK"'",
+			     str_parser_section(parser), pri_shunk(skey));
+		/* never returns */
+		return false;
+	}
+
+	if (found->validity & kv_optarg_only) {
+		parser_fatal(parser, /*errno*/0, "'%s' keyword '"PRI_SHUNK"' invalid; use command line option",
 			     str_parser_section(parser), pri_shunk(skey));
 		/* never returns */
 		return false;

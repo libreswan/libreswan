@@ -47,14 +47,15 @@ enum keyword_valid_ix {
 	KV_ALIAS_IX,		/* is an alias for another keyword */
 	KV_DUPLICATEOK_IX,	/* within a connection, the item can
 				 * be duplicated (notably also=) */
-	KV_IGNORE_IX,		/* pretend entry does not exist */
+	KV_OPTARG_ONLY_IX,	/* pretend entry does not exist; only
+				 * allowed on command line */
 };
 
 enum keyword_valid {
         kv_leftright	= LELEM(KV_LEFTRIGHT_IX),
         kv_both		= LELEM(KV_BOTH_IX),
         kv_alias	= LELEM(KV_ALIAS_IX),
-        kv_ignore	= LELEM(KV_IGNORE_IX),
+        kv_optarg_only	= LELEM(KV_OPTARG_ONLY_IX),
         kv_duplicateok	= LELEM(KV_DUPLICATEOK_IX),
 };
 
