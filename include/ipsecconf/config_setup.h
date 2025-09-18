@@ -28,8 +28,6 @@ struct ipsec_conf;
 enum config_setup_keyword {
 	/* zero is reserved */
 
-#define CONFIG_SETUP_KEYWORD_FLOOR KSF_CURLIFACE
-
 	/*
 	 * By convention, these are global configuration strings and
 	 * only appear in the "config setup" section (KSF == Keyword

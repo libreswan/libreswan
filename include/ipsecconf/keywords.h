@@ -34,6 +34,10 @@
 
 struct logger;
 
+enum keyword_field {
+	KEYWORD_FIELD_FLOOR = 1,
+};
+
 /* these are bits set in a word */
 enum keyword_valid_ix {
 	KV_LEFTRIGHT_IX,        /* comes in left-FOO and right-FOO

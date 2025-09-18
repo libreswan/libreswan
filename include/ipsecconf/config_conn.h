@@ -53,7 +53,7 @@
  */
 
 enum config_conn_keyword {
-#define CONFIG_CONN_KEYWORD_FLOOR KWS_DEBUG
+	/* zero is reserved */
 
 	/*
 	 * Generic keywords, add more here.

@@ -94,13 +94,13 @@ static void check_config_keywords(struct logger *logger,
 
 		switch (section) {
 		case CONFIG_SETUP:
-			ok &= pexpect((k->field >= CONFIG_SETUP_KEYWORD_FLOOR &&
+			ok &= pexpect((k->field >= KEYWORD_FIELD_FLOOR &&
 				       k->field < CONFIG_SETUP_KEYWORD_ROOF) ||
 				      k->field == KNCF_OBSOLETE);
 			ok &= pexpect((k->validity & (kv_leftright | kv_both)) == LEMPTY);
 			break;
 		case CONFIG_CONN:
-			ok &= pexpect((k->field >= CONFIG_CONN_KEYWORD_FLOOR &&
+			ok &= pexpect((k->field >= KEYWORD_FIELD_FLOOR &&
 				       k->field < CONFIG_CONN_KEYWORD_ROOF) ||
 				      k->field == KNCF_OBSOLETE);
 			break;
