@@ -1,0 +1,32 @@
+ifconfig eth1
+eth1      Link encap:Ethernet  HWaddr 12:00:53:45:54:01  
+          inet addr:192.0.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:0:1::15/64 Scope:Global
+          inet6 addr: fe80::1000:53ff:fe45:5401/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:23 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:9 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:3148 (3.0 KiB)  TX bytes:842 (842.0 B)
+set #
+ ifconfig eth1 up
+set #
+ ifconfig eth2
+eth2      Link encap:Ethernet  HWaddr 12:00:53:45:54:02  
+          inet addr:198.18.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: fe80::1000:53ff:fe45:5402/64 Scope:Link
+          inet6 addr: 2001:db8:1::15/64 Scope:Global
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:16 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2138 (2.0 KiB)  TX bytes:752 (752.0 B)
+set #
+ ifconfig eth2 up
+set #
+ ../../guestbin/ping-once.sh --up 198.18.1.12 # RISE
+up
+set #
+ ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
+up
+set #

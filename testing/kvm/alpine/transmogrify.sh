@@ -16,6 +16,12 @@ EOF
 mv /tmp/fstab /etc/fstab
 cat /etc/fstab
 
+# Replace the HOSTNAME init script with one that can figure out the
+# HOSTNAME and interface configuration based on interfaces (it saves
+# the result in /etc/network/interfaces).
+cp -v /bench/testing/kvm/alpine/hostname /etc/init.d/hostname
+chmod a+x /etc/init.d/hostname
+
 # chsh -s /bin/bash root
 sed -i -e 's,root:/bin/.*,root:/bin/bash,' /etc/passwd
 

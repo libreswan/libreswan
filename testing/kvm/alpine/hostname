@@ -1,0 +1,70 @@
+#!/sbin/openrc-run
+
+# Copyright (c) Natanael Copa
+# Copyright (c) 2025 Andrew Cagney
+# This code is licensed under BSD-2-Clause
+
+description="Sets the hostname of the machine."
+
+depend() {
+	keyword -prefix -lxc -docker
+}
+
+libreswan_eth()
+{
+	local n=$1
+	local ipv4=$2
+	local ipv6=$3
+	cat <<EOF >>/etc/network/interfaces.new
+auto eth$n
+iface eth$n inet static
+    address ${ipv4}
+    mask 255.255.255.0
+iface eth$n inet6 static
+    address ${ipv6}
+    netmask 64
+EOF
+}
+
+start() {
+	cat <<EOF > /etc/network/interfaces.new
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+EOF
+	mac=$(ip addr show eth1 | awk '/link.ether/ { print $2}')
+	echo mac=$mac 1>&2
+	case "$mac" in
+	12:00:00:64:64:23 ) # EAST
+		hostname=east
+		libreswan_eth 1 192.1.2.23 2001:db8:1:2::23
+		libreswan_eth 2 192.0.2.254 2001:db8:0:2::254
+		;;
+	12:00:00:64:64:45 ) # WEST
+		hostname=west
+		libreswan_eth 1 192.1.2.45 2001:db8:1:2::45
+		libreswan_eth 2 192.0.1.254 2001:db8:0:1::254
+		;;
+	12:52:49:53:45:01 ) # RISE
+		hostname=rise
+		#libreswan_eth 1 198.18.12.12 2001:db8:12::12
+		libreswan_eth 1 192.0.2.12 2001:db8:0:2::12
+		libreswan_eth 2 198.18.1.12 2001:db8:1::12
+		;;
+	12:00:53:45:54:01 ) # SET
+		hostname=set
+		#libreswan_eth 1 198.18.15.15 2001:db8:15::15
+		libreswan_eth 1 192.0.1.15 2001:db8:0:1::15
+		libreswan_eth 2 198.18.1.15 2001:db8:1::15
+		;;
+	* )
+		hostname=alpine
+		;;
+	esac
+	mv /etc/network/interfaces.new /etc/network/interfaces
+	ebegin "Setting hostname"
+	hostname ${hostname}
+	eend $?
+}
