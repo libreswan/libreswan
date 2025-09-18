@@ -213,8 +213,6 @@ enum config_conn_keyword {
 
 #define CONFIG_CONN_KEYWORD_ROOF (KWYN_SESSION_RESUMPTION + 1)
 
-	KW_roof,
-
 	KNCF_OBSOLETE = 0,		/* to ignore but warn obsoleted keywords */
 };
 
