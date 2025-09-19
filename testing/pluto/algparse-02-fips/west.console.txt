@@ -528,11 +528,11 @@ algparse -fips -v1 'ike=+' (expect ERROR)
 algparse -fips -v1 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=aes-' (expect ERROR)
-	ERROR: IKE Pseudorandom Function (KDF) '' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) is empty
 algparse -fips -v1 'ike=aes+' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 'ike=aes;' (expect ERROR)
-	ERROR: IKE Key Exchange Method (DH) '' is not recognized
+	ERROR: IKE Key Exchange Method (DH) is empty
 algparse -fips -v1 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 'ike=+aes' (expect ERROR)
@@ -1046,11 +1046,11 @@ algparse -fips -v1 -pfs 'ike=+' (expect ERROR)
 algparse -fips -v1 -pfs 'ike=;' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=aes-' (expect ERROR)
-	ERROR: IKE Pseudorandom Function (KDF) '' is not recognized
+	ERROR: IKE Pseudorandom Function (KDF) is empty
 algparse -fips -v1 -pfs 'ike=aes+' (expect ERROR)
 	ERROR: '+' invalid, IKEv1 proposals do not support multiple transforms of the same type
 algparse -fips -v1 -pfs 'ike=aes;' (expect ERROR)
-	ERROR: IKE Key Exchange Method (DH) '' is not recognized
+	ERROR: IKE Key Exchange Method (DH) is empty
 algparse -fips -v1 -pfs 'ike=-aes' (expect ERROR)
 	ERROR: IKE encryption algorithm is empty
 algparse -fips -v1 -pfs 'ike=+aes' (expect ERROR)
