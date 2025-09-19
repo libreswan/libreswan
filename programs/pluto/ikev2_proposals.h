@@ -37,12 +37,12 @@ void llog_v2_proposals(enum stream stream, const struct logger *logger,
  * and returning the "first" local proposal to match.
  *
  * The need to load all the remote proposals into buffers is avoided
- * by processing them in a single pass.  This is a tradeoff.  Since each
- * remote proposal in turn is compared against all local proposals
- * (and not each local proposal in turn compared against all remote
- * proposals) a local proposal matching only the last remote proposal
- * takes more comparisons.  On the other hand, mallocing and pointer
- * juggling is avoided.
+ * by processing them in a single pass.  This is a tradeoff.  Since
+ * each remote proposal in turn is compared against all local
+ * proposals (and not each local proposal in turn compared against all
+ * remote proposals) a local proposal matching only the last remote
+ * proposal takes more comparisons.  On the other hand, mallocing and
+ * pointer juggling is avoided.
  */
 
 v2_notification_t process_v2SA_payload(const char *what,
