@@ -4,7 +4,7 @@ west #
  echo "initdone"
 initdone
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp256
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp256 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp256
@@ -24,7 +24,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp384
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp384 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp384
@@ -44,7 +44,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp521
@@ -64,7 +64,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes
@@ -84,7 +84,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes esp=aes128-sha2-ecp256
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes esp=aes128-sha2-ecp256 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes128-sha2-ecp521 pfs=yes esp=aes128-sha2-ecp256
@@ -104,7 +104,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp256
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp256 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes128-sha2-ecp256
@@ -122,7 +122,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp384
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp384 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes128-sha2-ecp384
@@ -140,7 +140,7 @@ destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
 west #
- ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp521
+ ../../guestbin/pluto-up-down.sh keyexchange=ikev2 ike=aes128-sha2-ecp521 -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes128-sha2-ecp521

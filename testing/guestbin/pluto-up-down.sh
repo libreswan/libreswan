@@ -2,7 +2,6 @@
 
 set -eu
 
-wait_until_alive_param="-I 192.0.1.254 192.0.2.254"
 connection_name=algo
 
 if test $# -lt 1 ; then
@@ -15,9 +14,8 @@ Run:
 - ipsec addconn --name ${connection_name} also=<hostname> <connection-param>
   the also= lets generic parameters be in ipsec.conf
 - ipsec up ${connection_name}
-  it is assumed it will establish
 - wait-until-alive <wait-until-alive-param>
-  the default is WESTNET to EASTNET -- ${wait_until_alive_param}
+  but only when <wait-until-alive-param> are specified
 - ipsec stop
   clean up ready for next test
 EOF
@@ -38,6 +36,7 @@ while test $# -gt 0 ; do
     connection_param="${connection_param} $1" ; shift
 done
 
+wait_until_alive_param=
 if test $# -gt 0 ; then
     wait_until_alive_param="$@"
 fi
@@ -49,5 +48,7 @@ RUN ipsec addconn \
     also=`hostname` \
     ${connection_param}
 RUN ipsec up ${connection_name}
-RUN ../../guestbin/wait-until-alive ${wait_until_alive_param}
+if test -n "${wait_until_alive_param}" ; then
+    RUN ../../guestbin/wait-until-alive ${wait_until_alive_param}
+fi
 RUN ipsec stop
