@@ -810,6 +810,7 @@ $(KVM_BASEDIR)/$(KVM_PREFIX)%-base: \
 	: use script to drive build of new domain
 	$(KVM_PYTHON) ./kvm-install-base.py \
 		os "$*" \
+		platform "$*" \
 		domain "$(notdir $@)" \
 		gateway $(KVM_GATEWAY_ADDRESS) \
 		benchdir $(KVM_BENCHDIR) \
@@ -854,6 +855,18 @@ $(KVM_BASEDIR)/$(KVM_PREFIX)%-base: \
 	: access the wrong files.
 	:
 	$(KVMSH) $(notdir $@) -- test ! -d /source -a ! -d /testing
+	:
+	: Save environment in .kvm_env, for shell et.al.
+	:
+	$(KVMSH) $(notdir $@) -- 'cp /dev/null .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_PLATFORM=$*                    >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_GATEWAY=$(KVM_GATEWAY_ADDRESS) >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_PREFIX=$(KVM_PREFIX)           >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_BENCHDIR=$(KVM_BENCHDIR)       >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_POOLDIR=$(KVM_POOLDIR)         >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_SOURCEDIR=$(KVM_SOURCEDIR)     >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'echo export KVM_TESTINGDIR=$(KVM_TESTINGDIR)   >> .kvm_env'
+	$(KVMSH) $(notdir $@) -- 'cat .kvm_env'
 	:
 	: Everything seems to be working, shut down.
 	:
@@ -1417,7 +1430,7 @@ kvm-install-all: kvm-keys-ok
 kvm-install-all: $(foreach os, $(KVM_OS), kvm-install-all-$(os))
 
 .PHONY: kvm-install-base
-kvm-install-base: kvm-keys-ok
+kvm-install-base:
 kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
 
 #

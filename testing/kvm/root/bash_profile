@@ -1,3 +1,8 @@
+# load environment
+if test -r $HOME/.kvm_env ; then
+   . $HOME/.kvm_env
+fi
+
 # don't flood output with bracket characters
 bind 'set enable-bracketed-paste off'
 
@@ -22,7 +27,7 @@ export SYSTEMD_COLOURS=false
 unset DEBUGINFOD_URLS
 
 # include status in the prompt when non-zero
-PS1='[\u@\h \W$(s=${?#0};echo "${s:+ $s}")]\$ '
+PS1='['"${KVM_PLATFORM:-\u}"'@\h \W$(s=${?#0};echo "${s:+ $s}")]\$ '
 
 # Force OBJDIR into /var/tmp
 export OBJDIR=/var/tmp/OBJDIR
