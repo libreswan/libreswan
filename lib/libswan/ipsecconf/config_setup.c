@@ -373,6 +373,7 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
+		case kt_nosup:
 			break;
 
 		}

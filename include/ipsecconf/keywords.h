@@ -67,7 +67,9 @@ enum keyword_type {
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_also,		/* i.e., #include */
-	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
+	kt_obsolete,            /* option that is obsoleted, allow
+				 * keyword but warn and ignore */
+	kt_nosup,		/* Option is not enabled in build */
 };
 
 struct keyword_def {

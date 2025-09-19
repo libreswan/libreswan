@@ -824,6 +824,11 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		parser_key_value_warning(parser, &key, value, "obsolete keyword ignored");
 		return;
 
+	case kt_nosup:
+		/* drop it on the floor */
+		parser_key_value_warning(parser, &key, value, "unsupported keyword ignored");
+		return;
+
 	}
 
 	if (d != NULL) {

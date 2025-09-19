@@ -229,6 +229,7 @@ static bool translate_field(struct starter_conn *conn,
 		break;
 
 	case kt_obsolete:
+	case kt_nosup:
 		break;
 	}
 
