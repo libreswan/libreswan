@@ -1602,6 +1602,7 @@ kvmplutotest	ikev2-intermediate-03-unsolicited				good
 kvmplutotest	ikev2-intermediate-04-addke-modp8192				good
 kvmplutotest	ikev2-intermediate-04-addke-ml-kem-768				good
 kvmplutotest	ikev2-intermediate-05-addke-modp8192-ml-kem-768			good
+kvmplutotest	ikev2-intermediate-05-addke-duplicate				wip	github/2370
 kvmplutotest	ikev2-intermediate-06-addke2-dh19-addke4-none-addke6-dh20	good
 
 # VPN System Roles - skip automated testing for now

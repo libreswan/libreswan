@@ -1,0 +1,59 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ # this should negotiate dh19,dh20,dh21
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21' -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh19+dh20+dh21-dh19+dh20+dh21-dh19+dh20+dh21
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH19}, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=DH20}
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=DH21}
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with rsa-digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3072-bit PKCS#1 1.5 RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ # this should fail
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh19-dh20-dh19+dh20'
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh19-dh20-dh19+dh20
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
+"algo" #1: IKE_SA_INIT_I: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"algo" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"algo" #1: deleting IKE SA (sent IKE_SA_INIT request)
+west #
