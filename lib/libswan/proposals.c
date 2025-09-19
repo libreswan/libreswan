@@ -956,16 +956,9 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 	PASSERT(logger, transform_type != NULL);
 
 	if (token.len == 0) {
-		if (parser->policy->version == IKEv1) {
-			/* test compat hack */
-			proposal_error(parser, "%s %s '' is not recognized",
-				       parser->protocol->name,
-				       transform_type->story);
-		} else {
-			proposal_error(parser, "%s %s is empty",
-				       parser->protocol->name,
-				       transform_type->story);
-		}
+		proposal_error(parser, "%s %s is empty",
+			       parser->protocol->name,
+			       transform_type->story);
 		return false;
 	}
 
