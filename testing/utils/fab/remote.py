@@ -101,8 +101,12 @@ def _login(console, logger, login, password, lapsed_time, timeout):
     # mode will re-adjust this.
     #
     # This can barf with a timeout when the prompt is wrong.
+    #
+    # Include a newline so that the new prompt is on a line on its
+    # own!  There seems to be a bash bug where the command and prompt
+    # are re-echoed when the prompt is OS@\h instead of \u@\h.
     try:
-        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
+        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr ; echo")
     except (pexpect.TIMEOUT, pexpect.EOF) as e:
         logger.error("EXCEPTION while setting terminal mode: %s", e)
         return None
