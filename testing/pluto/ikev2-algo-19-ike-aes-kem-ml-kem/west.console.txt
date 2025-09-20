@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ../../guestbin/pluto-up-down.sh 'ike=aes;kem=ml_kem_768'
+ ../../guestbin/pluto-up-down.sh 'ike=aes;kem=ml_kem_768' -- -I 192.0.1.254 192.0.2.254
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes;kem=ml_kem_768

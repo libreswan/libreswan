@@ -148,6 +148,8 @@ generate_root_ca()
     set -x
 
     echo "generating root certificiate: $@" 1>&3
+    echo 1>&3
+
     local certdir=$1 ; shift ; echo " certdir=${certdir}" 1>&3
     local ca=$1      ; shift ; echo " ca=${ca}" 1>&3
     local is_ca=$1   ; shift ; echo " is_ca=${is_ca}" 1>&3
@@ -226,6 +228,7 @@ generate_cert()
     set -x
 
     echo "generating certificate: $@" 1>&3
+    echo 1>&3
 
     local certdir=$1  ; shift ; echo " certdir=${certdir}" 1>&3
     local ca=$1       ; shift ; echo " ca=${ca}" 1>&3
