@@ -219,6 +219,12 @@ struct ikev2_proposal_match {
 	 */
 	lset_t matched_transform_types;
 	/*
+	 * Set of matched KEM algorithms from KEM and ADDKE
+	 * transforms.
+	 */
+	lset_t matched_kem_algorithms;
+
+	/*
 	 * Pointer to the best matched transform within the local
 	 * proposal, or the (invalid) sentinel transform.
 	 */
@@ -456,6 +462,8 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 			memcpy(matching_local_proposal->matching_transform,
 			       matching_local_proposal->sentinel_transform,
 			       sizeof(matching_local_proposal->sentinel_transform));
+			/* clear KEM algorithms */
+			matching_local_proposal->matched_kem_algorithms = LEMPTY;
 		}
 	}
 
@@ -643,6 +651,22 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 				if (local_transform->attr_keylen != remote_transform.attr_keylen) {
 					continue;
 				}
+
+				/*
+				 * Reject duplicate KEM algorithms.
+				 * See notes below.
+				 */
+				bool kem_algorithm = (type == IKEv2_TRANS_TYPE_KEM ||
+						      (type >= IKEv2_TRANS_TYPE_ADDKE1 &&
+						       type <= IKEv2_TRANS_TYPE_ADDKE7));
+				if (kem_algorithm &&
+				    remote_transform.id != IKEv2_KEM_NONE &&
+				    (matching_local_proposal->matched_kem_algorithms & LELEM(remote_transform.id))) {
+					vdbg("ignoring previously selected KEM algorithm %u",
+					     remote_transform.id);
+					continue;
+				}
+
 				VDBG_JAMBUF(buf) {
 					jam(buf, "remote proposal %u transform %d (",
 					    remote_propnum, remote_transform_nr);
@@ -653,6 +677,43 @@ static int process_transforms(struct pbs_in *prop_pbs, struct jambuf *remote_jam
 					jam(buf, ") transform %td",
 					    local_transform - local_transforms->transform);
 				}
+				/*
+				 * Keep track of the currently
+				 * selected KEM algorithms.
+				 *
+				 * RFC 9370 has:
+				 *
+				 *   However, for the ADDKE Transform
+				 *   Types, the responder's choice
+				 *   MUST NOT contain duplicated
+				 *   algorithms (those with an
+				 *   identical Transform ID and
+				 *   attributes), except for the
+				 *   Transform ID of NONE.
+				 *
+				 * Even do this when either old or new
+				 * is NONE (either from the sentinel,
+				 * or proposed).  This way new=NONE
+				 * strips out old=ALG; and new=ALG
+				 * gets added (the NONE bit is ignored
+				 * above).
+				 *
+				 * Note this doesn't do backtracking.
+				 * For instance, a responder with
+				 * addke1=dh19+dh20, addke2=dh19+dh20,
+				 * will reject addke1=dh19+dh20[dh19],
+				 * addke2=dh19 as, once addke1=dh19 is
+				 * selected it won't switch to dh20.
+				 *
+				 * .matched_kem_algorithms above.
+				 */
+				if (kem_algorithm) {
+					unsigned old_id = matching_local_proposal->matching_transform[type]->id;
+					matching_local_proposal->matched_kem_algorithms &= ~LELEM(old_id);
+					matching_local_proposal->matched_kem_algorithms |= LELEM(remote_transform.id);
+					vdbg("adding %d to kem algorithm set (was %d)", remote_transform.id, old_id);
+				}
+
 				/*
 				 * Update the sentinel with
 				 * this new best match for
