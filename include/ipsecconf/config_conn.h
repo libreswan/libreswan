@@ -53,7 +53,7 @@
  */
 
 enum config_conn_keyword {
-#define CONFIG_CONN_KEYWORD_FLOOR KWS_DEBUG
+	/* zero is reserved */
 
 	/*
 	 * Generic keywords, add more here.
@@ -212,10 +212,6 @@ enum config_conn_keyword {
 	KWYN_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
 #define CONFIG_CONN_KEYWORD_ROOF (KWYN_SESSION_RESUMPTION + 1)
-
-	KW_roof,
-
-	KNCF_OBSOLETE = 0,		/* to ignore but warn obsoleted keywords */
 };
 
 #endif

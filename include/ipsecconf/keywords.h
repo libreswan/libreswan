@@ -34,6 +34,11 @@
 
 struct logger;
 
+enum keyword_field {
+	KEYWORD_FIELD_UNSET = 0,
+	KEYWORD_FIELD_FLOOR = 1,
+};
+
 /* these are bits set in a word */
 enum keyword_valid_ix {
 	KV_LEFTRIGHT_IX,        /* comes in left-FOO and right-FOO
@@ -42,14 +47,15 @@ enum keyword_valid_ix {
 	KV_ALIAS_IX,		/* is an alias for another keyword */
 	KV_DUPLICATEOK_IX,	/* within a connection, the item can
 				 * be duplicated (notably also=) */
-	KV_IGNORE_IX,		/* pretend entry does not exist */
+	KV_OPTARG_ONLY_IX,	/* pretend entry does not exist; only
+				 * allowed on command line */
 };
 
 enum keyword_valid {
         kv_leftright	= LELEM(KV_LEFTRIGHT_IX),
         kv_both		= LELEM(KV_BOTH_IX),
         kv_alias	= LELEM(KV_ALIAS_IX),
-        kv_ignore	= LELEM(KV_IGNORE_IX),
+        kv_optarg_only	= LELEM(KV_OPTARG_ONLY_IX),
         kv_duplicateok	= LELEM(KV_DUPLICATEOK_IX),
 };
 
@@ -61,7 +67,9 @@ enum keyword_type {
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
 	kt_also,		/* i.e., #include */
-	kt_obsolete,            /* option that is obsoleted, allow keyword but warn and ignore */
+	kt_obsolete,            /* option that is obsoleted, allow
+				 * keyword but warn and ignore */
+	kt_nosup,		/* Option is not enabled in build */
 };
 
 struct keyword_def {

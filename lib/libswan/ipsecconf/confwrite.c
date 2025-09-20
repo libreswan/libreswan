@@ -130,6 +130,7 @@ static void confwrite_value(FILE *out,
 			break;
 
 		case kt_obsolete:
+		case kt_nosup:
 			break;
 
 		case kt_unsigned:

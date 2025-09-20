@@ -50,7 +50,8 @@ static const struct sparse_names kw_phase2types_names = {
 };
 
 static const struct keyword_def config_conn_keyword[] = {
-#define K(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .validity = VALIDITY, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
+#define K(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, .validity = VALIDITY, ##__VA_ARGS__ }
+#define U(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = kt_nosup, }
 
   /*
    * This is "left=" and "right="
@@ -88,9 +89,15 @@ static const struct keyword_def config_conn_keyword[] = {
   K("username",  kv_leftright,  kt_string,  KWS_USERNAME),
   K("addresspool",  kv_leftright,  kt_string,  KWS_ADDRESSPOOL),
   K("auth",  kv_leftright, kt_string,  KWS_AUTH),
+
 #ifdef USE_CAT
-  K("cat",  kv_leftright,  kt_sparse_name,  KWYN_CAT, .sparse_names = &yn_option_names),
+# define S K
+#else
+# define S U
 #endif
+  S("cat",  kv_leftright,  kt_sparse_name,  KWYN_CAT, .sparse_names = &yn_option_names),
+#undef S
+
   K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),
   K("autheap",  kv_leftright,  kt_string,  KWS_AUTHEAP),
   K("groundhog",  kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, .sparse_names = &yn_option_names),
@@ -219,9 +226,14 @@ static const struct keyword_def config_conn_keyword[] = {
   K("priority",  LEMPTY,  kt_string,  KWS_PRIORITY),
   K("tfc",  LEMPTY,  kt_string,  KWS_TFC),
   K("reqid",  LEMPTY,  kt_string,  KWS_REQID),
+
 #ifdef USE_NFLOG
-  K("nflog-group",  LEMPTY,  kt_string,  KWS_NFLOG_GROUP),
+# define S K
+#else
+# define S U
 #endif
+  S("nflog-group",  LEMPTY,  kt_string,  KWS_NFLOG_GROUP),
+#undef S
 
   K("aggressive",  LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
 
@@ -236,6 +248,7 @@ static const struct keyword_def config_conn_keyword[] = {
   /* alias for compatibility - undocumented on purpose */
 
 #define A(KEYNAME, VALIDITY, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = VALIDITY|kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
+
   A("aggrmode", LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
   A("keylife", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
   A("lifetime", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
@@ -255,11 +268,13 @@ static const struct keyword_def config_conn_keyword[] = {
 
   /* obsolete config setup options */
 
-#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, .field = KNCF_OBSOLETE, ##__VA_ARGS__ }
+#define O(KEYNAME, ...) { .keyname = KEYNAME, .type = kt_obsolete, }
+
   O("dpdaction"),
   O("clientaddrfamily"),
   O("keyingtries"),
 
+#undef U
 #undef O
 #undef A
 #undef K

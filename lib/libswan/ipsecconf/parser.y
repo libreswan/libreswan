@@ -677,10 +677,6 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 			continue;
 		}
 
-		if (k->validity & kv_ignore) {
-			continue;
-		}
-
 		if (parser->section == SECTION_CONN_DEFAULT &&
 		    k->field == KSCF_ALSO) {
 			continue;
@@ -758,6 +754,13 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 		return false;
 	}
 
+	if (found->validity & kv_optarg_only) {
+		parser_fatal(parser, /*errno*/0, "'%s' keyword '"PRI_SHUNK"' invalid; use command line option",
+			     str_parser_section(parser), pri_shunk(skey));
+		/* never returns */
+		return false;
+	}
+
 	/* else, set up llval.k to point, and return KEYWORD */
 	key->key = found;
 	key->left = left;
@@ -819,6 +822,11 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	case kt_obsolete:
 		/* drop it on the floor */
 		parser_key_value_warning(parser, &key, value, "obsolete keyword ignored");
+		return;
+
+	case kt_nosup:
+		/* drop it on the floor */
+		parser_key_value_warning(parser, &key, value, "unsupported keyword ignored");
 		return;
 
 	}

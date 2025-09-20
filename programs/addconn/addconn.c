@@ -726,11 +726,7 @@ int main(int argc, char *argv[])
 			print_option(configsetup, "ctlsocket", "%s", ctlsocket);
 		}
 
-		for (enum config_setup_keyword kw = CONFIG_SETUP_KEYWORD_FLOOR;
-		     kw < CONFIG_SETUP_KEYWORD_ROOF; kw++) {
-
-			PASSERT(logger, kw < config_setup_keywords.len);
-			const struct keyword_def *kd = &config_setup_keywords.item[kw];
+		ITEMS_FOR_EACH(kd, &config_setup_keywords) {
 
 			if (kd->keyname == NULL) {
 				continue;
