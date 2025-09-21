@@ -36,10 +36,9 @@ west #
  ipsec up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"west" #1: dropping ADDKE4=NONE from list of negotiated IKE_INTERMEDIATE exchanges
 "west" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=MODP8192}, initiating IKE_INTERMEDIATE
 "west" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=DH19}
-"west" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
-"west" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke4=NONE}
 "west" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
 "west" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke6=DH20}
 "west" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
