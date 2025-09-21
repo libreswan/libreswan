@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec add east
+"east": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # confirm PPK was used
+east #
+ grep -e '^[^].*PPK.*used in' /tmp/pluto.log
+grep: Unmatched [, [^, [:, [., or [=
+east #

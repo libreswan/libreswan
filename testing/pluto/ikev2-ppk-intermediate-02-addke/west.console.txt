@@ -1,0 +1,136 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ ipsec whack --impair revival
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20' -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh20
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
+"algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none' -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh20-none
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: dropping ADDKE1=NONE from list of negotiated IKE_INTERMEDIATE exchanges
+"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"algo" #1: dropping IKE_SA_INIT response with duplicate Message ID 0, IKE SA in state IKE_SA_INIT_IR has already processed response
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
+"algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-none-ml_kem_768' -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh20-none-ml_kem_768
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: dropping ADDKE1=NONE from list of negotiated IKE_INTERMEDIATE exchanges
+"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"algo" #1: dropping IKE_SA_INIT response with duplicate Message ID 0, IKE SA in state IKE_SA_INIT_IR has already processed response
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
+"algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-none' -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh20-modp8192-none
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: dropping ADDKE2=NONE from list of negotiated IKE_INTERMEDIATE exchanges
+"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192, PPK}
+"algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/pluto-up-down.sh 'ike=aes;dh20-modp8192-ml_kem_768' -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes;dh20-modp8192-ml_kem_768
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
+"algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ # confirm PPK was used
+west #
+ grep -e '^[^].*PPK.*used in' /tmp/pluto.log
+grep: Unmatched [, [^, [:, [., or [=
+west #
