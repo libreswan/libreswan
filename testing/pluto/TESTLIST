@@ -1522,8 +1522,8 @@ kvmplutotest	ikev2-ppk-static-08-no_ppk-responder		good
 kvmplutotest	ikev2-ppk-static-09-no_ppk-initiator		good
 kvmplutotest	ikev2-ppk-static-10-yes-no			good
 kvmplutotest	ikev2-ppk-static-11-multiple-ppk-ids		good
-kvmplutotest	ikev2-ppk-intermediate-01-insist-yes			good
-vkmplutotest	ikev2-ppk-intermediate-02-addke-modp8192-ml-kem-768	good
+kvmplutotest	ikev2-ppk-intermediate-01-insist-yes		good
+vkmplutotest	ikev2-ppk-intermediate-02-addke			good
 
 # REDIRECT
 kvmplutotest	ikev2-redirect-02-auth				good
@@ -1596,8 +1596,7 @@ kvmplutotest	ikev2-tcp-05-transport-mode		wip	github/1133
 kvmplutotest	ikev2-udp-05-transport-mode 		good
 
 # Intermediary Exchange
-kvmplutotest	ikev2-intermediate-01-addke-none-rsa				good
-kvmplutotest	ikev2-intermediate-01-addke-none-psk				good
+kvmplutotest	ikev2-intermediate-01-addke-connswitch				good
 kvmplutotest	ikev2-intermediate-03-unsolicited				good
 kvmplutotest	ikev2-intermediate-04-addke-modp8192				good
 kvmplutotest	ikev2-intermediate-04-addke-ml-kem-768				good
