@@ -411,6 +411,8 @@ static void test_esp(struct logger *logger)
 
 	esp(false, "kem=modp8192"); /* missing encryption */
 
+	esp(ike_version == IKEv2, "aes;sn=yes"); /* ignore IKEv1 */
+
 #undef esp
 }
 

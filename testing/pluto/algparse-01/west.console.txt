@@ -362,6 +362,8 @@ algparse -v1 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
+algparse -v1 'esp=aes;sn=yes' (expect ERROR)
+	ERROR: ESP Sequence Number 'yes' is not supported by IKEv1
 algparse -v1 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -906,6 +908,8 @@ algparse -v1 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
+algparse -v1 -pfs 'esp=aes;sn=yes' (expect ERROR)
+	ERROR: ESP Sequence Number 'yes' is not supported by IKEv1
 algparse -v1 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -1458,6 +1462,8 @@ algparse -v2 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
+algparse -v2 'esp=aes;sn=yes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
 algparse -v2 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -1964,6 +1970,8 @@ algparse -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect ERROR)
 	ERROR: ESP proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
+algparse -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
 algparse -v2 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -2465,6 +2473,8 @@ algparse -addke -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect SUCCESS)
 	AES_GCM_16-NONE-MODP2048-MODP2048
 algparse -addke -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
+algparse -addke -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)
+	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
 algparse -addke -v2 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128

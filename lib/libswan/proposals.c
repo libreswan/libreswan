@@ -375,6 +375,7 @@ const struct ike_alg_type *proposal_transform_type[PROPOSAL_TRANSFORM_ROOF] = {
 	S(prf),
 	S(integ),
 	S(kem),
+	S(sn),
 #undef S
 #define S(E) [PROPOSAL_TRANSFORM_##E] = &ike_alg_kem
 	S(addke1),
@@ -1277,7 +1278,14 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		 */
 		if (parser->protocol->kem) {
 			return parse_transform_algorithms(parser, proposal,
-							  PROPOSAL_TRANSFORM_kem, tokens);
+							  transform, tokens);
+		}
+		break;
+
+	case PROPOSAL_TRANSFORM_sn:
+		if (typed_how == TRANSFORM_TYPE_EXPLICIT) {
+			return parse_transform_algorithms(parser, proposal,
+							  transform, tokens);
 		}
 		break;
 
