@@ -1,3 +1,0 @@
-Intermediate Exchange with IKEv2 using PSK on the initiator (west), and on the responder.
-
-

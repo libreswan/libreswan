@@ -1,0 +1,72 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add psk
+"psk": added IKEv2 connection
+west #
+ ipsec add rsa-west
+"rsa-west": added IKEv2 connection
+west #
+ ipsec whack --impair suppress_retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec up psk
+"psk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"psk" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"psk" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"psk" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=DH21}
+"psk" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"psk" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"psk" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"psk" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"psk" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#2: "psk", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ ipsec down psk
+"psk": initiating delete of connection's IKE SA #1 (and Child SA #2)
+"psk" #1: sent INFORMATIONAL request to delete IKE SA
+"psk" #2: ESP traffic information: in=84B out=84B
+"psk" #1: deleting IKE SA (established IKE SA)
+west #
+ ipsec up rsa-west
+"rsa-west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"rsa-west" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"rsa-west" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
+"rsa-west" #3: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=DH21}
+"rsa-west" #3: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"rsa-west" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with rsa-digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org'; Child SA #4 {ESP <0xESPESP}
+"rsa-west" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
+"rsa-west" #3: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3072-bit PKCS#1 1.5 RSA with SHA1 signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"rsa-west" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+#4: "rsa-west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+west #
+ ipsec down rsa-west
+"rsa-west": initiating delete of connection's IKE SA #3 (and Child SA #4)
+"rsa-west" #3: sent INFORMATIONAL request to delete IKE SA
+"rsa-west" #4: ESP traffic information: in=84B out=84B
+"rsa-west" #3: deleting IKE SA (established IKE SA)
+west #
+ echo done
+done
+west #
+ ipsec _kernel state
+west #
+ ipsec _kernel policy
+west #

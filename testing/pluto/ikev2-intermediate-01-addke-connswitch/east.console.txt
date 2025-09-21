@@ -6,12 +6,16 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec add any-east
-"any-east": added IKEv2 connection
+ ipsec add psk
+"psk": added IKEv2 connection
 east #
- ipsec connectionstatus | grep ' policy: '
-"any-east":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
+ ipsec add rsa-east
+"rsa-east": added IKEv2 connection
 east #
  echo "initdone"
 initdone
+east #
+ ipsec _kernel state
+east #
+ ipsec _kernel policy
 east #
