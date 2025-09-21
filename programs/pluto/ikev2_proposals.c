@@ -1778,7 +1778,8 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 		 */
 		pexpect(!transforms->transform[1].valid); /* zero or 1 */
 		const struct ikev2_transform *transform = &transforms->transform[0];
-		if (transform->valid || transform->implied) {
+		if (transform->valid ||
+		    transform->implied) {
 			switch (type) {
 			case IKEv2_TRANS_TYPE_ENCR:
 			{
@@ -1900,13 +1901,6 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 				 * ADDKE is optional, for instance
 				 * proposing just ADDKE1-ADDKE3 is
 				 * valid).
-				 *
-				 * XXX: still need to ensure that all
-				 * KEMs are unique.
-				 *
-				 * XXX: need to allow KEM=NONE which
-				 * means perform an IKE_INTERMEDIATE
-				 * exchange with no KE payload.
 				 */
 				size_t max_addke = elemsof(ta.ta_addke.list);
 				if (ta.ta_addke.len >= max_addke) {
@@ -1914,6 +1908,12 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 						     "accepted IKEv2 proposal contains more than %zu KEMs",
 						     max_addke);
 					return false;
+				}
+				if (kem == &ike_alg_kem_none) {
+					name_buf tb;
+					llog(RC_LOG, logger, "dropping %s=NONE from list of negotiated IKE_INTERMEDIATE exchanges",
+					     str_enum_short(&ikev2_trans_type_names, type, &tb));
+					continue;
 				}
 				ta.ta_addke.list[ta.ta_addke.len].type = type;
 				ta.ta_addke.list[ta.ta_addke.len].kem = kem;
