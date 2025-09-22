@@ -32,7 +32,7 @@ west #
  ipsec pluto --config ocsp-cache.conf
 west #
  ipsec status | grep ocsp
-configdir=/etc, configfile=ocsp-cache.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
+configdir=/etc, configfile=/testing/pluto/addconn-41-ocsp-config/ocsp-cache.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
 ocsp-enable=yes, ocsp-strict=no, ocsp-timeout=2
 ocsp-uri=http://nic.testing.libreswan.org:2560, ocsp-trust-name=nic
 ocsp-cache-size=1000, ocsp-cache-min-age=20, ocsp-cache-max-age=40, ocsp-method=get

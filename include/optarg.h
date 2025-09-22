@@ -81,6 +81,8 @@ NEVER_RETURNS PRINTF_LIKE(2) void optarg_fatal(const struct logger *logger,
 const char *optarg_nonempty(const struct logger *logger);
 /* returns a non-NULL string, or barfs */
 const char *optarg_empty(const struct logger *logger);
+/* returns an allocated realpath(), or barfs; must pfree() */
+char *optarg_realpath(const struct logger *logger);
 
 deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale);
 

@@ -112,7 +112,7 @@ bool in_main_thread(void)
 
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
-static const char *conffile = IPSEC_CONF;
+static char *conffile = NULL;
 
 static struct {
 	bool enable;
@@ -122,9 +122,7 @@ static struct {
 
 void free_pluto_main(void)
 {
-	/* Some values can be NULL if not specified as pluto argument */
-	free_global_redirect_dests();
-	free_config_setup();
+	pfreeany(conffile);
 }
 
 /* string naming compile-time options that have interop implications */
@@ -635,6 +633,7 @@ int main(int argc, char **argv)
 	 * determine if it is running on an aux thread.
 	 */
 	main_thread = pthread_self();
+	conffile = clone_str(IPSEC_CONF, "conffile");
 
 	/* handle arguments */
 	for (;; ) {
@@ -972,7 +971,8 @@ int main(int argc, char **argv)
 			 * Config struct to variables mapper.  This
 			 * will update previously set options.
 			 */
-			conffile = optarg_nonempty(logger);
+			pfreeany(conffile);
+			conffile = optarg_realpath(logger);
 			if (!load_config_setup(optarg, logger, 0/*no-verbosity*/)) {
 				/* details already logged */
 				optarg_fatal(logger, "cannot load config file '%s'", optarg);

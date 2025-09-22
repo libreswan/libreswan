@@ -364,6 +364,8 @@ algparse -v1 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v1 'esp=aes;sn=yes' (expect ERROR)
 	ERROR: ESP Sequence Number 'yes' is not supported by IKEv1
+algparse -v1 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
 algparse -v1 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -424,6 +426,8 @@ algparse -v1 'ah=sha2;modp2048-modp2048' (expect ERROR)
 	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 'ah=kem=modp8192' (expect ERROR)
 	ERROR: AH proposal missing integ transform
+algparse -v1 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v1 'ike' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
@@ -580,6 +584,11 @@ algparse -v1 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse -v1 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
 	ERROR: IKE proposal contains unexpected explicit integ=
+algparse -v1 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-MODP2048
+	AES_CBC-HMAC_SHA1-MODP1536
+	AES_CBC-HMAC_SHA1-DH19
+	AES_CBC-HMAC_SHA1-DH31
 west #
  ipsec algparse -tp -v1 -pfs
 algparse -v1 -pfs 'esp' (expect SUCCESS)
@@ -910,6 +919,8 @@ algparse -v1 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v1 -pfs 'esp=aes;sn=yes' (expect ERROR)
 	ERROR: ESP Sequence Number 'yes' is not supported by IKEv1
+algparse -v1 -pfs 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
 algparse -v1 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
 	HMAC_SHA2_512_256
@@ -968,6 +979,8 @@ algparse -v1 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
 	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v1 -pfs 'ah=kem=modp8192' (expect ERROR)
 	ERROR: AH proposal missing integ transform
+algparse -v1 -pfs 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v1 -pfs 'ike' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256-MODP2048
 	AES_CBC-HMAC_SHA2_512-MODP2048
@@ -1124,6 +1137,11 @@ algparse -v1 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse -v1 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
 	ERROR: IKE proposal contains unexpected explicit integ=
+algparse -v1 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-MODP2048
+	AES_CBC-HMAC_SHA1-MODP1536
+	AES_CBC-HMAC_SHA1-DH19
+	AES_CBC-HMAC_SHA1-DH31
 west #
  ipsec algparse -tp -v2
 algparse -v2 'esp' (expect SUCCESS)
@@ -1464,6 +1482,8 @@ algparse -v2 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v2 'esp=aes;sn=yes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
+algparse -v2 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
 algparse -v2 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -1526,6 +1546,8 @@ algparse -v2 'ah=sha2;modp2048-modp2048' (expect ERROR)
 algparse -v2 'ah=kem=modp8192' (expect SUCCESS)
 ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA2_512_256+HMAC_SHA2_256_128
+algparse -v2 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v2 'ike' (expect SUCCESS)
 	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -1670,6 +1692,8 @@ algparse -v2 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse -v2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+algparse -v2 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
  ipsec algparse -tp -v2 -pfs
 algparse -v2 -pfs 'esp' (expect SUCCESS)
@@ -1972,6 +1996,8 @@ algparse -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
+algparse -v2 -pfs 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
 algparse -v2 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -2029,6 +2055,8 @@ algparse -v2 -pfs 'ah=sha2;modp2048-modp2048' (expect ERROR)
 	ERROR: AH proposal contains unexpected '-modp2048', expecting ';<transform>=...'
 algparse -v2 -pfs 'ah=kem=modp8192' (expect SUCCESS)
 	HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP8192
+algparse -v2 -pfs 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -v2 -pfs 'ike' (expect SUCCESS)
 	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -2173,6 +2201,8 @@ algparse -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+algparse -v2 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
  ipsec algparse -tp -v2 -pfs -addke
 algparse -addke -v2 -pfs 'esp' (expect SUCCESS)
@@ -2475,6 +2505,8 @@ algparse -addke -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -addke -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128-PARTIAL_64_BIT_SEQUENTIAL
+algparse -addke -v2 -pfs 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1_96
 algparse -addke -v2 -pfs 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
 	HMAC_SHA2_256_128
@@ -2532,6 +2564,8 @@ algparse -addke -v2 -pfs 'ah=sha2;modp2048-modp2048' (expect SUCCESS)
 	HMAC_SHA2_256_128-MODP2048-MODP2048
 algparse -addke -v2 -pfs 'ah=kem=modp8192' (expect SUCCESS)
 	HMAC_SHA2_512_256+HMAC_SHA2_256_128-MODP8192
+algparse -addke -v2 -pfs 'ah=sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1' (expect SUCCESS)
+	HMAC_SHA1_96
 algparse -addke -v2 -pfs 'ike' (expect SUCCESS)
 	AES_GCM_16_256-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 	AES_GCM_16_128-HMAC_SHA2_512+HMAC_SHA2_256-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
@@ -2676,6 +2710,8 @@ algparse -addke -v2 -pfs 'ike=kem=modp8192' (expect ERROR)
 	ERROR: IKE proposal missing encrypt transform
 algparse -addke -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 	AES_CBC-HMAC_SHA2_256_128-HMAC_SHA1-DH20
+algparse -addke -v2 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
+	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
  # Run the algorithm tests; there should be no fails.
 west #

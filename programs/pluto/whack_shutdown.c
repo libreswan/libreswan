@@ -61,6 +61,8 @@
 #include "ikev2_ike_session_resume.h"	/* for shutdown_ike_session_resume() */
 #include "spd_db.h"	/* for check_spd_db() */
 #include "server_fork.h"	/* for check_server_fork() */
+#include "ikev2_redirect.h"	/* for free_global_redirect_dests() */
+#include "ipsecconf/config_setup.h"	/* for free_config_setup() */
 #include "pending.h"
 #include "connection_event.h"
 #include "terminate.h"
@@ -217,6 +219,8 @@ void exit_epilogue(struct logger *logger)
 	free_server(logger);
 
 	free_virtual_ip();	/* virtual_private= */
+	free_global_redirect_dests();
+	free_config_setup();
 	free_pluto_main();	/* our static chars */
 
 	/* report memory leaks now, after all free_* calls */
