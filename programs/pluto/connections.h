@@ -262,6 +262,8 @@ struct child_config {
 		bool esp_tfc_padding_not_supported;	/* notification */
 	} send;
 
+  bool reject_simultaneous_ike_auth;
+
 	struct {
 		enum yna_options yna;
 		unsigned nr;
