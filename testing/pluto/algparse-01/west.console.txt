@@ -7,8 +7,8 @@ algparse -v1 'esp' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
-	AES_GCM_16_128-NONE
-	AES_GCM_16_256-NONE
+	AES_GCM_16_128
+	AES_GCM_16_256
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_512_256
 	3DES_CBC-HMAC_SHA2_256_128
@@ -44,7 +44,7 @@ algparse -v1 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256
 	AES_CBC_128-HMAC_SHA2_256_128
 algparse -v1 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=3des-sha1;modp1024' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v1 'esp=3des-sha1;modp1536' (expect SUCCESS)
@@ -118,105 +118,105 @@ algparse -v1 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 	CAMELLIA_CBC_256-HMAC_SHA2_256_128
 algparse -v1 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v1 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v1 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v1 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v1 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v1 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v1 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v1 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v1 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v1 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v1 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v1 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA1_96
 	AES_CTR-HMAC_SHA2_512_256
@@ -242,7 +242,7 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is 
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 algparse -v1 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
-	NULL_AUTH_AES_GMAC_256-NONE
+	NULL_AUTH_AES_GMAC_256
 algparse -v1 'esp=3des-sha1;modp8192' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
@@ -586,8 +586,8 @@ algparse -v1 -pfs 'esp' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
 	AES_CBC-HMAC_SHA2_256_128
-	AES_GCM_16_128-NONE
-	AES_GCM_16_256-NONE
+	AES_GCM_16_128
+	AES_GCM_16_256
 	3DES_CBC-HMAC_SHA1_96
 	3DES_CBC-HMAC_SHA2_512_256
 	3DES_CBC-HMAC_SHA2_256_128
@@ -618,7 +618,7 @@ algparse -v1 -pfs 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256
 	AES_CBC_128-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=3des-sha1;modp1024' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v1 -pfs 'esp=3des-sha1;modp1536' (expect SUCCESS)
@@ -688,105 +688,105 @@ algparse -v1 -pfs 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 	CAMELLIA_CBC_256-HMAC_SHA2_256_128
 algparse -v1 -pfs 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 -pfs 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v1 -pfs 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v1 -pfs 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v1 -pfs 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 -pfs 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v1 -pfs 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v1 -pfs 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v1 -pfs 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v1 -pfs 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v1 -pfs 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v1 -pfs 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 -pfs 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v1 -pfs 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v1 -pfs 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 -pfs 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 -pfs 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 -pfs 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 -pfs 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 -pfs 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 -pfs 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 -pfs 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v1 -pfs 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v1 -pfs 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v1 -pfs 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v1 -pfs 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v1 -pfs 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v1 -pfs 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v1 -pfs 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 -pfs 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 -pfs 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 -pfs 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 -pfs 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v1 -pfs 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v1 -pfs 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v1 -pfs 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v1 -pfs 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v1 -pfs 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v1 -pfs 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA1_96
 	AES_CTR-HMAC_SHA2_512_256
@@ -810,7 +810,7 @@ algparse -v1 -pfs 'esp=aes_ctr256' (expect SUCCESS)
 algparse -v1 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -v1 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
+	NULL_AUTH_AES_GMAC_256-MODP8192
 algparse -v1 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v1 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
@@ -1127,9 +1127,9 @@ algparse -v1 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect ERROR)
 west #
  ipsec algparse -tp -v2
 algparse -v2 'esp' (expect SUCCESS)
-	AES_GCM_16_256-NONE
-	AES_GCM_16_128-NONE
-	CHACHA20_POLY1305-NONE
+	AES_GCM_16_256
+	AES_GCM_16_128
+	CHACHA20_POLY1305
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=' (expect ERROR)
@@ -1156,7 +1156,7 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is 
 algparse -v2 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=3des-sha1;modp1024' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v2 'esp=3des-sha1;modp1536' (expect SUCCESS)
@@ -1220,105 +1220,105 @@ algparse -v2 'esp=camellia192' (expect SUCCESS)
 algparse -v2 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v2 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v2 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v2 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v2 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v2 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v2 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v2 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v2 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v2 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v2 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v2 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aesctr' (expect SUCCESS)
@@ -1334,7 +1334,7 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is 
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256
 algparse -v2 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
-	NULL_AUTH_AES_GMAC_256-NONE
+	NULL_AUTH_AES_GMAC_256
 algparse -v2 'esp=3des-sha1;modp8192' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	3DES_CBC-HMAC_SHA1_96
@@ -1673,9 +1673,9 @@ algparse -v2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 west #
  ipsec algparse -tp -v2 -pfs
 algparse -v2 -pfs 'esp' (expect SUCCESS)
-	AES_GCM_16_256-NONE
-	AES_GCM_16_128-NONE
-	CHACHA20_POLY1305-NONE
+	AES_GCM_16_256
+	AES_GCM_16_128
+	CHACHA20_POLY1305
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=' (expect ERROR)
@@ -1699,7 +1699,7 @@ algparse -v2 -pfs 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
 algparse -v2 -pfs 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=3des-sha1;modp1024' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -v2 -pfs 'esp=3des-sha1;modp1536' (expect SUCCESS)
@@ -1759,105 +1759,105 @@ algparse -v2 -pfs 'esp=camellia192' (expect SUCCESS)
 algparse -v2 -pfs 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 -pfs 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -v2 -pfs 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -v2 -pfs 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -v2 -pfs 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 -pfs 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -v2 -pfs 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -v2 -pfs 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -v2 -pfs 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -v2 -pfs 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -v2 -pfs 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -v2 -pfs 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 -pfs 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -v2 -pfs 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -v2 -pfs 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 -pfs 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 -pfs 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 -pfs 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 -pfs 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 -pfs 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 -pfs 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 -pfs 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -v2 -pfs 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -v2 -pfs 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -v2 -pfs 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -v2 -pfs 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -v2 -pfs 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -v2 -pfs 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -v2 -pfs 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 -pfs 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 -pfs 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 -pfs 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 -pfs 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -v2 -pfs 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -v2 -pfs 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -v2 -pfs 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -v2 -pfs 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -v2 -pfs 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -v2 -pfs 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 -pfs 'esp=aesctr' (expect SUCCESS)
@@ -1871,7 +1871,7 @@ algparse -v2 -pfs 'esp=aes_ctr256' (expect SUCCESS)
 algparse -v2 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -v2 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
+	NULL_AUTH_AES_GMAC_256-MODP8192
 algparse -v2 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -v2 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
@@ -2176,9 +2176,9 @@ algparse -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 west #
  ipsec algparse -tp -v2 -pfs -addke
 algparse -addke -v2 -pfs 'esp' (expect SUCCESS)
-	AES_GCM_16_256-NONE
-	AES_GCM_16_128-NONE
-	CHACHA20_POLY1305-NONE
+	AES_GCM_16_256
+	AES_GCM_16_128
+	CHACHA20_POLY1305
 	AES_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -addke -v2 -pfs 'esp=' (expect ERROR)
@@ -2202,7 +2202,7 @@ algparse -addke -v2 -pfs 'esp=aes-128-sha1-modp2048' (expect SUCCESS)
 algparse -addke -v2 -pfs 'esp=aes-128' (expect SUCCESS)
 	AES_CBC_128-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -addke -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -addke -v2 -pfs 'esp=3des-sha1;modp1024' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'modp1024' is not supported
 algparse -addke -v2 -pfs 'esp=3des-sha1;modp1536' (expect SUCCESS)
@@ -2262,105 +2262,105 @@ algparse -addke -v2 -pfs 'esp=camellia192' (expect SUCCESS)
 algparse -addke -v2 -pfs 'esp=camellia256' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -addke -v2 -pfs 'esp=aes_ccm' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -addke -v2 -pfs 'esp=aes_ccm_a-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -addke -v2 -pfs 'esp=aes_ccm_a-192-null' (expect SUCCESS)
-	AES_CCM_8_192-NONE
+	AES_CCM_8_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_a-256-null' (expect SUCCESS)
-	AES_CCM_8_256-NONE
+	AES_CCM_8_256
 algparse -addke -v2 -pfs 'esp=aes_ccm_b-128-null' (expect SUCCESS)
-	AES_CCM_12_128-NONE
+	AES_CCM_12_128
 algparse -addke -v2 -pfs 'esp=aes_ccm_b-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_b-256-null' (expect SUCCESS)
-	AES_CCM_12_256-NONE
+	AES_CCM_12_256
 algparse -addke -v2 -pfs 'esp=aes_ccm_c-128-null' (expect SUCCESS)
-	AES_CCM_16_128-NONE
+	AES_CCM_16_128
 algparse -addke -v2 -pfs 'esp=aes_ccm_c-192-null' (expect SUCCESS)
-	AES_CCM_16_192-NONE
+	AES_CCM_16_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_c-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_gcm' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -addke -v2 -pfs 'esp=aes_gcm_a-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -addke -v2 -pfs 'esp=aes_gcm_a-192-null' (expect SUCCESS)
-	AES_GCM_8_192-NONE
+	AES_GCM_8_192
 algparse -addke -v2 -pfs 'esp=aes_gcm_a-256-null' (expect SUCCESS)
-	AES_GCM_8_256-NONE
+	AES_GCM_8_256
 algparse -addke -v2 -pfs 'esp=aes_gcm_b-128-null' (expect SUCCESS)
-	AES_GCM_12_128-NONE
+	AES_GCM_12_128
 algparse -addke -v2 -pfs 'esp=aes_gcm_b-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -addke -v2 -pfs 'esp=aes_gcm_b-256-null' (expect SUCCESS)
-	AES_GCM_12_256-NONE
+	AES_GCM_12_256
 algparse -addke -v2 -pfs 'esp=aes_gcm_c-128-null' (expect SUCCESS)
-	AES_GCM_16_128-NONE
+	AES_GCM_16_128
 algparse -addke -v2 -pfs 'esp=aes_gcm_c-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -addke -v2 -pfs 'esp=aes_gcm_c-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_ccm_a-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -addke -v2 -pfs 'esp=aes_ccm_b-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -addke -v2 -pfs 'esp=aes_ccm_c-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -addke -v2 -pfs 'esp=aes_gcm_a-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -addke -v2 -pfs 'esp=aes_gcm_b-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -addke -v2 -pfs 'esp=aes_gcm_c-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -addke -v2 -pfs 'esp=aes_ccm-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -addke -v2 -pfs 'esp=aes_gcm-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -addke -v2 -pfs 'esp=aes_ccm-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_gcm-192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_gcm_192-null' (expect SUCCESS)
-	AES_GCM_16_192-NONE
+	AES_GCM_16_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_8-null' (expect SUCCESS)
-	AES_CCM_8-NONE
+	AES_CCM_8
 algparse -addke -v2 -pfs 'esp=aes_ccm_12-null' (expect SUCCESS)
-	AES_CCM_12-NONE
+	AES_CCM_12
 algparse -addke -v2 -pfs 'esp=aes_ccm_16-null' (expect SUCCESS)
-	AES_CCM_16-NONE
+	AES_CCM_16
 algparse -addke -v2 -pfs 'esp=aes_gcm_8-null' (expect SUCCESS)
-	AES_GCM_8-NONE
+	AES_GCM_8
 algparse -addke -v2 -pfs 'esp=aes_gcm_12-null' (expect SUCCESS)
-	AES_GCM_12-NONE
+	AES_GCM_12
 algparse -addke -v2 -pfs 'esp=aes_gcm_16-null' (expect SUCCESS)
-	AES_GCM_16-NONE
+	AES_GCM_16
 algparse -addke -v2 -pfs 'esp=aes_ccm_8-128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -addke -v2 -pfs 'esp=aes_ccm_12-192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_16-256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_gcm_8-128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -addke -v2 -pfs 'esp=aes_gcm_12-192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -addke -v2 -pfs 'esp=aes_gcm_16-256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_ccm_8_128-null' (expect SUCCESS)
-	AES_CCM_8_128-NONE
+	AES_CCM_8_128
 algparse -addke -v2 -pfs 'esp=aes_ccm_12_192-null' (expect SUCCESS)
-	AES_CCM_12_192-NONE
+	AES_CCM_12_192
 algparse -addke -v2 -pfs 'esp=aes_ccm_16_256-null' (expect SUCCESS)
-	AES_CCM_16_256-NONE
+	AES_CCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_gcm_8_128-null' (expect SUCCESS)
-	AES_GCM_8_128-NONE
+	AES_GCM_8_128
 algparse -addke -v2 -pfs 'esp=aes_gcm_12_192-null' (expect SUCCESS)
-	AES_GCM_12_192-NONE
+	AES_GCM_12_192
 algparse -addke -v2 -pfs 'esp=aes_gcm_16_256-null' (expect SUCCESS)
-	AES_GCM_16_256-NONE
+	AES_GCM_16_256
 algparse -addke -v2 -pfs 'esp=aes_ctr' (expect SUCCESS)
 	AES_CTR-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -addke -v2 -pfs 'esp=aesctr' (expect SUCCESS)
@@ -2374,7 +2374,7 @@ algparse -addke -v2 -pfs 'esp=aes_ctr256' (expect SUCCESS)
 algparse -addke -v2 -pfs 'esp=camellia_cbc_256-hmac_sha2_512_256;modp8192' (expect SUCCESS)
 	CAMELLIA_CBC_256-HMAC_SHA2_512_256-MODP8192
 algparse -addke -v2 -pfs 'esp=null_auth_aes_gmac_256-null;modp8192' (expect SUCCESS)
-	NULL_AUTH_AES_GMAC_256-NONE-MODP8192
+	NULL_AUTH_AES_GMAC_256-MODP8192
 algparse -addke -v2 -pfs 'esp=3des-sha1;modp8192' (expect SUCCESS)
 	3DES_CBC-HMAC_SHA1_96-MODP8192
 algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192' (expect SUCCESS)
@@ -2470,7 +2470,7 @@ algparse -addke -v2 -pfs 'esp=3des-sha1;modp8192,3des-sha2;modp8192' (expect SUC
 algparse -addke -v2 -pfs 'esp=3des-sha1-modp8192,3des-sha2-modp2048' (expect ERROR)
 	ERROR: more than one IKEv2 ESP Key Exchange algorithm (MODP8192, MODP2048) requires unimplemented CREATE_CHILD_SA INVALID_KE
 algparse -addke -v2 -pfs 'esp=aes_gcm;modp2048-modp2048' (expect SUCCESS)
-	AES_GCM_16-NONE-MODP2048-MODP2048
+	AES_GCM_16-MODP2048-MODP2048
 algparse -addke -v2 -pfs 'esp=kem=modp8192' (expect ERROR)
 	ERROR: ESP proposal missing encrypt transform
 algparse -addke -v2 -pfs 'esp=aes;sn=yes' (expect SUCCESS)

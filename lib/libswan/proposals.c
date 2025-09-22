@@ -516,20 +516,16 @@ void jam_proposal(struct jambuf *buf,
 	}
 
 	/*
-	 * For output compatibility reasons, the INTEG is shown before
-	 * the PRF; but not it matches the PRF; and not when it is
-	 * NONE (ike=aes_gcm-none gives the impression that there is
-	 * no integrity).  But for output compat reasons, do include
-	 * NONE NONE when there's no PRF (ah=sha1_96,
-	 * esp=aes_gcm-none-sha1?!?).
+	 * Does it look like the INTEG was generated from the PRF?
 	 *
-	 * Skip INTEG when it matches PRF.
+	 * When it is, the INTEG is suppressed.
 	 */
 
 	struct transform_algorithms *prf_algs = proposal->algorithms[PROPOSAL_TRANSFORM_prf];
 	struct transform_algorithms *integ_algs = proposal->algorithms[PROPOSAL_TRANSFORM_integ];
-	bool prf_is_empty = (prf_algs == NULL || prf_algs->len == 0);
-	bool integ_is_empty = (integ_algs == NULL || integ_algs->len == 0);
+	bool encrypt_is_empty = (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_encrypt) == NULL);
+	bool prf_is_empty = (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) == NULL);
+	bool integ_is_empty = (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_integ) == NULL);
 	bool integ_matches_prf = false;
 	if (!prf_is_empty && !integ_is_empty &&
 	    prf_algs->len == integ_algs->len) {
@@ -545,9 +541,16 @@ void jam_proposal(struct jambuf *buf,
 		}
 	}
 
-	if (prf_is_empty ||
-	    (proposal_encrypt_norm(proposal) && !integ_matches_prf) ||
-	    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal))) {
+	/*
+	 * For output compatibility reasons, the INTEG is shown before
+	 * the PRF; but not when it matches the PRF; and not when it
+	 * is NONE (ike=aes_gcm-none gives the impression that there
+	 * is no integrity).
+	 */
+
+	if (encrypt_is_empty ||
+	    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)) ||
+	    (proposal_encrypt_norm(proposal) && !integ_matches_prf)) {
 		algorithm_separator = jam_proposal_algorithm(buf, proposal,
 							     PROPOSAL_TRANSFORM_integ,
 							     algorithm_separator);
