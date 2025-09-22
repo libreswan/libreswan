@@ -122,8 +122,6 @@ static struct {
 
 void free_pluto_main(void)
 {
-	/* Some values can be NULL if not specified as pluto argument */
-	free_global_redirect_dests();
 	free_config_setup();
 }
 
