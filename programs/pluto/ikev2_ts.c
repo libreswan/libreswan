@@ -39,6 +39,7 @@
 #include "instantiate.h"
 #include "ikev2_states.h"
 #include "peer_id.h"
+#include "ikev2_auth.h"
 
 #define TS_MAX 16 /* arbitrary */
 
