@@ -15,6 +15,7 @@
 
 #include <stdlib.h>		/* for exit() */
 #include <stdio.h>		/* for output */
+#include <errno.h>
 
 #include "optarg.h"
 
@@ -27,6 +28,7 @@
 #include "timescale.h"
 #include "lswversion.h"
 #include "binaryscale-iec-60027-2.h"
+#include "lswalloc.h"
 
 int optarg_index = -1;
 unsigned verbose;
@@ -263,6 +265,21 @@ const char *optarg_empty(const struct logger *logger)
 	PEXPECT(logger, (opt->has_arg == optional_argument ||
 			 opt->has_arg == required_argument));
 	return optarg; /* could be empty, can't be NULL */
+}
+
+char *optarg_realpath(const struct logger *logger)
+{
+	/* can't be empty, can't be NULL */
+	const char *path = optarg_nonempty(logger);
+	char *freepath = realpath(path, NULL); /* must free(); not pfree() */
+	if (freepath == NULL) {
+		int error = errno; /*save value*/
+		optarg_fatal(logger, "%s", strerror(error));
+	}
+
+	char *realpath = clone_str(freepath, "realpath");
+	free(freepath); /* not pfree() */
+	return realpath;
 }
 
 deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale)
