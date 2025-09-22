@@ -32,15 +32,15 @@
 static bool ah_proposal_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_encrypt, false)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_encrypt, false)) {
 		return false;
 	}
 
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_prf, false)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_prf, false)) {
 		return false;
 	}
 
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_integ, true)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_integ, true)) {
 		return false;
 	}
 

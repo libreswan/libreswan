@@ -46,7 +46,7 @@ enum stream;
  */
 enum proposal_transform {
 #define PROPOSAL_TRANSFORM_FLOOR (PROPOSAL_TRANSFORM_encrypt)
-	PROPOSAL_TRANSFORM_encrypt,
+	PROPOSAL_TRANSFORM_encrypt = 1,
 	PROPOSAL_TRANSFORM_prf,
 	PROPOSAL_TRANSFORM_integ,
 	PROPOSAL_TRANSFORM_kem,
@@ -62,8 +62,22 @@ enum proposal_transform {
 };
 
 extern const struct enum_names proposal_transform_names;
+
 /* map transform onto its type */
-extern const struct ike_alg_type *proposal_transform_type[PROPOSAL_TRANSFORM_ROOF];
+struct transform_type {
+	enum proposal_transform index;
+	const char *name;
+	const struct ike_alg_type *alg;
+};
+
+extern const struct transform_type transform_types[PROPOSAL_TRANSFORM_ROOF + 1];
+#define transform_type_floor &transform_types[PROPOSAL_TRANSFORM_FLOOR]
+#define transform_type_encrypt &transform_types[PROPOSAL_TRANSFORM_encrypt]
+#define transform_type_prf &transform_types[PROPOSAL_TRANSFORM_prf]
+#define transform_type_integ &transform_types[PROPOSAL_TRANSFORM_integ]
+#define transform_type_kem &transform_types[PROPOSAL_TRANSFORM_kem]
+#define transform_type_addke1 &transform_types[PROPOSAL_TRANSFORM_addke1]
+#define transform_type_roof &transform_types[PROPOSAL_TRANSFORM_ROOF]
 
 /*
  * Everything combined.
@@ -163,6 +177,7 @@ struct proposal_protocol {
  */
 
 struct transform_algorithm {
+	const struct transform_type *type;
 	const struct ike_alg *desc;
 	/*
 	 * Because struct encrypt_desc still specifies multiple key
@@ -189,16 +204,15 @@ void free_proposals(struct proposals **proposals);
 extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
-void free_algorithms(struct proposal *proposal, enum proposal_transform algorithm);
 void append_proposal(struct proposals *proposals, struct proposal **proposal);
 void append_proposal_transform(struct proposal_parser *parser,
 			       struct proposal *proposal,
-			       enum proposal_transform transform,
-			       const struct ike_alg *alg,
+			       const struct transform_type *transform_type,
+			       const struct ike_alg *transform,
 			       int enckeylen);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 enum proposal_transform algorithm);
+				 const struct transform_type *transform_type);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
@@ -238,13 +252,13 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
 /* the first algorithm, or NULL */
-struct transform_algorithm *first_transform_algorithm(const struct proposal *proposal,
-						      enum proposal_transform transform);
+struct transform_algorithm *first_proposal_transform(const struct proposal *proposal,
+						     const struct transform_type *transform_type);
 struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
-						  enum proposal_transform transform);
+						  const struct transform_type *transform_type);
 
 #define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)			\
-	ITEMS_FOR_EACH(ALGORITHM, transform_algorithms(PROPOSAL, PROPOSAL_TRANSFORM_##TYPE))
+	ITEMS_FOR_EACH(ALGORITHM, transform_algorithms(PROPOSAL, transform_type_##TYPE))
 
 /*
  * Error indicated by err_buf[0] != '\0'.
@@ -284,7 +298,7 @@ bool proposal_aead_none_ok(struct proposal_parser *parser,
 /* proposal has at least one expected transform */
 bool proposal_transform_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal,
-			   enum proposal_transform transform,
+			   const struct transform_type *transform_type,
 			   bool expected);
 
 /*
@@ -337,7 +351,7 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 
 bool parse_proposal_transform(struct proposal_parser *parser,
 			      struct proposal *proposal,
-			      enum proposal_transform transform,
+			      const struct transform_type *transform_type,
 			      shunk_t token);
 
 bool parse_proposal(struct proposal_parser *parser,
@@ -346,7 +360,7 @@ bool parse_proposal(struct proposal_parser *parser,
 void discard_proposal_transform(const char *what,
 				struct proposal_parser *parser,
 				struct proposal *proposal,
-				enum proposal_transform transform,
+				const struct transform_type *transform_type,
 				diag_t *diag);
 
 #endif /* PROPOSALS_H */

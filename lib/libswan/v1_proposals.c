@@ -32,10 +32,10 @@
  */
 
 static struct v1_proposal merge_alg_default(struct v1_proposal proposal,
-					    enum proposal_transform transform,
+					    const struct transform_type *type,
 					    const struct ike_alg *default_alg)
 {
-	switch (transform) {
+	switch (type->index) {
 #define T(TYPE)								\
 		case PROPOSAL_TRANSFORM_##TYPE:				\
 			proposal.TYPE = TYPE##_desc(default_alg);	\
@@ -46,7 +46,7 @@ static struct v1_proposal merge_alg_default(struct v1_proposal proposal,
 		T(integ);
 #undef T
 	default:
-		bad_case(transform);
+		bad_case(type->index);
 	}
 	return proposal;
 }
@@ -58,9 +58,9 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 static bool add_alg_defaults(struct proposal_parser *parser,
 			     struct proposals *proposals,
 			     const struct v1_proposal *proposal,
-			     enum proposal_transform transform)
+			     const struct transform_type *transform_type)
 {
-	const struct ike_alg **default_algs = parser->protocol->defaults->transform[transform];
+	const struct ike_alg **default_algs = parser->protocol->defaults->transform[transform_type->index];
 	const struct logger *logger = parser->policy->logger;
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
@@ -77,13 +77,12 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 			continue;
 		}
 		/* add it */
-		name_buf tn;
 		ldbgf(DBG_PROPOSAL_PARSER, logger,
 		      "adding default %s %s %s",
-		      str_enum_short(&proposal_transform_names, transform, &tn),
+		      transform_type->name,
 		      alg->type->story, alg->fqn);
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
-								       transform,
+								       transform_type,
 								       (*default_alg));
 		if (!add_proposal_defaults(parser, proposals, &merged_proposal)) {
 			passert(parser->diag != NULL);
@@ -104,13 +103,13 @@ static bool add_proposal(struct proposal_parser *parser,
 {
 	struct proposal *new = alloc_proposal(parser);
 	if (proposal->encrypt != NULL) {
-		append_proposal_transform(parser, new, PROPOSAL_TRANSFORM_encrypt,
+		append_proposal_transform(parser, new, transform_type_encrypt,
 					  &proposal->encrypt->common, proposal->enckeylen);
 	}
 #define A(NAME)								\
 	if (proposal->NAME != NULL) {					\
 		append_proposal_transform(parser, new,			\
-					  PROPOSAL_TRANSFORM_##NAME,	\
+					  transform_type_##NAME,	\
 					  &proposal->NAME->common,	\
 					  0/*enckeylen*/);		\
 	}
@@ -145,15 +144,15 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 	if (proposal->kem == NULL &&
 	    defaults->transform[PROPOSAL_TRANSFORM_kem] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					PROPOSAL_TRANSFORM_kem);
+					transform_type_kem);
 	} else if (proposal->encrypt == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_encrypt] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					PROPOSAL_TRANSFORM_encrypt);
+					transform_type_encrypt);
 	} else if (proposal->prf == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_prf] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					PROPOSAL_TRANSFORM_prf);
+					transform_type_prf);
 	} else if (proposal->integ == NULL &&
 		   proposal->encrypt != NULL &&
 		   encrypt_desc_is_aead(proposal->encrypt)) {
@@ -166,7 +165,7 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 	} else if (proposal->integ == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_integ] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					PROPOSAL_TRANSFORM_integ);
+					transform_type_integ);
 	} else if (proposal->integ == NULL &&
 		   proposal->prf != NULL &&
 		   proposal->encrypt != NULL &&
@@ -235,10 +234,10 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	 * transforms of the same type is to use '='.  Don't reject
 	 * '=' outright though as correct use of '=' is reasonable.
 	 */
-	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
-	     transform < PROPOSAL_TRANSFORM_ROOF; transform++) {
+	for (const struct transform_type *transform_type = transform_type_floor;
+	     transform_type < transform_type_roof; transform_type++) {
 		struct transform_algorithms *algorithms =
-			transform_algorithms(scratch_proposal, transform);
+			transform_algorithms(scratch_proposal, transform_type);
 		if (algorithms != NULL && algorithms->len > 1) {
 			proposal_error(parser, "IKEv1 does not support multiple transforms of the same type ('=' invalid)");
 			return false;
