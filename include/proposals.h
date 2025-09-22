@@ -176,7 +176,7 @@ struct proposal_protocol {
  * A proposal as decoded by the parser.
  */
 
-struct transform_algorithm {
+struct transform {
 	const struct transform_type *type;
 	const struct ike_alg *desc;
 	/*
@@ -188,7 +188,7 @@ struct transform_algorithm {
 
 struct transform_algorithms {
 	unsigned len;
-	struct transform_algorithm item[];
+	struct transform item[];
 };
 
 /* return counts of encrypt=aead and integ=none */
@@ -252,7 +252,7 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
 /* the first algorithm, or NULL */
-struct transform_algorithm *first_proposal_transform(const struct proposal *proposal,
+struct transform *first_proposal_transform(const struct proposal *proposal,
 						     const struct transform_type *transform_type);
 struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
 						  const struct transform_type *transform_type);

@@ -261,8 +261,8 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 				break;
 			}
 			for (unsigned n = 0; n < old_algs->len; n++) {
-				struct transform_algorithm *old = &old_algs->item[n];
-				struct transform_algorithm *new = &new_algs->item[n];
+				struct transform *old = &old_algs->item[n];
+				struct transform *new = &new_algs->item[n];
 				if (old->desc != new->desc) {
 					same = false;
 					break;
@@ -325,7 +325,7 @@ struct transform_algorithms *transform_algorithms(const struct proposal *proposa
 	return proposal->algorithms[type->index];
 }
 
-struct transform_algorithm *first_proposal_transform(const struct proposal *proposal,
+struct transform *first_proposal_transform(const struct proposal *proposal,
 						      const struct transform_type *type)
 {
 	struct transform_algorithms *algorithms = proposal->algorithms[type->index];
@@ -423,9 +423,9 @@ void append_proposal_transform(struct proposal_parser *parser,
 
 	/* grow */
 	PASSERT(logger, transform_type->index < elemsof(proposal->algorithms));
-	struct transform_algorithm *end = grow_items(proposal->algorithms[transform_type->index]);
+	struct transform *end = grow_items(proposal->algorithms[transform_type->index]);
 
-	*end = (struct transform_algorithm) {
+	*end = (struct transform) {
 		.type = transform_type,
 		.desc = transform,
 		.enckeylen = enckeylen,
@@ -460,10 +460,10 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 
 	unsigned new_len = 1;	/* keep/skip the first */
 	for (unsigned n = 1; n < algs->len; n++) {
-		const struct transform_algorithm *new = &algs->item[n];
+		const struct transform *new = &algs->item[n];
 		bool duplicate = false;
 		for (unsigned o = 0; o < n; o++) {
-			const struct transform_algorithm *old = &algs->item[o];
+			const struct transform *old = &algs->item[o];
 			if (old->desc != new->desc) {
 				continue;
 			}
@@ -543,8 +543,8 @@ void jam_proposal(struct jambuf *buf,
 	    prf_algs->len == integ_algs->len) {
 		integ_matches_prf = true; /* hopefully */
 		for (unsigned n = 0; n < integ_algs->len; n++) {
-			struct transform_algorithm *prf  = &prf_algs->item[n];
-			struct transform_algorithm *integ  = &integ_algs->item[n];
+			struct transform *prf  = &prf_algs->item[n];
+			struct transform *integ  = &integ_algs->item[n];
 			if (&integ_desc(integ->desc)->prf->common != prf->desc) {
 				/* i.e., prf and integ are different */
 				integ_matches_prf = false;
@@ -608,7 +608,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform_algorithm *first_kem =
+		struct transform *first_kem =
 			first_proposal_transform(proposal, transform_type_kem);
 		if (first_kem == NULL) {
 			if (first_null_ke == NULL) {
@@ -645,7 +645,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			struct transform_algorithm *first_kem =
+			struct transform *first_kem =
 				first_proposal_transform(proposal, transform_type_kem);
 			if (first_kem != NULL) {
 				ke = first_kem->desc;
