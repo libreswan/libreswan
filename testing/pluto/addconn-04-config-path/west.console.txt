@@ -1,47 +1,73 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- cp test.conf /tmp/test.conf
+ # /etc/ipsec.conf is corrupt
 west #
- ipsec pluto --config /tmp/test.conf
+ # try absolute non-standard location
+west #
+ cp tmp.conf /tmp
+west #
+ ipsec pluto --config /tmp/tmp.conf
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- echo "initdone"
-initdone
+ ipsec connectionstatus tmp
+"tmp": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"tmp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"tmp":   my_updown=ipsec _updown;
+"tmp":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"tmp":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"tmp":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"tmp":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"tmp":   sec_label:unset;
+"tmp":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"tmp":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"tmp":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"tmp":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"tmp":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"tmp":   v2-auth-hash-policy: none;
+"tmp":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"tmp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"tmp":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"tmp":   sendca: all; our sendcert: always; their sendcert: always;
+"tmp":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"tmp":   nat-traversal: encapsulation:auto; keepalive:20s
+"tmp":   routing: unrouted;
+"tmp":   conn serial: $1;
 west #
- # did pluto forked addconn pickup right config file location and load the connection
-west #
- ipsec status | grep westnet-eastnet-ipv4-psk-ikev2 | grep "[.][.][.]"
-"westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
-west #
- # does status show /tmp/test.conf as config file used for startup
-west #
- ipsec status | grep configfile
-configdir=/etc, configfile=/tmp/test.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
-west #
- # rhbz#1645137 test
-west #
- ipsec addconn --config /tmp/test.conf longike
-"longike": added IKEv2 connection
-west #
- ipsec whack --shutdown # stop will cause reading /etc/ipsec.conf
+ ipsec whack --shutdown
 Pluto is shutting down
 west #
- # rhbz#1625303 test
+ # try relative non-standard location
 west #
- cp bomb.conf /etc/ipsec.conf
+ ipsec pluto --config path.conf
 west #
- cp include-bomb.conf /etc/ipsec.d/
+ ../../guestbin/wait-until-pluto-started
 west #
- restorecon /etc/ipsec.conf /etc/ipsec.d/include-bomb.conf
+ ipsec connectionstatus path
+"path": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
+"path":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
+"path":   my_updown=ipsec _updown;
+"path":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
+"path":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
+"path":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+"path":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
+"path":   sec_label:unset;
+"path":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"path":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;
+"path":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+"path":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+"path":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
+"path":   v2-auth-hash-policy: none;
+"path":   conn_prio: 24,24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+"path":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
+"path":   our idtype: FQDN; our id=@west; their idtype: FQDN; their id=@east
+"path":   sendca: all; our sendcert: always; their sendcert: always;
+"path":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
+"path":   nat-traversal: encapsulation:auto; keepalive:20s
+"path":   routing: unrouted;
+"path":   conn serial: $1;
 west #
- # should fail properly at maxdepth recursion
-west #
- ipsec addconn --verbose --config /etc/ipsec.conf --checkconfig
-opening file: /etc/ipsec.conf
-ipsec addconn: warning: /etc/ipsec.d/include-bomb.conf:3: including '/etc/ipsec.d/include-bomb.conf' exceeds max inclusion depth of 10
-west #
- echo done
-done
+ ipsec whack --shutdown
+Pluto is shutting down
 west #

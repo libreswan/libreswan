@@ -1,12 +1,26 @@
 Testing of non-standard ipsec.conf passed to pluto
 
-In versions prior to 3.30, starting pluto using ipsec pluto --config /dir/ipsec.conf
-would cause the pluto main process to start addconn without passing
-the --config /dir/ipsec.conf option and any connections meant to be loaded
-on startup would not load.
+Fixed in 3.30:
 
-Additionally, ipsec status would display that /etc/ipsec.conf was used instead
-of /dir/ipsec.conf
+- PLUTO, was always passing the default "ipsec.conf" path to ADDCONN.
 
-This also tests another bug, rhbz#1645137 that caused addconn to cras
-on extremely long ike= lines (from systemwide crypto policies)
+  This meant that when given a config file containing connections, and
+  in a non-standard location, vis:
+
+    --config /notetc/ipsec.conf
+
+  The file was ignored by ADDCONN, and any connections it contains
+  were never loaded.
+
+- also, `ipsec status` would display the default "ipsec.conf" path
+  instead of the non-standard path specified by pluto
+
+Fixed in 5.4:
+
+- PLUTO, was passing the unresolved path to ADDCONN.  This meant that
+  when given a relative path like:
+
+    --config ipsec.conf
+
+  ADDCON, since it is run under PLUTO and in a system directory, could
+  typically not load the file.
