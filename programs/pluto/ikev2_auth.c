@@ -1062,3 +1062,52 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 	}
 	}
 }
+
+/*
+ * Check if a given permanent connection has a competing IKE SA with
+ * IKE_AUTH request outstanding. This is useful to detect IKE_AUTH crossing
+ * streams scenarios.
+ */
+
+bool has_competing_ike_auth(const struct connection *c,
+		const struct ike_sa *ike,
+		const struct msg_digest *md)
+{
+	/* Connection must be permanent and request must be incoming */
+	if (v2_msg_role(md) != MESSAGE_REQUEST || !is_permanent(c)) {
+		return false;
+	}
+
+	struct state_filter sf = {
+	  .connection_serialno = c->serialno,
+	  .search = {
+		.order = NEW2OLD,
+		.verbose.logger = ike->sa.logger,
+		.where = HERE,
+	  },
+	};
+
+	while (next_state(&sf)) {
+		if (!IS_IKE_SA(sf.st)) {
+			continue;
+		}
+
+		struct ike_sa *competing_ike = pexpect_ike_sa(sf.st);
+		if (competing_ike == NULL || competing_ike == ike) {
+			continue;
+		} else if (competing_ike->sa.st_sa_role != SA_INITIATOR) {
+			continue;
+		} else if (!v2_msgid_request_outstanding(competing_ike)) {
+			continue;
+		}
+
+		const struct v2_exchange *outstanding_request =
+			competing_ike->sa.st_v2_msgid_windows.initiator.exchange;
+		if (outstanding_request != NULL && outstanding_request->type == ISAKMP_v2_IKE_AUTH) {
+			llog(RC_LOG, ike->sa.logger, "Competing IKE SA "PRI_SO" has outstanding IKE_AUTH request",
+					pri_so(competing_ike->sa.st_serialno));
+			return true;
+		}
+	}
+	return false;
+}

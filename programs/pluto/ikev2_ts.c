@@ -1655,6 +1655,12 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			     best.connection->name, pri_so(best.connection->serialno),
 			     (is_from_group(best.connection) ? " from group" : ""),
 			     cc->name, pri_so(cc->serialno));
+
+			if (has_competing_ike_auth(best.connection, ike, md)) {
+				llog_ts(child, &tsps, "best connection matching TS has competing IKE_AUTH");
+				return false;
+			}
+
 			connswitch_state_and_log(&child->sa, best.connection);
 			return true;
 		}
