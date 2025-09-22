@@ -413,6 +413,8 @@ static void test_esp(struct logger *logger)
 
 	esp(ike_version == IKEv2, "aes;sn=yes"); /* ignore IKEv1 */
 
+	esp(true, "aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1");
+
 #undef esp
 }
 
@@ -468,6 +470,8 @@ static void test_ah(struct logger *logger)
 	ah(addke && ike_version == IKEv2, "sha2;modp2048-modp2048");
 
 	ah(ike_version == IKEv2, "kem=modp8192");
+
+	ah(true, "sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1,sha1");
 
 #undef ah
 }
@@ -560,6 +564,8 @@ static void test_ike(struct logger *logger)
 	ike(ike_version == IKEv2, "aes-sha2;prf=sha1;kem=dh20"); /*additive*/
 	ike(false, "kem=modp8192"); /* missing encrypt */
 	ike(ike_version == IKEv2, "aes-sha1;integ=sha2;dh20");
+
+	ike(true, "aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1");
 
 #undef ike
 }
