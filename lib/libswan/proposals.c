@@ -137,6 +137,7 @@ struct proposal {
 	 * The algorithm entries.
 	 */
 	struct transform_algorithms *algorithms[PROPOSAL_TRANSFORM_ROOF];
+	struct transforms transforms;
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -425,8 +426,13 @@ struct transform_algorithms *transform_algorithms(const struct proposal *proposa
 	return proposal->algorithms[type->index];
 }
 
+const struct transforms *proposal_transforms(const struct proposal *proposal)
+{
+	return &proposal->transforms;
+}
+
 struct transform *first_proposal_transform(const struct proposal *proposal,
-						      const struct transform_type *type)
+					   const struct transform_type *type)
 {
 	struct transform_algorithms *algorithms = proposal->algorithms[type->index];
 	if (algorithms == NULL) {
@@ -462,6 +468,7 @@ void free_proposal(struct proposal **proposals)
 		     type < transform_type_roof; type++) {
 			pfree_transforms(del, type);
 		}
+		pfree_data(&del->transforms);
 		pfree(del);
 	}
 	*proposals = NULL;
@@ -521,22 +528,30 @@ void append_proposal_transform(struct proposal_parser *parser,
 
 	vassert(transform_type->alg == transform->type);
 
-	/* grow */
-	vassert(transform_type->index < elemsof(proposal->algorithms));
-	struct transform *end = grow_items(proposal->algorithms[transform_type->index]);
-
-	*end = (struct transform) {
+	struct transform new_transform = {
 		.type = transform_type,
 		.desc = transform,
 		.enckeylen = enckeylen,
 	};
 
-	vdbg("append %s %s %s %s[_%d]",
+	/* grow */
+	vassert(transform_type->index < elemsof(proposal->algorithms));
+	struct transform *end = grow_items(proposal->algorithms[transform_type->index]);
+	*end = new_transform;
+
+	/* grow */
+	end = grow_data(&proposal->transforms);
+	*end = new_transform;
+
+	vdbg("append %s %s %s %s[_%d]; %s length %d; raw length %d",
 	     parser->protocol->name,
 	     transform_type->name,
 	     transform->type->story,
 	     transform->fqn,
-	     enckeylen);
+	     enckeylen,
+	     transform_type->name,
+	     proposal->algorithms[transform_type->index]->len,
+	     proposal->transforms.len);
 }
 
 /*
@@ -598,6 +613,40 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 	algs->len = new_len;
 }
 
+size_t jam_proposal_transform(struct jambuf *buf,
+			      const struct transform *transform)
+{
+	size_t s = 0;
+	s += jam_string(buf, transform->desc->fqn);
+	if (transform->enckeylen != 0) {
+		s += jam(buf, "_%d", transform->enckeylen);
+	}
+	return s;
+}
+
+size_t jam_proposal_transforms(struct jambuf *buf,
+			       const struct proposal *proposal)
+{
+	size_t s = 0;
+	bool first = true;
+	const struct transform_type *previous_type = transform_types; /*first is 1*/
+	DATA_FOR_EACH(transform, &proposal->transforms) {
+		if (previous_type < transform->type) {
+			s += jam_string(buf, (first ? "" : "-")); first = false;
+		} else if (previous_type == transform->type) {
+			pexpect(!first);
+			s += jam_string(buf, "+");
+		} else {
+			s += jam_string(buf, (first ? "" : ";")); first = false;
+			s += jam_string(buf, transform->type->name);
+			s += jam_string(buf, "=");
+		}
+		s += jam_proposal_transform(buf, transform);
+		previous_type = transform->type;
+	}
+	return s;
+}
+
 static const char *jam_proposal_algorithm(struct jambuf *buf,
 					  const struct proposal *proposal,
 					  const struct transform_type *type,
@@ -606,10 +655,7 @@ static const char *jam_proposal_algorithm(struct jambuf *buf,
 	const char *separator = algorithm_separator;
 	ITEMS_FOR_EACH(algorithm, proposal->algorithms[type->index]) {
 		jam_string(buf, separator); separator = "+"; algorithm_separator = "-";
-		jam_string(buf, algorithm->desc->fqn);
-		if (algorithm->enckeylen != 0) {
-			jam(buf, "_%d", algorithm->enckeylen);
-		}
+		jam_proposal_transform(buf, algorithm);
 	}
 	return algorithm_separator;
 }

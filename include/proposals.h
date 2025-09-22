@@ -173,7 +173,7 @@ struct proposal_protocol {
 };
 
 /*
- * A proposal as decoded by the parser.
+ * A proposal's transforms as decoded by the parser.
  */
 
 struct transform {
@@ -184,6 +184,11 @@ struct transform {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
+};
+
+struct transforms {
+	unsigned len;
+	struct transform *data;
 };
 
 struct transform_algorithms {
@@ -236,8 +241,10 @@ struct child_proposals {
 	struct proposals *p;
 };
 
-void jam_proposal(struct jambuf *log,
-		  const struct proposal *proposal);
+size_t jam_proposal_transform(struct jambuf *buf, const struct transform *transform);
+size_t jam_proposal_transforms(struct jambuf *buf, const struct proposal *proposal);
+
+void jam_proposal(struct jambuf *log, const struct proposal *proposal);
 void jam_proposals(struct jambuf *log, const struct proposals *proposals);
 
 /*
@@ -263,6 +270,8 @@ struct transform_algorithms *transform_algorithms(const struct proposal *proposa
 
 #define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)			\
 	ITEMS_FOR_EACH(ALGORITHM, transform_algorithms(PROPOSAL, transform_type_##TYPE))
+
+const struct transforms *proposal_transforms(const struct proposal *proposal);
 
 /*
  * Error indicated by err_buf[0] != '\0'.
