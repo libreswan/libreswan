@@ -14,7 +14,7 @@ east #
 initdone
 east #
  ../../guestbin/wait-for-pluto.sh '#2: responder established Child SA using #1'
-"north-any-east"[1] 192.1.3.33 #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.2.101/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"north-any-east"[1] 192.1.3.33 #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0/24===192.0.2.101/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 east #
  ../../guestbin/wait-for-pluto.sh '#3: Quick Mode request rejected'
 "road-any-east"[1] 192.1.3.209 #3: Quick Mode request rejected, peer requested lease of 192.0.2.101/32 but it is unavailable, lease is reserved by C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org; deleting ISAKMP SA

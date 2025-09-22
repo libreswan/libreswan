@@ -36,7 +36,7 @@ west #
 "west-x509" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "west-x509" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-x509" #1: initiator established IKE SA; authenticated peer using preloaded certificate 'CN=east-selfsigned.testing.libreswan.org' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'CN=east-selfsigned.testing.libreswan.org'
-"west-x509" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-x509" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec whack --impair timeout_on_retransmit
 west #

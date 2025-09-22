@@ -34,7 +34,7 @@ road #
 "authenticated" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@road'; Child SA #2 {ESP <0xESPESP}
 "authenticated" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "authenticated" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"authenticated" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"authenticated" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up

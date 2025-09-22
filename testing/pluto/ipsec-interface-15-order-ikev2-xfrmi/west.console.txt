@@ -54,7 +54,7 @@ west #
 "westnet4-eastnet4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet4-eastnet4" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet4-eastnet4" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet4-eastnet4" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet4-eastnet4" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec up westnet6-eastnet6
 "westnet6-eastnet6" #3: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
@@ -63,7 +63,7 @@ west #
 "westnet6-eastnet6" #3: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
 "westnet6-eastnet6" #3: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet6-eastnet6" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet6-eastnet6" #4: initiator established Child SA using #3; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet6-eastnet6" #4: initiator established Child SA using #3; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -138,7 +138,7 @@ west #
 "westnet4-eastnet4" #5: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet4-eastnet4" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet4-eastnet4" #6: added 192.0.1.251/24 to ipsec-interface ipsec1@NONE
-"westnet4-eastnet4" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet4-eastnet4" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec up westnet6-eastnet6
 "westnet6-eastnet6" #7: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
@@ -148,7 +148,7 @@ west #
 "westnet6-eastnet6" #7: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet6-eastnet6" #7: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet6-eastnet6" #8: added 2001:db8:0:1::251/64 to ipsec-interface ipsec1@NONE
-"westnet6-eastnet6" #8: initiator established Child SA using #7; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet6-eastnet6" #8: initiator established Child SA using #7; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -221,7 +221,7 @@ west #
 "westnet4-eastnet4" #9: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #10 {ESP <0xESPESP}
 "westnet4-eastnet4" #9: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet4-eastnet4" #9: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet4-eastnet4" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet4-eastnet4" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec up westnet6-eastnet6
 "westnet6-eastnet6" #11: initiating IKEv2 connection to 2001:db8:1:2::23 using UDP
@@ -230,7 +230,7 @@ west #
 "westnet6-eastnet6" #11: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #12 {ESP <0xESPESP}
 "westnet6-eastnet6" #11: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet6-eastnet6" #11: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet6-eastnet6" #12: initiator established Child SA using #11; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet6-eastnet6" #12: initiator established Child SA using #11; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

@@ -40,7 +40,7 @@ west #
 "west-east" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=NULL_AUTH_AES_GMAC_128 pfsgroup=no-pfs 192.0.1.0/24===192.0.2.0/24}
 "west-east" #2: sent Quick Mode request
-"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE DPD=passive}
+"west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

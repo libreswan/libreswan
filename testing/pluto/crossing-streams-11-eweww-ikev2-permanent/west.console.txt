@@ -51,7 +51,7 @@ west #
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
-"east-west" #3: responder established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #3: responder established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # WEST: process IKE_SA_INIT response; establish IKE SA; create Child
 west #

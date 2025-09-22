@@ -28,7 +28,7 @@ north #
 "north-east" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "north-east" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "north-east" #2: route-client output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
-"north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ../../guestbin/ping-once.sh --down 192.0.2.254
 down

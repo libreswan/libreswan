@@ -30,7 +30,7 @@ west #
 "west-cuckold" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "west-cuckold" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # stall the Child SA's crypto
 west #
@@ -75,7 +75,7 @@ west #
 "west-cuckoo" #4: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 west #
  ../../guestbin/wait-for-pluto.sh '#5: initiator established Child SA using #4'
-"west-cuckoo" #5: initiator established Child SA using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-cuckoo" #5: initiator established Child SA using #4; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # expect second child
 west #

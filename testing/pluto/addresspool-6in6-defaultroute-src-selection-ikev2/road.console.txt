@@ -51,7 +51,7 @@ road #
 "road"[1] 2001:db8:1:2::23 #1: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr}
 "road"[1] 2001:db8:1:2::23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "road"[1] 2001:db8:1:2::23 #2: received INTERNAL_IP6_ADDRESS 2001:db8:0:3:1::
-"road"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3:1::/128===::/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:3:1::/128===::/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:3:1::0 2001:db8:0:2::254
 up

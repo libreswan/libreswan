@@ -31,13 +31,13 @@ initiating all connections with alias "west-east"
 "west-east/4x0" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "west-east/4x0" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-east/4x0" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west-east/1x0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east/1x0" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.254/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 "west-east/2x0" #3: sent IPsec Child req wait response
-"west-east/2x0" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.253/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east/2x0" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.253/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 "west-east/3x0" #4: sent IPsec Child req wait response
-"west-east/3x0" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.252/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east/3x0" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.252/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 "west-east/4x0" #5: sent IPsec Child req wait response
-"west-east/4x0" #5: initiator established Child SA; IPsec tunnel [192.0.1.251/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east/4x0" #5: initiator established Child SA; IPsec tunnel [192.0.1.251/32===192.0.2.254/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # state #1(ESTABLISHED_IKE_SA), #2, #3, #4, and #5
 west #

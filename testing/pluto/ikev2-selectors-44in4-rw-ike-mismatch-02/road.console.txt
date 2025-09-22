@@ -35,7 +35,7 @@ road #
 "road" #2: running updown route 192.0.3.0/24===192.0.2.0/24
 "road" #2: running updown route 192.0.3.0/24===192.0.20.0/24
 "road" #2: running updown route 192.0.3.0/24===192.0.30.0/24
-"road" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] [192.0.3.0/24===192.0.20.0/24] [192.0.3.0/24===192.0.30.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] [192.0.3.0/24===192.0.20.0/24] [192.0.3.0/24===192.0.30.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  # There should be a %hold shunt for 192.0.30.0/24 which MUST NOT
 road #

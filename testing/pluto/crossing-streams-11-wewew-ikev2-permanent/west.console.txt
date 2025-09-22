@@ -65,7 +65,7 @@ west #
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
-"east-west" #4: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #4: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # WEST: process IKE_AUTH response; establish Child SA
 west #
@@ -73,7 +73,7 @@ west #
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
 IMPAIR: start processing inbound drip packet 4
 IMPAIR: stop processing inbound drip packet 4
-"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"east-west" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up  -I 192.0.1.254 192.0.2.254
 up

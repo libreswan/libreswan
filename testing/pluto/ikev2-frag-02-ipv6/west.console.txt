@@ -35,7 +35,7 @@ west #
 "v6-tunnel" #1: sent IKE_AUTH request to [2001:db8:1:2::23]:UDP/500 with digital-signature and DER_ASN1_DN 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=key4096.testing.libreswan.org, E=user-key4096@testing.libreswan.org'; Child SA #2 {ESP <0xESPESP}
 "v6-tunnel" #1: processing IKE_AUTH response from [2001:db8:1:2::23]:UDP/500 containing SK{IDr,CERT,AUTH,SA,TSi,TSr}
 "v6-tunnel" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"v6-tunnel" #2: initiator established Child SA using #1; IPsec tunnel [2001:111:1111::/48===2001:2222:222:2200::/56] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"v6-tunnel" #2: initiator established Child SA using #1; IPsec tunnel [2001:111:1111::/48===2001:2222:222:2200::/56] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  grep "fragment number" /tmp/pluto.log
 |    fragment number: 1 (00 01)

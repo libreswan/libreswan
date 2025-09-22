@@ -67,7 +67,7 @@ west #
 "westnet-eastnet-6in4" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-6in4" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-6in4" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet-6in4" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-6in4" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::/64===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ping6 -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254 (2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
