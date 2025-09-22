@@ -34,21 +34,23 @@
 
 static void merge_algorithms(struct proposal_parser *parser,
 			     struct proposal *proposal,
-			     enum proposal_transform transform)
+			     const struct transform_type *transform_type)
 {
-	const struct ike_alg **defaults = parser->protocol->defaults->transform[transform];
+	const struct ike_alg **defaults = parser->protocol->defaults->transform[transform_type->index];
 	if (defaults == NULL) {
 		return;
 	}
 
-	struct transform_algorithms *algorithms = transform_algorithms(proposal, transform);
+	struct transform_algorithms *algorithms = transform_algorithms(proposal, transform_type);
 	if (algorithms != NULL) {
 		/* could be empty when impaired */
 		return;
 	}
 
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
-		append_proposal_transform(parser, proposal, transform, *alg, 0);
+		append_proposal_transform(parser, proposal,
+					  transform_type,
+					  *alg, 0);
 	}
 }
 
@@ -56,31 +58,31 @@ static bool merge_defaults(struct proposal_parser *parser,
 			   struct proposal *proposal)
 {
 	const struct proposal_defaults *defaults = parser->protocol->defaults;
-	for (enum proposal_transform transform = PROPOSAL_TRANSFORM_FLOOR;
-	     transform < PMIN(PROPOSAL_TRANSFORM_prf, PROPOSAL_TRANSFORM_integ);
-	     transform++) {
-		merge_algorithms(parser, proposal, transform);
+	for (const struct transform_type *type = transform_type_floor;
+	     type < PMIN(transform_type_prf, transform_type_integ);
+	     type++) {
+		merge_algorithms(parser, proposal, type);
 	}
 
 	/*
 	 * PRF/INTEG are weird; and, as of time of writing INTEG was
 	 * ordered before PRF, which is backwards.
 	 */
-	merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_prf);
-	if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_integ) == NULL) {
+	merge_algorithms(parser, proposal, transform_type_prf);
+	if (first_proposal_transform(proposal, transform_type_integ) == NULL) {
 		if (proposal_encrypt_aead(proposal)) {
 			/*
 			 * Since AEAD, integrity is always 'none'.
 			 */
 			append_proposal_transform(parser, proposal,
-						  PROPOSAL_TRANSFORM_integ,
+						  transform_type_integ,
 						  &ike_alg_integ_none.common, 0);
 		} else if (defaults->transform[PROPOSAL_TRANSFORM_integ] != NULL) {
 			/*
 			 * Merge in the defaults.
 			 */
-			merge_algorithms(parser, proposal, PROPOSAL_TRANSFORM_integ);
-		} else if (first_transform_algorithm(proposal, PROPOSAL_TRANSFORM_prf) != NULL &&
+			merge_algorithms(parser, proposal, transform_type_integ);
+		} else if (first_proposal_transform(proposal, transform_type_prf) != NULL &&
 			   proposal_encrypt_norm(proposal)) {
 			/*
 			 * Since non-AEAD, use integrity algorithms
@@ -103,15 +105,16 @@ static bool merge_defaults(struct proposal_parser *parser,
 					return false;
 				}
 				append_proposal_transform(parser, proposal,
-							  PROPOSAL_TRANSFORM_integ,
+							  transform_type_integ,
 							  &integ->common, 0);
 			}
 		}
 	}
 
-	for (enum proposal_transform transform = PMAX(PROPOSAL_TRANSFORM_prf, PROPOSAL_TRANSFORM_integ) + 1;
-	     transform < PROPOSAL_TRANSFORM_ROOF; transform++) {
-		merge_algorithms(parser, proposal, transform);
+	for (const struct transform_type *transform_type =
+		     PMAX(transform_type_prf, transform_type_integ) + 1;
+	     transform_type < transform_type_roof; transform_type++) {
+		merge_algorithms(parser, proposal, transform_type);
 	}
 	return true;
 }

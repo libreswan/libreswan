@@ -43,7 +43,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 	 * Check that the ALG_INFO spec is implemented.
 	 */
 
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_encrypt, true)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_encrypt, true)) {
 		return false;
 	}
 
@@ -55,7 +55,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 							    alg->enckeylen)));
 	}
 
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_prf, true)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_prf, true)) {
 		return false;
 	}
 
@@ -64,7 +64,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 		PASSERT(logger, ike_alg_is_ike(&prf->common, logger));
 	}
 
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_integ, true)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_integ, true)) {
 		return false;
 	}
 
@@ -74,7 +74,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 				 ike_alg_is_ike(&integ->common, logger)));
 	}
 
-	if (!proposal_transform_ok(parser, proposal, PROPOSAL_TRANSFORM_kem, true)) {
+	if (!proposal_transform_ok(parser, proposal, transform_type_kem, true)) {
 		return false;
 	}
 
