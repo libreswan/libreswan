@@ -122,7 +122,6 @@ static struct {
 
 void free_pluto_main(void)
 {
-	free_config_setup();
 }
 
 /* string naming compile-time options that have interop implications */
