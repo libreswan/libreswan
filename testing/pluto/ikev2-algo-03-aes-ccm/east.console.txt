@@ -120,7 +120,7 @@ Connection list:
 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   nat-traversal: encapsulation:auto; keepalive:20s
 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   routing: unrouted;
 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn serial: $1;
-"westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms: AES_CCM_8_128-NONE
+"westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms: AES_CCM_8_128
  
 Total IPsec connections: loaded 1, routed 0, active 0
  

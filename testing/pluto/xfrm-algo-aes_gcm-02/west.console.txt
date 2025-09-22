@@ -136,7 +136,7 @@ Connection list:
 "westnet-eastnet-gcm":   routing: unrouted;
 "westnet-eastnet-gcm":   conn serial: $1;
 "westnet-eastnet-gcm":   IKE algorithms: AES_CBC_256-HMAC_SHA2_256-MODP2048, AES_CBC_256-HMAC_SHA2_512-MODP2048, AES_CBC_256-HMAC_SHA1-MODP2048, AES_CBC_256-HMAC_SHA2_256-MODP1536, AES_CBC_256-HMAC_SHA2_512-MODP1536, AES_CBC_256-HMAC_SHA1-MODP1536, AES_CBC_256-HMAC_SHA2_256-DH19, AES_CBC_256-HMAC_SHA2_512-DH19, AES_CBC_256-HMAC_SHA1-DH19, AES_CBC_256-HMAC_SHA2_256-DH31, AES_CBC_256-HMAC_SHA2_512-DH31, AES_CBC_256-HMAC_SHA1-DH31
-"westnet-eastnet-gcm":   ESP algorithms: AES_GCM_16_256-NONE
+"westnet-eastnet-gcm":   ESP algorithms: AES_GCM_16_256
  
 Total IPsec connections: loaded 1, routed 0, active 0
  
@@ -160,7 +160,7 @@ west #
 "westnet-eastnet-gcm" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-gcm" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-gcm" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-"westnet-eastnet-gcm" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_GCM_16_256-NONE pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
+"westnet-eastnet-gcm" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_GCM_16_256 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
 "westnet-eastnet-gcm" #2: sent Quick Mode request
 "westnet-eastnet-gcm" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
