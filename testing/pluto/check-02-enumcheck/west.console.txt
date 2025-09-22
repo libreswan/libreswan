@@ -5504,90 +5504,90 @@ name for -1 present (should be absent)
          jam_enum_short 127: SHELL_COMMAND_NOT_EXECUTABLE OK
          jam_enum_human 127: shell-command-not-executable OK
          match SHELL_COMMAND_NOT_EXECUTABLE [short]: OK
-  proposal_transform_names: [0..12)
-    0 -> PROPOSAL_TRANSFORM_encrypt
-         jam_enum 0: PROPOSAL_TRANSFORM_encrypt OK
+  proposal_transform_names: [1..13)
+    1 -> PROPOSAL_TRANSFORM_encrypt
+         jam_enum 1: PROPOSAL_TRANSFORM_encrypt OK
          match PROPOSAL_TRANSFORM_encrypt: OK
-         short_name 0: encrypt OK
-         jam_enum_short 0: encrypt OK
-         jam_enum_human 0: encrypt OK
+         short_name 1: encrypt OK
+         jam_enum_short 1: encrypt OK
+         jam_enum_human 1: encrypt OK
          match encrypt [short]: OK
-    1 -> PROPOSAL_TRANSFORM_prf
-         jam_enum 1: PROPOSAL_TRANSFORM_prf OK
+    2 -> PROPOSAL_TRANSFORM_prf
+         jam_enum 2: PROPOSAL_TRANSFORM_prf OK
          match PROPOSAL_TRANSFORM_prf: OK
-         short_name 1: prf OK
-         jam_enum_short 1: prf OK
-         jam_enum_human 1: prf OK
+         short_name 2: prf OK
+         jam_enum_short 2: prf OK
+         jam_enum_human 2: prf OK
          match prf [short]: OK
-    2 -> PROPOSAL_TRANSFORM_integ
-         jam_enum 2: PROPOSAL_TRANSFORM_integ OK
+    3 -> PROPOSAL_TRANSFORM_integ
+         jam_enum 3: PROPOSAL_TRANSFORM_integ OK
          match PROPOSAL_TRANSFORM_integ: OK
-         short_name 2: integ OK
-         jam_enum_short 2: integ OK
-         jam_enum_human 2: integ OK
+         short_name 3: integ OK
+         jam_enum_short 3: integ OK
+         jam_enum_human 3: integ OK
          match integ [short]: OK
-    3 -> PROPOSAL_TRANSFORM_kem
-         jam_enum 3: PROPOSAL_TRANSFORM_kem OK
+    4 -> PROPOSAL_TRANSFORM_kem
+         jam_enum 4: PROPOSAL_TRANSFORM_kem OK
          match PROPOSAL_TRANSFORM_kem: OK
-         short_name 3: kem OK
-         jam_enum_short 3: kem OK
-         jam_enum_human 3: kem OK
+         short_name 4: kem OK
+         jam_enum_short 4: kem OK
+         jam_enum_human 4: kem OK
          match kem [short]: OK
-    4 -> PROPOSAL_TRANSFORM_sn
-         jam_enum 4: PROPOSAL_TRANSFORM_sn OK
+    5 -> PROPOSAL_TRANSFORM_sn
+         jam_enum 5: PROPOSAL_TRANSFORM_sn OK
          match PROPOSAL_TRANSFORM_sn: OK
-         short_name 4: sn OK
-         jam_enum_short 4: sn OK
-         jam_enum_human 4: sn OK
+         short_name 5: sn OK
+         jam_enum_short 5: sn OK
+         jam_enum_human 5: sn OK
          match sn [short]: OK
-    5 -> PROPOSAL_TRANSFORM_addke1
-         jam_enum 5: PROPOSAL_TRANSFORM_addke1 OK
+    6 -> PROPOSAL_TRANSFORM_addke1
+         jam_enum 6: PROPOSAL_TRANSFORM_addke1 OK
          match PROPOSAL_TRANSFORM_addke1: OK
-         short_name 5: addke1 OK
-         jam_enum_short 5: addke1 OK
-         jam_enum_human 5: addke1 OK
+         short_name 6: addke1 OK
+         jam_enum_short 6: addke1 OK
+         jam_enum_human 6: addke1 OK
          match addke1 [short]: OK
-    6 -> PROPOSAL_TRANSFORM_addke2
-         jam_enum 6: PROPOSAL_TRANSFORM_addke2 OK
+    7 -> PROPOSAL_TRANSFORM_addke2
+         jam_enum 7: PROPOSAL_TRANSFORM_addke2 OK
          match PROPOSAL_TRANSFORM_addke2: OK
-         short_name 6: addke2 OK
-         jam_enum_short 6: addke2 OK
-         jam_enum_human 6: addke2 OK
+         short_name 7: addke2 OK
+         jam_enum_short 7: addke2 OK
+         jam_enum_human 7: addke2 OK
          match addke2 [short]: OK
-    7 -> PROPOSAL_TRANSFORM_addke3
-         jam_enum 7: PROPOSAL_TRANSFORM_addke3 OK
+    8 -> PROPOSAL_TRANSFORM_addke3
+         jam_enum 8: PROPOSAL_TRANSFORM_addke3 OK
          match PROPOSAL_TRANSFORM_addke3: OK
-         short_name 7: addke3 OK
-         jam_enum_short 7: addke3 OK
-         jam_enum_human 7: addke3 OK
+         short_name 8: addke3 OK
+         jam_enum_short 8: addke3 OK
+         jam_enum_human 8: addke3 OK
          match addke3 [short]: OK
-    8 -> PROPOSAL_TRANSFORM_addke4
-         jam_enum 8: PROPOSAL_TRANSFORM_addke4 OK
+    9 -> PROPOSAL_TRANSFORM_addke4
+         jam_enum 9: PROPOSAL_TRANSFORM_addke4 OK
          match PROPOSAL_TRANSFORM_addke4: OK
-         short_name 8: addke4 OK
-         jam_enum_short 8: addke4 OK
-         jam_enum_human 8: addke4 OK
+         short_name 9: addke4 OK
+         jam_enum_short 9: addke4 OK
+         jam_enum_human 9: addke4 OK
          match addke4 [short]: OK
-    9 -> PROPOSAL_TRANSFORM_addke5
-         jam_enum 9: PROPOSAL_TRANSFORM_addke5 OK
+   10 -> PROPOSAL_TRANSFORM_addke5
+         jam_enum 10: PROPOSAL_TRANSFORM_addke5 OK
          match PROPOSAL_TRANSFORM_addke5: OK
-         short_name 9: addke5 OK
-         jam_enum_short 9: addke5 OK
-         jam_enum_human 9: addke5 OK
+         short_name 10: addke5 OK
+         jam_enum_short 10: addke5 OK
+         jam_enum_human 10: addke5 OK
          match addke5 [short]: OK
-   10 -> PROPOSAL_TRANSFORM_addke6
-         jam_enum 10: PROPOSAL_TRANSFORM_addke6 OK
+   11 -> PROPOSAL_TRANSFORM_addke6
+         jam_enum 11: PROPOSAL_TRANSFORM_addke6 OK
          match PROPOSAL_TRANSFORM_addke6: OK
-         short_name 10: addke6 OK
-         jam_enum_short 10: addke6 OK
-         jam_enum_human 10: addke6 OK
+         short_name 11: addke6 OK
+         jam_enum_short 11: addke6 OK
+         jam_enum_human 11: addke6 OK
          match addke6 [short]: OK
-   11 -> PROPOSAL_TRANSFORM_addke7
-         jam_enum 11: PROPOSAL_TRANSFORM_addke7 OK
+   12 -> PROPOSAL_TRANSFORM_addke7
+         jam_enum 12: PROPOSAL_TRANSFORM_addke7 OK
          match PROPOSAL_TRANSFORM_addke7: OK
-         short_name 11: addke7 OK
-         jam_enum_short 11: addke7 OK
-         jam_enum_human 11: addke7 OK
+         short_name 12: addke7 OK
+         jam_enum_short 12: addke7 OK
+         jam_enum_human 12: addke7 OK
          match addke7 [short]: OK
   sa_kind_names: [0..2)
     0 -> IKE_SA
