@@ -1448,6 +1448,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	vdbg("trying <encrypt>-<PRF>");
 	tokens_at_start = (*tokens);
+	const unsigned nr_transforms_at_start = proposal->transforms.len; /* for unwinding */
 	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
 		/* advance */
 		vdbg("<encrypt>-<PRF> succeeded");
@@ -1475,6 +1476,8 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	diag_t prf_diag = parser->diag;
 	parser->diag = NULL;
 	(*tokens) = tokens_at_start;
+	/* truncate the transforms array */
+	realloc_data(&proposal->transforms, nr_transforms_at_start);
 
 	/*
 	 * Now try <INTEG>.
