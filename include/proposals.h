@@ -176,7 +176,7 @@ struct proposal_protocol {
  * A proposal as decoded by the parser.
  */
 
-struct transform_algorithm {
+struct transform {
 	const struct transform_type *type;
 	const struct ike_alg *desc;
 	/*
@@ -188,7 +188,7 @@ struct transform_algorithm {
 
 struct transform_algorithms {
 	unsigned len;
-	struct transform_algorithm item[];
+	struct transform item[];
 };
 
 /* return counts of encrypt=aead and integ=none */
@@ -204,15 +204,19 @@ void free_proposals(struct proposals **proposals);
 extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
-void append_proposal(struct proposals *proposals, struct proposal **proposal);
+void append_proposal(struct proposals *proposals,
+		     struct proposal **proposal,
+		     struct verbose verbose);
 void append_proposal_transform(struct proposal_parser *parser,
 			       struct proposal *proposal,
 			       const struct transform_type *transform_type,
 			       const struct ike_alg *transform,
-			       int enckeylen);
+			       int enckeylen,
+			       struct verbose verbose);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 const struct transform_type *transform_type);
+				 const struct transform_type *transform_type,
+				 struct verbose verbose);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
@@ -252,7 +256,7 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
 /* the first algorithm, or NULL */
-struct transform_algorithm *first_proposal_transform(const struct proposal *proposal,
+struct transform *first_proposal_transform(const struct proposal *proposal,
 						     const struct transform_type *transform_type);
 struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
 						  const struct transform_type *transform_type);
@@ -281,10 +285,12 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str);
+			    shunk_t alg_str,
+			    struct verbose verbose);
 bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str);
+			    shunk_t alg_str,
+			    struct verbose verbose);
 
 /*
  * Post parsing checks that the proposal is ok (yea *_ok() is a pretty
@@ -325,42 +331,8 @@ struct v1_proposal {
 
 struct v1_proposal v1_proposal(const struct proposal *proposal);
 
-/*
- * INTERNAL: tokenize <input> into <delim_before><current><delim_after><input>
- */
-
-struct proposal_term {
-	shunk_t token;
-	char delim;
-};
-
-struct proposal_tokenizer {
-	struct proposal_term prev;
-	struct proposal_term curr;
-	struct proposal_term next;
-	shunk_t input;
-	const char *delims;
-};
-
-struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delim);
-void proposal_next_token(struct proposal_tokenizer *token);
-
-bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
-				      struct proposal *proposal,
-				      struct proposal_tokenizer *tokens);
-
-bool parse_proposal_transform(struct proposal_parser *parser,
-			      struct proposal *proposal,
-			      const struct transform_type *transform_type,
-			      shunk_t token);
-
 bool parse_proposal(struct proposal_parser *parser,
-		    struct proposal *proposal, shunk_t input);
-
-void discard_proposal_transform(const char *what,
-				struct proposal_parser *parser,
-				struct proposal *proposal,
-				const struct transform_type *transform_type,
-				diag_t *diag);
+		    struct proposal *proposal, shunk_t input,
+		    struct verbose verbose);
 
 #endif /* PROPOSALS_H */

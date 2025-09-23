@@ -2719,7 +2719,7 @@ struct ikev2_proposals *get_v2_CREATE_CHILD_SA_rekey_child_proposals(struct ike_
 	 * the need to only look at the first proposal.
 	 */
 	struct proposal *proposal = next_proposal(cc->config->child.proposals.p, NULL);
-	const struct transform_algorithm *proposal_dh =
+	const struct transform *proposal_dh =
 		first_proposal_transform(proposal, transform_type_kem);
 
 	struct ikev2_proposals *proposals;

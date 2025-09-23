@@ -45,7 +45,7 @@ bool server_run(const char *verb, const char *verb_suffix,
 		struct verbose verbose)
 {
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
-	if (VDBGP()) {
+	if (verbose.debug) {
 		int slen = strlen(cmd);
 		int i;
 

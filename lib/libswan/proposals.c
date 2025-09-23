@@ -29,9 +29,107 @@
 #include "ike_alg_kem.h"
 #include "alg_byname.h"
 
+struct tokens;
+
 static bool ignore_transform_lookup_error(struct proposal_parser *parser,
 					  const struct transform_type *transform_type,
-					  shunk_t token);
+					  shunk_t token,
+					  struct verbose verbose);
+
+static bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
+					     struct proposal *proposal,
+					     struct tokens *tokens,
+					     struct verbose verbose);
+
+static bool parse_proposal_transform(struct proposal_parser *parser,
+				     struct proposal *proposal,
+				     const struct transform_type *transform_type,
+				     shunk_t token,
+				     struct verbose verbose);
+
+/*
+ * INTERNAL: tokenize <input> into:
+ *
+ *    <prev.token> <prev.delim> <curr.token> <curr.delim> <next.token> <next.delim> <input>
+ *
+ * each call to next_token() shifts things long.
+ */
+
+struct proposal_term {
+	shunk_t token;
+	char delim;
+};
+
+struct tokens {
+	struct proposal_term prev;
+	struct proposal_term curr;
+	struct proposal_term next;
+	shunk_t input;
+	const char *delims;
+};
+
+static void jam_token(struct jambuf *buf, const char *wrap,
+		      struct proposal_term term)
+{
+	jam_string(buf, wrap);
+	if (term.token.ptr == NULL) {
+		jam_string(buf, "<null>");
+	} else {
+		jam_string(buf, "\"");
+		jam_shunk(buf, term.token);
+		jam_string(buf, "\"");
+	}
+	jam_string(buf, "'");
+	if (term.delim != '\0') {
+		jam_char(buf, term.delim);
+	}
+	jam_string(buf, "'");
+	jam_string(buf, wrap);
+}
+
+static void next_token(struct tokens *tokens, struct verbose verbose)
+{
+	/* shuffle tokens */
+	tokens->prev = tokens->curr;
+	tokens->curr = tokens->next;
+	/* parse new next */
+	tokens->next.token = shunk_token(&tokens->input, &tokens->next.delim, tokens->delims);
+	VDBG_JAMBUF(buf) {
+		jam_string(buf, "tokens:");
+		jam_string(buf, " ");
+		jam_token(buf, "", tokens->prev);
+		jam_string(buf, " ");
+		jam_token(buf, "*", tokens->curr);
+		jam_string(buf, " ");
+		jam_token(buf, "", tokens->next);
+		jam_string(buf, " ");
+		if (tokens->input.ptr == NULL) {
+			jam_string(buf, "<null>");
+		} else {
+			jam_string(buf, "\"");
+			jam_shunk(buf, tokens->input);
+			jam_string(buf, "\"");
+		}
+	}
+}
+
+static struct tokens first_token(shunk_t input, const char *delims,
+				 struct verbose verbose)
+{
+	struct tokens tokens = {
+		.input = input,
+		.delims = delims,
+	};
+	/* shift <input> into <next> */
+	next_token(&tokens, verbose);
+	/* shift <next> into <curr> */
+	next_token(&tokens, verbose);
+	return tokens;
+}
+
+/*
+ * The proposal parser.
+ */
 
 struct proposal {
 	bool impaired;
@@ -238,7 +336,9 @@ unsigned nr_proposals(const struct proposals *proposals)
 	return nr;
 }
 
-void append_proposal(struct proposals *proposals, struct proposal **proposal)
+void append_proposal(struct proposals *proposals,
+		     struct proposal **proposal,
+		     struct verbose verbose)
 {
 	struct proposal **end = &proposals->proposals;
 	/* check for duplicates */
@@ -261,8 +361,8 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 				break;
 			}
 			for (unsigned n = 0; n < old_algs->len; n++) {
-				struct transform_algorithm *old = &old_algs->item[n];
-				struct transform_algorithm *new = &new_algs->item[n];
+				struct transform *old = &old_algs->item[n];
+				struct transform *new = &new_algs->item[n];
 				if (old->desc != new->desc) {
 					same = false;
 					break;
@@ -291,7 +391,7 @@ void append_proposal(struct proposals *proposals, struct proposal **proposal)
 			}
 		}
 		if (same) {
-			ldbg(&global_logger, "discarding duplicate proposal");
+			vdbg("discarding duplicate proposal");
 			free_proposal(proposal);
 			return;
 		}
@@ -325,7 +425,7 @@ struct transform_algorithms *transform_algorithms(const struct proposal *proposa
 	return proposal->algorithms[type->index];
 }
 
-struct transform_algorithm *first_proposal_transform(const struct proposal *proposal,
+struct transform *first_proposal_transform(const struct proposal *proposal,
 						      const struct transform_type *type)
 {
 	struct transform_algorithms *algorithms = proposal->algorithms[type->index];
@@ -408,35 +508,35 @@ void append_proposal_transform(struct proposal_parser *parser,
 			       struct proposal *proposal,
 			       const struct transform_type *transform_type,
 			       const struct ike_alg *transform,
-			       int enckeylen)
+			       int enckeylen,
+			       struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
 	if (transform == NULL) {
-		llog_pexpect(logger, HERE,
+		vlog_pexpect(HERE,
 			     "no %s %s algorithm to append",
 			     parser->protocol->name,
 			     transform_type->name);
 		return;
 	}
 
-	PASSERT(logger, transform_type->alg == transform->type);
+	vassert(transform_type->alg == transform->type);
 
 	/* grow */
-	PASSERT(logger, transform_type->index < elemsof(proposal->algorithms));
-	struct transform_algorithm *end = grow_items(proposal->algorithms[transform_type->index]);
+	vassert(transform_type->index < elemsof(proposal->algorithms));
+	struct transform *end = grow_items(proposal->algorithms[transform_type->index]);
 
-	*end = (struct transform_algorithm) {
+	*end = (struct transform) {
 		.type = transform_type,
 		.desc = transform,
 		.enckeylen = enckeylen,
 	};
 
-	ldbgf(DBG_PROPOSAL_PARSER, logger, "append %s %s %s %s[_%d]",
-	      parser->protocol->name,
-	      transform_type->name,
-	      transform->type->story,
-	      transform->fqn,
-	      enckeylen);
+	vdbg("append %s %s %s %s[_%d]",
+	     parser->protocol->name,
+	     transform_type->name,
+	     transform->type->story,
+	     transform->fqn,
+	     enckeylen);
 }
 
 /*
@@ -448,11 +548,10 @@ void append_proposal_transform(struct proposal_parser *parser,
  */
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 const struct transform_type *transform_type)
+				 const struct transform_type *transform_type,
+				 struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
-
-	PASSERT(logger, transform_type->index < elemsof(proposal->algorithms));
+	vassert(transform_type->index < elemsof(proposal->algorithms));
 	struct transform_algorithms *algs = proposal->algorithms[transform_type->index];
 	if (algs == NULL || algs->len == 0) {
 		return;
@@ -460,10 +559,10 @@ void remove_duplicate_algorithms(struct proposal_parser *parser,
 
 	unsigned new_len = 1;	/* keep/skip the first */
 	for (unsigned n = 1; n < algs->len; n++) {
-		const struct transform_algorithm *new = &algs->item[n];
+		const struct transform *new = &algs->item[n];
 		bool duplicate = false;
 		for (unsigned o = 0; o < n; o++) {
-			const struct transform_algorithm *old = &algs->item[o];
+			const struct transform *old = &algs->item[o];
 			if (old->desc != new->desc) {
 				continue;
 			}
@@ -543,8 +642,8 @@ void jam_proposal(struct jambuf *buf,
 	    prf_algs->len == integ_algs->len) {
 		integ_matches_prf = true; /* hopefully */
 		for (unsigned n = 0; n < integ_algs->len; n++) {
-			struct transform_algorithm *prf  = &prf_algs->item[n];
-			struct transform_algorithm *integ  = &integ_algs->item[n];
+			struct transform *prf  = &prf_algs->item[n];
+			struct transform *integ  = &integ_algs->item[n];
 			if (&integ_desc(integ->desc)->prf->common != prf->desc) {
 				/* i.e., prf and integ are different */
 				integ_matches_prf = false;
@@ -608,7 +707,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform_algorithm *first_kem =
+		struct transform *first_kem =
 			first_proposal_transform(proposal, transform_type_kem);
 		if (first_kem == NULL) {
 			if (first_null_ke == NULL) {
@@ -645,7 +744,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			struct transform_algorithm *first_kem =
+			struct transform *first_kem =
 				first_proposal_transform(proposal, transform_type_kem);
 			if (first_kem != NULL) {
 				ke = first_kem->desc;
@@ -727,6 +826,9 @@ void proposal_error(struct proposal_parser *parser, const char *fmt, ...)
 struct proposals *proposals_from_str(struct proposal_parser *parser,
 				     const char *str)
 {
+	struct verbose verbose = VERBOSE(NO_STREAM, parser->policy->logger, "p");
+	verbose.debug = LDBGP(DBG_PROPOSAL_PARSER, verbose.logger);
+
 	struct proposals *proposals = alloc_thing(struct proposals, "proposals");
 	if (str == NULL) {
 		proposals->defaulted = true;
@@ -735,10 +837,14 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 		str = parser->protocol->defaults->proposals[fips_mode];
 		PASSERT(parser->policy->logger, str != NULL);
 	}
+
+	vdbg("parse %s proposals '%s'", parser->protocol->name, str);
+	verbose.level++;
+
 	bool ok = false;
 	switch (parser->policy->version) {
-	case IKEv1: ok = v1_proposals_parse_str(parser, proposals, shunk1(str)); break;
-	case IKEv2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str)); break;
+	case IKEv1: ok = v1_proposals_parse_str(parser, proposals, shunk1(str), verbose); break;
+	case IKEv2: ok = v2_proposals_parse_str(parser, proposals, shunk1(str), verbose); break;
 	default:
 		bad_case(parser->policy->version);
 	}
@@ -797,8 +903,16 @@ static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, s
 
 bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 				      struct proposal *proposal,
-				      struct proposal_tokenizer *tokens)
+				      struct tokens *tokens,
+				      struct verbose verbose)
 {
+	const struct transform_type *transform_type = transform_type_encrypt;
+	vdbg("trying '"PRI_SHUNK"'... as %s transform of type %s",
+	     pri_shunk(tokens->curr.token),
+	     transform_type->name,
+	     transform_type->alg->name);
+	verbose.level++;
+
 	if (tokens->curr.token.len == 0) {
 		proposal_error(parser, "%s encryption algorithm is empty",
 			       parser->protocol->name);
@@ -828,15 +942,17 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 		const struct ike_alg *alg = encrypt_alg_byname(parser, ealg,
 							       enckeylen, print);
 		if (alg == NULL) {
-			return ignore_transform_lookup_error(parser, transform_type_encrypt, print);
+			return ignore_transform_lookup_error(parser, transform_type_encrypt, print, verbose);
 		}
 
+		verbose.level++;
 		append_proposal_transform(parser, proposal,
 					  transform_type_encrypt,
-					  alg, enckeylen);
+					  alg, enckeylen,
+					  verbose);
 		/* consume <ealg>-<eklen> */
-		proposal_next_token(tokens);
-		proposal_next_token(tokens);
+		next_token(tokens, verbose);
+		next_token(tokens, verbose);
 		return true;
 	}
 
@@ -848,11 +964,13 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 						       0/*enckeylen*/,
 						       /*print*/token);
 	if (alg != NULL) {
+		verbose.level++;
 		append_proposal_transform(parser, proposal,
 					  transform_type_encrypt,
-					  alg, 0);
+					  alg, 0,
+					  verbose);
 		/* consume <ealg> */
-		proposal_next_token(tokens);
+		next_token(tokens, verbose);
 		return true;
 	}
 
@@ -875,7 +993,7 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 		 */
 		passert(parser->diag != NULL);
 		return ignore_transform_lookup_error(parser, transform_type_encrypt,
-						     tokens->curr.token);
+						     tokens->curr.token, verbose);
 	}
 
 	/*
@@ -912,14 +1030,16 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 	alg = encrypt_alg_byname(parser, ealg, enckeylen, /*print*/token);
 	if (alg == NULL) {
 		passert(parser->diag != NULL);
-		return ignore_transform_lookup_error(parser, transform_type_encrypt, token);
+		return ignore_transform_lookup_error(parser, transform_type_encrypt, token, verbose);
 	}
 
+	verbose.level++;
 	append_proposal_transform(parser, proposal,
 				  transform_type_encrypt,
-				  alg, enckeylen);
+				  alg, enckeylen,
+				  verbose);
 	/* consume <ealg> */
-	proposal_next_token(tokens);
+	next_token(tokens, verbose);
 	return true;
 }
 
@@ -931,18 +1051,17 @@ bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
 
 bool ignore_transform_lookup_error(struct proposal_parser *parser,
 				   const struct transform_type *transform_type,
-				   shunk_t token)
+				   shunk_t token,
+				   struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
-	passert(parser->diag != NULL);
+	vassert(parser->diag != NULL);
 	if (parser->policy->ignore_transform_lookup_error) {
 		/*
 		 * XXX: the algorithm might be unknown, or might be
 		 * known but not enabled due to FIPS, or ...?
 		 */
 		name_buf vb;
-		llog(RC_LOG, logger,
-		     "ignoring %s %s %s '"PRI_SHUNK"': %s",
+		vlog("ignoring %s %s %s '"PRI_SHUNK"': %s",
 		     str_enum_long(&ike_version_names, parser->policy->version, &vb),
 		     parser->protocol->name, /* ESP|IKE|AH */
 		     transform_type->name,
@@ -952,22 +1071,21 @@ bool ignore_transform_lookup_error(struct proposal_parser *parser,
 		return true;
 	}
 
-	ldbgf(DBG_PROPOSAL_PARSER, logger,
-	      "lookup for %s '"PRI_SHUNK"' failed: %s",
-	      transform_type->name,
-	      pri_shunk(token),
-	      str_diag(parser->diag));
+	vdbg("lookup for %s '"PRI_SHUNK"' failed: %s",
+	     transform_type->name,
+	     pri_shunk(token),
+	     str_diag(parser->diag));
 	return false;
 }
 
 bool parse_proposal_transform(struct proposal_parser *parser,
 			      struct proposal *proposal,
 			      const struct transform_type *transform_type,
-			      shunk_t token)
+			      shunk_t token,
+			      struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
-	PASSERT(logger, parser->diag == NULL);
-	PASSERT(logger, transform_type != NULL);
+	vassert(parser->diag == NULL);
+	vassert(transform_type != NULL);
 
 	if (token.len == 0) {
 		proposal_error(parser, "%s %s is empty",
@@ -976,137 +1094,66 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 		return false;
 	}
 
-	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing transform '%s' of type '%s': "PRI_SHUNK,
-	      transform_type->name,
-	      transform_type->alg->name,
-	      pri_shunk(token));
+	vdbg("parsing transform '%s' of type '%s': "PRI_SHUNK,
+	     transform_type->name,
+	     transform_type->alg->name,
+	     pri_shunk(token));
 
 	const struct ike_alg *alg = alg_byname(parser, transform_type->alg,
 					       token, token/*print*/);
 	if (alg == NULL) {
-		return ignore_transform_lookup_error(parser, transform_type, token);
+		return ignore_transform_lookup_error(parser, transform_type, token, verbose);
 	}
 
-	append_proposal_transform(parser, proposal, transform_type, alg, 0/*enckeylen*/);
+	verbose.level++;
+	append_proposal_transform(parser, proposal, transform_type,
+				  alg, 0/*enckeylen*/, verbose);
 	return true;
-}
-
-void discard_proposal_transform(const char *what, struct proposal_parser *parser,
-				struct proposal *proposal,
-				const struct transform_type *type,
-				diag_t *diag)
-{
-	const struct logger *logger = parser->policy->logger;
-	/* toss the result, but save the error */
-	ldbgf(DBG_PROPOSAL_PARSER, logger,
-	      "%s failed, saving error '%s' and tossing result",
-	      what, str_diag(parser->diag));
-	pfree_transforms(proposal, type);
-	if (diag != NULL) {
-		(*diag) = parser->diag;
-		parser->diag = NULL;
-	} else {
-		pfree_diag(&parser->diag);
-	}
-}
-
-struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims)
-{
-	struct proposal_tokenizer token = {
-		.input = input,
-		.delims = delims,
-	};
-	/* parse next */
-	proposal_next_token(&token);
-	/* next<-this; parse next */
-	proposal_next_token(&token);
-	return token;
-}
-
-static void jam_token(struct jambuf *buf, const char *wrap,
-		      struct proposal_term term)
-{
-	jam_string(buf, " ");
-	jam_string(buf, wrap);
-	if (term.token.ptr == NULL) {
-		jam_string(buf, "<null>");
-	} else {
-		jam_string(buf, "\"");
-		jam_shunk(buf, term.token);
-		jam_string(buf, "\"");
-	}
-	jam_string(buf, "'");
-	if (term.delim != '\0') {
-		jam_char(buf, term.delim);
-	}
-	jam_string(buf, "'");
-	jam_string(buf, wrap);
-}
-
-void proposal_next_token(struct proposal_tokenizer *tokens)
-{
-	struct logger *logger = &global_logger;
-
-	/* shuffle tokens */
-	tokens->prev = tokens->curr;
-	tokens->curr = tokens->next;
-	/* parse new next */
-	tokens->next.token = shunk_token(&tokens->input, &tokens->next.delim, tokens->delims);
-	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "tokens:");
-			jam_token(buf, "", tokens->prev);
-			jam_token(buf, "*", tokens->curr);
-			jam_token(buf, "", tokens->next);
-			jam_string(buf, " ");
-			if (tokens->input.ptr == NULL) {
-				jam_string(buf, "<null>");
-			} else {
-				jam_string(buf, "\"");
-				jam_shunk(buf, tokens->input);
-				jam_string(buf, "\"");
-			}
-		}
-	}
 }
 
 static bool parse_transform_algorithms(struct proposal_parser *parser,
 				       struct proposal *proposal,
 				       const struct transform_type *transform_type,
-				       struct proposal_tokenizer *tokens)
-{
-	const struct logger *logger = parser->policy->logger;
-	PASSERT(logger, transform_type != NULL);
-	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing %s of type %s",
-	      transform_type->name,
-	      transform_type->alg->name);
+				       struct tokens *tokens,
+				       struct verbose verbose)
 
-	PASSERT(logger, parser->diag == NULL); /* so far so good */
+{
+	vassert(transform_type != NULL);
+	vdbg("trying '"PRI_SHUNK"'... as %s transform of type %s",
+	     pri_shunk(tokens->curr.token),
+	     transform_type->name,
+	     transform_type->alg->name);
+	verbose.level++;
+
+	vassert(parser->diag == NULL); /* so far so good */
 	if (!parse_proposal_transform(parser, proposal,
 				      transform_type,
-				      tokens->curr.token)) {
+				      tokens->curr.token,
+				      verbose)) {
 		return false;
 	}
 
-	passert(parser->diag == NULL); /* still good */
-	proposal_next_token(tokens);
+	vassert(parser->diag == NULL); /* still good */
+	next_token(tokens, verbose);
 	while (tokens->prev.delim == '+') {
 		if (!parse_proposal_transform(parser, proposal,
 					      transform_type,
-					      tokens->curr.token)) {
+					      tokens->curr.token,
+					      verbose)) {
 			return false;
 		}
-		passert(parser->diag == NULL);
-		proposal_next_token(tokens);
+		vassert(parser->diag == NULL);
+		next_token(tokens, verbose);
 	}
 
-	remove_duplicate_algorithms(parser, proposal, transform_type);
+	remove_duplicate_algorithms(parser, proposal, transform_type, verbose);
 	return true;
 }
 
 static bool parse_encrypt_transforms(struct proposal_parser *parser,
 				     struct proposal *proposal,
-				     struct proposal_tokenizer *tokens)
+				     struct tokens *tokens,
+				     struct verbose verbose)
 {
 	/*
 	 * Encryption.
@@ -1130,28 +1177,29 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 	 */
 
 	/* first encryption algorithm token is expected */
-	if (!parse_proposal_encrypt_transform(parser, proposal, tokens)) {
-		passert(parser->diag != NULL);
+	if (!parse_proposal_encrypt_transform(parser, proposal, tokens, verbose)) {
+		vassert(parser->diag != NULL);
 		return false;
 	}
-	passert(parser->diag == NULL);
+	vassert(parser->diag == NULL);
 
 	/* further encryption algorithm tokens are optional */
 	while (tokens->prev.delim == '+') {
-		if (!parse_proposal_encrypt_transform(parser, proposal, tokens)) {
-			passert(parser->diag != NULL);
+		if (!parse_proposal_encrypt_transform(parser, proposal, tokens, verbose)) {
+			vassert(parser->diag != NULL);
 			return false;
 		}
-		passert(parser->diag == NULL);
+		vassert(parser->diag == NULL);
 	}
 
-	remove_duplicate_algorithms(parser, proposal, transform_type_encrypt);
+	remove_duplicate_algorithms(parser, proposal, transform_type_encrypt, verbose);
 	return true;
 }
 
 static bool parse_prf_transforms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 struct proposal_tokenizer *tokens)
+				 struct tokens *tokens,
+				 struct verbose verbose)
 {
 	const struct logger *logger = parser->policy->logger;
 
@@ -1174,11 +1222,10 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	 * the PRF isn't something to encourage.
 	 */
 
-	struct proposal_tokenizer prf_tokens = (*tokens);
-	if (parse_transform_algorithms(parser, proposal, transform_type_prf, &prf_tokens)) {
+	struct tokens prf_tokens = (*tokens);
+	if (parse_transform_algorithms(parser, proposal, transform_type_prf, &prf_tokens, verbose)) {
 		/* advance */
-		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "<encr>-<PRF> succeeded, advancing tokens");
+		vdbg("<encr>-<PRF> succeeded, advancing tokens");
 		(*tokens) = prf_tokens;
 		return true;
 	}
@@ -1203,15 +1250,15 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	 * message).
 	 */
 
-	diag_t prf_diag = NULL;
-	discard_proposal_transform("<encr>-<PRF>", parser, proposal,
-				   transform_type_prf,
-				   /*save the diag*/&prf_diag);
+	vdbg("<encr>-<PRF> failed, saving error '%s' and tossing result",
+	     str_diag(parser->diag));
+	pfree_transforms(proposal, transform_type_prf);
+	diag_t prf_diag = parser->diag;
+	parser->diag = NULL;
 
-	if (!parse_transform_algorithms(parser, proposal, transform_type_integ, tokens)) {
-		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "both <encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
-		      str_diag(prf_diag), str_diag(parser->diag));
+	if (!parse_transform_algorithms(parser, proposal, transform_type_integ, tokens, verbose)) {
+		vdbg("both <encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
+		     str_diag(prf_diag), str_diag(parser->diag));
 		pfree_diag(&parser->diag);
 		parser->diag = prf_diag;
 		return false;
@@ -1224,9 +1271,8 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 		return true;
 	}
 
-	if (!parse_transform_algorithms(parser, proposal, transform_type_prf, tokens)) {
-		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
+	if (!parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
+		vdbg("<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
 		return false;
 	}
 
@@ -1242,28 +1288,20 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 				      struct proposal *proposal,
 				      const struct transform_type *transform_type,
 				      enum transform_typed_how typed_how,
-				      struct proposal_tokenizer *tokens)
+				      struct tokens *tokens,
+				      struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
-	ldbgf(DBG_PROPOSAL_PARSER, logger,
-	      "parsing transforms %s%s"PRI_SHUNK"...",
-	      transform_type->name,
-	      (typed_how == TRANSFORM_TYPE_IMPLICIT ? ":" :
-	       typed_how == TRANSFORM_TYPE_EXPLICIT ? "=" :
-	       "?"),
-	      pri_shunk(tokens->curr.token));
-
 	switch (transform_type->index) {
 
 	case PROPOSAL_TRANSFORM_encrypt:
 		if (parser->protocol->encrypt) {
-			return parse_encrypt_transforms(parser, proposal, tokens);
+			return parse_encrypt_transforms(parser, proposal, tokens, verbose);
 		}
 		break;
 
 	case PROPOSAL_TRANSFORM_prf:
 		if (parser->protocol->prf) {
-			return parse_prf_transforms(parser, proposal, tokens);
+			return parse_prf_transforms(parser, proposal, tokens, verbose);
 		}
 		break;
 
@@ -1271,7 +1309,8 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		if ((parser->protocol->integ && !parser->protocol->prf) ||
 		    (parser->protocol->integ && typed_how == TRANSFORM_TYPE_EXPLICIT)) {
 			return parse_transform_algorithms(parser, proposal,
-							  transform_type, tokens);
+							  transform_type, tokens,
+							  verbose);
 		}
 		break;
 
@@ -1289,14 +1328,16 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		 */
 		if (parser->protocol->kem) {
 			return parse_transform_algorithms(parser, proposal,
-							  transform_type, tokens);
+							  transform_type, tokens,
+							  verbose);
 		}
 		break;
 
 	case PROPOSAL_TRANSFORM_sn:
 		if (typed_how == TRANSFORM_TYPE_EXPLICIT) {
 			return parse_transform_algorithms(parser, proposal,
-							  transform_type, tokens);
+							  transform_type, tokens,
+							  verbose);
 		}
 		break;
 
@@ -1312,7 +1353,8 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		 */
 		if (parser->policy->addke) {
 			return parse_transform_algorithms(parser, proposal,
-							  transform_type, tokens);
+							  transform_type, tokens,
+							  verbose);
 		}
 		break;
 	}
@@ -1326,19 +1368,23 @@ static bool parse_proposal_transforms(struct proposal_parser *parser,
 		return false;
 	}
 
+	vdbg("%s does not have %s transforms",
+	     parser->protocol->name,
+	     transform_type->name);
+
 	return true;
 }
 
 bool parse_proposal(struct proposal_parser *parser,
-		    struct proposal *proposal, shunk_t input)
+		    struct proposal *proposal,
+		    shunk_t input,
+		    struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
+	vdbg("parse %s proposal '"PRI_SHUNK"'", parser->protocol->name, pri_shunk(input));
+	verbose.level++;
+	const unsigned verbose_base = verbose.level;
 
-	if (LDBGP(DBG_PROPOSAL_PARSER, logger)) {
-		LDBG_log(logger, "proposal: '"PRI_SHUNK"'", pri_shunk(input));
-	}
-
-	struct proposal_tokenizer tokens = proposal_first_token(input, "-;+=!");
+	struct tokens tokens = first_token(input, "-;+=!", verbose);
 
 	/* hack to stop non ADDKE reporting missing ADDKE */
 	const struct transform_type *transform_roof =
@@ -1349,13 +1395,15 @@ bool parse_proposal(struct proposal_parser *parser,
 
 	while (tokens.curr.token.ptr != NULL) {
 
+		verbose.level = verbose_base;
 		const char prev_delim[] = { tokens.prev.delim, '\0', };
 		const char curr_delim[] = { tokens.curr.delim, '\0', };
-		ldbgf(DBG_PROPOSAL_PARSER, logger, "examining '%s' \""PRI_SHUNK"\" '%s', transform=%s",
-		      prev_delim,
-		      pri_shunk(tokens.curr.token),
-		      curr_delim,
-		      transform_type->name);
+		vdbg("parsing '%s'\""PRI_SHUNK"\"'%s', expecting %s transform",
+		     prev_delim,
+		     pri_shunk(tokens.curr.token),
+		     curr_delim,
+		     transform_type->name);
+		verbose.level++;
 
 		if (tokens.curr.delim == '!') {
 
@@ -1370,27 +1418,30 @@ bool parse_proposal(struct proposal_parser *parser,
 
 			/* advance to TRANSFORMS after '!' */
 			transform_type = tmp;
-			proposal_next_token(&tokens);
+			next_token(&tokens, verbose);
 			proposal->impaired = true;
 
 			/* go directly to the algorithm parser */
 			if (tokens.curr.token.len == 0 &&
 			    tokens.curr.token.ptr != NULL &&
 			    proposal->algorithms[transform_type->index] == NULL) {
-				llog(IMPAIR_STREAM, logger, "forcing empty %s proposal %s transform",
+				llog(IMPAIR_STREAM, verbose.logger,
+				     "forcing empty %s proposal %s transform",
 				     proposal->protocol->name,
 				     transform_type->name);
 				proposal->algorithms[transform_type->index] =
 					alloc_thing(struct transform_algorithms,
 						    "empty transforms");
 				/* skip empty transform */
-				proposal_next_token(&tokens);
+				next_token(&tokens, verbose);
 			} else {
-				llog(IMPAIR_STREAM, logger, "forcing %s proposal %s transform",
+				llog(IMPAIR_STREAM, verbose.logger,
+				     "forcing %s proposal %s transform",
 				     proposal->protocol->name,
 				     transform_type->name);
 				if (!parse_transform_algorithms(parser, proposal,
-								transform_type, &tokens)) {
+								transform_type, &tokens,
+								verbose)) {
 					return false;
 				}
 			}
@@ -1422,22 +1473,20 @@ bool parse_proposal(struct proposal_parser *parser,
 				return false;
 			}
 
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "switching from '%s' transforms to '%s' transforms",
-			      transform_type->name,
-			      tmp->name);
+			vdbg("switching from '%s' transforms to '%s' transforms",
+			     transform_type->name,
+			     tmp->name);
 
 			/* advance to TRANSFORMS after '=' */
-			proposal_next_token(&tokens);
+			next_token(&tokens, verbose);
 			transform_type = tmp;
 			typed_how = TRANSFORM_TYPE_EXPLICIT;
 
 		} else if (tokens.prev.delim == ';' &&
 			   transform_type <= transform_type_kem) {
 
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "skipping from transform '%s' to ;KEM",
-			      transform_type->name);
+			vdbg("skipping from transform '%s' to ;KEM",
+			     transform_type->name);
 
 			/* treat ;... like KEM=... */
 			transform_type = transform_type_kem;
@@ -1458,12 +1507,13 @@ bool parse_proposal(struct proposal_parser *parser,
 			return false;
 		}
 
-		PASSERT(logger, (transform_type >= transform_types &&
-				 transform_type < transform_type_roof));
+		vassert(transform_type >= transform_types &&
+			transform_type < transform_type_roof);
 
 		if (!parse_proposal_transforms(parser, proposal,
 					       transform_type,
-					       typed_how, &tokens)) {
+					       typed_how, &tokens,
+					       verbose)) {
 			return false;
 		}
 

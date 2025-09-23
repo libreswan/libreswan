@@ -40,6 +40,7 @@
 struct verbose {
 	const struct logger *logger;
 	enum stream stream;
+	bool debug;
 	int level;
 	const char *prefix;
 	where_t where;
@@ -87,6 +88,7 @@ struct verbose {
 			.stream = (STREAM != DEBUG_STREAM ? STREAM :	\
 				   LDBGP(DBG_BASE, LOGGER) ? DEBUG_STREAM : \
 				   NO_STREAM),				\
+			.debug = LDBGP(DBG_BASE, LOGGER),		\
 			.where = HERE,					\
 			}
 
@@ -120,6 +122,12 @@ struct verbose {
 #define vlog_passert(WHERE, FMT, ...)				\
 	llog_passert(verbose.logger, WHERE, FMT, ##__VA_ARGS__)
 
+#if 0
+/* no - so that grep IMPAIR_STREAM finds IMPAIRs */
+#define vimpair(FMT, ...)					\
+	llog(IMPAIR_STREAM, verbose.logger, FMT, ##__VA_ARGS__)
+#endif
+
 #define vwarning(FMT, ...)						\
 	llog(WARNING_STREAM, verbose.logger, FMT, ##__VA_ARGS__)
 
@@ -144,13 +152,11 @@ struct verbose {
  * These all have the same feel as the LDBG*() series.
  */
 
-#define VDBGP()	LDBGP(DBG_BASE, verbose.logger)
-
-#define vdbg(FMT, ...)							\
-	{								\
-		if (VDBGP()) {						\
-			VDBG_log(FMT, ##__VA_ARGS__);			\
-		}							\
+#define vdbg(FMT, ...)					\
+	{						\
+		if (verbose.debug) {			\
+			VDBG_log(FMT, ##__VA_ARGS__);	\
+		}					\
 	}
 
 #define VDBG_log(FMT, ...)			\
@@ -160,7 +166,7 @@ struct verbose {
 
 #define vdbg_errno(ERRNO, FMT, ...)				\
 	{							\
-		if (VDBGP()) {					\
+		if (verbose.debug) {				\
 			VDBG_errno(errno_, FMT, ##__VA_ARGS__);	\
 		}						\
 	}
@@ -174,7 +180,7 @@ struct verbose {
 	}
 
 #define VDBG_JAMBUF(BUF)						\
-	for (bool cond_ = VDBGP(); cond_; cond_ = false)		\
+	for (bool cond_ = verbose.debug; cond_; cond_ = false)		\
 		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
 			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
 			     cond_; cond_ = false)
@@ -191,8 +197,7 @@ struct verbose {
 
 #define verbose(FMT, ...)						\
 	{								\
-		if (verbose.stream != 0 &&				\
-		    verbose.stream != NO_STREAM) {			\
+		if (verbose.stream != NO_STREAM) {			\
 			llog(verbose.stream, verbose.logger,		\
 			     PRI_VERBOSE""FMT,				\
 			     pri_verbose, ##__VA_ARGS__);		\
