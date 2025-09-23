@@ -4106,7 +4106,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	build_connection_proposals_from_hosts_and_configs(c, verbose);
-	if (VDBGP()) {
+	if (verbose.debug) {
 		VDBG_log("proposals built");
 		connection_db_check(verbose.logger, HERE);
 	}
@@ -4122,7 +4122,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	vassert(!oriented(c));
 	orient(c, verbose.logger);
 
-	if (VDBGP()) {
+	if (verbose.debug) {
 		VDBG_log("oriented; maybe");
 		connection_db_check(verbose.logger, HERE);
 	}

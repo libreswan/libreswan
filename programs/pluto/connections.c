@@ -758,7 +758,7 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 	 */
 	connection_db_rehash_that_id(c);
 	connection_db_rehash_host_pair(c);
-	if (VDBGP()) {
+	if (verbose.debug) {
 		connection_db_check(verbose.logger, HERE);
 	}
 
