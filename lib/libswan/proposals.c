@@ -991,25 +991,6 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 	return true;
 }
 
-void discard_proposal_transform(const char *what, struct proposal_parser *parser,
-				struct proposal *proposal,
-				const struct transform_type *type,
-				diag_t *diag)
-{
-	const struct logger *logger = parser->policy->logger;
-	/* toss the result, but save the error */
-	ldbgf(DBG_PROPOSAL_PARSER, logger,
-	      "%s failed, saving error '%s' and tossing result",
-	      what, str_diag(parser->diag));
-	pfree_transforms(proposal, type);
-	if (diag != NULL) {
-		(*diag) = parser->diag;
-		parser->diag = NULL;
-	} else {
-		pfree_diag(&parser->diag);
-	}
-}
-
 struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delims)
 {
 	struct proposal_tokenizer token = {
@@ -1203,10 +1184,12 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	 * message).
 	 */
 
-	diag_t prf_diag = NULL;
-	discard_proposal_transform("<encr>-<PRF>", parser, proposal,
-				   transform_type_prf,
-				   /*save the diag*/&prf_diag);
+	ldbgf(DBG_PROPOSAL_PARSER, logger,
+	      "<encr>-<PRF> failed, saving error '%s' and tossing result",
+	      str_diag(parser->diag));
+	pfree_transforms(proposal, transform_type_prf);
+	diag_t prf_diag = parser->diag;
+	parser->diag = NULL;
 
 	if (!parse_transform_algorithms(parser, proposal, transform_type_integ, tokens)) {
 		ldbgf(DBG_PROPOSAL_PARSER, logger,

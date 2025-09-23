@@ -357,10 +357,4 @@ bool parse_proposal_transform(struct proposal_parser *parser,
 bool parse_proposal(struct proposal_parser *parser,
 		    struct proposal *proposal, shunk_t input);
 
-void discard_proposal_transform(const char *what,
-				struct proposal_parser *parser,
-				struct proposal *proposal,
-				const struct transform_type *transform_type,
-				diag_t *diag);
-
 #endif /* PROPOSALS_H */
