@@ -325,35 +325,6 @@ struct v1_proposal {
 
 struct v1_proposal v1_proposal(const struct proposal *proposal);
 
-/*
- * INTERNAL: tokenize <input> into <delim_before><current><delim_after><input>
- */
-
-struct proposal_term {
-	shunk_t token;
-	char delim;
-};
-
-struct proposal_tokenizer {
-	struct proposal_term prev;
-	struct proposal_term curr;
-	struct proposal_term next;
-	shunk_t input;
-	const char *delims;
-};
-
-struct proposal_tokenizer proposal_first_token(shunk_t input, const char *delim);
-void proposal_next_token(struct proposal_tokenizer *token);
-
-bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
-				      struct proposal *proposal,
-				      struct proposal_tokenizer *tokens);
-
-bool parse_proposal_transform(struct proposal_parser *parser,
-			      struct proposal *proposal,
-			      const struct transform_type *transform_type,
-			      shunk_t token);
-
 bool parse_proposal(struct proposal_parser *parser,
 		    struct proposal *proposal, shunk_t input);
 
