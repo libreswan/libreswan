@@ -156,29 +156,34 @@ void show_kernel_alg_connection(struct show *s,
 		}
 	}
 
-	const struct state *st = state_by_serialno(c->established_child_sa);
-
-	if (st != NULL && st->st_esp.protocol == &ip_protocol_esp) {
-		SHOW_JAMBUF(s, buf) {
-			jam_string(buf, c->name);
-			jam_string(buf, ":  ");
-			jam(buf, " %s algorithm newest: %s_%03d-%s;",
-			    satype,
-			    st->st_esp.trans_attrs.ta_encrypt->common.fqn,
-			    st->st_esp.trans_attrs.enckeylen,
-			    st->st_esp.trans_attrs.ta_integ->common.fqn);
-			jam(buf, " pfsgroup=%s", pfsbuf);
-		}
-	}
-
-	if (st != NULL && st->st_ah.protocol == &ip_protocol_ah) {
-		SHOW_JAMBUF(s, buf) {
-			jam_string(buf, c->name);
-			jam_string(buf, ":  ");
-			jam(buf, " %s algorithm newest: %s;",
-			    satype,
-			    st->st_ah.trans_attrs.ta_integ->common.fqn);
-			jam(buf, " pfsgroup=%s", pfsbuf);
+	const struct child_sa *child = child_sa_by_serialno(c->established_child_sa);
+	if (child != NULL) {
+		const struct ipsec_proto_info *outer = outer_ipsec_proto_info(child);
+		if (outer != NULL ) {
+			SHOW_JAMBUF(s, buf) {
+				jam_string(buf, c->name);
+				jam_string(buf, ":  ");
+				jam_string(buf, " ");
+				jam_string(buf, outer->protocol->name);
+				jam_string(buf, " algorithm newest: ");
+				/* should be a function */
+				const char *sep = "";
+				if (outer->trans_attrs.ta_encrypt != NULL) {
+					jam_string(buf, sep); sep = "-";
+					jam_string(buf, outer->trans_attrs.ta_encrypt->common.fqn);
+					if (outer->trans_attrs.enckeylen > 0) {
+						jam(buf, "_%3u", outer->trans_attrs.enckeylen);
+					}
+				}
+				if (outer->trans_attrs.ta_integ != NULL &&
+				    (outer->trans_attrs.ta_integ != &ike_alg_integ_none ||
+				     !encrypt_desc_is_aead(outer->trans_attrs.ta_encrypt))) {
+					jam_string(buf, sep); sep = "-";
+					jam_string(buf, outer->trans_attrs.ta_integ->common.fqn);
+				}
+				jam_string(buf, ";");
+				jam(buf, " pfsgroup=%s", pfsbuf);
+			}
 		}
 	}
 }
