@@ -115,6 +115,29 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 #define clone_const_things(ORIG, COUNT, NAME) \
 	clone_bytes((ORIG), (COUNT) * sizeof((ORIG)[0]), (NAME))
 
+char *clone_str(const char *str, const char *name);
+void append_str(char **sentence, const char *sep, const char *word);
+
+#define pfreeany(P) {				\
+		typeof(P) *pp_ = &(P);		\
+		if (*pp_ != NULL) {		\
+			pfree(*pp_);		\
+			*pp_ = NULL;		\
+		}				\
+	}
+
+#define replace(p, q) { pfreeany(p); (p) = (q); }
+
+/*
+ * Memory primitives, should only be used by libevent.
+ */
+void *uninitialized_malloc(size_t size, const char *name);
+void *uninitialized_realloc(void *ptr, size_t size, const char *name);
+
+/* can't use vaprintf() as it calls malloc() directly */
+char *alloc_printf(const char *fmt, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
+char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESULT;
+
 /*
  * Items:
  *
@@ -156,27 +179,65 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 	     ITEM != NULL && ITEM < (ITEMS)->item + (ITEMS)->len;	\
 	     ITEM++)
 
-char *clone_str(const char *str, const char *name);
-void append_str(char **sentence, const char *sep, const char *word);
+/*
+ * Data is for when the array header is embedded in another structure,
+ * and only the data table needs allocating.
+ *
+ *   struct whatever {
+ *      unsigned len;
+ *      <TYPE> *data;
+ *   }
+ *
+ * Since .len always exits it simplifies code needing to check if the
+ * array is empty.
+ */
 
-#define pfreeany(P) {				\
-		typeof(P) *pp_ = &(P);		\
-		if (*pp_ != NULL) {		\
-			pfree(*pp_);		\
-			*pp_ = NULL;		\
-		}				\
+#define alloc_data(DATA, COUNT)					\
+	({							\
+		(DATA)->data = alloc_things((DATA)->data[0],	\
+					    COUNT, #DATA);	\
+		(DATA)->len = (COUNT);				\
+	})
+
+#define pfree_data(DATA)			\
+	{					\
+		pfreeany((DATA)->data);		\
+		(DATA)->len = 0;		\
 	}
 
-#define replace(p, q) { pfreeany(p); (p) = (q); }
+#define grow_data(DATA)						\
+	({							\
+		size_t size_ = sizeof((DATA)->data[0]);		\
+		void *data_ = (DATA)->data;			\
+		realloc_bytes(&data_,				\
+			      /*old*/size_ * (DATA)->len,	\
+			      /*old*/size_ * ((DATA)->len + 1),	\
+			      #DATA);				\
+		(DATA)->data = data_;				\
+		(DATA)->len += 1;				\
+		&(DATA)->data[(DATA)->len-1];			\
+	})
 
-/*
- * Memory primitives, should only be used by libevent.
- */
-void *uninitialized_malloc(size_t size, const char *name);
-void *uninitialized_realloc(void *ptr, size_t size, const char *name);
+#define realloc_data(DATA, COUNT)					\
+	{								\
+		if ((COUNT) == 0) {					\
+			/* realloc doesn't like size==0*/		\
+			pfree_data(DATA);				\
+		} else if ((COUNT) != (DATA)->len) {			\
+			size_t size_ = sizeof((DATA)->data[0]);		\
+			void *data_ = (DATA)->data;			\
+			realloc_bytes(&data_,				\
+				      /*old*/size_ * (DATA)->len,	\
+				      /*old*/size_ * (COUNT),		\
+				      #DATA);				\
+			(DATA)->data = data_;				\
+			(DATA)->len = (COUNT);				\
+		}							\
+	}
 
-/* can't use vaprintf() as it calls malloc() directly */
-char *alloc_printf(const char *fmt, ...) PRINTF_LIKE(1) MUST_USE_RESULT;
-char *alloc_vprintf(const char *fmt, va_list ap)  VPRINTF_LIKE(1) MUST_USE_RESULT;
+#define DATA_FOR_EACH(DATUM, DATA)					\
+	for (typeof((DATA)->data[0]) *DATUM = (DATA)->data;		\
+	     (DATUM) != NULL && (DATUM) < ((DATA)->data + (DATA)->len);	\
+	     (DATUM)++)
 
 #endif /* _LSW_ALLOC_H_ */
