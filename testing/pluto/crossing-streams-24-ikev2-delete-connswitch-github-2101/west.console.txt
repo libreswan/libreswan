@@ -51,7 +51,7 @@ Connection list:
 "a":   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #3; established Child SA: #2;
 "a":   conn serial: $1;
 "a":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
-"a":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"a":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
 "b": 192.0.3.254/32===192.1.2.45[@west]...192.1.2.23[@east]===192.0.20.0/24; routed-tunnel; my_ip=192.0.3.254; their_ip=unset;
 "b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "b":   my_updown=ipsec _updown;
@@ -74,7 +74,7 @@ Connection list:
 "b":   nat-traversal: encapsulation:auto; keepalive:20s
 "b":   routing: routed-tunnel; owner: Child SA #4; established Child SA: #4;
 "b":   conn serial: $2;
-"b":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"b":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
  
 Total IPsec connections: loaded 2, routed 2, active 2
 west #

@@ -186,7 +186,7 @@ Connection list:
 "road-east-x509-ipv4"[1]:   routing: routed-tunnel; owner: Child SA #2; established IKE SA: #3; established Child SA: #2;
 "road-east-x509-ipv4"[1]:   conn serial: $2, instantiated from: $1;
 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
-"road-east-x509-ipv4"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
+"road-east-x509-ipv4"[1]:   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
  
 Total IPsec connections: loaded 2, routed 1, active 1
  
