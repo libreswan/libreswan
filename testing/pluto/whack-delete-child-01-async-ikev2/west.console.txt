@@ -26,12 +26,12 @@ west #
 "west-cuckold" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "west-cuckold" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-cuckold" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-cuckold" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec up west-cuckoo
 "west-cuckoo" #3: initiating Child SA using IKE SA #1
 "west-cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-cuckoo" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -54,10 +54,10 @@ west #
 "west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  ../../guestbin/wait-for-pluto.sh '#4: initiator established'
-"west-cuckoo" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-cuckoo" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/wait-for-pluto.sh '#5: initiator established'
-"west-cuckold" #5: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-cuckold" #5: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up

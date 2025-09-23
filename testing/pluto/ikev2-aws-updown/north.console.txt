@@ -24,7 +24,7 @@ north #
 "westnet-northnet" #1: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-northnet" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@west'
 "westnet-northnet" #2: route-client output: westnet-northnet routed: setting eastnet-northnet passive
-"westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
+"westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #2: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
@@ -70,7 +70,7 @@ north #
 "eastnet-northnet" #4: route-client output: eastnet-northnet routed: setting westnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
-"eastnet-northnet" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
+"eastnet-northnet" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #4: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
@@ -136,7 +136,7 @@ north #
 "westnet-northnet" #6: route-client output: westnet-northnet routed: setting eastnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#6: initiator established Child SA using #5'
-"westnet-northnet" #6: initiator established Child SA using #5; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
+"westnet-northnet" #6: initiator established Child SA using #5; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #6: "westnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
@@ -256,7 +256,7 @@ north #
 "eastnet-northnet" #10: route-client output: eastnet-northnet routed: setting westnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#10: initiator established Child SA using #9'
-"eastnet-northnet" #10: initiator established Child SA using #9; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=active}
+"eastnet-northnet" #10: initiator established Child SA using #9; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
 #10: "eastnet-northnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'

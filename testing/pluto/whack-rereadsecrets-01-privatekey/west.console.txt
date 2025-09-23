@@ -50,7 +50,7 @@ forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
  ../../guestbin/wait-for-pluto.sh '#2: initiator established Child SA using #1'
-"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23

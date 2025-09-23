@@ -47,7 +47,7 @@ east #
 #2: "clear-or-private#192.1.3.0/24"[1] ...192.1.3.209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
 east #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"clear-or-private#192.1.3.0/24"[1] ...192.1.3.209 #2: responder established Child SA using #1; IPsec tunnel [192.1.2.66-192.1.2.66:0-65535 0===192.1.3.209/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"clear-or-private#192.1.3.0/24"[1] ...192.1.3.209 #2: responder established Child SA using #1; IPsec tunnel [192.1.2.66-192.1.2.66:0-65535 0===192.1.3.209/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 east #
  # you should see one RSA and on NULL only
 east #

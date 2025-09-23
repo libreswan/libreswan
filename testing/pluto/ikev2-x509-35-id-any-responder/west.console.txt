@@ -34,7 +34,7 @@ west #
 "ikev2-westnet-eastnet-x509-cr" #1: peer certificate contains no subjectAltName extension to match IPV4_ADDR '192.1.2.23'
 "ikev2-westnet-eastnet-x509-cr" #1: X509: connection allows unmatched IKE ID and certificate SAN
 "ikev2-westnet-eastnet-x509-cr" #1: initiator established IKE SA; authenticated peer certificate '192.1.2.23' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"ikev2-westnet-eastnet-x509-cr" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"ikev2-westnet-eastnet-x509-cr" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  echo "done"
 done

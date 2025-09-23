@@ -48,7 +48,7 @@ initiate on-demand for packet 192.1.3.209:8-ICMP->192.1.2.23:0 by whack
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer using preloaded certificate '192.1.2.23' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
@@ -79,7 +79,7 @@ road #
 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='192.1.2.23'
 road #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  # you should see one RSA and on NULL only
 road #

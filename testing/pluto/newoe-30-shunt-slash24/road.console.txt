@@ -43,7 +43,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 : oe.negopass.failnone.pass ESTABLISH
-"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
 : oe.negopass.failnone.pass EXPECT IPSEC POLICY
@@ -234,7 +234,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 : oe.negopass.faildrop.pass ESTABLISH
-"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
 : oe.negopass.faildrop.pass EXPECT IPSEC POLICY
@@ -441,7 +441,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 : oe.negopass.failpass.pass ESTABLISH
-"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
 : oe.negopass.failpass.pass EXPECT IPSEC POLICY
@@ -642,7 +642,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 : oe.negodrop.failnone.pass ESTABLISH
-"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
 : oe.negodrop.failnone.pass EXPECT IPSEC POLICY
@@ -835,7 +835,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 : oe.negodrop.faildrop.pass ESTABLISH
-"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
 : oe.negodrop.faildrop.pass EXPECT IPSEC POLICY
@@ -1044,7 +1044,7 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 fired and forgotten
 "road#192.1.2.0/24"[1] ...192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 : oe.negodrop.failpass.pass ESTABLISH
-"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"road#192.1.2.0/24"[1] ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.209/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 #2: "road#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
 up
 : oe.negodrop.failpass.pass EXPECT IPSEC POLICY

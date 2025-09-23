@@ -24,7 +24,7 @@ east #
 #3: "east/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
 east #
  ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA'
-"east/0x2" #4: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"east/0x2" #4: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 east #
  # non-zero counts confirm encrypted traffic flowing
 east #

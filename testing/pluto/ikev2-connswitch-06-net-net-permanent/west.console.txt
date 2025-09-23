@@ -24,12 +24,12 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2-b
 "westnet-eastnet-ipv4-psk-ikev2-b" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-ipv4-psk-ikev2-b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"westnet-eastnet-ipv4-psk-ikev2-b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"westnet-eastnet-ipv4-psk-ikev2-b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  echo done
 done

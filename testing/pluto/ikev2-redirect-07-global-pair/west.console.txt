@@ -41,7 +41,7 @@ west #
 "west-cuckoo" #2: sent IKE_AUTH request to 192.1.3.33:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #3 {ESP <0xESPESP}
 "west-cuckoo" #2: processing IKE_AUTH response from 192.1.3.33:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "west-cuckoo" #2: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"west-cuckoo" #3: initiator established Child SA using #2; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-cuckoo" #3: initiator established Child SA using #2; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # initiate the second connection; will create its own IKE SA and then
 west #
@@ -63,7 +63,7 @@ west #
 "west-cuckold": IMPAIR: dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.3.33; delete IKE SA
 "west-cuckold" #5: initiating Child SA using IKE SA #2
 "west-cuckold" #5: sent CREATE_CHILD_SA request to create Child SA using IKE SA #2 {ESP <0xESPESP}
-"west-cuckold" #5: initiator established Child SA using #2; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-cuckold" #5: initiator established Child SA using #2; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ipsec trafficstatus
 #5: "west-cuckold", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'

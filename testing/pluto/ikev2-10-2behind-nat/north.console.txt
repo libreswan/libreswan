@@ -19,7 +19,7 @@ north #
 "north"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/4500 containing SK{IDr,CERT,AUTH,CP,SA,TSi,TSr}
 "north"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "north"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.100
-"north"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.100/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"north"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.100/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.2.100 192.0.2.254
 up

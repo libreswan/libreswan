@@ -38,12 +38,12 @@ west #
  ipsec up west-cuckoo-1
 "west-cuckoo-1" #3: initiating Child SA using IKE SA #1
 "west-cuckoo-1" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"west-cuckoo-1" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-cuckoo-1" #3: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ipsec up west-cuckoo-2
 "west-cuckoo-2" #4: initiating Child SA using IKE SA #1
 "west-cuckoo-2" #4: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"west-cuckoo-2" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"west-cuckoo-2" #4: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up

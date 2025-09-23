@@ -21,7 +21,7 @@ east #
  # Ping from east, but first make certain that the tunnels are up
 east #
  ../../guestbin/wait-for-pluto.sh '#4: initiator established Child SA using #1'
-"cuckoo" #4: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"cuckoo" #4: initiator established Child SA using #1; IPsec tunnel [192.0.20.0/24===192.0.3.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 east #
  ../../guestbin/ping-once.sh --up -I 192.0.20.254 192.0.3.254
 up

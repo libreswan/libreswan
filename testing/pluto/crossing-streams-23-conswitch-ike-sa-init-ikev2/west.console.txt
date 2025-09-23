@@ -53,7 +53,7 @@ west #
 "a" #3: switched to "b"
 west #
  ../../guestbin/wait-for-pluto.sh --match '"b" #3: responder established Child SA using #2'
-"b" #3: responder established Child SA using #2; IPsec tunnel [192.0.3.254/32===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"b" #3: responder established Child SA using #2; IPsec tunnel [192.0.3.254/32===192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  # this is where pluto realises that the stream crossed
 west #
@@ -61,7 +61,7 @@ west #
 "a" #1: dropping negotiation as superseded by established IKE SA #2
 west #
  ../../guestbin/wait-for-pluto.sh --match '"a" #4: initiator established Child SA using #2'
-"a" #4: initiator established Child SA using #2; IPsec tunnel [192.0.3.253/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"a" #4: initiator established Child SA using #2; IPsec tunnel [192.0.3.253/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.3.253 192.0.2.254
 up

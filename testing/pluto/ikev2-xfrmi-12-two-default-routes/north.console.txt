@@ -29,7 +29,7 @@ north #
 "north-west" #1: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "north-west" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@west'
 "north-west" #2: route-client output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
-"north-west" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"north-west" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ../../guestbin/ip.sh -s link show ipsec2
 X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -62,7 +62,7 @@ north #
 "north-east" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #4 {ESP <0xESPESP}
 "north-east" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "north-east" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"north-east" #4: initiator established Child SA using #3; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"north-east" #4: initiator established Child SA using #3; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ../../guestbin/ip.sh -s link show ipsec2
 X: ipsec2@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

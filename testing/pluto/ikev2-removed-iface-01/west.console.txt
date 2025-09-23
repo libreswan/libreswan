@@ -49,7 +49,7 @@ west #
 "test1" #1: processing IKE_AUTH response from 192.1.3.1:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "test1" #1: WARNING: '192.1.3.2' PSK length of 9 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)
 "test1" #1: initiator established IKE SA; authenticated peer using authby=secret and IPV4_ADDR '192.1.3.1'
-"test1" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.2/32===192.1.3.1/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"test1" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.2/32===192.1.3.1/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.3.2 192.1.3.1
 up
@@ -82,7 +82,7 @@ west #
 "test2" #3: processing IKE_AUTH response from 192.1.3.1:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "test2" #3: WARNING: '192.1.3.3' PSK length of 9 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)
 "test2" #3: initiator established IKE SA; authenticated peer using authby=secret and IPV4_ADDR '192.1.3.1'
-"test2" #4: initiator established Child SA using #3; IPsec tunnel [192.1.3.3/32===192.1.3.1/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"test2" #4: initiator established Child SA using #3; IPsec tunnel [192.1.3.3/32===192.1.3.1/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.3.3 192.1.3.1
 up

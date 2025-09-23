@@ -15,7 +15,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for-pluto.sh --match '#2: initiator established Child SA'
-"west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up

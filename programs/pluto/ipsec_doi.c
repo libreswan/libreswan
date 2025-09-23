@@ -150,7 +150,11 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		     st->st_esp.trans_attrs.enckeylen != st->st_esp.trans_attrs.ta_encrypt->keydeflen)) {
 			jam(buf, "_%u", st->st_esp.trans_attrs.enckeylen);
 		}
-		jam(buf, "-%s", st->st_esp.trans_attrs.ta_integ->common.fqn);
+		/* log transform when non-AEAD or non-NONE */
+		if (!encrypt_desc_is_aead(st->st_esp.trans_attrs.ta_encrypt) ||
+		    st->st_esp.trans_attrs.ta_integ != &ike_alg_integ_none) {
+			jam(buf, "-%s", st->st_esp.trans_attrs.ta_integ->common.fqn);
+		}
 
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_kem != NULL) {
 			jam_string(buf, "-");

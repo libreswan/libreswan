@@ -25,12 +25,12 @@ north #
 "north-east-gw" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP}
 "north-east-gw" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "north-east-gw" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
-"north-east-gw" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"north-east-gw" #2: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ipsec auto --up north-east-sn
 "north-east-sn" #3: initiating Child SA using IKE SA #1
 "north-east-sn" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"north-east-sn" #3: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.0.21.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-DH19 DPD=passive}
+"north-east-sn" #3: initiator established Child SA using #1; IPsec tunnel [192.1.3.33/32===192.0.21.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 north #
  ../../guestbin/ip.sh link show type xfrm
 X: ipsec1@NONE: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

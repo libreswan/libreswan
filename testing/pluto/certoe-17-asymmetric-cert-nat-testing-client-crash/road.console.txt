@@ -85,7 +85,7 @@ road #
 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
  grep "^[^|].* established Child SA" /tmp/pluto.log
-"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=active}
+"private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=active}
 road #
  grep "auth method: IKEv2_AUTH_" /tmp/pluto.log
 |    auth method: IKEv2_AUTH_NULL (0xd)

@@ -28,7 +28,7 @@ west #
 "west"[1] 2001:db8:1:2::23 #2: running updown prepare 2001:db8:0:3:1::/128===2001:db8:0:2::/64
 "west"[1] 2001:db8:1:2::23 #2: running updown route 2001:db8:0:3:1::/128===2001:db8:0:2::/64
 "west"[1] 2001:db8:1:2::23 #2: running updown up 2001:db8:0:3:1::/128===2001:db8:0:2::/64
-"west"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [192.3.1.0/32===192.0.2.0/24] [2001:db8:0:3:1::/128===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west"[1] 2001:db8:1:2::23 #2: initiator established Child SA using #1; IPsec tunnel [192.3.1.0/32===192.0.2.0/24] [2001:db8:0:3:1::/128===2001:db8:0:2::/64] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  echo done
 done

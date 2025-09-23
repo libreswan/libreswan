@@ -59,12 +59,12 @@ east #
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: sent IKE_AUTH request to 192.1.2.254:UDP/6666 with shared-key-mac and FQDN '@east'; Child SA #4 {ESPinUDP <0xESPESP}
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: processing IKE_AUTH response from 192.1.2.254:UDP/6666 containing SK{IDr,AUTH,SA,TSi,TSr}
 "road-eastnet-ikev2"[1] 192.1.2.254 #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@road'
-"road-eastnet-ikev2"[1] 192.1.2.254 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.1.3.209/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.254:6666 DPD=passive}
+"road-eastnet-ikev2"[1] 192.1.2.254 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.1.3.209/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.254:6666 DPD=passive}
 east #
  # since the NAT port is still open road should allow recovery
 east #
  ../../guestbin/wait-for-pluto.sh '^".*#4: initiator established Child SA using #3'
-"road-eastnet-ikev2"[1] 192.1.2.254 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.1.3.209/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.254:6666 DPD=passive}
+"road-eastnet-ikev2"[1] 192.1.2.254 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0/24===192.1.3.209/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.254:6666 DPD=passive}
 east #
  ipsec _kernel policy
 src 192.0.2.0/24 dst 192.1.3.209/32

@@ -25,7 +25,7 @@ west #
 "west-east" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(TICKET_LT_OPAQUE),IDr,CERT,AUTH,SA,TSi,TSr}
 "west-east" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 "west-east" #1: received v2N_TICKET_LT_OPAQUE
-"west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec status | grep ticket
 "west-east":   session resume ticket: length: B bytes; expires-in: Ns;
@@ -46,7 +46,7 @@ west #
 "west-east" #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{N(TICKET_LT_OPAQUE),IDr,AUTH,SA,TSi,TSr}
 "west-east" #3: initiator established IKE SA; authenticated peer using authby=session-resume
 "west-east" #3: received v2N_TICKET_LT_OPAQUE
-"west-east" #4: initiator established Child SA using #3; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+"west-east" #4: initiator established Child SA using #3; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec status | grep ticket
 "west-east":   session resume ticket: length: B bytes; expires-in: Ns;

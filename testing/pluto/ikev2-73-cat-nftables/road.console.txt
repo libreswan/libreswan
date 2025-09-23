@@ -22,7 +22,7 @@ road #
 "road-east"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/4500 containing SK{IDr,AUTH,CP,SA,TSi,TSr}
 "road-east"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "road-east"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
-"road-east"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
+"road-east"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1/32===192.0.2.0/24] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec whack --trafficstatus
 #2: "road-east"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east', lease=10.0.10.1/32
