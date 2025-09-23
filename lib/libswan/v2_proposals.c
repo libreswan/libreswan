@@ -34,7 +34,8 @@
 
 static void merge_algorithms(struct proposal_parser *parser,
 			     struct proposal *proposal,
-			     const struct transform_type *transform_type)
+			     const struct transform_type *transform_type,
+			     struct verbose verbose)
 {
 	const struct ike_alg **defaults = parser->protocol->defaults->transform[transform_type->index];
 	if (defaults == NULL) {
@@ -49,26 +50,27 @@ static void merge_algorithms(struct proposal_parser *parser,
 
 	for (const struct ike_alg **alg = defaults; (*alg) != NULL; alg++) {
 		append_proposal_transform(parser, proposal,
-					  transform_type,
-					  *alg, 0);
+					  transform_type, *alg, 0,
+					  verbose);
 	}
 }
 
 static bool merge_defaults(struct proposal_parser *parser,
-			   struct proposal *proposal)
+			   struct proposal *proposal,
+			   struct verbose verbose)
 {
 	const struct proposal_defaults *defaults = parser->protocol->defaults;
 	for (const struct transform_type *type = transform_type_floor;
 	     type < PMIN(transform_type_prf, transform_type_integ);
 	     type++) {
-		merge_algorithms(parser, proposal, type);
+		merge_algorithms(parser, proposal, type, verbose);
 	}
 
 	/*
 	 * PRF/INTEG are weird; and, as of time of writing INTEG was
 	 * ordered before PRF, which is backwards.
 	 */
-	merge_algorithms(parser, proposal, transform_type_prf);
+	merge_algorithms(parser, proposal, transform_type_prf, verbose);
 	if (first_proposal_transform(proposal, transform_type_integ) == NULL) {
 		if (proposal_encrypt_aead(proposal)) {
 			/*
@@ -76,12 +78,13 @@ static bool merge_defaults(struct proposal_parser *parser,
 			 */
 			append_proposal_transform(parser, proposal,
 						  transform_type_integ,
-						  &ike_alg_integ_none.common, 0);
+						  &ike_alg_integ_none.common, 0,
+						  verbose);
 		} else if (defaults->transform[PROPOSAL_TRANSFORM_integ] != NULL) {
 			/*
 			 * Merge in the defaults.
 			 */
-			merge_algorithms(parser, proposal, transform_type_integ);
+			merge_algorithms(parser, proposal, transform_type_integ, verbose);
 		} else if (first_proposal_transform(proposal, transform_type_prf) != NULL &&
 			   proposal_encrypt_norm(proposal)) {
 			/*
@@ -106,7 +109,8 @@ static bool merge_defaults(struct proposal_parser *parser,
 				}
 				append_proposal_transform(parser, proposal,
 							  transform_type_integ,
-							  &integ->common, 0);
+							  &integ->common, 0,
+							  verbose);
 			}
 		}
 	}
@@ -114,26 +118,28 @@ static bool merge_defaults(struct proposal_parser *parser,
 	for (const struct transform_type *transform_type =
 		     PMAX(transform_type_prf, transform_type_integ) + 1;
 	     transform_type < transform_type_roof; transform_type++) {
-		merge_algorithms(parser, proposal, transform_type);
+		merge_algorithms(parser, proposal, transform_type, verbose);
 	}
 	return true;
 }
 
 static bool parse_ikev2_proposal(struct proposal_parser *parser,
-				 struct proposal *proposal, shunk_t input)
+				 struct proposal *proposal,
+				 shunk_t input,
+				 struct verbose verbose)
 {
-	if (!parse_proposal(parser, proposal, input)) {
+	if (!parse_proposal(parser, proposal, input, verbose)) {
 		return false;
 	}
 
-	if (!merge_defaults(parser, proposal)) {
-		passert(parser->diag != NULL);
+	if (!merge_defaults(parser, proposal, verbose)) {
+		vassert(parser->diag != NULL);
 		return false;
 	}
 
 	/* back end? */
 	if (!parser->protocol->proposal_ok(parser, proposal)) {
-		passert(parser->diag != NULL);
+		vassert(parser->diag != NULL);
 		return false;
 	}
 
@@ -142,12 +148,9 @@ static bool parse_ikev2_proposal(struct proposal_parser *parser,
 
 bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t input)
+			    shunk_t input,
+			    struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
-	ldbgf(DBG_PROPOSAL_PARSER, logger, "parsing '"PRI_SHUNK"' for %s",
-	      pri_shunk(input), parser->protocol->name);
-
 	if (input.len == 0) {
 		/* XXX: hack to keep testsuite happy */
 		proposal_error(parser, "%s proposal is empty",
@@ -159,8 +162,8 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 		/* find the next proposal */
 		shunk_t raw_proposal = shunk_token(&input, NULL, ",");
 		struct proposal *proposal = alloc_proposal(parser);
-		if (!parse_ikev2_proposal(parser, proposal, raw_proposal)) {
-			passert(parser->diag != NULL);
+		if (!parse_ikev2_proposal(parser, proposal, raw_proposal, verbose)) {
+			vassert(parser->diag != NULL);
 			free_proposal(&proposal);
 			return false;
 		}
@@ -168,8 +171,8 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 		 * XXX: should check that the proposal hasn't ended up
 		 * empty.
 		 */
-		passert(parser->diag == NULL);
-		append_proposal(proposals, &proposal);
+		vassert(parser->diag == NULL);
+		append_proposal(proposals, &proposal, verbose);
 	} while (input.ptr != NULL);
 	return true;
 }

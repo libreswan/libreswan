@@ -204,15 +204,19 @@ void free_proposals(struct proposals **proposals);
 extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
-void append_proposal(struct proposals *proposals, struct proposal **proposal);
+void append_proposal(struct proposals *proposals,
+		     struct proposal **proposal,
+		     struct verbose verbose);
 void append_proposal_transform(struct proposal_parser *parser,
 			       struct proposal *proposal,
 			       const struct transform_type *transform_type,
 			       const struct ike_alg *transform,
-			       int enckeylen);
+			       int enckeylen,
+			       struct verbose verbose);
 void remove_duplicate_algorithms(struct proposal_parser *parser,
 				 struct proposal *proposal,
-				 const struct transform_type *transform_type);
+				 const struct transform_type *transform_type,
+				 struct verbose verbose);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
@@ -281,10 +285,12 @@ struct proposals *proposals_from_str(struct proposal_parser *parser,
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str);
+			    shunk_t alg_str,
+			    struct verbose verbose);
 bool v2_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str);
+			    shunk_t alg_str,
+			    struct verbose verbose);
 
 /*
  * Post parsing checks that the proposal is ok (yea *_ok() is a pretty
@@ -326,6 +332,7 @@ struct v1_proposal {
 struct v1_proposal v1_proposal(const struct proposal *proposal);
 
 bool parse_proposal(struct proposal_parser *parser,
-		    struct proposal *proposal, shunk_t input);
+		    struct proposal *proposal, shunk_t input,
+		    struct verbose verbose);
 
 #endif /* PROPOSALS_H */

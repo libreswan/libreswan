@@ -27,6 +27,11 @@
 #include "ike_alg_kem.h"
 #include "alg_byname.h"
 
+static bool add_proposal_defaults(struct proposal_parser *parser,
+				  struct proposals *proposals,
+				  const struct v1_proposal *proposal,
+				  struct verbose verbose);
+
 /*
  * Add the proposal defaults for the specific algorithm.
  */
@@ -51,17 +56,13 @@ static struct v1_proposal merge_alg_default(struct v1_proposal proposal,
 	return proposal;
 }
 
-static bool add_proposal_defaults(struct proposal_parser *parser,
-				  struct proposals *proposals,
-				  const struct v1_proposal *proposal);
-
 static bool add_alg_defaults(struct proposal_parser *parser,
 			     struct proposals *proposals,
 			     const struct v1_proposal *proposal,
-			     const struct transform_type *transform_type)
+			     const struct transform_type *transform_type,
+			     struct verbose verbose)
 {
 	const struct ike_alg **default_algs = parser->protocol->defaults->transform[transform_type->index];
-	const struct logger *logger = parser->policy->logger;
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
 	 */
@@ -70,22 +71,20 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 		const struct ike_alg *alg = *default_alg;
 		if (!alg_byname_ok(parser, alg,
 				   shunk1(alg->fqn))) {
-			ldbgf(DBG_PROPOSAL_PARSER, logger,
-			      "skipping default %s",
-			      str_diag(parser->diag));
+			vdbg("skipping default %s",
+			     str_diag(parser->diag));
 			pfree_diag(&parser->diag);
 			continue;
 		}
 		/* add it */
-		ldbgf(DBG_PROPOSAL_PARSER, logger,
-		      "adding default %s %s %s",
-		      transform_type->name,
-		      alg->type->story, alg->fqn);
+		vdbg("adding default %s %s %s",
+		     transform_type->name,
+		     alg->type->story, alg->fqn);
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
 								       transform_type,
 								       (*default_alg));
-		if (!add_proposal_defaults(parser, proposals, &merged_proposal)) {
-			passert(parser->diag != NULL);
+		if (!add_proposal_defaults(parser, proposals, &merged_proposal, verbose)) {
+			vassert(parser->diag != NULL);
 			return false;
 		}
 	}
@@ -99,19 +98,23 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 
 static bool add_proposal(struct proposal_parser *parser,
 			 struct proposals *proposals,
-			 const struct v1_proposal *proposal)
+			 const struct v1_proposal *proposal,
+			 struct verbose verbose)
 {
 	struct proposal *new = alloc_proposal(parser);
 	if (proposal->encrypt != NULL) {
 		append_proposal_transform(parser, new, transform_type_encrypt,
-					  &proposal->encrypt->common, proposal->enckeylen);
+					  &proposal->encrypt->common,
+					  proposal->enckeylen,
+					  verbose);
 	}
 #define A(NAME)								\
 	if (proposal->NAME != NULL) {					\
 		append_proposal_transform(parser, new,			\
 					  transform_type_##NAME,	\
 					  &proposal->NAME->common,	\
-					  0/*enckeylen*/);		\
+					  0/*enckeylen*/,		\
+					  verbose);			\
 	}
 	A(prf);
 	A(integ);
@@ -122,7 +125,7 @@ static bool add_proposal(struct proposal_parser *parser,
 		free_proposal(&new);
 		return false;
 	}
-	append_proposal(proposals, &new);
+	append_proposal(proposals, &new, verbose);
 	return true;
 }
 
@@ -133,7 +136,8 @@ static bool add_proposal(struct proposal_parser *parser,
 
 static bool add_proposal_defaults(struct proposal_parser *parser,
 				  struct proposals *proposals,
-				  const struct v1_proposal *proposal)
+				  const struct v1_proposal *proposal,
+				  struct verbose verbose)
 {
 	const struct proposal_defaults *defaults = parser->protocol->defaults;
 	/*
@@ -144,15 +148,18 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 	if (proposal->kem == NULL &&
 	    defaults->transform[PROPOSAL_TRANSFORM_kem] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					transform_type_kem);
+					transform_type_kem,
+					verbose);
 	} else if (proposal->encrypt == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_encrypt] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					transform_type_encrypt);
+					transform_type_encrypt,
+					verbose);
 	} else if (proposal->prf == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_prf] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					transform_type_prf);
+					transform_type_prf,
+					verbose);
 	} else if (proposal->integ == NULL &&
 		   proposal->encrypt != NULL &&
 		   encrypt_desc_is_aead(proposal->encrypt)) {
@@ -161,11 +168,12 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 		 */
 		struct v1_proposal merged_proposal = *proposal;
 		merged_proposal.integ = &ike_alg_integ_none;
-		return add_proposal_defaults(parser, proposals, &merged_proposal);
+		return add_proposal_defaults(parser, proposals, &merged_proposal, verbose);
 	} else if (proposal->integ == NULL &&
 		   defaults->transform[PROPOSAL_TRANSFORM_integ] != NULL) {
 		return add_alg_defaults(parser, proposals, proposal,
-					transform_type_integ);
+					transform_type_integ,
+					verbose);
 	} else if (proposal->integ == NULL &&
 		   proposal->prf != NULL &&
 		   proposal->encrypt != NULL &&
@@ -189,16 +197,17 @@ static bool add_proposal_defaults(struct proposal_parser *parser,
 				       proposal->prf->common.fqn);
 			return false;
 		}
-		return add_proposal_defaults(parser, proposals, &merged_proposal);
+		return add_proposal_defaults(parser, proposals, &merged_proposal, verbose);
 	} else {
-		return add_proposal(parser, proposals, proposal);
+		return add_proposal(parser, proposals, proposal, verbose);
 	}
 }
 
 static bool parse_ikev1_proposal(struct proposal_parser *parser,
 				 struct proposals *proposals,
 				 struct proposal *scratch_proposal,
-				 shunk_t proposal)
+				 shunk_t proposal,
+				 struct verbose verbose)
 {
 	/*
 	 * Catch the obvious case of a proposal containing '+' early.
@@ -221,7 +230,7 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 		return false;
 	}
 
-	if (!parse_proposal(parser, scratch_proposal, proposal)) {
+	if (!parse_proposal(parser, scratch_proposal, proposal, verbose)) {
 		return false;
 	}
 
@@ -252,18 +261,14 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	 * defaults into lots of little proposals.
 	 */
 	struct v1_proposal v1 = v1_proposal(scratch_proposal);
-	return add_proposal_defaults(parser, proposals, &v1);
+	return add_proposal_defaults(parser, proposals, &v1, verbose);
 }
 
 bool v1_proposals_parse_str(struct proposal_parser *parser,
 			    struct proposals *proposals,
-			    shunk_t alg_str)
+			    shunk_t alg_str,
+			    struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
-	ldbgf(DBG_PROPOSAL_PARSER, logger,
-	      "parsing '"PRI_SHUNK"' for %s",
-	      pri_shunk(alg_str), parser->protocol->name);
-
 	if (alg_str.len == 0) {
 		/* XXX: hack to keep testsuite happy */
 		proposal_error(parser, "%s proposal is empty", parser->protocol->name);
@@ -276,9 +281,9 @@ bool v1_proposals_parse_str(struct proposal_parser *parser,
 		shunk_t proposal = shunk_token(&prop_ptr, NULL, ",");
 		/* parse it */
 		struct proposal *scratch_proposal = alloc_proposal(parser);
-		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, proposal)) {
+		if (!parse_ikev1_proposal(parser, proposals, scratch_proposal, proposal, verbose)) {
 			free_proposal(&scratch_proposal);
-			passert(parser->diag != NULL);
+			vassert(parser->diag != NULL);
 			return false;
 		}
 		free_proposal(&scratch_proposal);
