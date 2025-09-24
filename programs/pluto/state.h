@@ -264,11 +264,31 @@ struct state {
 
 	struct trans_attrs st_oakley;
 
-	/* Child SA / IPsec SA */
+	/*
+	 * Child SA / IPsec SA.
+	 *
+	 * XXX:
+	 *
+	 * There's space for separate ESP, AH, and IPcomp because,
+	 * long ago all possible combinations were allowed for IKEv1.
+	 * That code has long since gone, but the fields live on.
+	 *
+	 * Now-a-days only the conbination {ESP,AH}{,IPcomp} is
+	 * allowed.  An outgoing packet has the optional IPcomp
+	 * followed by ESP or AH.
+	 *
+	 * Notice how the struct has its protocol as a member.  This
+	 * is only set when the other fiels are populated (at least
+	 * for now).
+	 */
 	enum kernel_mode st_kernel_mode;	/* aka IPsec mode */
 	struct ipsec_proto_info st_ah;
 	struct ipsec_proto_info st_esp;
 	struct ipsec_proto_info st_ipcomp;
+#define outer_ipsec_proto_info(CHILD)					\
+	((CHILD)->sa.st_esp.protocol == &ip_protocol_esp ? &(CHILD)->sa.st_esp : \
+	 (CHILD)->sa.st_ah.protocol == &ip_protocol_ah ? &(CHILD)->sa.st_ah : \
+	 NULL)
 
 	reqid_t st_reqid;			/* bundle of 4 (out,in, compout,compin */
 
