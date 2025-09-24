@@ -397,6 +397,16 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 	return new_len;
 }
 
+static int transform_cmp(const void  *l, const void *r)
+{
+	const struct transform *lt = l;
+	const struct transform *rt = r;
+	if (lt->type->index != rt->type->index) {
+		return lt->type->index - rt->type->index;
+	}
+	return l - r;
+}
+
 static void cleanup_raw_transforms(struct proposal_parser *parser,
 				   struct proposal *proposal,
 				   struct verbose verbose)
@@ -407,6 +417,13 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	vdbg("updating raw transform length from %u to %u",
 	     proposal->transforms.len, new_len);
 	realloc_data(&proposal->transforms, new_len);
+
+	vdbg("sorting raw transforms");
+	/* clean up the raw transforms */
+	qsort(proposal->transforms.data,
+	      proposal->transforms.len,
+	      sizeof(proposal->transforms.data[0]),
+	      transform_cmp);
 }
 
 /*
