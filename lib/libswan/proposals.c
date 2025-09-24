@@ -342,10 +342,112 @@ unsigned nr_proposals(const struct proposals *proposals)
 	return nr;
 }
 
-void append_proposal(struct proposals *proposals,
+static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
+					    struct transforms transforms,
+					    enum stream stream,
+					    struct verbose verbose)
+{
+	unsigned new_len = 0;
+	DATA_FOR_EACH(new, &transforms) {
+		if (new == transforms.data) {
+			/* skip first */
+			new_len++;
+			continue;
+		}
+		DATA_FOR_EACH(old, &transforms) {
+			if (old == new) {
+				struct transform *next =
+					&transforms.data[new_len++];
+				if (next != new) {
+					*next = *new;
+				}
+				break;
+			}
+			if (old->type != new->type) {
+				continue;
+			}
+			if (old->desc != new->desc) {
+				continue;
+			}
+			/*
+			 * Since enckeylen=0 is a wildcard there's no
+			 * point following it with a non-zero keylen,
+			 * for instance aes,aes128.
+			 *
+			 * The reverse, aes128,aes is ok.  It is
+			 * giving preference to aes128 over other aes
+			 * combinations.
+			 */
+			if (old->enckeylen == 0 ||
+			    old->enckeylen == new->enckeylen) {
+				if (stream != DEBUG_STREAM || verbose.debug) {
+					LLOG_JAMBUF(stream, verbose.logger, buf) {
+						jam_string(buf, "discarding duplicate ");
+						jam_string(buf, parser->protocol->name);
+						jam_string(buf, " ");
+						jam_string(buf, new->desc->type->story);
+						jam_string(buf, " ");
+						jam_proposal_transform(buf, new);
+					}
+				}
+				break;
+			}
+		}
+	}
+	return new_len;
+}
+
+static void cleanup_raw_transforms(struct proposal_parser *parser,
+				   struct proposal *proposal,
+				   struct verbose verbose)
+{
+	vdbg("removing duplicates in raw transforms");
+	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
+						       DEBUG_STREAM, verbose);
+	vdbg("updating raw transform length from %u to %u",
+	     proposal->transforms.len, new_len);
+	realloc_data(&proposal->transforms, new_len);
+}
+
+/*
+ * Note: duplicates are only removed after all transform's algorithms
+ * have all parsed.
+ *
+ * This stops bogus errors such as when the parser makes several
+ * attempts at parsing a transform.  For instance, as a PRF and then
+ * as INTEG.
+ */
+
+static void cleanup_proposal_algorithms(struct proposal_parser *parser,
+					struct proposal *proposal,
+					struct verbose verbose)
+{
+	for (const struct transform_type *type = transform_type_floor;
+	     type < transform_type_roof; type++) {
+		struct transform_algorithms *transforms = proposal->algorithms[type->index];
+		if (transforms == NULL) {
+			continue;
+		}
+
+		unsigned new_len = remove_duplicate_transforms(parser,
+							       (struct transforms) {
+								       .len = transforms->len,
+								       .data = transforms->item,
+							       },
+							       parser->policy->stream,
+							       verbose);
+		transforms->len = new_len;
+	}
+}
+
+void append_proposal(struct proposal_parser *parser,
+		     struct proposals *proposals,
 		     struct proposal **proposal,
 		     struct verbose verbose)
 {
+	cleanup_raw_transforms(parser, (*proposal), verbose);
+	cleanup_proposal_algorithms(parser, *proposal, verbose);
+
 	struct proposal **end = &proposals->proposals;
 	/* check for duplicates */
 	while ((*end) != NULL) {
@@ -557,65 +659,6 @@ void append_proposal_transform(struct proposal_parser *parser,
 	     transform_type->name,
 	     proposal->algorithms[transform_type->index]->len,
 	     proposal->transforms.len);
-}
-
-/*
- * Note: duplicates are only removed after all transform's algorithms
- * have all parsed.
- *
- * Stops bogus errors when making multiple attempts at parsing the
- * transform algoritithms, for instance as a PRF and then as INTEG.
- */
-void remove_duplicate_algorithms(struct proposal_parser *parser,
-				 struct proposal *proposal,
-				 const struct transform_type *transform_type,
-				 struct verbose verbose)
-{
-	vassert(transform_type->index < elemsof(proposal->algorithms));
-	struct transform_algorithms *algs = proposal->algorithms[transform_type->index];
-	if (algs == NULL || algs->len == 0) {
-		return;
-	}
-
-	unsigned new_len = 1;	/* keep/skip the first */
-	for (unsigned n = 1; n < algs->len; n++) {
-		const struct transform *new = &algs->item[n];
-		bool duplicate = false;
-		for (unsigned o = 0; o < n; o++) {
-			const struct transform *old = &algs->item[o];
-			if (old->desc != new->desc) {
-				continue;
-			}
-			/*
-			 * Since enckeylen=0 is a wildcard there's no
-			 * point following it with a non-zero keylen,
-			 * for instance aes,aes128.
-			 *
-			 * The reverse, aes128,aes is ok.  It is
-			 * giving preference to aes128 over other aes
-			 * combinations.
-			 */
-			if (old->enckeylen == 0 ||
-			    old->enckeylen == new->enckeylen) {
-				LLOG_JAMBUF(parser->policy->stream, parser->policy->logger, buf) {
-					jam(buf, "discarding duplicate %s %s %s",
-					    parser->protocol->name,
-					    new->desc->type->story,
-					    new->desc->fqn);
-					if (new->enckeylen != 0) {
-						jam(buf, "_%d", new->enckeylen);
-					}
-				}
-				duplicate = true;
-				break;
-			}
-		}
-		if (duplicate) {
-			continue;
-		}
-		algs->item[new_len++] = (*new);
-	}
-	algs->len = new_len;
 }
 
 size_t jam_proposal_transform(struct jambuf *buf,
@@ -1197,7 +1240,6 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 		next_token(tokens, verbose);
 	}
 
-	remove_duplicate_algorithms(parser, proposal, transform_type, verbose);
 	return true;
 }
 
@@ -1243,7 +1285,6 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 		vassert(parser->diag == NULL);
 	}
 
-	remove_duplicate_algorithms(parser, proposal, transform_type_encrypt, verbose);
 	return true;
 }
 

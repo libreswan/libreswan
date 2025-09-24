@@ -172,7 +172,7 @@ bool v2_proposals_parse_str(struct proposal_parser *parser,
 		 * empty.
 		 */
 		vassert(parser->diag == NULL);
-		append_proposal(proposals, &proposal, verbose);
+		append_proposal(parser, proposals, &proposal, verbose);
 	} while (input.ptr != NULL);
 	return true;
 }
