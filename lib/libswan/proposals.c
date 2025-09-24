@@ -207,6 +207,11 @@ bool proposal_integ_none(const struct proposal *proposal)
 	return true;
 }
 
+bool proposal_impaired(const struct proposal *proposal)
+{
+	return proposal->impaired;
+}
+
 bool proposal_aead_none_ok(struct proposal_parser *parser,
 			   const struct proposal *proposal)
 {

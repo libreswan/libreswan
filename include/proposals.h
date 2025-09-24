@@ -200,6 +200,7 @@ struct transform_algorithms {
 bool proposal_encrypt_aead(const struct proposal *proposal);
 bool proposal_encrypt_norm(const struct proposal *proposal);
 bool proposal_integ_none(const struct proposal *proposal);
+bool proposal_impaired(const struct proposal *proposal);
 
 unsigned nr_proposals(const struct proposals *proposals);
 bool default_proposals(const struct proposals *proposals);
