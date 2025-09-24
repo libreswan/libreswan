@@ -1697,7 +1697,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 #endif
 
 		case SADB_EXT_PROPOSAL:
-			if (VDBGP()) {
+			if (verbose.debug) {
 				verbose("ignore: ");
 				verbose.level++;
 				llog_sadb_ext(verbose, msg, ext, ext_cursor);
@@ -1706,7 +1706,7 @@ static void parse_sadb_acquire(const struct sadb_msg *msg,
 			break;
 
 		default:
-			if (VDBGP()) {
+			if (verbose.debug) {
 				verbose.level++;
 				llog_sadb_ext(verbose, msg, ext, ext_cursor);
 				verbose.level--;
