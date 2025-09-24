@@ -107,10 +107,24 @@ static bool merge_defaults(struct proposal_parser *parser,
 						       prf->desc->fqn);
 					return false;
 				}
-				append_proposal_transform(parser, proposal,
-							  transform_type_integ,
-							  &integ->common, 0,
-							  verbose);
+				/*
+				 * Since the proposal been stripped of
+				 * duplicates, need to check for
+				 * duplicate transforms here.
+				 */
+				bool duplicate = false;
+				DATA_FOR_EACH(old, proposal_transforms(proposal)) {
+					if (old->desc == &integ->common) {
+						duplicate = true;
+						break;
+					}
+				}
+				if (!duplicate) {
+					append_proposal_transform(parser, proposal,
+								  transform_type_integ,
+								  &integ->common, 0,
+								  verbose);
+				}
 			}
 		}
 	}
