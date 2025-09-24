@@ -121,11 +121,17 @@ static void check(const struct protocol *protocol,
 	if (proposals != NULL) {
 		pexpect(parser->diag == NULL);
 		FOR_EACH_PROPOSAL(proposals, proposal) {
-			JAMBUF(buf) {
-				jam(buf, "\t");
-				jam_proposal(buf, proposal);
-				fprintf(stdout, PRI_SHUNK"\n",
-					pri_shunk(jambuf_as_shunk(buf)));
+			char old[LOG_WIDTH];
+			struct jambuf old_buf = ARRAY_AS_JAMBUF(old);
+			jam_proposal(&old_buf, proposal);
+			fprintf(stdout, "\t%s\n", old);
+			if (proposal_impaired(proposal)) {
+				char new[LOG_WIDTH];
+				struct jambuf new_buf = ARRAY_AS_JAMBUF(new);
+				jam_proposal_transforms(&new_buf, proposal);
+				if (!streq(old, new)) {
+					fprintf(stdout, "\t%s\n", new);
+				}
 			}
 		}
 		free_proposals(&proposals);
