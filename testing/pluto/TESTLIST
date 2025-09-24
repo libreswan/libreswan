@@ -1604,6 +1604,8 @@ kvmplutotest	ikev2-intermediate-05-addke-modp8192-ml-kem-768			good
 kvmplutotest	ikev2-intermediate-05-addke-duplicate				good	github/2370
 kvmplutotest	ikev2-intermediate-06-addke2-dh19-addke4-none-addke6-dh20	good
 
+kvmplutotest	interop-ikev2-strongswan-49-ml-kem-responder			wip	github/2401
+
 # VPN System Roles - skip automated testing for now
 kvmplutotest	ikev2-systemrole-01-host-to-host	good
 kvmplutotest	ikev2-systemrole-02-net-to-net		good	github/1751
