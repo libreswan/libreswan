@@ -1201,63 +1201,65 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 				 struct tokens *tokens,
 				 struct verbose verbose)
 {
-	const struct logger *logger = parser->policy->logger;
+	struct tokens tokens_at_start;
 
 	/*
-	 * Try to parse:
+	 * Try to parse <PRF> as in:
 	 *
-	 *     <encr>-<PRF>...
+	 *     <encrypt>-<PRF>...
 	 *
-	 * If it succeeds, assume the proposal is <encr>-<prf>-<kem>
-	 * and not <encr>-<integ>-<prf>-<kem>.  The merge code will
-	 * fill <integ> in with either NONE (AEAD) or the <prf>s
-	 * converted to integ.
+	 * When PRF succeeds, the proposal is assumed to be
+	 * <encrypt>-<prf>[-<kem>] (i.e., <integ> can't follow).
 	 *
-	 * If it fails, code below will try <encr>-<integ>-<prf>.
+	 * The merge code will then either build the INTEG from the
+	 * PRF or, when AEAD, set INTEG to NONE.
 	 *
-	 * This means, to specify integrity, the full integrity
-	 * algorithm name is needed.  This means that
-	 * aes_gcm-none-sha1-dh21 is easy but anything else is a pain.
-	 * Hopefully this is ok as specifying integrity different to
-	 * the PRF isn't something to encourage.
+	 * When PRF fails, discard what was accumulated (but save the
+	 * error) ready for an attempt at <encrypt>-<INTEG>.  For
+	 * instance, given sha2+sha1_96, "sha2" will have been added
+	 * before "sha1_96" fails as a PRF algorithm.
 	 */
 
-	struct tokens prf_tokens = (*tokens);
-	if (parse_transform_algorithms(parser, proposal, transform_type_prf, &prf_tokens, verbose)) {
+	vdbg("trying <encrypt>-<PRF>");
+	tokens_at_start = (*tokens);
+	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
 		/* advance */
-		vdbg("<encr>-<PRF> succeeded, advancing tokens");
-		(*tokens) = prf_tokens;
+		vdbg("<encrypt>-<PRF> succeeded");
 		return true;
 	}
 
 	/*
-	 * XXX: IKEv1 IKE proposals only allow a PRF (i.e., not
-	 * ike=<encr>-<integ> or ike=<encr>-<prf>-<integ>.  Hence,
-	 * when the PRF lookup fails, reject the proposal.
+	 * No point continuing when INTEG isn't allowed.
+	 *
+	 * For instance, IKEv1 IKE proposals.  Hence, when the PRF
+	 * lookup fails, reject the proposal.
 	 */
 	if (!parser->protocol->integ) {
-		PEXPECT(logger, parser->diag != NULL);
+		vexpect(parser->diag != NULL);
 		return false;
 	}
 
 	/*
-	 * Since <encr>-<PRF> failed, and integrity is expected, try:
-	 *
-	 *    <encr>-<INTEG>[-<PRF>]...
-	 *
-	 * But only after first reverting the work on PRFs.  Should
-	 * the INTEG fail to parse, return the PRF diag (better
-	 * message).
+	 * Discard anything lingering from trying to parse <PRF>.
 	 */
 
-	vdbg("<encr>-<PRF> failed, saving error '%s' and tossing result",
+	vdbg("<encrypt>-<PRF> failed, saving error '%s' and tossing result",
 	     str_diag(parser->diag));
 	pfree_transforms(proposal, transform_type_prf);
 	diag_t prf_diag = parser->diag;
 	parser->diag = NULL;
+	(*tokens) = tokens_at_start;
 
+	/*
+	 * Now try <INTEG>.
+	 *
+	 * If the INTEG fails, return the error message from the PRF
+	 * (i.e., pretend <encrypt>-<prf> is what failed).
+	 */
+
+	vdbg("trying <encrypt>-<INTEG>");
 	if (!parse_transform_algorithms(parser, proposal, transform_type_integ, tokens, verbose)) {
-		vdbg("both <encr>-<PRF> and <encr>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
+		vdbg("both <encrypt>-<PRF> and <encrypt>-<INTEG> failed, returning earlier PRF error '%s' and discarding INTEG error '%s')",
 		     str_diag(prf_diag), str_diag(parser->diag));
 		pfree_diag(&parser->diag);
 		parser->diag = prf_diag;
@@ -1266,17 +1268,28 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	pfree_diag(&prf_diag);
 
+	/*
+	 * <encrypt>-<INTEG> can only be followed by -<PRF> or ;<KEM>
+	 * (i.e., <encrypt>-<integ>-<kem> is invalid, see tests).
+	 *
+	 * Exclude ';<KEM>' then try for -<INTEG>.
+	 */
+
 	if (tokens->curr.token.ptr == NULL /*more?*/ ||
 	    tokens->prev.delim == ';' /*;KEM>*/) {
 		return true;
 	}
 
-	if (!parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
-		vdbg("<encr>-<integ>-<PRF> failed '%s'", str_diag(parser->diag));
-		return false;
+	vdbg("trying <encrypt>-<prf>-<INTEG>");
+	tokens_at_start = (*tokens);
+	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
+		vdbg("<encrypt>-<PRF>-<INTEG> succceeded");
+		return true;
 	}
 
-	return true;
+	vexpect(parser->diag != NULL);
+	vdbg("<encrypt>-<prf>-<INTEG> failed, returning %s", str_diag(parser->diag));
+	return false;
 }
 
 enum transform_typed_how {
