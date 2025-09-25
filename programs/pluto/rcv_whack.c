@@ -691,14 +691,14 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	}
 
 	if (msg.basic.whack_status) {
-		struct show *s = alloc_show(whack_logger);
+		struct show *s = alloc_show(whack_logger, &show_text_ops);
 		whack_status(s, mononow());
 		free_show(&s);
 		/* bail early, but without complaint */
 		return; /* don't shutdown */
 	}
 
-	struct show *s = alloc_show(whack_logger);
+	struct show *s = alloc_show(whack_logger, &show_text_ops);
 	whack_process(&msg, s);
 	free_show(&s);
 }

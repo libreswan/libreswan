@@ -40,7 +40,17 @@
 #include "crypto.h"
 #include "ikev1_db_ops.h"
 #include "iface.h"
+#include "show_ops.h"
 #include "show.h"
+
+#define MAX_SHOW_STATES 5	/* maximum depth of a structure */
+
+enum show_state {
+	SHOW_NONE = 0,
+	SHOW_OBJECT,
+	SHOW_ARRAY,
+	SHOW_MEMBER,
+};
 
 struct show {
 	/*
@@ -55,13 +65,24 @@ struct show {
 	 * Where to build the messages.
 	 */
 	struct logjam logjam;
+	/*
+	 * Function table per backend.
+	 */
+	const struct show_ops *ops;
+
+	struct jambuf *jambuf;
+	enum show_state states[MAX_SHOW_STATES];
+	size_t state_index;
+	bool insert_separator;
 };
 
-struct show *alloc_show(struct logger *logger)
+struct show *alloc_show(struct logger *logger,
+			const struct show_ops *ops)
 {
 	struct show s = {
 		.separator = NO_SEPARATOR,
 		.logger = logger,
+		.ops = ops,
 	};
 	return clone_thing(s, "on show");
 }
@@ -166,4 +187,129 @@ void show_rc(enum rc_type rc, struct show *s, const char *message, ...)
 	show_va_list(s, message, ap);
 	va_end(ap);
 	whack_rc(rc, s->logger);
+}
+
+static bool push_state(struct show *s, enum show_state state)
+{
+	if (s->state_index > MAX_SHOW_STATES) {
+		return false;
+	}
+	s->states[s->state_index++] = state;
+	return true;
+}
+
+static bool pop_state(struct show *s, enum show_state state)
+{
+	if (s->state_index == 0) {
+		return false;
+	}
+	if (s->states[--s->state_index] != state) {
+		return false;
+	}
+	return true;
+}
+
+static void assert_state(struct show *s, enum show_state state)
+{
+#define A(ASSERTION) if (!(ASSERTION)) abort()
+	A(s->state_index > 0);
+	A(s->states[s->state_index - 1] == state);
+#undef A
+}
+
+void show_structured_start(struct show *s)
+{
+	s->jambuf = show_jambuf(s);
+}
+
+void show_structured_end(struct show *s)
+{
+	show_to_logger(s);
+	s->jambuf = NULL;
+	s->state_index = 0;
+	s->insert_separator = false;
+}
+
+void show_raw(struct show *s, const char *message, ...)
+{
+	if (s->insert_separator)
+		s->ops->separator(s->jambuf);
+
+	va_list ap;
+	va_start(ap, message);
+	s->ops->raw_va_list(s->jambuf, message, ap);
+	va_end(ap);
+
+	s->insert_separator = true;
+}
+
+void show_string(struct show *s, const char *message, ...)
+{
+	if (s->insert_separator)
+		s->ops->separator(s->jambuf);
+
+	va_list ap;
+	va_start(ap, message);
+	s->ops->string_va_list(s->jambuf, message, ap);
+	va_end(ap);
+
+	s->insert_separator = true;
+}
+
+void show_member_start(struct show *s, const char *name)
+{
+	assert_state(s, SHOW_OBJECT);
+	if (s->insert_separator)
+		s->ops->separator(s->jambuf);
+
+	s->ops->member_start(s->jambuf, name);
+
+	s->insert_separator = false;
+	push_state(s, SHOW_MEMBER);
+}
+
+void show_member_end(struct show *s)
+{
+	s->ops->member_end(s->jambuf);
+
+	s->insert_separator = true;
+	pop_state(s, SHOW_MEMBER);
+}
+
+void show_array_start(struct show *s)
+{
+	if (s->insert_separator)
+		s->ops->separator(s->jambuf);
+
+	s->ops->array_start(s->jambuf);
+
+	s->insert_separator = false;
+	push_state(s, SHOW_ARRAY);
+}
+
+void show_array_end(struct show *s)
+{
+	s->ops->array_end(s->jambuf);
+
+	s->insert_separator = true;
+	pop_state(s, SHOW_ARRAY);
+}
+
+void show_object_start(struct show *s)
+{
+	if (s->insert_separator)
+		s->ops->separator(s->jambuf);
+
+	s->ops->object_start(s->jambuf);
+
+	s->insert_separator = false;
+	push_state(s, SHOW_OBJECT);
+}
+
+void show_object_end(struct show *s)
+{
+	s->ops->object_end(s->jambuf);
+
+	s->insert_separator = true;
+	pop_state(s, SHOW_OBJECT);
 }
