@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 strongswan U5.9.14 must be installed
-Linux strongSwan U6.0.2/K6.16.7-200.fc42.x86_64
+Linux strongSwan U6.0.2/K6.16.8-200.fc42.x86_64
 University of Applied Sciences Rapperswil, Switzerland
 west #
  # confirm that the network is alive
@@ -29,13 +29,9 @@ initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) N(IKE_INT_SUP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(IKE_INT_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
+parsed IKE_SA_INIT response 0 [ SA KE No N(IKE_INT_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
 selected proposal: IKE:AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_8192/KE1_ML_KEM_768
 generating IKE_INTERMEDIATE request 1 [ KE ]
-splitting IKE message (XXX bytes) into 2 fragments
-generating IKE_INTERMEDIATE request 1 [ EF(1/2) ]
-generating IKE_INTERMEDIATE request 1 [ EF(2/2) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_INTERMEDIATE response 1 [ KE ]
@@ -44,16 +40,17 @@ establishing CHILD_SA westnet-eastnet-ikev2{1}
 generating IKE_AUTH request 2 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 2 [ N(AUTH_FAILED) ]
-received AUTHENTICATION_FAILED notify error
-establishing connection 'westnet-eastnet-ikev2' failed
+parsed IKE_AUTH response 2 [ IDr AUTH SA TSi TSr ]
+authentication of 'east' with pre-shared key successful
+IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
+CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
+connection 'westnet-eastnet-ikev2' established successfully
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time 0ms
+up
 west #
  echo done
 done
@@ -68,6 +65,8 @@ Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
 Bypass LAN 198.19.0.0/16:  198.19.0.0/16 === 198.19.0.0/16 PASS
 Bypass LAN 198.19.0.1/32:  198.19.0.1/32 === 198.19.0.1/32 PASS
-Security Associations (0 up, 0 connecting):
-  none
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24
 west #

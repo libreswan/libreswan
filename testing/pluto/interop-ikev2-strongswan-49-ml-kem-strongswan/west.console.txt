@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
 strongswan U5.9.14 must be installed
-Linux strongSwan U6.0.2/K6.16.7-200.fc42.x86_64
+Linux strongSwan U6.0.2/K6.16.8-200.fc42.x86_64
 University of Applied Sciences Rapperswil, Switzerland
 west #
  # confirm that the network is alive

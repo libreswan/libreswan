@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep --userland strongswan
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.3.81, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 aa 6e 2a 08 06
 strongswan U5.9.14 must be installed
-Linux strongSwan U6.0.2/K6.16.7-200.fc42.x86_64
+Linux strongSwan U6.0.2/K6.16.8-200.fc42.x86_64
 University of Applied Sciences Rapperswil, Switzerland
 east #
  ../../guestbin/strongswan-start.sh
