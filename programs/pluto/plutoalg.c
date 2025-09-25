@@ -71,6 +71,27 @@ void show_kernel_alg_status(struct show *s)
 	}
 }
 
+void jam_ipsec_proto_info(struct jambuf *buf, const struct ipsec_proto_info *info)
+{
+	const char *sep = "";
+	const struct encrypt_desc *encrypt = info->trans_attrs.ta_encrypt;
+	if (encrypt != NULL) {
+		jam_string(buf, sep); sep = "-";
+		jam_string(buf, encrypt->common.fqn);
+		if (!encrypt->keylen_omitted ||
+		    (info->trans_attrs.enckeylen != 0 &&
+		     info->trans_attrs.enckeylen != encrypt->keydeflen)) {
+			jam(buf, "_%u", info->trans_attrs.enckeylen);
+		}
+	}
+	const struct integ_desc *integ = info->trans_attrs.ta_integ;
+	if (integ != NULL &&
+	    (integ != &ike_alg_integ_none || !encrypt_desc_is_aead(encrypt))) {
+		jam_string(buf, sep); sep = "-";
+		jam_string(buf, integ->common.fqn);
+	}
+}
+
 void show_kernel_alg_connection(struct show *s,
 				const struct connection *c)
 {
@@ -166,21 +187,7 @@ void show_kernel_alg_connection(struct show *s,
 				jam_string(buf, " ");
 				jam_string(buf, outer->protocol->name);
 				jam_string(buf, " algorithm newest: ");
-				/* should be a function */
-				const char *sep = "";
-				if (outer->trans_attrs.ta_encrypt != NULL) {
-					jam_string(buf, sep); sep = "-";
-					jam_string(buf, outer->trans_attrs.ta_encrypt->common.fqn);
-					if (outer->trans_attrs.enckeylen > 0) {
-						jam(buf, "_%3u", outer->trans_attrs.enckeylen);
-					}
-				}
-				if (outer->trans_attrs.ta_integ != NULL &&
-				    (outer->trans_attrs.ta_integ != &ike_alg_integ_none ||
-				     !encrypt_desc_is_aead(outer->trans_attrs.ta_encrypt))) {
-					jam_string(buf, sep); sep = "-";
-					jam_string(buf, outer->trans_attrs.ta_integ->common.fqn);
-				}
+				jam_ipsec_proto_info(buf, outer);
 				jam_string(buf, ";");
 				jam(buf, " pfsgroup=%s", pfsbuf);
 			}

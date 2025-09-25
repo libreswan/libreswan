@@ -143,18 +143,9 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		    iptfs ? "/IPTFS" : "",
 		    ntohl(st->st_esp.outbound.spi),
 		    ntohl(st->st_esp.inbound.spi));
-		jam(buf, " xfrm=%s", st->st_esp.trans_attrs.ta_encrypt->common.fqn);
-		/* log keylen when it is required and/or "interesting" */
-		if (!st->st_esp.trans_attrs.ta_encrypt->keylen_omitted ||
-		    (st->st_esp.trans_attrs.enckeylen != 0 &&
-		     st->st_esp.trans_attrs.enckeylen != st->st_esp.trans_attrs.ta_encrypt->keydeflen)) {
-			jam(buf, "_%u", st->st_esp.trans_attrs.enckeylen);
-		}
-		/* log transform when non-AEAD or non-NONE */
-		if (!encrypt_desc_is_aead(st->st_esp.trans_attrs.ta_encrypt) ||
-		    st->st_esp.trans_attrs.ta_integ != &ike_alg_integ_none) {
-			jam(buf, "-%s", st->st_esp.trans_attrs.ta_integ->common.fqn);
-		}
+
+		jam_string(buf, " xfrm=");
+		jam_ipsec_proto_info(buf, &st->st_esp);
 
 		if ((st->st_ike_version == IKEv2) && st->st_pfs_kem != NULL) {
 			jam_string(buf, "-");
@@ -175,11 +166,11 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 	if (st->st_ah.protocol == &ip_protocol_ah) {
 		jam_string(buf, ini);
 		ini = " ";
-		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
+		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=",
 		    st->st_ah.trans_attrs.esn_enabled ? "/ESN" : "",
 		    ntohl(st->st_ah.outbound.spi),
-		    ntohl(st->st_ah.inbound.spi),
-		    st->st_ah.trans_attrs.ta_integ->common.fqn);
+		    ntohl(st->st_ah.inbound.spi));
+		jam_ipsec_proto_info(buf, &st->st_ah);
 	}
 
 	if (st->st_ipcomp.protocol == &ip_protocol_ipcomp) {
