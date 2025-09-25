@@ -354,6 +354,7 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 			new_len++;
 			continue;
 		}
+
 		DATA_FOR_EACH(old, &transforms) {
 			if (old == new) {
 				struct transform *next =
@@ -397,16 +398,65 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 	return new_len;
 }
 
+static int transform_cmp(const void  *l, const void *r)
+{
+	const struct transform *lt = l;
+	const struct transform *rt = r;
+	if (lt->type->index != rt->type->index) {
+		return lt->type->index - rt->type->index;
+	}
+	return l - r;
+}
+
 static void cleanup_raw_transforms(struct proposal_parser *parser,
 				   struct proposal *proposal,
 				   struct verbose verbose)
 {
+	if (proposal->impaired) {
+		vdbg("skipping cleanup of raw transforms, proposal is impaired");
+		return;
+	}
+
 	vdbg("removing duplicates in raw transforms");
 	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
 						       DEBUG_STREAM, verbose);
 	vdbg("updating raw transform length from %u to %u",
 	     proposal->transforms.len, new_len);
 	realloc_data(&proposal->transforms, new_len);
+
+	vdbg("removing PFS vs KEM transforms");
+	if (!parser->policy->pfs &&
+	    parser->policy->check_pfs_vs_ke) {
+
+		/*
+		 * Drop KEM when no-PFS.
+		 *
+		 * Note: the proposal may only have KEM algorithms,
+		 * which means all will be dropped leaving an empty
+		 * proposal.
+		 */
+		unsigned new_len = 0;
+		DATA_FOR_EACH(new, &proposal->transforms) {
+			if (new->type == transform_type_kem &&
+			    !parser->policy->pfs &&
+			    parser->policy->check_pfs_vs_ke) {
+				vdbg("dropping %s %s as no PFS", new->type->name, new->desc->fqn);
+				continue;
+			}
+			struct transform *next = &proposal->transforms.data[new_len++];
+			if (next != new) {
+				*next = *new;
+			}
+		}
+		realloc_data(&proposal->transforms, new_len);
+	}
+
+	vdbg("sorting raw transforms");
+	/* clean up the raw transforms */
+	qsort(proposal->transforms.data,
+	      proposal->transforms.len,
+	      sizeof(proposal->transforms.data[0]),
+	      transform_cmp);
 }
 
 /*
@@ -675,10 +725,127 @@ size_t jam_proposal_transform(struct jambuf *buf,
 size_t jam_proposal_transforms(struct jambuf *buf,
 			       const struct proposal *proposal)
 {
+	const struct transform_type *previous_type;
+	/*
+	 * Should INTEG be skipped because it is appears to have been
+	 * constructed from the PRF?
+	 *
+	 * Remembering that things could be jumbled up, find the first
+	 * and last PRF and INTEG.
+	 */
+	const struct transform *first_prf = NULL;
+	const struct transform *first_integ = NULL;
+	const struct transform *last_prf = NULL;
+	const struct transform *last_integ = NULL;
+	const struct transform *first_encrypt = NULL;
+	bool encrypt_is_only_aead = false;
+	bool transforms_in_order = true;
+	previous_type = transform_types; /*first is 1*/
+	DATA_FOR_EACH(transform, &proposal->transforms) {
+		if (transform->type == transform_type_prf) {
+			if (first_prf == NULL) {
+				first_prf = transform;
+			}
+			last_prf = transform;
+		}
+		if (transform->type == transform_type_integ) {
+			if (first_integ == NULL) {
+				first_integ = transform;
+			}
+			last_integ = transform;
+		}
+		if (transform->type == transform_type_encrypt) {
+			if (first_encrypt == NULL) {
+				first_encrypt = transform;
+				encrypt_is_only_aead = true; /* fixed below */
+			}
+			encrypt_is_only_aead &= encrypt_desc_is_aead(encrypt_desc(transform->desc));
+		}
+		/* no re-ordering */
+		transforms_in_order &= (previous_type <= transform->type);
+		previous_type = transform->type;
+	}
+
+	/*
+	 * Only one integ and it's NONE; duplicate NONE doesn't count.
+	 */
+	bool integ_is_only_none = (first_integ != NULL && first_integ == last_integ &&
+				   first_integ->desc == &ike_alg_integ_none.common);
+
+	bool skip_integ;
+	if (!transforms_in_order) {
+		skip_integ = false;
+	} else if (encrypt_is_only_aead && integ_is_only_none) {
+		skip_integ = true;
+	} else if (first_prf == NULL || first_integ == NULL) {
+		/* one is missing */
+		skip_integ = false;
+	} else if ((last_prf - first_prf) != (last_integ - first_integ)) {
+		/* different approx counts */
+		skip_integ = false;
+	} else {
+		/* see if they match */
+		skip_integ = true; /* hope for the best */
+		const struct transform *prf = first_prf;
+		const struct transform *integ = first_integ;
+		do {
+			if (prf->desc != &integ_desc(integ->desc)->prf->common) {
+				skip_integ = false;
+				break;
+			}
+			prf++;
+			integ++;
+			if (prf > last_prf && integ > last_integ) {
+				/* made it to the end */
+				break;
+			}
+			if (prf > last_prf || integ > last_integ) {
+				/* different counts (actually handled
+				 * above) */
+				skip_integ = false;
+				break;
+			}
+			if (prf->type != transform_type_prf ||
+			    integ->type != transform_type_integ) {
+				/* jumbled transforms; integ/prf
+				 * aren't contigious */
+				skip_integ = false;
+				break;
+			}
+		} while (true);
+	}
+
 	size_t s = 0;
 	bool first = true;
-	const struct transform_type *previous_type = transform_types; /*first is 1*/
+	previous_type = transform_types; /*first is 1*/
+	bool jammed_prf_and_integ = false;
 	DATA_FOR_EACH(transform, &proposal->transforms) {
+		/* skip integ? */
+		if (transform->type == transform_type_integ && skip_integ) {
+			continue;
+		}
+		if (transforms_in_order && !skip_integ &&
+		    (transform->type == transform_type_prf ||
+		     transform->type == transform_type_integ)) {
+			if (!jammed_prf_and_integ) {
+				for (const struct transform *integ = first_integ;
+				     integ != NULL && integ <= last_integ; integ++) {
+					s += jam_string(buf, (integ > first_integ ? "+" :
+							      first ? "" : "-"));
+					first = false;
+					s += jam_proposal_transform(buf, integ);
+				}
+				for (const struct transform *prf = first_prf;
+				     prf != NULL && prf <= last_prf; prf++) {
+					s += jam_string(buf, (prf > first_prf ? "+" :
+							      first ? "" : "-"));
+					first = false;
+					s += jam_proposal_transform(buf, prf);
+				}
+				jammed_prf_and_integ = true;
+			}
+			continue;
+		}
 		if (previous_type < transform->type) {
 			s += jam_string(buf, (first ? "" : "-")); first = false;
 		} else if (previous_type == transform->type) {
@@ -1314,6 +1481,7 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	vdbg("trying <encrypt>-<PRF>");
 	tokens_at_start = (*tokens);
+	const unsigned nr_transforms_at_start = proposal->transforms.len; /* for unwinding */
 	if (parse_transform_algorithms(parser, proposal, transform_type_prf, tokens, verbose)) {
 		/* advance */
 		vdbg("<encrypt>-<PRF> succeeded");
@@ -1341,6 +1509,8 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 	diag_t prf_diag = parser->diag;
 	parser->diag = NULL;
 	(*tokens) = tokens_at_start;
+	/* truncate the transforms array */
+	realloc_data(&proposal->transforms, nr_transforms_at_start);
 
 	/*
 	 * Now try <INTEG>.
