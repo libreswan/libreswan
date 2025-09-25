@@ -138,7 +138,7 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
 static void compute_intermediate_mac(struct ike_sa *ike,
 				     PK11SymKey *intermediate_key,
 				     const uint8_t *message_start,
-				     shunk_t plain,
+				     shunk_t inner_payloads,
 				     chunk_t *int_auth_ir)
 {
 	struct logger *logger = ike->sa.logger;
@@ -236,7 +236,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	struct ikev2_generic adjusted_encrypted_payload_header;
 	shunk_t unencrypted_payloads = {
 		.ptr = header.ptr + header.len,
-		.len = ((const uint8_t*) plain.ptr - message_start
+		.len = ((const uint8_t*) inner_payloads.ptr - message_start
 			- ike->sa.st_oakley.ta_encrypt->wire_iv_size
 			- sizeof(adjusted_encrypted_payload_header)
 			- header.len),
@@ -244,7 +244,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 
 	shunk_t encrypted_payload = {
 		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
-		.len = plain.len + sizeof(adjusted_encrypted_payload_header),
+		.len = inner_payloads.len + sizeof(adjusted_encrypted_payload_header),
 	};
 
 	/*
@@ -254,12 +254,6 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	shunk_t encrypted_payload_header = {
 		.ptr = encrypted_payload.ptr,
 		.len = sizeof(adjusted_encrypted_payload_header),
-	};
-
-	/* skip the IV */
-	shunk_t inner_payloads = {
-		.ptr = plain.ptr,
-		.len = plain.len,
 	};
 
 	/* the message header needs its Length adjusted */
@@ -326,9 +320,10 @@ static void compute_intermediate_outbound_mac(struct ike_sa *ike,
 					      struct v2_message *message,
 					      chunk_t *intermediate_auth_ir)
 {
+	shunk_t inner_payloads = HUNK_AS_SHUNK(message->sk.cleartext);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message->sk.pbs.container->start,
-				 HUNK_AS_SHUNK(message->sk.cleartext) /* inner payloads */,
+				 inner_payloads,
 				 intermediate_auth_ir);
 }
 
@@ -337,9 +332,11 @@ static void compute_intermediate_inbound_mac(struct ike_sa *ike,
 					     struct msg_digest *md,
 					     chunk_t *intermediate_auth_ir)
 {
-	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
+	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	shunk_t inner_payloads = pbs_in_all(&sk->pbs);
 	compute_intermediate_mac(ike, intermediate_key,
-				 md->packet_pbs.start, plain,
+				 md->packet_pbs.start,
+				 inner_payloads,
 				 intermediate_auth_ir);
 }
 
