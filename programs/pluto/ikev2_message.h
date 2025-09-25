@@ -48,8 +48,6 @@ struct v2SK_payload {
 	chunk_t integrity;
 };
 
-bool encrypt_v2SK_payload(struct v2SK_payload *sk);
-
 uint8_t build_ikev2_critical(bool impair, struct logger *logger);
 
 enum payload_security {
@@ -79,6 +77,7 @@ bool open_v2_message(const char *story,
 		     enum payload_security security);
 
 bool close_v2_message(struct v2_message *message);
+bool record_v2_message(struct v2_message *message);
 
 bool close_and_record_v2_message(struct v2_message *message);
 

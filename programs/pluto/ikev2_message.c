@@ -50,6 +50,8 @@
 #include "ikev2_send.h"
 #include "ikev2_notification.h"
 
+static bool encrypt_v2SK_payload(struct v2SK_payload *sk);
+
 /*
  * Determine the IKE version we will use for the IKE packet
  * Normally, this is "2.0", but in the future we might need to
@@ -1351,7 +1353,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 			return STF_INTERNAL_ERROR;
 		}
 		ldbg(sk->logger, "recording outgoing fragment failed");
-		record_v2_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
+		record_v2_outgoing_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
 	}
 	return STF_OK;
 }
@@ -1482,12 +1484,8 @@ bool close_v2_message(struct v2_message *message)
 	return true;
 }
 
-bool close_and_record_v2_message(struct v2_message *message)
+bool record_v2_message(struct v2_message *message)
 {
-	if (!close_v2_message(message)) {
-		return false;
-	}
-
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
 		if (record_v2SK_message(&message->message,
@@ -1498,10 +1496,23 @@ bool close_and_record_v2_message(struct v2_message *message)
 		}
 		return true;
 	case UNENCRYPTED_PAYLOAD:
-		record_v2_message(pbs_out_all(&message->message),
-				  message->outgoing_fragments,
-				  message->logger);
+		record_v2_outgoing_message(pbs_out_all(&message->message),
+					   message->outgoing_fragments,
+					   message->logger);
 		return true;
 	}
 	bad_case(message->security);
+}
+
+bool close_and_record_v2_message(struct v2_message *message)
+{
+	if (!close_v2_message(message)) {
+		return false;
+	}
+
+	if (!record_v2_message(message)) {
+		return false;
+	}
+
+	return true;
 }

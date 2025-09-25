@@ -90,8 +90,8 @@ void record_v2_outgoing_fragment(shunk_t fragment,
 	memcpy((*fragments)->ptr/*array*/, fragment.ptr, fragment.len);
 }
 
-void record_v2_message(shunk_t message, struct v2_outgoing_fragment **fragments,
-		       struct logger *logger)
+void record_v2_outgoing_message(shunk_t message, struct v2_outgoing_fragment **fragments,
+				struct logger *logger)
 {
 	free_v2_outgoing_fragments(fragments, logger);
 	record_v2_outgoing_fragment(message, fragments, logger);
