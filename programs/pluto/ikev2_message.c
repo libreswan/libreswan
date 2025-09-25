@@ -1482,12 +1482,8 @@ bool close_v2_message(struct v2_message *message)
 	return true;
 }
 
-bool close_and_record_v2_message(struct v2_message *message)
+bool record_v2_message(struct v2_message *message)
 {
-	if (!close_v2_message(message)) {
-		return false;
-	}
-
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
 		if (record_v2SK_message(&message->message,
@@ -1504,4 +1500,17 @@ bool close_and_record_v2_message(struct v2_message *message)
 		return true;
 	}
 	bad_case(message->security);
+}
+
+bool close_and_record_v2_message(struct v2_message *message)
+{
+	if (!close_v2_message(message)) {
+		return false;
+	}
+
+	if (!record_v2_message(message)) {
+		return false;
+	}
+
+	return true;
 }

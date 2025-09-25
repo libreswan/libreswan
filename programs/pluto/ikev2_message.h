@@ -79,6 +79,7 @@ bool open_v2_message(const char *story,
 		     enum payload_security security);
 
 bool close_v2_message(struct v2_message *message);
+bool record_v2_message(struct v2_message *message);
 
 bool close_and_record_v2_message(struct v2_message *message);
 
