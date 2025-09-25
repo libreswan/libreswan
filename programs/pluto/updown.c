@@ -74,7 +74,7 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 /*
  * fmt_common_shell_out: form the command string
  *
- * note: this mutates *st by calling get_sa_bundle_info().
+ * note: this mutates *st by calling get_ipsec_traffic().
  */
 
 static bool fmt_common_shell_out(char *buf, size_t blen,
@@ -245,9 +245,9 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 
 	if (first_ipsec_proto != NULL) {
 		/*
-		 * note: this mutates *st by calling get_sa_bundle_info
+		 * note: this mutates *st by calling get_ipsec_traffic
 		 *
-		 * XXX: does the get_sa_bundle_info() call order matter? Should this
+		 * XXX: does the get_ipsec_traffic() call order matter? Should this
 		 * be a single "atomic" call?
 		 */
 		if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {

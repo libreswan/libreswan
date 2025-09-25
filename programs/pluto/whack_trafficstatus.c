@@ -43,7 +43,7 @@
 #include "whack_trafficstatus.h"
 #include "iface.h"
 
-/* note: this mutates *st by calling get_sa_bundle_info */
+/* note: this mutates *st by calling get_ipsec_traffic */
 static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 {
 	if (!pexpect(child != NULL)) {
@@ -171,7 +171,7 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 		nr++;
 		SHOW_JAMBUF(s, buf) {
 			/* note: this mutates *st by calling
-			 * get_sa_bundle_info */
+			 * get_ipsec_traffic */
 			jam_child_sa_traffic(buf, pexpect_child_sa(st));
 		}
 	}

@@ -1944,11 +1944,11 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
  * for errors, as they could mean that the SA is broken and needs to
  * be replace anyway.
  *
- * note: this mutates *st by calling get_sa_bundle_info
+ * note: this mutates *st by calling get_ipsec_traffic
  *
  * XXX:
  *
- * The use of get_sa_bundle_info() here is likely bogus.  The function
+ * The use of get_ipsec_traffic() here is likely bogus.  The function
  * returns the SA's add time (PF_KEY v2 documents it as such, xfrm
  * returns the .add_time field so presumably ...) when it is assumed
  * to be returning the idle time.

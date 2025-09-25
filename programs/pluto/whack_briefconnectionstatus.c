@@ -71,7 +71,7 @@ static uint64_t get_child_bytes(const struct connection *c, enum direction direc
 		}
 
 		/* note: this mutates *st by calling
-		 * get_sa_bundle_info */
+		 * get_ipsec_traffic */
 		struct child_sa *child = pexpect_child_sa(st);
 		struct ipsec_proto_info *first_ipsec_proto =
 		    (child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
