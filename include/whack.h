@@ -489,6 +489,8 @@ struct whack_message {
 	/* what metric to put on ipsec routes */
 	int metric;
 
+	bool whack_json;
+
 	/* space for strings (hope there is enough room) */
 	size_t str_size;
 	unsigned char string[4096];
