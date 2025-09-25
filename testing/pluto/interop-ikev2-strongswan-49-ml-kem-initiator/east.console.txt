@@ -1,0 +1,22 @@
+/testing/guestbin/swan-prep --nokeys
+[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.3.81, on dev eth0
+[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 aa 6e 2a 08 06
+Creating empty NSS database
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ikev2
+"westnet-eastnet-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
+east #
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
+east #

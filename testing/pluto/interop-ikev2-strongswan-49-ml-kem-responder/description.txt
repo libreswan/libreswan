@@ -1,5 +1,1 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
-the responder.
-
-This is the reverse test of interop-ikev2-strongswan-03
-
+interop libreswan->strongswan with addke1=ml_kem_768

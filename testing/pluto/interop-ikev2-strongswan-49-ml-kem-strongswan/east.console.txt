@@ -77,19 +77,7 @@ east #
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 east #
- if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
-Status of IKE charon daemon (strongSwan VERSION):
-  uptime: XXX second, since YYY
-  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
-Listening IP addresses:
-  198.19.3.81
-  192.1.2.23
-  192.0.2.254
-Connections:
-westnet-eastnet-ikev2:  192.1.2.23...192.1.2.45  IKEv2
-westnet-eastnet-ikev2:   local:  [east] uses pre-shared key authentication
-westnet-eastnet-ikev2:   remote: [west] uses pre-shared key authentication
-westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
@@ -97,9 +85,6 @@ Bypass LAN 198.19.0.0/16:  198.19.0.0/16 === 198.19.0.0/16 PASS
 Bypass LAN 198.19.0.1/32:  198.19.0.1/32 === 198.19.0.1/32 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
-westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_8192/KE1_ML_KEM_768
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:  AES_CBC_256/HMAC_SHA2_256_128, XXX bytes_i (XX pkts, XXs ago), XXX bytes_o (XX pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24
 east #

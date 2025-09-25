@@ -1,6 +1,4 @@
 /testing/guestbin/swan-prep --nokeys
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.10.211, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 bd 12 a6 08 06
 Creating empty NSS database
 west #
  # confirm that the network is alive
@@ -35,24 +33,51 @@ west #
 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
 "westnet-eastnet-ikev2" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
-"westnet-eastnet-ikev2" #1: ML_KEM_768 KE missing from IKE_INTERMEDIATE RESPONSE
-"westnet-eastnet-ikev2" #1: encountered fatal error in state IKE_INTERMEDIATE_I
-"westnet-eastnet-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2" #1: deleting IKE SA (sent IKE_INTERMEDIATE request)
+"westnet-eastnet-ikev2" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"westnet-eastnet-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"westnet-eastnet-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-down UNEXPECTED
-# ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-1 packets transmitted, 0 received, 100% packet loss, time 0ms
+up
 west #
  echo done
 done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha256) 0xHASHKEY 128
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	dir out
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha256) 0xHASHKEY 128
+	enc cbc(aes) 0xENCKEY
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.1.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
 west #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 west #
