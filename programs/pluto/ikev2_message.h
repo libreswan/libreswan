@@ -48,8 +48,6 @@ struct v2SK_payload {
 	chunk_t integrity;
 };
 
-bool encrypt_v2SK_payload(struct v2SK_payload *sk);
-
 uint8_t build_ikev2_critical(bool impair, struct logger *logger);
 
 enum payload_security {

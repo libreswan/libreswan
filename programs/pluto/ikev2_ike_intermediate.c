@@ -481,15 +481,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 				 HUNK_AS_SHUNK(request.sk.cleartext) /* inner payloads */,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
 
-	if (!encrypt_v2SK_payload(&request.sk)) {
-		llog(RC_LOG, request.logger,
-		     "error encrypting response");
+	if (!record_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	record_v2_outgoing_message(pbs_out_all(&request.message),
-				   request.outgoing_fragments,
-				   request.logger);
 
 	/* save initiator for response processor */
 	ike->sa.st_kem.initiator = task->initiator;
@@ -779,15 +773,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 				 HUNK_AS_SHUNK(response.sk.cleartext) /* inner payloads */,
 				 &ike->sa.st_v2_ike_intermediate.responder);
 
-	if (!encrypt_v2SK_payload(&response.sk)) {
-		llog(RC_LOG, response.logger,
-		     "error encrypting response");
+	if (!record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	record_v2_outgoing_message(pbs_out_all(&response.message),
-				   response.outgoing_fragments,
-				   response.logger);
 
 	if (task->keymat != NULL) {
 		extract_v2_ike_intermediate_keys(ike, task->keymat);

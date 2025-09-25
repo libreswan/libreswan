@@ -50,6 +50,8 @@
 #include "ikev2_send.h"
 #include "ikev2_notification.h"
 
+static bool encrypt_v2SK_payload(struct v2SK_payload *sk);
+
 /*
  * Determine the IKE version we will use for the IKE packet
  * Normally, this is "2.0", but in the future we might need to
