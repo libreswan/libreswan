@@ -354,6 +354,7 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 			new_len++;
 			continue;
 		}
+
 		DATA_FOR_EACH(old, &transforms) {
 			if (old == new) {
 				struct transform *next =
@@ -417,6 +418,33 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	vdbg("updating raw transform length from %u to %u",
 	     proposal->transforms.len, new_len);
 	realloc_data(&proposal->transforms, new_len);
+
+	vdbg("removing PFS vs KEM transforms");
+	if (!parser->policy->pfs &&
+	    parser->policy->check_pfs_vs_ke) {
+
+		/*
+		 * Drop KEM when no-PFS.
+		 *
+		 * Note: the proposal may only have KEM algorithms,
+		 * which means all will be dropped leaving an empty
+		 * proposal.
+		 */
+		unsigned new_len = 0;
+		DATA_FOR_EACH(new, &proposal->transforms) {
+			if (new->type == transform_type_kem &&
+			    !parser->policy->pfs &&
+			    parser->policy->check_pfs_vs_ke) {
+				vdbg("dropping %s %s as no PFS", new->type->name, new->desc->fqn);
+				continue;
+			}
+			struct transform *next = &proposal->transforms.data[new_len++];
+			if (next != new) {
+				*next = *new;
+			}
+		}
+		realloc_data(&proposal->transforms, new_len);
+	}
 
 	vdbg("sorting raw transforms");
 	/* clean up the raw transforms */
