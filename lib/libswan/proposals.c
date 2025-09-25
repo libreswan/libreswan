@@ -412,6 +412,11 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 				   struct proposal *proposal,
 				   struct verbose verbose)
 {
+	if (proposal->impaired) {
+		vdbg("skipping cleanup of raw transforms, proposal is impaired");
+		return;
+	}
+
 	vdbg("removing duplicates in raw transforms");
 	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
 						       DEBUG_STREAM, verbose);
