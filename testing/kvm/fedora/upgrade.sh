@@ -147,9 +147,11 @@ dnf upgrade -y $(packages_for_build)
 : Pre-release packages pulled from updates testing
 :
 
+# dnf upgrade -y --enable-repo=updates-testing strongswan
+
 packages="
-https://kojipkgs.fedoraproject.org//work/tasks/4710/137444710/strongswan-6.0.2-2.fc42.x86_64.rpm
-https://kojipkgs.fedoraproject.org//work/tasks/4710/137444710/strongswan-sqlite-6.0.2-2.fc42.x86_64.rpm
+https://kojipkgs.fedoraproject.org//packages/strongswan/6.0.2/4.fc42/x86_64/strongswan-6.0.2-4.fc42.x86_64.rpm
+https://kojipkgs.fedoraproject.org//packages/strongswan/6.0.2/4.fc42/x86_64/strongswan-sqlite-6.0.2-4.fc42.x86_64.rpm
 "
 
 rpms=
