@@ -487,9 +487,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	record_v2_message(pbs_out_all(&request.message),
-			  request.outgoing_fragments,
-			  request.logger);
+	record_v2_outgoing_message(pbs_out_all(&request.message),
+				   request.outgoing_fragments,
+				   request.logger);
 
 	/* save initiator for response processor */
 	ike->sa.st_kem.initiator = task->initiator;
@@ -785,9 +785,9 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	record_v2_message(pbs_out_all(&response.message),
-			  response.outgoing_fragments,
-			  response.logger);
+	record_v2_outgoing_message(pbs_out_all(&response.message),
+				   response.outgoing_fragments,
+				   response.logger);
 
 	if (task->keymat != NULL) {
 		extract_v2_ike_intermediate_keys(ike, task->keymat);
