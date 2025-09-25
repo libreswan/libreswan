@@ -115,7 +115,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 		key_name = "Ni | Nr";
 		break;
 	}
-	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYSEED = prf(Ni | Nr, g^ir)",
+	struct crypt_prf *prf = crypt_prf_init_hunk("IKE SKEYSEED",
 						    prf_desc,
 						    key_name, key,
 						    logger);
@@ -141,7 +141,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 					 struct logger *logger)
 {
 	/* key = SK_d (old) */
-	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa rekey skeyseed", prf_desc,
+	struct crypt_prf *prf = crypt_prf_init_symkey("IKE rekey SKEYSEED", prf_desc,
 						      "SK_d (old)", SK_d_old,
 						      logger);
 	if (prf == NULL) {
@@ -167,7 +167,7 @@ static PK11SymKey *ike_sa_resume_skeyseed(const struct prf_desc *prf_desc,
 					  struct logger *logger)
 {
 	/* key = SK_d (old) */
-	struct crypt_prf *prf = crypt_prf_init_symkey("ike sa session resume skeyseed", prf_desc,
+	struct crypt_prf *prf = crypt_prf_init_symkey("IKE sa session resume SKEYSEED", prf_desc,
 						      "SK_d (old)", SK_d_old,
 						      logger);
 
@@ -258,8 +258,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 
 	{
 		struct crypt_prf *prf =
-			crypt_prf_init_symkey("<prf-psk> = prf(<psk>,\"Key Pad for IKEv2\")",
-					      prf_desc, "shared secret", psk, logger);
+			crypt_prf_init_symkey("PSK key-pad", prf_desc, "shared secret", psk, logger);
 		if (prf == NULL) {
 			if (is_fips_mode()) {
 				llog_passert(logger, HERE,
@@ -283,7 +282,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 	struct crypt_mac signed_octets;
 	{
 		struct crypt_prf *prf =
-			crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
+			crypt_prf_init_symkey("PSK signed octets",
 					      prf_desc, "<prf-psk>", prf_psk, logger);
 		/*
 		 * For the responder, the octets to be signed start
@@ -301,7 +300,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 		crypt_prf_update_hunk(prf, "first-packet", first_packet);
 		crypt_prf_update_hunk(prf, "nonce", nonce);
 		crypt_prf_update_hunk(prf, "hash", *id_hash);
-		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
+		crypt_prf_update_hunk(prf, "IntAuth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
 	symkey_delref(logger, "prf-psk", &prf_psk);
@@ -315,8 +314,7 @@ static struct crypt_mac psk_resume(const struct prf_desc *prf_desc,
 				   struct logger *logger)
 {
 	struct crypt_prf *prf =
-		crypt_prf_init_symkey("<signed-octets> = prf(SK_px, <message octets>)",
-				      prf_desc, "<SK_px>", SK_px, logger);
+		crypt_prf_init_symkey("PSK resume signed-octets", prf_desc, "<SK_px>", SK_px, logger);
 	if (prf == NULL) {
 		llog_pexpect(logger, HERE,
 			     "failed to create IKEv2 PRF for computing signed-octets = prf(SK_px, <message octets>");

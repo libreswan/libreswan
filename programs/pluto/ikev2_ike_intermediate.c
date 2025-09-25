@@ -197,7 +197,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 */
 
 	/* prf(SK_p[ir](N), ... */
-	struct crypt_prf *prf = crypt_prf_init_symkey("prf(IntAuth_*_A [| IntAuth_*_P])",
+	struct crypt_prf *prf = crypt_prf_init_symkey("IKE INTERMEDIATE",
 						      ike->sa.st_oakley.ta_prf,
 						      "SK_p", intermediate_key,
 						      ike->sa.logger);

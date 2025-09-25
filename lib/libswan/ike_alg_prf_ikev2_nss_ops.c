@@ -237,8 +237,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 	/* calculate outer prf */
 	struct crypt_mac signed_octets;
 	{
-		struct crypt_prf *prf = crypt_prf_init_symkey("<signed-octets> = prf(<prf-psk>, <msg octets>)",
-							      prf_desc,
+		struct crypt_prf *prf = crypt_prf_init_symkey("PSK signed-octets", prf_desc,
 							      "<prf-psk>", prf_psk,
 							      logger);
 		/*
@@ -257,7 +256,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 		crypt_prf_update_hunk(prf, "first-packet", first_packet);
 		crypt_prf_update_hunk(prf, "nonce", nonce);
 		crypt_prf_update_hunk(prf, "hash", *id_hash);
-		crypt_prf_update_hunk(prf,"IntAuth", intermediate_packet);
+		crypt_prf_update_hunk(prf, "intauth", intermediate_packet);
 		signed_octets = crypt_prf_final_mac(&prf, NULL);
 	}
 	symkey_delref(logger, "prf-psk", &prf_psk);

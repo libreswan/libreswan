@@ -407,10 +407,8 @@ struct ppk_confirmation calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc
 	PK11SymKey *ppk_key = symkey_from_hunk("PPK Keying material", ppk->key, logger);
 
 	/* prf(PPK, ... */
-	struct crypt_prf *prf = crypt_prf_init_symkey("prf(PPK,)",
-						      prf_desc,
-						      "PPK", ppk_key,
-						      logger);
+	struct crypt_prf *prf = crypt_prf_init_symkey("PPK confirmation", prf_desc,
+						      "PPK", ppk_key, logger);
 
 	crypt_prf_update_hunk(prf, "Ni", Ni);
 	crypt_prf_update_hunk(prf, "Nr", Nr);
