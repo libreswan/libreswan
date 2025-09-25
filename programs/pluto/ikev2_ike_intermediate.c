@@ -321,6 +321,28 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
 }
 
+static void compute_intermediate_outbound_mac(struct ike_sa *ike,
+					      PK11SymKey *intermediate_key,
+					      struct v2_message *message,
+					      chunk_t *intermediate_auth_ir)
+{
+	compute_intermediate_mac(ike, intermediate_key,
+				 message->sk.pbs.container->start,
+				 HUNK_AS_SHUNK(message->sk.cleartext) /* inner payloads */,
+				 intermediate_auth_ir);
+}
+
+static void compute_intermediate_inbound_mac(struct ike_sa *ike,
+					     PK11SymKey *intermediate_key,
+					     struct msg_digest *md,
+					     chunk_t *intermediate_auth_ir)
+{
+	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
+	compute_intermediate_mac(ike, intermediate_key,
+				 md->packet_pbs.start, plain,
+				 intermediate_auth_ir);
+}
+
 /*
  * Return the IKE_INTERMEDIATE exchange being worked on.
  */
@@ -557,10 +579,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	 * For Intermediate Exchange, apply PRF to the peer's messages
 	 * and store in state for further authentication.
 	 */
-	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
-				 request.sk.pbs.container->start,
-				 HUNK_AS_SHUNK(request.sk.cleartext) /* inner payloads */,
-				 &ike->sa.st_v2_ike_intermediate.initiator);
+
+	compute_intermediate_outbound_mac(ike, ike->sa.st_skey_pi_nss, &request,
+					  &ike->sa.st_v2_ike_intermediate.initiator);
 
 	if (!record_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
@@ -674,10 +695,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	 *
 	 * Hence, here the responder uses the initiator's keys.
 	 */
-	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
-	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
-				 md->packet_pbs.start, plain,
-				 &ike->sa.st_v2_ike_intermediate.initiator);
+	compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pi_nss, md,
+					 &ike->sa.st_v2_ike_intermediate.initiator);
 
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
@@ -849,10 +868,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	 * For Intermediate Exchange, apply PRF to the peer's messages
 	 * and store in state for further authentication.
 	 */
-	compute_intermediate_mac(ike, ike->sa.st_skey_pr_nss,
-				 response.sk.pbs.container->start,
-				 HUNK_AS_SHUNK(response.sk.cleartext) /* inner payloads */,
-				 &ike->sa.st_v2_ike_intermediate.responder);
+	compute_intermediate_outbound_mac(ike, ike->sa.st_skey_pr_nss, &response,
+					  &ike->sa.st_v2_ike_intermediate.responder);
 
 	if (!record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
@@ -889,10 +906,8 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 *
 	 * Hence, here the initiator uses the responder's keys.
 	 */
-	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
-	compute_intermediate_mac(ike, ike->sa.st_skey_pr_nss,
-				 md->packet_pbs.start, plain,
-				 &ike->sa.st_v2_ike_intermediate.responder);
+	compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pr_nss, md,
+					 &ike->sa.st_v2_ike_intermediate.responder);
 
 	/*
 	 * if this connection has a newer Child SA than this state
