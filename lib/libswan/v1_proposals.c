@@ -125,7 +125,7 @@ static bool add_proposal(struct proposal_parser *parser,
 		free_proposal(&new);
 		return false;
 	}
-	append_proposal(proposals, &new, verbose);
+	append_proposal(parser, proposals, &new, verbose);
 	return true;
 }
 

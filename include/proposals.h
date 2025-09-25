@@ -210,7 +210,8 @@ void free_proposals(struct proposals **proposals);
 extern struct proposal *alloc_proposal(const struct proposal_parser *parser);
 extern void free_proposal(struct proposal **proposal);
 
-void append_proposal(struct proposals *proposals,
+void append_proposal(struct proposal_parser *parser,
+		     struct proposals *proposals,
 		     struct proposal **proposal,
 		     struct verbose verbose);
 void append_proposal_transform(struct proposal_parser *parser,
@@ -219,10 +220,6 @@ void append_proposal_transform(struct proposal_parser *parser,
 			       const struct ike_alg *transform,
 			       int enckeylen,
 			       struct verbose verbose);
-void remove_duplicate_algorithms(struct proposal_parser *parser,
-				 struct proposal *proposal,
-				 const struct transform_type *transform_type,
-				 struct verbose verbose);
 
 struct proposal_parser *alloc_proposal_parser(const struct proposal_policy *policy,
 					      const struct proposal_protocol *protocol);
