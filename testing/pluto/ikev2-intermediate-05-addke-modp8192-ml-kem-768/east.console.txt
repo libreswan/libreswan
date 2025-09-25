@@ -10,7 +10,7 @@ east #
 "any-east": added IKEv2 connection
 east #
  ipsec connectionstatus | grep ' policy: '
-"any-east":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+INTERMEDIATE;
+"any-east":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ESN_NO+ESN_YES+INTERMEDIATE;
 east #
  echo "initdone"
 initdone

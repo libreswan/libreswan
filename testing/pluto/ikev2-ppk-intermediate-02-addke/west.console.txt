@@ -43,9 +43,7 @@ Redirecting to: [initsystem]
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: dropping ADDKE1=NONE from list of negotiated IKE_INTERMEDIATE exchanges
-"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
-"algo" #1: dropping IKE_SA_INIT response with duplicate Message ID 0, IKE SA in state IKE_SA_INIT_IR has already processed response
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
@@ -67,9 +65,7 @@ Redirecting to: [initsystem]
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: dropping ADDKE1=NONE from list of negotiated IKE_INTERMEDIATE exchanges
-"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
-"algo" #1: dropping IKE_SA_INIT response with duplicate Message ID 0, IKE SA in state IKE_SA_INIT_IR has already processed response
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
@@ -91,7 +87,6 @@ Redirecting to: [initsystem]
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: dropping ADDKE2=NONE from list of negotiated IKE_INTERMEDIATE exchanges
-"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192, PPK}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
@@ -113,7 +108,6 @@ Redirecting to: [initsystem]
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"algo" #1: dropping IKE_SA_INIT response with in-progress Message ID 0, IKE SA in state IKE_SA_INIT_I is currently processing an earlier response with the same ID
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
