@@ -1259,16 +1259,8 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 		NULL;
 	ldbg(logger, "TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
 
-	const struct ip_protocol *proto;
-	const struct ipsec_proto_info *proto_info;
-
-	if (child->sa.st_esp.protocol == &ip_protocol_esp) {
-		proto = &ip_protocol_esp;
-		proto_info = &child->sa.st_esp;
-	} else if (child->sa.st_ah.protocol == &ip_protocol_ah) {
-		proto = &ip_protocol_ah;
-		proto_info = &child->sa.st_ah;
-	} else {
+	const struct ipsec_proto_info *proto_info = outer_ipsec_proto_info(child);
+	if (proto_info == NULL) {
 		return false;
 	}
 
@@ -1310,7 +1302,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 
 	*migrate = (struct kernel_migrate) {
 		.xfrm_dir = xfrm_policy_dir,
-		.proto = proto,
+		.proto = proto_info->protocol,
 		.encap_type = encap_type,
 		.reqid = reqid_esp(c->child.reqid),
 		.spi = dst->spi,
@@ -1355,7 +1347,9 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 	if (encap_type == NULL)
 		migrate->src.encap_port = migrate->dst.encap_port = 0;
 
-	ip_said said = said_from_address_protocol_spi(dst->end->host->addr, proto, migrate->spi);
+	ip_said said = said_from_address_protocol_spi(dst->end->host->addr,
+						      proto_info->protocol,
+						      migrate->spi);
 	jam_said(&story_jb, &said);
 
 	endpoint_buf ra_old, ra_new;

@@ -78,11 +78,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 
 	jam(buf, ", add_time=%"PRIu64, child->sa.st_esp.add_time);
 
-	struct ipsec_proto_info *first_ipsec_proto =
-		(child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp:
-		 child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-		 NULL);
+	struct ipsec_proto_info *first_ipsec_proto = outer_ipsec_proto_info(child);
 	passert(first_ipsec_proto != NULL);
 
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {

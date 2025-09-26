@@ -277,10 +277,11 @@ static struct child_sa *find_phase2_state_to_delete(const struct ike_sa *ike,
 						  child->sa.st_connection)) {
 			continue;
 		}
-		const struct ipsec_proto_info *pr =
-			(protoid == PROTO_IPSEC_AH ? &child->sa.st_ah :
-			 &child->sa.st_esp);
-		if (pr->protocol == NULL) {
+		const struct ipsec_proto_info *pr = outer_ipsec_proto_info(child);
+		if (pr == NULL) {
+			continue;
+		}
+		if (pr->protocol->ikev1_protocol_id != protoid) {
 			continue;
 		}
 		if (pr->outbound.spi == spi) {

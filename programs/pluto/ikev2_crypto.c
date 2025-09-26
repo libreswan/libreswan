@@ -54,11 +54,7 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
-	struct ipsec_proto_info *ipi =
-		child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
-		child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		NULL;
-
+	struct ipsec_proto_info *ipi = outer_ipsec_proto_info(child);
 	passert(ipi != NULL);	/* ESP or AH must be present */
 
 	/*

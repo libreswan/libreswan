@@ -337,11 +337,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 		 * number of bytes changes with compression.
 		 */
 
-		struct ipsec_proto_info *first_proto_info =
-			(child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-			 child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
-			 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-			 NULL);
+		struct ipsec_proto_info *first_proto_info = outer_ipsec_proto_info(child);
 
 		bool in_info = get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND);
 		bool out_info = get_ipsec_traffic(child, first_proto_info, DIRECTION_OUTBOUND);

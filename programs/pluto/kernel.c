@@ -1960,12 +1960,7 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
 bool was_eroute_idle(struct child_sa *child, deltatime_t since_when)
 {
 	passert(child != NULL);
-	struct ipsec_proto_info *first_proto_info =
-		(child->sa.st_ah.protocol == &ip_protocol_ah ? &child->sa.st_ah :
-		 child->sa.st_esp.protocol == &ip_protocol_esp ? &child->sa.st_esp :
-		 child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? &child->sa.st_ipcomp :
-		 NULL);
-
+	struct ipsec_proto_info *first_proto_info = outer_ipsec_proto_info(child);
 	if (!get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND)) {
 		/* snafu; assume idle!?! */
 		return true;
@@ -2290,11 +2285,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 
 	bool rekey = c->config->rekey;
 	bool newest = c->established_child_sa == child->sa.st_serialno;
-	struct state *st =  &child->sa;
-	struct ipsec_proto_info *pr = (st->st_esp.protocol == &ip_protocol_esp ? &st->st_esp :
-				       st->st_ah.protocol == &ip_protocol_ah ? &st->st_ah :
-				       st->st_ipcomp.protocol == &ip_protocol_ipcomp ? &st->st_ipcomp :
-				       NULL);
+	struct ipsec_proto_info *pr = outer_ipsec_proto_info(child);
 
 	bool already_softexpired = ((pr->inbound.expired[SA_SOFT_EXPIRED]) ||
 				    (pr->outbound.expired[SA_SOFT_EXPIRED]));
