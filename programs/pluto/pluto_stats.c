@@ -403,7 +403,7 @@ void whack_showstats(const struct whack_message *wm UNUSED, struct show *s)
 	show(s, "total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
 	/*
 	 * Total counts only total of traffic by terminated IPsec
-	 * SA's.  Should we call get_sa_bundle_info() for bytes of
+	 * SA's.  Should we call get_ipsec_traffic() for bytes of
 	 * active IPsec SA's?
 	 */
 	show_bytes(s, "total.ipsec.traffic", &pstats_ipsec_bytes);

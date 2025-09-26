@@ -288,7 +288,7 @@ void event_v1_nat_keepalive(struct state *st)
 	 * keepalives, we don't need to check IPsec SA's being idle.
 	 * If we were to check IPsec SA, we could then also update the
 	 * ISAKMP SA, but we think this is too expensive (call
-	 * get_sa_bundle_info() to kernel _and_ find ISAKMP SA.
+	 * get_ipsec_traffic() to kernel _and_ find ISAKMP SA.
 	 */
 	if (!IS_IPSEC_SA_ESTABLISHED(st)) {
 		ldbg(st->logger, "NAT-keep-alive: IPsec SA is not established");
