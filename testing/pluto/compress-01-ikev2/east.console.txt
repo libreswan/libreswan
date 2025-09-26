@@ -96,3 +96,7 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 east #
+ ipsec connectionstatus | grep 'algorithm newest'
+"westnet-eastnet-ipcomp":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-DH19
+"westnet-eastnet-ipcomp":   ESP algorithm newest: AES_GCM_16_256; IPCOMP; pfsgroup=<Phase1>
+east # 

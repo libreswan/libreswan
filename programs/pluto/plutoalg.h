@@ -8,3 +8,5 @@ extern void show_kernel_alg_connection(struct show *s,
 
 struct ike_info;
 #define IKEALGBUF_LEN strlen("00000_000-00000_000-00000")
+
+void jam_ipsec_proto_info(struct jambuf *buf, const struct ipsec_proto_info *info);
