@@ -234,7 +234,7 @@ static bool open_v2_message_body(struct pbs_out *message,
  * octets.  The IV will subsequently be discarded after decryption.
  * This is true of Cipher Block Chaining mode (CBC).
  */
-static bool emit_v2SK_iv(struct v2SK_payload *sk)
+static bool pad_v2SK_iv(struct v2SK_payload *sk)
 {
 	/* compute location/size */
 	sk->wire_iv = chunk2(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
@@ -266,6 +266,7 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 		.isag_length = 0, /* filled in later */
 		.isag_critical = build_ikev2_critical(false, ike->sa.logger),
 	};
+	sk->header = shunk2(container->cur, sizeof(e));
 	if (!pbs_out_struct(container, e, &ikev2_sk_desc, &sk->pbs)) {
 		llog(RC_LOG, logger,
 		     "error initializing SK header for encrypted %s message",
@@ -281,14 +282,12 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 	 * fields [...] MUST NOT be included in the associated data.
 	 */
 
-	sk->aad = chunk2(sk->pbs.container->start, sk->pbs.cur - sk->pbs.container->start);
+	sk->aad = shunk2(sk->pbs.container->start, sk->pbs.cur - sk->pbs.container->start);
 
-	/* emit IV and save location */
+	/* emit space for IV, and save location */
 
-	if (!emit_v2SK_iv(sk)) {
-		llog(RC_LOG, logger,
-		     "error initializing IV for encrypted %s message",
-		     container->name);
+	if (!pad_v2SK_iv(sk)) {
+		/* already logged */
 		return false;
 	}
 
@@ -305,10 +304,11 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 	 */
 	PASSERT(sk->logger, sk->pbs.container != NULL && sk->pbs.container->name == container->name);
 
-	ldbg(sk->logger, "%s() %s=[%zu,%zu) %s=[%zu,%zu)",
+	ldbg(sk->logger, "%s() %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu)",
 	     __func__,
-#define R(N) #N, sk->N.ptr - sk->payload.ptr, sk->N.len
+#define R(N) #N, (const uint8_t *)sk->N.ptr - (const uint8_t *)sk->payload.ptr, sk->N.len
 	     R(aad),
+	     R(header),
 	     R(wire_iv));
 #undef R
 
@@ -370,12 +370,13 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 	sk->payload.len = sk->pbs.cur - sk->payload.ptr;
 	close_pbs_out(&sk->pbs);
 
-	ldbg(sk->logger, "%s() payload=%zu bytes %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu)",
+	ldbg(sk->logger, "%s() payload=%zu bytes %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu) %s=[%zu,%zu)",
 	     __func__, sk->padding.len,
-#define R(N) #N, sk->N.ptr - sk->payload.ptr, sk->N.len
+#define R(N) #N, (const uint8_t *)sk->N.ptr - (const uint8_t *)sk->payload.ptr, sk->N.len
 	     R(aad),
-	     R(cleartext),
+	     R(header),
 	     R(wire_iv),
+	     R(cleartext),
 	     R(padding),
 	     R(integrity));
 #undef R
@@ -456,8 +457,8 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		/* okay, authenticate from beginning of IV */
 		struct crypt_prf *ctx = crypt_prf_init_symkey("integ", ike->sa.st_oakley.ta_integ->prf,
 							      "authkey", authkey, sk->logger);
-		chunk_t message = chunk2(sk->aad.ptr, sk->integrity.ptr - sk->aad.ptr);
-		crypt_prf_update_bytes(ctx, "message", message.ptr, message.len);
+		shunk_t message = shunk2(sk->aad.ptr, sk->integrity.ptr - (const uint8_t*)sk->aad.ptr);
+		crypt_prf_update_hunk(ctx, "message", message);
 		PASSERT(sk->logger, sk->integrity.len == ike->sa.st_oakley.ta_integ->integ_output_size);
 		struct crypt_mac mac = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 		memcpy_hunk(sk->integrity.ptr, mac, sk->integrity.len);
@@ -1107,8 +1108,7 @@ static bool record_outbound_fragment(struct logger *logger,
 				     enum next_payload_types_ikev2 skf_np,
 				     struct v2_outgoing_fragment **fragp,
 				     chunk_t *fragment,	/* read-only */
-				     unsigned int number, unsigned int total,
-				     const char *desc)
+				     unsigned int number, unsigned int total)
 {
 	struct fragment_pbs_out message_fragment;
 	if (!open_fragment_pbs_out("fragment", &message_fragment, logger)) {
@@ -1163,14 +1163,12 @@ static bool record_outbound_fragment(struct logger *logger,
 	 * fields [...] MUST NOT be included in the associated data.
 	 */
 
-	skf.aad = chunk2(skf.pbs.container->start, skf.pbs.cur - skf.pbs.container->start);
+	skf.aad = shunk2(skf.pbs.container->start, skf.pbs.cur - skf.pbs.container->start);
 
-	/* emit IV and save location */
+	/* emit space for IV, and save location */
 
-	if (!emit_v2SK_iv(&skf)) {
-		llog(RC_LOG, logger,
-		     "error initializing IV for encrypted %s message",
-		     desc);
+	if (!pad_v2SK_iv(&skf)) {
+		/* already logged */
 		return false;
 	}
 
@@ -1202,7 +1200,6 @@ static bool record_outbound_fragment(struct logger *logger,
 
 static bool record_outbound_fragments(const struct pbs_out *body,
 				      struct v2SK_payload *sk,
-				      const char *desc,
 				      struct v2_outgoing_fragment **frags)
 {
 	free_v2_outgoing_fragments(frags, sk->logger);
@@ -1300,7 +1297,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 		chunk_t fragment = chunk2(sk->cleartext.ptr + offset,
 					  PMIN(sk->cleartext.len - offset, len));
 		if (!record_outbound_fragment(sk->logger, sk->ike, &hdr, skf_np, frag,
-					      &fragment, number, nfrags, desc)) {
+					      &fragment, number, nfrags)) {
 			return false;
 		}
 		frag = &(*frag)->next;
@@ -1342,7 +1339,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
 	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
 	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
-		if (!record_outbound_fragments(msg, sk, what, outgoing_fragments)) {
+		if (!record_outbound_fragments(msg, sk, outgoing_fragments)) {
 			ldbg(sk->logger, "record outbound fragments failed");
 			return STF_INTERNAL_ERROR;
 		}

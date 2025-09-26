@@ -39,9 +39,10 @@ struct v2SK_payload {
 	struct ike_sa *ike;
 	struct pbs_out pbs; /* within SK */
 	/* private */
-	/* pointers into SK header+contents */
-	chunk_t payload; /* aad+wire_iv+cleartext+padding+integrity */
-	chunk_t aad;
+	shunk_t aad; /* IKE header ... SK header */
+	/* pointers into sk_header+contents */
+	chunk_t payload; /* sk_header+wire_iv+cleartext+padding+integrity */
+	shunk_t header;
 	chunk_t wire_iv;
 	chunk_t cleartext;
 	chunk_t padding;
