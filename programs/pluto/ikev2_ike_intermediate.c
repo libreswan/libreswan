@@ -88,12 +88,13 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
 
 /*
  * Without this the code makes little sense.
- * https://datatracker.ietf.org/doc/html/draft-ietf-ipsecme-ikev2-intermediate-08
+ *
+ * https://www.rfc-editor.org/rfc/rfc9242.html#figure-1
  *
  *                       1                   2                   3
  *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^ <-- MESSAGE START
- *  |                       IKE SA Initiator's SPI                  | | |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^ <- MESSAGE
+ *  |                       IKE SA Initiator's SPI                  | | |    HEADER
  *  |                                                               | | |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ I |
  *  |                       IKE SA Responder's SPI                  | K |
@@ -104,18 +105,18 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
  *  |                          Message ID                           | r A
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
  *  |                       Adjusted Length                         | | |
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v |
- *  |                                                               |   |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v | <- UNENCRYPTED
+ *  |                                                               |   |    PAYLOADS
  *  ~                 Unencrypted payloads (if any)                 ~   |
  *  |                                                               |   |
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <-- ENCRYPTED HEADER
- *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <- ENCRYPTED
+ *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |    PAYLOAD
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v    HEADER
  *  |                                                               | |
  *  ~                     Initialization Vector                     ~ E
  *  |                                                               | E
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ c ^ <-- PLAIN
- *  |                                                               | r |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ c ^ <- INNER
+ *  |                                                               | r |    PAYLOADS
  *  ~             Inner payloads (not yet encrypted)                ~   P
  *  |                                                               | P |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ l v
@@ -136,55 +137,13 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
 
 static void compute_intermediate_mac(struct ike_sa *ike,
 				     PK11SymKey *intermediate_key,
-				     const uint8_t *message_start,
-				     shunk_t plain,
+				     shunk_t message_header,
+				     shunk_t unencrypted_payloads,
+				     shunk_t encrypted_payload_header,
+				     shunk_t inner_payloads,
 				     chunk_t *int_auth_ir)
 {
 	struct logger *logger = ike->sa.logger;
-
-	/*
-	 * Define variables that match the naming scheme used by the
-	 * RFC's ASCII diagram above.
-	 */
-
-	/*
-	 * Extract the message header, will need to patch up the
-	 * trailing length field.
-	 */
-	struct isakmp_hdr adjusted_message_header;
-	shunk_t header = {
-		.ptr = message_start,
-		.len = sizeof(adjusted_message_header),
-	};
-
-	struct ikev2_generic adjusted_encrypted_payload_header;
-	shunk_t unencrypted_payloads = {
-		.ptr = header.ptr + header.len,
-		.len = ((const uint8_t*) plain.ptr - message_start
-			- ike->sa.st_oakley.ta_encrypt->wire_iv_size
-			- sizeof(adjusted_encrypted_payload_header)
-			- header.len),
-	};
-
-	shunk_t encrypted_payload = {
-		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
-		.len = plain.len + sizeof(adjusted_encrypted_payload_header),
-	};
-
-	/*
-	 * Extract the encrypted header, will need to patch up the
-	 * trailing Payload Length field.
-	 */
-	shunk_t encrypted_payload_header = {
-		.ptr = encrypted_payload.ptr,
-		.len = sizeof(adjusted_encrypted_payload_header),
-	};
-
-	/* skip the IV */
-	shunk_t inner_payloads = {
-		.ptr = plain.ptr,
-		.len = plain.len,
-	};
 
 	/*
 	 * compute the PRF over "A" + "P" as in:
@@ -196,48 +155,272 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 * IntAuth_r2 = prf(SK_pr2, IntAuth_r1 | IntAuth_r2A [| IntAuth_r2P])
 	 */
 
-	/* prf(SK_p[ir](N), ... */
+	/*
+	 * IntAuth_[ir](N) = prf(SK_p[ir](N), ...)
+	 */
+
 	struct crypt_prf *prf = crypt_prf_init_symkey("IKE INTERMEDIATE",
 						      ike->sa.st_oakley.ta_prf,
 						      "SK_p", intermediate_key,
 						      ike->sa.logger);
 
-	/* prf(..., IntAuth_[ir](N-1) | ...) */
+	/*
+	 * IntAuth_[ir](N) = prf(..., IntAuth_[ir](N-1) | ...)
+	 */
+
 	if (int_auth_ir->len > 0) {
 		crypt_prf_update_hunk(prf, "IntAuth_[ir](N-1)", *int_auth_ir);
 	}
 
-	/* A: prf(... | IntAuth_[ir](N)A | ...) */
+	/*
+	 * IntAuth_[ir](N) = prf(... | IntAuth_[ir](N)A | ...)
+	 *
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ ^ <- MESSAGE
+	 *  |                       IKE SA Initiator's SPI                  | | |    HEADER
+	 *  |                                                               | | |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ I |
+	 *  |                       IKE SA Responder's SPI                  | K |
+	 *  |                                                               | E |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+   |
+	 *  |  Next Payload | MjVer | MnVer | Exchange Type |     Flags     | H |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ d |
+	 *  |                          Message ID                           | r A
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
+	 *  |                       Adjusted Length                         | | |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v | <- UNENCRYPTED
+	 *  |                                                               |   |    PAYLOADS
+	 *  ~                 Unencrypted payloads (if any)                 ~   |
+	 *  |                                                               |   |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <- ENCRYPTED
+	 *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |    PAYLOAD
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v    HEADER
+	 *
+	 * The IntAuth_[i/r]*A chunk consists of the sequence of
+	 * octets from the first octet of the IKE Header (not
+	 * including the prepended four octets of zeros, if UDP
+	 * encapsulation or TCP encapsulation of ESP packets is used)
+	 * to the last octet of the generic header of the Encrypted
+	 * payload.  The scope of IntAuth_[i/r]*A is identical to the
+	 * scope of Associated Data defined for the use of AEAD
+	 * algorithms in IKEv2 (see Section 5.1 of [RFC5282]), which
+	 * is stressed by using the "A" suffix in its name.  Note that
+	 * calculation of IntAuth_[i/r]*A doesn't depend on whether an
+	 * AEAD algorithm or a plain cipher is used in IKE SA.
+	 *
+	 * For the purpose of prf calculation, the Length field in the
+	 * IKE Header and the Payload Length field in the Encrypted
+	 * payload header are adjusted so that they don't count the
+	 * lengths of Initialization Vector, Integrity Checksum Data,
+	 * Padding, and Pad Length fields. In other words, the Length
+	 * field in the IKE Header (denoted as Adjusted Length in
+	 * Figure 1) is set to the sum of the lengths of
+	 * IntAuth_[i/r]*A and IntAuth_[i/r]*P, and the Payload Length
+	 * field in the Encrypted payload header (denoted as Adjusted
+	 * Payload Length in Figure 1) is set to the length of
+	 * IntAuth_[i/r]*P plus the size of the Encrypted payload
+	 * header (four octets).
+	 *
+	 * Define variables that match the naming scheme used by the
+	 * RFC's ASCII diagram above.
+	 */
 
-	/* the message header needs its Length adjusted */
-	size_t adjusted_payload_length = (header.len
-				 + unencrypted_payloads.len
-				 + encrypted_payload_header.len
-				 + inner_payloads.len);
+	/*
+	 * The message header needs its Length adjusted.
+	 *
+	 * What isn't mentioned is that, when things are fragmented,
+	 * the Next Payload field also needs to be changed from SKF to
+	 * SK (but only when there's no unencrypted payloads).
+	 *
+	 * When there's unencrypted payloads, its the last of those
+	 * that needs adjusting, and pluto doesn't do that (caller
+	 * will have rejected it).
+	 */
+	size_t adjusted_payload_length = (message_header.len
+					  + unencrypted_payloads.len
+					  + encrypted_payload_header.len
+					  + inner_payloads.len);
 	ldbg(logger, "adjusted payload length: %zu", adjusted_payload_length);
-	memcpy(&adjusted_message_header, header.ptr, header.len);
+	struct isakmp_hdr adjusted_message_header;
+	memcpy(&adjusted_message_header, message_header.ptr, message_header.len);
 	hton_thing(adjusted_payload_length, adjusted_message_header.isa_length);
-	crypt_prf_update_thing(prf, "Adjusted Message Header", adjusted_message_header);
+	if (adjusted_message_header.isa_np == ISAKMP_NEXT_v2SKF) {
+		ldbg(logger, "adjusted fragmented Next Payload to SK");
+		adjusted_message_header.isa_np = ISAKMP_NEXT_v2SK;
+	}
+	crypt_prf_update_thing(prf, "IntAuth_[ir](N)A: adjusted message header",
+			       adjusted_message_header);
 
-	/* Unencrypted payload */
-	crypt_prf_update_hunk(prf, "Unencrypted payloads (if any)", unencrypted_payloads);
+	/*
+	 * Unencrypted payload (hopefully empty)
+	 *
+	 * When there's fragmentation, this needs to be adjusted so
+	 * that the last unencrypted payload's Next Payload field is
+	 * SK, and not SKF.  Not happening.
+	 */
+	crypt_prf_update_hunk(prf, "IntAuth_[ir](N)A: unencrypted payloads",
+			      unencrypted_payloads);
 
-	/* encrypted payload header needs its Length adjusted */
+	/*
+	 * Encrypted payload header needs its Length adjusted.
+	 */
 	size_t adjusted_encrypted_payload_length = encrypted_payload_header.len + inner_payloads.len;
 	ldbg(logger, "adjusted encrypted payload length: %zu", adjusted_encrypted_payload_length);
+	struct ikev2_generic adjusted_encrypted_payload_header;
 	memcpy(&adjusted_encrypted_payload_header, encrypted_payload_header.ptr, encrypted_payload_header.len);
 	hton_thing(adjusted_encrypted_payload_length, adjusted_encrypted_payload_header.isag_length);
-	crypt_prf_update_thing(prf, "Adjusted Encrypted (SK) Header", adjusted_encrypted_payload_header);
+	crypt_prf_update_thing(prf, "IntAuth_[ir](N)A: adjusted encrypted (SK) header",
+			       adjusted_encrypted_payload_header);
 
-	/* P: prf(... | IntAuth_[ir](N)P) */
+	/*
+	 * IntAuth_[ir](N) = prf(... | IntAuth_[ir](N)P)
+	 *
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ c ^ <- INNER
+	 *  |                                                               | r |    PAYLOADS
+	 *  ~             Inner payloads (not yet encrypted)                ~   P
+	 *  |                                                               | P |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ l v
+	 *
+	 * The IntAuth_[i/r]*P chunk is present if the Encrypted
+	 * payload is not empty. It consists of the content of the
+	 * Encrypted payload that is fully formed but not yet
+	 * encrypted.  The Initialization Vector, Padding, Pad Length,
+	 * and Integrity Checksum Data fields (see Section 3.14 of
+	 * [RFC7296]) are not included into the calculation.  In other
+	 * words, the IntAuth_[i/r]*P chunk is the inner payloads of
+	 * the Encrypted payload in plaintext form, which is stressed
+	 * by using the "P" suffix in its name.
+	 */
 
-	crypt_prf_update_bytes(prf, "Inner payloads (decrypted)",
-			       inner_payloads.ptr, inner_payloads.len);
+	crypt_prf_update_hunk(prf, "IntAuth_[ir](N)P", inner_payloads);
 
 	/* extract the mac; replace existing value */
 	struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 	free_chunk_content(int_auth_ir);
 	*int_auth_ir = clone_hunk(mac, "IntAuth");
+}
+
+static void compute_intermediate_outbound_mac(struct ike_sa *ike,
+					      PK11SymKey *intermediate_key,
+					      struct v2_message *message,
+					      chunk_t *intermediate_auth_ir)
+{
+	shunk_t message_header = {
+		.ptr = message->sk.pbs.container->start,
+		.len = sizeof(struct isakmp_hdr),
+	};
+	shunk_t unencrypted_payloads = {
+		.ptr = (message_header.ptr + message_header.len),
+		.len = ((const uint8_t *)message->sk.header.ptr
+			- (const uint8_t *)message_header.ptr
+			- message_header.len),
+	};
+	shunk_t encrypted_payload_header = {
+		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
+		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
+	};
+	shunk_t inner_payloads = HUNK_AS_SHUNK(message->sk.cleartext);
+	compute_intermediate_mac(ike, intermediate_key,
+				 message_header,
+				 unencrypted_payloads,
+				 encrypted_payload_header,
+				 inner_payloads,
+				 intermediate_auth_ir);
+}
+
+static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
+					     PK11SymKey *intermediate_key,
+					     struct msg_digest *md,
+					     chunk_t *intermediate_auth_ir)
+{
+	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+
+	shunk_t message_header = {
+		.ptr = md->packet_pbs.start,
+		.len = sizeof(struct isakmp_hdr),
+	};
+	const uint8_t *message_header_end = (message_header.ptr + message_header.len);
+	/*
+	 * Several problems that stem from how pluto re-constructs the
+	 * fragments into an unfragmented payload:
+	 *
+	 *
+	 */
+	shunk_t unencrypted_payloads;
+	if (md->hdr.isa_np == ISAKMP_NEXT_v2SK ||
+	    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
+		/*
+		 * It's empty.
+		 *
+		 * For SKF, the hash code will need to change Next
+		 * Payload back to SK.
+		 */
+		unencrypted_payloads = (shunk_t) {
+			.ptr = message_header_end,
+			.len = 0,
+		};
+	} else if (md->v2_frags_total == 0) {
+		/*
+		 * DANGER:
+		 *
+		 * When re-constructing a fragmented message, Pluto
+		 * stores the accumulated fragments in a separate
+		 * buffer (md->raw_packet) and then points sk->pbs at
+		 * it.  This means that, for a fragmented payload,
+		 * sk->pbs.start DOES NOT point into md->packet_pbs.
+		 * Hence, the calculation:
+		 *
+		 *    sk->pbs.start - md->packet_pbs.start
+		 *
+		 * can only be used when the message is unfragmented.
+		 *
+		 * sk->pbs.start points at the contents of the SK
+		 * packet, not the header, hence the math to back up.
+		 */
+		unencrypted_payloads = (shunk_t) {
+			.ptr = message_header_end,
+			.len = ((sk->pbs.start
+				 - ike->sa.st_oakley.ta_encrypt->wire_iv_size
+				 - sizeof(struct ikev2_generic))
+				- message_header_end),
+		};
+	} else {
+		/*
+		 * NOTE:
+		 *
+		 * When computing the HASH of a fragmented message, in
+		 * addition to adjusting the header's Length field,
+		 * the headers Next Payload needs to be changed from
+		 * SKF to SK.
+		 *
+		 * However, when the fragmented message also contains
+		 * unencrypted payloads, its the Next Payload field of
+		 * the last unencrypted payload that contains SKF and
+		 * needs to be changed.
+		 *
+		 * Fortunatly, fragmented messages with unencrypted
+		 * payloads aren't really a thing.  So not handling
+		 * them is mostly hardmless.
+		 */
+		llog(WARNING_STREAM, ike->sa.logger,
+		     "fragmented IKE_INTERMEDIATE messages with unencrypted payloads is not supported");
+		return false;
+	}
+	/*
+	 * Note.  For fragmented packets, this is the encrypted header
+	 * from the first fragment.
+	 */
+	shunk_t encrypted_payload_header = {
+		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
+		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
+	};
+	shunk_t inner_payloads = pbs_in_all(&sk->pbs);
+	compute_intermediate_mac(ike, intermediate_key,
+				 message_header,
+				 unencrypted_payloads,
+				 encrypted_payload_header,
+				 inner_payloads,
+				 intermediate_auth_ir);
+	return true;
 }
 
 /*
@@ -476,10 +659,9 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	 * For Intermediate Exchange, apply PRF to the peer's messages
 	 * and store in state for further authentication.
 	 */
-	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
-				 request.sk.pbs.container->start,
-				 HUNK_AS_SHUNK(request.sk.cleartext) /* inner payloads */,
-				 &ike->sa.st_v2_ike_intermediate.initiator);
+
+	compute_intermediate_outbound_mac(ike, ike->sa.st_skey_pi_nss, &request,
+					  &ike->sa.st_v2_ike_intermediate.initiator);
 
 	if (!record_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
@@ -593,10 +775,14 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	 *
 	 * Hence, here the responder uses the initiator's keys.
 	 */
-	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
-	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
-				 md->packet_pbs.start, plain,
-				 &ike->sa.st_v2_ike_intermediate.initiator);
+	if (!compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pi_nss, md,
+					      &ike->sa.st_v2_ike_intermediate.initiator)) {
+		/* already logged; send back something */
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_INVALID_SYNTAX, empty_shunk,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
@@ -768,10 +954,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 	 * For Intermediate Exchange, apply PRF to the peer's messages
 	 * and store in state for further authentication.
 	 */
-	compute_intermediate_mac(ike, ike->sa.st_skey_pr_nss,
-				 response.sk.pbs.container->start,
-				 HUNK_AS_SHUNK(response.sk.cleartext) /* inner payloads */,
-				 &ike->sa.st_v2_ike_intermediate.responder);
+	compute_intermediate_outbound_mac(ike, ike->sa.st_skey_pr_nss, &response,
+					  &ike->sa.st_v2_ike_intermediate.responder);
 
 	if (!record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
@@ -808,10 +992,11 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 *
 	 * Hence, here the initiator uses the responder's keys.
 	 */
-	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
-	compute_intermediate_mac(ike, ike->sa.st_skey_pr_nss,
-				 md->packet_pbs.start, plain,
-				 &ike->sa.st_v2_ike_intermediate.responder);
+	if (!compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pr_nss, md,
+					      &ike->sa.st_v2_ike_intermediate.responder)) {
+		/* already logged */
+		return STF_FATAL;
+	}
 
 	/*
 	 * if this connection has a newer Child SA than this state
