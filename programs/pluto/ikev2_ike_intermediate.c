@@ -105,8 +105,8 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
  *  |                          Message ID                           | r A
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
  *  |                       Adjusted Length                         | | |
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v |
- *  |                                                               |   |
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v | <- UNENCRYPTED
+ *  |                                                               |   |    PAYLOADS
  *  ~                 Unencrypted payloads (if any)                 ~   |
  *  |                                                               |   |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <- ENCRYPTED
@@ -138,6 +138,7 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
 static void compute_intermediate_mac(struct ike_sa *ike,
 				     PK11SymKey *intermediate_key,
 				     shunk_t message_header,
+				     shunk_t unencrypted_payloads,
 				     shunk_t inner_payloads,
 				     chunk_t *int_auth_ir)
 {
@@ -185,8 +186,8 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 *  |                          Message ID                           | r A
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | |
 	 *  |                       Adjusted Length                         | | |
-	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v |
-	 *  |                                                               |   |
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ v | <- UNENCRYPTED
+	 *  |                                                               |   |    PAYLOADS
 	 *  ~                 Unencrypted payloads (if any)                 ~   |
 	 *  |                                                               |   |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <- ENCRYPTED
@@ -228,14 +229,6 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 */
 
 	struct ikev2_generic adjusted_encrypted_payload_header;
-	shunk_t unencrypted_payloads = {
-		.ptr = message_header.ptr + message_header.len,
-		.len = ((const uint8_t*) inner_payloads.ptr - (const uint8_t*)message_header.ptr
-			- ike->sa.st_oakley.ta_encrypt->wire_iv_size
-			- sizeof(adjusted_encrypted_payload_header)
-			- message_header.len),
-	};
-
 	shunk_t encrypted_payload = {
 		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
 		.len = inner_payloads.len + sizeof(adjusted_encrypted_payload_header),
@@ -319,28 +312,105 @@ static void compute_intermediate_outbound_mac(struct ike_sa *ike,
 		.ptr = message->sk.pbs.container->start,
 		.len = sizeof(struct isakmp_hdr),
 	};
+	shunk_t unencrypted_payloads = {
+		.ptr = (message_header.ptr + message_header.len),
+		.len = ((const uint8_t *)message->sk.header.ptr
+			- (const uint8_t *)message_header.ptr
+			- message_header.len),
+	};
 	shunk_t inner_payloads = HUNK_AS_SHUNK(message->sk.cleartext);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
+				 unencrypted_payloads,
 				 inner_payloads,
 				 intermediate_auth_ir);
 }
 
-static void compute_intermediate_inbound_mac(struct ike_sa *ike,
+static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 					     PK11SymKey *intermediate_key,
 					     struct msg_digest *md,
 					     chunk_t *intermediate_auth_ir)
 {
+	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+
 	shunk_t message_header = {
 		.ptr = md->packet_pbs.start,
 		.len = sizeof(struct isakmp_hdr),
 	};
-	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	const uint8_t *message_header_end = (message_header.ptr + message_header.len);
+	/*
+	 * Several problems that stem from how pluto re-constructs the
+	 * fragments into an unfragmented payload:
+	 *
+	 *
+	 */
+	shunk_t unencrypted_payloads;
+	if (md->hdr.isa_np == ISAKMP_NEXT_v2SK ||
+	    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
+		/*
+		 * It's empty.
+		 *
+		 * For SKF, the hash code will need to change Next
+		 * Payload back to SK.
+		 */
+		unencrypted_payloads = (shunk_t) {
+			.ptr = message_header_end,
+			.len = 0,
+		};
+	} else if (md->v2_frags_total == 0) {
+		/*
+		 * DANGER:
+		 *
+		 * When re-constructing a fragmented message, Pluto
+		 * stores the accumulated fragments in a separate
+		 * buffer (md->raw_packet) and then points sk->pbs at
+		 * it.  This means that, for a fragmented payload,
+		 * sk->pbs.start DOES NOT point into md->packet_pbs.
+		 * Hence, the calculation:
+		 *
+		 *    sk->pbs.start - md->packet_pbs.start
+		 *
+		 * can only be used when the message is unfragmented.
+		 *
+		 * sk->pbs.start points at the contents of the SK
+		 * packet, not the header, hence the math to back up.
+		 */
+		unencrypted_payloads = (shunk_t) {
+			.ptr = message_header_end,
+			.len = ((sk->pbs.start
+				 - ike->sa.st_oakley.ta_encrypt->wire_iv_size
+				 - sizeof(struct ikev2_generic))
+				- message_header_end),
+		};
+	} else {
+		/*
+		 * NOTE:
+		 *
+		 * When computing the HASH of a fragmented message, in
+		 * addition to adjusting the header's Length field,
+		 * the headers Next Payload needs to be changed from
+		 * SKF to SK.
+		 *
+		 * However, when the fragmented message also contains
+		 * unencrypted payloads, its the Next Payload field of
+		 * the last unencrypted payload that contains SKF and
+		 * needs to be changed.
+		 *
+		 * Fortunatly, fragmented messages with unencrypted
+		 * payloads aren't really a thing.  So not handling
+		 * them is mostly hardmless.
+		 */
+		llog(WARNING_STREAM, ike->sa.logger,
+		     "fragmented IKE_INTERMEDIATE messages with unencrypted payloads is not supported");
+		return false;
+	}
 	shunk_t inner_payloads = pbs_in_all(&sk->pbs);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
+				 unencrypted_payloads,
 				 inner_payloads,
 				 intermediate_auth_ir);
+	return true;
 }
 
 /*
@@ -695,8 +765,14 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	 *
 	 * Hence, here the responder uses the initiator's keys.
 	 */
-	compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pi_nss, md,
-					 &ike->sa.st_v2_ike_intermediate.initiator);
+	if (!compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pi_nss, md,
+					      &ike->sa.st_v2_ike_intermediate.initiator)) {
+		/* already logged; send back something */
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_INVALID_SYNTAX, empty_shunk,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
@@ -906,8 +982,11 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 *
 	 * Hence, here the initiator uses the responder's keys.
 	 */
-	compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pr_nss, md,
-					 &ike->sa.st_v2_ike_intermediate.responder);
+	if (!compute_intermediate_inbound_mac(ike, ike->sa.st_skey_pr_nss, md,
+					      &ike->sa.st_v2_ike_intermediate.responder)) {
+		/* already logged */
+		return STF_FATAL;
+	}
 
 	/*
 	 * if this connection has a newer Child SA than this state
