@@ -189,6 +189,9 @@ void show_kernel_alg_connection(struct show *s,
 				jam_string(buf, " algorithm newest: ");
 				jam_ipsec_proto_info(buf, outer);
 				jam_string(buf, ";");
+				if (child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp) {
+					jam_string(buf, " IPCOMP;");
+				}
 				jam(buf, " pfsgroup=%s", pfsbuf);
 			}
 		}
