@@ -1,0 +1,75 @@
+/testing/guestbin/swan-prep --nokeys
+[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.6.197, on dev eth0
+[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 42 dc 3a 08 06
+Creating empty NSS database
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ ../../guestbin/pluto-up-down.sh ike=aes-sha1-modp8192-ml_kem_768 -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes-sha1-modp8192-ml_kem_768
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/pluto-up-down.sh ike=aes-sha1-modp8192-ml_kem_768 fragmentation=no -- -I 192.0.1.254 192.0.2.254
+ ipsec start
+Redirecting to: [initsystem]
+ ipsec addconn --name algo also=west ike=aes-sha1-modp8192-ml_kem_768 fragmentation=no
+"algo": added IKEv2 connection
+ ipsec up algo
+"algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
+"algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
+"algo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_256_128 DPD=passive}
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
+west #
+ if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
+west #

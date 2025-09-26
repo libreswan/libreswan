@@ -1,4 +1,8 @@
 /testing/guestbin/swan-prep --nokeys
+[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.6.197, on dev eth0
+[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 8d 76 15 08 06
+[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.6.197, on dev eth0
+[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 08 65 c0 08 06
 Creating empty NSS database
 east #
  ipsec start
