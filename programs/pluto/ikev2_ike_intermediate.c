@@ -110,8 +110,8 @@ void cleanup_IKE_INTERMEDIATE_task(struct ikev2_task **task, struct logger *logg
  *  ~                 Unencrypted payloads (if any)                 ~   |
  *  |                                                               |   |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <- ENCRYPTED
- *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |    HEADER
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v
+ *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |    PAYLOAD
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v    HEADER
  *  |                                                               | |
  *  ~                     Initialization Vector                     ~ E
  *  |                                                               | E
@@ -139,6 +139,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 				     PK11SymKey *intermediate_key,
 				     shunk_t message_header,
 				     shunk_t unencrypted_payloads,
+				     shunk_t encrypted_payload_header,
 				     shunk_t inner_payloads,
 				     chunk_t *int_auth_ir)
 {
@@ -191,8 +192,8 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 *  ~                 Unencrypted payloads (if any)                 ~   |
 	 *  |                                                               |   |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ ^ | <- ENCRYPTED
-	 *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |    HEADER
-	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v
+	 *  | Next Payload  |C|  RESERVED   |    Adjusted Payload Length    | | |    PAYLOAD
+	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ | v    HEADER
 	 *
 	 * The IntAuth_[i/r]*A chunk consists of the sequence of
 	 * octets from the first octet of the IKE Header (not
@@ -224,26 +225,8 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 */
 
 	/*
-	 * Extract the message header, will need to patch up the
-	 * trailing length field.
+	 * The message header needs its Length adjusted.
 	 */
-
-	struct ikev2_generic adjusted_encrypted_payload_header;
-	shunk_t encrypted_payload = {
-		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
-		.len = inner_payloads.len + sizeof(adjusted_encrypted_payload_header),
-	};
-
-	/*
-	 * Extract the encrypted header, will need to patch up the
-	 * trailing Payload Length field.
-	 */
-	shunk_t encrypted_payload_header = {
-		.ptr = encrypted_payload.ptr,
-		.len = sizeof(adjusted_encrypted_payload_header),
-	};
-
-	/* the message header needs its Length adjusted */
 	size_t adjusted_payload_length = (message_header.len
 					  + unencrypted_payloads.len
 					  + encrypted_payload_header.len
@@ -270,6 +253,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	 */
 	size_t adjusted_encrypted_payload_length = encrypted_payload_header.len + inner_payloads.len;
 	ldbg(logger, "adjusted encrypted payload length: %zu", adjusted_encrypted_payload_length);
+	struct ikev2_generic adjusted_encrypted_payload_header;
 	memcpy(&adjusted_encrypted_payload_header, encrypted_payload_header.ptr, encrypted_payload_header.len);
 	hton_thing(adjusted_encrypted_payload_length, adjusted_encrypted_payload_header.isag_length);
 	crypt_prf_update_thing(prf, "IntAuth_[ir](N)A: adjusted encrypted (SK) header",
@@ -318,10 +302,15 @@ static void compute_intermediate_outbound_mac(struct ike_sa *ike,
 			- (const uint8_t *)message_header.ptr
 			- message_header.len),
 	};
+	shunk_t encrypted_payload_header = {
+		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
+		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
+	};
 	shunk_t inner_payloads = HUNK_AS_SHUNK(message->sk.cleartext);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
 				 unencrypted_payloads,
+				 encrypted_payload_header,
 				 inner_payloads,
 				 intermediate_auth_ir);
 }
@@ -404,10 +393,19 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 		     "fragmented IKE_INTERMEDIATE messages with unencrypted payloads is not supported");
 		return false;
 	}
+	/*
+	 * Note.  For fragmented packets, this is the encrypted header
+	 * from the first fragment.
+	 */
+	shunk_t encrypted_payload_header = {
+		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
+		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
+	};
 	shunk_t inner_payloads = pbs_in_all(&sk->pbs);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
 				 unencrypted_payloads,
+				 encrypted_payload_header,
 				 inner_payloads,
 				 intermediate_auth_ir);
 	return true;
