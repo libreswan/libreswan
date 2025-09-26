@@ -226,6 +226,14 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 
 	/*
 	 * The message header needs its Length adjusted.
+	 *
+	 * What isn't mentioned is that, when things are fragmented,
+	 * the Next Payload field also needs to be changed from SKF to
+	 * SK (but only when there's no unencrypted payloads).
+	 *
+	 * When there's unencrypted payloads, its the last of those
+	 * that needs adjusting, and pluto doesn't do that (caller
+	 * will have rejected it).
 	 */
 	size_t adjusted_payload_length = (message_header.len
 					  + unencrypted_payloads.len
@@ -235,6 +243,10 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	struct isakmp_hdr adjusted_message_header;
 	memcpy(&adjusted_message_header, message_header.ptr, message_header.len);
 	hton_thing(adjusted_payload_length, adjusted_message_header.isa_length);
+	if (adjusted_message_header.isa_np == ISAKMP_NEXT_v2SKF) {
+		ldbg(logger, "adjusted fragmented Next Payload to SK");
+		adjusted_message_header.isa_np = ISAKMP_NEXT_v2SK;
+	}
 	crypt_prf_update_thing(prf, "IntAuth_[ir](N)A: adjusted message header",
 			       adjusted_message_header);
 
