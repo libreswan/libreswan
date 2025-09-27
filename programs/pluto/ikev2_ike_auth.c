@@ -677,6 +677,56 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		return STF_FATAL;
        }
 
+	const struct connection *c = ike->sa.st_connection;
+
+	/* If initiator has another IKE SA with IKE_AUTH request
+	 * outstanding for the same connection that is permanent
+	 * then the current IKE_AUTH request most likely crossed
+	 * the outstanding one.
+	 *
+	 * Instead of responder's IKE_AUTH response we'll send
+	 * TEMPORARY_FAILURE to the initiator and terminate this
+	 * IKE SA.
+	 */
+	if (v2_msg_role(md) == MESSAGE_REQUEST && is_permanent(c)) {
+		struct state_filter sf = {
+		  .connection_serialno = c->serialno,
+		  .search = {
+			.order = NEW2OLD,
+			.verbose.logger = ike->sa.logger,
+			.where = HERE,
+		  },
+		};
+
+		while (next_state(&sf)) {
+			struct ike_sa *competing_ike = pexpect_ike_sa(sf.st);
+
+			if (competing_ike == NULL || competing_ike == ike) {
+				continue;
+			}
+
+			if (competing_ike->sa.st_sa_role != SA_INITIATOR) {
+				continue;
+			}
+
+			if (!v2_msgid_request_outstanding(competing_ike)) {
+				continue;
+			}
+
+			const struct v2_exchange *outstanding_request =
+				competing_ike->sa.st_v2_msgid_windows.initiator.exchange;
+			if (outstanding_request != NULL && outstanding_request->type == ISAKMP_v2_IKE_AUTH) {
+				llog(RC_LOG, ike->sa.logger, "IKE SA "PRI_SO" has outstanding IKE_AUTH request, "
+					"rejecting crossing IKE_AUTH request from IKE SA "PRI_SO,
+					pri_so(competing_ike->sa.st_serialno), pri_so(ike->sa.st_serialno));
+				record_v2N_response(ike->sa.logger, ike, md,
+						v2N_TEMPORARY_FAILURE, empty_shunk,
+						ENCRYPTED_PAYLOAD);
+				return STF_FATAL;
+			}
+		}
+	}
+
 	/*
 	 * This both decodes the initiator's ID and, when necessary,
 	 * switches connection based on that ID.
@@ -685,7 +735,6 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * switch based on the contents of the CERTREQ.
 	 */
 
-	const struct connection *c = ike->sa.st_connection;
 	bool found_ppk = false;
 
 	/*
