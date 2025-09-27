@@ -131,6 +131,11 @@ static struct tokens first_token(shunk_t input, const char *delims,
  * The proposal parser.
  */
 
+struct transform_algorithms {
+	unsigned len;
+	struct transform item[];
+};
+
 struct proposal {
 	bool impaired;
 	/*
@@ -138,6 +143,7 @@ struct proposal {
 	 */
 	struct transform_algorithms *algorithms[PROPOSAL_TRANSFORM_ROOF];
 	struct transforms transforms;
+	struct transform *first[PROPOSAL_TRANSFORM_ROOF];
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -172,7 +178,7 @@ bool proposal_encrypt_aead(const struct proposal *proposal)
 	if (first_proposal_transform(proposal, transform_type_encrypt) == NULL) {
 		return false;
 	}
-	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_encrypt) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		if (!encrypt_desc_is_aead(encrypt)) {
 			return false;
@@ -186,7 +192,7 @@ bool proposal_encrypt_norm(const struct proposal *proposal)
 	if (first_proposal_transform(proposal, transform_type_encrypt) == NULL) {
 		return false;
 	}
-	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_encrypt) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		if (encrypt_desc_is_aead(encrypt)) {
 			return false;
@@ -198,7 +204,7 @@ bool proposal_encrypt_norm(const struct proposal *proposal)
 bool proposal_integ_none(const struct proposal *proposal)
 {
 	/* interpret NULL as NONE */
-	FOR_EACH_ALGORITHM(proposal, integ, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_integ) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
 		if (integ != &ike_alg_integ_none) {
 			return false;
@@ -340,6 +346,22 @@ unsigned nr_proposals(const struct proposals *proposals)
 		nr++;
 	}
 	return nr;
+}
+
+static void build_proposal_first_transform(struct proposal *proposal,
+					   struct verbose verbose)
+{
+	verbose.level++;
+	vdbg("building first links");
+	/* set next pointers */
+	zero(&proposal->first);
+	for (unsigned i = proposal->transforms.len;
+	     i > 0; i--) {
+		struct transform *transform = &proposal->transforms.data[i-1];
+		unsigned t = transform->type->index;
+		transform->next = proposal->first[t];
+		proposal->first[t] = transform;
+	}
 }
 
 static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
@@ -555,6 +577,9 @@ void append_proposal(struct proposal_parser *parser,
 		}
 		end = &(*end)->next;
 	}
+
+	build_proposal_first_transform((*proposal), verbose);
+
 	*end = *proposal;
 	*proposal = NULL;
 }
@@ -577,12 +602,6 @@ struct v1_proposal v1_proposal(const struct proposal *proposal)
 	return v1;
 }
 
-struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
-						  const struct transform_type *type)
-{
-	return proposal->algorithms[type->index];
-}
-
 const struct transforms *proposal_transforms(const struct proposal *proposal)
 {
 	return &proposal->transforms;
@@ -591,17 +610,16 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 struct transform *first_proposal_transform(const struct proposal *proposal,
 					   const struct transform_type *type)
 {
-	DATA_FOR_EACH(transform, &proposal->transforms) {
-		if (transform->type == type) {
-			passert(proposal->algorithms[type->index] != NULL);
-			passert(proposal->algorithms[type->index]->len > 0);
-			passert(proposal->algorithms[type->index]->item[0].desc == transform->desc);
-			passert(proposal->algorithms[type->index]->item[0].enckeylen == transform->enckeylen);
-			return transform;
-		}
+	struct transform *first = proposal->first[type->index];
+	if (first == NULL) {
+		passert(proposal->algorithms[type->index] == NULL);
+	} else {
+		passert(proposal->algorithms[type->index] != NULL);
+		passert(proposal->algorithms[type->index]->len > 0);
+		passert(proposal->algorithms[type->index]->item[0].desc == first->desc);
+		passert(proposal->algorithms[type->index]->item[0].enckeylen == first->enckeylen);
 	}
-	passert(proposal->algorithms[type->index] == NULL);
-	return NULL;
+	return first;
 }
 
 static void pfree_transforms(struct proposal *proposal,
@@ -696,12 +714,13 @@ void append_proposal_transform(struct proposal_parser *parser,
 
 	/* grow */
 	vassert(transform_type->index < elemsof(proposal->algorithms));
-	struct transform *end = grow_items(proposal->algorithms[transform_type->index]);
-	*end = new_transform;
+	struct transform *algorithms_end =
+		grow_items(proposal->algorithms[transform_type->index]);
+	*algorithms_end = new_transform;
 
 	/* grow */
-	end = grow_data(&proposal->transforms);
-	*end = new_transform;
+	struct transform *transforms_end = grow_data(&proposal->transforms);
+	*transforms_end = new_transform;
 
 	vdbg("append %s %s %s %s[_%d]; %s length %d; raw length %d",
 	     parser->protocol->name,
@@ -712,6 +731,8 @@ void append_proposal_transform(struct proposal_parser *parser,
 	     transform_type->name,
 	     proposal->algorithms[transform_type->index]->len,
 	     proposal->transforms.len);
+
+	build_proposal_first_transform(proposal, verbose);
 }
 
 size_t jam_proposal_transform(struct jambuf *buf,
@@ -1414,6 +1435,7 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 		next_token(tokens, verbose);
 	}
 
+	build_proposal_first_transform(proposal, verbose);
 	return true;
 }
 
@@ -1459,6 +1481,7 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 		vassert(parser->diag == NULL);
 	}
 
+	build_proposal_first_transform(proposal, verbose);
 	return true;
 }
 

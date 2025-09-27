@@ -46,7 +46,7 @@ static bool ah_proposal_ok(struct proposal_parser *parser,
 
 	/* ah=null is invalid */
 	if (!impair.allow_null_none) {
-		FOR_EACH_ALGORITHM(proposal, integ, alg) {
+		TRANSFORMS_FOR_EACH(alg, proposal, transform_type_integ) {
 			/* passerts */
 			const struct integ_desc *integ = integ_desc(alg->desc);
 			if (integ == &ike_alg_integ_none) {

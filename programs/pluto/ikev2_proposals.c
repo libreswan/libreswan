@@ -2245,7 +2245,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	/*
 	 * Encryption.
 	 */
-	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_encrypt) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		if (!append_encrypt_transform(v2_proposal, encrypt,
 					      alg->enckeylen, verbose)) {
@@ -2256,7 +2256,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	/*
 	 * PRF.
 	 */
-	FOR_EACH_ALGORITHM(proposal, prf, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_prf) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
 		append_transform(v2_proposal, IKEv2_TRANS_TYPE_PRF,
 				 prf->ikev2_alg_id, 0);
@@ -2265,7 +2265,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 	/*
 	 * Integrity.
 	 */
-	FOR_EACH_ALGORITHM(proposal, integ, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_integ) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
 		/*
 		 * This includes INTEG=NONE which will then be omitted
@@ -2298,7 +2298,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		 * For instance, a CREATE_CHILD_SA(NEW) proposal where
 		 * DH was specified on the esp= line.
 		 */
-		FOR_EACH_ALGORITHM(proposal, kem, alg) {
+		TRANSFORMS_FOR_EACH(alg, proposal, transform_type_kem) {
 			const struct kem_desc *dh = kem_desc(alg->desc);
 			/*
 			 * WHILE DH=NONE is included in the proposal it is
@@ -2326,9 +2326,7 @@ static struct ikev2_proposal *ikev2_proposal_from_proposal_info(const struct pro
 		/* map TYPE onto PROPOSAL algorithm */
 		const struct transform_type *ptype =
 			transform_type_addke1 + (type - IKEv2_TRANS_TYPE_ADDKE1);
-		/* Can't use FOR_EACH_ALGORITHM(addkeN) */
-		struct transform_algorithms *algs = transform_algorithms(proposal, ptype);
-		ITEMS_FOR_EACH(alg, algs) {
+		TRANSFORMS_FOR_EACH(alg, proposal, ptype) {
 			const struct kem_desc *kem = kem_desc(alg->desc);
 			append_transform(v2_proposal, type,
 					 kem->ikev2_alg_id, 0);

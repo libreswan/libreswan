@@ -184,16 +184,12 @@ struct transform {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
+	struct transform *next;
 };
 
 struct transforms {
 	unsigned len;
 	struct transform *data;
-};
-
-struct transform_algorithms {
-	unsigned len;
-	struct transform item[];
 };
 
 /* return counts of encrypt=aead and integ=none */
@@ -262,12 +258,13 @@ struct proposal *next_proposal(const struct proposals *proposals,
 
 /* the first algorithm, or NULL */
 struct transform *first_proposal_transform(const struct proposal *proposal,
-						     const struct transform_type *transform_type);
-struct transform_algorithms *transform_algorithms(const struct proposal *proposal,
-						  const struct transform_type *transform_type);
+					   const struct transform_type *transform_type);
 
-#define FOR_EACH_ALGORITHM(PROPOSAL, TYPE, ALGORITHM)			\
-	ITEMS_FOR_EACH(ALGORITHM, transform_algorithms(PROPOSAL, transform_type_##TYPE))
+#define TRANSFORMS_FOR_EACH(TRANSFORM, PROPOSAL, TYPE)		\
+	for (struct transform *TRANSFORM =			\
+		     first_proposal_transform(PROPOSAL, TYPE);	\
+	     (TRANSFORM) != NULL;				\
+	     (TRANSFORM) = (TRANSFORM)->next)
 
 const struct transforms *proposal_transforms(const struct proposal *proposal);
 
