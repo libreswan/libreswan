@@ -62,12 +62,14 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 			     const struct transform_type *transform_type,
 			     struct verbose verbose)
 {
+	unsigned level = verbose.level;
 	const struct ike_alg **default_algs = parser->protocol->defaults->transform[transform_type->index];
 	/*
 	 * Use VALID_ALG to add the valid algorithms into VALID_ALGS.
 	 */
 	for (const struct ike_alg **default_alg = default_algs;
 	     *default_alg; default_alg++) {
+		verbose.level = level;
 		const struct ike_alg *alg = *default_alg;
 		if (!alg_byname_ok(parser, alg,
 				   shunk1(alg->fqn))) {
@@ -77,9 +79,8 @@ static bool add_alg_defaults(struct proposal_parser *parser,
 			continue;
 		}
 		/* add it */
-		vdbg("adding default %s %s %s",
-		     transform_type->name,
-		     alg->type->story, alg->fqn);
+		vdbg("adding default %s %s %s", transform_type->name, alg->type->story, alg->fqn);
+		verbose.level++;
 		struct v1_proposal merged_proposal = merge_alg_default(*proposal,
 								       transform_type,
 								       (*default_alg));

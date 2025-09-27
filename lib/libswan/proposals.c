@@ -36,10 +36,10 @@ static bool ignore_transform_lookup_error(struct proposal_parser *parser,
 					  shunk_t token,
 					  struct verbose verbose);
 
-static bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
-					     struct proposal *proposal,
-					     struct tokens *tokens,
-					     struct verbose verbose);
+static bool parse_encrypt_transform(struct proposal_parser *parser,
+				    struct proposal *proposal,
+				    struct tokens *tokens,
+				    struct verbose verbose);
 
 static bool parse_proposal_transform(struct proposal_parser *parser,
 				     struct proposal *proposal,
@@ -591,14 +591,17 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 struct transform *first_proposal_transform(const struct proposal *proposal,
 					   const struct transform_type *type)
 {
-	struct transform_algorithms *algorithms = proposal->algorithms[type->index];
-	if (algorithms == NULL) {
-		return NULL;
+	DATA_FOR_EACH(transform, &proposal->transforms) {
+		if (transform->type == type) {
+			passert(proposal->algorithms[type->index] != NULL);
+			passert(proposal->algorithms[type->index]->len > 0);
+			passert(proposal->algorithms[type->index]->item[0].desc == transform->desc);
+			passert(proposal->algorithms[type->index]->item[0].enckeylen == transform->enckeylen);
+			return transform;
+		}
 	}
-	if (algorithms->len == 0) {
-		return NULL;
-	}
-	return &algorithms->item[0];
+	passert(proposal->algorithms[type->index] == NULL);
+	return NULL;
 }
 
 static void pfree_transforms(struct proposal *proposal,
@@ -958,6 +961,10 @@ void jam_proposals(struct jambuf *buf, const struct proposals *proposals)
 static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				      struct proposals *proposals)
 {
+#define first_kem_algorithm (proposal->algorithms[PROPOSAL_TRANSFORM_kem] == NULL ? NULL : \
+			     proposal->algorithms[PROPOSAL_TRANSFORM_kem]->len == 0 ? NULL : \
+			     proposal->algorithms[PROPOSAL_TRANSFORM_kem]->item)
+
 	/*
 	 * Scrape the proposals searching for a Key Exchange
 	 * algorithms of interest.
@@ -968,8 +975,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_ke = NULL;
 	const struct ike_alg *second_ke = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform *first_kem =
-			first_proposal_transform(proposal, transform_type_kem);
+		struct transform *first_kem = first_kem_algorithm;
 		if (first_kem == NULL) {
 			if (first_null_ke == NULL) {
 				first_null_ke = proposal;
@@ -1005,8 +1011,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
 		FOR_EACH_PROPOSAL(proposals, proposal) {
 			const struct ike_alg *ke = NULL;
-			struct transform *first_kem =
-				first_proposal_transform(proposal, transform_type_kem);
+			struct transform *first_kem = first_kem_algorithm;
 			if (first_kem != NULL) {
 				ke = first_kem->desc;
 			}
@@ -1023,6 +1028,8 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 		}
 		return true;
 	}
+
+#undef first_kem_algorithm
 
 	/*
 	 * Since at least one proposal included KE, all proposals
@@ -1162,10 +1169,10 @@ static int parse_proposal_eklen(struct proposal_parser *parser, shunk_t print, s
 	return eklen;
 }
 
-bool parse_proposal_encrypt_transform(struct proposal_parser *parser,
-				      struct proposal *proposal,
-				      struct tokens *tokens,
-				      struct verbose verbose)
+bool parse_encrypt_transform(struct proposal_parser *parser,
+			     struct proposal *proposal,
+			     struct tokens *tokens,
+			     struct verbose verbose)
 {
 	const struct transform_type *transform_type = transform_type_encrypt;
 	vdbg("trying '"PRI_SHUNK"'... as %s transform of type %s",
@@ -1437,7 +1444,7 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 	 */
 
 	/* first encryption algorithm token is expected */
-	if (!parse_proposal_encrypt_transform(parser, proposal, tokens, verbose)) {
+	if (!parse_encrypt_transform(parser, proposal, tokens, verbose)) {
 		vassert(parser->diag != NULL);
 		return false;
 	}
@@ -1445,7 +1452,7 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 
 	/* further encryption algorithm tokens are optional */
 	while (tokens->prev.delim == '+') {
-		if (!parse_proposal_encrypt_transform(parser, proposal, tokens, verbose)) {
+		if (!parse_encrypt_transform(parser, proposal, tokens, verbose)) {
 			vassert(parser->diag != NULL);
 			return false;
 		}
