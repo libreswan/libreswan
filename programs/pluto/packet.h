@@ -88,6 +88,7 @@ typedef const struct {
  */
 struct fixup {
 	uint8_t *loc;
+	const char *name;
 	struct_desc *sd;
 	field_desc *fp; /* name .fp from packet.c */
 };

@@ -2365,6 +2365,16 @@ diag_t pbs_in_bytes(struct pbs_in *ins, void *bytes, size_t len, const char *nam
 	return NULL;
 }
 
+#define save_fixup(OUTS, FIELD, LOC, SD, FP)				\
+	{								\
+		ldbg((OUTS)->logger, #FIELD": saving location '%s'.'%s'", \
+		     sd->name, fp->name);				\
+		(OUTS)->FIELD.name = #FIELD;				\
+		(OUTS)->FIELD.loc = LOC;				\
+		(OUTS)->FIELD.sd = SD;					\
+		(OUTS)->FIELD.fp = FP;					\
+	}
+
 /*
  * Check IKEv2's Last Substructure field.
  */
@@ -2406,11 +2416,7 @@ static void update_last_substructure(struct pbs_out *outs,
 	/*
 	 * Now save the location of this Last Substructure.
 	 */
-	ldbg(outs->logger, "last substructure: saving location '%s'.'%s'.'%s'",
-	     outs->desc->name, sd->name, fp->name);
-	outs->last_substructure.loc = cur;
-	outs->last_substructure.sd = sd;
-	outs->last_substructure.fp = fp;
+	save_fixup(outs, last_substructure, cur, sd, fp);
 }
 
 static void close_last_substructure(struct pbs_out *pbs)
@@ -2439,11 +2445,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 				     const uint8_t *inp, uint8_t *cur)
 {
 	PASSERT(outs->logger, fp->size == 1);
-	ldbg(outs->logger, "next payload chain: saving message location '%s'.'%s'",
-	     sd->name, fp->name);
-	outs->next_payload_chain.loc = cur;
-	outs->next_payload_chain.sd = sd;
-	outs->next_payload_chain.fp = fp;
+	save_fixup(outs, next_payload_chain, cur, sd, fp);
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		name_buf npb;
@@ -2533,11 +2535,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	*message->next_payload_chain.loc = sd->pt;
 
 	/* save new */
-	ldbg(outs->logger, "next payload chain: saving location '%s'.'%s' in '%s'",
-	     sd->name, fp->name, message->name);
-	message->next_payload_chain.loc = cur;
-	message->next_payload_chain.sd = sd;
-	message->next_payload_chain.fp = fp;
+	save_fixup(message, next_payload_chain, cur, sd, fp);
 }
 
 /* "emit" a host struct into a network packet.
