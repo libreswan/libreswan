@@ -1339,11 +1339,8 @@ ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS poli
 algparse -fips -v2 'esp=aes;none,aes' (expect SUCCESS)
 ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
-	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes;none,aes;modp2048' (expect SUCCESS)
 ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
-ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
-	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'esp=aes-sha1-none' (expect SUCCESS)
 ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
