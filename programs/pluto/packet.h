@@ -127,11 +127,10 @@ struct pbs_out {
 	/*
 	 * For patching Length field in header.
 	 *
-	 * Filled in by close_pbs_out().
+	 * Filled in by close_pbs_out() calling apply_fixup().
 	 * Note: it may not be aligned.
 	 */
-	uint8_t *lenfld;	/* start of variable length field */
-	field_desc *lenfld_desc;	/* includes length */
+	struct fixup header_length_field;
 
 	/*
 	 * For patching IKEv2's Next Payload field chain.

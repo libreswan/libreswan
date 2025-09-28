@@ -2768,15 +2768,14 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 				 * We do record where this is so that it can be
 				 * filled in by a subsequent close_pbs_out().
 				 */
-				PASSERT(outs->logger, obj.lenfld == NULL);    /* only one ft_len allowed */
-				obj.lenfld = cur;
-				obj.lenfld_desc = fp;
+				PASSERT(outs->logger, obj.header_length_field.loc == NULL);    /* only one ft_len allowed */
+				save_fixup(&obj, header_length_field, cur, sd, fp);
 
 				/* fill with crap so failure to overwrite will be noticed */
-				memset(cur, 0xFA, i);
+				memset(cur, 0xFA, fp->size);
 
-				inp += i;
-				cur += i;
+				inp += fp->size;
+				cur += fp->size;
 				break;
 			}
 
@@ -2987,10 +2986,10 @@ bool close_pbs_out(struct pbs_out *pbs)
 {
 	PASSERT(pbs->logger, pbs->logger != NULL);
 
-	if (pbs->lenfld != NULL) {
+	if (pbs->header_length_field.loc != NULL) {
 		size_t len = (pbs->cur - pbs->start);
 
-		if (pbs->lenfld_desc->field_type == ft_lv)
+		if (pbs->header_length_field.fp->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
 
 		ldbg(pbs->logger, "emitting length of %s: %zu", pbs->name, len);
@@ -2998,9 +2997,7 @@ bool close_pbs_out(struct pbs_out *pbs)
 		/*
 		 * Emit SIZE octets of (host) length in network order.
 		 */
-		unsigned size = pbs->lenfld_desc->size;
-		PASSERT(pbs->logger, size > 0);
-		raw_hton(len, pbs->lenfld, size);
+		apply_fixup(pbs->logger, &pbs->header_length_field, len);
 	}
 
 	/* if there is one */
