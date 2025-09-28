@@ -2375,6 +2375,15 @@ diag_t pbs_in_bytes(struct pbs_in *ins, void *bytes, size_t len, const char *nam
 		(OUTS)->FIELD.fp = FP;					\
 	}
 
+void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value)
+{
+	unsigned size = fixup->fp->size;
+	ldbg(logger, "%s: emitting %u byte %ju into %s.%s",
+	     fixup->name, size, value, fixup->sd->name, fixup->fp->name);
+	PASSERT(logger, size > 0);
+	raw_hton(value, fixup->loc, size);
+}
+
 /*
  * Check IKEv2's Last Substructure field.
  */
@@ -2527,12 +2536,7 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 
 	/* update previous struct's next payload type field */
-	name_buf npb;
-	ldbg(outs->logger, "next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
-	     message->next_payload_chain.sd->name,
-	     message->next_payload_chain.fp->name,
-	     sd->name, sd->pt, str_enum_long(fp->desc, sd->pt, &npb));
-	*message->next_payload_chain.loc = sd->pt;
+	apply_fixup(outs->logger, &message->next_payload_chain, sd->pt);
 
 	/* save new */
 	save_fixup(message, next_payload_chain, cur, sd, fp);
