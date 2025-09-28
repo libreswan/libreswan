@@ -518,56 +518,47 @@ void append_proposal(struct proposal_parser *parser,
 		     struct verbose verbose)
 {
 	cleanup_raw_transforms(parser, (*proposal), verbose);
-	cleanup_proposal_algorithms(parser, *proposal, verbose);
+	cleanup_proposal_algorithms(parser, (*proposal), verbose);
 
-	struct proposal **end = &proposals->proposals;
-	/* check for duplicates */
-	while ((*end) != NULL) {
+	/*
+	 * Check for duplicates.  Use a double pointer so that at end
+	 * of loop it's pointing to last's next.
+	 */
+	struct proposal **end;
+	for (end = &proposals->proposals; (*end) != NULL; end = &(*end)->next) {
+		const struct proposal *old_proposal = (*end);
+		const struct proposal *new_proposal = (*proposal);
+		if (old_proposal->transforms.len != new_proposal->transforms.len) {
+			continue;
+		}
 		bool same = true;
-		for (const struct transform_type *type = transform_type_floor;
-		     same && type < transform_type_roof; type++) {
-			struct transform_algorithms *old_algs = (*end)->algorithms[type->index];
-			struct transform_algorithms *new_algs = (*proposal)->algorithms[type->index];
-			if ((old_algs == NULL || old_algs->len == 0) &&
-			    (new_algs == NULL || new_algs->len == 0)) {
-				continue;
-			}
-			if (old_algs == NULL || new_algs == NULL) {
+		for (unsigned t = 0; t < new_proposal->transforms.len; t++) {
+			const struct transform *old = &old_proposal->transforms.data[t];
+			const struct transform *new = &new_proposal->transforms.data[t];
+			if (old->desc != new->desc) {
 				same = false;
 				break;
 			}
-			if (old_algs->len != new_algs->len) {
+			/*
+			 * Check ENCKEYLEN match.
+			 *
+			 * Since OLD with ENCKEYLEN=0 means
+			 * all key lengths, any NEW ENCKEYLEN
+			 * will match. For instance,
+			 * aes,aes128.
+			 *
+			 * Hence only check when OLD
+			 * ENCKEYLEN!=0.  For instance,
+			 * aes128,aes256.
+			 *
+			 * XXX: don't try to handle aes,aes128
+			 * as it is too late.
+			 */
+			if (old->desc->type == &ike_alg_encrypt &&
+			    (old->enckeylen != 0 &&
+			     new->enckeylen != old->enckeylen)) {
 				same = false;
 				break;
-			}
-			for (unsigned n = 0; n < old_algs->len; n++) {
-				struct transform *old = &old_algs->item[n];
-				struct transform *new = &new_algs->item[n];
-				if (old->desc != new->desc) {
-					same = false;
-					break;
-				}
-				/*
-				 * Check ENCKEYLEN match.
-				 *
-				 * Since OLD with ENCKEYLEN=0 means
-				 * all key lengths, any NEW ENCKEYLEN
-				 * will match. For instance,
-				 * aes,aes128.
-				 *
-				 * Hence only check when OLD
-				 * ENCKEYLEN!=0.  For instance,
-				 * aes128,aes256.
-				 *
-				 * XXX: don't try to handle aes,aes128
-				 * as it is too late.
-				 */
-				if (old->desc->type == &ike_alg_encrypt &&
-				    (old->enckeylen != 0 &&
-				     new->enckeylen != old->enckeylen)) {
-					same = false;
-					break;
-				}
 			}
 		}
 		if (same) {
@@ -575,7 +566,6 @@ void append_proposal(struct proposal_parser *parser,
 			free_proposal(proposal);
 			return;
 		}
-		end = &(*end)->next;
 	}
 
 	build_proposal_first_transform((*proposal), verbose);
