@@ -88,9 +88,12 @@ typedef const struct {
  */
 struct fixup {
 	uint8_t *loc;
+	const char *name;
 	struct_desc *sd;
 	field_desc *fp; /* name .fp from packet.c */
 };
+
+void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value);
 
 /*
  * The formatting of input and output of packets is done through
@@ -124,11 +127,10 @@ struct pbs_out {
 	/*
 	 * For patching Length field in header.
 	 *
-	 * Filled in by close_pbs_out().
+	 * Filled in by close_pbs_out() calling apply_fixup().
 	 * Note: it may not be aligned.
 	 */
-	uint8_t *lenfld;	/* start of variable length field */
-	field_desc *lenfld_desc;	/* includes length */
+	struct fixup header_length_field;
 
 	/*
 	 * For patching IKEv2's Next Payload field chain.
@@ -146,6 +148,10 @@ struct pbs_out {
 
 	/*
 	 * For patching IKEv2's Last Substructure field.
+	 *
+	 * XXX: acutually, it's used to verify the last substructure
+	 * bit, not set it.  Caller should know when it has reached
+	 * the end.
 	 *
 	 * IKEv2 has nested substructures.  An SA Payload contains
 	 * Proposal Substructures, and a Proposal Substructure

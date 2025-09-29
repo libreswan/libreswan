@@ -2365,6 +2365,25 @@ diag_t pbs_in_bytes(struct pbs_in *ins, void *bytes, size_t len, const char *nam
 	return NULL;
 }
 
+#define save_fixup(OUTS, FIELD, LOC, SD, FP)				\
+	{								\
+		ldbg((OUTS)->logger, #FIELD": saving location '%s'.'%s'", \
+		     sd->name, fp->name);				\
+		(OUTS)->FIELD.name = #FIELD;				\
+		(OUTS)->FIELD.loc = LOC;				\
+		(OUTS)->FIELD.sd = SD;					\
+		(OUTS)->FIELD.fp = FP;					\
+	}
+
+void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value)
+{
+	unsigned size = fixup->fp->size;
+	ldbg(logger, "%s: emitting %u byte %ju into %s.%s",
+	     fixup->name, size, value, fixup->sd->name, fixup->fp->name);
+	PASSERT(logger, size > 0);
+	raw_hton(value, fixup->loc, size);
+}
+
 /*
  * Check IKEv2's Last Substructure field.
  */
@@ -2406,11 +2425,7 @@ static void update_last_substructure(struct pbs_out *outs,
 	/*
 	 * Now save the location of this Last Substructure.
 	 */
-	ldbg(outs->logger, "last substructure: saving location '%s'.'%s'.'%s'",
-	     outs->desc->name, sd->name, fp->name);
-	outs->last_substructure.loc = cur;
-	outs->last_substructure.sd = sd;
-	outs->last_substructure.fp = fp;
+	save_fixup(outs, last_substructure, cur, sd, fp);
 }
 
 static void close_last_substructure(struct pbs_out *pbs)
@@ -2439,11 +2454,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 				     const uint8_t *inp, uint8_t *cur)
 {
 	PASSERT(outs->logger, fp->size == 1);
-	ldbg(outs->logger, "next payload chain: saving message location '%s'.'%s'",
-	     sd->name, fp->name);
-	outs->next_payload_chain.loc = cur;
-	outs->next_payload_chain.sd = sd;
-	outs->next_payload_chain.fp = fp;
+	save_fixup(outs, next_payload_chain, cur, sd, fp);
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		name_buf npb;
@@ -2525,19 +2536,10 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 
 	/* update previous struct's next payload type field */
-	name_buf npb;
-	ldbg(outs->logger, "next payload chain: setting previous '%s'.'%s' to current %s (%d:%s)",
-	     message->next_payload_chain.sd->name,
-	     message->next_payload_chain.fp->name,
-	     sd->name, sd->pt, str_enum_long(fp->desc, sd->pt, &npb));
-	*message->next_payload_chain.loc = sd->pt;
+	apply_fixup(outs->logger, &message->next_payload_chain, sd->pt);
 
 	/* save new */
-	ldbg(outs->logger, "next payload chain: saving location '%s'.'%s' in '%s'",
-	     sd->name, fp->name, message->name);
-	message->next_payload_chain.loc = cur;
-	message->next_payload_chain.sd = sd;
-	message->next_payload_chain.fp = fp;
+	save_fixup(message, next_payload_chain, cur, sd, fp);
 }
 
 /* "emit" a host struct into a network packet.
@@ -2766,15 +2768,14 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 				 * We do record where this is so that it can be
 				 * filled in by a subsequent close_pbs_out().
 				 */
-				PASSERT(outs->logger, obj.lenfld == NULL);    /* only one ft_len allowed */
-				obj.lenfld = cur;
-				obj.lenfld_desc = fp;
+				PASSERT(outs->logger, obj.header_length_field.loc == NULL);    /* only one ft_len allowed */
+				save_fixup(&obj, header_length_field, cur, sd, fp);
 
 				/* fill with crap so failure to overwrite will be noticed */
-				memset(cur, 0xFA, i);
+				memset(cur, 0xFA, fp->size);
 
-				inp += i;
-				cur += i;
+				inp += fp->size;
+				cur += fp->size;
 				break;
 			}
 
@@ -2985,10 +2986,10 @@ bool close_pbs_out(struct pbs_out *pbs)
 {
 	PASSERT(pbs->logger, pbs->logger != NULL);
 
-	if (pbs->lenfld != NULL) {
+	if (pbs->header_length_field.loc != NULL) {
 		size_t len = (pbs->cur - pbs->start);
 
-		if (pbs->lenfld_desc->field_type == ft_lv)
+		if (pbs->header_length_field.fp->field_type == ft_lv)
 			len -= sizeof(struct isakmp_attribute);
 
 		ldbg(pbs->logger, "emitting length of %s: %zu", pbs->name, len);
@@ -2996,9 +2997,7 @@ bool close_pbs_out(struct pbs_out *pbs)
 		/*
 		 * Emit SIZE octets of (host) length in network order.
 		 */
-		unsigned size = pbs->lenfld_desc->size;
-		PASSERT(pbs->logger, size > 0);
-		raw_hton(len, pbs->lenfld, size);
+		apply_fixup(pbs->logger, &pbs->header_length_field, len);
 	}
 
 	/* if there is one */
