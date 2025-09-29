@@ -235,11 +235,9 @@ struct child_proposals {
 	struct proposals *p;
 };
 
-size_t jam_proposal_transform(struct jambuf *buf, const struct transform *transform);
-size_t jam_proposal_transforms(struct jambuf *buf, const struct proposal *proposal);
-
-void jam_proposal(struct jambuf *log, const struct proposal *proposal);
-void jam_proposals(struct jambuf *log, const struct proposals *proposals);
+size_t jam_proposals(struct jambuf *log, const struct proposals *proposals);
+size_t jam_proposal(struct jambuf *log, const struct proposal *proposal);
+size_t jam_transform(struct jambuf *buf, const struct transform *transform);
 
 /*
  * Iterate through all the proposals and the proposal's algorithms.

@@ -410,7 +410,7 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 						jam_string(buf, " ");
 						jam_string(buf, new->desc->type->story);
 						jam_string(buf, " ");
-						jam_proposal_transform(buf, new);
+						jam_transform(buf, new);
 					}
 				}
 				break;
@@ -725,8 +725,8 @@ void append_proposal_transform(struct proposal_parser *parser,
 	build_proposal_first_transform(proposal, verbose);
 }
 
-size_t jam_proposal_transform(struct jambuf *buf,
-			      const struct transform *transform)
+size_t jam_transform(struct jambuf *buf,
+		     const struct transform *transform)
 {
 	size_t s = 0;
 	s += jam_string(buf, transform->desc->fqn);
@@ -736,8 +736,8 @@ size_t jam_proposal_transform(struct jambuf *buf,
 	return s;
 }
 
-size_t jam_proposal_transforms(struct jambuf *buf,
-			       const struct proposal *proposal)
+size_t jam_proposal(struct jambuf *buf,
+		    const struct proposal *proposal)
 {
 	const struct transform_type *previous_type;
 	/*
@@ -847,14 +847,14 @@ size_t jam_proposal_transforms(struct jambuf *buf,
 					s += jam_string(buf, (integ > first_integ ? "+" :
 							      first ? "" : "-"));
 					first = false;
-					s += jam_proposal_transform(buf, integ);
+					s += jam_transform(buf, integ);
 				}
 				for (const struct transform *prf = first_prf;
 				     prf != NULL && prf <= last_prf; prf++) {
 					s += jam_string(buf, (prf > first_prf ? "+" :
 							      first ? "" : "-"));
 					first = false;
-					s += jam_proposal_transform(buf, prf);
+					s += jam_transform(buf, prf);
 				}
 				jammed_prf_and_integ = true;
 			}
@@ -870,99 +870,21 @@ size_t jam_proposal_transforms(struct jambuf *buf,
 			s += jam_string(buf, transform->type->name);
 			s += jam_string(buf, "=");
 		}
-		s += jam_proposal_transform(buf, transform);
+		s += jam_transform(buf, transform);
 		previous_type = transform->type;
 	}
 	return s;
 }
 
-static const char *jam_proposal_algorithm(struct jambuf *buf,
-					  const struct proposal *proposal,
-					  const struct transform_type *type,
-					  const char *algorithm_separator)
+size_t jam_proposals(struct jambuf *buf, const struct proposals *proposals)
 {
-	const char *separator = algorithm_separator;
-	ITEMS_FOR_EACH(algorithm, proposal->algorithms[type->index]) {
-		jam_string(buf, separator); separator = "+"; algorithm_separator = "-";
-		jam_proposal_transform(buf, algorithm);
-	}
-	return algorithm_separator;
-}
-
-void jam_proposal(struct jambuf *buf,
-		  const struct proposal *proposal)
-{
-	const char *algorithm_separator = "";
-
-	for (const struct transform_type *type = transform_type_floor;
-	     type < PMIN(transform_type_prf, transform_type_integ);
-	     type++) {
-		algorithm_separator = jam_proposal_algorithm(buf, proposal, type,
-							     algorithm_separator);
-	}
-
-	/*
-	 * Does it look like the INTEG was generated from the PRF?
-	 *
-	 * When it is, the INTEG is suppressed.
-	 */
-
-	struct transform_algorithms *prf_algs = proposal->algorithms[PROPOSAL_TRANSFORM_prf];
-	struct transform_algorithms *integ_algs = proposal->algorithms[PROPOSAL_TRANSFORM_integ];
-	bool encrypt_is_empty = (first_proposal_transform(proposal, transform_type_encrypt) == NULL);
-	bool prf_is_empty = (first_proposal_transform(proposal, transform_type_prf) == NULL);
-	bool integ_is_empty = (first_proposal_transform(proposal, transform_type_integ) == NULL);
-	bool integ_matches_prf = false;
-	if (!prf_is_empty && !integ_is_empty &&
-	    prf_algs->len == integ_algs->len) {
-		integ_matches_prf = true; /* hopefully */
-		for (unsigned n = 0; n < integ_algs->len; n++) {
-			struct transform *prf  = &prf_algs->item[n];
-			struct transform *integ  = &integ_algs->item[n];
-			if (&integ_desc(integ->desc)->prf->common != prf->desc) {
-				/* i.e., prf and integ are different */
-				integ_matches_prf = false;
-				break;
-			}
-		}
-	}
-
-	/*
-	 * For output compatibility reasons, the INTEG is shown before
-	 * the PRF; but not when it matches the PRF; and not when it
-	 * is NONE (ike=aes_gcm-none gives the impression that there
-	 * is no integrity).
-	 */
-
-	if (encrypt_is_empty ||
-	    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)) ||
-	    (proposal_encrypt_norm(proposal) && !integ_matches_prf)) {
-		algorithm_separator = jam_proposal_algorithm(buf, proposal,
-							     transform_type_integ,
-							     algorithm_separator);
-	}
-
-	algorithm_separator = jam_proposal_algorithm(buf, proposal,
-						     transform_type_prf,
-						     algorithm_separator);
-
-	for (const struct transform_type *type = PMAX(transform_type_prf + 1,
-						      transform_type_integ + 1);
-	     type < transform_type_roof; type++) {
-		algorithm_separator = jam_proposal_algorithm(buf, proposal, type,
-							     algorithm_separator);
-	}
-
-}
-
-void jam_proposals(struct jambuf *buf, const struct proposals *proposals)
-{
+	size_t s = 0;
 	const char *sep = "";
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		jam_string(buf, sep);
-		jam_proposal(buf, proposal);
-		sep = ", ";
+		s += jam_string(buf, sep); sep = ", ";
+		s += jam_proposal(buf, proposal);
 	}
+	return s;
 }
 
 /*

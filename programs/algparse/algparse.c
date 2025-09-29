@@ -121,21 +121,10 @@ static void check(const struct protocol *protocol,
 	if (proposals != NULL) {
 		pexpect(parser->diag == NULL);
 		FOR_EACH_PROPOSAL(proposals, proposal) {
-			char old[LOG_WIDTH];
-			struct jambuf old_buf = ARRAY_AS_JAMBUF(old);
-			jam_proposal(&old_buf, proposal);
-			fprintf(stdout, "\t%s\n", old);
-			char new[LOG_WIDTH];
-			struct jambuf new_buf = ARRAY_AS_JAMBUF(new);
-			jam_proposal_transforms(&new_buf, proposal);
-			if (!streq(old, new)) {
-				if (proposal_impaired(proposal)) {
-					fprintf(stdout, "\t%s\n", new);
-				} else {
-					fprintf(stdout, "UNEXPECTED FAIL: '%s' does not match\n", new);
-					failures++;
-				}
-			}
+			char string[LOG_WIDTH];
+			struct jambuf buf = ARRAY_AS_JAMBUF(string);
+			jam_proposal(&buf, proposal);
+			fprintf(stdout, "\t%s\n", string);
 		}
 		free_proposals(&proposals);
 		if (expected == FAIL) {
