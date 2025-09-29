@@ -1270,23 +1270,16 @@ static bool encrypt_and_record_outbound_fragments(const struct pbs_out *body,
 	hdr.isa_np = ISAKMP_NEXT_v2NONE; /* clear NP */
 
 	/*
-	 * Extract the SK's next payload field from the original
-	 * unfragmented message.  This is used as the first SKF's NP
-	 * field, the rest have NP=NONE(0).
+	 * Extract the value of the SK's next payload field from the
+	 * original unfragmented message.  This is used as the first
+	 * fragmented payload's SKF Next Payload field, the rest have
+	 * Next Payload set to NONE(0).
+	 *
+	 * Note: the value isn't known until the first encrypted
+	 * payload is emitted.  Hence the need to fetch it from the SK
+	 * payload after the message has been constructed.
 	 */
-	enum next_payload_types_ikev2 skf_np;
-	{
-		struct pbs_in pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(sk->payload), "sk");
-		struct ikev2_generic e;
-		struct pbs_in ignored;
-		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), &ignored);
-		if (d != NULL) {
-			llog(RC_LOG, sk->logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			return false;
-		}
-		skf_np = e.isag_np;
-	}
+	enum next_payload_types_ikev2 skf_np = fixup_value(sk->logger, &sk->sk_next_payload_field);
 
 	unsigned int number = 1;
 	unsigned int offset = 0;
@@ -1426,6 +1419,19 @@ bool open_v2_message(const char *story,
 		if (!open_body_v2SK_payload(&message->body, ike, logger, &message->sk)) {
 			return false;
 		}
+
+		/*
+		 * Save the Next Payload chain's fixup which currently
+		 * points into the just emitted SK header's Next
+		 * Payload field.
+		 *
+		 * Since there is a single chain running through the
+		 * message, this is stored somewhere other then the
+		 * SK.PBS (probably the outermost PBS).
+		 */
+		struct fixup *next_payload_chain = pbs_out_next_payload_chain(&message->sk.pbs);
+		message->sk.sk_next_payload_field = *next_payload_chain;
+
 		message->pbs = &message->sk.pbs;
 		if (!emit_v2UNKNOWN("encrypted", exchange_type,
 				    &impair.add_unknown_v2_payload_to_sk,
