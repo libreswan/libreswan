@@ -47,7 +47,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 		return false;
 	}
 
-	FOR_EACH_ALGORITHM(proposal, encrypt, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_encrypt) {
 		const struct encrypt_desc *encrypt = encrypt_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&encrypt->common, logger));
 		PASSERT(logger, (alg->enckeylen == 0 ||
@@ -59,7 +59,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 		return false;
 	}
 
-	FOR_EACH_ALGORITHM(proposal, prf, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_prf) {
 		const struct prf_desc *prf = prf_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&prf->common, logger));
 	}
@@ -68,7 +68,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 		return false;
 	}
 
-	FOR_EACH_ALGORITHM(proposal, integ, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_integ) {
 		const struct integ_desc *integ = integ_desc(alg->desc);
 		PASSERT(logger, (integ == &ike_alg_integ_none ||
 				 ike_alg_is_ike(&integ->common, logger)));
@@ -78,7 +78,7 @@ static bool ike_proposal_ok(struct proposal_parser *parser,
 		return false;
 	}
 
-	FOR_EACH_ALGORITHM(proposal, kem, alg) {
+	TRANSFORMS_FOR_EACH(alg, proposal, transform_type_kem) {
 		const struct kem_desc *kem = kem_desc(alg->desc);
 		PASSERT(logger, ike_alg_is_ike(&kem->common, logger));
 		if (kem == &ike_alg_kem_none) {

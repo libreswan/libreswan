@@ -42,9 +42,8 @@ static void merge_algorithms(struct proposal_parser *parser,
 		return;
 	}
 
-	struct transform_algorithms *algorithms = transform_algorithms(proposal, transform_type);
-	if (algorithms != NULL) {
-		/* could be empty when impaired */
+	struct transform *transform = first_proposal_transform(proposal, transform_type);
+	if (transform != NULL) {
 		return;
 	}
 
@@ -90,13 +89,24 @@ static bool merge_defaults(struct proposal_parser *parser,
 			/*
 			 * Since non-AEAD, use integrity algorithms
 			 * that are implemented using the PRFs.
+			 *
+			 * Danger: transforms->data changes as the
+			 * table grows; hence this strange construct
+			 * and the need to re-index the table.
 			 */
-			FOR_EACH_ALGORITHM(proposal, prf, prf) {
+			volatile const struct transforms *transforms =
+				proposal_transforms(proposal);
+			for (unsigned t = 0; t < transforms->len; t++) {
+				const struct transform *transform = &transforms->data[t];
+				if (transform->type != transform_type_prf) {
+					continue;
+				}
+				const struct ike_alg *prf = transform->desc;
 				const struct integ_desc *integ = NULL;
 				for (const struct integ_desc **integp = next_integ_desc(NULL);
 				     integp != NULL; integp = next_integ_desc(integp)) {
 					if ((*integp)->prf != NULL &&
-					    &(*integp)->prf->common == prf->desc) {
+					    &(*integp)->prf->common == prf) {
 						integ = *integp;
 						break;
 					}
@@ -104,7 +114,7 @@ static bool merge_defaults(struct proposal_parser *parser,
 				if (integ == NULL) {
 					proposal_error(parser, "%s integrity derived from PRF %s is not supported",
 						       parser->protocol->name,
-						       prf->desc->fqn);
+						       prf->fqn);
 					return false;
 				}
 				/*
