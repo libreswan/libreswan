@@ -1102,13 +1102,13 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
  *
  */
 
-static bool record_outbound_fragment(struct logger *logger,
-				     struct ike_sa *ike,
-				     const struct isakmp_hdr *hdr,
-				     enum next_payload_types_ikev2 skf_np,
-				     struct v2_outgoing_fragment **fragp,
-				     chunk_t *fragment,	/* read-only */
-				     unsigned int number, unsigned int total)
+static bool encrypt_and_record_outbound_fragment(struct logger *logger,
+						 struct ike_sa *ike,
+						 const struct isakmp_hdr *hdr,
+						 enum next_payload_types_ikev2 skf_np,
+						 struct v2_outgoing_fragment **fragp,
+						 chunk_t *fragment,	/* read-only */
+						 unsigned int number, unsigned int total)
 {
 	struct fragment_pbs_out message_fragment;
 	if (!open_fragment_pbs_out("fragment", &message_fragment, logger)) {
@@ -1198,9 +1198,9 @@ static bool record_outbound_fragment(struct logger *logger,
 	return true;
 }
 
-static bool record_outbound_fragments(const struct pbs_out *body,
-				      struct v2SK_payload *sk,
-				      struct v2_outgoing_fragment **frags)
+static bool encrypt_and_record_outbound_fragments(const struct pbs_out *body,
+						  struct v2SK_payload *sk,
+						  struct v2_outgoing_fragment **frags)
 {
 	free_v2_outgoing_fragments(frags, sk->logger);
 
@@ -1270,23 +1270,16 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	hdr.isa_np = ISAKMP_NEXT_v2NONE; /* clear NP */
 
 	/*
-	 * Extract the SK's next payload field from the original
-	 * unfragmented message.  This is used as the first SKF's NP
-	 * field, the rest have NP=NONE(0).
+	 * Extract the value of the SK's next payload field from the
+	 * original unfragmented message.  This is used as the first
+	 * fragmented payload's SKF Next Payload field, the rest have
+	 * Next Payload set to NONE(0).
+	 *
+	 * Note: the value isn't known until the first encrypted
+	 * payload is emitted.  Hence the need to fetch it from the SK
+	 * payload after the message has been constructed.
 	 */
-	enum next_payload_types_ikev2 skf_np;
-	{
-		struct pbs_in pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(sk->payload), "sk");
-		struct ikev2_generic e;
-		struct pbs_in ignored;
-		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), &ignored);
-		if (d != NULL) {
-			llog(RC_LOG, sk->logger, "%s", str_diag(d));
-			pfree_diag(&d);
-			return false;
-		}
-		skf_np = e.isag_np;
-	}
+	enum next_payload_types_ikev2 skf_np = fixup_value(sk->logger, &sk->sk_next_payload_field);
 
 	unsigned int number = 1;
 	unsigned int offset = 0;
@@ -1296,8 +1289,8 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 		PASSERT(sk->logger, *frag == NULL);
 		chunk_t fragment = chunk2(sk->cleartext.ptr + offset,
 					  PMIN(sk->cleartext.len - offset, len));
-		if (!record_outbound_fragment(sk->logger, sk->ike, &hdr, skf_np, frag,
-					      &fragment, number, nfrags)) {
+		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike, &hdr, skf_np, frag,
+							  &fragment, number, nfrags)) {
 			return false;
 		}
 		frag = &(*frag)->next;
@@ -1315,14 +1308,14 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 }
 
 /*
- * Record the message ready for sending.  If needed, first fragment
- * it.
+ * Encrypt and Record the message ready for sending.  If needed, first
+ * fragment it.
  */
 
-static stf_status record_v2SK_message(struct pbs_out *msg,
-				      struct v2SK_payload *sk,
-				      const char *what,
-				      struct v2_outgoing_fragment **outgoing_fragments)
+static stf_status encrypt_and_record_v2SK_message(struct pbs_out *msg,
+						  struct v2SK_payload *sk,
+						  const char *what,
+						  struct v2_outgoing_fragment **outgoing_fragments)
 {
 	size_t len = pbs_out_all(msg).len;
 
@@ -1339,19 +1332,20 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
 	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
 	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
-		if (!record_outbound_fragments(msg, sk, outgoing_fragments)) {
+		if (!encrypt_and_record_outbound_fragments(msg, sk, outgoing_fragments)) {
 			ldbg(sk->logger, "record outbound fragments failed");
 			return STF_INTERNAL_ERROR;
 		}
-	} else {
-		if (!encrypt_v2SK_payload(sk)) {
-			llog(RC_LOG, sk->logger,
-				    "error encrypting %s message", what);
-			return STF_INTERNAL_ERROR;
-		}
-		ldbg(sk->logger, "recording outgoing fragment failed");
-		record_v2_outgoing_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
+		return STF_OK;
 	}
+
+	if (!encrypt_v2SK_payload(sk)) {
+		llog(RC_LOG, sk->logger,
+		     "error encrypting %s message", what);
+		return STF_INTERNAL_ERROR;
+	}
+	ldbg(sk->logger, "recording outgoing fragment failed");
+	record_v2_outgoing_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
 	return STF_OK;
 }
 
@@ -1425,6 +1419,19 @@ bool open_v2_message(const char *story,
 		if (!open_body_v2SK_payload(&message->body, ike, logger, &message->sk)) {
 			return false;
 		}
+
+		/*
+		 * Save the Next Payload chain's fixup which currently
+		 * points into the just emitted SK header's Next
+		 * Payload field.
+		 *
+		 * Since there is a single chain running through the
+		 * message, this is stored somewhere other then the
+		 * SK.PBS (probably the outermost PBS).
+		 */
+		struct fixup *next_payload_chain = pbs_out_next_payload_chain(&message->sk.pbs);
+		message->sk.sk_next_payload_field = *next_payload_chain;
+
 		message->pbs = &message->sk.pbs;
 		if (!emit_v2UNKNOWN("encrypted", exchange_type,
 				    &impair.add_unknown_v2_payload_to_sk,
@@ -1485,10 +1492,10 @@ bool record_v2_message(struct v2_message *message)
 {
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
-		if (record_v2SK_message(&message->message,
-					&message->sk,
-					message->story,
-					message->outgoing_fragments) != STF_OK) {
+		if (encrypt_and_record_v2SK_message(&message->message,
+						    &message->sk,
+						    message->story,
+						    message->outgoing_fragments) != STF_OK) {
 			return false;
 		}
 		return true;

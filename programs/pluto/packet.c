@@ -2365,15 +2365,21 @@ diag_t pbs_in_bytes(struct pbs_in *ins, void *bytes, size_t len, const char *nam
 	return NULL;
 }
 
-#define save_fixup(OUTS, FIELD, LOC, SD, FP)				\
-	{								\
-		ldbg((OUTS)->logger, #FIELD": saving location '%s'.'%s'", \
-		     sd->name, fp->name);				\
-		(OUTS)->FIELD.name = #FIELD;				\
-		(OUTS)->FIELD.loc = LOC;				\
-		(OUTS)->FIELD.sd = SD;					\
-		(OUTS)->FIELD.fp = FP;					\
-	}
+static void save_fixup_1(struct logger *logger, const char *name,
+			 struct fixup *fixup,
+			 void *loc,
+			 struct_desc *sd,
+			 field_desc *fp)
+{
+	ldbg(logger, "%s: saving location '%s'.'%s'", name, sd->name, fp->name);
+	fixup->name = name;
+	fixup->fp = fp;
+	fixup->sd = sd;
+	fixup->loc = loc;
+}
+
+#define save_fixup(OUTS, FIELD, LOC, SD, FP) \
+	save_fixup_1((OUTS)->logger, #FIELD, &(OUTS)->FIELD, LOC, SD, FP)
 
 void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value)
 {
@@ -2382,6 +2388,18 @@ void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t val
 	     fixup->name, size, value, fixup->sd->name, fixup->fp->name);
 	PASSERT(logger, size > 0);
 	raw_hton(value, fixup->loc, size);
+}
+
+uintmax_t fixup_value(struct logger *logger, const struct fixup *fixup)
+{
+	PASSERT(logger, fixup->name != NULL);
+	PASSERT(logger, fixup->sd != NULL);
+	PASSERT(logger, fixup->fp != NULL);
+	PASSERT(logger, fixup->fp->size > 0);
+	uintmax_t value = raw_ntoh(fixup->loc, fixup->fp->size);
+	ldbg(logger, "%s: value at %zu byte fixup %s.%s is %ju",
+	     fixup->name, fixup->fp->size, fixup->sd->name, fixup->fp->name, value);
+	return value;
 }
 
 /*
@@ -2467,6 +2485,29 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 }
 
+struct fixup *pbs_out_next_payload_chain(struct pbs_out *outs)
+{
+	/*
+	 * Find the message (packet) PBS containing the next payload
+	 * chain pointers initialized by start_next_payload_chain().
+	 * Since there is a single chain, running through the message,
+	 * this is stored in the outermost PBS.
+	 *
+	 * XXX: don't try to be all fancy and copy back values; could
+	 * use an outs->message pointer; but since nesting is minimal
+	 * this isn't really urgent
+	 */
+	do {
+		outs = outs->container;
+	} while (outs->container != NULL);
+
+	struct fixup *next_payload_chain = &outs->next_payload_chain;
+	PASSERT(outs->logger, next_payload_chain->loc != NULL);
+	PASSERT(outs->logger, next_payload_chain->sd != NULL);
+	PASSERT(outs->logger, next_payload_chain->fp != NULL);
+	return next_payload_chain;
+}
+
 static void update_next_payload_chain(struct pbs_out *outs,
 				      struct_desc *sd, field_desc *fp,
 				      const uint8_t *inp, uint8_t *cur)
@@ -2496,15 +2537,9 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	 * use an outs->message pointer; but since nesting is minimal
 	 * this isn't really urgent
 	 */
-	struct pbs_out *message = outs->container;
-	PASSERT(outs->logger, message != NULL);
-	while (message->container != NULL) {
-		message = message->container;
-	}
-	PASSERT(outs->logger, message->next_payload_chain.loc != NULL);
-	PASSERT(outs->logger, message->next_payload_chain.sd != NULL);
-	PASSERT(outs->logger, message->next_payload_chain.fp != NULL);
-	PEXPECT(outs->logger, *message->next_payload_chain.loc == ISAKMP_NEXT_NONE);
+	struct fixup *next_payload_chain = pbs_out_next_payload_chain(outs);
+	/* not yet patched */
+	PEXPECT(outs->logger, next_payload_chain->loc[0] == ISAKMP_NEXT_NONE);
 
 	/*
 	 * Initialize this payload's next payload chain
@@ -2536,10 +2571,10 @@ static void update_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 
 	/* update previous struct's next payload type field */
-	apply_fixup(outs->logger, &message->next_payload_chain, sd->pt);
+	apply_fixup(outs->logger, next_payload_chain, sd->pt);
 
 	/* save new */
-	save_fixup(message, next_payload_chain, cur, sd, fp);
+	save_fixup_1(outs->logger, "next_payload_chain", next_payload_chain, cur, sd, fp);
 }
 
 /* "emit" a host struct into a network packet.
