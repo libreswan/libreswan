@@ -33,6 +33,7 @@
 
 struct ip_info;
 struct logger;
+struct pbs_out;
 
 /* a struct_desc describes a structure for the struct I/O routines.
  * This requires arrays of field_desc values to describe struct fields.
@@ -94,6 +95,8 @@ struct fixup {
 };
 
 void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value);
+uintmax_t fixup_value(struct logger *logger, const struct fixup *fixup);
+struct fixup *pbs_out_next_payload_chain(struct pbs_out *outs);
 
 /*
  * The formatting of input and output of packets is done through
