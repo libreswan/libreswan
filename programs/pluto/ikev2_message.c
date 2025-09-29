@@ -1101,8 +1101,9 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 						 const struct isakmp_hdr *hdr,
 						 enum next_payload_types_ikev2 skf_np,
 						 struct v2_outgoing_fragment **fragp,
-						 chunk_t *fragment,	/* read-only */
-						 unsigned int number, unsigned int total)
+						 shunk_t fragment,
+						 unsigned int number,
+						 unsigned int total)
 {
 	struct fragment_pbs_out message_fragment;
 	if (!open_fragment_pbs_out("fragment", &message_fragment, logger)) {
@@ -1172,7 +1173,7 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 
 	/* output the fragment */
 
-	if (!pbs_out_hunk(&skf.pbs, *fragment, "cleartext fragment"))
+	if (!pbs_out_hunk(&skf.pbs, fragment, "cleartext fragment"))
 		return false;
 
 	if (!close_v2SK_payload(&skf)) {
@@ -1211,37 +1212,53 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	/*
 	 * XXX: this math seems very contrived, can the fragment()
 	 * function above be left to do the computation on-the-fly?
+	 *
+	 * XXX: perhaps, the problem is that the SKF header needs to
+	 * know the total number of fragments.
+	 *
+	 * Start with the max size of the entire packet (aka
+	 * .ikev2_max_fragment_size).
 	 */
 
-	unsigned int len = endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
+	unsigned int max_skf_size = endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size;
 
 	/*
-	 * If we are doing NAT, so that the other end doesn't mistake
-	 * this message for ESP, each message needs a non-ESP_Marker
-	 * prefix.
+	 * Reduce MAX by non-ESP marker bytes.  When doing NAT these
+	 * are added to the start of the UDP packet.
 	 */
-	if (sk->ike->sa.st_iface_endpoint != NULL && sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled)
-		len -= NON_ESP_MARKER_SIZE;
+	if (sk->ike->sa.st_iface_endpoint != NULL &&
+	    sk->ike->sa.st_iface_endpoint->esp_encapsulation_enabled) {
+		max_skf_size -= NON_ESP_MARKER_SIZE;
+	}
 
-	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
+	/*
+	 * Reduce MAX of the always present message and the SKF
+	 * headers
+	 */
+	max_skf_size -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
 
-	len -= (encrypt_desc_is_aead(sk->ike->sa.st_oakley.ta_encrypt)
-		? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
-		: sk->ike->sa.st_oakley.ta_integ->integ_output_size);
+	/*
+	 * Reduce MAX by the always present integrity/tag bytes.
+	 */
+	max_skf_size -= (encrypt_desc_is_aead(sk->ike->sa.st_oakley.ta_encrypt)
+			 ? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
+			 : sk->ike->sa.st_oakley.ta_integ->integ_output_size);
 
-	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize)
-		len &= ~(sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize - 1);
+	if (sk->ike->sa.st_oakley.ta_encrypt->pad_to_blocksize) {
+		max_skf_size &= ~(sk->ike->sa.st_oakley.ta_encrypt->enc_blocksize - 1);
+	}
 
-	len -= 2;	/* ??? what's this? */
+	max_skf_size -= 2;	/* ??? what's this? */
 
 	PASSERT(sk->logger, sk->cleartext.len != 0);
 
-	unsigned int nfrags = (sk->cleartext.len + len - 1) / len;
+	/* required number of fragments; rounded */
+	unsigned int nfrags = (sk->cleartext.len + max_skf_size - 1) / max_skf_size;
 
 	if (nfrags > MAX_IKE_FRAGMENTS) {
 		llog(RC_LOG, sk->logger,
 			    "fragmenting this %zu byte message into %u byte chunks leads to too many frags",
-			    sk->cleartext.len, len);
+			    sk->cleartext.len, max_skf_size);
 		return false;
 	}
 
@@ -1277,27 +1294,25 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	enum next_payload_types_ikev2 skf_np = fixup_value(sk->logger, &sk->sk_next_payload_field);
 
 	unsigned int number = 1;
-	unsigned int offset = 0;
+	shunk_t clear_cursor = HUNK_AS_SHUNK(sk->cleartext);
 
 	struct v2_outgoing_fragment **frag = frags;
-	while (true) {
+	do {
+		/* chop off the next fragment, advancing the cursor */
+		shunk_t fragment = hunk_slice(clear_cursor, 0, PMIN(clear_cursor.len, max_skf_size));
+		clear_cursor = hunk_slice(clear_cursor, fragment.len, clear_cursor.len);
+
 		PASSERT(sk->logger, *frag == NULL);
-		chunk_t fragment = chunk2(sk->cleartext.ptr + offset,
-					  PMIN(sk->cleartext.len - offset, len));
-		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike, &hdr, skf_np, frag,
-							  &fragment, number, nfrags)) {
+		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike,
+							  &hdr, skf_np, frag,
+							  fragment,
+							  number, nfrags)) {
 			return false;
 		}
 		frag = &(*frag)->next;
-
-		offset += fragment.len;
 		number++;
 		skf_np = ISAKMP_NEXT_v2NONE;
-
-		if (offset >= sk->cleartext.len) {
-			break;
-		}
-	}
+	} while (clear_cursor.len > 0);
 
 	return true;
 }
