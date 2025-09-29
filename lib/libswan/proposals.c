@@ -600,16 +600,7 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 struct transform *first_proposal_transform(const struct proposal *proposal,
 					   const struct transform_type *type)
 {
-	struct transform *first = proposal->first[type->index];
-	if (first == NULL) {
-		passert(proposal->algorithms[type->index] == NULL);
-	} else {
-		passert(proposal->algorithms[type->index] != NULL);
-		passert(proposal->algorithms[type->index]->len > 0);
-		passert(proposal->algorithms[type->index]->item[0].desc == first->desc);
-		passert(proposal->algorithms[type->index]->item[0].enckeylen == first->enckeylen);
-	}
-	return first;
+	return proposal->first[type->index];
 }
 
 static void pfree_transforms(struct proposal *proposal,
