@@ -219,12 +219,6 @@ static bool open_v2_message_body(struct pbs_out *message,
 		return false;
 	}
 
-	if (!emit_v2UNKNOWN("unencrypted", exchange_type,
-			    &impair.add_unknown_v2_payload_to,
-			    body)) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -1386,6 +1380,12 @@ bool open_v2_message(const char *story,
 				  exchange_type, &message->body)) {
 		llog(RC_LOG, message->logger,
 		     "error initializing hdr for encrypted notification");
+		return false;
+	}
+
+	if (!emit_v2UNKNOWN("unencrypted", exchange_type,
+			    &impair.add_unknown_v2_payload_to,
+			    &message->body)) {
 		return false;
 	}
 
