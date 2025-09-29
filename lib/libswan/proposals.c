@@ -420,6 +420,49 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 	return new_len;
 }
 
+static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
+					 struct proposal *proposal,
+					 struct verbose verbose)
+{
+	/*
+	 * Drop KEM when no-PFS.
+	 *
+	 * Note: the proposal may only have KEM algorithms,
+	 * which means all will be dropped leaving an empty
+	 * proposal.
+	 */
+	vdbg("removing PFS transforms");
+	verbose.level++;
+
+	unsigned len = 0;
+	bool already_logged = false;
+	DATA_FOR_EACH(new, &proposal->transforms) {
+		if (new->type == transform_type_kem) {
+			if (already_logged) {
+				vdbg("ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
+				     parser->protocol->name, new->desc->fqn);
+			} else if (new->desc == &ike_alg_kem_none.common) {
+				llog(parser->policy->stream, parser->policy->logger,
+				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
+				     parser->protocol->name);
+			} else {
+				llog(parser->policy->stream, parser->policy->logger,
+				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
+				     parser->protocol->name, new->desc->fqn);
+			}
+			already_logged = true;
+			continue;
+		}
+		struct transform *old = &proposal->transforms.data[len++];
+		if (old != new) {
+			*old = *new;
+		}
+	}
+	vdbg("after PFS removal there are %u (from %u) transforms",
+	     len, proposal->transforms.len);
+	realloc_data(&proposal->transforms, len);
+}
+
 static int transform_cmp(const void  *l, const void *r)
 {
 	const struct transform *lt = l;
@@ -442,35 +485,13 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	vdbg("removing duplicates in raw transforms");
 	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
 						       DEBUG_STREAM, verbose);
-	vdbg("updating raw transform length from %u to %u",
-	     proposal->transforms.len, new_len);
+	vdbg("updated transform length after duplicate removal %u (from %u)",
+	     new_len, proposal->transforms.len);
 	realloc_data(&proposal->transforms, new_len);
 
-	vdbg("removing PFS vs KEM transforms");
 	if (!parser->policy->pfs &&
 	    parser->policy->check_pfs_vs_ke) {
-
-		/*
-		 * Drop KEM when no-PFS.
-		 *
-		 * Note: the proposal may only have KEM algorithms,
-		 * which means all will be dropped leaving an empty
-		 * proposal.
-		 */
-		unsigned new_len = 0;
-		DATA_FOR_EACH(new, &proposal->transforms) {
-			if (new->type == transform_type_kem &&
-			    !parser->policy->pfs &&
-			    parser->policy->check_pfs_vs_ke) {
-				vdbg("dropping %s %s as no PFS", new->type->name, new->desc->fqn);
-				continue;
-			}
-			struct transform *next = &proposal->transforms.data[new_len++];
-			if (next != new) {
-				*next = *new;
-			}
-		}
-		realloc_data(&proposal->transforms, new_len);
+		remove_pfs_vs_kem_transforms(parser, proposal, verbose);
 	}
 
 	vdbg("sorting raw transforms");
@@ -879,81 +900,55 @@ size_t jam_proposals(struct jambuf *buf, const struct proposals *proposals)
 }
 
 /*
- * When PFS=no ignore any DH algorithms, and when PFS=yes reject
- * mixing implicit and explicit DH.
+ * When PFS=no, DH algorithms should have all been stripped.  When
+ * PFS=yes reject mixing implicit and explicit DH.
  */
 static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				      struct proposals *proposals)
 {
-#define first_kem_algorithm (proposal->algorithms[PROPOSAL_TRANSFORM_kem] == NULL ? NULL : \
-			     proposal->algorithms[PROPOSAL_TRANSFORM_kem]->len == 0 ? NULL : \
-			     proposal->algorithms[PROPOSAL_TRANSFORM_kem]->item)
-
 	/*
 	 * Scrape the proposals searching for a Key Exchange
 	 * algorithms of interest.
 	 */
 
-	const struct proposal *first_null_ke = NULL;
-	const struct proposal *first_none_ke = NULL;
-	const struct ike_alg *first_ke = NULL;
-	const struct ike_alg *second_ke = NULL;
+	const struct proposal *first_proposal_with_no_kem = NULL;
+	const struct proposal *first_proposal_with_kem_none = NULL;
+	/* something other than NONE */
+	const struct ike_alg *first_unique_kem = NULL;
+	const struct ike_alg *second_unique_kem = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform *first_kem = first_kem_algorithm;
-		if (first_kem == NULL) {
-			if (first_null_ke == NULL) {
-				first_null_ke = proposal;
+		struct transform *kem = proposal->first[PROPOSAL_TRANSFORM_kem];
+		if (kem == NULL) {
+			if (first_proposal_with_no_kem == NULL) {
+				first_proposal_with_no_kem = proposal;
 			}
-		} else if (first_kem->desc == &ike_alg_kem_none.common) {
-			if (first_none_ke == NULL) {
-				first_none_ke = proposal;
+			continue;
+		}
+		if (kem->desc == &ike_alg_kem_none.common) {
+			if (first_proposal_with_kem_none == NULL) {
+				first_proposal_with_kem_none = proposal;
 			}
-		} else if (first_ke == NULL) {
-			first_ke = first_kem->desc;
-		} else if (second_ke == NULL && first_ke != first_kem->desc) {
-			second_ke = first_kem->desc;
+			continue;
+		}
+		if (first_unique_kem == NULL) {
+			first_unique_kem = kem->desc;
+			continue;
+		}
+		if (kem->desc == first_unique_kem) {
+			continue;
+		}
+		if (second_unique_kem == NULL) {
+			/* not NONE, and not first */
+			second_unique_kem = kem->desc;
 		}
 	}
 
-	if (first_ke == NULL && first_none_ke == NULL) {
-		/* no DH is always ok */
+	/*
+	 * Regardless of PFS, no proposal specifying KEM is always ok.
+	 */
+	if (first_unique_kem == NULL && first_proposal_with_kem_none == NULL) {
 		return true;
 	}
-
-	/*
-	 * Try to generate very specific errors first.  For instance,
-	 * given PFS=no esp=aes,aes;dh21, an error stating that dh21
-	 * is not valid because of PFS is more helpful than an error
-	 * saying that all or no proposals need PFS.
-	 */
-
-	/*
-	 * Since PFS=NO overrides any DH, don't silently ignore it.
-	 * Check this early so that a conflict with PFS=no code gets
-	 * reported before anything else.
-	 */
-	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
-		FOR_EACH_PROPOSAL(proposals, proposal) {
-			const struct ike_alg *ke = NULL;
-			struct transform *first_kem = first_kem_algorithm;
-			if (first_kem != NULL) {
-				ke = first_kem->desc;
-			}
-			if (ke == &ike_alg_kem_none.common) {
-				llog(parser->policy->stream, parser->policy->logger,
-				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
-				     parser->protocol->name);
-			} else if (ke != NULL) {
-				llog(parser->policy->stream, parser->policy->logger,
-				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
-				     parser->protocol->name, ke->fqn);
-			}
-			pfree_transforms(proposal, transform_type_kem);
-		}
-		return true;
-	}
-
-#undef first_kem_algorithm
 
 	/*
 	 * Since at least one proposal included KE, all proposals
@@ -963,44 +958,37 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	 * (The converse, no proposals including KE was handled right
 	 * at the start).
 	 */
-	if (first_null_ke != NULL) {
+	if (first_proposal_with_no_kem != NULL) {
 		/* KE was specified */
 		proposal_error(parser, "either all or no %s proposals should specify Key Exchange",
 			       parser->protocol->name);
 		return false;
 	}
 
-	switch (parser->policy->version) {
-
-	case IKEv1:
-		/*
-		 * IKEv1 only allows one KE algorithm.
-		 */
-		if (first_ke != NULL && second_ke != NULL) {
+	if (first_unique_kem != NULL && second_unique_kem != NULL) {
+		switch (parser->policy->version) {
+		case IKEv1:
+			/*
+			 * IKEv1 only allows one KE algorithm.
+			 */
 			proposal_error(parser, "more than one IKEv1 %s Key Exchange algorithm (%s, %s) is not allowed in quick mode",
 				       parser->protocol->name,
-				       first_ke->fqn,
-				       second_ke->fqn);
+				       first_unique_kem->fqn,
+				       second_unique_kem->fqn);
 			return false;
-		}
-		break;
-
-	case IKEv2:
-		/*
-		 * IKEv2, only implements one KE algorithm for Child SAs.
-		 */
-		if (first_ke != NULL && second_ke != NULL) {
+		case IKEv2:
+			/*
+			 * IKEv2, only implements one KE algorithm for Child SAs.
+			 */
 			proposal_error(parser, "more than one IKEv2 %s Key Exchange algorithm (%s, %s) requires unimplemented CREATE_CHILD_SA INVALID_KE",
 				       parser->protocol->name,
-				       first_ke->fqn,
-				       second_ke->fqn);
+				       first_unique_kem->fqn,
+				       second_unique_kem->fqn);
 			return false;
+		default:
+			/* ignore */
+			break;
 		}
-		break;
-
-	default:
-		/* ignore */
-		break;
 	}
 
 	return true;
