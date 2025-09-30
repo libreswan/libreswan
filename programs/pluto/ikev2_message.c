@@ -1192,7 +1192,7 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 	return true;
 }
 
-static bool encrypt_and_record_outbound_fragments(const struct pbs_out *body,
+static bool encrypt_and_record_outbound_fragments(shunk_t message,
 						  struct v2SK_payload *sk,
 						  struct v2_outgoing_fragment **frags)
 {
@@ -1247,11 +1247,12 @@ static bool encrypt_and_record_outbound_fragments(const struct pbs_out *body,
 
 	/*
 	 * Extract the hdr from the original unfragmented message.
-	 * Set it up for auto-update of its next payload field chain.
+	 *
+	 * Tweak it ready for use as the fragment's message header
+	 * (clear Next Paylod).
 	 */
 	struct isakmp_hdr hdr;
 	{
-		shunk_t message = pbs_out_all(body);
 		struct pbs_in pbs = pbs_in_from_shunk(message, "sk hdr");
 		struct pbs_in ignored;
 		diag_t d = pbs_in_struct(&pbs, &isakmp_hdr_desc, &hdr, sizeof(hdr), &ignored);
@@ -1306,12 +1307,12 @@ static bool encrypt_and_record_outbound_fragments(const struct pbs_out *body,
  * fragment it.
  */
 
-static stf_status encrypt_and_record_v2SK_message(struct pbs_out *msg,
+static stf_status encrypt_and_record_v2SK_message(shunk_t message,
 						  struct v2SK_payload *sk,
 						  const char *what,
 						  struct v2_outgoing_fragment **outgoing_fragments)
 {
-	size_t len = pbs_out_all(msg).len;
+	size_t len = message.len;
 
 	/*
 	 * If we are doing NAT, so that the other end doesn't mistake
@@ -1326,7 +1327,7 @@ static stf_status encrypt_and_record_v2SK_message(struct pbs_out *msg,
 	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
 	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
 	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
-		if (!encrypt_and_record_outbound_fragments(msg, sk, outgoing_fragments)) {
+		if (!encrypt_and_record_outbound_fragments(message, sk, outgoing_fragments)) {
 			ldbg(sk->logger, "record outbound fragments failed");
 			return STF_INTERNAL_ERROR;
 		}
@@ -1339,7 +1340,7 @@ static stf_status encrypt_and_record_v2SK_message(struct pbs_out *msg,
 		return STF_INTERNAL_ERROR;
 	}
 	ldbg(sk->logger, "recording outgoing fragment failed");
-	record_v2_outgoing_message(pbs_out_all(msg), outgoing_fragments, sk->logger);
+	record_v2_outgoing_message(message, outgoing_fragments, sk->logger);
 	return STF_OK;
 }
 
@@ -1492,7 +1493,7 @@ bool record_v2_message(struct v2_message *message)
 {
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
-		if (encrypt_and_record_v2SK_message(&message->message,
+		if (encrypt_and_record_v2SK_message(pbs_out_all(&message->message),
 						    &message->sk,
 						    message->story,
 						    message->outgoing_fragments) != STF_OK) {
