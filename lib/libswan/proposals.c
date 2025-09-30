@@ -1582,30 +1582,34 @@ bool parse_proposal(struct proposal_parser *parser,
 			proposal->impaired = true;
 
 			/* go directly to the algorithm parser */
+#if 0
+			/*
+			 * A transform with no algorithm should stop
+			 * the proposal being decorated with that
+			 * transforms defaults?
+			 */
 			if (tokens.curr.token.len == 0 &&
 			    tokens.curr.token.ptr != NULL &&
-			    proposal->algorithms[transform_type->index] == NULL) {
+			    proposal->first[transform_type->index] == NULL) {
 				llog(IMPAIR_STREAM, verbose.logger,
 				     "forcing empty %s proposal %s transform",
 				     proposal->protocol->name,
 				     transform_type->name);
-				proposal->algorithms[transform_type->index] =
-					alloc_thing(struct transform_algorithms,
-						    "empty transforms");
+				append_proposal_transform(parser, proposal, transform_type, NULL, 0, verbose);
 				/* skip empty transform */
 				next_token(&tokens, verbose);
-			} else {
-				llog(IMPAIR_STREAM, verbose.logger,
-				     "forcing %s proposal %s transform",
-				     proposal->protocol->name,
-				     transform_type->name);
-				if (!parse_transform_algorithms(parser, proposal,
-								transform_type, &tokens,
-								verbose)) {
-					return false;
-				}
+				continue;
 			}
-
+#endif
+			llog(IMPAIR_STREAM, verbose.logger,
+			     "forcing %s proposal %s transform",
+			     proposal->protocol->name,
+			     transform_type->name);
+			if (!parse_transform_algorithms(parser, proposal,
+							transform_type, &tokens,
+							verbose)) {
+				return false;
+			}
 			continue;
 
 		}
