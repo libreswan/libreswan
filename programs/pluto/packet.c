@@ -2371,7 +2371,9 @@ static void save_fixup_1(struct logger *logger, const char *name,
 			 struct_desc *sd,
 			 field_desc *fp)
 {
-	ldbg(logger, "%s: saving location '%s'.'%s'", name, sd->name, fp->name);
+	ldbg(logger, "%s: %p: saving location '%s'.'%s'",
+	     name, fixup,
+	     sd->name, fp->name);
 	fixup->name = name;
 	fixup->fp = fp;
 	fixup->sd = sd;
@@ -2384,8 +2386,9 @@ static void save_fixup_1(struct logger *logger, const char *name,
 void apply_fixup(struct logger *logger, const struct fixup *fixup, uintmax_t value)
 {
 	unsigned size = fixup->fp->size;
-	ldbg(logger, "%s: emitting %u byte %ju into %s.%s",
-	     fixup->name, size, value, fixup->sd->name, fixup->fp->name);
+	ldbg(logger, "%s: %p: storing %u byte value %ju in fixup %s.%s",
+	     fixup->name, fixup, size, value,
+	     fixup->sd->name, fixup->fp->name);
 	PASSERT(logger, size > 0);
 	raw_hton(value, fixup->loc, size);
 }
@@ -2397,8 +2400,9 @@ uintmax_t fixup_value(struct logger *logger, const struct fixup *fixup)
 	PASSERT(logger, fixup->fp != NULL);
 	PASSERT(logger, fixup->fp->size > 0);
 	uintmax_t value = raw_ntoh(fixup->loc, fixup->fp->size);
-	ldbg(logger, "%s: value at %zu byte fixup %s.%s is %ju",
-	     fixup->name, fixup->fp->size, fixup->sd->name, fixup->fp->name, value);
+	ldbg(logger, "%s: %p: %zu byte value at fixup %s.%s is %ju",
+	     fixup->name, fixup,
+	     fixup->fp->size, fixup->sd->name, fixup->fp->name, value);
 	return value;
 }
 
@@ -2497,11 +2501,12 @@ struct fixup *pbs_out_next_payload_chain(struct pbs_out *outs)
 	 * use an outs->message pointer; but since nesting is minimal
 	 * this isn't really urgent
 	 */
-	do {
-		outs = outs->container;
-	} while (outs->container != NULL);
+	struct pbs_out *outer = outs;
+	while (outer->container != NULL) {
+		outer = outer->container;
+	}
 
-	struct fixup *next_payload_chain = &outs->next_payload_chain;
+	struct fixup *next_payload_chain = &outer->next_payload_chain;
 	PASSERT(outs->logger, next_payload_chain->loc != NULL);
 	PASSERT(outs->logger, next_payload_chain->sd != NULL);
 	PASSERT(outs->logger, next_payload_chain->fp != NULL);
