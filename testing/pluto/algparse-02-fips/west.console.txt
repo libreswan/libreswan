@@ -362,6 +362,9 @@ algparse -fips -v1 'esp=aes;sn=yes' (expect ERROR)
 algparse -fips -v1 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v1 'esp=aes;ECP_256,aes;none' (expect ERROR)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
 	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -fips -v1 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
@@ -1456,6 +1459,7 @@ algparse -fips -v2 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,ae
 	AES_CBC-HMAC_SHA1_96
 algparse -fips -v2 'esp=aes;ECP_256,aes;none' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -fips -v2 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
