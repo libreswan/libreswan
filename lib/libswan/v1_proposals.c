@@ -248,7 +248,11 @@ static bool parse_ikev1_proposal(struct proposal_parser *parser,
 	     transform_type < transform_type_roof; transform_type++) {
 		const struct transform *transform = first_proposal_transform(scratch_proposal,
 									     transform_type);
-		if (transform != NULL && transform->next) {
+		if (transform == NULL) {
+			continue;
+		}
+		transform = next_proposal_transform(scratch_proposal, transform);
+		if (transform != NULL) {
 			proposal_error(parser, "IKEv1 does not support multiple transforms of the same type ('=' invalid)");
 			return false;
 		}

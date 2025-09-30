@@ -142,7 +142,6 @@ struct proposal {
 	 * The algorithm entries.
 	 */
 	struct transforms transforms;
-	struct transform *first[PROPOSAL_TRANSFORM_ROOF];
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -347,22 +346,6 @@ unsigned nr_proposals(const struct proposals *proposals)
 	return nr;
 }
 
-static void build_proposal_first_transform(struct proposal *proposal,
-					   struct verbose verbose)
-{
-	verbose.level++;
-	vdbg("building first links");
-	/* set next pointers */
-	zero(&proposal->first);
-	for (unsigned i = proposal->transforms.len;
-	     i > 0; i--) {
-		struct transform *transform = &proposal->transforms.data[i-1];
-		unsigned t = transform->type->index;
-		transform->next = proposal->first[t];
-		proposal->first[t] = transform;
-	}
-}
-
 static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 					    struct transforms transforms,
 					    struct verbose verbose)
@@ -552,8 +535,6 @@ void append_proposal(struct proposal_parser *parser,
 		}
 	}
 
-	build_proposal_first_transform((*proposal), verbose);
-
 	*end = *proposal;
 	*proposal = NULL;
 }
@@ -702,8 +683,6 @@ void append_proposal_transform(struct proposal_parser *parser,
 	     enckeylen,
 	     transform_type->name,
 	     proposal->transforms.len);
-
-	build_proposal_first_transform(proposal, verbose);
 }
 
 size_t jam_transform(struct jambuf *buf,
@@ -886,7 +865,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_unique_kem = NULL;
 	const struct ike_alg *second_unique_kem = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform *kem = proposal->first[PROPOSAL_TRANSFORM_kem];
+		const struct transform *kem = first_proposal_transform(proposal, transform_type_kem);
 		if (kem == NULL) {
 			if (first_proposal_with_no_kem == NULL) {
 				first_proposal_with_no_kem = proposal;
@@ -1294,8 +1273,6 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 		vassert(parser->diag == NULL);
 		next_token(tokens, verbose);
 	}
-
-	build_proposal_first_transform(proposal, verbose);
 	return true;
 }
 
@@ -1340,8 +1317,6 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 		}
 		vassert(parser->diag == NULL);
 	}
-
-	build_proposal_first_transform(proposal, verbose);
 	return true;
 }
 

@@ -184,7 +184,6 @@ struct transform {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
-	struct transform *next;
 };
 
 struct transforms {
