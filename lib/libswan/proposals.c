@@ -366,7 +366,6 @@ static void build_proposal_first_transform(struct proposal *proposal,
 
 static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 					    struct transforms transforms,
-					    enum stream stream,
 					    struct verbose verbose)
 {
 	unsigned new_len = 0;
@@ -403,15 +402,13 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 			 */
 			if (old->enckeylen == 0 ||
 			    old->enckeylen == new->enckeylen) {
-				if (stream != DEBUG_STREAM || verbose.debug) {
-					LLOG_JAMBUF(stream, verbose.logger, buf) {
-						jam_string(buf, "discarding duplicate ");
-						jam_string(buf, parser->protocol->name);
-						jam_string(buf, " ");
-						jam_string(buf, new->desc->type->story);
-						jam_string(buf, " ");
-						jam_transform(buf, new);
-					}
+				LLOG_JAMBUF(parser->policy->stream, verbose.logger, buf) {
+					jam_string(buf, "discarding duplicate ");
+					jam_string(buf, parser->protocol->name);
+					jam_string(buf, " ");
+					jam_string(buf, new->desc->type->story);
+					jam_string(buf, " ");
+					jam_transform(buf, new);
 				}
 				break;
 			}
@@ -483,8 +480,7 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	}
 
 	vdbg("removing duplicates in raw transforms");
-	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
-						       DEBUG_STREAM, verbose);
+	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms, verbose);
 	vdbg("updated transform length after duplicate removal %u (from %u)",
 	     new_len, proposal->transforms.len);
 	realloc_data(&proposal->transforms, new_len);
@@ -502,44 +498,12 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	      transform_cmp);
 }
 
-/*
- * Note: duplicates are only removed after all transform's algorithms
- * have all parsed.
- *
- * This stops bogus errors such as when the parser makes several
- * attempts at parsing a transform.  For instance, as a PRF and then
- * as INTEG.
- */
-
-static void cleanup_proposal_algorithms(struct proposal_parser *parser,
-					struct proposal *proposal,
-					struct verbose verbose)
-{
-	for (const struct transform_type *type = transform_type_floor;
-	     type < transform_type_roof; type++) {
-		struct transform_algorithms *transforms = proposal->algorithms[type->index];
-		if (transforms == NULL) {
-			continue;
-		}
-
-		unsigned new_len = remove_duplicate_transforms(parser,
-							       (struct transforms) {
-								       .len = transforms->len,
-								       .data = transforms->item,
-							       },
-							       parser->policy->stream,
-							       verbose);
-		transforms->len = new_len;
-	}
-}
-
 void append_proposal(struct proposal_parser *parser,
 		     struct proposals *proposals,
 		     struct proposal **proposal,
 		     struct verbose verbose)
 {
 	cleanup_raw_transforms(parser, (*proposal), verbose);
-	cleanup_proposal_algorithms(parser, (*proposal), verbose);
 
 	/*
 	 * Check for duplicates.  Use a double pointer so that at end
