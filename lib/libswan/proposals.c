@@ -141,7 +141,6 @@ struct proposal {
 	/*
 	 * The algorithm entries.
 	 */
-	struct transform_algorithms *algorithms[PROPOSAL_TRANSFORM_ROOF];
 	struct transforms transforms;
 	struct transform *first[PROPOSAL_TRANSFORM_ROOF];
 	/*
@@ -588,13 +587,6 @@ struct transform *first_proposal_transform(const struct proposal *proposal,
 	return proposal->first[type->index];
 }
 
-static void pfree_transforms(struct proposal *proposal,
-			     const struct transform_type *type)
-{
-	passert(type->index < elemsof(proposal->algorithms));
-	pfreeany(proposal->algorithms[type->index]);
-}
-
 struct proposal *alloc_proposal(const struct proposal_parser *parser)
 {
 	struct proposal *proposal = alloc_thing(struct proposal, "proposal");
@@ -608,10 +600,6 @@ void free_proposal(struct proposal **proposals)
 	while (proposal != NULL) {
 		struct proposal *del = proposal;
 		proposal = proposal->next;
-		for (const struct transform_type *type = transform_type_floor;
-		     type < transform_type_roof; type++) {
-			pfree_transforms(del, type);
-		}
 		pfree_data(&del->transforms);
 		pfree(del);
 	}
@@ -679,23 +667,16 @@ void append_proposal_transform(struct proposal_parser *parser,
 	};
 
 	/* grow */
-	vassert(transform_type->index < elemsof(proposal->algorithms));
-	struct transform *algorithms_end =
-		grow_items(proposal->algorithms[transform_type->index]);
-	*algorithms_end = new_transform;
-
-	/* grow */
 	struct transform *transforms_end = grow_data(&proposal->transforms);
 	*transforms_end = new_transform;
 
-	vdbg("append %s %s %s %s[_%d]; %s length %d; raw length %d",
+	vdbg("append %s %s %s %s[_%d]; %s; raw length %d",
 	     parser->protocol->name,
 	     transform_type->name,
 	     transform->type->story,
 	     transform->fqn,
 	     enckeylen,
 	     transform_type->name,
-	     proposal->algorithms[transform_type->index]->len,
 	     proposal->transforms.len);
 
 	build_proposal_first_transform(proposal, verbose);
@@ -1390,7 +1371,6 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	vdbg("<encrypt>-<PRF> failed, saving error '%s' and tossing result",
 	     str_diag(parser->diag));
-	pfree_transforms(proposal, transform_type_prf);
 	diag_t prf_diag = parser->diag;
 	parser->diag = NULL;
 	(*tokens) = tokens_at_start;
