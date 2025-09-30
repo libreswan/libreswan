@@ -56,12 +56,15 @@ struct task_handler v2_auth_signature_handler = {
 };
 
 bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
-			      const struct crypt_mac *hash_to_sign,
-			      const struct hash_desc *hash_algo,
+			      const struct crypt_mac *idhash,
+			      const struct hash_desc *hasher,
+			      enum perspective from_the_perspective_of,
 			      const struct pubkey_signer *signer,
 			      v2_auth_signature_cb *cb,
 			      where_t where)
 {
+	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, idhash, hasher, from_the_perspective_of);
+
 	const struct connection *c = ike->sa.st_connection;
 	struct secret_pubkey_stuff *pks = get_local_private_key(c, signer->type,
 								ike->sa.logger);
@@ -72,8 +75,8 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 
 	struct task task = {
 		.cb = cb,
-		.hash_algo = hash_algo,
-		.hash_to_sign = *hash_to_sign,
+		.hash_algo = hasher,
+		.hash_to_sign = hash_to_sign,
 		.signer = signer,
 		.pks = secret_pubkey_stuff_addref(pks, HERE),
 		.signature = {0},
