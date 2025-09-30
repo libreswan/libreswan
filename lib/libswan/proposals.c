@@ -141,9 +141,7 @@ struct proposal {
 	/*
 	 * The algorithm entries.
 	 */
-	struct transform_algorithms *algorithms[PROPOSAL_TRANSFORM_ROOF];
 	struct transforms transforms;
-	struct transform *first[PROPOSAL_TRANSFORM_ROOF];
 	/*
 	 * Which protocol is this proposal intended for?
 	 */
@@ -348,25 +346,8 @@ unsigned nr_proposals(const struct proposals *proposals)
 	return nr;
 }
 
-static void build_proposal_first_transform(struct proposal *proposal,
-					   struct verbose verbose)
-{
-	verbose.level++;
-	vdbg("building first links");
-	/* set next pointers */
-	zero(&proposal->first);
-	for (unsigned i = proposal->transforms.len;
-	     i > 0; i--) {
-		struct transform *transform = &proposal->transforms.data[i-1];
-		unsigned t = transform->type->index;
-		transform->next = proposal->first[t];
-		proposal->first[t] = transform;
-	}
-}
-
 static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 					    struct transforms transforms,
-					    enum stream stream,
 					    struct verbose verbose)
 {
 	unsigned new_len = 0;
@@ -403,15 +384,13 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 			 */
 			if (old->enckeylen == 0 ||
 			    old->enckeylen == new->enckeylen) {
-				if (stream != DEBUG_STREAM || verbose.debug) {
-					LLOG_JAMBUF(stream, verbose.logger, buf) {
-						jam_string(buf, "discarding duplicate ");
-						jam_string(buf, parser->protocol->name);
-						jam_string(buf, " ");
-						jam_string(buf, new->desc->type->story);
-						jam_string(buf, " ");
-						jam_transform(buf, new);
-					}
+				LLOG_JAMBUF(parser->policy->stream, verbose.logger, buf) {
+					jam_string(buf, "discarding duplicate ");
+					jam_string(buf, parser->protocol->name);
+					jam_string(buf, " ");
+					jam_string(buf, new->desc->type->story);
+					jam_string(buf, " ");
+					jam_transform(buf, new);
 				}
 				break;
 			}
@@ -483,8 +462,7 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	}
 
 	vdbg("removing duplicates in raw transforms");
-	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
-						       DEBUG_STREAM, verbose);
+	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms, verbose);
 	vdbg("updated transform length after duplicate removal %u (from %u)",
 	     new_len, proposal->transforms.len);
 	realloc_data(&proposal->transforms, new_len);
@@ -502,44 +480,12 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	      transform_cmp);
 }
 
-/*
- * Note: duplicates are only removed after all transform's algorithms
- * have all parsed.
- *
- * This stops bogus errors such as when the parser makes several
- * attempts at parsing a transform.  For instance, as a PRF and then
- * as INTEG.
- */
-
-static void cleanup_proposal_algorithms(struct proposal_parser *parser,
-					struct proposal *proposal,
-					struct verbose verbose)
-{
-	for (const struct transform_type *type = transform_type_floor;
-	     type < transform_type_roof; type++) {
-		struct transform_algorithms *transforms = proposal->algorithms[type->index];
-		if (transforms == NULL) {
-			continue;
-		}
-
-		unsigned new_len = remove_duplicate_transforms(parser,
-							       (struct transforms) {
-								       .len = transforms->len,
-								       .data = transforms->item,
-							       },
-							       parser->policy->stream,
-							       verbose);
-		transforms->len = new_len;
-	}
-}
-
 void append_proposal(struct proposal_parser *parser,
 		     struct proposals *proposals,
 		     struct proposal **proposal,
 		     struct verbose verbose)
 {
 	cleanup_raw_transforms(parser, (*proposal), verbose);
-	cleanup_proposal_algorithms(parser, (*proposal), verbose);
 
 	/*
 	 * Check for duplicates.  Use a double pointer so that at end
@@ -589,8 +535,6 @@ void append_proposal(struct proposal_parser *parser,
 		}
 	}
 
-	build_proposal_first_transform((*proposal), verbose);
-
 	*end = *proposal;
 	*proposal = NULL;
 }
@@ -618,17 +562,34 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 	return &proposal->transforms;
 }
 
-struct transform *first_proposal_transform(const struct proposal *proposal,
-					   const struct transform_type *type)
+const struct transform *first_proposal_transform(const struct proposal *proposal,
+						 const struct transform_type *type)
 {
-	return proposal->first[type->index];
+	for (unsigned t = 0; t < proposal->transforms.len; t++) {
+		const struct transform *transform = &proposal->transforms.data[t];
+		if (transform->type == type) {
+			return transform;
+		}
+	}
+	return NULL;
 }
 
-static void pfree_transforms(struct proposal *proposal,
-			     const struct transform_type *type)
+const struct transform *next_proposal_transform(const struct proposal *proposal,
+						const struct transform *previous)
 {
-	passert(type->index < elemsof(proposal->algorithms));
-	pfreeany(proposal->algorithms[type->index]);
+	/* try to check for a realloc of data */
+	passert(proposal->transforms.len > 0);
+	passert(previous >= &proposal->transforms.data[0]);
+	passert(previous < &proposal->transforms.data[proposal->transforms.len]);
+	/* continue; from next */
+	for (const struct transform *next = previous + 1;
+	     next < &proposal->transforms.data[proposal->transforms.len];
+	     next++) {
+		if (next->type == previous->type) {
+			return next;
+		}
+	}
+	return NULL;
 }
 
 struct proposal *alloc_proposal(const struct proposal_parser *parser)
@@ -644,10 +605,6 @@ void free_proposal(struct proposal **proposals)
 	while (proposal != NULL) {
 		struct proposal *del = proposal;
 		proposal = proposal->next;
-		for (const struct transform_type *type = transform_type_floor;
-		     type < transform_type_roof; type++) {
-			pfree_transforms(del, type);
-		}
 		pfree_data(&del->transforms);
 		pfree(del);
 	}
@@ -715,26 +672,17 @@ void append_proposal_transform(struct proposal_parser *parser,
 	};
 
 	/* grow */
-	vassert(transform_type->index < elemsof(proposal->algorithms));
-	struct transform *algorithms_end =
-		grow_items(proposal->algorithms[transform_type->index]);
-	*algorithms_end = new_transform;
-
-	/* grow */
 	struct transform *transforms_end = grow_data(&proposal->transforms);
 	*transforms_end = new_transform;
 
-	vdbg("append %s %s %s %s[_%d]; %s length %d; raw length %d",
+	vdbg("append %s %s %s %s[_%d]; %s; raw length %d",
 	     parser->protocol->name,
 	     transform_type->name,
 	     transform->type->story,
 	     transform->fqn,
 	     enckeylen,
 	     transform_type->name,
-	     proposal->algorithms[transform_type->index]->len,
 	     proposal->transforms.len);
-
-	build_proposal_first_transform(proposal, verbose);
 }
 
 size_t jam_transform(struct jambuf *buf,
@@ -917,7 +865,7 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	const struct ike_alg *first_unique_kem = NULL;
 	const struct ike_alg *second_unique_kem = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform *kem = proposal->first[PROPOSAL_TRANSFORM_kem];
+		const struct transform *kem = first_proposal_transform(proposal, transform_type_kem);
 		if (kem == NULL) {
 			if (first_proposal_with_no_kem == NULL) {
 				first_proposal_with_no_kem = proposal;
@@ -1325,8 +1273,6 @@ static bool parse_transform_algorithms(struct proposal_parser *parser,
 		vassert(parser->diag == NULL);
 		next_token(tokens, verbose);
 	}
-
-	build_proposal_first_transform(proposal, verbose);
 	return true;
 }
 
@@ -1371,8 +1317,6 @@ static bool parse_encrypt_transforms(struct proposal_parser *parser,
 		}
 		vassert(parser->diag == NULL);
 	}
-
-	build_proposal_first_transform(proposal, verbose);
 	return true;
 }
 
@@ -1426,7 +1370,6 @@ static bool parse_prf_transforms(struct proposal_parser *parser,
 
 	vdbg("<encrypt>-<PRF> failed, saving error '%s' and tossing result",
 	     str_diag(parser->diag));
-	pfree_transforms(proposal, transform_type_prf);
 	diag_t prf_diag = parser->diag;
 	parser->diag = NULL;
 	(*tokens) = tokens_at_start;
@@ -1618,30 +1561,34 @@ bool parse_proposal(struct proposal_parser *parser,
 			proposal->impaired = true;
 
 			/* go directly to the algorithm parser */
+#if 0
+			/*
+			 * A transform with no algorithm should stop
+			 * the proposal being decorated with that
+			 * transforms defaults?
+			 */
 			if (tokens.curr.token.len == 0 &&
 			    tokens.curr.token.ptr != NULL &&
-			    proposal->algorithms[transform_type->index] == NULL) {
+			    proposal->first[transform_type->index] == NULL) {
 				llog(IMPAIR_STREAM, verbose.logger,
 				     "forcing empty %s proposal %s transform",
 				     proposal->protocol->name,
 				     transform_type->name);
-				proposal->algorithms[transform_type->index] =
-					alloc_thing(struct transform_algorithms,
-						    "empty transforms");
+				append_proposal_transform(parser, proposal, transform_type, NULL, 0, verbose);
 				/* skip empty transform */
 				next_token(&tokens, verbose);
-			} else {
-				llog(IMPAIR_STREAM, verbose.logger,
-				     "forcing %s proposal %s transform",
-				     proposal->protocol->name,
-				     transform_type->name);
-				if (!parse_transform_algorithms(parser, proposal,
-								transform_type, &tokens,
-								verbose)) {
-					return false;
-				}
+				continue;
 			}
-
+#endif
+			llog(IMPAIR_STREAM, verbose.logger,
+			     "forcing %s proposal %s transform",
+			     proposal->protocol->name,
+			     transform_type->name);
+			if (!parse_transform_algorithms(parser, proposal,
+							transform_type, &tokens,
+							verbose)) {
+				return false;
+			}
 			continue;
 
 		}
