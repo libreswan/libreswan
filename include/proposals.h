@@ -255,11 +255,11 @@ struct proposal *next_proposal(const struct proposals *proposals,
 	     PROPOSAL = next_proposal(PROPOSALS, PROPOSAL))
 
 /* the first algorithm, or NULL */
-struct transform *first_proposal_transform(const struct proposal *proposal,
-					   const struct transform_type *transform_type);
+const struct transform *first_proposal_transform(const struct proposal *proposal,
+						 const struct transform_type *transform_type);
 
 #define TRANSFORMS_FOR_EACH(TRANSFORM, PROPOSAL, TYPE)		\
-	for (struct transform *TRANSFORM =			\
+	for (const struct transform *TRANSFORM =		\
 		     first_proposal_transform(PROPOSAL, TYPE);	\
 	     (TRANSFORM) != NULL;				\
 	     (TRANSFORM) = (TRANSFORM)->next)

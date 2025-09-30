@@ -581,7 +581,7 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 	return &proposal->transforms;
 }
 
-struct transform *first_proposal_transform(const struct proposal *proposal,
+const struct transform *first_proposal_transform(const struct proposal *proposal,
 					   const struct transform_type *type)
 {
 	return proposal->first[type->index];

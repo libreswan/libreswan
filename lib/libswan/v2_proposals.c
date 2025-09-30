@@ -42,7 +42,7 @@ static void merge_algorithms(struct proposal_parser *parser,
 		return;
 	}
 
-	struct transform *transform = first_proposal_transform(proposal, transform_type);
+	const struct transform *transform = first_proposal_transform(proposal, transform_type);
 	if (transform != NULL) {
 		return;
 	}
