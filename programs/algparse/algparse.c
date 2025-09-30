@@ -424,6 +424,12 @@ static void test_esp(struct logger *logger)
 
 	esp(true, "aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1");
 
+	/*
+	 * When PFS=YES, so that a responder accepts either, this is
+	 * allowed; when PFS=NO both ECP_256 and NONE are stripped.
+	 */
+	esp(ike_version == IKEv2, "aes;ECP_256,aes;none");
+
 #undef esp
 }
 
