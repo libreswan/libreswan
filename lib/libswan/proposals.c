@@ -582,9 +582,33 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 }
 
 const struct transform *first_proposal_transform(const struct proposal *proposal,
-					   const struct transform_type *type)
+						 const struct transform_type *type)
 {
-	return proposal->first[type->index];
+	for (unsigned t = 0; t < proposal->transforms.len; t++) {
+		const struct transform *transform = &proposal->transforms.data[t];
+		if (transform->type == type) {
+			return transform;
+		}
+	}
+	return NULL;
+}
+
+const struct transform *next_proposal_transform(const struct proposal *proposal,
+						const struct transform *previous)
+{
+	/* try to check for a realloc of data */
+	passert(proposal->transforms.len > 0);
+	passert(previous >= &proposal->transforms.data[0]);
+	passert(previous < &proposal->transforms.data[proposal->transforms.len]);
+	/* continue; from next */
+	for (const struct transform *next = previous + 1;
+	     next < &proposal->transforms.data[proposal->transforms.len];
+	     next++) {
+		if (next->type == previous->type) {
+			return next;
+		}
+	}
+	return NULL;
 }
 
 struct proposal *alloc_proposal(const struct proposal_parser *parser)

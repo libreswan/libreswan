@@ -258,11 +258,14 @@ struct proposal *next_proposal(const struct proposals *proposals,
 const struct transform *first_proposal_transform(const struct proposal *proposal,
 						 const struct transform_type *transform_type);
 
-#define TRANSFORMS_FOR_EACH(TRANSFORM, PROPOSAL, TYPE)		\
-	for (const struct transform *TRANSFORM =		\
-		     first_proposal_transform(PROPOSAL, TYPE);	\
-	     (TRANSFORM) != NULL;				\
-	     (TRANSFORM) = (TRANSFORM)->next)
+const struct transform *next_proposal_transform(const struct proposal *proposal,
+						const struct transform *prev);
+
+#define TRANSFORMS_FOR_EACH(TRANSFORM, PROPOSAL, TYPE)			\
+	for (const struct transform *TRANSFORM =			\
+		     first_proposal_transform(proposal, TYPE);		\
+	     TRANSFORM != NULL;						\
+	     TRANSFORM = next_proposal_transform(proposal, TRANSFORM))
 
 const struct transforms *proposal_transforms(const struct proposal *proposal);
 
