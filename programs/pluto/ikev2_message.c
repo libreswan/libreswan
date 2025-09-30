@@ -29,7 +29,6 @@
  * for more details.
  */
 
-
 #include "defs.h"
 
 #include "log.h"
@@ -245,14 +244,27 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 				   struct logger *logger,
 				   struct v2SK_payload *sk)
 {
-	*sk = (struct v2SK_payload) {
-		.logger = logger,
-		.ike = ike,
-		.payload = {
-		    .ptr = container->cur,
-		    .len = 0,	/* computed at end; set here to silence GCC 6.10 */
-		}
+	sk->logger = logger;
+	sk->ike = ike;
+	sk->payload = (chunk_t) {
+		.ptr = container->cur,
+		.len = 0,	/* computed at end; set here to silence GCC 6.10 */
 	};
+
+	/*
+	 * Save the location of the previous payload, or message
+	 * header's, Next Payload field.  It will end up containing
+	 * the type of the about-to-be emitted SK payload.
+	 *
+	 * When the message is fragmented that field (in the new
+	 * message) needs to be changed from SK to SKF.
+	 *
+	 * Since there is a single chain running through the message,
+	 * this is stored somewhere other then the SK.PBS (probably
+	 * the outermost PBS).
+	 */
+	volatile struct fixup *next_payload_chain = pbs_out_next_payload_chain(container);
+	sk->previous_to_sk_next_payload_field = (*next_payload_chain);
 
 	/* emit Encryption Payload header */
 
@@ -267,6 +279,15 @@ static bool open_body_v2SK_payload(struct pbs_out *container,
 		     container->name);
 		return false;
 	}
+
+	/*
+	 * Save the Next Payload field of the just emitted SK header.
+	 *
+	 * When fragmenting an SK message, the first SKF header
+	 * contains this value (the first encrypted payload's type),
+	 * while all others contain 0.
+	 */
+	sk->sk_next_payload_field = (*next_payload_chain);
 
 	/*
 	 * Additional Authenticated Data - AAD - is everything so far:
@@ -1285,6 +1306,9 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 						 struct ike_sa *ike,
 						 const struct isakmp_hdr *hdr,
+						 enum next_payload_types_ikev2 unencrypted_payloads_type,
+						 shunk_t unencrypted_payloads,
+						 ptrdiff_t previous_to_sk_next_payload_offset,
 						 enum next_payload_types_ikev2 skf_np,
 						 struct v2_outgoing_fragments *fragments,
 						 shunk_t fragment,
@@ -1298,8 +1322,30 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 	/* HDR out */
 
 	struct pbs_out body;
-	if (!pbs_out_struct(&message_fragment.pbs, (*hdr), &isakmp_hdr_desc, &body))
+	if (!pbs_out_struct(&message_fragment.pbs, (*hdr), &isakmp_hdr_desc, &body)) {
 		return false;
+	}
+
+	if (unencrypted_payloads.len > 0) {
+		if (!pbs_out_hunk(&body, unencrypted_payloads, "unencrypted payloads")) {
+			return false;
+		}
+		/*
+		 * Update the header's Next Payload field so that it
+		 * contains the type of the first unencrypted payload.
+		 */
+		struct fixup *next_payload_chain = pbs_out_next_payload_chain(&body);
+		apply_fixup(logger, next_payload_chain, unencrypted_payloads_type);
+		/*
+		 * Advance the Next Payload chain so that it points at
+		 * the last Next Payload field in the unencrypted
+		 * payloads.  Make certain it is zero.  When the SKF
+		 * header is emitted it will be set to SKF.
+		 */
+		next_payload_chain->loc = message_fragment.pbs.start + previous_to_sk_next_payload_offset;
+		next_payload_chain->name = "unencrypted Next Payload";
+		apply_fixup(logger, next_payload_chain, ISAKMP_NEXT_v2NONE);
+	}
 
 	/*
 	 * Fake up an SK payload description sufficient to fool the
@@ -1384,6 +1430,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 						  struct v2_outgoing_fragments **fragments,
 						  const char *story)
 {
+	struct logger *logger = sk->logger;
+
 	/*
 	 * fragment contents:
 	 * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
@@ -1437,8 +1485,21 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 
 	PASSERT(sk->logger, sk->cleartext.len != 0);
 
-	/* required number of fragments; rounded */
-	unsigned int nfrags = (sk->cleartext.len + max_skf_size - 1) / max_skf_size;
+	/*
+	 * Location of the unencrypted payloads and it's Next Payload
+	 * field.
+	 */
+	shunk_t unencrypted_payloads = {
+		.ptr = message.ptr + sizeof(struct isakmp_hdr),
+		.len = sk->payload.ptr - (const uint8_t*)message.ptr - sizeof(struct isakmp_hdr),
+	};
+
+	/*
+	 * Required number of fragments; rounded; and including
+	 * unencrypted payloads.
+	 */
+	PASSERT(logger, unencrypted_payloads.len < max_skf_size);
+	unsigned int nfrags = (sk->cleartext.len + unencrypted_payloads.len + max_skf_size - 1) / max_skf_size;
 
 	if (nfrags > MAX_IKE_FRAGMENTS) {
 		llog(RC_LOG, sk->logger,
@@ -1466,7 +1527,19 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 			return false;
 		}
 	}
+	enum next_payload_types_ikev2 unencrypted_payloads_type = hdr.isa_np;
 	hdr.isa_np = ISAKMP_NEXT_v2NONE; /* clear NP */
+
+	/*
+	 * Determine the offset, within the original message, of the
+	 * Next Payload field that is pointing at the SK payload.
+	 * It's either in the message header or the last unencrypted
+	 * payload.  The fragmented message will have that same
+	 * location for the Next Payload field pointing at SKF.
+	 */
+	PASSERT(logger, sk->previous_to_sk_next_payload_field.name != NULL);
+	ptrdiff_t previous_to_sk_next_payload_offset =
+		(sk->previous_to_sk_next_payload_field.loc - (const uint8_t*)message.ptr);
 
 	/*
 	 * Extract the value of the SK's next payload field from the
@@ -1489,14 +1562,21 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 		clear_cursor = shunk_slice(clear_cursor, fragment.len, clear_cursor.len);
 
 		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike,
-							  &hdr, skf_np,
-							  (*fragments), fragment,
+							  &hdr,
+							  unencrypted_payloads_type,
+							  unencrypted_payloads,
+							  previous_to_sk_next_payload_offset,
+							  skf_np,
+							  (*fragments),
+							  fragment,
 							  number)) {
 			return false;
 		}
 
 		number++;
+
 		skf_np = ISAKMP_NEXT_v2NONE;
+		unencrypted_payloads = null_shunk;
 	} while (clear_cursor.len > 0);
 
 	return true;
@@ -1605,32 +1685,17 @@ bool open_v2_message(const char *story,
 			return false;
 		}
 		/*
-		 * Encrypting requires an IKE SA for the keys.
+		 * Encrypting requires an IKE SA for the keys; and the
+		 * IKE SA to have keys.
 		 */
-		if (PBAD(message->logger, ike == NULL)) {
-			return false;
-		}
-		/*
-		 * Encryption requires the IKE SA to have keys.
-		 */
-		if (!PEXPECT(message->logger, ike->sa.hidden_variables.st_skeyid_calculated)) {
-			return false;
-		}
-		if (!open_body_v2SK_payload(&message->body, ike, logger, &message->sk)) {
+		if (PBAD(message->logger, ike == NULL) ||
+		    PBAD(message->logger, !ike->sa.hidden_variables.st_skeyid_calculated)) {
 			return false;
 		}
 
-		/*
-		 * Save the Next Payload chain's fixup which currently
-		 * points into the just emitted SK header's Next
-		 * Payload field.
-		 *
-		 * Since there is a single chain running through the
-		 * message, this is stored somewhere other then the
-		 * SK.PBS (probably the outermost PBS).
-		 */
-		struct fixup *next_payload_chain = pbs_out_next_payload_chain(&message->sk.pbs);
-		message->sk.sk_next_payload_field = *next_payload_chain;
+		if (!open_body_v2SK_payload(&message->body, ike, logger, &message->sk)) {
+			return false;
+		}
 
 		message->pbs = &message->sk.pbs;
 		if (!emit_v2UNKNOWN("encrypted", exchange_type,
