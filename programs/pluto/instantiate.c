@@ -443,7 +443,7 @@ struct connection *labeled_parent_instantiate(struct ike_sa *ike,
 	 * payload into both ends.
 	 */
 	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
-	c->child.sec_label = clone_hunk(sec_label, __func__);
+	c->child.sec_label = clone_hunk_as_chunk(sec_label, __func__);
 
 	build_connection_proposals_from_hosts_and_configs(c, verbose);
 	build_connection_spds_from_proposals(c);

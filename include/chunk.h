@@ -70,7 +70,7 @@ chunk_t alloc_chunk(size_t count, const char *name);
 chunk_t clone_bytes_as_chunk(const void *first_ptr, size_t first_len,
 			     const char *name);
 
-#define clone_hunk(HUNK, NAME)						\
+#define clone_hunk_as_chunk(HUNK, NAME)						\
 	({								\
 		typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */	\
 		clone_bytes_as_chunk(hunk_->ptr, hunk_->len, NAME);	\

@@ -857,7 +857,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	PASSERT(ike->sa.logger, frag->plain.ptr == NULL);
 	PASSERT(ike->sa.logger, frag->text.len == 0);
 	PASSERT(ike->sa.logger, frag->plain.len == 0);
-	frag->text = clone_hunk(text, "incoming IKEv2 encrypted fragment");
+	frag->text = clone_hunk_as_chunk(text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*

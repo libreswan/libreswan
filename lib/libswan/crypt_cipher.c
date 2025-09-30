@@ -99,7 +99,7 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 	cipher_context->op = op;
 	cipher_context->iv_source = iv_source;
 	cipher_context->symkey = symkey_addref(logger, __func__, symkey);
-	cipher_context->salt = clone_hunk(salt, __func__);
+	cipher_context->salt = clone_hunk_as_chunk(salt, __func__);
 	cipher_context->old_wire_iv = alloc_chunk(cipher->wire_iv_size, __func__);
 	if (cipher->encrypt_ops->cipher_op_context_create != NULL) {
 		cipher_context->op_context =

@@ -113,7 +113,7 @@ err_t fetch_curl(const char *url, time_t timeout, chunk_t *blob,
 	if (res == CURLE_OK) {
 		/* clone from realloc(3)ed memory to pluto-allocated memory */
 		errorbuffer[0] = '\0';
-		*blob = clone_hunk(response, "curl blob");
+		*blob = clone_hunk_as_chunk(response, "curl blob");
 	} else {
 		llog(RC_LOG, verbose.logger,
 		     "fetching uri (%s) with libcurl failed: %s", url, errorbuffer);

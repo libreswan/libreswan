@@ -275,7 +275,7 @@ const char *str_id(const struct id *id, id_buf *buf)
 
 struct id clone_id(const struct id *src, const char *story)
 {
-	chunk_t name = clone_hunk(src->name, story);
+	chunk_t name = clone_hunk_as_chunk(src->name, story);
 	struct id dst = {
 		.kind = src->kind,
 		.ip_addr = src->ip_addr,

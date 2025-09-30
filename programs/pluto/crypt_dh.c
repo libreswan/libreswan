@@ -284,7 +284,7 @@ void submit_dh_shared_secret(struct state *callback_sa,
 			     __func__);
 	}
 	struct task *task = alloc_thing(struct task, "dh");
-	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
+	task->remote_ke = clone_hunk_as_chunk(remote_ke, "DH crypto");
 	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
 	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;

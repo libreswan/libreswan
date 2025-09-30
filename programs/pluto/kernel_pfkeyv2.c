@@ -173,7 +173,7 @@ static void queue_msg(const struct inbuf *msg)
 {
 	struct pending *pending = alloc_thing(struct pending, __func__);
 	/* assume MSG still points at the entire buffer */
-	pending->msg = clone_hunk(msg->buf, __func__);
+	pending->msg = clone_hunk_as_chunk(msg->buf, __func__);
 	init_list_entry(&pending_info, pending, &pending->entry);
 	insert_list_entry(&pending_queue, &pending->entry);
 }

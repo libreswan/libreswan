@@ -208,7 +208,7 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 			}
 
 			generalName_t *gn = alloc_thing(generalName_t, "generalName");
-			gn->name = clone_hunk(ca_name, "ca name");
+			gn->name = clone_hunk_as_chunk(ca_name, "ca name");
 			gn->kind = GN_DIRECTORY_NAME;
 			gn->next = ike->sa.st_v1_requested_ca;
 			ike->sa.st_v1_requested_ca = gn;

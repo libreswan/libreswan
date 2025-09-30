@@ -2488,7 +2488,7 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						    ike->sa.st_xauth_username,
 						    pks);
 						if (pks != NULL) {
-							ike->sa.st_xauth_password = clone_hunk(*pks, "saved xauth password");
+							ike->sa.st_xauth_password = clone_hunk_as_chunk(*pks, "saved xauth password");
 						}
 					}
 

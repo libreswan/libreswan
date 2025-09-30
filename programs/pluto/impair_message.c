@@ -131,7 +131,7 @@ static const struct message *save_message(struct direction_impairment *direction
 	}
 	/* save new */
 	struct message *new = alloc_thing(struct message, "message");
-	new->body = clone_hunk(message, "message-body");
+	new->body = clone_hunk_as_chunk(message, "message-body");
 	new->inbound.md = md_addref(inbound_md);
 	new->outbound.interface = outbound_interface;
 	new->outbound.endpoint = outbound_endpoint;
