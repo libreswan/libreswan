@@ -71,13 +71,13 @@ struct transform_type {
 };
 
 extern const struct transform_type transform_types[PROPOSAL_TRANSFORM_ROOF + 1];
-#define transform_type_floor &transform_types[PROPOSAL_TRANSFORM_FLOOR]
-#define transform_type_encrypt &transform_types[PROPOSAL_TRANSFORM_encrypt]
-#define transform_type_prf &transform_types[PROPOSAL_TRANSFORM_prf]
-#define transform_type_integ &transform_types[PROPOSAL_TRANSFORM_integ]
-#define transform_type_kem &transform_types[PROPOSAL_TRANSFORM_kem]
-#define transform_type_addke1 &transform_types[PROPOSAL_TRANSFORM_addke1]
-#define transform_type_roof &transform_types[PROPOSAL_TRANSFORM_ROOF]
+#define transform_type_floor (&transform_types[PROPOSAL_TRANSFORM_FLOOR])
+#define transform_type_encrypt (&transform_types[PROPOSAL_TRANSFORM_encrypt])
+#define transform_type_prf (&transform_types[PROPOSAL_TRANSFORM_prf])
+#define transform_type_integ (&transform_types[PROPOSAL_TRANSFORM_integ])
+#define transform_type_kem (&transform_types[PROPOSAL_TRANSFORM_kem])
+#define transform_type_addke1 (&transform_types[PROPOSAL_TRANSFORM_addke1])
+#define transform_type_roof (&transform_types[PROPOSAL_TRANSFORM_ROOF])
 
 /*
  * Everything combined.
