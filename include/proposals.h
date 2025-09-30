@@ -71,13 +71,13 @@ struct transform_type {
 };
 
 extern const struct transform_type transform_types[PROPOSAL_TRANSFORM_ROOF + 1];
-#define transform_type_floor &transform_types[PROPOSAL_TRANSFORM_FLOOR]
-#define transform_type_encrypt &transform_types[PROPOSAL_TRANSFORM_encrypt]
-#define transform_type_prf &transform_types[PROPOSAL_TRANSFORM_prf]
-#define transform_type_integ &transform_types[PROPOSAL_TRANSFORM_integ]
-#define transform_type_kem &transform_types[PROPOSAL_TRANSFORM_kem]
-#define transform_type_addke1 &transform_types[PROPOSAL_TRANSFORM_addke1]
-#define transform_type_roof &transform_types[PROPOSAL_TRANSFORM_ROOF]
+#define transform_type_floor (&transform_types[PROPOSAL_TRANSFORM_FLOOR])
+#define transform_type_encrypt (&transform_types[PROPOSAL_TRANSFORM_encrypt])
+#define transform_type_prf (&transform_types[PROPOSAL_TRANSFORM_prf])
+#define transform_type_integ (&transform_types[PROPOSAL_TRANSFORM_integ])
+#define transform_type_kem (&transform_types[PROPOSAL_TRANSFORM_kem])
+#define transform_type_addke1 (&transform_types[PROPOSAL_TRANSFORM_addke1])
+#define transform_type_roof (&transform_types[PROPOSAL_TRANSFORM_ROOF])
 
 /*
  * Everything combined.
@@ -235,11 +235,9 @@ struct child_proposals {
 	struct proposals *p;
 };
 
-size_t jam_proposal_transform(struct jambuf *buf, const struct transform *transform);
-size_t jam_proposal_transforms(struct jambuf *buf, const struct proposal *proposal);
-
-void jam_proposal(struct jambuf *log, const struct proposal *proposal);
-void jam_proposals(struct jambuf *log, const struct proposals *proposals);
+size_t jam_proposals(struct jambuf *log, const struct proposals *proposals);
+size_t jam_proposal(struct jambuf *log, const struct proposal *proposal);
+size_t jam_transform(struct jambuf *buf, const struct transform *transform);
 
 /*
  * Iterate through all the proposals and the proposal's algorithms.

@@ -410,7 +410,7 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 						jam_string(buf, " ");
 						jam_string(buf, new->desc->type->story);
 						jam_string(buf, " ");
-						jam_proposal_transform(buf, new);
+						jam_transform(buf, new);
 					}
 				}
 				break;
@@ -418,6 +418,49 @@ static unsigned remove_duplicate_transforms(struct proposal_parser *parser,
 		}
 	}
 	return new_len;
+}
+
+static void remove_pfs_vs_kem_transforms(struct proposal_parser *parser,
+					 struct proposal *proposal,
+					 struct verbose verbose)
+{
+	/*
+	 * Drop KEM when no-PFS.
+	 *
+	 * Note: the proposal may only have KEM algorithms,
+	 * which means all will be dropped leaving an empty
+	 * proposal.
+	 */
+	vdbg("removing PFS transforms");
+	verbose.level++;
+
+	unsigned len = 0;
+	bool already_logged = false;
+	DATA_FOR_EACH(new, &proposal->transforms) {
+		if (new->type == transform_type_kem) {
+			if (already_logged) {
+				vdbg("ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
+				     parser->protocol->name, new->desc->fqn);
+			} else if (new->desc == &ike_alg_kem_none.common) {
+				llog(parser->policy->stream, parser->policy->logger,
+				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
+				     parser->protocol->name);
+			} else {
+				llog(parser->policy->stream, parser->policy->logger,
+				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
+				     parser->protocol->name, new->desc->fqn);
+			}
+			already_logged = true;
+			continue;
+		}
+		struct transform *old = &proposal->transforms.data[len++];
+		if (old != new) {
+			*old = *new;
+		}
+	}
+	vdbg("after PFS removal there are %u (from %u) transforms",
+	     len, proposal->transforms.len);
+	realloc_data(&proposal->transforms, len);
 }
 
 static int transform_cmp(const void  *l, const void *r)
@@ -442,35 +485,13 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	vdbg("removing duplicates in raw transforms");
 	unsigned new_len = remove_duplicate_transforms(parser, proposal->transforms,
 						       DEBUG_STREAM, verbose);
-	vdbg("updating raw transform length from %u to %u",
-	     proposal->transforms.len, new_len);
+	vdbg("updated transform length after duplicate removal %u (from %u)",
+	     new_len, proposal->transforms.len);
 	realloc_data(&proposal->transforms, new_len);
 
-	vdbg("removing PFS vs KEM transforms");
 	if (!parser->policy->pfs &&
 	    parser->policy->check_pfs_vs_ke) {
-
-		/*
-		 * Drop KEM when no-PFS.
-		 *
-		 * Note: the proposal may only have KEM algorithms,
-		 * which means all will be dropped leaving an empty
-		 * proposal.
-		 */
-		unsigned new_len = 0;
-		DATA_FOR_EACH(new, &proposal->transforms) {
-			if (new->type == transform_type_kem &&
-			    !parser->policy->pfs &&
-			    parser->policy->check_pfs_vs_ke) {
-				vdbg("dropping %s %s as no PFS", new->type->name, new->desc->fqn);
-				continue;
-			}
-			struct transform *next = &proposal->transforms.data[new_len++];
-			if (next != new) {
-				*next = *new;
-			}
-		}
-		realloc_data(&proposal->transforms, new_len);
+		remove_pfs_vs_kem_transforms(parser, proposal, verbose);
 	}
 
 	vdbg("sorting raw transforms");
@@ -600,16 +621,7 @@ const struct transforms *proposal_transforms(const struct proposal *proposal)
 struct transform *first_proposal_transform(const struct proposal *proposal,
 					   const struct transform_type *type)
 {
-	struct transform *first = proposal->first[type->index];
-	if (first == NULL) {
-		passert(proposal->algorithms[type->index] == NULL);
-	} else {
-		passert(proposal->algorithms[type->index] != NULL);
-		passert(proposal->algorithms[type->index]->len > 0);
-		passert(proposal->algorithms[type->index]->item[0].desc == first->desc);
-		passert(proposal->algorithms[type->index]->item[0].enckeylen == first->enckeylen);
-	}
-	return first;
+	return proposal->first[type->index];
 }
 
 static void pfree_transforms(struct proposal *proposal,
@@ -725,8 +737,8 @@ void append_proposal_transform(struct proposal_parser *parser,
 	build_proposal_first_transform(proposal, verbose);
 }
 
-size_t jam_proposal_transform(struct jambuf *buf,
-			      const struct transform *transform)
+size_t jam_transform(struct jambuf *buf,
+		     const struct transform *transform)
 {
 	size_t s = 0;
 	s += jam_string(buf, transform->desc->fqn);
@@ -736,8 +748,8 @@ size_t jam_proposal_transform(struct jambuf *buf,
 	return s;
 }
 
-size_t jam_proposal_transforms(struct jambuf *buf,
-			       const struct proposal *proposal)
+size_t jam_proposal(struct jambuf *buf,
+		    const struct proposal *proposal)
 {
 	const struct transform_type *previous_type;
 	/*
@@ -847,14 +859,14 @@ size_t jam_proposal_transforms(struct jambuf *buf,
 					s += jam_string(buf, (integ > first_integ ? "+" :
 							      first ? "" : "-"));
 					first = false;
-					s += jam_proposal_transform(buf, integ);
+					s += jam_transform(buf, integ);
 				}
 				for (const struct transform *prf = first_prf;
 				     prf != NULL && prf <= last_prf; prf++) {
 					s += jam_string(buf, (prf > first_prf ? "+" :
 							      first ? "" : "-"));
 					first = false;
-					s += jam_proposal_transform(buf, prf);
+					s += jam_transform(buf, prf);
 				}
 				jammed_prf_and_integ = true;
 			}
@@ -870,177 +882,73 @@ size_t jam_proposal_transforms(struct jambuf *buf,
 			s += jam_string(buf, transform->type->name);
 			s += jam_string(buf, "=");
 		}
-		s += jam_proposal_transform(buf, transform);
+		s += jam_transform(buf, transform);
 		previous_type = transform->type;
 	}
 	return s;
 }
 
-static const char *jam_proposal_algorithm(struct jambuf *buf,
-					  const struct proposal *proposal,
-					  const struct transform_type *type,
-					  const char *algorithm_separator)
+size_t jam_proposals(struct jambuf *buf, const struct proposals *proposals)
 {
-	const char *separator = algorithm_separator;
-	ITEMS_FOR_EACH(algorithm, proposal->algorithms[type->index]) {
-		jam_string(buf, separator); separator = "+"; algorithm_separator = "-";
-		jam_proposal_transform(buf, algorithm);
-	}
-	return algorithm_separator;
-}
-
-void jam_proposal(struct jambuf *buf,
-		  const struct proposal *proposal)
-{
-	const char *algorithm_separator = "";
-
-	for (const struct transform_type *type = transform_type_floor;
-	     type < PMIN(transform_type_prf, transform_type_integ);
-	     type++) {
-		algorithm_separator = jam_proposal_algorithm(buf, proposal, type,
-							     algorithm_separator);
-	}
-
-	/*
-	 * Does it look like the INTEG was generated from the PRF?
-	 *
-	 * When it is, the INTEG is suppressed.
-	 */
-
-	struct transform_algorithms *prf_algs = proposal->algorithms[PROPOSAL_TRANSFORM_prf];
-	struct transform_algorithms *integ_algs = proposal->algorithms[PROPOSAL_TRANSFORM_integ];
-	bool encrypt_is_empty = (first_proposal_transform(proposal, transform_type_encrypt) == NULL);
-	bool prf_is_empty = (first_proposal_transform(proposal, transform_type_prf) == NULL);
-	bool integ_is_empty = (first_proposal_transform(proposal, transform_type_integ) == NULL);
-	bool integ_matches_prf = false;
-	if (!prf_is_empty && !integ_is_empty &&
-	    prf_algs->len == integ_algs->len) {
-		integ_matches_prf = true; /* hopefully */
-		for (unsigned n = 0; n < integ_algs->len; n++) {
-			struct transform *prf  = &prf_algs->item[n];
-			struct transform *integ  = &integ_algs->item[n];
-			if (&integ_desc(integ->desc)->prf->common != prf->desc) {
-				/* i.e., prf and integ are different */
-				integ_matches_prf = false;
-				break;
-			}
-		}
-	}
-
-	/*
-	 * For output compatibility reasons, the INTEG is shown before
-	 * the PRF; but not when it matches the PRF; and not when it
-	 * is NONE (ike=aes_gcm-none gives the impression that there
-	 * is no integrity).
-	 */
-
-	if (encrypt_is_empty ||
-	    (proposal_encrypt_aead(proposal) && !proposal_integ_none(proposal)) ||
-	    (proposal_encrypt_norm(proposal) && !integ_matches_prf)) {
-		algorithm_separator = jam_proposal_algorithm(buf, proposal,
-							     transform_type_integ,
-							     algorithm_separator);
-	}
-
-	algorithm_separator = jam_proposal_algorithm(buf, proposal,
-						     transform_type_prf,
-						     algorithm_separator);
-
-	for (const struct transform_type *type = PMAX(transform_type_prf + 1,
-						      transform_type_integ + 1);
-	     type < transform_type_roof; type++) {
-		algorithm_separator = jam_proposal_algorithm(buf, proposal, type,
-							     algorithm_separator);
-	}
-
-}
-
-void jam_proposals(struct jambuf *buf, const struct proposals *proposals)
-{
+	size_t s = 0;
 	const char *sep = "";
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		jam_string(buf, sep);
-		jam_proposal(buf, proposal);
-		sep = ", ";
+		s += jam_string(buf, sep); sep = ", ";
+		s += jam_proposal(buf, proposal);
 	}
+	return s;
 }
 
 /*
- * When PFS=no ignore any DH algorithms, and when PFS=yes reject
- * mixing implicit and explicit DH.
+ * When PFS=no, DH algorithms should have all been stripped.  When
+ * PFS=yes reject mixing implicit and explicit DH.
  */
 static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 				      struct proposals *proposals)
 {
-#define first_kem_algorithm (proposal->algorithms[PROPOSAL_TRANSFORM_kem] == NULL ? NULL : \
-			     proposal->algorithms[PROPOSAL_TRANSFORM_kem]->len == 0 ? NULL : \
-			     proposal->algorithms[PROPOSAL_TRANSFORM_kem]->item)
-
 	/*
 	 * Scrape the proposals searching for a Key Exchange
 	 * algorithms of interest.
 	 */
 
-	const struct proposal *first_null_ke = NULL;
-	const struct proposal *first_none_ke = NULL;
-	const struct ike_alg *first_ke = NULL;
-	const struct ike_alg *second_ke = NULL;
+	const struct proposal *first_proposal_with_no_kem = NULL;
+	const struct proposal *first_proposal_with_kem_none = NULL;
+	/* something other than NONE */
+	const struct ike_alg *first_unique_kem = NULL;
+	const struct ike_alg *second_unique_kem = NULL;
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		struct transform *first_kem = first_kem_algorithm;
-		if (first_kem == NULL) {
-			if (first_null_ke == NULL) {
-				first_null_ke = proposal;
+		struct transform *kem = proposal->first[PROPOSAL_TRANSFORM_kem];
+		if (kem == NULL) {
+			if (first_proposal_with_no_kem == NULL) {
+				first_proposal_with_no_kem = proposal;
 			}
-		} else if (first_kem->desc == &ike_alg_kem_none.common) {
-			if (first_none_ke == NULL) {
-				first_none_ke = proposal;
+			continue;
+		}
+		if (kem->desc == &ike_alg_kem_none.common) {
+			if (first_proposal_with_kem_none == NULL) {
+				first_proposal_with_kem_none = proposal;
 			}
-		} else if (first_ke == NULL) {
-			first_ke = first_kem->desc;
-		} else if (second_ke == NULL && first_ke != first_kem->desc) {
-			second_ke = first_kem->desc;
+			continue;
+		}
+		if (first_unique_kem == NULL) {
+			first_unique_kem = kem->desc;
+			continue;
+		}
+		if (kem->desc == first_unique_kem) {
+			continue;
+		}
+		if (second_unique_kem == NULL) {
+			/* not NONE, and not first */
+			second_unique_kem = kem->desc;
 		}
 	}
 
-	if (first_ke == NULL && first_none_ke == NULL) {
-		/* no DH is always ok */
+	/*
+	 * Regardless of PFS, no proposal specifying KEM is always ok.
+	 */
+	if (first_unique_kem == NULL && first_proposal_with_kem_none == NULL) {
 		return true;
 	}
-
-	/*
-	 * Try to generate very specific errors first.  For instance,
-	 * given PFS=no esp=aes,aes;dh21, an error stating that dh21
-	 * is not valid because of PFS is more helpful than an error
-	 * saying that all or no proposals need PFS.
-	 */
-
-	/*
-	 * Since PFS=NO overrides any DH, don't silently ignore it.
-	 * Check this early so that a conflict with PFS=no code gets
-	 * reported before anything else.
-	 */
-	if (!parser->policy->pfs && (first_ke != NULL || first_none_ke != NULL)) {
-		FOR_EACH_PROPOSAL(proposals, proposal) {
-			const struct ike_alg *ke = NULL;
-			struct transform *first_kem = first_kem_algorithm;
-			if (first_kem != NULL) {
-				ke = first_kem->desc;
-			}
-			if (ke == &ike_alg_kem_none.common) {
-				llog(parser->policy->stream, parser->policy->logger,
-				     "ignoring redundant %s Key Exchange algorithm 'NONE' as PFS policy is disabled",
-				     parser->protocol->name);
-			} else if (ke != NULL) {
-				llog(parser->policy->stream, parser->policy->logger,
-				     "ignoring %s Key Exchange algorithm '%s' as PFS policy is disabled",
-				     parser->protocol->name, ke->fqn);
-			}
-			pfree_transforms(proposal, transform_type_kem);
-		}
-		return true;
-	}
-
-#undef first_kem_algorithm
 
 	/*
 	 * Since at least one proposal included KE, all proposals
@@ -1050,44 +958,37 @@ static bool proposals_pfs_vs_ke_check(struct proposal_parser *parser,
 	 * (The converse, no proposals including KE was handled right
 	 * at the start).
 	 */
-	if (first_null_ke != NULL) {
+	if (first_proposal_with_no_kem != NULL) {
 		/* KE was specified */
 		proposal_error(parser, "either all or no %s proposals should specify Key Exchange",
 			       parser->protocol->name);
 		return false;
 	}
 
-	switch (parser->policy->version) {
-
-	case IKEv1:
-		/*
-		 * IKEv1 only allows one KE algorithm.
-		 */
-		if (first_ke != NULL && second_ke != NULL) {
+	if (first_unique_kem != NULL && second_unique_kem != NULL) {
+		switch (parser->policy->version) {
+		case IKEv1:
+			/*
+			 * IKEv1 only allows one KE algorithm.
+			 */
 			proposal_error(parser, "more than one IKEv1 %s Key Exchange algorithm (%s, %s) is not allowed in quick mode",
 				       parser->protocol->name,
-				       first_ke->fqn,
-				       second_ke->fqn);
+				       first_unique_kem->fqn,
+				       second_unique_kem->fqn);
 			return false;
-		}
-		break;
-
-	case IKEv2:
-		/*
-		 * IKEv2, only implements one KE algorithm for Child SAs.
-		 */
-		if (first_ke != NULL && second_ke != NULL) {
+		case IKEv2:
+			/*
+			 * IKEv2, only implements one KE algorithm for Child SAs.
+			 */
 			proposal_error(parser, "more than one IKEv2 %s Key Exchange algorithm (%s, %s) requires unimplemented CREATE_CHILD_SA INVALID_KE",
 				       parser->protocol->name,
-				       first_ke->fqn,
-				       second_ke->fqn);
+				       first_unique_kem->fqn,
+				       second_unique_kem->fqn);
 			return false;
+		default:
+			/* ignore */
+			break;
 		}
-		break;
-
-	default:
-		/* ignore */
-		break;
 	}
 
 	return true;

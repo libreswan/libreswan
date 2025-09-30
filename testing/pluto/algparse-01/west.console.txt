@@ -260,6 +260,8 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is 
 	3DES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes;none' (expect ERROR)
 	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
@@ -367,6 +369,9 @@ algparse -v1 'esp=aes;sn=yes' (expect ERROR)
 algparse -v1 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 algparse -v1 'esp=aes;ECP_256,aes;none' (expect ERROR)
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
 	ERROR: ESP Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'ah' (expect SUCCESS)
 	HMAC_SHA1_96
@@ -404,6 +409,8 @@ algparse -v1 'ah=sha2-none' (expect ERROR)
 algparse -v1 'ah=sha2;none' (expect ERROR)
 	ERROR: AH Key Exchange Method (DH) 'none' is not supported by IKEv1
 algparse -v1 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v1 'ah=aes-sha1' (expect ERROR)
@@ -1390,6 +1397,8 @@ ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is 
 	3DES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes-sha1-modp8192,aes-sha1-modp8192,aes-sha1-modp8192' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes;none' (expect SUCCESS)
 ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
@@ -1399,6 +1408,7 @@ ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS poli
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes;none,aes;modp2048' (expect SUCCESS)
 ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
+ipsec algparse: ignoring ESP Key Exchange algorithm 'MODP2048' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'esp=aes-sha1-none' (expect SUCCESS)
 ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
@@ -1503,6 +1513,7 @@ algparse -v2 'esp=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1
 	AES_CBC-HMAC_SHA1_96
 algparse -v2 'esp=aes;ECP_256,aes;none' (expect SUCCESS)
 ipsec algparse: ignoring ESP Key Exchange algorithm 'DH19' as PFS policy is disabled
+ipsec algparse: ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
 	AES_CBC-HMAC_SHA2_512_256+HMAC_SHA2_256_128
 algparse -v2 'ah' (expect SUCCESS)
 	HMAC_SHA2_512_256
@@ -1541,6 +1552,8 @@ algparse -v2 'ah=sha2;none' (expect SUCCESS)
 ipsec algparse: ignoring redundant AH Key Exchange algorithm 'NONE' as PFS policy is disabled
 	HMAC_SHA2_256_128
 algparse -v2 'ah=sha1-modp8192,sha1-modp8192,sha1-modp8192' (expect SUCCESS)
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
+ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 ipsec algparse: ignoring AH Key Exchange algorithm 'MODP8192' as PFS policy is disabled
 	HMAC_SHA1_96
 algparse -v2 'ah=aes-sha1' (expect ERROR)

@@ -279,8 +279,8 @@ struct ikev2_proposals {
 /*
  * Print <TRANSFORM> to the buffer.
  */
-static void jam_transform(struct jambuf *buf, enum ikev2_trans_type type,
-			  const struct ikev2_transform *transform)
+static void jam_ikev2_transform(struct jambuf *buf, enum ikev2_trans_type type,
+				const struct ikev2_transform *transform)
 {
 	jam_enum_enum_short(buf, &v2_transform_ID_enums,
 			    type, transform->id);
@@ -305,7 +305,7 @@ static void jam_type_transform(struct jambuf *buf, enum ikev2_trans_type type,
 {
 	jam_trans_type(buf, type);
 	jam_string(buf, "=");
-	jam_transform(buf, type, transform);
+	jam_ikev2_transform(buf, type, transform);
 }
 
 static void jam_protoid(struct jambuf *buf, enum ikev2_sec_proto_id protoid)
@@ -314,13 +314,13 @@ static void jam_protoid(struct jambuf *buf, enum ikev2_sec_proto_id protoid)
 }
 
 /* <TRANSFORM> { "+" <TRANSFORM> }+ */
-static void jam_transforms(struct jambuf *buf, enum ikev2_trans_type type,
-			   const struct ikev2_transforms *transforms)
+static void jam_ikev2_transforms(struct jambuf *buf, enum ikev2_trans_type type,
+				 const struct ikev2_transforms *transforms)
 {	char *sep = "";
 	const struct ikev2_transform *transform;
 	FOR_EACH_TRANSFORM(transform, transforms) {
 		jam_string(buf, sep);
-		jam_transform(buf, type, transform);
+		jam_ikev2_transform(buf, type, transform);
 		sep = "+";
 	};
 }
@@ -347,7 +347,7 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 			if (type == IKEv2_TRANS_TYPE_ESN) {
 				jam_string(buf, "ESN:");
 			}
-			jam_transforms(buf, type, transforms);
+			jam_ikev2_transforms(buf, type, transforms);
 			sep = "-";
 		}
 	}
