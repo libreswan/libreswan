@@ -74,10 +74,14 @@ struct hash_hunk {
 	const void *ptr;
 };
 
+struct hash_hunks {
+	const struct hash_hunk *hunk;
+	unsigned len;
+};
+
 struct crypt_mac crypt_hash_hunks(const char *what,
 				  const struct hash_desc *hasher,
-				  const struct hash_hunk hunks[],
-				  unsigned nr_hunks,
+				  const struct hash_hunks *hunks,
 				  struct logger *logger);
 
 #endif

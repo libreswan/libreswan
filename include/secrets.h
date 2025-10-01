@@ -45,6 +45,7 @@ struct pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
 struct hash_desc;
 struct hash_hunk;
+struct hash_hunks;
 struct cert;
 
 /*
@@ -189,8 +190,7 @@ struct pubkey_signer {
 	struct hash_signature (*sign)(const struct pubkey_signer *signer,
 				      const struct hash_desc *hasher,
 				      const struct secret_pubkey_stuff *pks,
-				      const struct hash_hunk *hunks,
-				      unsigned nr_hunks,
+				      const struct hash_hunks *hunks,
 				      struct logger *logger);
 	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
@@ -231,8 +231,7 @@ const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
 struct hash_signature pubkey_hash_then_sign(const struct pubkey_signer *signer,
 					    const struct hash_desc *hasher,
 					    const struct secret_pubkey_stuff *pks,
-					    const struct hash_hunk *hunks,
-					    unsigned nr_hunks,
+					    const struct hash_hunks *hunks,
 					    struct logger *logger);
 
 /*

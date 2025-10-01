@@ -154,9 +154,12 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 		{ "Intermediate ID + 1", HUNK_REF(task->intermediate_wire_id), },
 	};
 
+	const struct hash_hunks hunks = {
+		ARRAY_REF(octets),
+	};
+
 	task->signature = task->signer->sign(task->signer, task->hasher,
-					     task->pks, ARRAY_REF(octets),
-					     logger);
+					     task->pks, &hunks, logger);
 	logtime_stop(&start, "%s()", __func__);
 }
 
