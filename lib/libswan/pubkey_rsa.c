@@ -243,9 +243,9 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		LDBG_log(logger, "keyid: *%s", str_keyid(pkc->keyid));
-		LDBG_log(logger, "  n:"); LDBG_hunk(logger, modulus);
-		LDBG_log(logger, "  e:"); LDBG_hunk(logger, exponent);
-		LDBG_log(logger, "  CKAID:"); LDBG_hunk(logger, pkc->ckaid);
+		LDBG_log_hunk(logger, "  n:", &modulus);
+		LDBG_log_hunk(logger, "  e:", &exponent);
+		LDBG_log_hunk(logger, "  CKAID:", &pkc->ckaid);
 	}
 
 	return NULL;

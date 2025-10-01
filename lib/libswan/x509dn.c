@@ -841,7 +841,7 @@ err_t atodn(const char *src, chunk_t *dn)
 
 	*dn = clone_bytes_as_chunk(dn_buf, dn_ptr - dn_buf, "atodn");
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(logger, "ASCII to DN =>"); LDBG_hunk(logger, *dn);
+		LDBG_log_hunk(logger, "ASCII to DN =>", dn);
 	}
 	return NULL;
 

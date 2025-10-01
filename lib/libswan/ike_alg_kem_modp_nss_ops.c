@@ -37,8 +37,8 @@ static void nss_modp_calc_local_secret(const struct kem_desc *group,
 	chunk_t base = chunk_from_hex(group->nss.modp.base, group->nss.modp.base);
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log(logger, "NSS: Value of Prime:"); LDBG_hunk(logger, prime);
-		LDBG_log(logger, "NSS: Value of base:"); LDBG_hunk(logger, base);
+		LDBG_log_hunk(logger, "NSS: Value of Prime:", &prime);
+		LDBG_log_hunk(logger, "NSS: Value of base:", &base);
 	}
 
 	SECKEYDHParams dh_params = {
