@@ -138,7 +138,7 @@ static struct hash_signature v2_auth_signature(struct logger *logger,
 	logtime_t start = logtime_start(logger);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "hash to sign:", *hash_to_sign);
+		LDBG_log_hunk(logger, "hash to sign:", hash_to_sign);
 	}
 
 	logtime_t sign_time = logtime_start(logger);

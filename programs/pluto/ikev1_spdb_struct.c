@@ -1876,7 +1876,7 @@ psk_common:
 							    str_id(&c->remote->host.id, &hid));
 						} else if (LDBGP(DBG_PRIVATE, logger) ||
 							   LDBGP(DBG_CRYPT, logger)) {
-							LDBG_log_hunk(logger, "user PSK:", *pss);
+							LDBG_log_hunk(logger, "user PSK:", pss);
 						}
 						ta.auth = OAKLEY_PRESHARED_KEY;
 					}

@@ -254,7 +254,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	passert(hash.len <= sizeof(hash.ptr/*array*/));
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "v2rsa octets:", *idhash);
+		LDBG_log_hunk(logger, "v2rsa octets:", idhash);
 	}
 
 	/* now generate signature blob */
@@ -269,7 +269,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	if (no_ppk_auth != NULL) {
 		*no_ppk_auth = clone_hunk_as_chunk(sig, "NO_PPK_AUTH chunk");
 		if (LDBGP(DBG_PRIVATE, logger) || LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", *no_ppk_auth);
+			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", no_ppk_auth);
 		}
 	} else {
 		if (!pbs_out_hunk(a_pbs, sig, "rsa signature"))
@@ -363,7 +363,7 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	*sk = t;
 	if (LDBGP(DBG_CRYPT, logger)) {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
-		LDBG_log_hunk(logger, "%s:", chunk_sk, name);
+		LDBG_log_hunk(logger, "%s:", &chunk_sk, name);
 		free_chunk_content(&chunk_sk);
 	}
 }
@@ -378,7 +378,7 @@ void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "starting to recalculate SK_d, SK_pi, SK_pr");
-		LDBG_log_hunk(logger, "PPK:", ppk);
+		LDBG_log_hunk(logger, "PPK:", &ppk);
 	}
 
 	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);

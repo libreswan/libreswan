@@ -183,8 +183,8 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 	shunk_t remote_cookie = pbs_in_left(&cookie_digest->pbs);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "received cookie:", remote_cookie);
-		LDBG_log_hunk(logger, "computed cookie:", local_cookie);
+		LDBG_log_hunk(logger, "received cookie:", &remote_cookie);
+		LDBG_log_hunk(logger, "computed cookie:", &local_cookie);
 	}
 
 	if (!hunk_eq(local_cookie, remote_cookie)) {

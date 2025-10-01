@@ -143,16 +143,16 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	switch (child->sa.st_sa_role) {
 	case SA_RESPONDER:
 		if (LDBGP(DBG_CRYPT, logger)) {
-			    LDBG_log_hunk(logger, "inbound  keymat:", ikeymat);
-			    LDBG_log_hunk(logger, "outbound keymat:", rkeymat);
+			    LDBG_log_hunk(logger, "inbound  keymat:", &ikeymat);
+			    LDBG_log_hunk(logger, "outbound keymat:", &rkeymat);
 		}
 		ipi->inbound.keymat = ikeymat;
 		ipi->outbound.keymat = rkeymat;
 		break;
 	case SA_INITIATOR:
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "inbound  keymat:", rkeymat);
-			LDBG_log_hunk(logger, "outbound keymat:", ikeymat);
+			LDBG_log_hunk(logger, "inbound  keymat:", &rkeymat);
+			LDBG_log_hunk(logger, "outbound keymat:", &ikeymat);
 		}
 		ipi->outbound.keymat = ikeymat;
 		ipi->inbound.keymat = rkeymat;

@@ -245,12 +245,20 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 	for (bool cond_ = LDBGP(COND, LOGGER); cond_; cond_ = false)	\
 		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
 
-/* DBG_*() are unconditional */
-
-#define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)		\
-	{						\
-		LDBG_log(LOGGER, LABEL, ##__VA_ARGS__);	\
-		LDBG_hunk(LOGGER, HUNK);		\
+/*
+ * XXX: strange param order is so that the LABELS line up in the code
+ * vis:
+ *
+ *    LDBG_log_hunk(logger, "first label:", &hunk1)
+ *    LDBG_log_hunk(logger, "label two:", &hunk2)
+ */
+#define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)				\
+	{								\
+		llog(DEBUG_STREAM, LOGGER, LABEL, ##__VA_ARGS__);	\
+		const typeof(*(HUNK)) *h_ = (HUNK);			\
+		llog_dump(DEBUG_STREAM, LOGGER,				\
+			  (h_ == NULL ? NULL : h_->ptr),		\
+			  (h_ == NULL ? 0 : h_->len));			\
 	}
 
 #define LDBG_dump(LOGGER, DATA, LEN)			\

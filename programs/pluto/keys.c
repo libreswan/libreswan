@@ -547,7 +547,7 @@ const struct secret_preshared_stuff *get_connection_psk(const struct connection 
 
 	const struct secret_preshared_stuff *psk = secret_preshared_stuff(s);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "pre-shared key (PSK):", *psk);
+		LDBG_log_hunk(logger, "pre-shared key (PSK):", psk);
 	}
 
 	return psk;
@@ -576,8 +576,8 @@ const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection 
 		const struct secret_ppk_stuff *ppk = secret_ppk_stuff(s);
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "found PPK");
-			LDBG_log_hunk(logger, "PPK_ID:", ppk->id);
-			LDBG_log_hunk(logger, "PPK:", ppk->key);
+			LDBG_log_hunk(logger, "PPK_ID:", &ppk->id);
+			LDBG_log_hunk(logger, "PPK:", &ppk->key);
 		}
 		return ppk;
 	} else {
