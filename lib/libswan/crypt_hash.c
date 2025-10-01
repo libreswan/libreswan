@@ -135,3 +135,20 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 	*hashp = hash = NULL;
 	return output;
 }
+
+
+struct crypt_mac crypt_hash_hunks(const char *what,
+				  const struct hash_desc *hasher,
+				  const struct hash_hunk hunks[],
+				  unsigned nr_hunks,
+				  struct logger *logger)
+{
+	struct crypt_hash *ctx = crypt_hash_init(what, hasher, logger);
+	for (const struct hash_hunk *hunk = hunks;
+	     hunk < hunks + nr_hunks; hunk++) {
+		if (hunk->len > 0) {
+			crypt_hash_digest_hunk(ctx, hunk->name, HUNK_AS_SHUNK(hunk));
+		}
+	}
+	return crypt_hash_final_mac(&ctx);
+}
