@@ -437,7 +437,7 @@ bool emit_v2N_PPK_IDENTITY_KEY(struct pbs_out *pbs, struct ike_sa *ike,
 	}
 
 	const struct ppk_id_payload payl = ppk_id_payload(PPK_ID_FIXED,
-							  HUNK_AS_SHUNK(ppk->id),
+							  HUNK_AS_SHUNK(&ppk->id),
 							  ike->sa.logger);
 	if (!emit_unified_ppk_id(&payl, &ppks)) {
 		return false;

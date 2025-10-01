@@ -108,7 +108,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *kem,
 			pfree_diag(&d);
 			return NULL;
 		}
-		ke = HUNK_AS_SHUNK(responder_ke);
+		ke = HUNK_AS_SHUNK(&responder_ke);
 		private_key = NULL;
 		public_key = NULL;
 	} else {
@@ -192,7 +192,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 		d = kem->kem_ops->calc_shared_secret(kem,
 						     secret->private_key,
 						     secret->public_key,
-						     HUNK_AS_SHUNK(task->remote_ke),
+						     HUNK_AS_SHUNK(&task->remote_ke),
 						     &task->shared_secret,
 						     logger);
 	} else {
@@ -209,7 +209,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 			PASSERT(logger, secret->private_key != NULL);
 			d = kem->kem_ops->kem_decapsulate(kem,
 							  secret->private_key,
-							  HUNK_AS_SHUNK(task->remote_ke),
+							  HUNK_AS_SHUNK(&task->remote_ke),
 							  &task->shared_secret,
 							  logger);
 			break;

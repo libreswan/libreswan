@@ -376,7 +376,7 @@ static void drip_outbound(const struct message *m, struct logger *logger)
 {
 	const struct iface_endpoint *interface = m->outbound.interface;
 	ssize_t wlen = interface->io->write_packet(interface,
-						   HUNK_AS_SHUNK(m->body),
+						   HUNK_AS_SHUNK(&m->body),
 						   &m->outbound.endpoint,
 						   logger);
 	if (wlen != (ssize_t)m->body.len) {

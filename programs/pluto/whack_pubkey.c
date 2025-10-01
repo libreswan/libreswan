@@ -162,7 +162,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 				     /*install_time*/realnow(),
 				     /*until_time*/realtime_epoch,
 				     /*ttl*/0,
-				     HUNK_AS_SHUNK(rawkey),
+				     HUNK_AS_SHUNK(&rawkey),
 				     &pubkey/*new-public-key:must-delref*/,
 				     logger);
 	if (d != NULL) {

@@ -69,7 +69,7 @@ static void compute_ke_and_nonce(struct logger *logger,
 	if (task->dh != NULL) {
 		task->local_secret = calc_dh_local_secret(task->dh,
 							  task->role,
-							  HUNK_AS_SHUNK(task->initiator_ke),
+							  HUNK_AS_SHUNK(&task->initiator_ke),
 							  logger);
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "%s() %s KE (pointer): %p",

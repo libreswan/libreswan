@@ -271,7 +271,7 @@ static bool msg_sendrecv(struct outbuf *req, struct inbuf *recv,
 
 	struct sadb_msg *msg = req->base;
 	padup_sadb(req, msg);
-	llog_sadb(verbose, HUNK_AS_SHUNK(req->buf));
+	llog_sadb(verbose, HUNK_AS_SHUNK(&req->buf));
 
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
@@ -1764,7 +1764,7 @@ static void process_pending_queue(struct verbose verbose)
 	struct pending *pending;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(pending, &pending_queue) {
 		remove_list_entry(&pending->entry);
-		process_pending(HUNK_AS_SHUNK(pending->msg), verbose);
+		process_pending(HUNK_AS_SHUNK(&pending->msg), verbose);
 		free_chunk_content(&pending->msg);
 		pfree(pending);
 	}

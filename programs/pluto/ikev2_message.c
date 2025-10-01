@@ -434,7 +434,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 		}
 
 		if (!cipher_context_op_aead(ike->sa.st_ike_encrypt_cipher_context,
-					    sk->wire_iv, HUNK_AS_SHUNK(sk->aad),
+					    sk->wire_iv, HUNK_AS_SHUNK(&sk->aad),
 					    text_and_tag, enc.len, sk->integrity.len,
 					    sk->logger)) {
 			return false;
@@ -1007,7 +1007,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * and SKF .chain[] pointers).
 	 */
 	struct payload_digest sk = {
-		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(md->raw_packet), "decrypted SFK payloads"),
+		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->raw_packet), "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};
@@ -1294,7 +1294,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	enum next_payload_types_ikev2 skf_np = fixup_value(sk->logger, &sk->sk_next_payload_field);
 
 	unsigned int number = 1;
-	shunk_t clear_cursor = HUNK_AS_SHUNK(sk->cleartext);
+	shunk_t clear_cursor = HUNK_AS_SHUNK(&sk->cleartext);
 
 	struct v2_outgoing_fragment **frag = frags;
 	do {

@@ -99,7 +99,7 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = HUNK_AS_SHUNK(name),
+			.name = HUNK_AS_SHUNK(&name),
 			.scratch = name.ptr,
 		};
 		return NULL;

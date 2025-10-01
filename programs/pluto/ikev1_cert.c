@@ -276,7 +276,7 @@ bool ikev1_ship_chain(chunk_t *chain, int n, struct pbs_out *outs,
 		      uint8_t type)
 {
 	for (int i = 0; i < n; i++) {
-		if (!ikev1_ship_CERT(type, HUNK_AS_SHUNK(chain[i]), outs))
+		if (!ikev1_ship_CERT(type, HUNK_AS_SHUNK(&chain[i]), outs))
 			return false;
 	}
 

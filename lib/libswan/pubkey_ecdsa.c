@@ -69,7 +69,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		 * A simple match, the buffer cnotains just the key.
 		 */
 		if (ipseckey_pubkey.len == (*e)->bytes) {
-			raw = HUNK_AS_SHUNK(ipseckey_pubkey);
+			raw = HUNK_AS_SHUNK(&ipseckey_pubkey);
 			group = (*e);
 			break;
 		}

@@ -206,7 +206,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		if (PBAD(logger, auth_sig->len == 0)) {
 			return diag(PEXPECT_PREFIX"missing auth_sig");
 		}
-		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(*auth_sig), logger);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(auth_sig), logger);
 	} else if (authby != AUTH_NULL) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
@@ -239,7 +239,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				  prf->common.fqn,
 				  key_size_min);
 		}
-		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(*psk), logger);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(psk), logger);
 		if (pss == NULL) {
 			/*
 			 * XXX: seems that this could, in theory,

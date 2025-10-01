@@ -118,9 +118,9 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			LDBG_hunk(logger, text_and_tag);		\
 		}							\
 		if (!cipher_aead(encrypt_desc, CIPHER_OP, USE_WIRE_IV,	\
-				 HUNK_AS_SHUNK(salt),			\
+				 HUNK_AS_SHUNK(&salt),			\
 				 wire_iv,				\
-				 HUNK_AS_SHUNK(aad),			\
+				 HUNK_AS_SHUNK(&aad),			\
 				 text_and_tag,				\
 				 plaintext.len, tag.len,		\
 				 sym_key,				\

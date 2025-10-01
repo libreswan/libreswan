@@ -1254,7 +1254,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (id.kind == ID_NONE) {
 
 			struct pubkey_content pubkey_content; /* must free_pubkey_content() */
-			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(keyspace),
+			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(&keyspace),
 						      &pubkey_content, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
@@ -1289,7 +1289,7 @@ static diag_t extract_host_end(struct host_end *host,
 						     /*install_time*/realnow(),
 						     /*until_time*/realtime_epoch,
 						     /*ttl*/0,
-						     HUNK_AS_SHUNK(keyspace),
+						     HUNK_AS_SHUNK(&keyspace),
 						     &pubkey, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);

@@ -296,7 +296,7 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 				 uint8_t *bytes, size_t sizeof_bytes)
 {
 	struct crypt_mac mac = xcbc_mac((*prf)->desc, (*prf)->key,
-					HUNK_AS_SHUNK((*prf)->bytes),
+					HUNK_AS_SHUNK(&(*prf)->bytes),
 					(*prf)->logger);
 	memcpy(bytes, mac.ptr, sizeof_bytes);
 	free_chunk_content(&(*prf)->bytes);
@@ -307,7 +307,7 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 {
 	struct crypt_mac mac = xcbc_mac((*prf)->desc, (*prf)->key,
-					HUNK_AS_SHUNK((*prf)->bytes),
+					HUNK_AS_SHUNK(&(*prf)->bytes),
 					(*prf)->logger);
 	PK11SymKey *key = symkey_from_hunk("xcbc", mac, (*prf)->logger);
 	free_chunk_content(&(*prf)->bytes);

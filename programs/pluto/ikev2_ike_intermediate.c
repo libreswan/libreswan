@@ -318,7 +318,7 @@ static void compute_intermediate_outbound_mac(struct ike_sa *ike,
 		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
 		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
 	};
-	shunk_t inner_payloads = HUNK_AS_SHUNK(message->sk.cleartext);
+	shunk_t inner_payloads = HUNK_AS_SHUNK(&message->sk.cleartext);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
 				 unencrypted_payloads,
@@ -939,7 +939,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		}
 		/* we have a match, send PPK_IDENTITY back */
 		const struct ppk_id_payload ppk_id_p =
-			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id), ike->sa.logger);
+			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(&ppk->id), ike->sa.logger);
 		if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1120,7 +1120,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 				return STF_FATAL;
 			}
 			const struct secret_ppk_stuff *ppk =
-				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(&payl.ppk_id),
 						    ike->sa.logger);
 
 			recalc_v2_ike_intermediate_ppk_keymat(ike, ppk, HERE);
