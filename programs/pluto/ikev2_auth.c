@@ -609,10 +609,9 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike,
 							const struct pubkey_signer *signer,
 							v2_auth_signature_cb *cb)
 {
-	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
-							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, md,
-				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
+				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
+				      signer, cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, empty_shunk/*no data*/,
@@ -767,10 +766,9 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       const struct pubkey_signer *signer,
 						       v2_auth_signature_cb *cb)
 {
-	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
-							     LOCAL_PERSPECTIVE);
 	if (!submit_v2_auth_signature(ike, md,
-				      &hash_to_sign, hash_algo, signer, cb, HERE)) {
+				      &id_payload->mac, hash_algo, LOCAL_PERSPECTIVE,
+				      signer, cb, HERE)) {
 		ldbg(ike->sa.logger, "submit_v2_auth_signature() died, fatal");
 		return STF_FATAL;
 	}

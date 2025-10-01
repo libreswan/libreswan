@@ -59,8 +59,9 @@ typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 
 bool submit_v2_auth_signature(struct ike_sa *ike,
 			      struct msg_digest *md,
-			      const struct crypt_mac *sighash,
-			      const struct hash_desc *hash_algo,
+			      const struct crypt_mac *idhash,
+			      const struct hash_desc *hasher,
+			      enum perspective from_the_perspective_of,
 			      const struct pubkey_signer *signer,
 			      v2_auth_signature_cb *cb,
 			      where_t where);
