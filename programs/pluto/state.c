@@ -1133,8 +1133,9 @@ void delete_state(struct state *st)
 
 	free_generalNames(st->st_v1_requested_ca, true);
 
-	free_chunk_content(&st->st_firstpacket_me);
-	free_chunk_content(&st->st_firstpacket_peer);
+	ro_hunk_delref(&st->st_firstpacket_me, st->logger);
+	ro_hunk_delref(&st->st_firstpacket_peer, st->logger);
+
 #ifdef USE_IKEv1
 	free_chunk_content(&st->st_v1_tpacket);
 	free_chunk_content(&st->st_v1_rpacket);

@@ -396,8 +396,13 @@ struct state {
 
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
-	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
-	chunk_t st_firstpacket_peer;             /* copy of peers message 1 (for hashing) */
+	struct ro_hunk *st_firstpacket_me;	/* copy of my message
+						 * 1; for hashing and
+						 * dup detection */
+	struct ro_hunk *st_firstpacket_peer;	/* copy of peers
+						 * message 1; for
+						 * hashing and dup
+						 * detection */
 
 	struct p_dns_req *ipseckey_dnsr;    /* ipseckey of that end */
 	struct p_dns_req *ipseckey_fwd_dnsr;/* validate IDi that IP in forward A/AAAA */

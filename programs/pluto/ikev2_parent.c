@@ -601,17 +601,18 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 				process_v2_request_no_skeyseed_continue, HERE);
 }
 
-void save_first_outbound_ikev2_packet(const char *why,
+void save_first_outbound_ikev2_packet(const char *why UNUSED,
 				      struct ike_sa *ike,
 				      const struct v2_message *message)
 {
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&message->message),
-		      why);
+	shunk_t shunk = pbs_out_all(&message->message);
+	struct ro_hunk *packet = clone_hunk_as_ro_hunk(&shunk, ike->sa.logger, HERE);
+	replace_ro_hunk(&ike->sa.st_firstpacket_me, packet, ike->sa.logger, HERE);
+	ro_hunk_delref(&packet, ike->sa.logger);
 }
 
 
-void save_first_inbound_ikev2_packet(const char *why,
+void save_first_inbound_ikev2_packet(const char *why UNUSED,
 				     struct ike_sa *ike, struct msg_digest *md)
 {
 	/*
@@ -633,7 +634,7 @@ void save_first_inbound_ikev2_packet(const char *why,
 	 * "trim padding (not actually legit)".
 	 */
 	PEXPECT(ike->sa.logger, md->message_pbs.cur == md->message_pbs.roof);
-	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      pbs_in_to_cursor(&md->message_pbs),
-		      why);
+	struct ro_hunk *packet = clone_hunk_as_ro_hunk(&md->packet, ike->sa.logger, HERE);
+	replace_ro_hunk(&ike->sa.st_firstpacket_peer, packet, ike->sa.logger, HERE);
+	ro_hunk_delref(&packet, ike->sa.logger);
 }
