@@ -45,7 +45,10 @@ struct task {
 	struct secret_pubkey_stuff *pks;
 	const struct hash_desc *hasher;
 	const struct pubkey_signer *signer;
-	uint8_t intermediate_id[sizeof(uint32_t)];
+	struct {
+		size_t len;
+		uint8_t ptr[sizeof(msgid_t)];
+	} intermediate_wire_id;
 	/* out */
 	struct hash_signature signature;
 };
@@ -89,10 +92,18 @@ static void pack_task(struct ike_sa *ike,
 	task->firstpacket = clone_hunk_as_chunk(firstpacket, "firstpacket");
 	/* on initiator, we need to hash responders nonce */
 	task->nonce = clone_hunk_as_chunk(nonce, "nonce");
+	task->idhash = (*idhash);
 	task->ia1 = clone_hunk_as_chunk(ia1, "ia1");
 	task->ia2 = clone_hunk_as_chunk(ia2, "ia2");
-	task->idhash = (*idhash);
-	hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, task->intermediate_id);
+	if (ike->sa.st_v2_ike_intermediate.id != 0) {
+		/*
+		 * The first IKE_AUTH exchange's ID (which is
+		 * presumably immediately after the last
+		 * IKE_INTERMEDIATE exchange).
+		 */
+		task->intermediate_wire_id.len = sizeof(task->intermediate_wire_id.ptr/*array*/);
+		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, task->intermediate_wire_id.ptr/*array*/);
+	}
 }
 
 bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
@@ -153,26 +164,23 @@ static struct hash_signature v2_auth_signature(struct logger *logger,
 	return sig;
 }
 
-static struct crypt_mac compute_hash_to_sign(struct logger *logger, struct task *task)
-{
-	struct crypt_hash *ctx = crypt_hash_init("sighash", task->hasher, logger);
-	crypt_hash_digest_hunk(ctx, "first packet", task->firstpacket);
-	crypt_hash_digest_hunk(ctx, "nonce", task->nonce);
-	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	crypt_hash_digest_hunk(ctx, "IDHASH", task->idhash);
-	if (task->ia1.len > 0) {
-		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", task->ia1);
-		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", task->ia2);
-		/* IKE AUTH's first Message ID */
-		crypt_hash_digest_thing(ctx, "IKE_AUTH_MID", task->intermediate_id);
-	}
-	return crypt_hash_final_mac(&ctx);
-}
-
 static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 				       int unused_my_thread UNUSED)
 {
-	struct crypt_mac hash_to_sign = compute_hash_to_sign(logger, task);
+	const struct hash_hunk octets[] = {
+		{ "first packet", HUNK_REF(task->firstpacket), },
+		{ "nonce", HUNK_REF(task->nonce), },
+		{ "idhash", HUNK_REF(task->idhash), },
+		/* optional intermediate, len can be 0 */
+		{ "ia1", HUNK_REF(task->ia1), },
+		{ "ia2", HUNK_REF(task->ia2), },
+		{ "Intermediate ID + 1", HUNK_REF(task->intermediate_wire_id), },
+	};
+	struct crypt_mac hash_to_sign = crypt_hash_hunks("hash-to-sign",
+							 task->hasher,
+							 ARRAY_REF(octets),
+							 logger);
+
 	task->signature = v2_auth_signature(logger, &hash_to_sign,
 					    task->hasher,
 					    task->pks, task->signer);

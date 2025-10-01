@@ -48,6 +48,7 @@
 #define THING_AS_HUNK(THING) { .ptr = &(THING), .len = sizeof(THING), }
 #define NULL_HUNK { .ptr = NULL, .len = 0, }
 /* #define EMPTY_HUNK { .ptr = &buffer, .len = 0, } */
+#define HUNK_REF(HUNK) .ptr = (HUNK).ptr, .len = (HUNK).len
 
 /*
  * hunk version of compare functions (or at least libreswan's
