@@ -353,7 +353,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		llog(ERROR_STREAM, logger,
 		     "CRL: importing %s failed, helper aborted with waitpid status %d",
 		     dp->url, wstatus);
-		llog_hunk(RC_LOG, logger, output);
+		llog_hunk(RC_LOG, logger, &output);
 		return false;
 	}
 
@@ -362,7 +362,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		llog(ERROR_STREAM, logger,
 		     "CRL: importing %s failed, helper exited with non-zero status %d",
 		     dp->url, ret);
-		llog_hunk(RC_LOG, logger, output);
+		llog_hunk(RC_LOG, logger, &output);
 		return false;
 	}
 

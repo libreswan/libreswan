@@ -913,7 +913,7 @@ void llog_vendorids(enum stream stream, struct logger *logger)
 		name_buf idb;
 		llog(stream, logger, "[%s]%s", str_vendorid(id, &idb),
 		     (v->entry->kind == VID_SUBSTRING ? " (prefix match)" : ""));
-		llog_hunk(stream, logger, vid);
+		llog_hunk(stream, logger, &vid);
 		enum known_vendorid r = vendorid_by_shunk(vid);
 		passert(r != VID_none);
 		if (r != id) {

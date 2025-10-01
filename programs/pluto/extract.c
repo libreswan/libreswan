@@ -1147,7 +1147,7 @@ static diag_t extract_host_end(struct host_end *host,
 				if (ugh != NULL) {
 					vlog("error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					llog_hunk(RC_LOG, verbose.logger, host_config->ca);
+					llog_hunk(RC_LOG, verbose.logger, &host_config->ca);
 				}
 			}
 

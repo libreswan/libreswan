@@ -158,10 +158,12 @@ void llog_va_list(enum stream stream, const struct logger *logger,
 void llog_dump(enum stream stream,
 	       const struct logger *log,
 	       const void *p, size_t len);
-#define llog_hunk(STREAM, LOGGER, HUNK)				\
+#define llog_hunk(STREAM, LOGGER, HUNK)					\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(STREAM, LOGGER, hunk_->ptr, hunk_->len);	\
+		const typeof(*(HUNK)) *h_ = (HUNK); /* evaluate once */ \
+		llog_dump(STREAM, LOGGER,				\
+			  (h_ == NULL ? NULL : h_->ptr),		\
+			  (h_ == NULL ? 0 : h_->len));			\
 	}
 #define llog_thing(STREAM, LOGGER, THING)			\
 	llog_dump(STREAM, LOGGER, &(THING), sizeof(THING))
@@ -169,10 +171,12 @@ void llog_dump(enum stream stream,
 void llog_base64_bytes(enum stream stream,
 		       const struct logger *log,
 		       const void *p, size_t len);
-#define llog_base64_hunk(STREAM, LOGGER, HUNK)			\
+#define llog_base64_hunk(STREAM, LOGGER, HUNK)				\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_base64_bytes(STREAM, LOGGER, hunk_->ptr, hunk_->len); \
+		const typeof(*(HUNK)) *h_ = (HUNK); /* evaluate once */ \
+		llog_base64_bytes(STREAM, LOGGER,			\
+				  (h_ == NULL ? NULL : h_->ptr),	\
+				  (h_ == NULL ? 0 : h_->len));		\
 	}
 
 void llog_pem_bytes(enum stream stream,
@@ -181,8 +185,10 @@ void llog_pem_bytes(enum stream stream,
 		    const void *p, size_t len);
 #define llog_pem_hunk(STREAM, LOGGER, NAME, HUNK)			\
 	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_pem_bytes(STREAM, LOGGER, NAME, hunk_->ptr, hunk_->len); \
+		const typeof(*(HUNK)) *h_ = (HUNK); /* evaluate once */ \
+		llog_pem_bytes(STREAM, LOGGER, NAME,			\
+			       (h_ == NULL ? NULL : h_->ptr),		\
+			       (h_ == NULL ? 0 : h_->len));		\
 	}
 
 /*
@@ -264,8 +270,11 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 #define LDBG_dump(LOGGER, DATA, LEN)			\
 	llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN)
 
-#define LDBG_hunk(LOGGER, HUNK)				\
-	llog_hunk(DEBUG_STREAM, LOGGER, HUNK);
+#define LDBG_hunk(LOGGER, HUNK)						\
+	{								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		llog_dump(DEBUG_STREAM, LOGGER, hunk_->ptr, hunk_->len); \
+	}
 
 #define LDBG_thing(LOGGER, THING)			\
 	llog_thing(DEBUG_STREAM, LOGGER, THING);
