@@ -20,6 +20,70 @@
 #include <stddef.h>		/* size_t */
 #include <stdint.h>		/* uint8_t */
 
+#include "refcnt.h"
+
+/*
+ * read-write reference counted hunk.
+ */
+
+struct rw_hunk {
+	struct refcnt refcnt;
+	size_t len;
+	uint8_t ptr[];
+};
+
+struct rw_hunk *clone_bytes_as_rw_hunk(const void *ptr, size_t len,
+				       const struct logger *logger,
+				       where_t where);
+#define clone_hunk_as_rw_hunk(HUNK, LOGGER, WHERE)			\
+	({								\
+		const typeof(*(HUNK)) *h_ = HUNK; /* evaluate once; no paren */	\
+		clone_bytes_as_rw_hunk(h_->ptr, h_->len, LOGGER, WHERE); \
+	})
+
+struct rw_hunk *rw_hunk_addref_where(struct rw_hunk *hunk,
+				     const struct logger *logger,
+				     where_t where);
+void rw_hunk_delref_where(struct rw_hunk **hunk,
+			  const struct logger *logger,
+			  where_t where);
+void replace_rw_hunk(struct rw_hunk **hunk, struct rw_hunk *with,
+		     struct logger *logger, where_t where);
+
+#define rw_hunk_addref(HUNK, LOGGER) rw_hunk_addref_where(HUNK, LOGGER, HERE)
+#define rw_hunk_delref(HUNK, LOGGER) rw_hunk_delref_where(HUNK, LOGGER, HERE)
+
+/*
+ * read-only reference counted hunk.
+ */
+
+struct ro_hunk {
+	struct refcnt refcnt;
+	size_t len;
+	const uint8_t ptr[];
+};
+
+struct ro_hunk *clone_bytes_as_ro_hunk(const void *ptr, size_t len,
+				       const struct logger *logger,
+				       where_t where);
+#define clone_hunk_as_ro_hunk(HUNK, LOGGER, WHERE)			\
+	({								\
+		const typeof(*(HUNK)) *h_ = HUNK; /* evaluate once; no paren */	\
+		clone_bytes_as_ro_hunk(h_->ptr, h_->len, LOGGER, WHERE); \
+	})
+
+struct ro_hunk *ro_hunk_addref_where(struct ro_hunk *hunk,
+				     const struct logger *logger,
+				     where_t where);
+void ro_hunk_delref_where(struct ro_hunk **hunk,
+			  const struct logger *logger,
+			  where_t where);
+void replace_ro_hunk(struct ro_hunk **hunk, struct ro_hunk *with,
+		     struct logger *logger, where_t where);
+
+#define ro_hunk_addref(HUNK, LOGGER) ro_hunk_addref_where(HUNK, LOGGER, HERE)
+#define ro_hunk_delref(HUNK, LOGGER) ro_hunk_delref_where(HUNK, LOGGER, HERE)
+
 /*
  * Macros and functions for manipulating hunk like structures.  Any
  * struct containing .ptr and .len fields is considered a hunk.
@@ -451,7 +515,6 @@ char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
 		shunk_t hunk_ = THING_AS_HUNK(THING);			\
 		raw_clone_as_string(hunk_.ptr, hunk_.len, NAME);	\
 	})
-
 
 #define clone_bytes_as_hunk(TYPE, PTR, LEN)				\
 	({								\
