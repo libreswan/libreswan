@@ -123,7 +123,7 @@ static const struct message *save_message(struct direction_impairment *direction
 		if (hunk_eq(old->body, message)) {
 			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(logger, "matching %u", nr);
-				LDBG_hunk(logger, old->body);
+				LDBG_hunk(logger, &old->body);
 			}
 			old->count++;
 			return old;
@@ -131,7 +131,7 @@ static const struct message *save_message(struct direction_impairment *direction
 	}
 	/* save new */
 	struct message *new = alloc_thing(struct message, "message");
-	new->body = clone_hunk(message, "message-body");
+	new->body = clone_hunk_as_chunk(message, "message-body");
 	new->inbound.md = md_addref(inbound_md);
 	new->outbound.interface = outbound_interface;
 	new->outbound.endpoint = outbound_endpoint;
@@ -352,7 +352,7 @@ static void drip_message(const struct direction_impairment *direction,
 	     "IMPAIR: start processing %s %s packet %u",
 	     direction->name, reason, m->nr);
 	if (LDBGP(DBG_BASE, logger)) {
-		llog_hunk(DEBUG_STREAM, logger, m->body);
+		llog_hunk(DEBUG_STREAM, logger, &m->body);
 	}
 
 	direction->drip(m, logger);
@@ -376,7 +376,7 @@ static void drip_outbound(const struct message *m, struct logger *logger)
 {
 	const struct iface_endpoint *interface = m->outbound.interface;
 	ssize_t wlen = interface->io->write_packet(interface,
-						   HUNK_AS_SHUNK(m->body),
+						   HUNK_AS_SHUNK(&m->body),
 						   &m->outbound.endpoint,
 						   logger);
 	if (wlen != (ssize_t)m->body.len) {

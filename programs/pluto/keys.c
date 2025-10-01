@@ -547,7 +547,7 @@ const struct secret_preshared_stuff *get_connection_psk(const struct connection 
 
 	const struct secret_preshared_stuff *psk = secret_preshared_stuff(s);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "pre-shared key (PSK):", *psk);
+		LDBG_log_hunk(logger, "pre-shared key (PSK):", psk);
 	}
 
 	return psk;
@@ -576,8 +576,8 @@ const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection 
 		const struct secret_ppk_stuff *ppk = secret_ppk_stuff(s);
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "found PPK");
-			LDBG_log_hunk(logger, "PPK_ID:", ppk->id);
-			LDBG_log_hunk(logger, "PPK:", ppk->key);
+			LDBG_log_hunk(logger, "PPK_ID:", &ppk->id);
+			LDBG_log_hunk(logger, "PPK:", &ppk->key);
 		}
 		return ppk;
 	} else {
@@ -592,7 +592,7 @@ const struct secret_ppk_stuff *get_connection_ppk_stuff(const struct connection 
 		ITEMS_FOR_EACH(ppk_id_shunk, ppk_ids_shunks) {
 			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(c->logger, "try to find PPK with PPK_ID:");
-				LDBG_hunk(c->logger, *ppk_id_shunk);
+				LDBG_hunk(c->logger, ppk_id_shunk);
 			}
 
 			const struct secret_ppk_stuff *ppk =
@@ -617,7 +617,7 @@ const struct secret_ppk_stuff *get_ppk_stuff_by_id(shunk_t ppk_id, struct logger
 {
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "looking for PPK with ID:");
-		LDBG_hunk(logger, ppk_id);
+		LDBG_hunk(logger, &ppk_id);
 	}
 	return secret_ppk_stuff_by_id(pluto_secrets, ppk_id);
 }

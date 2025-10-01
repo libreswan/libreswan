@@ -125,17 +125,17 @@ static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 {
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: data:");
-		LDBG_hunk(logger, bytes);
+		LDBG_hunk(logger, &bytes);
 		chunk_t k = chunk_from_symkey("K", key, logger);
 		LDBG_log(logger, "XCBC: K:");
-		LDBG_hunk(logger, k);
+		LDBG_hunk(logger, &k);
 		free_chunk_content(&k);
 	}
 
 	struct crypt_mac k1t = derive_ki(prf, key, 1, logger);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: K1:");
-		LDBG_hunk(logger, k1t);
+		LDBG_hunk(logger, &k1t);
 	}
 	PK11SymKey *k1 = xcbc_key_from_mac(prf, "k1", &k1t, logger);
 
@@ -173,9 +173,9 @@ static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 		struct crypt_mac k2 = derive_ki(prf, key, 2, logger);
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "XCBC: Computing E[%d] using K2", n);
-			LDBG_log(logger, "XCBC: K2:"); LDBG_hunk(logger, k2);
-			LDBG_log(logger, "XCBC: E[n-1]"); LDBG_hunk(logger, e);
-			LDBG_log(logger, "XCBC: M[n]:"); LDBG_hunk(logger, m);
+			LDBG_log_hunk(logger, "XCBC: K2:", &k2);
+			LDBG_log_hunk(logger, "XCBC: E[n-1]", &e);
+			LDBG_log_hunk(logger, "XCBC: M[n]:", &m);
 		}
 		/*
 		 *      a)  If the blocksize of M[n] is 128 bits:
@@ -188,16 +188,16 @@ static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			t.ptr[j] = m_ptr[j] ^ e.ptr[j] ^ k2.ptr[j];
 		}
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log(logger, "XCBC: M[n]^E[n-1]^K2:"); LDBG_hunk(logger, t);
+			LDBG_log_hunk(logger, "XCBC: M[n]^E[n-1]^K2:", &t);
 		}
 		encrypt("K1(M[n]^E[n-1]^K2)", &e, &t, prf, k1, logger);
 	} else {
 		struct crypt_mac k3 = derive_ki(prf, key, 3, logger);
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "Computing E[%d] using K3", n);
-			LDBG_log(logger, "XCBC: K3"); LDBG_hunk(logger, k3);
-			LDBG_log(logger, "XCBC: E[n-1]:"); LDBG_hunk(logger, e);
-			LDBG_log(logger, "XCBC: M[n]:"); LDBG_hunk(logger, m);
+			LDBG_log_hunk(logger, "XCBC: K3", &k3);
+			LDBG_log_hunk(logger, "XCBC: E[n-1]:", &e);
+			LDBG_log_hunk(logger, "XCBC: M[n]:", &m);
 		}
 		/*
 		 *      b)  If the blocksize of M[n] is less than 128 bits:
@@ -220,15 +220,15 @@ static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 			t.ptr[j] = 0x00 ^ e.ptr[j] ^ k3.ptr[j];
 		}
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log(logger, "XCBC: M[n]:"); LDBG_hunk(logger, m);
-			LDBG_log(logger, "XCBC: M[n]:80...^E[n-1]^K3:"); LDBG_hunk(logger, t);
+			LDBG_log_hunk(logger, "XCBC: M[n]:", &m);
+			LDBG_log_hunk(logger, "XCBC: M[n]:80...^E[n-1]^K3:", &t);
 		}
 		encrypt("K1(M[n]^E[n-1]^K2)", &e, &t, prf, k1, logger);
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: MAC:");
-		LDBG_hunk(logger, e);
+		LDBG_hunk(logger, &e);
 	}
 
 	symkey_delref(logger, "k1", &k1);
@@ -296,7 +296,7 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 				 uint8_t *bytes, size_t sizeof_bytes)
 {
 	struct crypt_mac mac = xcbc_mac((*prf)->desc, (*prf)->key,
-					HUNK_AS_SHUNK((*prf)->bytes),
+					HUNK_AS_SHUNK(&(*prf)->bytes),
 					(*prf)->logger);
 	memcpy(bytes, mac.ptr, sizeof_bytes);
 	free_chunk_content(&(*prf)->bytes);
@@ -307,7 +307,7 @@ static void nss_xcbc_final_bytes(struct prf_context **prf,
 static PK11SymKey *nss_xcbc_final_symkey(struct prf_context **prf)
 {
 	struct crypt_mac mac = xcbc_mac((*prf)->desc, (*prf)->key,
-					HUNK_AS_SHUNK((*prf)->bytes),
+					HUNK_AS_SHUNK(&(*prf)->bytes),
 					(*prf)->logger);
 	PK11SymKey *key = symkey_from_hunk("xcbc", mac, (*prf)->logger);
 	free_chunk_content(&(*prf)->bytes);

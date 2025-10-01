@@ -206,7 +206,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		if (PBAD(logger, auth_sig->len == 0)) {
 			return diag(PEXPECT_PREFIX"missing auth_sig");
 		}
-		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(*auth_sig), logger);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(auth_sig), logger);
 	} else if (authby != AUTH_NULL) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
@@ -239,7 +239,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				  prf->common.fqn,
 				  key_size_min);
 		}
-		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(*psk), logger);
+		pss = prf_key_from_hunk("auth_sig", prf, HUNK_AS_SHUNK(psk), logger);
 		if (pss == NULL) {
 			/*
 			 * XXX: seems that this could, in theory,
@@ -256,13 +256,10 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
-		LDBG_log_hunk(logger, "%s:", *nonce, nonce_name);
-		LDBG_log_hunk(logger, "%s:", *nonce, nonce_name);
-		LDBG_log_hunk(logger, "idhash:", *idhash);
-		LDBG_log_hunk(logger, "idhash:", *idhash);
-		LDBG_log_hunk(logger, "IntAuth:", intermediate_auth);
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", &firstpacket);
+		LDBG_log_hunk(logger, "%s:", nonce, nonce_name);
+		LDBG_log_hunk(logger, "idhash:", idhash);
+		LDBG_log_hunk(logger, "IntAuth:", &intermediate_auth);
 		LDBG_symkey(logger, "", "PSS:", pss);
 	}
 
@@ -299,9 +296,9 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 	}
 
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	*additional_auth = clone_hunk(signed_octets, chunk_n);
+	*additional_auth = clone_hunk_as_chunk(signed_octets, chunk_n);
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "%s:", *additional_auth, chunk_n);
+		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_n);
 	}
 
 	return true;
@@ -345,8 +342,8 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-	    LDBG_log_hunk(logger, "received PSK auth octets:", sig);
-	    LDBG_log_hunk(logger, "calculated PSK auth octets:", calc_hash);
+	    LDBG_log_hunk(logger, "received PSK auth octets:", &sig);
+	    LDBG_log_hunk(logger, "calculated PSK auth octets:", &calc_hash);
 	}
 
 	if (!hunk_eq(sig, calc_hash)) {

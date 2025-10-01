@@ -711,8 +711,8 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash", md);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "EAP: msk:", msk);
-		LDBG_log_hunk(logger, "EAP: idhash_in:", idhash_in);
+		LDBG_log_hunk(logger, "EAP: msk:", &msk);
+		LDBG_log_hunk(logger, "EAP: idhash_in:", &idhash_in);
 	}
 
 	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
@@ -796,7 +796,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
+		LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 	}
 
 	struct hash_signature signed_signature = {

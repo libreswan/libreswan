@@ -201,7 +201,7 @@ void ikev2_replace(struct state *st, bool detach_whack)
 			llog(RC_LOG, st->logger, "initiate reauthentication of IKE SA");
 		}
 		initiate_v2_IKE_SA_INIT_request(c, st, &policy, &inception,
-						HUNK_AS_SHUNK(c->child.sec_label),
+						HUNK_AS_SHUNK(&c->child.sec_label),
 						detach_whack);
 
 	} else {

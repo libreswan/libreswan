@@ -387,7 +387,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		const struct secret_ppk_stuff *ppk =
 			get_connection_ppk_stuff(ike->sa.st_connection);
 		const struct ppk_id_payload ppk_id_p =
-			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id),
+			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(&ppk->id),
 				       ike->sa.logger);
 
 		struct pbs_out ppks;
@@ -705,7 +705,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			}
 
 			const struct secret_ppk_stuff *ppk =
-				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(&payl.ppk_id),
 						    ike->sa.logger);
 			if (ppk != NULL) {
 				found_ppk = true;
@@ -848,7 +848,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		size_t len = pbs_left(&pbs);
 		pexpect(len == ike->sa.st_no_ppk_auth.len);
 		struct pbs_in pbs_no_ppk_auth =
-			pbs_in_from_shunk(HUNK_AS_SHUNK(ike->sa.st_no_ppk_auth),
+			pbs_in_from_shunk(HUNK_AS_SHUNK(&ike->sa.st_no_ppk_auth),
 					  "struct pbs_in for verifying NO_PPK_AUTH");
 		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						 ike, &idhash_in, &pbs_no_ppk_auth,

@@ -108,7 +108,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *kem,
 			pfree_diag(&d);
 			return NULL;
 		}
-		ke = HUNK_AS_SHUNK(responder_ke);
+		ke = HUNK_AS_SHUNK(&responder_ke);
 		private_key = NULL;
 		public_key = NULL;
 	} else {
@@ -192,7 +192,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 		d = kem->kem_ops->calc_shared_secret(kem,
 						     secret->private_key,
 						     secret->public_key,
-						     HUNK_AS_SHUNK(task->remote_ke),
+						     HUNK_AS_SHUNK(&task->remote_ke),
 						     &task->shared_secret,
 						     logger);
 	} else {
@@ -209,7 +209,7 @@ static void compute_dh_shared_secret(struct logger *logger,
 			PASSERT(logger, secret->private_key != NULL);
 			d = kem->kem_ops->kem_decapsulate(kem,
 							  secret->private_key,
-							  HUNK_AS_SHUNK(task->remote_ke),
+							  HUNK_AS_SHUNK(&task->remote_ke),
 							  &task->shared_secret,
 							  logger);
 			break;
@@ -284,7 +284,7 @@ void submit_dh_shared_secret(struct state *callback_sa,
 			     __func__);
 	}
 	struct task *task = alloc_thing(struct task, "dh");
-	task->remote_ke = clone_hunk(remote_ke, "DH crypto");
+	task->remote_ke = clone_hunk_as_chunk(remote_ke, "DH crypto");
 	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
 	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;

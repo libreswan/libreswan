@@ -123,7 +123,7 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 	crypt_prf_final_bytes(&hash, fixup->hash_data.ptr, fixup->hash_data.len);
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "%s HASH(%u):", fixup->what, fixup->hash_type);
-		LDBG_hunk(logger, fixup->hash_data);
+		LDBG_hunk(logger, &fixup->hash_data);
 	}
 }
 
@@ -183,7 +183,7 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 	if (!hunk_eq(received_hash, computed_hash)) {
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "received %s HASH_DATA:", what);
-			LDBG_hunk(logger, received_hash);
+			LDBG_hunk(logger, &received_hash);
 		}
 		llog(RC_LOG, logger,
 		     "received '%s' message HASH(%u) data does not match computed value",

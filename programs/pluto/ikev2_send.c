@@ -70,7 +70,7 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	for (struct v2_outgoing_fragment *frag = frags;
 	     frag != NULL; frag = frag->next) {
 		nr_frags++;
-		if (!send_hunk_using_state(&ike->sa, where, *frag)) {
+		if (!send_hunk_using_state(&ike->sa, where, frag)) {
 			ldbg(ike->sa.logger, "send of %s fragment %u failed", where, nr_frags);
 			return false;
 		}

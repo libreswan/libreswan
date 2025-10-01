@@ -120,7 +120,7 @@ bool extract_KE(struct state *st/*ike-or-child*/,
 		LDBG_log(logger, "%s %s contained %u byte KE:",
 			 peer, str_enum_enum_short(&exchange_type_names, st->st_ike_version, md->hdr.isa_xchg, &xn),
 			 bytes);
-		LDBG_hunk(logger, ke);
+		LDBG_hunk(logger, &ke);
 	}
 
 	return true;

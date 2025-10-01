@@ -186,20 +186,20 @@ static void jam_traffic_selector_proposals(struct jambuf *buf, struct child_sa *
 	case SA_INITIATOR:
 		jam_traffic_selector_proposal(buf, "TSi",
 					      &c->local->child.selectors.proposed,
-					      HUNK_AS_SHUNK(c->child.sec_label));
+					      HUNK_AS_SHUNK(&c->child.sec_label));
 		jam_string(buf, ";");
 		jam_traffic_selector_proposal(buf, "TSr",
 					      &c->remote->child.selectors.proposed,
-					      HUNK_AS_SHUNK(c->child.sec_label));
+					      HUNK_AS_SHUNK(&c->child.sec_label));
 		break;
 	case SA_RESPONDER:
 		jam_traffic_selector_proposal(buf, "TSi",
 					      &c->remote->child.selectors.proposed,
-					      HUNK_AS_SHUNK(c->child.sec_label));
+					      HUNK_AS_SHUNK(&c->child.sec_label));
 		jam_string(buf, " ");
 		jam_traffic_selector_proposal(buf, "TSr",
 					      &c->local->child.selectors.proposed,
-					      HUNK_AS_SHUNK(c->child.sec_label));
+					      HUNK_AS_SHUNK(&c->child.sec_label));
 		break;
 	}
 	jam_string(buf, "}");
@@ -584,7 +584,7 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 
 	if (!emit_v2TS_payload(out, child, &ikev2_ts_i_desc,
 			       &c->local->child.selectors.proposed,
-			       HUNK_AS_SHUNK(c->child.sec_label),
+			       HUNK_AS_SHUNK(&c->child.sec_label),
 			       &impair.number_of_TSi_selectors,
 			       "local TSi")) {
 		return false;
@@ -592,7 +592,7 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 
 	if (!emit_v2TS_payload(out, child, &ikev2_ts_r_desc,
 			       &c->remote->child.selectors.proposed,
-			       HUNK_AS_SHUNK(c->child.sec_label),
+			       HUNK_AS_SHUNK(&c->child.sec_label),
 			       &impair.number_of_TSr_selectors,
 			       "remote TSr")) {
 		return false;
@@ -624,7 +624,7 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	ip_selectors *accepted_ts_i =
 		(c->remote->child.selectors.accepted.len > 0 ? &c->remote->child.selectors.accepted : &c->remote->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_i_desc, accepted_ts_i,
-			       HUNK_AS_SHUNK(c->child.sec_label),
+			       HUNK_AS_SHUNK(&c->child.sec_label),
 			       &impair.number_of_TSi_selectors,
 			       "remote TSi")) {
 		return false;
@@ -633,7 +633,7 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	ip_selectors *accepted_ts_r =
 		(c->local->child.selectors.accepted.len > 0 ? &c->local->child.selectors.accepted : &c->local->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_r_desc, accepted_ts_r,
-			       HUNK_AS_SHUNK(c->child.sec_label),
+			       HUNK_AS_SHUNK(&c->child.sec_label),
 			       &impair.number_of_TSr_selectors,
 			       "local TSr")) {
 		return false;

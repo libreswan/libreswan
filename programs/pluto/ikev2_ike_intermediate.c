@@ -296,7 +296,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	/* extract the mac; replace existing value */
 	struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 	free_chunk_content(int_auth_ir);
-	*int_auth_ir = clone_hunk(mac, "IntAuth");
+	*int_auth_ir = clone_hunk_as_chunk(mac, "IntAuth");
 }
 
 static void compute_intermediate_outbound_mac(struct ike_sa *ike,
@@ -318,7 +318,7 @@ static void compute_intermediate_outbound_mac(struct ike_sa *ike,
 		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
 		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
 	};
-	shunk_t inner_payloads = HUNK_AS_SHUNK(message->sk.cleartext);
+	shunk_t inner_payloads = HUNK_AS_SHUNK(&message->sk.cleartext);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
 				 unencrypted_payloads,
@@ -579,7 +579,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		if (LDBGP(DBG_BASE, logger)) {
 			shunk_t ke = kem_initiator_ke(task->initiator);
 			LDBG_log(logger, "initiator ADDKE:");
-			LDBG_hunk(logger, ke);
+			LDBG_hunk(logger, &ke);
 		}
 	}
 
@@ -787,8 +787,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
 		/* for SKEYSEED */
-		.ni = clone_hunk(ike->sa.st_ni, "Ni"),
-		.nr = clone_hunk(ike->sa.st_nr, "Nr"),
+		.ni = clone_hunk_as_chunk(ike->sa.st_ni, "Ni"),
+		.nr = clone_hunk_as_chunk(ike->sa.st_nr, "Nr"),
 		.d = symkey_addref(logger, "d", ike->sa.st_skey_d_nss),
 		.prf = ike->sa.st_oakley.ta_prf,
 		/* for KEYMAT */
@@ -819,7 +819,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		}
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "ADDKE: responder encapsulating using initiator KE:");
-			LDBG_hunk(logger, initiator_ke);
+			LDBG_hunk(logger, &initiator_ke);
 		}
 
 		diag_t d = kem_responder_encapsulate(task->exchange.addke.kem, initiator_ke,
@@ -832,7 +832,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		if (LDBGP(DBG_BASE, logger)) {
 			shunk_t ke = kem_responder_ke(task->responder);
 			LDBG_log(logger, "ADDKE: responder KE:");
-			LDBG_hunk(logger, ke);
+			LDBG_hunk(logger, &ke);
 		}
 
 		ldbg(logger, "ADDKE: responder calculating skeyseed using prf %s",
@@ -939,7 +939,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_continue(struct ike_sa *ike,
 		}
 		/* we have a match, send PPK_IDENTITY back */
 		const struct ppk_id_payload ppk_id_p =
-			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(ppk->id), ike->sa.logger);
+			ppk_id_payload(PPK_ID_FIXED, HUNK_AS_SHUNK(&ppk->id), ike->sa.logger);
 		if (!emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -1026,8 +1026,8 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 		/* for ADDKE decapsulate() */
 		.initiator = ike->sa.st_kem.initiator,
 		/* for skeyseed */
-		.ni = clone_hunk(ike->sa.st_ni, "Ni"),
-		.nr = clone_hunk(ike->sa.st_nr, "Nr"),
+		.ni = clone_hunk_as_chunk(ike->sa.st_ni, "Ni"),
+		.nr = clone_hunk_as_chunk(ike->sa.st_nr, "Nr"),
 		.d = symkey_addref(logger, "d", ike->sa.st_skey_d_nss),
 		.prf = ike->sa.st_oakley.ta_prf,
 		/* for KEYMAT */
@@ -1059,7 +1059,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 		}
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "ADDKE: decapsulating using responder KE:");
-			LDBG_hunk(logger, responder_ke);
+			LDBG_hunk(logger, &responder_ke);
 		}
 		diag_t d = kem_initiator_decapsulate(task->initiator, responder_ke, logger);
 		if (d != NULL) {
@@ -1120,7 +1120,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct ike_sa *ike,
 				return STF_FATAL;
 			}
 			const struct secret_ppk_stuff *ppk =
-				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(payl.ppk_id),
+				get_ppk_stuff_by_id(/*ppk_id*/HUNK_AS_SHUNK(&payl.ppk_id),
 						    ike->sa.logger);
 
 			recalc_v2_ike_intermediate_ppk_keymat(ike, ppk, HERE);

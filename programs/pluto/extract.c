@@ -1147,7 +1147,7 @@ static diag_t extract_host_end(struct host_end *host,
 				if (ugh != NULL) {
 					vlog("error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					llog_hunk(RC_LOG, verbose.logger, host_config->ca);
+					llog_hunk(RC_LOG, verbose.logger, &host_config->ca);
 				}
 			}
 
@@ -1254,7 +1254,7 @@ static diag_t extract_host_end(struct host_end *host,
 		if (id.kind == ID_NONE) {
 
 			struct pubkey_content pubkey_content; /* must free_pubkey_content() */
-			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(keyspace),
+			d = unpack_dns_pubkey_content(src->pubkey_alg, HUNK_AS_SHUNK(&keyspace),
 						      &pubkey_content, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
@@ -1289,7 +1289,7 @@ static diag_t extract_host_end(struct host_end *host,
 						     /*install_time*/realnow(),
 						     /*until_time*/realtime_epoch,
 						     /*ttl*/0,
-						     HUNK_AS_SHUNK(keyspace),
+						     HUNK_AS_SHUNK(&keyspace),
 						     &pubkey, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
@@ -3808,7 +3808,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (ugh != NULL) {
 			return diag("%s: policy-label=%s", ugh, wm->sec_label);
 		}
-		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
+		config->sec_label = clone_hunk_as_chunk(sec_label, "struct config sec_label");
 	}
 
 	/*
@@ -3861,7 +3861,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		int that = (this + 1) % END_ROOF;
 		if (same_ca[that]) {
-			config->end[that].host.ca = clone_hunk(config->end[this].host.ca,
+			config->end[that].host.ca = clone_hunk_as_chunk(config->end[this].host.ca,
 							       "same ca");
 			break;
 		}

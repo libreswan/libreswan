@@ -91,7 +91,7 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 			 symkey,
 			 (dump_salt ? ", salt: " : ""));
 		if (dump_salt) {
-			LDBG_hunk(logger, salt);
+			LDBG_hunk(logger, &salt);
 		}
 	}
 	struct cipher_context *cipher_context = alloc_thing(struct cipher_context, __func__);
@@ -99,7 +99,7 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 	cipher_context->op = op;
 	cipher_context->iv_source = iv_source;
 	cipher_context->symkey = symkey_addref(logger, __func__, symkey);
-	cipher_context->salt = clone_hunk(salt, __func__);
+	cipher_context->salt = clone_hunk_as_chunk(salt, __func__);
 	cipher_context->old_wire_iv = alloc_chunk(cipher->wire_iv_size, __func__);
 	if (cipher->encrypt_ops->cipher_op_context_create != NULL) {
 		cipher_context->op_context =
@@ -171,7 +171,7 @@ bool cipher_context_op_aead(const struct cipher_context *cipher_context,
 								 cipher_context->op,
 								 cipher_context->iv_source,
 								 cipher_context->symkey,
-								 HUNK_AS_SHUNK(cipher_context->salt),
+								 HUNK_AS_SHUNK(&cipher_context->salt),
 								 wire_iv, aad,
 								 text_and_tag,
 								 text_size,
@@ -195,7 +195,7 @@ void cipher_context_op_normal(const struct cipher_context *cipher_context,
 							      cipher_context->op,
 							      cipher_context->iv_source,
 							      cipher_context->symkey,
-							      HUNK_AS_SHUNK(cipher_context->salt),
+							      HUNK_AS_SHUNK(&cipher_context->salt),
 							      wire_iv, text,
 							      ikev1_iv,
 							      logger);

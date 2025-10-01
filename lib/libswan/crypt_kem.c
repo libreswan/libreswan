@@ -106,7 +106,7 @@ diag_t kem_responder_encapsulate(const struct kem_desc *kem,
 			pfree_kem_responder(responder, logger);
 			return d;
 		}
-		(*responder)->ke = HUNK_AS_SHUNK((*responder)->internal.ke);
+		(*responder)->ke = HUNK_AS_SHUNK(&(*responder)->internal.ke);
 	} else {
 		kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key, &(*responder)->internal.public_key, logger);
 		PASSERT(logger, (*responder)->internal.private_key != NULL);

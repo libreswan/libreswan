@@ -171,7 +171,7 @@ static struct kernel_policy kernel_policy_from_spd(struct kernel_policy_encap po
 		.sa_marks = &spd->connection->sa_marks,
 		.ipsec_interface = spd->connection->ipsec_interface,
 		.id = DEFAULT_KERNEL_POLICY_ID,
-		.sec_label = HUNK_AS_SHUNK(spd->connection->config->sec_label),
+		.sec_label = HUNK_AS_SHUNK(&spd->connection->config->sec_label),
 		.nr_rules = 0,
 	};
 
@@ -355,7 +355,7 @@ bool add_spd_kernel_policy(const struct spd *spd,
 					shunt_kind,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->ipsec_interface,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
 
@@ -447,7 +447,7 @@ bool replace_spd_kernel_policy(const struct spd *spd,
 					shunt_kind,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->ipsec_interface,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
@@ -482,7 +482,7 @@ static bool restore_spd_kernel_policy(const struct spd *spd,
 					shunt_kind,
 					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->ipsec_interface,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					HUNK_AS_SHUNK(&c->config->sec_label),
 					&nic_offload,
 					where);
 	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
@@ -559,7 +559,7 @@ bool delete_spd_kernel_policy(const struct spd *spd,
 				    &spd->connection->sa_marks,
 				    spd->connection->ipsec_interface,
 				    DEFAULT_KERNEL_POLICY_ID,
-				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				    HUNK_AS_SHUNK(&spd->connection->config->sec_label),
 				    logger, where, story);
 }
 
@@ -642,7 +642,7 @@ static void delete_cat_kernel_policy(const struct spd *spd,
 				  &local_client, &spd->remote->client,
 				  &c->sa_marks, c->ipsec_interface,
 				  DEFAULT_KERNEL_POLICY_ID,
-				  HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				  HUNK_AS_SHUNK(&spd->connection->config->sec_label),
 				  logger, where, story)) {
 		llog(RC_LOG, logger, "%s failed", story);
 	}

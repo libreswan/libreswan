@@ -243,9 +243,9 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		LDBG_log(logger, "keyid: *%s", str_keyid(pkc->keyid));
-		LDBG_log(logger, "  n:"); LDBG_hunk(logger, modulus);
-		LDBG_log(logger, "  e:"); LDBG_hunk(logger, exponent);
-		LDBG_log(logger, "  CKAID:"); LDBG_hunk(logger, pkc->ckaid);
+		LDBG_log_hunk(logger, "  n:", &modulus);
+		LDBG_log_hunk(logger, "  e:", &exponent);
+		LDBG_log_hunk(logger, "  CKAID:", &pkc->ckaid);
 	}
 
 	return NULL;
@@ -403,7 +403,7 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, *expected_hash);
+		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
@@ -548,7 +548,7 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, *expected_hash);
+		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
@@ -696,7 +696,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, *expected_hash);
+		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*

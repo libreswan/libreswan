@@ -447,7 +447,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 			struct state *st = state_by_serialno(pid_entry->serialno);
 			if (pid_entry->serialno == SOS_NOBODY) {
 				pid_entry->callback(NULL, NULL, status,
-						    HUNK_AS_SHUNK(pid_entry->output),
+						    HUNK_AS_SHUNK(&pid_entry->output),
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else if (st == NULL) {
@@ -456,7 +456,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					jam_string(buf, " disappeared");
 				}
 				pid_entry->callback(NULL, NULL, status,
-						    HUNK_AS_SHUNK(pid_entry->output),
+						    HUNK_AS_SHUNK(&pid_entry->output),
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else {
@@ -471,7 +471,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 				statetime_t start = statetime_start(st);
 				const enum ike_version ike_version = st->st_ike_version;
 				stf_status ret = pid_entry->callback(st, pid_entry->md, status,
-								     HUNK_AS_SHUNK(pid_entry->output),
+								     HUNK_AS_SHUNK(&pid_entry->output),
 								     pid_entry->context,
 								     pid_entry->logger);
 				if (ret == STF_SKIP_COMPLETE_STATE_TRANSITION) {

@@ -196,7 +196,7 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 
 		if (LDBGP(DBG_BASE, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "CR:");
-			LDBG_hunk(ike->sa.logger, ca_name);
+			LDBG_hunk(ike->sa.logger, &ca_name);
 		}
 
 		if (ca_name.len > 0) {
@@ -208,7 +208,7 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 			}
 
 			generalName_t *gn = alloc_thing(generalName_t, "generalName");
-			gn->name = clone_hunk(ca_name, "ca name");
+			gn->name = clone_hunk_as_chunk(ca_name, "ca name");
 			gn->kind = GN_DIRECTORY_NAME;
 			gn->next = ike->sa.st_v1_requested_ca;
 			ike->sa.st_v1_requested_ca = gn;
@@ -276,7 +276,7 @@ bool ikev1_ship_chain(chunk_t *chain, int n, struct pbs_out *outs,
 		      uint8_t type)
 {
 	for (int i = 0; i < n; i++) {
-		if (!ikev1_ship_CERT(type, HUNK_AS_SHUNK(chain[i]), outs))
+		if (!ikev1_ship_CERT(type, HUNK_AS_SHUNK(&chain[i]), outs))
 			return false;
 	}
 

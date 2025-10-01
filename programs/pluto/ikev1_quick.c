@@ -305,9 +305,9 @@ static bool compute_proto_keymat(struct ike_sa *ike,
 	if (LDBGP(DBG_CRYPT, child->sa.logger)) {
 		LDBG_log(child->sa.logger, "%s KEYMAT", satypename);
 		LDBG_log(child->sa.logger, "  inbound:");
-		LDBG_hunk(child->sa.logger, pi->inbound.keymat);
+		LDBG_hunk(child->sa.logger, &pi->inbound.keymat);
 		LDBG_log(child->sa.logger, "  outbound:");
-		LDBG_hunk(child->sa.logger, pi->outbound.keymat);
+		LDBG_hunk(child->sa.logger, &pi->outbound.keymat);
 	}
 
 	return true;

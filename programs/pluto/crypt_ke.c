@@ -69,7 +69,7 @@ static void compute_ke_and_nonce(struct logger *logger,
 	if (task->dh != NULL) {
 		task->local_secret = calc_dh_local_secret(task->dh,
 							  task->role,
-							  HUNK_AS_SHUNK(task->initiator_ke),
+							  HUNK_AS_SHUNK(&task->initiator_ke),
 							  logger);
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(logger, "%s() %s KE (pointer): %p",
@@ -81,7 +81,7 @@ static void compute_ke_and_nonce(struct logger *logger,
 	task->nonce = alloc_rnd_chunk(DEFAULT_NONCE_SIZE, "nonce");
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s() generated nonce:", __func__);
-		LDBG_hunk(logger, task->nonce);
+		LDBG_hunk(logger, &task->nonce);
 	}
 }
 
@@ -123,7 +123,7 @@ void submit_ke_and_nonce(struct state *callback_sa,
 		.dh = dh,
 		.cb = cb,
 		.role = task_sa->st_sa_role,
-		.initiator_ke = clone_hunk(task_sa->st_gi, "Gi"),
+		.initiator_ke = clone_hunk_as_chunk(task_sa->st_gi, "Gi"),
 	};
 	submit_task(/*callback*/callback_sa, /*task*/task_sa,
 		    md, detach_whack,

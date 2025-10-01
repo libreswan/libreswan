@@ -126,7 +126,7 @@ static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 	}
 	if ((*issuer) == NULL) {
 		(*issuer) = alloc_thing(struct crl_issuer, "add distribution point issuer");
-		(*issuer)->dn = clone_hunk(issuer_dn, "crl issuer dn");
+		(*issuer)->dn = clone_hunk_as_chunk(issuer_dn, "crl issuer dn");
 	}
 }
 
@@ -353,7 +353,7 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		llog(ERROR_STREAM, logger,
 		     "CRL: importing %s failed, helper aborted with waitpid status %d",
 		     dp->url, wstatus);
-		llog_hunk(RC_LOG, logger, output);
+		llog_hunk(RC_LOG, logger, &output);
 		return false;
 	}
 
@@ -362,21 +362,21 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 		llog(ERROR_STREAM, logger,
 		     "CRL: importing %s failed, helper exited with non-zero status %d",
 		     dp->url, ret);
-		llog_hunk(RC_LOG, logger, output);
+		llog_hunk(RC_LOG, logger, &output);
 		return false;
 	}
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "CRL: the sleeping dragon returned from %s with %zu gold",
 			 dp->url, output.len);
-		LDBG_hunk(logger, output);
+		LDBG_hunk(logger, &output);
 	}
 
-	chunk_t sign_dn = clone_hunk(output, "signer");		/* must free */
+	chunk_t sign_dn = clone_hunk_as_chunk(output, "signer");		/* must free */
 	pemtobin(&sign_dn);
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "CRL: the sleeping dragon returned from %s signs:", dp->url);
-		LDBG_hunk(logger, sign_dn);
+		LDBG_hunk(logger, &sign_dn);
 	}
 
 	/*

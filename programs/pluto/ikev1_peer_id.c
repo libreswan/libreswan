@@ -265,7 +265,7 @@ stf_status oakley_auth(struct ike_sa *ike, struct msg_digest *md,
 		} else {
 			if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 				LDBG_log(ike->sa.logger, "received HASH:");
-				LDBG_hunk(ike->sa.logger, pbs_hash);
+				LDBG_hunk(ike->sa.logger, &pbs_hash);
 			}
 			llog(RC_LOG, ike->sa.logger,
 			     "received Hash Payload does not match computed value");

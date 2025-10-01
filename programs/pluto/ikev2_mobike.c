@@ -265,7 +265,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 		} else {
 			cookie2 = tmp;
 			if (LDBGP(DBG_BASE, logger)) {
-				LDBG_log_hunk(logger, "MOBIKE COOKIE2 received:", cookie2);
+				LDBG_log_hunk(logger, "MOBIKE COOKIE2 received:", &cookie2);
 			}
 		}
 	}

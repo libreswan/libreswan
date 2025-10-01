@@ -281,7 +281,7 @@ static int show_pem(struct secret_pubkey_stuff *pks, struct logger *logger)
 	 *
 	 * openssl pkey -in /tmp/x -inform PEM -pubin -noout -text
 	 */
-	llog_pem_hunk(PRINTF_STREAM, logger, "PUBLIC KEY", der);
+	llog_pem_hunk(PRINTF_STREAM, logger, "PUBLIC KEY", &der);
 
 	free_chunk_content(&der);
 

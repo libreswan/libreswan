@@ -55,7 +55,7 @@ struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "ppk type: %d", (int) payload.type);
 		LDBG_log(logger, "ppk_id from payload:");
-		LDBG_hunk(logger, payload.ppk_id);
+		LDBG_hunk(logger, &payload.ppk_id);
 	}
 	return payload;
 }
@@ -115,7 +115,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	shunk_t ppk_id = pbs_in_left(&pbs);
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
-		LDBG_hunk(ike->sa.logger, ppk_id);
+		LDBG_hunk(ike->sa.logger, &ppk_id);
 	}
 
 	if (ppk_id.len == 0) {
@@ -205,7 +205,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
-		LDBG_hunk(ike->sa.logger, ppk_id);
+		LDBG_hunk(ike->sa.logger, &ppk_id);
 	}
 
 	struct ppk_confirmation ppk_confirmation = { .len = PPK_CONFIRMATION_LEN, };
@@ -220,7 +220,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 
 	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK Confirmation:");
-		LDBG_hunk(ike->sa.logger, ppk_confirmation);
+		LDBG_hunk(ike->sa.logger, &ppk_confirmation);
 	}
 
 	/* clone ppk id and ppk confirmation data */
@@ -254,7 +254,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	passert(hash.len <= sizeof(hash.ptr/*array*/));
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "v2rsa octets:", *idhash);
+		LDBG_log_hunk(logger, "v2rsa octets:", idhash);
 	}
 
 	/* now generate signature blob */
@@ -267,9 +267,9 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 		return false;
 
 	if (no_ppk_auth != NULL) {
-		*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
+		*no_ppk_auth = clone_hunk_as_chunk(sig, "NO_PPK_AUTH chunk");
 		if (LDBGP(DBG_PRIVATE, logger) || LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", *no_ppk_auth);
+			LDBG_log_hunk(logger, "NO_PPK_AUTH payload:", no_ppk_auth);
 		}
 	} else {
 		if (!pbs_out_hunk(a_pbs, sig, "rsa signature"))
@@ -363,7 +363,7 @@ static void ppk_recalc_one(PK11SymKey **sk /* updated */, PK11SymKey *ppk_key,
 	*sk = t;
 	if (LDBGP(DBG_CRYPT, logger)) {
 		chunk_t chunk_sk = chunk_from_symkey("sk_chunk", *sk, logger);
-		LDBG_log_hunk(logger, "%s:", chunk_sk, name);
+		LDBG_log_hunk(logger, "%s:", &chunk_sk, name);
 		free_chunk_content(&chunk_sk);
 	}
 }
@@ -378,7 +378,7 @@ void ppk_recalculate(shunk_t ppk, const struct prf_desc *prf_desc,
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "starting to recalculate SK_d, SK_pi, SK_pr");
-		LDBG_log_hunk(logger, "PPK:", ppk);
+		LDBG_log_hunk(logger, "PPK:", &ppk);
 	}
 
 	ppk_recalc_one(sk_d, ppk_key, prf_desc, "sk_d", logger);
@@ -421,7 +421,7 @@ struct ppk_confirmation calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger,"prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)");
-		LDBG_hunk(logger, ppk_confirmation);
+		LDBG_hunk(logger, &ppk_confirmation);
 	}
 
 	symkey_delref(logger, "PPK Keying material", &ppk_key);
@@ -437,7 +437,7 @@ bool emit_v2N_PPK_IDENTITY_KEY(struct pbs_out *pbs, struct ike_sa *ike,
 	}
 
 	const struct ppk_id_payload payl = ppk_id_payload(PPK_ID_FIXED,
-							  HUNK_AS_SHUNK(ppk->id),
+							  HUNK_AS_SHUNK(&ppk->id),
 							  ike->sa.logger);
 	if (!emit_unified_ppk_id(&payl, &ppks)) {
 		return false;

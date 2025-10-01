@@ -214,7 +214,7 @@ static bool send_or_resend_v1_ike_msg_from_state(struct state *st,
 	    should_fragment_v1_ike_msg(st, len + natt_bonus, resending)) {
 		return send_v1_frags(st, where);
 	} else {
-		return send_hunk_using_state(st, where, st->st_v1_tpacket);
+		return send_hunk_using_state(st, where, &st->st_v1_tpacket);
 	}
 }
 

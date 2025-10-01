@@ -177,7 +177,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	struct crypt_mac chunk_output = crypt_prf_final_mac(&chunk_prf, NULL);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "chunk output");
-		LDBG_hunk(logger, chunk_output);
+		LDBG_hunk(logger, &chunk_output);
 	}
 	if (!verify_hunk(test->description, "prf OUT",
 			 prf_output, chunk_output,

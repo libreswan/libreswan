@@ -250,9 +250,9 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	     unpadded_encrypt.len, encrypt_padding, padded_encrypt.len);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "encrypting:");
-		LDBG_hunk(logger, padded_encrypt);
+		LDBG_hunk(logger, &padded_encrypt);
 		LDBG_log(logger, "IV:");
-		LDBG_hunk(logger, *iv);
+		LDBG_hunk(logger, iv);
 	}
 
 	/*
@@ -266,7 +266,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "next IV:");
-		LDBG_hunk(logger, *iv);
+		LDBG_hunk(logger, iv);
 	}
 
 	return true;

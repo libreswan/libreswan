@@ -99,7 +99,7 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = HUNK_AS_SHUNK(name),
+			.name = HUNK_AS_SHUNK(&name),
 			.scratch = name.ptr,
 		};
 		return NULL;
@@ -275,7 +275,7 @@ const char *str_id(const struct id *id, id_buf *buf)
 
 struct id clone_id(const struct id *src, const char *story)
 {
-	chunk_t name = clone_hunk(src->name, story);
+	chunk_t name = clone_hunk_as_chunk(src->name, story);
 	struct id dst = {
 		.kind = src->kind,
 		.ip_addr = src->ip_addr,

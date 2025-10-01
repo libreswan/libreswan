@@ -416,9 +416,9 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	/* now, encrypt */
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(sk->logger, "data before [authenticated] encryption:");
-		LDBG_hunk(sk->logger, enc);
+		LDBG_hunk(sk->logger, &enc);
 		LDBG_log(sk->logger, "integ before [authenticated] encryption:");
-		LDBG_hunk(sk->logger, sk->integrity);
+		LDBG_hunk(sk->logger, &sk->integrity);
 	}
 
 	/* encrypt and authenticate the block */
@@ -428,13 +428,13 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 		/* now, encrypt */
 		if (LDBGP(DBG_CRYPT, logger)) {
-		    LDBG_log_hunk(logger, "salt before authenticated encryption:", salt);
-		    LDBG_log_hunk(logger, "IV before authenticated encryption:", sk->wire_iv);
-		    LDBG_log_hunk(logger, "AAD before authenticated encryption:", sk->aad);
+		    LDBG_log_hunk(logger, "salt before authenticated encryption:", &salt);
+		    LDBG_log_hunk(logger, "IV before authenticated encryption:", &sk->wire_iv);
+		    LDBG_log_hunk(logger, "AAD before authenticated encryption:", &sk->aad);
 		}
 
 		if (!cipher_context_op_aead(ike->sa.st_ike_encrypt_cipher_context,
-					    sk->wire_iv, HUNK_AS_SHUNK(sk->aad),
+					    sk->wire_iv, HUNK_AS_SHUNK(&sk->aad),
 					    text_and_tag, enc.len, sk->integrity.len,
 					    sk->logger)) {
 			return false;
@@ -459,17 +459,17 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(sk->logger, "data being hmac:");
-			LDBG_hunk(sk->logger, message);
+			LDBG_hunk(sk->logger, &message);
 			LDBG_log(sk->logger, "out calculated auth:");
-			LDBG_hunk(sk->logger, sk->integrity);
+			LDBG_hunk(sk->logger, &sk->integrity);
 		}
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(sk->logger, "data after [authenticated] encryption:");
-		LDBG_hunk(sk->logger,  enc);
+		LDBG_hunk(sk->logger,  &enc);
 		LDBG_log(sk->logger, "integ after [authenticated] encryption:");
-		LDBG_hunk(sk->logger, sk->integrity);
+		LDBG_hunk(sk->logger, &sk->integrity);
 	}
 
 	return true;
@@ -582,11 +582,11 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		/* decrypt */
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "salt before authenticated decryption:", salt);
-			LDBG_log_hunk(logger, "IV before authenticated decryption:", wire_iv);
-			LDBG_log_hunk(logger, "AAD before authenticated decryption:", aad);
-			LDBG_log_hunk(logger, "integ before authenticated decryption:", integ);
-			LDBG_log_hunk(logger, "payload before decryption:", enc);
+			LDBG_log_hunk(logger, "salt before authenticated decryption:", &salt);
+			LDBG_log_hunk(logger, "IV before authenticated decryption:", &wire_iv);
+			LDBG_log_hunk(logger, "AAD before authenticated decryption:", &aad);
+			LDBG_log_hunk(logger, "integ before authenticated decryption:", &integ);
+			LDBG_log_hunk(logger, "payload before decryption:", &enc);
 		}
 
 		if (!cipher_context_op_aead(ike->sa.st_ike_decrypt_cipher_context,
@@ -598,8 +598,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "data after authenticated decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
-			LDBG_hunk(ike->sa.logger, integ);
+			LDBG_hunk(ike->sa.logger, &enc);
+			LDBG_hunk(ike->sa.logger, &integ);
 		}
 
 	} else {
@@ -621,7 +621,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload before decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
+			LDBG_hunk(ike->sa.logger, &enc);
 		}
 
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
@@ -631,7 +631,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload after decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
+			LDBG_hunk(ike->sa.logger, &enc);
 		}
 
 	}
@@ -857,7 +857,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	PASSERT(ike->sa.logger, frag->plain.ptr == NULL);
 	PASSERT(ike->sa.logger, frag->text.len == 0);
 	PASSERT(ike->sa.logger, frag->plain.len == 0);
-	frag->text = clone_hunk(text, "incoming IKEv2 encrypted fragment");
+	frag->text = clone_hunk_as_chunk(text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
@@ -1007,7 +1007,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * and SKF .chain[] pointers).
 	 */
 	struct payload_digest sk = {
-		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(md->raw_packet), "decrypted SFK payloads"),
+		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->raw_packet), "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};
@@ -1294,7 +1294,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	enum next_payload_types_ikev2 skf_np = fixup_value(sk->logger, &sk->sk_next_payload_field);
 
 	unsigned int number = 1;
-	shunk_t clear_cursor = HUNK_AS_SHUNK(sk->cleartext);
+	shunk_t clear_cursor = HUNK_AS_SHUNK(&sk->cleartext);
 
 	struct v2_outgoing_fragment **frag = frags;
 	do {

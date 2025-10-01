@@ -86,11 +86,11 @@ static void pack_task(struct ike_sa *ike,
 		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.initiator :
 		       empty_chunk);
 
-	task->firstpacket = clone_hunk(firstpacket, "firstpacket");
+	task->firstpacket = clone_hunk_as_chunk(firstpacket, "firstpacket");
 	/* on initiator, we need to hash responders nonce */
-	task->nonce = clone_hunk(nonce, "nonce");
-	task->ia1 = clone_hunk(ia1, "ia1");
-	task->ia2 = clone_hunk(ia2, "ia2");
+	task->nonce = clone_hunk_as_chunk(nonce, "nonce");
+	task->ia1 = clone_hunk_as_chunk(ia1, "ia1");
+	task->ia2 = clone_hunk_as_chunk(ia2, "ia2");
 	task->idhash = (*idhash);
 	hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, task->intermediate_id);
 }
@@ -138,7 +138,7 @@ static struct hash_signature v2_auth_signature(struct logger *logger,
 	logtime_t start = logtime_start(logger);
 
 	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "hash to sign:", *hash_to_sign);
+		LDBG_log_hunk(logger, "hash to sign:", hash_to_sign);
 	}
 
 	logtime_t sign_time = logtime_start(logger);

@@ -1267,7 +1267,7 @@ static struct child_sa *duplicate_state(struct connection *c,
 	 */
 	if (sa_kind == CHILD_SA) {
 		child->sa.st_oakley = ike->sa.st_oakley;
-#   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
+#   define state_clone_chunk(CHUNK) child->sa.CHUNK = clone_hunk_as_chunk(ike->sa.CHUNK, #CHUNK " in duplicate state")
 		state_clone_chunk(st_ni);
 		state_clone_chunk(st_nr);
 #   undef state_clone_chunk

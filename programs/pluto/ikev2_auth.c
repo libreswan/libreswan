@@ -90,12 +90,12 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
-		LDBG_log_hunk(logger, "%s", *nonce, nonce_name);
-		LDBG_log_hunk(logger, "idhash", *idhash);
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", &firstpacket);
+		LDBG_log_hunk(logger, "%s", nonce, nonce_name);
+		LDBG_log_hunk(logger, "idhash", idhash);
 		if (ike->sa.st_v2_ike_intermediate.enabled) {
-			LDBG_log_hunk(logger, "IntAuth_*_I_A:", ia1);
-			LDBG_log_hunk(logger, "IntAuth_*_R_A:", ia2);
+			LDBG_log_hunk(logger, "IntAuth_*_I_A:", &ia1);
+			LDBG_log_hunk(logger, "IntAuth_*_R_A:", &ia2);
 		}
 	}
 
@@ -736,7 +736,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
+			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
 		struct hash_signature signed_signature = {
@@ -861,7 +861,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		}
 
 		if (LDBGP(DBG_CRYPT, logger)) {
-			LDBG_log_hunk(logger, "PSK auth octets:", signed_octets);
+			LDBG_log_hunk(logger, "PSK auth octets:", &signed_octets);
 		}
 
 		struct hash_signature signed_signature = {
@@ -928,7 +928,7 @@ void v2_IKE_AUTH_responder_id_payload(struct ike_sa *ike)
 		ike->sa.st_v2_id_payload.header =
 			build_v2_id_payload(&c->local->host, &data,
 					    "my IDr", ike->sa.logger);
-		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
+		ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(data, "my IDr");
 	}
 
 	/* will be signed in auth payload */
@@ -944,7 +944,7 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
 	ike->sa.st_v2_id_payload.header =
 		build_v2_id_payload(&c->local->host, &data,
 				    "my IDi", ike->sa.logger);
-	ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
+	ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(data, "my IDi");
 
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 					    "st_skey_pi_nss",

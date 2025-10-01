@@ -170,14 +170,14 @@ void extract_ikev2_ike_keys(struct state *st,
 			cipher_context_create(st->st_oakley.ta_encrypt,
 					      ENCRYPT, FILL_WIRE_IV,
 					      st->st_skey_ei_nss,
-					      HUNK_AS_SHUNK(st->st_skey_initiator_salt),
+					      HUNK_AS_SHUNK(&st->st_skey_initiator_salt),
 					      st->logger);
 		/* decrypt inbound uses R */
 		st->st_ike_decrypt_cipher_context =
 			cipher_context_create(st->st_oakley.ta_encrypt,
 					      DECRYPT, USE_WIRE_IV,
 					      st->st_skey_er_nss,
-					      HUNK_AS_SHUNK(st->st_skey_responder_salt),
+					      HUNK_AS_SHUNK(&st->st_skey_responder_salt),
 					      st->logger);
 		break;
 	case SA_RESPONDER:
@@ -186,14 +186,14 @@ void extract_ikev2_ike_keys(struct state *st,
 			cipher_context_create(st->st_oakley.ta_encrypt,
 					      ENCRYPT, FILL_WIRE_IV,
 					      st->st_skey_er_nss,
-					      HUNK_AS_SHUNK(st->st_skey_responder_salt),
+					      HUNK_AS_SHUNK(&st->st_skey_responder_salt),
 					      st->logger);
 		/* decrypt inbound uses I */
 		st->st_ike_decrypt_cipher_context =
 			cipher_context_create(st->st_oakley.ta_encrypt,
 					      DECRYPT, USE_WIRE_IV,
 					      st->st_skey_ei_nss,
-					      HUNK_AS_SHUNK(st->st_skey_initiator_salt),
+					      HUNK_AS_SHUNK(&st->st_skey_initiator_salt),
 					      st->logger);
 		break;
 	default:

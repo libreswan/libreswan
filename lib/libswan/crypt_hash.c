@@ -129,7 +129,7 @@ struct crypt_mac crypt_hash_final_mac(struct crypt_hash **hashp)
 	passert(output.len <= sizeof(output.ptr/*array*/));
 	hash->desc->hash_ops->final_bytes(&hash->context, output.ptr, output.len);
 	if (ldbg_hash(hash, "final mac length %zu", output.len)) {
-		LDBG_hunk(hash->logger, output);
+		LDBG_hunk(hash->logger, &output);
 	}
 	pfree(*hashp);
 	*hashp = hash = NULL;

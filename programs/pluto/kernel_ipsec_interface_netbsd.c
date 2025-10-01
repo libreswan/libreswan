@@ -152,7 +152,7 @@ static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbo
 	if (result.output.len == 0) {
 		return "sysctl exited with no output";
 	}
-	shunk_t shunk = HUNK_AS_SHUNK(result.output);
+	shunk_t shunk = HUNK_AS_SHUNK(&result.output);
 	err_t e = shunk_to_uintmax(shunk, &shunk, 10, value);
 	if (e != NULL) {
 		return "sysctl output is non-numeric";
