@@ -44,6 +44,7 @@ struct pubkey;		/* forward */
 struct pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
 struct hash_desc;
+struct hash_hunk;
 struct cert;
 
 /*
@@ -185,6 +186,12 @@ struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
 	const struct pubkey_type *type;
+	struct hash_signature (*sign)(const struct pubkey_signer *signer,
+				      const struct hash_desc *hasher,
+				      const struct secret_pubkey_stuff *pks,
+				      const struct hash_hunk *hunks,
+				      unsigned nr_hunks,
+				      struct logger *logger);
 	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
 					   const struct hash_desc *hash_algo,
@@ -220,6 +227,13 @@ extern const struct pubkey_signer pubkey_signer_digsig_rsassa_pss;	/* rfc7427 */
 extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
 
 const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
+
+struct hash_signature pubkey_hash_then_sign(const struct pubkey_signer *signer,
+					    const struct hash_desc *hasher,
+					    const struct secret_pubkey_stuff *pks,
+					    const struct hash_hunk *hunks,
+					    unsigned nr_hunks,
+					    struct logger *logger);
 
 /*
  * Public Key Machinery.

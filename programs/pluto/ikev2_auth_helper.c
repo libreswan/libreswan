@@ -139,34 +139,11 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 	return true;
 }
 
-static struct hash_signature v2_auth_signature(struct logger *logger,
-					       const struct crypt_mac *hash_to_sign,
-					       const struct hash_desc *hash_algo,
-					       const struct secret_pubkey_stuff *pks,
-					       const struct pubkey_signer *signer)
-{
-	passert(hash_to_sign->len <= sizeof(hash_to_sign->ptr/*array*/)); /*hint to coverity*/
-	logtime_t start = logtime_start(logger);
-
-	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log_hunk(logger, "hash to sign:", hash_to_sign);
-	}
-
-	logtime_t sign_time = logtime_start(logger);
-	struct hash_signature sig = signer->sign_hash(pks,
-						      hash_to_sign->ptr,
-						      hash_to_sign->len,
-						      hash_algo,
-						      logger);
-	logtime_stop(&sign_time, "%s() calling sign_hash()", __func__);
-	passert(sig.len <= sizeof(sig.ptr/*array*/));
-	logtime_stop(&start, "%s()", __func__);
-	return sig;
-}
-
 static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 				       int unused_my_thread UNUSED)
 {
+	logtime_t start = logtime_start(logger);
+
 	const struct hash_hunk octets[] = {
 		{ "first packet", HUNK_REF(task->firstpacket), },
 		{ "nonce", HUNK_REF(task->nonce), },
@@ -176,14 +153,11 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 		{ "ia2", HUNK_REF(task->ia2), },
 		{ "Intermediate ID + 1", HUNK_REF(task->intermediate_wire_id), },
 	};
-	struct crypt_mac hash_to_sign = crypt_hash_hunks("hash-to-sign",
-							 task->hasher,
-							 ARRAY_REF(octets),
-							 logger);
 
-	task->signature = v2_auth_signature(logger, &hash_to_sign,
-					    task->hasher,
-					    task->pks, task->signer);
+	task->signature = task->signer->sign(task->signer, task->hasher,
+					     task->pks, ARRAY_REF(octets),
+					     logger);
+	logtime_stop(&start, "%s()", __func__);
 }
 
 static stf_status v2_auth_signature_completed(struct state *st,
