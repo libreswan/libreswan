@@ -115,7 +115,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 		if (LDBGP(DBG_CRYPT, logger)) {				\
 			LDBG_log(logger, "%s() %s: aad-size=%zd salt-size=%zd wire-IV-size=%zd text-size=%zd tag-size=%zd text+tag in:", \
 				 __func__, #CIPHER_OP, aad.len, salt.len, wire_iv.len, len, tag.len); \
-			LDBG_hunk(logger, text_and_tag);		\
+			LDBG_hunk(logger, &text_and_tag);		\
 		}							\
 		if (!cipher_aead(encrypt_desc, CIPHER_OP, USE_WIRE_IV,	\
 				 HUNK_AS_SHUNK(&salt),			\
@@ -135,7 +135,7 @@ static bool test_gcm_vector(const struct encrypt_desc *encrypt_desc,
 			ok = false;					\
 		if (LDBGP(DBG_CRYPT, logger)) {				\
 			LDBG_log(logger, "%s() text+tag out:", __func__); \
-			LDBG_hunk(logger, text_and_tag);		\
+			LDBG_hunk(logger, &text_and_tag);		\
 		}							\
 	}
 

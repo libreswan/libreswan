@@ -369,14 +369,14 @@ static bool fetch_succeeded(struct crl_distribution_point *dp,
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "CRL: the sleeping dragon returned from %s with %zu gold",
 			 dp->url, output.len);
-		LDBG_hunk(logger, output);
+		LDBG_hunk(logger, &output);
 	}
 
 	chunk_t sign_dn = clone_hunk_as_chunk(output, "signer");		/* must free */
 	pemtobin(&sign_dn);
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "CRL: the sleeping dragon returned from %s signs:", dp->url);
-		LDBG_hunk(logger, sign_dn);
+		LDBG_hunk(logger, &sign_dn);
 	}
 
 	/*

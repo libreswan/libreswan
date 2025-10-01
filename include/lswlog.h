@@ -260,21 +260,15 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
  */
 #define LDBG_log_hunk(LOGGER, LABEL, HUNK, ...)				\
 	{								\
-		llog(DEBUG_STREAM, LOGGER, LABEL, ##__VA_ARGS__);	\
-		const typeof(*(HUNK)) *h_ = (HUNK);			\
-		llog_dump(DEBUG_STREAM, LOGGER,				\
-			  (h_ == NULL ? NULL : h_->ptr),		\
-			  (h_ == NULL ? 0 : h_->len));			\
+		LDBG_log(LOGGER, LABEL, ##__VA_ARGS__);			\
+		LDBG_hunk(LOGGER, HUNK);				\
 	}
 
 #define LDBG_dump(LOGGER, DATA, LEN)			\
 	llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN)
 
-#define LDBG_hunk(LOGGER, HUNK)						\
-	{								\
-		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(DEBUG_STREAM, LOGGER, hunk_->ptr, hunk_->len); \
-	}
+#define LDBG_hunk(LOGGER, HUNK)			\
+	llog_hunk(DEBUG_STREAM, LOGGER, HUNK)
 
 #define LDBG_thing(LOGGER, THING)			\
 	llog_thing(DEBUG_STREAM, LOGGER, THING);

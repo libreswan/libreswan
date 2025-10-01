@@ -233,7 +233,7 @@ struct crypt_mac crypt_prf_final_mac(struct crypt_prf **prfp, const struct integ
 	prf->desc->prf_mac_ops->final_bytes(&prf->context, output.ptr,
 					    prf->desc->prf_output_size);
 	if (ldbg_prf(prf, "final mac length %zu", output.len)) {
-		LDBG_hunk(prf->logger, output);
+		LDBG_hunk(prf->logger, &output);
 	}
 	/* clean up */
 	pfree(*prfp);

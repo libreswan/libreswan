@@ -2345,7 +2345,7 @@ diag_t pbs_in_shunk(struct pbs_in *ins, size_t len, shunk_t *shunk, const char *
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "parsing %zu raw bytes of %s into %s",
 			 len, ins->name, name);
-		LDBG_hunk(logger, *shunk);
+		LDBG_hunk(logger, shunk);
 	}
 	ins->cur += len;
 	return NULL;

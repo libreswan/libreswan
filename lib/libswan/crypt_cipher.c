@@ -91,7 +91,7 @@ struct cipher_context *cipher_context_create(const struct encrypt_desc *cipher,
 			 symkey,
 			 (dump_salt ? ", salt: " : ""));
 		if (dump_salt) {
-			LDBG_hunk(logger, salt);
+			LDBG_hunk(logger, &salt);
 		}
 	}
 	struct cipher_context *cipher_context = alloc_thing(struct cipher_context, __func__);

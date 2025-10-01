@@ -196,7 +196,7 @@ static void decode_v1_certificate_request(struct ike_sa *ike,
 
 		if (LDBGP(DBG_BASE, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "CR:");
-			LDBG_hunk(ike->sa.logger, ca_name);
+			LDBG_hunk(ike->sa.logger, &ca_name);
 		}
 
 		if (ca_name.len > 0) {

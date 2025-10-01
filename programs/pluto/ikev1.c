@@ -1525,7 +1525,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 				 (unsigned) pbs_left(&md->message_pbs),
 				 cipher->common.fqn);
 			LDBG_log(ike->sa.logger, "IV before:");
-			LDBG_hunk(ike->sa.logger, md->v1_decrypt_iv);
+			LDBG_hunk(ike->sa.logger, &md->v1_decrypt_iv);
 		}
 
 		/* Decrypt everything after header */
@@ -1540,7 +1540,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			     ike->sa.logger);
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "IV after:");
-			LDBG_hunk(ike->sa.logger, md->v1_decrypt_iv);
+			LDBG_hunk(ike->sa.logger, &md->v1_decrypt_iv);
 			LDBG_log(ike->sa.logger,
 				 "decrypted payload (starts at offset %td):",
 				 md->message_pbs.cur - md->message_pbs.roof);
@@ -1976,7 +1976,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 			if (LDBGP(DBG_BASE, LOGGER)) {
 				shunk_t header = pbs_in_to_cursor(&p->pbs);
 				LDBG_log(LOGGER, "%s", p->pbs.name);
-				LDBG_hunk(LOGGER, header);
+				LDBG_hunk(LOGGER, &header);
 			}
 		}
 	}

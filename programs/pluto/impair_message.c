@@ -123,7 +123,7 @@ static const struct message *save_message(struct direction_impairment *direction
 		if (hunk_eq(old->body, message)) {
 			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(logger, "matching %u", nr);
-				LDBG_hunk(logger, old->body);
+				LDBG_hunk(logger, &old->body);
 			}
 			old->count++;
 			return old;

@@ -173,9 +173,9 @@ static void detect_ikev1_natd(struct msg_digest *md, struct ike_sa *ike)
 
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "expected NAT-D(local):");
-		LDBG_hunk(ike->sa.logger, hash_local);
+		LDBG_hunk(ike->sa.logger, &hash_local);
 		LDBG_log(ike->sa.logger, "expected NAT-D(remote):");
-		LDBG_hunk(ike->sa.logger, hash_remote);
+		LDBG_hunk(ike->sa.logger, &hash_remote);
 	}
 
 	bool found_local = false;
@@ -186,7 +186,7 @@ static void detect_ikev1_natd(struct msg_digest *md, struct ike_sa *ike)
 		shunk_t left = pbs_in_left(&p->pbs);
 		if (LDBGP(DBG_BASE, ike->sa.logger)) {
 			LDBG_log(ike->sa.logger, "received NAT-D:");
-			LDBG_hunk(ike->sa.logger, left);
+			LDBG_hunk(ike->sa.logger, &left);
 		}
 
 		if (hunk_eq(left, hash_local))
@@ -298,7 +298,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	if (LDBGP(DBG_BASE, logger)) {
 		shunk_t nat_ao = pbs_in_all(&p->pbs);
 		LDBG_log(logger, "NAT-OA:");
-		LDBG_hunk(logger, nat_ao);
+		LDBG_hunk(logger, &nat_ao);
 	}
 
 	ip_address ip;

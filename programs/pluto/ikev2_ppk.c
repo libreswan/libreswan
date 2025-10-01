@@ -55,7 +55,7 @@ struct ppk_id_payload ppk_id_payload(enum ikev2_ppk_id_type type,
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "ppk type: %d", (int) payload.type);
 		LDBG_log(logger, "ppk_id from payload:");
-		LDBG_hunk(logger, payload.ppk_id);
+		LDBG_hunk(logger, &payload.ppk_id);
 	}
 	return payload;
 }
@@ -115,7 +115,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	shunk_t ppk_id = pbs_in_left(&pbs);
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
-		LDBG_hunk(ike->sa.logger, ppk_id);
+		LDBG_hunk(ike->sa.logger, &ppk_id);
 	}
 
 	if (ppk_id.len == 0) {
@@ -205,7 +205,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK_ID:");
-		LDBG_hunk(ike->sa.logger, ppk_id);
+		LDBG_hunk(ike->sa.logger, &ppk_id);
 	}
 
 	struct ppk_confirmation ppk_confirmation = { .len = PPK_CONFIRMATION_LEN, };
@@ -220,7 +220,7 @@ bool extract_v2N_ppk_id_key(const struct pbs_in *notify_pbs,
 
 	if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "extracted PPK Confirmation:");
-		LDBG_hunk(ike->sa.logger, ppk_confirmation);
+		LDBG_hunk(ike->sa.logger, &ppk_confirmation);
 	}
 
 	/* clone ppk id and ppk confirmation data */
@@ -421,7 +421,7 @@ struct ppk_confirmation calc_PPK_IDENTITY_KEY_confirmation(const struct prf_desc
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger,"prf(PPK, Ni | Nr | SPIi | SPIr) (full PPK confirmation)");
-		LDBG_hunk(logger, ppk_confirmation);
+		LDBG_hunk(logger, &ppk_confirmation);
 	}
 
 	symkey_delref(logger, "PPK Keying material", &ppk_key);

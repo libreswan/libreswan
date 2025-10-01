@@ -472,7 +472,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 	} else if (nonce->len != len || !memeq(nonce->ptr, input_pbs.cur, len)) {
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "expected nonce");
-			LDBG_hunk(logger, *nonce);
+			LDBG_hunk(logger, nonce);
 			LDBG_log(logger, "received nonce");
 			LDBG_dump(logger, input_pbs.cur, len);
 		}

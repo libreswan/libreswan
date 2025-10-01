@@ -416,9 +416,9 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 	/* now, encrypt */
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(sk->logger, "data before [authenticated] encryption:");
-		LDBG_hunk(sk->logger, enc);
+		LDBG_hunk(sk->logger, &enc);
 		LDBG_log(sk->logger, "integ before [authenticated] encryption:");
-		LDBG_hunk(sk->logger, sk->integrity);
+		LDBG_hunk(sk->logger, &sk->integrity);
 	}
 
 	/* encrypt and authenticate the block */
@@ -459,17 +459,17 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(sk->logger, "data being hmac:");
-			LDBG_hunk(sk->logger, message);
+			LDBG_hunk(sk->logger, &message);
 			LDBG_log(sk->logger, "out calculated auth:");
-			LDBG_hunk(sk->logger, sk->integrity);
+			LDBG_hunk(sk->logger, &sk->integrity);
 		}
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(sk->logger, "data after [authenticated] encryption:");
-		LDBG_hunk(sk->logger,  enc);
+		LDBG_hunk(sk->logger,  &enc);
 		LDBG_log(sk->logger, "integ after [authenticated] encryption:");
-		LDBG_hunk(sk->logger, sk->integrity);
+		LDBG_hunk(sk->logger, &sk->integrity);
 	}
 
 	return true;
@@ -598,8 +598,8 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "data after authenticated decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
-			LDBG_hunk(ike->sa.logger, integ);
+			LDBG_hunk(ike->sa.logger, &enc);
+			LDBG_hunk(ike->sa.logger, &integ);
 		}
 
 	} else {
@@ -621,7 +621,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload before decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
+			LDBG_hunk(ike->sa.logger, &enc);
 		}
 
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
@@ -631,7 +631,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 
 		if (LDBGP(DBG_CRYPT, logger)) {
 			LDBG_log(ike->sa.logger, "payload after decryption:");
-			LDBG_hunk(ike->sa.logger, enc);
+			LDBG_hunk(ike->sa.logger, &enc);
 		}
 
 	}

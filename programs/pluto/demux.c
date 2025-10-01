@@ -132,7 +132,7 @@ void process_md(struct msg_digest *md)
 				 packet.len, md->hdr.isa_length);
 			shunk_t tail = hunk_slice(packet, message.len, packet.len);
 			LDBG_log(md->logger, "extraneous bytes:");
-			LDBG_hunk(md->logger, tail);
+			LDBG_hunk(md->logger, &tail);
 		}
 	}
 
@@ -302,7 +302,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 				 str_endpoint(&md->iface->local_endpoint, &lb),
 				 md->iface->io->protocol->name);
 			shunk_t packet = pbs_in_all(&md->packet_pbs);
-			LDBG_hunk(logger, packet);
+			LDBG_hunk(logger, &packet);
 		}
 
 		pstats_ike_bytes.in += pbs_in_all(&md->packet_pbs).len;

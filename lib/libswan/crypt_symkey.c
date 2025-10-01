@@ -110,7 +110,7 @@ void LDBG_symkey(struct logger *logger, const char *prefix, const char *name, PK
 		} else {
 			chunk_t bytes = chunk_from_symkey(prefix, key, logger);
 			/* NULL suppresses the dump header */
-			LDBG_hunk(logger, bytes);
+			LDBG_hunk(logger, &bytes);
 			free_chunk_content(&bytes);
 		}
 	}

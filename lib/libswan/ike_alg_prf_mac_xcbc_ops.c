@@ -125,17 +125,17 @@ static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 {
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: data:");
-		LDBG_hunk(logger, bytes);
+		LDBG_hunk(logger, &bytes);
 		chunk_t k = chunk_from_symkey("K", key, logger);
 		LDBG_log(logger, "XCBC: K:");
-		LDBG_hunk(logger, k);
+		LDBG_hunk(logger, &k);
 		free_chunk_content(&k);
 	}
 
 	struct crypt_mac k1t = derive_ki(prf, key, 1, logger);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: K1:");
-		LDBG_hunk(logger, k1t);
+		LDBG_hunk(logger, &k1t);
 	}
 	PK11SymKey *k1 = xcbc_key_from_mac(prf, "k1", &k1t, logger);
 
@@ -228,7 +228,7 @@ static struct crypt_mac xcbc_mac(const struct prf_desc *prf, PK11SymKey *key,
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "XCBC: MAC:");
-		LDBG_hunk(logger, e);
+		LDBG_hunk(logger, &e);
 	}
 
 	symkey_delref(logger, "k1", &k1);

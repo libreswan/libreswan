@@ -403,7 +403,7 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, *expected_hash);
+		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
@@ -548,7 +548,7 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, *expected_hash);
+		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*
@@ -696,7 +696,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "NSS RSA: verifying that decrypted signature matches hash:");
-		LDBG_hunk(logger, *expected_hash);
+		LDBG_hunk(logger, expected_hash);
 	}
 
 	/*

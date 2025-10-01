@@ -971,7 +971,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		peer->name = name;
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "KEY ID:");
-			LDBG_hunk(logger, peer->name);
+			LDBG_hunk(logger, &peer->name);
 		}
 		break;
 
@@ -979,7 +979,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		peer->name = name;
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "DER ASN1 DN:");
-			LDBG_hunk(logger, peer->name);
+			LDBG_hunk(logger, &peer->name);
 		}
 		break;
 
@@ -987,7 +987,7 @@ diag_t unpack_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id
 		if (name.len != 0) {
 			if (LDBGP(DBG_BASE, logger)) {
 				LDBG_log(logger, "unauthenticated NULL ID:");
-				LDBG_hunk(logger, name);
+				LDBG_hunk(logger, &name);
 			}
 		}
 		break;

@@ -1500,9 +1500,9 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		if (LDBGP(DBG_PRIVATE, child->sa.logger) ||
 		    LDBGP(DBG_CRYPT, child->sa.logger)) {
 			LDBG_log(child->sa.logger, "ESP encrypt key:");
-			LDBG_hunk(child->sa.logger, said_next->encrypt_key);
+			LDBG_hunk(child->sa.logger, &said_next->encrypt_key);
 			LDBG_log(child->sa.logger, "ESP integrity key:");
-			LDBG_hunk(child->sa.logger, said_next->integ_key);
+			LDBG_hunk(child->sa.logger, &said_next->integ_key);
 		}
 
 		setup_esp_nic_offload(&said_next->nic_offload, c, child->sa.logger);
@@ -1571,7 +1571,7 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 		if (LDBGP(DBG_PRIVATE, child->sa.logger) ||
 		    LDBGP(DBG_CRYPT, child->sa.logger)) {
 			LDBG_log(child->sa.logger, "AH authkey:");
-			LDBG_hunk(child->sa.logger, said_next->integ_key);
+			LDBG_hunk(child->sa.logger, &said_next->integ_key);
 		}
 
 		bool ret = kernel_ops_add_sa(said_next, replace, child->sa.logger);

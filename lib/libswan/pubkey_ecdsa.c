@@ -190,7 +190,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		LDBG_log(logger, "pub");
 		LDBG_dump(logger, ec->publicValue.data, ec->publicValue.len);
 		LDBG_log(logger, "CKAID");
-		LDBG_hunk(logger, pkc->ckaid);
+		LDBG_hunk(logger, &pkc->ckaid);
 	}
 
 	return NULL;
@@ -330,7 +330,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "signed hash:");
-		LDBG_hunk(logger, signature);
+		LDBG_hunk(logger, &signature);
 	}
 
 	ldbg(logger, "%s: signed hash", __func__);

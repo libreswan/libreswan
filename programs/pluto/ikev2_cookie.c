@@ -260,7 +260,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	replace_chunk(&ike->sa.st_dcookie, cookie, "DDOS cookie");
 	if (LDBGP(DBG_BASE, ike->sa.logger)) {
 		LDBG_log(ike->sa.logger, "IKEv2 cookie received");
-		LDBG_hunk(ike->sa.logger, ike->sa.st_dcookie);
+		LDBG_hunk(ike->sa.logger, &ike->sa.st_dcookie);
 	}
 
 	if (stream != NO_STREAM) {

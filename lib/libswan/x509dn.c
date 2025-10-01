@@ -553,7 +553,7 @@ size_t jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
 		/* error: print DN as hex string */
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "error in DN parsing: %s; bad DN:", ugh);
-			LDBG_hunk(logger, dn);
+			LDBG_hunk(logger, &dn);
 		}
 		/* reset the buffer */
 		jambuf_set_pos(buf, &pos);

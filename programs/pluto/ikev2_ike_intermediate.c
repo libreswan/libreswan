@@ -579,7 +579,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		if (LDBGP(DBG_BASE, logger)) {
 			shunk_t ke = kem_initiator_ke(task->initiator);
 			LDBG_log(logger, "initiator ADDKE:");
-			LDBG_hunk(logger, ke);
+			LDBG_hunk(logger, &ke);
 		}
 	}
 
@@ -819,7 +819,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		}
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "ADDKE: responder encapsulating using initiator KE:");
-			LDBG_hunk(logger, initiator_ke);
+			LDBG_hunk(logger, &initiator_ke);
 		}
 
 		diag_t d = kem_responder_encapsulate(task->exchange.addke.kem, initiator_ke,
@@ -832,7 +832,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 		if (LDBGP(DBG_BASE, logger)) {
 			shunk_t ke = kem_responder_ke(task->responder);
 			LDBG_log(logger, "ADDKE: responder KE:");
-			LDBG_hunk(logger, ke);
+			LDBG_hunk(logger, &ke);
 		}
 
 		ldbg(logger, "ADDKE: responder calculating skeyseed using prf %s",
@@ -1059,7 +1059,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 		}
 		if (LDBGP(DBG_BASE, logger)) {
 			LDBG_log(logger, "ADDKE: decapsulating using responder KE:");
-			LDBG_hunk(logger, responder_ke);
+			LDBG_hunk(logger, &responder_ke);
 		}
 		diag_t d = kem_initiator_decapsulate(task->initiator, responder_ke, logger);
 		if (d != NULL) {

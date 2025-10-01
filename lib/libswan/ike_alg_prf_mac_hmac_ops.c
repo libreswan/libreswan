@@ -209,7 +209,7 @@ static PK11SymKey *final_symkey(struct prf_context **prfp)
 	struct crypt_mac outer_mac = crypt_hash_final_mac(&outer);
 	if (LDBGP(DBG_CRYPT, (*prfp)->logger)) {
 		LDBG_log((*prfp)->logger, " hashed-outer");
-		LDBG_hunk((*prfp)->logger, outer_mac);
+		LDBG_hunk((*prfp)->logger, &outer_mac);
 	}
 	PK11SymKey *hmac = symkey_from_hunk("HMAC", outer_mac, (*prfp)->logger);
 	pfreeany(*prfp);

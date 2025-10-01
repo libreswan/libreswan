@@ -81,7 +81,7 @@ static void compute_ke_and_nonce(struct logger *logger,
 	task->nonce = alloc_rnd_chunk(DEFAULT_NONCE_SIZE, "nonce");
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "%s() generated nonce:", __func__);
-		LDBG_hunk(logger, task->nonce);
+		LDBG_hunk(logger, &task->nonce);
 	}
 }
 
