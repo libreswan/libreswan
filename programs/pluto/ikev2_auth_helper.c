@@ -32,14 +32,20 @@
 #include "log.h"
 #include "connections.h"
 #include "ike_alg_hash.h"
+#include "crypt_hash.h"
 
 struct task {
 	/* in */
-	const struct crypt_mac hash_to_sign;
-	const struct hash_desc *hash_algo;
+	chunk_t firstpacket;
+	chunk_t nonce;
+	chunk_t ia1;
+	chunk_t ia2;
+	struct crypt_mac idhash;
 	v2_auth_signature_cb *cb;
 	struct secret_pubkey_stuff *pks;
+	const struct hash_desc *hasher;
 	const struct pubkey_signer *signer;
+	uint8_t intermediate_id[sizeof(uint32_t)];
 	/* out */
 	struct hash_signature signature;
 };
@@ -55,6 +61,40 @@ struct task_handler v2_auth_signature_handler = {
 	.cleanup_cb = v2_auth_signature_cleanup,
 };
 
+static void pack_task(struct ike_sa *ike,
+		      const struct crypt_mac *idhash,
+		      enum perspective from_the_perspective_of,
+		      struct task *task)
+{
+	enum sa_role role =
+		(from_the_perspective_of == LOCAL_PERSPECTIVE ? ike->sa.st_sa_role :
+		 ike->sa.st_sa_role == SA_INITIATOR ? SA_RESPONDER :
+		 ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
+		 0);
+
+	chunk_t firstpacket = (from_the_perspective_of == LOCAL_PERSPECTIVE ? ike->sa.st_firstpacket_me :
+			       from_the_perspective_of == REMOTE_PERSPECTIVE ? ike->sa.st_firstpacket_peer :
+			       empty_chunk);
+
+	chunk_t nonce = (role == SA_INITIATOR ? ike->sa.st_nr :
+			 role == SA_RESPONDER ? ike->sa.st_ni :
+			 empty_chunk);
+	chunk_t ia1 = (role == SA_INITIATOR ? ike->sa.st_v2_ike_intermediate.initiator :
+		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.responder :
+		       empty_chunk);
+	chunk_t ia2 = (role == SA_INITIATOR ? ike->sa.st_v2_ike_intermediate.responder :
+		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.initiator :
+		       empty_chunk);
+
+	task->firstpacket = clone_hunk(firstpacket, "firstpacket");
+	/* on initiator, we need to hash responders nonce */
+	task->nonce = clone_hunk(nonce, "nonce");
+	task->ia1 = clone_hunk(ia1, "ia1");
+	task->ia2 = clone_hunk(ia2, "ia2");
+	task->idhash = (*idhash);
+	hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, task->intermediate_id);
+}
+
 bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 			      const struct crypt_mac *idhash,
 			      const struct hash_desc *hasher,
@@ -63,8 +103,6 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 			      v2_auth_signature_cb *cb,
 			      where_t where)
 {
-	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, idhash, hasher, from_the_perspective_of);
-
 	const struct connection *c = ike->sa.st_connection;
 	struct secret_pubkey_stuff *pks = get_local_private_key(c, signer->type,
 								ike->sa.logger);
@@ -75,12 +113,13 @@ bool submit_v2_auth_signature(struct ike_sa *ike, struct msg_digest *md,
 
 	struct task task = {
 		.cb = cb,
-		.hash_algo = hasher,
-		.hash_to_sign = hash_to_sign,
+		.hasher = hasher,
 		.signer = signer,
 		.pks = secret_pubkey_stuff_addref(pks, HERE),
 		.signature = {0},
 	};
+
+	pack_task(ike, idhash, from_the_perspective_of, &task);
 
 	submit_task(/*callback*/&ike->sa, /*task*/&ike->sa, md,
 		    /*detach_whack*/false,
@@ -114,10 +153,28 @@ static struct hash_signature v2_auth_signature(struct logger *logger,
 	return sig;
 }
 
+static struct crypt_mac compute_hash_to_sign(struct logger *logger, struct task *task)
+{
+	struct crypt_hash *ctx = crypt_hash_init("sighash", task->hasher, logger);
+	crypt_hash_digest_hunk(ctx, "first packet", task->firstpacket);
+	crypt_hash_digest_hunk(ctx, "nonce", task->nonce);
+	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
+	crypt_hash_digest_hunk(ctx, "IDHASH", task->idhash);
+	if (task->ia1.len > 0) {
+		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", task->ia1);
+		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", task->ia2);
+		/* IKE AUTH's first Message ID */
+		crypt_hash_digest_thing(ctx, "IKE_AUTH_MID", task->intermediate_id);
+	}
+	return crypt_hash_final_mac(&ctx);
+}
+
 static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 				       int unused_my_thread UNUSED)
 {
-	task->signature = v2_auth_signature(logger, &task->hash_to_sign, task->hash_algo,
+	struct crypt_mac hash_to_sign = compute_hash_to_sign(logger, task);
+	task->signature = v2_auth_signature(logger, &hash_to_sign,
+					    task->hasher,
 					    task->pks, task->signer);
 }
 
@@ -131,6 +188,10 @@ static stf_status v2_auth_signature_completed(struct state *st,
 
 static void v2_auth_signature_cleanup(struct task **task, struct logger *logger UNUSED)
 {
+	free_chunk_content(&(*task)->firstpacket);
+	free_chunk_content(&(*task)->nonce);
+	free_chunk_content(&(*task)->ia1);
+	free_chunk_content(&(*task)->ia2);
 	secret_pubkey_stuff_delref(&(*task)->pks, HERE);
 	pfreeany(*task);
 }
