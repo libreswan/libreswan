@@ -262,25 +262,6 @@ void ldbgf(lset_t cond, const struct logger *logger, const char *fmt, ...) PRINT
 #define LDBG_thing(LOGGER, THING)			\
 	llog_thing(DEBUG_STREAM, LOGGER, THING);
 
-#define ldbg_dump(LOGGER, DATA, LEN)			\
-	{						\
-		if (LDBGP(DBG_BASE, LOGGER)) {		\
-			LDBG_dump(LOGGER, DATA, LEN);	\
-		}					\
-	}
-#define ldbg_hunk(LOGGER, HUNK)				\
-	{						\
-		if (LDBGP(DBG_BASE, LOGGER)) {		\
-			LDBG_hunk(LOGGER, HUNK);	\
-		}					\
-	}
-#define ldbg_thing(LOGGER, THING)			\
-	{						\
-		if (LDBGP(DBG_BASE, LOGGER)) {		\
-			LDBG_thing(LOGGER, THING);	\
-		}					\
-	}
-
 /* LDBG_*(logger, ...) are unconditional wrappers */
 #define LDBG_log(LOGGER, FMT, ...) llog(DEBUG_STREAM, LOGGER, FMT, ##__VA_ARGS__)
 #define LDBG_va_list(LOGGER, FMT, AP) llog_va_list(DEBUG_STREAM, LOGGER, FMT, AP)
