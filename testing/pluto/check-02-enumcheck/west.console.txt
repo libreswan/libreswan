@@ -252,7 +252,7 @@ west #
          jam_enum_short 252: HMAC_SHA2_256_TRUNCBUG OK
          jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
-  auth_names: [1..7)
+  auth_names: [1..8)
     1 -> AUTH_NEVER
          jam_enum 1: AUTH_NEVER OK
          match AUTH_NEVER: OK
@@ -280,19 +280,19 @@ west #
          jam_enum_short 4: ECDSA OK
          jam_enum_human 4: ecdsa OK
          match ECDSA [short]: OK
-    5 -> AUTH_NULL
-         jam_enum 5: AUTH_NULL OK
+    6 -> AUTH_NULL
+         jam_enum 6: AUTH_NULL OK
          match AUTH_NULL: OK
-         short_name 5: NULL OK
-         jam_enum_short 5: NULL OK
-         jam_enum_human 5: null OK
+         short_name 6: NULL OK
+         jam_enum_short 6: NULL OK
+         jam_enum_human 6: null OK
          match NULL [short]: OK
-    6 -> AUTH_EAPONLY
-         jam_enum 6: AUTH_EAPONLY OK
+    7 -> AUTH_EAPONLY
+         jam_enum 7: AUTH_EAPONLY OK
          match AUTH_EAPONLY: OK
-         short_name 6: EAPONLY OK
-         jam_enum_short 6: EAPONLY OK
-         jam_enum_human 6: eaponly OK
+         short_name 7: EAPONLY OK
+         jam_enum_short 7: EAPONLY OK
+         jam_enum_human 7: eaponly OK
          match EAPONLY [short]: OK
   connection_event_kind_names: [1..2)
     1 -> CONNECTION_REVIVAL
