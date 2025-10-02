@@ -77,7 +77,7 @@ void whack_active_redirect_state(struct connection *c UNUSED,
 		llog(LOG_STREAM/*not-whack*/, ike->sa.logger,
 		     "redirecting to: "PRI_SHUNK, pri_shunk(active_dest));
 		pfreeany(ike->sa.st_active_redirect_gw);
-		ike->sa.st_active_redirect_gw = clone_hunk_as_string(active_dest, "redirect");
+		ike->sa.st_active_redirect_gw = clone_hunk_as_string(&active_dest, "redirect");
 		v2_msgid_queue_exchange(ike, NULL, &v2_INFORMATIONAL_v2N_REDIRECT_exchange);
 		context->count++;
 	}

@@ -48,7 +48,7 @@ err_t ttoprotocol(shunk_t text, const struct ip_protocol **proto)
 	}
 
 	/* act of desperation */
-	char *n = clone_hunk_as_string(text, "proto name");
+	char *n = clone_hunk_as_string(&text, "proto name");
 	const struct protoent *protocol = getprotobyname(n);
 	pfree(n);
 	if (protocol != NULL) {

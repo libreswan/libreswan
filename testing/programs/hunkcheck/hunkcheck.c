@@ -1078,7 +1078,7 @@ static void check__clone_hunk_as_string(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT(" input='"PRI_SHUNK"' output='%s'", pri_shunk(t->hunk), t->output);
-		char *output = clone_hunk_as_string(t->hunk, "test");
+		char *output = clone_hunk_as_string(&t->hunk, "test");
 		if (!streq(t->output, output)) {
 			FAIL("clone_hunk_as_string() output %s should be '%s'", output, t->output);
 		}

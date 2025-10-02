@@ -41,7 +41,7 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
 	*dst = unset_address;
 
-	char *name = clone_hunk_as_string(src, "ttoaddress_dns"); /* must free */
+	char *name = clone_hunk_as_string(&src, "ttoaddress_dns"); /* must free */
 	struct addrinfo *res = NULL; /* must-free when EAI==0 */
 	int family = afi == NULL ? AF_UNSPEC : afi->af;
 	const struct addrinfo hints = (struct addrinfo) {

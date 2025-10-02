@@ -110,7 +110,7 @@ static void unlocked_append_distribution_point(asn1_t issuer_dn, shunk_t url)
 		 * No distribution point found, add one.
 		 */
 		*dp = alloc_thing(struct crl_distribution_point, "add distribution point");
-		(*dp)->url = clone_hunk_as_string(url, "dp url");
+		(*dp)->url = clone_hunk_as_string(&url, "dp url");
 		(*dp)->first_request = realnow();
 		static unsigned count;
 		(*dp)->nr = ++count;

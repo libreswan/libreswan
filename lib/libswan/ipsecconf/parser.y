@@ -510,7 +510,7 @@ void add_parser_key_value(struct parser *parser,
 			parser_key_value_warning(parser, key, value,
 						 "overriding earlier '%s' keyword with new value", section);
 			pfreeany(kv->keyval.val);
-			kv->keyval.val = clone_hunk_as_string(value, "keyword.string"); /*handles NULL*/
+			kv->keyval.val = clone_hunk_as_string(&value, "keyword.string"); /*handles NULL*/
 			kv->number = number;
 			kv->deltatime = deltatime;
 			return;
@@ -541,7 +541,7 @@ static void append_parser_key_value(struct parser *parser,
 	};
 
 	/* add the value */
-	new->keyval.val = clone_hunk_as_string(value, /*handles NULL*/
+	new->keyval.val = clone_hunk_as_string(&value/*handles NULL*/,
 					       "keyword.list");
 
 	if (LDBGP(DBG_TMI, parser->logger)) {

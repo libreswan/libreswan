@@ -21,7 +21,7 @@
 #include "lswalloc.h"		/* for clone_bytes() */
 #include "hunk.h"
 
-char *raw_clone_as_string(const void *ptr, size_t maxlen, const char *name)
+char *clone_bytes_as_string(const void *ptr, size_t maxlen, const char *name)
 {
 	if (ptr == NULL) {
 		return NULL;
