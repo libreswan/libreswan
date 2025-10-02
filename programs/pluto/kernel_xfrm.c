@@ -630,15 +630,11 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			/* ignore */
 		} else {
 			/* Probe failures are not real ERRORs */
-			if (streq(story, "Probe Test")) {
-				if (LDBGP(DBG_BASE, logger))
-					LDBG_log(logger, "netlink response for %s %s", description, story);
-			} else {
-				llog_errno(ERROR_STREAM, logger, -rsp.u.e.error,
-					   "netlink response for %s %s: ",
-					   description, story);
-				llog_ext_ack(RC_LOG, logger, &rsp.n);
-			}
+			llog_errno((streq(story, "Probe Test") ? ALL_STREAMS : ERROR_STREAM),
+				   logger, -rsp.u.e.error,
+				   "netlink response for %s %s: ",
+				   description, story);
+			llog_ext_ack(RC_LOG, logger, &rsp.n);
 			return false;
 		}
 	}
