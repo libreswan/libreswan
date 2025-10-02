@@ -131,7 +131,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
-enum keyword_auth local_v2_auth(struct ike_sa *ike)
+enum auth local_v2_auth(struct ike_sa *ike)
 {
 	if (ike->sa.st_v2_resume_session != NULL) {
 		return AUTH_PSK;
@@ -143,7 +143,7 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike)
 	}
 
 	const struct connection *c = ike->sa.st_connection;
-	enum keyword_auth authby = c->local->host.config->auth;
+	enum auth authby = c->local->host.config->auth;
 	pexpect(authby != AUTH_UNSET);
 	return authby;
 }
@@ -154,7 +154,7 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike)
  */
 
 enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
-					   enum keyword_auth authby)
+					   enum auth authby)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -297,7 +297,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
 		       struct pbs_out *outs)
 {
-	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
+	enum auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
 	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, authby);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),
@@ -429,12 +429,12 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,
 			     const struct crypt_mac *idhash_in,
 			     struct pbs_in *signature_pbs,
-			     const enum keyword_auth that_auth)
+			     const enum auth that_auth)
 {
 	name_buf ramb, eanb;
 	ldbg(ike->sa.logger, "verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
 	     str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
-	     str_enum_short(&keyword_auth_names, that_auth, &eanb));
+	     str_enum_short(&auth_names, that_auth, &eanb));
 
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTH matches
@@ -478,7 +478,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		if (that_auth != AUTH_PSK) {
 			name_buf an;
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    str_enum_short(&keyword_auth_names, that_auth, &an));
+				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
@@ -502,7 +502,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		    !ike->sa.st_connection->remote->host.config->authby.null) {
 			name_buf an;
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    str_enum_short(&keyword_auth_names, that_auth, &an));
+				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
 		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
@@ -522,7 +522,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		    that_auth != AUTH_RSASIG) {
 			name_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    str_enum_short(&keyword_auth_names, that_auth, &an));
+				    str_enum_short(&auth_names, that_auth, &an));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -606,7 +606,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		ldbg(ike->sa.logger, "digsig:   no match");
 		name_buf an;
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    str_enum_short(&keyword_auth_names, that_auth, &an));
+			    str_enum_short(&auth_names, that_auth, &an));
 
 	}
 	default:
@@ -642,7 +642,7 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 {
 	struct logger *logger = ike->sa.logger;
 
-	enum keyword_auth authby = local_v2_auth(ike);
+	enum auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 
@@ -796,7 +796,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 						      v2_auth_signature_cb *cb)
 {
 	struct logger *logger = ike->sa.logger;
-	enum keyword_auth authby = local_v2_auth(ike);
+	enum auth authby = local_v2_auth(ike);
 	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 	case IKEv2_AUTH_RSA_DIGITAL_SIGNATURE:
@@ -850,7 +850,7 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 		}
 		name_buf ana;
 		ldbg(ike->sa.logger, "digsig:   authby %s selects signer %s",
-		     str_enum_long(&keyword_auth_names, authby, &ana),
+		     str_enum_long(&auth_names, authby, &ana),
 		     signer->name);
 		ike->sa.st_v2_digsig.signer = signer;
 

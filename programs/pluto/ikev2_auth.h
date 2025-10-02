@@ -32,6 +32,7 @@ enum perspective;
 struct pubkey_signer;
 struct pbs_out;
 struct pbs_in;
+enum auth;
 
 struct crypt_mac v2_sha1_hash(const struct crypt_mac *hash);
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
@@ -42,13 +43,13 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike);
 
 shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
-			      enum keyword_auth authby);
+			      enum auth authby);
 
 /*
  * The local end's proof-of-identity sent to the remote peer.
  */
-enum keyword_auth local_v2_auth(struct ike_sa *ike);
-enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike, enum keyword_auth auth);
+enum auth local_v2_auth(struct ike_sa *ike);
+enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike, enum auth auth);
 bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
 		       struct pbs_out *outpbs);
@@ -70,7 +71,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 			     struct ike_sa *ike,
 			     const struct crypt_mac *idhash_in,
 			     struct pbs_in *signature_pbs,
-			     const enum keyword_auth that_authby);
+			     const enum auth that_authby);
 
 stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct msg_digest *md,
 						      v2_auth_signature_cb auth_cb);

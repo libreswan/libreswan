@@ -192,25 +192,6 @@ enum_names sd_action_names = {
 	NULL
 };
 
-static const char *const keyword_auth_name[] = {
-#define R(E,S) [E - AUTH_UNSET] = S
-	R(AUTH_UNSET, "unset"),
-	R(AUTH_NEVER, "never"),
-	R(AUTH_PSK, "secret"),
-	R(AUTH_RSASIG, "rsasig"),
-	R(AUTH_ECDSA, "ecdsa"),
-	R(AUTH_NULL, "null"),
-	R(AUTH_EAPONLY, "eaponly"),
-#undef R
-};
-
-enum_names keyword_auth_names = {
-	AUTH_UNSET, AUTH_EAPONLY,
-	ARRAY_REF(keyword_auth_name),
-	NULL, /* prefix */
-	NULL
-};
-
 static const char *const stf_status_strings[] = {
 #define S(E) [E - STF_SKIP_COMPLETE_STATE_TRANSITION] = #E
 	S(STF_SKIP_COMPLETE_STATE_TRANSITION),

@@ -50,6 +50,7 @@
 #include "hash_table.h"
 #include "diag.h"
 #include "ckaid.h"
+#include "auth.h"
 #include "authby.h"
 #include "routing.h"
 #include "connection_owner.h"
@@ -99,7 +100,7 @@ struct host_end_config {
 	/*
 	 * Proof of identity.
 	 */
-	enum keyword_auth auth;
+	enum auth auth;
 	struct authby authby;
 
 	struct id id;			/* or ID_NONE aka %any aka set to host-addr */
