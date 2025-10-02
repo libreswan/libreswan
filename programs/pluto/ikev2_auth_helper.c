@@ -145,13 +145,13 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 	logtime_t start = logtime_start(logger);
 
 	const struct hash_hunk octets[] = {
-		{ "first packet", HUNK_REF(task->firstpacket), },
-		{ "nonce", HUNK_REF(task->nonce), },
-		{ "idhash", HUNK_REF(task->idhash), },
+		{ "first packet", HUNK_REF(&task->firstpacket), },
+		{ "nonce", HUNK_REF(&task->nonce), },
+		{ "idhash", HUNK_REF(&task->idhash), },
 		/* optional intermediate, len can be 0 */
-		{ "ia1", HUNK_REF(task->ia1), },
-		{ "ia2", HUNK_REF(task->ia2), },
-		{ "Intermediate ID + 1", HUNK_REF(task->intermediate_wire_id), },
+		{ "ia1", HUNK_REF(&task->ia1), },
+		{ "ia2", HUNK_REF(&task->ia2), },
+		{ "Intermediate ID + 1", HUNK_REF(&task->intermediate_wire_id), },
 	};
 
 	const struct hash_hunks hunks = {
