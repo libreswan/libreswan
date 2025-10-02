@@ -33,7 +33,7 @@ void cipher_ikev1(const struct encrypt_desc *cipher,
 	struct cipher_context *context = cipher_context_create(cipher, op, iv_source,
 							       symkey, null_shunk,
 							       logger);
-	chunk_t iv_chunk = HUNK_AS_CHUNK((*iv));
+	chunk_t iv_chunk = HUNK_AS_CHUNK(iv);
 	chunk_t wire_iv = hunk_slice(iv_chunk, cipher->salt_size,
 				     cipher->salt_size + cipher->wire_iv_size);
 	cipher_context_op_normal(context, wire_iv, data, iv, logger);

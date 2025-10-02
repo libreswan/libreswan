@@ -44,12 +44,6 @@ typedef struct /*chunk*/ {
 
 chunk_t chunk2(void *ptr, size_t len);
 
-#define HUNK_AS_CHUNK(HUNK)			\
-	({					\
-		typeof(HUNK) *h_ = &(HUNK);	\
-		chunk2(h_->ptr, h_->len);	\
-	})
-
 /*
  * Convert writeable THING to a writeable CHUNK.  When compiled with
  * GCC (at least) and THING is read-only, a warning will be generated.
@@ -61,6 +55,16 @@ chunk_t chunk2(void *ptr, size_t len);
  *
  * For a read-only CHUNK like object, see THING_AS_SHUNK().
  */
+
+#define HUNK_AS_CHUNK(HUNK)						\
+	({								\
+		typeof(*(HUNK)) *h_ = HUNK; /* evalutate once; no paren */ \
+		chunk_t c_ = {						\
+			.ptr = (h_ == NULL ? NULL : h_->ptr),		\
+			.len = (h_ == NULL ? 0 : h_->len),		\
+		};							\
+		c_;							\
+	})
 #define THING_AS_CHUNK(THING) chunk2(&(THING), sizeof(THING))
 
 chunk_t alloc_chunk(size_t count, const char *name);
