@@ -28,6 +28,10 @@
  */
 
 #include <pthread.h>    /* Must be the first include file */
+
+#include <prthread.h>	/* for hacking around NSPR */
+#include <private/pprthred.h>	/* for PR_DetachThread() */
+
 #include <unistd.h>	/* for sleep() */
 #include <limits.h>	/* for UINT_MAX, ULONG_MAX */
 
@@ -270,6 +274,39 @@ static void *helper_thread(void *arg)
 			sleep(impair.helper_thread_delay.value);
 		}
 		do_job(job, w->helper_id);
+	}
+
+	if (LDBGP(DBG_BASE, w->logger)) {
+		PRThread *self = PR_GetCurrentThread();
+		PRThreadType type = PR_GetThreadType(self);
+#define THINKS(T) case T: ldbg(w->logger, "NSPR thinks I'm a "#T" thread"); break
+		switch (type) {
+			THINKS(PR_USER_THREAD);
+			THINKS(PR_SYSTEM_THREAD);
+		default:
+			ldbg(w->logger, "NSPR doesn't no what to think about ThreadType %d", type);
+			break;
+		}
+		PRThreadScope scope = PR_GetThreadScope(self);
+		switch (scope) {
+			THINKS(PR_LOCAL_THREAD);
+			THINKS(PR_GLOBAL_THREAD);
+			THINKS(PR_GLOBAL_BOUND_THREAD);
+		default:
+			ldbg(w->logger, "NSPR doesn't no what to think about ThreadScope: %d", type);
+			break;
+		}
+		PRThreadState state = PR_GetThreadState(self);
+		switch (state) {
+			THINKS(PR_JOINABLE_THREAD);
+			THINKS(PR_UNJOINABLE_THREAD);
+		default:
+			ldbg(w->logger, "NSPR doesn't no what to think abouth ThreadState: %d", type);
+			break;
+		}
+#undef THINKS
+		ldbg(w->logger, "detaching NSPR");
+		PR_DetachThread();
 	}
 
 	ldbg(w->logger, "helper %u: telling main thread that it is exiting", w->helper_id);
