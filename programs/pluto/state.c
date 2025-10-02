@@ -1639,6 +1639,13 @@ void jam_humber_uintmax(struct jambuf *buf,
 	jam_string(buf, suffix);
 }
 
+const char *str_humber_uintmax(const char *prefix, uintmax_t val, const char *suffix, humber_buf *buf)
+{
+	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
+	jam_humber_uintmax(&jb, prefix, val, suffix);
+	return buf->buf;
+}
+
 void whack_briefstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);

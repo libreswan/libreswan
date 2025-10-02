@@ -87,6 +87,8 @@ OBJS += ikev2_eap.o
 
 OBJS += state_db.o
 OBJS += show.o
+OBJS += show_text.o
+OBJS += show_json.o
 OBJS += binlog.o
 OBJS += retransmit.o
 OBJS += quirks.o
