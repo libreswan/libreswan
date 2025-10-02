@@ -189,7 +189,9 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		 * RFC 5723 6.2:
 		 * AUTH = prf(SK_px, <message octets>)
 		 */
-		(*sighash) = ikev2_psk_resume(prf, SK_px, firstpacket, logger);
+		(*sighash) = ikev2_psk_resume(prf, SK_px,
+					      HUNK_AS_SHUNK(&firstpacket),
+					      logger);
 		PASSERT(logger, sighash->len > 0);
 		return NULL;
 	}
@@ -269,7 +271,8 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	 */
 	passert(idhash->len == prf->prf_output_size);
 	*sighash = ikev2_psk_auth(prf, pss,
-				  firstpacket, *nonce, idhash,
+				  HUNK_AS_SHUNK(&firstpacket),
+				  *nonce, idhash,
 				  intermediate_auth, ike->sa.logger);
 	symkey_delref(logger, "pss", &pss);
 	free_chunk_content(&intermediate_auth);

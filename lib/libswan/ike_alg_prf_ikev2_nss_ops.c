@@ -204,7 +204,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 
 static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 				 PK11SymKey *psk,
-				 chunk_t first_packet,
+				 shunk_t first_packet,
 				 chunk_t nonce,
 				 const struct crypt_mac *id_hash,
 				 chunk_t intermediate_packet,
@@ -266,7 +266,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 
 static struct crypt_mac psk_resume(const struct prf_desc *prf,
 				   PK11SymKey *SK_px,
-				   chunk_t first_packet,
+				   shunk_t first_packet,
 				   struct logger *logger)
 {
 	return ike_alg_prf_ikev2_mac_ops.psk_resume(prf, SK_px,
