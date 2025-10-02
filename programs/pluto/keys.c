@@ -166,6 +166,7 @@ void list_psks(struct show *s)
 struct tac_state {
 	const struct pubkey_signer *signer;
 	const struct crypt_mac *hash;
+	const struct hash_hunks *hunks;
 	shunk_t signature;
 	const struct hash_desc *hash_algo;
 	realtime_t now;
@@ -286,9 +287,21 @@ static bool try_all_keys(enum cert_origin cert_origin,
 		jam(&s->tried_jambuf, " *%s", keyid_str);
 
 		logtime_t try_time = logtime_start(s->logger);
-		bool passed = (s->signer->authenticate_signature)(s->hash, s->signature,
-								  key, s->hash_algo,
-								  &s->fatal_diag, s->logger);
+		bool passed;
+		if (s->signer->authenticate_message_signature != NULL) {
+			passed = s->signer->authenticate_message_signature(s->signer,
+									   s->hunks,
+									   s->signature,
+									   key, s->hash_algo,
+									   &s->fatal_diag,
+									   s->logger);
+		} else {
+			passed = (s->signer->authenticate_hash_signature)(s->signer,
+									  s->hash,
+									  s->signature,
+									  key, s->hash_algo,
+									  &s->fatal_diag, s->logger);
+		}
 		logtime_stop(&try_time, "%s() trying a pubkey", __func__);
 
 		if (s->fatal_diag != NULL) {
@@ -315,6 +328,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 
 diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 				    const struct crypt_mac *hash,
+				    const struct hash_hunks *hunks,
 				    shunk_t signature,
 				    const struct hash_desc *hash_algo,
 				    const struct pubkey_signer *signer,
@@ -327,6 +341,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		.signer = signer,
 		.logger = logger,
 		.hash = hash,
+		.hunks = hunks,
 		.now = realnow(),
 		.signature = signature,
 		.hash_algo = hash_algo,

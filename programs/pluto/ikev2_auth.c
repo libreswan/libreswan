@@ -42,22 +42,32 @@
 #include "ikev2_send.h"
 #include "ikev2_notification.h"
 
-struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
-				      const struct crypt_mac *idhash,
-				      const struct hash_desc *hasher,
-				      enum perspective from_the_perspective_of)
+struct v2AUTH_blobs {
+	uint32_t mid;
+	struct hash_hunk blob[8];
+	struct hash_hunks hunks;
+};
+
+static void extract_v2AUTH_blobs(const struct ike_sa *ike,
+				 const struct crypt_mac *idhash,
+				 enum perspective from_the_perspective_of,
+				 struct v2AUTH_blobs *blobs)
 {
 	struct logger *logger = ike->sa.logger;
+	zero(blobs);
 
 	enum sa_role role;
-	chunk_t firstpacket;
+	struct hash_hunk *blob = blobs->blob;
+
+	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
+		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
+		   (struct hash_hunk) {0});
+
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
-		firstpacket = ike->sa.st_firstpacket_me;
 		role = ike->sa.st_sa_role;
 		break;
 	case REMOTE_PERSPECTIVE:
-		firstpacket = ike->sa.st_firstpacket_peer;
 		role = (ike->sa.st_sa_role == SA_INITIATOR ? SA_RESPONDER :
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);
@@ -66,55 +76,59 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 		bad_case(from_the_perspective_of);
 	}
 
-	const chunk_t *nonce;
-	const char *nonce_name;
-	chunk_t ia1;
-	chunk_t ia2;
-	switch (role) {
-	case SA_INITIATOR:
-		/* on initiator, we need to hash responders nonce */
-		nonce = &ike->sa.st_nr;
-		nonce_name = "inputs to hash2 (responder nonce)";
-		ia1 = ike->sa.st_v2_ike_intermediate.initiator;
-		ia2 = ike->sa.st_v2_ike_intermediate.responder;
-		break;
-	case SA_RESPONDER:
-		/* on responder, we need to hash initiators nonce */
-		nonce = &ike->sa.st_ni;
-		nonce_name = "inputs to hash2 (initiator nonce)";
-		ia1 = ike->sa.st_v2_ike_intermediate.responder;
-		ia2 = ike->sa.st_v2_ike_intermediate.initiator;
-		break;
-	default:
-		bad_case(role);
+	/* inbound nonce */
+	*blob++ = (role == SA_INITIATOR ? (struct hash_hunk) { "responder nonce", HUNK_REF(ike->sa.st_nr), } :
+		   role == SA_RESPONDER ? (struct hash_hunk) { "initiator nonce", HUNK_REF(ike->sa.st_ni), } :
+		   (struct hash_hunk) {0});
+
+	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
+	*blob++ = (struct hash_hunk) { "idhash", HUNK_REF(*idhash), };
+
+	if (ike->sa.st_v2_ike_intermediate.enabled) {
+		chunk_t ia1;
+		chunk_t ia2;
+		switch (role) {
+		case SA_INITIATOR:
+			ia1 = ike->sa.st_v2_ike_intermediate.initiator;
+			ia2 = ike->sa.st_v2_ike_intermediate.responder;
+			break;
+		case SA_RESPONDER:
+			ia1 = ike->sa.st_v2_ike_intermediate.responder;
+			ia2 = ike->sa.st_v2_ike_intermediate.initiator;
+			break;
+		default:
+			bad_case(role);
+		}
+		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(ia1), };
+		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(ia2), };
+		/* IKE AUTH's first Message ID */
+		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, blobs->mid);
+		shunk_t mid = THING_AS_HUNK(blobs->mid);
+		*blob++ = (struct hash_hunk) { "IKE_AUTH_MID", HUNK_REF(mid), };
 	}
+
+	blobs->hunks.len = blob - blobs->blob;
+	blobs->hunks.hunk = blobs->blob;
+	PASSERT(logger, blobs->hunks.len <= elemsof(blobs->blob));
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", &firstpacket);
-		LDBG_log_hunk(logger, "%s", nonce, nonce_name);
-		LDBG_log_hunk(logger, "idhash", idhash);
-		if (ike->sa.st_v2_ike_intermediate.enabled) {
-			LDBG_log_hunk(logger, "IntAuth_*_I_A:", &ia1);
-			LDBG_log_hunk(logger, "IntAuth_*_R_A:", &ia2);
+		for (unsigned u = 0; u < blobs->hunks.len; u++) {
+			struct hash_hunk *hunk = &blobs->blob[u];
+			if (hunk->len > 0) {
+				LDBG_log_hunk(logger, "%s:", hunk, hunk->name);
+			}
 		}
 	}
+}
 
-	struct crypt_hash *ctx = crypt_hash_init("sighash", hasher,
-						 ike->sa.logger);
-	crypt_hash_digest_hunk(ctx, "first packet", firstpacket);
-	crypt_hash_digest_hunk(ctx, "nonce", *nonce);
-	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
-	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
-	if (ike->sa.st_v2_ike_intermediate.enabled) {
-		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", ia1);
-		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", ia2);
-		/* IKE AUTH's first Message ID */
-		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
-		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, ike_auth_mid);
-		crypt_hash_digest_thing(ctx, "IKE_AUTH_MID", ike_auth_mid);
-	}
-	return crypt_hash_final_mac(&ctx);
+struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
+				      const struct crypt_mac *idhash,
+				      const struct hash_desc *hasher,
+				      enum perspective from_the_perspective_of)
+{
+	struct v2AUTH_blobs blobs;
+	extract_v2AUTH_blobs(ike, idhash, from_the_perspective_of, &blobs);
+	return crypt_hash_hunks("sighash", hasher, &blobs.hunks, ike->sa.logger);
 }
 
 enum keyword_auth local_v2_auth(struct ike_sa *ike)
@@ -400,9 +414,11 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 		return diag("authentication failed: rejecting received zero-length signature");
 	}
 
-	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
-						     REMOTE_PERSPECTIVE);
-	diag_t d = authsig_and_log_using_pubkey(ike, &hash, signature,
+	struct v2AUTH_blobs blobs;
+	extract_v2AUTH_blobs(ike, idhash, REMOTE_PERSPECTIVE, &blobs);
+	struct crypt_mac hash = crypt_hash_hunks("pubkey hash", hash_algo,
+						 &blobs.hunks, ike->sa.logger);
+	diag_t d = authsig_and_log_using_pubkey(ike, &hash, &blobs.hunks, signature,
 						hash_algo, pubkey_signer,
 						signature_payload_name);
 	statetime_stop(&start, "%s()", __func__);

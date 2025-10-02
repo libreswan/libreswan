@@ -337,11 +337,12 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 	return signature;
 }
 
-static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
-					     struct pubkey *kr,
-					     const struct hash_desc *unused_hash_algo UNUSED,
-					     diag_t *fatal_diag,
-					     struct logger *logger)
+static bool ECDSA_raw_authenticate_hash_signature(const struct pubkey_signer *signer UNUSED,
+						  const struct crypt_mac *hash, shunk_t signature,
+						  struct pubkey *kr,
+						  const struct hash_desc *unused_hash_algo UNUSED,
+						  diag_t *fatal_diag,
+						  struct logger *logger)
 {
 	const struct pubkey_content *ecdsa = &kr->content;
 
@@ -410,7 +411,7 @@ const struct pubkey_signer pubkey_signer_raw_ecdsa = {
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.sign = pubkey_hash_then_sign,
 	.sign_hash = ECDSA_raw_sign_hash,
-	.authenticate_signature = ECDSA_raw_authenticate_signature,
+	.authenticate_hash_signature = ECDSA_raw_authenticate_hash_signature,
 	.jam_auth_method = ECDSA_jam_auth_method,
 };
 
@@ -476,11 +477,12 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 	return signature;
 }
 
-static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
-						struct pubkey *pubkey,
-						const struct hash_desc *hash_alg,
-						diag_t *fatal_diag,
-						struct logger *logger)
+static bool ECDSA_digsig_authenticate_hash_signature(const struct pubkey_signer *signer UNUSED,
+						     const struct crypt_mac *hash, shunk_t signature,
+						     struct pubkey *pubkey,
+						     const struct hash_desc *hash_alg,
+						     diag_t *fatal_diag,
+						     struct logger *logger)
 {
 	const struct pubkey_content *ecdsa = &pubkey->content;
 
@@ -531,6 +533,6 @@ const struct pubkey_signer pubkey_signer_digsig_ecdsa = {
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
 	.sign = pubkey_hash_then_sign,
 	.sign_hash = ECDSA_digsig_sign_hash,
-	.authenticate_signature = ECDSA_digsig_authenticate_signature,
+	.authenticate_hash_signature = ECDSA_digsig_authenticate_hash_signature,
 	.jam_auth_method = ECDSA_jam_auth_method,
 };
