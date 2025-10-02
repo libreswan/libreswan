@@ -385,12 +385,13 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 	return sig;
 }
 
-static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_hash,
-					       shunk_t signature,
-					       struct pubkey *pubkey,
-					       const struct hash_desc *unused_hash_algo UNUSED,
-					       diag_t *fatal_diag,
-					       struct logger *logger)
+static bool RSA_authenticate_hash_signature_raw_rsa(const struct pubkey_signer *signer UNUSED,
+						    const struct crypt_mac *expected_hash,
+						    shunk_t signature,
+						    struct pubkey *pubkey,
+						    const struct hash_desc *unused_hash_algo UNUSED,
+						    diag_t *fatal_diag,
+						    struct logger *logger)
 {
 	SECKEYPublicKey *seckey_public = pubkey->content.public_key;
 
@@ -478,7 +479,7 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 	.type = &pubkey_type_rsa,
 	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_raw_sign_hash,
-	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+	.authenticate_hash_signature = RSA_authenticate_hash_signature_raw_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
@@ -531,12 +532,13 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 	return signature;
 }
 
-static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *expected_hash,
-						     shunk_t signature,
-						     struct pubkey *pubkey,
-						     const struct hash_desc *unused_hash_algo UNUSED,
-						     diag_t *fatal_diag,
-						     struct logger *logger)
+static bool RSA_authenticate_hash_signature_pkcs1_1_5_rsa(const struct pubkey_signer *signer UNUSED,
+							  const struct crypt_mac *expected_hash,
+							  shunk_t signature,
+							  struct pubkey *pubkey,
+							  const struct hash_desc *unused_hash_algo UNUSED,
+							  diag_t *fatal_diag,
+							  struct logger *logger)
 {
 	SECKEYPublicKey *seckey_public = pubkey->content.public_key;
 
@@ -614,7 +616,7 @@ const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
 	.type = &pubkey_type_rsa,
 	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
-	.authenticate_signature = RSA_authenticate_signature_pkcs1_1_5_rsa,
+	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
@@ -624,7 +626,7 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 	.type = &pubkey_type_rsa,
 	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
-	.authenticate_signature = RSA_authenticate_signature_pkcs1_1_5_rsa,
+	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
@@ -681,12 +683,13 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 	return sig;
 }
 
-static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expected_hash,
-						  shunk_t signature,
-						  struct pubkey *pubkey,
-						  const struct hash_desc *hash_algo,
-						  diag_t *fatal_diag,
-						  struct logger *logger)
+static bool RSA_authenticate_hash_signature_rsassa_pss(const struct pubkey_signer *signer UNUSED,
+						       const struct crypt_mac *expected_hash,
+						       shunk_t signature,
+						       struct pubkey *pubkey,
+						       const struct hash_desc *hash_algo,
+						       diag_t *fatal_diag,
+						       struct logger *logger)
 {
 	SECKEYPublicKey *seckey_public = pubkey->content.public_key;
 
@@ -755,6 +758,6 @@ const struct pubkey_signer pubkey_signer_digsig_rsassa_pss = {
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
 	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_rsassa_pss_sign_hash,
-	.authenticate_signature = RSA_authenticate_signature_rsassa_pss,
+	.authenticate_hash_signature = RSA_authenticate_hash_signature_rsassa_pss,
 	.jam_auth_method = RSA_jam_auth_method,
 };

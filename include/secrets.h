@@ -203,12 +203,20 @@ struct pubkey_signer {
 	 * false;FATAL_DIAG=NULL: pubkey did not verify
 	 * false;FATAL_DIAG!=NULL: operation should be aborted
 	 */
-	bool (*authenticate_signature)(const struct crypt_mac *hash,
-				       shunk_t signature,
-				       struct pubkey *kr,
-				       const struct hash_desc *hash_algo,
-				       diag_t *fatal_diag,
-				       struct logger *logger);
+	bool (*authenticate_hash_signature)(const struct pubkey_signer *signer,
+					    const struct crypt_mac *hash,
+					    shunk_t signature,
+					    struct pubkey *kr,
+					    const struct hash_desc *hash_algo,
+					    diag_t *fatal_diag,
+					    struct logger *logger);
+	bool (*authenticate_message_signature)(const struct pubkey_signer *signer,
+					       const struct hash_hunks *hunks,
+					       shunk_t signature,
+					       struct pubkey *kr,
+					       const struct hash_desc *hash_algo,
+					       diag_t *fatal_diag,
+					       struct logger *logger);
 	size_t (*jam_auth_method)(struct jambuf *,
 				  const struct pubkey_signer *,
 				  const struct pubkey *,

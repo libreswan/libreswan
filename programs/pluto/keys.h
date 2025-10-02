@@ -41,6 +41,7 @@ struct hash_desc;
 struct show;
 struct ike_sa;
 struct pubkey_signer;
+struct hash_hunks;
 
 struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 						  const struct pubkey_type *type,
@@ -72,6 +73,7 @@ extern struct pubkey_list *pluto_pubkeys;
 
 extern diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 					   const struct crypt_mac *hash,
+					   const struct hash_hunks *hunks,
 					   shunk_t signature,
 					   const struct hash_desc *hash_algo,
 					   const struct pubkey_signer *signer,

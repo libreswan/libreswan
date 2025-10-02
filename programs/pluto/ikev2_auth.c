@@ -414,9 +414,11 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 		return diag("authentication failed: rejecting received zero-length signature");
 	}
 
-	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
-						     REMOTE_PERSPECTIVE);
-	diag_t d = authsig_and_log_using_pubkey(ike, &hash, signature,
+	struct v2AUTH_blobs blobs;
+	extract_v2AUTH_blobs(ike, idhash, REMOTE_PERSPECTIVE, &blobs);
+	struct crypt_mac hash = crypt_hash_hunks("pubkey hash", hash_algo,
+						 &blobs.hunks, ike->sa.logger);
+	diag_t d = authsig_and_log_using_pubkey(ike, &hash, &blobs.hunks, signature,
 						hash_algo, pubkey_signer,
 						signature_payload_name);
 	statetime_stop(&start, "%s()", __func__);
