@@ -72,7 +72,8 @@ OBJS += pubkey_ecdsa.o
 
 $(OBJS): | $(builddir)/pubkey/
 OBJS += pubkey/pubkey_types.o
-
+OBJS += pubkey/pubkey_type_rsa.o
+OBJS += pubkey/pubkey_type_ecp.o
 
 OBJS += sparse_names.o
 
