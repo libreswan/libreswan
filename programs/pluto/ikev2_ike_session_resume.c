@@ -1044,7 +1044,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 	c->session = alloc_thing(struct session, __func__);
 	c->session->sr_expires = monotime_add(mononow(),
 					      deltatime(tl.sr_lifetime));
-	c->session->ticket = clone_hunk_as_chunk(ticket, __func__);
+	c->session->ticket = clone_hunk_as_chunk(&ticket, __func__);
 
 	set_resume_session(&c->session->resume,
 			   /*initiator*/c->local,

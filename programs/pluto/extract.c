@@ -3808,7 +3808,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (ugh != NULL) {
 			return diag("%s: policy-label=%s", ugh, wm->sec_label);
 		}
-		config->sec_label = clone_hunk_as_chunk(sec_label, "struct config sec_label");
+		config->sec_label = clone_hunk_as_chunk(&sec_label, "struct config sec_label");
 	}
 
 	/*
@@ -3861,7 +3861,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		int that = (this + 1) % END_ROOF;
 		if (same_ca[that]) {
-			config->end[that].host.ca = clone_hunk_as_chunk(config->end[this].host.ca,
+			config->end[that].host.ca = clone_hunk_as_chunk(&config->end[this].host.ca,
 							       "same ca");
 			break;
 		}

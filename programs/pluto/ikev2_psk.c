@@ -296,7 +296,7 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
 	}
 
 	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
-	*additional_auth = clone_hunk_as_chunk(signed_octets, chunk_n);
+	*additional_auth = clone_hunk_as_chunk(&signed_octets, chunk_n);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log_hunk(logger, "%s:", additional_auth, chunk_n);
 	}

@@ -123,7 +123,7 @@ void submit_ke_and_nonce(struct state *callback_sa,
 		.dh = dh,
 		.cb = cb,
 		.role = task_sa->st_sa_role,
-		.initiator_ke = clone_hunk_as_chunk(task_sa->st_gi, "Gi"),
+		.initiator_ke = clone_hunk_as_chunk(&task_sa->st_gi, "Gi"),
 	};
 	submit_task(/*callback*/callback_sa, /*task*/task_sa,
 		    md, detach_whack,

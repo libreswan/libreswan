@@ -296,7 +296,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	/* extract the mac; replace existing value */
 	struct crypt_mac mac = crypt_prf_final_mac(&prf, NULL/*no-truncation*/);
 	free_chunk_content(int_auth_ir);
-	*int_auth_ir = clone_hunk_as_chunk(mac, "IntAuth");
+	*int_auth_ir = clone_hunk_as_chunk(&mac, "IntAuth");
 }
 
 static void compute_intermediate_outbound_mac(struct ike_sa *ike,
@@ -787,8 +787,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	struct ikev2_task task = {
 		.exchange = current_ikev2_ike_intermediate_exchange(ike),
 		/* for SKEYSEED */
-		.ni = clone_hunk_as_chunk(ike->sa.st_ni, "Ni"),
-		.nr = clone_hunk_as_chunk(ike->sa.st_nr, "Nr"),
+		.ni = clone_hunk_as_chunk(&ike->sa.st_ni, "Ni"),
+		.nr = clone_hunk_as_chunk(&ike->sa.st_nr, "Nr"),
 		.d = symkey_addref(logger, "d", ike->sa.st_skey_d_nss),
 		.prf = ike->sa.st_oakley.ta_prf,
 		/* for KEYMAT */
@@ -1026,8 +1026,8 @@ static stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 		/* for ADDKE decapsulate() */
 		.initiator = ike->sa.st_kem.initiator,
 		/* for skeyseed */
-		.ni = clone_hunk_as_chunk(ike->sa.st_ni, "Ni"),
-		.nr = clone_hunk_as_chunk(ike->sa.st_nr, "Nr"),
+		.ni = clone_hunk_as_chunk(&ike->sa.st_ni, "Ni"),
+		.nr = clone_hunk_as_chunk(&ike->sa.st_nr, "Nr"),
 		.d = symkey_addref(logger, "d", ike->sa.st_skey_d_nss),
 		.prf = ike->sa.st_oakley.ta_prf,
 		/* for KEYMAT */
