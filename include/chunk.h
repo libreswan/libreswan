@@ -44,12 +44,6 @@ typedef struct /*chunk*/ {
 
 chunk_t chunk2(void *ptr, size_t len);
 
-#define HUNK_AS_CHUNK(HUNK)			\
-	({					\
-		typeof(HUNK) *h_ = &(HUNK);	\
-		chunk2(h_->ptr, h_->len);	\
-	})
-
 /*
  * Convert writeable THING to a writeable CHUNK.  When compiled with
  * GCC (at least) and THING is read-only, a warning will be generated.
@@ -61,6 +55,16 @@ chunk_t chunk2(void *ptr, size_t len);
  *
  * For a read-only CHUNK like object, see THING_AS_SHUNK().
  */
+
+#define HUNK_AS_CHUNK(HUNK)						\
+	({								\
+		typeof(*(HUNK)) *h_ = HUNK; /* evalutate once; no paren */ \
+		chunk_t c_ = {						\
+			.ptr = (h_ == NULL ? NULL : h_->ptr),		\
+			.len = (h_ == NULL ? 0 : h_->len),		\
+		};							\
+		c_;							\
+	})
 #define THING_AS_CHUNK(THING) chunk2(&(THING), sizeof(THING))
 
 chunk_t alloc_chunk(size_t count, const char *name);
@@ -70,22 +74,24 @@ chunk_t alloc_chunk(size_t count, const char *name);
 chunk_t clone_bytes_as_chunk(const void *first_ptr, size_t first_len,
 			     const char *name);
 
-#define clone_hunk_as_chunk(HUNK, NAME)						\
+#define clone_hunk_as_chunk(HUNK, NAME)					\
 	({								\
-		typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */	\
-		clone_bytes_as_chunk(hunk_->ptr, hunk_->len, NAME);	\
+		const typeof(*(HUNK)) *h_ = HUNK; /* evaluate once; no paren */ \
+		clone_bytes_as_chunk(h_->ptr, h_->len, NAME);		\
 	})
 
 chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
 				   const void *second_ptr, size_t second_len,
 				   const char *name);
 
-#define clone_hunk_hunk(LHS, RHS, NAME)					\
+#define clone_hunk_hunk_as_chunk(LHS, RHS, NAME)			\
 	({								\
-		typeof(LHS) lhs_ = LHS; /* evaluate once */		\
-		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
-		clone_bytes_bytes_as_chunk(lhs_.ptr, lhs_.len,		\
-					   rhs_.ptr, rhs_.len,		\
+		const typeof(*(LHS)) *lhs_ = LHS; /* evaluate once */	\
+		const typeof(*(RHS)) *rhs_ = RHS; /* evaluate once */	\
+		clone_bytes_bytes_as_chunk((lhs_ == NULL ? NULL : lhs_->ptr), \
+					   (lhs_ == NULL ? 0 : lhs_->len), \
+					   (rhs_ == NULL ? NULL : rhs_->ptr), \
+					   (rhs_ == NULL ? 0 : rhs_->len), \
 					   NAME);			\
 	})
 

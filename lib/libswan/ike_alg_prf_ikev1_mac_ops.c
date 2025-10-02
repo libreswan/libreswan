@@ -37,7 +37,7 @@ static PK11SymKey *signature_skeyid(const struct prf_desc *prf_desc,
 				    struct logger *logger)
 {
 	/* key = Ni|Nr */
-	chunk_t key = clone_hunk_hunk(Ni, Nr, "key = Ni|Nr");
+	chunk_t key = clone_hunk_hunk_as_chunk(&Ni, &Nr, "key = Ni|Nr");
 	struct crypt_prf *prf = crypt_prf_init_hunk("SKEYID sig",
 						    prf_desc,
 						    "Ni|Nr", key,

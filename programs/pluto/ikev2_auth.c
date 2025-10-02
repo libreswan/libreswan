@@ -59,8 +59,8 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	enum sa_role role;
 	struct hash_hunk *blob = blobs->blob;
 
-	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
-		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
+	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(&ike->sa.st_firstpacket_me), } :
+		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(&ike->sa.st_firstpacket_peer), } :
 		   (struct hash_hunk) {0});
 
 	switch (from_the_perspective_of) {
@@ -77,12 +77,12 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	}
 
 	/* inbound nonce */
-	*blob++ = (role == SA_INITIATOR ? (struct hash_hunk) { "responder nonce", HUNK_REF(ike->sa.st_nr), } :
-		   role == SA_RESPONDER ? (struct hash_hunk) { "initiator nonce", HUNK_REF(ike->sa.st_ni), } :
+	*blob++ = (role == SA_INITIATOR ? (struct hash_hunk) { "responder nonce", HUNK_REF(&ike->sa.st_nr), } :
+		   role == SA_RESPONDER ? (struct hash_hunk) { "initiator nonce", HUNK_REF(&ike->sa.st_ni), } :
 		   (struct hash_hunk) {0});
 
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
-	*blob++ = (struct hash_hunk) { "idhash", HUNK_REF(*idhash), };
+	*blob++ = (struct hash_hunk) { "idhash", HUNK_REF(idhash), };
 
 	if (ike->sa.st_v2_ike_intermediate.enabled) {
 		chunk_t ia1;
@@ -99,12 +99,12 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 		default:
 			bad_case(role);
 		}
-		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(ia1), };
-		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(ia2), };
+		*blob++ = (struct hash_hunk) { "IntAuth_*_I_A", HUNK_REF(&ia1), };
+		*blob++ = (struct hash_hunk) { "IntAuth_*_R_A", HUNK_REF(&ia2), };
 		/* IKE AUTH's first Message ID */
 		hton_thing(ike->sa.st_v2_ike_intermediate.id + 1, blobs->mid);
 		shunk_t mid = THING_AS_HUNK(blobs->mid);
-		*blob++ = (struct hash_hunk) { "IKE_AUTH_MID", HUNK_REF(mid), };
+		*blob++ = (struct hash_hunk) { "IKE_AUTH_MID", HUNK_REF(&mid), };
 	}
 
 	blobs->hunks.len = blob - blobs->blob;
@@ -944,7 +944,7 @@ void v2_IKE_AUTH_responder_id_payload(struct ike_sa *ike)
 		ike->sa.st_v2_id_payload.header =
 			build_v2_id_payload(&c->local->host, &data,
 					    "my IDr", ike->sa.logger);
-		ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(data, "my IDr");
+		ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(&data, "my IDr");
 	}
 
 	/* will be signed in auth payload */
@@ -960,7 +960,7 @@ void v2_IKE_AUTH_initiator_id_payload(struct ike_sa *ike)
 	ike->sa.st_v2_id_payload.header =
 		build_v2_id_payload(&c->local->host, &data,
 				    "my IDi", ike->sa.logger);
-	ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(data, "my IDi");
+	ike->sa.st_v2_id_payload.data = clone_hunk_as_chunk(&data, "my IDi");
 
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDi", ike,
 					    "st_skey_pi_nss",

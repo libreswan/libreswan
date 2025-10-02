@@ -57,9 +57,11 @@ shunk_t shunk2(const void *ptr, size_t len);
 
 #define HUNK_AS_SHUNK(HUNK)						\
 	({								\
-		const typeof(*(HUNK)) *h_ = (HUNK);			\
-		shunk_t s_ = (h_ == NULL ? (shunk_t) NULL_HUNK :	\
-			      shunk2(h_->ptr, h_->len));		\
+		const typeof(*(HUNK)) *h_ = HUNK; /* evalutate once; no paren */ \
+		shunk_t s_ = {						\
+			.ptr = (h_ == NULL ? NULL : h_->ptr),		\
+			.len = (h_ == NULL ? 0 : h_->len),		\
+		};							\
 		s_;							\
 	})
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))

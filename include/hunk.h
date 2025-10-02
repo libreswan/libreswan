@@ -48,7 +48,7 @@
 #define THING_AS_HUNK(THING) { .ptr = &(THING), .len = sizeof(THING), }
 #define NULL_HUNK { .ptr = NULL, .len = 0, }
 /* #define EMPTY_HUNK { .ptr = &buffer, .len = 0, } */
-#define HUNK_REF(HUNK) .ptr = (HUNK).ptr, .len = (HUNK).len
+#define HUNK_REF(HUNK) .ptr = ((HUNK) == 0 ? NULL : (HUNK)->ptr), .len = ((HUNK) == NULL ? 0 : (HUNK)->len)
 
 /*
  * hunk version of compare functions (or at least libreswan's
@@ -445,11 +445,13 @@ uintmax_t raw_ntoh(const void *bytes, size_t size);
  * convert a hunk into a NUL terminated string; NULL is NULL.
  */
 
-char *raw_clone_as_string(const void *ptr, size_t len, const char *name);
+char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
 #define clone_hunk_as_string(HUNK, NAME)				\
 	({								\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		raw_clone_as_string(hunk_.ptr, hunk_.len, NAME);	\
+		const typeof(*(HUNK)) *h_ = HUNK; /* evaluate once; no paren */	\
+		clone_bytes_as_string((h_ == NULL ? NULL : h_->ptr),	\
+				      (h_ == NULL ? 0 : h_->len),	\
+				      NAME);				\
 	})
 
 #define clone_thing_as_string(THING, NAME)				\

@@ -1415,8 +1415,8 @@ static void xauth_launch_authent(struct ike_sa *ike,
 		return;
 #endif
 
-	char *arg_name = clone_hunk_as_string(*name, "NUL-terminated XAUTH name");
-	char *arg_password = clone_hunk_as_string(*password, "NUL-terminated XAUTH password");
+	char *arg_name = clone_hunk_as_string(name, "NUL-terminated XAUTH name");
+	char *arg_password = clone_hunk_as_string(password, "NUL-terminated XAUTH password");
 
 	/*
 	 * For XAUTH, we're flipping between retransmitting the packet
@@ -2488,7 +2488,8 @@ static stf_status xauth_client_resp(struct ike_sa *ike,
 						    ike->sa.st_xauth_username,
 						    pks);
 						if (pks != NULL) {
-							ike->sa.st_xauth_password = clone_hunk_as_chunk(*pks, "saved xauth password");
+							ike->sa.st_xauth_password =
+								clone_hunk_as_chunk(pks, "saved xauth password");
 						}
 					}
 

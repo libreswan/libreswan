@@ -190,7 +190,7 @@ static void gcm_run_test(struct logger *logger)
 							    key,
 							    HERE, logger);
 
-	chunk_t text_and_tag = clone_hunk_hunk(ct, tag, "text-and-tag");
+	chunk_t text_and_tag = clone_hunk_hunk_as_chunk(&ct, &tag, "text-and-tag");
 
 	bool result = cipher_aead(gcm_alg, DECRYPT, USE_WIRE_IV,
 				  HUNK_AS_SHUNK(&salt), iv,

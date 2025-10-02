@@ -54,7 +54,7 @@ err_t ttoport(shunk_t service_name, ip_port *port)
 	 * string but SERVICE_NAME, being a shunk_t may not include
 	 * that; hence the clone to create a proper string.
 	 */
-	char *service_string = clone_hunk_as_string(service_name, "service name");
+	char *service_string = clone_hunk_as_string(&service_name, "service name");
 	const struct servent *service = getservbyname(service_string, NULL);
 	pfree(service_string);
 	if (service != NULL) {

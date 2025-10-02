@@ -91,7 +91,7 @@ diag_t diag_diag(diag_t *d, const char *fmt, ...)
 diag_t diag_jambuf(struct jambuf *buf)
 {
 	shunk_t msg = jambuf_as_shunk(buf); /* no '\0', but there is one */
-	return (diag_t) clone_hunk_as_string(msg, "diag jambuf");
+	return (diag_t) clone_hunk_as_string(&msg, "diag jambuf");
 }
 
 const char *str_diag(diag_t diag)

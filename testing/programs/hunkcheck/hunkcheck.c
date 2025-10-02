@@ -337,16 +337,16 @@ static void check_shunk_clone(void)
 		const struct test *t = &tests[ti];
 		PRINT_S(stdout, "");
 		shunk_t s = shunk1(t->s);
-		chunk_t c = clone_hunk_as_chunk(s, "c");
+		chunk_t c = clone_hunk_as_chunk(&s, "c");
 		if (c.len != s.len) {
-			FAIL_S("clone_hunk_as_chunk(s).len returned %zu, expecting %zu",
+			FAIL_S("clone_hunk_as_chunk(&s).len returned %zu, expecting %zu",
 			       c.len, s.len);
 		}
 		if (c.ptr == NULL && s.ptr != NULL) {
-			FAIL_S("clone_hunk_as_chunk(s).ptr returned NULL, expecting non-NULL");
+			FAIL_S("clone_hunk_as_chunk(&s).ptr returned NULL, expecting non-NULL");
 		}
 		if (c.ptr != NULL && s.ptr == NULL) {
-			FAIL_S("clone_hunk_as_chunk(s).ptr returned non-NULL, expecting NULL");
+			FAIL_S("clone_hunk_as_chunk(&s).ptr returned non-NULL, expecting NULL");
 		}
 		free_chunk_content(&c);
 	}
@@ -1078,7 +1078,7 @@ static void check__clone_hunk_as_string(void)
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT(" input='"PRI_SHUNK"' output='%s'", pri_shunk(t->hunk), t->output);
-		char *output = clone_hunk_as_string(t->hunk, "test");
+		char *output = clone_hunk_as_string(&t->hunk, "test");
 		if (!streq(t->output, output)) {
 			FAIL("clone_hunk_as_string() output %s should be '%s'", output, t->output);
 		}

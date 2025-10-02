@@ -1857,13 +1857,13 @@ shunk_t pbs_out_all(const struct pbs_out *pbs)
 chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name)
 {
 	shunk_t all = pbs_in_all(pbs);
-	return clone_hunk_as_chunk(all, name);
+	return clone_hunk_as_chunk(&all, name);
 }
 
 chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name)
 {
 	shunk_t all = pbs_out_all(pbs);
-	return clone_hunk_as_chunk(all, name);
+	return clone_hunk_as_chunk(&all, name);
 }
 
 /* start - cursor */
