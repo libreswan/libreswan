@@ -87,7 +87,7 @@ static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
 		 * Presumably the IV has come from the peer.
 		 */
 		generator = CKG_NO_GENERATE;
-		iv = clone_hunk_hunk(salt, wire_iv, "IV");
+		iv = clone_hunk_hunk_as_chunk(&salt, &wire_iv, "IV");
 		break;
 	case FILL_WIRE_IV:
 		/*
@@ -95,7 +95,7 @@ static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
 		 * copy it back.
 		 */
 		generator = CKG_GENERATE_COUNTER_XOR;
-		iv = clone_hunk_hunk(salt, aead->random_iv, "IV");
+		iv = clone_hunk_hunk_as_chunk(&salt, &aead->random_iv, "IV");
 		break;
 	case USE_IKEv1_IV: /* makes no sense */
 	default:

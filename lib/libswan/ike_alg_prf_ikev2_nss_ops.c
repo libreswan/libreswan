@@ -164,7 +164,7 @@ static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
 {
 	PK11SymKey *prf_plus;
 
-	chunk_t seed_data = clone_hunk_hunk(Ni, Nr, "seed_data = Ni || Nr");
+	chunk_t seed_data = clone_hunk_hunk_as_chunk(&Ni, &Nr, "seed_data = Ni || Nr");
 	append_chunk_hunk("seed_data = Nir || SPIi", &seed_data, SPIi);
 	append_chunk_hunk("seed_data = Nir || SPIir", &seed_data, SPIr);
 	prf_plus = prfplus_key_data("keymat", prf_desc, skeyseed, NULL, seed_data,
@@ -195,7 +195,7 @@ static PK11SymKey *child_sa_keymat(const struct prf_desc *prf_desc,
 	chunk_t seed_data;
 	PK11SymKey *prf_plus;
 
-	seed_data = clone_hunk_hunk(Ni, Nr, "seed_data = Ni || Nr");
+	seed_data = clone_hunk_hunk_as_chunk(&Ni, &Nr, "seed_data = Ni || Nr");
 	prf_plus = prfplus_key_data("keymat", prf_desc, SK_d, new_ke_secret, seed_data,
 				    required_bytes, logger);
 	free_chunk_content(&seed_data);

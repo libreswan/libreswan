@@ -84,12 +84,14 @@ chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
 				   const void *second_ptr, size_t second_len,
 				   const char *name);
 
-#define clone_hunk_hunk(LHS, RHS, NAME)					\
+#define clone_hunk_hunk_as_chunk(LHS, RHS, NAME)			\
 	({								\
-		typeof(LHS) lhs_ = LHS; /* evaluate once */		\
-		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
-		clone_bytes_bytes_as_chunk(lhs_.ptr, lhs_.len,		\
-					   rhs_.ptr, rhs_.len,		\
+		const typeof(*(LHS)) *lhs_ = LHS; /* evaluate once */	\
+		const typeof(*(RHS)) *rhs_ = RHS; /* evaluate once */	\
+		clone_bytes_bytes_as_chunk((lhs_ == NULL ? NULL : lhs_->ptr), \
+					   (lhs_ == NULL ? 0 : lhs_->len), \
+					   (rhs_ == NULL ? NULL : rhs_->ptr), \
+					   (rhs_ == NULL ? 0 : rhs_->len), \
 					   NAME);			\
 	})
 
