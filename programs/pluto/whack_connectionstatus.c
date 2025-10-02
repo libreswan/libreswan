@@ -594,7 +594,8 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		 */
 		const char *who = "our";
 		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
-			jam(buf, "%s auth:", who);
+			jam_string(buf, who);
+			jam_string(buf, " auth:");
 			/*
 			 * EXPECT everything except rsasig_v1_5.
 			 */
@@ -603,11 +604,11 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			expect.rsasig_v1_5 = false;
 			struct authby authby = authby_and(end->authby, mask);
 			if (authby_eq(authby, expect)) {
-				jam_enum_short(buf, &keyword_auth_names, end->auth);
+				jam_enum_human(buf, &keyword_auth_names, end->auth);
 			} else if (oriented(c) && end == c->remote->host.config) {
 				jam_authby(buf, end->authby);
 			} else {
-				jam_enum_short(buf, &keyword_auth_names, end->auth);
+				jam_enum_human(buf, &keyword_auth_names, end->auth);
 				jam_string(buf, "(");
 				jam_authby(buf, authby);
 				jam_string(buf, ")");

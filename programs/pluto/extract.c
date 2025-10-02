@@ -3924,9 +3924,9 @@ diag_t extract_connection(const struct whack_message *wm,
 			name_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,
-				    str_enum_long(&keyword_auth_names, c->local->host.config->auth, &lab),
+				    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &lab),
 				    c->remote->config->leftright,
-				    str_enum_long(&keyword_auth_names, c->remote->host.config->auth, &rab));
+				    str_enum_short(&keyword_auth_names, c->remote->host.config->auth, &rab));
 		}
 	}
 
