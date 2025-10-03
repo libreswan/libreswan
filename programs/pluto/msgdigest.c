@@ -33,7 +33,6 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 				  /*debugging*/LEMPTY, where);
 	md->packet = (packet == NULL ? alloc_chunk(packet_len, "packet") :
 		      clone_bytes_as_chunk(packet, packet_len, "packet"));
-	md->packet_pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->packet), "packet");
 	return md;
 }
 

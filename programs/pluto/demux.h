@@ -202,7 +202,6 @@ struct msg_digest {
 	 * msg_digest.
 	 */
 	chunk_t packet;
-	struct pbs_in packet_pbs;			/* whole packet */
 	struct pbs_in message_pbs;			/* message to be processed */
 
 #   define PAYLIMIT 30

@@ -335,7 +335,7 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
 
 	shunk_t message_header = {
-		.ptr = md->packet_pbs.start,
+		.ptr = md->packet.ptr,
 		.len = sizeof(struct isakmp_hdr),
 	};
 	const uint8_t *message_header_end = (message_header.ptr + message_header.len);
@@ -369,7 +369,7 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 		 * sk->pbs.start DOES NOT point into md->packet_pbs.
 		 * Hence, the calculation:
 		 *
-		 *    sk->pbs.start - md->packet_pbs.start
+		 *    sk->pbs.start - md->packet.ptr
 		 *
 		 * can only be used when the message is unfragmented.
 		 *
