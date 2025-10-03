@@ -148,32 +148,38 @@ bool raw_starteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
 
 #define hunk_starteq(HUNK, START)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		const typeof(START) start_ = START; /* evaluate once */	\
-		raw_starteq(hunk_.ptr, hunk_.len,			\
-			    start_.ptr, start_.len);			\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		const typeof(START) *start_ = &(START); /* evaluate once */ \
+		raw_starteq(hunk_->ptr, hunk_->len,			\
+			    start_->ptr, start_->len);			\
 	})
 
 bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
 
 #define hunk_casestarteq(HUNK, START) /* case independent */		\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		const typeof(START) start_ = START; /* evaluate once */	\
-		raw_casestarteq(hunk_.ptr, hunk_.len,			\
-				start_.ptr, start_.len);		\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		const typeof(START) *start_ = &(START); /* evaluate once */ \
+		raw_casestarteq(hunk_->ptr, hunk_->len,			\
+				start_->ptr, start_->len);		\
 	})
 
 #define hunk_strstarteq(HUNK, STRING)					\
-	hunk_starteq(HUNK, shunk1(STRING))
+	({								\
+		shunk_t string_ = shunk1(STRING); /* evaluate once */	\
+		hunk_starteq(HUNK, string_);				\
+	})
 
 #define hunk_strcasestarteq(HUNK, STRING)				\
-	hunk_casestarteq(HUNK, shunk1(STRING))
+	({								\
+		shunk_t string_ = shunk1(STRING); /* evaluate once */	\
+		hunk_casestarteq(HUNK, string_);			\
+	})
 
-#define hunk_strnlen(HUNK)					\
-	({							\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		strnlen((const char *)hunk_.ptr, hunk_.len);	\
+#define hunk_strnlen(HUNK)						\
+	({								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		strnlen((const char *)hunk_->ptr, hunk_->len);		\
 	})
 
 /*
