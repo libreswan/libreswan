@@ -26,25 +26,21 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 			    where_t where)
 {
 	struct logger *logger = &global_logger;
-	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len,
-						 logger, where);
+	struct msg_digest *md = refcnt_alloc(struct msg_digest, logger, where);
 	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
 	md->logger = alloc_logger(md, &logger_message_vec,
 				  /*debugging*/LEMPTY, where);
-	void *buffer = md + 1;
-	md->packet_pbs = pbs_in_from_shunk(shunk2(buffer, packet_len), "packet");
-	if (packet != NULL) {
-		memcpy(buffer, packet, packet_len);
-	}
+	md->packet = (packet == NULL ? alloc_chunk(packet_len, "packet") :
+		      clone_bytes_as_chunk(packet, packet_len, "packet"));
+	md->packet_pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->packet), "packet");
 	return md;
 }
 
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 {
-	shunk_t packet = pbs_in_all(&md->packet_pbs);
 	struct msg_digest *clone = alloc_md(md->iface, &md->sender,
-					    packet.ptr, packet.len,
+					    md->packet.ptr, md->packet.len,
 					    where);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
@@ -63,6 +59,7 @@ void md_delref_where(struct msg_digest **mdp, where_t where)
 	struct msg_digest *md = delref_where(mdp, logger, where);
 	if (md != NULL) {
 		free_chunk_content(&md->raw_packet);
+		free_chunk_content(&md->packet);
 		free_logger(&md->logger, where);
 		iface_endpoint_delref_where(&md->iface, where);
 		pfree(md);
