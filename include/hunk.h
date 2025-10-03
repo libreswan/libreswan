@@ -196,35 +196,41 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 #define hunk_eat(DINNER, EAT)						\
 	({								\
-		typeof(DINNER) _dinner = DINNER;			\
-		typeof(EAT) _eat = EAT;					\
+		typeof(*(DINNER)) *_dinner = DINNER; /* force pointer */ \
+		const typeof(EAT) *_eat = &(EAT); /* don't copy */	\
 		bool _ok = raw_starteq(_dinner->ptr, _dinner->len,	\
-				       _eat.ptr, _eat.len);		\
+				       _eat->ptr, _eat->len);		\
 		if (_ok) {						\
-			_dinner->ptr += _eat.len;			\
-			_dinner->len -= _eat.len;			\
+			_dinner->ptr += _eat->len;			\
+			_dinner->len -= _eat->len;			\
 		}							\
 		_ok;							\
 	})
 
-#define hunk_streat(DINNER, STREAT)		\
-	hunk_eat(DINNER, shunk1(STREAT))
+#define hunk_streat(DINNER, STRING)			\
+	({						\
+		shunk_t string_ = shunk1(STRING);	\
+		hunk_eat(DINNER, string_);		\
+	})
 
 #define hunk_caseeat(DINNER, EAT)					\
 	({								\
-		typeof(DINNER) _dinner = DINNER;			\
-		typeof(EAT) _eat = EAT;					\
+		typeof(*(DINNER)) *_dinner = DINNER; /* force pointer */ \
+		const typeof(EAT) *_eat = &(EAT); /* don't copy */	\
 		bool _ok = raw_casestarteq(_dinner->ptr, _dinner->len,	\
-					   _eat.ptr, _eat.len);		\
+					   _eat->ptr, _eat->len);	\
 		if (_ok) {						\
-			_dinner->ptr += _eat.len;			\
-			_dinner->len -= _eat.len;			\
+			_dinner->ptr += _eat->len;			\
+			_dinner->len -= _eat->len;			\
 		}							\
 		_ok;							\
 	})
 
-#define hunk_strcaseeat(DINNER, STRCASEEAT)		\
-	hunk_caseeat(DINNER, shunk1(STRCASEEAT))
+#define hunk_strcaseeat(DINNER, STRING)			\
+	({						\
+		shunk_t string_ = shunk1(STRING);	\
+		hunk_caseeat(DINNER, string_);		\
+	})
 
 /* misc */
 
