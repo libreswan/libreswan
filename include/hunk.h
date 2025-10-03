@@ -112,25 +112,25 @@ bool raw_heq(const void *l_ptr, size_t l_len,
 
 #define hunk_streq(HUNK, STRING)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const char *string_ = STRING; /* evaluate once */	\
-		raw_eq(hunk_.ptr, hunk_.len, string_,			\
+		raw_eq(hunk_->ptr, hunk_->len, string_,			\
 		       string_ != NULL ? strlen(string_) : 0);		\
 	})
 
 #define hunk_strcaseeq(HUNK, STRING) /* case independent */		\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const char *string_ = STRING; /* evaluate once */	\
-		raw_caseeq(hunk_.ptr, hunk_.len, string_,		\
+		raw_caseeq(hunk_->ptr, hunk_->len, string_,		\
 			   string_ != NULL ? strlen(string_) : 0);	\
 	})
 
 #define hunk_strheq(HUNK, STRING) /* case and [-_] independent */	\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const char *string_ = STRING; /* evaluate once */	\
-		raw_heq(hunk_.ptr, hunk_.len, string_,		\
+		raw_heq(hunk_->ptr, hunk_->len, string_,		\
 			string_ != NULL ? strlen(string_) : 0);	\
 	})
 
