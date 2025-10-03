@@ -252,20 +252,20 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 #define hunk_char(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) hc_hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hc_hunk_ = &(HUNK); /* don't copy */ \
 		size_t hc_index_ = INDEX;/* evaluate once */		\
-		const char *hc_char_ = hc_hunk_.ptr;			\
-		hc_index_ < hc_hunk_.len ? hc_char_[INDEX] : '\0';	\
+		const char *hc_char_ = hc_hunk_->ptr;			\
+		hc_index_ < hc_hunk_->len ? hc_char_[INDEX] : '\0';	\
 	})
 
 /* returns the unsigned byte cast to int; or -1 when end-of-hunk */
 
 #define hunk_byte(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) hb_hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hb_hunk_ = &(HUNK); /* don't copy */ \
 		size_t hb_index_ = INDEX;/* evaluate once */		\
-		const uint8_t *hb_byte_ = hb_hunk_.ptr;			\
-		hb_index_ < hb_hunk_.len ? hb_byte_[INDEX] : -1;	\
+		const uint8_t *hb_byte_ = hb_hunk_->ptr;		\
+		hb_index_ < hb_hunk_->len ? hb_byte_[INDEX] : -1;	\
 	})
 
 /*
