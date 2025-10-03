@@ -257,8 +257,9 @@ static void check_shunk_token(void)
 
 		char t_delim = -1;
 		shunk_t t_token = shunk_token(&t_input, &t_delim, t->delims);
+		shunk_t t_token_shunk = shunk1(t->token);
 
-		if (!hunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, t_token_shunk)) {
 			FAIL_S("shunk_token() returned token '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_token), t->token);
 		}
@@ -268,7 +269,8 @@ static void check_shunk_token(void)
 			       t_delim, t->delim);
 		}
 
-		if (!hunk_eq(t_input, shunk1(t->input))) {
+		shunk_t t_input_shunk = shunk1(t->input);
+		if (!hunk_eq(t_input, t_input_shunk)) {
 			FAIL_S("shunk_token() returned input '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_input),
 			       t->input == NULL ? "NULL" : t->input);
@@ -306,13 +308,15 @@ static void check_shunk_span(void)
 
 		shunk_t t_input = shunk1(t->old);
 		shunk_t t_token = shunk_span(&t_input, t->accept);
+		shunk_t t_token_shunk = shunk1(t->token);
 
-		if (!hunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, t_token_shunk)) {
 			FAIL("shunk_span() returned token '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_token), t->token);
 		}
 
-		if (!hunk_eq(t_input, shunk1(t->new))) {
+		shunk_t t_new_shunk = shunk1(t->new);
+		if (!hunk_eq(t_input, t_new_shunk)) {
 			FAIL("shunk_span() returned new input '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_input), t->new);
 		}

@@ -72,9 +72,9 @@ int raw_cmp(const void *l_ptr, size_t l_len,
 
 #define hunk_cmp(L, R)						\
 	({							\
-		typeof(L) l_ = L; /* evaluate once */		\
-		typeof(R) r_ = R; /* evaluate once */		\
-		raw_cmp(l_.ptr, l_.len, r_.ptr, r_.len);	\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_cmp(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 bool raw_eq(const void *l_ptr, size_t l_len,
@@ -89,25 +89,25 @@ bool raw_heq(const void *l_ptr, size_t l_len,
 		(HUNK).len == 0;		\
 	})
 
-#define hunk_eq(L,R)					\
-	({						\
-		typeof(L) l_ = L; /* evaluate once */	\
-		typeof(R) r_ = R; /* evaluate once */	\
-		raw_eq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+#define hunk_eq(L,R)						\
+	({							\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_eq(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 #define hunk_caseeq(L, R) /* case independent */		\
 	({							\
-		const typeof(L) l_ = L; /* evaluate once */	\
-		const typeof(R) r_ = R; /* evaluate once */	\
-		raw_caseeq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_caseeq(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 #define hunk_heq(L, R) /* case and [-_] independent */		\
 	({							\
-		const typeof(L) l_ = L; /* evaluate once */	\
-		const typeof(R) r_ = R; /* evaluate once */	\
-		raw_heq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_heq(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 #define hunk_streq(HUNK, STRING)					\
@@ -224,10 +224,10 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 #define hunk_memeq(HUNK, MEM, SIZE)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const void *mem_ = MEM; /* evaluate once */		\
 		size_t size_ = SIZE; /* evaluate once */		\
-		raw_eq(hunk_.ptr, hunk_.len, mem_, size_);		\
+		raw_eq(hunk_->ptr, hunk_->len, mem_, size_);		\
 	})
 
 #define hunk_thingeq(SHUNK, THING) hunk_memeq(SHUNK, &(THING), sizeof(THING))
