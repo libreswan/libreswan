@@ -118,6 +118,7 @@ struct secret_pubkey_stuff *secret_pubkey_stuff(const struct secret *secret)
 	switch (secret->kind) {
 	case SECRET_RSA:
 	case SECRET_ECDSA:
+	case SECRET_EDDSA:
 		/* some sort of PKI */
 		return secret->u.pubkey;
 	default:
@@ -418,6 +419,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
+			case SECRET_EDDSA:
 				same = secret_pubkey_same(s, best, logger);
 				break;
 			case SECRET_XAUTH:
@@ -970,6 +972,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				break;
 			case SECRET_RSA:
 			case SECRET_ECDSA:
+			case SECRET_EDDSA:
 				secret_pubkey_stuff_delref(&s->u.pubkey, HERE);
 				break;
 			default:

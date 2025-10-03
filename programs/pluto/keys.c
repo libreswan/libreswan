@@ -96,13 +96,15 @@ static int print_secrets(struct secret *secret,
 		kind = "PSK";
 		break;
 	case SECRET_RSA:
-		kind = "RSA";
+	case SECRET_ECDSA:
+	case SECRET_EDDSA:
+	{
+		const struct secret_pubkey_stuff *stuff = secret_pubkey_stuff(secret);
+		kind = stuff->content.type->name;
 		break;
+	}
 	case SECRET_XAUTH:
 		kind = "XAUTH";
-		break;
-	case SECRET_ECDSA:
-		kind = "ECDSA";
 		break;
 	default:
 		return 1;
