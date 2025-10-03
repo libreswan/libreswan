@@ -393,8 +393,7 @@ static bool score_host_connection(const struct ike_sa *ike,
 		{
 			lset_buf eb;
 			vdbg("%s so no authby checks performed",
-			     str_lset_short(&keyword_auth_names, "+",
-					    proposed_authbys, &eb));
+			     str_lset_short(&auth_names, "+", proposed_authbys, &eb));
 			break;
 		}
 		}

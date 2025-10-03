@@ -29,17 +29,19 @@ struct authby {
 	bool never;
 	bool rsasig;
 	bool ecdsa;
+	bool eddsa;
 	bool rsasig_v1_5;
 };
 
 #define AUTHBY_RSASIG (struct authby) { .rsasig = true, .rsasig_v1_5 = true, }
 #define AUTHBY_ECDSA (struct authby) { .ecdsa = true, }
+#define AUTHBY_EDDSA (struct authby) { .eddsa = true, }
 #define AUTHBY_NEVER (struct authby) { .never = true, }
 #define AUTHBY_NULL (struct authby) { .null = true, }
 #define AUTHBY_PSK (struct authby) { .psk = true, }
 
 #define AUTHBY_NONE (struct authby) {0}
-#define AUTHBY_ALL (struct authby) { true, true, true, true, true, true }
+#define AUTHBY_ALL (struct authby) { true, true, true, true, true, true, true }
 
 #define AUTHBY_IKEv1_DEFAULTS (struct authby) { .rsasig = true, }
 #define AUTHBY_IKEv2_DEFAULTS (struct authby) { .rsasig = true, .rsasig_v1_5 = true, .ecdsa = true, }
@@ -56,8 +58,8 @@ bool authby_has_rsasig(struct authby);
 bool authby_has_ecdsa(struct authby);
 bool authby_has_digsig(struct authby);
 
-enum keyword_auth auth_from_authby(struct authby authby);
-struct authby authby_from_auth(enum keyword_auth auth);
+enum auth auth_from_authby(struct authby authby);
+struct authby authby_from_auth(enum auth auth);
 
 typedef struct {
 	char buf[sizeof("RSA+NULL+NEVER+RSASIG+ECDSA+RSASIG_v1_5") + 1/*canary*/];

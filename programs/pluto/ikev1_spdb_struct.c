@@ -1263,7 +1263,7 @@ static enum ikev1_auth_method sa_auth_method(const struct connection *c,
 	 * Notice how MAIN and AGGR modes use slightly different code
 	 * to compute the index.
 	 */
-	enum keyword_auth auth = c->local->host.config->auth;
+	enum auth auth = c->local->host.config->auth;
 	PEXPECT(logger, auth == c->remote->host.config->auth);
 	unsigned index = ((auth == AUTH_PSK ? 1 :
 			   auth == AUTH_RSASIG ? 2 : 0) |

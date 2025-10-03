@@ -575,12 +575,12 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	lset_t proposed_authbys;
 	if (ike->sa.st_v2_resume_session) {
-		enum keyword_auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
+		enum auth auth = resume_session_auth(ike->sa.st_v2_resume_session);
 		name_buf rn, an;
 		ldbg(ike->sa.logger, "resuming, ignoring v2AUTH method %s, using %s",
 		     str_enum_short(&ikev2_auth_method_names,
 				    md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method, &an),
-		     str_enum_short(&keyword_auth_names, auth, &rn));
+		     str_enum_short(&auth_names, auth, &rn));
 		proposed_authbys = LELEM(auth);
 	} else {
 		proposed_authbys = proposed_v2AUTH(ike, md);
@@ -827,7 +827,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process AUTH payload */
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
+	enum auth initiator_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
 					    c->remote->host.config->auth);
 	struct authby initiator_authby = c->remote->host.config->authby;
 	passert(initiator_auth != AUTH_NEVER && initiator_auth != AUTH_UNSET);
@@ -1219,7 +1219,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
+	enum auth responder_auth = (ike->sa.st_v2_resume_session != NULL ? AUTH_PSK :
 					    c->remote->host.config->auth);
 
 	passert(responder_auth != AUTH_NEVER && responder_auth != AUTH_UNSET);
@@ -1589,7 +1589,7 @@ void llog_success_initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		/* AUTH payload (proof-of-identity) */
 		jam_string(buf, " with ");
-		enum keyword_auth authby = local_v2_auth(ike);
+		enum auth authby = local_v2_auth(ike);
 		enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 		jam_enum_human(buf, &ikev2_auth_method_names, auth_method);
 		/* ID payload */

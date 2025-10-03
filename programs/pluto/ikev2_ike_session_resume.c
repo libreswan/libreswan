@@ -154,10 +154,10 @@ void refresh_v2_ike_session_resume(struct logger *logger)
 struct resume_session {
 	char initiator_id[256];
 	char responder_id[256];
-	enum keyword_auth auth_method;
+	enum auth auth_method;
 };
 
-enum keyword_auth resume_session_auth(const struct resume_session *session)
+enum auth resume_session_auth(const struct resume_session *session)
 {
 	return session->auth_method;
 }

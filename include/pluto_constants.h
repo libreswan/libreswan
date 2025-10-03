@@ -122,18 +122,6 @@ enum keyword_pubkey {
 
 extern const struct sparse_names keyword_pubkey_names;
 
-enum keyword_auth {
-	AUTH_UNSET = 0,
-	AUTH_NEVER,
-	AUTH_PSK,
-	AUTH_RSASIG,
-	AUTH_ECDSA,
-	AUTH_NULL,
-	AUTH_EAPONLY,
-};
-
-extern const struct enum_names keyword_auth_names;
-
 /* OCSP related constants - defaults picked from NSS defaults */
 #define OCSP_DEFAULT_CACHE_SIZE 1000
 #define OCSP_DEFAULT_CACHE_MIN_AGE 3600

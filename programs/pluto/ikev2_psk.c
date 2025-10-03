@@ -57,7 +57,7 @@
 diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct hash_signature *auth_sig,
 				   const struct ike_sa *ike,
-				   enum keyword_auth authby,
+				   enum auth authby,
 				   const struct crypt_mac *idhash,
 				   const chunk_t firstpacket,
 				   struct crypt_mac *sighash)
@@ -73,7 +73,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	ldbg(logger, "%s() called for %s to %s PSK with authby=%s resume=%s",
 	     __func__, ike->sa.st_state->name,
 	     str_enum_short(&perspective_names, perspective, &pb),
-	     str_enum_long(&keyword_auth_names, authby, &an),
+	     str_enum_long(&auth_names, authby, &an),
 	     bool_str(ike->sa.st_v2_resume_session != NULL));
 
 	/* this is the IKE_AUTH exchange, so a given */
@@ -276,7 +276,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	return NULL;
 }
 
-bool ikev2_create_psk_auth(enum keyword_auth authby,
+bool ikev2_create_psk_auth(enum auth authby,
 			   const struct ike_sa *ike,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
@@ -310,7 +310,7 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
  * The log message must mention both the peer's ID and kind.
  */
 
-diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
+diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
 				       const struct ike_sa *ike,
 				       const struct crypt_mac *idhash,
 				       struct pbs_in *sig_pbs,
@@ -368,7 +368,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			/* XXX: log prf(prf(hash based on null or secret)) how? */
 			/* now it was authenticated */
 			jam_string(buf, "using authby=");
-			jam_enum_long(buf, &keyword_auth_names, authby);
+			jam_enum_human(buf, &auth_names, authby);
 			jam_string(buf, " and ");
 			jam_enum_short(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
 			jam_string(buf, " '");

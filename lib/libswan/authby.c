@@ -14,6 +14,7 @@
  */
 
 #include "authby.h"
+#include "auth.h"
 
 #include "constants.h"		/* for enum keyword_auth */
 #include "jambuf.h"
@@ -92,7 +93,7 @@ bool authby_has_digsig(struct authby lhs)
 	return authby_has_ecdsa(lhs) || authby_has_rsasig(lhs);
 }
 
-enum keyword_auth auth_from_authby(struct authby authby)
+enum auth auth_from_authby(struct authby authby)
 {
 	return (authby.rsasig ? AUTH_RSASIG :
 		authby.ecdsa ? AUTH_ECDSA :
@@ -103,20 +104,18 @@ enum keyword_auth auth_from_authby(struct authby authby)
 		AUTH_UNSET);
 }
 
-struct authby authby_from_auth(enum keyword_auth auth)
+struct authby authby_from_auth(enum auth auth)
 {
+#define AUTH(BY) case AUTH_##BY: return AUTHBY_##BY
 	switch (auth) {
-	case AUTH_RSASIG:
-		return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
-	case AUTH_ECDSA:
-		return (struct authby) { .ecdsa = true, };
-	case AUTH_PSK:
-		return (struct authby) { .psk = true, };
-	case AUTH_NULL:
-		return (struct authby) { .null = true, };
-	case AUTH_NEVER:
+		AUTH(RSASIG);
+		AUTH(ECDSA);
+		AUTH(EDDSA);
+		AUTH(PSK);
+		AUTH(NULL);
+		AUTH(NEVER);
 	case AUTH_UNSET:
-		return (struct authby) { .never = true, };
+		return AUTHBY_NEVER;
 	case AUTH_EAPONLY:
 		return (struct authby) {0};
 	}

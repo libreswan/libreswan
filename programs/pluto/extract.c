@@ -1369,9 +1369,9 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->eap = autheap;
 
-	enum keyword_auth auth = extract_enum_name(leftright, "auth", src->auth,
+	enum auth auth = extract_enum_name(leftright, "auth", src->auth,
 						   /*value_when_unset*/AUTH_UNSET,
-						   &keyword_auth_names,
+						   &auth_names,
 						   wm, &d, verbose);
 	if (d != NULL) {
 		return d;
@@ -1389,7 +1389,7 @@ static diag_t extract_host_end(struct host_end *host,
 		/* AUTH_UNSET is updated below */
 		name_buf ab;
 		return diag("%sauth=%s option is invalid for type=passthrough connection",
-			    leftright, str_enum_short(&keyword_auth_names, auth, &ab));
+			    leftright, str_enum_short(&auth_names, auth, &ab));
 	}
 
 	struct authby authby = whack_authby;
@@ -1440,10 +1440,9 @@ static diag_t extract_host_end(struct host_end *host,
 	struct authby authby_mask = {0};
 	switch (auth) {
 	case AUTH_RSASIG:
-		authby_mask = AUTHBY_RSASIG;
-		break;
 	case AUTH_ECDSA:
-		authby_mask = AUTHBY_ECDSA;
+	case AUTH_EDDSA:
+		authby_mask = authby_from_auth(auth);
 		break;
 	case AUTH_PSK:
 		/* force only bit (not on by default) */
@@ -1469,7 +1468,7 @@ static diag_t extract_host_end(struct host_end *host,
 			authby_buf pb;
 			return diag("%sauth=%s expects authby=%s",
 				    leftright,
-				    str_enum_short(&keyword_auth_names, auth, &ab),
+				    str_enum_short(&auth_names, auth, &ab),
 				    str_authby(authby_mask, &pb));
 		}
 	}
@@ -1478,7 +1477,7 @@ static diag_t extract_host_end(struct host_end *host,
 	authby_buf wabb;
 	authby_buf eabb;
 	vdbg("fake %sauth=%s %sauthby=%s from whack authby %s",
-	     src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
+	     src->leftright, str_enum_short(&auth_names, auth, &eab),
 	     src->leftright, str_authby(authby, &eabb),
 	     str_authby(whack_authby, &wabb));
 	host_config->auth = auth;
@@ -3924,9 +3923,9 @@ diag_t extract_connection(const struct whack_message *wm,
 			name_buf lab, rab;
 			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 				    c->local->config->leftright,
-				    str_enum_long(&keyword_auth_names, c->local->host.config->auth, &lab),
+				    str_enum_short(&auth_names, c->local->host.config->auth, &lab),
 				    c->remote->config->leftright,
-				    str_enum_long(&keyword_auth_names, c->remote->host.config->auth, &rab));
+				    str_enum_short(&auth_names, c->remote->host.config->auth, &rab));
 		}
 	}
 
