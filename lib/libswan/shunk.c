@@ -65,7 +65,7 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 				*delim = *pos;
 			}
 			/* skip over TOKEN+DELIM */
-			*input = hunk_slice(*input, pos-start+1, input->len);
+			*input = shunk_slice(*input, pos-start+1, input->len);
 			return token;
 		}
 		pos++;
@@ -96,7 +96,7 @@ shunk_t shunk_span(shunk_t *input, const char *accept)
 			/* save the token and stop character */
 			shunk_t token = shunk2(start, pos - start);
 			/* skip over TOKEN+DELIM */
-			*input = hunk_slice(*input, pos - start, input->len);
+			*input = shunk_slice(*input, pos - start, input->len);
 			return token;
 		}
 		pos++;
@@ -205,7 +205,7 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 			return "uintmax_t overflow";
 		}
 		u = u + d;
-		cursor = hunk_slice(cursor, 1, cursor.len);
+		cursor = shunk_slice(cursor, 1, cursor.len);
 	}
 
 	if (cursor.len == input.len) {

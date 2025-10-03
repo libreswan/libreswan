@@ -142,6 +142,30 @@ shunk_t *clone_shunk_tokens(shunk_t input, const char *delim, where_t here);
 shunk_t shunk_span(shunk_t *input, const char *accept);
 
 /*
+ * Return hunk[FLOOR..ROOF) as a read-only shunk_t.
+ *
+ * For instance:
+ *
+ *    hunk_slice(s, 1, s.len);
+ *
+ * drops the first character.
+ */
+
+#define shunk_slice(HUNK, FLOOR, ROOF)			\
+	({						\
+		size_t _floor = FLOOR;			\
+		size_t _roof = ROOF;			\
+		typeof(HUNK) *_hunk = &(HUNK); /* don't copy */	\
+		passert(_floor <= _roof);		\
+		passert(_roof <= _hunk->len);		\
+		shunk_t _slice = {			\
+			_hunk->ptr + _floor,		\
+			.len = _roof - _floor,		\
+		};					\
+		_slice;					\
+	})
+
+/*
  * Number conversion; loosely based on strtoul(START, END, BASE).
  *
  * Parse INPUT according to BASE (see strtoul()). Should the numeric

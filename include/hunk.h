@@ -269,26 +269,6 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 	})
 
 /*
- * hunk[FLOOR..ROOF)
- *
- * For instance: hunk_slice(s, 1, s.len);
- */
-
-#define hunk_slice(HUNK, FLOOR, ROOF)			\
-	({						\
-		size_t _floor = FLOOR;			\
-		size_t _roof = ROOF;			\
-		typeof(HUNK) _hunk = HUNK;		\
-		passert(_floor <= _roof);		\
-		passert(_roof <= _hunk.len);		\
-		typeof(HUNK) _slice = {			\
-			_hunk.ptr + _floor,		\
-			.len = _roof - _floor,		\
-		};					\
-		_slice;					\
-	})
-
-/*
  * Macros to treat a HUNK, pointing into a buffer, like a data stream:
  *
  * - initially .ptr is the start of the buffer, and .len is the

@@ -96,6 +96,30 @@ chunk_t clone_bytes_bytes_as_chunk(const void *first_ptr, size_t first_len,
 	})
 
 /*
+ * Return hunk[FLOOR..ROOF) as a writeable chunk_t.
+ *
+ * For instance:
+ *
+ *    hunk_slice(s, 1, s.len);
+ *
+ * drops the first character.
+ */
+
+#define chunk_slice(HUNK, FLOOR, ROOF)			\
+	({						\
+		size_t _floor = FLOOR;			\
+		size_t _roof = ROOF;			\
+		typeof(HUNK) *_hunk = &(HUNK); /* don't copy */	\
+		passert(_floor <= _roof);		\
+		passert(_roof <= _hunk->len);		\
+		chunk_t _slice = {			\
+			_hunk->ptr + _floor,		\
+			.len = _roof - _floor,		\
+		};					\
+		_slice;					\
+	})
+
+/*
  * replace RHS with the concatenation of LHS+RHS
  *
  * These functions have their name first which, while inconsistent
