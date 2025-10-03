@@ -5666,7 +5666,7 @@ name for -1 present (should be absent)
          short_name 6: action: stopping OK
          jam_enum_short 6: action: stopping OK
          jam_enum_human 6: action: stopping OK
-  secret_kind_names: [1..8)
+  secret_kind_names: [1..9)
     1 -> SECRET_PSK
          jam_enum 1: SECRET_PSK OK
          match SECRET_PSK: OK
@@ -5681,40 +5681,47 @@ name for -1 present (should be absent)
          jam_enum_short 2: RSA OK
          jam_enum_human 2: rsa OK
          match RSA [short]: OK
-    3 -> SECRET_XAUTH
-         jam_enum 3: SECRET_XAUTH OK
-         match SECRET_XAUTH: OK
-         short_name 3: XAUTH OK
-         jam_enum_short 3: XAUTH OK
-         jam_enum_human 3: xauth OK
-         match XAUTH [short]: OK
-    4 -> SECRET_PPK
-         jam_enum 4: SECRET_PPK OK
-         match SECRET_PPK: OK
-         short_name 4: PPK OK
-         jam_enum_short 4: PPK OK
-         jam_enum_human 4: ppk OK
-         match PPK [short]: OK
-    5 -> SECRET_ECDSA
-         jam_enum 5: SECRET_ECDSA OK
+    3 -> SECRET_ECDSA
+         jam_enum 3: SECRET_ECDSA OK
          match SECRET_ECDSA: OK
-         short_name 5: ECDSA OK
-         jam_enum_short 5: ECDSA OK
-         jam_enum_human 5: ecdsa OK
+         short_name 3: ECDSA OK
+         jam_enum_short 3: ECDSA OK
+         jam_enum_human 3: ecdsa OK
          match ECDSA [short]: OK
-    6 -> SECRET_NULL
-         jam_enum 6: SECRET_NULL OK
+    4 -> SECRET_EDDSA
+         jam_enum 4: SECRET_EDDSA OK
+         match SECRET_EDDSA: OK
+         short_name 4: EDDSA OK
+         jam_enum_short 4: EDDSA OK
+         jam_enum_human 4: eddsa OK
+         match EDDSA [short]: OK
+    5 -> SECRET_XAUTH
+         jam_enum 5: SECRET_XAUTH OK
+         match SECRET_XAUTH: OK
+         short_name 5: XAUTH OK
+         jam_enum_short 5: XAUTH OK
+         jam_enum_human 5: xauth OK
+         match XAUTH [short]: OK
+    6 -> SECRET_PPK
+         jam_enum 6: SECRET_PPK OK
+         match SECRET_PPK: OK
+         short_name 6: PPK OK
+         jam_enum_short 6: PPK OK
+         jam_enum_human 6: ppk OK
+         match PPK [short]: OK
+    7 -> SECRET_NULL
+         jam_enum 7: SECRET_NULL OK
          match SECRET_NULL: OK
-         short_name 6: NULL OK
-         jam_enum_short 6: NULL OK
-         jam_enum_human 6: null OK
+         short_name 7: NULL OK
+         jam_enum_short 7: NULL OK
+         jam_enum_human 7: null OK
          match NULL [short]: OK
-    7 -> SECRET_INVALID
-         jam_enum 7: SECRET_INVALID OK
+    8 -> SECRET_INVALID
+         jam_enum 8: SECRET_INVALID OK
          match SECRET_INVALID: OK
-         short_name 7: INVALID OK
-         jam_enum_short 7: INVALID OK
-         jam_enum_human 7: invalid OK
+         short_name 8: INVALID OK
+         jam_enum_short 8: INVALID OK
+         jam_enum_human 8: invalid OK
          match INVALID [short]: OK
   send_ca_policy_names: [0..3)
     0 -> CA_SEND_NONE

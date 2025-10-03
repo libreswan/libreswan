@@ -2395,9 +2395,10 @@ static const char *const secret_kind_name[] = {
 #define S(E) [E - SECRET_PSK] = #E
 	S(SECRET_PSK),
 	S(SECRET_RSA),
+	S(SECRET_ECDSA),
+	S(SECRET_EDDSA),
 	S(SECRET_XAUTH),
 	S(SECRET_PPK),
-	S(SECRET_ECDSA),
 	S(SECRET_NULL),
 	S(SECRET_INVALID),
 #undef S

@@ -73,10 +73,23 @@ void free_pubkey_content(struct pubkey_content *pubkey_content,
 enum secret_kind {
 	/* start at one so accidental 0 will not match */
 	SECRET_PSK = 1,
+	/*
+	 * XXX: need three PUBKEY types?
+	 *
+	 * Most code doesn't care.  However the code searching for the
+	 * private key uses ID+KIND where KIND is explicitly specified
+	 * as RSA, ECDSA, et.al.  Changing that to the generic
+	 * SECRET_PUBKEY may result in the wrong key being found?
+	 *
+	 * NSS, for instance, with certutils, lets the key kind be
+	 * specified as a filter.
+	 */
 	SECRET_RSA,
+	SECRET_ECDSA, /* should not be needed */
+	SECRET_EDDSA, /* should not be needed */
+
 	SECRET_XAUTH,
 	SECRET_PPK,
-	SECRET_ECDSA, /* should not be needed */
 	SECRET_NULL,
 	SECRET_INVALID,
 };
