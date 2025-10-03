@@ -451,8 +451,10 @@ static bool isakmp_add_attr(struct modecfg_pbs *modecfg_pbs,
 			llog(RC_LOG, ike->sa.logger, "sending CISCO_SPLIT %s/%s",
 			     str_address(&addr, &ab), str_address(&mask, &mb));
 			struct CISCO_split_item i = {0};
-			memcpy_hunk(&i.cs_addr, address_as_shunk(&addr), sizeof(i.cs_addr));
-			memcpy_hunk(&i.cs_mask, address_as_shunk(&mask), sizeof(i.cs_mask));
+			shunk_t addr_buf = address_as_shunk(&addr);
+			shunk_t mask_buf = address_as_shunk(&mask);
+			memcpy_hunk(&i.cs_addr, addr_buf, sizeof(i.cs_addr));
+			memcpy_hunk(&i.cs_mask, mask_buf, sizeof(i.cs_mask));
 			if (!pbs_out_struct(&attrval, i, &CISCO_split_desc, NULL)) {
 				return false;
 			}

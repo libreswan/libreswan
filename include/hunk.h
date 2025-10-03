@@ -395,9 +395,9 @@ char  char_toupper(char c);
 
 #define memcpy_hunk(DST, HUNK, SIZE)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		passert(hunk_.len == SIZE);				\
-		memcpy(DST, hunk_.ptr, SIZE);				\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* don't copy */	\
+		passert(hunk_->len == SIZE);				\
+		memcpy(DST, hunk_->ptr, SIZE);				\
 	})
 
 /*
@@ -411,13 +411,13 @@ uintmax_t raw_ntoh(const void *bytes, size_t size);
 
 #define ntoh_hunk(HUNK)							\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		raw_ntoh(hunk_.ptr, hunk_.len);				\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* don't copy */	\
+		raw_ntoh(hunk_->ptr, hunk_->len);			\
 	})
 
 #define hton_chunk(H, HUNK) /* writeable */				\
 	({								\
-		const chunk_t hunk_ = HUNK; /* evaluate once */		\
+		chunk_t hunk_ = HUNK; /* evaluate onece */		\
 		raw_hton(H, hunk_.ptr, hunk_.len);			\
 	})
 
