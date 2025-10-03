@@ -1839,6 +1839,14 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 	 * share same structure.
 	 */
 	struct pbs_in pbs = PBS_INIT((void*)shunk.ptr, shunk.len, name);
+	/*
+	 * XXX: start level off at 2.  Level 1 is the raw packet.
+	 *
+	 * At least that is how I'm retro-engineering the previous
+	 * behaviour (while the comment indicated that the levels
+	 * started at one, the code said otherwise).
+	 */
+	pbs.level = 2;
 	return pbs;
 }
 
@@ -1937,10 +1945,11 @@ static void LDBG_print_struct(struct logger *logger,
 	uintmax_t last_enum = 0;
 
 	char stars[40]; /* arbitrary limit on label+flock-of-* */
-	for (unsigned s = 0; s < level && s < elemsof(stars)-2; s++) {
-		stars[s+0] = '*';
-		stars[s+1] = '\0';
+	unsigned s;
+	for (s = 0; s < level && s < elemsof(stars)-2; s++) {
+		stars[s] = '*';
 	}
+	stars[s] = '\0';
 
 	LDBG_log(logger, "%s%s%s:", stars, label, sd->name);
 
@@ -2090,10 +2099,7 @@ static void DBG_prefix_print_pbs_in_struct(const struct pbs_in *pbs,
 	 * Print out a title, with a prefix of asterisks to show the
 	 * nesting level; minimum of one star.
 	 */
-	unsigned level = 1;
-	for (const struct pbs_in *p = pbs; p != NULL; p = p->container) {
-		level++;
-	}
+	unsigned level = pbs->level;
 	LDBG_print_struct(&global_logger, label, level, struct_ptr, sd, len_meaningful);
 }
 
@@ -2311,7 +2317,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		*obj_pbs = pbs_in_from_shunk(shunk2(ins->cur/*not CUR*/, roof - ins->cur), sd->name);
 		obj_pbs->cur = cur; /* skip header */
 		/* back link */
-		obj_pbs->container = ins;
+		obj_pbs->level = ins->level + 1;
 		obj_pbs->desc = sd;
 	}
 	ins->cur = roof;

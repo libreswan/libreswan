@@ -93,8 +93,10 @@ static callback_cb handle_md_event;		/* type assertion */
 
 void process_md(struct msg_digest *md)
 {
-	diag_t d = pbs_in_struct(&md->packet_pbs, &isakmp_hdr_desc,
-				 &md->hdr, sizeof(md->hdr), &md->message_pbs);
+	struct pbs_in packet_pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->packet), "packet");
+	diag_t d = pbs_in_struct(&packet_pbs, &isakmp_hdr_desc,
+				 &md->hdr, sizeof(md->hdr),
+				 &md->message_pbs);
 	if (d != NULL) {
 		/*
 		 * The packet was very badly mangled. We can't be sure
@@ -115,25 +117,32 @@ void process_md(struct msg_digest *md)
 	 * They map onto the same bytes.
 	 */
 	shunk_t message = pbs_in_all(&md->message_pbs);
-	shunk_t packet = pbs_in_all(&md->packet_pbs);
-	PEXPECT(md->logger, message.ptr == packet.ptr);
+	PEXPECT(md->logger, message.ptr == md->packet.ptr);
 
-	if (packet.len > message.len) {
+	if (md->packet.len > message.len) {
 		/*
 		 * The extracted message, with its .len set from the
-		 * header, is shorter than the raw packet.
+		 * header is shorter than the raw packet.
 		 *
 		 * Some (old?) versions of the Cisco VPN client send
-		 * an additional 16 bytes of zero bytes - Complain but
-		 * accept it
+		 * an additional 16 zero-bytes - complain but accept
+		 * it
 		 */
 		if (LDBGP(DBG_BASE, md->logger)) {
 			LDBG_log(md->logger, "size (%zu) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
-				 packet.len, md->hdr.isa_length);
-			shunk_t tail = hunk_slice(packet, message.len, packet.len);
-			LDBG_log(md->logger, "extraneous bytes:");
+				 md->packet.len, md->hdr.isa_length);
+			shunk_t tail = hunk_slice(HUNK_AS_SHUNK(&md->packet),
+						  message.len, md->packet.len);
+			if (tail.len > 16) {
+				LDBG_log(md->logger, "extraneous bytes (truncated from %zu):", tail.len);
+				tail.len = 16;
+			} else {
+				LDBG_log(md->logger, "extraneous bytes:");
+			}
 			LDBG_hunk(md->logger, &tail);
 		}
+		/* truncate */
+		md->packet.len = message.len;
 	}
 
 	unsigned vmaj = md->hdr.isa_version >> ISA_MAJ_SHIFT;
@@ -296,16 +305,16 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 			endpoint_buf sb;
 			endpoint_buf lb;
 			LDBG_log(logger, "*received %zu bytes from %s on %s %s using %s",
-				 pbs_in_all(&md->packet_pbs).len,
+				 md->packet.len,
 				 str_endpoint(&md->sender, &sb),
 				 md->iface->ip_dev->real_device_name,
 				 str_endpoint(&md->iface->local_endpoint, &lb),
 				 md->iface->io->protocol->name);
-			shunk_t packet = pbs_in_all(&md->packet_pbs);
+			shunk_t packet = HUNK_AS_SHUNK(&md->packet);
 			LDBG_hunk(logger, &packet);
 		}
 
-		pstats_ike_bytes.in += pbs_in_all(&md->packet_pbs).len;
+		pstats_ike_bytes.in += md->packet.len;
 
 		md->md_inception = md_start;
 		if (!impair_inbound(md)) {

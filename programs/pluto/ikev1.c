@@ -429,7 +429,7 @@ void ikev1_init_pbs_out_from_md_hdr(struct msg_digest *md, bool enc,
 static bool ikev1_duplicate(struct state *st, struct msg_digest *md)
 {
 	passert(st != NULL);
-	if (hunk_eq(st->st_v1_rpacket, pbs_in_all(&md->packet_pbs))) {
+	if (hunk_eq(st->st_v1_rpacket, md->packet)) {
 		/*
 		 * Exact Duplicate.  Drop or retransmit?
 		 *
@@ -1271,7 +1271,7 @@ void process_v1_packet(struct msg_digest *md)
 					 * reusing FRAG.
 					 */
 					frag = st->st_v1_rfrags;
-					uint8_t *buffer = whole_md->packet_pbs.start;
+					uint8_t *buffer = whole_md->packet.ptr;
 					size_t offset = 0;
 					while (frag != NULL && frag->index <= last_frag_index) {
 						passert(offset + frag->data.len <= size);
@@ -1516,7 +1516,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * Grab a copy of raw packet (for duplicate packet
 		 * detection).
 		 */
-		md->raw_packet = clone_pbs_in_all(&md->packet_pbs, "raw packet");
+		md->raw_packet = clone_hunk_as_chunk(&md->packet, "raw packet");
 		PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == cipher->enc_blocksize);
 
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
@@ -2041,7 +2041,7 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 	} else {
 		/* this may be a repeat, but it will work */
 		replace_chunk(&st->st_v1_rpacket,
-			      pbs_in_all(&md->packet_pbs),
+			      HUNK_AS_SHUNK(&md->packet),
 			      "raw packet");
 	}
 }

@@ -807,9 +807,9 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	/* entire SKF pbs; cur points past SKF header */
 	const struct pbs_in *skf_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
 	/* entire payload: AAD+SKF-header+IV+cipher-text) */
-	chunk_t text = chunk2(md->packet_pbs.start, skf_pbs->roof - md->packet_pbs.start);
+	chunk_t text = chunk2(md->packet.ptr, skf_pbs->roof - md->packet.ptr);
 	/* first thing after SKF header is Initialization Vector */
-	unsigned iv_offset = skf_pbs->cur - md->packet_pbs.start;
+	unsigned iv_offset = skf_pbs->cur - md->packet.ptr;
 
 	/* if possible, decrypt (in place) */
 
@@ -1050,14 +1050,14 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	 * Having read the SK header, the .cursor is pointing at the
 	 * IV.  Lets corrupt it!
 	 */
-	size_t iv_offset = sk_pbs->cur - md->packet_pbs.start;
+	size_t iv_offset = sk_pbs->cur - md->packet.ptr;
 	if (impair.corrupt_encrypted && !md->fake_clone) {
 		llog(RC_LOG, ike->sa.logger,
 		     "IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
-		md->packet_pbs.start[iv_offset] = ~(md->packet_pbs.start[iv_offset]);
+		md->packet.ptr[iv_offset] = ~(md->packet.ptr[iv_offset]);
 	}
 
-	chunk_t message = chunk2(md->packet_pbs.start, sk_pbs->roof - md->packet_pbs.start);
+	chunk_t message = chunk2(md->packet.ptr, sk_pbs->roof - md->packet.ptr);
 	shunk_t plain = null_shunk; /*to be sure*/
 	bool ok = verify_and_decrypt_v2_message(ike, message, &plain, iv_offset);
 	md->chain[ISAKMP_NEXT_v2SK]->pbs = pbs_in_from_shunk(plain, "decrypted SK payload");

@@ -145,7 +145,7 @@ static const struct message *save_message(struct direction_impairment *direction
 static const struct message *save_inbound(struct msg_digest *md)
 {
 	return save_message(&inbound,
-			    pbs_in_all(&md->packet_pbs),
+			    HUNK_AS_SHUNK(&md->packet),
 			    /*inbound.md*/md,
 			    /*outbound.interface*/NULL,
 			    /*outbound.endpoint*/unset_endpoint);
