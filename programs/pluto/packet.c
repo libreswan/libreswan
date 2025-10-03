@@ -1937,10 +1937,11 @@ static void LDBG_print_struct(struct logger *logger,
 	uintmax_t last_enum = 0;
 
 	char stars[40]; /* arbitrary limit on label+flock-of-* */
-	for (unsigned s = 0; s < level && s < elemsof(stars)-2; s++) {
-		stars[s+0] = '*';
-		stars[s+1] = '\0';
+	unsigned s;
+	for (s = 0; s < level && s < elemsof(stars)-2; s++) {
+		stars[s] = '*';
 	}
+	stars[s] = '\0';
 
 	LDBG_log(logger, "%s%s%s:", stars, label, sd->name);
 
