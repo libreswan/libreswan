@@ -109,7 +109,7 @@ struct fixup *pbs_out_next_payload_chain(struct pbs_out *outs);
  */
 
 struct pbs_in {
-	struct pbs_in *container;		/* PBS of which we are part */
+	unsigned level;				/* PBS of which we are part */
 	struct_desc *desc;
 	const char *name;			/* what does this PBS represent? */
 	uint8_t *start;				/* public: where this stream starts */
