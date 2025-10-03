@@ -314,10 +314,10 @@ static bool RSA_pubkey_same(const struct pubkey_content *lhs,
 	 * redundant?  The direct n==n test would pick up the
 	 * difference.
 	 */
-	bool e = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.rsa.publicExponent),
-			 same_secitem_as_shunk(rhs->public_key->u.rsa.publicExponent));
-	bool n = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.rsa.modulus),
-			 same_secitem_as_shunk(rhs->public_key->u.rsa.modulus));
+	bool e = SECITEM_ItemsAreEqual(&lhs->public_key->u.rsa.publicExponent,
+				       &rhs->public_key->u.rsa.publicExponent);
+	bool n = SECITEM_ItemsAreEqual(&lhs->public_key->u.rsa.modulus,
+				       &rhs->public_key->u.rsa.modulus);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "n did %smatch", n ? "" : "NOT ");
 		LDBG_log(logger, "e did %smatch", e ? "" : "NOT ");
