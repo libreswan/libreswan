@@ -175,6 +175,7 @@ struct hash_signature {
 struct pubkey_type {
 	const char *name;
 	enum secret_kind private_key_kind;
+	enum ipseckey_algorithm_type ipseckey_algorithm;
 	void (*free_pubkey_content)(struct pubkey_content *pkc,
 				    const struct logger *logger);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
@@ -236,6 +237,8 @@ struct pubkey_signer {
 				  const struct hash_desc *);
 };
 
+extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
+
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
 
@@ -247,7 +250,7 @@ extern const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa;	/* rfc7427
 extern const struct pubkey_signer pubkey_signer_digsig_rsassa_pss;	/* rfc7427 */
 extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
 
-const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
+const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type alg);
 
 struct hash_signature pubkey_hash_then_sign(const struct pubkey_signer *signer,
 					    const struct hash_desc *hasher,

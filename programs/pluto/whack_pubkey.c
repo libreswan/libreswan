@@ -37,19 +37,8 @@
 err_t whack_pubkey_to_chunk(enum ipseckey_algorithm_type pubkey_alg,
 			    const char *pubkey_in, chunk_t *pubkey_out)
 {
-	int base;
-	switch (pubkey_alg) {
-	case IPSECKEY_ALGORITHM_RSA:
-	case IPSECKEY_ALGORITHM_ECDSA:
-		base = 0; /* figure it out */
-		break;
-	case IPSECKEY_ALGORITHM_X_PUBKEY:
-		base = 64; /* dam it */
-		break;
-	default:
-		bad_case(pubkey_alg);
-	}
-
+	unsigned base = (pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? 64 /*dam-it*/ :
+			 0/*figure-it-out*/);
 	return ttochunk(shunk1(pubkey_in), base, pubkey_out);
 }
 
@@ -96,7 +85,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * Figure out the key type.
 	 */
 
-	const struct pubkey_type *type = pubkey_alg_type(wm->pubkey_alg);
+	const struct pubkey_type *type = pubkey_type_from_ipseckey_algorithm(wm->pubkey_alg);
 	struct id keyid; /* must free_id_content() */
 	err = atoid(wm->keyid, &keyid);
 	if (err != NULL) {
