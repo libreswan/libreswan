@@ -1838,6 +1838,8 @@ enum gw_identity_type {
 
 /*
  * Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4.
+ *
+ * See https://www.iana.org/assignments/ipseckey-rr-parameters/ipseckey-rr-parameters.xhtml
  */
 
 enum ipseckey_algorithm_type {
