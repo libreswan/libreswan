@@ -371,6 +371,7 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 		}
 
 		struct secret_pubkey_stuff pks = {
+			.content.type = type,
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 

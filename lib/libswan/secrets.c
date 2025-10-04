@@ -1193,13 +1193,16 @@ static err_t add_private_key(struct secret **secrets,
 			     const struct pubkey_type *type,
 			     SECKEYPrivateKey *private_key)
 {
-	struct pubkey_content content;
+	struct pubkey_content content = {
+		.type = type,
+	};
+
 	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss, logger);
 	if (err != NULL) {
 		return err;
 	}
 
-	PASSERT(logger, content.type == type);
+	PASSERT(logger, content.type == type); /* don't change */
 	PEXPECT(logger, content.ckaid.len > 0);
 	PEXPECT(logger, content.keyid.keyid[0] != '\0');
 
@@ -1398,7 +1401,10 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 			    cert->nickname);
 	}
 
-	struct pubkey_content pkc = {0};
+	struct pubkey_content pkc = {
+		.type = type,
+	};
+
 	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss, logger);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);

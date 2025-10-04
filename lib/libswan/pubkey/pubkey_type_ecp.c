@@ -221,7 +221,7 @@ static err_t ECP_extract_pubkey_content(struct pubkey_content *pkc,
 					  SECItem *ckaid_nss,
 					  const struct logger *logger)
 {
-	pkc->type = &pubkey_type_ecdsa;
+	PEXPECT(logger, pkc->type == &pubkey_type_ecdsa);
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
 	ldbg_newref(logger, pkc->public_key);
 	pkc->ckaid = ckaid_from_secitem(ckaid_nss);

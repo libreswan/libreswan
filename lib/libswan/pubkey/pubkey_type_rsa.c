@@ -264,6 +264,8 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 					SECItem *cert_ckaid,
 					const struct logger *logger)
 {
+	PEXPECT(logger, pkc->type == &pubkey_type_rsa);
+
 	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
 	size_t size;
@@ -287,8 +289,7 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 		return "RSA modulus too large for signature buffer";
 	}
 
-	/* now allocate */
-	pkc->type = &pubkey_type_rsa;
+	/* now fill in */
 	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
 	ldbg_newref(logger, pkc->public_key);
 	pkc->ckaid = ckaid_from_secitem(cert_ckaid);
