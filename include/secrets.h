@@ -175,6 +175,7 @@ struct hash_signature {
 struct pubkey_type {
 	const char *name;
 	enum secret_kind private_key_kind;
+	enum ipseckey_algorithm_type ipseckey_algorithm;
 	void (*free_pubkey_content)(struct pubkey_content *pkc,
 				    const struct logger *logger);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */

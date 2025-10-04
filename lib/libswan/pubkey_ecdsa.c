@@ -279,6 +279,7 @@ static size_t ECDSA_strength_in_bits(const struct pubkey *pubkey)
 const struct pubkey_type pubkey_type_ecdsa = {
 	.name = "ECDSA",
 	.private_key_kind = SECRET_ECDSA, /* XXX: delete field */
+	.ipseckey_algorithm = IPSECKEY_ALGORITHM_ECDSA,
 	.ipseckey_rdata_to_pubkey_content = ECDSA_ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = ECDSA_pubkey_content_to_ipseckey_rdata,
 	.free_pubkey_content = ECDSA_free_pubkey_content,
