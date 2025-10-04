@@ -1097,31 +1097,25 @@ diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
 				 struct pubkey_content *pubkey_content,
 				 const struct logger *logger)
 {
-
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
 		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, pubkey_content);
 		if (d != NULL) {
 			return d;
 		}
-	} else {
-		const struct pubkey_type *pubkey_type = NULL; /* TBD */
-		switch (algorithm_type) {
-		case IPSECKEY_ALGORITHM_RSA:
-			pubkey_type = &pubkey_type_rsa;
-			break;
-		case IPSECKEY_ALGORITHM_ECDSA:
-			pubkey_type = &pubkey_type_ecdsa;
-			break;
-		default:
-			return diag("invalid IPSECKEY Algorithm Type %u", algorithm_type);
-		}
+		PASSERT(logger, pubkey_content->type != NULL);
+		return NULL;
+	}
 
-		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 pubkey_content,
-									 logger);
-		if (d != NULL) {
-			return d;
-		}
+	const struct pubkey_type *pubkey_type = pubkey_type_from_ipseckey_algorithm(algorithm_type);
+	if (pubkey_type == NULL) {
+		return diag("invalid IPSECKEY Algorithm Type %u", algorithm_type);
+	}
+
+	diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
+								 pubkey_content,
+								 logger);
+	if (d != NULL) {
+		return d;
 	}
 
 	PASSERT(logger, pubkey_content->type != NULL);
