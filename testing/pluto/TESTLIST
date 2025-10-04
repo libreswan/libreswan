@@ -699,6 +699,8 @@ kvmplutotest 	newoe-28-dual-source			good
 kvmplutotest	newoe-30-shunt-slash24			good
 kvmplutotest	newoe-30-shunt-slash32			good
 
+kvmplutotest	newoe-31-interface-lost			wip	github/2413
+
 kvmplutotest 	certoe-01-whack				good
 kvmplutotest 	certoe-02-whack-otherca			good
 kvmplutotest 	certoe-03-cop-whack			good

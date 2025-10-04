@@ -1,0 +1,55 @@
+/testing/guestbin/swan-prep
+west #
+ cp policies/* /etc/ipsec.d/policies/
+west #
+ echo "192.1.2.0/24"  >> /etc/ipsec.d/policies/private-or-clear
+west #
+ cp ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # give OE policies time to load
+west #
+ ../../guestbin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
+Total IPsec connections: loaded 9, routed 4, active 0
+west #
+ grep '^[^|].*listen' /tmp/pluto.log
+addconn: listening for IKE messages
+west #
+ # check no oe
+west #
+ ipsec whack --trafficstatus
+west #
+ # trigger oe and wait for connection
+west #
+ ../../guestbin/ping-once.sh --fire-and-forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+west #
+ ../../guestbin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23
+up
+west #
+ ipsec whack --trafficstatus
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+west #
+ ipsec down '"private-or-clear#192.1.2.0/24"'
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
+west #
+ ifconfig eth1 down
+west #
+ ipsec listen
+listening for IKE messages
+shutting down interface eth1 192.1.2.45:4500
+shutting down interface eth1 192.1.2.45:500
+loading secrets from "/etc/ipsec.secrets"
+west #
+ grep '^[^|].*listen' /tmp/pluto.log
+addconn: listening for IKE messages
