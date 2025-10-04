@@ -22,6 +22,7 @@ static const char *ipseckey_algorithm_type_name[] = {
 	S(IPSECKEY_ALGORITHM_DSA),
 	S(IPSECKEY_ALGORITHM_RSA),
 	S(IPSECKEY_ALGORITHM_ECDSA),
+	S(IPSECKEY_ALGORITHM_EDDSA),
 	S(IPSECKEY_ALGORITHM_X_PUBKEY),
 #undef S
 };
