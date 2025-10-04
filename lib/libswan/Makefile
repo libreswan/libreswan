@@ -70,6 +70,10 @@ OBJS += secrets.o
 OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
 
+$(OBJS): | $(builddir)/pubkey/
+OBJS += pubkey/pubkey_types.o
+
+
 OBJS += sparse_names.o
 
 OBJS += ttoaddress_dns.o

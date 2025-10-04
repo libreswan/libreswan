@@ -237,6 +237,8 @@ struct pubkey_signer {
 				  const struct hash_desc *);
 };
 
+extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
+
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
 
