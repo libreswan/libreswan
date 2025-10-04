@@ -184,6 +184,8 @@ struct transform {
 	 * lengths, ENCKEYLEN is still required.
 	 */
 	int enckeylen; /* only one! */
+	/* something to keep sorts stable */
+	int order;
 };
 
 struct transforms {

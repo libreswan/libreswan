@@ -449,7 +449,7 @@ static int transform_cmp(const void  *l, const void *r)
 	if (lt->type->index != rt->type->index) {
 		return lt->type->index - rt->type->index;
 	}
-	return l - r;
+	return lt->order - rt->order;
 }
 
 static void cleanup_raw_transforms(struct proposal_parser *parser,
@@ -470,6 +470,12 @@ static void cleanup_raw_transforms(struct proposal_parser *parser,
 	if (!parser->policy->pfs &&
 	    parser->policy->check_pfs_vs_ke) {
 		remove_pfs_vs_kem_transforms(parser, proposal, verbose);
+	}
+
+	vdbg("ordering raw transforms");
+	int order = 0;
+	DATA_FOR_EACH(transform, &proposal->transforms) {
+		transform->order = order++;
 	}
 
 	vdbg("sorting raw transforms");
