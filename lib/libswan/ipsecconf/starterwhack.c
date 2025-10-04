@@ -39,7 +39,7 @@
 
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
-
+#include "ipsecconf/keywords.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "whack.h"
@@ -115,38 +115,53 @@ static bool set_whack_end(struct whack_end *w,
 	w->ckaid = l->values[KWS_CKAID].string;
 
 	/*
-	 * Map one of rsasigkey=, ecdsa=, or pubkey=, onto .pubkey +
-	 * .pubkey_alg.
+	 * XXX: Map one of rsasigkey=, ecdsa=, or pubkey=, onto
+	 * .pubkey + .pubkey_alg.
+	 *
+	 * HACK:
+	 *
+	 * Use the table ipseckey_algorithm_config_names and the key's
+	 * name to find the ipseckey_algorithm_type value - that's the
+	 * table that pluto will use when logging the key name's
+	 * field.
+	 *
+	 * Not obvious, but it is one less table to maintain!
 	 */
 
-	static const struct key {
-		enum ipseckey_algorithm_type alg;
-		enum config_conn_keyword kws;
-		const char *name;
-	} keys[] = {
-		{ IPSECKEY_ALGORITHM_RSA, KWS_RSASIGKEY, "rsasigkey", },
-		{ IPSECKEY_ALGORITHM_ECDSA, KWS_ECDSAKEY, "ecdsakey", },
-		{ IPSECKEY_ALGORITHM_X_PUBKEY, KWS_PUBKEY, "pubkey", },
+	enum config_conn_keyword keys[] = {
+		KWS_RSASIGKEY,
+		KWS_ECDSAKEY,
+		KWS_PUBKEY,
 	};
-	const struct key *found_key = NULL;
-	FOR_EACH_ELEMENT(key, keys) {
+	const char *found_keyname = NULL;
+	FOR_EACH_ELEMENT(p, keys) {
+
+		enum config_conn_keyword key = (*p);
 
 		/* find the first of above that is set */
-		const char *value = l->values[key->kws].string;
+		const char *value = l->values[key].string;
 		if (value == NULL) {
 			continue;
 		}
 
-		if (found_key != NULL) {
+		/* convert the keyname into the algorithm */
+		const char *keyname = config_conn_keywords.item[key].keyname;
+		if (found_keyname != NULL) {
 			pexpect(w->pubkey != NULL);
 			llog(RC_LOG, logger,
-			     "duplicate key fields %s= and %s=", found_key->name, key->name);
+			     "duplicate key fields %s= and %s=",
+			     found_keyname, keyname);
 			return false;
 		}
 
-		found_key = key;
+		int alg = enum_byname(&ipseckey_algorithm_config_names, shunk1(keyname));
+		if (alg <= 0) {
+			llog_passert(logger, HERE, "could not find '%s'", keyname);
+		}
+
+		found_keyname = keyname;
 		w->pubkey = value;
-		w->pubkey_alg = key->alg;
+		w->pubkey_alg = alg;
 		break;
 	}
 
