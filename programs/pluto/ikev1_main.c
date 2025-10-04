@@ -302,9 +302,9 @@ static void main_mode_hash_body(struct ike_sa *ike,
 	 * we use the bytes as they appear on the wire to avoid
 	 * "spelling problems".
 	 */
-	shunk_t id_body = hunk_slice(id_payload,
-				     sizeof(struct isakmp_generic),
-				     id_payload.len);
+	shunk_t id_body = shunk_slice(id_payload,
+				      sizeof(struct isakmp_generic),
+				      id_payload.len);
 	crypt_prf_update_hunk(ctx, "idpl", id_body);
 }
 

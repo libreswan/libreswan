@@ -34,8 +34,8 @@ void cipher_ikev1(const struct encrypt_desc *cipher,
 							       symkey, null_shunk,
 							       logger);
 	chunk_t iv_chunk = HUNK_AS_CHUNK(iv);
-	chunk_t wire_iv = hunk_slice(iv_chunk, cipher->salt_size,
-				     cipher->salt_size + cipher->wire_iv_size);
+	chunk_t wire_iv = chunk_slice(iv_chunk, cipher->salt_size,
+				      cipher->salt_size + cipher->wire_iv_size);
 	cipher_context_op_normal(context, wire_iv, data, iv, logger);
 	cipher_context_destroy(&context, logger);
 }

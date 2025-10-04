@@ -185,11 +185,11 @@ static void check_hunk_eq(void)
 	}
 }
 
-static void check_shunk_slice(void)
+static void check_hunk_slice(void)
 {
 	static const struct test {
-		const char *l;
-		const char *r;
+		const char *hunk;
+		const char *slice;
 		int lo, hi;
 	} tests[] = {
 		{ "", "", 0, 0, },
@@ -209,15 +209,24 @@ static void check_shunk_slice(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT_LR(stdout, " lo=%d hi=%d", t->lo, t->hi);
-		shunk_t l = shunk1(t->l);
-		shunk_t r = shunk1(t->r);
+		PRINTF(stdout, "hunk=%s lo=%d hi=%d slice=%s",
+		       t->hunk, t->lo, t->hi, t->slice);
+		chunk_t hunk = clone_bytes_as_chunk(t->hunk, strlen(t->hunk), "hunk");
+		shunk_t slice = shunk1(t->slice);
 
-		shunk_t t_slice = hunk_slice(l, t->lo, t->hi);
-		if (!hunk_eq(r, t_slice)) {
-			FAIL_LR("shunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
-				pri_shunk(t_slice), pri_shunk(r));
+		shunk_t shunk_slice = shunk_slice(hunk, t->lo, t->hi);
+		if (!hunk_eq(slice, shunk_slice)) {
+			FAIL("shunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
+			     pri_shunk(shunk_slice), pri_shunk(slice));
 		}
+
+		chunk_t chunk_slice = chunk_slice(hunk, t->lo, t->hi);
+		if (!hunk_eq(slice, chunk_slice)) {
+			FAIL("chunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
+			     pri_shunk(chunk_slice), pri_shunk(slice));
+		}
+
+		free_chunk_content(&hunk);
 	}
 }
 
@@ -257,8 +266,9 @@ static void check_shunk_token(void)
 
 		char t_delim = -1;
 		shunk_t t_token = shunk_token(&t_input, &t_delim, t->delims);
+		shunk_t t_token_shunk = shunk1(t->token);
 
-		if (!hunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, t_token_shunk)) {
 			FAIL_S("shunk_token() returned token '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_token), t->token);
 		}
@@ -268,7 +278,8 @@ static void check_shunk_token(void)
 			       t_delim, t->delim);
 		}
 
-		if (!hunk_eq(t_input, shunk1(t->input))) {
+		shunk_t t_input_shunk = shunk1(t->input);
+		if (!hunk_eq(t_input, t_input_shunk)) {
 			FAIL_S("shunk_token() returned input '"PRI_SHUNK"', expecting '%s'",
 				pri_shunk(t_input),
 			       t->input == NULL ? "NULL" : t->input);
@@ -306,13 +317,15 @@ static void check_shunk_span(void)
 
 		shunk_t t_input = shunk1(t->old);
 		shunk_t t_token = shunk_span(&t_input, t->accept);
+		shunk_t t_token_shunk = shunk1(t->token);
 
-		if (!hunk_eq(t_token, shunk1(t->token))) {
+		if (!hunk_eq(t_token, t_token_shunk)) {
 			FAIL("shunk_span() returned token '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_token), t->token);
 		}
 
-		if (!hunk_eq(t_input, shunk1(t->new))) {
+		shunk_t t_new_shunk = shunk1(t->new);
+		if (!hunk_eq(t_input, t_new_shunk)) {
 			FAIL("shunk_span() returned new input '"PRI_SHUNK"', expecting '%s'",
 			     pri_shunk(t_input), t->new);
 		}
@@ -1096,7 +1109,7 @@ int main(int argc, char *argv[])
 	}
 
 	check_hunk_eq();
-	check_shunk_slice();
+	check_hunk_slice();
 	check_shunk_token();
 	check_shunk_span();
 	check_shunk_clone();

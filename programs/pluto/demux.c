@@ -131,8 +131,7 @@ void process_md(struct msg_digest *md)
 		if (LDBGP(DBG_BASE, md->logger)) {
 			LDBG_log(md->logger, "size (%zu) in received packet is larger than the size specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
 				 md->packet.len, md->hdr.isa_length);
-			shunk_t tail = hunk_slice(HUNK_AS_SHUNK(&md->packet),
-						  message.len, md->packet.len);
+			shunk_t tail = shunk_slice(md->packet, message.len, md->packet.len);
 			if (tail.len > 16) {
 				LDBG_log(md->logger, "extraneous bytes (truncated from %zu):", tail.len);
 				tail.len = 16;

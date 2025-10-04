@@ -262,8 +262,8 @@ static bool ECDSA_pubkey_same(const struct pubkey_content *lhs,
 	 * redundant?  The direct n==n test would pick up the
 	 * difference.
 	 */
-	bool e = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.ec.publicValue),
-			 same_secitem_as_shunk(rhs->public_key->u.ec.publicValue));
+	bool e = SECITEM_ItemsAreEqual(&lhs->public_key->u.ec.publicValue,
+				       &rhs->public_key->u.ec.publicValue);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "e did %smatch", e ? "" : "NOT ");
 	}

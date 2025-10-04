@@ -1138,7 +1138,7 @@ bool parse_encrypt_transform(struct proposal_parser *parser,
 	 *
 	 * Always treat this as an error.
 	 */
-	shunk_t eklen = hunk_slice(token, end, token.len);
+	shunk_t eklen = shunk_slice(token, end, token.len);
 	int enckeylen = parse_proposal_eklen(parser, token, eklen);
 	if (enckeylen <= 0) {
 		passert(parser->diag != NULL);
@@ -1151,9 +1151,9 @@ bool parse_encrypt_transform(struct proposal_parser *parser,
 	 * The <eklen> in <ealg><eklen> or <ealg>_<eklen> parsed; trim
 	 * <eklen> from <ealg> and then try the lookup.
 	 */
-	shunk_t ealg = hunk_slice(token, 0, end);
+	shunk_t ealg = shunk_slice(token, 0, end);
 	if (hunk_char(ealg, ealg.len-1) == '_') {
-		ealg = hunk_slice(ealg, 0, ealg.len-1);
+		ealg = shunk_slice(ealg, 0, ealg.len-1);
 	}
 	alg = encrypt_alg_byname(parser, ealg, enckeylen, /*print*/token);
 	if (alg == NULL) {

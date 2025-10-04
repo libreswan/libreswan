@@ -506,7 +506,7 @@ static struct state *new_state(struct connection *c,
 	    impair.ike_initiator_spi.enabled) {
 		uintmax_t v = impair.ike_initiator_spi.value;
 		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE initiator SPI to 0x%jx", v);
-		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.initiator));
+		hton_thing(v, st->st_ike_spis.initiator);
 	}
 
 	st->st_ike_spis.responder = ike_responder_spi;
@@ -514,7 +514,7 @@ static struct state *new_state(struct connection *c,
 	    impair.ike_responder_spi.enabled) {
 		uintmax_t v = impair.ike_responder_spi.value;
 		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE responder SPI to 0x%jx", v);
-		hton_chunk(v, THING_AS_CHUNK(st->st_ike_spis.responder));
+		hton_thing(v, st->st_ike_spis.responder);
 	}
 
 	st->hidden_variables.st_nat_oa = ipv4_info.address.zero;

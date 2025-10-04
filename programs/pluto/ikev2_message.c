@@ -1299,8 +1299,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	struct v2_outgoing_fragment **frag = frags;
 	do {
 		/* chop off the next fragment, advancing the cursor */
-		shunk_t fragment = hunk_slice(clear_cursor, 0, PMIN(clear_cursor.len, max_skf_size));
-		clear_cursor = hunk_slice(clear_cursor, fragment.len, clear_cursor.len);
+		shunk_t fragment = shunk_slice(clear_cursor, 0, PMIN(clear_cursor.len, max_skf_size));
+		clear_cursor = shunk_slice(clear_cursor, fragment.len, clear_cursor.len);
 
 		PASSERT(sk->logger, *frag == NULL);
 		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike,

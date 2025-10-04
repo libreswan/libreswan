@@ -149,7 +149,7 @@ static bool cipher_op_aead_nss(const struct encrypt_desc *cipher,
 		 * The First time this op is used the .random_iv is
 		 * returned, from then on .random_op^count is used.
 		 */
-		chunk_t out_iv = hunk_slice(iv, salt.len, iv.len);
+		chunk_t out_iv = chunk_slice(iv, salt.len, iv.len);
 		PASSERT(logger, out_iv.len == aead->random_iv.len);
 		hunk_cpy(wire_iv, out_iv);
 	}

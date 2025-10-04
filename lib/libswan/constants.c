@@ -44,6 +44,14 @@
 #include "connection_owner.h"
 #include "sparse_names.h"
 
+bool strheq(const char *a, const char *b)
+{
+	/* these handle NULL pointers */
+	shunk_t sa = shunk1(a);
+	shunk_t sb = shunk1(b);
+	return hunk_heq(sa, sb);
+}
+
 const char *bool_str(bool b)
 {
 	return b ? "yes" : "no";

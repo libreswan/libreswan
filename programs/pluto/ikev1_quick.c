@@ -1510,11 +1510,11 @@ static bool echo_id(struct pbs_out *outs,
 	 *
 	 * There's code using id_pd.pbs to read the payload breaking
 	 * that assumption.  Hence, the need to re-compute the
-	 * location of the Identifier Data using hunk_slice().  See
+	 * location of the Identifier Data using shunk_slice().  See
 	 * decode_net_id().
 	 */
 	shunk_t id_all = pbs_in_all(&id_pd->pbs);
-	shunk_t id_data = hunk_slice(id_all, sizeof(id_header), id_all.len);
+	shunk_t id_data = shunk_slice(id_all, sizeof(id_header), id_all.len);
 
 	if (!pbs_out_hunk(&id_body, id_data, "ID body")) {
 		return false;

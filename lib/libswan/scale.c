@@ -39,7 +39,7 @@ err_t tto_mixed_decimal(shunk_t input, shunk_t *cursor, struct mixed_decimal *nu
 	/* [.<FRACTION>] */
 	if (is_char(input, '.')) {
 		/* drop '.' */
-		input = hunk_slice(input, 1, input.len);
+		input = shunk_slice(input, 1, input.len);
 		/* need to handle .01 */
 		shunk_t tmp = input;
 		/* reject ".???", allow "0." and ".0" */

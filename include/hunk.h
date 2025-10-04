@@ -72,9 +72,9 @@ int raw_cmp(const void *l_ptr, size_t l_len,
 
 #define hunk_cmp(L, R)						\
 	({							\
-		typeof(L) l_ = L; /* evaluate once */		\
-		typeof(R) r_ = R; /* evaluate once */		\
-		raw_cmp(l_.ptr, l_.len, r_.ptr, r_.len);	\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_cmp(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 bool raw_eq(const void *l_ptr, size_t l_len,
@@ -89,48 +89,48 @@ bool raw_heq(const void *l_ptr, size_t l_len,
 		(HUNK).len == 0;		\
 	})
 
-#define hunk_eq(L,R)					\
-	({						\
-		typeof(L) l_ = L; /* evaluate once */	\
-		typeof(R) r_ = R; /* evaluate once */	\
-		raw_eq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+#define hunk_eq(L,R)						\
+	({							\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_eq(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 #define hunk_caseeq(L, R) /* case independent */		\
 	({							\
-		const typeof(L) l_ = L; /* evaluate once */	\
-		const typeof(R) r_ = R; /* evaluate once */	\
-		raw_caseeq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_caseeq(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 #define hunk_heq(L, R) /* case and [-_] independent */		\
 	({							\
-		const typeof(L) l_ = L; /* evaluate once */	\
-		const typeof(R) r_ = R; /* evaluate once */	\
-		raw_heq(l_.ptr, l_.len, r_.ptr, r_.len);	\
+		const typeof(L) *l_ = &(L); /* evaluate once */	\
+		const typeof(R) *r_ = &(R); /* evaluate once */	\
+		raw_heq(l_->ptr, l_->len, r_->ptr, r_->len);	\
 	})
 
 #define hunk_streq(HUNK, STRING)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const char *string_ = STRING; /* evaluate once */	\
-		raw_eq(hunk_.ptr, hunk_.len, string_,			\
+		raw_eq(hunk_->ptr, hunk_->len, string_,			\
 		       string_ != NULL ? strlen(string_) : 0);		\
 	})
 
 #define hunk_strcaseeq(HUNK, STRING) /* case independent */		\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const char *string_ = STRING; /* evaluate once */	\
-		raw_caseeq(hunk_.ptr, hunk_.len, string_,		\
+		raw_caseeq(hunk_->ptr, hunk_->len, string_,		\
 			   string_ != NULL ? strlen(string_) : 0);	\
 	})
 
 #define hunk_strheq(HUNK, STRING) /* case and [-_] independent */	\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const char *string_ = STRING; /* evaluate once */	\
-		raw_heq(hunk_.ptr, hunk_.len, string_,		\
+		raw_heq(hunk_->ptr, hunk_->len, string_,		\
 			string_ != NULL ? strlen(string_) : 0);	\
 	})
 
@@ -148,32 +148,38 @@ bool raw_starteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
 
 #define hunk_starteq(HUNK, START)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		const typeof(START) start_ = START; /* evaluate once */	\
-		raw_starteq(hunk_.ptr, hunk_.len,			\
-			    start_.ptr, start_.len);			\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		const typeof(START) *start_ = &(START); /* evaluate once */ \
+		raw_starteq(hunk_->ptr, hunk_->len,			\
+			    start_->ptr, start_->len);			\
 	})
 
 bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
 
 #define hunk_casestarteq(HUNK, START) /* case independent */		\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		const typeof(START) start_ = START; /* evaluate once */	\
-		raw_casestarteq(hunk_.ptr, hunk_.len,			\
-				start_.ptr, start_.len);		\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		const typeof(START) *start_ = &(START); /* evaluate once */ \
+		raw_casestarteq(hunk_->ptr, hunk_->len,			\
+				start_->ptr, start_->len);		\
 	})
 
 #define hunk_strstarteq(HUNK, STRING)					\
-	hunk_starteq(HUNK, shunk1(STRING))
+	({								\
+		shunk_t string_ = shunk1(STRING); /* evaluate once */	\
+		hunk_starteq(HUNK, string_);				\
+	})
 
 #define hunk_strcasestarteq(HUNK, STRING)				\
-	hunk_casestarteq(HUNK, shunk1(STRING))
+	({								\
+		shunk_t string_ = shunk1(STRING); /* evaluate once */	\
+		hunk_casestarteq(HUNK, string_);			\
+	})
 
-#define hunk_strnlen(HUNK)					\
-	({							\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		strnlen((const char *)hunk_.ptr, hunk_.len);	\
+#define hunk_strnlen(HUNK)						\
+	({								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		strnlen((const char *)hunk_->ptr, hunk_->len);		\
 	})
 
 /*
@@ -190,44 +196,50 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 #define hunk_eat(DINNER, EAT)						\
 	({								\
-		typeof(DINNER) _dinner = DINNER;			\
-		typeof(EAT) _eat = EAT;					\
+		typeof(*(DINNER)) *_dinner = DINNER; /* force pointer */ \
+		const typeof(EAT) *_eat = &(EAT); /* don't copy */	\
 		bool _ok = raw_starteq(_dinner->ptr, _dinner->len,	\
-				       _eat.ptr, _eat.len);		\
+				       _eat->ptr, _eat->len);		\
 		if (_ok) {						\
-			_dinner->ptr += _eat.len;			\
-			_dinner->len -= _eat.len;			\
+			_dinner->ptr += _eat->len;			\
+			_dinner->len -= _eat->len;			\
 		}							\
 		_ok;							\
 	})
 
-#define hunk_streat(DINNER, STREAT)		\
-	hunk_eat(DINNER, shunk1(STREAT))
+#define hunk_streat(DINNER, STRING)			\
+	({						\
+		shunk_t string_ = shunk1(STRING);	\
+		hunk_eat(DINNER, string_);		\
+	})
 
 #define hunk_caseeat(DINNER, EAT)					\
 	({								\
-		typeof(DINNER) _dinner = DINNER;			\
-		typeof(EAT) _eat = EAT;					\
+		typeof(*(DINNER)) *_dinner = DINNER; /* force pointer */ \
+		const typeof(EAT) *_eat = &(EAT); /* don't copy */	\
 		bool _ok = raw_casestarteq(_dinner->ptr, _dinner->len,	\
-					   _eat.ptr, _eat.len);		\
+					   _eat->ptr, _eat->len);	\
 		if (_ok) {						\
-			_dinner->ptr += _eat.len;			\
-			_dinner->len -= _eat.len;			\
+			_dinner->ptr += _eat->len;			\
+			_dinner->len -= _eat->len;			\
 		}							\
 		_ok;							\
 	})
 
-#define hunk_strcaseeat(DINNER, STRCASEEAT)		\
-	hunk_caseeat(DINNER, shunk1(STRCASEEAT))
+#define hunk_strcaseeat(DINNER, STRING)			\
+	({						\
+		shunk_t string_ = shunk1(STRING);	\
+		hunk_caseeat(DINNER, string_);		\
+	})
 
 /* misc */
 
 #define hunk_memeq(HUNK, MEM, SIZE)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		const void *mem_ = MEM; /* evaluate once */		\
 		size_t size_ = SIZE; /* evaluate once */		\
-		raw_eq(hunk_.ptr, hunk_.len, mem_, size_);		\
+		raw_eq(hunk_->ptr, hunk_->len, mem_, size_);		\
 	})
 
 #define hunk_thingeq(SHUNK, THING) hunk_memeq(SHUNK, &(THING), sizeof(THING))
@@ -240,40 +252,20 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 #define hunk_char(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) hc_hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hc_hunk_ = &(HUNK); /* don't copy */ \
 		size_t hc_index_ = INDEX;/* evaluate once */		\
-		const char *hc_char_ = hc_hunk_.ptr;			\
-		hc_index_ < hc_hunk_.len ? hc_char_[INDEX] : '\0';	\
+		const char *hc_char_ = hc_hunk_->ptr;			\
+		hc_index_ < hc_hunk_->len ? hc_char_[INDEX] : '\0';	\
 	})
 
 /* returns the unsigned byte cast to int; or -1 when end-of-hunk */
 
 #define hunk_byte(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) hb_hunk_ = HUNK; /* evaluate once */	\
+		const typeof(HUNK) *hb_hunk_ = &(HUNK); /* don't copy */ \
 		size_t hb_index_ = INDEX;/* evaluate once */		\
-		const uint8_t *hb_byte_ = hb_hunk_.ptr;			\
-		hb_index_ < hb_hunk_.len ? hb_byte_[INDEX] : -1;	\
-	})
-
-/*
- * hunk[FLOOR..ROOF)
- *
- * For instance: hunk_slice(s, 1, s.len);
- */
-
-#define hunk_slice(HUNK, FLOOR, ROOF)			\
-	({						\
-		size_t _floor = FLOOR;			\
-		size_t _roof = ROOF;			\
-		typeof(HUNK) _hunk = HUNK;		\
-		passert(_floor <= _roof);		\
-		passert(_roof <= _hunk.len);		\
-		typeof(HUNK) _slice = {			\
-			_hunk.ptr + _floor,		\
-			.len = _roof - _floor,		\
-		};					\
-		_slice;					\
+		const uint8_t *hb_byte_ = hb_hunk_->ptr;		\
+		hb_index_ < hb_hunk_->len ? hb_byte_[INDEX] : -1;	\
 	})
 
 /*
@@ -403,9 +395,9 @@ char  char_toupper(char c);
 
 #define memcpy_hunk(DST, HUNK, SIZE)					\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		passert(hunk_.len == SIZE);				\
-		memcpy(DST, hunk_.ptr, SIZE);				\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* don't copy */	\
+		passert(hunk_->len == SIZE);				\
+		memcpy(DST, hunk_->ptr, SIZE);				\
 	})
 
 /*
@@ -419,13 +411,13 @@ uintmax_t raw_ntoh(const void *bytes, size_t size);
 
 #define ntoh_hunk(HUNK)							\
 	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		raw_ntoh(hunk_.ptr, hunk_.len);				\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* don't copy */	\
+		raw_ntoh(hunk_->ptr, hunk_->len);			\
 	})
 
 #define hton_chunk(H, HUNK) /* writeable */				\
 	({								\
-		const chunk_t hunk_ = HUNK; /* evaluate once */		\
+		chunk_t hunk_ = HUNK; /* evaluate onece */		\
 		raw_hton(H, hunk_.ptr, hunk_.len);			\
 	})
 

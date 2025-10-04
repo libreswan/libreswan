@@ -209,7 +209,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 				     "received IKE_SA_INIT request from previous exchange; packet dropped");
 		}
 
-		if (hunk_eq(old->sa.st_firstpacket_peer, pbs_in_all(&md->message_pbs))) {
+		if (hunk_eq(old->sa.st_firstpacket_peer, md->packet)) {
 			/*
 			 * Clearly a duplicate.
 			 *

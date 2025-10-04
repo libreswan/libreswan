@@ -205,7 +205,7 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * Fortunately, everything ignores that byte.
 	 */
 	shunk_t message = pbs_out_all(pbs);
-	shunk_t unpadded_encrypt = hunk_slice(message, sizeof(struct isakmp_hdr), message.len);
+	shunk_t unpadded_encrypt = shunk_slice(message, sizeof(struct isakmp_hdr), message.len);
 	size_t encrypt_padding = pad_up(unpadded_encrypt.len, e->enc_blocksize);
 	if (encrypt_padding != 0) {
 		if (!pbs_out_zero(pbs, encrypt_padding, "encryption padding")) {
@@ -221,9 +221,9 @@ bool close_and_encrypt_v1_message(struct ike_sa *ike,
 	 * vaguely similar.
 	 */
 	chunk_t padded_message = chunk2(pbs->start, pbs_out_all(pbs).len);
-	chunk_t padded_encrypt = hunk_slice(padded_message,
-					    sizeof(struct isakmp_hdr),
-					    padded_message.len);
+	chunk_t padded_encrypt = chunk_slice(padded_message,
+					     sizeof(struct isakmp_hdr),
+					     padded_message.len);
 
 	/*
 	 * Finally, re-pad the entire message (header and body) to
