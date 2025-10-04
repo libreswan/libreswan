@@ -578,9 +578,8 @@ bool record_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike)
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&request.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SESSION_RESUME request",
+					 ike, &request);
 
 	return true;
 }
@@ -819,7 +818,8 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SESSION_RESUME request",
+					ike, md);
 
 	/*
 	 * The response needs to be sent in the clear so that the
@@ -858,9 +858,8 @@ stf_status process_v2_IKE_SESSION_RESUME_request_continue(struct state *ike_st,
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&response.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SESSION_RESUME response",
+					 ike, &response);
 
 	return STF_OK;
 }
@@ -1008,7 +1007,8 @@ stf_status process_v2_IKE_SESSION_RESUME_response(struct ike_sa *ike,
 	 */
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SESSION_RESUME response",
+					ike, md);
 
 	/*
 	 * Since systems are go, start updating the state, starting
