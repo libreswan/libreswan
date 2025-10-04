@@ -24,7 +24,7 @@ west #
 west.    IN    IPSECKEY  10 0 2 . <<RAW-PUBKEY#1>>
 west #
  ipsec showhostkey --ipseckey --pubkey --ckaid "${ckaid}"
-west.    IN    IPSECKEY  10 0 4 . <<PEM-PUBKEY#1>>
+west.    IN    IPSECKEY  10 0 5 . <<PEM-PUBKEY#1>>
 west #
  # see description.txt for why they are different
 west #
