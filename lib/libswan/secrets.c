@@ -184,19 +184,6 @@ void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize)
 	*keysize = n.len;
 }
 
-const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg)
-{
-	static const struct pubkey_type *pubkey_types[] = {
-		[IPSECKEY_ALGORITHM_RSA] = &pubkey_type_rsa,
-		[IPSECKEY_ALGORITHM_ECDSA] = &pubkey_type_ecdsa,
-		[IPSECKEY_ALGORITHM_X_PUBKEY] = NULL,
-	};
-	if (alg < elemsof(pubkey_types)) {
-		return pubkey_types[alg];
-	}
-	return NULL;
-}
-
 const keyid_t *pubkey_keyid(const struct pubkey *pk)
 {
 	return &pk->content.keyid;

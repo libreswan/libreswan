@@ -20,3 +20,16 @@ const struct pubkey_type *pubkey_types[] = {
 	&pubkey_type_ecdsa,
 	NULL,
 };
+
+const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type algorithm)
+{
+	for (const struct pubkey_type **p = pubkey_types;
+	     (*p) != NULL; p++) {
+		const struct pubkey_type *type = (*p);
+		if (type->ipseckey_algorithm == algorithm) {
+			return type;
+		}
+	}
+	return NULL;
+}
+

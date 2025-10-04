@@ -96,7 +96,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * Figure out the key type.
 	 */
 
-	const struct pubkey_type *type = pubkey_alg_type(wm->pubkey_alg);
+	const struct pubkey_type *type = pubkey_type_from_ipseckey_algorithm(wm->pubkey_alg);
 	struct id keyid; /* must free_id_content() */
 	err = atoid(wm->keyid, &keyid);
 	if (err != NULL) {
