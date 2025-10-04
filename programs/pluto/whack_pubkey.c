@@ -37,19 +37,8 @@
 err_t whack_pubkey_to_chunk(enum ipseckey_algorithm_type pubkey_alg,
 			    const char *pubkey_in, chunk_t *pubkey_out)
 {
-	int base;
-	switch (pubkey_alg) {
-	case IPSECKEY_ALGORITHM_RSA:
-	case IPSECKEY_ALGORITHM_ECDSA:
-		base = 0; /* figure it out */
-		break;
-	case IPSECKEY_ALGORITHM_X_PUBKEY:
-		base = 64; /* dam it */
-		break;
-	default:
-		bad_case(pubkey_alg);
-	}
-
+	unsigned base = (pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? 64 /*dam-it*/ :
+			 0/*figure-it-out*/);
 	return ttochunk(shunk1(pubkey_in), base, pubkey_out);
 }
 
