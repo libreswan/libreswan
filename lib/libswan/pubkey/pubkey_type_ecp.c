@@ -48,7 +48,7 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 						   struct pubkey_content *pkc,
 						   const struct logger *logger)
 {
-	static const struct kem_desc *kem[] = {
+	static const struct kem_desc *kems[] = {
 		&ike_alg_kem_secp256r1,
 		&ike_alg_kem_secp384r1,
 		&ike_alg_kem_secp521r1,
@@ -61,18 +61,19 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 	 * Raw EC pubkeys contain the EC point (or points).
 	 */
 
-	const struct kem_desc *group = NULL;
+	const struct kem_desc *kem = NULL;
 	shunk_t raw = null_shunk;
-	const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
-	FOR_EACH_ELEMENT(e, kem) {
+	FOR_EACH_ELEMENT(e, kems) {
+
 		/*
-		 * A simple match, the buffer cnotains just the key.
+		 * A simple match, the buffer contains just the key.
 		 */
-		if (ipseckey_pubkey.len == (*e)->bytes) {
-			raw = HUNK_AS_SHUNK(&ipseckey_pubkey);
-			group = (*e);
+		if (ipseckey_pubkey.len == kem->bytes) {
+			raw = ipseckey_pubkey;
+			kem = (*e);
 			break;
 		}
+
 		/*
 		 * The raw IPSECKEY_PUBKEY, which could come from the
 		 * internet or a config file, can include the
@@ -80,17 +81,18 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 		 *
 		 * Allow for and strip that off when necessary.
 		 */
+		const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
 		if ((*e)->nss.ecp.includes_ec_point_form_uncompressed &&
 		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
 		    ipseckey_pubkey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			/* ignore prefix */
-			raw = shunk2(ipseckey_pubkey_ptr + 1, ipseckey_pubkey.len - 1);
-			group = (*e);
+			raw = shunk_slice(ipseckey_pubkey, 1, ipseckey_pubkey.len);
+			kem = (*e);
 			break;
 		}
 	}
 
-	if (group == NULL) {
+	if (kem == NULL) {
 		return diag("unrecognized EC Public Key with length %zu", ipseckey_pubkey.len);
 	}
 
@@ -126,13 +128,22 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 	 * public key.
 	 */
 
-	if (SECITEM_AllocItem(arena, &ec->publicValue, raw.len + 1) == NULL) {
-		diag_t d = diag_nss_error("copying 'k' to EDSA public key");
-		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return d;
+	if (kem->nss.ecp.includes_ec_point_form_uncompressed) {
+		if (SECITEM_AllocItem(arena, &ec->publicValue, raw.len + 1) == NULL) {
+			diag_t d = diag_nss_error("copying 'k' to EDSA public key");
+			PORT_FreeArena(arena, /*zero?*/PR_TRUE);
+			return d;
+		}
+		ec->publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
+		memcpy(ec->publicValue.data + 1, raw.ptr, raw.len);
+	} else {
+		if (SECITEM_AllocItem(arena, &ec->publicValue, raw.len) == NULL) {
+			diag_t d = diag_nss_error("copying 'k' to EDSA public key");
+			PORT_FreeArena(arena, /*zero?*/PR_TRUE);
+			return d;
+		}
+		memcpy(ec->publicValue.data, raw.ptr, raw.len);
 	}
-	ec->publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
-	memcpy(ec->publicValue.data + 1, raw.ptr, raw.len);
 
 	/*
 	 * Copy the OID (wrapped in ASN.1 ObjectID template) into the
@@ -140,7 +151,7 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 	 *
 	 * See also DH code.
 	 */
-	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss.ecp.oid); /*static*/
+	const SECOidData *ec_oid = SECOID_FindOIDByTag(kem->nss.ecp.oid); /*static*/
 	if (ec_oid == NULL) {
 		diag_t d = diag_nss_error("lookup of EC OID failed");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
@@ -201,8 +212,6 @@ static err_t ECP_pubkey_content_to_ipseckey_rdata(const struct pubkey_content *p
 						  enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	const SECKEYECPublicKey *ec = &pkc->public_key->u.ec;
-	passert((ec->publicValue.len & 1) == 1);
-	passert(ec->publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
 	*ipseckey_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
 	*ipseckey_algorithm = IPSECKEY_ALGORITHM_ECDSA;
 	return NULL;
