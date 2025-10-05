@@ -36,7 +36,7 @@
 
 struct task {
 	/* in */
-	chunk_t firstpacket;
+	struct ro_hunk *firstpacket;
 	chunk_t nonce;
 	chunk_t ia1;
 	chunk_t ia2;
@@ -75,9 +75,9 @@ static void pack_task(struct ike_sa *ike,
 		 ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 		 0);
 
-	chunk_t firstpacket = (from_the_perspective_of == LOCAL_PERSPECTIVE ? ike->sa.st_firstpacket_me :
-			       from_the_perspective_of == REMOTE_PERSPECTIVE ? ike->sa.st_firstpacket_peer :
-			       empty_chunk);
+	struct ro_hunk *firstpacket = (from_the_perspective_of == LOCAL_PERSPECTIVE ? ike->sa.st_firstpacket_me :
+				       from_the_perspective_of == REMOTE_PERSPECTIVE ? ike->sa.st_firstpacket_peer :
+				       NULL);
 
 	chunk_t nonce = (role == SA_INITIATOR ? ike->sa.st_nr :
 			 role == SA_RESPONDER ? ike->sa.st_ni :
@@ -89,7 +89,7 @@ static void pack_task(struct ike_sa *ike,
 		       role == SA_RESPONDER ? ike->sa.st_v2_ike_intermediate.initiator :
 		       empty_chunk);
 
-	task->firstpacket = clone_hunk_as_chunk(&firstpacket, "firstpacket");
+	task->firstpacket = ro_hunk_addref(firstpacket, ike->sa.logger);
 	/* on initiator, we need to hash responders nonce */
 	task->nonce = clone_hunk_as_chunk(&nonce, "nonce");
 	task->idhash = (*idhash);
@@ -145,7 +145,7 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 	logtime_t start = logtime_start(logger);
 
 	const struct hash_hunk octets[] = {
-		{ "first packet", HUNK_REF(&task->firstpacket), },
+		{ "first packet", HUNK_REF(task->firstpacket), },
 		{ "nonce", HUNK_REF(&task->nonce), },
 		{ "idhash", HUNK_REF(&task->idhash), },
 		/* optional intermediate, len can be 0 */
@@ -171,9 +171,9 @@ static stf_status v2_auth_signature_completed(struct state *st,
 	return status;
 }
 
-static void v2_auth_signature_cleanup(struct task **task, struct logger *logger UNUSED)
+static void v2_auth_signature_cleanup(struct task **task, struct logger *logger)
 {
-	free_chunk_content(&(*task)->firstpacket);
+	ro_hunk_delref(&(*task)->firstpacket, logger);
 	free_chunk_content(&(*task)->nonce);
 	free_chunk_content(&(*task)->ia1);
 	free_chunk_content(&(*task)->ia2);

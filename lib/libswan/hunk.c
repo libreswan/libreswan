@@ -21,6 +21,74 @@
 #include "lswalloc.h"		/* for clone_bytes() */
 #include "hunk.h"
 
+struct rw_hunk *clone_bytes_as_rw_hunk(const void *ptr, size_t len,
+				       const struct logger *logger,
+				       where_t where)
+{
+	struct rw_hunk *rw_hunk = refcnt_overalloc(struct rw_hunk, len, logger, where);
+	rw_hunk->len = len;
+	memcpy((void*)rw_hunk->ptr, ptr, len);
+	return rw_hunk;
+}
+
+struct rw_hunk *rw_hunk_addref_where(struct rw_hunk *rw_hunk,
+				     const struct logger *logger,
+				     where_t where)
+{
+	return addref_where(rw_hunk, logger, where);
+}
+
+void rw_hunk_delref_where(struct rw_hunk **rw_hunkp,
+			  const struct logger *logger,
+			  where_t where)
+{
+	struct rw_hunk *rw_hunk = delref_where(rw_hunkp, logger, where);
+	if (rw_hunk != NULL) {
+		pfreeany(rw_hunk);
+	}
+}
+
+void replace_rw_hunk(struct rw_hunk **hunk, struct rw_hunk *with,
+		     struct logger *logger, where_t where)
+{
+	rw_hunk_delref_where(hunk, logger, where);
+	*hunk = rw_hunk_addref_where(with, logger, where);
+}
+
+struct ro_hunk *clone_bytes_as_ro_hunk(const void *ptr, size_t len,
+				       const struct logger *logger,
+				       where_t where)
+{
+	struct ro_hunk *ro_hunk = refcnt_overalloc(struct ro_hunk, len, logger, where);
+	ro_hunk->len = len;
+	memcpy((void*)ro_hunk->ptr, ptr, len);
+	return ro_hunk;
+}
+
+struct ro_hunk *ro_hunk_addref_where(struct ro_hunk *ro_hunk,
+				     const struct logger *logger,
+				     where_t where)
+{
+	return addref_where(ro_hunk, logger, where);
+}
+
+void ro_hunk_delref_where(struct ro_hunk **ro_hunkp,
+			  const struct logger *logger,
+			  where_t where)
+{
+	struct ro_hunk *ro_hunk = delref_where(ro_hunkp, logger, where);
+	if (ro_hunk != NULL) {
+		pfreeany(ro_hunk);
+	}
+}
+
+void replace_ro_hunk(struct ro_hunk **hunk, struct ro_hunk *with,
+		     struct logger *logger, where_t where)
+{
+	ro_hunk_delref_where(hunk, logger, where);
+	*hunk = ro_hunk_addref_where(with, logger, where);
+}
+
 char *clone_bytes_as_string(const void *ptr, size_t maxlen, const char *name)
 {
 	if (ptr == NULL) {

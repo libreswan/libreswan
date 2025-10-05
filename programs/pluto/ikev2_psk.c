@@ -59,7 +59,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct ike_sa *ike,
 				   enum auth authby,
 				   const struct crypt_mac *idhash,
-				   const chunk_t firstpacket,
+				   struct ro_hunk *firstpacket,
 				   struct crypt_mac *sighash)
 {
 	struct logger *logger = ike->sa.logger;
@@ -189,7 +189,9 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 		 * RFC 5723 6.2:
 		 * AUTH = prf(SK_px, <message octets>)
 		 */
-		(*sighash) = ikev2_psk_resume(prf, SK_px, firstpacket, logger);
+		(*sighash) = ikev2_psk_resume(prf, SK_px,
+					      HUNK_AS_SHUNK(firstpacket),
+					      logger);
 		PASSERT(logger, sighash->len > 0);
 		return NULL;
 	}
@@ -256,7 +258,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	}
 
 	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", &firstpacket);
+		LDBG_log_hunk(logger, "inputs to hash1 (first packet):", firstpacket);
 		LDBG_log_hunk(logger, "%s:", nonce, nonce_name);
 		LDBG_log_hunk(logger, "idhash:", idhash);
 		LDBG_log_hunk(logger, "IntAuth:", &intermediate_auth);
@@ -269,7 +271,8 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 	 */
 	passert(idhash->len == prf->prf_output_size);
 	*sighash = ikev2_psk_auth(prf, pss,
-				  firstpacket, *nonce, idhash,
+				  HUNK_AS_SHUNK(firstpacket),
+				  *nonce, idhash,
 				  intermediate_auth, ike->sa.logger);
 	symkey_delref(logger, "pss", &pss);
 	free_chunk_content(&intermediate_auth);

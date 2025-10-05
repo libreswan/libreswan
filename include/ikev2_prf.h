@@ -95,7 +95,7 @@ PK11SymKey *ikev2_child_sa_keymat(const struct prf_desc *prf_desc,
 
 struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc,
 				PK11SymKey *psk,
-				chunk_t first_packet,
+				shunk_t first_packet,
 				chunk_t nonce,
 				const struct crypt_mac *id_hash,
 				chunk_t intermediate_packet,
@@ -103,7 +103,7 @@ struct crypt_mac ikev2_psk_auth(const struct prf_desc *prf_desc,
 
 struct crypt_mac ikev2_psk_resume(const struct prf_desc *prf_desc,
 				  PK11SymKey *SK_px,
-				  chunk_t first_packet,
+				  shunk_t first_packet,
 				  struct logger *logger);
 
 #endif

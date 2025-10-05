@@ -574,9 +574,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&request.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SA_INIT request",
+					 ike, &request);
 
 	return true;
 }
@@ -783,7 +782,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* note that we don't update the state here yet */
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SA_INIT request",
+					ike, md);
 
 	/* make sure HDR is at start of a clean buffer */
 
@@ -951,9 +951,8 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* save packet for later signing */
-	replace_chunk(&ike->sa.st_firstpacket_me,
-		      pbs_out_all(&response.message),
-		      "saved first packet");
+	save_first_outbound_ikev2_packet("IKE_SA_INIT response",
+					 ike, &response);
 
 	return STF_OK;
 }
@@ -1247,7 +1246,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	}
 
 	/* Record first packet for later checking of signature.  */
-	record_first_v2_packet(ike, md, HERE);
+	save_first_inbound_ikev2_packet("IKE_SA_INIT response",
+					ike, md);
 
 	/*
 	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and

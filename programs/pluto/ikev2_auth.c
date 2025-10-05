@@ -59,8 +59,8 @@ static void extract_v2AUTH_blobs(const struct ike_sa *ike,
 	enum sa_role role;
 	struct hash_hunk *blob = blobs->blob;
 
-	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(&ike->sa.st_firstpacket_me), } :
-		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(&ike->sa.st_firstpacket_peer), } :
+	*blob++ = (from_the_perspective_of == LOCAL_PERSPECTIVE ? (struct hash_hunk) { "first-packet-me", HUNK_REF(ike->sa.st_firstpacket_me), } :
+		   from_the_perspective_of == REMOTE_PERSPECTIVE ? (struct hash_hunk) { "first-packet-peer", HUNK_REF(ike->sa.st_firstpacket_peer), } :
 		   (struct hash_hunk) {0});
 
 	switch (from_the_perspective_of) {

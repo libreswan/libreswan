@@ -70,14 +70,15 @@ struct prf_ikev2_ops {
 	/* AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"), <{Initiator,Responder}SignedOctets>) */
 	struct crypt_mac (*psk_auth)(const struct prf_desc *prf_desc,
 				     PK11SymKey *psk,
-				     chunk_t first_packet, chunk_t nonce,
+				     shunk_t first_packet,
+				     chunk_t nonce,
 				     const struct crypt_mac *id_hash,
 				     chunk_t intermediate_packet,
 				     struct logger *logger);
 	/* AUTH = prf(SK_px, <message octets>) */
 	struct crypt_mac (*psk_resume)(const struct prf_desc *prf_desc,
 				       PK11SymKey *SK_px,
-				       chunk_t first_packet,
+				       shunk_t first_packet,
 				       struct logger *logger);
 };
 

@@ -32,7 +32,7 @@ diag_t ikev2_calculate_psk_sighash(enum perspective perspective,
 				   const struct ike_sa *ike,
 				   enum auth authby,
 				   const struct crypt_mac *idhash,
-				   const chunk_t firstpacket,
+				   struct ro_hunk *firstpacket,
 				   struct crypt_mac *sighash);
 
 diag_t verify_v2AUTH_and_log_using_psk(enum auth authby,
