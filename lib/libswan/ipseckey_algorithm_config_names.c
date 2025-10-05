@@ -21,6 +21,7 @@ static const char *ipseckey_algorithm_config_name[] = {
 #define S(E,S) [E - IPSECKEY_ALGORITHM_RSA] = S
 	S(IPSECKEY_ALGORITHM_RSA, "rsasigkey"),
 	S(IPSECKEY_ALGORITHM_ECDSA, "ecdsakey"),
+	S(IPSECKEY_ALGORITHM_EDDSA, "eddsakey"),
 	S(IPSECKEY_ALGORITHM_X_PUBKEY, "pubkey"),
 #undef S
 };

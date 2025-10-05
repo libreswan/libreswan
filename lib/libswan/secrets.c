@@ -1162,7 +1162,9 @@ const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *pubk
 	case rsaKey:
 		return &pubkey_type_rsa;
 	case ecKey:
-		return &pubkey_type_ecdsa;
+	        return &pubkey_type_ecdsa;
+	case edKey:
+	        return &pubkey_type_eddsa;
 	default:
 		return NULL;
 	}

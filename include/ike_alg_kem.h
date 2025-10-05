@@ -27,6 +27,7 @@ extern const struct kem_desc ike_alg_kem_modp8192;
 extern const struct kem_desc ike_alg_kem_secp256r1;
 extern const struct kem_desc ike_alg_kem_secp384r1;
 extern const struct kem_desc ike_alg_kem_secp521r1;
+
 #ifdef USE_DH22
 extern const struct kem_desc ike_alg_kem_dh22;
 #endif
@@ -36,9 +37,12 @@ extern const struct kem_desc ike_alg_kem_dh23;
 #ifdef USE_DH24
 extern const struct kem_desc ike_alg_kem_dh24;
 #endif
+
 #ifdef USE_DH31
 extern const struct kem_desc ike_alg_kem_curve25519;
 #endif
+
+extern const struct kem_desc ike_alg_kem_ed25519; /* for EDDSA */
 
 #ifdef USE_ML_KEM_512
 extern const struct kem_desc ike_alg_kem_ml_kem_512;

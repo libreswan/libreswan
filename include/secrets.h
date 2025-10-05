@@ -241,6 +241,7 @@ extern const struct pubkey_type *pubkey_types[]; /* NULL terminated */
 
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
+extern const struct pubkey_type pubkey_type_eddsa;
 
 extern const struct pubkey_signer pubkey_signer_raw_rsa;		/* IKEv1 */
 extern const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa;	/* rfc7296 */
