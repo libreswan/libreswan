@@ -1155,22 +1155,9 @@ diag_t unpack_dns_pubkey(const struct id *id, /* ASKK */
 	return NULL;
 }
 
-static const struct pubkey_type *pubkey_type_nss(SECKEYPublicKey *pubk)
+const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *pubk)
 {
 	KeyType key_type = SECKEY_GetPublicKeyType(pubk);
-	switch (key_type) {
-	case rsaKey:
-		return &pubkey_type_rsa;
-	case ecKey:
-		return &pubkey_type_ecdsa;
-	default:
-		return NULL;
-	}
-}
-
-static const struct pubkey_type *private_key_type_nss(SECKEYPrivateKey *private_key)
-{
-	KeyType key_type = SECKEY_GetPrivateKeyType(private_key);
 	switch (key_type) {
 	case rsaKey:
 		return &pubkey_type_rsa;
@@ -1252,7 +1239,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 {
 
 	/* XXX: see also nss_cert_key_kind(cert) */
-	const struct pubkey_type *type = pubkey_type_nss(pubk);
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubk);
 	if (type == NULL) {
 		return "NSS cert not supported";
 	}
@@ -1327,19 +1314,21 @@ static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 						 SECItem *ckaid_nss,
 						 SECKEYPrivateKey *private_key)
 {
-	const struct pubkey_type *type = private_key_type_nss(private_key);
-	if (type == NULL) {
-		return "NSS private key not supported (unknown type)";
-	}
-
-	SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(private_key); /* must free */
-	if (pubk == NULL) {
+	SECKEYPublicKey *public_key = SECKEY_ConvertToPublicKey(private_key); /* must free */
+	if (public_key == NULL) {
 		return "NSS private key has no public key";
 	}
 
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(public_key);
+	if (type == NULL) {
+		SECKEY_DestroyPublicKey(public_key);
+		return "NSS private key not supported (unknown type)";
+	}
+
 	err_t err = add_private_key(secrets, pks, logger,
-				    pubk, ckaid_nss, type, private_key);
-	SECKEY_DestroyPublicKey(pubk);
+				    public_key, ckaid_nss,
+				    type, private_key);
+	SECKEY_DestroyPublicKey(public_key);
 	return err;
 }
 
@@ -1391,7 +1380,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 					struct pubkey **pk,
 					const struct logger *logger)
 {
-	const struct pubkey_type *type = pubkey_type_nss(pubkey_nss);
+	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubkey_nss);
 	if (type == NULL) {
 		id_buf idb;
 		return diag("NSS: could not create public key with ID '%s': certificate '%s' has an unknown key kind",
