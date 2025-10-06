@@ -85,6 +85,7 @@ static struct ike_sa *nudge_connection_established_parents(struct connection *c,
 
 static bool whack_connection_root_by_base_name(const struct connection_visitor_param *param)
 {
+	struct logger *logger = show_logger(param->s);
 #if 0
 	/*
 	 * While base names, such as 'conn', probably never start with
@@ -105,7 +106,9 @@ static bool whack_connection_root_by_base_name(const struct connection_visitor_p
 		},
 	};
 	if (next_connection(&by_base_name)) {
+		connection_addref(by_base_name.c, logger);
 		param->root.visitor(by_base_name.c, param);
+		connection_delref(&by_base_name.c, logger);
 		return true; /* found something, stop */
 	}
 	return false; /* keep looking */
@@ -113,6 +116,8 @@ static bool whack_connection_root_by_base_name(const struct connection_visitor_p
 
 static bool whack_connection_root_by_name(const struct connection_visitor_param *param)
 {
+	struct logger *logger = show_logger(param->s);
+
 	/*
 	 * Fully qualified names, such as '"conn#1.2.3.0/24"[1]',
 	 * always start with a quote, so no point searching when there
@@ -132,7 +137,9 @@ static bool whack_connection_root_by_name(const struct connection_visitor_param 
 		},
 	};
 	if (next_connection(&by_name)) {
+		connection_addref(by_name.c, logger);
 		param->root.visitor(by_name.c, param);
+		connection_delref(&by_name.c, logger);
 		return true; /* only one, stop */
 	}
 	return false; /* keep looking */
@@ -203,7 +210,9 @@ static bool whack_connection_roots_by_alias(const struct connection_visitor_para
 		}
 		unsigned nr = 0;
 		do {
+			connection_addref(by_alias_root.c, logger);
 			nr += param->root.visitor(by_alias_root.c, param);
+			connection_delref(&by_alias_root.c, logger);
 		} while (all_connections(&by_alias_root));
 		/* footer */
 		if (param->each->past_tense != NULL) {
@@ -250,7 +259,9 @@ static bool whack_connection_root_by_serialno(const struct connection_visitor_pa
 		{
 			struct connection *c = connection_by_serialno(serialno);
 			if (c != NULL) {
+				connection_addref(c, logger);
 				param->root.visitor(c, param);
+				connection_delref(&c, logger);
 				return true; /* found something, stop */
 			}
 			break;
@@ -260,7 +271,9 @@ static bool whack_connection_root_by_serialno(const struct connection_visitor_pa
 			struct state *st = state_by_serialno(serialno);
 			if (st != NULL) {
 				struct connection *c = st->st_connection;
+				connection_addref(c, logger);
 				param->root.visitor(c, param);
+				connection_delref(&c, logger);
 				return true; /* found something, stop */
 			}
 			break;
@@ -279,9 +292,13 @@ static bool whack_connection_root_by_serialno(const struct connection_visitor_pa
 static unsigned visit_connection_node(struct connection *c,
 				      const struct connection_visitor_param *param)
 {
-	return param->node.visitor(param->wm, param->s,
-				   c,
-				   param->node.context);
+	struct logger *logger = show_logger(param->s);
+	PEXPECT(logger, refcnt_peek(c) > 1);
+	unsigned result = param->node.visitor(param->wm, param->s,
+					      c,
+					      param->node.context);
+	PEXPECT(logger, refcnt_peek(c) >= 1);
+	return result;
 }
 
 unsigned whack_connection_instance_new2old(const struct whack_message *m,
@@ -324,7 +341,7 @@ static unsigned visit_connection_tree(struct connection *c,
 				      const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
-	connection_addref(c, logger); /* must delref */
+	PEXPECT(logger, refcnt_peek(c) > 1);
 
 	unsigned nr = 0;
 
@@ -344,7 +361,9 @@ static unsigned visit_connection_tree(struct connection *c,
 		},
 	};
 	while (next_connection(&instances)) {
+		connection_addref(instances.c, logger);
 		nr += visit_connection_tree(instances.c, param);
+		connection_delref(&instances.c, logger);
 	}
 
 	/* postfix tree walk */
@@ -353,8 +372,7 @@ static unsigned visit_connection_tree(struct connection *c,
 		nr += param->tree.visitor(c, param);
 	}
 
-	/* kill addref() and caller's pointer */
-	connection_delref(&c, logger);
+	PEXPECT(logger, refcnt_peek(c) >= 1);
 	return nr;
 }
 
@@ -480,9 +498,11 @@ unsigned visit_connection_state(struct connection *c,
 				const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
+	PEXPECT(logger, refcnt_peek(c) > 1);
 	whack_attach(c, logger);
 	visit_connection_states(c, param->state.visitor, param->state.context, HERE);
 	whack_detach(c, logger);
+	PEXPECT(logger, refcnt_peek(c) >= 1);
 	return 1;
 }
 
