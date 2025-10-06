@@ -819,3 +819,19 @@ void state_detach_where(struct state *st, const struct logger *src, where_t wher
 	}
 	whack_detach_where(st->logger, src, where);
 }
+
+struct logger *merge_loggers(struct logger *o_logger,
+			     bool background,
+			     struct logger *g_logger)
+{
+	/*
+	 * Create a logger that looks like the object; but also has
+	 * whack attached.
+	 */
+	struct logger *logger = clone_logger(o_logger, HERE);
+	whack_attach_where(logger, g_logger, HERE);
+	if (!background) {
+		whack_attach_where(o_logger, g_logger, HERE);
+	}
+	return logger;
+}

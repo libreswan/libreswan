@@ -60,6 +60,14 @@ void whack_rc(enum rc_type rc, const struct logger *logger);
 
 void release_whack(struct logger *logger, where_t where);
 
+/*
+ * Create a logger that looks like the object; but also has whack
+ * attached.
+ */
+struct logger *merge_loggers(struct logger *o_logger,
+			     bool background,
+			     struct logger *g_logger);
+
 bool whack_attached(const struct logger *logger);
 bool same_whack(const struct logger *lhs, const struct logger *rhs);
 void whack_attach_where(struct logger *dst, const struct logger *src, where_t where);
