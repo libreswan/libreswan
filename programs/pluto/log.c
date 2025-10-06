@@ -754,21 +754,6 @@ void whack_attach_where(struct logger *dst, const struct logger *src, where_t wh
 	dst->whackfd[0] = fd_addref_where(src_fd, dst, where);
 }
 
-void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where)
-{
-	whack_attach_where(md->logger, src, where);
-}
-
-void connection_attach_where(struct connection *c, const struct logger *src, where_t where)
-{
-	whack_attach_where(c->logger, src, where);
-}
-
-void state_attach_where(struct state *st, const struct logger *src, where_t where)
-{
-	whack_attach_where(st->logger, src, where);
-}
-
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
 	if (src == dst) {
@@ -792,30 +777,6 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 			return;
 		}
 	}
-}
-
-void md_detach_where(struct msg_digest *md, const struct logger *src, where_t where)
-{
-	if (md == NULL) {
-		return;
-	}
-	whack_detach_where(md->logger, src, where);
-}
-
-void connection_detach_where(struct connection *c, const struct logger *src, where_t where)
-{
-	if (c == NULL) {
-		return;
-	}
-	whack_detach_where(c->logger, src, where);
-}
-
-void state_detach_where(struct state *st, const struct logger *src, where_t where)
-{
-	if (st == NULL) {
-		return;
-	}
-	whack_detach_where(st->logger, src, where);
 }
 
 struct logger *merge_loggers(struct logger *o_logger,
