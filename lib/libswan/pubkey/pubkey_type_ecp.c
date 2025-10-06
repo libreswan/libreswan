@@ -63,7 +63,7 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 		/*
 		 * A simple match, the buffer contains just the key.
 		 */
-		if (ipseckey_pubkey.len == kem->bytes) {
+		if (ipseckey_pubkey.len == (*e)->bytes) {
 			raw = ipseckey_pubkey;
 			kem = (*e);
 			break;
