@@ -214,8 +214,11 @@ void exit_epilogue(struct logger *logger)
 #endif
 
 	/*
-	 * No libevent events beyond this point.
+	 * NO LIBEVENT EVENTS BEYOND THIS POINT.
+	 *
+	 * THESE FUNCTIONS JUST DELETE MEMORY (hence free*())
 	 */
+	free_server_fork(logger);
 	free_server(logger);
 
 	free_virtual_ip();	/* virtual_private= */

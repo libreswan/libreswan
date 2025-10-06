@@ -154,11 +154,13 @@ static struct pid_entry *add_pid(const char *name,
 	return new_pid;
 }
 
-static void free_pid_entry(struct pid_entry **p)
+static void delete_pid_entry(struct pid_entry **p)
 {
+	pid_entry_db_del((*p));
 	free_logger(&(*p)->logger, HERE);
 	free_chunk_content(&(*p)->output);
 	md_delref(&(*p)->md);
+	detach_fd_read_listener(&(*p)->fdl);	/* NULL is ok */
 	ldbg_delref(&global_logger, *p);
 	pfree(*p);
 	*p = NULL;
@@ -486,8 +488,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					       pid_entry->name);
 			}
 			/* clean it up */
-			pid_entry_db_del(pid_entry);
-			free_pid_entry(&pid_entry);
+			delete_pid_entry(&pid_entry);
 			continue;
 		}
 	}
@@ -501,4 +502,16 @@ void init_server_fork(struct logger *logger)
 void check_server_fork(struct logger *logger, where_t where)
 {
 	pid_entry_db_check(logger, where);
+}
+
+void free_server_fork(struct logger *logger)
+{
+	struct pid_entry *e;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &pid_entry_db_list_head) {
+		LLOG_JAMBUF(RC_LOG, logger, buf) {
+			jam_string(buf, "dropping ");
+			jam_pid_entry(buf, e);
+		}
+		delete_pid_entry(&e);
+	}
 }
