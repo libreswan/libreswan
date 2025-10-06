@@ -394,7 +394,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 			whack_attach(cq.c, c->logger);
 			terminate_and_unroute_connection(cq.c, where);
 			/* leave whack attached during death */
-			delete_connection(&cq.c);
+			connection_delref(&cq.c, c->logger);
 		}
 		pmemory(c); /* should not disappear */
 		/* to be sure */
@@ -454,7 +454,7 @@ void terminate_and_delete_connections(struct connection **cp,
 		whack_attach((*cp), logger);
 		terminate_and_down_and_unroute_connections((*cp), where);
 		/* leave whack attached during death */
-		delete_connection(cp);
+		connection_delref(cp, logger);
 		return;
 
 	case CK_GROUP:
@@ -478,7 +478,7 @@ void terminate_and_delete_connections(struct connection **cp,
 		}
 		pmemory((*cp)); /* should not disappear */
 		/* leave whack attached during death */
-		delete_connection(cp);
+		connection_delref(cp, logger);
 		return;
 	}
 

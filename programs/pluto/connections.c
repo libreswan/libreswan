@@ -313,14 +313,6 @@ static void llog_delete_connection_when_instance(const struct connection *c)
 	}
 }
 
-void delete_connection_where(struct connection **cp, where_t where)
-{
-	struct connection *c = *cp;
-	llog_delete_connection_when_instance(c);
-	delref_where(cp, c->logger, where); /* should leave 0 references */
-	discard_connection(&c, true/*connection_valid*/, where);
-}
-
 struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where)
 {
 	return refcnt_addref(c, owner, where);
