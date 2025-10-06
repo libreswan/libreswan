@@ -487,7 +487,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	struct child_sa *larval_child = new_v2_child_sa(c, ike, CHILD_SA,
 							SA_INITIATOR,
 							STATE_V2_REKEY_CHILD_I0);
-	state_attach(&larval_child->sa, logger);
+	whack_attach(&larval_child->sa, logger);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_child->sa.logger, NULL);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
@@ -886,7 +886,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 {
 	/* share the log! */
 	if (!detach_whack) {
-		state_attach(&ike->sa, cc->logger);
+		whack_attach(&ike->sa, cc->logger);
 	}
 
 	struct child_sa *larval_child = new_v2_child_sa(cc, ike, CHILD_SA,
@@ -1610,7 +1610,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike,
 	struct child_sa *larval_ike = new_v2_child_sa(c, ike, IKE_SA,
 						      SA_INITIATOR,
 						      STATE_V2_REKEY_IKE_I0);
-	state_attach(&larval_ike->sa, ike->sa.logger);
+	whack_attach(&larval_ike->sa, ike->sa.logger);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, larval_ike->sa.logger, NULL);
 
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
@@ -2221,7 +2221,7 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 	if (replacing != NULL && IS_CHILD_SA(replacing)) {
 		PEXPECT((*larval_child)->sa.logger,
 			(*larval_child)->sa.st_sa_kind_when_established == CHILD_SA);
-		state_detach(replacing, (*larval_child)->sa.logger);
+		whack_detach(replacing, (*larval_child)->sa.logger);
 	}
 
 	connection_teardown_child(larval_child, REASON_DELETED, HERE);

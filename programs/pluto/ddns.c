@@ -178,10 +178,10 @@ static void connection_check_ddns(struct logger *logger)
 	while (next_connection(&cf)) {
 		/* addref, delref is probably over kill */
 		struct connection *c = connection_addref(cf.c, logger);
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "pending ddns");
 		connection_check_ddns1(c, verbose);
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		connection_delref(&c, logger);
 	}
 

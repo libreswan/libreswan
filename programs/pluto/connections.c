@@ -1194,7 +1194,7 @@ struct connection *alloc_connection(const char *name,
 				 debugging, where);
 
 	/* after alloc_logger(); connection's first gasp */
-	connection_attach(c, logger);
+	whack_attach(c, logger);
 
 	/*
 	 *  Update the .instance_serial.

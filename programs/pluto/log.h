@@ -76,15 +76,6 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 #define whack_attach(DST, SRC) whack_attach_where((DST)->logger, SRC, HERE)
 #define whack_detach(DST, SRC) whack_detach_where((DST)->logger, SRC, HERE)
 
-#define md_attach whack_attach
-#define md_detach whack_detach
-
-#define connection_attach whack_attach
-#define connection_detach whack_detach
-
-#define state_attach whack_attach
-#define state_detach whack_detach
-
 /* for pushing state to other subsystems */
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
 #define binlog_fake_state(st, new_state) binlog_state((st), (new_state))

@@ -56,9 +56,9 @@ static unsigned whack_initiate_connection(const struct whack_message *m,
 	case CK_LABELED_CHILD:
 	case CK_GROUP:
 	case CK_INSTANCE:
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		llog(RC_LOG, c->logger, "cannot initiate");
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		return 0; /* the connection doesn't count */
 	case CK_INVALID:
 		break;

@@ -99,7 +99,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		free_logger(&loggers, HERE);
 		/* release whack, possibly attached to C by
 		 * merge_loggers */
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		connection_delref(&c, logger);
 		break;
 	}

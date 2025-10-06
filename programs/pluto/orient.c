@@ -262,7 +262,7 @@ bool orient(struct connection *c, const struct logger *logger)
 
 		if (left && right) {
 			/* too many choices */
-			connection_attach(c, logger);
+			whack_attach(c, logger);
 			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 				jam_string(buf, "connection matches both left ");
 				jam_iface(buf, iface);
@@ -270,7 +270,7 @@ bool orient(struct connection *c, const struct logger *logger)
 				jam_iface(buf, iface);
 			}
 			terminate_and_disorient_connection(c, HERE);
-			connection_detach(c, logger);
+			whack_detach(c, logger);
 			return false;
 		}
 
@@ -301,7 +301,7 @@ bool orient(struct connection *c, const struct logger *logger)
 			 * log line doesn't differentiate.
 			 */
 			pexpect(end != matching_end);
-			connection_attach(c, logger);
+			whack_attach(c, logger);
 			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 				jam_string(buf, "connection matches both ");
 				/*previous-match*/
@@ -315,7 +315,7 @@ bool orient(struct connection *c, const struct logger *logger)
 				jam_iface(buf, iface);
 			}
 			terminate_and_disorient_connection(c, HERE);
-			connection_detach(c, logger);
+			whack_detach(c, logger);
 			return false;
 		}
 
@@ -339,9 +339,9 @@ bool orient(struct connection *c, const struct logger *logger)
 		if (old_iface != NULL) {
 			/* when there's no interface, there's nothing
 			 * to terminate */
-			connection_attach(c, logger);
+			whack_attach(c, logger);
 			terminate_and_disorient_connection(c, HERE);
-			connection_detach(c, logger);
+			whack_detach(c, logger);
 		}
 		return false;
 	}
@@ -448,11 +448,11 @@ void check_orientations(const struct logger *logger)
 		bool is_oriented = orient(c, logger);
 		/* log when it becomes oriented */
 		if (!was_oriented && is_oriented) {
-			connection_attach(c, logger);
+			whack_attach(c, logger);
 			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
 				jam_orientation(buf, c, /*orientation_details*/true);
 			}
-			connection_detach(c, logger);
+			whack_detach(c, logger);
 		}
 	}
 }

@@ -157,7 +157,7 @@ static void delete_ikev1_child(struct connection *c, struct child_sa **child, wh
 	 * Can't assume the IKE SA is the best available for the
 	 * Child.
 	 */
-	state_attach(&(*child)->sa, c->logger);
+	whack_attach(&(*child)->sa, c->logger);
 	struct ike_sa *ike = established_isakmp_sa_for_state(&(*child)->sa,
 							     /*viable-parent*/false);
 	llog_n_maybe_send_v1_delete(ike, &(*child)->sa, where);
@@ -169,7 +169,7 @@ static void delete_ikev1_ike(struct connection *c, struct ike_sa **ike, where_t 
 	/*
 	 * Assume the established IKE SA can delete itself.
 	 */
-	state_attach(&(*ike)->sa, c->logger);
+	whack_attach(&(*ike)->sa, c->logger);
 	llog_n_maybe_send_v1_delete((*ike), &(*ike)->sa, HERE);
 	connection_teardown_ike(ike, REASON_DELETED, where);
 }
@@ -218,12 +218,12 @@ static void down_ikev1_connection_state(struct connection *c,
 		return;
 
 	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
 	case VISIT_CONNECTION_LURKING_IKE_SA:
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
 
@@ -277,7 +277,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 			 * IKE is principal this helps stop the visit
 			 * code making further callbacks.
 			 */
-			state_attach(&(*child)->sa, c->logger);
+			whack_attach(&(*child)->sa, c->logger);
 			submit_v2_delete_exchange((*ike), (*child));
 			(*ike) = NULL;
 			return;
@@ -287,7 +287,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO" (and %s "PRI_SO")",
 		     c->config->ike_info->parent_sa_name, pri_so((*ike)->sa.st_serialno),
 		     c->config->ike_info->child_sa_name, pri_so((*child)->sa.st_serialno));
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		submit_v2_delete_exchange((*ike), NULL);
 		return;
 
@@ -297,7 +297,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 			 * The cuckold is shared.  Just delete this
 			 * Child SA.
 			 */
-			state_attach(&(*child)->sa, c->logger);
+			whack_attach(&(*child)->sa, c->logger);
 			submit_v2_delete_exchange((*ike), (*child));
 			(*ike) = NULL;
 			return;
@@ -309,7 +309,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		     c->config->ike_info->child_sa_name, pri_so((*child)->sa.st_serialno));
 
 		/* zap the cuckold's IKE SA which will delete the Child */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		submit_v2_delete_exchange((*ike), NULL);
 		return;
 
@@ -323,12 +323,12 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		return;
 
 	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
 	case VISIT_CONNECTION_LURKING_IKE_SA:
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		connection_teardown_ike(ike, REASON_DELETED, HERE);
 		return;
 
@@ -345,7 +345,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 		llog(RC_LOG, c->logger, "initiating delete of connection's %s "PRI_SO,
 		     c->config->ike_info->parent_sa_name,
 		     pri_so((*ike)->sa.st_serialno));
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		submit_v2_delete_exchange((*ike), NULL);
 		return;
 
@@ -359,7 +359,7 @@ static void down_ikev2_connection_state(struct connection *c UNUSED,
 
 static unsigned down_connection(struct connection *c, struct logger *logger)
 {
-	connection_attach(c, logger);
+	whack_attach(c, logger);
 
 	switch (c->config->ike_version) {
 	case IKEv1:
@@ -383,7 +383,7 @@ static unsigned down_connection(struct connection *c, struct logger *logger)
 		return 1;
 	}
 
-	connection_detach(c, logger);
+	whack_detach(c, logger);
 	return 1;
 }
 

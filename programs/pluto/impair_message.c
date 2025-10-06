@@ -365,9 +365,9 @@ static void drip_message(const struct direction_impairment *direction,
 static void drip_inbound(const struct message *m, struct logger *logger)
 {
 	struct msg_digest *md = clone_raw_md(m->inbound.md, HERE);
-	md_attach(md, logger);
+	whack_attach(md, logger);
 	process_md(md);
-	md_detach(md, logger);
+	whack_detach(md, logger);
 	md_delref(&md);
 	pexpect(md == NULL);
 }

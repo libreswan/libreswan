@@ -143,7 +143,7 @@ static void delete_every_connection(struct logger *logger)
 		 * wipes out anything else.
 		 */
 
-		connection_attach(cq.c, logger);
+		whack_attach(cq.c, logger);
 		PEXPECT(cq.c->logger, (cq.c->local->kind == CK_GROUP ||
 				       cq.c->local->kind == CK_PERMANENT ||
 				       cq.c->local->kind == CK_TEMPLATE ||
