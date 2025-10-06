@@ -1,5 +1,8 @@
 /testing/guestbin/swan-prep
 west #
+ valgrind --quiet $(ipsec -n _authbycheck) > /dev/null || echo failed
+ipsec _authbycheck: leak detective found no leaks
+west #
  valgrind --quiet $(ipsec -n _jambufcheck) > /dev/null || echo failed
 ipsec _jambufcheck: leak detective found no leaks
 west #

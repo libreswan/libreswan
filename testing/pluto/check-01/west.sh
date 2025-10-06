@@ -1,5 +1,6 @@
 /testing/guestbin/swan-prep
 
+valgrind --quiet $(ipsec -n _authbycheck) > /dev/null || echo failed
 valgrind --quiet $(ipsec -n _jambufcheck) > /dev/null || echo failed
 valgrind --quiet $(ipsec -n _timecheck) > /dev/null || echo failed
 valgrind --quiet $(ipsec -n _hunkcheck) > /dev/null || echo failed
