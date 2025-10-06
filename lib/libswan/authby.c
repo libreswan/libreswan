@@ -26,6 +26,7 @@
 	 (LHS).psk OP				\
 	 (LHS).rsasig OP			\
 	 (LHS).rsasig_v1_5 OP			\
+	 (LHS).eddsa OP				\
 	 (LHS).ecdsa)
 
 #define OP(LHS, OP, RHS)						\
@@ -35,6 +36,7 @@
 			.never = (LHS).never OP (RHS).never,		\
 			.psk = (LHS).psk OP (RHS).psk,			\
 			.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
+			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
 			.ecdsa = (LHS).ecdsa OP (RHS).ecdsa,		\
 			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
 		};							\
@@ -88,6 +90,7 @@ bool authby_has(struct authby authby, enum auth auth)
 bool authby_has_digsig(struct authby lhs)
 {
 	return (authby_has(lhs, AUTH_ECDSA) ||
+		authby_has(lhs, AUTH_EDDSA) ||
 		authby_has(lhs, AUTH_RSASIG));
 }
 
@@ -95,6 +98,7 @@ enum auth auth_from_authby(struct authby authby)
 {
 	return (authby.rsasig ? AUTH_RSASIG :
 		authby.ecdsa ? AUTH_ECDSA :
+		authby.eddsa ? AUTH_EDDSA :
 		authby.rsasig_v1_5 ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
@@ -136,6 +140,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	JAM_AUTHBY(psk, PSK);
 	JAM_AUTHBY(rsasig, RSASIG);
 	JAM_AUTHBY(ecdsa, ECDSA);
+	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);
 	JAM_AUTHBY(rsasig_v1_5, RSASIG_v1_5);
