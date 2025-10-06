@@ -174,7 +174,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(authby_has_rsasig(c->local->host.config->authby));
+		pexpect(authby_has(c->local->host.config->authby, AUTH_RSASIG));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGITAL_SIGNATURE;
 		}
@@ -206,7 +206,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(authby_has_ecdsa(c->local->host.config->authby));
+		pexpect(authby_has(c->local->host.config->authby, AUTH_ECDSA));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGITAL_SIGNATURE;
 		}

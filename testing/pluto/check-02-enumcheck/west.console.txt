@@ -3691,6 +3691,12 @@ name for -1 present (should be absent)
          short_name 3: ecdsakey OK
          jam_enum_short 3: ecdsakey OK
          jam_enum_human 3: ecdsakey OK
+    4 -> eddsakey
+         jam_enum 4: eddsakey OK
+         match eddsakey: OK
+         short_name 4: eddsakey OK
+         jam_enum_short 4: eddsakey OK
+         jam_enum_human 4: eddsakey OK
     5 -> pubkey
          jam_enum 5: pubkey OK
          match pubkey: OK

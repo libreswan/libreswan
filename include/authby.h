@@ -20,7 +20,7 @@
 
 #include "lset.h"
 
-enum keyword_auth;
+enum auth;
 struct jambuf;
 
 struct authby {
@@ -50,12 +50,12 @@ struct authby authby_xor(struct authby lhs, struct authby rhs);
 struct authby authby_and(struct authby lhs, struct authby rhs);
 struct authby authby_or(struct authby lhs, struct authby rhs);
 struct authby authby_not(struct authby lhs);
+
 bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
-bool authby_has_rsasig(struct authby);
-bool authby_has_ecdsa(struct authby);
+bool authby_has(struct authby, enum auth);
 bool authby_has_digsig(struct authby);
 
 enum auth auth_from_authby(struct authby authby);

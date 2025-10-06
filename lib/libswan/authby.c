@@ -26,6 +26,7 @@
 	 (LHS).psk OP				\
 	 (LHS).rsasig OP			\
 	 (LHS).rsasig_v1_5 OP			\
+	 (LHS).eddsa OP				\
 	 (LHS).ecdsa)
 
 #define OP(LHS, OP, RHS)						\
@@ -35,6 +36,7 @@
 			.never = (LHS).never OP (RHS).never,		\
 			.psk = (LHS).psk OP (RHS).psk,			\
 			.rsasig = (LHS).rsasig OP (RHS).rsasig,		\
+			.eddsa = (LHS).eddsa OP (RHS).eddsa,		\
 			.ecdsa = (LHS).ecdsa OP (RHS).ecdsa,		\
 			.rsasig_v1_5 = (LHS).rsasig_v1_5 OP (RHS).rsasig_v1_5, \
 		};							\
@@ -78,25 +80,25 @@ bool authby_le(struct authby lhs, struct authby rhs)
 	return REDUCE(le, &&);
 }
 
-bool authby_has_rsasig(struct authby lhs)
+bool authby_has(struct authby authby, enum auth auth)
 {
-	return lhs.rsasig || lhs.rsasig_v1_5;
-}
-
-bool authby_has_ecdsa(struct authby lhs)
-{
-	return lhs.ecdsa;
+	struct authby auth_bit = authby_from_auth(auth);
+	/* auth bit must be set */
+	return authby_is_set(authby_and(auth_bit, authby));
 }
 
 bool authby_has_digsig(struct authby lhs)
 {
-	return authby_has_ecdsa(lhs) || authby_has_rsasig(lhs);
+	return (authby_has(lhs, AUTH_ECDSA) ||
+		authby_has(lhs, AUTH_EDDSA) ||
+		authby_has(lhs, AUTH_RSASIG));
 }
 
 enum auth auth_from_authby(struct authby authby)
 {
 	return (authby.rsasig ? AUTH_RSASIG :
 		authby.ecdsa ? AUTH_ECDSA :
+		authby.eddsa ? AUTH_EDDSA :
 		authby.rsasig_v1_5 ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
@@ -108,12 +110,13 @@ struct authby authby_from_auth(enum auth auth)
 {
 #define AUTH(BY) case AUTH_##BY: return AUTHBY_##BY
 	switch (auth) {
-		AUTH(RSASIG);
 		AUTH(ECDSA);
 		AUTH(EDDSA);
 		AUTH(PSK);
 		AUTH(NULL);
 		AUTH(NEVER);
+	case AUTH_RSASIG:
+		return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
 	case AUTH_UNSET:
 		return AUTHBY_NEVER;
 	case AUTH_EAPONLY:
@@ -137,6 +140,7 @@ size_t jam_authby(struct jambuf *buf, struct authby authby)
 	JAM_AUTHBY(psk, PSK);
 	JAM_AUTHBY(rsasig, RSASIG);
 	JAM_AUTHBY(ecdsa, ECDSA);
+	JAM_AUTHBY(eddsa, EDDSA);
 	JAM_AUTHBY(never, AUTH_NEVER);
 	JAM_AUTHBY(null, AUTH_NULL);
 	JAM_AUTHBY(rsasig_v1_5, RSASIG_v1_5);
