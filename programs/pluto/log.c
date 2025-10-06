@@ -713,8 +713,14 @@ bool same_whack(const struct logger *lhs, const struct logger *rhs)
 	return false;
 }
 
-static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
+void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
 {
+	if (src == dst) {
+		return;
+	}
+
+	struct fd *src_fd = logger_fd(src);
+
 	/* do no harm? */
 	if (src_fd == NULL) {
 		ldbg(dst, "no whack to attach");
@@ -746,14 +752,6 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 	     pri_fd(src_fd), dst);
 	fd_delref_where(&dst->whackfd[0], dst, where);
 	dst->whackfd[0] = fd_addref_where(src_fd, dst, where);
-}
-
-void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
-{
-	if (src == dst) {
-		return;
-	}
-	attach_fd_where(dst, logger_fd(src), where);
 }
 
 void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where)
