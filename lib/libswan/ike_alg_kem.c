@@ -325,6 +325,23 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 };
 #endif
 
+const struct kem_desc ike_alg_kem_ed25519 = {
+	.common = {
+		.type = &ike_alg_kem,
+		.fqn = "DH32",
+		.names = "dh32,curve448",
+		.id = {
+			[IKEv1_OAKLEY_ID] = -1,
+			[IKEv1_IPSEC_ID] = -1,
+			[IKEv2_ALG_ID] = -1,
+		},
+	},
+	.bytes = 57 /* octets */,
+	.initiator_bytes = 57 /* octets */,
+	.responder_bytes = 57 /* octets */,
+	.nss.ecp.oid = SEC_OID_ED25519_PUBLIC_KEY,
+};
+
 /* https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-mlkem/ */
 
 #ifdef USE_ML_KEM_512

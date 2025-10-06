@@ -10,7 +10,7 @@
  * Copyright (C) 2010, 2016 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2016, 2022 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, 2022, 2025 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -304,18 +304,16 @@ static int show_leftright(struct secret_pubkey_stuff *pks,
 		return 5;
 	}
 
+	name_buf config_name = {0};
 	if (pubkey_flg) {
 		printf("\t%spubkey=", side);
-	} else if (pks->content.type == &pubkey_type_rsa) {
-		printf("\t# rsakey %s\n", pks->content.keyid.keyid);
-		printf("\t%srsasigkey=0s", side);
-	} else if (pks->content.type == &pubkey_type_ecdsa) {
-		printf("\t# ecdsakey %s\n", pks->content.keyid.keyid);
-		printf("\t%secdsakey=0s", side);
-	} else {
+	} else if (!enum_short(&ipseckey_algorithm_config_names, pks->content.type->ipseckey_algorithm, &config_name)) {
 		fprintf(stderr, "%s: wrong kind of key %s in show_confkey, expected RSA or ECDSA.\n",
 			progname, pks->content.type->name);
 		return 5;
+	} else {
+		printf("\t# %s %s\n", config_name.buf, pks->content.keyid.keyid);
+		printf("\t%s%s=0s", side, config_name.buf);
 	}
 
 	printf("%s\n", base64);
@@ -357,34 +355,27 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 		 * which also creates private-key-stuff.
 		 */
 
-		/* XXX: see also private_key_type_nss(pubk); */
-		const struct pubkey_type *type;
-		switch (SECKEY_GetPrivateKeyType(private_key)) {
-		case rsaKey:
-			type = &pubkey_type_rsa;
-			break;
-		case ecKey:
-			type = &pubkey_type_ecdsa;
-			break;
-		default:
-			continue;
-		}
-
-		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(node->key); /* must free */
+		SECItem *ckaid_nss = PK11_GetLowLevelKeyIDForPrivateKey(private_key); /* must free */
 		if (ckaid_nss == NULL) {
 			continue;
 		}
 
-		SECKEYPublicKey *pubk = SECKEY_ConvertToPublicKey(node->key);
-		if (pubk == NULL) {
+		SECKEYPublicKey *public_key = SECKEY_ConvertToPublicKey(private_key); /* must free? */
+		if (public_key == NULL) {
+			continue;
+		}
+
+		const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(public_key);
+		if (type == NULL) {
 			continue;
 		}
 
 		struct secret_pubkey_stuff pks = {
+			.content.type = type,
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		type->extract_pubkey_content(&pks.content, pubk, ckaid_nss, logger);
+		type->extract_pubkey_content(&pks.content, public_key, ckaid_nss, logger);
 
 		/*
 		 * Only count private keys that get processed.

@@ -62,14 +62,16 @@ func find(name, pattern,
 
     find("RAW-PUBKEY", "rsasigkey=0s([+=0-9a-zA-Z/]+)")
     find("RAW-PUBKEY", "ecdsakey=0s([+=0-9a-zA-Z/]+)")
+    find("RAW-PUBKEY", "eddsakey=0s([+=0-9a-zA-Z/]+)")
     find("PEM-PUBKEY", "pubkey=([+=0-9a-zA-Z/]+)")
 
-    # RSA's algorithm is 2; ECDSA is 3; 4 is made up
-    find("RAW-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +[23] +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
-    find("PEM-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +4 +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
+    # RSA's algorithm is 2; ECDSA is 3; EDDSA is 4; 5 is made up
+    find("RAW-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +[234] +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
+    find("PEM-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +[5] +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
 
     find("KEYID", "keyid: ([+=0-9a-zA-Z/]+)")
     find("KEYID", "# ecdsakey ([+=0-9a-zA-Z/]+)")
+    find("KEYID", "# eddsakey ([+=0-9a-zA-Z/]+)")
     find("KEYID", "# rsakey ([+=0-9a-zA-Z/]+)")
 
     # replace all IDs with symbolic values

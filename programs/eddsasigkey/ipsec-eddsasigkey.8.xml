@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"
+[<!ENTITY % entities SYSTEM "entities.xml">%entities;]>
+<refentry>
+  <refmeta>
+    <refentrytitle>IPSEC-EDDSASIGKEY</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class='date'>6 Sep 2013</refmiscinfo>
+    <refmiscinfo class="source">Libreswan</refmiscinfo>
+    <refmiscinfo class="version">@@IPSECVERSION@@</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>ipsec-eddsasigkey</refname>
+    <refpurpose>generate EDDSA signature key</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>ipsec eddsasigkey</command>
+      <arg choice='opt'>--verbose </arg>
+      <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
+      <arg choice='opt'>--seed <replaceable>numbits</replaceable></arg>
+      <arg choice='opt'>--nssdir <replaceable>nssdir</replaceable></arg>
+      <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
+      <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
+      <arg choice='opt'>curvename</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>eddsasigkey</command>
+      generates an EDDSA public/private key pair, suitable for digital signatures, on a named curve specified with
+      <emphasis>curvename</emphasis>. Currently it only accepts <emphasis>secp256r1</emphasis>,
+      <emphasis>secp384r1</emphasis>, and <emphasis>secp521r1</emphasis>.
+    </para>
+
+    <para>
+      The public exponent is forced to the value <emphasis>3</emphasis>, which has important
+      speed advantages for signature checking. Beware that the resulting keys
+      have known weaknesses as encryption keys
+      <emphasis>and should not be used for that purpose</emphasis>.
+    </para>
+
+    <para>
+      The <option>--verbose</option> option makes <emphasis>eddsasigkey</emphasis>
+      give a running commentary on standard error. By default, it works in
+      silence until it is ready to generate output.
+    </para>
+
+    <para>
+      The <option>--seeddev</option> option specifies a
+      source for random bits used to seed the crypto library's
+      RNG. The default is <filename>/dev/random</filename> (see
+      &random.4;).
+      FreeS/WAN and Openswan without NSS support used this option to specify
+      the random source used to directly create keys. Libreswan only uses
+      it to seed the NSS crypto libraries RNG. Under Linux with hardware random
+      support, special devices might show up as <filename>/dev/*rng*</filename>
+      devices. However, these should never be accessed directly using this option,
+      as hardware failures could lead to extremely non-random values (streams
+      of zeroes have been observed in the wild)
+    </para>
+
+    <para>
+      The <option>--seedbits</option> option specifies how many seed bits are pulled from
+      the random device to seed the NSS PRNG. The default of 480bit comes from FIPS requirements.
+      Seed bits are rounded up to a multiple of 8.
+    </para>
+
+    <para>
+      The use of a different random device or a reduction of seedbits from the default value is
+      prevented when the system is running in FIPS mode.
+    </para>
+
+    <para>
+      The <option>--nssdir</option> option specifies the directory to use for the nss database.
+      This is the directory where the NSS certificate, key and security modules databases reside. The
+      default value is <filename>@@IPSEC_NSSDIR@@</filename>.
+    </para>
+
+    <para>
+      The <option>--password</option> option specifies the nss cryptographic module authentication
+      password if the NSS module has been configured to require it.  A password is required by hardware
+      tokens and also by the internal software token module when configured to run in FIPS mode.
+      If the argument is <emphasis>@@IPSEC_CONFDDIR@@</emphasis><filename>/nsspassword</filename>,
+      the password comes from that file; otherwise argument is the password.
+    </para>
+  </refsect1>
+
+  <refsect1 id='examples'><title>EXAMPLES</title>
+  <variablelist>
+    <varlistentry>
+      <term>
+	<command>ipsec eddsasigkey --verbose 4096</command>
+      </term>
+      <listitem>
+	<para>generates a 4096-bit signature key  and stores this key in the NSS database.
+	The public key can then be extracted and edited into the <filename>ipsec.conf</filename> (see
+	&ipsec-showhostkey.8;).
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  </refsect1>
+
+  <refsect1 id='files'>
+    <title>FILES</title>
+    <para>
+      /dev/random, /dev/urandom
+    </para>
+  </refsect1>
+
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      &random.4;,
+      &rngd.8;,
+      &ipsec-showhostkey.8;,
+      <emphasis>Applied Cryptography, 2nd. ed., by Bruce Schneier, Wiley 1996</emphasis>,
+      <emphasis>RFCs 2537, 2313</emphasis>,
+      <emphasis>GNU  MP, the GNU multiple precision arithmetic library, edition 2.0.2, by Torbj Granlund</emphasis>
+    </para>
+  </refsect1>
+
+  <refsect1 id='history'>
+    <title>HISTORY</title>
+    <para>
+      Originally written for the Linux FreeS/WAN project
+      &lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
+      by Henry Spencer. Updated for the Libreswan Project by Paul Wouters.
+    </para>
+    <para>
+      The <option>--round</option> and <option>--noopt</option>
+      options were obsoleted as these were only used with the old non-library crypto code
+    </para>
+    <para>
+      The <option>--random</option> device is only used for seeding the crypto library,
+      not for direct random to generate keys
+    </para>
+  </refsect1>
+
+  <refsect1 id='bugs'>
+    <title>BUGS</title>
+    <para>
+      <command>eddsasigkey</command>'s run time is difficult to
+      predict, since <filename>/dev/random</filename> output can be
+      arbitrarily delayed if the system's entropy pool is low on
+      randomness, and the time taken by the search for primes is also
+      somewhat unpredictable. Specifically, embedded systems and most
+      virtual machines are low on entropy. In such a situation,
+      consider generating the EDDSA key on another machine, and
+      copying <filename>ipsec.secrets</filename> and the
+      <filename>@@IPSEC_NSSDIR@@</filename> directory tree to the
+      embedded platform. Note that NSS embeds the full path in the DB
+      files, so the path on proxy machine must be identical to the
+      path on the destination machine.
+    </para>
+  </refsect1>
+
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <author><personname><firstname>Paul</firstname><surname>Wouters</surname></personname></author>
+    </para>
+  </refsect1>
+</refentry>
+

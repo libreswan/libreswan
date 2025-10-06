@@ -29,14 +29,17 @@ SUBDIRS += _updown
 SUBDIRS += addconn
 SUBDIRS += algparse
 SUBDIRS += cavp
-SUBDIRS += ecdsasigkey
+
 SUBDIRS += ipsec
 SUBDIRS += letsencrypt
+SUBDIRS += readwriteconf
+SUBDIRS += setup
 
 SUBDIRS += newhostkey
-SUBDIRS += readwriteconf
+
+SUBDIRS += ecdsasigkey
+SUBDIRS += eddsasigkey
 SUBDIRS += rsasigkey
-SUBDIRS += setup
 
 SUBDIRS += showhostkey
 SUBDIRS += showroute

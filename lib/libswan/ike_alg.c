@@ -869,8 +869,12 @@ static const struct kem_desc *kem_descriptors[] = {
 #ifdef USE_DH24
 	&ike_alg_kem_dh24,
 #endif
+
 #ifdef USE_DH31
 	&ike_alg_kem_curve25519,
+#endif
+#ifdef USE_DH32
+	&ike_alg_kem_curve448,
 #endif
 
 #ifdef USE_ML_KEM_512
