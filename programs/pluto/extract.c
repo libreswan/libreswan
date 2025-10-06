@@ -1013,6 +1013,9 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 			} else if (hunk_streq(val, "rsa-sha2_512")) {
 				authby->rsasig = true;
 				(*sighash_policy) |= POL_SIGHASH_SHA2_512;
+			} else if (hunk_streq(val, "eddsa")) {
+				authby->eddsa = true;
+				(*sighash_policy) |= POL_SIGHASH_IDENTITY;
 			} else if (hunk_streq(val, "ecdsa") ||
 				   hunk_streq(val, "ecdsa-sha2")) {
 				authby->ecdsa = true;
