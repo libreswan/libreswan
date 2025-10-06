@@ -76,6 +76,7 @@ static const struct keyword_def config_conn_keyword[] = {
    */
   K("rsasigkey",  kv_leftright,  kt_string,  KWS_RSASIGKEY),
   K("ecdsakey",  kv_leftright,  kt_string,  KWS_ECDSAKEY),
+  K("eddsakey",  kv_leftright,  kt_string,  KWS_EDDSAKEY),
   K("pubkey",  kv_leftright,  kt_string,  KWS_PUBKEY),
 
   K("cert",  kv_leftright,  kt_string,  KWS_CERT),
