@@ -14,7 +14,7 @@ west #
 < 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
 west #
  ipsec showhostkey --left --ckaid "${ckaid}"
-	# rsakey <<KEYID#1>>
+	# rsasigkey <<KEYID#1>>
 	leftrsasigkey=0s<<RAW-PUBKEY#1>>
 west #
  ipsec showhostkey --left --pubkey --ckaid "${ckaid}"
