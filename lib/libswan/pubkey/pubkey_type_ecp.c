@@ -44,7 +44,7 @@
 #include "ike_alg_kem.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
-static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
+static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey,
 						   struct pubkey_content *pkc,
 						   const struct logger *logger,
 						   const struct kem_desc *kems[])
@@ -59,15 +59,23 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 	const struct kem_desc *kem = NULL;
 	shunk_t raw = null_shunk;
 	for (const struct kem_desc **e = kems; (*e) != NULL; e++) {
+		kem = (*e);
+
+		ldbg(logger, "pkc=%s kem=%s pubkey=%p.%zu expected=%zu uncompressed=%s",
+		     pkc->type->name, kem->common.fqn,
+		     ipseckey.ptr, ipseckey.len, kem->bytes,
+		     bool_str(pkc->type->nss.ecp.includes_ec_point_form_uncompressed));
 
 		/*
 		 * A simple match, the buffer contains just the key.
 		 */
-		if (ipseckey_pubkey.len == (*e)->bytes) {
-			raw = ipseckey_pubkey;
-			kem = (*e);
+		if (ipseckey.len == kem->bytes) {
+			raw = ipseckey;
 			break;
 		}
+
+		PEXPECT(logger, (pkc->type->nss.ecp.includes_ec_point_form_uncompressed ==
+				 kem->nss.ecp.includes_ec_point_form_uncompressed));
 
 		/*
 		 * The raw IPSECKEY_PUBKEY, which could come from the
@@ -76,19 +84,19 @@ static diag_t ECP_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey
 		 *
 		 * Allow for and strip that off when necessary.
 		 */
-		const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
-		if ((*e)->nss.ecp.includes_ec_point_form_uncompressed &&
-		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
-		    ipseckey_pubkey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
+		const uint8_t *const ipseckey_ptr = ipseckey.ptr;
+		if (pkc->type->nss.ecp.includes_ec_point_form_uncompressed &&
+		    ipseckey.len == (*e)->bytes + 1 &&
+		    ipseckey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			/* ignore prefix */
-			raw = shunk_slice(ipseckey_pubkey, 1, ipseckey_pubkey.len);
-			kem = (*e);
+			raw = shunk_slice(ipseckey, 1, ipseckey.len);
 			break;
 		}
 	}
 
-	if (kem == NULL) {
-		return diag("unrecognized EC Public Key with length %zu", ipseckey_pubkey.len);
+	if (raw.len == 0) {
+		return diag("unrecognized %s Public Key with length %zu",
+			    pkc->type->name, ipseckey.len);
 	}
 
 	passert(raw.ptr != NULL && raw.len > 0);
@@ -230,9 +238,14 @@ static err_t ECP_pubkey_content_to_ipseckey_rdata(const struct pubkey_content *p
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
+	const struct pubkey_type *type = pkc->type;
 	const SECKEYECPublicKey *ec = &pkc->public_key->u.ec;
-	*ipseckey_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
-	*ipseckey_algorithm = IPSECKEY_ALGORITHM_ECDSA;
+	if (type->nss.ecp.includes_ec_point_form_uncompressed) {
+		*ipseckey_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
+	} else {
+		*ipseckey_pubkey = clone_bytes_as_chunk(ec->publicValue.data, ec->publicValue.len, "EC POINTS (even)");
+	}
+	*ipseckey_algorithm = type->ipseckey_algorithm;
 	return NULL;
 }
 
@@ -315,6 +328,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.extract_pubkey_content = ECP_extract_pubkey_content,
 	.pubkey_same = ECP_pubkey_same,
 	.strength_in_bits = ECP_strength_in_bits,
+	.nss.ecp.includes_ec_point_form_uncompressed = true,
 };
 
 const struct pubkey_type pubkey_type_eddsa = {
@@ -327,4 +341,5 @@ const struct pubkey_type pubkey_type_eddsa = {
 	.extract_pubkey_content = ECP_extract_pubkey_content,
 	.pubkey_same = ECP_pubkey_same,
 	.strength_in_bits = ECP_strength_in_bits,
+	.nss.ecp.includes_ec_point_form_uncompressed = false,
 };

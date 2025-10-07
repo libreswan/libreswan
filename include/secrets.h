@@ -195,6 +195,22 @@ struct pubkey_type {
 			    const struct logger *logger);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
+
+	struct {
+		struct {
+			/*
+			 * For most EC algorithms, NSS's internal
+			 * public key value consists of the one byte
+			 * EC_POINT_FORM_UNCOMPRESSED prefix followed
+			 * by two equal-sized points.
+			 *
+			 * There are exceptions (curve25519, for
+			 * instance) which contains no prefix and just
+			 * a single point.
+			 */
+			bool includes_ec_point_form_uncompressed;
+		} ecp;
+	} nss;
 };
 
 struct pubkey_signer {
