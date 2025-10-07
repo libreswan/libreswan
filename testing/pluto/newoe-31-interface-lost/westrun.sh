@@ -12,3 +12,7 @@ ipsec down '"private-or-clear#192.1.2.0/24"'
 # connection to be deleted.
 ifconfig eth1 down
 ipsec listen
+
+# restore eth1
+ifconfig eth1 192.1.2.45 up
+ipsec listen
