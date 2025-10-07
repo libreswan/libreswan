@@ -1111,9 +1111,12 @@ diag_t unpack_dns_pubkey_content(enum ipseckey_algorithm_type algorithm_type,
 		return diag("invalid IPSECKEY Algorithm Type %u", algorithm_type);
 	}
 
-	diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-								 pubkey_content,
-								 logger);
+	*pubkey_content = (struct pubkey_content) {
+		.type = pubkey_type,
+	};
+	diag_t d = pubkey_type->extract_pubkey_content_from_ipseckey(dnssec_pubkey,
+								     pubkey_content,
+								     logger);
 	if (d != NULL) {
 		return d;
 	}
@@ -1199,7 +1202,7 @@ static err_t add_private_key(struct secret **secrets,
 		.type = type,
 	};
 
-	err_t err = type->extract_pubkey_content(&content, pubk, ckaid_nss, logger);
+	err_t err = type->extract_pubkey_content_from_SECKEYPublicKey(&content, pubk, ckaid_nss, logger);
 	if (err != NULL) {
 		return err;
 	}
@@ -1407,7 +1410,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 		.type = type,
 	};
 
-	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss, logger);
+	err_t err = type->extract_pubkey_content_from_SECKEYPublicKey(&pkc, pubkey_nss, ckaid_nss, logger);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		id_buf idb;
