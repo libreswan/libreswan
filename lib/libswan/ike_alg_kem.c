@@ -336,9 +336,9 @@ const struct kem_desc ike_alg_kem_ed25519 = {
 			[IKEv2_ALG_ID] = -1,
 		},
 	},
-	.bytes = 57 /* octets */,
-	.initiator_bytes = 57 /* octets */,
-	.responder_bytes = 57 /* octets */,
+	.bytes = 32 /* octets */,
+	.initiator_bytes = 32 /* octets */,
+	.responder_bytes = 32 /* octets */,
 	.nss.ecp.oid = SEC_OID_ED25519_PUBLIC_KEY,
 };
 
