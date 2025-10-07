@@ -176,25 +176,50 @@ struct pubkey_type {
 	const char *name;
 	enum secret_kind private_key_kind;
 	enum ipseckey_algorithm_type ipseckey_algorithm;
+	/*
+	 * This frees the fields within PKC but NOT PKC (it's assumed
+	 * the struct is in some larger object).
+	 */
 	void (*free_pubkey_content)(struct pubkey_content *pkc,
 				    const struct logger *logger);
-	/* to/from the blob in DNS's IPSECKEY's Public Key field */
-	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc,
-						   const struct logger *logger);
-	err_t (*pubkey_content_to_ipseckey_rdata)(const struct pubkey_content *pkc,
-						  chunk_t *ipseckey_pubkey,
-						  enum ipseckey_algorithm_type *ipseckey_algorithm);
+	/*
+	 * To/from the blob in DNS's IPSECKEY's RDATA's public key field.
+	 * pkc .type is defined before call.
+	 *
+	 * Callee should PEXPECT() that pkc.type is as expected.
+	 */
+	diag_t (*extract_pubkey_content_from_ipseckey)(shunk_t ipseckey_pubkey,
+						       struct pubkey_content *pkc,
+						       const struct logger *logger);
+	err_t (*pubkey_content_to_ipseckey)(const struct pubkey_content *pkc,
+					    chunk_t *ipseckey_pubkey,
+					    enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
-	err_t (*extract_pubkey_content)(struct pubkey_content *pkc,
-					SECKEYPublicKey *pubkey_nss,
-					SECItem *ckaid_nss,
-					const struct logger *logger);
+	err_t (*extract_pubkey_content_from_SECKEYPublicKey)(struct pubkey_content *pkc,
+							     SECKEYPublicKey *pubkey_nss,
+							     SECItem *ckaid_nss,
+							     const struct logger *logger);
 	bool (*pubkey_same)(const struct pubkey_content *lhs,
 			    const struct pubkey_content *rhs,
 			    const struct logger *logger);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
+
+	struct {
+		struct {
+			/*
+			 * For most EC algorithms, NSS's internal
+			 * public key value consists of the one byte
+			 * EC_POINT_FORM_UNCOMPRESSED prefix followed
+			 * by two equal-sized points.
+			 *
+			 * There are exceptions (curve25519, for
+			 * instance) which contains no prefix and just
+			 * a single point.
+			 */
+			bool includes_ec_point_form_uncompressed;
+		} ecp;
+	} nss;
 };
 
 struct pubkey_signer {

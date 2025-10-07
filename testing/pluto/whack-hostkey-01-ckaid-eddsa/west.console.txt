@@ -22,7 +22,7 @@ west #
 	leftpubkey=<<PEM-PUBKEY#1>>
 west #
  ipsec showhostkey --ipseckey --ckaid "${ckaid}"
-west.    IN    IPSECKEY  10 0 3 . <<RAW-PUBKEY#1>>
+west.    IN    IPSECKEY  10 0 4 . <<RAW-PUBKEY#1>>
 west #
  ipsec showhostkey --ipseckey --pubkey --ckaid "${ckaid}"
 west.    IN    IPSECKEY  10 0 5 . <<PEM-PUBKEY#1>>

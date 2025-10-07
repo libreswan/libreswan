@@ -196,9 +196,9 @@ static char *base64_ipseckey_rdata_from_pubkey_secret(struct secret_pubkey_stuff
 						      enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
-	err_t e = pks->content.type->pubkey_content_to_ipseckey_rdata(&pks->content,
-									       &ipseckey_pubkey,
-									       ipseckey_algorithm);
+	err_t e = pks->content.type->pubkey_content_to_ipseckey(&pks->content,
+								&ipseckey_pubkey,
+								ipseckey_algorithm);
 	if (e != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, e);
 		return NULL;
@@ -378,7 +378,7 @@ static struct secret_pubkey_stuff *foreach_nss_private_key(secret_pubkey_func fu
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		type->extract_pubkey_content(&pks.content, public_key, ckaid_nss, logger);
+		type->extract_pubkey_content_from_SECKEYPublicKey(&pks.content, public_key, ckaid_nss, logger);
 
 		/*
 		 * Only count private keys that get processed.

@@ -38,14 +38,14 @@
  * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).
  */
 
-static err_t RSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content *pkc,
-						  chunk_t *ipseckey_pubkey,
-						  enum ipseckey_algorithm_type *ipseckey_algorithm)
+static err_t RSA_pubkey_content_to_ipseckey(const struct pubkey_content *pkc,
+					    chunk_t *ipseckey,
+					    enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	SECKEYRSAPublicKey *rsa = &pkc->public_key->u.rsa;
 	chunk_t exponent = same_secitem_as_chunk(rsa->publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(rsa->modulus);
-	*ipseckey_pubkey = EMPTY_CHUNK;
+	*ipseckey = EMPTY_CHUNK;
 	*ipseckey_algorithm = 0;
 
 	/*
@@ -73,7 +73,7 @@ static err_t RSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content *p
 	p += modulus.len;
 
 	*ipseckey_algorithm = IPSECKEY_ALGORITHM_RSA;
-	*ipseckey_pubkey = (chunk_t) {
+	*ipseckey = (chunk_t) {
 		.ptr = buf,
 		.len = p - buf,
 	};
@@ -159,14 +159,16 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 	return NULL;
 }
 
-static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc,
-						   const struct logger *logger)
+static diag_t RSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
+						       struct pubkey_content *pkc,
+						       const struct logger *logger)
 {
+	PEXPECT(logger, pkc->type == &pubkey_type_rsa);
+
 	/* unpack */
 	shunk_t exponent;
 	shunk_t modulus;
-	diag_t d = pubkey_ipseckey_rdata_to_rsa_pubkey(ipseckey_pubkey, &exponent, &modulus);
+	diag_t d = pubkey_ipseckey_rdata_to_rsa_pubkey(ipseckey, &exponent, &modulus);
 	if (d != NULL) {
 		return d;
 	}
@@ -227,7 +229,7 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	pkc->ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 
-	err_t kberr = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, &pkc->keyid);
+	err_t kberr = keyblob_to_keyid(ipseckey.ptr, ipseckey.len, &pkc->keyid);
 	if (kberr != NULL) {
 		diag_t d = diag("%s", kberr);
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
@@ -259,10 +261,10 @@ static void RSA_free_pubkey_content(struct pubkey_content *rsa,
 	rsa->public_key = NULL;
 }
 
-static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
-					SECKEYPublicKey *seckey_public,
-					SECItem *cert_ckaid,
-					const struct logger *logger)
+static err_t RSA_extract_pubkey_content_from_SECKEYPublicKey(struct pubkey_content *pkc,
+							     SECKEYPublicKey *seckey_public,
+							     SECItem *cert_ckaid,
+							     const struct logger *logger)
 {
 	PEXPECT(logger, pkc->type == &pubkey_type_rsa);
 
@@ -337,9 +339,9 @@ const struct pubkey_type pubkey_type_rsa = {
 	.private_key_kind = SECRET_RSA, /* XXX: delete field */
 	.ipseckey_algorithm = IPSECKEY_ALGORITHM_RSA,
 	.free_pubkey_content = RSA_free_pubkey_content,
-	.ipseckey_rdata_to_pubkey_content = RSA_ipseckey_rdata_to_pubkey_content,
-	.pubkey_content_to_ipseckey_rdata = RSA_pubkey_content_to_ipseckey_rdata,
-	.extract_pubkey_content = RSA_extract_pubkey_content,
+	.extract_pubkey_content_from_ipseckey = RSA_extract_pubkey_content_from_ipseckey,
+	.pubkey_content_to_ipseckey = RSA_pubkey_content_to_ipseckey,
+	.extract_pubkey_content_from_SECKEYPublicKey = RSA_extract_pubkey_content_from_SECKEYPublicKey,
 	.pubkey_same = RSA_pubkey_same,
 	.strength_in_bits = RSA_strength_in_bits,
 };
