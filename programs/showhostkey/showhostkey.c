@@ -304,15 +304,18 @@ static int show_leftright(struct secret_pubkey_stuff *pks,
 		return 5;
 	}
 
+	printf("\t# %s keyid: %s\n", side, pks->content.keyid.keyid);
+
 	name_buf config_name = {0};
-	if (pubkey_flg) {
-		printf("\t%spubkey=", side);
-	} else if (!enum_short(&ipseckey_algorithm_config_names, pks->content.type->ipseckey_algorithm, &config_name)) {
+	if (!enum_short(&ipseckey_algorithm_config_names, pks->content.type->ipseckey_algorithm, &config_name)) {
 		fprintf(stderr, "%s: wrong kind of key %s in show_confkey, expected RSA or ECDSA.\n",
 			progname, pks->content.type->name);
 		return 5;
+	}
+
+	if (pubkey_flg) {
+		printf("\t%spubkey=", side);
 	} else {
-		printf("\t# %s %s\n", config_name.buf, pks->content.keyid.keyid);
 		printf("\t%s%s=0s", side, config_name.buf);
 	}
 
