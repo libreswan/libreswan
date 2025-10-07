@@ -42,7 +42,9 @@ conn hostkey
 	right=192.1.2.23
 	rightsubnet=192.0.2.0/24
 	authby=ecdsa
+	# right keyid: <<KEYID#1>>
 	rightpubkey=<<PEM-PUBKEY#1>>
+	# left keyid: <<KEYID#2>>
 	leftpubkey=<<PEM-PUBKEY#2>>
 west #
  ipsec auto --add hostkey

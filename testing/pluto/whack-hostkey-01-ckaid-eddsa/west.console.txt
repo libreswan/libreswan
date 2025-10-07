@@ -14,10 +14,11 @@ west #
 < 1> EDDSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
 west #
  ipsec showhostkey --left --ckaid "${ckaid}"
-	# eddsakey <<KEYID#1>>
+	# left keyid: <<KEYID#1>>
 	lefteddsakey=0s<<RAW-PUBKEY#1>>
 west #
  ipsec showhostkey --left --pubkey --ckaid "${ckaid}"
+	# left keyid: <<KEYID#1>>
 	leftpubkey=<<PEM-PUBKEY#1>>
 west #
  ipsec showhostkey --ipseckey --ckaid "${ckaid}"

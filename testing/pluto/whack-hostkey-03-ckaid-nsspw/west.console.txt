@@ -12,6 +12,6 @@ west #
  ckaid=$(ipsec showhostkey --list | sed -e 's/.*ckaid: //')
 west #
  ipsec showhostkey --left --ckaid "$ckaid"
-	# rsakey <<KEYID#1>>
+	# left keyid: <<KEYID#1>>
 	leftrsasigkey=0s<<RAW-PUBKEY#1>>
 west #
