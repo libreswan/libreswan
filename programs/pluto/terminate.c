@@ -435,10 +435,13 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
-void terminate_and_delete_connections(struct connection **cp,
-				      struct logger *logger, where_t where)
+void terminate_and_delete_connections(struct connection *c,
+				      const struct logger *logger,
+				      where_t where)
 {
-	switch ((*cp)->local->kind) {
+	PEXPECT(logger, refcnt_peek(c) > 1);
+
+	switch (c->local->kind) {
 	case CK_LABELED_PARENT:
 	case CK_PERMANENT:
 	case CK_TEMPLATE:
@@ -451,19 +454,19 @@ void terminate_and_delete_connections(struct connection **cp,
 		 * cause Child SA cuckoo connection to be deleted.
 		 * Hence, the keep getting first loop.
 		 */
-		whack_attach((*cp), logger);
-		terminate_and_down_and_unroute_connections((*cp), where);
+		whack_attach(c, logger);
+		terminate_and_down_and_unroute_connections(c, where);
 		/* leave whack attached during death */
-		connection_delref(cp, logger);
+		connection_delref(&c, logger);
 		return;
 
 	case CK_GROUP:
 	{
 		/* should not disappear */
-		whack_attach((*cp), logger);
+		whack_attach(c, logger);
 		struct connection_filter cq = {
-			.clonedfrom = (*cp),
-			.ike_version = (*cp)->config->ike_version,
+			.clonedfrom = c,
+			.ike_version = c->config->ike_version,
 			.search = {
 				.order = OLD2NEW,
 				.verbose.logger = logger,
@@ -471,14 +474,16 @@ void terminate_and_delete_connections(struct connection **cp,
 			},
 		};
 		if (next_connection(&cq)) {
-			llog(RC_LOG, (*cp)->logger, "deleting group instances");
+			llog(RC_LOG, c->logger, "deleting group instances");
 			do {
-				terminate_and_delete_connections(&cq.c, logger, where);
+				connection_addref(cq.c, logger);
+				terminate_and_delete_connections(cq.c, logger, where);
+				connection_delref(&cq.c, logger);
 			} while (next_connection(&cq));
 		}
-		pmemory((*cp)); /* should not disappear */
+		pmemory(c); /* should not disappear */
 		/* leave whack attached during death */
-		connection_delref(cp, logger);
+		connection_delref(&c, logger);
 		return;
 	}
 
@@ -487,7 +492,7 @@ void terminate_and_delete_connections(struct connection **cp,
 	case CK_INVALID:
 		break;
 	}
-	bad_enum((*cp)->logger, &connection_kind_names, (*cp)->local->kind);
+	bad_enum(c->logger, &connection_kind_names, c->local->kind);
 }
 
 static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
