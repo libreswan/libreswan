@@ -70,9 +70,6 @@ func find(name, pattern,
     find("PEM-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +[5] +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
 
     find("KEYID", "keyid: ([+=0-9a-zA-Z/]+)")
-    find("KEYID", "# ecdsakey ([+=0-9a-zA-Z/]+)")
-    find("KEYID", "# eddsakey ([+=0-9a-zA-Z/]+)")
-    find("KEYID", "# rsakey ([+=0-9a-zA-Z/]+)")
 
     # replace all IDs with symbolic values
     old = $0

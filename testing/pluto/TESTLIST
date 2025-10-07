@@ -1453,17 +1453,23 @@ kvmplutotest	whack-rereadcerts-01			good
 kvmplutotest	whack-rereadsecrets-01-privatekey	good	github/1894
 kvmplutotest	whack-ctlsocket-01			good
 
-# "ipsec showhostkey"
+# "ipsec newhostkey" "ipsec showhostkey"
+
 kvmplutotest	whack-hostkey-01-ckaid-rsa		good
 kvmplutotest	whack-hostkey-01-ckaid-ecdsa		good
 kvmplutotest	whack-hostkey-01-ckaid-eddsa		good	github/2474
+
 kvmplutotest	whack-hostkey-02-ckaid-fips		good
 kvmplutotest	whack-hostkey-03-ckaid-nsspw		good
+
 kvmplutotest	whack-hostkey-04-ikev1-rawkey-rsa	good
+
 kvmplutotest	whack-hostkey-05-ikev2-rawkey-rsa	good
 kvmplutotest	whack-hostkey-05-ikev2-rawkey-ecdsa	good
 kvmplutotest	whack-hostkey-06-ikev2-pubkey-rsa	good
 kvmplutotest	whack-hostkey-06-ikev2-pubkey-ecdsa	good
+kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-rsa		good
+kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-ecdsa	good
 
 # up edge cases
 kvmplutotest	whack-up-01-async-ikev1			good

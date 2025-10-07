@@ -45,6 +45,7 @@ conn hostkey
 	rightsubnet=192.0.2.0/24
 	authby=rsa-sha2
 	rightckaid=<<CKAID#2>>
+	# left keyid: <<KEYID#1>>
 	leftpubkey=<<PEM-PUBKEY#1>>
 east #
  ipsec auto --add hostkey
