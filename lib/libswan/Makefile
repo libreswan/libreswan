@@ -67,11 +67,11 @@ OBJS += secret_pubkey_stuff_to_pubkey_der.o
 OBJS += pubkey_der_to_pubkey_content.o
 OBJS += clone_shunk_tokens.o
 OBJS += secrets.o
-OBJS += pubkey_rsa.o
-OBJS += pubkey_ecdsa.o
 
 $(OBJS): | $(builddir)/pubkey/
 OBJS += pubkey/pubkey_types.o
+OBJS += pubkey/pubkey_signer_rsa.o
+OBJS += pubkey/pubkey_signer_ecdsa.o
 OBJS += pubkey/pubkey_type_rsa.o
 OBJS += pubkey/pubkey_type_ecp.o
 
