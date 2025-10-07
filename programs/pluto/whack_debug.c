@@ -36,7 +36,7 @@ static unsigned whack_debug_connection(const struct whack_message *m,
 				       struct connection *c,
 				       struct connection_visitor_context *context UNUSED)
 {
-	connection_attach(c, show_logger(s));
+	whack_attach(c, show_logger(s));
 	c->logger->debugging = lmod(c->logger->debugging, m->whack_debugging);
 	if (LDBGP(DBG_BASE, c->logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
@@ -45,7 +45,7 @@ static unsigned whack_debug_connection(const struct whack_message *m,
 				       "+", c->logger->debugging);
 		}
 	}
-	connection_detach(c, show_logger(s));
+	whack_detach(c, show_logger(s));
 	return 1; /* the connection counts */
 }
 

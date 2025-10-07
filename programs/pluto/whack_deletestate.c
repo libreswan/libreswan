@@ -34,22 +34,6 @@
 #include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
 #include "ikev1_delete.h"	/* for record_n_send_n_log_v2_delete() */
 
-static struct logger *merge_loggers(struct logger *o_logger,
-				   bool background,
-				   struct logger *g_logger)
-{
-	/*
-	 * Create a logger that looks like the object; but also has
-	 * whack attached.
-	 */
-	struct logger *logger = clone_logger(o_logger, HERE);
-	whack_attach(logger, g_logger);
-	if (!background) {
-		whack_attach(o_logger, g_logger);
-	}
-	return logger;
-}
-
 void whack_deletestate(const struct whack_message *m, struct show *s)
 {
 	if (m->whack_deletestateno > SOS_MAX) {

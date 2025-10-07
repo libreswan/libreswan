@@ -249,7 +249,7 @@ static void release_dead_interfaces(struct verbose verbose)
 		 * (it's pointless as the interface has gone).
 		 */
 		c = connection_addref(c, verbose.logger);
-		connection_attach(c, verbose.logger);
+		whack_attach(c, verbose.logger);
 		terminate_all_connection_states(c, HERE);
 
 		/*
@@ -261,7 +261,7 @@ static void release_dead_interfaces(struct verbose verbose)
 		PEXPECT(c->logger, oriented(c)); /* per above */
 		disorient(c);
 
-		connection_detach(c, verbose.logger);
+		whack_detach(c, verbose.logger);
 		connection_delref(&c, verbose.logger);
 	}
 }

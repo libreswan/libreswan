@@ -886,7 +886,7 @@ stf_status process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK(struct ike_sa 
 	 * This should trigger revival and, with no ticket, use
 	 * IKE_SA_INIT.
 	 */
-	connection_attach(ike->sa.st_connection, ike->sa.logger);
+	whack_attach(ike->sa.st_connection, ike->sa.logger);
 	return STF_OK_INITIATOR_DELETE_IKE;
 }
 

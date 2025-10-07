@@ -480,9 +480,9 @@ unsigned visit_connection_state(struct connection *c,
 				const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
-	connection_attach(c, logger);
+	whack_attach(c, logger);
 	visit_connection_states(c, param->state.visitor, param->state.context, HERE);
-	connection_detach(c, logger);
+	whack_detach(c, logger);
 	return 1;
 }
 

@@ -329,7 +329,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			     (c->config->rekey ? "LATEST!" : "--dontrekey"));
 		}
 
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		connection_delete_v1_state(&st, HERE);
 		break;
 	}
@@ -374,7 +374,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			 * to say.
 			 */
 			struct child_sa *child = pexpect_child_sa(st);
-			state_attach(&child->sa, logger);
+			whack_attach(&child->sa, logger);
 			llog_pexpect(child->sa.logger, HERE,
 				     "Child SA lost its IKE SA "PRI_SO"",
 				     pri_so(child->sa.st_clonedfrom));
@@ -399,7 +399,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			st = NULL;
 		} else {
 			struct child_sa *child = pexpect_child_sa(st);
-			state_attach(&child->sa, logger);
+			whack_attach(&child->sa, logger);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			st = NULL;
 		}
@@ -414,7 +414,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * being garbage collected.  Either way, time to
 		 * delete it.
 		 */
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		if (deltatime_cmp(event_delay, >, deltatime_zero)) {
 			/* Don't bother logging 0 delay */
 			deltatime_buf dtb;
@@ -454,7 +454,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * being garbage collected.  Either way, time to
 		 * delete it.
 		 */
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		if (deltatime_cmp(event_delay, >, deltatime_zero)) {
 			/* Don't bother logging 0 delay */
 			deltatime_buf dtb;
@@ -493,7 +493,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		 * or response within a reasonable time.  Time to
 		 * delete it.
 		 */
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		deltatime_buf dtb;
 		llog(RC_LOG, st->logger,
 		     "initiator/responder/response processor timeout after %s seconds",
@@ -537,7 +537,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 #endif
 #endif
 	case EVENT_v1_CRYPTO_TIMEOUT:
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		ldbg(st->logger, "event crypto_failed on state "PRI_SO", aborting",
 		     pri_so(st->st_serialno));
 		if (IS_PARENT_SA(st)) {
@@ -553,14 +553,14 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 
 	case EVENT_v1_NAT_KEEPALIVE:
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		event_v1_nat_keepalive(st);
-		state_detach(st, logger);
+		whack_detach(st, logger);
 		break;
 	case EVENT_v2_NAT_KEEPALIVE:
-		state_attach(st, logger);
+		whack_attach(st, logger);
 		event_v2_nat_keepalive(pexpect_ike_sa(st));
-		state_detach(st, logger);
+		whack_detach(st, logger);
 		break;
 
 	default:

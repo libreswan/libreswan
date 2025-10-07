@@ -56,22 +56,6 @@ static struct connection *find_impaired_connection(co_serial_t co,
 	return c;
 }
 
-static struct logger *merge_loggers(struct logger *o_logger,
-				   bool background,
-				   struct logger *g_logger)
-{
-	/*
-	 * Create a logger that looks like the object; but also has
-	 * whack attached.
-	 */
-	struct logger *logger = clone_logger(o_logger, HERE);
-	whack_attach(logger, g_logger);
-	if (!background) {
-		whack_attach(o_logger, g_logger);
-	}
-	return logger;
-}
-
 static void whack_impair_action(enum impair_action impairment_action,
 				unsigned impairment_param,
 				bool whack_enable,
@@ -115,7 +99,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		free_logger(&loggers, HERE);
 		/* release whack, possibly attached to C by
 		 * merge_loggers */
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 		connection_delref(&c, logger);
 		break;
 	}

@@ -60,7 +60,7 @@ static void reread_cert(struct connection *c, struct logger *logger)
 {
 	ldbg(logger, "rereading certificate(s) for connection %s", c->name);
 
-	connection_attach(c, logger);
+	whack_attach(c, logger);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		struct host_end_config *host_end_config =
@@ -68,7 +68,7 @@ static void reread_cert(struct connection *c, struct logger *logger)
 		reread_end_cert(host_end_config, c->logger);
 	}
 
-	connection_detach(c, logger);
+	whack_detach(c, logger);
 }
 
 

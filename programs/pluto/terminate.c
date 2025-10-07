@@ -77,7 +77,7 @@ static void terminate_v1_state(struct connection *c,
 		 * IKEv1 announces the death of the ISAKMP SA after
 		 * all the children have gone (reverse of IKEv2).
 		 */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		(*ike)->sa.st_viable_parent = false;
 		return;
 
@@ -93,7 +93,7 @@ static void terminate_v1_state(struct connection *c,
 		 *
 		 * Hence just always re-compute it.
 		 */
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		struct ike_sa *isakmp = /* could be NULL */
 			established_isakmp_sa_for_state(&(*child)->sa, /*viable-parent*/false);
 		/* IKEv1 has cuckoos */
@@ -103,11 +103,11 @@ static void terminate_v1_state(struct connection *c,
 	}
 
 	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case VISIT_CONNECTION_LURKING_IKE_SA:
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		delete_ike_sa(ike);
 		return;
 
@@ -151,7 +151,7 @@ static void terminate_v2_states(struct connection *c,
 		 *
 		 * IKEv2 announces the death first.
 		 */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		(*ike)->sa.st_viable_parent = false;
 		record_n_send_n_log_v2_delete(*ike, HERE);
 		return;
@@ -160,17 +160,17 @@ static void terminate_v2_states(struct connection *c,
 	case VISIT_CONNECTION_CHILD_OF_CUCKOLD_IKE_SA:
 	case VISIT_CONNECTION_CHILD_OF_CROSSED_IKE_SA:
 		PEXPECT(c->logger, ike != NULL);
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case VISIT_CONNECTION_CHILD_OF_NONE:
 		llog_pexpect(c->logger, HERE, "trying to teardown an orphan child");
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 
 	case VISIT_CONNECTION_LURKING_CHILD_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		delete_child_sa(child);
 		return;
 	case VISIT_CONNECTION_LURKING_IKE_SA:
@@ -183,12 +183,12 @@ static void terminate_v2_states(struct connection *c,
 		 * the IKE SA has children then they too are deleted,
 		 * but when would this be the case?
 		 */
-		state_attach(&(*ike)->sa, c->logger);
+		whack_attach(&(*ike)->sa, c->logger);
 		terminate_ike_family(ike, REASON_DELETED, HERE);
 		return;
 
 	case VISIT_CONNECTION_CUCKOO_OF_PRINCIPAL_IKE_SA:
-		state_attach(&(*child)->sa, c->logger);
+		whack_attach(&(*child)->sa, c->logger);
 		connection_teardown_child(child, REASON_DELETED, HERE);
 		return;
 	case VISIT_CONNECTION_CHILDLESS_PRINCIPAL_IKE_SA:
@@ -391,7 +391,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 			last = cq.c;
 			/* stop it disappearing */
 			connection_addref(cq.c, c->logger);
-			connection_attach(cq.c, c->logger);
+			whack_attach(cq.c, c->logger);
 			terminate_and_unroute_connection(cq.c, where);
 			/* leave whack attached during death */
 			delete_connection(&cq.c);
@@ -418,10 +418,10 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 		if (next_connection(&cq)) {
 			llog(RC_LOG, c->logger, "terminating group instances");
 			do {
-				connection_attach(cq.c, c->logger); /* propagate whack */
+				whack_attach(cq.c, c->logger); /* propagate whack */
 				terminate_and_down_and_unroute_connections(cq.c, where);
 				pmemory(cq.c); /* should not disappear */
-				connection_detach(cq.c, c->logger); /* propagate whack */
+				whack_detach(cq.c, c->logger); /* propagate whack */
 			} while (next_connection(&cq));
 		}
 		pmemory(c); /* should not disappear */
@@ -451,7 +451,7 @@ void terminate_and_delete_connections(struct connection **cp,
 		 * cause Child SA cuckoo connection to be deleted.
 		 * Hence, the keep getting first loop.
 		 */
-		connection_attach((*cp), logger);
+		whack_attach((*cp), logger);
 		terminate_and_down_and_unroute_connections((*cp), where);
 		/* leave whack attached during death */
 		delete_connection(cp);
@@ -460,7 +460,7 @@ void terminate_and_delete_connections(struct connection **cp,
 	case CK_GROUP:
 	{
 		/* should not disappear */
-		connection_attach((*cp), logger);
+		whack_attach((*cp), logger);
 		struct connection_filter cq = {
 			.clonedfrom = (*cp),
 			.ike_version = (*cp)->config->ike_version,
@@ -507,7 +507,7 @@ static void terminate_v1_child(struct ike_sa **ike, struct child_sa *child)
 		 */
 		ldbg_routing((*ike)->sa.logger, "    deleting larval IPsec SA "PRI_SO,
 			     pri_so(child->sa.st_serialno));
-		state_attach(&child->sa, (*ike)->sa.logger);
+		whack_attach(&child->sa, (*ike)->sa.logger);
 		delete_child_sa(&child);
 	}
 }
@@ -524,7 +524,7 @@ static void terminate_v2_child(struct ike_sa **ike, struct child_sa *child,
 	 * If the child owns the connection's routing then it needs to
 	 * be dispatched; else it can simply be deleted.
 	 */
-	state_attach(&child->sa, (*ike)->sa.logger);
+	whack_attach(&child->sa, (*ike)->sa.logger);
 
 	/* redundant */
 	on_delete(&child->sa, skip_send_delete);
@@ -610,7 +610,7 @@ void terminate_ike_family(struct ike_sa **ike,
 	} else {
 		ldbg_routing((*ike)->sa.logger, "  dispatching delete to Child SA "PRI_SO,
 			     pri_so(connection_child->sa.st_serialno));
-		state_attach(&connection_child->sa, (*ike)->sa.logger);
+		whack_attach(&connection_child->sa, (*ike)->sa.logger);
 		/* will delete child and its logger */
 		connection_teardown_child(&connection_child, reason, where); /* always dispatches here*/
 		PEXPECT((*ike)->sa.logger, connection_child == NULL); /*gone!*/

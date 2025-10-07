@@ -71,9 +71,9 @@ bool initiate_connection(struct connection *c,
 			"initiate: remote_host=%s",
 			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
 	verbose.level++;
-	connection_attach(c, logger);
+	whack_attach(c, logger);
 	bool ok = initiate_connection_1_basics(c, remote_host, background);
-	connection_detach(c, logger);
+	whack_detach(c, logger);
 	return ok;
 }
 
@@ -169,7 +169,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		 * connection?
 		 */
 
-		connection_attach(d, c->logger);
+		whack_attach(d, c->logger);
 
 		address_buf ab;
 		llog(RC_LOG, d->logger,
@@ -178,7 +178,7 @@ static bool initiate_connection_2_address(struct connection *c,
 
 		bool ok = initiate_connection_3_template(d, background, inception);
 
-		connection_detach(d, d->logger);
+		whack_detach(d, d->logger);
 		connection_delref(&d, c->logger);
 		return ok;
 	}
@@ -242,7 +242,7 @@ static bool initiate_connection_3_template(struct connection *c,
 	if (is_labeled_template(c)) {
 		struct connection *d =
 			labeled_template_instantiate(c, c->remote->host.addr, HERE);
-		connection_attach(d, c->logger);
+		whack_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -251,7 +251,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 
-		connection_detach(d, c->logger);
+		whack_detach(d, c->logger);
 		connection_delref(&d, c->logger);
 		return ok;
 	}
@@ -260,7 +260,7 @@ static bool initiate_connection_3_template(struct connection *c,
 	    c->config->ike_version == IKEv2 &&
 	    c->config->narrowing) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
-		connection_attach(d, c->logger);
+		whack_attach(d, c->logger);
 		/*
 		 * LOGGING: why not log this (other than it messes
 		 * with test output)?
@@ -269,7 +269,7 @@ static bool initiate_connection_3_template(struct connection *c,
 		/* flip cur_connection */
 		bool ok = initiate_connection_4_fab(d, background, inception);
 
-		connection_detach(d, c->logger);
+		whack_detach(d, c->logger);
 		connection_delref(&d, c->logger);
 		return ok;
 	}
@@ -407,7 +407,7 @@ void initiate(struct connection *c,
 			connection_initiated_ike(ike, initiated_by, HERE);
 		}
 		if (detach_whack) {
-			state_detach(&ike->sa, c->logger);
+			whack_detach(&ike->sa, c->logger);
 		}
 		return;
 	}
@@ -446,14 +446,14 @@ void initiate(struct connection *c,
 			if (c->config->sec_label.len > 0) {
 				cc = labeled_parent_instantiate(ike, sec_label, HERE);
 				/* propagate whack attached to C */
-				connection_attach(cc, c->logger);
+				whack_attach(cc, c->logger);
 			} else {
 				cc = connection_addref(c, c->logger);
 			}
 			child = submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
 								    detach_whack);
 			if (c != cc) {
-				connection_detach(cc, c->logger);
+				whack_detach(cc, c->logger);
 			}
 			connection_delref(&cc, cc->logger);
 			break;
@@ -478,7 +478,7 @@ void initiate(struct connection *c,
 			 * Caller will then detach whack from the
 			 * connection.
 			 */
-			state_detach(&child->sa, c->logger);
+			whack_detach(&child->sa, c->logger);
 		}
 		return;
 	}

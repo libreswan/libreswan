@@ -73,9 +73,9 @@ static unsigned whack_route_connection(const struct whack_message *m UNUSED,
 				       struct connection *c,
 				       struct connection_visitor_context *context UNUSED)
 {
-	connection_attach(c, show_logger(s));
+	whack_attach(c, show_logger(s));
 	unsigned rc = maybe_route_connection(c);
-	connection_detach(c, show_logger(s));
+	whack_detach(c, show_logger(s));
 	return rc;
 }
 

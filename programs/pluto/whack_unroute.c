@@ -29,9 +29,9 @@ static unsigned whack_unroute_connections(const struct whack_message *m UNUSED,
 	struct logger *logger = show_logger(s);
 	connection_addref(c, logger);
 	{
-		connection_attach(c, logger);
+		whack_attach(c, logger);
 		terminate_and_down_and_unroute_connections(c, HERE);
-		connection_detach(c, logger);
+		whack_detach(c, logger);
 	}
 	connection_delref(&c, logger);
 	return 1;

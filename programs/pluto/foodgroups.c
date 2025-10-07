@@ -108,7 +108,7 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 	}
 
 	/* and group instance */
-	connection_attach(template, logger);
+	whack_attach(template, logger);
 	ldbg(template->logger, "removing group template");
 
 	PEXPECT(template->logger, !is_group(template));
@@ -455,7 +455,7 @@ void load_groups(struct logger *logger)
 				}
 				if (r >= 0) {
 					struct connection *g = np->group;
-					connection_attach(g, logger);
+					whack_attach(g, logger);
 					/* group instance (which is a template) */
 					struct connection *t = group_instantiate(g,
 										 np->subnet,
@@ -478,7 +478,7 @@ void load_groups(struct logger *logger)
 						np->serialno = t->serialno;
 						/* advance new */
 						npp = &np->next;
-						connection_detach(t, logger);
+						whack_detach(t, logger);
 					} else {
 						/*
 						 * XXX: is this really
@@ -494,7 +494,7 @@ void load_groups(struct logger *logger)
 						*npp = np->next;
 						pfree_target(&np);
 					}
-					connection_detach(g, logger);
+					whack_detach(g, logger);
 				}
 			}
 		}

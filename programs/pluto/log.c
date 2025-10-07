@@ -713,8 +713,14 @@ bool same_whack(const struct logger *lhs, const struct logger *rhs)
 	return false;
 }
 
-static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where)
+void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
 {
+	if (src == dst) {
+		return;
+	}
+
+	struct fd *src_fd = logger_fd(src);
+
 	/* do no harm? */
 	if (src_fd == NULL) {
 		ldbg(dst, "no whack to attach");
@@ -748,29 +754,6 @@ static void attach_fd_where(struct logger *dst, struct fd *src_fd, where_t where
 	dst->whackfd[0] = fd_addref_where(src_fd, dst, where);
 }
 
-void whack_attach_where(struct logger *dst, const struct logger *src, where_t where)
-{
-	if (src == dst) {
-		return;
-	}
-	attach_fd_where(dst, logger_fd(src), where);
-}
-
-void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where)
-{
-	whack_attach_where(md->logger, src, where);
-}
-
-void connection_attach_where(struct connection *c, const struct logger *src, where_t where)
-{
-	whack_attach_where(c->logger, src, where);
-}
-
-void state_attach_where(struct state *st, const struct logger *src, where_t where)
-{
-	whack_attach_where(st->logger, src, where);
-}
-
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where)
 {
 	if (src == dst) {
@@ -796,26 +779,18 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 	}
 }
 
-void md_detach_where(struct msg_digest *md, const struct logger *src, where_t where)
+struct logger *merge_loggers(struct logger *o_logger,
+			     bool background,
+			     struct logger *g_logger)
 {
-	if (md == NULL) {
-		return;
+	/*
+	 * Create a logger that looks like the object; but also has
+	 * whack attached.
+	 */
+	struct logger *logger = clone_logger(o_logger, HERE);
+	whack_attach_where(logger, g_logger, HERE);
+	if (!background) {
+		whack_attach_where(o_logger, g_logger, HERE);
 	}
-	whack_detach_where(md->logger, src, where);
-}
-
-void connection_detach_where(struct connection *c, const struct logger *src, where_t where)
-{
-	if (c == NULL) {
-		return;
-	}
-	whack_detach_where(c->logger, src, where);
-}
-
-void state_detach_where(struct state *st, const struct logger *src, where_t where)
-{
-	if (st == NULL) {
-		return;
-	}
-	whack_detach_where(st->logger, src, where);
+	return logger;
 }

@@ -460,7 +460,7 @@ static struct state *new_state(struct connection *c,
 	 * and .st_connection.
 	 *
 	 * See github#2338 (.st_state was being dereferenced by the
-	 * logger) causing state_attach(), which debug-logs, to core
+	 * logger) causing whack_attach(), which debug-logs, to core
 	 * dump.
 	 *
 	 * Note:
@@ -489,7 +489,7 @@ static struct state *new_state(struct connection *c,
 	/* the logger is minimally viable */
 
 	/* causes first (debug-log) gasp */
-	state_attach(st, c->logger);
+	whack_attach(st, c->logger);
 
 	/* fix HACK: above with real reference */
 	st->st_connection = connection_addref(c, st->logger);
@@ -750,12 +750,12 @@ static void flush_incomplete_children(struct ike_sa *ike)
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
 			if (!IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-				state_attach(&child->sa, ike->sa.logger);
+				whack_attach(&child->sa, ike->sa.logger);
 				connection_teardown_child(&child, REASON_DELETED, HERE);
 			}
 			continue;
 		case IKEv2:
-			state_attach(&child->sa, ike->sa.logger);
+			whack_attach(&child->sa, ike->sa.logger);
 			connection_teardown_child(&child, REASON_DELETED, HERE);
 			continue;
 		}
@@ -1711,7 +1711,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 				      struct logger *logger,
 				      where_t where)
 {
-	state_attach(&(*ike)->sa, logger); /* no detach, going down */
+	whack_attach(&(*ike)->sa, logger); /* no detach, going down */
 
 	ldbg_sa((*ike), "parent is no longer vivable (but can send delete)");
 	(*ike)->sa.st_viable_parent = false;
@@ -1758,7 +1758,7 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 	};
 	while(next_state(&cf)) {
 		struct child_sa *child = pexpect_child_sa(cf.st);
-		state_attach(&child->sa, logger); /* no detach, going down */
+		whack_attach(&child->sa, logger); /* no detach, going down */
 		switch (child->sa.st_ike_version) {
 		case IKEv1:
 			llog_sa_delete_n_send(established_isakmp, &child->sa);

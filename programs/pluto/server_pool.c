@@ -451,7 +451,7 @@ void submit_task(struct state *callback_sa,
 		}
 
 		if (detach_whack) {
-			whack_detach(job->logger, task_sa->logger);
+			whack_detach(job, task_sa->logger);
 		}
 
 		schedule_callback("inline crypto", delay,
@@ -461,7 +461,7 @@ void submit_task(struct state *callback_sa,
 	}
 
 	if (detach_whack) {
-		whack_detach(job->logger, task_sa->logger);
+		whack_detach(job, task_sa->logger);
 	}
 
 	/* add to backlog */

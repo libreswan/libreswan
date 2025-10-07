@@ -60,31 +60,21 @@ void whack_rc(enum rc_type rc, const struct logger *logger);
 
 void release_whack(struct logger *logger, where_t where);
 
+/*
+ * Create a logger that looks like the object; but also has whack
+ * attached.
+ */
+struct logger *merge_loggers(struct logger *o_logger,
+			     bool background,
+			     struct logger *g_logger);
+
 bool whack_attached(const struct logger *logger);
 bool same_whack(const struct logger *lhs, const struct logger *rhs);
 void whack_attach_where(struct logger *dst, const struct logger *src, where_t where);
 void whack_detach_where(struct logger *dst, const struct logger *src, where_t where);
 
-#define whack_attach(DST, SRC) whack_attach_where(DST, SRC, HERE)
-#define whack_detach(DST, SRC) whack_detach_where(DST, SRC, HERE)
-
-void md_attach_where(struct msg_digest *md, const struct logger *src, where_t where);
-void md_detach_where(struct msg_digest *md, const struct logger *src, where_t where);
-
-#define md_attach(MD, SRC) md_attach_where(MD, SRC, HERE)
-#define md_detach(MD, SRC) md_detach_where(MD, SRC, HERE)
-
-void connection_attach_where(struct connection *c, const struct logger *src, where_t where);
-void connection_detach_where(struct connection *c, const struct logger *src, where_t where);
-
-#define connection_attach(C, SRC) connection_attach_where(C, SRC, HERE)
-#define connection_detach(C, SRC) connection_detach_where(C, SRC, HERE)
-
-void state_attach_where(struct state *st, const struct logger *src, where_t where);
-void state_detach_where(struct state *st, const struct logger *src, where_t where);
-
-#define state_attach(ST, SRC) state_attach_where(ST, SRC, HERE)
-#define state_detach(ST, SRC) state_detach_where(ST, SRC, HERE)
+#define whack_attach(DST, SRC) whack_attach_where((DST)->logger, SRC, HERE)
+#define whack_detach(DST, SRC) whack_detach_where((DST)->logger, SRC, HERE)
 
 /* for pushing state to other subsystems */
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
