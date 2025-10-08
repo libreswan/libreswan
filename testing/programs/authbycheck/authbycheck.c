@@ -159,6 +159,15 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	for (enum auth auth = AUTH_FLOOR; auth < AUTH_ROOF; auth++) {
+		if (auth == AUTH_EAPONLY) {
+			continue;
+		}
+		if (!auth_in_authby(auth, AUTHBY_ALL)) {
+			FAIL("auth_in_authby(%u, AUTHBY_ALL) failed", auth);
+		}
+	}
+
 	if (report_leaks(logger)) {
 		fails++;
 	}

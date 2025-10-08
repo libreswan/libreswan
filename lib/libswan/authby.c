@@ -106,19 +106,15 @@ enum auth auth_from_authby(struct authby authby)
 
 struct authby authby_from_auth(enum auth auth)
 {
-#define AUTH(BY) case AUTH_##BY: return AUTHBY_##BY
 	switch (auth) {
-		AUTH(ECDSA);
-		AUTH(EDDSA);
-		AUTH(PSK);
-		AUTH(NULL);
-		AUTH(NEVER);
-	case AUTH_RSASIG:
-		return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
 	case AUTH_UNSET:
-		return AUTHBY_NEVER;
-	case AUTH_EAPONLY:
-		return (struct authby) {0};
+	case AUTH_NEVER: return (struct authby) { .never = true, };
+	case AUTH_NULL: return (struct authby) { .null = true, };
+	case AUTH_PSK: return (struct authby) { .psk = true, };
+	case AUTH_ECDSA: return (struct authby) { .ecdsa = true, };
+	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
+	case AUTH_RSASIG: return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
+	case AUTH_EAPONLY: return (struct authby) {0};
 	}
 	bad_case(auth);
 }
