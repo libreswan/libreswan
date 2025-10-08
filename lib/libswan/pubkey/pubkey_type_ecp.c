@@ -47,7 +47,8 @@
 static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 						       struct pubkey_content *pkc,
 						       const struct logger *logger,
-						       const struct kem_desc *kems[])
+						       const struct kem_desc *kems[],
+						       KeyType key_type)
 {
 	PEXPECT(logger, (pkc->type == &pubkey_type_ecdsa ||
 			 pkc->type == &pubkey_type_eddsa));
@@ -124,7 +125,7 @@ static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 	}
 
 	seckey->arena = arena;
-	seckey->keyType = ecKey;
+	seckey->keyType = key_type;
 	seckey->pkcs11Slot = NULL;
 	seckey->pkcs11ID = CK_INVALID_HANDLE;
 	SECKEYECPublicKey *ec = &seckey->u.ec;
@@ -157,15 +158,15 @@ static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 	 *
 	 * See also DH code.
 	 */
-	const SECOidData *ec_oid = SECOID_FindOIDByTag(kem->nss.ecp.oid); /*static*/
-	if (ec_oid == NULL) {
+	const SECOidData *ecp_oid = SECOID_FindOIDByTag(kem->nss.ecp.oid); /*static*/
+	if (ecp_oid == NULL) {
 		diag_t d = diag_nss_error("lookup of EC OID failed");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
 	}
 
 	if (SEC_ASN1EncodeItem(arena, &ec->DEREncodedParams,
-			       &ec_oid->oid, SEC_ObjectIDTemplate) == NULL) {
+			       &ecp_oid->oid, SEC_ObjectIDTemplate) == NULL) {
 		diag_t d = diag_nss_error("ASN.1 encoding of EC OID failed");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
@@ -175,7 +176,6 @@ static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 	 * Maintain magic values.
 	 */
 
-	/* should this include EC? */
 	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&ec->publicValue);
 	if (nss_ckaid == NULL) {
 		diag_t d = diag_nss_error("unable to compute 'CKAID' from public value");
@@ -196,13 +196,12 @@ static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 		return d;
 	}
 
-	pkc->type = &pubkey_type_ecdsa;
 	pkc->public_key = seckey;
 	ldbg_newref(logger, pkc->public_key);
 
 	if (LDBGP(DBG_BASE, logger)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		LDBG_log(logger, "ECDSA Key:");
+		LDBG_log(logger, "%s Key:", pkc->type->name);
 		LDBG_log(logger, "keyid: *%s", str_keyid(pkc->keyid));
 		LDBG_log(logger, "pub");
 		LDBG_dump(logger, ec->publicValue.data, ec->publicValue.len);
@@ -223,7 +222,7 @@ static diag_t ECDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 		&ike_alg_kem_secp521r1,
 		NULL,
 	};
-	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem);
+	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem, ecKey);
 }
 
 static diag_t EDDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
@@ -234,7 +233,7 @@ static diag_t EDDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 		&ike_alg_kem_ed25519,
 		NULL,
 	};
-	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem);
+	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem, edKey);
 }
 
 static err_t ECP_pubkey_content_to_ipseckey(const struct pubkey_content *pkc,
