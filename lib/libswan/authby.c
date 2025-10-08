@@ -80,18 +80,16 @@ bool authby_le(struct authby lhs, struct authby rhs)
 	return REDUCE(le, &&);
 }
 
-bool authby_has(struct authby authby, enum auth auth)
+bool auth_in_authby(enum auth auth, struct authby authby)
 {
 	struct authby auth_bit = authby_from_auth(auth);
 	/* auth bit must be set */
 	return authby_is_set(authby_and(auth_bit, authby));
 }
 
-bool authby_has_digsig(struct authby lhs)
+bool digital_signature_in_authby(struct authby authby)
 {
-	return (authby_has(lhs, AUTH_ECDSA) ||
-		authby_has(lhs, AUTH_EDDSA) ||
-		authby_has(lhs, AUTH_RSASIG));
+	return authby_is_set(authby_and(AUTHBY_DIGITAL_SIGNATURE, authby));
 }
 
 enum auth auth_from_authby(struct authby authby)

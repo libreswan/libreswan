@@ -66,16 +66,16 @@ int main(int argc, char *argv[])
 		if (authby_is_set(authby) != set) {
 			FAIL("authby_is_set(%u) == %u", auth, set);
 		}
-		if (authby_has(authby, auth) != set) {
-			FAIL("authby_has(%u, %u) == %u", auth, auth, set);
+		if (auth_in_authby(auth, authby) != set) {
+			FAIL("auth_in_authby(%u, %u) == %u", auth, auth, set);
 		}
 
 		struct authby notby = authby_not(authby);
 		if (!authby_is_set(notby)) {
 			FAIL("authby_is_set(not(%u)) == %u", auth, false);
 		}
-		if (authby_has(notby, auth)) {
-			FAIL("authby_has(not(%u), %u) == %u", auth, auth, false);
+		if (auth_in_authby(auth, notby)) {
+			FAIL("auth_in_authby(%u, not(%u)) == %u", auth, auth, false);
 		}
 
 		authby_buf ab;
@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
 			if (authby_is_set(andby) != and) {
 				FAIL("authby_is_set(and(%u,%u)) == %u", auth, alt, and);
 			}
-			if (authby_has(andby, auth) != and) {
-				FAIL("authby_has(and(%u,%u), %u) == %u", auth, alt, auth, and);
+			if (auth_in_authby(auth, andby) != and) {
+				FAIL("auth_in_authby(%u, and(%u,%u)) == %u", auth, alt, auth, and);
 			}
 
 			PRINT("authby_or(%u,%u)", auth, alt);
@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
 			if (!authby_is_set(orby)) {
 				FAIL("authby_is_set(or(%u,%u))", auth, alt);
 			}
-			if (!authby_has(orby, auth)) {
-				FAIL("authby_has(or(%u,%u), %u)", auth, alt, auth);
+			if (!auth_in_authby(auth, orby)) {
+				FAIL("auth_in_authby(%u, or(%u,%u))", auth, alt, auth);
 			}
 			if (authby_le(orby, authby) != and) {
 				FAIL("orby: authby: authby_le(or(%u,%u), %u) == %u", auth, alt, auth, and);
@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
 			if (authby_is_set(xorby) != xor) {
 				FAIL("authby_is_set(xor(%u,%u)) == %u", auth, alt, xor);
 			}
-			if (authby_has(xorby, auth) != (xor && set)) {
-				FAIL("authby_has(xor(%u,%u), %u) == %u", auth, alt, auth, xor && set);
+			if (auth_in_authby(auth, xorby) != (xor && set)) {
+				FAIL("auth_in_authby(%u, xor(%u,%u)) == %u", auth, alt, auth, xor && set);
 			}
 
 			PRINT("authby_eq(%u,%u)", auth, alt);

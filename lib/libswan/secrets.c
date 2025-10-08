@@ -235,33 +235,38 @@ struct secret *foreach_secret(struct secret *secrets,
 }
 
 static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
-						    const struct pubkey_type *type_or_null,
-						    const SECItem *pubkey_ckaid,
+						    const ckaid_t *ckaid,/*truncated?*/
 						    const struct logger *logger)
 {
-	for (struct secret *s = secrets; s != NULL; s = s->next) {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
+	ckaid_buf cb;
+	vdbg("looking for pubkey secret with ckaid %s", str_ckaid(ckaid, &cb));
+	unsigned base_level = verbose.level;
+
+	for (struct secret *secret = secrets; secret != NULL; secret = secret->next) {
 		id_buf idb;
 		name_buf kb;
-		ldbg(logger, "trying secret %s:%s",
-		     str_enum_long(&secret_kind_names, s->kind, &kb),
-		     (PEXPECT(logger, s->ids != NULL) ? str_id(&s->ids->id, &idb) : "<NULL-ID-LIST>"));
-		const struct secret_pubkey_stuff *pki = secret_pubkey_stuff(s);
+		verbose.level = base_level + 1;
+		vdbg("trying secret %s:%s",
+		     str_enum_long(&secret_kind_names, secret->kind, &kb),
+		     (vbad(secret->ids == NULL) ? "<NULL-ID-LIST>" : str_id(&secret->ids->id, &idb)));
+		verbose.level++;
+
+		const struct secret_pubkey_stuff *pki = secret_pubkey_stuff(secret);
 		if (pki == NULL) {
 			/* not a pubkey */
-			ldbg(logger, "  not PKI");
+			vdbg("secret has no pubkey stuff");
 			continue;
 		}
-		if (type_or_null != NULL && pki->content.type != type_or_null) {
-			/* need exact or wildcard */
-			ldbg(logger, "  not %s", type_or_null->name);
+
+		if (!hunk_eq(pki->content.ckaid, *ckaid)) {
+			vdbg("secret has wrong ckaid");
 			continue;
 		}
-		if (!ckaid_eq_nss(&pki->content.ckaid, pubkey_ckaid)) {
-			ldbg(logger, "  wrong ckaid");
-			continue;
-		}
-		ldbg(logger, "  matched");
-		return s;
+
+		vdbg("secret matched");
+		return secret;
 	}
 	return NULL;
 }
@@ -1245,15 +1250,19 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 						const struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
-
 	/* XXX: see also nss_cert_key_kind(cert) */
 	const struct pubkey_type *type = pubkey_type_from_SECKEYPublicKey(pubk);
 	if (type == NULL) {
 		return "NSS cert not supported";
 	}
 
-	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, type, ckaid_nss, logger);
+	ckaid_t ckaid = ckaid_from_secitem(ckaid_nss);
+	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, &ckaid, logger);
 	if (s != NULL) {
+		if (s->u.pubkey->content.type != type) {
+			return "NSS private key as wrong type";
+		}
+
 		ldbg(logger, "secrets entry for certificate already exists: %s", cert->nickname);
 		*pks = s->u.pubkey;
 		*load_needed = false;
@@ -1340,15 +1349,23 @@ static err_t find_or_load_private_key_by_ckaid_1(struct secret **secrets,
 	return err;
 }
 
-err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					struct secret_pubkey_stuff **pks, bool *load_needed,
+/*
+ * CKAIDs are unique; there should be only one match.
+ *
+ * XXX: caller is responsible for checking that the returned key is
+ * useful.  For instance, given auth=ecdsa ckaid=<eddsa>, this will
+ * return the <eddsa> key, which isn't useful.
+ */
+err_t find_or_load_private_key_by_ckaid(struct secret **secrets,
+					const ckaid_t *ckaid,
+					struct secret_pubkey_stuff **pks,
+					bool *load_needed,
 					const struct logger *logger)
 {
 	*load_needed = false;
 	PASSERT(logger, ckaid != NULL);
 
-	SECItem ckaid_nss = same_ckaid_as_secitem(ckaid);
-	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, NULL, &ckaid_nss, logger);
+	struct secret *s = find_secret_by_pubkey_ckaid_1(*secrets, ckaid, logger);
 	if (s != NULL) {
 		ldbg(logger, "secrets entry for ckaid already exists");
 		*pks = s->u.pubkey;
@@ -1362,6 +1379,7 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 		return "NSS: has no internal slot ....";
 	}
 
+	SECItem ckaid_nss = same_ckaid_as_secitem(ckaid);
 	/* must free */
 	SECKEYPrivateKey *private_key = PK11_FindKeyByKeyID(slot, &ckaid_nss,
 							    lsw_nss_get_password_context(logger));

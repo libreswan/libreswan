@@ -42,6 +42,7 @@ struct authby {
 
 #define AUTHBY_NONE (struct authby) {0}
 #define AUTHBY_ALL (struct authby) { true, true, true, true, true, true, true }
+#define AUTHBY_DIGITAL_SIGNATURE (struct authby) { .rsasig = true, .ecdsa = true, .rsasig_v1_5 = true, }
 
 #define AUTHBY_IKEv1_DEFAULTS (struct authby) { .rsasig = true, }
 #define AUTHBY_IKEv2_DEFAULTS (struct authby) { .rsasig = true, .rsasig_v1_5 = true, .ecdsa = true, }
@@ -55,8 +56,8 @@ bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
 bool authby_eq(struct authby, struct authby);
 
-bool authby_has(struct authby, enum auth);
-bool authby_has_digsig(struct authby);
+bool auth_in_authby(enum auth, struct authby);
+bool digital_signature_in_authby(struct authby);
 
 enum auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum auth auth);
