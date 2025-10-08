@@ -707,7 +707,8 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 
 		struct secret_pubkey_stuff *pks;
 		bool load_needed;
-		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->local->host.config->ckaid,
+		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets,
+							      c->local->host.config->ckaid,
 							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
@@ -733,11 +734,20 @@ struct secret_pubkey_stuff *get_local_private_key(const struct connection *c,
 			     c->local->config->leftright, str_ckaid(c->local->host.config->ckaid, &ckb));
 		}
 
+		if (pks->content.type != type) {
+			ckaid_buf ckb;
+			llog(RC_LOG, logger,
+			     "private key matching CKAID %s has type %s but %s is needed",
+			     str_ckaid(c->local->host.config->ckaid, &ckb),
+			     pks->content.type->name,
+			     type->name);
+			return NULL;
+		}
+
 		/*
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		PEXPECT(logger, pks->content.type == type);
 		ldbg(logger, "connection %s's %s private key found in NSS DB using CKAID",
 		     c->name, type->name);
 		return pks;

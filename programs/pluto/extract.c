@@ -959,7 +959,7 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 	(*sighash_policy) = LEMPTY;
 
 	if (is_never_negotiate_wm(wm)) {
-		(*authby) = AUTHBY_NEVER;
+		(*authby) = authby_from_auth(AUTH_NEVER);
 		return NULL;
 	}
 
@@ -2544,16 +2544,14 @@ diag_t extract_connection(const struct whack_message *wm,
 		if (wm->never_negotiate_shunt == SHUNT_UNSET) {
 			return diag("connection with authby=never must specify shunt type via type=");
 		}
-	}
-	if (wm->never_negotiate_shunt != SHUNT_UNSET) {
-		if (!authby_eq(whack_authby, AUTHBY_NONE) &&
-		    !authby_eq(whack_authby, AUTHBY_NEVER)) {
-			authby_buf ab;
-			name_buf sb;
-			return diag("kind=%s shunt connection cannot have authby=%s authentication",
-				    str_sparse_short(&never_negotiate_shunt_names, wm->never_negotiate_shunt, &sb),
-				    str_authby(whack_authby, &ab));
-		}
+	} else if (wm->never_negotiate_shunt != SHUNT_UNSET &&
+		   authby_is_set(whack_authby)) {
+		/* can't be .never and can't be empty */
+		authby_buf ab;
+		name_buf sb;
+		return diag("kind=%s shunt connection cannot have authby=%s authentication",
+			    str_sparse_short(&never_negotiate_shunt_names, wm->never_negotiate_shunt, &sb),
+			    str_authby(whack_authby, &ab));
 	}
 
 	if (ike_version == IKEv1) {

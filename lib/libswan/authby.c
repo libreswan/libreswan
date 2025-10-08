@@ -80,18 +80,16 @@ bool authby_le(struct authby lhs, struct authby rhs)
 	return REDUCE(le, &&);
 }
 
-bool authby_has(struct authby authby, enum auth auth)
+bool auth_in_authby(enum auth auth, struct authby authby)
 {
 	struct authby auth_bit = authby_from_auth(auth);
 	/* auth bit must be set */
 	return authby_is_set(authby_and(auth_bit, authby));
 }
 
-bool authby_has_digsig(struct authby lhs)
+bool digital_signature_in_authby(struct authby authby)
 {
-	return (authby_has(lhs, AUTH_ECDSA) ||
-		authby_has(lhs, AUTH_EDDSA) ||
-		authby_has(lhs, AUTH_RSASIG));
+	return authby_is_set(authby_and(AUTHBY_DIGITAL_SIGNATURE, authby));
 }
 
 enum auth auth_from_authby(struct authby authby)
@@ -108,19 +106,15 @@ enum auth auth_from_authby(struct authby authby)
 
 struct authby authby_from_auth(enum auth auth)
 {
-#define AUTH(BY) case AUTH_##BY: return AUTHBY_##BY
 	switch (auth) {
-		AUTH(ECDSA);
-		AUTH(EDDSA);
-		AUTH(PSK);
-		AUTH(NULL);
-		AUTH(NEVER);
-	case AUTH_RSASIG:
-		return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
 	case AUTH_UNSET:
-		return AUTHBY_NEVER;
-	case AUTH_EAPONLY:
-		return (struct authby) {0};
+	case AUTH_NEVER: return (struct authby) { .never = true, };
+	case AUTH_NULL: return (struct authby) { .null = true, };
+	case AUTH_PSK: return (struct authby) { .psk = true, };
+	case AUTH_ECDSA: return (struct authby) { .ecdsa = true, };
+	case AUTH_EDDSA: return (struct authby) { .eddsa = true, };
+	case AUTH_RSASIG: return (struct authby) { .rsasig = true, .rsasig_v1_5 = true };
+	case AUTH_EAPONLY: return (struct authby) {0};
 	}
 	bad_case(auth);
 }

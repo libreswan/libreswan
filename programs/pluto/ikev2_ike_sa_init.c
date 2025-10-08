@@ -531,7 +531,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * Since the initiator can't switch connections the decision is
 	 * final.
 	 */
-	if (authby_has_digsig(c->remote->host.config->authby) &&
+	if (digital_signature_in_authby(c->remote->host.config->authby) &&
 	    (c->config->sighash_policy != LEMPTY)) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs)) {
 			return false;
