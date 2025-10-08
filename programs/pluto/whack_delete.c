@@ -36,7 +36,7 @@ static unsigned whack_delete_connections(const struct whack_message *m UNUSED,
 					 struct connection *c,
 					 struct connection_visitor_context *context UNUSED)
 {
-	terminate_and_delete_connections(&c, show_logger(s), HERE);
+	terminate_and_delete_connections(c, show_logger(s), HERE);
 	return 1;
 }
 

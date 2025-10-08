@@ -114,7 +114,7 @@ static void delete_group_instantiation(co_serial_t serialno, struct logger *logg
 	PEXPECT(template->logger, !is_group(template));
 	PEXPECT(template->logger, is_template(template));
 
-	terminate_and_delete_connections(&template, logger, HERE);
+	terminate_and_delete_connections(template, logger, HERE);
 }
 
 /* subnetcmp compares the two ip_subnet values a and b.

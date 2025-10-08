@@ -148,7 +148,9 @@ static void delete_every_connection(struct logger *logger)
 				       cq.c->local->kind == CK_PERMANENT ||
 				       cq.c->local->kind == CK_TEMPLATE ||
 				       cq.c->local->kind == CK_LABELED_TEMPLATE));
-		terminate_and_delete_connections(&cq.c, logger, HERE);
+		connection_addref(cq.c, logger);
+		terminate_and_delete_connections(cq.c, logger, HERE);
+		connection_delref(&cq.c, logger);
 	}
 }
 

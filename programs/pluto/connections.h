@@ -945,9 +945,6 @@ void update_hosts_from_end_host_addr(struct connection *c, enum end end,
 				     ip_address that_nexthop_addr,
 				     where_t where);
 
-void delete_connection_where(struct connection **cp, where_t where);
-#define delete_connection(CP) delete_connection_where(CP, HERE)
-
 struct connection *connection_addref_where(struct connection *c, const struct logger *owner, where_t where);
 void connection_delref_where(struct connection **cp, const struct logger *owner, where_t where);
 #define connection_addref(C, OWNER) connection_addref_where(C, OWNER, HERE)
