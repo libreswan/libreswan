@@ -152,6 +152,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	for (enum auth auth = DIGITAL_SIGNATURE_AUTH_FLOOR;
+	     auth < DIGITAL_SIGNATURE_AUTH_ROOF; auth++) {
+		if (!auth_in_authby(auth, AUTHBY_DIGITAL_SIGNATURE)) {
+			FAIL("auth_in_authby(%u, AUTHBY_DIGITAL_SIGNATURE) failed", auth);
+		}
+	}
+
 	if (report_leaks(logger)) {
 		fails++;
 	}
