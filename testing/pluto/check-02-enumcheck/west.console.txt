@@ -253,40 +253,40 @@ west #
          jam_enum_human 252: hmac-sha2-256-truncbug OK
          match HMAC_SHA2_256_TRUNCBUG [short]: OK
   auth_names: [1..8)
-    1 -> AUTH_NEVER
-         jam_enum 1: AUTH_NEVER OK
-         match AUTH_NEVER: OK
-         short_name 1: NEVER OK
-         jam_enum_short 1: NEVER OK
-         jam_enum_human 1: never OK
-         match NEVER [short]: OK
-    2 -> secret
-         jam_enum 2: secret OK
-         match secret: OK
-         short_name 2: secret OK
-         jam_enum_short 2: secret OK
-         jam_enum_human 2: secret OK
-    3 -> AUTH_RSASIG
-         jam_enum 3: AUTH_RSASIG OK
+    1 -> AUTH_RSASIG
+         jam_enum 1: AUTH_RSASIG OK
          match AUTH_RSASIG: OK
-         short_name 3: RSASIG OK
-         jam_enum_short 3: RSASIG OK
-         jam_enum_human 3: rsasig OK
+         short_name 1: RSASIG OK
+         jam_enum_short 1: RSASIG OK
+         jam_enum_human 1: rsasig OK
          match RSASIG [short]: OK
-    4 -> AUTH_ECDSA
-         jam_enum 4: AUTH_ECDSA OK
+    2 -> AUTH_ECDSA
+         jam_enum 2: AUTH_ECDSA OK
          match AUTH_ECDSA: OK
-         short_name 4: ECDSA OK
-         jam_enum_short 4: ECDSA OK
-         jam_enum_human 4: ecdsa OK
+         short_name 2: ECDSA OK
+         jam_enum_short 2: ECDSA OK
+         jam_enum_human 2: ecdsa OK
          match ECDSA [short]: OK
-    6 -> AUTH_NULL
-         jam_enum 6: AUTH_NULL OK
+    4 -> secret
+         jam_enum 4: secret OK
+         match secret: OK
+         short_name 4: secret OK
+         jam_enum_short 4: secret OK
+         jam_enum_human 4: secret OK
+    5 -> AUTH_NULL
+         jam_enum 5: AUTH_NULL OK
          match AUTH_NULL: OK
-         short_name 6: NULL OK
-         jam_enum_short 6: NULL OK
-         jam_enum_human 6: null OK
+         short_name 5: NULL OK
+         jam_enum_short 5: NULL OK
+         jam_enum_human 5: null OK
          match NULL [short]: OK
+    6 -> AUTH_NEVER
+         jam_enum 6: AUTH_NEVER OK
+         match AUTH_NEVER: OK
+         short_name 6: NEVER OK
+         jam_enum_short 6: NEVER OK
+         jam_enum_human 6: never OK
+         match NEVER [short]: OK
     7 -> AUTH_EAPONLY
          jam_enum 7: AUTH_EAPONLY OK
          match AUTH_EAPONLY: OK
