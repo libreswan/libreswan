@@ -125,6 +125,7 @@ strongswan-sqlite
 systemd-networkd
 tar
 tcpdump
+tpm2-abrmd
 valgrind
 vim-enhanced
 wireshark-cli
