@@ -209,8 +209,9 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	if (is_labeled(c) && sec_label.len == 0) {
 		/*
 		 * Establishing a sec_label connection yet there's no
-		 * sec-label for the child.  Assume this is a forced
-		 * up aka childless IKE SA.
+		 * sec-label for the child.
+		 *
+		 * Assume this is a forced UP aka childless IKE SA.
 		 */
 		PEXPECT(ike->sa.logger, is_labeled_parent(c));
 		ldbg(ike->sa.logger,
@@ -227,19 +228,25 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		     "omitting CHILD SA payloads from the IKE_AUTH request as no child policy");
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
-	} else {
-		struct connection *cc;
-		if (is_labeled(c)) {
-			PEXPECT(ike->sa.logger, is_labeled_parent(c));
-			PEXPECT(ike->sa.logger, c == ike->sa.st_connection);
-			cc = labeled_parent_instantiate(ike, sec_label, HERE);
-		} else {
-			cc = connection_addref(c, ike->sa.logger);
-		}
+	} else if (is_labeled(c)) {
+		/*
+		 * Need to release the reference returned by
+		 * instantiate() (append_pending() will take its own
+		 * reference).
+		 */
+		PEXPECT(ike->sa.logger, sec_label.len > 0);
+		PEXPECT(ike->sa.logger, is_labeled_parent(c));
+		PEXPECT(ike->sa.logger, c == ike->sa.st_connection);
+		struct connection *cc = labeled_parent_instantiate(ike, sec_label, HERE);
 		append_pending(ike, cc, policy,
 			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
 			       sec_label, true/*part of initiate*/, detach_whack);
 		connection_delref(&cc, ike->sa.logger);
+	} else {
+		PEXPECT(ike->sa.logger, sec_label.len == 0);
+		append_pending(ike, c, policy,
+			       (predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno),
+			       sec_label, true/*part of initiate*/, detach_whack);
 	}
 
 	/*
