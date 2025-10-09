@@ -243,14 +243,42 @@ static void release_dead_interfaces(struct verbose verbose)
 		 * have been deleted.
 		 *
 		 * Since a reference is taken, deleting all states of
-		 * an instance can't delete the connection.
+		 * an instance can't delete the connection; instead it
+		 * happens here.
 		 *
 		 * What's needed is a variant that doesn't try to send
 		 * (it's pointless as the interface has gone).
+		 *
+		 * Don't alter +UP and +ROUTE, when the interface
+		 * comes back things should react accordingly.
 		 */
-		c = connection_addref(c, verbose.logger);
+
+		connection_addref(c, verbose.logger);
 		whack_attach(c, verbose.logger);
+
+		/*
+		 * Instantiated groups are never in a disoriented
+		 * state; hence instead of disorienting the
+		 * connection, delete it.
+		 *
+		 * The double delref, is first to get rid of the
+		 * addref above; and second to do the deed, dirt
+		 * cheap.
+		 *
+		 * XXX: the first delref should be part of
+		 * disorient()?
+		 */
+		if (is_from_group(c) && vexpect(refcnt_peek(c) > 1)) {
+			struct connection *cp = c;
+			terminate_and_down_and_unroute_connections(cp, HERE);
+			connection_delref(&cp, verbose.logger);
+			connection_delref(&c, verbose.logger);
+			continue;
+		}
+
+		vexpect(refcnt_peek(c) > 1);
 		terminate_all_connection_states(c, HERE);
+		vexpect(refcnt_peek(c) >= 1);
 
 		/*
 		 * ... and then disorient it, moving it to the
