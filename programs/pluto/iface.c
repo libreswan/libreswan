@@ -268,9 +268,12 @@ static void release_dead_interfaces(struct verbose verbose)
 		 * XXX: the first delref should be part of
 		 * disorient()?
 		 */
-		if (is_from_group(c) && vexpect(refcnt_peek(c) > 1)) {
+		if (is_from_group(c) &&
+		    is_group(c->clonedfrom) &&
+		    vexpect(refcnt_peek(c) > 1)) {
 			struct connection *cp = c;
 			terminate_and_down_and_unroute_connections(cp, HERE);
+			vdbg("%s has a count of %d (%p %p)", c->name, refcnt_peek(c), c->logger, verbose.logger);
 			connection_delref(&cp, verbose.logger);
 			connection_delref(&c, verbose.logger);
 			continue;
