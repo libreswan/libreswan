@@ -16,33 +16,9 @@ west #
  ../../guestbin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
 Total IPsec connections: loaded 9, routed 4, active 0
 west #
- # bring up OE
+ # lost interface with no connection
 west #
- ipsec whack --trafficstatus
-west #
- ../../guestbin/ping-once.sh --fire-and-forget -I 192.1.2.45 192.1.2.23
-fired and forgotten
-west #
- ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
-#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
-west #
- ../../guestbin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23
-up
-west #
- ipsec whack --trafficstatus
-#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
-west #
- # take it down
-west #
- ipsec down '"private-or-clear#192.1.2.0/24"'
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
-"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (established IKE SA)
-west #
- # now loose the interface 192.1.2.0/24; this should cause that OE
-west #
- # connection to be deleted.
+ # now loose the interface 192.1.2.0/24
 west #
  ifconfig eth1 down
 west #
@@ -73,4 +49,83 @@ loading group "/etc/ipsec.d/policies/private"
 loading group "/etc/ipsec.d/policies/private-or-clear"
 loading group "/etc/ipsec.d/policies/clear-or-private"
 loading group "/etc/ipsec.d/policies/clear"
+west #
+ # bring up OE
+west #
+ ipsec whack --trafficstatus
+west #
+ ../../guestbin/ping-once.sh --fire-and-forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+west #
+ ../../guestbin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23
+up
+west #
+ ipsec whack --trafficstatus
+#2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL'
+west #
+ # lost interface with OE connection
+west #
+ # now loose the interface 192.1.2.0/24
+west #
+ ifconfig eth1 down
+west #
+ ipsec listen
+listening for IKE messages
+shutting down interface eth1 192.1.2.45:4500
+shutting down interface eth1 192.1.2.45:500
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23: terminating SAs using this connection
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+ERROR: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: send on eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP failed in delete notification: Network is unreachable (errno 101)
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: unroute-host output: RTNETLINK answers: Network is unreachable
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: unroute-host output: RTNETLINK answers: Network is unreachable
+"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"private-or-clear#192.1.2.0/24": unroute-host output: RTNETLINK answers: Network is unreachable
+"private-or-clear#192.1.2.0/24": unroute-host output: RTNETLINK answers: Network is unreachable
+loading secrets from "/etc/ipsec.secrets"
+west #
+ # restore eth1
+west #
+ ifconfig eth1 192.1.2.45 up
+west #
+ ipsec listen
+listening for IKE messages
+adding interface eth1 192.1.2.45:UDP/500
+adding interface eth1 192.1.2.45:UDP/4500 (NAT)
+"clear": oriented passthrough connection (local: left=%defaultroute  remote: right=%group)
+"clear-or-private": oriented IKEv2 connection (local: left=%defaultroute  remote: right=%opportunisticgroup)
+"private-or-clear": oriented IKEv2 connection (local: left=%defaultroute  remote: right=%opportunisticgroup)
+"private": oriented IKEv2 connection (local: left=%defaultroute  remote: right=%opportunisticgroup)
+"block": oriented drop connection (local: left=%defaultroute  remote: right=%group)
+loading secrets from "/etc/ipsec.secrets"
+loading group "/etc/ipsec.d/policies/block"
+loading group "/etc/ipsec.d/policies/private"
+loading group "/etc/ipsec.d/policies/private-or-clear"
+loading group "/etc/ipsec.d/policies/clear-or-private"
+loading group "/etc/ipsec.d/policies/clear"
+west #
+ # bring up OE
+west #
+ ipsec whack --trafficstatus
+west #
+ ../../guestbin/ping-once.sh --fire-and-forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
+timeout waiting 30 seconds for ipsec whack --trafficstatus to match 192.1.2.23
+output: 
+west #
+ ../../guestbin/ping-once.sh --fire-and-forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec whack --trafficstatus
+#4: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+west #
+ ipsec whack --trafficstatus
+#4: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='ID_NULL'
+west #
+ ../../guestbin/ping-once.sh --up   -I 192.1.2.45 192.1.2.23
+up
 west #
