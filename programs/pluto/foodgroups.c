@@ -345,9 +345,24 @@ void load_groups(struct logger *logger)
 {
 	struct fg_targets *new_targets = NULL;
 
+	ldbg(logger, "old food groups:");
+	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
+		if (!oriented(t->group)) {
+			llog_pexpect(logger, HERE, "group %s is not oriented", t->group->name);
+			return;
+		}
+		selector_buf asource;
+		subnet_buf atarget;
+		LDBG_log(logger, "  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
+			 str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
+			 str_subnet(&t->subnet, &atarget),
+			 t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
+			 t->group->name);
+	}
+
 	/*
-	 * Find all the connection groups and, for each, add config
-	 * file targets into new_targets.
+	 * Find all the ORIENTED connection groups and, for each, add
+	 * config file targets into new_targets.
 	 */
 	struct connection_filter cf = {
 		.kind = CK_GROUP,
@@ -368,17 +383,6 @@ void load_groups(struct logger *logger)
 	}
 
 	if (LDBGP(DBG_BASE, logger)) {
-		/* dump old food groups */
-		LDBG_log(logger, "old food groups:");
-		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
-			selector_buf asource;
-			subnet_buf atarget;
-			LDBG_log(logger, "  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				 str_selector_range_port(&t->group->child.spds.list->local->client, &asource),
-				 str_subnet(&t->subnet, &atarget),
-				 t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				 t->group->name);
-		}
 		/* dump new food groups */
 		LDBG_log(logger, "new food groups:");
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {

@@ -7,14 +7,19 @@ It shouldn't crash:
   this takes down and deletes the OE instantiations (1) and leaves the
   OE template
 
-- ifconfig eth1 delete
-
-  the interface is lost, something triggers listen
+- ifconfig eth1 down
 
 - ipsec listen
 
   This should delete '"private-or-clear#192.1.2.0/24"' since it has
   not interface; and then instantiate OE template connections for any
   new interfaces.
+
+- ifconfig eth1 up
+
+- ipsec listen
+
+  bonus points if the groups are re-expanded, oriented, and routed
+  with the restored interface
 
 see #2413 FATAL: ASSERTION FAILED: ...
