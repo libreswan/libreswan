@@ -3,7 +3,8 @@
     test harness
 
  Copyright (C) 2014-2015 Matt Rogers <mrogers@redhat.com>
- Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ Copyright (C) 2015,2025 Andrew Cagney <andrew.cagney@gmail.com>
+ Copyright (C) 2021 Rishabh Kumar <cs19mtech11026@iith.ac.in>
 
  This program is free software; you can redistribute it and/or modify it
  under the terms of the GNU General Public License as published by the

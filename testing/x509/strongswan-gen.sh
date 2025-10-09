@@ -5,15 +5,16 @@ set -ex
 PKI="/usr/libexec/strongswan/pki"
 #PKI="/usr/local/strongswan/bin/pki"
 
-libreswandir=$(cd $(dirname $(realpath -m $0)); cd ../..; pwd)
-cd ${libreswandir}/testing/x509
-rm -rf strongswan/*
+x509dir=$(realpath $(dirname $0))
+cd ${x509dir}
+rm -rf ${x509dir}/strongswan/*
+mkdir ${x509dir}/strongswan
 
 pki()
 {
     local caname=$1 ; shift
-    mkdir ${libreswandir}/testing/x509/strongswan/${caname}
-    cd ${libreswandir}/testing/x509/strongswan/${caname}
+    mkdir ${x509dir}/strongswan/${caname}
+    cd ${x509dir}/strongswan/${caname}
 
     $PKI "$@" > strongCAkey.der
     $PKI "$@" > strongWestKey.der
