@@ -74,7 +74,6 @@ make
 ldns-devel
 libcurl-devel
 libseccomp-devel
-external/nss/
 libselinux-devel
 mercurial			NSS
 gyp				NSS
