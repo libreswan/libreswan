@@ -422,7 +422,7 @@ static void visit_connection_roots(const struct connection_visitor_param *param)
 	 * detach stopping the KEYS from being added.
 	 */
 	if (param->each->log_unknown_name) {
-#define MESSAGE "no connection or alias named \"%s\"'", param->wm->name
+#define MESSAGE "no connection or alias named \"%s\"", param->wm->name
 		/* what means leave more breadcrumbs */
 		if (param->each->past_tense != NULL) {
 			llog_rc(RC_UNKNOWN_NAME, logger, MESSAGE);
