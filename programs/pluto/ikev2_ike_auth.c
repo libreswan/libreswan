@@ -188,10 +188,16 @@ static stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike,
 }
 
 stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
-							   struct msg_digest *null_md UNUSED,
+							   struct msg_digest *null_md,
 							   const struct hash_signature *auth_sig)
 {
+	PEXPECT(ike->sa.logger, null_md == NULL);
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
+
+	if (auth_sig == NULL || auth_sig->len == 0) {
+		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
+		return STF_FATAL;
+	}
 
 	/* beginning of data going out */
 
@@ -1039,6 +1045,15 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 								      struct msg_digest *md,
 								      const struct hash_signature *auth_sig)
 {
+	if (auth_sig == NULL || auth_sig->len == 0) {
+		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED,
+				    empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
 	struct connection *c = ike->sa.st_connection;
 	bool send_redirect = false;
 	if (!v2_ike_sa_auth_responder_establish(ike, &send_redirect)) {
