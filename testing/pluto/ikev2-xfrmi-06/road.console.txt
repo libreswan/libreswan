@@ -36,7 +36,7 @@ road #
 #2: "road"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=192.0.2.1/32
 road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
-no connection or alias named "westnet-eastnet-ipv4-psk-ikev2"'
+no connection or alias named "westnet-eastnet-ipv4-psk-ikev2"
 road #
  echo done
 done

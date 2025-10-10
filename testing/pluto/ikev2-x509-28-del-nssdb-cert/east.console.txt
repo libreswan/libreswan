@@ -33,7 +33,7 @@ east #
 "test": failed to add connection: right certificate 'east' not found in the NSS database
 east #
  ipsec auto --delete test
-no connection or alias named "test"'
+no connection or alias named "test"
 east #
  # put east back
 east #
