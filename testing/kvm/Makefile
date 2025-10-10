@@ -146,7 +146,7 @@ kvm-flag-value = $($(call kvm-flag, $(patsubst KVM_%, %, $(1))))
 # either KVM_${PLATFORM}_FLAG or KVM_FLAG
 KVM-MAKEFLAG = \
 	$(if $(call kvm-flag-name, $(1)), \
-		$(patsubst KVM_%, %, $(1))=$(call kvm-flag-value, $(1)))
+		"'$(strip $(patsubst KVM_%, %, $(1))=$(call kvm-flag-value, $(1)))'")
 
 KVM_MAKEFLAGS ?= $(strip \
 	-j$(call kvm-flag-value, KVM_BUILD_CPUS) \

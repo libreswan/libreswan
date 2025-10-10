@@ -69,11 +69,16 @@ building() {
     cat <<EOF | awk '{print $1}'
 ElectricFence
 audit-libs-devel
+c++
 make
 ldns-devel
 libcurl-devel
 libseccomp-devel
+external/nss/
 libselinux-devel
+mercurial			NSS
+gyp				NSS
+ninja-build			NSS
 nss-devel
 nss-tools
 nss-util-devel
