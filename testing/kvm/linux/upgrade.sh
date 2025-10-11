@@ -124,7 +124,6 @@ ocspd
 openssl
 python3-netaddr
 python3-pexpect
-python3-pyOpenSSL
 rsync
 selinux-policy-devel
 socat
