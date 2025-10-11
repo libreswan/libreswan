@@ -18,22 +18,36 @@
 #define LSWNSS_H
 
 /*
- * The official ML-KEM constants from PKCS#11 3.2 are only supported
- * in NSS 3.116 or later.  Use the vendor-specific constants
- * otherwise.
+ * XXX: old comment:
  *
- * It's assumed that <nss.h> contains the version constants.
+ *   The official ML-KEM constants from PKCS#11 3.2 are only supported
+ *   in NSS 3.116 or later.  Use the vendor-specific constants
+ *   otherwise.
  *
- * XXX: note CONSTANTS not MACROs.  NSS has had the macro CKM_ML_KEM
+ * XXX:
+ *
+ * This code was added BEFORE NSS 4.116 was released; and when it did
+ * drop it didn't work with Libreswan!  Hence (5.4) the new values are
+ * now disabled.
+ *
+ * There's no hurry here.  Since dropping support for the old values
+ * breaks runtime compatibility it, likely, will never happen.  Once
+ * there's confirmation that Libreswan works using the new values with
+ * a RELEASED version of NSS the switch can be made (results from the
+ * intermediate tests should be posted as evidence).
+ *
+ * Note: CONSTANTS not MACROs.  NSS has had the macro CKM_ML_KEM
  * et.al.  defined for sometime, it's that the internal code didn't
  * know what to do with the value.  Hence the need for LSW_ prefix.
+ *
+ * Note: It's assumed that <nss.h> contains the version constants; it
+ * has since 3.2.
  */
 
 #include <nss.h>
 
-#if (defined(NSS_VMAJOR) ? NSS_VMAJOR : 0) > 3 || \
-	((defined(NSS_VMAJOR) ? NSS_VMAJOR : 0) >= 3 && \
-	 (defined(NSS_VMINOR) ? NSS_VMINOR : 0) >= 116)
+#if 0 && (( NSS_VMAJOR > 3 ) ||				\
+	  ( NSS_VMAJOR == 3 &&	NSS_VMINOR >= 116 ))
 #define LSW_CKM_ML_KEM_KEY_PAIR_GEN CKM_ML_KEM_KEY_PAIR_GEN
 #define LSW_CKM_ML_KEM CKM_ML_KEM
 #define LSW_CKP_ML_KEM_768 CKP_ML_KEM_768
