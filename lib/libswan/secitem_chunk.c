@@ -18,12 +18,12 @@
 #include "jambuf.h"
 #include "lswnss.h"
 
-SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type)
+SECItem same_bytes_as_secitem(void *bytes, size_t len, SECItemType type)
 {
 	SECItem si = {
 		.type = type,
-		.data = chunk.ptr,
-		.len = chunk.len,
+		.data = bytes,
+		.len = len,
 	};
 	return si;
 }
