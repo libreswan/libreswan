@@ -31,6 +31,12 @@ You can load this machine definition into libvirt using:
     </controller>
     <controller type='virtio-serial' index='0'>
     </controller>
+    <!--
+	While the BSDs and Alpine use NFS to mount /testing, fedora
+	uses p9fs.  Hence keep these mount points.  Include /source as
+	it is needed when debugging; and /pool as it is used when
+	installing packages.
+    -->
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>

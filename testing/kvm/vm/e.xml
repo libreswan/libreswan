@@ -37,10 +37,23 @@ You can load this machine definition into libvirt using:
     </controller>
     <controller type='virtio-serial' index='0'>
     </controller>
-    <!--OpenBSD uses NFS mount this filesystem is defined here just to hack some part of testing script to work-->
+    <!--
+	While the BSDs and Alpine use NFS to mount /testing, fedora
+	uses p9fs.  Hence keep these mount points.  Include /source as
+	it is needed when debugging; and /pool as it is used when
+	installing packages.
+    -->
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>
+    </filesystem>
+    <filesystem type='mount' accessmode='squash'>
+      <source dir='@@SOURCEDIR@@'/>
+      <target dir='source'/>
+    </filesystem>
+    <filesystem type='mount' accessmode='squash'>
+      <source dir='@@POOLDIR@@'/>
+      <target dir='pool'/>
     </filesystem>
     <!--
       Keep the first interface pointing at the gateway (if it moves
