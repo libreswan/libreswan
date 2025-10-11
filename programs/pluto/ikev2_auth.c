@@ -417,8 +417,13 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 
 	struct v2AUTH_blobs blobs;
 	extract_v2AUTH_blobs(ike, idhash, REMOTE_PERSPECTIVE, &blobs);
-	struct crypt_mac hash = crypt_hash_hunks("pubkey hash", hash_algo,
-						 &blobs.hunks, ike->sa.logger);
+	struct crypt_mac hash = {0};
+	if (hash_algo == &ike_alg_hash_identity) {
+		llog(RC_LOG, ike->sa.logger, "identity hash, skipping hash calculation");
+	} else {
+		hash = crypt_hash_hunks("pubkey hash", hash_algo,
+					&blobs.hunks, ike->sa.logger);
+	}
 	diag_t d = authsig_and_log_using_pubkey(ike, &hash, &blobs.hunks, signature,
 						hash_algo, pubkey_signer,
 						signature_payload_name);

@@ -252,7 +252,6 @@ struct pubkey_signer {
 					       const struct hash_hunks *hunks,
 					       shunk_t signature,
 					       struct pubkey *kr,
-					       const struct hash_desc *hash_algo,
 					       diag_t *fatal_diag,
 					       struct logger *logger);
 	size_t (*jam_auth_method)(struct jambuf *,
