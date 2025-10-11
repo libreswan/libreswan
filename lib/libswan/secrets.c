@@ -1488,20 +1488,3 @@ void free_pubkey_content(struct pubkey_content *pubkey_content,
 {
 	pubkey_content->type->free_pubkey_content(pubkey_content, logger);
 }
-
-struct hash_signature pubkey_hash_then_sign(const struct pubkey_signer *signer,
-					    const struct hash_desc *hasher,
-					    const struct secret_pubkey_stuff *pks,
-					    const struct hash_hunks *hunks,
-					    struct logger *logger)
-{
-	struct crypt_mac hash_to_sign = crypt_hash_hunks("hash-to-sign", hasher,
-							 hunks, logger);
-	struct hash_signature sig = signer->sign_hash(pks,
-						      hash_to_sign.ptr,
-						      hash_to_sign.len,
-						      hasher,
-						      logger);
-	passert(sig.len <= sizeof(sig.ptr/*array*/));
-	return sig;
-}

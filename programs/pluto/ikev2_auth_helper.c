@@ -158,8 +158,20 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 		ARRAY_REF(octets),
 	};
 
-	task->signature = task->signer->sign(task->signer, task->hasher,
-					     task->pks, &hunks, logger);
+	if (task->signer->sign_message != NULL) {
+		task->signature = task->signer->sign_message(task->signer,
+							     task->pks,
+							     &hunks,logger);
+	} else {
+		struct crypt_mac hash_to_sign = crypt_hash_hunks("hash-to-sign",
+								 task->hasher,
+								 &hunks, logger);
+		task->signature = task->signer->sign_hash(task->pks,
+							  hash_to_sign.ptr,
+							  hash_to_sign.len,
+							  task->hasher,
+							  logger);
+	}
 	logtime_stop(&start, "%s()", __func__);
 }
 
