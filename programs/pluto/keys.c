@@ -294,7 +294,7 @@ static bool try_all_keys(enum cert_origin cert_origin,
 			passed = s->signer->authenticate_message_signature(s->signer,
 									   s->hunks,
 									   s->signature,
-									   key, s->hash_algo,
+									   key,
 									   &s->fatal_diag,
 									   s->logger);
 		} else {
@@ -338,6 +338,12 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 {
 	const struct connection *c = ike->sa.st_connection;
 	struct logger *logger = ike->sa.logger;
+
+	if (!PEXPECT(logger, ((hash_algo == &ike_alg_hash_identity) ==
+			      (signer->authenticate_message_signature != NULL)))) {
+		return diag("confused by HASH vs authenticator");
+	}
+
 	struct tac_state s = {
 		/* in */
 		.signer = signer,

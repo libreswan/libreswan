@@ -36,7 +36,7 @@
 
 /* returns the length of the result on success; 0 on failure */
 static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,
-					       const uint8_t *hash_val, size_t hash_len,
+					       shunk_t hash_to_sign,
 					       const struct hash_desc *hash_algo,
 					       struct logger *logger)
 {
@@ -51,11 +51,7 @@ static struct hash_signature RSA_raw_sign_hash(const struct secret_pubkey_stuff 
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	SECItem data = {
-		.type = siBuffer,
-		.len = hash_len,
-		.data = DISCARD_CONST(uint8_t *, hash_val),
-	};
+	SECItem data = same_shunk_as_secitem(hash_to_sign, siBuffer);
 
 	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
 	passert(sig.len <= sizeof(sig.ptr/*array*/));
@@ -169,7 +165,6 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 	.name = "RSA",
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
-	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_raw_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_raw_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
@@ -177,7 +172,7 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 
 /* returns the length of the result on success; 0 on failure */
 static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_stuff *pks,
-						     const uint8_t *hash_val, size_t hash_len,
+						     shunk_t hash_to_sign,
 						     const struct hash_desc *hash_algo,
 						     struct logger *logger)
 {
@@ -188,11 +183,7 @@ static struct hash_signature RSA_pkcs1_1_5_sign_hash(const struct secret_pubkey_
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	SECItem digest = {
-		.type = siBuffer,
-		.len = hash_len,
-		.data = DISCARD_CONST(uint8_t *, hash_val),
-	};
+	SECItem digest = same_shunk_as_secitem(hash_to_sign, siBuffer);
 
 	/*
 	 * XXX: the call expects the OID TAG for the hash algorithm
@@ -306,7 +297,6 @@ const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
-	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
@@ -316,7 +306,6 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 	.type = &pubkey_type_rsa,
-	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_pkcs1_1_5_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
@@ -324,7 +313,7 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 
 /* returns the length of the result on success; 0 on failure */
 static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey_stuff *pks,
-						      const uint8_t *hash_val, size_t hash_len,
+						      shunk_t hash_to_sign,
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
 {
@@ -335,11 +324,7 @@ static struct hash_signature RSA_rsassa_pss_sign_hash(const struct secret_pubkey
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	SECItem data = {
-		.type = siBuffer,
-		.len = hash_len,
-		.data = DISCARD_CONST(uint8_t *, hash_val),
-	};
+	SECItem data = same_shunk_as_secitem(hash_to_sign, siBuffer);
 
 	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
 	passert(sig.len <= sizeof(sig.ptr/*array*/));
@@ -448,7 +433,6 @@ const struct pubkey_signer pubkey_signer_digsig_rsassa_pss = {
 	.name = "RSASSA-PSS", /* name from RFC 7427 */
 	.type = &pubkey_type_rsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
-	.sign = pubkey_hash_then_sign,
 	.sign_hash = RSA_rsassa_pss_sign_hash,
 	.authenticate_hash_signature = RSA_authenticate_hash_signature_rsassa_pss,
 	.jam_auth_method = RSA_jam_auth_method,

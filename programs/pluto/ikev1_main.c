@@ -340,8 +340,10 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
-	struct hash_signature sig = pubkey_signer_raw_rsa.sign_hash(pks, hash->ptr, hash->len,
-								    &ike_alg_hash_sha1, logger);
+	struct hash_signature sig = pubkey_signer_raw_rsa.sign_hash(pks,
+								    HUNK_AS_SHUNK(hash),
+								    &ike_alg_hash_sha1,
+								    logger);
 	return sig;
 }
 

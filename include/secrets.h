@@ -226,13 +226,12 @@ struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
 	const struct pubkey_type *type;
-	struct hash_signature (*sign)(const struct pubkey_signer *signer,
-				      const struct hash_desc *hasher,
-				      const struct secret_pubkey_stuff *pks,
-				      const struct hash_hunks *hunks,
-				      struct logger *logger);
+	struct hash_signature (*sign_message)(const struct pubkey_signer *signer,
+					      const struct secret_pubkey_stuff *pks,
+					      const struct hash_hunks *hunks,
+					      struct logger *logger);
 	struct hash_signature (*sign_hash)(const struct secret_pubkey_stuff *pks,
-					   const uint8_t *hash_octets, size_t hash_len,
+					   shunk_t hash_to_sign,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
 	/*
@@ -253,7 +252,6 @@ struct pubkey_signer {
 					       const struct hash_hunks *hunks,
 					       shunk_t signature,
 					       struct pubkey *kr,
-					       const struct hash_desc *hash_algo,
 					       diag_t *fatal_diag,
 					       struct logger *logger);
 	size_t (*jam_auth_method)(struct jambuf *,
@@ -278,12 +276,6 @@ extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
 
 const struct pubkey_type *pubkey_type_from_ipseckey_algorithm(enum ipseckey_algorithm_type alg);
 const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *public_key);
-
-struct hash_signature pubkey_hash_then_sign(const struct pubkey_signer *signer,
-					    const struct hash_desc *hasher,
-					    const struct secret_pubkey_stuff *pks,
-					    const struct hash_hunks *hunks,
-					    struct logger *logger);
 
 /*
  * Public Key Machinery.

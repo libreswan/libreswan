@@ -45,7 +45,7 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuff *pks,
-						 const uint8_t *hash_val, size_t hash_len,
+						 shunk_t hash_to_sign,
 						 const struct hash_desc *hash_alg,
 						 struct logger *logger)
 {
@@ -58,18 +58,14 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_pubkey_stuf
 
 
 	/* point HASH to sign at HASH_VAL */
-	SECItem hash_to_sign = {
-		.type = siBuffer,
-		.len = hash_len,
-		.data = DISCARD_CONST(uint8_t *, hash_val),
-	};
+	SECItem nss_hash_to_sign = same_shunk_as_secitem(hash_to_sign, siBuffer);
 
 	/* point signature at the SIG_VAL buffer */
 	struct hash_signature signature = {0};
 	SECItem raw_signature;
 	SECStatus s = SGN_Digest(pks->private_key,
 				 hash_alg->nss.oid_tag,
-				 &raw_signature, &hash_to_sign);
+				 &raw_signature, &nss_hash_to_sign);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
 		llog_nss_error(RC_LOG, logger,
@@ -166,14 +162,13 @@ const struct pubkey_signer pubkey_signer_raw_ecdsa = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
-	.sign = pubkey_hash_then_sign,
 	.sign_hash = ECDSA_raw_sign_hash,
 	.authenticate_hash_signature = ECDSA_raw_authenticate_hash_signature,
 	.jam_auth_method = ECDSA_jam_auth_method,
 };
 
 static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_stuff *pks,
-						    const uint8_t *hash_val, size_t hash_len,
+						    shunk_t hash_to_sign,
 						    const struct hash_desc *hash_algo_unused UNUSED,
 						    struct logger *logger)
 {
@@ -186,11 +181,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 	ldbgf(DBG_CRYPT, logger, "ECDSA_sign_hash: Started using NSS");
 
 	/* point HASH to sign at HASH_VAL */
-	SECItem hash_to_sign = {
-		.type = siBuffer,
-		.len = hash_len,
-		.data = DISCARD_CONST(uint8_t *, hash_val),
-	};
+	SECItem nss_hash_to_sign = same_shunk_as_secitem(hash_to_sign, siBuffer);
 
 	/* point signature at the SIG_VAL buffer */
 	uint8_t raw_signature_data[sizeof(struct hash_signature)];
@@ -203,7 +194,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 	ldbg(logger, "ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
-	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
+	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &nss_hash_to_sign);
 	if (LDBGP(DBG_CRYPT, logger)) {
 		LDBG_log(logger, "PK11_Sign() returned:");
 		LDBG_dump(logger, raw_signature.data, raw_signature.len);
@@ -288,7 +279,6 @@ const struct pubkey_signer pubkey_signer_digsig_ecdsa = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
-	.sign = pubkey_hash_then_sign,
 	.sign_hash = ECDSA_digsig_sign_hash,
 	.authenticate_hash_signature = ECDSA_digsig_authenticate_hash_signature,
 	.jam_auth_method = ECDSA_jam_auth_method,
