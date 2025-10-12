@@ -8,11 +8,11 @@ Usage:
     $(basename $0) <directory>
 Generates a host key and then creates:
      OUTPUT/<us>.pub      i.e., {left,right}pubkey=...
-     OUTPUT/<us>.raw      i.e., {left,right}{rsasig,ecdsa}key=
+     OUTPUT/<us>.raw      i.e., {left,right}{rsasig,ecdsa,eddsa}key=
      OUTPUT/<us>.pem      mime file
      OUTPUT/<us>.ckaid    i.e., {left,right}ciakd=...
      OUTPUT/<us>.hostkey  copy of .raw or .pub
-Uses directory to determine raw|pem and rsa|ecdsa.
+Uses directory to determine raw|pem and rsa|ecdsa|eddsa.
 EOF
     exit 1
 fi
@@ -21,6 +21,7 @@ keytype=
 case $1 in
 	*rsa* )   keytype=rsa ;;
 	*ecdsa* ) keytype=ecdsa ;;
+	*eddsa* ) keytype=eddsa ;;
 	* ) echo "Unknown keytype" 1>&2 ; exit 1 ;;
 esac
 
@@ -51,7 +52,7 @@ ckaid=$(ipsec newhostkey --keytype ${keytype} 2>&1 | grep "showhostkey" | sed "s
 printf "\t${leftright}ckaid=${ckaid}\n" > OUTPUT/$us.ckaid
 # BEGIN...END
 ipsec showhostkey --pem                   --ckaid "${ckaid}" > OUTPUT/$us.pem
-# {left,right}{rsasig,ecdsa}key=...
+# {left,right}{rsasig,ecdsa,eddsa}key=...
 ipsec showhostkey --${leftright}          --ckaid "${ckaid}" > OUTPUT/$us.raw
 # {left,right}pubkey=...
 ipsec showhostkey --${leftright} --pubkey --ckaid "${ckaid}" > OUTPUT/$us.pub

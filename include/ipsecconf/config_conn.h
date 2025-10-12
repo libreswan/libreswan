@@ -64,6 +64,7 @@ enum config_conn_keyword {
 
 	KWS_RSASIGKEY,
 	KWS_ECDSAKEY,
+	KWS_EDDSAKEY,
 	KWS_PUBKEY,
 
 	KWS_IPSEC_INTERFACE,

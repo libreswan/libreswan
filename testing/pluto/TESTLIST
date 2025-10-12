@@ -1469,6 +1469,7 @@ kvmplutotest	whack-hostkey-04-ikev1-rawkey-rsa	good
 
 kvmplutotest	whack-hostkey-05-ikev2-rawkey-rsa	good
 kvmplutotest	whack-hostkey-05-ikev2-rawkey-ecdsa	good
+kvmplutotest	whack-hostkey-05-ikev2-rawkey-eddsa	good	github/2477
 kvmplutotest	whack-hostkey-06-ikev2-pubkey-rsa	good
 kvmplutotest	whack-hostkey-06-ikev2-pubkey-ecdsa	good
 kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-rsa		good

@@ -131,6 +131,7 @@ static bool set_whack_end(struct whack_end *w,
 	enum config_conn_keyword keys[] = {
 		KWS_RSASIGKEY,
 		KWS_ECDSAKEY,
+		KWS_EDDSAKEY,
 		KWS_PUBKEY,
 	};
 	const char *found_keyname = NULL;

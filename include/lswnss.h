@@ -150,7 +150,12 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, name_buf *buf);
 /* these do not clone */
 chunk_t same_secitem_as_chunk(SECItem si);
 shunk_t same_secitem_as_shunk(SECItem si);
-SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
+#define same_hunk_as_secitem(HUNK, TYPE)				\
+	({								\
+		typeof(*(HUNK)) *hunk_ = HUNK;				\
+		same_bytes_as_secitem(hunk_->ptr, hunk_->len, TYPE);	\
+	})
+SECItem same_bytes_as_secitem(void *bytes, size_t len, SECItemType type);
 SECItem same_shunk_as_secitem(shunk_t chunk, SECItemType type); /* NSS doesn't do const */
 
 /* this clones */

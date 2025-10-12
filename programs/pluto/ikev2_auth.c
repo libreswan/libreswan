@@ -243,6 +243,21 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 			"legacy ECDSA is not implemented");
 		return IKEv2_AUTH_RESERVED;
 
+	case AUTH_EDDSA:
+		/*
+		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
+		 * indicating a preference for Digital Signature
+		 * Method, and local policy was ok with the
+		 * suggestion.
+		 */
+		pexpect(auth_in_authby(AUTH_EDDSA, c->local->host.config->authby));
+		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
+			return IKEv2_AUTH_DIGITAL_SIGNATURE;
+		}
+
+		llog(RC_LOG, ike->sa.logger, "EDDSA only supports Digital Signature authentication");
+		return IKEv2_AUTH_RESERVED;
+
 	case AUTH_EAPONLY:
 		/*
 		 * EAP-Only uses an EAP Generated KEY; which is
@@ -257,7 +272,6 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 	case AUTH_NULL:
 		return IKEv2_AUTH_NULL;
 
-	case AUTH_EDDSA: /* TBD */
 	case AUTH_NEVER:
 	case AUTH_UNSET:
 		break;
@@ -274,8 +288,7 @@ static const struct hash_desc *negotiated_hash_map[] = {
 	&ike_alg_hash_sha2_512,
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_256,
-	/* RFC 8420 IDENTITY algo not supported yet */
-	/* { POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
+	&ike_alg_hash_identity,
 };
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
@@ -524,8 +537,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
 	{
-		if (that_auth != AUTH_ECDSA &&
-		    that_auth != AUTH_RSASIG) {
+		if (!digital_signature_in_authby(authby_from_auth(that_auth))) {
 			name_buf an;
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
 				    str_enum_short(&auth_names, that_auth, &an));
@@ -557,6 +569,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				const struct pubkey_signer *signer;
 				struct authby authby;
 			} signers[] = {
+				{ &pubkey_signer_digsig_eddsa_ed25519, { .eddsa = true, }, },
 				{ &pubkey_signer_digsig_ecdsa, { .ecdsa = true, }, },
 				{ &pubkey_signer_digsig_rsassa_pss, { .rsasig = true, }, },
 				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
@@ -723,8 +736,12 @@ stf_status submit_v2AUTH_generate_responder_signature(struct ike_sa *ike, struct
 			break;
 		case AUTH_ECDSA:
 			/* no choice */
-			signer_story = "hardwired";
+			signer_story = "hardwired(ECDSA)";
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_ecdsa;
+			break;
+		case AUTH_EDDSA:
+			signer_story = "hardwired(EDDSA)";
+			ike->sa.st_v2_digsig.signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
 		default:
 			bad_case(authby);
@@ -850,6 +867,9 @@ stf_status submit_v2AUTH_generate_initiator_signature(struct ike_sa *ike,
 			break;
 		case AUTH_ECDSA:
 			signer = &pubkey_signer_digsig_ecdsa;
+			break;
+		case AUTH_EDDSA:
+			signer = &pubkey_signer_digsig_eddsa_ed25519;
 			break;
 		default:
 			bad_case(authby);

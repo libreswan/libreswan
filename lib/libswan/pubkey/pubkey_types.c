@@ -18,6 +18,7 @@
 const struct pubkey_type *pubkey_types[] = {
 	&pubkey_type_rsa,
 	&pubkey_type_ecdsa,
+	&pubkey_type_eddsa,
 	NULL,
 };
 

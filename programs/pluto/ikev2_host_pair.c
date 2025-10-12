@@ -386,6 +386,7 @@ struct connection *find_v2_unsecured_host_pair_connection(const struct msg_diges
 	 */
 	static const struct authby remote_authbys[] = {
 		{ .ecdsa = true, },
+		{ .eddsa = true, },
 		{ .rsasig = true, },
 		{ .rsasig_v1_5 = true, },
 		{ .psk = true, },

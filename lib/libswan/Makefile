@@ -72,6 +72,7 @@ $(OBJS): | $(builddir)/pubkey/
 OBJS += pubkey/pubkey_types.o
 OBJS += pubkey/pubkey_signer_rsa.o
 OBJS += pubkey/pubkey_signer_ecdsa.o
+OBJS += pubkey/pubkey_signer_eddsa.o
 OBJS += pubkey/pubkey_type_rsa.o
 OBJS += pubkey/pubkey_type_ecp.o
 
