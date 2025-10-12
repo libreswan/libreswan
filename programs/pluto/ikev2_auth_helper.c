@@ -167,8 +167,7 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 								 task->hasher,
 								 &hunks, logger);
 		task->signature = task->signer->sign_hash(task->pks,
-							  hash_to_sign.ptr,
-							  hash_to_sign.len,
+							  HUNK_AS_SHUNK(&hash_to_sign),
 							  task->hasher,
 							  logger);
 	}
