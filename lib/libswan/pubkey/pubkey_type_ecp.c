@@ -229,11 +229,15 @@ static diag_t EDDSA_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 							 struct pubkey_content *pkc,
 							 const struct logger *logger)
 {
+#ifdef USE_EDDSA
 	static const struct kem_desc *kem[] = {
 		&ike_alg_kem_ed25519,
 		NULL,
 	};
 	return  ECP_extract_pubkey_content_from_ipseckey(ipseckey, pkc, logger, kem, edKey);
+#else
+	return diag("EDDSA not supported (%p, %p, %p)", ipseckey.ptr, pkc, logger);
+#endif
 }
 
 static err_t ECP_pubkey_content_to_ipseckey(const struct pubkey_content *pkc,

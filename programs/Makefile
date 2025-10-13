@@ -38,7 +38,11 @@ SUBDIRS += setup
 SUBDIRS += newhostkey
 
 SUBDIRS += ecdsasigkey
+
+ifeq ($(USE_EDDSA),true)
 SUBDIRS += eddsasigkey
+endif
+
 SUBDIRS += rsasigkey
 
 SUBDIRS += showhostkey

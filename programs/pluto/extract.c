@@ -1445,8 +1445,12 @@ static diag_t extract_host_end(struct host_end *host,
 	case AUTH_RSASIG:
 	case AUTH_ECDSA:
 	case AUTH_EDDSA:
+#ifdef USE_EDDSA
 		authby_mask = authby_from_auth(auth);
 		break;
+#else
+		return diag("auth=eddsa is not supported by this build");
+#endif
 	case AUTH_PSK:
 		/* force only bit (not on by default) */
 		authby = (struct authby) { .psk = true, };

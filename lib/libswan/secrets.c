@@ -1171,8 +1171,10 @@ const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *pubk
 		return &pubkey_type_rsa;
 	case ecKey:
 	        return &pubkey_type_ecdsa;
+#ifdef USE_EDDSA
 	case edKey:
 	        return &pubkey_type_eddsa;
+#endif
 	default:
 		return NULL;
 	}

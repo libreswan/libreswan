@@ -325,6 +325,7 @@ const struct kem_desc ike_alg_kem_curve25519 = {
 };
 #endif
 
+#ifdef USE_EDDSA
 const struct kem_desc ike_alg_kem_ed25519 = {
 	.common = {
 		.type = &ike_alg_kem,
@@ -341,6 +342,7 @@ const struct kem_desc ike_alg_kem_ed25519 = {
 	.responder_bytes = 32 /* octets */,
 	.nss.ecp.oid = SEC_OID_ED25519_PUBLIC_KEY,
 };
+#endif
 
 /* https://datatracker.ietf.org/doc/draft-ietf-ipsecme-ikev2-mlkem/ */
 

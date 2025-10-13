@@ -28,7 +28,6 @@
 #include <pk11pub.h>
 #include <cryptohi.h>
 #include <keyhi.h>
-#include <blapi.h>
 
 #include "lswnss.h"
 #include "lswlog.h"
