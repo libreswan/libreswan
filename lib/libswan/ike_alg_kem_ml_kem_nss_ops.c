@@ -26,30 +26,48 @@
 #include "passert.h"
 #include "lswalloc.h"
 
-static void nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
+static bool nss_ml_kem_calc_local_secret_1(const struct kem_desc *kem,
+					   SECKEYPrivateKey **private_key,
+					   SECKEYPublicKey **public_key,
+					   struct logger *logger,
+					   CK_MECHANISM_TYPE ml_kem_mechanism,
+					   PK11SlotInfo *slot)
+{
+	LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter =
+		kem->nss.ml_kem.generate_key_pair_parameter;
+	(*private_key) = PK11_GenerateKeyPair(slot, ml_kem_mechanism,
+					      &generate_key_pair_parameter,
+					      public_key,
+					      /*isPerm*/PR_FALSE,
+					      /*isSensitive*/PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
+					      lsw_nss_get_password_context(logger));
+	if (*public_key == NULL || *private_key == NULL) {
+		llog_nss_error(ERROR_STREAM, logger, "PK11_GenerateKeyPair(%lx) failed",
+			       ml_kem_mechanism);
+		return false;
+	}
+
+	PASSERT(logger, (*private_key) != NULL);
+	PASSERT(logger, (*public_key) != NULL);
+	return true;
+}
+
+static bool nss_ml_kem_calc_local_secret(const struct kem_desc *kem,
 					 SECKEYPrivateKey **private_key,
 					 SECKEYPublicKey **public_key,
 					 struct logger *logger)
 {
-    CK_MECHANISM_TYPE ml_kem_mechanism = LSW_CKM_ML_KEM_KEY_PAIR_GEN;
-    LSW_CK_ML_KEM_PARAMETER_SET_TYPE generate_key_pair_parameter =
-	    kem->nss.ml_kem.generate_key_pair_parameter;
-
-    void *password_context = lsw_nss_get_password_context(logger);
-    PK11SlotInfo *slot = PK11_GetBestSlot(ml_kem_mechanism, password_context);
-    PASSERT(logger, slot != NULL);
-
-    (*private_key) = PK11_GenerateKeyPair(slot, ml_kem_mechanism,
-					  &generate_key_pair_parameter,
-					  public_key,
-					  /*isPerm*/PR_FALSE,
-					  /*isSensitive*/PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
-					  password_context);
-
-    PK11_FreeSlot(slot);
-
-    PASSERT(logger, (*private_key) != NULL);
-    PASSERT(logger, (*public_key) != NULL);
+	CK_MECHANISM_TYPE ml_kem_mechanism = LSW_CKM_ML_KEM_KEY_PAIR_GEN;
+	PK11SlotInfo *slot = PK11_GetBestSlot(ml_kem_mechanism, lsw_nss_get_password_context(logger));
+	if (slot == NULL) {
+		llog_nss_error(ERROR_STREAM, logger, "PK11_GetBestSlot(%lx) failed",
+			       ml_kem_mechanism);
+		return false;
+	}
+	bool ok = nss_ml_kem_calc_local_secret_1(kem, private_key, public_key, logger,
+						 ml_kem_mechanism, slot);
+	PK11_FreeSlot(slot);
+	return ok;
 }
 
 static shunk_t nss_ml_kem_local_secret_ke(const struct kem_desc *kem,

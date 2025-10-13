@@ -359,18 +359,22 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 }
 
 stf_status initiate_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
-						    struct msg_digest *unused_md,
+						    struct msg_digest *null_md,
 						    struct dh_local_secret *local_secret,
 						    chunk_t *nonce)
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
-	pexpect(unused_md == NULL);
+	pexpect(null_md == NULL);
 	/* I1 is from INVALID KE */
 	pexpect(ike->sa.st_state == &state_v2_IKE_SA_INIT_I0 ||
 		ike->sa.st_state == &state_v2_IKE_SA_INIT_I);
 	ldbg(ike->sa.logger, "%s() for "PRI_SO" %s",
 	     __func__, pri_so(ike->sa.st_serialno), ike->sa.st_state->name);
+
+	if (local_secret == NULL) {
+		return STF_FATAL;
+	}
 
 	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gi);
 	unpack_nonce(&ike->sa.st_ni, nonce);

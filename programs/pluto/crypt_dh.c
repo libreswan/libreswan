@@ -112,7 +112,9 @@ struct dh_local_secret *calc_dh_local_secret(const struct kem_desc *kem,
 		private_key = NULL;
 		public_key = NULL;
 	} else {
-		kem->kem_ops->calc_local_secret(kem, &private_key, &public_key, logger);
+		if (!kem->kem_ops->calc_local_secret(kem, &private_key, &public_key, logger)) {
+			return NULL;
+		}
 		shared_key = NULL;
 		zero(&responder_ke);
 		passert(private_key != NULL);

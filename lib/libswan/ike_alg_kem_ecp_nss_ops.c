@@ -37,16 +37,45 @@
 #include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_ecp_calc_local_secret(const struct kem_desc *kem,
-				      SECKEYPrivateKey **privk,
-				      SECKEYPublicKey **pubk,
-				      struct logger *logger)
+static bool nss_ecp_calc_local_secret_1(const struct kem_desc *kem,
+					SECKEYPrivateKey **privk,
+					SECKEYPublicKey **pubk,
+					struct logger *logger,
+					SECKEYECParams *ec_params)
 {
 	/*
 	 * Get the PK11 formatted EC parameters (stored in static
 	 * data) from NSS.
 	 */
 	ldbgf(DBG_CRYPT, logger, "oid %d %x", kem->nss.ecp.oid, kem->nss.ecp.oid);
+
+	*privk = SECKEY_CreateECPrivateKey(ec_params, pubk,
+					   lsw_nss_get_password_context(logger));
+	if (*pubk == NULL || *privk == NULL) {
+		SECITEM_FreeItem(ec_params, PR_TRUE/*also-free-SECItem*/);
+		llog_nss_error(ERROR_STREAM, logger, "SECKEY_CreateECPrivateKey() failed");
+		return false;
+	}
+
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
+			    (*pubk)->keyType,
+			    (*pubk)->u.ec.size,
+			    (*pubk)->u.ec.publicValue.data,
+			    (*pubk)->u.ec.publicValue.len);
+			jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
+		}
+	}
+	return true;
+}
+
+
+static bool nss_ecp_calc_local_secret(const struct kem_desc *kem,
+					SECKEYPrivateKey **privk,
+					SECKEYPublicKey **pubk,
+					struct logger *logger)
+{
 
 	/*
 	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a
@@ -69,26 +98,9 @@ static void nss_ecp_calc_local_secret(const struct kem_desc *kem,
 			     kem->nss.ecp.oid, kem->common.fqn);
 	}
 
-
-	*privk = SECKEY_CreateECPrivateKey(ec_params, pubk,
-					   lsw_nss_get_password_context(logger));
-
+	bool ok = nss_ecp_calc_local_secret_1(kem, privk, pubk, logger, ec_params);
 	SECITEM_FreeItem(ec_params, PR_TRUE/*also-free-SECItem*/);
-
-	if (*pubk == NULL || *privk == NULL) {
-		passert_nss_error(logger, HERE, "ECP private key creation failed");
-	}
-
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "public keyType %d size %d publicValue@%p %d bytes public key: ",
-			    (*pubk)->keyType,
-			    (*pubk)->u.ec.size,
-			    (*pubk)->u.ec.publicValue.data,
-			    (*pubk)->u.ec.publicValue.len);
-			jam_nss_secitem(buf, &(*pubk)->u.ec.publicValue);
-		}
-	}
+	return ok;
 }
 
 /*

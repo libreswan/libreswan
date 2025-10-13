@@ -76,10 +76,12 @@ diag_t kem_initiator_key_gen(const struct kem_desc *kem,
 {
 	(*initiator) = alloc_thing(struct kem_initiator, "kem-initiator");
 	(*initiator)->kem = kem;
-	kem->kem_ops->calc_local_secret(kem,
-					&(*initiator)->internal.private_key,
-					&(*initiator)->internal.public_key,
-					logger);
+	if (!kem->kem_ops->calc_local_secret(kem,
+					     &(*initiator)->internal.private_key,
+					     &(*initiator)->internal.public_key,
+					     logger)) {
+		return diag("ML_KEM failed");
+	}
 	PASSERT(logger, (*initiator)->internal.private_key != NULL);
 	PASSERT(logger, (*initiator)->internal.public_key != NULL);
 	(*initiator)->ke = kem->kem_ops->local_secret_ke(kem, (*initiator)->internal.public_key);
@@ -108,7 +110,10 @@ diag_t kem_responder_encapsulate(const struct kem_desc *kem,
 		}
 		(*responder)->ke = HUNK_AS_SHUNK(&(*responder)->internal.ke);
 	} else {
-		kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key, &(*responder)->internal.public_key, logger);
+		if (!kem->kem_ops->calc_local_secret(kem, &(*responder)->internal.private_key,
+						     &(*responder)->internal.public_key, logger)) {
+			return diag("ML_KEM failed");
+		}
 		PASSERT(logger, (*responder)->internal.private_key != NULL);
 		PASSERT(logger, (*responder)->internal.public_key != NULL);
 		d = kem->kem_ops->calc_shared_secret(kem,

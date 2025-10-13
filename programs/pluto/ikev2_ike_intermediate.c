@@ -843,6 +843,11 @@ stf_status process_v2_IKE_INTERMEDIATE_request_helper(struct ikev2_task *task,
 							    kem_responder_shared_key(task->responder),
 							    task->ni, task->nr,
 							    logger);
+		if (skeyseed == NULL) {
+			llog(RC_LOG, logger, "responder IKE_INTERMEDIATE SKEYSEED failed");
+			return STF_FATAL;
+		}
+
 		ldbg(logger, "ADDKE: responder calculating KEYMAT using prf %s",
 		     task->prf->common.fqn);
 		task->keymat = ikev2_ike_sa_keymat(task->prf, skeyseed,
@@ -1076,6 +1081,11 @@ stf_status process_v2_IKE_INTERMEDIATE_response_helper(struct ikev2_task *task,
 							    kem_initiator_shared_key(task->initiator),
 							    task->ni, task->nr,
 							    logger);
+		if (skeyseed == NULL) {
+			llog(RC_LOG, logger, "initiator IKE_INTERMEDIATE SKEYSEED failed");
+			return STF_FATAL;
+		}
+
 		ldbg(logger, "ADDKE: initiator calculating KEYMAT using prf %s",
 		     task->prf->common.fqn);
 		task->keymat = ikev2_ike_sa_keymat(task->prf, skeyseed,

@@ -28,19 +28,13 @@
 #include "ike_alg_kem_ops.h"
 #include "crypt_symkey.h"
 
-static void nss_modp_calc_local_secret(const struct kem_desc *group,
-				       SECKEYPrivateKey **privk,
-				       SECKEYPublicKey **pubk,
-				       struct logger *logger)
+static bool nss_modp_calc_local_secret_1(const struct kem_desc *group,
+					 SECKEYPrivateKey **privk,
+					 SECKEYPublicKey **pubk,
+					 struct logger *logger,
+					 chunk_t prime,
+					 chunk_t base)
 {
-	chunk_t prime = chunk_from_hex(group->nss.modp.prime, group->nss.modp.prime);
-	chunk_t base = chunk_from_hex(group->nss.modp.base, group->nss.modp.base);
-
-	if (LDBGP(DBG_CRYPT, logger)) {
-		LDBG_log_hunk(logger, "NSS: Value of Prime:", &prime);
-		LDBG_log_hunk(logger, "NSS: Value of base:", &base);
-	}
-
 	SECKEYDHParams dh_params = {
 		.prime = {
 			.data = prime.ptr,
@@ -69,12 +63,32 @@ static void nss_modp_calc_local_secret(const struct kem_desc *group,
 		*privk = SECKEY_CreateDHPrivateKey(&dh_params, pubk,
 						   lsw_nss_get_password_context(logger));
 		if (*pubk == NULL || *privk == NULL) {
-			passert_nss_error(logger, HERE, "MODP private key creation failed");
+			llog_nss_error(ERROR_STREAM, logger, "SECKEY_CreateDHPrivateKey() failed");
+			return false;
 		}
 	} while (group->bytes != (*pubk)->u.dh.publicValue.len);
 
+	return true;
+}
+
+static bool nss_modp_calc_local_secret(const struct kem_desc *group,
+				       SECKEYPrivateKey **privk,
+				       SECKEYPublicKey **pubk,
+				       struct logger *logger)
+{
+	chunk_t prime = chunk_from_hex(group->nss.modp.prime, group->nss.modp.prime);
+	chunk_t base = chunk_from_hex(group->nss.modp.base, group->nss.modp.base);
+	if (LDBGP(DBG_CRYPT, logger)) {
+		LDBG_log_hunk(logger, "NSS: Value of Prime:", &prime);
+		LDBG_log_hunk(logger, "NSS: Value of base:", &base);
+	}
+
+	bool ok = nss_modp_calc_local_secret_1(group, privk, pubk, logger,
+					       prime, base);
+
 	free_chunk_content(&prime);
 	free_chunk_content(&base);
+	return ok;
 }
 
 static shunk_t nss_modp_local_secret_ke(const struct kem_desc *group,

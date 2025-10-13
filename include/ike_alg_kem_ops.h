@@ -41,7 +41,7 @@ struct kem_ops {
 	 * SIZEOF_KE == .BYTES from above, but pass it in so both ends
 	 * can perform a sanity check.
 	 */
-	void (*calc_local_secret)(const struct kem_desc *group,
+	bool (*calc_local_secret)(const struct kem_desc *group,
 				  SECKEYPrivateKey **local_privk,
 				  SECKEYPublicKey **locak_pubk,
 				  struct logger *logger);
