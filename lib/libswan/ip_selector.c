@@ -632,7 +632,8 @@ void pexpect_selector(const ip_selector *s, where_t where)
 
 	if (s->ip.is_set == false ||
 	    s->ip.version == 0) {
-		llog_pexpect(&global_logger, where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
+		llog_pexpect(&global_logger, where,
+			     "invalid "PRI_IP_SELECTOR, pri_ip_selector(s));
 	}
 }
 

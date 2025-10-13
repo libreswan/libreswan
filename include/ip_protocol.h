@@ -67,6 +67,10 @@ struct ip_protocol {
 	bool zero_port_is_any;
 };
 
+#define PRI_IP_PROTOCOL "%s"
+#define pri_ip_protocol(PROTOCOL) ((PROTOCOL) > 255 ? "PROTO>255" :	\
+				   protocol_from_ipproto(PROTOCOL)->name)
+
 #if 0
 typedef const struct ip_protocol *ip_protocol; /* good idea? */
 #endif

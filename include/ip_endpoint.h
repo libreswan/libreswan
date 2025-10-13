@@ -52,17 +52,15 @@ typedef struct {
 	uint32_t mark_out;
 } ip_endpoint;
 
-#define PRI_ENDPOINT "<endpoint-%s:IPv%d,%s["PRI_IP_BYTES"]:%u>"
-#define pri_endpoint(A)						\
-		((A)->ip.is_set ? "set" : "unset"),		\
-		(A)->ip.version,				\
-		((A)->ipproto > 255 ? "PROTO>255" :		\
-		 protocol_from_ipproto((A)->ipproto)->name),	\
-		pri_ip_bytes((A)->bytes),			\
+#define PRI_IP_ENDPOINT "<endpoint-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]//"PRI_IP_PROTOCOL"/%u>"
+#define pri_ip_endpoint(A)				\
+	((A)->ip.is_set ? "set" : "unset"),		\
+		pri_ip_version((A)->ip.version),	\
+		pri_ip_bytes((A)->bytes),		\
+		pri_ip_protocol((A)->ipproto),		\
 		(A)->hport
 
 void pexpect_endpoint(const ip_endpoint *e, where_t where);
-#define pendpoint(E) pexpect_endpoint(E, HERE)
 
 /*
  * Constructors.

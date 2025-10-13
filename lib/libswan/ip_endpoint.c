@@ -105,7 +105,7 @@ ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 
 	ip_endpoint dst = endpoint;
 	dst.hport = hport(port);
-	pendpoint(&dst);
+	pexpect_endpoint(&dst, HERE);
 	return dst;
 }
 
@@ -338,6 +338,7 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 	    e->ipproto == 0 ||
 	    protocol == NULL /* ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {
-		llog_pexpect(&global_logger, where, "invalid endpoint: "PRI_ENDPOINT, pri_endpoint(e));
+		llog_pexpect(&global_logger, where,
+			     "invalid "PRI_IP_ENDPOINT, pri_ip_endpoint(e));
 	}
 }

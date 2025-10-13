@@ -37,15 +37,14 @@ typedef struct {
 	unsigned prefix_len;
 } ip_cidr;
 
-#define PRI_CIDR "<cidr-%s:IPv%d["PRI_IP_BYTES"]/%u>"
-#define pri_cidr(A)							\
-	((A).ip.is_set ? "set" : "unset"),				\
-			(A).ip.version,					\
-			pri_ip_bytes((A).bytes),			\
-			(A).prefix_len
+#define PRI_IP_CIDR "<cidr-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]/%u>"
+#define pri_ip_cidr(A)				\
+	((A).ip.is_set ? "set" : "unset"),	\
+		pri_ip_version((A).ip.version),	\
+		pri_ip_bytes((A).bytes),	\
+		(A).prefix_len
 
 void pexpect_cidr(const ip_cidr a, where_t where);
-#define pcidr(A) pexpect_cidr(A, HERE)
 
 extern const ip_cidr unset_cidr;
 

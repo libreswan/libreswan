@@ -195,7 +195,8 @@ void pexpect_cidr(const ip_cidr cidr, where_t where)
 {
 	if (cidr.ip.is_set == false ||
 	    cidr.ip.version == 0) {
-		llog_pexpect(&global_logger, where, "invalid "PRI_CIDR, pri_cidr(cidr));
+		llog_pexpect(&global_logger, where,
+			     "invalid "PRI_IP_CIDR, pri_ip_cidr(cidr));
 	}
 }
 
