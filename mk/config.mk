@@ -344,22 +344,22 @@ PREFIX ?= /usr/local
 # LIBEXECDIR is where sub-commands get put.  the "ipsec" command will
 # look for them when it is run.
 LIBEXECDIR ?= $(PREFIX)/libexec/ipsec
-TRANSFORMS += 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
-TRANSFORMS += 's:@@IPSEC_EXECDIR@@:$(LIBEXECDIR):g'
+TRANSFORMS += -e 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
+TRANSFORMS += -e 's:@@IPSEC_EXECDIR@@:$(LIBEXECDIR):g'
 USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(LIBEXECDIR)\"
 
 # SBINDIR is where the user interface command goes.
 SBINDIR ?= $(PREFIX)/sbin
-TRANSFORMS += 's:@@SBINDIR@@:$(SBINDIR):g'
+TRANSFORMS += -e 's:@@SBINDIR@@:$(SBINDIR):g'
 USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"$(SBINDIR)\"
 
 # where the appropriate manpage tree is located
 MANDIR ?= $(PREFIX)/share/man
-TRANSFORMS += 's:@@MANDIR@@:$(MANDIR):'
+TRANSFORMS += -e 's:@@MANDIR@@:$(MANDIR):'
 
 # where readonly configuration files go
 SYSCONFDIR ?= /etc
-TRANSFORMS += 's:@@SYSCONFDIR@@:$(SYSCONFDIR):g'
+TRANSFORMS += -e 's:@@SYSCONFDIR@@:$(SYSCONFDIR):g'
 
 #
 # INITSYSTEM
@@ -380,51 +380,51 @@ INSTALL_INITSYSTEM ?= true
 # During install the $(DESTDIR) prefix is added.
 
 RC_D_DIR ?= $(SYSCONFDIR)/rc.d
-TRANSFORMS += 's:@@RC_D_DIR@@:$(RC_D_DIR):g'
+TRANSFORMS += -e 's:@@RC_D_DIR@@:$(RC_D_DIR):g'
 
 EXAMPLE_RC_D_DIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(RC_D_DIR))
-TRANSFORMS += 's:@@EXAMPLE_RC_D_DIR@@:$(EXAMPLE_RC_D_DIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_RC_D_DIR@@:$(EXAMPLE_RC_D_DIR):g'
 
 # Where the INITSYSTEM=init.d scripts and examples go.  During install
 # $(DESTDIR) prefix is added.
 
 INIT_D_DIR ?= /etc/init.d
-TRANSFORMS += 's:@@INIT_D_DIR@@:$(INIT_D_DIR):g'
+TRANSFORMS += -e 's:@@INIT_D_DIR@@:$(INIT_D_DIR):g'
 
 EXAMPLE_INIT_D_DIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(INIT_D_DIR))
-TRANSFORMS += 's:@@EXAMPLE_INIT_D_DIR@@:$(EXAMPLE_INIT_D_DIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_INIT_D_DIR@@:$(EXAMPLE_INIT_D_DIR):g'
 
 
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
 RUNDIR ?= /run/pluto
-TRANSFORMS += 's:@@RUNDIR@@:$(RUNDIR):g'
+TRANSFORMS += -e 's:@@RUNDIR@@:$(RUNDIR):g'
 USERLAND_CFLAGS += -DIPSEC_RUNDIR=\"$(RUNDIR)\"
 
 # final configuration file
 IPSEC_CONF ?= $(SYSCONFDIR)/ipsec.conf
-TRANSFORMS += 's:@@IPSEC_CONF@@:$(IPSEC_CONF):g'
+TRANSFORMS += -e 's:@@IPSEC_CONF@@:$(IPSEC_CONF):g'
 USERLAND_CFLAGS += -DIPSEC_CONF=\"$(IPSEC_CONF)\"
 
 # final secrets file
 IPSEC_SECRETS ?= $(SYSCONFDIR)/ipsec.secrets
-TRANSFORMS += 's:@@IPSEC_SECRETS@@:$(IPSEC_SECRETS):g'
+TRANSFORMS += -e 's:@@IPSEC_SECRETS@@:$(IPSEC_SECRETS):g'
 USERLAND_CFLAGS += -DIPSEC_SECRETS=\"$(IPSEC_SECRETS)\"
 
 IPSEC_CONFDDIR ?= $(SYSCONFDIR)/ipsec.d
-TRANSFORMS += 's:@@IPSEC_CONFDDIR@@:$(IPSEC_CONFDDIR):g'
+TRANSFORMS += -e 's:@@IPSEC_CONFDDIR@@:$(IPSEC_CONFDDIR):g'
 USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(IPSEC_CONFDDIR)\"
 
 EXAMPLE_IPSEC_CONFDDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/ipsec.d
-TRANSFORMS += 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
 
 # libreswan's sample configuration files go into ...
 EXAMPLE_IPSEC_SYSCONFDIR ?= $(PREFIX)/share/doc/libreswan
-TRANSFORMS += 's:@@EXAMPLE_IPSEC_SYSCONFDIR@@:$(EXAMPLE_IPSEC_SYSCONFDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_IPSEC_SYSCONFDIR@@:$(EXAMPLE_IPSEC_SYSCONFDIR):g'
 
 # where per-conn pluto logs go
 VARDIR ?= /var
-TRANSFORMS += 's:@@VARDIR@@:$(VARDIR):g'
+TRANSFORMS += -e 's:@@VARDIR@@:$(VARDIR):g'
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(VARDIR)\"
 
 #
@@ -438,10 +438,10 @@ DEFAULT_LOGLEVEL ?= LOG_WARNING
 USERLAND_CFLAGS += -DDEFAULT_LOGLEVEL=$(DEFAULT_LOGLEVEL)
 
 LOGDIR ?= $(VARDIR)/log
-TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
+TRANSFORMS += -e 's:@@LOGDIR@@:$(LOGDIR):g'
 
 LOGFILE ?= $(LOGDIR)/pluto.log
-TRANSFORMS += 's:@@LOGFILE@@:$(LOGFILE):g'
+TRANSFORMS += -e 's:@@LOGFILE@@:$(LOGFILE):g'
 USERLAND_CFLAGS += -DLOGFILE='"$(LOGFILE)"'
 
 ifeq ($(USE_LOGFILE),true)
@@ -450,13 +450,13 @@ endif
 
 # Directory for logrotate config
 LOGROTATEDDIR ?= $(SYSCONFDIR)/logrotate.d
-TRANSFORMS += 's:@@LOGROTATEDDIR@@:$(LOGROTATEDDIR):g'
+TRANSFORMS += -e 's:@@LOGROTATEDDIR@@:$(LOGROTATEDDIR):g'
 EXAMPLE_LOGROTATEDDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/logrotate.d
-TRANSFORMS += 's:@@EXAMPLE_LOGROTATEDDIR@@:$(EXAMPLE_LOGROTATEDDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLE_LOGROTATEDDIR@@:$(EXAMPLE_LOGROTATEDDIR):g'
 
 # Where nss databases go
 NSSDIR ?= $(VARDIR)/lib/ipsec/nss
-TRANSFORMS += 's:@@IPSEC_NSSDIR@@:$(NSSDIR):g'
+TRANSFORMS += -e 's:@@IPSEC_NSSDIR@@:$(NSSDIR):g'
 USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(NSSDIR)\"
 
 # Where NSS programs live (well most of them, fedora hides vfychain,
@@ -465,7 +465,7 @@ ifndef NSS_BINDIR
 NSS_BINDIR := $(shell pkg-config --variable prefix nss)/bin
 export NSS_BINDIR
 endif
-TRANSFORMS += 's:@@NSS_BINDIR@@:$(NSS_BINDIR):g'
+TRANSFORMS += -e 's:@@NSS_BINDIR@@:$(NSS_BINDIR):g'
 USERLAND_CFLAGS += -DNSS_BINDIR=\"$(NSS_BINDIR)\"
 
 DOCKER_PLUTONOFORK ?= --nofork
@@ -632,16 +632,16 @@ export LIBRESWANLIB LSWTOOLLIB
 
 SED ?= sed
 TRANSFORM_VARIABLES = $(SED) \
-			-e "s:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g" \
-			-e "s:@@INITSYSTEM@@:$(INITSYSTEM):g" \
-			-e "s:@@IPSECVERSION@@:$(IPSECVERSION):g" \
-			-e "s:@@SD_PLUTO_OPTIONS@@:$(SD_PLUTO_OPTIONS):g" \
-			-e "s:@@SD_RESTART_TYPE@@:$(SD_RESTART_TYPE):g" \
-			-e "s:@@SD_TYPE@@:$(SD_TYPE):g" \
-			-e "s:@@SD_WATCHDOGSEC@@:$(SD_WATCHDOGSEC):g" \
-			-e "s:@@SHELL_BINARY@@:$(SHELL_BINARY):g" \
-			-e "s:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g" \
-			$(patsubst %, -e %, $(TRANSFORMS))
+			-e 's:@@DOCKER_PLUTONOFORK@@:$(DOCKER_PLUTONOFORK):g' \
+			-e 's:@@INITSYSTEM@@:$(INITSYSTEM):g' \
+			-e 's:@@IPSECVERSION@@:$(IPSECVERSION):g' \
+			-e 's:@@SD_PLUTO_OPTIONS@@:$(SD_PLUTO_OPTIONS):g' \
+			-e 's:@@SD_RESTART_TYPE@@:$(SD_RESTART_TYPE):g' \
+			-e 's:@@SD_TYPE@@:$(SD_TYPE):g' \
+			-e 's:@@SD_WATCHDOGSEC@@:$(SD_WATCHDOGSEC):g' \
+			-e 's:@@SHELL_BINARY@@:$(SHELL_BINARY):g' \
+			-e 's:@@USE_DEFAULT_CONNS@@:$(USE_DEFAULT_CONNS):g' \
+			$(TRANSFORMS)
 
 # computing checksums; debian things different
 CKSUM ?= cksum
@@ -769,7 +769,7 @@ ifeq ($(USE_CAT),true)
 USERLAND_CFLAGS += -DUSE_CAT
 endif
 
-TRANSFORMS += 's:@@USE_CAT@@:$(USE_CAT):g'
+TRANSFORMS += -e 's:@@USE_CAT@@:$(USE_CAT):g'
 
 #
 # Enable NFLOG; what ever that is.
@@ -781,7 +781,7 @@ ifeq ($(USE_NFLOG),true)
 USERLAND_CFLAGS += -DUSE_NFLOG
 endif
 
-TRANSFORMS += 's:@@USE_NFLOG@@:$(USE_NFLOG):g'
+TRANSFORMS += -e 's:@@USE_NFLOG@@:$(USE_NFLOG):g'
 
 #
 # IPTABLES vs NFTABLES
@@ -793,7 +793,7 @@ ifeq ($(USE_IPTABLES),true)
 USERLAND_CFLAGS += -DUSE_IPTABLES
 endif
 
-TRANSFORMS += 's:@@USE_IPTABLES@@:$(USE_IPTABLES):g'
+TRANSFORMS += -e 's:@@USE_IPTABLES@@:$(USE_IPTABLES):g'
 
 USE_NFTABLES ?= false
 
@@ -801,7 +801,7 @@ ifeq ($(USE_NFTABLES),true)
 USERLAND_CFLAGS += -DUSE_NFTABLES
 endif
 
-TRANSFORMS += 's:@@USE_NFTABLES@@:$(USE_NFTABLES):g'
+TRANSFORMS += -e 's:@@USE_NFTABLES@@:$(USE_NFTABLES):g'
 
 #
 # Check for conflicts between NFTABLES, IPTABLES, CAT and 
@@ -845,9 +845,9 @@ AUTHPAM_LDFLAGS ?= -lpam
 endif
 
 PAMCONFDIR ?= $(SYSCONFDIR)/pam.d
-TRANSFORMS += 's:@@PAMCONFDIR@@:$(PAMCONFDIR):g'
+TRANSFORMS += -e 's:@@PAMCONFDIR@@:$(PAMCONFDIR):g'
 EXAMPLE_PAMCONFDIR ?= $(EXAMPLE_IPSEC_SYSCONFDIR)/pam.d
-TRANSFORMS += 's:@@EXAMPLEPAMCONFDIR@@:$(EXAMPLE_PAMCONFDIR):g'
+TRANSFORMS += -e 's:@@EXAMPLEPAMCONFDIR@@:$(EXAMPLE_PAMCONFDIR):g'
 
 USE_EDDSA ?= true
 ifeq ($(USE_EDDSA),true)

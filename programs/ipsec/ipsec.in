@@ -515,17 +515,17 @@ ipsec_whack() {
 
 set_nss_db_trusts() {
     # has to handle a NSS nick with spaces
-    certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
+    @@CERTUTIL@@ -L -d "${IPSEC_NSSDIR_SQL}" | \
 	grep -E -v '(Trust Attributes|SSL,S/MIME,JAR/XPI|^)$' | \
 	awk '{$NF=""; print $0}' | \
 	while read -r cert
     do
-	if certutil -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | \
+	if @@CERTUTIL@@ -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | \
 	    grep -q 'Is a CA' && \
-	    [ $(certutil -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]
+	    [ $(@@CERTUTIL@@ -L -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]
 	then
 	    echo "correcting trust bits for ${cert}"
-	    certutil -M -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" -t 'CT,,'
+	    @@CERTUTIL@@ -M -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" -t 'CT,,'
 	fi
     done
 }
@@ -891,7 +891,7 @@ ipsec_import() {
 	    exit 1
 	fi
 
-	pk12util -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}"
+	@@PK12UTIL@@ -i "${pkcs12bundle}" -d "${IPSEC_NSSDIR_SQL}"
 	# check and correct trust bits
 	set_nss_db_trusts
 	exit 0
@@ -982,7 +982,7 @@ ipsec_checknss() {
 		echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
 		# this section works around a few certutil quirks
 		# to maintain the current password and merge keys
-		certutil -N -d sql:"${NSSTMP}" --empty-password
+		@@CERTUTIL@@ -N -d sql:"${NSSTMP}" --empty-password
 		if [ $? -gt 0 ]; then
 		    echo "Failed to initialize nss database sql:${NSSTMP}" >&2
 		    exit 4
@@ -1003,7 +1003,7 @@ ipsec_checknss() {
 		    printf "\n\n" > "${NSSTMP}/nsspassword2.txt"
 		    # Change blank pw to the current, and use
 		    # for certutil --upgrade-merge
-		    certutil -W -d sql:"${NSSTMP}" \
+		    @@CERTUTIL@@ -W -d sql:"${NSSTMP}" \
 			-f "${NSSTMP}/nsspassword2.txt" \
 			-@ "${NSSTMP}/nsspassword.txt"
 		    DBPW="-f ${NSSTMP}/nsspassword.txt -@ ${NSSTMP}/nsspassword.txt"
@@ -1011,7 +1011,7 @@ ipsec_checknss() {
 		fi
 		# restore umask
 		umask ${umask}
-		certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
+		@@CERTUTIL@@ --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 		    -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
 		rc=$?
 		if [ ${rc} -ne 0 ]; then
@@ -1024,7 +1024,7 @@ ipsec_checknss() {
 			if [ -f "${file}" ]; then
 			    filename=$(basename "${file}")
 			    name=${filename%%.*}
-			    certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
+			    @@CERTUTIL@@ -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
 			    [ $? -eq 0 ] || printf "%s\n" "${file}"
 			fi
 		    done
@@ -1032,7 +1032,7 @@ ipsec_checknss() {
 		if [ -d "${CRLDIR}" ]; then
 		    for file in "${CRLDIR}"/*; do
 			if [ -f "${file}" ]; then
-			    crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
+			    @@CRLUTIL@@ -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
 			    [ $? -eq 0 ] || printf "%s\n" "${file}"
 			fi
 		    done
@@ -1058,7 +1058,7 @@ ipsec_checknss() {
 	fi
 	echo "Initializing NSS database"
 	echo
-	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
+	@@CERTUTIL@@ -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
 	if [ $? -gt 0 ]; then
 	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
 	    exit 4
@@ -1080,16 +1080,27 @@ ipsec_nsscmd() {
     #
 
     if [ -z "${1}" ]; then
-	echo "Usage: ipsec {certutil|crlutil||pk12util|vfychain} ..." >&2
+	echo "Usage: ipsec {certutil|crlutil|pk12util|vfychain} ..." >&2
 	exit 1
     fi
 
-    # vfychain on Fedora isn't in the default path.
-    if [ -x "/usr/lib64/nss/unsupported-tools/${1}" ] ; then
-	cmd="/usr/lib64/nss/unsupported-tools/${1}"
-    else
-	cmd="${1}"
-    fi
+    # Use the configured path; vfychain on Fedora isn't in the default
+    # path (see linux.mk).
+    case "${1}" in
+	certutil ) cmd="@@CERTUTIL@@" ;;
+	crlutil ) cmd="@@CRLUTIL@@" ;;
+	modutil ) cmd="@@MODUTIL@@" ;;
+	pk12util ) cmd="@@PK12UTIL@@" ;;
+	vfychain ) cmd="@@VFYCHAIN@@" ;;
+	* ) cmd="${1}" ;; # barf?
+    esac
+
+    # modutil's nssdir option is different, ulgn
+    case "${1}" in
+	modutil ) nssdir="-dbdir ${IPSEC_NSSDIR}" ;;
+	* ) nssdir="-d ${IPSEC_NSSDIR}" ;;
+    esac
+
     shift	# drop the command
 
     # reject -d and --nssdir outright
@@ -1108,16 +1119,12 @@ ipsec_nsscmd() {
 	    ;;
     esac
 
-    # modutil's nssdir option is different, ulgn
-    case "${cmd}" in
-	modutil)
-	    exec ${dry_run} ${cmd} -dbdir ${IPSEC_NSSDIR} "${@}"
-	    ;;
-	*)
-	    exec ${dry_run} ${cmd} -d ${IPSEC_NSSDIR} "${@}"
-	    ;;
-    esac
-    # exec failed?
+    # Don't use EXEC.  With cmd="LD_LIBRARY_PATH=... command" exec
+    # tries to execute LD_LIBRARY_PATH=... which fails.
+    #
+    # Do use EVAL.  With cmd=LD_LIBRARY_PATH=... command" the shell
+    # tries to run "LD_LIBRARY_PATH=... command" which fails.
+    eval ${dry_run} ${cmd} ${nssdir} "${@}"
     exit $?
 }
 

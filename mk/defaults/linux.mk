@@ -61,6 +61,8 @@ ifneq ($(filter fedora,$(LINUX_VARIANT)),)
   USE_LINUX_AUDIT ?= true
   USE_SECCOMP ?= true
   USE_LABELED_IPSEC ?= true
+  # vfychain on Fedora isn't in the default path.
+  VFYCHAIN ?= /usr/lib64/nss/unsupported-tools/vfychain
 endif
 
 #
@@ -109,6 +111,7 @@ ifndef INITSYSTEM
     INITSYSTEM=sysvinit
   endif
 endif
+
 
 #
 # basic stuff (unless overridden by above)
