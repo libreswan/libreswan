@@ -206,12 +206,17 @@ struct finite_state {
 			const struct state_v1_microcode *transitions;
 		} v1;
 		struct {
-			const struct v2_transition *child_transition;
+			/*
+			 * The transition for the larval SAs being
+			 * created by CREATE_CHILD_SA.
+			 */
+			const struct v2_transition *larval_sa_transition;
 			const struct v2_exchanges {
 				const struct v2_exchange *const *list;
 				size_t len;
 			} ike_responder_exchanges;
-			bool secured; /* hence, exchanges must be integrity protected */
+			bool secured; /* hence, exchanges must be
+				       * integrity protected */
 		} v2;
 	};
 };

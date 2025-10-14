@@ -84,10 +84,10 @@ void set_larval_v2_transition(struct child_sa *larval,
 			      where_t where)
 {
 	const struct v2_transition *transition =
-		larval->sa.st_state->v2.child_transition;
+		larval->sa.st_state->v2.larval_sa_transition;
 	PASSERT_WHERE(larval->sa.logger, where, transition != NULL);
 	PEXPECT_WHERE(larval->sa.logger, where, larval->sa.st_state != NULL);
-	PEXPECT_WHERE(larval->sa.logger, where, larval->sa.st_state->v2.child_transition == transition);
+	PEXPECT_WHERE(larval->sa.logger, where, larval->sa.st_state->v2.larval_sa_transition == transition);
 	PEXPECT_WHERE(larval->sa.logger, where, transition->to == to);
 	set_v2_transition(&larval->sa, transition, where);
 }

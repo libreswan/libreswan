@@ -1330,7 +1330,7 @@ struct child_sa *new_v2_child_sa(struct connection *c,
 
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];
-	const struct v2_transition *transition = fs->v2.child_transition;
+	const struct v2_transition *transition = fs->v2.larval_sa_transition;
 	PASSERT(c->logger, transition != NULL);
 
 	/*

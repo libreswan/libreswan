@@ -69,7 +69,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest
 							 const struct payload_summary *summary,
 							 const struct ikev2_expected_payloads *payloads);
 
-#define V2_CHILD(KIND, STORY, CAT, ...)					\
+#define V2_LARVAL_SA(KIND, STORY, CAT, ...)				\
 									\
 	const struct finite_state state_v2_##KIND = {			\
 		.kind = STATE_V2_##KIND,				\
@@ -79,7 +79,7 @@ static struct ikev2_payload_errors ikev2_verify_payloads(const struct msg_digest
 		.story = STORY,						\
 		.category = CAT,					\
 		.ike_version = IKEv2,					\
-		.v2.child_transition = &v2_##KIND##_transition,		\
+		.v2.larval_sa_transition = &v2_##KIND##_transition,	\
 		##__VA_ARGS__,						\
 	}
 
@@ -169,7 +169,8 @@ static const struct v2_transition v2_REKEY_IKE_I0_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
+V2_LARVAL_SA(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0",
+	     CAT_IGNORE);
 
 static const struct v2_transition v2_REKEY_IKE_R0_transition = {
 	.story      = "process CREATE_CHILD_SA rekey IKE SA request (larval)",
@@ -178,7 +179,8 @@ static const struct v2_transition v2_REKEY_IKE_R0_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA);
+V2_LARVAL_SA(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0",
+	     CAT_OPEN_IKE_SA);
 
 static const struct v2_transition v2_REKEY_IKE_I1_transition = {
 	.story      = "process CREATE_CHILD_SA rekey IKE SA response (larval)",
@@ -187,7 +189,8 @@ static const struct v2_transition v2_REKEY_IKE_I1_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA",
+	     CAT_OPEN_CHILD_SA);
 
 /*
  * Child states when rekeying a Child SA using CREATE_CHILD_SA.
@@ -200,7 +203,8 @@ static const struct v2_transition v2_REKEY_CHILD_I0_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
+V2_LARVAL_SA(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0",
+	     CAT_IGNORE);
 
 static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
 	.story      = "process CREATE_CHILD_SA rekey Child SA request (larval)",
@@ -209,7 +213,8 @@ static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0",
+	     CAT_OPEN_CHILD_SA);
 
 static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
 	.story      = "process CREATE_CHILD_SA rekey Child SA response (larval)",
@@ -219,7 +224,8 @@ static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA",
+	     CAT_OPEN_CHILD_SA);
 
 /*
  * Child states when creating a new Child SA using CREATE_CHILD_SA.
@@ -232,7 +238,8 @@ static const struct v2_transition v2_NEW_CHILD_I0_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
+V2_LARVAL_SA(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0",
+	     CAT_IGNORE);
 
 static const struct v2_transition v2_NEW_CHILD_R0_transition = {
 	.story      = "process CREATE_CHLD_SA create Child SA request (larval)",
@@ -241,8 +248,8 @@ static const struct v2_transition v2_NEW_CHILD_R0_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
-	 CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
+	     CAT_OPEN_CHILD_SA);
 
 static const struct v2_transition v2_NEW_CHILD_I1_transition = {
 	.story      = "process CREATE_CHILD_SA create Child SA response (larval)",
@@ -251,8 +258,8 @@ static const struct v2_transition v2_NEW_CHILD_I1_transition = {
 	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
-V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
-	 CAT_OPEN_CHILD_SA);
+V2_LARVAL_SA(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
+	     CAT_OPEN_CHILD_SA);
 
 /*
  * IKEv2 established states.
@@ -940,8 +947,8 @@ static void vdbg_transition(struct verbose verbose,
 
 }
 
-static void validate_state_child_transition(struct verbose verbose,
-					    const struct v2_transition *t)
+static void validate_state_larval_sa_transition(struct verbose verbose,
+						const struct v2_transition *t)
 {
 	const struct finite_state *to = t->to;
 	vassert(to != NULL);
@@ -1055,17 +1062,17 @@ static void validate_state(struct verbose verbose, const struct finite_state *fr
 	 * Validate transitions XOR exchanges.  Can have at most one.
 	 */
 
-	vassert((from->v2.child_transition == NULL) ||
+	vassert((from->v2.larval_sa_transition == NULL) ||
 		(from->v2.ike_responder_exchanges.len == 0));
 
-	if (from->v2.child_transition != NULL) {
+	if (from->v2.larval_sa_transition != NULL) {
 		verbose.level = level;
 		vdbg("child transition:");
 		verbose.level++;
-		validate_state_child_transition(verbose, from->v2.child_transition);
+		validate_state_larval_sa_transition(verbose, from->v2.larval_sa_transition);
+		verbose.level = level;
 	}
 
-	verbose.level = level;
 	vdbg("exchanges:");
 	verbose.level++;
 	FOR_EACH_ITEM(exchange, &from->v2.ike_responder_exchanges) {
