@@ -523,7 +523,7 @@ static const struct v2_transition v2_INFORMATIONAL_mobike_initiate_transition = 
 static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] = {
 	{ .story      = "Informational Response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_mobike_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
@@ -534,6 +534,7 @@ static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] 
 
 const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.name = "INFORMATIONAL (MOBIKE probe)",
 	.exchange_subplot = " (MOBIKE probe)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },

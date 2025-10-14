@@ -1069,7 +1069,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 static const struct v2_transition v2_IKE_SESSION_RESUME_initiate_transition = {
 	.story      = "initiating IKE_SESSION_RESUME",
 	.to = &state_v2_IKE_SESSION_RESUME_I,
-	.exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	.exchange = &v2_IKE_SESSION_RESUME_exchange,
 	.processor  = NULL, /* XXX: should be set */
 	.llog_success = llog_success_ikev2_exchange_initiator,
 	.timeout_event = EVENT_v2_RETRANSMIT,
@@ -1078,7 +1078,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_initiate_transition = {
 static const struct v2_transition v2_IKE_SESSION_RESUME_responder_transition[] = {
 	{ .story      = "Respond to IKE_SESSION_RESUME",
 	  .to = &state_v2_IKE_SESSION_RESUME_R,
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(Ni) | v2P(N),
 	  .message_payloads.notification = v2N_TICKET_OPAQUE,
@@ -1091,7 +1091,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 
 	{ .story      = "received anti-DDOS COOKIE notify response; resending IKE_SESSION_RESUME request with cookie payload added",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0,
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_COOKIE, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_COOKIE,
@@ -1100,7 +1100,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 
 	{ .story      = "received REDIRECT notify response; aborting resumption and start IKE_SA_INIT request to new destination",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0, /* XXX: never happens STF_SUSPEND */
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_REDIRECT, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_REDIRECT,
@@ -1110,7 +1110,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 
 	{ .story      = "received TICKET_NACK notification response; aborting resumption and initiating IKE_SA_INIT exchange",
 	  .to = &state_v2_IKE_SESSION_RESUME_I0, /* XXX: never happens STF_SUSPEND */
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads = { .required = v2P(N), .notification = v2N_TICKET_NACK, },
 	  .processor  = process_v2_IKE_SESSION_RESUME_response_v2N_TICKET_NACK,
@@ -1120,7 +1120,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_response_transition[] = 
 
 	{ .story      = "Initiator: process incoming Session Resume Packet from Responder, initiate IKE_AUTH",
 	  .to = &state_v2_IKE_SESSION_RESUME_IR,
-	  .exchange   = ISAKMP_v2_IKE_SESSION_RESUME,
+	  .exchange = &v2_IKE_SESSION_RESUME_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(Nr),
 	  .processor  = process_v2_IKE_SESSION_RESUME_response,

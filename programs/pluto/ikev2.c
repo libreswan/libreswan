@@ -154,16 +154,10 @@ void llog_success_ikev2_exchange_initiator(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
 		jam_string(buf, " request to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 	}
-}
-
-void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange)
-{
-	jam_enum_short(buf, &ikev2_exchange_names, exchange->type);
-	jam_string(buf, exchange->exchange_subplot);
 }
 
 void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges)
@@ -176,7 +170,7 @@ void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges)
 		if (i == exchanges->len - 1) {
 			jam_string(buf, "or ");
 		}
-		jam_v2_exchange(buf, exchange);
+		jam_string(buf, exchange->name);
 	}
 }
 
@@ -186,7 +180,7 @@ void llog_success_ikev2_exchange_responder(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "responder processed ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
 		jam_string(buf, ", expecting ");
 		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 		jam_string(buf, " request");
@@ -199,7 +193,7 @@ void llog_success_ikev2_exchange_response(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_RESPONSE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "initiator processed ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
 		if (v2_msgid_request_pending(ike)) {
 			jam_string(buf, ", initiating ");
 			jam_v2_msgid_pending(buf, ike);
@@ -1946,7 +1940,7 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 	}
 	jam_string(buf, transition->to->short_name);
 	jam_string(buf, " (");
-	jam_enum_long(buf, &ikev2_exchange_names, transition->exchange);
+	jam_string(buf, transition->exchange->name);
 	jam_string(buf, " ");
 	jam_enum_long(buf, &message_role_names, transition->recv_role);
 	jam_string(buf, ": ");
@@ -1959,7 +1953,7 @@ bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_e
 	const struct finite_state *state = ike->sa.st_state;
 	LDBGP_JAMBUF(DBG_BASE, ike->sa.logger, buf) {
 		jam_string(buf, "looking for exchange ");
-		jam_v2_exchange(buf, exchange);
+		jam_string(buf, exchange->name);
 		jam_string(buf, " in state ");
 		jam_string(buf, state->short_name);
 	}

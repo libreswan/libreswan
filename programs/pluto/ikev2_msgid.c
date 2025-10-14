@@ -485,8 +485,8 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 	unsigned ranking = 0;
 	struct v2_msgid_pending **pp = &ike->sa.st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
-		if (exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL
-		    && (*pp)->exchange->initiate.transition->exchange != ISAKMP_v2_INFORMATIONAL) {
+		if (exchange->initiate.transition->exchange->type == ISAKMP_v2_INFORMATIONAL
+		    && (*pp)->exchange->initiate.transition->exchange->type != ISAKMP_v2_INFORMATIONAL) {
 			break;
 		}
 		ranking++;
@@ -512,8 +512,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 	if (stream != NO_STREAM) {
 		LLOG_JAMBUF(stream, logger, buf) {
 			jam_string(buf, "adding ");
-			jam_enum_short(buf, &ikev2_exchange_names,
-				       exchange->initiate.transition->exchange);
+			jam_string(buf, exchange->initiate.transition->exchange->name);
 			jam_string(buf, " request to IKE SA ");
 			jam_so(buf, ike->sa.st_serialno);
 			jam_string(buf, "'s message queue");
@@ -524,8 +523,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 				jam_string(buf, "; before ");
 				jam_so(buf, (*pp)->who_for);
 				jam_string(buf, "'s ");
-				jam_enum_short(buf, &ikev2_exchange_names,
-					       (*pp)->exchange->initiate.transition->exchange);
+				jam_string(buf, (*pp)->exchange->initiate.transition->exchange->name);
 				jam_string(buf, " exchange");
 			}
 		}
@@ -579,11 +577,9 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 
 		struct child_sa *child = child_sa_by_serialno(pending.child);
 		if (pending.child != SOS_NOBODY && child == NULL) {
-			name_buf xb;
 			dbg_v2_msgid(ike,
 				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
-				     str_enum_long(&ikev2_exchange_names,
-					      pending.exchange->initiate.transition->exchange, &xb),
+				     pending.exchange->initiate.transition->exchange->name,
 				     pri_so(pending.child), unack);
 			continue;
 		}
@@ -695,6 +691,6 @@ void jam_v2_msgid_pending(struct jambuf *buf, struct ike_sa *ike)
 				jam_string(buf, ", and ");
 			}
 		}
-		jam_v2_exchange(buf, p->exchange);
+		jam_string(buf, p->exchange->name);
 	}
 }

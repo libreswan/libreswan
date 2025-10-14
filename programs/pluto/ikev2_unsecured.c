@@ -481,7 +481,7 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 			     "dropping unexpected %s response with Message ID %jd, IKE SA in state %s is waiting for %s response",
 			     str_enum_short(&ikev2_exchange_names, md->hdr.isa_xchg, &xb), msgid,
 			     ike->sa.st_state->short_name,
-			     str_enum_short(&ikev2_exchange_names, outstanding_exchange->type, &xb));
+			     outstanding_exchange->name);
 		return;
 	}
 

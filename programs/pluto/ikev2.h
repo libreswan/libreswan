@@ -82,14 +82,15 @@ struct v2_transition {
 	} flags;
 
 	/*
-	 * The message type being exchanged.
+	 * The exchange being processed (type is in exchange->type).
+	 * There can be multiple exchanges with the same .type.
 	 *
 	 * Incoming message must match RECV_ROLE.
 	 *
 	 * When RECV_ROLE is NO_MESSAGE, the transition is for a new
 	 * exchange.
 	 */
-	const enum ikev2_exchange exchange;
+	const struct v2_exchange *exchange;
 	enum message_role recv_role;
 
 	/*
@@ -121,7 +122,12 @@ struct v2_transitions {
 };
 
 struct v2_exchange {
+	/*
+	 * Note: there can be multiple exchanges with the same type
+	 * (such as variants on CREATE_CHILD_SA and INFORMATIONAL).
+	 */
 	const enum ikev2_exchange type;
+	const char *name; /* e.g., IKE_AUTH (EAP) */
 	const char *exchange_subplot;
 	bool secured;
 	struct {
@@ -160,6 +166,7 @@ struct v2_exchange {
 									\
 	const struct v2_exchange v2_##KIND##_exchange = {		\
 		.type = ISAKMP_v2_##KIND,				\
+		.name = #KIND SUBPLOT,					\
 		.exchange_subplot = SUBPLOT,				\
 		.secured = SECURED,					\
 		.initiate.transition = &v2_##KIND##_initiate_transition, \
@@ -222,7 +229,6 @@ ikev2_llog_success_fn llog_success_ikev2_exchange_response;
 
 ikev2_llog_success_fn ldbg_success_ikev2;
 
-void jam_v2_exchange(struct jambuf *buf, const struct v2_exchange *exchange);
 void jam_v2_exchanges(struct jambuf *buf, const struct v2_exchanges *exchanges);
 
 bool accept_v2_notification(v2_notification_t n,

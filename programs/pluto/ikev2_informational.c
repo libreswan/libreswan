@@ -235,7 +235,7 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 
 	{ .story      = "Informational Request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange = &v2_INFORMATIONAL_exchange,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N) | v2P(CP),
@@ -247,6 +247,7 @@ static const struct v2_transition v2_INFORMATIONAL_responder_transition[] = {
 
 const struct v2_exchange v2_INFORMATIONAL_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.name = "INFORMATIONAL",
 	.exchange_subplot = "",
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.secured = true,
