@@ -165,7 +165,7 @@ static void jam_expected_payloads(struct jambuf *buf,
 static const struct v2_transition v2_REKEY_IKE_I0_transition = {
 	.story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
 	.to = &state_v2_REKEY_IKE_I1,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
@@ -173,7 +173,7 @@ V2_CHILD(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0", CAT_IGNORE);
 static const struct v2_transition v2_REKEY_IKE_R0_transition = {
 	.story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA);
@@ -181,7 +181,7 @@ V2_CHILD(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0", CAT_OPEN_IKE_SA);
 static const struct v2_transition v2_REKEY_IKE_I1_transition = {
 	.story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_CHILD_SA);
@@ -193,7 +193,7 @@ V2_CHILD(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA", CAT_OPEN_
 static const struct v2_transition v2_REKEY_CHILD_I0_transition = {
 	.story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
 	.to = &state_v2_REKEY_CHILD_I1,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
@@ -201,7 +201,7 @@ V2_CHILD(REKEY_CHILD_I0, "STATE_V2_REKEY_CHILD_I0", CAT_IGNORE);
 static const struct v2_transition v2_REKEY_CHILD_R0_transition = {
 	.story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(REKEY_CHILD_R0, "STATE_V2_REKEY_CHILD_R0", CAT_OPEN_CHILD_SA);
@@ -210,7 +210,7 @@ static const struct v2_transition v2_REKEY_CHILD_I1_transition = {
 	.story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
 	.flags = { .release_whack = true, },
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_OPEN_CHILD_SA);
@@ -222,7 +222,7 @@ V2_CHILD(REKEY_CHILD_I1, "sent CREATE_CHILD_SA request to rekey IPsec SA", CAT_O
 static const struct v2_transition v2_NEW_CHILD_I0_transition = {
 	.story      = "initiate create Child SA (CREATE_CHILD_SA)",
 	.to = &state_v2_NEW_CHILD_I1,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
@@ -230,7 +230,7 @@ V2_CHILD(NEW_CHILD_I0, "STATE_V2_NEW_CHILD_I0", CAT_IGNORE);
 static const struct v2_transition v2_NEW_CHILD_R0_transition = {
 	.story      = "process create Child SA request (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
@@ -239,7 +239,7 @@ V2_CHILD(NEW_CHILD_R0, "STATE_V2_NEW_CHILD_R0",
 static const struct v2_transition v2_NEW_CHILD_I1_transition = {
 	.story      = "process create Child SA response (CREATE_CHILD_SA)",
 	.to = &state_v2_ESTABLISHED_CHILD_SA,
-	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.exchange_type = ISAKMP_v2_CREATE_CHILD_SA,
 };
 
 V2_CHILD(NEW_CHILD_I1, "sent CREATE_CHILD_SA request for new IPsec SA",
@@ -406,10 +406,11 @@ static const struct v2_transition *find_v2_transition(struct verbose verbose,
 		verbose.level++;
 
 		/* message type? */
-		if (transition->exchange != md->hdr.isa_xchg) {
+		if (transition->exchange_type != md->hdr.isa_xchg) {
 			name_buf xb;
 			vdbg("exchange type does not match %s",
-				str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
+				str_enum_short(&ikev2_exchange_names,
+					       transition->exchange_type, &xb));
 			continue;
 		}
 
@@ -867,7 +868,7 @@ static void vdbg_transition(struct verbose verbose,
 
 	VDBG_JAMBUF(buf) {
 		jam_string(buf, "->");
-		jam_enum_short(buf, &ikev2_exchange_names, t->exchange);
+		jam_enum_short(buf, &ikev2_exchange_names, t->exchange_type);
 		jam_string(buf, "; ");
 		switch (t->recv_role) {
 		case NO_MESSAGE:
@@ -944,7 +945,7 @@ static void validate_state_child_transition(struct verbose verbose,
 		vassert(payloads->required == LEMPTY);
 		vassert(payloads->optional == LEMPTY);
 	}
-	vassert(t->exchange != 0);
+	vassert(t->exchange_type != 0);
 	vassert(t->recv_role == 0);
 	vassert(t->processor == NULL);
 	vassert(t->llog_success == NULL);
@@ -958,7 +959,7 @@ static void validate_state_exchange_transition(struct verbose verbose,
 	vdbg_transition(verbose, transition);
 	vassert(transition->llog_success != NULL);
 	vassert(transition->recv_role == recv_role);
-	vassert(transition->exchange == exchange->type);
+	vassert(transition->exchange_type == exchange->type);
 }
 
 static void validate_state_exchange(struct verbose verbose,
@@ -1022,7 +1023,7 @@ static void validate_state_exchange(struct verbose verbose,
 	/* does the exchange appear in the state's transitions? */
 	bool found_transition = false;
 	FOR_EACH_ITEM(t, &exchange->transitions.responder) {
-		if (t->exchange == exchange->type) {
+		if (t->exchange_type == exchange->type) {
 			found_transition = true;
 			break;
 		}

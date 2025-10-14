@@ -854,7 +854,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "process initial IKE_AUTH(EAP) request",
 	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange_type = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(IDi),
@@ -865,7 +865,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 
 	{ .story      = "process continuing IKE_AUTH(EAP) request",
 	  .to = &state_v2_IKE_AUTH_EAP_R,
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange_type = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(EAP),
@@ -876,7 +876,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	{ .story      = "process final IKE_AUTH(EAP) request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
-	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .exchange_type = ISAKMP_v2_IKE_AUTH,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(AUTH),

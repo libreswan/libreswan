@@ -485,8 +485,8 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 	unsigned ranking = 0;
 	struct v2_msgid_pending **pp = &ike->sa.st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
-		if (exchange->initiate.transition->exchange == ISAKMP_v2_INFORMATIONAL
-		    && (*pp)->exchange->initiate.transition->exchange != ISAKMP_v2_INFORMATIONAL) {
+		if (exchange->initiate.transition->exchange_type == ISAKMP_v2_INFORMATIONAL
+		    && (*pp)->exchange->initiate.transition->exchange_type != ISAKMP_v2_INFORMATIONAL) {
 			break;
 		}
 		ranking++;
@@ -513,7 +513,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 		LLOG_JAMBUF(stream, logger, buf) {
 			jam_string(buf, "adding ");
 			jam_enum_short(buf, &ikev2_exchange_names,
-				       exchange->initiate.transition->exchange);
+				       exchange->initiate.transition->exchange_type);
 			jam_string(buf, " request to IKE SA ");
 			jam_so(buf, ike->sa.st_serialno);
 			jam_string(buf, "'s message queue");
@@ -525,7 +525,7 @@ void v2_msgid_queue_exchange(struct ike_sa *ike, struct child_sa *child/*could-b
 				jam_so(buf, (*pp)->who_for);
 				jam_string(buf, "'s ");
 				jam_enum_short(buf, &ikev2_exchange_names,
-					       (*pp)->exchange->initiate.transition->exchange);
+					       (*pp)->exchange->initiate.transition->exchange_type);
 				jam_string(buf, " exchange");
 			}
 		}
@@ -583,7 +583,8 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			dbg_v2_msgid(ike,
 				     "cannot initiate %s exchange for "PRI_SO" as Child SA disappeared (unack %jd)",
 				     str_enum_long(&ikev2_exchange_names,
-					      pending.exchange->initiate.transition->exchange, &xb),
+						   pending.exchange->initiate.transition->exchange_type,
+						   &xb),
 				     pri_so(pending.child), unack);
 			continue;
 		}

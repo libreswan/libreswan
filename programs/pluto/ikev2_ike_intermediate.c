@@ -1177,7 +1177,8 @@ static void llog_success_initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_enum_short(buf, &ikev2_exchange_names,
+			       ike->sa.st_v2_transition->exchange_type);
 		jam_string(buf, " request to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_ike_intermediate_details(buf, ike);
@@ -1190,7 +1191,8 @@ static void llog_success_process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "responder processed ");
-		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_enum_short(buf, &ikev2_exchange_names,
+			       ike->sa.st_v2_transition->exchange_type);
 		jam_ike_intermediate_details(buf, ike);
 		jam_string(buf, ", expecting ");
 		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
@@ -1201,7 +1203,7 @@ static void llog_success_process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.to = &state_v2_IKE_INTERMEDIATE_I,
-	.exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	.exchange_type = ISAKMP_v2_IKE_INTERMEDIATE,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
 	.llog_success = llog_success_initiate_v2_IKE_INTERMEDIATE_request,
 	.timeout_event = EVENT_v2_RETRANSMIT,
@@ -1211,7 +1213,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
-	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .exchange_type = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(KE)|v2P(N/*PPK_IDENTITY*/),
@@ -1224,7 +1226,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
 	  .to = &state_v2_IKE_INTERMEDIATE_IR,
-	  .exchange   = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .exchange_type = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(KE)|v2P(N/*PPK_IDENTITY*/),

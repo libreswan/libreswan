@@ -89,7 +89,7 @@ struct v2_transition {
 	 * When RECV_ROLE is NO_MESSAGE, the transition is for a new
 	 * exchange.
 	 */
-	const enum ikev2_exchange exchange;
+	const enum ikev2_exchange exchange_type;
 	enum message_role recv_role;
 
 	/*

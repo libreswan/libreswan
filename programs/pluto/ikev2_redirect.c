@@ -663,7 +663,7 @@ static stf_status process_v2_INFORMATIONAL_v2N_REDIRECT_response(struct ike_sa *
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transition = {
 	.story = "redirect IKE SA",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
-	.exchange = ISAKMP_v2_INFORMATIONAL,
+	.exchange_type = ISAKMP_v2_INFORMATIONAL,
 	.processor = send_v2_INFORMATIONAL_v2N_REDIRECT_request,
 	.llog_success = ldbg_success_ikev2,
 	.timeout_event =  EVENT_RETAIN,
@@ -672,7 +672,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_initiate_transit
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transition[] = {
 	{ .story      = "Informational Request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(N),
@@ -685,7 +685,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_responder_transi
 static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transition[] = {
 	{ .story      = "Informational Response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .exchange   = ISAKMP_v2_INFORMATIONAL,
+	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N),
