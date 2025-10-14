@@ -50,9 +50,6 @@ For Debian / Ubuntu / Mint
       libpam0g-dev libcap-ng-dev libldns-dev xmlto \
       libcurl4-openssl-dev
 
-apt-get install build-essential pkg-config \
-      bison fles
-
 For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
 
     dnf install audit-libs-devel bison curl-devel flex \
