@@ -14,7 +14,7 @@ ipsec whack --no-impair block_outbound
 
 # wait for the child SA's stalled crypto to complete and then get
 # added to the IKE SA's message queue
-../../guestbin/wait-for-pluto.sh '#3: adding CREATE_CHILD_SA request'
+../../guestbin/wait-for-pluto.sh '#3: adding CREATE_CHILD_SA .* request'
 
 # Now release the delete! The IKE SA and its child will die but ...
 ipsec whack --impair drip_outbound:1
