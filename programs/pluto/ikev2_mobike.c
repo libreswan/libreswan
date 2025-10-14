@@ -524,7 +524,6 @@ static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] 
 	{ .story      = "Informational Response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange = &v2_INFORMATIONAL_mobike_exchange,
-	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(N) | v2P(CP),

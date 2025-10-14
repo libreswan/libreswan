@@ -53,7 +53,7 @@ void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 		return;
 	}
 
-	pexpect(exchange->initiate.transition->exchange_type == ISAKMP_v2_INFORMATIONAL);
+	pexpect(exchange->initiate.transition->exchange->type == ISAKMP_v2_INFORMATIONAL);
 	v2_msgid_queue_exchange(ike, NULL, exchange);
 }
 
@@ -366,7 +366,6 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition 
 	.story = "liveness probe",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = &v2_INFORMATIONAL_liveness_exchange,
-	.exchange_type = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_liveness_request,
 	.llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
 	.timeout_event =  EVENT_RETAIN,
@@ -376,7 +375,6 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition
 	{ .story      = "Informational Request (liveness probe)",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange = &v2_INFORMATIONAL_liveness_exchange,
-	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  /* strictly match empty message */
@@ -393,7 +391,6 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
 	  .exchange = &v2_INFORMATIONAL_liveness_exchange,
-	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .processor  = process_v2_INFORMATIONAL_liveness_response,

@@ -237,7 +237,7 @@ void llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request(struct ike_sa *ike,
 void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 {
 	const struct v2_exchange *exchange = &v2_INFORMATIONAL_v2DELETE_exchange;
-	pexpect(exchange->initiate.transition->exchange_type == ISAKMP_v2_INFORMATIONAL);
+	pexpect(exchange->initiate.transition->exchange->type == ISAKMP_v2_INFORMATIONAL);
 	if (child == NULL) {
 		/*
 		 * IKE SA is no longer viable - reviving Child SA's
@@ -557,7 +557,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition 
 	.story = "initiate Informational Delete IKE or Child SA",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
 	.exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
-	.exchange_type = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.llog_success = llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.timeout_event =  EVENT_RETAIN,
@@ -567,7 +566,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_responder_transition
 	{ .story      = "process Informational Delete IKE or Child SA request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
-	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(D),
@@ -581,7 +579,6 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[
 	{ .story      = "process Informational Delete IKE or Child SA response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
-	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.optional = v2P(D),

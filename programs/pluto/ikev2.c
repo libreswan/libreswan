@@ -155,7 +155,7 @@ void llog_success_ikev2_exchange_initiator(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
 		jam_enum_short(buf, &ikev2_exchange_names,
-			       ike->sa.st_v2_transition->exchange_type);
+			       ike->sa.st_v2_transition->exchange->type);
 		jam_string(buf, " request to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 	}
@@ -188,7 +188,7 @@ void llog_success_ikev2_exchange_responder(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "responder processed ");
 		jam_enum_short(buf, &ikev2_exchange_names,
-			       ike->sa.st_v2_transition->exchange_type);
+			       ike->sa.st_v2_transition->exchange->type);
 		jam_string(buf, ", expecting ");
 		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);
 		jam_string(buf, " request");
@@ -202,7 +202,7 @@ void llog_success_ikev2_exchange_response(struct ike_sa *ike,
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "initiator processed ");
 		jam_enum_short(buf, &ikev2_exchange_names,
-			       ike->sa.st_v2_transition->exchange_type);
+			       ike->sa.st_v2_transition->exchange->type);
 		if (v2_msgid_request_pending(ike)) {
 			jam_string(buf, ", initiating ");
 			jam_v2_msgid_pending(buf, ike);
@@ -1949,7 +1949,7 @@ void jam_v2_transition(struct jambuf *buf, const struct v2_transition *transitio
 	}
 	jam_string(buf, transition->to->short_name);
 	jam_string(buf, " (");
-	jam_enum_long(buf, &ikev2_exchange_names, transition->exchange_type);
+	jam_enum_long(buf, &ikev2_exchange_names, transition->exchange->type);
 	jam_string(buf, " ");
 	jam_enum_long(buf, &message_role_names, transition->recv_role);
 	jam_string(buf, ": ");

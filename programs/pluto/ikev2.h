@@ -82,19 +82,15 @@ struct v2_transition {
 	} flags;
 
 	/*
-	 * Backlink to exchange that this transition is a member of.
-	 */
-	const struct v2_exchange *exchange;
-
-	/*
-	 * The message type being exchanged.
+	 * The exchange being processed (type is in exchange->type).
+	 * There can be multiple exchanges with the same .type.
 	 *
 	 * Incoming message must match RECV_ROLE.
 	 *
 	 * When RECV_ROLE is NO_MESSAGE, the transition is for a new
 	 * exchange.
 	 */
-	const enum ikev2_exchange exchange_type;
+	const struct v2_exchange *exchange;
 	enum message_role recv_role;
 
 	/*
@@ -126,6 +122,10 @@ struct v2_transitions {
 };
 
 struct v2_exchange {
+	/*
+	 * Note: there can be multiple exchanges with the same type
+	 * (such as variants on CREATE_CHILD_SA and INFORMATIONAL).
+	 */
 	const enum ikev2_exchange type;
 	const char *exchange_subplot;
 	bool secured;
