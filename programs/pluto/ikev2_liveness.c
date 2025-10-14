@@ -365,6 +365,7 @@ stf_status process_v2_INFORMATIONAL_liveness_response(struct ike_sa *ike,
 static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition = {
 	.story = "liveness probe",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_INFORMATIONAL_liveness_exchange,
 	.exchange_type = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_liveness_request,
 	.llog_success = ldbg_success_ikev2, /* shhh, don't clutter up logs with LIVENESS */
@@ -374,6 +375,7 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_initiate_transition 
 static const struct v2_transition v2_INFORMATIONAL_liveness_responder_transition[] = {
 	{ .story      = "Informational Request (liveness probe)",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange = &v2_INFORMATIONAL_liveness_exchange,
 	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
@@ -390,6 +392,7 @@ static const struct v2_transition v2_INFORMATIONAL_liveness_response_transition[
 	{ .story      = "Informational Response (liveness probe)",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
 	  .flags = { .release_whack = true, },
+	  .exchange = &v2_INFORMATIONAL_liveness_exchange,
 	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),

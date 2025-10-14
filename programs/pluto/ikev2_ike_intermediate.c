@@ -1203,6 +1203,7 @@ static void llog_success_process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 static const struct v2_transition v2_IKE_INTERMEDIATE_initiate_transition = {
 	.story      = "initiating IKE_INTERMEDIATE",
 	.to = &state_v2_IKE_INTERMEDIATE_I,
+	.exchange = &v2_IKE_INTERMEDIATE_exchange,
 	.exchange_type = ISAKMP_v2_IKE_INTERMEDIATE,
 	.processor  = initiate_v2_IKE_INTERMEDIATE_request,
 	.llog_success = llog_success_initiate_v2_IKE_INTERMEDIATE_request,
@@ -1213,6 +1214,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 
 	{ .story      = "Responder: process IKE_INTERMEDIATE request",
 	  .to = &state_v2_IKE_INTERMEDIATE_R,
+	  .exchange = &v2_IKE_INTERMEDIATE_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
@@ -1226,6 +1228,7 @@ static const struct v2_transition v2_IKE_INTERMEDIATE_responder_transition[] = {
 static const struct v2_transition v2_IKE_INTERMEDIATE_response_transition[] = {
 	{ .story      = "processing IKE_INTERMEDIATE response",
 	  .to = &state_v2_IKE_INTERMEDIATE_IR,
+	  .exchange = &v2_IKE_INTERMEDIATE_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_INTERMEDIATE,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),

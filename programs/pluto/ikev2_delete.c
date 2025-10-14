@@ -556,6 +556,7 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition = {
 	.story = "initiate Informational Delete IKE or Child SA",
 	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
 	.exchange_type = ISAKMP_v2_INFORMATIONAL,
 	.processor = initiate_v2_INFORMATIONAL_v2DELETE_request,
 	.llog_success = llog_success_initiate_v2_INFORMATIONAL_v2DELETE_request,
@@ -565,6 +566,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_initiate_transition 
 static const struct v2_transition v2_INFORMATIONAL_v2DELETE_responder_transition[] = {
 	{ .story      = "process Informational Delete IKE or Child SA request",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
 	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SK),
@@ -578,6 +580,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2DELETE_response_transition[
 
 	{ .story      = "process Informational Delete IKE or Child SA response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
+	  .exchange = &v2_INFORMATIONAL_v2DELETE_exchange,
 	  .exchange_type = ISAKMP_v2_INFORMATIONAL,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),

@@ -18,6 +18,8 @@
 
 struct v2SK_payload;
 
+extern const struct v2_exchange v2_INFORMATIONAL_mobike_exchange;
+
 extern void ikev2_addr_change(struct state *st);
 
 extern void record_deladdr(ip_address *ip, char *a_type, struct logger *logger);

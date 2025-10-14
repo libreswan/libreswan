@@ -82,6 +82,11 @@ struct v2_transition {
 	} flags;
 
 	/*
+	 * Backlink to exchange that this transition is a member of.
+	 */
+	const struct v2_exchange *exchange;
+
+	/*
 	 * The message type being exchanged.
 	 *
 	 * Incoming message must match RECV_ROLE.

@@ -1378,6 +1378,7 @@ static const struct v2_transition v2_IKE_SA_INIT_initiate_transition = {
 	 */
 	.story      = "initiating IKE_SA_INIT",
 	.to = &state_v2_IKE_SA_INIT_I,
+	.exchange = &v2_IKE_SA_INIT_exchange,
 	.exchange_type   = ISAKMP_v2_IKE_SA_INIT,
 	.processor  = NULL, /* XXX: should be set */
 	.llog_success = llog_success_ikev2_exchange_initiator,
@@ -1391,6 +1392,7 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	 */
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .to = &state_v2_IKE_SA_INIT_R,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
@@ -1408,6 +1410,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
 	  .to = &state_v2_IKE_SA_INIT_I0,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
@@ -1418,6 +1421,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
 	  .to = &state_v2_IKE_SA_INIT_I0,
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
@@ -1428,6 +1432,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
 	  .to = &state_v2_IKE_SA_INIT_I0, /* XXX: never happens STF_SUSPEND */
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(N),
@@ -1445,6 +1450,7 @@ static const struct v2_transition v2_IKE_SA_INIT_response_transition[] = {
 	 */
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
 	  .to = &state_v2_IKE_SA_INIT_IR, /* next exchange does IKE_AUTH | IKE_INTERMEDIATE */
+	  .exchange = &v2_IKE_SA_INIT_exchange,
 	  .exchange_type = ISAKMP_v2_IKE_SA_INIT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Nr),
