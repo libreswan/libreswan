@@ -50,6 +50,19 @@ ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   ifeq ($(LINUX_VERSION_CODENAME),trixie) # Debian 13; until June 30 2030
     USE_XFRM_HEADER_COPY ?= true
   endif
+  # https://releases.ubuntu.com/
+  ifeq ($(LINUX_VERSION_CODENAME),focal) # Ubuntu 20.04.6 LTS
+    USE_ML_KEM_768 ?= false
+    USE_XFRM_HEADER_COPY ?= true
+  endif
+  ifeq ($(LINUX_VERSION_CODENAME),jammy) # Ubuntu 22.04.5 LTS
+    USE_ML_KEM_768 ?= false
+    USE_XFRM_HEADER_COPY ?= true
+  endif
+  ifeq ($(LINUX_VERSION_CODENAME),noble) # Ubuntu 24.04.3 LTS
+    USE_ML_KEM_768 ?= false
+    USE_XFRM_HEADER_COPY ?= true
+  endif
 endif
 
 #
