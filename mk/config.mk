@@ -513,6 +513,20 @@ NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
 SSL_LDFLAGS ?= -lssl3
 
+# NSS's command line utilities
+
+CERTUTIL ?= certutil
+CRLUTIL  ?= crlutil
+MODUTIL  ?= modutil
+PK12UTIL ?= pk12util
+VFYCHAIN ?= vfychain
+
+TRANSFORMS += -e 's:@@CERTUTIL@@:$(CERTUTIL):g'
+TRANSFORMS += -e 's:@@CRLUTIL@@:$(CRLUTIL):g'
+TRANSFORMS += -e 's:@@MODUTIL@@:$(MODUTIL):g'
+TRANSFORMS += -e 's:@@PK12UTIL@@:$(PK12UTIL):g'
+TRANSFORMS += -e 's:@@VFYCHAIN@@:$(VFYCHAIN):g'
+
 # -levent can mean two things?
 LIBEVENT_LDFLAGS ?= -levent_core -levent_pthreads
 
