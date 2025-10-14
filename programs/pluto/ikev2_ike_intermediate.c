@@ -1177,8 +1177,7 @@ static void llog_success_initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == NO_MESSAGE);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "sent ");
-		jam_enum_short(buf, &ikev2_exchange_names,
-			       ike->sa.st_v2_transition->exchange->type);
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
 		jam_string(buf, " request to ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &ike->sa.st_remote_endpoint);
 		jam_ike_intermediate_details(buf, ike);
@@ -1191,8 +1190,7 @@ static void llog_success_process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	PEXPECT(ike->sa.logger, v2_msg_role(md) == MESSAGE_REQUEST);
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
 		jam_string(buf, "responder processed ");
-		jam_enum_short(buf, &ikev2_exchange_names,
-			       ike->sa.st_v2_transition->exchange->type);
+		jam_string(buf, ike->sa.st_v2_transition->exchange->name);
 		jam_ike_intermediate_details(buf, ike);
 		jam_string(buf, ", expecting ");
 		jam_v2_exchanges(buf, &ike->sa.st_state->v2.ike_responder_exchanges);

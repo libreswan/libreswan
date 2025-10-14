@@ -696,6 +696,7 @@ static const struct v2_transition v2_INFORMATIONAL_v2N_REDIRECT_response_transit
 
 const struct v2_exchange v2_INFORMATIONAL_v2N_REDIRECT_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
+	.name = "INFORMATIONAL (redirect IKE SA)",
 	.exchange_subplot = " (redirect IKE SA)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },

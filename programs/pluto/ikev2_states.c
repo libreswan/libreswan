@@ -517,7 +517,7 @@ static const struct v2_transition *find_v2_exchange_transition(struct verbose ve
 		verbose.level = level;
 		VDBG_JAMBUF(buf) {
 			jam_string(buf, "trying exchange ");
-			jam_v2_exchange(buf, exchange);
+			jam_string(buf, exchange->name);
 			jam_string(buf, " ...");
 		}
 		verbose.level++;
@@ -744,7 +744,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 		}
 		VDBG_JAMBUF(buf) {
 			jam_string(buf, "plausible; exchange type matches responder exchange ");
-			jam_v2_exchange(buf, exchange);
+			jam_string(buf, exchange->name);
 		}
 		break;
 	case MESSAGE_RESPONSE:
@@ -757,14 +757,14 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 				jam_string(buf, "unexpected ");
 				jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
 				jam_string(buf, " response, expecting ");
-				jam_v2_exchange(buf, exchange);
+				jam_string(buf, exchange->name);
 				jam_string(buf, "; message dropped");
 			}
 			return false;
 		}
 		VDBG_JAMBUF(buf) {
 			jam_string(buf, "plausible; exchange type matches outstanding exchange ");
-			jam_v2_exchange(buf, exchange);
+			jam_string(buf, exchange->name);
 		}
 		break;
 	}
@@ -774,7 +774,7 @@ bool is_plausible_secured_v2_exchange(struct ike_sa *ike, struct msg_digest *md)
 	 */
 	if (!exchange->secured) {
 		LLOG_PEXPECT_JAMBUF(ike->sa.logger, HERE, buf) {
-			jam_v2_exchange(buf, exchange);
+			jam_string(buf, exchange->name);
 			jam_string(buf, " (");
 			jam_enum_short(buf, &message_role_names, role);
 			jam_string(buf, ") exchange should be secured");
@@ -866,6 +866,17 @@ void jam_v2_payload_errors(struct jambuf *buf, const struct msg_digest *md,
 	jam_string(buf, ")");
 }
 
+static void jam_v2_exchange_name(struct jambuf *buf, const struct v2_exchange *exchange, struct verbose verbose)
+{
+	if (vbad(exchange->name == NULL)) {
+		jam_enum_short(buf, &ikev2_exchange_names, exchange->type);
+		return;
+	}
+
+	jam_string(buf, exchange->name);
+	return;
+}
+
 static void vdbg_transition(struct verbose verbose,
 			    const struct v2_transition *t)
 {
@@ -875,7 +886,8 @@ static void vdbg_transition(struct verbose verbose,
 
 	VDBG_JAMBUF(buf) {
 		jam_string(buf, "->");
-		jam_enum_short(buf, &ikev2_exchange_names, t->exchange->type);
+		vassert(t->exchange->name != NULL);
+		jam_v2_exchange_name(buf, t->exchange, verbose);
 		jam_string(buf, "; ");
 		switch (t->recv_role) {
 		case NO_MESSAGE:
@@ -976,7 +988,7 @@ static void validate_state_exchange(struct verbose verbose,
 {
 	VDBG_JAMBUF(buf) {
 		jam_string(buf, "=>");
-		jam_v2_exchange(buf, exchange);
+		jam_v2_exchange_name(buf, exchange, verbose);
 		jam_string(buf, "; secured: ");
 		jam_bool(buf, exchange->secured);
 	}
@@ -1020,7 +1032,15 @@ static void validate_state_exchange(struct verbose verbose,
 	}
 
 	verbose.level = level;
+
+	vassert(exchange->name != NULL);
+	name_buf exchange_name;
+	enum_short(&ikev2_exchange_names, exchange->type, &exchange_name);
+	shunk_t name = shunk1(exchange->name);
+	vassert(hunk_streat(&name, exchange_name.buf));
+
 	vassert(exchange->exchange_subplot != NULL);
+	vassert(hunk_streq(name, exchange->exchange_subplot));
 	if (strlen(exchange->exchange_subplot) > 0) {
 		/* " (...)" */
 		vassert(startswith(exchange->exchange_subplot, " ("));
