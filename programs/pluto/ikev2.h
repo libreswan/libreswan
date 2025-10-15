@@ -114,6 +114,10 @@ struct v2_transition {
 	 * responder, and the response.
 	 */
 	ikev2_llog_success_fn *llog_success;
+	/*
+	 * Log the start of the transition.
+	 */
+	bool log_transition_start;
 };
 
 struct v2_transitions {
@@ -141,7 +145,8 @@ struct v2_exchange {
 };
 
 #define V2_EXCHANGE(KIND, SUBPLOT,					\
-		    I_CAT, IR_CAT, SECURED,				\
+		    I_CAT, IR_CAT,					\
+		    SECURED,						\
 		    ...)						\
 									\
 	const struct finite_state state_v2_##KIND##_I = {		\

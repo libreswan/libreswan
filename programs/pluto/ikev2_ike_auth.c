@@ -505,14 +505,6 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 		return STF_IGNORE;
 	}
 
-	/*
-	 * This log line establishes that the packet's been decrypted
-	 * and now it is being processed for real.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
-
 	if (ike->sa.st_v2_resume_session != NULL) {
 		ldbg(ike->sa.logger, "resuming, skipping cert decode");
 		return process_v2_IKE_AUTH_request_skip_cert_decode(ike, md);
@@ -1190,14 +1182,6 @@ static stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike,
 					       struct msg_digest *md)
 {
 	/*
-	 * This log line establishes that the packet's been decrypted
-	 * and now it is being processed for real.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
-
-	/*
 	 * If the initiator rejects the responders authentication it
 	 * should immediately send a delete notification and wipe the SA.
 	 */
@@ -1648,6 +1632,7 @@ static const struct v2_transition v2_IKE_AUTH_responder_transition[] = {
 	  .encrypted_payloads.required = v2P(IDi) | v2P(AUTH),
 	  .encrypted_payloads.optional = v2P(CERT) | v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
+	  .log_transition_start = true,
 	  .llog_success = ldbg_success_ikev2,
 	  .timeout_event = EVENT_v2_REPLACE, },
 
@@ -1676,13 +1661,14 @@ static const struct v2_transition v2_IKE_AUTH_response_transition[] = {
 
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .to = &state_v2_ESTABLISHED_IKE_SA,
-	  .flags = { .release_whack = true, },
+	  .flags.release_whack = true,
 	  .exchange = &v2_IKE_AUTH_exchange,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .message_payloads.required = v2P(SK),
 	  .encrypted_payloads.required = v2P(IDr) | v2P(AUTH),
 	  .encrypted_payloads.optional = v2P(CERT) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_response,
+	  .log_transition_start = true,
 	  .llog_success = ldbg_success_ikev2,/* logged mid transition */
 	  .timeout_event = EVENT_v2_REPLACE,
 	},

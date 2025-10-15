@@ -904,6 +904,9 @@ static void vdbg_transition(struct verbose verbose,
 			bad_case(t->recv_role);
 		}
 		jam_string(buf, "; ");
+		jam_string(buf, "log transition start: ");
+		jam_bool(buf, t->log_transition_start);
+		jam_string(buf, "; ");
 		jam_string(buf, "payloads: ");
 		FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
 			if (payloads->required == LEMPTY &&
