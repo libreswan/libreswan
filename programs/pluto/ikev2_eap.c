@@ -64,6 +64,12 @@ static v2_auth_signature_cb process_v2_IKE_AUTH_request_EAP_start_signature_cont
 
 struct eap_state {
 	struct logger    *logger;
+	/*
+	 * Client's IKE_AUTH packet that triggered EAP.  It contains
+	 * IDi and TS[ir].
+	 */
+	struct msg_digest *first_v2_IKE_AUTH_request;
+
 	uint8_t          eap_id;
 	uint8_t          eap_established;
 
@@ -208,34 +214,39 @@ static void eaptls_handshake_cb(PRFileDesc *fd UNUSED, void *client_data)
 	eap->eap_established = 1;
 }
 
-static struct eap_state *alloc_eap_state(struct logger *logger)
+static struct eap_state *alloc_eap_state(struct logger *logger,
+					 struct msg_digest *first_v2_IKE_AUTH_request)
 {
 	struct eap_state *eap = alloc_thing(struct eap_state, "EAP state");
 	eap->logger = logger;
+	eap->first_v2_IKE_AUTH_request = md_addref(first_v2_IKE_AUTH_request);
 	return eap;
 }
 
 void free_eap_state(struct eap_state **_eap)
 {
 	struct eap_state *eap = *_eap;
-	if (eap == NULL)
+	if (eap == NULL) {
 		return;
+	}
 
 	if (eap->eaptls_desc) PR_Close(eap->eaptls_desc);
 	free_chunk_content(&eap->eaptls_chunk);
+
+	md_delref(&eap->first_v2_IKE_AUTH_request);
 
 	pfree(eap);
 	*_eap = NULL;
 }
 
-
-static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
+static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs,
+		      struct msg_digest *md)
 {
 	struct logger *logger = ike->sa.logger;
 	struct eap_state *eap;
 	struct pbs_out pb_eap;
 
-	eap = alloc_eap_state(logger);
+	eap = alloc_eap_state(logger, md);
 	ike->sa.st_eap = eap;
 
 	struct ikev2_generic ie = {
@@ -571,16 +582,13 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 		}
 	}
 
-	if (!start_eap(ike, response.pbs)) {
+	if (!start_eap(ike, response.pbs, md)) {
 		goto auth_fail;
 	}
 
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-
-	/* remember the original message with child sa etc. parameters */
-	ike->sa.st_eap_sa_md = md_addref(md);
 
 	return STF_OK;
 
@@ -675,11 +683,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 {
 	static const char key_pad_str[] = "client EAP encryption"; /* EAP-TLS RFC 5216 */
 	struct eap_state *eap = ike->sa.st_eap;
-	struct msg_digest *sa_md = ike->sa.st_eap_sa_md;
 	struct logger *logger = ike->sa.logger;
 
 	pexpect(eap != NULL);
-	pexpect(sa_md != NULL);
+	pexpect(eap->first_v2_IKE_AUTH_request != NULL);
 
 	if (!eap->eap_established)
 		return STF_FATAL;
@@ -702,7 +709,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 				     key_pad_str, sizeof(key_pad_str) - 1,
 				     PR_FALSE, NULL, 0,
 				     msk.ptr, msk.len) != SECSuccess) {
-		free_eap_state(&ike->sa.st_eap);
 		llog_nss_error(RC_LOG, logger, "Keying material export failed");
 		return STF_FATAL;
 	}
@@ -718,7 +724,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
 						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						   &msk);
-	free_eap_state(&ike->sa.st_eap);
+
 	if (d != NULL) {
 		llog(RC_LOG, ike->sa.logger, "%s", str_diag(d));
 		pfree_diag(&d);
@@ -769,10 +775,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	/*
-	 * EAP only does PSK!
+	 * EAP only does PSK?!?
 	 */
 
-	enum auth local_authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
+	enum auth local_authby = AUTH_PSK;
 	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, local_authby);
 	if (!PEXPECT(ike->sa.logger, (local_auth_method == IKEv2_AUTH_SHARED_KEY_MAC ||
 				      local_auth_method == IKEv2_AUTH_NULL))) {
@@ -831,7 +837,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	md_delref(&ike->sa.st_eap_sa_md);
+	free_eap_state(&ike->sa.st_eap);
 	return STF_OK;
 }
 

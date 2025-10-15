@@ -595,7 +595,6 @@ struct state {
 	PK11SymKey *st_skey_pr_nss;	/* v2 PPK for responder */
 
 	struct eap_state  *st_eap;	/* v2 EAP */
-	struct msg_digest *st_eap_sa_md; /* v2 EAP initial message with SA request */
 
 	chunk_t st_skey_initiator_salt;	/* v2 */
 	chunk_t st_skey_responder_salt;	/* v2 */
