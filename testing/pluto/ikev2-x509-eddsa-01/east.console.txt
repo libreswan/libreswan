@@ -3,19 +3,17 @@ ERROR: east's /etc/strongswan/ipsec.secrets not found
 east #
  /testing/x509/strongswan-gen.sh
 + PKI=PATH/libexec/strongswan/pki
-++++ realpath -m /testing/x509/strongswan-gen.sh
 +++ dirname /testing/x509/strongswan-gen.sh
-++ cd /testing/x509
-++ cd ../..
-++ pwd
-+ libreswandir=/
-+ cd //testing/x509
-+ rm -rf strongswan/strong-EC strongswan/strong-ED
+++ realpath /testing/x509
++ x509dir=/testing/x509
++ cd /testing/x509
++ rm -rf /testing/x509/strongswan/strong-EC /testing/x509/strongswan/strong-ED
++ mkdir -p /testing/x509/strongswan/
 + pki strong-EC --gen --type ecdsa --size 384
 + local caname=strong-EC
 + shift
-+ mkdir //testing/x509/strongswan/strong-EC
-+ cd //testing/x509/strongswan/strong-EC
++ mkdir /testing/x509/strongswan/strong-EC
++ cd /testing/x509/strongswan/strong-EC
 + PATH/libexec/strongswan/pki --gen --type ecdsa --size 384
 + PATH/libexec/strongswan/pki --gen --type ecdsa --size 384
 + PATH/libexec/strongswan/pki --gen --type ecdsa --size 384
@@ -36,8 +34,8 @@ east #
 + pki strong-ED --gen --type ed25519
 + local caname=strong-ED
 + shift
-+ mkdir //testing/x509/strongswan/strong-ED
-+ cd //testing/x509/strongswan/strong-ED
++ mkdir /testing/x509/strongswan/strong-ED
++ cd /testing/x509/strongswan/strong-ED
 + PATH/libexec/strongswan/pki --gen --type ed25519
 + PATH/libexec/strongswan/pki --gen --type ed25519
 + PATH/libexec/strongswan/pki --gen --type ed25519
@@ -59,12 +57,12 @@ east #
  /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- /testing/x509/import.sh strongswan/strong-EC/strongEast.p12
- ipsec pk12util -w nss-pw -i strongswan/strong-EC/strongEast.p12
+ /testing/x509/import.sh strongswan/strong-ED/strongEast.p12
+ ipsec pk12util -w nss-pw -i strongswan/strong-ED/strongEast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n strong-EC -t CT,,
+ ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongEast
-"strong-EC" [CN=strongSwan strong-EC CA,O=strongSwan,C=CH]
+"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
   "strongEast" [CN=strongEast,O=strongSwan,C=CH]
 east #
  ipsec start
