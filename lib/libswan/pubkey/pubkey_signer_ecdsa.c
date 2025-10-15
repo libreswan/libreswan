@@ -190,8 +190,8 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_pubkey_s
 		.len = PK11_SignatureLen(pks->private_key),
 		.data = raw_signature_data,
 	};
+	ldbg(logger, "EDDSA signature.len %d", raw_signature.len);
 	passert(raw_signature.len <= sizeof(raw_signature_data));
-	ldbg(logger, "ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &nss_hash_to_sign);
