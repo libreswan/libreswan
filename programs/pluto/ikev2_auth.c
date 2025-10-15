@@ -1076,7 +1076,7 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 	case IKEv2_AUTH_NULL:
 		return LELEM(AUTH_NULL);
 	case IKEv2_AUTH_DIGITAL_SIGNATURE:
-		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA);
+		return LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA) | LELEM(AUTH_EDDSA);
 	default:
 	{
 		name_buf nb;
