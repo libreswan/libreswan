@@ -465,6 +465,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
 	}
+
 	if (c->local->host.config->eap != IKE_EAP_TLS ||
 	    c->remote->host.config->eap != IKE_EAP_TLS) {
 		llog_sa(RC_LOG, ike,
@@ -472,9 +473,16 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 		goto auth_fail;
 	}
 
+	/*
+	 * XXX: this can change the IKE SA's connection.
+	 */
+
 	stf_status status = process_v2_IKE_AUTH_request_standard_payloads(ike, md);
-	if (status != STF_OK)
+	if (status != STF_OK) {
 		return status;
+	}
+
+	c = ike->sa.st_connection; /* could have been changed */
 
 	/*
 	 * Construct the IDr payload and store it in state so that it
@@ -485,6 +493,11 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	 * laid out the same as the packet.
 	 */
 	v2_IKE_AUTH_responder_id_payload(ike);
+
+	if (c->local->host.config->auth == AUTH_EAPONLY) {
+		ldbg(ike->sa.logger, "EAPONLY: skipping v2AUTH calculation for start response, not needed");
+		return process_v2_IKE_AUTH_request_EAP_start_signature_continue(ike, md, NULL);
+	}
 
 	return submit_v2AUTH_generate_responder_signature(ike, md, process_v2_IKE_AUTH_request_EAP_start_signature_continue);
 
@@ -501,6 +514,16 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 									   const struct hash_signature *auth_sig)
 {
 	struct connection *c = ike->sa.st_connection;
+
+	/* when EAPONLY, AUTH_SIG==NULL */
+	if (auth_sig != NULL && auth_sig->len == 0) {
+		llog(RC_LOG, ike->sa.logger, "AUTH signature calculation failed");
+		record_v2N_response(ike->sa.logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED,
+				    empty_shunk/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
 
 	/* HDR out */
 
@@ -564,6 +587,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	 * magic fed into it.
 	 */
 	if (c->local->host.config->auth == AUTH_EAPONLY) {
+		pexpect(auth_sig == NULL);
 		ldbg_sa(ike, "EAP: skipping AUTH payload as our proof-of-identity is eap-only");
 	} else {
 		/*
