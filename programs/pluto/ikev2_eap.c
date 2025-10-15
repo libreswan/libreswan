@@ -713,8 +713,14 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 		return STF_FATAL;
 	}
 
-	/* calculate hash of IDi for AUTH below */
-	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash", md);
+	/*
+	 * Calculate hash of IDi for AUTH below.
+	 *
+	 * The IDi was sent in the very first IKE_AUTH message from
+	 * the client.
+	 */
+	struct crypt_mac idhash_in = v2_remote_id_hash(ike, "IDi verify hash",
+						       eap->first_v2_IKE_AUTH_request);
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log_hunk(logger, "EAP: msk:", &msk);
@@ -821,14 +827,16 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	}
 
 	/*
-	 * Try to build a child.
+	 * Try to build a child.  The Child SA payloads were sent in
+	 * the very first IKE_AUTH message from the client.
 	 *
 	 * The result can be fatal, or just doesn't create the child.
 	 */
 
 	if (send_redirect) {
 		ldbg(ike->sa.logger, "skipping child; redirect response");
-	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, md, response.pbs)) {
+	} else if (!process_any_v2_IKE_AUTH_request_child_payloads(ike, eap->first_v2_IKE_AUTH_request,
+								   response.pbs)) {
 		/* already logged; already recorded */
 		return STF_FATAL;
 	}
