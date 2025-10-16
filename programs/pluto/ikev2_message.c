@@ -1100,10 +1100,9 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 						 struct ike_sa *ike,
 						 const struct isakmp_hdr *hdr,
 						 enum next_payload_types_ikev2 skf_np,
-						 struct v2_outgoing_fragment **fragp,
+						 struct v2_outgoing_fragments *fragments,
 						 shunk_t fragment,
-						 unsigned int number,
-						 unsigned int total)
+						 unsigned int number)
 {
 	struct fragment_pbs_out message_fragment;
 	if (!open_fragment_pbs_out("fragment", &message_fragment, logger)) {
@@ -1145,7 +1144,7 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 		.isaskf_np = skf_np, /* needed */
 		.isaskf_critical = build_ikev2_critical(false, ike->sa.logger),
 		.isaskf_number = number,
-		.isaskf_total = total,
+		.isaskf_total = fragments->len,
 	};
 	if (!pbs_out_struct(&body, e, &ikev2_skf_desc, &skf.pbs))
 		return false;
@@ -1189,16 +1188,15 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 	}
 
 	ldbg(ike->sa.logger, "recording fragment %u", number);
-	record_v2_outgoing_fragment(pbs_out_all(&message_fragment.pbs), fragp, logger);
+	PASSERT(ike->sa.logger, number > 0);
+	fragments->item[number - 1] = clone_pbs_out_all(&message_fragment.pbs, "fragment");
 	return true;
 }
 
 static bool encrypt_and_record_outbound_fragments(shunk_t message,
 						  struct v2SK_payload *sk,
-						  struct v2_outgoing_fragment **frags)
+						  struct v2_outgoing_fragments **fragments)
 {
-	free_v2_outgoing_fragments(frags, sk->logger);
-
 	/*
 	 * fragment contents:
 	 * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
@@ -1262,6 +1260,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 		return false;
 	}
 
+	realloc_v2_outgoing_fragments(fragments, sk->logger, nfrags);
+
 	/*
 	 * Extract the hdr from the original unfragmented message.
 	 *
@@ -1296,20 +1296,18 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	unsigned int number = 1;
 	shunk_t clear_cursor = HUNK_AS_SHUNK(&sk->cleartext);
 
-	struct v2_outgoing_fragment **frag = frags;
 	do {
 		/* chop off the next fragment, advancing the cursor */
 		shunk_t fragment = shunk_slice(clear_cursor, 0, PMIN(clear_cursor.len, max_skf_size));
 		clear_cursor = shunk_slice(clear_cursor, fragment.len, clear_cursor.len);
 
-		PASSERT(sk->logger, *frag == NULL);
 		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike,
-							  &hdr, skf_np, frag,
-							  fragment,
-							  number, nfrags)) {
+							  &hdr, skf_np,
+							  (*fragments), fragment,
+							  number)) {
 			return false;
 		}
-		frag = &(*frag)->next;
+
 		number++;
 		skf_np = ISAKMP_NEXT_v2NONE;
 	} while (clear_cursor.len > 0);
@@ -1325,7 +1323,7 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 static stf_status encrypt_and_record_v2SK_message(shunk_t message,
 						  struct v2SK_payload *sk,
 						  const char *what,
-						  struct v2_outgoing_fragment **outgoing_fragments)
+						  struct v2_outgoing_fragments **outgoing_fragments)
 {
 	size_t len = message.len;
 

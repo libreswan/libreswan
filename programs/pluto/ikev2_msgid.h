@@ -89,7 +89,7 @@ struct v2_msgid_window {
 	 * to delete them after a few minutes.
 	 */
 	struct v2_incoming_fragments *incoming_fragments;
-	struct v2_outgoing_fragment *outgoing_fragments;
+	struct v2_outgoing_fragments *outgoing_fragments;
 	/*
 	 * The exchange being worked on by the initiator.
 	 */
