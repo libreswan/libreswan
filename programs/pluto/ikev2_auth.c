@@ -311,7 +311,8 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 		       const struct hash_signature *auth_sig,
 		       struct pbs_out *outs)
 {
-	enum auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
+	/* EAP only does PSK?!? */
+	enum auth authby = (ike->sa.st_eap != NULL ? AUTH_PSK : local_v2_auth(ike));
 	enum ikev2_auth_method local_auth_method = local_v2AUTH_method(ike, authby);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.logger),

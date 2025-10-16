@@ -1,25 +1,20 @@
 #start ocsp server here
 nic #
+ ../../guestbin/ocspd.sh --start
  cp /testing/x509/real/mainca/nic.key /etc/ocspd/private/nic_key.pem
-nic #
  cp /testing/x509/real/mainca/nic.end.cert /etc/ocspd/certs/nic.pem
-nic #
  cp /testing/x509/real/mainca/root.cert /etc/ocspd/certs/mainca.pem
-nic #
- cp /testing/x509/ocspd.conf /etc/ocspd/
-nic #
+ cp /testing/x509/ocspd.conf /etc/ocspd/ocspd.conf
  openssl crl -inform DER -in /testing/x509/real/mainca/crl-is-up-to-date.crl -outform PEM -out /etc/ocspd/crls/revoked_crl.pem
-nic #
  restorecon -R /etc/ocspd
-nic #
- #stock ocspd.conf, used separate ones for different configs
-nic #
  ocspd -v -d -c /etc/ocspd/ocspd.conf
 nic #
  echo "initdone"
 initdone
 nic #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
+nic #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 nic #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 nic #
