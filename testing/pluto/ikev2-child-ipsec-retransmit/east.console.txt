@@ -22,7 +22,7 @@ east #
  # should show retransmits on west and replies on east
 east #
  grep sending /tmp/pluto.log |grep through
-| sending 248 bytes for Respond to IKE_SA_INIT through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 225 bytes for Responder: process IKE_AUTH request through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 177 bytes for process CREATE_CHILD_SA new Child SA request through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
+| sending 248 bytes for IKE_SA_INIT response through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
+| sending 225 bytes for IKE_AUTH response through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
+| sending 177 bytes for CREATE_CHILD_SA message through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 east #
