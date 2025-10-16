@@ -400,27 +400,11 @@ enum message_role v2_msg_role(const struct msg_digest *md)
  * list all the payload types
  */
 
-static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct msg_digest *md)
+void jam_msg_digest_payloads(struct jambuf *buf,
+			     const struct msg_digest *md)
 {
-	jam_string(buf, prefix);
-
-	jam_string(buf, " ");
 	const enum ike_version ike_version = hdr_ike_version(&md->hdr);
-	jam_enum_enum_short(buf, &exchange_type_names, ike_version,
-			    md->hdr.isa_xchg);
-
-	if (ike_version == IKEv2) {
-		switch (v2_msg_role(md)) {
-		case MESSAGE_REQUEST: jam_string(buf, " request"); break;
-		case MESSAGE_RESPONSE: jam_string(buf, " response"); break;
-		case NO_MESSAGE: break;
-		}
-	}
-
-	jam_string(buf, " from ");
-	jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
-
-	const char *sep = " containing ";
+	const char *sep = "";
 	const char *term = "";
 	for (unsigned d = 0; d < md->digest_roof; d++) {
 		const struct payload_digest *pd = &md->digest[d];
@@ -455,13 +439,6 @@ static void jam_msg_digest(struct jambuf *buf, const char *prefix, const struct 
 		}
 	}
 	jam_string(buf, term);
-}
-
-void llog_msg_digest(enum stream stream, struct logger *logger, const char *prefix, const struct msg_digest *md)
-{
-	LLOG_JAMBUF(stream, logger, buf) {
-		jam_msg_digest(buf, prefix, md);
-	}
 }
 
 void limited_llog_md(const struct msg_digest *md,

@@ -903,6 +903,10 @@ static void vdbg_transition(struct verbose verbose,
 		default:
 			bad_case(t->recv_role);
 		}
+		if (t->log_transition_start) {
+			jam_string(buf, "; ");
+			jam_string(buf, "log transition start");
+		}
 		jam_string(buf, "; ");
 		jam_string(buf, "payloads: ");
 		FOR_EACH_THING(payloads, &t->message_payloads, &t->encrypted_payloads) {
@@ -965,6 +969,7 @@ static void validate_state_larval_sa_transition(struct verbose verbose,
 		vassert(payloads->optional == LEMPTY);
 	}
 	vassert(t->exchange != NULL);
+	vassert(!(t->exchange->log_transition_start && t->log_transition_start));
 	vassert(t->exchange->type == ISAKMP_v2_CREATE_CHILD_SA);
 	vassert(t->recv_role == 0);
 	vassert(t->processor == NULL);
@@ -980,6 +985,7 @@ static void validate_state_exchange_transition(struct verbose verbose,
 	vassert(transition->llog_success != NULL);
 	vassert(transition->recv_role == recv_role);
 	vassert(transition->exchange == exchange);
+	vassert(!(transition->log_transition_start && exchange->log_transition_start));
 }
 
 static void validate_state_exchange(struct verbose verbose,
@@ -991,6 +997,9 @@ static void validate_state_exchange(struct verbose verbose,
 		jam_v2_exchange_name(buf, exchange, verbose);
 		jam_string(buf, "; secured: ");
 		jam_bool(buf, exchange->secured);
+		if (exchange->log_transition_start) {
+			jam_string(buf, "; log transition start");
+		}
 	}
 	const unsigned level = ++verbose.level;
 

@@ -720,13 +720,6 @@ stf_status process_v2_IKE_SESSION_RESUME_request(struct ike_sa *ike,
 						 struct child_sa *null_child,
 						 struct msg_digest *md)
 {
-	/*
-	 * This log line establishes that resources (such as the state
-	 * structure) have been allocated and the packet is being
-	 * processed for real.
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
-
 	pexpect(null_child == NULL);
 	passert(ike->sa.st_ike_version == IKEv2);
 	passert(ike->sa.st_state == &state_v2_UNSECURED_R);
@@ -1083,6 +1076,7 @@ static const struct v2_transition v2_IKE_SESSION_RESUME_responder_transition[] =
 	  .message_payloads.required = v2P(Ni) | v2P(N),
 	  .message_payloads.notification = v2N_TICKET_OPAQUE,
 	  .processor  = process_v2_IKE_SESSION_RESUME_request,
+	  .log_transition_start = true,
 	  .llog_success = llog_success_ikev2_exchange_responder,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
@@ -1142,7 +1136,9 @@ V2_STATE(IKE_SESSION_RESUME_R, "sent IKE_SESSION_RESUME response",
 	 &v2_IKE_AUTH_exchange);
 
 V2_EXCHANGE(IKE_SESSION_RESUME, "",
-	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
+	    /*secured*/false,
+	    /*llog-processing*/false);
 
 #if 0
 void init_ike_session_resume(struct logger *logger)

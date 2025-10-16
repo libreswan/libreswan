@@ -252,10 +252,10 @@ void md_delref_where(struct msg_digest **mdp, where_t where);
 /* only the buffer */
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
 
-void schedule_md_event(const char *story, struct msg_digest *md);
+void jam_msg_digest_payloads(struct jambuf *buf,
+			     const struct msg_digest *md);
 
-void llog_msg_digest(enum stream stream, struct logger *logger,
-		     const char *prefix, const struct msg_digest *md);
+void schedule_md_event(const char *story, struct msg_digest *md);
 
 /* rate limited logging */
 void limited_llog_md(const struct msg_digest *md, const char *message, ...) PRINTF_LIKE(2);

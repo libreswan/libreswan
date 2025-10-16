@@ -1240,6 +1240,8 @@ V2_STATE(IKE_INTERMEDIATE_R, "sent IKE_INTERMEDIATE response",
 	 &v2_IKE_AUTH_EAP_exchange);
 
 V2_EXCHANGE(IKE_INTERMEDIATE, "",
-	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/true,
+	    CAT_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
+	    /*secured*/true,
+	    /*llog-processing*/true,
 	    &state_v2_IKE_SA_INIT_IR,
 	    &state_v2_IKE_INTERMEDIATE_IR);

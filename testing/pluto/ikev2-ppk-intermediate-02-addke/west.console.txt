@@ -23,6 +23,7 @@ Redirecting to: [initsystem]
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{N(PPK_IDENTITY)}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
@@ -45,6 +46,7 @@ Redirecting to: [initsystem]
 "algo" #1: dropping ADDKE1=NONE from list of negotiated IKE_INTERMEDIATE exchanges
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {PPK}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{N(PPK_IDENTITY)}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
@@ -67,6 +69,7 @@ Redirecting to: [initsystem]
 "algo" #1: dropping ADDKE1=NONE from list of negotiated IKE_INTERMEDIATE exchanges
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE,N(PPK_IDENTITY)}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
@@ -89,6 +92,7 @@ Redirecting to: [initsystem]
 "algo" #1: dropping ADDKE2=NONE from list of negotiated IKE_INTERMEDIATE exchanges
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192, PPK}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE,N(PPK_IDENTITY)}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
@@ -110,8 +114,10 @@ Redirecting to: [initsystem]
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_256 integ=HMAC_SHA2_512_256 prf=HMAC_SHA2_512 group=DH20}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=MODP8192}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke2=ML_KEM_768, PPK}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE,N(PPK_IDENTITY)}
 "algo" #1: PPK 'PPKIDA' used in IKE_INTERMEDIATE by initiator
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}

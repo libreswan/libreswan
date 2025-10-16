@@ -613,7 +613,6 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 {
 	v2_notification_t n;
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing", md);
 
 	vassert(ike->sa.st_ike_version == IKEv2);
 	vassert(ike->sa.st_state == &state_v2_UNSECURED_R);
@@ -1395,6 +1394,7 @@ static const struct v2_transition v2_IKE_SA_INIT_responder_transition[] = {
 	  .recv_role  = MESSAGE_REQUEST,
 	  .message_payloads.required = v2P(SA) | v2P(KE) | v2P(Ni),
 	  .processor  = process_v2_IKE_SA_INIT_request,
+	  .log_transition_start = true,
 	  .llog_success = llog_success_process_v2_IKE_SA_INIT_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 };
@@ -1466,5 +1466,7 @@ V2_STATE(IKE_SA_INIT_R, "sent IKE_SA_INIT response",
 	 &v2_IKE_AUTH_EAP_exchange);
 
 V2_EXCHANGE(IKE_SA_INIT, "",
-	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false,
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
+	    /*secured*/false,
+	    /*llog-processing*/false,
 	    &state_v2_IKE_SA_INIT_I0);

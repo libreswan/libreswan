@@ -90,6 +90,10 @@
 
 static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
+static void llog_transition_start(enum stream stream, struct logger *logger,
+				  const struct v2_transition *svm,
+				  const struct msg_digest *md);
+
 static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ike_sa *ike);
 
 /*
@@ -1335,7 +1339,23 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 
 	md->message_pbs.roof = md->message_pbs.cur;	/* trim padding (not actually legit) */
 
-	ldbg(logger, "calling processor %s", svm->story);
+	if (PBAD(logger, svm->exchange == NULL)) {
+		return;
+	}
+
+	if (svm->log_transition_start ||
+	    svm->exchange->log_transition_start) {
+		/*
+		 * This log line establishes that a secured requst has
+		 * been decrypted and is now being processed for real.
+		 *
+		 * XXX but what about liveness packets; they should
+		 * not log.
+		 */
+		llog_transition_start(RC_LOG, ike->sa.logger, svm, md);
+	} else if (LDBGP(DBG_BASE, ike->sa.logger)) {
+		llog_transition_start(DEBUG_STREAM, ike->sa.logger, svm, md);
+	}
 
 	/*
 	 * XXX: for now pass in NULL for the child.
@@ -1963,4 +1983,29 @@ bool v2_ike_sa_can_initiate_exchange(const struct ike_sa *ike, const struct v2_e
 		}
 	}
 	return false;
+}
+
+void llog_transition_start(enum stream stream, struct logger *logger,
+			   const struct v2_transition *svm,
+			   const struct msg_digest *md)
+{
+	LLOG_JAMBUF(stream, logger, buf) {
+
+		jam_string(buf, "processing ");
+
+		PEXPECT(logger, svm->exchange->type == md->hdr.isa_xchg);
+		jam_string(buf, svm->exchange->name);
+
+		switch (v2_msg_role(md)) {
+		case MESSAGE_REQUEST: jam_string(buf, " request"); break;
+		case MESSAGE_RESPONSE: jam_string(buf, " response"); break;
+		case NO_MESSAGE: break;
+		}
+
+		jam_string(buf, " from ");
+		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
+
+		jam_string(buf, " containing ");
+		jam_msg_digest_payloads(buf, md);
+	}
 }

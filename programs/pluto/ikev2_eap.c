@@ -434,14 +434,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	}
 
 	/*
-	 * This log line establishes that the packet's been decrypted
-	 * and now it is being processed for real.
-	 *
-	 * XXX: move this into ikev2.c?
-	 */
-	llog_msg_digest(RC_LOG, ike->sa.logger, "processing decrypted", md);
-
-	/*
 	 * XXX: hack so that incoming certs are ignored; should update
 	 * CERT code?
 	 */
@@ -860,6 +852,7 @@ static const struct v2_transition v2_IKE_AUTH_EAP_responder_transition[] = {
 	  .encrypted_payloads.required = v2P(IDi),
 	  .encrypted_payloads.optional = v2P(CERTREQ) | v2P(IDr) | v2P(CP) | v2P(SA) | v2P(TSi) | v2P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
+	  .log_transition_start = true,
 	  .llog_success = llog_success_process_v2_IKE_AUTH_EAP_request,
 	  .timeout_event = EVENT_v2_DISCARD, },
 
