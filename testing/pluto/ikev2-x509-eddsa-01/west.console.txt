@@ -1,12 +1,12 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 west #
- /testing/x509/import.sh strongswan/strong-EC/strongWest.p12
- ipsec pk12util -w nss-pw -i strongswan/strong-EC/strongWest.p12
+ /testing/x509/import.sh strongswan/strong-ED/strongWest.p12
+ ipsec pk12util -w nss-pw -i strongswan/strong-ED/strongWest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
- ipsec certutil -M -n strong-EC -t CT,,
+ ipsec certutil -M -n strong-ED -t CT,,
  ipsec certutil -O -n strongWest
-"strong-EC" [CN=strongSwan strong-EC CA,O=strongSwan,C=CH]
+"strong-ED" [CN=strongSwan strong-ED CA,O=strongSwan,C=CH]
   "strongWest" [CN=strongWest,O=strongSwan,C=CH]
 west #
  ipsec start

@@ -114,12 +114,13 @@ static diag_t ECP_extract_pubkey_content_from_ipseckey(shunk_t ipseckey,
 
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
-		return diag_nss_error("allocating ECDSA arena");
+		return diag_nss_error("allocating %s arena", pkc->type->name);
 	}
 
 	SECKEYPublicKey *seckey = PORT_ArenaZNew(arena, SECKEYPublicKey);
 	if (seckey == NULL) {
-		diag_t d = diag_nss_error("allocating ECDSA SECKEYPublicKey");
+		diag_t d = diag_nss_error("allocating %s SECKEYPublicKey",
+					  pkc->type->name);
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
 	}
@@ -279,8 +280,8 @@ static err_t ECP_extract_pubkey_content_from_SECKEYPublicKey(struct pubkey_conte
 
 	if (LDBGP(DBG_BASE, logger)) {
 		ckaid_buf cb;
-		LDBG_log(logger, "ECDSA keyid *%s", str_keyid(pkc->keyid));
-		LDBG_log(logger, "ECDSA keyid *%s", str_ckaid(&pkc->ckaid, &cb));
+		LDBG_log(logger, "%s keyid *%s", pkc->type->name, str_keyid(pkc->keyid));
+		LDBG_log(logger, "%s keyid *%s", pkc->type->name, str_ckaid(&pkc->ckaid, &cb));
 	}
 
 	/*

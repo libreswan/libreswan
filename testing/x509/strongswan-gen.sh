@@ -8,7 +8,7 @@ PKI="/usr/libexec/strongswan/pki"
 x509dir=$(realpath $(dirname $0))
 cd ${x509dir}
 rm -rf ${x509dir}/strongswan/*
-mkdir ${x509dir}/strongswan
+mkdir -p ${x509dir}/strongswan/
 
 pki()
 {

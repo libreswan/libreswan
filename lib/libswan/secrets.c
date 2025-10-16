@@ -1239,8 +1239,13 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 {
 
 	SECKEYPrivateKey *private_key = PK11_FindKeyByAnyCert(cert, lsw_nss_get_password_context(logger));
-	if (private_key == NULL)
+	ldbg(logger, "found private key %p with type %d vs edKey=%d ecKey=%d",
+	     private_key,
+	     (private_key != NULL ? private_key->keyType : 0),
+	     edKey, ecKey);
+	if (private_key == NULL) {
 		return "NSS: cert private key not found";
+	}
 	err_t err = add_private_key(secrets, pks, logger,
 				    pubk, ckaid_nss, type, private_key);
 	SECKEY_DestroyPrivateKey(private_key);
@@ -1271,7 +1276,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 		return NULL;
 	}
 
-	ldbg(logger, "adding %s secret for certificate: %s", type->name, cert->nickname);
+	ldbg(logger, "loading %s secret for certificate: %s", type->name, cert->nickname);
 	*load_needed = true;
 	err_t err = find_or_load_private_key_by_cert_3(secrets, cert, pks, logger,
 						       /* extracted fields */

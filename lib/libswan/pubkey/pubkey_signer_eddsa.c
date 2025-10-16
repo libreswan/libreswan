@@ -58,9 +58,9 @@ static chunk_t concat_hunks(const struct hash_hunks *hunks)
 }
 
 static struct hash_signature EDDSA_sign_message_1(const struct pubkey_signer *signer UNUSED,
-					  const struct secret_pubkey_stuff *pks,
-					  chunk_t message,
-					  struct logger *logger)
+						  const struct secret_pubkey_stuff *pks,
+						  chunk_t message,
+						  struct logger *logger)
 {
 	if (!pexpect(pks->private_key != NULL)) {
 		ldbg(logger, "no private key!");
@@ -79,7 +79,8 @@ static struct hash_signature EDDSA_sign_message_1(const struct pubkey_signer *si
 		.len = PK11_SignatureLen(pks->private_key),
 		.data = raw_signature_data,
 	};
-	passert(raw_signature.len <= sizeof(raw_signature_data));
+	ldbg(logger, "signature length is %d", raw_signature.len);
+	PASSERT(logger, raw_signature.len <= sizeof(raw_signature_data));
 
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(logger, "EDDSA message of %zu bytes:", message.len);
