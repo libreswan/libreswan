@@ -1100,10 +1100,9 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 						 struct ike_sa *ike,
 						 const struct isakmp_hdr *hdr,
 						 enum next_payload_types_ikev2 skf_np,
-						 struct v2_outgoing_fragment **fragp,
+						 struct v2_outgoing_fragments *fragments,
 						 shunk_t fragment,
-						 unsigned int number,
-						 unsigned int total)
+						 unsigned int number)
 {
 	struct fragment_pbs_out message_fragment;
 	if (!open_fragment_pbs_out("fragment", &message_fragment, logger)) {
@@ -1145,7 +1144,7 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 		.isaskf_np = skf_np, /* needed */
 		.isaskf_critical = build_ikev2_critical(false, ike->sa.logger),
 		.isaskf_number = number,
-		.isaskf_total = total,
+		.isaskf_total = fragments->len,
 	};
 	if (!pbs_out_struct(&body, e, &ikev2_skf_desc, &skf.pbs))
 		return false;
@@ -1189,16 +1188,16 @@ static bool encrypt_and_record_outbound_fragment(struct logger *logger,
 	}
 
 	ldbg(ike->sa.logger, "recording fragment %u", number);
-	record_v2_outgoing_fragment(pbs_out_all(&message_fragment.pbs), fragp, logger);
+	PASSERT(ike->sa.logger, number > 0);
+	fragments->item[number - 1] = clone_pbs_out_all(&message_fragment.pbs, "fragment");
 	return true;
 }
 
 static bool encrypt_and_record_outbound_fragments(shunk_t message,
 						  struct v2SK_payload *sk,
-						  struct v2_outgoing_fragment **frags)
+						  struct v2_outgoing_fragments **fragments,
+						  const char *story)
 {
-	free_v2_outgoing_fragments(frags, sk->logger);
-
 	/*
 	 * fragment contents:
 	 * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
@@ -1262,6 +1261,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 		return false;
 	}
 
+	realloc_v2_outgoing_fragments(fragments, sk->logger, nfrags, story);
+
 	/*
 	 * Extract the hdr from the original unfragmented message.
 	 *
@@ -1296,20 +1297,18 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 	unsigned int number = 1;
 	shunk_t clear_cursor = HUNK_AS_SHUNK(&sk->cleartext);
 
-	struct v2_outgoing_fragment **frag = frags;
 	do {
 		/* chop off the next fragment, advancing the cursor */
 		shunk_t fragment = shunk_slice(clear_cursor, 0, PMIN(clear_cursor.len, max_skf_size));
 		clear_cursor = shunk_slice(clear_cursor, fragment.len, clear_cursor.len);
 
-		PASSERT(sk->logger, *frag == NULL);
 		if (!encrypt_and_record_outbound_fragment(sk->logger, sk->ike,
-							  &hdr, skf_np, frag,
-							  fragment,
-							  number, nfrags)) {
+							  &hdr, skf_np,
+							  (*fragments), fragment,
+							  number)) {
 			return false;
 		}
-		frag = &(*frag)->next;
+
 		number++;
 		skf_np = ISAKMP_NEXT_v2NONE;
 	} while (clear_cursor.len > 0);
@@ -1324,8 +1323,8 @@ static bool encrypt_and_record_outbound_fragments(shunk_t message,
 
 static stf_status encrypt_and_record_v2SK_message(shunk_t message,
 						  struct v2SK_payload *sk,
-						  const char *what,
-						  struct v2_outgoing_fragment **outgoing_fragments)
+						  struct v2_outgoing_fragments **outgoing_fragments,
+						  const char *story)
 {
 	size_t len = message.len;
 
@@ -1342,7 +1341,7 @@ static stf_status encrypt_and_record_v2SK_message(shunk_t message,
 	if (sk->ike->sa.st_iface_endpoint->io->protocol == &ip_protocol_udp &&
 	    sk->ike->sa.st_v2_ike_fragmentation_enabled &&
 	    len >= endpoint_info(sk->ike->sa.st_remote_endpoint)->ikev2_max_fragment_size) {
-		if (!encrypt_and_record_outbound_fragments(message, sk, outgoing_fragments)) {
+		if (!encrypt_and_record_outbound_fragments(message, sk, outgoing_fragments, story)) {
 			ldbg(sk->logger, "record outbound fragments failed");
 			return STF_INTERNAL_ERROR;
 		}
@@ -1350,12 +1349,11 @@ static stf_status encrypt_and_record_v2SK_message(shunk_t message,
 	}
 
 	if (!encrypt_v2SK_payload(sk)) {
-		llog(RC_LOG, sk->logger,
-		     "error encrypting %s message", what);
+		llog(RC_LOG, sk->logger, "error encrypting %s message", story);
 		return STF_INTERNAL_ERROR;
 	}
 	ldbg(sk->logger, "recording outgoing fragment failed");
-	record_v2_outgoing_message(message, outgoing_fragments, sk->logger);
+	record_v2_outgoing_message(message, outgoing_fragments, sk->logger, story);
 	return STF_OK;
 }
 
@@ -1510,15 +1508,16 @@ bool record_v2_message(struct v2_message *message)
 	case ENCRYPTED_PAYLOAD:
 		if (encrypt_and_record_v2SK_message(pbs_out_all(&message->message),
 						    &message->sk,
-						    message->story,
-						    message->outgoing_fragments) != STF_OK) {
+						    message->outgoing_fragments,
+						    message->story) != STF_OK) {
 			return false;
 		}
 		return true;
 	case UNENCRYPTED_PAYLOAD:
 		record_v2_outgoing_message(pbs_out_all(&message->message),
 					   message->outgoing_fragments,
-					   message->logger);
+					   message->logger,
+					   message->story);
 		return true;
 	}
 	bad_case(message->security);

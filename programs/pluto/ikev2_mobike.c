@@ -354,8 +354,7 @@ void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 		 * XXX: hopefully this call doesn't muddle the IKE
 		 * Message IDs.
 		 */
-		send_recorded_v2_message(ike, "reply packet for process_encrypted_informational_ikev2",
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* restore established address and interface */
 		ike->sa.st_remote_endpoint = old_remote;
 		ike->sa.st_iface_endpoint = old_interface; /* restore-old */
@@ -592,8 +591,7 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	}
 
 	v2_msgid_finish(ike, NULL/*md*/, HERE);
-	send_recorded_v2_message(ike, "mobike informational request",
-				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+	send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 }
 
 static void initiate_mobike_probe(struct ike_sa *ike,

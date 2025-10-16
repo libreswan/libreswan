@@ -627,8 +627,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 			return true;
 		}
 		}
-		send_recorded_v2_message(ike, "ikev2-responder-retransmit",
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		return true;
 	}
 
@@ -1498,12 +1497,10 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 	switch (transition->recv_role) {
 	case NO_MESSAGE: /* initiating a new exchange */
-		send_recorded_v2_message(ike, transition->story,
-					 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 		break;
 	case MESSAGE_REQUEST: /* responding */
-		send_recorded_v2_message(ike, transition->story,
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		break;
 	case MESSAGE_RESPONSE: /* finishing exchange */
 		break;
@@ -1696,8 +1693,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		dbg_v2_msgid(ike, "finishing old exchange (STF_OK_RESPONDER_DELETE_IKE)");
 		pexpect(transition->recv_role == MESSAGE_REQUEST);
 		v2_msgid_finish(ike, md, HERE);
-		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY",
-					 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+		send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 		/* do the deed */
 		on_delete(&ike->sa, skip_send_delete);
 		terminate_ike_family(&ike, REASON_DELETED, HERE);
@@ -1756,8 +1752,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 			if (ike->sa.st_v2_msgid_windows.responder.outgoing_fragments != NULL) {
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
 				v2_msgid_finish(ike, md, HERE);
-				send_recorded_v2_message(ike, "STF_FATAL",
-							 ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+				send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			} else {
 				llog_pexpect_v2_msgid(ike, "exchange zombie: no FATAL message response was recorded!?!");
 			}

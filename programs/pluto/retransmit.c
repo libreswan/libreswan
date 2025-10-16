@@ -154,7 +154,7 @@ void start_retransmits(struct state *st)
  * reached - so that the caller has access to the capped values.
  */
 
-enum retransmit_action retransmit(struct state *st)
+enum retransmit_action retransmit(struct state *st, const char *fmt, ...)
 {
 	/*
 	 * XXX: this is the IKE SA's retry limit; a second child
@@ -270,8 +270,11 @@ enum retransmit_action retransmit(struct state *st)
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_schedule(st->st_connection->config->ike_info->retransmit_event, rt->delay, st);
 	LLOG_JAMBUF(RC_LOG, st->logger, buf) {
-		jam(buf, "%s: retransmission; will wait ",
-			st->st_state->name);
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+		jam_string(buf, "; will wait ");
 		jam_deltatime(buf, rt->delay);
 		jam_string(buf, " seconds for response");
 	}

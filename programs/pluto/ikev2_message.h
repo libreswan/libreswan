@@ -67,7 +67,8 @@ struct v2_message {
 	struct pbs_out message;
 	struct pbs_out body;
 	const char *story;
-	struct v2_outgoing_fragment **outgoing_fragments;
+	/* points into IKE SA! */
+	struct v2_outgoing_fragments **outgoing_fragments;
 	struct v2SK_payload sk; /* optional */
 };
 

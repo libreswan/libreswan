@@ -548,8 +548,7 @@ void record_n_send_n_log_v2_delete(struct ike_sa *ike, where_t where)
 	v2_msgid_start_record_n_send(ike, &v2_INFORMATIONAL_v2DELETE_exchange);
 	/* hack; this call records the delete */
 	initiate_v2_INFORMATIONAL_v2DELETE_request(ike, /*child*/NULL, /*md*/NULL);
-	send_recorded_v2_message(ike, "delete notification",
-				 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+	send_recorded_v2_message(ike, ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
 	v2_msgid_finish(ike, NULL/*MD*/, HERE);
 }
 

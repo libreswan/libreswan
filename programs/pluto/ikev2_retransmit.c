@@ -86,12 +86,20 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		return;
 	}
 
-	enum retransmit_action retransmit_action = retransmit(&ike->sa);
+	struct v2_outgoing_fragments *fragments =
+		ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments;
+	if (fragments == NULL) {
+		llog_pexpect(ike->sa.logger, HERE, "no fragments to send");
+		return;
+	}
+
+	enum retransmit_action retransmit_action =
+		retransmit(&ike->sa, "retransmitting %s", fragments->story);
+
 	switch (retransmit_action) {
 
 	case RETRANSMIT_YES:
-		send_recorded_v2_message(ike, "EVENT_RETRANSMIT",
-					 ike->sa.st_v2_msgid_windows.initiator.outgoing_fragments);
+		send_recorded_v2_message(ike, fragments);
 		return;
 
 	case RETRANSMIT_NO:

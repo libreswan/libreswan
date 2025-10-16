@@ -50,8 +50,11 @@ enum retransmit_action {
 	TIMEOUT_ON_RETRANSMIT,
 };
 
-enum retransmit_action retransmit(struct state *st);
-
+/*
+ * IKEv1 keeps retransmits in the child (since multiple children can
+ * be sending).  Hence ST.
+ */
+enum retransmit_action retransmit(struct state *st, const char *fmt, ...) PRINTF_LIKE(2);
 
 size_t lswlog_retransmit_prefix(struct jambuf *buf, struct state *st);
 
