@@ -1136,7 +1136,9 @@ V2_STATE(IKE_SESSION_RESUME_R, "sent IKE_SESSION_RESUME response",
 	 &v2_IKE_AUTH_exchange);
 
 V2_EXCHANGE(IKE_SESSION_RESUME, "",
-	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA, /*secured*/false);
+	    CAT_HALF_OPEN_IKE_SA, CAT_OPEN_IKE_SA,
+	    /*secured*/false,
+	    /*llog-processing*/false);
 
 #if 0
 void init_ike_session_resume(struct logger *logger)

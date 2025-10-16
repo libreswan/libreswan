@@ -134,6 +134,16 @@ struct v2_exchange {
 	const char *name; /* e.g., IKE_AUTH (EAP) */
 	const char *exchange_subplot;
 	bool secured;
+
+	/*
+	 * Force a "processing ..." message at the start of all
+	 * transitions handling a packet in this exchange.
+	 *
+	 * When set, the transitions do not need (should not have)
+	 * their .log_transition_state bit set.
+	 */
+	bool log_transition_start;
+
 	struct {
 		const struct v2_transition *transition;
 		const struct finite_state *from[3];	/* grow as needed */
@@ -147,6 +157,7 @@ struct v2_exchange {
 #define V2_EXCHANGE(KIND, SUBPLOT,					\
 		    I_CAT, IR_CAT,					\
 		    SECURED,						\
+		    LOG_TRANSITION_START,				\
 		    ...)						\
 									\
 	const struct finite_state state_v2_##KIND##_I = {		\
@@ -174,6 +185,7 @@ struct v2_exchange {
 		.name = #KIND SUBPLOT,					\
 		.exchange_subplot = SUBPLOT,				\
 		.secured = SECURED,					\
+		.log_transition_start = LOG_TRANSITION_START,		\
 		.initiate.transition = &v2_##KIND##_initiate_transition, \
 		.initiate.from = { __VA_ARGS__ },			\
 		.transitions.responder = {				\

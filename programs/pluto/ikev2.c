@@ -1343,7 +1343,8 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		return;
 	}
 
-	if (svm->log_transition_start) {
+	if (svm->log_transition_start ||
+	    svm->exchange->log_transition_start) {
 		/*
 		 * This log line establishes that a secured requst has
 		 * been decrypted and is now being processed for real.
