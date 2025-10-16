@@ -1084,18 +1084,9 @@ ipsec_nsscmd() {
 	exit 1
     fi
 
-    # Use the configured path; vfychain on Fedora isn't in the default
-    # path (see linux.mk).
-    case "${1}" in
-	certutil ) cmd="@@CERTUTIL@@" ;;
-	crlutil ) cmd="@@CRLUTIL@@" ;;
-	modutil ) cmd="@@MODUTIL@@" ;;
-	pk12util ) cmd="@@PK12UTIL@@" ;;
-	vfychain ) cmd="@@VFYCHAIN@@" ;;
-	* ) cmd="${1}" ;; # barf?
-    esac
-
     # modutil's nssdir option is different, ulgn
+
+    cmd=${1}
     case "${1}" in
 	modutil ) nssdir="-dbdir ${IPSEC_NSSDIR}" ;;
 	* ) nssdir="-d ${IPSEC_NSSDIR}" ;;
@@ -1119,12 +1110,28 @@ ipsec_nsscmd() {
 	    ;;
     esac
 
-    # Don't use EXEC.  With cmd="LD_LIBRARY_PATH=... command" exec
-    # tries to execute LD_LIBRARY_PATH=... which fails.
+    # Don't use EXEC.  Given CERTUTIL et.al. expanded to:
     #
-    # Do use EVAL.  With cmd=LD_LIBRARY_PATH=... command" the shell
-    # tries to run "LD_LIBRARY_PATH=... command" which fails.
-    eval ${dry_run} ${cmd} ${nssdir} "${@}"
+    #    LD_LIBRARY_PATH=... /path/to/certutil
+    #
+    # EXEC will try to execute "LD_LIBRARY_PATH=...".
+    #
+    # There's a problem with expansion of LD_LIBRARY_PATH= within this
+    # script.  It should be consumed by SH, but instead it is treated
+    # as the command (same thing in simple scripts works!).
+    #
+    # Workaround is to, when overriding CERTUTIL et.al., include
+    # "eval" as a prefix (just note that it breaks "$@" when there are
+    # empty parameters such as '').
+
+    case "${cmd}" in
+	certutil ) ${dry_run} @@CERTUTIL@@  ${nssdir} "$@" ;;
+	crlutil )  ${dry_run} @@CRLUTIL@@   ${nssdir} "$@" ;;
+	modutil )  ${dry_run} @@MODUTIL@@   ${nssdir} "$@" ;;
+	pk12util ) ${dry_run} @@PK12UTIL@@  ${nssdir} "$@" ;;
+	vfychain ) ${dry_run} @@VFYCHAIN@@  ${nssdir} "$@" ;;
+	* ) echo "${cmd} failed" 1>&2 ; exit 1 ;;
+    esac
     exit $?
 }
 
