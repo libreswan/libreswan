@@ -48,7 +48,6 @@
 #endif
 
 bool send_recorded_v2_message(struct ike_sa *ike,
-			      const char *where,
 			      struct v2_outgoing_fragments *frags)
 {
 	if (ike->sa.st_iface_endpoint == NULL) {
@@ -57,7 +56,7 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	}
 
 	if (frags == NULL) {
-		llog_sa(RC_LOG, ike, "no %s message to send", where);
+		llog_sa(RC_LOG, ike, "no message to send");
 		return false;
 	}
 
@@ -69,8 +68,9 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 	unsigned nr_frags = 0;
 	ITEMS_FOR_EACH(frag, frags) {
 		nr_frags++;
-		if (!send_hunk_using_state(&ike->sa, where, frag)) {
-			ldbg(ike->sa.logger, "send of %s fragment %u failed", where, nr_frags);
+		if (!send_hunk_using_state(&ike->sa, frags->story, frag)) {
+			ldbg(ike->sa.logger, "send of %s fragment %u failed",
+			     frags->story, nr_frags);
 			return false;
 		}
 	}
@@ -80,9 +80,10 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 
 void record_v2_outgoing_message(shunk_t message,
 				struct v2_outgoing_fragments **fragments,
-				struct logger *logger)
+				struct logger *logger,
+				const char *story)
 {
-	realloc_v2_outgoing_fragments(fragments, logger, 1);
+	realloc_v2_outgoing_fragments(fragments, logger, 1, story);
 	(*fragments)->item[0] = clone_hunk_as_chunk(&message, "fragment");
 }
 
@@ -182,11 +183,13 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 
 void realloc_v2_outgoing_fragments(struct v2_outgoing_fragments **fragments,
 				   struct logger *logger,
-				   unsigned nfrags)
+				   unsigned nfrags,
+				   const char *story)
 {
 	free_v2_outgoing_fragments(fragments, logger);
 	PASSERT(logger, nfrags > 0);
 	(*fragments) = alloc_items(struct v2_outgoing_fragments, nfrags);
+	(*fragments)->story = story;
 	ldbg_newref(logger, (*fragments));
 }
 

@@ -220,8 +220,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 			 */
 			limited_llog(old->sa.logger, UNSECURED_LOG_LIMITER,
 				     "received duplicate IKE_SA_INIT request; retransmitting response");
-			send_recorded_v2_message(old, "IKE_SA_INIT responder retransmit",
-						 old->sa.st_v2_msgid_windows.responder.outgoing_fragments);
+			send_recorded_v2_message(old, old->sa.st_v2_msgid_windows.responder.outgoing_fragments);
 			return;
 		}
 

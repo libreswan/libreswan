@@ -55,7 +55,7 @@
 
 void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 {
-	switch (retransmit(st)) {
+	switch (retransmit(st, "%s: retransmission", st->st_state->name)) {
 	case RETRANSMIT_YES:
 		resend_recorded_v1_ike_msg(st, "EVENT_RETRANSMIT");
 		return;

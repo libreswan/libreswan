@@ -78,6 +78,7 @@ struct v2_incoming_fragments {
 };
 
 struct v2_outgoing_fragments {
+	const char *story;
 	unsigned len;
 	chunk_t item[];
 };
@@ -87,8 +88,7 @@ struct v2_outgoing_fragments {
  * authenticated)?
  */
 
-bool send_recorded_v2_message(struct ike_sa *ike, const char *where,
-			      struct v2_outgoing_fragments *frags);
+bool send_recorded_v2_message(struct ike_sa *ike, struct v2_outgoing_fragments *frags);
 
 struct emit_v2_response_context;
 typedef bool emit_v2_response_fn(struct pbs_out *pbs, struct emit_v2_response_context *context);
@@ -99,14 +99,16 @@ bool send_v2_response_from_md(struct msg_digest *md, const char *what,
 
 void record_v2_outgoing_message(shunk_t message,
 				struct v2_outgoing_fragments **fragments,
-				struct logger *logger);
+				struct logger *logger,
+				const char *story);
 
 void free_v2_message_queues(struct state *st);
 void free_v2_incoming_fragments(struct v2_incoming_fragments **frags);
 
 void realloc_v2_outgoing_fragments(struct v2_outgoing_fragments **frags,
 				   struct logger *logger,
-				   unsigned nfrags);
+				   unsigned nfrags,
+				   const char *story);
 void free_v2_outgoing_fragments(struct v2_outgoing_fragments **frags, struct logger *logger);
 
 /*
