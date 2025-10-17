@@ -132,7 +132,6 @@ struct v2_exchange {
 	 */
 	const enum ikev2_exchange type;
 	const char *name; /* e.g., IKE_AUTH (EAP) */
-	const char *exchange_subplot;
 	bool secured;
 
 	/*
@@ -183,7 +182,6 @@ struct v2_exchange {
 	const struct v2_exchange v2_##KIND##_exchange = {		\
 		.type = ISAKMP_v2_##KIND,				\
 		.name = #KIND SUBPLOT,					\
-		.exchange_subplot = SUBPLOT,				\
 		.secured = SECURED,					\
 		.log_transition_start = LOG_TRANSITION_START,		\
 		.initiate.transition = &v2_##KIND##_initiate_transition, \

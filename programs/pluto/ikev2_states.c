@@ -1042,19 +1042,20 @@ static void validate_state_exchange(struct verbose verbose,
 
 	verbose.level = level;
 
+	/* confirm NAME starts with EXCHANGE */
 	vassert(exchange->name != NULL);
 	name_buf exchange_name;
 	enum_short(&ikev2_exchange_names, exchange->type, &exchange_name);
 	shunk_t name = shunk1(exchange->name);
 	vassert(hunk_streat(&name, exchange_name.buf));
 
-	vassert(exchange->exchange_subplot != NULL);
-	vassert(hunk_streq(name, exchange->exchange_subplot));
-	if (strlen(exchange->exchange_subplot) > 0) {
+	/* confirm NAME ends in "" or " (SUBPLOT)" */
+	if (name.len > 0) {
 		/* " (...)" */
-		vassert(startswith(exchange->exchange_subplot, " ("));
-		vassert(strchr(exchange->exchange_subplot, ')') == strchr(exchange->exchange_subplot, '\0') - 1);
+		vassert(hunk_strstarteq(name, " ("));
+		vassert(hunk_char(name, -1) == ')');
 	}
+
 	vassert(from->v2.secured == exchange->secured);
 
 	/* does the exchange appear in the state's transitions? */

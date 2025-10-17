@@ -924,7 +924,6 @@ V2_STATE(IKE_AUTH_EAP_R, "sent IKE_AUTH(EAP) response",
 const struct v2_exchange v2_IKE_AUTH_EAP_exchange = {
 	.type = ISAKMP_v2_IKE_AUTH,
 	.name = "IKE_AUTH (EAP)",
-	.exchange_subplot = " (EAP)",
 	.secured = true,
 	.transitions.responder = {
 		ARRAY_REF(v2_IKE_AUTH_EAP_responder_transition),

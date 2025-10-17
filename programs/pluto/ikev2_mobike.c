@@ -534,7 +534,6 @@ static const struct v2_transition v2_INFORMATIONAL_mobike_response_transition[] 
 const struct v2_exchange v2_INFORMATIONAL_mobike_exchange = {
 	.type = ISAKMP_v2_INFORMATIONAL,
 	.name = "INFORMATIONAL (MOBIKE probe)",
-	.exchange_subplot = " (MOBIKE probe)",
 	.secured = true,
 	.initiate.from = { &state_v2_ESTABLISHED_IKE_SA, },
 	.initiate.transition = &v2_INFORMATIONAL_mobike_initiate_transition,
