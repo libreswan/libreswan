@@ -10,8 +10,9 @@ b end-sanitize-retransmits
   /^[a-z]* #/ b end-sanitize-retransmits
 
 :match-sanitize-retransmits
-  /retransmission; will wait/ b next-sanitize-retransmits
+  /retransmission; will wait/         b next-sanitize-retransmits
   /discarding packet received during/ b next-sanitize-retransmits
+  /retransmitting .*;/                b next-sanitize-retransmits
   b sanitize-retransmits
 
 # drop current line (append next, delete current line)
