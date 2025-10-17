@@ -470,13 +470,14 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 }
 
 PRINTF_LIKE(3)
-static void llog_v2_request_no_skeyseed(struct ike_sa *ike, const struct msg_digest *md,
-					const char *content, ...)
+static void llog_v2_first_encrypted_request_starts_skeyseed(struct ike_sa *ike,
+							    const struct msg_digest *md,
+							    const char *content, ...)
 {
 	LLOG_JAMBUF(RC_LOG, ike->sa.logger, buf) {
-		jam_string(buf, "received ");
+		jam_string(buf, "received first encrypted ");
 		jam_enum_short(buf, &ikev2_exchange_names, md->hdr.isa_xchg);
-		jam_string(buf, " containing ");
+		jam_string(buf, " message containing ");
 		{
 			va_list ap;
 			va_start(ap, content);
@@ -485,7 +486,7 @@ static void llog_v2_request_no_skeyseed(struct ike_sa *ike, const struct msg_dig
 		}
 		jam_string(buf, " from ");
 		jam_endpoint_address_protocol_port_sensitive(buf, &md->sender);
-		jam_string(buf, ", computing DH in the background");
+		jam_string(buf, ", completing Key Exchange computation (SKEYSEED) in the background");
 	}
 }
 
@@ -568,7 +569,7 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		/* save message */
 		*frags = alloc_thing(struct v2_incoming_fragments, "incoming v2_ike_rfrags");
 		(*frags)->md = md_addref(md);
-		llog_v2_request_no_skeyseed(ike, md, "SK payload");
+		llog_v2_first_encrypted_request_starts_skeyseed(ike, md, "SK payload");
 	} else if (md->chain[ISAKMP_NEXT_v2SKF] != NULL) {
 		struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
 		switch (collect_v2_incoming_fragment(ike, md, frags)) {
@@ -579,8 +580,9 @@ void process_v2_request_no_skeyseed(struct ike_sa *ike, struct msg_digest *md)
 		case FRAGMENTS_COMPLETE:
 			break;
 		}
-		llog_v2_request_no_skeyseed(ike, md, "SKF fragment %u (1 of %u)",
-					    skf->isaskf_number, (*frags)->total);
+		llog_v2_first_encrypted_request_starts_skeyseed(ike, md, "SKF fragment %u of %u",
+								skf->isaskf_number,
+								(*frags)->total);
 	} else {
 		llog_pexpect(ike->sa.logger, HERE, "message has neither SK nor SKF payload");
 		return;
@@ -610,7 +612,6 @@ void save_first_outbound_ikev2_packet(const char *why UNUSED,
 	replace_ro_hunk(&ike->sa.st_firstpacket_me, packet, ike->sa.logger, HERE);
 	ro_hunk_delref(&packet, ike->sa.logger);
 }
-
 
 void save_first_inbound_ikev2_packet(const char *why UNUSED,
 				     struct ike_sa *ike, struct msg_digest *md)
