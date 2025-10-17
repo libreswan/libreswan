@@ -34,7 +34,7 @@ const struct scales binary_scales = {
 	.base = 1024,
 	.name = "binary",
 	.default_scale = 0,
-	.scale = { ARRAY_REF(binary_scale), },
+	LIST_REF(binary_scale),
 };
 
 static const struct scale binary_byte_scale[] = {
@@ -51,5 +51,5 @@ const struct scales binary_byte_scales = {
 	.base = 1024,
 	.name = "binary byte",
 	.default_scale = 0,
-	.scale = { ARRAY_REF(binary_byte_scale), },
+	LIST_REF(binary_byte_scale),
 };

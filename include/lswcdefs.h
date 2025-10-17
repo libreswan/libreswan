@@ -67,6 +67,8 @@
  * A macro to iterate over a list-like structure.
  */
 
+#define LIST_REF(ARRAY) .list = ARRAY, .len = elemsof(ARRAY)
+
 #define FOR_EACH_ITEM(ENTRY, LIST)					\
 	for (typeof((LIST)->list[0]) *ENTRY =				\
 		     (LIST) != NULL ? (LIST)->list : NULL;		\

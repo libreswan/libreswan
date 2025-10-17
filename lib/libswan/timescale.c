@@ -34,7 +34,7 @@ static const struct scale scales[] = {
 
 const struct scales timescales = {
 	.base = 10,
-	.scale = { ARRAY_REF(scales) },
+	LIST_REF(scales),
 };
 
 const struct scale *ttotimescale(shunk_t cursor, enum timescale default_timescale)
