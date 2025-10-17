@@ -298,3 +298,41 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat_ptr, size_t ea
 	}
 	return true;
 }
+
+char raw_char(const void *ptr, size_t len, long index)
+{
+	const char *p = ptr;
+
+	if (index < 0) {
+		index += len;
+	}
+
+	if (index >= (ssize_t)len) {
+		return '\0';
+	}
+
+	if (index >= 0) {
+		return p[index];
+	}
+
+	return '\0';
+}
+
+int raw_byte(const void *ptr, size_t len, long index)
+{
+	const uint8_t *p = ptr;
+
+	if (index < 0) {
+		index += len;
+	}
+
+	if (index >= (ssize_t)len) {
+		return -1;
+	}
+
+	if (index >= 0) {
+		return p[index];
+	}
+
+	return -1;
+}

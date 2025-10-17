@@ -310,26 +310,27 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 
 /*
  * Manipulate the hunk as an array of characters.
+ *
+ * -ve values index from end (like python?)
  */
 
-/* returns '\0' when out of range */
+/* returns '\0' (NUL) when out of range */
+
+char raw_char(const void *ptr, size_t len, long index);
+int raw_byte(const void *ptr, size_t len, long index);
 
 #define hunk_char(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) *hc_hunk_ = &(HUNK); /* don't copy */ \
-		size_t hc_index_ = INDEX;/* evaluate once */		\
-		const char *hc_char_ = hc_hunk_->ptr;			\
-		hc_index_ < hc_hunk_->len ? hc_char_[INDEX] : '\0';	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* don't copy */	\
+		raw_char(hunk_->ptr, hunk_->len, INDEX);		\
 	})
 
-/* returns the unsigned byte cast to int; or -1 when end-of-hunk */
+/* returns -1 when out of range */
 
 #define hunk_byte(HUNK, INDEX)						\
 	({								\
-		const typeof(HUNK) *hb_hunk_ = &(HUNK); /* don't copy */ \
-		size_t hb_index_ = INDEX;/* evaluate once */		\
-		const uint8_t *hb_byte_ = hb_hunk_->ptr;		\
-		hb_index_ < hb_hunk_->len ? hb_byte_[INDEX] : -1;	\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* don't copy */	\
+		raw_byte(hunk_->ptr, hunk_->len, INDEX);		\
 	})
 
 /*

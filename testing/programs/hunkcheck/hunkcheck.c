@@ -369,17 +369,21 @@ static void check__hunk_char__hunk_byte(void)
 {
 	static const struct test {
 		const char *s;
-		size_t i;
+		long i;
 		char c;
 		int b;
+		char nc;
+		int nb;
 	} tests[] = {
 		/* empty always same */
-		{ "", 0, '\0', -1, },
-		{ "a", 0, 'a', 'a', },
-		{ "a", 1, '\0', -1, },
-		{ "ab", 0, 'a', 'a', },
-		{ "ab", 1, 'b', 'b', },
-		{ "ab", 2, '\0', -1, },
+		{ "", 0, '\0', -1, '\0', -1, },
+		{ "", 1, '\0', -1, '\0', -1, },
+		{ "a", 0, 'a', 'a', '\0', -1, },
+		{ "a", 1, '\0', -1, 'a', 'a', },
+		{ "ab", 0, 'a', 'a', 'a', 'a', },
+		{ "ab", 1, 'b', 'b', 'b', 'b', },
+		{ "ab", 2, '\0', -1, 'a', 'a', },
+		{ "ab", 3, '\0', -1, '\0', -1, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
