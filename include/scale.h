@@ -23,6 +23,8 @@
 #include "shunk.h"
 
 struct jambuf;
+struct scales;
+struct scale;
 
 /*
  * Mixed number conversion.
@@ -56,6 +58,30 @@ err_t tto_mixed_decimal(shunk_t input, shunk_t *cursor,
 size_t jam_mixed_decimal(struct jambuf *buf, struct mixed_decimal number);
 
 /*
+ * Display INTMAX re-scaled to the specified UNIT.
+ *
+ * XXX: should it include the scale?  Problem is that some potential
+ * calls currently include the format ("%jds) but others do not
+ * ("%jd").
+ */
+
+size_t jam_intmax_scaled(struct jambuf *buf,
+			 intmax_t intmax,
+			 const struct scales *scales,
+			 unsigned unit);
+
+/*
+ * Display INTMAX re-scaled to a human friendly unit; with the human
+ * friendly unit name appended.
+ *
+ * The human friendly unit is the one closest to INTMAX.
+ */
+
+size_t jam_intmax_human(struct jambuf *buf,
+			intmax_t intmax,
+			const struct scales *scales);
+
+/*
  * Conversion to/from <number><scale>.
  */
 
@@ -81,8 +107,8 @@ const struct scale *ttoscale(shunk_t cursor,
 			     const struct scales *scales);
 
 err_t scale_mixed_decimal(const struct scale *scale,
-			 struct mixed_decimal number,
-			 uintmax_t *value);
+			  struct mixed_decimal number,
+			  uintmax_t *value);
 
 diag_t tto_scaled_uintmax(shunk_t cursor, uintmax_t *value, const struct scales *scales);
 

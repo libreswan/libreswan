@@ -23,8 +23,9 @@
 #include "passert.h"
 
 static const struct scale scales[] = {
+	/* milliseconds, and microseconds are in-human */
 	[TIMESCALE_MICROSECONDS] = { (uintmax_t)1,                                  "us", NULL, NULL, },
-	[TIMESCALE_MILLISECONDS] = { (uintmax_t)1 * 1000,                           "ms", "milisecond", "milliseconds", },
+	[TIMESCALE_MILLISECONDS] = { (uintmax_t)1 * 1000,                           "ms", NULL, NULL, },
 	[TIMESCALE_SECONDS]      = { (uintmax_t)1 * 1000 * 1000,                    "s", "second", "seconds", },
 	[TIMESCALE_MINUTES]      = { (uintmax_t)1 * 1000 * 1000 * secs_per_minute,  "m", "minute", "minutes", },
 	[TIMESCALE_HOURS]        = { (uintmax_t)1 * 1000 * 1000 * secs_per_hour,    "h", "hour", "hours", },

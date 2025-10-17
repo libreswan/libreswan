@@ -104,12 +104,16 @@ typedef struct {
 	char buf[sizeof("-18446744073709551615.1000000000 long-milli-seconds!")+1/*canary*/]; /* true length ???? */
 } deltatime_buf;
 
+/* seconds */
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
-const char *str_deltatime_scaled(deltatime_t d, enum timescale scale, deltatime_buf *buf);
-const char *str_deltatime_human(deltatime_t d, deltatime_buf *buf);
-
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
-size_t jam_deltatime_scaled(struct jambuf *buf, deltatime_t d, enum timescale scale);
+
+/* in specified unit; with unit appended */
+const char *str_deltatime_scaled(deltatime_t d, enum timescale unit, deltatime_buf *buf);
+size_t jam_deltatime_scaled(struct jambuf *buf, deltatime_t d, enum timescale unit);
+
+/* in most friendly unit; with unit appended */
+const char *str_deltatime_human(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime_human(struct jambuf *buf, deltatime_t d);
 
 diag_t ttodeltatime(shunk_t t, deltatime_t *d);

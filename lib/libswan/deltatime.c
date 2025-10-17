@@ -174,26 +174,46 @@ deltatime_t deltatime_from_timeval(struct timeval t)
 
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d)
 {
-	size_t s = 0;
-	struct timeval tv;
-	if (d.dt.tv_sec < 0) {
-		s += jam(buf, "-");
-		tv = negate_timeval(d.dt);
-	} else {
-		tv = d.dt;
-	}
-	s += jam_mixed_decimal(buf, (struct mixed_decimal) {
-			.decimal = tv.tv_sec,
-			.numerator = tv.tv_usec,
-			.denominator = 1000000/*us*/,
-		});
-	return s;
+	intmax_t microseconds = microseconds_from(d.dt);
+	return jam_intmax_scaled(buf, microseconds,
+				 &timescales, TIMESCALE_SECONDS);
 }
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_deltatime(&buf, d);
+	return out->buf;
+}
+
+size_t jam_deltatime_scaled(struct jambuf *buf, deltatime_t d, enum timescale unit)
+{
+	intmax_t microseconds = microseconds_from(d.dt);
+	return jam_intmax_scaled(buf, microseconds, &timescales, unit);
+}
+
+const char *str_deltatime_scaled(deltatime_t d,
+				 enum timescale scale,
+				 deltatime_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_deltatime_scaled(&buf, d, scale);
+	return out->buf;
+}
+
+size_t jam_deltatime_human(struct jambuf *buf, deltatime_t d)
+{
+
+	size_t s = 0;
+	intmax_t microseconds = microseconds_from(d.dt);
+	s += jam_intmax_human(buf, microseconds, &timescales);
+	return s;
+}
+
+const char *str_deltatime_human(deltatime_t d, deltatime_buf *out)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
+	jam_deltatime_human(&buf, d);
 	return out->buf;
 }
 

@@ -126,6 +126,70 @@ size_t jam_mixed_decimal(struct jambuf *buf, struct mixed_decimal number)
 	return s;
 }
 
+size_t jam_intmax_scaled(struct jambuf *buf,
+			 intmax_t intmax,
+			 const struct scales *scales,
+			 unsigned unit)
+{
+	size_t s = 0;
+
+	uintmax_t uintmax = intmax;
+	if (intmax < 0) {
+		s += jam_string(buf, "-");
+		uintmax = -intmax;
+	}
+
+	passert(unit < scales->len);
+	const struct scale *scale = &scales->list[unit];
+	struct mixed_decimal scaled_value = {
+		.decimal = uintmax / scale->multiplier,
+		.numerator = uintmax % scale->multiplier,
+		.denominator = scale->multiplier,
+	};
+
+	s += jam_mixed_decimal(buf, scaled_value);
+	return s;
+}
+
+size_t jam_intmax_human(struct jambuf *buf,
+			intmax_t intmax,
+			const struct scales *scales)
+{
+	/*
+	 * Find the biggest scale less than RAW_VALUE, so that when
+	 * scaled, the result will include a decimal (WHOLE) part; 0
+	 * will stick to the default scale.
+	 */
+	uintmax_t uintmax = (intmax < 0 ? -intmax : intmax);
+	const struct scale *scale = &scales->list[scales->default_scale];
+	FOR_EACH_ITEM(s, scales) {
+		if (s->human != NULL && s->humans != NULL &&
+		    uintmax >= s->multiplier) {
+			scale = s;
+		}
+	}
+
+	struct mixed_decimal scaled_value = {
+		.decimal = uintmax / scale->multiplier,
+		.numerator = uintmax % scale->multiplier,
+		.denominator = scale->multiplier,
+	};
+
+	size_t s = 0;
+	s += jam_mixed_decimal(buf, scaled_value);
+	s += jam_string(buf, " ");
+	if (scale->human != NULL &&
+	    scaled_value.decimal == 1 &&
+	    scaled_value.numerator == 0) {
+		s += jam_string(buf, scale->human);
+	} else if (scale->humans != NULL) {
+		s += jam_string(buf, scale->humans);
+	} else {
+		jam_string(buf, scale->suffix);
+	}
+	return s;
+}
+
 err_t scale_mixed_decimal(const struct scale *scale,
 			  struct mixed_decimal number,
 			  uintmax_t *value)
