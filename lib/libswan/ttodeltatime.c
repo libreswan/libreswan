@@ -22,7 +22,7 @@
 #include "passert.h"
 #include "lswlog.h"
 
-diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
+diag_t ttodeltatimescale(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 {
 	*d = deltatime_zero;
 
@@ -60,4 +60,9 @@ diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 
 	*d = deltatime_from_microseconds(microseconds);
 	return NULL;
+}
+
+diag_t ttodeltatime(shunk_t t, deltatime_t *d)
+{
+	return ttodeltatimescale(t, d, TIMESCALE_SECONDS);
 }

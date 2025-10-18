@@ -579,7 +579,7 @@ diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
 diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
 			  shunk_t value, deltatime_t *deltatime)
 {
-	diag_t diag = ttodeltatime(value, deltatime, TIMESCALE_SECONDS);
+	diag_t diag = ttodeltatime(value, deltatime);
 	if (diag != NULL) {
 		return diag;
 	}
