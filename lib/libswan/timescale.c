@@ -33,7 +33,6 @@ static const struct scale scales[] = {
 };
 
 const struct scales timescales = {
-	.base = 10,
 	LIST_REF(scales),
 };
 
