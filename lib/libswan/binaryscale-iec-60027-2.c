@@ -21,13 +21,13 @@
 #include "constants.h"		/* for binary_per_kilo */
 
 static const struct scale binary_scale[] = {
-	{"",   1, },
-	{"Ki", 1 * binary_per_kilo, },
-	{"Mi", 1 * binary_per_mega, },
-	{"Gi", 1 * binary_per_giga, },
-	{"Ti", 1 * binary_per_tera, },
-	{"Pi", 1 * binary_per_peta, },
-	{"Ei", 1 * binary_per_exa, },
+	{ 1,                   "",   NULL, NULL, },
+	{ 1 * binary_per_kilo, "Ki", NULL, NULL, },
+	{ 1 * binary_per_mega, "Mi", NULL, NULL, },
+	{ 1 * binary_per_giga, "Gi", NULL, NULL, },
+	{ 1 * binary_per_tera, "Ti", NULL, NULL, },
+	{ 1 * binary_per_peta, "Pi", NULL, NULL, },
+	{ 1 * binary_per_exa,  "Ei", NULL, NULL, },
 };
 
 const struct scales binary_scales = {
@@ -37,13 +37,13 @@ const struct scales binary_scales = {
 };
 
 static const struct scale binary_byte_scale[] = {
-	{"",    1, },
-	{"KiB", 1 * binary_per_kilo, },
-	{"MiB", 1 * binary_per_mega, },
-	{"GiB", 1 * binary_per_giga, },
-	{"TiB", 1 * binary_per_tera, },
-	{"PiB", 1 * binary_per_peta, },
-	{"PiB", 1 * binary_per_exa, },
+	{ 1,                   "",    "byte",     "bytes", },
+	{ 1 * binary_per_kilo, "KiB", "kilobyte", "kilobytes", },
+	{ 1 * binary_per_mega, "MiB", "megabyte", "megabytes", },
+	{ 1 * binary_per_giga, "GiB", "gigabyte", "gigabytes", },
+	{ 1 * binary_per_tera, "TiB", "terabyte", "terrabytes", },
+	{ 1 * binary_per_peta, "PiB", "petabyte", "petabytes", },
+	{ 1 * binary_per_exa,  "PiB", "exabyte",  "exabytes", },
 };
 
 const struct scales binary_byte_scales = {

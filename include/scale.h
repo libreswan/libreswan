@@ -1,6 +1,6 @@
 /* scale, for libreswan
  *
- * Copyright (C) 2024  Andrew Cagney
+ * Copyright (C) 2024, 2025  Andrew Cagney
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -36,6 +36,7 @@ struct jambuf;
  *
  * If CURSOR is non-NULL, it is set to the text following the numeric
  * value.
+ *
  * For instance 3.45 breaks down into:
  *
  *    decimal(3) + numerator(45)/denominator(100)
@@ -59,8 +60,10 @@ size_t jam_mixed_decimal(struct jambuf *buf, struct mixed_decimal number);
  */
 
 struct scale {
-	const char *suffix;
 	uintmax_t multiplier;
+	const char *suffix;
+	const char *human;	/* singular */
+	const char *humans;	/* plural */
 };
 
 /* for debugging */
@@ -75,8 +78,7 @@ struct scales {
 };
 
 const struct scale *ttoscale(shunk_t cursor,
-			     const struct scales *scales,
-			     unsigned default_scale);
+			     const struct scales *scales);
 
 err_t scale_mixed_decimal(const struct scale *scale,
 			 struct mixed_decimal number,

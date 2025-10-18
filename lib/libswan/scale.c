@@ -67,16 +67,19 @@ err_t tto_mixed_decimal(shunk_t input, shunk_t *cursor, struct mixed_decimal *nu
 	return NULL;
 }
 
-const struct scale *ttoscale(shunk_t cursor, const struct scales *scales,
-			     unsigned default_scale)
+const struct scale *ttoscale(shunk_t cursor,
+			     const struct scales *scales)
 {
-	if (cursor.len == 0) {
-		/* default scaling */
-		return &scales->list[default_scale];
-	}
-
 	FOR_EACH_ITEM(scale, scales) {
 		if (hunk_strcaseeq(cursor, scale->suffix)) {
+			return scale;
+		}
+		if (scale->human != NULL &&
+		    hunk_strcaseeq(cursor, scale->human)) {
+			return scale;
+		}
+		if (scale->humans != NULL &&
+		    hunk_strcaseeq(cursor, scale->humans)) {
 			return scale;
 		}
 	}
@@ -165,10 +168,19 @@ diag_t tto_scaled_uintmax(shunk_t t, uintmax_t *r, const struct scales *scales)
 			    scales->name,  pri_shunk(t), err);
 	}
 
-	const struct scale *scale = ttoscale(cursor, scales, scales->default_scale);
-	if (scale == NULL) {
-		return diag("unrecognized %s multiplier \""PRI_SHUNK"\"",
-			    scales->name, pri_shunk(cursor));
+	/* skip spaces */
+	while (hunk_streat(&cursor, " "));
+
+	const struct scale *scale;
+	if (cursor.len == 0) {
+		scale = &scales->list[scales->default_scale];
+	} else {
+		/* exact match */
+		scale = ttoscale(cursor, scales);
+		if (scale == NULL) {
+			return diag("unrecognized %s multiplier \""PRI_SHUNK"\"",
+				    scales->name, pri_shunk(cursor));
+		}
 	}
 
 	uintmax_t binary;

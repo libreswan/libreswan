@@ -101,11 +101,16 @@ deltatime_t deltatime_from_timeval(const struct timeval a);
 
 typedef struct {
 	/* slightly over size */
-	char buf[sizeof("-18446744073709551615.1000000000")+1/*canary*/]; /* true length ???? */
+	char buf[sizeof("-18446744073709551615.1000000000 long-milli-seconds!")+1/*canary*/]; /* true length ???? */
 } deltatime_buf;
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
+const char *str_deltatime_scaled(deltatime_t d, enum timescale scale, deltatime_buf *buf);
+const char *str_deltatime_human(deltatime_t d, deltatime_buf *buf);
+
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
+size_t jam_deltatime_scaled(struct jambuf *buf, deltatime_t d, enum timescale scale);
+size_t jam_deltatime_human(struct jambuf *buf, deltatime_t d);
 
 diag_t ttodeltatime(shunk_t t, deltatime_t *d);
 /* This has one call - retransmit-timeout :-( */

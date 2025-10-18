@@ -43,6 +43,9 @@ diag_t ttodeltatimescale(shunk_t t, deltatime_t *d, enum timescale default_times
 			    pri_shunk(t), err);
 	}
 
+	/* skip blanks */
+	while (hunk_streat(&cursor, " "));
+
 	/* [<SCALE>] */
 	const struct scale *scale = ttotimescale(cursor, default_timescale);
 	if (scale == NULL) {
