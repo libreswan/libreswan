@@ -1623,10 +1623,10 @@ int main(int argc, char **argv)
 			msg.iptfs_max_queue_size = optarg;
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
-			msg.iptfs_drop_time = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.iptfs_drop_time = optarg_deltatime(logger);
 			continue;
 		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
-			msg.iptfs_init_delay = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.iptfs_init_delay = optarg_deltatime(logger);
 			continue;
 		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
 			msg.iptfs_reorder_window = optarg;
@@ -1780,7 +1780,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
-			msg.retransmit_timeout = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.retransmit_timeout = optarg_deltatime(logger);
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
@@ -1788,11 +1788,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			msg.ikelifetime = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.ikelifetime = optarg_deltatime(logger);
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			msg.ipsec_lifetime = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.ipsec_lifetime = optarg_deltatime(logger);
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
@@ -1804,7 +1804,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
-			msg.rekeymargin = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			msg.rekeymargin = optarg_deltatime(logger);
 			continue;
 
 		case CD_REKEYFUZZ:	/* --rekeyfuzz <percentage> */

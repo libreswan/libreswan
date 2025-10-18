@@ -84,7 +84,7 @@ const char *optarg_empty(const struct logger *logger);
 /* returns an allocated realpath(), or barfs; must pfree() */
 char *optarg_realpath(const struct logger *logger);
 
-deltatime_t optarg_deltatime(const struct logger *logger, enum timescale default_timescale);
+deltatime_t optarg_deltatime(const struct logger *logger);
 
 /* -1==MAX */
 uintmax_t optarg_uintmax(const struct logger *logger);
