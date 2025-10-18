@@ -50,8 +50,7 @@ struct ipsec_conf_keyval {
 diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key,
 			 shunk_t value, uintmax_t *number);
 diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key,
-			  shunk_t value, enum timescale default_timescale,
-			  deltatime_t *deltatime);
+			  shunk_t value, deltatime_t *deltatime);
 diag_t parse_kt_sparse_name(const struct ipsec_conf_keyval *key,
 			    shunk_t value, uintmax_t *number,
 			    enum stream stream, struct logger *logger);
