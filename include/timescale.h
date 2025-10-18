@@ -30,6 +30,8 @@ enum timescale {
 	TIMESCALE_WEEKS,
 };
 
+extern const struct scales timescales;
+
 const struct scale *timescale(enum timescale);
 
 #define PRI_TIMESCALE "1%s(%juus)"

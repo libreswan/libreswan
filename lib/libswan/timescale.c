@@ -33,6 +33,8 @@ static const struct scale scales[] = {
 };
 
 const struct scales timescales = {
+	.name = "duration",
+	.default_scale = TIMESCALE_SECONDS,
 	LIST_REF(scales),
 };
 

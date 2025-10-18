@@ -64,5 +64,12 @@ diag_t ttodeltatimescale(shunk_t t, deltatime_t *d, enum timescale default_times
 
 diag_t ttodeltatime(shunk_t t, deltatime_t *d)
 {
-	return ttodeltatimescale(t, d, TIMESCALE_SECONDS);
+	uintmax_t microseconds;
+	diag_t diag = tto_scaled_uintmax(t, &microseconds, &timescales);
+	if (diag != NULL) {
+		return diag;
+	}
+
+	*d = deltatime_from_microseconds(microseconds);
+	return NULL;
 }
