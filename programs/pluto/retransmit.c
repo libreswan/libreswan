@@ -275,8 +275,8 @@ enum retransmit_action retransmit(struct state *st, const char *fmt, ...)
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 		jam_string(buf, "; will wait ");
-		jam_deltatime(buf, rt->delay);
-		jam_string(buf, " seconds for response");
+		jam_deltatime_human(buf, rt->delay);
+		jam_string(buf, " for response");
 	}
 	return RETRANSMIT_YES;
 }
