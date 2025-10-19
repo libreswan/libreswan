@@ -577,10 +577,9 @@ diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
 }
 
 diag_t parse_kt_deltatime(const struct ipsec_conf_keyval *key UNUSED,
-			  shunk_t value, enum timescale default_timescale,
-			  deltatime_t *deltatime)
+			  shunk_t value, deltatime_t *deltatime)
 {
-	diag_t diag = ttodeltatime(value, deltatime, default_timescale);
+	diag_t diag = ttodeltatime(value, deltatime);
 	if (diag != NULL) {
 		return diag;
 	}
@@ -816,7 +815,7 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		break;
 
 	case kt_seconds:
-		d = parse_kt_deltatime(&key, value, TIMESCALE_SECONDS, &deltatime);
+		d = parse_kt_deltatime(&key, value, &deltatime);
 		break;
 
 	case kt_obsolete:

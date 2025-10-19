@@ -68,13 +68,10 @@ struct scale {
 #define pri_scale(TS) (TS)->suffix, (TS)->multiplier
 
 struct scales {
-	uintmax_t base;
 	const char *name;
 	unsigned default_scale;
-	struct {
-		const struct scale *list;
-		unsigned len;
-	} scale;
+	const struct scale *list;
+	unsigned len;
 };
 
 const struct scale *ttoscale(shunk_t cursor,

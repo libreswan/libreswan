@@ -22,7 +22,7 @@
 #include "passert.h"
 #include "lswlog.h"
 
-diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
+diag_t ttodeltatimescale(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 {
 	*d = deltatime_zero;
 
@@ -56,6 +56,18 @@ diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale)
 	if (e != NULL) {
 		return diag("invalid duration \""PRI_SHUNK"\", %s",
 			    pri_shunk(t), e);
+	}
+
+	*d = deltatime_from_microseconds(microseconds);
+	return NULL;
+}
+
+diag_t ttodeltatime(shunk_t t, deltatime_t *d)
+{
+	uintmax_t microseconds;
+	diag_t diag = tto_scaled_uintmax(t, &microseconds, &timescales);
+	if (diag != NULL) {
+		return diag;
 	}
 
 	*d = deltatime_from_microseconds(microseconds);

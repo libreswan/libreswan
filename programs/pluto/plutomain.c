@@ -554,10 +554,11 @@ static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 	return NULL;
 }
 
-static void update_optarg_deltatime(enum config_setup_keyword kw, struct logger *logger,
-				   enum timescale timescale, int lower, int upper)
+static void update_optarg_deltatime(enum config_setup_keyword kw,
+				    struct logger *logger,
+				    int lower, int upper)
 {
-	deltatime_t time = optarg_deltatime(logger, timescale);
+	deltatime_t time = optarg_deltatime(logger);
 	check_diag(logger, deltatime_ok(time, lower, upper));
 	update_setup_deltatime(kw, time);
 }
@@ -763,7 +764,7 @@ int main(int argc, char **argv)
 
 		case OPT_EXPIRE_SHUNT_INTERVAL:	/* --expire-shunt-interval <interval> */
 		{
-			deltatime_t interval = optarg_deltatime(logger, TIMESCALE_SECONDS);
+			deltatime_t interval = optarg_deltatime(logger);
 			check_diag(logger, deltatime_ok(interval, 1, MAX_EXPIRE_SHUNT_INTERVAL_SECONDS));
 			update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, interval);
 			continue;
@@ -839,14 +840,14 @@ int main(int argc, char **argv)
 		case OPT_CURL_TIMEOUT:	/* --curl-timeout */
 #define CRL_TIMEOUT_RANGE 1, 1000
 			update_optarg_deltatime(KBF_CRL_TIMEOUT_SECONDS, logger,
-						TIMESCALE_SECONDS, CRL_TIMEOUT_RANGE);
+						CRL_TIMEOUT_RANGE);
 			continue;
 		case OPT_CRL_STRICT:	/* --crl-strict */
 			update_setup_yn(KYN_CRL_STRICT, YN_YES);
 			continue;
 		case OPT_CRLCHECKINTERVAL:	/* --crlcheckinterval <seconds> */
 			update_setup_deltatime(KBF_CRL_CHECKINTERVAL,
-					       optarg_deltatime(logger, TIMESCALE_SECONDS));
+					       optarg_deltatime(logger));
 			continue;
 
 		case OPT_OCSP_STRICT:
@@ -864,7 +865,7 @@ int main(int argc, char **argv)
 		case OPT_OCSP_TIMEOUT:	/* --ocsp-timeout <seconds> */
 #define OCSP_TIMEOUT_RANGE 1, 1000
 			update_optarg_deltatime(KBF_OCSP_TIMEOUT_SECONDS, logger,
-						TIMESCALE_SECONDS, OCSP_TIMEOUT_RANGE);
+						OCSP_TIMEOUT_RANGE);
 			continue;
 		case OPT_OCSP_CACHE_SIZE:	/* --ocsp-cache-size <entries> */
 		{
@@ -881,7 +882,7 @@ int main(int argc, char **argv)
 		case OPT_OCSP_CACHE_MIN_AGE:	/* --ocsp-cache-min-age <seconds> */
 #define OCSP_CACHE_MIN_AGE_RANGE 1, -1
 			update_optarg_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
-						TIMESCALE_SECONDS, OCSP_CACHE_MIN_AGE_RANGE);
+						OCSP_CACHE_MIN_AGE_RANGE);
 			continue;
 		case OPT_OCSP_CACHE_MAX_AGE:	/* --ocsp-cache-max-age <seconds> */
 			/*
@@ -891,7 +892,7 @@ int main(int argc, char **argv)
 			 */
 #define OCSP_CACHE_MAX_AGE_RANGE 0, -1
 			update_optarg_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
-						TIMESCALE_SECONDS, OCSP_CACHE_MAX_AGE_RANGE);
+						OCSP_CACHE_MAX_AGE_RANGE);
 			continue;
 		case OPT_OCSP_METHOD:	/* --ocsp-method get|post */
 			update_setup_option(KBF_OCSP_METHOD, optarg_sparse(logger, 0, &ocsp_method_names));
@@ -952,7 +953,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_KEEP_ALIVE:	/* --keep-alive <delay_secs> */
-			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger, TIMESCALE_SECONDS));
+			update_setup_deltatime(KBF_KEEP_ALIVE, optarg_deltatime(logger));
 			continue;
 
 		case OPT_SELFTEST:	/* --selftest */

@@ -107,7 +107,9 @@ typedef struct {
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
 
-diag_t ttodeltatime(shunk_t t, deltatime_t *d, enum timescale default_timescale);
+diag_t ttodeltatime(shunk_t t, deltatime_t *d);
+/* This has one call - retransmit-timeout :-( */
+diag_t ttodeltatimescale(shunk_t t, deltatime_t *d, enum timescale default_timescale);
 
 /*
  * Primitives used to implement times; try to avoid timeval

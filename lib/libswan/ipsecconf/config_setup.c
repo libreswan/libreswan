@@ -351,7 +351,7 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		case kt_seconds:
 		{
 			deltatime_t deltatime;
-			d = parse_kt_deltatime(kv, value, TIMESCALE_SECONDS, &deltatime);
+			d = parse_kt_deltatime(kv, value, &deltatime);
 			if (d != NULL) {
 				llog_bad(logger, kv, d);
 				pfree_diag(&d);

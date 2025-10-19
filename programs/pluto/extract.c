@@ -618,20 +618,20 @@ static char *extract_string(const char *leftright, const char *name,
 	return clone_str(string, name);
 }
 
-static deltatime_t extract_deltatime(const char *leftright,
-				     const char *name,
-				     const char *value,
-				     enum timescale default_timescale,
-				     deltatime_t value_when_unset,
-				     const struct whack_message *wm,
-				     diag_t *d, struct verbose verbose)
+static deltatime_t extract_deltatimescale(const char *leftright,
+					  const char *name,
+					  const char *value,
+					  enum timescale default_timescale,
+					  deltatime_t value_when_unset,
+					  const struct whack_message *wm,
+					  diag_t *d, struct verbose verbose)
 {
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
 
 	deltatime_t deltatime;
-	diag_t diag = ttodeltatime(shunk1(value), &deltatime, default_timescale);
+	diag_t diag = ttodeltatimescale(shunk1(value), &deltatime, default_timescale);
 	if (diag != NULL) {
 		(*d) = diag_diag(&diag, "%s%s=%s invalid, ",
 				 leftright, name, value);
@@ -3477,10 +3477,11 @@ diag_t extract_connection(const struct whack_message *wm,
 			(wm->retransmit_timeout.is_set ? wm->retransmit_timeout :
 			 deltatime_from_milliseconds(RETRANSMIT_TIMEOUT_DEFAULT * 1000));
 		config->retransmit_interval =
-			extract_deltatime("", "retransmit-interval", wm->retransmit_interval,
-					  TIMESCALE_MILLISECONDS,
-					  /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
-					  wm, &d, verbose);
+			extract_deltatimescale("", "retransmit-interval",
+					       wm->retransmit_interval,
+					       TIMESCALE_MILLISECONDS,
+					       /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
+					       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3541,7 +3542,6 @@ diag_t extract_connection(const struct whack_message *wm,
 			config->sa_rekey_margin = new_rkm;
 		}
 
-		const enum timescale dpd_timescale = TIMESCALE_SECONDS;
 		switch (ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
@@ -3549,15 +3549,13 @@ diag_t extract_connection(const struct whack_message *wm,
 			    wm->dpdtimeout != NULL) {
 				diag_t d;
 				d = ttodeltatime(shunk1(wm->dpddelay),
-						 &config->dpd.delay,
-						 dpd_timescale);
+						 &config->dpd.delay);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
 							 wm->dpddelay);
 				}
 				d = ttodeltatime(shunk1(wm->dpdtimeout),
-						 &config->dpd.timeout,
-						 dpd_timescale);
+						 &config->dpd.timeout);
 				if (d != NULL) {
 					return diag_diag(&d, "dpdtimeout=%s invalid, ",
 							 wm->dpdtimeout);
@@ -3575,8 +3573,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			if (wm->dpddelay != NULL) {
 				diag_t d;
 				d = ttodeltatime(shunk1(wm->dpddelay),
-						 &config->dpd.delay,
-						 dpd_timescale);
+						 &config->dpd.delay);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
 							 wm->dpddelay);

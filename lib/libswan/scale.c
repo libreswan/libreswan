@@ -72,10 +72,10 @@ const struct scale *ttoscale(shunk_t cursor, const struct scales *scales,
 {
 	if (cursor.len == 0) {
 		/* default scaling */
-		return &scales->scale.list[default_scale];
+		return &scales->list[default_scale];
 	}
 
-	FOR_EACH_ITEM(scale, &scales->scale) {
+	FOR_EACH_ITEM(scale, scales) {
 		if (hunk_strcaseeq(cursor, scale->suffix)) {
 			return scale;
 		}
