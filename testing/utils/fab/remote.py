@@ -85,18 +85,6 @@ def _login(console, logger, login, password, lapsed_time, timeout):
             logger.error("EOF while trying to login")
             return None
 
-    # Sync with the remote end by matching a known and unique pattern.
-    # Strictly match PATTERN+PROMPT so that earlier prompts that might
-    # also be lurking in the output are discarded.
-    try:
-        number = str(random.randrange(10000, 1000000))
-        sync = "sync=" + number + "=cnyc"
-        console.sendline("echo " + sync)
-        console.expect(sync.encode() + rb'\s+' + console.prompt.pattern, timeout=virsh.TIMEOUT)
-    except (pexpect.TIMEOUT, pexpect.EOF) as e:
-        logger.error("EXCEPTION while syncing output: %s", e)
-        return None
-
     # Set the PTY inside the VM to no-echo; kvmsh.py's interactive
     # mode will re-adjust this.
     #
@@ -105,10 +93,17 @@ def _login(console, logger, login, password, lapsed_time, timeout):
     # Include a newline so that the new prompt is on a line on its
     # own!  There seems to be a bash bug where the command and prompt
     # are re-echoed when the prompt is OS@\h instead of \u@\h.
+    #
+    # Append a unique output string so that input and output are in
+    # sync.
+
     try:
-        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr ; echo")
+        number = str(random.randrange(10000, 1000000))
+        sync = "sync=" + number + "=cnyc"
+        console.sendline("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr ; echo " + sync)
+        console.expect(sync.encode() + rb'\s+' + console.prompt.pattern, timeout=virsh.TIMEOUT)
     except (pexpect.TIMEOUT, pexpect.EOF) as e:
-        logger.error("EXCEPTION while setting terminal mode: %s", e)
+        logger.error("EXCEPTION while syncing output: %s", e)
         return None
 
     return console
