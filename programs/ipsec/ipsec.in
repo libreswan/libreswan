@@ -493,6 +493,10 @@ ipsec_whack() {
 		utc="${1}"
 		shift
 		;;
+	    --json)
+		json="${1}"
+		shift
+		;;
 	    --verbose)
 		verbose="${1}"
 		shift
@@ -509,7 +513,7 @@ ipsec_whack() {
 		;;
 	esac
     done
-    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host}
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host} ${json}
     exit $?
 }
 

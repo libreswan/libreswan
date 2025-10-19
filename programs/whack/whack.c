@@ -443,6 +443,8 @@ enum opt {
 	OPT_OPPO_DPORT,
 	OPT_OPPO_LABEL,
 
+	OPT_JSON,
+
 	/* List options */
 
 	LST_UTC,
@@ -734,6 +736,7 @@ const struct option optarg_options[] = {
 	{ "processstatus\0", no_argument, NULL, OPT_PROCESSSTATUS },
 	{ "statestatus\0", no_argument, NULL, OPT_SHOW_STATES }, /* alias to catch typos */
 	{ "showstates\0", no_argument, NULL, OPT_SHOW_STATES },
+	{ "json\0", no_argument, NULL, OPT_JSON },
 
 #ifdef USE_SECCOMP
 	{ "seccomp-crashtest\0", no_argument, NULL, OPT_SECCOMP_CRASHTEST },
@@ -1444,6 +1447,10 @@ int main(int argc, char **argv)
 
 		case OPT_ASYNC:	/* --asynchronous */
 			msg.whack_async = true;
+			continue;
+
+		case OPT_JSON:	/* --json */
+			msg.whack_json = true;
 			continue;
 
 		/* List options */

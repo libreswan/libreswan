@@ -140,7 +140,7 @@ static bool recent_last_contact(struct child_sa *child,
  * that half the channel is working.  All the incoming packets could
  * be retransmits.
  *
- * note: this mutates *st by calling get_sa_bundle_info
+ * note: this mutates *st by calling get_ipsec_traffic
  */
 
 void event_v2_liveness(struct state *st)

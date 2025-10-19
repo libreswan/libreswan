@@ -43,59 +43,77 @@
 #include "whack_trafficstatus.h"
 #include "iface.h"
 
-/* note: this mutates *st by calling get_sa_bundle_info */
-static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
+/* note: this mutates *child by calling get_ipsec_traffic */
+static void show_child_sa_traffic_object(struct show *s, struct child_sa *child)
 {
-	if (!pexpect(child != NULL)) {
-		return;
+	const struct connection *c = child->sa.st_connection;
+
+	SHOW_MEMBER(s, serialno, "serial") {
+		show_string(s, PRI_SO, pri_so(child->sa.st_serialno));
 	}
 
-	jam_so(buf, child->sa.st_serialno);
-	jam_string(buf, ": ");
-
-	const struct connection *c = child->sa.st_connection;
-	jam_connection(buf, c);
+	SHOW_MEMBER(s, connection, "connection") {
+		connection_buf cb;
+		show_string(s, "%s%s", c->name, str_connection_suffix(c, &cb));
+	}
 
 	if (child->sa.st_xauth_username[0] != '\0') {
-		jam(buf, ", username=%s", child->sa.st_xauth_username);
-	}
-
-	/* traffic */
-	jam(buf, ", type=%s",
-	    (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" :
-	     child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" :
-	     child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
-	     "UNKNOWN"));
-
-	if (c->iface->nic_offload) {
-		switch (c->config->nic_offload) {
-		case NIC_OFFLOAD_PACKET: jam(buf, "(nic-offload=packet)"); break;
-		case NIC_OFFLOAD_CRYPTO: jam(buf, "(nic-offload=crypto)"); break;
-		case NIC_OFFLOAD_NO: break;
-		case NIC_OFFLOAD_UNSET: jam(buf, "(nic-offload=UNSET)"); break;
+		SHOW_MEMBER(s, username, "username") {
+			show_string(s, "%s", child->sa.st_xauth_username);
 		}
 	}
 
-	jam(buf, ", add_time=%"PRIu64, child->sa.st_esp.add_time);
+	/* traffic */
+	SHOW_MEMBER(s, type_, "type") {
+		show_string(s, "%s",
+		     (child->sa.st_esp.protocol == &ip_protocol_esp ? "ESP" :
+		      child->sa.st_ah.protocol == &ip_protocol_ah ? "AH" :
+		      child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
+		      "UNKNOWN"));
+	}
+
+	if (c->iface->nic_offload && c->config->nic_offload != NIC_OFFLOAD_NO) {
+		SHOW_MEMBER(s, nic_offload, "nic-offload") {
+			switch (c->config->nic_offload) {
+			case NIC_OFFLOAD_PACKET: show_string(s, "%s", "packet"); break;
+			case NIC_OFFLOAD_CRYPTO: show_string(s, "%s", "crypto"); break;
+			case NIC_OFFLOAD_UNSET: show_string(s, "%s", "UNSET"); break;
+			default:
+				break;
+			}
+		}
+	}
+
+	SHOW_MEMBER(s, add_time, "add_time") {
+		show_raw(s, "%"PRIu64, child->sa.st_esp.add_time);
+	}
 
 	struct ipsec_proto_info *first_ipsec_proto = outer_ipsec_proto_info(child);
 	passert(first_ipsec_proto != NULL);
 
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
-		jam(buf, ", inBytes=%ju", first_ipsec_proto->inbound.bytes);
+		SHOW_MEMBER(s, in_bytes, "inBytes"){
+			show_raw(s, "%ju", first_ipsec_proto->inbound.bytes);
+		}
 	}
 
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_OUTBOUND)) {
-		jam(buf, ", outBytes=%ju", first_ipsec_proto->outbound.bytes);
+		SHOW_MEMBER(s, out_bytes, "outBytes") {
+			show_raw(s, "%ju", first_ipsec_proto->outbound.bytes);
+		}
 		if (c->config->sa_ipsec_max_bytes != 0) {
-			jam_humber_uintmax(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
+			SHOW_MEMBER(s, max_bytes, "maxBytes") {
+				humber_buf hb;
+				show_string(s, "%s", str_humber_uintmax("", c->config->sa_ipsec_max_bytes, "B", &hb));
+			}
 		}
 	}
 
 	if (child->sa.st_xauth_username[0] == '\0') {
-		jam(buf, ", id='");
-		jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
-		jam(buf, "'");
+		SHOW_MEMBER(s, id, "id") {
+			id_buf ib;
+			show_string(s, "%s", str_id_bytes(&c->remote->host.id, jam_sanitized_bytes, &ib));
+		}
 	}
 
 	/*
@@ -110,16 +128,32 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 			* pool. */
 		       &c->local) {
 		if (nr_child_leases(*end) > 0) {
-			jam(buf, ", lease=");
-			const char *sep = "";
-			FOR_EACH_ELEMENT(lease, (*end)->child.lease) {
-				if (lease->ip.is_set) {
-					jam_string(buf, sep); sep = ",";
-					/* XXX: lease should be CIDR */
-					ip_subnet s = subnet_from_address(*lease);
-					jam_subnet(buf, &s);
+			SHOW_MEMBER(s, lease_, "lease") {
+				SHOW_ARRAY(s, leases) {
+					FOR_EACH_ELEMENT(lease, (*end)->child.lease) {
+						if (lease->ip.is_set) {
+							/* XXX: lease should be CIDR */
+							ip_subnet sn = subnet_from_address(*lease);
+							subnet_buf sb;
+							show_string(s, "%s", str_subnet(&sn, &sb));
+						}
+					}
 				}
 			}
+		}
+	}
+}
+
+/* note: this mutates *child by calling get_ipsec_traffic */
+static void show_child_sa_traffic(struct show *s, struct child_sa *child)
+{
+	if (!pexpect(child != NULL)) {
+		return;
+	}
+
+	SHOW_STRUCTURED(s, child_sa_traffic) {
+		SHOW_OBJECT(s, child_sa_traffic_connection) {
+			show_child_sa_traffic_object(s, child);
 		}
 	}
 }
@@ -165,11 +199,9 @@ static unsigned whack_trafficstatus_connection(const struct whack_message *m UNU
 
 		/* whack-log-global - no prefix */
 		nr++;
-		SHOW_JAMBUF(s, buf) {
-			/* note: this mutates *st by calling
-			 * get_sa_bundle_info */
-			jam_child_sa_traffic(buf, pexpect_child_sa(st));
-		}
+		/* note: this mutates *st by calling
+		 * get_ipsec_traffic */
+		show_child_sa_traffic(s, pexpect_child_sa(st));
 	}
 
 	return nr; /* return count */

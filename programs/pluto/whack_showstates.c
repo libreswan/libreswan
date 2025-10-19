@@ -169,7 +169,7 @@ static size_t jam_readable_humber(struct jambuf *buf, uint64_t num, bool kilos)
 }
 
 /*
- * Note: st cannot be const because we call get_sa_bundle_info on it
+ * Note: st cannot be const because we call get_ipsec_traffic on it
  */
 
 static void show_state(struct show *s, struct state *st, const monotime_t now)
