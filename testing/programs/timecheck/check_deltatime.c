@@ -87,13 +87,17 @@ static void check_ttodeltatime(void)
 		{ "0.1ms", (uintmax_t)      100,            TIMESCALE_SECONDS, true, },
 		{ "0.5m",  (uintmax_t)  30*1000*1000,       TIMESCALE_SECONDS, true, },
 
+		/* human */
+		{ "1seconds", (uintmax_t)1*1000*1000,       TIMESCALE_MILLISECONDS, true, },
+		{ "2 second", (uintmax_t)2*1000*1000,       TIMESCALE_MILLISECONDS, true, },
+		{ "1 ",       (uintmax_t)1*1000,            TIMESCALE_MILLISECONDS, true, },
+		{ "1 s",      (uintmax_t)1*1000*1000,       TIMESCALE_MILLISECONDS, true, },
+
 		/* error */
 		{ "",    (uintmax_t)0,                      TIMESCALE_SECONDS, false, },
 		{ "1x",  (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
 		{ "x1",  (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
 		{ "1mm", (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
-		{ "1seconds", (uintmax_t)0,                 TIMESCALE_MILLISECONDS, false, },
-		{ "1 s", (uintmax_t)0,                      TIMESCALE_MILLISECONDS, false, },
 		{ "0x10", (uintmax_t)0,                     TIMESCALE_SECONDS, false, },
 		{ "0.1",  (uintmax_t)0,                     TIMESCALE_MICROSECONDS, false, },
 		{ "0.1x", (uintmax_t)0,                     TIMESCALE_SECONDS, false, },

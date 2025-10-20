@@ -49,7 +49,7 @@ west #
 "westnet-eastnet-ikev2" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ikev2" #1: sent Main Mode request
 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+"westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 1 second for response
 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 8 seconds for response

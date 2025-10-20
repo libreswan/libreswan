@@ -23,13 +23,14 @@
 #include "passert.h"
 
 static const struct scale scales[] = {
-	[TIMESCALE_MICROSECONDS] = { "us", (uintmax_t)1, },
-	[TIMESCALE_MILLISECONDS] = { "ms", (uintmax_t)1 * 1000, },
-	[TIMESCALE_SECONDS]      = { "s",  (uintmax_t)1 * 1000 * 1000, },
-	[TIMESCALE_MINUTES]      = { "m",  (uintmax_t)1 * 1000 * 1000 * secs_per_minute, },
-	[TIMESCALE_HOURS]        = { "h",  (uintmax_t)1 * 1000 * 1000 * secs_per_hour, },
-	[TIMESCALE_DAYS]         = { "d",  (uintmax_t)1 * 1000 * 1000 * secs_per_day, },
-	[TIMESCALE_WEEKS]        = { "w",  (uintmax_t)1 * 1000 * 1000 * secs_per_day * 7, },
+	/* milliseconds, and microseconds are in-human */
+	[TIMESCALE_MICROSECONDS] = { (uintmax_t)1,                                  "us", NULL, NULL, },
+	[TIMESCALE_MILLISECONDS] = { (uintmax_t)1 * 1000,                           "ms", NULL, NULL, },
+	[TIMESCALE_SECONDS]      = { (uintmax_t)1 * 1000 * 1000,                    "s", "second", "seconds", },
+	[TIMESCALE_MINUTES]      = { (uintmax_t)1 * 1000 * 1000 * secs_per_minute,  "m", "minute", "minutes", },
+	[TIMESCALE_HOURS]        = { (uintmax_t)1 * 1000 * 1000 * secs_per_hour,    "h", "hour", "hours", },
+	[TIMESCALE_DAYS]         = { (uintmax_t)1 * 1000 * 1000 * secs_per_day,     "d", "day", "days", },
+	[TIMESCALE_WEEKS]        = { (uintmax_t)1 * 1000 * 1000 * secs_per_day * 7, "w", "week", "weeks", },
 };
 
 const struct scales timescales = {
@@ -40,7 +41,10 @@ const struct scales timescales = {
 
 const struct scale *ttotimescale(shunk_t cursor, enum timescale default_timescale)
 {
-	return ttoscale(cursor, &timescales, default_timescale);
+	if (cursor.len == 0) {
+		return &timescales.list[default_timescale];
+	}
+	return ttoscale(cursor, &timescales);
 }
 
 const struct scale *timescale(enum timescale scale)

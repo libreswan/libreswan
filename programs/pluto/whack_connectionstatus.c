@@ -53,6 +53,7 @@
 #include "monotime.h"
 #include "ikev2_ike_session_resume.h"	/* for show_session_resume() */
 #include "kernel_info.h"
+#include "timescale.h"
 
 /* Passed in to jam_end_client() */
 static const char END_SEPARATOR[] = "===";
@@ -763,8 +764,12 @@ static void show_connection_status(struct show *s, const struct connection *c)
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, c->name);
 		jam_string(buf, ":  ");
-		jam(buf, " retransmit-interval: %jdms;",
-		    milliseconds_from_deltatime(c->config->retransmit_interval));
+		/* retransmit-interval */
+		jam_string(buf, " retransmit-interval: ");
+		jam_deltatime_scaled(buf, c->config->retransmit_interval,
+				     TIMESCALE_MILLISECONDS);
+		jam_string(buf, "ms;");
+		/* retransmit-timeout */
 		jam(buf, " retransmit-timeout: %jds;",
 		    deltasecs(c->config->retransmit_timeout));
 		/* tcp? */

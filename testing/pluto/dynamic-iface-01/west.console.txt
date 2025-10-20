@@ -81,7 +81,7 @@ west #
 "west-float" #5: initiating IKEv1 Main Mode connection
 "west-float" #5: sent Main Mode request
 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 0.5 seconds for response
-"west-float" #5: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
+"west-float" #5: STATE_MAIN_I1: retransmission; will wait 1 second for response
 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 2 seconds for response
 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 4 seconds for response
 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 8 seconds for response
