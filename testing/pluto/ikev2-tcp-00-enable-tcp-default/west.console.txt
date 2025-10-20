@@ -53,7 +53,7 @@ west #
 "west" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west" #2: retransmitting IKE_SA_INIT request; will wait 0.5 seconds for response
-"west" #2: retransmitting IKE_SA_INIT request; will wait 1 seconds for response
+"west" #2: retransmitting IKE_SA_INIT request; will wait 1 second for response
 "west" #2: retransmitting IKE_SA_INIT request; will wait 2 seconds for response
 "west" #2: retransmitting IKE_SA_INIT request; will wait 4 seconds for response
 "west" #2: retransmitting IKE_SA_INIT request; will wait 8 seconds for response
