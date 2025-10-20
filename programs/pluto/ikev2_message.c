@@ -990,13 +990,13 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * Pass 2: Re-assemble the fragments into the .raw_packet
 	 * buffer.
 	 */
-	PEXPECT(logger, md->raw_packet.ptr == NULL); /* empty */
-	md->raw_packet = alloc_chunk(size, "IKEv2 fragments buffer");
+	PEXPECT(logger, md->v2_sk_payload.ptr == NULL); /* empty */
+	md->v2_sk_payload = alloc_chunk(size, "IKEv2 fragments buffer");
 	unsigned int offset = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		PASSERT(logger, offset + frag->plain.len <= size);
-		memcpy(md->raw_packet.ptr + offset,
+		memcpy(md->v2_sk_payload.ptr + offset,
 		       frag->plain.ptr, frag->plain.len);
 		offset += frag->plain.len;
 	}
@@ -1007,7 +1007,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * and SKF .chain[] pointers).
 	 */
 	struct payload_digest sk = {
-		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->raw_packet), "decrypted SFK payloads"),
+		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->v2_sk_payload), "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};

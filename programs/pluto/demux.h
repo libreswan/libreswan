@@ -145,12 +145,20 @@ enum v1_pb {
 #endif
 
 /* message digest
+ *
  * Note: raw_packet and packet_pbs are "owners" of space on heap.
  */
 
 struct msg_digest {
 	refcnt_t refcnt;
-	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
+	chunk_t v1_raw_packet;			/* (v1) if encrypted,
+						 * received packet
+						 * before
+						 * decryption */
+	chunk_t v2_sk_payload;			/* (v2) if fragmented,
+						 * the re-constructed
+						 * SK payload (or
+						 * packet?).  */
 	struct iface_endpoint *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
 	struct isakmp_hdr hdr;			/* message's header */
