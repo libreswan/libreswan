@@ -1109,16 +1109,18 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	}
 
 	/*
-	 * Go deeper:
+	 * Skip pre-processing unencrypted notifications (there should
+	 * be none, and they haven't yet had their integrity
+	 * confirmed.
 	 *
-	 * XXX: should this do 'deeper' analysis of packets.  For
-	 * instance checking the SPI of a notification payload?
-	 * Probably not as the value may be ignored.
-	 *
-	 * The exception is seems to be v2N - both cookie and redirect
-	 * code happen early and use the values.
+	 * This also means that the only data structures pointing into
+	 * the packet are all found in .chain[]; and redirecting them
+	 * to reconstructed message (when fragmented) should be
+	 * easier.
 	 */
-	decode_v2N_payloads(ike->sa.logger, md);
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		ldbg(ike->sa.logger, "ignoring unencrypted notifications");
+	}
 
 	/*
 	 * Using the (in theory) protected but not encrypted parts of
