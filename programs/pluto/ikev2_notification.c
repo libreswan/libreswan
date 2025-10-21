@@ -37,6 +37,9 @@
 #include "ikev2_send.h"		/* for send_v2_notification_from_md() et.al. */
 #include "log_limiter.h"
 
+static void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
+			       const struct payload_digest *notify);
+
 enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
 	switch (n) {
@@ -147,6 +150,14 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 		LDBG_log(logger, "%s notification %s saved", type, name.buf);
 	}
 	md->pd[v2_pd] = notify;
+}
+
+void decode_v2N_payloads(struct logger *logger, struct msg_digest *md)
+{
+	for (struct payload_digest *n = md->chain[ISAKMP_NEXT_v2N];
+	     n != NULL; n = n->next) {
+		decode_v2N_payload(logger, md, n);
+	}
 }
 
 /*

@@ -58,8 +58,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 /* output an empty v2 notification payload */
 bool emit_v2N(v2_notification_t ntype, struct pbs_out *outs);
 
-void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
-			const struct payload_digest *notify);
+void decode_v2N_payloads(struct logger *logger, struct msg_digest *md);
 
 enum v2_pd v2_pd_from_notification(v2_notification_t);
 
