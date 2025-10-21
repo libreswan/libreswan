@@ -370,9 +370,9 @@ int raw_byte(const void *ptr, size_t len, long index);
 
 /* returns POINTER to start of write; or NULL; see pfkey v2 code */
 
-#define hunk_put(HUNK, PTR, LEN)					\
+#define hunk_put_bytes(HUNK, PTR, LEN)					\
 	({								\
-		typeof(HUNK) hp_hunk_ = HUNK; /* evaluate once */	\
+		typeof(*(HUNK)) *hp_hunk_ = HUNK; /* evaluate once */	\
 		size_t hp_len_ = LEN; /* evaluate once */		\
 		const void *hp_src_ = PTR; /* evaluate once */		\
 		void *hp_dst_ = NULL;					\
@@ -384,53 +384,38 @@ int raw_byte(const void *ptr, size_t len, long index);
 			hp_hunk_->ptr += hp_len_;			\
 		}							\
 		/* XXX: can't assume alignment; but */			\
-		(typeof(PTR)) hp_dst_;					\
+		(typeof(&(*(PTR)))) hp_dst_;				\
 	})
 
 #define hunk_put_hunk(HUNK, DATA)					\
 	({								\
-		typeof(DATA) hph_hunk_ = DATA; /* evaluate once */	\
-		hunk_put(HUNK, hph_hunk_.ptr, hph_hunk_.len);		\
+		typeof(*(DATA)) *hp_data_ = DATA; /* evaluate once */	\
+		hunk_put_bytes(HUNK, hp_data_->ptr, hp_data_->len);	\
 	})
 
-#define hunk_put_thing(HUNK, THING)		\
-	(typeof(THING)*) hunk_put(HUNK, &(THING), sizeof(THING))
+#define hunk_put_thing(HUNK, THING)					\
+	(typeof(THING)*) hunk_put_bytes(HUNK, &(THING), sizeof(THING))
+
+#define hunk_put_byte(HUNK, BYTE, COUNT)				\
+	({								\
+		uint8_t hp_byte_ = BYTE;				\
+		size_t hp_len_ = COUNT;					\
+		typeof(*(HUNK)) *hp_hunk_ = HUNK;			\
+		void *hp_dst_ = NULL;					\
+		if (hp_hunk_->len >= hp_len_) {				\
+			/* can't assume memory alignment */		\
+			hp_dst_ = hp_hunk_->ptr;			\
+			memset(hp_dst_, hp_byte_, hp_len_);		\
+			hp_hunk_->len -= hp_len_;			\
+			hp_hunk_->ptr += hp_len_;			\
+		}							\
+		hp_dst_;						\
+	})
+
 
 /*
- * Macros for filling in a HUNK like object (hunk like objects have an
- * array for .ptr, hence sizeof(.ptr) determines the upper bound).
+ * Deal with ischar() etc expecting unsigned char + -1.
  */
-
-#define hunk_append_bytes(DST/*pointer*/, SRC_PTR, SRC_LEN)		\
-	({								\
-		typeof(SRC_PTR) src_ptr_ = SRC_PTR; /* evaluate once */	\
-		size_t src_len_ = SRC_LEN; /* evaluate once */		\
-		typeof(DST) dst_ = DST; /* evaluate once */		\
-		passert(dst_->len + src_len_ <= sizeof(dst_->ptr/*array*/)); \
-		typeof(dst_->ptr[0]) *dst_ptr_ = dst_->ptr + dst_->len;	\
-		memcpy(dst_ptr_, src_ptr_, src_len_);			\
-		dst_->len += src_len_;					\
-		dst_ptr_;						\
-	})
-
-#define hunk_append_hunk(DST/*pointer*/, SRC/*value*/)		\
-	({							\
-		typeof(SRC) *src_ = &(SRC); /* evaluate once */	\
-		hunk_append_bytes(DST, src_->ptr, src_->len);	\
-	})
-
-#define hunk_append_byte(DST/*pointer*/, BYTE, COUNT)			\
-	({								\
-		size_t count_ = COUNT;					\
-		typeof(DST) dst_ = DST; /* evaluate once */		\
-		passert(dst_->len + count_ <= sizeof(dst_->ptr)/*array*/); \
-		typeof(dst_->ptr[0]) *dst_ptr_ = dst_->ptr + dst_->len;	\
-		memset(dst_ptr_, BYTE, count_);				\
-		dst_->len += count_;					\
-		dst_ptr_;						\
-	})
-
-/* see hunkcheck.c */
 
 #define is_digit(HUNK) char_isdigit(hunk_char(HUNK, 0))
 #define is_char(HUNK, CHAR) (hunk_char(HUNK, 0) == CHAR)

@@ -341,7 +341,7 @@ static struct sockaddr *put_address_sockaddr(struct outbuf *msg,
 					     const ip_address addr)
 {
 	ip_sockaddr sa = sockaddr_from_address(addr);
-	return hunk_put(msg, &sa.sa.sa, sa.len);
+	return hunk_put_bytes(msg, &sa.sa.sa, sa.len);
 }
 
 /*
@@ -450,7 +450,7 @@ static struct sadb_key *put_sadb_key(struct outbuf *msg,
 	struct sadb_key *key =
 		put_sadb_ext(msg, sadb_key, key_alg,
 			     .sadb_key_bits = keyval.len * BITS_IN_BYTE);
-	if (hunk_put_hunk(msg, keyval) == NULL) {
+	if (hunk_put_hunk(msg, &keyval) == NULL) {
 		llog_passert(verbose.logger, HERE, "bad key(E)");
 	}
 	padup_sadb(msg, key);
