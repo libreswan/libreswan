@@ -359,25 +359,6 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 		}
 
 		/*
-		 * Go deeper:
-		 *
-		 * XXX: should this do 'deeper' analysis of packets.
-		 * For instance checking the SPI of a notification
-		 * payload?  Probably not as the value may be ignored.
-		 *
-		 * The exception is seems to be v2N - both cookie and
-		 * redirect code happen early and use the values.
-		 */
-
-		switch (np) {
-		case ISAKMP_NEXT_v2N:
-			decode_v2N_payload(logger, md, pd);
-			break;
-		default:
-			break;
-		}
-
-		/*
 		 * Determine the next payload.
 		 *
 		 * SK and SKF are special - their next-payload field
@@ -1128,6 +1109,20 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	}
 
 	/*
+	 * Skip pre-processing unencrypted notifications (there should
+	 * be none, and they haven't yet had their integrity
+	 * confirmed.
+	 *
+	 * This also means that the only data structures pointing into
+	 * the packet are all found in .chain[]; and redirecting them
+	 * to reconstructed message (when fragmented) should be
+	 * easier.
+	 */
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+		ldbg(ike->sa.logger, "ignoring unencrypted notifications");
+	}
+
+	/*
 	 * Using the (in theory) protected but not encrypted parts of
 	 * the message, weed out anything that isn't at least vaguely
 	 * plausible:
@@ -1289,6 +1284,18 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 		complete_protected_but_fatal_exchange(ike, md, md->encrypted_payloads.n, data);
 		return;
 	}
+
+	/*
+	 * Go deeper:
+	 *
+	 * XXX: should this do 'deeper' analysis of packets.  For
+	 * instance checking the SPI of a notification payload?
+	 * Probably not as the value may be ignored.
+	 *
+	 * The exception is seems to be v2N - both cookie and redirect
+	 * code happen early and use the values.
+	 */
+	decode_v2N_payloads(ike->sa.logger, md);
 
 	/*
 	 * XXX: is SECURED_PAYLOAD_FAILED redundant?  Earlier checks

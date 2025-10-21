@@ -1516,7 +1516,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * Grab a copy of raw packet (for duplicate packet
 		 * detection).
 		 */
-		md->raw_packet = clone_hunk_as_chunk(&md->packet, "raw packet");
+		md->v1_raw_packet = clone_hunk_as_chunk(&md->packet, "raw packet");
 		PEXPECT(ike->sa.logger, md->v1_decrypt_iv.len == cipher->enc_blocksize);
 
 		if (LDBGP(DBG_CRYPT, ike->sa.logger)) {
@@ -2033,10 +2033,10 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
 {
 	if (md->encrypted) {
 		/* if encrypted, duplication already done */
-		if (md->raw_packet.ptr != NULL) {
+		if (md->v1_raw_packet.ptr != NULL) {
 			pfreeany(st->st_v1_rpacket.ptr);
-			st->st_v1_rpacket = md->raw_packet;
-			md->raw_packet = EMPTY_CHUNK;
+			st->st_v1_rpacket = md->v1_raw_packet;
+			md->v1_raw_packet = EMPTY_CHUNK;
 		}
 	} else {
 		/* this may be a repeat, but it will work */

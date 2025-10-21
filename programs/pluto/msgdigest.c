@@ -57,7 +57,8 @@ void md_delref_where(struct msg_digest **mdp, where_t where)
 	const struct logger *logger = (*mdp != NULL ? (*mdp)->logger : &global_logger);
 	struct msg_digest *md = delref_where(mdp, logger, where);
 	if (md != NULL) {
-		free_chunk_content(&md->raw_packet);
+		free_chunk_content(&md->v1_raw_packet);
+		free_chunk_content(&md->v2_sk_payload);
 		free_chunk_content(&md->packet);
 		free_logger(&md->logger, where);
 		iface_endpoint_delref_where(&md->iface, where);

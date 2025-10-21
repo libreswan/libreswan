@@ -274,6 +274,18 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	}
 
 	/*
+	 * Go deeper:
+	 *
+	 * XXX: should this do 'deeper' analysis of packets.  For
+	 * instance checking the SPI of a notification payload?
+	 * Probably not as the value may be ignored.
+	 *
+	 * The exception is seems to be v2N - both cookie and redirect
+	 * code happen early and use the values.
+	 */
+	decode_v2N_payloads(md->logger, md);
+
+	/*
 	 * Do I want a cookie?
 	 */
 	if (v2_rejected_initiator_cookie(md, require_ddos_cookies())) {
@@ -541,6 +553,18 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 		/* already logged */
 		return;
 	}
+
+	/*
+	 * Go deeper:
+	 *
+	 * XXX: should this do 'deeper' analysis of packets.  For
+	 * instance checking the SPI of a notification payload?
+	 * Probably not as the value may be ignored.
+	 *
+	 * The exception is seems to be v2N - both cookie and redirect
+	 * code happen early and use the values.
+	 */
+	decode_v2N_payloads(ike->sa.logger, md);
 
 	/* transition? */
 	const struct v2_transition *transition = NULL;
