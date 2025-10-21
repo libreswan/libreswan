@@ -344,9 +344,7 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 					     chunk_t *intermediate_auth_ir)
 {
 	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-
-	chunk_t packet = (md->v2_sk_packet.ptr != NULL ? md->v2_sk_packet :
-			  md->packet);
+	chunk_t packet = md->packet;
 
 	shunk_t message_header = {
 		.ptr = packet.ptr,

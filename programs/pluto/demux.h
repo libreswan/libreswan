@@ -159,10 +159,6 @@ struct msg_digest {
 						 * received packet
 						 * before
 						 * decryption */
-	chunk_t v2_sk_packet;			/* (v2) when
-						 * fragmented, the
-						 * re-constructed
-						 * packet.  */
 
 	struct iface_endpoint *iface;		/* interface on which message arrived */
 	ip_endpoint sender;			/* address:port where message came from */
