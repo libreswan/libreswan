@@ -210,7 +210,7 @@ void llog_success_ikev2_exchange_response(struct ike_sa *ike,
  */
 struct payload_summary ikev2_decode_payloads(struct logger *logger,
 					     struct msg_digest *md,
-					     struct pbs_in *in_pbs,
+					     /*i.e., ro*/ struct pbs_in in_pbs,
 					     enum next_payload_types_ikev2 np)
 {
 	struct payload_summary summary = {
@@ -273,7 +273,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 			 * the Critical Bit, we should be upset but if
 			 * it does not, we should just ignore it.
 			 */
-			diag_t d = pbs_in_struct(in_pbs, &ikev2_generic_desc,
+			diag_t d = pbs_in_struct(&in_pbs, &ikev2_generic_desc,
 						 &pd->payload, sizeof(pd->payload), &pd->pbs);
 			if (d != NULL) {
 				llog(RC_LOG, logger,
@@ -329,7 +329,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 		 * be.
 		 */
 		pd->payload_type = np;
-		diag_t d = pbs_in_struct(in_pbs, sd,
+		diag_t d = pbs_in_struct(&in_pbs, sd,
 					 &pd->payload, sizeof(pd->payload),
 					 &pd->pbs);
 		if (d != NULL) {
@@ -1108,10 +1108,9 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 */
 	ldbg(logger, "unpacking clear payload");
 	passert(!md->message_payloads.parsed);
-	md->message_payloads =
-		ikev2_decode_payloads(ike->sa.logger, md,
-				      &md->message_pbs,
-				      md->hdr.isa_np);
+	md->message_payloads = ikev2_decode_payloads(ike->sa.logger, md,
+						     md->message_pbs,
+						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		/*
 		 * Should only respond when the message is an
@@ -1280,8 +1279,9 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 	 * should identify the problem isn't being returned this is
 	 * the least of our problems.
 	 */
-	struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
-	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md, &sk->pbs,
+	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
+	md->encrypted_payloads = ikev2_decode_payloads(ike->sa.logger, md,
+						       sk->pbs,
 						       sk->payload.generic.isag_np);
 	if (md->encrypted_payloads.n != v2N_NOTHING_WRONG) {
 		shunk_t data = shunk2(md->encrypted_payloads.data,
