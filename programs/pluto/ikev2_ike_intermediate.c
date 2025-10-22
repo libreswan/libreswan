@@ -334,78 +334,21 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 {
 	const struct payload_digest *sk = md->chain[ISAKMP_NEXT_v2SK];
 
+	chunk_t packet = (md->v2_sk_packet.ptr != NULL ? md->v2_sk_packet :
+			  md->packet);
+
 	shunk_t message_header = {
-		.ptr = md->packet.ptr,
+		.ptr = packet.ptr,
 		.len = sizeof(struct isakmp_hdr),
 	};
 	const uint8_t *message_header_end = (message_header.ptr + message_header.len);
-	/*
-	 * Several problems that stem from how pluto re-constructs the
-	 * fragments into an unfragmented payload:
-	 *
-	 *
-	 */
-	shunk_t unencrypted_payloads;
-	if (md->hdr.isa_np == ISAKMP_NEXT_v2SK ||
-	    md->hdr.isa_np == ISAKMP_NEXT_v2SKF) {
-		/*
-		 * It's empty.
-		 *
-		 * For SKF, the hash code will need to change Next
-		 * Payload back to SK.
-		 */
-		unencrypted_payloads = (shunk_t) {
-			.ptr = message_header_end,
-			.len = 0,
-		};
-	} else if (md->v2_frags_total == 0) {
-		/*
-		 * DANGER:
-		 *
-		 * sk->pbs.cur points at the contents of the SK
-		 * packet, not the header, hence the math to back up.
-		 *
-		 * sk-pbs.start should always point at the SK header,
-		 * but it gets moved to the start of the decrypted
-		 * payload (sometimes).
-		 */
-		unencrypted_payloads = (shunk_t) {
-			.ptr = message_header_end,
-			.len = ((sk->pbs.cur
-				 - ike->sa.st_oakley.ta_encrypt->wire_iv_size
-				 - sizeof(struct ikev2_generic))
-				- message_header_end),
-		};
-	} else {
-		/*
-		 * NOTE:
-		 *
-		 * When computing the HASH of a fragmented message, in
-		 * addition to adjusting the header's Length field,
-		 * the headers Next Payload needs to be changed from
-		 * SKF to SK.
-		 *
-		 * However, when the fragmented message also contains
-		 * unencrypted payloads, its the Next Payload field of
-		 * the last unencrypted payload that contains SKF and
-		 * needs to be changed.
-		 *
-		 * Fortunatly, fragmented messages with unencrypted
-		 * payloads aren't really a thing.  So not handling
-		 * them is mostly hardmless.
-		 */
-		llog(WARNING_STREAM, ike->sa.logger,
-		     "fragmented IKE_INTERMEDIATE messages with unencrypted payloads is not supported");
-		return false;
-	}
-	/*
-	 * Note.  For fragmented packets, this is the encrypted header
-	 * from the first fragment.
-	 */
-	shunk_t encrypted_payload_header = {
-		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
-		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
-	};
+	ldbg(ike->sa.logger, "packet %p start %p end %p",
+	     packet.ptr, sk->pbs.start, message_header_end);
+	shunk_t unencrypted_payloads =
+		shunk2(message_header_end, sk->pbs.start - message_header_end);
+	shunk_t encrypted_payload_header =
+		shunk2(unencrypted_payloads.ptr + unencrypted_payloads.len,
+		       sizeof(struct ikev2_generic)/*encrypted header*/);
 	/* .cur .. .roof */
 	shunk_t inner_payloads = pbs_in_left(&sk->pbs);
 	compute_intermediate_mac(ike, intermediate_key,
