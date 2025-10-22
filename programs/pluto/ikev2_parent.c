@@ -462,6 +462,9 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 			return STF_SKIP_COMPLETE_STATE_TRANSITION;
 		}
 		md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
+		if (md == NULL) {
+			return STF_FATAL;
+		}
 	}
 
 	process_protected_v2_message(ike, md);

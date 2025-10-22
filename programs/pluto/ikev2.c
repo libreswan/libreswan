@@ -244,49 +244,82 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 		ldbg(logger, "now let's proceed with payload (%s)",
 		     str_enum_long(&ikev2_payload_names, np, &b));
 
+		/*
+		 * (*PD) is the payload digest for this payload.  It
+		 * has three^D^D four fields:
+		 *
+		 *    PAYLOAD_TYPE, the PD's payload type, from the
+		 *    previous payload's Next Payload field
+		 *
+		 *    PBS, the nested PBS within the message, with
+		 *    .start pointing at the payload header and
+		 *    .cursor pointing at the start of the payload's
+		 *    body; filled in by pbs_in_struct().
+		 *
+		 *    .PAYLOAD, the unpacked contents of the payload's
+		 *    header; filled in by pbs_in_struct()
+		 *
+		 *    NEXT, the .chain[] pointer, linking payloads of
+		 *    the same type (see also .last[]).
+		 *
+		 * All payloads, including those that have
+		 * unrecognized content, are accumulated in .digest[]
+		 * (they are not added to .chain[]).
+		 *
+		 * XXX: When de-fragmenting an IKE_INTERMEDIATE
+		 * message, the location of the last unencrypted
+		 * payload is needed so that payload's Next Payload
+		 * field can be changed from SKF to SK so that it
+		 * matches the pre-fragmentation message (for
+		 * simplicity, the field is always changed) (see
+		 * IKE_INTERMEDIATE).
+		 */
+
 		if (md->digest_roof >= elemsof(md->digest)) {
 			llog(RC_LOG, logger, "more than %zu payloads in message; ignored",
 			     elemsof(md->digest));
 			summary.n = v2N_INVALID_SYNTAX;
-			break;
+			return summary;
 		}
 
-		/*
-		 * *pd is the payload digest for this payload.
-		 * It has three fields:
-		 *	pbs is filled in by in_struct
-		 *	payload is filled in by in_struct
-		 *	next is filled in by list linking logic
-		 */
-		struct payload_digest *const pd = md->digest + md->digest_roof;
+		struct payload_digest *const pd = &md->digest[md->digest_roof++];
 
 		/*
-		 * map the payload onto its payload descriptor which
-		 * describes how to decode it
+		 * Map the payload onto its payload descriptor which
+		 * describes how to decode it.
 		 */
 		const struct_desc *sd = v2_payload_desc(np);
 
 		if (sd == NULL) {
+
 			/*
 			 * This payload is unknown to us.  RFCs 4306
 			 * and 5996 2.5 say that if the payload has
 			 * the Critical Bit, we should be upset but if
 			 * it does not, we should just ignore it.
+			 *
+			 * Regardless, read it in so that it is
+			 * available to to the fragmentation code (and
+			 * IKE_INTERMEDIATE).
 			 */
 			diag_t d = pbs_in_struct(&in_pbs, &ikev2_generic_desc,
-						 &pd->payload, sizeof(pd->payload), &pd->pbs);
+						 &pd->payload, sizeof(pd->payload),
+						 &pd->pbs);
 			if (d != NULL) {
-				llog(RC_LOG, logger,
-				     "malformed payload in packet: %s", str_diag(d));
+				llog(RC_LOG, logger, "malformed payload in packet: %s", str_diag(d));
 				pfree_diag(&d);
 				summary.n = v2N_INVALID_SYNTAX;
-				break;
+				return summary;
 			}
+
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
 				/*
 				 * It was critical.  See RFC 5996 1.5
 				 * "Version Numbers and Forward
-				 * Compatibility"
+				 * Compatibility".
+				 *
+				 * Unrecognized critical payloads are
+				 * fatal.  Respond accordingly.
 				 */
 				const char *role;
 				switch (v2_msg_role(md)) {
@@ -303,15 +336,18 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 				llog(RC_LOG, logger,
 				     "message %s contained an unknown critical payload type (%s)",
 				     role, str_enum_long(&ikev2_payload_names, np, &b));
+				/* add the notify payload's data */
 				summary.n = v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 				summary.data[0] = np;
 				summary.data_size = 1;
-				break;
+				return summary;
 			}
+
 			name_buf eb;
 			llog(RC_LOG, logger,
 			     "non-critical payload ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 			     str_enum_long(&ikev2_payload_names, np, &eb));
+			pd->payload_type = np;
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
@@ -319,8 +355,9 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 		if (np >= LELEM_ROOF) {
 			ldbg(logger, "huge next-payload %u", np);
 			summary.n = v2N_INVALID_SYNTAX;
-			break;
+			return summary;
 		}
+
 		summary.repeated |= summary.present & LELEM(np);
 		summary.present |= LELEM(np);
 
@@ -336,7 +373,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 			llog(RC_LOG, logger, "malformed payload in packet: %s", str_diag(d));
 			pfree_diag(&d);
 			summary.n = v2N_INVALID_SYNTAX;
-			break;
+			return summary;
 		}
 
 		ldbg(logger, "processing payload: %s (len=%zu)",
@@ -388,7 +425,6 @@ struct payload_summary ikev2_decode_payloads(struct logger *logger,
 			break;
 		}
 
-		md->digest_roof++;
 	}
 
 	return summary;
@@ -1214,14 +1250,17 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 			ldbg(logger, "waiting for more fragments");
 			return;
 		case FRAGMENTS_COMPLETE:
+			/*
+			 * Replace MD with a message constructed
+			 * starting with fragment 1 (which also
+			 * contains unencrypted payloads).
+			 */
+			protected_md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
+			if (protected_md == NULL) {
+				return;
+			}
 			break;
 		}
-		/*
-		 * Replace MD with a message constructed starting with
-		 * fragment 1 (which also contains unencrypted
-		 * payloads).
-		 */
-		protected_md = reassemble_v2_incoming_fragments(frags, ike->sa.logger);
 		break;
 	}
 	case v2P(SK):
