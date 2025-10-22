@@ -510,4 +510,12 @@ char *clone_bytes_as_string(const void *ptr, size_t len, const char *name);
 		h_;							\
 	})
 
+/*
+ * This jibberish can be cut/paste into a debugger causing it to dump
+ * the bytes as hex.
+ */
+
+#define PRI_HUNK "*(uint8_t*)%p@%zu"
+#define pri_hunk(HUNK) (HUNK).ptr, (HUNK).len
+
 #endif
