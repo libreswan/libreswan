@@ -145,6 +145,17 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 {
 	struct logger *logger = ike->sa.logger;
 
+	if (LDBGP(DBG_BASE, logger)) {
+		LDBG_log(logger, "raw input to intermediate mac-calculation (pre-fixup)");
+		LDBG_log(logger, "  message_header           "PRI_HUNK, pri_hunk(message_header));
+		LDBG_hunk(logger, &message_header);
+		LDBG_log(logger, "  unencrypted_payloads     "PRI_HUNK, pri_hunk(unencrypted_payloads));
+		LDBG_hunk(logger, &unencrypted_payloads);
+		LDBG_log(logger, "  encrypted_payload_header "PRI_HUNK, pri_hunk(encrypted_payload_header));
+		LDBG_hunk(logger, &encrypted_payload_header);
+		LDBG_log(logger, "  inner_payloads           "PRI_HUNK, pri_hunk(inner_payloads));
+	}
+
 	/*
 	 * compute the PRF over "A" + "P" as in:
 	 *
