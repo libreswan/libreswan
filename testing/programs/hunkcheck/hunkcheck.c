@@ -441,56 +441,83 @@ static void check__hunk_get__hunk_put(void)
 	}
 }
 
-static void check__hunk_append(void)
+static void check__hunk_put(void)
 {
-	struct hunk_like {
-		size_t len;
-		uint8_t ptr[11];
-	} dst = {
-		.len = 0,
-		.ptr = "0123456789", /* includes trailing NUL */
-	};
+	/* keep writing to this buffer */
+	uint8_t data[11] = "0123456789"; /* includes trailing NUL */
+	const struct { char a, b; } thing = { 'a', 'b', };
 
 	/* XXX: can't test overflow as it will abort!?! */
 	struct test {
 		size_t len;
-		const char *val;
-	} tests[3] = {
-		{ 3, "str3456789" },
-		{ 5, "strZZ56789" },
-		{ 8, "strZZABC89" },
+		const char val[sizeof(data) + 1];
+	} tests[] = {
+		{ 8, "str3456789" },
+		{ 5, "strZZZ6789" },
+		{ 2, "strZZZABC9" },
+		{ 0, "strZZZABCab" },
+		/* overflow */
+		{ 0, "overflow" },
+		{ 0, "overflow" },
 	};
 
 	shunk_t str = shunk1("str");
+	chunk_t dst = chunk2(data, sizeof(data));
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("val: %zu %s", t->len, t->val);
+		PRINT("hunk_put() %zd expect: %zu %s", ti, t->len, t->val);
+
+		void *in = dst.ptr;
+		const void *out;
 
 		switch (ti) {
+
 		case 0:
-			hunk_append_hunk(&dst, str);
+			out = hunk_put_hunk(&dst, &str);
 			break;
 
 		case 1:
-			/* now try zero */
-			hunk_append_byte(&dst, 'Z', 2);
+			out = hunk_put_byte(&dst, 'Z', 3);
 			break;
 
 		case 2:
-			hunk_append_bytes(&dst, "ABC", 3);
+			out = hunk_put_bytes(&dst, "ABC", 3);
 			break;
+
+		case 3:
+			out = hunk_put_thing(&dst, thing);
+			break;
+
+		case 4:
+			if (hunk_put_byte(&dst, 'a', 1) != NULL) {
+				FAIL("hunk_put_byte() did not overflow");
+			}
+			continue;
+
+		case 5:
+			if (hunk_put_hunk(&dst, &str) != NULL) {
+				FAIL("hunk_put_hunk() did not overflow");
+			}
+			continue;
+
 		}
 
 		if (dst.len != t->len) {
-			FAIL("hunk_append_hunk() appended %zu characters, expecting %zu",
-			     dst.len, t->len);
+			FAIL("hunk_put*() space for %zu not %zu",
+			     t->len, dst.len);
 		}
-		if (!memeq(dst.ptr, t->val, sizeof(dst.ptr))) {
-			FAIL("hunk_append_hunk() value is %s, expecting %s",
-			     dst.ptr, t->val);
+		if (in != out) {
+			FAIL("hunk_put*() expecting in==out");
+		}
+
+		if (!memeq(data, t->val, sizeof(data))) {
+			FAIL("hunk_put*() value is %s, expecting %s",
+			     data, t->val);
 		}
 	}
+
+
 }
 
 static void check_hunk_char_is(void)
@@ -1124,7 +1151,7 @@ int main(int argc, char *argv[])
 	check_ntoh_hton_hunk();
 	check__hunk_get__hunk_put();
 	check_hunks();
-	check__hunk_append();
+	check__hunk_put();
 	check__clone_hunk_as_string();
 
 	if (report_leaks(logger)) {

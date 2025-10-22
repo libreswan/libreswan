@@ -970,36 +970,100 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 						    struct logger *logger)
 {
 	ldbg(logger, "reassembling incoming fragments");
-	struct msg_digest *md = md_addref((*frags)->md);
-	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SK] == NULL);
-	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SKF] != NULL);
-	PEXPECT(logger, md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_number == 1);
-	PASSERT(logger, md->digest_roof < elemsof(md->digest));
 
 	/*
-	 * Pass 1: Compute the total payload size.
+	 * MD is the first message fragment; it;s going to be
+	 * scribbled on turning it into an unfragmented message.
 	 */
-	unsigned size = 0;
+	struct msg_digest *md = md_addref((*frags)->md);
+
+	PASSERT(logger, md->chain[ISAKMP_NEXT_v2SK] == NULL);
+	PASSERT(logger, md->digest_roof < elemsof(md->digest));
+	struct payload_digest *old_skf = md->chain[ISAKMP_NEXT_v2SKF];
+	PASSERT(logger, old_skf != NULL);
+	PEXPECT(logger, old_skf->payload.v2skf.isaskf_number == 1);
+
+	/*
+	 * Determine the lengh of the re-assembled packet.
+	 *
+	 * Per IKE_INTERMEDIATE, it will contain the IKE Header,
+	 * unencrypted payloads, SK payload header, and the
+	 * reassembled fragments.
+	 *
+	 * It will not contain the IV (normally follows the SK payload
+	 * header) and padding / checksum (normally at end of packet.
+	 */
+	size_t length = 0;
+
+	/* IKE HEADER */
+	chunk_t old_ike_header = chunk_slice(md->packet, 0, sizeof(struct isakmp_hdr));
+	ldbg(logger, "old IKE header %zu bytes", old_ike_header.len);
+	length += old_ike_header.len;
+
+	/* unencrypted payloads */
+	ldbg(logger, "skf start %p packet ptr %p header %zu",
+	     old_skf->pbs.start, md->packet.ptr, sizeof(struct ikev2_skf));
+	chunk_t old_unencrypted_payloads = chunk_slice(md->packet, old_ike_header.len,
+						       old_skf->pbs.start - md->packet.ptr);
+	ldbg(logger, "old unencrypted payloads %zu bytes", old_unencrypted_payloads.len);
+	length += old_unencrypted_payloads.len;
+
+	/* just the generic bits of SKF header */
+	chunk_t old_skf_generic_header = chunk_slice(md->packet,
+						     old_ike_header.len + old_unencrypted_payloads.len,
+						     old_ike_header.len + old_unencrypted_payloads.len + sizeof(struct ikev2_generic));
+	ldbg(logger, "old generic part of SKF header %zu bytes", old_skf_generic_header.len);
+	length += old_skf_generic_header.len;
+
+	/*
+	 * Compute the space needed to re-assemble the fragments; add
+	 * that to length.
+	 */
+	size_t encrypted_payloads_length = 0;
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		PEXPECT(logger, frag->plain.ptr != NULL);
-		size += frag->plain.len;
+		encrypted_payloads_length += frag->plain.len;
 	}
+	ldbg(logger, "reassembled encrypted payloads length %zu", encrypted_payloads_length);
+	length += encrypted_payloads_length;
 
 	/*
-	 * Pass 2: Re-assemble the fragments into the .raw_packet
-	 * buffer.
+	 * Allocate the packet
 	 */
-	PEXPECT(logger, md->v2_sk_payload.ptr == NULL); /* empty */
-	md->v2_sk_payload = alloc_chunk(size, "IKEv2 fragments buffer");
-	unsigned int offset = 0;
+	PEXPECT(logger, md->v2_sk_packet.ptr == NULL); /* empty */
+	md->v2_sk_packet = alloc_chunk(length, "IKEv2 fragments buffer");
+	ldbg(logger, "reassembled total packet length %zu", md->v2_sk_packet.len);
+
+	/*
+	 * Copy over the packet start (IKE Header + unencrypted
+	 * payloads + generic part of SKF payload header).
+	 *
+	 * The code that follows will need to patch up:
+	 *
+	 * - IKE Header's length field
+	 * - if no unencrypted payloads,IKE Header's next payload field (SKF->SK)
+	 * - if unencrypted payloads, last header's SKF->SK
+	 * - the SK payload header's length
+	 *
+	 * Use a cursor.
+	 */
+	chunk_t packet_cursor = md->v2_sk_packet;
+	hunk_put_hunk(&packet_cursor, &old_ike_header);
+	hunk_put_hunk(&packet_cursor, &old_unencrypted_payloads);
+	shunk_t sk_body = shunk2(packet_cursor.ptr, old_skf_generic_header.len + encrypted_payloads_length);
+	hunk_put_hunk(&packet_cursor, &old_skf_generic_header);
+
+	/*
+	 * Pass 2: Append the fragments to the re-constructed packet.
+	 */
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
-		PASSERT(logger, offset + frag->plain.len <= size);
-		memcpy(md->v2_sk_payload.ptr + offset,
-		       frag->plain.ptr, frag->plain.len);
-		offset += frag->plain.len;
+		hunk_put_hunk(&packet_cursor, &frag->plain);
 	}
+
+	/* filled to the brim */
+	PASSERT(logger, packet_cursor.len == 0);
 
 	/*
 	 * Fake up enough of an SK payload_digest to fool the caller
@@ -1007,10 +1071,11 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * and SKF .chain[] pointers).
 	 */
 	struct payload_digest sk = {
-		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(&md->v2_sk_payload), "decrypted SFK payloads"),
+		.pbs = pbs_in_from_shunk(sk_body, "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};
+	sk.pbs.cur = sk.pbs.start + old_skf_generic_header.len;
 	struct payload_digest *skf = md->chain[ISAKMP_NEXT_v2SKF];
 	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
 	md->chain[ISAKMP_NEXT_v2SK] = skf;
