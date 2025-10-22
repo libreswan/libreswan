@@ -263,7 +263,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 
 	printf(PREFIX "enum_enum_name %lu %lu: ", table, val);
 	name_buf name;
-	bool name_ok = enum_enum_name(een, table, val, &name);
+	bool name_ok = enum_enum_long(een, table, val, &name);
 	printf("%s ", (name_ok ? name.buf : "NULL"));
 	if (name_ok == val_ok) {
 		printf("OK\n");

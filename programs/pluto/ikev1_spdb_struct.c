@@ -97,7 +97,7 @@ static bool out_attr(int type,
 	}
 	if (LDBGP(DBG_BASE, pbs->logger)) {
 		name_buf b;
-		if (enum_enum_name(attr_value_names, type, val, &b)) {
+		if (enum_enum_long(attr_value_names, type, val, &b)) {
 			LDBG_log(pbs->logger, "    [%lu is %s]", val, b.buf);
 		}
 	}
@@ -1793,7 +1793,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 			if (LDBGP(DBG_BASE, ike->sa.logger)) {
 				name_buf b;
-				if (enum_enum_name(&ikev1_oakley_attr_value_names, type, value, &b)) {
+				if (enum_enum_long(&ikev1_oakley_attr_value_names, type, value, &b)) {
 					LDBG_log(ike->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 				} else if (tlv) {
 					LDBG_log(ike->sa.logger, "   [%s is %jd]", af, value);
@@ -2437,7 +2437,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (LDBGP(DBG_BASE, child->sa.logger)) {
 			/* i.e., VALUE is real value */
 			name_buf b;
-			if (enum_enum_name(&ikev1_ipsec_attr_value_names, type, value, &b)) {
+			if (enum_enum_long(&ikev1_ipsec_attr_value_names, type, value, &b)) {
 				LDBG_log(child->sa.logger, "   [%s %jd is %s]", af, value, b.buf);
 			} else if (tlv) {
 				LDBG_log(child->sa.logger, "   [%s is %jd]", af, value);

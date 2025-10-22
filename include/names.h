@@ -159,8 +159,10 @@ const char *enum_range_name(const struct enum_names *range, unsigned long val, c
 
 typedef const struct enum_enum_names enum_enum_names;
 
-bool enum_enum_name(enum_enum_names *e, unsigned long table,
+bool enum_enum_long(enum_enum_names *e, unsigned long table,
 		    unsigned long val, name_buf *buf);
+bool enum_enum_short(enum_enum_names *e, unsigned long table,
+		     unsigned long val, name_buf *buf);
 
 const char *str_enum_enum(enum_enum_names *e, unsigned long table,
 			  unsigned long val, name_buf *buf);
