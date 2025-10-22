@@ -258,7 +258,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	 */
 	pexpect(!md->message_payloads.parsed);
 	md->message_payloads = ikev2_decode_payloads(md->logger, md,
-						     &md->message_pbs,
+						     md->message_pbs,
 						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		if (require_ddos_cookies()) {
@@ -547,7 +547,7 @@ static void process_v2_UNSECURED_response(struct msg_digest *md)
 
 	ldbg(ike->sa.logger, "unpacking clear payloads");
 	md->message_payloads = ikev2_decode_payloads(ike->sa.logger, md,
-						     &md->message_pbs,
+						     md->message_pbs,
 						     md->hdr.isa_np);
 	if (md->message_payloads.n != v2N_NOTHING_WRONG) {
 		/* already logged */

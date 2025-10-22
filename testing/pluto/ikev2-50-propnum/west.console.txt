@@ -74,7 +74,7 @@ west #
 |    spi size: 4 (04)
 |    # transforms: 4 (04)
 --
-| ***parse IKEv2 Proposal Substructure Payload:
+| *****parse IKEv2 Proposal Substructure Payload:
 |    last proposal: v2_PROPOSAL_LAST (0x0)
 |    length: 40 (00 28)
 |    prop #: 1 (01)

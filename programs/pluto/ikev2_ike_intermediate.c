@@ -362,23 +362,16 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 		/*
 		 * DANGER:
 		 *
-		 * When re-constructing a fragmented message, Pluto
-		 * stores the accumulated fragments in a separate
-		 * buffer (md->raw_packet) and then points sk->pbs at
-		 * it.  This means that, for a fragmented payload,
-		 * sk->pbs.start DOES NOT point into md->packet_pbs.
-		 * Hence, the calculation:
-		 *
-		 *    sk->pbs.start - md->packet.ptr
-		 *
-		 * can only be used when the message is unfragmented.
-		 *
-		 * sk->pbs.start points at the contents of the SK
+		 * sk->pbs.cur points at the contents of the SK
 		 * packet, not the header, hence the math to back up.
+		 *
+		 * sk-pbs.start should always point at the SK header,
+		 * but it gets moved to the start of the decrypted
+		 * payload (sometimes).
 		 */
 		unencrypted_payloads = (shunk_t) {
 			.ptr = message_header_end,
-			.len = ((sk->pbs.start
+			.len = ((sk->pbs.cur
 				 - ike->sa.st_oakley.ta_encrypt->wire_iv_size
 				 - sizeof(struct ikev2_generic))
 				- message_header_end),
@@ -413,7 +406,8 @@ static bool compute_intermediate_inbound_mac(struct ike_sa *ike,
 		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
 		.len = sizeof(struct ikev2_generic)/*encrypted header*/,
 	};
-	shunk_t inner_payloads = pbs_in_all(&sk->pbs);
+	/* .cur .. .roof */
+	shunk_t inner_payloads = pbs_in_left(&sk->pbs);
 	compute_intermediate_mac(ike, intermediate_key,
 				 message_header,
 				 unencrypted_payloads,

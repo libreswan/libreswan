@@ -1060,7 +1060,13 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	chunk_t message = chunk2(md->packet.ptr, sk_pbs->roof - md->packet.ptr);
 	shunk_t plain = null_shunk; /*to be sure*/
 	bool ok = verify_and_decrypt_v2_message(ike, message, &plain, iv_offset);
-	md->chain[ISAKMP_NEXT_v2SK]->pbs = pbs_in_from_shunk(plain, "decrypted SK payload");
+	/*
+	 * Update the SK pbs so that points at the decrypted payload
+	 * (skipping IV et.al.) BUT preserve .start, keeping it
+	 * pointing at SK's header.
+	 */
+	sk_pbs->cur = plain.ptr;
+	sk_pbs->roof = plain.ptr + plain.len;
 
 	name_buf xb;
 	ldbg(ike->sa.logger, PRI_SO" ikev2 %s decrypt %s",
