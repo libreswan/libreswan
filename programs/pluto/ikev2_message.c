@@ -1051,12 +1051,12 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	chunk_t packet_cursor = md->v2_sk_packet;
 	hunk_put_hunk(&packet_cursor, &old_ike_header);
 	hunk_put_hunk(&packet_cursor, &old_unencrypted_payloads);
+	shunk_t sk_body = shunk2(packet_cursor.ptr, old_skf_generic_header.len + encrypted_payloads_length);
 	hunk_put_hunk(&packet_cursor, &old_skf_generic_header);
 
 	/*
 	 * Pass 2: Append the fragments to the re-constructed packet.
 	 */
-	shunk_t sk_body = HUNK_AS_SHUNK(&packet_cursor); /* the remainder */
 	for (unsigned i = 1; i <= (*frags)->total; i++) {
 		struct v2_incoming_fragment *frag = &(*frags)->frags[i];
 		hunk_put_hunk(&packet_cursor, &frag->plain);
@@ -1075,6 +1075,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};
+	sk.pbs.cur = sk.pbs.start + old_skf_generic_header.len;
 	struct payload_digest *skf = md->chain[ISAKMP_NEXT_v2SKF];
 	md->chain[ISAKMP_NEXT_v2SKF] = NULL;
 	md->chain[ISAKMP_NEXT_v2SK] = skf;
