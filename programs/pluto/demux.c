@@ -421,9 +421,13 @@ void jam_msg_digest_payloads(struct jambuf *buf,
 		} else {
 			sep = ",";
 		}
-		jam_enum_enum_short(buf, &payload_type_names,
-				    ike_version,
-				    pd->payload_type);
+		name_buf ptb;
+		if (enum_enum_short(&payload_type_names, ike_version,
+				    pd->payload_type, &ptb)) {
+			jam_string(buf, ptb.buf);
+		} else {
+			jam(buf, "%u?", pd->payload_type);
+		}
 		/* go deeper? */
 		switch (pd->payload_type) {
 		case ISAKMP_NEXT_v2N:

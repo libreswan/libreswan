@@ -299,7 +299,7 @@ static const struct enum_names *enum_enum_table(enum_enum_names *een,
 	return NULL;
 }
 
-bool enum_enum_name(enum_enum_names *een, unsigned long table,
+bool enum_enum_long(enum_enum_names *een, unsigned long table,
 		    unsigned long val, name_buf *b)
 {
 	enum_names *en = enum_enum_table(een, table);
@@ -312,10 +312,25 @@ bool enum_enum_name(enum_enum_names *een, unsigned long table,
 	return enum_long(en, val, b);
 }
 
+bool enum_enum_short(enum_enum_names *een,
+		     unsigned long table,
+		     unsigned long val,
+		     name_buf *b)
+{
+	enum_names *en = enum_enum_table(een, table);
+	if (en == NULL) {
+		snprintf(b->tmp, sizeof(b->tmp), "%lu.%lu", table, val);
+		b->buf = b->tmp;
+		return false;
+	}
+
+	return enum_short(en, val, b);
+}
+
 const char *str_enum_enum(enum_enum_names *een, unsigned long table,
 			  unsigned long val, name_buf *b)
 {
-	enum_enum_name(een, table, val, b);
+	enum_enum_long(een, table, val, b);
 	return b->buf;
 }
 
