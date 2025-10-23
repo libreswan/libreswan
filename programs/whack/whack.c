@@ -1968,7 +1968,7 @@ int main(int argc, char **argv)
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			end->xauthusername = optarg;
+			end->we_xauthusername = optarg;
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
 			usernamelen = jam_str(xauthusername, sizeof(xauthusername), optarg) - xauthusername + 1;

@@ -172,7 +172,7 @@ struct whack_end {
 
 	enum yn_options xauthserver;	/* for XAUTH */
 	enum yn_options xauthclient;
-	const char *xauthusername;
+#define we_xauthusername conn->value[KWS_USERNAME]
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 	const char *sendcert;
