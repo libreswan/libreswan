@@ -146,4 +146,6 @@ void call_global_event_handler(enum global_timer type, struct logger *logger);
 
 void complete_state_transition(struct state *st, struct msg_digest *md, stf_status status);
 
+unsigned nr_processors_online(void);
+
 #endif /* SERVER_H */

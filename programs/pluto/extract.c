@@ -62,6 +62,7 @@
 #include "ipsec_interface.h"
 #include "kernel_info.h"
 #include "binaryscale-iec-60027-2.h"
+#include "server.h"		/* for nr_processors_online() */
 
 static bool is_never_negotiate_wm(const struct whack_message *wm)
 {
@@ -643,7 +644,8 @@ static deltatime_t extract_deltatimescale(const char *leftright,
 
 static unsigned extract_enum_name(const char *leftright,
 				  const char *name,
-				  const char *value, unsigned unset,
+				  const char *value,
+				  unsigned value_when_unset,
 				  const struct enum_names *names,
 				  const struct whack_message *wm,
 				  diag_t *d,
@@ -651,12 +653,8 @@ static unsigned extract_enum_name(const char *leftright,
 {
 	(*d) = NULL;
 
-	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
-		return unset;
-	}
-
-	if (value == NULL) {
-		return unset;
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+		return value_when_unset;
 	}
 
 	int match = enum_byname(names, shunk1(value));
@@ -681,11 +679,7 @@ static unsigned extract_sparse_name(const char *leftright,
 {
 	(*d) = NULL;
 
-	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
-		return value_when_unset;
-	}
-
-	if (value == NULL) {
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
 
@@ -701,7 +695,8 @@ static unsigned extract_sparse_name(const char *leftright,
 }
 
 struct range {
-	uintmax_t value_when_unset;
+	uintmax_t value_when_unset; /* also no? */
+	uintmax_t value_when_yes;
 	struct {
 		uintmax_t min;
 		uintmax_t max;
@@ -764,6 +759,53 @@ static uintmax_t check_range(const char *story,
 	}
 
 	return value;
+}
+
+/*
+ * Tricky.  It returns YNA so it can differentiate between N from the
+ * default and N from an explicit value.
+ */
+static uintmax_t extract_yn_uintmax(const char *story,
+				    const char *leftright,
+				    const char *name,
+				    const char *value,
+				    struct range range,
+				    enum yna_options *yna,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct verbose verbose)
+{
+	(*d) = NULL;
+	(*yna) = 0; /* unset */
+
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+		return range.value_when_unset;
+	}
+
+	/* YN_TEXT_OPTION_NAMES excludes 0, 1, ... */
+	const struct sparse_name *sparse = sparse_lookup_by_name(&yn_text_option_names,
+								 shunk1(value));
+	if (sparse != NULL) {
+		/* convert YES into "auto" + default ! */
+		*yna = (sparse->value == YN_YES ? YNA_AUTO : YNA_NO);
+		return (sparse->value == YN_YES ? range.value_when_yes :
+			range.value_when_unset);
+	}
+
+	uintmax_t number;
+	err_t err = shunk_to_uintmax(shunk1(value), NULL/*all*/, 0, &number);
+	if (err != NULL) {
+		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+		return range.value_when_unset;
+	}
+
+	if (number == 0) {
+		(*yna) = YNA_NO;
+		return 0;
+	}
+
+	(*yna) = YNA_YES; /* it was set' it was not autoset */
+	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
 static uintmax_t extract_uintmax(const char *story,
@@ -2492,6 +2534,23 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	vassert(c->base_name != NULL); /* see alloc_connection() */
+
+	/*
+	 * nr. child clones
+	 */
+	config->child.clones.nr = extract_yn_uintmax("number of replicant Child SA",
+						     "", "clones", wm->wm_clones,
+						     (struct range) {
+							     .value_when_unset = 0,
+							     .value_when_yes = nr_processors_online(),
+							     .limit.min = 1,
+							     .limit.max = UINT_MAX,
+						     },
+						     &config->child.clones.yna,
+						     wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
 	/*
 	 * Extract policy bits.

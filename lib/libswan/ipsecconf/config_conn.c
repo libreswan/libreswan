@@ -185,6 +185,8 @@ static const struct keyword_def config_conn_keyword[] = {
   K("vti-shared",  LEMPTY,  kt_sparse_name,  KWYN_VTI_SHARED, .sparse_names = &yn_option_names),
   K("ipsec-interface",  LEMPTY, kt_string, KWS_IPSEC_INTERFACE),
 
+  K("clones", LEMPTY, kt_string, KWS_CLONES),
+
   K("nic-offload",  LEMPTY,  kt_sparse_name,  KNCF_NIC_OFFLOAD, .sparse_names = &nic_offload_option_names),
 
   K("encapsulation",  LEMPTY,  kt_sparse_name,  KNCF_ENCAPSULATION, .sparse_names = &yna_option_names),

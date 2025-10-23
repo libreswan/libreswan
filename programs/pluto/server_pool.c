@@ -574,18 +574,7 @@ void start_server_helpers(uintmax_t nhelpers, struct logger *logger)
 	}
 
 	if (nhelpers == UINTMAX_MAX) {
-		int ncpu_online;
-#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
-		ncpu_online = sysconf(_SC_NPROCESSORS_ONLN);
-#else
-		int mib[2], numcpu;
-		size_t len;
-
-		mib[0] = CTL_HW;
-		mib[1] = HW_NCPU;
-		len = sizeof(numcpu);
-		ncpu_online = sysctl(mib, 2, &numcpu, &len, NULL, 0);
-#endif
+		int ncpu_online = nr_processors_online();
 		/* The theory is reserve one CPU for the event loop */
 		llog(RC_LOG, logger, "%d CPU cores online", ncpu_online);
 		if (ncpu_online < 4)
