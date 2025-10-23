@@ -323,6 +323,7 @@ OBJS += whack/pickle.o
 OBJS += whack/send.o
 OBJS += whack/aliascomp.o
 OBJS += whack/whack_magic.o
+OBJS += whack/init_whack_message.o
 
 whack/whack_magic.o: $(builddir)/whack/whack_magic.c
 

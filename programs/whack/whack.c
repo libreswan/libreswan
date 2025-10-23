@@ -1012,23 +1012,8 @@ int main(int argc, char **argv)
 
 	char *authby = NULL;
 
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_WHACK,
-
-		/*
-		 * XXX: gcc (nb3 20231008) 10.5.0 is convinced that
-		 * the shorter:
-		 *
-		 *   .end[LEFT_END].leftright = "left",
-		 *
-		 * leaves the .id field uninitialized.
-		 */
-		.end = {
-			[LEFT_END] = { .leftright = "left", },
-			[RIGHT_END] = { .leftright = "right", },
-		},
-
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_WHACK);
 
 	struct whack_end *end = &msg.end[LEFT_END];
 

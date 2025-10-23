@@ -20,6 +20,7 @@
 
 #include "whack.h"
 #include "lswlog.h"
+#include "ipsecconf/keywords.h"
 
 /*
  * Pack and unpack bytes
@@ -37,6 +38,22 @@ static bool pack_bytes(struct whackpacker *wp,
 		return false; /* would overflow buffer */
 	}
 	memcpy(wp->str_next, bytes, nr_bytes);
+	wp->str_next += nr_bytes;
+	return true;
+}
+
+static bool unpack_bytes(struct whackpacker *wp,
+			 void *bytes, size_t nr_bytes,
+			 const char *what,
+			 struct logger *logger)
+{
+	size_t space = wp->str_roof - wp->str_next;
+	if (space < nr_bytes) {
+		llog(RC_LOG, logger, "buffer overflow for '%s', space for %zu bytes but need %zu",
+		     what, space, nr_bytes);
+		return false; /* would overflow buffer */
+	}
+	memcpy(bytes, wp->str_next, nr_bytes);
 	wp->str_next += nr_bytes;
 	return true;
 }
@@ -67,6 +84,35 @@ static bool unpack_raw(struct whackpacker *wp,
 	}
 	(*bytes) = wp->str_next;
 	wp->str_next += nr_bytes;
+	return true;
+}
+
+static bool pack_str(struct whackpacker *wp,
+		     const char *string,
+		     const char *what,
+		     struct logger *logger)
+{
+	PASSERT(logger, string != NULL);
+	if (!pack_bytes(wp, string, strlen(string)+1, what, logger)) {
+		/* already logged */
+		return false;
+	}
+	return true;
+}
+
+static bool unpack_str(struct whackpacker *wp,
+		       const char **string,
+		       const char *what,
+		       struct logger *logger)
+{
+	void *value = wp->str_next;
+	void *nul = memchr(value, '\0', wp->str_roof - wp->str_next);
+	if (nul == NULL) {
+		llog(RC_LOG, logger, "%s is missing NUL", what);
+		return false;
+	}
+	*string = value;
+	wp->str_next = nul + 1;
 	return true;
 }
 
@@ -249,8 +295,80 @@ static bool unpack_constant_string(struct whackpacker *wp UNUSED,
 }
 
 /*
+ * Connections
+ */
+
+struct conn_pack {
+	enum end end:8;
+	enum config_conn_keyword key;
+};
+
+static bool pack_conn(struct whackpacker *wp,
+		      struct logger *logger)
+{
+	struct conn_pack conn = {0};
+	/* XXX: END_ROOF is used for non-end specific options */
+	for (conn.end = 0; conn.end <= END_ROOF; conn.end++) {
+		for (conn.key = 1; conn.key < CONFIG_CONN_KEYWORD_ROOF; conn.key++) {
+			const char *value = wp->msg->conn[conn.end].value[conn.key];
+			if (value == NULL) {
+				continue;
+			}
+			if (!pack_bytes(wp, &conn, sizeof(conn),
+					(conn.end == LEFT_END ? "left" :
+					 conn.end == RIGHT_END ? "right" :
+					 "conn"),
+					logger)) {
+				return false;
+			}
+			if (!pack_str(wp, value, "end.key.value", logger)) {
+				return false;
+			}
+		}
+		if (conn.end < elemsof(wp->msg->end)) {
+			wp->msg->end[conn.end].conn = NULL; /* don't send ptr over wire */
+		}
+	}
+	return true;
+}
+
+static bool unpack_conn(struct whackpacker *wp,
+			struct logger *logger)
+{
+	while (wp->str_next < wp->str_roof) {
+
+		struct conn_pack conn = {0};
+		if (!unpack_bytes(wp, &conn, sizeof(conn), "conn", logger)) {
+			return false;
+		}
+
+		if (conn.end > END_ROOF) {
+			/* remember END_ROOF is used for
+			 * global options */
+			llog(ERROR_STREAM, logger, "end overflow");
+			return false;
+		}
+
+		if (conn.key >= CONFIG_CONN_KEYWORD_ROOF) {
+			llog(ERROR_STREAM, logger, "key overflow");
+			return false;
+		}
+
+		const char *value = NULL;
+		if (!unpack_str(wp, &value, "value", logger)) {
+			return false;
+		}
+
+		wp->msg->conn[conn.end].value[conn.key] = value;
+	}
+
+	return true;
+}
+
+/*
  * in and out/
  */
+
 struct pickler {
 	bool (*string)(struct whackpacker *wp, const char **p, const char *what, struct logger *logger);
 	bool (*shunk)(struct whackpacker *wp, shunk_t *s, const char *what, struct logger *logger);
@@ -258,6 +376,7 @@ struct pickler {
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what, struct logger *logger);
 	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what, struct logger *logger);
 	bool (*constant_string)(struct whackpacker *wp, const char **p, const char *leftright, const char *what, struct logger *logger);
+	bool (*conn)(struct whackpacker *wp, struct logger *logger);
 };
 
 const struct pickler pickle_packer = {
@@ -267,6 +386,7 @@ const struct pickler pickle_packer = {
 	.raw = pack_raw,
 	.ip_protocol = pack_ip_protocol,
 	.constant_string = pack_constant_string,
+	.conn = pack_conn,
 };
 
 const struct pickler pickle_unpacker = {
@@ -276,6 +396,7 @@ const struct pickler pickle_unpacker = {
 	.raw = unpack_raw,
 	.ip_protocol = unpack_ip_protocol,
 	.constant_string = unpack_constant_string,
+	.conn = unpack_conn,
 };
 
 #define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD, logger)
@@ -371,6 +492,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->priority) &&
 		PICKLE_STRING(&wm->tfc) &&
 		PICKLE_STRING(&wm->whack.acquire.label) &&
+		pickle->conn(wp, logger) &&
 		true);
 }
 
@@ -411,6 +533,11 @@ err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger)
  */
 diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 {
+	/* patch up conn tuple pointers before unpickling */
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		wp->msg->end[end].conn = &wp->msg->conn[end];
+	}
+
 	/* sanity check message */
 	if (wp->msg->basic.magic == WHACK_BASIC_MAGIC) {
 		/* must at least contain .whack_shutdown */

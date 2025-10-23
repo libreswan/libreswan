@@ -201,11 +201,11 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger)
 {
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_command = WHACK_ADD,
-		.name = conn->name,
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
+
+	msg.whack_command = WHACK_ADD;
+	msg.name = conn->name;
 
 	msg.hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
@@ -369,9 +369,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_command = WHACK_LISTEN,
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
+	msg.whack_command = WHACK_LISTEN;
 	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }
