@@ -156,9 +156,6 @@ void replace_chunk_bytes(chunk_t *dst, const void *src, size_t sizeof_src, const
 extern const chunk_t empty_chunk;
 #define EMPTY_CHUNK ((const chunk_t) { .ptr = NULL, .len = 0 })
 
-#define PRI_CHUNK "%p@%zu"
-#define pri_chunk(CHUNK) (CHUNK).ptr, (CHUNK).len
-
 chunk_t chunk_from_hex(const char *hex, const char *name);
 
 #endif

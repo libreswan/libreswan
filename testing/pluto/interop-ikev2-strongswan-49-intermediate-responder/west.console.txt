@@ -1,6 +1,4 @@
 /testing/guestbin/swan-prep --nokeys
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.6.197, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 42 dc 3a 08 06
 Creating empty NSS database
 west #
  # confirm that the network is alive
@@ -37,6 +35,7 @@ Redirecting to: [initsystem]
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
@@ -57,6 +56,7 @@ Redirecting to: [initsystem]
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "algo" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
 "algo" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"algo" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "algo" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
 "algo" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "algo" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
@@ -66,6 +66,36 @@ Redirecting to: [initsystem]
 destination -I 192.0.1.254 192.0.2.254 is alive
  ipsec stop
 Redirecting to: [initsystem]
+west #
+ # try with an unencrypted payload; strongSwan and libreswan disagree
+west #
+ # on what to feed into the mac.  See:
+west #
+ # https://github.com/libreswan/libreswan/issues/2510
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add intermediate
+"intermediate": added IKEv2 connection
+west #
+ ipsec whack --impair add_unknown_v2_payload_to:IKE_INTERMEDIATE
+west #
+ ipsec up intermediate
+"intermediate" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"intermediate" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"intermediate" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
+"intermediate" #1: IMPAIR: adding an unknown payload of type 255 to unencrypted IKE_INTERMEDIATE message
+"intermediate" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
+"intermediate" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
+"intermediate" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH
+"intermediate" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
+"intermediate" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+"intermediate" #1: encountered fatal error in state IKE_AUTH_I
+"intermediate" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
+"intermediate" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi
 west #

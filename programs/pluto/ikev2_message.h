@@ -40,6 +40,7 @@ struct v2SK_payload {
 	struct pbs_out pbs; /* within SK */
 	/* SKF patch points in message */
 	struct fixup sk_next_payload_field;
+	struct fixup previous_to_sk_next_payload_field;
 	/* private */
 	shunk_t aad; /* IKE header ... SK header */
 	/* pointers into sk_header+contents */
