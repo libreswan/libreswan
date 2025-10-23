@@ -164,13 +164,13 @@ bool enum_enum_long(enum_enum_names *e, unsigned long table,
 bool enum_enum_short(enum_enum_names *e, unsigned long table,
 		     unsigned long val, name_buf *buf);
 
-const char *str_enum_enum(enum_enum_names *e, unsigned long table,
-			  unsigned long val, name_buf *buf);
+const char *str_enum_enum_long(enum_enum_names *e, unsigned long table,
+			       unsigned long val, name_buf *buf);
 const char *str_enum_enum_short(enum_enum_names *e, unsigned long table,
 				unsigned long val, name_buf *buf);
 
-size_t jam_enum_enum(struct jambuf *log, enum_enum_names *een,
-		     unsigned long table, unsigned long val);
+size_t jam_enum_enum_long(struct jambuf *log, enum_enum_names *een,
+			  unsigned long table, unsigned long val);
 size_t jam_enum_enum_short(struct jambuf *log, enum_enum_names *een,
 			   unsigned long table, unsigned long val);
 

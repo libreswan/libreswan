@@ -299,7 +299,7 @@ static void test_enum_enum(const char *title, enum_enum_names *een,
 	{
 		printf(PREFIX "jam_enum_enum %lu %lu: ", table, val);
 		struct jambuf buf = ARRAY_AS_JAMBUF(scratch);
-		jam_enum_enum(&buf, een, table, val);
+		jam_enum_enum_long(&buf, een, table, val);
 		shunk_t s = jambuf_as_shunk(&buf);
 		printf(""PRI_SHUNK" ", pri_shunk(s));
 		if (val_ok && hunk_streq(s, name.buf)) {

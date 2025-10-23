@@ -2042,7 +2042,7 @@ static void LDBG_print_struct(struct logger *logger,
 			case ft_loose_enum_enum:
 			{
 				name_buf buf;
-				const char *name = str_enum_enum(fp->desc, last_enum, n, &buf);
+				const char *name = str_enum_enum_long(fp->desc, last_enum, n, &buf);
 				LDBG_log(logger, "   %s: %s (0x%jx)",
 					 fp->name, name, n);
 				break;

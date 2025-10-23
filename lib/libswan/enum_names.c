@@ -327,8 +327,8 @@ bool enum_enum_short(enum_enum_names *een,
 	return enum_short(en, val, b);
 }
 
-const char *str_enum_enum(enum_enum_names *een, unsigned long table,
-			  unsigned long val, name_buf *b)
+const char *str_enum_enum_long(enum_enum_names *een, unsigned long table,
+			       unsigned long val, name_buf *b)
 {
 	enum_enum_long(een, table, val, b);
 	return b->buf;
@@ -348,8 +348,8 @@ const char *str_enum_enum_short(enum_enum_names *een, unsigned long table,
 	return str_enum_short(en, val, b);
 }
 
-size_t jam_enum_enum(struct jambuf *buf, enum_enum_names *een,
-		     unsigned long table, unsigned long val)
+size_t jam_enum_enum_long(struct jambuf *buf, enum_enum_names *een,
+			  unsigned long table, unsigned long val)
 {
 	enum_names *en = enum_enum_table(een, table);
 	if (en == NULL) {
