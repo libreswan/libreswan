@@ -6357,7 +6357,7 @@ name for -1 present (should be absent)
          jam_enum_short 40503: ISAKMP_N_CISCO_PRESHARED_KEY_HASH OK
          jam_enum_human 40503: isakmp-n-cisco-preshared-key-hash OK
          match ISAKMP_N_CISCO_PRESHARED_KEY_HASH [short]: OK
-  v2_notification_names: [1..50210)
+  v2_notification_names: [1..40961)
     1 -> v2N_UNSUPPORTED_CRITICAL_PAYLOAD
          jam_enum 1: v2N_UNSUPPORTED_CRITICAL_PAYLOAD OK
          match v2N_UNSUPPORTED_CRITICAL_PAYLOAD: OK
@@ -6519,6 +6519,20 @@ name for -1 present (should be absent)
          jam_enum_short 47: STATE_NOT_FOUND OK
          jam_enum_human 47: state-not-found OK
          match STATE_NOT_FOUND [short]: OK
+   48 -> v2N_TS_MAX_QUEUE
+         jam_enum 48: v2N_TS_MAX_QUEUE OK
+         match v2N_TS_MAX_QUEUE: OK
+         short_name 48: TS_MAX_QUEUE OK
+         jam_enum_short 48: TS_MAX_QUEUE OK
+         jam_enum_human 48: ts-max-queue OK
+         match TS_MAX_QUEUE [short]: OK
+   49 -> v2N_REGISTRATION_FAILED
+         jam_enum 49: v2N_REGISTRATION_FAILED OK
+         match v2N_REGISTRATION_FAILED: OK
+         short_name 49: REGISTRATION_FAILED OK
+         jam_enum_short 49: REGISTRATION_FAILED OK
+         jam_enum_human 49: registration-failed OK
+         match REGISTRATION_FAILED [short]: OK
   16384 -> v2N_INITIAL_CONTACT
          jam_enum 16384: v2N_INITIAL_CONTACT OK
          match v2N_INITIAL_CONTACT: OK
@@ -6834,13 +6848,13 @@ name for -1 present (should be absent)
          jam_enum_short 16428: IFOM_CAPABILITY OK
          jam_enum_human 16428: ifom-capability OK
          match IFOM_CAPABILITY [short]: OK
-  16429 -> v2N_SENDER_REQUEST_ID
-         jam_enum 16429: v2N_SENDER_REQUEST_ID OK
-         match v2N_SENDER_REQUEST_ID: OK
-         short_name 16429: SENDER_REQUEST_ID OK
-         jam_enum_short 16429: SENDER_REQUEST_ID OK
-         jam_enum_human 16429: sender-request-id OK
-         match SENDER_REQUEST_ID [short]: OK
+  16429 -> v2N_GROUP_SENDER
+         jam_enum 16429: v2N_GROUP_SENDER OK
+         match v2N_GROUP_SENDER: OK
+         short_name 16429: GROUP_SENDER OK
+         jam_enum_short 16429: GROUP_SENDER OK
+         jam_enum_human 16429: group-sender OK
+         match GROUP_SENDER [short]: OK
   16430 -> v2N_IKEV2_FRAGMENTATION_SUPPORTED
          jam_enum 16430: v2N_IKEV2_FRAGMENTATION_SUPPORTED OK
          match v2N_IKEV2_FRAGMENTATION_SUPPORTED: OK
@@ -6932,6 +6946,34 @@ name for -1 present (should be absent)
          jam_enum_short 16442: USE_AGGFRAG OK
          jam_enum_human 16442: use-aggfrag OK
          match USE_AGGFRAG [short]: OK
+  16443 -> v2N_SUPPORTED_AUTH_METHODS
+         jam_enum 16443: v2N_SUPPORTED_AUTH_METHODS OK
+         match v2N_SUPPORTED_AUTH_METHODS: OK
+         short_name 16443: SUPPORTED_AUTH_METHODS OK
+         jam_enum_short 16443: SUPPORTED_AUTH_METHODS OK
+         jam_enum_human 16443: supported-auth-methods OK
+         match SUPPORTED_AUTH_METHODS [short]: OK
+  16444 -> v2N_SA_RESOURCE_INFO
+         jam_enum 16444: v2N_SA_RESOURCE_INFO OK
+         match v2N_SA_RESOURCE_INFO: OK
+         short_name 16444: SA_RESOURCE_INFO OK
+         jam_enum_short 16444: SA_RESOURCE_INFO OK
+         jam_enum_human 16444: sa-resource-info OK
+         match SA_RESOURCE_INFO [short]: OK
+  16445 -> v2N_USE_PPK_INT
+         jam_enum 16445: v2N_USE_PPK_INT OK
+         match v2N_USE_PPK_INT: OK
+         short_name 16445: USE_PPK_INT OK
+         jam_enum_short 16445: USE_PPK_INT OK
+         jam_enum_human 16445: use-ppk-int OK
+         match USE_PPK_INT [short]: OK
+  16446 -> v2N_PPK_IDENTITY_KEY
+         jam_enum 16446: v2N_PPK_IDENTITY_KEY OK
+         match v2N_PPK_IDENTITY_KEY: OK
+         short_name 16446: PPK_IDENTITY_KEY OK
+         jam_enum_short 16446: PPK_IDENTITY_KEY OK
+         jam_enum_human 16446: ppk-identity-key OK
+         match PPK_IDENTITY_KEY [short]: OK
   40960 -> v2N_NULL_AUTH
          jam_enum 40960: v2N_NULL_AUTH OK
          match v2N_NULL_AUTH: OK
@@ -6939,20 +6981,6 @@ name for -1 present (should be absent)
          jam_enum_short 40960: NULL_AUTH OK
          jam_enum_human 40960: null-auth OK
          match NULL_AUTH [short]: OK
-  50208 -> v2N_PPK_IDENTITY_KEY
-         jam_enum 50208: v2N_PPK_IDENTITY_KEY OK
-         match v2N_PPK_IDENTITY_KEY: OK
-         short_name 50208: PPK_IDENTITY_KEY OK
-         jam_enum_short 50208: PPK_IDENTITY_KEY OK
-         jam_enum_human 50208: ppk-identity-key OK
-         match PPK_IDENTITY_KEY [short]: OK
-  50209 -> v2N_USE_PPK_INT
-         jam_enum 50209: v2N_USE_PPK_INT OK
-         match v2N_USE_PPK_INT: OK
-         short_name 50209: USE_PPK_INT OK
-         jam_enum_short 50209: USE_PPK_INT OK
-         jam_enum_human 50209: use-ppk-int OK
-         match USE_PPK_INT [short]: OK
   version_names: [16..33)
    16 -> ISAKMP Version 1.0 (rfc2407)
          jam_enum 16: ISAKMP Version 1.0 (rfc2407) OK

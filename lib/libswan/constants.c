@@ -1811,7 +1811,7 @@ enum_names v1_notification_names = {
 };
 
 static const char *const v2_notification_error_name[] = {
-#define S(E) [E - v2N_NOTHING_WRONG] = #E
+#define S(E) [E - v2N_ERROR_FLOOR] = #E
 	S(v2N_UNSUPPORTED_CRITICAL_PAYLOAD),
 	S(v2N_INVALID_IKE_SPI),
 	S(v2N_INVALID_MAJOR_VERSION),
@@ -1835,6 +1835,8 @@ static const char *const v2_notification_error_name[] = {
 	S(v2N_INVALID_GROUP_ID),
 	S(v2N_AUTHORIZATION_FAILED),
 	S(v2N_STATE_NOT_FOUND),
+	S(v2N_TS_MAX_QUEUE),
+	S(v2N_REGISTRATION_FAILED),
 #undef S
 };
 
@@ -1886,7 +1888,7 @@ static const char *const v2_notification_status_name[] = {
 	S(v2N_PSK_CONFIRM),
 	S(v2N_ERX_SUPPORTED),
 	S(v2N_IFOM_CAPABILITY),
-	S(v2N_SENDER_REQUEST_ID),
+	S(v2N_GROUP_SENDER),
 	S(v2N_IKEV2_FRAGMENTATION_SUPPORTED),
 	S(v2N_SIGNATURE_HASH_ALGORITHMS),
 	S(v2N_CLONE_IKE_SA_SUPPORTED),
@@ -1900,49 +1902,38 @@ static const char *const v2_notification_status_name[] = {
 	S(v2N_IP6_ALLOWED),
 	S(v2N_ADDITIONAL_KEY_EXCHANGE),
 	S(v2N_USE_AGGFRAG),
+	S(v2N_SUPPORTED_AUTH_METHODS),
+	S(v2N_SA_RESOURCE_INFO),
+	S(v2N_USE_PPK_INT),
+	S(v2N_PPK_IDENTITY_KEY),
 #undef S
 };
 
-static const char *const v2_notification_private_first_range_name[] = {
+static const char *const v2_notification_private_range_40960_40960_name[] = {
 #define S(E) [E - v2N_NULL_AUTH] = #E
 	S(v2N_NULL_AUTH),		/* 40960, used for mixed OE */
 #undef S
 };
 
-static const char *const v2_notification_private_second_range_name[] = {
-#define S(E) [E - v2N_PPK_IDENTITY_KEY] = #E
-	S(v2N_PPK_IDENTITY_KEY),	/* 50208, draft-ietf-ipsecme-ikev2-qr-alt-04 */
-	S(v2N_USE_PPK_INT),		/* 50209, draft-ietf-ipsecme-ikev2-qr-alt-04 */
-#undef S
-};
-
-static const struct enum_names v2_notification_private_second_range_names = {
-	v2N_PPK_IDENTITY_KEY,
-	v2N_USE_PPK_INT,
-	ARRAY_REF(v2_notification_private_second_range_name),
-	"v2N_", /* prefix */
-	NULL
-};
-
-static const struct enum_names v2_notification_private_first_range_names = {
+static const struct enum_names v2_notification_private_40960_40960_names = {
 	v2N_NULL_AUTH,
 	v2N_NULL_AUTH,
-	ARRAY_REF(v2_notification_private_first_range_name),
+	ARRAY_REF(v2_notification_private_range_40960_40960_name),
 	"v2N_", /* prefix */
-	&v2_notification_private_second_range_names
+	NULL,
 };
 
 static const struct enum_names v2_notification_status_names = {
-	v2N_INITIAL_CONTACT,
-	v2N_USE_AGGFRAG,
+	v2N_STATUS_FLOOR,
+	v2N_STATUS_PSTATS_ROOF-1,
 	ARRAY_REF(v2_notification_status_name),
 	"v2N_", /* prefix */
-	&v2_notification_private_first_range_names,
+	&v2_notification_private_40960_40960_names,
 };
 
 const struct enum_names v2_notification_names = {
-	v2N_NOTHING_WRONG,
-	v2N_STATE_NOT_FOUND,
+	v2N_ERROR_FLOOR,
+	v2N_ERROR_PSTATS_ROOF-1,
 	ARRAY_REF(v2_notification_error_name),
 	"v2N_", /* prefix */
 	&v2_notification_status_names
