@@ -84,6 +84,8 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 	C(TICKET_ACK);
 	C(TICKET_NACK);
 	C(TICKET_OPAQUE);
+	C(SA_RESOURCE_INFO);
+	C(TS_MAX_QUEUE);
 #undef C
 	default: return PD_v2_INVALID;
 	}

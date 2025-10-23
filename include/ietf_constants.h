@@ -1727,8 +1727,14 @@ typedef enum v2_notification {
 	v2N_INVALID_GROUP_ID = 45,		/* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46,		/* draft-yeung-g-ikev2 */
 	v2N_STATE_NOT_FOUND = 47,		/* RFC-9370 */
+	v2N_TS_MAX_QUEUE = 48,			/* RFC-9611 */
+	v2N_REGISTRATION_FAILED = 49,		/* RFC-ietf-ipsecme-g-ikev2 */
+
+	/* 50-8191 Unassigned */
 
 	v2N_ERROR_PSTATS_ROOF, /* used to cap error statistics array */
+
+	/* 8192-16384 Reserved for Private Use */
 
 	/*
 	 * Status notifications.
@@ -1783,7 +1789,7 @@ typedef enum v2_notification {
 	v2N_PSK_CONFIRM = 16426,		/* RFC-6631 */
 	v2N_ERX_SUPPORTED = 16427,		/* RFC-6867 */
 	v2N_IFOM_CAPABILITY = 16428,		/* 3GPP TS 24.303 v10.6.0 annex B.2 */
-	v2N_SENDER_REQUEST_ID = 16429,		/* draft-yeung-g-ikev2 */
+	v2N_GROUP_SENDER = 16429,		/* RFC-ietf-ipsecme-g-ikev2 */
 	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
 	v2N_SIGNATURE_HASH_ALGORITHMS = 16431,	/* RFC-7427 */
 	v2N_CLONE_IKE_SA_SUPPORTED = 16432,	/* RFC-7791 */
@@ -1799,17 +1805,17 @@ typedef enum v2_notification {
 	v2N_USE_AGGFRAG = 16442,		/* RFC-9347 */
 	v2N_SUPPORTED_AUTH_METHODS = 16443,	/* draft-ietf-ipsecme-ikev2-auth-announce-10 */
 
-	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
+	v2N_SA_RESOURCE_INFO = 16444,		/* RFC-9611 */
+	v2N_USE_PPK_INT = 16445,		/* RFC-ietf-ipsecme-ikev2-qr-alt */
+	v2N_PPK_IDENTITY_KEY = 16446,		/* RFC-ietf-ipsecme-ikev2-qr-alt */
 
-	/* 16438 - 40959 Unassigned */
+	/* 16447 - 40959 Unassigned */
+
+	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 
 	/* 40960 - 65535 Private Use */
 
 	v2N_NULL_AUTH = 40960,
-
-	v2N_PPK_IDENTITY_KEY = 50208,		/* draft-ietf-ipsecme-ikev2--00 */
-	v2N_USE_PPK_INT = 50209,		/* draft-ietf-ipsecme-ikev2-qr-alt-04 */
-
 
 } v2_notification_t;
 
