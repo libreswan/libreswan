@@ -1925,11 +1925,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
-			msg.hostaddrfamily = "ipv4";
+			msg.wm_hostaddrfamily = "ipv4";
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
-			msg.hostaddrfamily = "ipv6";
+			msg.wm_hostaddrfamily = "ipv6";
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */

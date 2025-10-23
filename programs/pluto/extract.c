@@ -295,14 +295,14 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 	 * Start with something easy.
 	 */
 
-	if (wm->hostaddrfamily != NULL) {
+	if (wm->wm_hostaddrfamily != NULL) {
 		/* save the winner */
-		const struct ip_info *afi = ttoinfo(wm->hostaddrfamily);
+		const struct ip_info *afi = ttoinfo(wm->wm_hostaddrfamily);
 		if (afi == NULL) {
-			return diag("hostaddrfamily=%s is not unrecognized", wm->hostaddrfamily);
+			return diag("hostaddrfamily=%s is not unrecognized", wm->wm_hostaddrfamily);
 		}
 		/* save source; must be winner! */
-		d = check_afi(&winner, "", "hostaddrfamily", wm->hostaddrfamily, afi, verbose);
+		d = check_afi(&winner, "", "hostaddrfamily", wm->wm_hostaddrfamily, afi, verbose);
 		if (vbad(d != NULL)) {
 			return d;
 		}

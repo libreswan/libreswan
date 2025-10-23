@@ -435,7 +435,7 @@ struct whack_message {
 
 	struct whack_end end[END_ROOF];
 
-	const char *hostaddrfamily;
+#define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
 
 	const char *ike;		/* ike algo string (separated by commas) */
 	enum encap_proto phase2;	/* outer protocol: ESP|AH */
