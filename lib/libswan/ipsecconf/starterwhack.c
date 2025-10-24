@@ -176,7 +176,7 @@ static bool set_whack_end(struct whack_end *w,
 
 	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
 	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
-	w->xauthusername = l->values[KWS_USERNAME].string;
+	w->we_xauthusername = l->values[KWS_USERNAME].string;
 
 	w->groundhog = l->values[KWYN_GROUNDHOG].option;
 
@@ -201,13 +201,13 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger)
 {
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_command = WHACK_ADD,
-		.name = conn->name,
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
 
-	msg.hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
+	msg.whack_command = WHACK_ADD;
+	msg.name = conn->name;
+
+	msg.wm_hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
 	msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
 	msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;
@@ -369,9 +369,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 int starter_whack_listen(const char *ctlsocket, struct logger *logger)
 {
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_ADDCONN,
-		.whack_command = WHACK_LISTEN,
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_ADDCONN);
+	msg.whack_command = WHACK_LISTEN;
 	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 }

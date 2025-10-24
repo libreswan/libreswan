@@ -295,14 +295,14 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 	 * Start with something easy.
 	 */
 
-	if (wm->hostaddrfamily != NULL) {
+	if (wm->wm_hostaddrfamily != NULL) {
 		/* save the winner */
-		const struct ip_info *afi = ttoinfo(wm->hostaddrfamily);
+		const struct ip_info *afi = ttoinfo(wm->wm_hostaddrfamily);
 		if (afi == NULL) {
-			return diag("hostaddrfamily=%s is not unrecognized", wm->hostaddrfamily);
+			return diag("hostaddrfamily=%s is not unrecognized", wm->wm_hostaddrfamily);
 		}
 		/* save source; must be winner! */
-		d = check_afi(&winner, "", "hostaddrfamily", wm->hostaddrfamily, afi, verbose);
+		d = check_afi(&winner, "", "hostaddrfamily", wm->wm_hostaddrfamily, afi, verbose);
 		if (vbad(d != NULL)) {
 			return d;
 		}
@@ -1360,7 +1360,7 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
 					       YN_NO, wm, verbose);
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
-						     src->xauthusername,
+						     src->we_xauthusername,
 						     wm, verbose);
 	enum eap_options autheap = extract_sparse_name(leftright, "autheap", src->autheap,
 						       /*value_when_unset*/IKE_EAP_NONE,

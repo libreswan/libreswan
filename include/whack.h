@@ -47,6 +47,7 @@
 #include "xauthby.h"
 #include "xauthfail.h"
 #include "ddos_mode.h"
+#include "ipsecconf/config_conn.h"	/* for CONFIG_CONN_KEYWORD_ROOF */
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
@@ -171,7 +172,7 @@ struct whack_end {
 
 	enum yn_options xauthserver;	/* for XAUTH */
 	enum yn_options xauthclient;
-	const char *xauthusername;
+#define we_xauthusername conn->value[KWS_USERNAME]
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 	const char *sendcert;
@@ -181,6 +182,8 @@ struct whack_end {
 	enum yn_options modecfgserver;	/* for MODECFG */
 	enum yn_options modecfgclient;
 	enum yn_options groundhog;	/* Is this end a groundhog? */
+
+	struct whack_config_conn *conn;
 };
 
 /*
@@ -204,6 +207,13 @@ struct whack_acquire {
 	} local, remote;
 	const char *label;
 	unsigned ipproto;
+};
+
+/*
+ */
+
+struct whack_config_conn {
+	const char *value[CONFIG_CONN_KEYWORD_ROOF];
 };
 
 /*
@@ -425,7 +435,7 @@ struct whack_message {
 
 	struct whack_end end[END_ROOF];
 
-	const char *hostaddrfamily;
+#define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
 
 	const char *ike;		/* ike algo string (separated by commas) */
 	enum encap_proto phase2;	/* outer protocol: ESP|AH */
@@ -492,7 +502,26 @@ struct whack_message {
 	/* space for strings (hope there is enough room) */
 	size_t str_size;
 	unsigned char string[4096];
+
+	/*
+	 * Danger zone:
+	 *
+	 * Objective is to replace all the above fields with tupples
+	 * (end, index, string) emitted from this table.  That, again,
+	 * gets us one step closer to accepting JSON.
+	 *
+	 * This is not sent over the wire (the message is truncated
+	 * somewhere within .string[].
+	 *
+	 * This array is likely very very empty.
+	 *
+	 * END_ROOF is used to store global (vs per-end) options.
+	 */
+	struct whack_config_conn conn[END_ROOF+1];
 };
+
+void init_whack_message(struct whack_message *wm,
+			enum whack_from from);
 
 /*
  * Options of whack --list*** command

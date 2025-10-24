@@ -1012,23 +1012,8 @@ int main(int argc, char **argv)
 
 	char *authby = NULL;
 
-	struct whack_message msg = {
-		.whack_from = WHACK_FROM_WHACK,
-
-		/*
-		 * XXX: gcc (nb3 20231008) 10.5.0 is convinced that
-		 * the shorter:
-		 *
-		 *   .end[LEFT_END].leftright = "left",
-		 *
-		 * leaves the .id field uninitialized.
-		 */
-		.end = {
-			[LEFT_END] = { .leftright = "left", },
-			[RIGHT_END] = { .leftright = "right", },
-		},
-
-	};
+	struct whack_message msg;
+	init_whack_message(&msg, WHACK_FROM_WHACK);
 
 	struct whack_end *end = &msg.end[LEFT_END];
 
@@ -1940,11 +1925,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
-			msg.hostaddrfamily = "ipv4";
+			msg.wm_hostaddrfamily = "ipv4";
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
-			msg.hostaddrfamily = "ipv6";
+			msg.wm_hostaddrfamily = "ipv6";
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
@@ -1983,7 +1968,7 @@ int main(int argc, char **argv)
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			end->xauthusername = optarg;
+			end->we_xauthusername = optarg;
 			/* ??? why does this length include NUL? */
 			/* XXX: no clue; but >0 does imply being present */
 			usernamelen = jam_str(xauthusername, sizeof(xauthusername), optarg) - xauthusername + 1;
