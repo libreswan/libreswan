@@ -3692,7 +3692,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						   &xauthfail_names, wm, verbose);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
+		config->ppk_ids = clone_str(wm->wm_ppk_ids, "connection ppk_ids");
 		if (config->ppk_ids != NULL) {
 			config->ppk_ids_shunks = ttoshunks(shunk1(config->ppk_ids),
 							   ", ",

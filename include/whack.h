@@ -485,7 +485,7 @@ struct whack_message {
 					 * cleanup on down? */
 
 	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-	const char *ppk_ids;
+#define wm_ppk_ids conn[END_ROOF].value[KWS_PPK_IDS]
 
 	/*
 	 * For RFC 5685 - IKEv2 Redirect mechanism.

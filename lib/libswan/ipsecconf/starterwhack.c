@@ -307,7 +307,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.vti_routing = conn->values[KWYN_VTI_ROUTING].option;
 	msg.vti_shared = conn->values[KWYN_VTI_SHARED].option;
 
-	msg.ppk_ids = conn->values[KWS_PPK_IDS].string;
+	msg.wm_ppk_ids = conn->values[KWS_PPK_IDS].string;
 
 	msg.wm_redirect_to = conn->values[KWS_REDIRECT_TO].string;
 	conn_log_val(logger, conn, "redirect-to", msg.wm_redirect_to);
