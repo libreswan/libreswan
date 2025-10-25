@@ -487,14 +487,17 @@ struct whack_message {
 	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 	const char *ppk_ids;
 
-	/* for RFC 5685 - IKEv2 Redirect mechanism */
+	/*
+	 * For RFC 5685 - IKEv2 Redirect mechanism.
+	 *
+	 * REDIRECT_TO is used by WHACK_ADD, WHACK_ACTIVE_REDIRECT and
+	 * WHACK_GLOBAL_REDIRECT.
+	 */
 	enum global_redirect global_redirect;
-	const char *redirect_to;	/* used by WHACK_ADD,
-				 * WHACK_ACTIVE_REDIRECT and
-				 * WHACK_GLOBAL_REDIRECT */
 	enum yn_options accept_redirect;
-	const char *accept_redirect_to;
 	enum yna_options send_redirect;
+#define wm_redirect_to conn[END_ROOF].value[KWS_REDIRECT_TO]
+#define wm_accept_redirect_to conn[END_ROOF].value[KWS_ACCEPT_REDIRECT_TO]
 
 	/* what metric to put on ipsec routes */
 	int metric;

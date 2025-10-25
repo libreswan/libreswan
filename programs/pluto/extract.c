@@ -2894,8 +2894,9 @@ diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * RFC 5685 - IKEv2 Redirect mechanism.
 	 */
-	config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
-	config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
+	config->redirect.to = clone_str(wm->wm_redirect_to, "connection redirect_to");
+	config->redirect.accept_to = clone_str(wm->wm_accept_redirect_to,
+					       "connection accept_redirect_to");
 	if (ike_version == IKEv1) {
 		if (wm->send_redirect != YNA_UNSET) {
 			vwarning("IKEv1 connection ignores send-redirect=");
@@ -2903,7 +2904,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} else {
 		switch (wm->send_redirect) {
 		case YNA_YES:
-			if (wm->redirect_to == NULL) {
+			if (wm->wm_redirect_to == NULL) {
 				vwarning("send-redirect=yes ignored, redirect-to= was not specified");
 			}
 			/* set it anyway!?!  the code checking it
@@ -2912,7 +2913,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			break;
 
 		case YNA_NO:
-			if (wm->redirect_to != NULL) {
+			if (wm->wm_redirect_to != NULL) {
 				vwarning("send-redirect=no, redirect-to= is ignored");
 			}
 			config->redirect.send_never = true;

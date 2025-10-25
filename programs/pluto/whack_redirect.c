@@ -46,9 +46,9 @@ void jam_whack_redirect(struct jambuf *buf, const struct whack_message *wm)
 		jam_string(buf, " name=");
 		jam_string(buf, wm->name);
 	}
-	if (wm->redirect_to != NULL) {
+	if (wm->wm_redirect_to != NULL) {
 		jam_string(buf, " redirect-to=");
-		jam_string(buf, wm->redirect_to);
+		jam_string(buf, wm->wm_redirect_to);
 	}
 	if (wm->global_redirect != 0) {
 		jam_string(buf, " redirect_to=");
@@ -95,10 +95,10 @@ void whack_active_redirect(const struct whack_message *wm, struct show *s)
 	 * Whack's --redirect-to is ambitious - is it part of an ADD
 	 * or a global op?  Checking .whack_add.
 	 */
-	PASSERT(logger, wm->redirect_to != NULL);
+	PASSERT(logger, wm->wm_redirect_to != NULL);
 	struct connection_state_visitor_context context = {0};
-	if (!set_redirect_dests(wm->redirect_to, &context.active_dests)) {
-		show(s, "redirect-to='%s' is empty", wm->redirect_to);
+	if (!set_redirect_dests(wm->wm_redirect_to, &context.active_dests)) {
+		show(s, "redirect-to='%s' is empty", wm->wm_redirect_to);
 		return;
 	}
 
@@ -130,6 +130,6 @@ void whack_active_redirect(const struct whack_message *wm, struct show *s)
 void whack_global_redirect(const struct whack_message *wm, struct show *s)
 {
 	set_global_redirect(wm->global_redirect,
-			    wm->redirect_to,
+			    wm->wm_redirect_to,
 			    show_logger(s));
 }

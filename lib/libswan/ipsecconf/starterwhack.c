@@ -309,10 +309,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.ppk_ids = conn->values[KWS_PPK_IDS].string;
 
-	msg.redirect_to = conn->values[KWS_REDIRECT_TO].string;
-	conn_log_val(logger, conn, "redirect-to", msg.redirect_to);
-	msg.accept_redirect_to = conn->values[KWS_ACCEPT_REDIRECT_TO].string;
-	conn_log_val(logger, conn, "accept-redirect-to", msg.accept_redirect_to);
+	msg.wm_redirect_to = conn->values[KWS_REDIRECT_TO].string;
+	conn_log_val(logger, conn, "redirect-to", msg.wm_redirect_to);
+	msg.wm_accept_redirect_to = conn->values[KWS_ACCEPT_REDIRECT_TO].string;
+	conn_log_val(logger, conn, "accept-redirect-to", msg.wm_accept_redirect_to);
 	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
 
 	msg.session_resumption = conn->values[KWYN_SESSION_RESUMPTION].option;

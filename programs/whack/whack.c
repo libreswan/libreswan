@@ -1247,7 +1247,7 @@ int main(int argc, char **argv)
 		case OPT_REDIRECT_TO:	/* --redirect-to */
 			/* either active, or or add */
 			/* .whack_command deciphered below */
-			msg.redirect_to = optarg;
+			msg.wm_redirect_to = optarg;
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
@@ -1257,7 +1257,7 @@ int main(int argc, char **argv)
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.redirect_to = optarg; /* could be empty string */
+			msg.wm_redirect_to = optarg; /* could be empty string */
 			continue;
 
 		case OPT_DDOS_MODE:
@@ -1857,7 +1857,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
-			msg.accept_redirect_to = optarg;
+			msg.wm_accept_redirect_to = optarg;
 			continue;
 
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
@@ -2208,7 +2208,7 @@ int main(int argc, char **argv)
 	 * --to sets WHACK_ADD and global-redirect-to sets
 	 * --WHACK_GLOBAL_REDIRECT.
 	 */
-	if (msg.redirect_to != NULL) {
+	if (msg.wm_redirect_to != NULL) {
 		switch (msg.whack_command) {
 		case 0:
 			whack_command(&msg, WHACK_ACTIVE_REDIRECT);
