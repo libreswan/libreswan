@@ -517,6 +517,7 @@ struct whack_message {
 	 *
 	 * END_ROOF is used to store global (vs per-end) options.
 	 */
+#define wm_clones conn[END_ROOF].value[KWS_CLONES]
 	struct whack_config_conn conn[END_ROOF+1];
 };
 

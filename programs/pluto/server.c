@@ -1110,3 +1110,8 @@ struct event_base *get_pluto_event_base(void)
 {
 	return pluto_eb;
 }
+
+unsigned nr_processors_online(void)
+{
+	return sysconf(_SC_NPROCESSORS_ONLN);
+}

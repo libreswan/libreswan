@@ -207,7 +207,12 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.whack_command = WHACK_ADD;
 	msg.name = conn->name;
 
-	msg.wm_hostaddrfamily = conn->values[KWS_HOSTADDRFAMILY].string;
+	FOR_EACH_THING(kw,
+		       KWS_HOSTADDRFAMILY,
+		       KWS_CLONES) {
+		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;
+	}
+
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
 	msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
 	msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;

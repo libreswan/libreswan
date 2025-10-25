@@ -740,6 +740,15 @@ static void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " replay_window: %ju;", c->config->child.replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->config->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
+		/* clones */
+		jam_string(buf, " clones: ");
+		switch (c->config->child.clones.yna) {
+		case YNA_NO: jam_string(buf, "no"); break;
+		case YNA_YES: jam(buf, "%u", c->config->child.clones.nr); break;
+		case YNA_AUTO: jam(buf, "yes (%u)", c->config->child.clones.nr); break;
+		case YNA_UNSET: jam_string(buf, "no (unset)"); break;
+		}
+		jam_string(buf, ";");
 	}
 
 	SHOW_JAMBUF(s, buf) {

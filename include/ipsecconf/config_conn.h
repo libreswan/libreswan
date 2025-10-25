@@ -69,6 +69,8 @@ enum config_conn_keyword {
 
 	KWS_IPSEC_INTERFACE,
 
+	KWS_CLONES,	/* RFC 9611 */
+
 	/*
 	 * By convention, these are connection strings (KSCF is
 	 * Keyword String Connection Flag?).  The initial ones come in
