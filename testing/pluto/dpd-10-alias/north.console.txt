@@ -66,7 +66,7 @@ north #
 "north-dpd/0x1":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "north-dpd/0x1":   sec_label:unset;
 "north-dpd/0x1":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"north-dpd/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"north-dpd/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "north-dpd/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "north-dpd/0x1":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "north-dpd/0x1":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -88,7 +88,7 @@ north #
 "north-dpd/0x2":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
 "north-dpd/0x2":   sec_label:unset;
 "north-dpd/0x2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"north-dpd/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
+"north-dpd/0x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; clones: no (unset);
 "north-dpd/0x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 "north-dpd/0x2":   initial-contact:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 "north-dpd/0x2":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
