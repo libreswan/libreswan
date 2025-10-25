@@ -358,12 +358,11 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
 		return -1;
 
-	msg.ike = conn->values[KWS_IKE].string;
-
-	msg.esp = conn->values[KWS_ESP].string;
-	msg.ah = conn->values[KWS_AH].string;
+	msg.wm_ike = conn->values[KWS_IKE].string;
+	msg.wm_esp = conn->values[KWS_ESP].string;
+	msg.wm_ah = conn->values[KWS_AH].string;
 	msg.phase2 = conn->values[KNCF_PHASE2].option;
-	msg.phase2alg = conn->values[KWS_PHASE2ALG].string;
+	msg.wm_phase2alg = conn->values[KWS_PHASE2ALG].string;
 
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)

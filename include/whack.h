@@ -437,11 +437,20 @@ struct whack_message {
 
 #define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
 
-	const char *ike;		/* ike algo string (separated by commas) */
-	enum encap_proto phase2;	/* outer protocol: ESP|AH */
-	const char *phase2alg;		/* outer protocol: ESP|AH */
-	const char *esp;		/* esp algo string (separated by commas) */
-	const char *ah;			/* esp algo string (separated by commas) */
+#define wm_ike conn[END_ROOF].value[KWS_IKE]	/* ike algo string
+						 * (separated by
+						 * commas) */
+	enum encap_proto phase2;		/* outer protocol:
+						 * ESP|AH */
+#define wm_phase2alg conn[END_ROOF].value[KWS_PHASE2ALG]
+						/* outer protocol:
+						 * alg */
+#define wm_esp conn[END_ROOF].value[KWS_ESP]	/* esp algo string
+						 * (separated by
+						 * commas) */
+#define wm_ah conn[END_ROOF].value[KWS_AH]	/* esp algo string
+						 * (separated by
+						 * commas) */
 
 	/* for WHACK_KEY: */
 	bool whack_key;

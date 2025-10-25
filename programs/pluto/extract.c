@@ -2351,16 +2351,16 @@ static diag_t extract_encap_alg(const char **encap_alg,
 				const char *name, const char *value,
 				const struct whack_message *wm)
 {
-	if (wm->phase2alg == NULL) {
+	if (wm->wm_phase2alg == NULL) {
 		(*encap_alg) = value; /* could be NULL */
 		return NULL;
 	}
 	if (value == NULL) {
-		(*encap_alg) = wm->phase2alg; /* can't be NULL */
+		(*encap_alg) = wm->wm_phase2alg; /* can't be NULL */
 		return NULL;
 	}
 	return diag("'%s=%s conficts with 'phase2alg=%s'",
-		    name, value, wm->phase2alg);
+		    name, value, wm->wm_phase2alg);
 }
 
 static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **encap_alg,
@@ -2384,32 +2384,32 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 	switch ((*encap_proto)) {
 
 	case ENCAP_PROTO_AH:
-		return extract_encap_alg(encap_alg, "ah", wm->ah, wm);
+		return extract_encap_alg(encap_alg, "ah", wm->wm_ah, wm);
 
 	case ENCAP_PROTO_ESP:
-		return extract_encap_alg(encap_alg, "esp", wm->esp, wm);
+		return extract_encap_alg(encap_alg, "esp", wm->wm_esp, wm);
 
 	case ENCAP_PROTO_UNSET:
-		if (wm->ah == NULL && wm->esp == NULL) {
-			(*encap_alg) = wm->phase2alg;
+		if (wm->wm_ah == NULL && wm->wm_esp == NULL) {
+			(*encap_alg) = wm->wm_phase2alg;
 			(*encap_proto) = ENCAP_PROTO_ESP;
 			break;
 		}
 
-		if (wm->ah != NULL) {
+		if (wm->wm_ah != NULL) {
 			(*encap_proto) = ENCAP_PROTO_AH;
-			(*encap_alg) = wm->ah;
+			(*encap_alg) = wm->wm_ah;
 			break;
 		}
 
-		if (wm->esp != NULL) {
+		if (wm->wm_esp != NULL) {
 			(*encap_proto) = ENCAP_PROTO_ESP;
-			(*encap_alg) = wm->esp;
+			(*encap_alg) = wm->wm_esp;
 			break;
 		}
 
 		return diag("can not distinguish between 'ah=%s' and 'esp=%s' without 'phase2='",
-			    wm->ah, wm->esp);
+			    wm->wm_ah, wm->wm_esp);
 	}
 
 	return NULL;
@@ -2728,7 +2728,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (wm->aggressive == YN_YES && ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
 	}
-	if (wm->aggressive == YN_YES && wm->ike == NULL) {
+	if (wm->aggressive == YN_YES && wm->wm_ike == NULL) {
 		return diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
 	config->aggressive = extract_yn("", "aggressive", wm->aggressive,
@@ -3281,7 +3281,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* IKE cipher suites */
 
-	if (never_negotiate_string_option("", "ike", wm->ike, wm, verbose)) {
+	if (never_negotiate_string_option("", "ike", wm->wm_ike, wm, verbose)) {
 		vdbg("never-negotiate ike");
 	} else {
 		const struct proposal_policy proposal_policy = {
@@ -3293,12 +3293,12 @@ diag_t extract_connection(const struct whack_message *wm,
 			.stream = ALL_STREAMS,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
-			.ignore_transform_lookup_error = (wm->ike == NULL),
+			.ignore_transform_lookup_error = (wm->wm_ike == NULL),
 			.addke = intermediate,
 		};
 
 		struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
-		config->ike_proposals.p = proposals_from_str(parser, wm->ike);
+		config->ike_proposals.p = proposals_from_str(parser, wm->wm_ike);
 
 		if (c->config->ike_proposals.p == NULL) {
 			vexpect(parser->diag != NULL); /* something */

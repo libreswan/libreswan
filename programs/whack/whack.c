@@ -1861,11 +1861,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
-			msg.ike = optarg;
+			msg.wm_ike = optarg;
 			continue;
 
 		case CD_ESP:	/* --esp <esp_alg1,esp_alg2,...> */
-			msg.esp = optarg;
+			msg.wm_esp = optarg;
 			continue;
 
 		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
