@@ -3709,29 +3709,30 @@ diag_t extract_connection(const struct whack_message *wm,
 					  /*value_when_unset*/YN_NO,
 					  wm, verbose);
 
-	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, verbose)) {
-		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
+	if (can_extract_string("", "modecfgdns", wm->wm_modecfgdns, wm, verbose)) {
+		diag_t d = ttoaddresses_num(shunk1(wm->wm_modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (ike_version == IKEv1 ? &ipv4_info : NULL),
 					    &config->modecfg.dns);
 		if (d != NULL) {
-			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->modecfgdns);
+			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->wm_modecfgdns);
 		}
 	}
 
-	if (can_extract_string("", "modecfgdomains", wm->modecfgdomains, wm, verbose)) {
-		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
+	if (can_extract_string("", "modecfgdomains", wm->wm_modecfgdomains, wm, verbose)) {
+		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->wm_modecfgdomains),
 							     ", ", HERE);
 		if (ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
 			vlog("IKEv1 only uses the first domain in modecfgdomain=%s",
-			     wm->modecfgdomains);
+			     wm->wm_modecfgdomains);
 			config->modecfg.domains[1] = null_shunk;
 		}
 	}
 
-	config->modecfg.banner = extract_string("", "modecfgbanner", wm->modecfgbanner,
+	config->modecfg.banner = extract_string("", "modecfgbanner",
+						wm->wm_modecfgbanner,
 						wm, verbose);
 
 	/*

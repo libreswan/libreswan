@@ -1999,13 +1999,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
-			msg.modecfgdns = optarg;
+			msg.wm_modecfgdns = optarg;
 			continue;
 		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
-			msg.modecfgdomains = optarg;
+			msg.wm_modecfgdomains = optarg;
 			continue;
 		case CD_MODECFGBANNER:	/* --modecfgbanner */
-			msg.modecfgbanner = optarg;
+			msg.wm_modecfgbanner = optarg;
 			continue;
 
 		case CD_CONN_MARK:      /* --conn-mark */

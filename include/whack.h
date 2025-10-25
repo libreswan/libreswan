@@ -470,9 +470,9 @@ struct whack_message {
 	const char *connalias;
 
 	/* for IKEv1 MODECFG and IKEv2 CP */
-	const char *modecfgdns;
-	const char *modecfgdomains;
-	const char *modecfgbanner;
+#define wm_modecfgdns conn[END_ROOF].value[KWS_MODECFGDNS]
+#define wm_modecfgdomains conn[END_ROOF].value[KWS_MODECFGDOMAINS]
+#define wm_modecfgbanner conn[END_ROOF].value[KWS_MODECFGBANNER]
 
 #define wm_mark conn[END_ROOF].value[KWS_MARK]
 #define wm_mark_in conn[END_ROOF].value[KWS_MARK_IN]

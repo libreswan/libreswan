@@ -294,9 +294,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.sec_label = conn->values[KWS_SEC_LABEL].string;
 	msg.debug = conn->values[KWS_DEBUG].string;
 
-	msg.modecfgdns = conn->values[KWS_MODECFGDNS].string;
-	msg.modecfgdomains = conn->values[KWS_MODECFGDOMAINS].string;
-	msg.modecfgbanner = conn->values[KWS_MODECFGBANNER].string;
+	msg.wm_modecfgdns = conn->values[KWS_MODECFGDNS].string;
+	msg.wm_modecfgdomains = conn->values[KWS_MODECFGDOMAINS].string;
+	msg.wm_modecfgbanner = conn->values[KWS_MODECFGBANNER].string;
 
 	msg.wm_mark = conn->values[KWS_MARK].string;
 	msg.wm_mark_in = conn->values[KWS_MARK_IN].string;
