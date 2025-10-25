@@ -1828,7 +1828,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
-			msg.cisco_unity = (optarg == NULL ? "yes" : optarg);
+			msg.wm_cisco_unity = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
@@ -1869,11 +1869,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
-			msg.remote_peer_type = optarg;
+			msg.wm_remote_peer_type = optarg;
 			continue;
 
 		case CD_NM_CONFIGURED:		/* --nm-configured[=yes|no] */
-			msg.nm_configured = (optarg == NULL ? "yes" : optarg);
+			msg.wm_nm_configured = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_TCP: /* --tcp */

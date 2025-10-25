@@ -2257,7 +2257,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 	diag_t d = NULL;
 
 	enum remote_peer_type remote_peer_type = extract_sparse_name("", "remote-peer-type",
-								     wm->remote_peer_type,
+								     wm->wm_remote_peer_type,
 								     REMOTE_PEER_IETF,
 								     &remote_peer_type_names,
 								     wm, &d, verbose);
@@ -2265,7 +2265,8 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
+	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity",
+							  wm->wm_cisco_unity,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
 							  wm, &d, verbose);
@@ -2273,7 +2274,8 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options nm_configured = extract_sparse_name("", "nm-configured", wm->nm_configured,
+	enum yn_options nm_configured = extract_sparse_name("", "nm-configured",
+							    wm->wm_nm_configured,
 							    /*value_when_unset*/YN_NO,
 							    &yn_option_names,
 							    wm, &d, verbose);
@@ -2281,7 +2283,8 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options cisco_split = extract_sparse_name("", "cisco-split", wm->cisco_split,
+	enum yn_options cisco_split = extract_sparse_name("", "cisco-split",
+							  wm->wm_cisco_split,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
 							  wm, &d, verbose);

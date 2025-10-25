@@ -286,10 +286,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 	/*
 	 * Cisco (UNITY).
 	 */
-	msg.remote_peer_type = conn->values[KWS_REMOTE_PEER_TYPE].string;
-	msg.cisco_unity = conn->values[KWS_CISCO_UNITY].string;
-	msg.nm_configured = conn->values[KWS_NM_CONFIGURED].string;
-	msg.cisco_split = conn->values[KWS_CISCO_SPLIT].string;
+	msg.wm_remote_peer_type = conn->values[KWS_REMOTE_PEER_TYPE].string;
+	msg.wm_cisco_unity = conn->values[KWS_CISCO_UNITY].string;
+	msg.wm_cisco_split = conn->values[KWS_CISCO_SPLIT].string;
+	msg.wm_nm_configured = conn->values[KWS_NM_CONFIGURED].string;
 
 	msg.sec_label = conn->values[KWS_SEC_LABEL].string;
 	msg.debug = conn->values[KWS_DEBUG].string;

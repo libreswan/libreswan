@@ -394,9 +394,9 @@ struct whack_message {
 	 * Option to just send the Cisco VID - the other end will behave
 	 * differently (ModeCFG + RSA?)
 	 */
-	const char *remote_peer_type;
-	const char *cisco_unity;
-	const char *cisco_split;
+#define wm_remote_peer_type conn[END_ROOF].value[KWS_REMOTE_PEER_TYPE]
+#define wm_cisco_unity conn[END_ROOF].value[KWS_CISCO_UNITY]
+#define wm_cisco_split conn[END_ROOF].value[KWS_CISCO_SPLIT]
 
 	/* Option to send strongswan VID to allow better interop */
 	enum yn_options fake_strongswan;
@@ -405,7 +405,7 @@ struct whack_message {
 	enum yn_options send_vendorid;
 
 	/* Checking if this connection is configured by Network Manager */
-	const char *nm_configured;
+#define wm_nm_configured conn[END_ROOF].value[KWS_NM_CONFIGURED]
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum xauthby xauthby;
