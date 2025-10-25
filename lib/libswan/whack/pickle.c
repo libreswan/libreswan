@@ -455,7 +455,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->mark) &&
 		PICKLE_STRING(&wm->mark_in) &&
 		PICKLE_STRING(&wm->mark_out) &&
-		PICKLE_STRING(&wm->vti_interface) &&
 		PICKLE_STRING(&wm->ipsec_interface) &&
 		PICKLE_STRING(&wm->remote_host) &&
 		PICKLE_STRING(&wm->keyid) &&

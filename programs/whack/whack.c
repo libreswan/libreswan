@@ -2019,7 +2019,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */
-			msg.vti_interface = optarg;
+			msg.wm_vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
 			msg.vti_routing = optarg_yn(logger, YN_YES);

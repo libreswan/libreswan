@@ -302,8 +302,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.mark_in = conn->values[KWS_MARK_IN].string;
 	msg.mark_out = conn->values[KWS_MARK_OUT].string;
 
-	msg.vti_interface = conn->values[KWS_VTI_INTERFACE].string;
-	conn_log_val(logger, conn, "vti-interface", msg.vti_interface);
+	msg.wm_vti_interface = conn->values[KWS_VTI_INTERFACE].string;
+	conn_log_val(logger, conn, "vti-interface", msg.wm_vti_interface);
 	msg.vti_routing = conn->values[KWYN_VTI_ROUTING].option;
 	msg.vti_shared = conn->values[KWYN_VTI_SHARED].option;
 

@@ -478,7 +478,7 @@ struct whack_message {
 	const char *mark_in;
 	const char *mark_out;
 
-	const char *vti_interface;
+#define wm_vti_interface conn[END_ROOF].value[KWS_VTI_INTERFACE]
 	enum yn_options vti_routing;	/* perform routing into vti
 					 * device or not */
 	enum yn_options vti_shared;	/* use remote %any and skip

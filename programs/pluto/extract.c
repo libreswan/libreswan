@@ -2598,7 +2598,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->child.encap_mode = encap_mode;
 
 	if (encap_mode == ENCAP_MODE_TRANSPORT) {
-		if (wm->vti_interface != NULL) {
+		if (wm->wm_vti_interface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
 		}
 	}
@@ -3411,11 +3411,12 @@ diag_t extract_connection(const struct whack_message *wm,
 					/*value_when_unset*/YN_NO, wm, verbose);
 	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing,
 					 /*value_when_unset*/YN_NO, wm, verbose);
-	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
+	if (wm->wm_vti_interface != NULL && strlen(wm->wm_vti_interface) >= IFNAMSIZ) {
 		vwarning("length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
-			 wm->vti_interface, (unsigned) IFNAMSIZ);
+			 wm->wm_vti_interface, (unsigned) IFNAMSIZ);
 	}
-	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
+	config->vti.interface = extract_string("",  "vti-interface",
+					       wm->wm_vti_interface,
 					       wm, verbose);
 
 	if (never_negotiate_sparse_option("", "nic-offload", wm->nic_offload,
