@@ -197,7 +197,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			 * pointers, since this is a temporary copy.
 			 */
 			struct whack_message wam = *wm;
-			wam.connalias = wm->name;
+			wam.wm_connalias = wm->name;
 
 			/*
 			 * Leave .subnets values alone.

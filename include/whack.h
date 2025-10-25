@@ -467,7 +467,7 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for connalias string */
-	const char *connalias;
+#define wm_connalias conn[END_ROOF].value[KWS_CONNALIAS]
 
 	/* for IKEv1 MODECFG and IKEv2 CP */
 #define wm_modecfgdns conn[END_ROOF].value[KWS_MODECFGDNS]

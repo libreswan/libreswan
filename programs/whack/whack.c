@@ -1139,7 +1139,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CONNALIAS:	/* --connalias name */
-			msg.connalias = optarg;
+			msg.wm_connalias = optarg;
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */

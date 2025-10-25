@@ -238,7 +238,7 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
-				  conn->values[KSCF_CONNALIAS].string)) {
+				  conn->values[KWS_CONNALIAS].string)) {
 			add_conn(conn, connname, ctlsocket, exit_status, logger);
 			found = true;
 		}

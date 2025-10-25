@@ -1924,7 +1924,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 			if (child_config->selectors.len > 0) {
 				/* skip aliases; they hide the selectors list */
-				if (wm->connalias != NULL) {
+				if (wm->wm_connalias != NULL) {
 					continue;
 				}
 				bool within = false;
@@ -3023,7 +3023,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
-	config->connalias = clone_str(wm->connalias, "connection alias");
+	config->connalias = clone_str(wm->wm_connalias, "connection alias");
 
 	/*
 	 * narrowing=?
