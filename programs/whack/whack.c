@@ -2009,13 +2009,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CONN_MARK:      /* --conn-mark */
-			msg.mark = optarg;
+			msg.wm_mark = optarg;
 			continue;
 		case CD_CONN_MARK_IN:      /* --conn-mark-in */
-			msg.mark_in = optarg;
+			msg.wm_mark_in = optarg;
 			continue;
 		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
-			msg.mark_out = optarg;
+			msg.wm_mark_out = optarg;
 			continue;
 
 		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */

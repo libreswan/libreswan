@@ -3752,34 +3752,34 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_string("", "mark", wm->mark, wm, verbose)) {
-		d = mark_parse("", "mark", wm->mark, &c->sa_marks.in);
+	if (can_extract_string("", "mark", wm->wm_mark, wm, verbose)) {
+		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.in);
 		if (d != NULL) {
 			return d;
 		}
-		d = mark_parse("", "mark", wm->mark, &c->sa_marks.out);
+		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.out);
 		if (d != NULL) {
 			return d;
 		}
 	}
 
-	if (can_extract_string("", "mark-in", wm->mark_in, wm, verbose)) {
-		if (wm->mark != NULL) {
+	if (can_extract_string("", "mark-in", wm->wm_mark_in, wm, verbose)) {
+		if (wm->wm_mark != NULL) {
 			vwarning("mark-in=%s overrides mark=%s",
-				 wm->mark_in, wm->mark);
+				 wm->wm_mark_in, wm->wm_mark);
 		}
-		d = mark_parse("", "mark-in", wm->mark_in, &c->sa_marks.in);
+		d = mark_parse("", "mark-in", wm->wm_mark_in, &c->sa_marks.in);
 		if (d != NULL) {
 			return d;
 		}
 	}
 
-	if (can_extract_string("", "mark-out", wm->mark_out, wm, verbose)) {
-		if (wm->mark != NULL) {
+	if (can_extract_string("", "mark-out", wm->wm_mark_out, wm, verbose)) {
+		if (wm->wm_mark != NULL) {
 			vwarning("mark-out=%s overrides mark=%s",
-				 wm->mark_out, wm->mark);
+				 wm->wm_mark_out, wm->wm_mark);
 		}
-		d = mark_parse("", "mark-out", wm->mark_out, &c->sa_marks.out);
+		d = mark_parse("", "mark-out", wm->wm_mark_out, &c->sa_marks.out);
 		if (d != NULL) {
 			return d;
 		}

@@ -452,9 +452,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->modecfgdns) &&
 		PICKLE_STRING(&wm->modecfgdomains) &&
 		PICKLE_STRING(&wm->modecfgbanner) &&
-		PICKLE_STRING(&wm->mark) &&
-		PICKLE_STRING(&wm->mark_in) &&
-		PICKLE_STRING(&wm->mark_out) &&
 		PICKLE_STRING(&wm->ipsec_interface) &&
 		PICKLE_STRING(&wm->remote_host) &&
 		PICKLE_STRING(&wm->keyid) &&

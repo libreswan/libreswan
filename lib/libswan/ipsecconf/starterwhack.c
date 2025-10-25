@@ -298,9 +298,9 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.modecfgdomains = conn->values[KWS_MODECFGDOMAINS].string;
 	msg.modecfgbanner = conn->values[KWS_MODECFGBANNER].string;
 
-	msg.mark = conn->values[KWS_MARK].string;
-	msg.mark_in = conn->values[KWS_MARK_IN].string;
-	msg.mark_out = conn->values[KWS_MARK_OUT].string;
+	msg.wm_mark = conn->values[KWS_MARK].string;
+	msg.wm_mark_in = conn->values[KWS_MARK_IN].string;
+	msg.wm_mark_out = conn->values[KWS_MARK_OUT].string;
 
 	msg.wm_vti_interface = conn->values[KWS_VTI_INTERFACE].string;
 	conn_log_val(logger, conn, "vti-interface", msg.wm_vti_interface);

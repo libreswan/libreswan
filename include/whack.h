@@ -474,9 +474,9 @@ struct whack_message {
 	const char *modecfgdomains;
 	const char *modecfgbanner;
 
-	const char *mark;
-	const char *mark_in;
-	const char *mark_out;
+#define wm_mark conn[END_ROOF].value[KWS_MARK]
+#define wm_mark_in conn[END_ROOF].value[KWS_MARK_IN]
+#define wm_mark_out conn[END_ROOF].value[KWS_MARK_OUT]
 
 #define wm_vti_interface conn[END_ROOF].value[KWS_VTI_INTERFACE]
 	enum yn_options vti_routing;	/* perform routing into vti
