@@ -2830,7 +2830,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->child.iptfs.enabled = true;
 		config->child.iptfs.packet_size =
 			extract_scaled_uintmax("", "", "iptfs-packet-size",
-					       wm->iptfs_packet_size,
+					       wm->wm_iptfs_packet_size,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
@@ -2842,7 +2842,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->child.iptfs.max_queue_size =
 			extract_scaled_uintmax("", "", "iptfs-max-queue-size",
-					       wm->iptfs_max_queue_size,
+					       wm->wm_iptfs_max_queue_size,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
@@ -2868,7 +2868,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->child.iptfs.reorder_window =
 			extract_scaled_uintmax("", "", "iptfs-reorder-window",
-					       wm->iptfs_reorder_window,
+					       wm->wm_iptfs_reorder_window,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,

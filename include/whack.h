@@ -422,9 +422,9 @@ struct whack_message {
 
 	enum yn_options iptfs;
 	enum yn_options iptfs_fragmentation;
-	const char *iptfs_packet_size; /* 0 for PMTU */
-	const char *iptfs_max_queue_size;
-	const char *iptfs_reorder_window;
+#define wm_iptfs_packet_size conn[END_ROOF].value[KWS_IPTFS_PACKET_SIZE] /* 0 for PMTU */
+#define wm_iptfs_max_queue_size conn[END_ROOF].value[KWS_IPTFS_MAX_QUEUE_SIZE]
+#define wm_iptfs_reorder_window conn[END_ROOF].value[KWS_IPTFS_REORDER_WINDOW]
 	deltatime_t iptfs_drop_time;
 	deltatime_t iptfs_init_delay;
 

@@ -1602,10 +1602,10 @@ int main(int argc, char **argv)
 			msg.iptfs_fragmentation = optarg_yn(logger, YN_YES);
 			continue;
 		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
-			msg.iptfs_packet_size = optarg;
+			msg.wm_iptfs_packet_size = optarg;
 			continue;
 		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
-			msg.iptfs_max_queue_size = optarg;
+			msg.wm_iptfs_max_queue_size = optarg;
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
 			msg.iptfs_drop_time = optarg_deltatime(logger);
@@ -1614,7 +1614,7 @@ int main(int argc, char **argv)
 			msg.iptfs_init_delay = optarg_deltatime(logger);
 			continue;
 		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
-			msg.iptfs_reorder_window = optarg;
+			msg.wm_iptfs_reorder_window = optarg;
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
