@@ -1769,7 +1769,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			msg.retransmit_interval = optarg;
+			msg.wm_retransmit_interval = optarg;
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
@@ -1793,11 +1793,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REKEYFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.rekeyfuzz = optarg;
+			msg.wm_rekeyfuzz = optarg;
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
-			msg.replay_window = optarg;
+			msg.wm_replay_window = optarg;
 			continue;
 
 		case CD_SENDCA:	/* --sendca */

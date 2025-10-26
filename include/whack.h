@@ -354,12 +354,12 @@ struct whack_message {
 	deltatime_t ipsec_lifetime;
 
 	deltatime_t rekeymargin; /* which SA? */
-	const char *rekeyfuzz;
+#define wm_rekeyfuzz conn[END_ROOF].value[KWS_REKEYFUZZ]
 
-	const char *replay_window;
+#define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
 	deltatime_t retransmit_timeout;
-	const char *retransmit_interval;	/* milliseconds, not
-						 * seconds!*/
+	/* milliseconds, not seconds!*/
+#define wm_retransmit_interval conn[END_ROOF].value[KWS_RETRANSMIT_INTERVAL]
 	enum nic_offload_options nic_offload;
 #define wm_ipsec_interface conn[END_ROOF].value[KWS_IPSEC_INTERFACE]
 

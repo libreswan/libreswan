@@ -3165,7 +3165,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "", "replay-window", wm->replay_window,
+		extract_uintmax("", "", "replay-window",
+				wm->wm_replay_window,
 				(struct range) {
 					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 					.limit.max = kernel_ops->max_replay_window,
@@ -3492,7 +3493,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz", wm->rekeyfuzz,
+	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz",
+						      wm->wm_rekeyfuzz,
 						      SA_REPLACEMENT_FUZZ_DEFAULT,
 						      wm, &d, verbose);
 
@@ -3544,7 +3546,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			 deltatime_from_milliseconds(RETRANSMIT_TIMEOUT_DEFAULT * 1000));
 		config->retransmit_interval =
 			extract_deltatimescale("", "retransmit-interval",
-					       wm->retransmit_interval,
+					       wm->wm_retransmit_interval,
 					       TIMESCALE_MILLISECONDS,
 					       /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
 					       wm, &d, verbose);
