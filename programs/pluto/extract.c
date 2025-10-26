@@ -1924,7 +1924,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 			if (child_config->selectors.len > 0) {
 				/* skip aliases; they hide the selectors list */
-				if (wm->connalias != NULL) {
+				if (wm->wm_connalias != NULL) {
 					continue;
 				}
 				bool within = false;
@@ -2152,9 +2152,9 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright);
 		return CK_GROUP;
 	}
-	if (wm->sec_label != NULL) {
+	if (wm->wm_sec_label != NULL) {
 		vdbg("%s connection is CK_LABELED_TEMPLATE: has security label: %s",
-		     this->leftright, wm->sec_label);
+		     this->leftright, wm->wm_sec_label);
 		return CK_LABELED_TEMPLATE;
 	}
 	if(wm->narrowing == YN_YES) {
@@ -2257,7 +2257,7 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 	diag_t d = NULL;
 
 	enum remote_peer_type remote_peer_type = extract_sparse_name("", "remote-peer-type",
-								     wm->remote_peer_type,
+								     wm->wm_remote_peer_type,
 								     REMOTE_PEER_IETF,
 								     &remote_peer_type_names,
 								     wm, &d, verbose);
@@ -2265,7 +2265,8 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity", wm->cisco_unity,
+	enum yn_options cisco_unity = extract_sparse_name("", "cisco-unity",
+							  wm->wm_cisco_unity,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
 							  wm, &d, verbose);
@@ -2273,7 +2274,8 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options nm_configured = extract_sparse_name("", "nm-configured", wm->nm_configured,
+	enum yn_options nm_configured = extract_sparse_name("", "nm-configured",
+							    wm->wm_nm_configured,
 							    /*value_when_unset*/YN_NO,
 							    &yn_option_names,
 							    wm, &d, verbose);
@@ -2281,7 +2283,8 @@ static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 		return d;
 	}
 
-	enum yn_options cisco_split = extract_sparse_name("", "cisco-split", wm->cisco_split,
+	enum yn_options cisco_split = extract_sparse_name("", "cisco-split",
+							  wm->wm_cisco_split,
 							  /*value_when_unset*/YN_NO,
 							  &yn_option_names,
 							  wm, &d, verbose);
@@ -2306,7 +2309,8 @@ static const struct ike_info *const ike_info[] = {
 static enum ike_version extract_ike_version(const struct whack_message *wm,
 					    diag_t *d, struct verbose verbose)
 {
-	enum ike_version keyexchange = extract_sparse_name("", "keyexchange", wm->keyexchange,
+	enum ike_version keyexchange = extract_sparse_name("", "keyexchange",
+							   wm->wm_keyexchange,
 							   /*value_when_unset*/0,
 							   &keyexchange_option_names,
 							   wm, d, verbose);
@@ -2314,7 +2318,8 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 		return 0;
 	}
 
-	enum yn_options ikev2 = extract_sparse_name("", "ikev2", wm->ikev2,
+	enum yn_options ikev2 = extract_sparse_name("", "ikev2",
+						    wm->wm_ikev2,
 						    /*value_when_unset*/0,
 						    &ikev2_option_names,
 						    wm, d, verbose);
@@ -2351,16 +2356,16 @@ static diag_t extract_encap_alg(const char **encap_alg,
 				const char *name, const char *value,
 				const struct whack_message *wm)
 {
-	if (wm->phase2alg == NULL) {
+	if (wm->wm_phase2alg == NULL) {
 		(*encap_alg) = value; /* could be NULL */
 		return NULL;
 	}
 	if (value == NULL) {
-		(*encap_alg) = wm->phase2alg; /* can't be NULL */
+		(*encap_alg) = wm->wm_phase2alg; /* can't be NULL */
 		return NULL;
 	}
 	return diag("'%s=%s conficts with 'phase2alg=%s'",
-		    name, value, wm->phase2alg);
+		    name, value, wm->wm_phase2alg);
 }
 
 static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **encap_alg,
@@ -2384,32 +2389,32 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 	switch ((*encap_proto)) {
 
 	case ENCAP_PROTO_AH:
-		return extract_encap_alg(encap_alg, "ah", wm->ah, wm);
+		return extract_encap_alg(encap_alg, "ah", wm->wm_ah, wm);
 
 	case ENCAP_PROTO_ESP:
-		return extract_encap_alg(encap_alg, "esp", wm->esp, wm);
+		return extract_encap_alg(encap_alg, "esp", wm->wm_esp, wm);
 
 	case ENCAP_PROTO_UNSET:
-		if (wm->ah == NULL && wm->esp == NULL) {
-			(*encap_alg) = wm->phase2alg;
+		if (wm->wm_ah == NULL && wm->wm_esp == NULL) {
+			(*encap_alg) = wm->wm_phase2alg;
 			(*encap_proto) = ENCAP_PROTO_ESP;
 			break;
 		}
 
-		if (wm->ah != NULL) {
+		if (wm->wm_ah != NULL) {
 			(*encap_proto) = ENCAP_PROTO_AH;
-			(*encap_alg) = wm->ah;
+			(*encap_alg) = wm->wm_ah;
 			break;
 		}
 
-		if (wm->esp != NULL) {
+		if (wm->wm_esp != NULL) {
 			(*encap_proto) = ENCAP_PROTO_ESP;
-			(*encap_alg) = wm->esp;
+			(*encap_alg) = wm->wm_esp;
 			break;
 		}
 
 		return diag("can not distinguish between 'ah=%s' and 'esp=%s' without 'phase2='",
-			    wm->ah, wm->esp);
+			    wm->wm_ah, wm->wm_esp);
 	}
 
 	return NULL;
@@ -2598,7 +2603,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->child.encap_mode = encap_mode;
 
 	if (encap_mode == ENCAP_MODE_TRANSPORT) {
-		if (wm->vti_interface != NULL) {
+		if (wm->wm_vti_interface != NULL) {
 			return diag("VTI requires tunnel mode but connection specifies type=transport");
 		}
 	}
@@ -2728,7 +2733,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (wm->aggressive == YN_YES && ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
 	}
-	if (wm->aggressive == YN_YES && wm->ike == NULL) {
+	if (wm->aggressive == YN_YES && wm->wm_ike == NULL) {
 		return diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
 	config->aggressive = extract_yn("", "aggressive", wm->aggressive,
@@ -2770,7 +2775,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->tfc,
+	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->wm_tfc,
 					(struct range) {
 						.value_when_unset = 0,
 						.limit.max = UINT32_MAX,
@@ -2830,7 +2835,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->child.iptfs.enabled = true;
 		config->child.iptfs.packet_size =
 			extract_scaled_uintmax("", "", "iptfs-packet-size",
-					       wm->iptfs_packet_size,
+					       wm->wm_iptfs_packet_size,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
@@ -2842,7 +2847,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->child.iptfs.max_queue_size =
 			extract_scaled_uintmax("", "", "iptfs-max-queue-size",
-					       wm->iptfs_max_queue_size,
+					       wm->wm_iptfs_max_queue_size,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
@@ -2868,7 +2873,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->child.iptfs.reorder_window =
 			extract_scaled_uintmax("", "", "iptfs-reorder-window",
-					       wm->iptfs_reorder_window,
+					       wm->wm_iptfs_reorder_window,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = 0/*i.e., disable*/,
@@ -2894,8 +2899,9 @@ diag_t extract_connection(const struct whack_message *wm,
 	/*
 	 * RFC 5685 - IKEv2 Redirect mechanism.
 	 */
-	config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
-	config->redirect.accept_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
+	config->redirect.to = clone_str(wm->wm_redirect_to, "connection redirect_to");
+	config->redirect.accept_to = clone_str(wm->wm_accept_redirect_to,
+					       "connection accept_redirect_to");
 	if (ike_version == IKEv1) {
 		if (wm->send_redirect != YNA_UNSET) {
 			vwarning("IKEv1 connection ignores send-redirect=");
@@ -2903,7 +2909,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} else {
 		switch (wm->send_redirect) {
 		case YNA_YES:
-			if (wm->redirect_to == NULL) {
+			if (wm->wm_redirect_to == NULL) {
 				vwarning("send-redirect=yes ignored, redirect-to= was not specified");
 			}
 			/* set it anyway!?!  the code checking it
@@ -2912,7 +2918,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			break;
 
 		case YNA_NO:
-			if (wm->redirect_to != NULL) {
+			if (wm->wm_redirect_to != NULL) {
 				vwarning("send-redirect=no, redirect-to= is ignored");
 			}
 			config->redirect.send_never = true;
@@ -3022,7 +3028,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
-	config->connalias = clone_str(wm->connalias, "connection alias");
+	config->connalias = clone_str(wm->wm_connalias, "connection alias");
 
 	/*
 	 * narrowing=?
@@ -3159,7 +3165,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "", "replay-window", wm->replay_window,
+		extract_uintmax("", "", "replay-window",
+				wm->wm_replay_window,
 				(struct range) {
 					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
 					.limit.max = kernel_ops->max_replay_window,
@@ -3280,7 +3287,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* IKE cipher suites */
 
-	if (never_negotiate_string_option("", "ike", wm->ike, wm, verbose)) {
+	if (never_negotiate_string_option("", "ike", wm->wm_ike, wm, verbose)) {
 		vdbg("never-negotiate ike");
 	} else {
 		const struct proposal_policy proposal_policy = {
@@ -3292,12 +3299,12 @@ diag_t extract_connection(const struct whack_message *wm,
 			.stream = ALL_STREAMS,
 			.logger = verbose.logger, /* on-stack */
 			/* let defaults stumble on regardless */
-			.ignore_transform_lookup_error = (wm->ike == NULL),
+			.ignore_transform_lookup_error = (wm->wm_ike == NULL),
 			.addke = intermediate,
 		};
 
 		struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
-		config->ike_proposals.p = proposals_from_str(parser, wm->ike);
+		config->ike_proposals.p = proposals_from_str(parser, wm->wm_ike);
 
 		if (c->config->ike_proposals.p == NULL) {
 			vexpect(parser->diag != NULL); /* something */
@@ -3410,11 +3417,12 @@ diag_t extract_connection(const struct whack_message *wm,
 					/*value_when_unset*/YN_NO, wm, verbose);
 	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing,
 					 /*value_when_unset*/YN_NO, wm, verbose);
-	if (wm->vti_interface != NULL && strlen(wm->vti_interface) >= IFNAMSIZ) {
+	if (wm->wm_vti_interface != NULL && strlen(wm->wm_vti_interface) >= IFNAMSIZ) {
 		vwarning("length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
-			 wm->vti_interface, (unsigned) IFNAMSIZ);
+			 wm->wm_vti_interface, (unsigned) IFNAMSIZ);
 	}
-	config->vti.interface = extract_string("",  "vti-interface", wm->vti_interface,
+	config->vti.interface = extract_string("",  "vti-interface",
+					       wm->wm_vti_interface,
 					       wm, verbose);
 
 	if (never_negotiate_sparse_option("", "nic-offload", wm->nic_offload,
@@ -3453,8 +3461,8 @@ diag_t extract_connection(const struct whack_message *wm,
 			}
 
 			/* byte/packet counters for packet offload on linux requires >= 6.7 */
-			if (wm->ipsec_max_bytes != NULL ||
-			    wm->ipsec_max_packets != NULL) {
+			if (wm->wm_ipsec_max_bytes != NULL ||
+			    wm->wm_ipsec_max_packets != NULL) {
 				if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
 					return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
 				}
@@ -3485,7 +3493,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz", wm->rekeyfuzz,
+	uintmax_t rekeyfuzz_percent = extract_percent("", "rekeyfuzz",
+						      wm->wm_rekeyfuzz,
 						      SA_REPLACEMENT_FUZZ_DEFAULT,
 						      wm, &d, verbose);
 
@@ -3537,7 +3546,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			 deltatime_from_milliseconds(RETRANSMIT_TIMEOUT_DEFAULT * 1000));
 		config->retransmit_interval =
 			extract_deltatimescale("", "retransmit-interval",
-					       wm->retransmit_interval,
+					       wm->wm_retransmit_interval,
 					       TIMESCALE_MILLISECONDS,
 					       /*value_when_unset*/deltatime_from_milliseconds(RETRANSMIT_INTERVAL_DEFAULT_MS),
 					       wm, &d, verbose);
@@ -3566,7 +3575,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->sa_ipsec_max_bytes =
 			extract_scaled_uintmax("IPsec max bytes",
-					       "", "ipsec-max-bytes", wm->ipsec_max_bytes,
+					       "", "ipsec-max-bytes",
+					       wm->wm_ipsec_max_bytes,
 					       &binary_byte_scales,
 					       (struct range) {
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
@@ -3579,7 +3589,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->sa_ipsec_max_packets =
 			extract_scaled_uintmax("IPsec max packets",
-					       "", "ipsec-max-packets", wm->ipsec_max_packets,
+					       "", "ipsec-max-packets",
+					       wm->wm_ipsec_max_packets,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
@@ -3604,41 +3615,41 @@ diag_t extract_connection(const struct whack_message *wm,
 		switch (ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
-			if (wm->dpddelay != NULL &&
-			    wm->dpdtimeout != NULL) {
+			if (wm->wm_dpddelay != NULL &&
+			    wm->wm_dpdtimeout != NULL) {
 				diag_t d;
-				d = ttodeltatime(shunk1(wm->dpddelay),
+				d = ttodeltatime(shunk1(wm->wm_dpddelay),
 						 &config->dpd.delay);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
-							 wm->dpddelay);
+							 wm->wm_dpddelay);
 				}
-				d = ttodeltatime(shunk1(wm->dpdtimeout),
+				d = ttodeltatime(shunk1(wm->wm_dpdtimeout),
 						 &config->dpd.timeout);
 				if (d != NULL) {
 					return diag_diag(&d, "dpdtimeout=%s invalid, ",
-							 wm->dpdtimeout);
+							 wm->wm_dpdtimeout);
 				}
 				deltatime_buf db, tb;
 				vdbg("IKEv1 dpd.timeout=%s dpd.delay=%s",
 				     str_deltatime(config->dpd.timeout, &db),
 				     str_deltatime(config->dpd.delay, &tb));
-			} else if (wm->dpddelay != NULL  ||
-				   wm->dpdtimeout != NULL) {
+			} else if (wm->wm_dpddelay != NULL  ||
+				   wm->wm_dpdtimeout != NULL) {
 				vwarning("IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
 		case IKEv2:
-			if (wm->dpddelay != NULL) {
+			if (wm->wm_dpddelay != NULL) {
 				diag_t d;
-				d = ttodeltatime(shunk1(wm->dpddelay),
+				d = ttodeltatime(shunk1(wm->wm_dpddelay),
 						 &config->dpd.delay);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
-							 wm->dpddelay);
+							 wm->wm_dpddelay);
 				}
 			}
-			if (wm->dpdtimeout != NULL) {
+			if (wm->wm_dpdtimeout != NULL) {
 				/* actual values don't matter */
 				vwarning("IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
 			}
@@ -3648,12 +3659,13 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->child.metric = wm->metric;
 
 		config->child.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
-							      "", "mtu", wm->mtu,
-							      &binary_byte_scales,
-							      (struct range) {
-								      .value_when_unset = 0,
-							      },
-							      wm, &d, verbose);
+							   "", "mtu",
+							   wm->wm_mtu,
+							   &binary_byte_scales,
+							   (struct range) {
+								   .value_when_unset = 0,
+							   },
+							   wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3676,7 +3688,8 @@ diag_t extract_connection(const struct whack_message *wm,
 						   /*value_when_unset*/YN_NO,
 						   wm, verbose);
 
-		config->send_ca = extract_enum_name("", "sendca", wm->sendca,
+		config->send_ca = extract_enum_name("", "sendca",
+						    wm->wm_sendca,
 						    CA_SEND_ALL,
 						    &send_ca_policy_names,
 						    wm, &d, verbose);
@@ -3691,7 +3704,7 @@ diag_t extract_connection(const struct whack_message *wm,
 						   &xauthfail_names, wm, verbose);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-		config->ppk_ids = clone_str(wm->ppk_ids, "connection ppk_ids");
+		config->ppk_ids = clone_str(wm->wm_ppk_ids, "connection ppk_ids");
 		if (config->ppk_ids != NULL) {
 			config->ppk_ids_shunks = ttoshunks(shunk1(config->ppk_ids),
 							   ", ",
@@ -3707,29 +3720,30 @@ diag_t extract_connection(const struct whack_message *wm,
 					  /*value_when_unset*/YN_NO,
 					  wm, verbose);
 
-	if (can_extract_string("", "modecfgdns", wm->modecfgdns, wm, verbose)) {
-		diag_t d = ttoaddresses_num(shunk1(wm->modecfgdns), ", ",
+	if (can_extract_string("", "modecfgdns", wm->wm_modecfgdns, wm, verbose)) {
+		diag_t d = ttoaddresses_num(shunk1(wm->wm_modecfgdns), ", ",
 					    /* IKEv1 doesn't do IPv6 */
 					    (ike_version == IKEv1 ? &ipv4_info : NULL),
 					    &config->modecfg.dns);
 		if (d != NULL) {
-			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->modecfgdns);
+			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->wm_modecfgdns);
 		}
 	}
 
-	if (can_extract_string("", "modecfgdomains", wm->modecfgdomains, wm, verbose)) {
-		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfgdomains),
+	if (can_extract_string("", "modecfgdomains", wm->wm_modecfgdomains, wm, verbose)) {
+		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->wm_modecfgdomains),
 							     ", ", HERE);
 		if (ike_version == IKEv1 &&
 		    config->modecfg.domains != NULL &&
 		    config->modecfg.domains[1].ptr != NULL) {
 			vlog("IKEv1 only uses the first domain in modecfgdomain=%s",
-			     wm->modecfgdomains);
+			     wm->wm_modecfgdomains);
 			config->modecfg.domains[1] = null_shunk;
 		}
 	}
 
-	config->modecfg.banner = extract_string("", "modecfgbanner", wm->modecfgbanner,
+	config->modecfg.banner = extract_string("", "modecfgbanner",
+						wm->wm_modecfgbanner,
 						wm, verbose);
 
 	/*
@@ -3750,34 +3764,34 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * mark-in= and mark-out= overwrite mark=
 	 */
 
-	if (can_extract_string("", "mark", wm->mark, wm, verbose)) {
-		d = mark_parse("", "mark", wm->mark, &c->sa_marks.in);
+	if (can_extract_string("", "mark", wm->wm_mark, wm, verbose)) {
+		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.in);
 		if (d != NULL) {
 			return d;
 		}
-		d = mark_parse("", "mark", wm->mark, &c->sa_marks.out);
+		d = mark_parse("", "mark", wm->wm_mark, &c->sa_marks.out);
 		if (d != NULL) {
 			return d;
 		}
 	}
 
-	if (can_extract_string("", "mark-in", wm->mark_in, wm, verbose)) {
-		if (wm->mark != NULL) {
+	if (can_extract_string("", "mark-in", wm->wm_mark_in, wm, verbose)) {
+		if (wm->wm_mark != NULL) {
 			vwarning("mark-in=%s overrides mark=%s",
-				 wm->mark_in, wm->mark);
+				 wm->wm_mark_in, wm->wm_mark);
 		}
-		d = mark_parse("", "mark-in", wm->mark_in, &c->sa_marks.in);
+		d = mark_parse("", "mark-in", wm->wm_mark_in, &c->sa_marks.in);
 		if (d != NULL) {
 			return d;
 		}
 	}
 
-	if (can_extract_string("", "mark-out", wm->mark_out, wm, verbose)) {
-		if (wm->mark != NULL) {
+	if (can_extract_string("", "mark-out", wm->wm_mark_out, wm, verbose)) {
+		if (wm->wm_mark != NULL) {
 			vwarning("mark-out=%s overrides mark=%s",
-				 wm->mark_out, wm->mark);
+				 wm->wm_mark_out, wm->wm_mark);
 		}
-		d = mark_parse("", "mark-out", wm->mark_out, &c->sa_marks.out);
+		d = mark_parse("", "mark-out", wm->wm_mark_out, &c->sa_marks.out);
 		if (d != NULL) {
 			return d;
 		}
@@ -3788,9 +3802,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_string("", "ipsec-interface", wm->ipsec_interface, wm, verbose)) {
+	if (can_extract_string("", "ipsec-interface",
+			       wm->wm_ipsec_interface,
+			       wm, verbose)) {
 		diag_t d;
-		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, verbose.logger);
+		d = parse_ipsec_interface(wm->wm_ipsec_interface, &ipsec_interface, verbose.logger);
 		if (d != NULL) {
 			return d;
 		}
@@ -3798,7 +3814,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "", "nflog-group", wm->nflog_group,
+	c->nflog_group = extract_uintmax("", "", "nflog-group",
+					 wm->wm_nflog_group,
 					 (struct range) {
 						 .value_when_unset = 0,
 						 .limit.min = 1,
@@ -3810,7 +3827,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->child.priority = extract_uintmax("", "", "priority", wm->priority,
+	config->child.priority = extract_uintmax("", "", "priority",
+						 wm->wm_priority,
 						 (struct range) {
 							 .value_when_unset = 0,
 							 .limit.max = UINT32_MAX,
@@ -3832,7 +3850,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "", "reqid", wm->reqid,
+	uintmax_t reqid = extract_uintmax("", "", "reqid",
+					  wm->wm_reqid,
 					  (struct range) {
 						  .value_when_unset = 0,
 						  .limit.min = 1,
@@ -3844,29 +3863,29 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->sa_reqid = (reqid != 0 ? reqid :
-			    wm->sec_label != NULL ? gen_reqid() :
-			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, verbose.logger) :
-			    /*generated later*/0);
+			    (wm->wm_sec_label != NULL ? gen_reqid() :
+			     ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, verbose.logger) :
+			     /*generated later*/0));
 
 	vdbg("c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
 	     pri_reqid(config->sa_reqid),
-	     (wm->reqid != NULL ? wm->reqid : "n/a"),
-	     (wm->sec_label != NULL ? wm->sec_label : "n/a"));
+	     (wm->wm_reqid != NULL ? wm->wm_reqid : "n/a"),
+	     (wm->wm_sec_label != NULL ? wm->wm_sec_label : "n/a"));
 
 	/*
 	 * Set both end's sec_label to the same value.
 	 */
 
-	if (wm->sec_label != NULL) {
-		vdbg("received sec_label '%s' from whack", wm->sec_label);
+	if (wm->wm_sec_label != NULL) {
+		vdbg("received sec_label '%s' from whack", wm->wm_sec_label);
 		if (ike_version == IKEv1) {
 			return diag("IKEv1 does not support Labeled IPsec");
 		}
 		/* include NUL! */
-		shunk_t sec_label = shunk2(wm->sec_label, strlen(wm->sec_label)+1);
+		shunk_t sec_label = shunk2(wm->wm_sec_label, strlen(wm->wm_sec_label)+1);
 		err_t ugh = vet_seclabel(sec_label);
 		if (ugh != NULL) {
-			return diag("%s: policy-label=%s", ugh, wm->sec_label);
+			return diag("%s: policy-label=%s", ugh, wm->wm_sec_label);
 		}
 		config->sec_label = clone_hunk_as_chunk(&sec_label, "struct config sec_label");
 	}

@@ -294,8 +294,8 @@ struct whack_message {
 		struct whack_acquire acquire;
 	} whack;
 
-	const char *keyexchange;
-	const char *ikev2;
+#define wm_keyexchange conn[END_ROOF].value[KWS_KEYEXCHANGE]
+#define wm_ikev2 conn[END_ROOF].value[KWS_IKEv2]
 
 	const char *authby;
 	const char *debug;
@@ -347,25 +347,25 @@ struct whack_message {
 						 * IKEv2 Session
 						 * Resumption */
 
-	const char *ipsec_max_bytes;
-	const char *ipsec_max_packets;
+#define wm_ipsec_max_bytes conn[END_ROOF].value[KWS_IPSEC_MAX_BYTES]
+#define wm_ipsec_max_packets conn[END_ROOF].value[KWS_IPSEC_MAX_PACKETS]
 
 	deltatime_t ikelifetime;
 	deltatime_t ipsec_lifetime;
 
 	deltatime_t rekeymargin; /* which SA? */
-	const char *rekeyfuzz;
+#define wm_rekeyfuzz conn[END_ROOF].value[KWS_REKEYFUZZ]
 
-	const char *replay_window;
+#define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
 	deltatime_t retransmit_timeout;
-	const char *retransmit_interval;	/* milliseconds, not
-						 * seconds!*/
+	/* milliseconds, not seconds!*/
+#define wm_retransmit_interval conn[END_ROOF].value[KWS_RETRANSMIT_INTERVAL]
 	enum nic_offload_options nic_offload;
-	const char *ipsec_interface;
+#define wm_ipsec_interface conn[END_ROOF].value[KWS_IPSEC_INTERFACE]
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
-	const char *dpddelay;		/* seconds */
-	const char *dpdtimeout;	/* seconds */
+#define wm_dpddelay conn[END_ROOF].value[KWS_DPDDELAY]		/* seconds */
+#define wm_dpdtimeout conn[END_ROOF].value[KWS_DPDTIMEOUT]	/* seconds */
 
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;
@@ -394,9 +394,9 @@ struct whack_message {
 	 * Option to just send the Cisco VID - the other end will behave
 	 * differently (ModeCFG + RSA?)
 	 */
-	const char *remote_peer_type;
-	const char *cisco_unity;
-	const char *cisco_split;
+#define wm_remote_peer_type conn[END_ROOF].value[KWS_REMOTE_PEER_TYPE]
+#define wm_cisco_unity conn[END_ROOF].value[KWS_CISCO_UNITY]
+#define wm_cisco_split conn[END_ROOF].value[KWS_CISCO_SPLIT]
 
 	/* Option to send strongswan VID to allow better interop */
 	enum yn_options fake_strongswan;
@@ -405,43 +405,53 @@ struct whack_message {
 	enum yn_options send_vendorid;
 
 	/* Checking if this connection is configured by Network Manager */
-	const char *nm_configured;
+#define wm_nm_configured conn[END_ROOF].value[KWS_NM_CONFIGURED]
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum xauthby xauthby;
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum xauthfail xauthfail;
-	const char *sendca;
+#define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
 
 	/* Force the MTU for this connection */
-	const char *mtu;
-	const char *priority;
-	const char *tfc;
+#define wm_mtu  conn[END_ROOF].value[KWS_MTU]
+#define wm_priority conn[END_ROOF].value[KWS_PRIORITY]
+#define wm_tfc conn[END_ROOF].value[KWS_TFC]
 	enum yn_options send_esp_tfc_padding_not_supported;
 
 	enum yn_options iptfs;
 	enum yn_options iptfs_fragmentation;
-	const char *iptfs_packet_size; /* 0 for PMTU */
-	const char *iptfs_max_queue_size;
-	const char *iptfs_reorder_window;
+#define wm_iptfs_packet_size conn[END_ROOF].value[KWS_IPTFS_PACKET_SIZE] /* 0 for PMTU */
+#define wm_iptfs_max_queue_size conn[END_ROOF].value[KWS_IPTFS_MAX_QUEUE_SIZE]
+#define wm_iptfs_reorder_window conn[END_ROOF].value[KWS_IPTFS_REORDER_WINDOW]
 	deltatime_t iptfs_drop_time;
 	deltatime_t iptfs_init_delay;
 
-	const char *reqid;
-	const char *nflog_group;
+#define wm_reqid conn[END_ROOF].value[KWS_REQID]
+#define wm_nflog_group conn[END_ROOF].value[KWS_NFLOG_GROUP]
 
-	const char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
+	/* sec_label string (if any) -- decoded by pluto */
+#define wm_sec_label conn[END_ROOF].value[KWS_SEC_LABEL]
 
 	struct whack_end end[END_ROOF];
 
 #define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
 
-	const char *ike;		/* ike algo string (separated by commas) */
-	enum encap_proto phase2;	/* outer protocol: ESP|AH */
-	const char *phase2alg;		/* outer protocol: ESP|AH */
-	const char *esp;		/* esp algo string (separated by commas) */
-	const char *ah;			/* esp algo string (separated by commas) */
+#define wm_ike conn[END_ROOF].value[KWS_IKE]	/* ike algo string
+						 * (separated by
+						 * commas) */
+	enum encap_proto phase2;		/* outer protocol:
+						 * ESP|AH */
+#define wm_phase2alg conn[END_ROOF].value[KWS_PHASE2ALG]
+						/* outer protocol:
+						 * alg */
+#define wm_esp conn[END_ROOF].value[KWS_ESP]	/* esp algo string
+						 * (separated by
+						 * commas) */
+#define wm_ah conn[END_ROOF].value[KWS_AH]	/* esp algo string
+						 * (separated by
+						 * commas) */
 
 	/* for WHACK_KEY: */
 	bool whack_key;
@@ -467,34 +477,37 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for connalias string */
-	const char *connalias;
+#define wm_connalias conn[END_ROOF].value[KWS_CONNALIAS]
 
 	/* for IKEv1 MODECFG and IKEv2 CP */
-	const char *modecfgdns;
-	const char *modecfgdomains;
-	const char *modecfgbanner;
+#define wm_modecfgdns conn[END_ROOF].value[KWS_MODECFGDNS]
+#define wm_modecfgdomains conn[END_ROOF].value[KWS_MODECFGDOMAINS]
+#define wm_modecfgbanner conn[END_ROOF].value[KWS_MODECFGBANNER]
 
-	const char *mark;
-	const char *mark_in;
-	const char *mark_out;
+#define wm_mark conn[END_ROOF].value[KWS_MARK]
+#define wm_mark_in conn[END_ROOF].value[KWS_MARK_IN]
+#define wm_mark_out conn[END_ROOF].value[KWS_MARK_OUT]
 
-	const char *vti_interface;
+#define wm_vti_interface conn[END_ROOF].value[KWS_VTI_INTERFACE]
 	enum yn_options vti_routing;	/* perform routing into vti
 					 * device or not */
 	enum yn_options vti_shared;	/* use remote %any and skip
 					 * cleanup on down? */
 
 	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-	const char *ppk_ids;
+#define wm_ppk_ids conn[END_ROOF].value[KWS_PPK_IDS]
 
-	/* for RFC 5685 - IKEv2 Redirect mechanism */
+	/*
+	 * For RFC 5685 - IKEv2 Redirect mechanism.
+	 *
+	 * REDIRECT_TO is used by WHACK_ADD, WHACK_ACTIVE_REDIRECT and
+	 * WHACK_GLOBAL_REDIRECT.
+	 */
 	enum global_redirect global_redirect;
-	const char *redirect_to;	/* used by WHACK_ADD,
-				 * WHACK_ACTIVE_REDIRECT and
-				 * WHACK_GLOBAL_REDIRECT */
 	enum yn_options accept_redirect;
-	const char *accept_redirect_to;
 	enum yna_options send_redirect;
+#define wm_redirect_to conn[END_ROOF].value[KWS_REDIRECT_TO]
+#define wm_accept_redirect_to conn[END_ROOF].value[KWS_ACCEPT_REDIRECT_TO]
 
 	/* what metric to put on ipsec routes */
 	int metric;

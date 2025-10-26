@@ -1139,7 +1139,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_CONNALIAS:	/* --connalias name */
-			msg.connalias = optarg;
+			msg.wm_connalias = optarg;
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
@@ -1247,7 +1247,7 @@ int main(int argc, char **argv)
 		case OPT_REDIRECT_TO:	/* --redirect-to */
 			/* either active, or or add */
 			/* .whack_command deciphered below */
-			msg.redirect_to = optarg;
+			msg.wm_redirect_to = optarg;
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
@@ -1257,7 +1257,7 @@ int main(int argc, char **argv)
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.redirect_to = optarg; /* could be empty string */
+			msg.wm_redirect_to = optarg; /* could be empty string */
 			continue;
 
 		case OPT_DDOS_MODE:
@@ -1568,16 +1568,16 @@ int main(int argc, char **argv)
 
 		/* --ikev1 --ikev2 --ikev2-propose */
 		case CD_IKEv1:
-			if (msg.keyexchange != NULL) {
+			if (msg.wm_keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.keyexchange = "IKEv1";
+			msg.wm_keyexchange = "IKEv1";
 			continue;
 		case CD_IKEv2:
-			if (msg.keyexchange != NULL) {
+			if (msg.wm_keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.keyexchange = "IKEv2";
+			msg.wm_keyexchange = "IKEv2";
 			continue;
 
 		/* --allow-narrowing */
@@ -1602,10 +1602,10 @@ int main(int argc, char **argv)
 			msg.iptfs_fragmentation = optarg_yn(logger, YN_YES);
 			continue;
 		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
-			msg.iptfs_packet_size = optarg;
+			msg.wm_iptfs_packet_size = optarg;
 			continue;
 		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
-			msg.iptfs_max_queue_size = optarg;
+			msg.wm_iptfs_max_queue_size = optarg;
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
 			msg.iptfs_drop_time = optarg_deltatime(logger);
@@ -1614,7 +1614,7 @@ int main(int argc, char **argv)
 			msg.iptfs_init_delay = optarg_deltatime(logger);
 			continue;
 		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
-			msg.iptfs_reorder_window = optarg;
+			msg.wm_iptfs_reorder_window = optarg;
 			continue;
 
 		case CD_COMPRESS:	/* --compress */
@@ -1769,7 +1769,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
-			msg.retransmit_interval = optarg;
+			msg.wm_retransmit_interval = optarg;
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
@@ -1781,11 +1781,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
-			msg.ipsec_max_bytes = optarg;
+			msg.wm_ipsec_max_bytes = optarg;
 			continue;
 
 		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
-			msg.ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
+			msg.wm_ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
@@ -1793,15 +1793,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REKEYFUZZ:	/* --rekeyfuzz <percentage> */
-			msg.rekeyfuzz = optarg;
+			msg.wm_rekeyfuzz = optarg;
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */
-			msg.replay_window = optarg;
+			msg.wm_replay_window = optarg;
 			continue;
 
 		case CD_SENDCA:	/* --sendca */
-			msg.sendca = optarg;
+			msg.wm_sendca = optarg;
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */
@@ -1828,7 +1828,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
-			msg.cisco_unity = (optarg == NULL ? "yes" : optarg);
+			msg.wm_cisco_unity = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
@@ -1836,11 +1836,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			msg.dpddelay = optarg;
+			msg.wm_dpddelay = optarg;
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			msg.dpdtimeout = optarg;
+			msg.wm_dpdtimeout = optarg;
 			continue;
 
 		case CD_OBSOLETE:
@@ -1857,23 +1857,23 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
-			msg.accept_redirect_to = optarg;
+			msg.wm_accept_redirect_to = optarg;
 			continue;
 
 		case CD_IKE:	/* --ike <ike_alg1,ike_alg2,...> */
-			msg.ike = optarg;
+			msg.wm_ike = optarg;
 			continue;
 
 		case CD_ESP:	/* --esp <esp_alg1,esp_alg2,...> */
-			msg.esp = optarg;
+			msg.wm_esp = optarg;
 			continue;
 
 		case CD_REMOTE_PEER_TYPE:	/* --remote-peer-type <cisco> */
-			msg.remote_peer_type = optarg;
+			msg.wm_remote_peer_type = optarg;
 			continue;
 
 		case CD_NM_CONFIGURED:		/* --nm-configured[=yes|no] */
-			msg.nm_configured = (optarg == NULL ? "yes" : optarg);
+			msg.wm_nm_configured = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_TCP: /* --tcp */
@@ -1895,8 +1895,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEC_LABEL:	/* --sec-label */
-			/* we only support symmetric labels but put it in struct end */
-			msg.sec_label = optarg;
+			msg.wm_sec_label = optarg;
 			continue;
 
 
@@ -1999,27 +1998,27 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
-			msg.modecfgdns = optarg;
+			msg.wm_modecfgdns = optarg;
 			continue;
 		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
-			msg.modecfgdomains = optarg;
+			msg.wm_modecfgdomains = optarg;
 			continue;
 		case CD_MODECFGBANNER:	/* --modecfgbanner */
-			msg.modecfgbanner = optarg;
+			msg.wm_modecfgbanner = optarg;
 			continue;
 
 		case CD_CONN_MARK:      /* --conn-mark */
-			msg.mark = optarg;
+			msg.wm_mark = optarg;
 			continue;
 		case CD_CONN_MARK_IN:      /* --conn-mark-in */
-			msg.mark_in = optarg;
+			msg.wm_mark_in = optarg;
 			continue;
 		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
-			msg.mark_out = optarg;
+			msg.wm_mark_out = optarg;
 			continue;
 
 		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */
-			msg.vti_interface = optarg;
+			msg.wm_vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
 			msg.vti_routing = optarg_yn(logger, YN_YES);
@@ -2029,7 +2028,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
-			msg.ipsec_interface = optarg;
+			msg.wm_ipsec_interface = optarg;
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
@@ -2045,15 +2044,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_MTU:	/* --mtu */
-			msg.mtu = optarg;
+			msg.wm_mtu = optarg;
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
-			msg.priority = optarg;
+			msg.wm_priority = optarg;
 			continue;
 
 		case CD_TFC:	/* --tfc */
-			msg.tfc = optarg;
+			msg.wm_tfc = optarg;
 			continue;
 
 		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */
@@ -2066,11 +2065,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
-			msg.nflog_group = optarg;
+			msg.wm_nflog_group = optarg;
 			continue;
 
 		case CD_REQID:	/* --reqid */
-			msg.reqid = optarg;
+			msg.wm_reqid = optarg;
 			continue;
 
 		case DBGOPT_NONE:	/* --debug-none (obsolete) */
@@ -2208,7 +2207,7 @@ int main(int argc, char **argv)
 	 * --to sets WHACK_ADD and global-redirect-to sets
 	 * --WHACK_GLOBAL_REDIRECT.
 	 */
-	if (msg.redirect_to != NULL) {
+	if (msg.wm_redirect_to != NULL) {
 		switch (msg.whack_command) {
 		case 0:
 			whack_command(&msg, WHACK_ACTIVE_REDIRECT);

@@ -444,51 +444,12 @@ static bool pickle_whack_message(struct whackpacker *wp,
 	return (PICKLE_STRING(&wm->name) && /* first */
 		pickle_whack_end(wp, "left", &wm->end[LEFT_END], pickle, logger) &&
 		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
-		PICKLE_STRING(&wm->ike) &&
-		PICKLE_STRING(&wm->esp) &&
-		PICKLE_STRING(&wm->ah) &&
-		PICKLE_STRING(&wm->phase2alg) &&
-		PICKLE_STRING(&wm->connalias) &&
-		PICKLE_STRING(&wm->modecfgdns) &&
-		PICKLE_STRING(&wm->modecfgdomains) &&
-		PICKLE_STRING(&wm->modecfgbanner) &&
-		PICKLE_STRING(&wm->mark) &&
-		PICKLE_STRING(&wm->mark_in) &&
-		PICKLE_STRING(&wm->mark_out) &&
-		PICKLE_STRING(&wm->vti_interface) &&
-		PICKLE_STRING(&wm->ipsec_interface) &&
 		PICKLE_STRING(&wm->remote_host) &&
-		PICKLE_STRING(&wm->ppk_ids) &&
-		PICKLE_STRING(&wm->redirect_to) &&
-		PICKLE_STRING(&wm->accept_redirect_to) &&
 		PICKLE_STRING(&wm->keyid) &&
 		PICKLE_STRING(&wm->pubkey) &&
 		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
-		PICKLE_STRING(&wm->sec_label) &&
-		PICKLE_STRING(&wm->dpdtimeout) &&
-		PICKLE_STRING(&wm->dpddelay) &&
-		PICKLE_STRING(&wm->nflog_group) &&
-		PICKLE_STRING(&wm->reqid) &&
-		PICKLE_STRING(&wm->sendca) &&
-		PICKLE_STRING(&wm->remote_peer_type) &&
-		PICKLE_STRING(&wm->ipsec_max_bytes) &&
-		PICKLE_STRING(&wm->ipsec_max_packets) &&
-		PICKLE_STRING(&wm->rekeyfuzz) &&
-		PICKLE_STRING(&wm->replay_window) &&
-		PICKLE_STRING(&wm->keyexchange) &&
-		PICKLE_STRING(&wm->ikev2) &&
-		PICKLE_STRING(&wm->nm_configured) &&
-		PICKLE_STRING(&wm->cisco_unity) &&
-		PICKLE_STRING(&wm->cisco_split) &&
 		PICKLE_STRING(&wm->authby) &&
-		PICKLE_STRING(&wm->iptfs_reorder_window) &&
-		PICKLE_STRING(&wm->iptfs_packet_size) &&
-		PICKLE_STRING(&wm->iptfs_max_queue_size) &&
-		PICKLE_STRING(&wm->retransmit_interval) &&
 		PICKLE_STRING(&wm->debug) &&
-		PICKLE_STRING(&wm->mtu) &&
-		PICKLE_STRING(&wm->priority) &&
-		PICKLE_STRING(&wm->tfc) &&
 		PICKLE_STRING(&wm->whack.acquire.label) &&
 		pickle->conn(wp, logger) &&
 		true);

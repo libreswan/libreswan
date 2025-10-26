@@ -204,7 +204,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("enable-tcp",  LEMPTY, kt_sparse_name, KNCF_ENABLE_TCP, .sparse_names = &tcp_option_names),
   K("tcp-remoteport",  LEMPTY, kt_unsigned, KNCF_TCP_REMOTEPORT),
 
-  K("connalias",  LEMPTY,  kt_appendstring,  KSCF_CONNALIAS),
+  K("connalias",  LEMPTY,  kt_appendstring,  KWS_CONNALIAS),
 
   /* attributes of the phase1 policy */
   K("ike",  LEMPTY,  kt_string,  KWS_IKE),
