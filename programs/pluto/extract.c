@@ -3799,9 +3799,11 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	struct ipsec_interface_config ipsec_interface = {0};
-	if (can_extract_string("", "ipsec-interface", wm->ipsec_interface, wm, verbose)) {
+	if (can_extract_string("", "ipsec-interface",
+			       wm->wm_ipsec_interface,
+			       wm, verbose)) {
 		diag_t d;
-		d = parse_ipsec_interface(wm->ipsec_interface, &ipsec_interface, verbose.logger);
+		d = parse_ipsec_interface(wm->wm_ipsec_interface, &ipsec_interface, verbose.logger);
 		if (d != NULL) {
 			return d;
 		}

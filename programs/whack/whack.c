@@ -2029,7 +2029,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
-			msg.ipsec_interface = optarg;
+			msg.wm_ipsec_interface = optarg;
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */

@@ -361,7 +361,7 @@ struct whack_message {
 	const char *retransmit_interval;	/* milliseconds, not
 						 * seconds!*/
 	enum nic_offload_options nic_offload;
-	const char *ipsec_interface;
+#define wm_ipsec_interface conn[END_ROOF].value[KWS_IPSEC_INTERFACE]
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
 #define wm_dpddelay conn[END_ROOF].value[KWS_DPDDELAY]		/* seconds */

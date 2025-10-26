@@ -444,7 +444,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 	return (PICKLE_STRING(&wm->name) && /* first */
 		pickle_whack_end(wp, "left", &wm->end[LEFT_END], pickle, logger) &&
 		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
-		PICKLE_STRING(&wm->ipsec_interface) &&
 		PICKLE_STRING(&wm->remote_host) &&
 		PICKLE_STRING(&wm->keyid) &&
 		PICKLE_STRING(&wm->pubkey) &&
