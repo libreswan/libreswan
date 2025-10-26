@@ -3611,41 +3611,41 @@ diag_t extract_connection(const struct whack_message *wm,
 		switch (ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
-			if (wm->dpddelay != NULL &&
-			    wm->dpdtimeout != NULL) {
+			if (wm->wm_dpddelay != NULL &&
+			    wm->wm_dpdtimeout != NULL) {
 				diag_t d;
-				d = ttodeltatime(shunk1(wm->dpddelay),
+				d = ttodeltatime(shunk1(wm->wm_dpddelay),
 						 &config->dpd.delay);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
-							 wm->dpddelay);
+							 wm->wm_dpddelay);
 				}
-				d = ttodeltatime(shunk1(wm->dpdtimeout),
+				d = ttodeltatime(shunk1(wm->wm_dpdtimeout),
 						 &config->dpd.timeout);
 				if (d != NULL) {
 					return diag_diag(&d, "dpdtimeout=%s invalid, ",
-							 wm->dpdtimeout);
+							 wm->wm_dpdtimeout);
 				}
 				deltatime_buf db, tb;
 				vdbg("IKEv1 dpd.timeout=%s dpd.delay=%s",
 				     str_deltatime(config->dpd.timeout, &db),
 				     str_deltatime(config->dpd.delay, &tb));
-			} else if (wm->dpddelay != NULL  ||
-				   wm->dpdtimeout != NULL) {
+			} else if (wm->wm_dpddelay != NULL  ||
+				   wm->wm_dpdtimeout != NULL) {
 				vwarning("IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
 		case IKEv2:
-			if (wm->dpddelay != NULL) {
+			if (wm->wm_dpddelay != NULL) {
 				diag_t d;
-				d = ttodeltatime(shunk1(wm->dpddelay),
+				d = ttodeltatime(shunk1(wm->wm_dpddelay),
 						 &config->dpd.delay);
 				if (d != NULL) {
 					return diag_diag(&d, "dpddelay=%s invalid, ",
-							 wm->dpddelay);
+							 wm->wm_dpddelay);
 				}
 			}
-			if (wm->dpdtimeout != NULL) {
+			if (wm->wm_dpdtimeout != NULL) {
 				/* actual values don't matter */
 				vwarning("IKEv2 ignores dpdtimeout==; use dpddelay= and retransmit-timeout=");
 			}

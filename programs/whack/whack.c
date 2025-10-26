@@ -1836,11 +1836,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			msg.dpddelay = optarg;
+			msg.wm_dpddelay = optarg;
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			msg.dpdtimeout = optarg;
+			msg.wm_dpdtimeout = optarg;
 			continue;
 
 		case CD_OBSOLETE:

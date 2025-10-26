@@ -364,8 +364,8 @@ struct whack_message {
 	const char *ipsec_interface;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
-	const char *dpddelay;		/* seconds */
-	const char *dpdtimeout;	/* seconds */
+#define wm_dpddelay conn[END_ROOF].value[KWS_DPDDELAY]		/* seconds */
+#define wm_dpdtimeout conn[END_ROOF].value[KWS_DPDTIMEOUT]	/* seconds */
 
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;

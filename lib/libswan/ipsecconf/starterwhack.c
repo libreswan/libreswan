@@ -263,8 +263,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	/* default to HOLD */
-	msg.dpddelay = conn->values[KWS_DPDDELAY].string;
-	msg.dpdtimeout = conn->values[KWS_DPDTIMEOUT].string;
+	msg.wm_dpddelay = conn->values[KWS_DPDDELAY].string;
+	msg.wm_dpdtimeout = conn->values[KWS_DPDTIMEOUT].string;
 
 	msg.sendca = conn->values[KWS_SENDCA].string;
 
