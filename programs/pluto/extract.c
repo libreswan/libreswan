@@ -2775,7 +2775,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->tfc,
+	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->wm_tfc,
 					(struct range) {
 						.value_when_unset = 0,
 						.limit.max = UINT32_MAX,
@@ -3657,12 +3657,13 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->child.metric = wm->metric;
 
 		config->child.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
-							      "", "mtu", wm->mtu,
-							      &binary_byte_scales,
-							      (struct range) {
-								      .value_when_unset = 0,
-							      },
-							      wm, &d, verbose);
+							   "", "mtu",
+							   wm->wm_mtu,
+							   &binary_byte_scales,
+							   (struct range) {
+								   .value_when_unset = 0,
+							   },
+							   wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -3820,7 +3821,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->child.priority = extract_uintmax("", "", "priority", wm->priority,
+	config->child.priority = extract_uintmax("", "", "priority",
+						 wm->wm_priority,
 						 (struct range) {
 							 .value_when_unset = 0,
 							 .limit.max = UINT32_MAX,

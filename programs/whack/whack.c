@@ -2045,15 +2045,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_MTU:	/* --mtu */
-			msg.mtu = optarg;
+			msg.wm_mtu = optarg;
 			continue;
 
 		case CD_PRIORITY:	/* --priority */
-			msg.priority = optarg;
+			msg.wm_priority = optarg;
 			continue;
 
 		case CD_TFC:	/* --tfc */
-			msg.tfc = optarg;
+			msg.wm_tfc = optarg;
 			continue;
 
 		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */

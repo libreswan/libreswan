@@ -415,9 +415,9 @@ struct whack_message {
 	const char *sendca;
 
 	/* Force the MTU for this connection */
-	const char *mtu;
-	const char *priority;
-	const char *tfc;
+#define wm_mtu  conn[END_ROOF].value[KWS_MTU]
+#define wm_priority conn[END_ROOF].value[KWS_PRIORITY]
+#define wm_tfc conn[END_ROOF].value[KWS_TFC]
 	enum yn_options send_esp_tfc_padding_not_supported;
 
 	enum yn_options iptfs;
