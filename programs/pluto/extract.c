@@ -2309,7 +2309,8 @@ static const struct ike_info *const ike_info[] = {
 static enum ike_version extract_ike_version(const struct whack_message *wm,
 					    diag_t *d, struct verbose verbose)
 {
-	enum ike_version keyexchange = extract_sparse_name("", "keyexchange", wm->keyexchange,
+	enum ike_version keyexchange = extract_sparse_name("", "keyexchange",
+							   wm->wm_keyexchange,
 							   /*value_when_unset*/0,
 							   &keyexchange_option_names,
 							   wm, d, verbose);
@@ -2317,7 +2318,8 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 		return 0;
 	}
 
-	enum yn_options ikev2 = extract_sparse_name("", "ikev2", wm->ikev2,
+	enum yn_options ikev2 = extract_sparse_name("", "ikev2",
+						    wm->wm_ikev2,
 						    /*value_when_unset*/0,
 						    &ikev2_option_names,
 						    wm, d, verbose);

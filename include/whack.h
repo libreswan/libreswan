@@ -294,8 +294,8 @@ struct whack_message {
 		struct whack_acquire acquire;
 	} whack;
 
-	const char *keyexchange;
-	const char *ikev2;
+#define wm_keyexchange conn[END_ROOF].value[KWS_KEYEXCHANGE]
+#define wm_ikev2 conn[END_ROOF].value[KWS_IKEv2]
 
 	const char *authby;
 	const char *debug;

@@ -1568,16 +1568,16 @@ int main(int argc, char **argv)
 
 		/* --ikev1 --ikev2 --ikev2-propose */
 		case CD_IKEv1:
-			if (msg.keyexchange != NULL) {
+			if (msg.wm_keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.keyexchange = "IKEv1";
+			msg.wm_keyexchange = "IKEv1";
 			continue;
 		case CD_IKEv2:
-			if (msg.keyexchange != NULL) {
+			if (msg.wm_keyexchange != NULL) {
 				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
-			msg.keyexchange = "IKEv2";
+			msg.wm_keyexchange = "IKEv2";
 			continue;
 
 		/* --allow-narrowing */
