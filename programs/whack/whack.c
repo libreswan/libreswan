@@ -1801,7 +1801,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SENDCA:	/* --sendca */
-			msg.sendca = optarg;
+			msg.wm_sendca = optarg;
 			continue;
 
 		case CD_ENCAPSULATION:	/* --encapsulation */
@@ -1895,8 +1895,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEC_LABEL:	/* --sec-label */
-			/* we only support symmetric labels but put it in struct end */
-			msg.sec_label = optarg;
+			msg.wm_sec_label = optarg;
 			continue;
 
 

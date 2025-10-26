@@ -412,7 +412,7 @@ struct whack_message {
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum xauthfail xauthfail;
-	const char *sendca;
+#define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
 
 	/* Force the MTU for this connection */
 #define wm_mtu  conn[END_ROOF].value[KWS_MTU]
@@ -431,7 +431,8 @@ struct whack_message {
 #define wm_reqid conn[END_ROOF].value[KWS_REQID]
 #define wm_nflog_group conn[END_ROOF].value[KWS_NFLOG_GROUP]
 
-	const char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
+	/* sec_label string (if any) -- decoded by pluto */
+#define wm_sec_label conn[END_ROOF].value[KWS_SEC_LABEL]
 
 	struct whack_end end[END_ROOF];
 

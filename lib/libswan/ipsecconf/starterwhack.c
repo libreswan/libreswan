@@ -266,7 +266,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.wm_dpddelay = conn->values[KWS_DPDDELAY].string;
 	msg.wm_dpdtimeout = conn->values[KWS_DPDTIMEOUT].string;
 
-	msg.sendca = conn->values[KWS_SENDCA].string;
+	msg.wm_sendca = conn->values[KWS_SENDCA].string;
 
 	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
 
@@ -291,7 +291,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.wm_cisco_split = conn->values[KWS_CISCO_SPLIT].string;
 	msg.wm_nm_configured = conn->values[KWS_NM_CONFIGURED].string;
 
-	msg.sec_label = conn->values[KWS_SEC_LABEL].string;
+	msg.wm_sec_label = conn->values[KWS_SEC_LABEL].string;
 	msg.debug = conn->values[KWS_DEBUG].string;
 
 	msg.wm_modecfgdns = conn->values[KWS_MODECFGDNS].string;

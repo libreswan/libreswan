@@ -2152,9 +2152,9 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright);
 		return CK_GROUP;
 	}
-	if (wm->sec_label != NULL) {
+	if (wm->wm_sec_label != NULL) {
 		vdbg("%s connection is CK_LABELED_TEMPLATE: has security label: %s",
-		     this->leftright, wm->sec_label);
+		     this->leftright, wm->wm_sec_label);
 		return CK_LABELED_TEMPLATE;
 	}
 	if(wm->narrowing == YN_YES) {
@@ -3688,7 +3688,8 @@ diag_t extract_connection(const struct whack_message *wm,
 						   /*value_when_unset*/YN_NO,
 						   wm, verbose);
 
-		config->send_ca = extract_enum_name("", "sendca", wm->sendca,
+		config->send_ca = extract_enum_name("", "sendca",
+						    wm->wm_sendca,
 						    CA_SEND_ALL,
 						    &send_ca_policy_names,
 						    wm, &d, verbose);
@@ -3862,29 +3863,29 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->sa_reqid = (reqid != 0 ? reqid :
-			    wm->sec_label != NULL ? gen_reqid() :
-			    ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, verbose.logger) :
-			    /*generated later*/0);
+			    (wm->wm_sec_label != NULL ? gen_reqid() :
+			     ipsec_interface.enabled ? ipsec_interface_reqid(ipsec_interface.id, verbose.logger) :
+			     /*generated later*/0));
 
 	vdbg("c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
 	     pri_reqid(config->sa_reqid),
 	     (wm->wm_reqid != NULL ? wm->wm_reqid : "n/a"),
-	     (wm->sec_label != NULL ? wm->sec_label : "n/a"));
+	     (wm->wm_sec_label != NULL ? wm->wm_sec_label : "n/a"));
 
 	/*
 	 * Set both end's sec_label to the same value.
 	 */
 
-	if (wm->sec_label != NULL) {
-		vdbg("received sec_label '%s' from whack", wm->sec_label);
+	if (wm->wm_sec_label != NULL) {
+		vdbg("received sec_label '%s' from whack", wm->wm_sec_label);
 		if (ike_version == IKEv1) {
 			return diag("IKEv1 does not support Labeled IPsec");
 		}
 		/* include NUL! */
-		shunk_t sec_label = shunk2(wm->sec_label, strlen(wm->sec_label)+1);
+		shunk_t sec_label = shunk2(wm->wm_sec_label, strlen(wm->wm_sec_label)+1);
 		err_t ugh = vet_seclabel(sec_label);
 		if (ugh != NULL) {
-			return diag("%s: policy-label=%s", ugh, wm->sec_label);
+			return diag("%s: policy-label=%s", ugh, wm->wm_sec_label);
 		}
 		config->sec_label = clone_hunk_as_chunk(&sec_label, "struct config sec_label");
 	}
