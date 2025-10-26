@@ -3813,7 +3813,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "", "nflog-group", wm->nflog_group,
+	c->nflog_group = extract_uintmax("", "", "nflog-group",
+					 wm->wm_nflog_group,
 					 (struct range) {
 						 .value_when_unset = 0,
 						 .limit.min = 1,
@@ -3848,7 +3849,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "", "reqid", wm->reqid,
+	uintmax_t reqid = extract_uintmax("", "", "reqid",
+					  wm->wm_reqid,
 					  (struct range) {
 						  .value_when_unset = 0,
 						  .limit.min = 1,
@@ -3866,7 +3868,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	vdbg("c->sa_reqid="PRI_REQID" because wm->reqid=%s and sec-label=%s",
 	     pri_reqid(config->sa_reqid),
-	     (wm->reqid != NULL ? wm->reqid : "n/a"),
+	     (wm->wm_reqid != NULL ? wm->wm_reqid : "n/a"),
 	     (wm->sec_label != NULL ? wm->sec_label : "n/a"));
 
 	/*

@@ -428,8 +428,8 @@ struct whack_message {
 	deltatime_t iptfs_drop_time;
 	deltatime_t iptfs_init_delay;
 
-	const char *reqid;
-	const char *nflog_group;
+#define wm_reqid conn[END_ROOF].value[KWS_REQID]
+#define wm_nflog_group conn[END_ROOF].value[KWS_NFLOG_GROUP]
 
 	const char *sec_label;	/* sec_label string (if any) -- decoded by pluto */
 

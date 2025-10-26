@@ -2066,11 +2066,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group */
-			msg.nflog_group = optarg;
+			msg.wm_nflog_group = optarg;
 			continue;
 
 		case CD_REQID:	/* --reqid */
-			msg.reqid = optarg;
+			msg.wm_reqid = optarg;
 			continue;
 
 		case DBGOPT_NONE:	/* --debug-none (obsolete) */
