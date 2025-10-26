@@ -3460,8 +3460,8 @@ diag_t extract_connection(const struct whack_message *wm,
 			}
 
 			/* byte/packet counters for packet offload on linux requires >= 6.7 */
-			if (wm->ipsec_max_bytes != NULL ||
-			    wm->ipsec_max_packets != NULL) {
+			if (wm->wm_ipsec_max_bytes != NULL ||
+			    wm->wm_ipsec_max_packets != NULL) {
 				if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
 					return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
 				}
@@ -3573,7 +3573,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->sa_ipsec_max_bytes =
 			extract_scaled_uintmax("IPsec max bytes",
-					       "", "ipsec-max-bytes", wm->ipsec_max_bytes,
+					       "", "ipsec-max-bytes",
+					       wm->wm_ipsec_max_bytes,
 					       &binary_byte_scales,
 					       (struct range) {
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,
@@ -3586,7 +3587,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->sa_ipsec_max_packets =
 			extract_scaled_uintmax("IPsec max packets",
-					       "", "ipsec-max-packets", wm->ipsec_max_packets,
+					       "", "ipsec-max-packets",
+					       wm->wm_ipsec_max_packets,
 					       &binary_scales,
 					       (struct range) {
 						       .value_when_unset = IPSEC_SA_MAX_OPERATIONS,

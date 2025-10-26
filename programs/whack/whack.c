@@ -1781,11 +1781,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
-			msg.ipsec_max_bytes = optarg;
+			msg.wm_ipsec_max_bytes = optarg;
 			continue;
 
 		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
-			msg.ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
+			msg.wm_ipsec_max_packets = optarg; /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */

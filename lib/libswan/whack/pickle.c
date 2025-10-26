@@ -453,8 +453,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->nflog_group) &&
 		PICKLE_STRING(&wm->reqid) &&
 		PICKLE_STRING(&wm->sendca) &&
-		PICKLE_STRING(&wm->ipsec_max_bytes) &&
-		PICKLE_STRING(&wm->ipsec_max_packets) &&
 		PICKLE_STRING(&wm->rekeyfuzz) &&
 		PICKLE_STRING(&wm->replay_window) &&
 		PICKLE_STRING(&wm->authby) &&
