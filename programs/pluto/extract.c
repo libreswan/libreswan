@@ -1737,15 +1737,16 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
 	 */
-	if (never_negotiate_string_option(leftright, "updown", src->updown, wm, verbose)) {
+	if (never_negotiate_string_option(leftright, "updown",
+					  src->we_updown, wm, verbose)) {
 		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
 		child_config->updown =
-			(src->updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
-			 streq(src->updown, UPDOWN_DISABLED) ? NULL :
-			 streq(src->updown, "") ? NULL :
-			 clone_str(src->updown, "child_config.updown"));
+			(src->we_updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
+			 streq(src->we_updown, UPDOWN_DISABLED) ? NULL :
+			 streq(src->we_updown, "") ? NULL :
+			 clone_str(src->we_updown, "child_config.updown"));
 	}
 
 

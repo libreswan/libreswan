@@ -1546,7 +1546,7 @@ int main(int argc, char **argv)
 		}
 
 		case END_UPDOWN:	/* --updown <updown> */
-			end->updown = optarg;
+			end->we_updown = optarg;
 			continue;
 
 		case CD_TO:	/* --to */

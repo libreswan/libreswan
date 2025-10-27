@@ -169,7 +169,7 @@ struct whack_end {
 #define we_subnets conn->value[KWS_SUBNETS]	/* alias subnet expansion */
 #define we_protoport conn->value[KWS_PROTOPORT]
 
-	const char *updown;		/* string */
+#define we_updown conn->value[KWS_UPDOWN]	/* string */
 	const char *virt;
 	const char *addresspool;
 

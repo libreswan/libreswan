@@ -172,7 +172,7 @@ static bool set_whack_end(struct whack_end *w,
 	w->we_auth = l->values[KWS_AUTH].string;
 	w->autheap = l->values[KWS_AUTHEAP].string;
 
-	w->updown = l->values[KWS_UPDOWN].string;
+	w->we_updown = l->values[KWS_UPDOWN].string;
 
 	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
 	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
