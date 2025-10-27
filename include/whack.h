@@ -152,7 +152,7 @@ struct whack_end {
 	 * conflict.
 	 */
 #define we_cert conn->value[KWS_CERT]
-	const char *ckaid;
+#define we_ckaid conn->value[KWS_CKAID]
 	const char *pubkey;
 	enum ipseckey_algorithm_type pubkey_alg;
 

@@ -930,10 +930,10 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 {
 	const char *leftright = src->leftright;
 	ckaid_t ckaid;
-	err_t err = string_to_ckaid(src->ckaid, &ckaid);
+	err_t err = string_to_ckaid(src->we_ckaid, &ckaid);
 	if (err != NULL) {
 		return diag("%s-ckaid='%s' invalid: %s",
-			    leftright, src->ckaid, err);
+			    leftright, src->we_ckaid, err);
 	}
 
 	/*
@@ -960,7 +960,7 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 	}
 
 	vdbg("%s-ckaid=%s did not match a certificate in the NSS database",
-	     leftright, src->ckaid);
+	     leftright, src->we_ckaid);
 
 	/* try to pre-load the private key */
 	bool load_needed;
@@ -1224,7 +1224,7 @@ static diag_t extract_host_end(struct host_end *host,
 	 */
 	if (src->we_cert != NULL) {
 
-		if (src->ckaid != NULL) {
+		if (src->we_ckaid != NULL) {
 			vwarning("ignoring %s ckaid '%s' and using %s certificate '%s'",
 				 leftright, src->we_cert,
 				 leftright, src->we_cert);
@@ -1278,11 +1278,12 @@ static diag_t extract_host_end(struct host_end *host,
 		 * the host key?
 		 */
 
-		if (src->ckaid != NULL) {
+		if (src->we_ckaid != NULL) {
 			name_buf pkb;
 			vwarning("ignoring %sckaid=%s and using %s%s",
-				 leftright, src->ckaid,
-				 leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+				 leftright, src->we_ckaid,
+				 leftright, str_enum_long(&ipseckey_algorithm_config_names,
+							  src->pubkey_alg, &pkb));
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
@@ -1375,7 +1376,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 		free_chunk_content(&keyspace);
 
-	} else if (src->ckaid != NULL) {
+	} else if (src->we_ckaid != NULL) {
 		diag_t d = extract_host_ckaid(host_config, src, same_ca, verbose);
 		if (d != NULL) {
 			return d;

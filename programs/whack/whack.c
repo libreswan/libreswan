@@ -1478,7 +1478,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			end->ckaid = optarg;	/* decoded by Pluto */
+			end->we_ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
