@@ -315,7 +315,8 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 		struct host_addr_config *host = &config->end[lr].host.host;
 		struct host_addr_config *nexthop = &config->end[lr].host.nexthop;
 
-		d = extract_host_addr(&winner, host, leftright, "", we->host, verbose);
+		d = extract_host_addr(&winner, host, leftright, "",
+				      we->we_host, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -4118,7 +4119,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			struct end_family *family = &end_family[end][host_afi->ip.version];
 			family->used = true;
 			family->field = "";
-			family->value = whack_ends[end]->host;
+			family->value = whack_ends[end]->we_host;
 		}
 	}
 

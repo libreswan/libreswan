@@ -83,7 +83,7 @@ static bool set_whack_end(struct whack_end *w,
 		w->id = value;
 	}
 
-	w->host = l->values[KWS_HOST].string;
+	w->we_host = l->values[KWS_HOST].string;
 	w->nexthop = l->values[KWS_NEXTHOP].string;
 	w->sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
 	w->vti = l->values[KWS_VTI].string; /* could be NULL */
