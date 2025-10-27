@@ -171,7 +171,7 @@ struct whack_end {
 
 #define we_updown conn->value[KWS_UPDOWN]	/* string */
 	const char *virt;
-	const char *addresspool;
+#define we_addresspool conn->value[KWS_ADDRESSPOOL]
 
 	enum yn_options xauthserver;	/* for XAUTH */
 	enum yn_options xauthclient;

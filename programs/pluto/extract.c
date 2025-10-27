@@ -1608,7 +1608,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgserver == YN_YES && src->addresspool != NULL) {
+	if (src->modecfgserver == YN_YES && src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
 				leftright, src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1636,7 +1636,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 #endif
 
-	if (src->modecfgclient == YN_YES && other_src->addresspool != NULL) {
+	if (src->modecfgclient == YN_YES && other_src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1646,7 +1646,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->cat == YN_YES && other_src->addresspool != NULL) {
+	if (src->cat == YN_YES && other_src->we_addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1676,7 +1676,7 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->modecfg.server |= (src->modecfgserver == YN_YES);
 	host_config->modecfg.client |= (src->modecfgclient == YN_YES);
 
-	if (src->addresspool != NULL) {
+	if (src->we_addresspool != NULL) {
 		other_host_config->modecfg.server = true;
 		host_config->modecfg.client = true;
 		vdbg("forced %s modecfg client=%s %s modecfg server=%s",
@@ -1755,7 +1755,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	/*
 	 * Figure out the end's child selectors.
 	 */
-	if (src->addresspool != NULL) {
+	if (src->we_addresspool != NULL) {
 
 		/*
 		 * Both ends can't add an address pool (cross
@@ -1777,10 +1777,11 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, leftright);
 		}
 
-		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL,
+		diag_t d = ttoranges_num(shunk1(src->we_addresspool), ", ", NULL,
 					 &child_config->addresspools);
 		if (d != NULL) {
-			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
+			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright,
+					 src->we_addresspool);
 		}
 
 		FOR_EACH_ITEM(range, &child_config->addresspools) {
@@ -1789,13 +1790,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 			if (ike_version == IKEv1 && afi == &ipv6_info) {
 				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
-					    leftright, src->addresspool);
+					    leftright, src->we_addresspool);
 			}
 
 			if (afi == &ipv6_info && !range_is_cidr((*range))) {
 				range_buf rb;
 				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
-					    leftright, src->addresspool,
+					    leftright, src->we_addresspool,
 					    str_range(range, &rb));
 			}
 
@@ -1815,7 +1816,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						       verbose.logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
-						 leftright, src->addresspool);
+						 leftright, src->we_addresspool);
 			}
 
 		}
@@ -2178,7 +2179,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	if (that->addresspool != NULL) {
+	if (that->we_addresspool != NULL) {
 		vdbg("%s connection is CK_TEMPLATE: %s has an address pool",
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
@@ -3051,18 +3052,18 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	if (wm->narrowing == YN_NO) {
 		FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-			if (end->addresspool != NULL) {
+			if (end->we_addresspool != NULL) {
 				return diag("narrowing=no conflicts with %saddresspool=%s",
 					    end->leftright,
-					    end->addresspool);
+					    end->we_addresspool);
 			}
 		}
 	}
 	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
 			   /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
-						wm->end[LEFT_END].addresspool != NULL ? YN_YES :
-						wm->end[RIGHT_END].addresspool != NULL ? YN_YES :
+						wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :
+						wm->end[RIGHT_END].we_addresspool != NULL ? YN_YES :
 						YN_NO),
 			   wm, verbose);
 #if 0
@@ -3901,8 +3902,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * Look for contradictions.
 	 */
 
-	if (wm->end[LEFT_END].addresspool != NULL &&
-	    wm->end[RIGHT_END].addresspool != NULL) {
+	if (wm->end[LEFT_END].we_addresspool != NULL &&
+	    wm->end[RIGHT_END].we_addresspool != NULL) {
 		return diag("both leftaddresspool= and rightaddresspool= defined");
 	}
 
@@ -4116,7 +4117,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				vassert(family->used == false);
 				family->used = true;
 				family->field = "addresspool";
-				family->value = whack_ends[end]->addresspool;
+				family->value = whack_ends[end]->we_addresspool;
 			}
 		} else {
 			struct end_family *family = &end_family[end][host_afi->ip.version];

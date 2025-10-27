@@ -416,7 +416,6 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_STRING(&end->pubkey) &&
 		PICKLE_STRING(&end->groups) &&
 		PICKLE_STRING(&end->virt) &&
-		PICKLE_STRING(&end->addresspool) &&
 		PICKLE_STRING(&end->subnet) &&
 		PICKLE_STRING(&end->sendcert) &&
 		PICKLE_STRING(&end->autheap) &&

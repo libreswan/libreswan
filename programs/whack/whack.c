@@ -1984,7 +1984,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			end->addresspool = optarg;
+			end->we_addresspool = optarg;
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
