@@ -1892,18 +1892,18 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * set to the .host_addr).
 	 */
 
-	if (src->sourceip != NULL) {
+	if (src->we_sourceip != NULL) {
 		if (src->interface_ip != NULL) {
 			return diag("cannot specify %sinterface-ip=%s and %sssourceip=%s",
 				    leftright, src->interface_ip,
-				    leftright, src->sourceip);
+				    leftright, src->we_sourceip);
 		}
 
-		diag_t d = ttoaddresses_num(shunk1(src->sourceip), ", ",
+		diag_t d = ttoaddresses_num(shunk1(src->we_sourceip), ", ",
 					    NULL/*UNSPEC*/, &child_config->sourceip);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssourceip=%s invalid, ",
-					 src->leftright, src->sourceip);
+					 src->leftright, src->we_sourceip);
 		}
 		/* valid? */
 		ip_address seen[IP_VERSION_ROOF] = {0};
@@ -1912,7 +1912,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			/* i.e., not :: and not 0.0.0.0 */
 			if (!address_is_specified(*sourceip)) {
 				return diag("%ssourceip=%s invalid, must be a valid address",
-					    leftright, src->sourceip);
+					    leftright, src->we_sourceip);
 			}
 
 			/* i.e., not 1::1,1::2 */
@@ -1921,7 +1921,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			if (seen[afi->ip.version].ip.is_set) {
 				address_buf sb, ipb;
 				return diag("%ssourceip=%s invalid, multiple %s addresses (%s and %s) specified",
-					    leftright, src->sourceip, afi->ip_name,
+					    leftright, src->we_sourceip, afi->ip_name,
 					    str_address(&seen[afi->ip.version], &sb),
 					    str_address(sourceip, &ipb));
 			}
@@ -1956,7 +1956,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				if (!within) {
 					address_buf sipb;
 					return diag("%ssourceip=%s invalid, address %s is not within %ssubnet=%s",
-						    leftright, src->sourceip,
+						    leftright, src->we_sourceip,
 						    str_address(sourceip, &sipb),
 						    leftright, src->subnet);
 				}
@@ -1965,14 +1965,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					address_buf sipb;
 					address_buf hab;
 					return diag("%ssourceip=%s invalid, address %s does not match %s=%s and %ssubnet= was not specified",
-						    leftright, src->sourceip,
+						    leftright, src->we_sourceip,
 						    str_address(sourceip, &sipb),
 						    leftright, str_address(&host_addr->addr, &hab),
 						    leftright);
 				}
 			} else {
 				return diag("%ssourceip=%s invalid, %ssubnet= unspecified and %s IP address unknown",
-					    leftright, src->sourceip,
+					    leftright, src->we_sourceip,
 					    leftright/*subnet=*/, leftright/*host=*/);
 			}
 		}

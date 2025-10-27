@@ -1498,7 +1498,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */
-			end->sourceip = optarg;
+			end->we_sourceip = optarg;
 			continue;
 
 		case END_INTERFACE_IP:	/* --interface-ip <ip-address/mask> */

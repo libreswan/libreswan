@@ -161,7 +161,7 @@ struct whack_end {
 #define we_ikeport conn->value[KWS_IKEPORT]	/* host */
 #define we_host conn->value[KWS_HOST]
 #define we_nexthop conn->value[KWS_NEXTHOP]
-	const char *sourceip;
+#define we_sourceip conn->value[KWS_SOURCEIP]
 	const char *vti;			/* host */
 	const char *interface_ip;		/* for ipsec-interface */
 
