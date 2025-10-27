@@ -87,7 +87,7 @@ static bool set_whack_end(struct whack_end *w,
 	w->we_nexthop = l->values[KWS_NEXTHOP].string;
 	w->we_sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
 	w->we_vti = l->values[KWS_VTI].string; /* could be NULL */
-	w->interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
+	w->we_interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
 
 	/*
 	 * Deal with legacy subnet=vhost:... and subnet=vnet:....

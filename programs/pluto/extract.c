@@ -1723,7 +1723,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	}
 
 	child_config->ipsec_interface_ip =
-		extract_cidr_num(leftright, "interface-ip", src->interface_ip, wm, &d, verbose);
+		extract_cidr_num(leftright, "interface-ip",
+				 src->we_interface_ip, wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1893,9 +1894,9 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 */
 
 	if (src->we_sourceip != NULL) {
-		if (src->interface_ip != NULL) {
+		if (src->we_interface_ip != NULL) {
 			return diag("cannot specify %sinterface-ip=%s and %sssourceip=%s",
-				    leftright, src->interface_ip,
+				    leftright, src->we_interface_ip,
 				    leftright, src->we_sourceip);
 		}
 

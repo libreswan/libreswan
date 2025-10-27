@@ -1502,7 +1502,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_INTERFACE_IP:	/* --interface-ip <ip-address/mask> */
-			end->interface_ip = optarg;
+			end->we_interface_ip = optarg;
 			continue;
 
 		case END_VTI:	/* --vti <ip-address/mask> */
