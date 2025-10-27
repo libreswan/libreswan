@@ -1547,14 +1547,15 @@ static diag_t extract_host_end(struct host_end *host,
 		return d;
 	}
 
-	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, verbose)) {
-		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
+	if (can_extract_string(leftright, "ikeport", src->we_ikeport, wm, verbose)) {
+		err = ttoport(shunk1(src->we_ikeport), &host_config->ikeport);
 		if (err != NULL) {
-			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
+			return diag("%sikeport=%s invalid, %s", leftright,
+				    src->we_ikeport, err);
 		}
 		if (!port_is_specified(host_config->ikeport)) {
 			return diag("%sikeport=%s invalid, must be in range 1-65535",
-				    leftright, src->ikeport);
+				    leftright, src->we_ikeport);
 		}
 	}
 

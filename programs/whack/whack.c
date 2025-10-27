@@ -1490,7 +1490,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
-			end->ikeport = optarg;
+			end->we_ikeport = optarg;
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */

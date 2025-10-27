@@ -158,7 +158,7 @@ struct whack_end {
 
 #define we_auth conn->value[KWS_AUTH]
 
-	const char *ikeport;			/* host */
+#define we_ikeport conn->value[KWS_IKEPORT]	/* host */
 	const char *host;
 	const char *nexthop;
 	const char *sourceip;
