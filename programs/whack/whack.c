@@ -1470,7 +1470,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SENDCERT:	/* --sendcert */
-			end->sendcert = optarg;
+			end->we_sendcert = optarg;
 			continue;
 
 		case END_CERT:	/* --cert <path> */

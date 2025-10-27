@@ -178,7 +178,7 @@ struct whack_end {
 #define we_xauthusername conn->value[KWS_USERNAME]
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
-	const char *sendcert;
+#define we_sendcert conn->value[KWS_SENDCERT]
 	const char *autheap;
 	enum ike_cert_type certtype;
 

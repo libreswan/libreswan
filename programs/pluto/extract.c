@@ -1542,7 +1542,8 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 	}
 
-	host_config->sendcert = extract_sparse_name(leftright, "sendcert", src->sendcert,
+	host_config->sendcert = extract_sparse_name(leftright, "sendcert",
+						    src->we_sendcert,
 						    cert_defaultcertpolicy, &sendcert_policy_names,
 						    wm, &d, verbose);
 	if (d != NULL) {
