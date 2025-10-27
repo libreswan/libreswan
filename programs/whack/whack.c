@@ -1506,7 +1506,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTI:	/* --vti <ip-address/mask> */
-			end->vti = optarg;
+			end->we_vti = optarg;
 			continue;
 
 		/*

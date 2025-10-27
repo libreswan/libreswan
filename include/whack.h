@@ -162,7 +162,7 @@ struct whack_end {
 #define we_host conn->value[KWS_HOST]
 #define we_nexthop conn->value[KWS_NEXTHOP]
 #define we_sourceip conn->value[KWS_SOURCEIP]
-	const char *vti;			/* host */
+#define we_vti conn->value[KWS_VTI]		/* host */
 	const char *interface_ip;		/* for ipsec-interface */
 
 	const char *subnet; /* child */

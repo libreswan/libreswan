@@ -1716,8 +1716,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(ike_version);
 	}
 
-	child_config->vti_ip =
-		extract_cidr_num(leftright, "vti", src->vti, wm, &d, verbose);
+	child_config->vti_ip = extract_cidr_num(leftright, "vti",
+						src->we_vti, wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
