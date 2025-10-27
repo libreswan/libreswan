@@ -167,7 +167,7 @@ struct whack_end {
 
 	const char *subnet; /* child */
 #define we_subnets conn->value[KWS_SUBNETS]	/* alias subnet expansion */
-	const char *protoport;
+#define we_protoport conn->value[KWS_PROTOPORT]
 
 	const char *updown;		/* string */
 	const char *virt;

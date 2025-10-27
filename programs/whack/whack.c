@@ -1533,7 +1533,7 @@ int main(int argc, char **argv)
 
 		/* --clientprotoport <protocol>/<port> */
 		case END_CLIENTPROTOPORT:
-			end->protoport = optarg;
+			end->we_protoport = optarg;
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */

@@ -2512,7 +2512,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	ip_protoport protoport[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *pp = wm->end[end].protoport;
+		const char *pp = wm->end[end].we_protoport;
 		const char *leftright = wm->end[end].leftright;
 		if (pp != NULL) {
 			err_t ugh = ttoprotoport(shunk1(pp), &protoport[end]);
