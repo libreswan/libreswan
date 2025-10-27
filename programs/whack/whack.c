@@ -1514,7 +1514,7 @@ int main(int argc, char **argv)
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTH:
-			end->auth = optarg;
+			end->we_auth = optarg;
 			continue;
 
 		case END_AUTHEAP:

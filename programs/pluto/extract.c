@@ -1415,10 +1415,11 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->eap = autheap;
 
-	enum auth auth = extract_enum_name(leftright, "auth", src->auth,
-						   /*value_when_unset*/AUTH_UNSET,
-						   &auth_names,
-						   wm, &d, verbose);
+	enum auth auth = extract_enum_name(leftright, "auth",
+					   src->we_auth,
+					   /*value_when_unset*/AUTH_UNSET,
+					   &auth_names,
+					   wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
