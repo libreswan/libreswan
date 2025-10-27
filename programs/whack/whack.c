@@ -1474,7 +1474,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			end->cert = optarg;	/* decoded by Pluto */
+			end->we_cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */

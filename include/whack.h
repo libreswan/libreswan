@@ -151,7 +151,7 @@ struct whack_end {
 	 * Pass everything over and let pluto decide what if anything
 	 * conflict.
 	 */
-	const char *cert;
+#define we_cert conn->value[KWS_CERT]
 	const char *ckaid;
 	const char *pubkey;
 	enum ipseckey_algorithm_type pubkey_alg;

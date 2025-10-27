@@ -1222,12 +1222,12 @@ static diag_t extract_host_end(struct host_end *host,
 	 *
 	 * Should this instead cross check?
 	 */
-	if (src->cert != NULL) {
+	if (src->we_cert != NULL) {
 
 		if (src->ckaid != NULL) {
 			vwarning("ignoring %s ckaid '%s' and using %s certificate '%s'",
-				 leftright, src->cert,
-				 leftright, src->cert);
+				 leftright, src->we_cert,
+				 leftright, src->we_cert);
 		}
 
 		if (pubkey != NULL) {
@@ -1236,14 +1236,14 @@ static diag_t extract_host_end(struct host_end *host,
 				 leftright,
 				 str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 				 pubkey,
-				 leftright, src->cert);
+				 leftright, src->we_cert);
 		}
 
-		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert,
+		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->we_cert,
 								      verbose.logger);
 		if (cert == NULL) {
 			return diag("%s certificate '%s' not found in the NSS database",
-				    leftright, src->cert);
+				    leftright, src->we_cert);
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
 								   *same_ca/*preserve_ca*/,
