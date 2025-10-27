@@ -166,7 +166,7 @@ static bool set_whack_end(struct whack_end *w,
 		break;
 	}
 
-	w->ca = l->values[KWS_CA].string;
+	w->we_ca = l->values[KWS_CA].string;
 	w->sendcert = l->values[KWS_SENDCERT].string;
 
 	w->auth = l->values[KWS_AUTH].string;

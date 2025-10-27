@@ -1482,7 +1482,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
-			end->ca = optarg;	/* decoded by Pluto */
+			end->we_ca = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_GROUPS:	/* --groups <access control groups> */

@@ -140,9 +140,12 @@ struct whack_end {
 	const char *leftright;	/* either "left" or "right" (not shipped) */
 
 	const char *id;		/* id string (if any) -- decoded by pluto */
-	const char *ca;		/* distinguished name string (if any) -- parsed by pluto */
 	const char *groups;		/* access control groups (if any) -- parsed by pluto */
 
+
+#define we_ca conn->value[KWS_CA]	/* distinguished name string
+					 * (if any) -- parsed by
+					 * pluto */
 	/*
 	 * Where, if anywhere, is the public/private key coming from?
 	 * Pass everything over and let pluto decide what if anything

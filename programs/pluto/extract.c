@@ -1175,17 +1175,17 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* decode CA distinguished name, if any */
 	host_config->ca = empty_chunk;
-	if (src->ca != NULL) {
-		if (streq(src->ca, "%same")) {
+	if (src->we_ca != NULL) {
+		if (streq(src->we_ca, "%same")) {
 			*same_ca = true;
-		} else if (!streq(src->ca, "%any")) {
+		} else if (!streq(src->we_ca, "%any")) {
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			ugh = atodn(src->ca, &host_config->ca);
+			ugh = atodn(src->we_ca, &host_config->ca);
 			if (ugh != NULL) {
 				vlog("bad %s CA string '%s': %s (ignored)",
-				     leftright, src->ca, ugh);
+				     leftright, src->we_ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
 				ugh = parse_dn(ASN1(host_config->ca));

@@ -416,7 +416,6 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_STRING(&end->cert) &&
 		PICKLE_STRING(&end->pubkey) &&
 		PICKLE_STRING(&end->ckaid) &&
-		PICKLE_STRING(&end->ca) &&
 		PICKLE_STRING(&end->groups) &&
 		PICKLE_STRING(&end->updown) &&
 		PICKLE_STRING(&end->virt) &&
