@@ -1518,7 +1518,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_AUTHEAP:
-			end->autheap = optarg;
+			end->we_autheap = optarg;
 			continue;
 
 		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */

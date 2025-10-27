@@ -179,7 +179,7 @@ struct whack_end {
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
 #define we_sendcert conn->value[KWS_SENDCERT]
-	const char *autheap;
+#define we_autheap conn->value[KWS_AUTHEAP]
 	enum ike_cert_type certtype;
 
 	enum yn_options modecfgserver;	/* for MODECFG */

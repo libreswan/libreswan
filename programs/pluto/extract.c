@@ -1407,7 +1407,8 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->we_xauthusername,
 						     wm, verbose);
-	enum eap_options autheap = extract_sparse_name(leftright, "autheap", src->autheap,
+	enum eap_options autheap = extract_sparse_name(leftright, "autheap",
+						       src->we_autheap,
 						       /*value_when_unset*/IKE_EAP_NONE,
 						       &eap_option_names,
 						       wm, &d, verbose);
