@@ -1764,7 +1764,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			vassert((*pool) == NULL);
 		}
 
-		if (src->subnets != NULL) {
+		if (src->we_subnets != NULL) {
 			/* XXX: why? */
 			return diag("cannot specify both %saddresspool= and %ssubnets=",
 				    leftright, leftright);

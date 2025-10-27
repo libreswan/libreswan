@@ -166,7 +166,7 @@ struct whack_end {
 #define we_interface_ip conn->value[KWS_INTERFACE_IP]	/* for ipsec-interface */
 
 	const char *subnet; /* child */
-	const char *subnets;	/* alias subnet expansion */
+#define we_subnets conn->value[KWS_SUBNETS]	/* alias subnet expansion */
 	const char *protoport;
 
 	const char *updown;		/* string */

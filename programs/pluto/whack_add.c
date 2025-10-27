@@ -93,12 +93,12 @@ static bool parse_subnets(struct subnets *sn,
 	}
 
 	ip_subnets subnets = {0};
-	if (end->subnets != NULL) {
-		diag_t d = ttosubnets_num(shunk1(end->subnets), /*afi*/NULL, &subnets);
+	if (end->we_subnets != NULL) {
+		diag_t d = ttosubnets_num(shunk1(end->we_subnets), /*afi*/NULL, &subnets);
 		if (d != NULL) {
 			llog_add_connection_failed(wm, logger,
 						   "%ssubnets=%s invalid, %s",
-						   end->leftright, end->subnets,
+						   end->leftright, end->we_subnets,
 						   str_diag(d));
 			pfree_diag(&d);
 			return false;
@@ -280,7 +280,7 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 	 */
 	bool have_subnets = false;
 	FOR_EACH_THING(subnets, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-		if (subnets->subnets == NULL) {
+		if (subnets->we_subnets == NULL) {
 			continue;
 		}
 		have_subnets = true;
@@ -296,7 +296,7 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 			llog_add_connection_failed(wm, logger,
 						   "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\"",
 						   subnet->leftright, subnet->subnet,
-						   subnets->leftright, subnets->subnets);
+						   subnets->leftright, subnets->we_subnets);
 			return;
 		}
 	}

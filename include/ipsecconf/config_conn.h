@@ -90,7 +90,7 @@ enum config_conn_keyword {
 	KWS_USERNAME,	/* left/right */
 	KWS_ADDRESSPOOL,	/* left/right */
 	KWS_SUBNET,	/* left/right */
-	KSCF_SUBNETS,	/* left/right */
+	KWS_SUBNETS,	/* left/right */
 
 	KWS_AUTHBY,
 

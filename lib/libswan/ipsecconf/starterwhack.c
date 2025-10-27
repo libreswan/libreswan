@@ -108,7 +108,7 @@ static bool set_whack_end(struct whack_end *w,
 		}
 	}
 
-	w->subnets = l->values[KSCF_SUBNETS].string;
+	w->we_subnets = l->values[KWS_SUBNETS].string;
 	w->we_ikeport = l->values[KWS_IKEPORT].string;
 	w->protoport = l->values[KWS_PROTOPORT].string;
 	w->we_cert = l->values[KWS_CERT].string;
