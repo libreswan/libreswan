@@ -1494,7 +1494,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
-			end->nexthop = optarg;
+			end->we_nexthop = optarg;
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */

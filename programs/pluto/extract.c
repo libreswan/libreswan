@@ -321,7 +321,8 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 			return d;
 		}
 
-		d = extract_host_addr(&winner, nexthop, leftright, "nexthop", we->nexthop, verbose);
+		d = extract_host_addr(&winner, nexthop, leftright, "nexthop",
+				      we->we_nexthop, verbose);
 		if (d != NULL) {
 			return d;
 		}
