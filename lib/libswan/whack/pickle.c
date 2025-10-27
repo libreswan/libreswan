@@ -413,26 +413,10 @@ static bool pickle_whack_end(struct whackpacker *wp,
 {
 	return (PICKLE_CONSTANT_STRING(&end->leftright, leftright),
 		PICKLE_STRING(&end->id) &&
-		PICKLE_STRING(&end->cert) &&
 		PICKLE_STRING(&end->pubkey) &&
-		PICKLE_STRING(&end->ckaid) &&
-		PICKLE_STRING(&end->ca) &&
 		PICKLE_STRING(&end->groups) &&
-		PICKLE_STRING(&end->updown) &&
 		PICKLE_STRING(&end->virt) &&
-		PICKLE_STRING(&end->host) &&
-		PICKLE_STRING(&end->nexthop) &&
-		PICKLE_STRING(&end->interface_ip) &&
-		PICKLE_STRING(&end->vti) &&
-		PICKLE_STRING(&end->addresspool) &&
-		PICKLE_STRING(&end->ikeport) &&
 		PICKLE_STRING(&end->subnet) &&
-		PICKLE_STRING(&end->subnets) &&
-		PICKLE_STRING(&end->sourceip) &&
-		PICKLE_STRING(&end->sendcert) &&
-		PICKLE_STRING(&end->protoport) &&
-		PICKLE_STRING(&end->autheap) &&
-		PICKLE_STRING(&end->auth) &&
 		true);
 }
 

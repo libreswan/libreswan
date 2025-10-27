@@ -61,7 +61,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("debug",  LEMPTY, kt_string, KWS_DEBUG),
 
   K("subnet",  kv_leftright,  kt_string,  KWS_SUBNET),
-  K("subnets",  kv_leftright,  kt_appendlist,  KSCF_SUBNETS),
+  K("subnets",  kv_leftright,  kt_appendlist,  KWS_SUBNETS),
   K("sourceip",  kv_leftright,  kt_string,  KWS_SOURCEIP),
   K("ikeport",  kv_leftright,  kt_string,  KWS_IKEPORT),
   K("interface-ip", kv_leftright,  kt_string, KWS_INTERFACE_IP),

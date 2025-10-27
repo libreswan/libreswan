@@ -1462,7 +1462,7 @@ int main(int argc, char **argv)
 		/* Connection Description options */
 
 		case END_HOST:	/* --host <ip-address> */
-			end->host = optarg;
+			end->we_host = optarg;
 			continue;
 
 		case END_ID:	/* --id <identity> */
@@ -1470,19 +1470,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SENDCERT:	/* --sendcert */
-			end->sendcert = optarg;
+			end->we_sendcert = optarg;
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			end->cert = optarg;	/* decoded by Pluto */
+			end->we_cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			end->ckaid = optarg;	/* decoded by Pluto */
+			end->we_ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
-			end->ca = optarg;	/* decoded by Pluto */
+			end->we_ca = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_GROUPS:	/* --groups <access control groups> */
@@ -1490,23 +1490,23 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
-			end->ikeport = optarg;
+			end->we_ikeport = optarg;
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
-			end->nexthop = optarg;
+			end->we_nexthop = optarg;
 			continue;
 
 		case END_SOURCEIP:	/* --sourceip <ip-address> */
-			end->sourceip = optarg;
+			end->we_sourceip = optarg;
 			continue;
 
 		case END_INTERFACE_IP:	/* --interface-ip <ip-address/mask> */
-			end->interface_ip = optarg;
+			end->we_interface_ip = optarg;
 			continue;
 
 		case END_VTI:	/* --vti <ip-address/mask> */
-			end->vti = optarg;
+			end->we_vti = optarg;
 			continue;
 
 		/*
@@ -1514,11 +1514,11 @@ int main(int argc, char **argv)
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTH:
-			end->auth = optarg;
+			end->we_auth = optarg;
 			continue;
 
 		case END_AUTHEAP:
-			end->autheap = optarg;
+			end->we_autheap = optarg;
 			continue;
 
 		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */
@@ -1533,7 +1533,7 @@ int main(int argc, char **argv)
 
 		/* --clientprotoport <protocol>/<port> */
 		case END_CLIENTPROTOPORT:
-			end->protoport = optarg;
+			end->we_protoport = optarg;
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
@@ -1546,7 +1546,7 @@ int main(int argc, char **argv)
 		}
 
 		case END_UPDOWN:	/* --updown <updown> */
-			end->updown = optarg;
+			end->we_updown = optarg;
 			continue;
 
 		case CD_TO:	/* --to */
@@ -1984,7 +1984,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			end->addresspool = optarg;
+			end->we_addresspool = optarg;
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */

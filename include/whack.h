@@ -140,43 +140,46 @@ struct whack_end {
 	const char *leftright;	/* either "left" or "right" (not shipped) */
 
 	const char *id;		/* id string (if any) -- decoded by pluto */
-	const char *ca;		/* distinguished name string (if any) -- parsed by pluto */
 	const char *groups;		/* access control groups (if any) -- parsed by pluto */
 
+
+#define we_ca conn->value[KWS_CA]	/* distinguished name string
+					 * (if any) -- parsed by
+					 * pluto */
 	/*
 	 * Where, if anywhere, is the public/private key coming from?
 	 * Pass everything over and let pluto decide what if anything
 	 * conflict.
 	 */
-	const char *cert;
-	const char *ckaid;
+#define we_cert conn->value[KWS_CERT]
+#define we_ckaid conn->value[KWS_CKAID]
 	const char *pubkey;
 	enum ipseckey_algorithm_type pubkey_alg;
 
-	const char *auth;
+#define we_auth conn->value[KWS_AUTH]
 
-	const char *ikeport;			/* host */
-	const char *host;
-	const char *nexthop;
-	const char *sourceip;
-	const char *vti;			/* host */
-	const char *interface_ip;		/* for ipsec-interface */
+#define we_ikeport conn->value[KWS_IKEPORT]	/* host */
+#define we_host conn->value[KWS_HOST]
+#define we_nexthop conn->value[KWS_NEXTHOP]
+#define we_sourceip conn->value[KWS_SOURCEIP]
+#define we_vti conn->value[KWS_VTI]		/* host */
+#define we_interface_ip conn->value[KWS_INTERFACE_IP]	/* for ipsec-interface */
 
 	const char *subnet; /* child */
-	const char *subnets;	/* alias subnet expansion */
-	const char *protoport;
+#define we_subnets conn->value[KWS_SUBNETS]	/* alias subnet expansion */
+#define we_protoport conn->value[KWS_PROTOPORT]
 
-	const char *updown;		/* string */
+#define we_updown conn->value[KWS_UPDOWN]	/* string */
 	const char *virt;
-	const char *addresspool;
+#define we_addresspool conn->value[KWS_ADDRESSPOOL]
 
 	enum yn_options xauthserver;	/* for XAUTH */
 	enum yn_options xauthclient;
 #define we_xauthusername conn->value[KWS_USERNAME]
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
-	const char *sendcert;
-	const char *autheap;
+#define we_sendcert conn->value[KWS_SENDCERT]
+#define we_autheap conn->value[KWS_AUTHEAP]
 	enum ike_cert_type certtype;
 
 	enum yn_options modecfgserver;	/* for MODECFG */

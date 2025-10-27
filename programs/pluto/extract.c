@@ -315,12 +315,14 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 		struct host_addr_config *host = &config->end[lr].host.host;
 		struct host_addr_config *nexthop = &config->end[lr].host.nexthop;
 
-		d = extract_host_addr(&winner, host, leftright, "", we->host, verbose);
+		d = extract_host_addr(&winner, host, leftright, "",
+				      we->we_host, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
-		d = extract_host_addr(&winner, nexthop, leftright, "nexthop", we->nexthop, verbose);
+		d = extract_host_addr(&winner, nexthop, leftright, "nexthop",
+				      we->we_nexthop, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -930,10 +932,10 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 {
 	const char *leftright = src->leftright;
 	ckaid_t ckaid;
-	err_t err = string_to_ckaid(src->ckaid, &ckaid);
+	err_t err = string_to_ckaid(src->we_ckaid, &ckaid);
 	if (err != NULL) {
 		return diag("%s-ckaid='%s' invalid: %s",
-			    leftright, src->ckaid, err);
+			    leftright, src->we_ckaid, err);
 	}
 
 	/*
@@ -960,7 +962,7 @@ static diag_t extract_host_ckaid(struct host_end_config *host_config,
 	}
 
 	vdbg("%s-ckaid=%s did not match a certificate in the NSS database",
-	     leftright, src->ckaid);
+	     leftright, src->we_ckaid);
 
 	/* try to pre-load the private key */
 	bool load_needed;
@@ -1175,17 +1177,17 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* decode CA distinguished name, if any */
 	host_config->ca = empty_chunk;
-	if (src->ca != NULL) {
-		if (streq(src->ca, "%same")) {
+	if (src->we_ca != NULL) {
+		if (streq(src->we_ca, "%same")) {
 			*same_ca = true;
-		} else if (!streq(src->ca, "%any")) {
+		} else if (!streq(src->we_ca, "%any")) {
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			ugh = atodn(src->ca, &host_config->ca);
+			ugh = atodn(src->we_ca, &host_config->ca);
 			if (ugh != NULL) {
 				vlog("bad %s CA string '%s': %s (ignored)",
-				     leftright, src->ca, ugh);
+				     leftright, src->we_ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
 				ugh = parse_dn(ASN1(host_config->ca));
@@ -1222,12 +1224,12 @@ static diag_t extract_host_end(struct host_end *host,
 	 *
 	 * Should this instead cross check?
 	 */
-	if (src->cert != NULL) {
+	if (src->we_cert != NULL) {
 
-		if (src->ckaid != NULL) {
+		if (src->we_ckaid != NULL) {
 			vwarning("ignoring %s ckaid '%s' and using %s certificate '%s'",
-				 leftright, src->cert,
-				 leftright, src->cert);
+				 leftright, src->we_cert,
+				 leftright, src->we_cert);
 		}
 
 		if (pubkey != NULL) {
@@ -1236,14 +1238,14 @@ static diag_t extract_host_end(struct host_end *host,
 				 leftright,
 				 str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
 				 pubkey,
-				 leftright, src->cert);
+				 leftright, src->we_cert);
 		}
 
-		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->cert,
+		CERTCertificate *cert = get_cert_by_nickname_from_nss(src->we_cert,
 								      verbose.logger);
 		if (cert == NULL) {
 			return diag("%s certificate '%s' not found in the NSS database",
-				    leftright, src->cert);
+				    leftright, src->we_cert);
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert, host_config,
 								   *same_ca/*preserve_ca*/,
@@ -1278,11 +1280,12 @@ static diag_t extract_host_end(struct host_end *host,
 		 * the host key?
 		 */
 
-		if (src->ckaid != NULL) {
+		if (src->we_ckaid != NULL) {
 			name_buf pkb;
 			vwarning("ignoring %sckaid=%s and using %s%s",
-				 leftright, src->ckaid,
-				 leftright, str_enum_long(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
+				 leftright, src->we_ckaid,
+				 leftright, str_enum_long(&ipseckey_algorithm_config_names,
+							  src->pubkey_alg, &pkb));
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
@@ -1375,7 +1378,7 @@ static diag_t extract_host_end(struct host_end *host,
 
 		free_chunk_content(&keyspace);
 
-	} else if (src->ckaid != NULL) {
+	} else if (src->we_ckaid != NULL) {
 		diag_t d = extract_host_ckaid(host_config, src, same_ca, verbose);
 		if (d != NULL) {
 			return d;
@@ -1404,7 +1407,8 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->we_xauthusername,
 						     wm, verbose);
-	enum eap_options autheap = extract_sparse_name(leftright, "autheap", src->autheap,
+	enum eap_options autheap = extract_sparse_name(leftright, "autheap",
+						       src->we_autheap,
 						       /*value_when_unset*/IKE_EAP_NONE,
 						       &eap_option_names,
 						       wm, &d, verbose);
@@ -1414,10 +1418,11 @@ static diag_t extract_host_end(struct host_end *host,
 
 	host_config->eap = autheap;
 
-	enum auth auth = extract_enum_name(leftright, "auth", src->auth,
-						   /*value_when_unset*/AUTH_UNSET,
-						   &auth_names,
-						   wm, &d, verbose);
+	enum auth auth = extract_enum_name(leftright, "auth",
+					   src->we_auth,
+					   /*value_when_unset*/AUTH_UNSET,
+					   &auth_names,
+					   wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1538,21 +1543,23 @@ static diag_t extract_host_end(struct host_end *host,
 		}
 	}
 
-	host_config->sendcert = extract_sparse_name(leftright, "sendcert", src->sendcert,
+	host_config->sendcert = extract_sparse_name(leftright, "sendcert",
+						    src->we_sendcert,
 						    cert_defaultcertpolicy, &sendcert_policy_names,
 						    wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	if (can_extract_string(leftright, "ikeport", src->ikeport, wm, verbose)) {
-		err = ttoport(shunk1(src->ikeport), &host_config->ikeport);
+	if (can_extract_string(leftright, "ikeport", src->we_ikeport, wm, verbose)) {
+		err = ttoport(shunk1(src->we_ikeport), &host_config->ikeport);
 		if (err != NULL) {
-			return diag("%sikeport=%s invalid, %s", leftright, src->ikeport, err);
+			return diag("%sikeport=%s invalid, %s", leftright,
+				    src->we_ikeport, err);
 		}
 		if (!port_is_specified(host_config->ikeport)) {
 			return diag("%sikeport=%s invalid, must be in range 1-65535",
-				    leftright, src->ikeport);
+				    leftright, src->we_ikeport);
 		}
 	}
 
@@ -1603,7 +1610,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgserver == YN_YES && src->addresspool != NULL) {
+	if (src->modecfgserver == YN_YES && src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
 				leftright, src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1631,7 +1638,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 #endif
 
-	if (src->modecfgclient == YN_YES && other_src->addresspool != NULL) {
+	if (src->modecfgclient == YN_YES && other_src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1641,7 +1648,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->cat == YN_YES && other_src->addresspool != NULL) {
+	if (src->cat == YN_YES && other_src->we_addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1671,7 +1678,7 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->modecfg.server |= (src->modecfgserver == YN_YES);
 	host_config->modecfg.client |= (src->modecfgclient == YN_YES);
 
-	if (src->addresspool != NULL) {
+	if (src->we_addresspool != NULL) {
 		other_host_config->modecfg.server = true;
 		host_config->modecfg.client = true;
 		vdbg("forced %s modecfg client=%s %s modecfg server=%s",
@@ -1711,14 +1718,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		bad_case(ike_version);
 	}
 
-	child_config->vti_ip =
-		extract_cidr_num(leftright, "vti", src->vti, wm, &d, verbose);
+	child_config->vti_ip = extract_cidr_num(leftright, "vti",
+						src->we_vti, wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
 
 	child_config->ipsec_interface_ip =
-		extract_cidr_num(leftright, "interface-ip", src->interface_ip, wm, &d, verbose);
+		extract_cidr_num(leftright, "interface-ip",
+				 src->we_interface_ip, wm, &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -1731,15 +1739,16 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * Useful on busy servers that do not need to use updown for
 	 * anything.
 	 */
-	if (never_negotiate_string_option(leftright, "updown", src->updown, wm, verbose)) {
+	if (never_negotiate_string_option(leftright, "updown",
+					  src->we_updown, wm, verbose)) {
 		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
 		child_config->updown =
-			(src->updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
-			 streq(src->updown, UPDOWN_DISABLED) ? NULL :
-			 streq(src->updown, "") ? NULL :
-			 clone_str(src->updown, "child_config.updown"));
+			(src->we_updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
+			 streq(src->we_updown, UPDOWN_DISABLED) ? NULL :
+			 streq(src->we_updown, "") ? NULL :
+			 clone_str(src->we_updown, "child_config.updown"));
 	}
 
 
@@ -1748,7 +1757,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	/*
 	 * Figure out the end's child selectors.
 	 */
-	if (src->addresspool != NULL) {
+	if (src->we_addresspool != NULL) {
 
 		/*
 		 * Both ends can't add an address pool (cross
@@ -1758,7 +1767,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			vassert((*pool) == NULL);
 		}
 
-		if (src->subnets != NULL) {
+		if (src->we_subnets != NULL) {
 			/* XXX: why? */
 			return diag("cannot specify both %saddresspool= and %ssubnets=",
 				    leftright, leftright);
@@ -1770,10 +1779,11 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, leftright);
 		}
 
-		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL,
+		diag_t d = ttoranges_num(shunk1(src->we_addresspool), ", ", NULL,
 					 &child_config->addresspools);
 		if (d != NULL) {
-			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
+			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright,
+					 src->we_addresspool);
 		}
 
 		FOR_EACH_ITEM(range, &child_config->addresspools) {
@@ -1782,13 +1792,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 			if (ike_version == IKEv1 && afi == &ipv6_info) {
 				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
-					    leftright, src->addresspool);
+					    leftright, src->we_addresspool);
 			}
 
 			if (afi == &ipv6_info && !range_is_cidr((*range))) {
 				range_buf rb;
 				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
-					    leftright, src->addresspool,
+					    leftright, src->we_addresspool,
 					    str_range(range, &rb));
 			}
 
@@ -1808,7 +1818,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 						       verbose.logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
-						 leftright, src->addresspool);
+						 leftright, src->we_addresspool);
 			}
 
 		}
@@ -1887,18 +1897,18 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * set to the .host_addr).
 	 */
 
-	if (src->sourceip != NULL) {
-		if (src->interface_ip != NULL) {
+	if (src->we_sourceip != NULL) {
+		if (src->we_interface_ip != NULL) {
 			return diag("cannot specify %sinterface-ip=%s and %sssourceip=%s",
-				    leftright, src->interface_ip,
-				    leftright, src->sourceip);
+				    leftright, src->we_interface_ip,
+				    leftright, src->we_sourceip);
 		}
 
-		diag_t d = ttoaddresses_num(shunk1(src->sourceip), ", ",
+		diag_t d = ttoaddresses_num(shunk1(src->we_sourceip), ", ",
 					    NULL/*UNSPEC*/, &child_config->sourceip);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssourceip=%s invalid, ",
-					 src->leftright, src->sourceip);
+					 src->leftright, src->we_sourceip);
 		}
 		/* valid? */
 		ip_address seen[IP_VERSION_ROOF] = {0};
@@ -1907,7 +1917,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			/* i.e., not :: and not 0.0.0.0 */
 			if (!address_is_specified(*sourceip)) {
 				return diag("%ssourceip=%s invalid, must be a valid address",
-					    leftright, src->sourceip);
+					    leftright, src->we_sourceip);
 			}
 
 			/* i.e., not 1::1,1::2 */
@@ -1916,7 +1926,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			if (seen[afi->ip.version].ip.is_set) {
 				address_buf sb, ipb;
 				return diag("%ssourceip=%s invalid, multiple %s addresses (%s and %s) specified",
-					    leftright, src->sourceip, afi->ip_name,
+					    leftright, src->we_sourceip, afi->ip_name,
 					    str_address(&seen[afi->ip.version], &sb),
 					    str_address(sourceip, &ipb));
 			}
@@ -1951,7 +1961,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				if (!within) {
 					address_buf sipb;
 					return diag("%ssourceip=%s invalid, address %s is not within %ssubnet=%s",
-						    leftright, src->sourceip,
+						    leftright, src->we_sourceip,
 						    str_address(sourceip, &sipb),
 						    leftright, src->subnet);
 				}
@@ -1960,14 +1970,14 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					address_buf sipb;
 					address_buf hab;
 					return diag("%ssourceip=%s invalid, address %s does not match %s=%s and %ssubnet= was not specified",
-						    leftright, src->sourceip,
+						    leftright, src->we_sourceip,
 						    str_address(sourceip, &sipb),
 						    leftright, str_address(&host_addr->addr, &hab),
 						    leftright);
 				}
 			} else {
 				return diag("%ssourceip=%s invalid, %ssubnet= unspecified and %s IP address unknown",
-					    leftright, src->sourceip,
+					    leftright, src->we_sourceip,
 					    leftright/*subnet=*/, leftright/*host=*/);
 			}
 		}
@@ -2171,7 +2181,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
 	}
-	if (that->addresspool != NULL) {
+	if (that->we_addresspool != NULL) {
 		vdbg("%s connection is CK_TEMPLATE: %s has an address pool",
 		     this->leftright, that->leftright);
 		return CK_TEMPLATE;
@@ -2506,7 +2516,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	ip_protoport protoport[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *pp = wm->end[end].protoport;
+		const char *pp = wm->end[end].we_protoport;
 		const char *leftright = wm->end[end].leftright;
 		if (pp != NULL) {
 			err_t ugh = ttoprotoport(shunk1(pp), &protoport[end]);
@@ -3044,18 +3054,18 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	if (wm->narrowing == YN_NO) {
 		FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-			if (end->addresspool != NULL) {
+			if (end->we_addresspool != NULL) {
 				return diag("narrowing=no conflicts with %saddresspool=%s",
 					    end->leftright,
-					    end->addresspool);
+					    end->we_addresspool);
 			}
 		}
 	}
 	bool narrowing =
 		extract_yn("", "narrowing", wm->narrowing,
 			   /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
-						wm->end[LEFT_END].addresspool != NULL ? YN_YES :
-						wm->end[RIGHT_END].addresspool != NULL ? YN_YES :
+						wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :
+						wm->end[RIGHT_END].we_addresspool != NULL ? YN_YES :
 						YN_NO),
 			   wm, verbose);
 #if 0
@@ -3894,8 +3904,8 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * Look for contradictions.
 	 */
 
-	if (wm->end[LEFT_END].addresspool != NULL &&
-	    wm->end[RIGHT_END].addresspool != NULL) {
+	if (wm->end[LEFT_END].we_addresspool != NULL &&
+	    wm->end[RIGHT_END].we_addresspool != NULL) {
 		return diag("both leftaddresspool= and rightaddresspool= defined");
 	}
 
@@ -4109,13 +4119,13 @@ diag_t extract_connection(const struct whack_message *wm,
 				vassert(family->used == false);
 				family->used = true;
 				family->field = "addresspool";
-				family->value = whack_ends[end]->addresspool;
+				family->value = whack_ends[end]->we_addresspool;
 			}
 		} else {
 			struct end_family *family = &end_family[end][host_afi->ip.version];
 			family->used = true;
 			family->field = "";
-			family->value = whack_ends[end]->host;
+			family->value = whack_ends[end]->we_host;
 		}
 	}
 
