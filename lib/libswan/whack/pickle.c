@@ -412,7 +412,6 @@ static bool pickle_whack_end(struct whackpacker *wp,
 			     struct logger *logger)
 {
 	return (PICKLE_CONSTANT_STRING(&end->leftright, leftright),
-		PICKLE_STRING(&end->id) &&
 		PICKLE_STRING(&end->pubkey) &&
 		PICKLE_STRING(&end->groups) &&
 		PICKLE_STRING(&end->virt) &&

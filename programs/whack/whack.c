@@ -1466,7 +1466,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ID:	/* --id <identity> */
-			end->id = optarg;	/* decoded by Pluto */
+			end->we_id = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_SENDCERT:	/* --sendcert */

@@ -55,34 +55,7 @@ static bool set_whack_end(struct whack_end *w,
 	const char *lr = l->leftright;
 	w->leftright = lr;
 
-	/*
-	 * Deal with ADDCONN's legacy ID syntax where, instead of
-	 * "\,", ",," was used to escape commas!
-	 *
-	 * Don't move to pluto, so that when ADDCONN dies, this hack
-	 * goes with it.
-	 */
-
-	if (l->values[KWS_ID].string != NULL) {
-		char *value = l->values[KWS_ID].string;
-		/*
-		 * Fixup old ",," in a ID_DER_ASN1_DN to proper
-		 * backslash comma.
-		 */
-		if (value[0] != '@' &&
-		    strstr(value, ",,") != NULL &&
-		    strstr(value, "=") != NULL) {
-			llog(RC_LOG, logger,
-			     "changing legacy ',,' to '\\,' in %sid=%s",
-			     lr, value);
-			char *cc;
-			while ((cc = strstr(value, ",,")) != NULL) {
-				cc[0] = '\\';
-			}
-		}
-		w->id = value;
-	}
-
+	w->we_id = l->values[KWS_ID].string;
 	w->we_host = l->values[KWS_HOST].string;
 	w->we_nexthop = l->values[KWS_NEXTHOP].string;
 	w->we_sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
