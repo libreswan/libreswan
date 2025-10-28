@@ -1,4 +1,6 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+/testing/x509/import.sh real/mainca/comma,.p12
+
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
@@ -16,5 +18,7 @@ ipsec add addconn-leftid=at-lsquare-foo-rsquare
 ipsec add addconn-leftid=at-foo
 ipsec add addconn-leftid=foo-at-bar
 ipsec add addconn-leftid=foo
+ipsec add addconn-rightid-x509
+ipsec add addconn-rightid-x509-comma-comma
 
 ipsec connectionstatus | grep ' id'
