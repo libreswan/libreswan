@@ -42,6 +42,8 @@ west #
  ipsec auto --add new-west
 "new-west": added IKEv2 connection
 west #
+ ipsec whack --impair suppress_retransmits
+west #
  ipsec auto --up old-west
 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "old-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
