@@ -1133,7 +1133,39 @@ static diag_t extract_host_end(struct host_end *host,
 	 */
 	struct id id = { .kind = ID_NONE, };
 	vexpect(host_config->id.kind == ID_NONE);
-	if (can_extract_string(leftright, "id", src->id, wm, verbose)) {
+	if (can_extract_string(leftright, "id", src->we_id, wm, verbose)) {
+		/*
+		 * Deal with ADDCONN's legacy ID syntax where, instead
+		 * of "\,", ",," was used to escape commas!
+		 *
+		 * XXX: Old comment from addconn:
+		 *
+		 *   Don't move to pluto, so that when ADDCONN dies,
+		 *   this hack goes with it.
+		 *
+		 * At the time pluto couldn't tell when ADDCONN was to
+		 * blame for the connection.  Now it can.  This also
+		 * simplifies the ADDCONN code down to the point where
+		 * it is sending raw tuples.
+		 *
+		 * XXX: logging code should use str->id so that the
+		 * original string, and not the one mangled by the
+		 * below, is displayed.
+		 */
+		char *idstr = clone_str(src->we_id, "id"); /* must free */
+		if (wm->whack_from == WHACK_FROM_ADDCONN) {
+			if (idstr[0] != '@' &&
+			    strstr(idstr, ",,") != NULL &&
+			    strstr(idstr, "=") != NULL) {
+				vwarning("changing legacy ',,' to '\\,' in %sid=%s",
+					 leftright, src->we_id);
+				char *cc;
+				while ((cc = strstr(idstr, ",,")) != NULL) {
+					cc[0] = '\\';
+				}
+			}
+		}
+
 		/*
 		 * Treat any atoid() failure as fatal.  One wart is
 		 * something like id=foo.  ttoaddress_dns() fails
@@ -1142,17 +1174,25 @@ static diag_t extract_host_end(struct host_end *host,
 		 * In 4.x the error was ignored and ID=<HOST_IP> was
 		 * used.
 		 */
-		err_t e = atoid(src->id, &id);
+
+		err_t e = atoid(idstr, &id);
+		pfreeany(idstr);
 		if (e != NULL) {
-			return diag("%sid=%s invalid, %s", leftright, src->id, e);
+			return diag("%sid=%s invalid, %s", leftright, src->we_id, e);
 		}
 
 		id_buf idb;
 		vdbg("setting %s-id='%s' as wm->%s->id=%s",
 		     leftright, str_id(&host_config->id, &idb),
-		     leftright, (src->id != NULL ? src->id : "NULL"));
+		     leftright, src->we_id);
 
-		/* danger, copying pointers */
+		/*
+		 * Danger: copying pointers; no leak;
+		 *
+		 * Should the extract fail, the caller will free
+		 * host_config->id.  Should the extract succeed, the
+		 * connection owns the pointers.
+		 */
 		host_config->id = id;
 
 	} else if (!is_never_negotiate_wm(wm) &&
@@ -1537,7 +1577,7 @@ static diag_t extract_host_end(struct host_end *host,
 	host_config->auth = auth;
 	host_config->authby = authby;
 
-	if (src->id != NULL && streq(src->id, "%fromcert")) {
+	if (src->we_id != NULL && streq(src->we_id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {
 			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
