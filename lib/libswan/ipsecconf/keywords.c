@@ -36,16 +36,6 @@ static void check_config_keywords(struct logger *logger,
 				  size_t config_keyword_roof,
 				  const struct keywords_def *keywords)
 {
-	if (LDBGP(DBG_TMI, logger)) {
-		ITEMS_FOR_EACH(k, keywords) {
-			if (k->keyname == NULL) {
-				continue;
-			}
-			unsigned i = (k - keywords->item);
-			LDBG_log(logger, "[%u] %s", i, k->keyname);
-		}
-	}
-
 	/* table contains ALIAS and OBSOLETE keywords at the end */
 	pexpect(keywords->len >= config_keyword_roof);
 
@@ -55,6 +45,8 @@ static void check_config_keywords(struct logger *logger,
 
 		bool ok = true;
 		unsigned ki = (k - keywords->item);
+
+		ldbg(logger, "[%u] %s", ki, k->keyname == NULL ? "(none)" : k->keyname);
 
 		switch (group) {
 		case BLANK:

@@ -83,7 +83,6 @@ static void help(void)
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | rsa | ecdsa | null | eaponly>] \\\n"
 		"	[--autheap <none | tls>] \\\n"
-		"	[--groups <access control groups>] \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
 		"	[--sendca no|issuer|all] [--sendcert yes|always|no|never|ifasked] \\\n"
@@ -472,7 +471,6 @@ enum opt {
 	END_CERT,
 	END_CKAID,
 	END_CA,
-	END_GROUPS,
 	END_IKEPORT,
 	END_NEXTHOP,
 	END_SUBNET,
@@ -783,7 +781,7 @@ const struct option optarg_options[] = {
 	{ "cert\0", required_argument, NULL, END_CERT },
 	{ "ckaid\0", required_argument, NULL, END_CKAID },
 	{ "ca\0", required_argument, NULL, END_CA },
-	{ "groups\0", required_argument, NULL, END_GROUPS },
+	{ IGNORE_OPT("groups", "5.4"), required_argument, NULL, 0 },
 	{ "ikeport\0", required_argument, NULL, END_IKEPORT },
 	{ "nexthop\0", required_argument, NULL, END_NEXTHOP },
 	{ "client\0", required_argument, NULL, END_SUBNET },	/* alias / backward compat */
@@ -1485,10 +1483,6 @@ int main(int argc, char **argv)
 			end->we_ca = optarg;	/* decoded by Pluto */
 			continue;
 
-		case END_GROUPS:	/* --groups <access control groups> */
-			end->groups = optarg;	/* decoded by Pluto */
-			continue;
-
 		case END_IKEPORT:	/* --ikeport <port-number> */
 			end->we_ikeport = optarg;
 			continue;
@@ -1538,10 +1532,11 @@ int main(int argc, char **argv)
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
 		{
+			/* map PUBKEY_DNSONDEMAND to %<ondemand> */
 			name_buf sb;
 			passert(sparse_short(&keyword_pubkey_names, PUBKEY_DNSONDEMAND, &sb));
 			passert(sb.buf != sb.tmp);
-			end->pubkey = sb.buf; /* points into keyword_pubkey_names */
+			end->we_pubkey = sb.buf; /* points into keyword_pubkey_names */
 			continue;
 		}
 
