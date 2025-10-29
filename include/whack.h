@@ -141,7 +141,6 @@ struct whack_end {
 
 #define we_id conn->value[KWS_ID]	/* id string (if any) --
 					 * decoded by pluto */
-	const char *groups;		/* access control groups (if any) -- parsed by pluto */
 
 #define we_ca conn->value[KWS_CA]	/* distinguished name string
 					 * (if any) -- parsed by

@@ -413,7 +413,6 @@ static bool pickle_whack_end(struct whackpacker *wp,
 {
 	return (PICKLE_CONSTANT_STRING(&end->leftright, leftright),
 		PICKLE_STRING(&end->pubkey) &&
-		PICKLE_STRING(&end->groups) &&
 		PICKLE_STRING(&end->virt) &&
 		PICKLE_STRING(&end->subnet) &&
 		true);
