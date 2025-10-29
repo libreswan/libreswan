@@ -57,7 +57,7 @@ west #
 "addconn-rightid-x509": added IKEv2 connection
 west #
  ipsec add addconn-rightid-x509-comma-comma
-ipsec addconn: changing legacy ',,' to '\,' in rightid=E=user-comma,,@testing.libreswan.org,CN=comma,,.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
+warning: "addconn-rightid-x509-comma-comma": changing legacy ',,' to '\,' in rightid=E=user-comma,,@testing.libreswan.org,CN=comma,,.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 "addconn-rightid-x509-comma-comma": added IKEv2 connection
 west #
  ipsec connectionstatus | grep ' id'
