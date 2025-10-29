@@ -369,7 +369,7 @@ static void check__hunk_char__hunk_byte(void)
 {
 	static const struct test {
 		const char *s;
-		long i;
+		size_t i;
 		char c;
 		int b;
 		char nc;
