@@ -152,8 +152,10 @@ struct whack_end {
 	 */
 #define we_cert conn->value[KWS_CERT]
 #define we_ckaid conn->value[KWS_CKAID]
-	const char *pubkey;
-	enum ipseckey_algorithm_type pubkey_alg;
+#define we_rsasigkey conn->value[KWS_RSASIGKEY]
+#define we_ecdsakey conn->value[KWS_ECDSAKEY]
+#define we_eddsakey conn->value[KWS_EDDSAKEY]
+#define we_pubkey conn->value[KWS_PUBKEY]
 
 #define we_auth conn->value[KWS_AUTH]
 

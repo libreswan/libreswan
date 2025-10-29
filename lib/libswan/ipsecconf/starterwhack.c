@@ -49,8 +49,7 @@
 #include "lswlog.h"
 
 static bool set_whack_end(struct whack_end *w,
-			  const struct starter_end *l,
-			  struct logger *logger)
+			  const struct starter_end *l)
 {
 	const char *lr = l->leftright;
 	w->leftright = lr;
@@ -87,57 +86,10 @@ static bool set_whack_end(struct whack_end *w,
 	w->we_cert = l->values[KWS_CERT].string;
 	w->we_ckaid = l->values[KWS_CKAID].string;
 
-	/*
-	 * XXX: Map one of rsasigkey=, ecdsa=, or pubkey=, onto
-	 * .pubkey + .pubkey_alg.
-	 *
-	 * HACK:
-	 *
-	 * Use the table ipseckey_algorithm_config_names and the key's
-	 * name to find the ipseckey_algorithm_type value - that's the
-	 * table that pluto will use when logging the key name's
-	 * field.
-	 *
-	 * Not obvious, but it is one less table to maintain!
-	 */
-
-	enum config_conn_keyword keys[] = {
-		KWS_RSASIGKEY,
-		KWS_ECDSAKEY,
-		KWS_EDDSAKEY,
-		KWS_PUBKEY,
-	};
-	const char *found_keyname = NULL;
-	FOR_EACH_ELEMENT(p, keys) {
-
-		enum config_conn_keyword key = (*p);
-
-		/* find the first of above that is set */
-		const char *value = l->values[key].string;
-		if (value == NULL) {
-			continue;
-		}
-
-		/* convert the keyname into the algorithm */
-		const char *keyname = config_conn_keywords.item[key].keyname;
-		if (found_keyname != NULL) {
-			pexpect(w->pubkey != NULL);
-			llog(RC_LOG, logger,
-			     "duplicate key fields %s= and %s=",
-			     found_keyname, keyname);
-			return false;
-		}
-
-		int alg = enum_byname(&ipseckey_algorithm_config_names, shunk1(keyname));
-		if (alg <= 0) {
-			llog_passert(logger, HERE, "could not find '%s'", keyname);
-		}
-
-		found_keyname = keyname;
-		w->pubkey = value;
-		w->pubkey_alg = alg;
-		break;
-	}
+	w->we_rsasigkey = l->values[KWS_RSASIGKEY].string;
+	w->we_ecdsakey = l->values[KWS_ECDSAKEY].string;
+	w->we_eddsakey = l->values[KWS_EDDSAKEY].string;
+	w->we_pubkey = l->values[KWS_PUBKEY].string;
 
 	w->we_ca = l->values[KWS_CA].string;
 	w->we_sendcert = l->values[KWS_SENDCERT].string;
@@ -326,10 +278,12 @@ int starter_whack_add_conn(const char *ctlsocket,
 	if (conn->values[KNCF_XAUTHFAIL].set)
 		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
 
-	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END], logger))
+	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {
 		return -1;
-	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END], logger))
+	}
+	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END])) {
 		return -1;
+	}
 
 	msg.wm_ike = conn->values[KWS_IKE].string;
 	msg.wm_esp = conn->values[KWS_ESP].string;

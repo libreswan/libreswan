@@ -70,10 +70,6 @@ static const struct keyword_def config_conn_keyword[] = {
   K("updown",  kv_leftright,  kt_string,  KWS_UPDOWN),
   K("id",  kv_leftright,  kt_string,  KWS_ID),
 
-  /*
-   * Note: these are merged into .pubkey + .pubkey_alg before sending
-   * to pluto.
-   */
   K("rsasigkey",  kv_leftright,  kt_string,  KWS_RSASIGKEY),
   K("ecdsakey",  kv_leftright,  kt_string,  KWS_ECDSAKEY),
   K("eddsakey",  kv_leftright,  kt_string,  KWS_EDDSAKEY),

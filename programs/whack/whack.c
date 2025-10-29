@@ -1532,10 +1532,11 @@ int main(int argc, char **argv)
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
 		{
+			/* map PUBKEY_DNSONDEMAND to %<ondemand> */
 			name_buf sb;
 			passert(sparse_short(&keyword_pubkey_names, PUBKEY_DNSONDEMAND, &sb));
 			passert(sb.buf != sb.tmp);
-			end->pubkey = sb.buf; /* points into keyword_pubkey_names */
+			end->we_pubkey = sb.buf; /* points into keyword_pubkey_names */
 			continue;
 		}
 
