@@ -54,45 +54,18 @@ static bool set_whack_end(struct whack_end *w,
 	const char *lr = l->leftright;
 	w->leftright = lr;
 
-	w->we_id = l->values[KWS_ID].string;
-	w->we_host = l->values[KWS_HOST].string;
-	w->we_nexthop = l->values[KWS_NEXTHOP].string;
-	w->we_sourceip = l->values[KWS_SOURCEIP].string; /* could be NULL */
-	w->we_vti = l->values[KWS_VTI].string; /* could be NULL */
-	w->we_interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
-
-	w->we_subnet = l->values[KWS_SUBNET].string;
-
-	w->we_subnets = l->values[KWS_SUBNETS].string;
-	w->we_ikeport = l->values[KWS_IKEPORT].string;
-	w->we_protoport = l->values[KWS_PROTOPORT].string;
-	w->we_cert = l->values[KWS_CERT].string;
-	w->we_ckaid = l->values[KWS_CKAID].string;
-
-	w->we_rsasigkey = l->values[KWS_RSASIGKEY].string;
-	w->we_ecdsakey = l->values[KWS_ECDSAKEY].string;
-	w->we_eddsakey = l->values[KWS_EDDSAKEY].string;
-	w->we_pubkey = l->values[KWS_PUBKEY].string;
-
-	w->we_ca = l->values[KWS_CA].string;
-	w->we_sendcert = l->values[KWS_SENDCERT].string;
-
-	w->we_auth = l->values[KWS_AUTH].string;
-	w->we_autheap = l->values[KWS_AUTHEAP].string;
-
-	w->we_updown = l->values[KWS_UPDOWN].string;
+	for (enum config_conn_keyword kw = 1; kw < CONFIG_CONN_KEYWORD_ROOF; kw++) {
+		w->conn->value[kw] = l->values[kw].string;
+	}
 
 	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
 	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
 	w->we_xauthusername = l->values[KWS_USERNAME].string;
-
 	w->groundhog = l->values[KWYN_GROUNDHOG].option;
-
 	w->modecfgserver = l->values[KWYN_MODECONFIGSERVER].option;
 	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
 	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
 
-	w->we_addresspool = l->values[KWS_ADDRESSPOOL].string;
 	return true;
 }
 
