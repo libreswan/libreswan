@@ -44,3 +44,4 @@ add pkgconfig
 add sed sed-doc
 add unbound-doc unbound-dev
 add xmlto xmlto-doc
+add tcpdump
