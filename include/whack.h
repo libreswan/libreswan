@@ -166,12 +166,11 @@ struct whack_end {
 #define we_vti conn->value[KWS_VTI]		/* host */
 #define we_interface_ip conn->value[KWS_INTERFACE_IP]	/* for ipsec-interface */
 
-	const char *subnet; /* child */
+#define we_subnet conn->value[KWS_SUBNET]	/* child; includes virt: */
 #define we_subnets conn->value[KWS_SUBNETS]	/* alias subnet expansion */
 #define we_protoport conn->value[KWS_PROTOPORT]
 
 #define we_updown conn->value[KWS_UPDOWN]	/* string */
-	const char *virt;
 #define we_addresspool conn->value[KWS_ADDRESSPOOL]
 
 	enum yn_options xauthserver;	/* for XAUTH */
