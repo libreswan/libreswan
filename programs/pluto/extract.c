@@ -1779,6 +1779,14 @@ static diag_t extract_host_end(struct host_end *host,
 	return NULL;
 }
 
+static bool is_virt(const struct whack_end *we)
+{
+	return (we->we_subnet != NULL &&
+		(startswith(we->we_subnet, "vhost:") ||
+		 startswith(we->we_subnet, "vnet:")));
+}
+
+
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
 				       const struct host_addr_config *host_addr,
@@ -1863,7 +1871,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, leftright);
 		}
 
-		if (src->subnet != NULL) {
+		if (src->we_subnet != NULL && !is_virt(src)) {
 			/* XXX: why? */
 			return diag("cannot specify both %saddresspool= and %ssubnet=",
 				    leftright, leftright);
@@ -1913,7 +1921,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 		}
 
-	} else if (src->subnet != NULL) {
+	} else if (src->we_subnet != NULL && !is_virt(src)) {
 
 		/*
 		 * Parse new syntax (protoport= is not used).
@@ -1924,11 +1932,11 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		vdbg("%s child selectors from %ssubnet (selector); %s.config.has_client=true",
 		     leftright, leftright, leftright);
 		ip_address nonzero_host;
-		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL,
+		diag_t d = ttoselectors_num(shunk1(src->we_subnet), ", ", NULL,
 					    &child_config->selectors, &nonzero_host);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
-					 leftright, src->subnet);
+					 leftright, src->we_subnet);
 		}
 
 		if (protoport.ip.is_set) {
@@ -1950,7 +1958,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		if (nonzero_host.ip.is_set) {
 			address_buf hb;
 			vlog("zeroing non-zero address identifier %s in %ssubnet=%s",
-			     str_address(&nonzero_host, &hb), leftright, src->subnet);
+			     str_address(&nonzero_host, &hb), leftright, src->we_subnet);
 		}
 
 	} else {
@@ -1967,13 +1975,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	 * XXX: don't set .has_client as update_child_ends*() will see
 	 * it and skip updating the client address from the host.
 	 */
-	if (src->virt != NULL) {
+	if (is_virt(src)) {
 		if (ike_version > IKEv1) {
 			return diag("IKEv%d does not support virtual subnets",
 				    ike_version);
 		}
 		vdbg("%s %s child has a virt-end", wm->name, leftright);
-		diag_t d = create_virtual(leftright, src->virt,
+		diag_t d = create_virtual(leftright, src->we_subnet,
 					  &child_config->virt);
 		if (d != NULL) {
 			return d;
@@ -2053,7 +2061,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					return diag("%ssourceip=%s invalid, address %s is not within %ssubnet=%s",
 						    leftright, src->we_sourceip,
 						    str_address(sourceip, &sipb),
-						    leftright, src->subnet);
+						    leftright, src->we_subnet);
 				}
 			} else if (host_addr->addr.ip.is_set) {
 				if (!address_eq_address(*sourceip, host_addr->addr)) {
@@ -2262,7 +2270,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright);
 		return CK_TEMPLATE;
 	}
-	if (that->virt != NULL) {
+	if (is_virt(that)) {
 		/*
 		 * A peer with subnet=vnet:.. needs instantiation so
 		 * we can accept multiple subnets from that peer.
@@ -4028,12 +4036,13 @@ diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->end[LEFT_END].virt != NULL && wm->end[RIGHT_END].virt != NULL) {
+	if (is_virt(&wm->end[LEFT_END]) &&
+	    is_virt(&wm->end[RIGHT_END])) {
 		return diag("both leftvirt= and rightvirt= defined");
 	}
 
-	if (is_group_wm(host_addrs) && (wm->end[LEFT_END].virt != NULL ||
-					wm->end[RIGHT_END].virt != NULL)) {
+	if (is_group_wm(host_addrs) && (is_virt(&wm->end[LEFT_END]) ||
+					is_virt(&wm->end[RIGHT_END]))) {
 		return diag("connection groups do not support virtual subnets");
 	}
 
@@ -4198,7 +4207,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				if (!family->used) {
 					family->used = true;
 					family->field = "subnet";
-					family->value = whack_ends[end]->subnet;
+					family->value = whack_ends[end]->we_subnet;
 				}
 			}
 		} else if (pools->len > 0) {

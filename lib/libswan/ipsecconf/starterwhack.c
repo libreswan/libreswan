@@ -61,24 +61,7 @@ static bool set_whack_end(struct whack_end *w,
 	w->we_vti = l->values[KWS_VTI].string; /* could be NULL */
 	w->we_interface_ip = l->values[KWS_INTERFACE_IP].string; /* could be NULL */
 
-	/*
-	 * Deal with legacy subnet=vhost:... and subnet=vnet:....
-	 * (although there's no alternative).
-	 *
-	 * Can't simply send {vhost,vnet}:... to pluto in .subnet
-	 * without a lot of work here and the extract code is the
-	 * subnets= expansion and that expects subnet= to be empty.
-	 */
-
-	const char *subnet = l->values[KWS_SUBNET].string;
-	if (subnet != NULL) {
-		if (startswith(subnet, "vhost:") ||
-		    startswith(subnet, "vnet:")) {
-			w->virt = subnet;
-		} else {
-			w->subnet = subnet;
-		}
-	}
+	w->we_subnet = l->values[KWS_SUBNET].string;
 
 	w->we_subnets = l->values[KWS_SUBNETS].string;
 	w->we_ikeport = l->values[KWS_IKEPORT].string;

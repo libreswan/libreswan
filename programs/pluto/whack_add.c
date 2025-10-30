@@ -72,20 +72,22 @@ static bool parse_subnets(struct subnets *sn,
 	unsigned len = 0;
 
 	ip_subnet subnet = unset_subnet;
-	if (end->subnet != NULL) {
+	if (end->we_subnet != NULL &&
+	    !startswith(end->we_subnet, "vhost:") &&
+	    !startswith(end->we_subnet, "vnet:")) {
 		ip_address nonzero_host;
-		err_t e = ttosubnet_num(shunk1(end->subnet), /*afi*/NULL,
+		err_t e = ttosubnet_num(shunk1(end->we_subnet), /*afi*/NULL,
 					&subnet, &nonzero_host);
 		if (e != NULL) {
 			llog_add_connection_failed(wm, logger, 
 						   "%ssubnet=%s invalid, %s",
-						   end->leftright, end->subnet, e);
+						   end->leftright, end->we_subnet, e);
 			return false;
 		}
 		if (nonzero_host.ip.is_set) {
 			llog_add_connection_failed(wm, logger,
 						   "%ssubnet=%s contains non-zero host identifier",
-						   end->leftright, end->subnet);
+						   end->leftright, end->we_subnet);
 			return false;
 		}
 		/* make space */
@@ -237,8 +239,8 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			char *right_subnet = NULL; /* must free */
 			const struct ip_info *left_afi = next_subnet(&left_subnet, &left->subnets, left_i);
 			const struct ip_info *right_afi = next_subnet(&right_subnet, &right->subnets, right_i);
-			wam.end[LEFT_END].subnet = left_subnet;
-			wam.end[RIGHT_END].subnet = right_subnet;
+			wam.end[LEFT_END].we_subnet = left_subnet;
+			wam.end[RIGHT_END].we_subnet = right_subnet;
 
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
@@ -253,15 +255,17 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 					return;
 				}
 			} else {
-				PEXPECT(logger, (wam.end[LEFT_END].subnet != NULL &&
-						 wam.end[RIGHT_END].subnet != NULL));
+				PEXPECT(logger, (wam.end[LEFT_END].we_subnet != NULL &&
+						 wam.end[RIGHT_END].we_subnet != NULL));
 				/*
 				 * Fudge up what looks like the
 				 * connection's prefix.
 				 */
 				llog(WARNING_STREAM, logger,
 				     "\"%s\": skipping mismatched leftsubnets=%s rightsubnets=%s",
-				     wm->name, wam.end[LEFT_END].subnet, wam.end[RIGHT_END].subnet);
+				     wm->name,
+				     wam.end[LEFT_END].we_subnet,
+				     wam.end[RIGHT_END].we_subnet);
 			}
 
 			pfreeany(name);
@@ -286,16 +290,20 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 		have_subnets = true;
 		/* have subnets=... */
 		FOR_EACH_THING(subnet, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-			if (subnet->subnet == NULL) {
+			if (subnet->we_subnet == NULL) {
 				continue;
 			}
-			if (strchr(subnet->subnet, ',') == NULL) {
+			if (startswith(subnet->we_subnet, "vhost:") ||
+			    startswith(subnet->we_subnet, "vnet:")) {
+				continue;
+			}
+			if (strchr(subnet->we_subnet, ',') == NULL) {
 				continue;
 			}
 			/* have subnets=.. and subnet=a,b... */
 			llog_add_connection_failed(wm, logger,
 						   "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\"",
-						   subnet->leftright, subnet->subnet,
+						   subnet->leftright, subnet->we_subnet,
 						   subnets->leftright, subnets->we_subnets);
 			return;
 		}

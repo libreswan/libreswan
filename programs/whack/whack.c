@@ -1516,12 +1516,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */
-			if (startswith(optarg, "vhost:") ||
-			    startswith(optarg, "vnet:")) {
-				end->virt = optarg;
-			} else {
-				end->subnet = optarg;	/* decoded by Pluto */
-			}
+			end->we_subnet = optarg;	/* decoded by Pluto */
 			msg.type = KS_TUNNEL;	/* client => tunnel */
 			continue;
 
