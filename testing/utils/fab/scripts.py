@@ -137,6 +137,7 @@ _GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
 
 def commands(directory, logger):
 
+    # match experimental all.console.txt
     for script in ("all.sh", "all.console.txt"):
         all = path.join(directory, script)
         if os.path.exists(all):
@@ -159,4 +160,42 @@ def commands(directory, logger):
                         commands.append(Command(None, "#", script))
             return commands
 
+    # match experimental HOST*.in
+    in_scripts = glob(path.join(directory, "*.in"))
+    if in_scripts:
+
+        # figure out the guest names
+        guests = set()
+        for script in in_scripts:
+            guests.update(_script_guests(script, hosts.GUESTS))
+        guests = sorted(guests)
+        logger.debug("guests: %s", ",".join(str(g) for g in guests))
+        GUESTS = dict()
+        for guest in guests:
+            GUESTS[guest.host.name] = guest
+
+        commands = Commands()
+        for script in in_scripts:
+            if not path.isfile(script):
+                continue
+            for line in open(script, "r"):
+                # regex matches both:
+                #   <host># command
+                # and
+                #   # comment
+                command = _GUEST_COMMAND_REGEX.match(line)
+                if command:
+                    host = command.group("guest")
+                    line = command.group("line")
+                    guest = GUESTS[host]
+                    logger.debug(f"HOST {host} GUEST {guest} LINE {line}")
+                    if host:
+                        commands.append(Command(guest, line, script))
+                    elif line:
+                        commands.append(Command(None, "# "+line, script))
+                    else:
+                        commands.append(Command(None, "#", script))
+        return commands
+
+    # match *.sh
     return _guest_scripts(directory, logger)
