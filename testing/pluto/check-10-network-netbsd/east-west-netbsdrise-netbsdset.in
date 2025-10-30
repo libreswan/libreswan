@@ -1,0 +1,37 @@
+testing/pluto/check-10-network-netbsd/01-east-ifconfig.sh
+
+east# ../../guestbin/ip.sh addr show eth0
+east# ../../guestbin/ip.sh link set eth0 up
+east# ../../guestbin/ip.sh addr show eth1
+east# ../../guestbin/ip.sh link set eth1 up
+
+testing/pluto/check-10-network-netbsd/02-west-ifconfig.sh
+
+west# ../../guestbin/ip.sh addr show eth0
+west# ../../guestbin/ip.sh link set eth0 up
+west# ../../guestbin/ip.sh addr show eth1
+west# ../../guestbin/ip.sh link set eth1 up
+
+testing/pluto/check-10-network-netbsd/03-netbsdrise-ifconfig.sh
+
+rise# ifconfig vioif1
+rise# ifconfig vioif1 up
+rise# ifconfig vioif2
+rise# ifconfig vioif2 up
+
+testing/pluto/check-10-network-netbsd/04-netbsdset-ifconfig.sh
+
+set# ifconfig vioif1
+set# ifconfig vioif1 up
+set# ifconfig vioif2
+set# ifconfig vioif2 up
+
+testing/pluto/check-10-network-netbsd/05-netbsdrise-ping.sh
+
+rise# ../../guestbin/ping-once.sh --up 198.18.1.15 # SET
+rise# ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST
+
+testing/pluto/check-10-network-netbsd/06-netbsdset-ping.sh
+
+set# ../../guestbin/ping-once.sh --up 198.18.1.12 # RISE
+set# ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
