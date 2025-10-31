@@ -67,8 +67,11 @@ for os in OS:
 
 os = OS[param.os]
 
-# Strip output of any escape sequences.  This does the stripping on
-# the input side but seems to cause pexpect to hang.  See
+# Strip output of any escape sequences on the input side of pexpect.
+#
+# It isn't used as it seems to cause pexpect to hang.
+#
+# See
 # https://web.archive.org/web/20200805075926/http://ascii-table.com/ansi-escape-sequences.php
 
 class AsciiDecoder(object):
@@ -90,18 +93,36 @@ class AsciiDecoder(object):
         return b''
 
 # This strips things on the output side, problem is that it often
-# doesn't see the full escape sequence so would get things wrong.
+# doesn't see the full escape sequence so can miss things.  Hence,
+# also stripping out simple control characters.
+#
+# https://web.archive.org/web/20200805075926/http://ascii-table.com/ansi-escape-sequences.php
 
 class Filter:
     def __init__(self):
         self.stream=sys.stdout.buffer
     def write(self, record):
         #print(record)
-        c = record
-        d = re.sub(rb'\x1b\[[0-9;=?]*[HfABCDsuJKmhlr]', b'', c)
-        # exclude all but 0x0a, 0x0d, ' '-DEL-1
-        e = re.sub(rb'[\x00-\x09\x0b-\x0c\x0e-\x1f\x7f-\xff]', b'', d)
-        self.stream.write(e);
+        d = record
+        # stip out some known escape sequences
+        d = re.sub(rb'\x1b\[[0-9;=?]*[HfABCDsuJKmhlr]', b'', d)
+        # strip out other non-print characters but leave NL,CR; given
+        # well known control characters a name
+        d = re.sub(rb'\x00', b'<NUL>', d)
+        d = re.sub(rb'[\x01-\x06]', b'', d)
+        d = re.sub(rb'[\x07]', b'<BEL>', d)
+        d = re.sub(rb'[\x08]', b'<BS>', d)
+        d = re.sub(rb'[\x09]', b'<HT>', d)
+        # new-line LF [\x0a]
+        d = re.sub(rb'[\x0b]', b'<VT>', d)
+        d = re.sub(rb'[\x0c]', b'<FF>', d)
+        # return   CR [\x0d]
+        d = re.sub(rb'[\x0e-\x1a]', b'', d)
+        d = re.sub(rb'[\x1b]', b'<ESC>', d)
+        d = re.sub(rb'[\x1c-\x1f]', b'', d)
+        d = re.sub(rb'[\x7f]', b'<DEL>', d)
+        d = re.sub(rb'[\x80-\xff]', b'', d)
+        self.stream.write(d);
     def flush(self):
         self.stream.flush()
 
@@ -115,6 +136,11 @@ class Raw:
 
 if os.FILTER_OUTPUT:
     logfile = Filter()
+    print("========================================")
+    print("   ENGAGING CONTROL CHARACTER SHIELD")
+    print("        BLOCKING CHARACTERS")
+    print("     THAT MESS WITH THE TERMINAL")
+    print("========================================")
 else:
     logfile = Raw()
 
