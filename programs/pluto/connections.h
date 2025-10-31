@@ -262,8 +262,6 @@ struct child_config {
 		bool esp_tfc_padding_not_supported;	/* notification */
 	} send;
 
-  bool reject_simultaneous_ike_auth;
-
 	struct {
 		enum yna_options yna;
 		unsigned nr;
@@ -441,7 +439,9 @@ struct config {
 		uint32_t id;
 	} ipsec_interface;
 
-	struct end_config end[END_ROOF];
+  bool reject_simultaneous_ike_auth;
+
+struct end_config end[END_ROOF];
 };
 
 /* There are two kinds of connections:
