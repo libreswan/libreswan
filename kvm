@@ -67,9 +67,9 @@ pass2help()
 
     install [PLATFORM]
 	if needed, create the build domains
-	install libreswan on the build domains
+	install libreswan, without documentation, on the build domains
 	clone the build domains to create the test domains
-	control with Makefile.inc.local:KVM_{FEDORA,FREEBSD,NETBSD,OPENBSD}=true
+	control with Makefile.inc.local:KVM_{FEDORA,FREEBSD,NETBSD,OPENBSD,ALPINE,DEBIAN}=true
     check [ <test-directory> ... ]
 	run the testsuite
 
@@ -146,8 +146,10 @@ pass2help()
 	build/install libreswan on the build domains
 	uses: ${kvm_platforms}
     install [PLATFORM]
-	build/install libreswan
+	build/install libreswan, but with out documentation aka install-base
 	clones build domains to create the test domains
+    all [platform]
+        same as install, but with documentation
 
   Stepwize delete the domains (just use ./kvm purge):
 
@@ -331,6 +333,7 @@ while test $# -gt 0 ; do
 	test   )     ops[${#ops[@]}]=check ;;
 	retest )     ops[${#ops[@]}]=recheck ;;
 	test-clean ) ops[${#ops[@]}]=check-clean ;;
+	all )        ops[${#ops[@]}]=install-all ;;
 
 	sh )
 	    # remainder of line is host + optional commands
@@ -546,7 +549,7 @@ while test $i -lt ${#ops[@]} ; do
 	    status_command
 	    ;;
 
-	base | upgrade | transmogrify | build | install | \
+	base | upgrade | transmogrify | build | install | install-all | \
         shutdown | uninstall | downgrade | demolish | purge )
 	    if test "${#platforms[@]}" -gt 0 ; then
 		targets=$(for platform in ${platforms[@]} ; do
@@ -557,7 +560,7 @@ while test $i -lt ${#ops[@]} ; do
 		run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    fi
 	    ;;
-	base* | upgrade* | transmogrify* | build* | install* | \
+	base* | upgrade* | transmogrify* | build* | install* | install-all* | \
         shutdown* | uninstall* | downgrade* | demolish* | purge* )
 	    run_pid ${gnumake} kvm-${op} "${makeflags[@]}"
 	    ;;
