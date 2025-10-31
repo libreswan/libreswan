@@ -54,7 +54,7 @@ dnf makecache
 sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 
 #
-# Build packages are installed then upgraded
+# Packages used to build libreswan, are installed and then upgraded.
 #
 
 packages_for_build() {
@@ -79,12 +79,14 @@ EOF
 #
 # Kernel packages are only installed to avoid drift.
 #
+# xl2tpd was included in this list because it sucks in additional
+# kernel dependencies; however Fedora 43 dropped the package for
+# kl2tpd.
 
 kernel_packages() {
     cat <<EOF | awk '{print $1}'
 kernel
 kernel-devel
-xl2tpd
 EOF
 }
 
@@ -101,8 +103,8 @@ fping
 gawk
 gdb
 gnutls-utils				used by soft tokens
-ike-scan
 iptables
+kl2tpd
 libcap-ng-utils
 linux-system-roles
 nc
@@ -144,18 +146,16 @@ dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
 dnf upgrade -y $(packages_for_build)
 
 :
-: Pre-release packages pulled from updates testing
+: Pre-release and/or dropped packages that still have builds
 :
 
-# dnf upgrade -y --enable-repo=updates-testing strongswan
-
-packages="
-https://kojipkgs.fedoraproject.org//packages/strongswan/6.0.2/4.fc42/x86_64/strongswan-6.0.2-4.fc42.x86_64.rpm
-https://kojipkgs.fedoraproject.org//packages/strongswan/6.0.2/4.fc42/x86_64/strongswan-sqlite-6.0.2-4.fc42.x86_64.rpm
+downloads="
+https://kojipkgs.fedoraproject.org//packages/xl2tpd/1.3.17/8.fc43/x86_64/xl2tpd-1.3.17-8.fc43.x86_64.rpm
+https://kojipkgs.fedoraproject.org//packages/ike-scan/1.9.4/44.fc43/x86_64/ike-scan-1.9.4-44.fc43.x86_64.rpm
 "
 
 rpms=
-for package in ${packages} ; do
+for package in ${downloads} ; do
     rpm=${cachedir}/$(basename ${package})
     curl --location --continue-at - --output ${rpm} "${package}"
     rpms="${rpms} ${rpm}"

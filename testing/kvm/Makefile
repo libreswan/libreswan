@@ -974,15 +974,15 @@ KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 #
 #   For instance: Fedora-Server-dvd-x86_64-36-1.5.iso
 
-KVM_FEDORA_RELEASE ?= 42
-KVM_FEDORA_BUILD ?= 1.1
+KVM_FEDORA_RELEASE ?= 43
+KVM_FEDORA_BUILD ?= 1.6
 KVM_FEDORA_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' fedora' | sort -V | tail -1))
 
 KVM_FEDORA_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/$(KVM_FEDORA_RELEASE)/Server/x86_64/iso
 
 KVM_FEDORA_ISO ?= $(KVM_POOLDIR)/Fedora-Server-dvd-x86_64-$(KVM_FEDORA_RELEASE)-$(KVM_FEDORA_BUILD).iso
 KVM_FEDORA_ISO_HASH = SHA256
-KVM_FEDORA_ISO_CKSUM ?= 7fee9ac23b932c6a8be36fc1e830e8bba5f83447b0f4c81fe2425620666a7043
+KVM_FEDORA_ISO_CKSUM ?= aca06983bef83da9b43144c1a2ff4c8483e4745167c17f53725c16a16742e643
 KVM_FEDORA_ISO_URL ?= $(KVM_FEDORA_URL)/$(notdir $(KVM_FEDORA_ISO))
 
 KVM_FEDORA_KICKSTART_FILE ?= fedora/base.ks
@@ -993,7 +993,7 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
 	--initrd-inject=$(KVM_FEDORA_BASE_DOMAIN).ks \
-	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 inst.notmux"
+	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_BASE_DOMAIN).ks) console=ttyS0,115200 net.ifnames=0 biosdevname=0 quiet plymouth.enable=0 inst.notmux"
 
 $(KVM_FEDORA_BASE_DOMAIN): $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
