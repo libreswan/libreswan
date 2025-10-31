@@ -1,11 +1,12 @@
 <varlistentry>
   <term>
-    <option>debug</option>
+    <option>debug=<replaceable>option</replaceable></option>
   </term>
   <listitem>
     <para>
-      Enable per-connection debug logging.  For more information see
-      &ipsec-whack.8; and the <option>--debug</option> option.
+      A comma separated list of options that enable internal debug
+      logs of the connection.  For more information see the global
+      <option>plutodebug=</option> option.
     </para>
     <note>
       <para>

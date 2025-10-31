@@ -1,18 +1,150 @@
 <varlistentry>
   <term>
-    <option>plutodebug</option>
+    <option>plutodebug=<replaceable>option</replaceable></option>
   </term>
   <listitem>
     <para>
-      Enable debug logging.  For more information see &ipsec-whack.8;
-      and the <option>--debug</option> option.
+      A comma separated list of options that globally enable internal
+      debug logs.  For debug logs of a single connection, see
+      <option>debug=</option>.
     </para>
     <note>
       <para>
-	This feature is used by &Libreswan;
-	developers.  The default logs should provide sufficient
-	information to diagnose configuration and connection problems.
+	This feature is used by &Libreswan; developers when debugging
+	libreswan internals.  The default logs should provide
+	sufficient information to diagnose most configuration and
+	connection problems.
       </para>
     </note>
+    <para>
+
+      Below is a select list of debug options (for a complete list
+      <command>ipsec whack --debug help</command>):
+
+      <variablelist>
+
+	<varlistentry>
+	  <term>
+	    <option>updown</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Run the &ipsec-updown.8; scripts with <command>set -v
+	      -x</command>.  Helpful when &ipsec-updown.8; isn't
+	      behaving as expected.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>routing</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Dump connection changes (for instance, routed, up,
+	      negotiating, ...) and how they interact with the kernel.
+	      Helpful when debugging connection transitions, and
+	      corresponding updates to kernel state/policy.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>base</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      In addition to <option>routing</option>, include general
+	      debug messages.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>cpu-usage</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Dump the CPU time consumed as an event is processed.
+	      Only recommended when diagnosing performance problems.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>refcnt</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Dump all changes to all reference counters.  Only
+	      recommended when tracking down a memory leak.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>all</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Equivalent to <option>routing/</option>,
+	      <option>base</option>, <option>cpu-usage</option>, and
+	      <option>refcnt</option>.  Recommend using either
+	      <option>routing</option>, or <option>base</option>
+	      instead.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>crypt</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Dump changes to reference counters.  Only recommended
+	      when debugging code making calls into the &NSS; library.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>private</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Dump the cryptographic material used by the IKE and
+	      Child SAs.  The format is similar to that expected by
+	      <command>tcpdump</command> and
+	      <command>wireshark</command>.
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>
+	    <option>tmi</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      It stands for Too Much Information.  Need we say more?
+	    </para>
+	  </listitem>
+	</varlistentry>
+
+      </variablelist>
+
+      All lines of debugging output are prefixed with "|" to
+      distinguish them from normal diagnostic messages (the the
+      command <command>grep -v -e '|' pluto.log</command> can be used
+      to filter out the debug logs).
+
+    </para>
   </listitem>
 </varlistentry>
