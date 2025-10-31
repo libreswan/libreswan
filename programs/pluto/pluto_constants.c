@@ -30,15 +30,6 @@
 #include "defs.h"
 #include "kernel.h"
 
-/*
- * To obsolete or convert to runtime options:
- * NOTYET
- * NOT_YET
- * PFKEY
- * PLUTO_GROUP_CTL
- * USE_3DES USE_AES USE_MD5 USE_SHA1 USE_SHA2
- */
-
 /* enum kernel_policy_op_names */
 
 static const char *kernel_policy_op_name[] = {

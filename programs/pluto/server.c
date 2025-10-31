@@ -157,11 +157,7 @@ void init_ctl_socket(const struct config_setup *oco,
 	}
 
 	/* to keep control socket secure, use umask */
-#ifdef PLUTO_GROUP_CTL
-	mode_t ou = umask(~(S_IRWXU | S_IRWXG));
-#else
 	mode_t ou = umask(~S_IRWXU);
-#endif
 
 	if (bind(ctl_fd, (struct sockaddr *)&ctl_addr,
 		 offsetof(struct sockaddr_un, sun_path) +
@@ -169,20 +165,6 @@ void init_ctl_socket(const struct config_setup *oco,
 		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not bind control socket");
 	}
 	umask(ou);
-
-#ifdef PLUTO_GROUP_CTL
-	{
-		struct group *g = getgrnam("pluto");
-
-		if (g != NULL) {
-			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
-				llog(RC_LOG, logger,
-					    "cannot chgrp ctl fd(%d) to gid=%d: %s",
-					    ctl_fd, g->gr_gid, strerror(errno));
-			}
-		}
-	}
-#endif
 
 	/*
 	 * 5 (five) is a haphazardly chosen limit for the backlog.
