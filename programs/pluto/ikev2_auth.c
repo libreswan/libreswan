@@ -1099,7 +1099,7 @@ bool has_outstanding_ike_auth_request(const struct connection *c,
 		const struct msg_digest *md)
 {
 	/* Check can be disable in a connection config */
-	if (c->config->reject_simultaneous_ike_auth) {
+	if (!c->config->reject_simultaneous_ike_auth) {
 		return false;
 	}
 
