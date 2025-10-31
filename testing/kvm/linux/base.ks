@@ -143,9 +143,12 @@ export EDITOR=vim
 # git stuff
 export GIT_PS1_SHOWDIRTYSTATE=true
 alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
-# stop systemd adding control characters
+# stop systemd adding control characters; and mangling the prompt!
 export LC_CTYPE=C
 export SYSTEMD_COLOURS=false
+export SYSTEMD_COLORS=false
+unset PROMPT_COMMAND
+unset PS0
 # don't wander into the weeds looking for debug info
 unset DEBUGINFOD_URLS
 # include status in the prompt
