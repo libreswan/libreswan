@@ -201,6 +201,7 @@
 <!-- definitely wrong but nothing better? -->
 <!ENTITY yN_options '{yes,<emphasis>no</emphasis>}'>
 <!ENTITY Yn_options '{<emphasis>yes</emphasis>,no}'>
+<!ENTITY ip_cidr '<replaceable>ip-address</replaceable>[/<replaceable>netmask</replaceable>]'>
 
 ]>
 
