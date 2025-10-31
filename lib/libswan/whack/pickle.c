@@ -33,8 +33,9 @@ static bool pack_bytes(struct whackpacker *wp,
 {
 	size_t space = wp->str_roof - wp->str_next;
 	if (space < nr_bytes) {
-		llog(RC_LOG, logger, "buffer overflow for '%s', space for %zu bytes but need %zu",
-		     what, space, nr_bytes);
+		llog(RC_LOG, logger,
+		     "buffer overflow for '%s'in %s(), space for %zu bytes but need %zu",
+		     what, __func__, space, nr_bytes);
 		return false; /* would overflow buffer */
 	}
 	memcpy(wp->str_next, bytes, nr_bytes);
@@ -49,8 +50,9 @@ static bool unpack_bytes(struct whackpacker *wp,
 {
 	size_t space = wp->str_roof - wp->str_next;
 	if (space < nr_bytes) {
-		llog(RC_LOG, logger, "buffer overflow for '%s', space for %zu bytes but need %zu",
-		     what, space, nr_bytes);
+		llog(RC_LOG, logger,
+		     "buffer overflow for '%s' in %s(), space for %zu bytes but need %zu",
+		     what, __func__, space, nr_bytes);
 		return false; /* would overflow buffer */
 	}
 	memcpy(bytes, wp->str_next, nr_bytes);
@@ -78,8 +80,9 @@ static bool unpack_raw(struct whackpacker *wp,
 	size_t space = wp->str_roof - wp->str_next;
 	if (space < nr_bytes) {
 		/* overflow */
-		llog(RC_LOG, logger, "buffer overflow for '%s'; have %zu bytes but expecting %zu",
-		     what, space, nr_bytes);
+		llog(RC_LOG, logger,
+		     "buffer overflow for '%s' in %s(), have %zu bytes but expecting %zu",
+		     what, __func__, space, nr_bytes);
 		return false;
 	}
 	(*bytes) = wp->str_next;
@@ -329,6 +332,12 @@ static bool pack_conn(struct whackpacker *wp,
 			wp->msg->end[conn.end].conn = NULL; /* don't send ptr over wire */
 		}
 	}
+	/* trailing 0.0 */
+	zero(&conn);
+	if (!pack_bytes(wp, &conn, sizeof(conn),
+			"sentinel", logger)) {
+		return false;
+	}
 	return true;
 }
 
@@ -340,6 +349,10 @@ static bool unpack_conn(struct whackpacker *wp,
 		struct conn_pack conn = {0};
 		if (!unpack_bytes(wp, &conn, sizeof(conn), "conn", logger)) {
 			return false;
+		}
+
+		if (conn.end == 0 && conn.key == 0) {
+			return true;
 		}
 
 		if (conn.end > END_ROOF) {
@@ -517,8 +530,8 @@ diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	wp->str_next = wp->msg->string;
 	wp->str_roof = (unsigned char *)wp->msg + wp->n;
 	if (wp->str_next > wp->str_roof) {
-		return diag("ignoring truncated message from whack: got %zu bytes; expected %zu",
-			    wp->n, sizeof(wp->msg));
+		return diag("ignoring truncated message from whack: got %zu bytes; expected %tu",
+			    wp->n, wp->msg->string - (uint8_t*)wp->msg);
 	}
 
 	if (!pickle_whack_message(wp, &pickle_unpacker, logger)) {

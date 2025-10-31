@@ -313,6 +313,16 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 	}
 
 	/* Send message */
+#if 0
+	const ssize_t min = 856;
+	if (len < min) {
+		llog(ERROR_STREAM, logger, "bumping up buffer from %td to %td",
+		     len, min);
+		len = min;	/* this just writes pat of the string
+				 * buffer */
+	}
+#endif
+
 
 	if (write(sock, msg, len) != len) {
 		llog_errno(ERROR_STREAM, logger, errno, "write(pluto_ctl) failed: ");
