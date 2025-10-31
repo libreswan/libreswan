@@ -1657,7 +1657,7 @@ bool process_v2TS_request_payloads(struct ike_sa *ike,
 			     (is_from_group(best.connection) ? " from group" : ""),
 			     cc->name, pri_so(cc->serialno));
 
-			if (has_oustanding_ike_auth_request(best.connection, ike, md)) {
+			if (has_outstanding_ike_auth_request(best.connection, ike, md)) {
 				llog_ts(child, &tsps, "best connection matching TS has IKE_AUTH request outstanding");
 				return false;
 			}
