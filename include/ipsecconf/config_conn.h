@@ -201,6 +201,7 @@ enum config_conn_keyword {
 	KWS_CISCO_SPLIT,	/* send cisco unity VID */
 
 	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
+	KWYN_REJECT_SIMULTANEOUS_IKE_AUTH,
 	KWYN_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KWYN_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
