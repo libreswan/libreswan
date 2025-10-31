@@ -2054,7 +2054,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REJECT_SIMULTANEOUS_IKE_AUTH: /* --reject-simultaneous-ike-auth */
-			msg.reject_simultaneour_ike_auth = optarg_yn(logger, YN_YES);
+			msg.reject_simultaneous_ike_auth = optarg_yn(logger, YN_YES);
 			continue;
 
 		case CD_PFS:	/* --pfs */
