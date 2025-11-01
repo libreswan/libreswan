@@ -299,7 +299,7 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 		exit(RC_WHACK_PROBLEM);
 	}
 
-	int sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
+	int sock = cloexec_socket(PLUTO_CTL_DOMAIN, PLUTO_CTL_TYPE, 0);
 	if (sock < 0) {
 		llog_errno(ERROR_STREAM, logger, errno, "socket() failed: ");
 		exit(RC_WHACK_PROBLEM);

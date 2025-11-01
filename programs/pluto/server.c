@@ -151,7 +151,7 @@ void init_ctl_socket(const struct config_setup *oco,
 	}
 
 	delete_ctl_socket();    /* preventative medicine */
-	ctl_fd = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
+	ctl_fd = cloexec_socket(PLUTO_CTL_DOMAIN, PLUTO_CTL_TYPE, 0);
 	if (ctl_fd == -1) {
 		fatal(PLUTO_EXIT_SOCKET_FAIL, logger, errno, "could not create control socket");
 	}

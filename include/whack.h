@@ -53,6 +53,14 @@
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
 #endif
 
+#ifndef PLUTO_CTL_DOMAIN
+# define PLUTO_CTL_DOMAIN AF_UNIX
+#endif
+
+#ifndef PLUTO_CTL_TYPE
+# define PLUTO_CTL_TYPE SOCK_SEQPACKET
+#endif
+
 enum whack_command {
 	WHACK_UNUSED,
 	WHACK_REREADALL,
