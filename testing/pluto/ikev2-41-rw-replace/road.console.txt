@@ -17,7 +17,7 @@ road #
  ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 road #
- ipsec auto --up road-east-x509-ipv4
+ ipsec up road-east-x509-ipv4 # sanitize-retransmits
 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "road-east-x509-ipv4"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east-x509-ipv4"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

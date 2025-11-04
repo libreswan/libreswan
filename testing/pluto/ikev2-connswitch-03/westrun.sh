@@ -1,4 +1,4 @@
-ipsec auto --up westnet-eastnet-two
-ipsec auto --up westnet-eastnet-one
-ipsec auto --up westnet-eastnet-three
+ipsec up westnet-eastnet-two # sanitize-retransmits
+ipsec up westnet-eastnet-one # sanitize-retransmits
+ipsec up westnet-eastnet-three # sanitize-retransmits
 echo done

@@ -14,10 +14,10 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add nss-cert-ocsp
+ ipsec add nss-cert-ocsp
 "nss-cert-ocsp": added IKEv2 connection
 west #
- ipsec auto --status |grep nss-cert-ocsp
+ ipsec connectionstatus nss-cert-ocsp
 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;
 "nss-cert-ocsp":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
 "nss-cert-ocsp":   mycert=west; my_updown=ipsec _updown;
@@ -45,7 +45,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --up nss-cert-ocsp
+ ipsec up nss-cert-ocsp # sanitize-retransmits
 "nss-cert-ocsp" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "nss-cert-ocsp" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "nss-cert-ocsp" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

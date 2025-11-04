@@ -1,5 +1,5 @@
 ipsec whack --impair revival
-ipsec auto --up westnet-northnet
+ipsec up westnet-northnet # sanitize-retransmits
 
 ipsec whack --trafficstatus
 ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.1.4.23

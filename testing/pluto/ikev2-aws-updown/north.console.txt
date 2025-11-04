@@ -16,7 +16,7 @@ initdone
 north #
  ipsec whack --impair revival
 north #
- ipsec auto --up westnet-northnet
+ ipsec up westnet-northnet # sanitize-retransmits
 "westnet-northnet" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
 "westnet-northnet" #1: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "westnet-northnet" #1: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

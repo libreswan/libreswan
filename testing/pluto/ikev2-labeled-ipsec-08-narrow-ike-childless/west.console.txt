@@ -22,7 +22,7 @@ initdone
 west #
  # should establish IKE SA and install two labels
 west #
- ipsec auto --up labeled
+ ipsec up labeled # sanitize-retransmits
 "labeled"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "labeled"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "labeled"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

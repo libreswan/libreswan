@@ -13,6 +13,8 @@ tcpdump started
 road #
  ipsec whack --impair revival
 road #
+ ipsec whack --impair suppress_retransmits
+road #
  ipsec auto --add road
 "road": created ipsec-interface ipsec1@NONE
 "road": added IKEv2 connection

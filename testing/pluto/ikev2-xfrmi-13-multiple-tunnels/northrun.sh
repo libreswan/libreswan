@@ -1,7 +1,7 @@
-ipsec auto --up north-east-21
-ipsec auto --up north-east-22
-ipsec auto --up north-east-23
-ipsec auto --up north-east-24
+ipsec up north-east-21 # sanitize-retransmits
+ipsec up north-east-22 # sanitize-retransmits
+ipsec up north-east-23 # sanitize-retransmits
+ipsec up north-east-24 # sanitize-retransmits
 ../../guestbin/ip.sh link show type xfrm
 ../../guestbin/ip.sh address add 192.0.31.254/24 dev ipsec21 2>/dev/null
 ../../guestbin/ip.sh address add 192.0.32.254/24 dev ipsec22 2>/dev/null

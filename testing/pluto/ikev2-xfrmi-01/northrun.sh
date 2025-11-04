@@ -1,4 +1,4 @@
-ipsec auto --up north
+ipsec auto --up north # sanitize-retransmits
 # comments below are to understand/explore the basics : what is going on
 # ../../guestbin/ip.sh link add ipsec1 type xfrm if_id 1 dev eth0
 # ../../guestbin/ip.sh link set ipsec1 up

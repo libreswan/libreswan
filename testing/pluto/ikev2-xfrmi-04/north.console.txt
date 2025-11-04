@@ -17,7 +17,7 @@ north #
  echo "initdone"
 initdone
 north #
- ipsec auto --up northnet-eastnet
+ ipsec up northnet-eastnet # sanitize-retransmits
 "northnet-eastnet" #1: initiating IKEv2 connection to 192.0.2.254 using UDP
 "northnet-eastnet" #1: sent IKE_SA_INIT request to 192.0.2.254:UDP/500
 "northnet-eastnet" #1: processed IKE_SA_INIT response from 192.0.2.254:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
