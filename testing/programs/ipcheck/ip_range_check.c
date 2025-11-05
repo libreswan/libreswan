@@ -78,7 +78,9 @@ static void check_iprange_bits(void)
 			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
 		}
 
-		ip_range range = range_from_raw(HERE, afi, lo.bytes, hi.bytes);
+		ip_range range = range_from_raw(HERE, afi,
+						lo.bytes, hi.bytes,
+						afi->mask_cnt);
 		int host_len = range_host_len(range);
 		if (host_len != t->host_len) {
 			FAIL("range_host_len(range) returned '%d', expected '%d'",
@@ -109,9 +111,13 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::1-::1", "::1/128", 1, },
 		{ LN, &ipv4_info, "4.3.2.1/32", "4.3.2.1/32", 1, },
 		{ LN, &ipv6_info, "::2/128", "::2/128", 1, },
+		{ LN, &ipv4_info, "4.3.2.1/32/32", "4.3.2.1/32", 1, },
+		{ LN, &ipv6_info, "::2/128/128", "::2/128", 1, },
+
 		/* normal range */
 		{ LN, &ipv6_info, "::1-::2", "::1-::2", 2, },
 		{ LN, &ipv4_info, "1.2.3.0-1.2.3.9", "1.2.3.0-1.2.3.9", 10, },
+
 		/* largest */
 		{ LN, &ipv4_info, "0.0.0.1-255.255.255.255", "0.0.0.1-255.255.255.255", UINT32_MAX, },
 
@@ -145,7 +151,7 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::/0", UINTMAX_MAX, },
 		{ LN, &ipv6_info, "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::1-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", UINTMAX_MAX, },
 
-		/* allow mask */
+		/* allow CIDR prefix */
 		{ LN, &ipv4_info, "1.2.3.0/32", "1.2.3.0/32", 1, },
 		{ LN, &ipv6_info, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", 1, },
 		{ LN, &ipv6_info, "2001:db8:0:9:1:2::/112", "2001:db8:0:9:1:2::/112", 65536, },
@@ -159,12 +165,20 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "4000::/2", "4000::/2", UINTMAX_MAX, },
 		{ LN, &ipv6_info, "8000::/1", "8000::/1", UINTMAX_MAX, },
 
+		/* allow CIDR prefix / subprefix */
+		{ LN, &ipv4_info, "1.2.3.0/31/32", "1.2.3.0/31", 2, },
+		{ LN, &ipv6_info, "1:0:3:0:0:0:0:2/127/128", "1:0:3::2/127", 2, },
+		{ LN, &ipv4_info, "1.2.3.0/24/28", "1.2.3.0/24/28", 256, },
+		{ LN, &ipv6_info, "1:0:3::/124/126", "1:0:3::/124/126", 16, },
+
 		/* reject port */
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:0", NULL, -1, },
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:30", NULL, -1, },
+
 		/* wrong order */
 		{ LN, &ipv4_info, "1.2.3.4-1.2.3.3", NULL, -1, },
 		{ LN, &ipv6_info, "::2-::1", NULL, -1, },
+
 		/* can contain %any */
 		{ LN, &ipv4_info, "0.0.0.0-0.0.0.0", "0.0.0.0/32", 1, },
 		{ LN, &ipv4_info, "0.0.0.0-0.0.0.1", "0.0.0.0/31", 2, },
@@ -174,6 +188,7 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::0/64", "::/64", UINT64_MAX, },
 		{ LN, &ipv6_info, "::0/127", "::/127", 2, },
 		{ LN, &ipv6_info, "::/0", "::/0", UINTMAX_MAX, },
+
 		/* nonsense */
 		{ LN, &ipv4_info, "1.2.3.0-nonenone", NULL, -1, },
 		{ LN, &ipv4_info, "", NULL, -1, },
@@ -338,7 +353,9 @@ static void check_range_is(void)
 		}
 
 		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
-				range_from_raw(HERE, afi, lo.bytes, hi.bytes));
+				range_from_raw(HERE, afi,
+					       lo.bytes, hi.bytes,
+					       afi->mask_cnt));
 		ip_range *range = &tmp;
 		CHECK_INFO(range);
 		CHECK_STR2(range);

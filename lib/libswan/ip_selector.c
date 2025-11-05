@@ -432,7 +432,9 @@ ip_range selector_range(const ip_selector selector)
 		return unset_range;
 	}
 
-	return range_from_raw(HERE, afi, selector.lo, selector.hi);
+	return range_from_raw(HERE, afi,
+			      selector.lo, selector.hi,
+			      afi->mask_cnt);
 }
 
 ip_address selector_prefix(const ip_selector selector)

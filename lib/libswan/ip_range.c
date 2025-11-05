@@ -34,13 +34,15 @@ const ip_range unset_range; /* all zeros */
 
 ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes lo,
-			const struct ip_bytes hi)
+			const struct ip_bytes hi,
+			unsigned subprefix)
 {
 	ip_range r = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
+		.subprefix = subprefix,
 	};
 	pexpect_range(&r, where);
 	return r;
@@ -81,7 +83,12 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 		return s;
 	}
 
-	return jam_ip_bytes_range(buf, afi, range->lo, range->hi);
+	s += jam_ip_bytes_range(buf, afi, range->lo, range->hi);
+	if (range->subprefix != afi->mask_cnt) {
+		s += jam(buf, "/%u", range->subprefix);
+	}
+
+	return s;
 }
 
 const char *str_range(const ip_range *range, range_buf *out)
@@ -100,7 +107,8 @@ ip_range range_from_address(const ip_address address)
 	}
 
 	return range_from_raw(HERE, afi,
-			      address.bytes, address.bytes);
+			      address.bytes, address.bytes,
+			      afi->mask_cnt);
 }
 
 ip_range range_from_subnet(const ip_subnet subnet)
@@ -119,7 +127,8 @@ ip_range range_from_subnet(const ip_subnet subnet)
 			      ip_bytes_blit(afi, subnet.bytes,
 					    &keep_routing_prefix,
 					    &set_host_identifier,
-					    subnet.maskbits));
+					    subnet.maskbits),
+			      afi->mask_cnt);
 }
 
 const struct ip_info *range_type(const ip_range *range)
@@ -321,7 +330,9 @@ err_t addresses_to_nonzero_range(const ip_address lo, const ip_address hi, ip_ra
 		return "out-of-order";
 	}
 
-	*dst = range_from_raw(HERE, lo_afi, lo.bytes, hi.bytes);
+	*dst = range_from_raw(HERE, lo_afi,
+			      lo.bytes, hi.bytes,
+			      lo_afi->mask_cnt);
 	return NULL;
 }
 

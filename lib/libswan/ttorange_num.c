@@ -18,7 +18,7 @@
 
 /*
  * convert from text form of IP address range specification to binary;
- * and more minor utilities for mask length calculations for IKEv2
+ * and more minor utilities for prefix length calculations for IKEv2
  */
 
 #include "jambuf.h"
@@ -30,7 +30,7 @@
 /*
  * ttorange_num()
  *
- * Convert "addr1-addr2" or subnet/mask to an address range.
+ * Convert "addr1-addr2" or subnet/prefix[/subprefix] to an address range.
  */
 err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 {
@@ -39,7 +39,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 
 	shunk_t cursor = input;
 
-	/* START or START/MASK or START-END */
+	/* START or START"/"PREFIX... or START"-"END */
 	char sep = '\0';
 	shunk_t start_token = shunk_token(&cursor, &sep, "/-");
 
@@ -60,30 +60,55 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		/* single address */
 		*dst = range_from_raw(HERE, afi,
 				      start_address.bytes,
-				      start_address.bytes);
+				      start_address.bytes,
+				      afi->mask_cnt);
 		return NULL;
 	}
 	case '/':
 	{
-		/* START/MASK */
-		uintmax_t maskbits = afi->mask_cnt;
-		err = shunk_to_uintmax(cursor, NULL, 0, &maskbits);
+		/* START/PREFIX[/SUBPREFIX] */
+		uintmax_t prefix = afi->mask_cnt; /* TBD */
+		err = shunk_to_uintmax(cursor, &cursor, 0, &prefix);
 		if (err != NULL) {
 			return err;
 		}
-		if (maskbits > afi->mask_cnt) {
+
+		if (prefix > afi->mask_cnt) {
 			return "too large";
 		}
+
+		uintmax_t subprefix = afi->mask_cnt;
+		if (cursor.len > 0) {
+			if (hunk_char(cursor, 0) != '/') {
+				return "invalid subprefix, expecting '/'";
+			}
+			
+			cursor = shunk_slice(cursor, 1, cursor.len);
+			err = shunk_to_uintmax(cursor, NULL, 0, &subprefix);
+			if (err != NULL) {
+				return err;
+			}
+
+			if (subprefix < prefix) {
+				return "subprefix is too small";
+			}
+
+			if (subprefix > afi->mask_cnt) {
+				return "subprefix is too big";
+			}
+		}
+
 		/* XXX: should this reject bad addresses */
 		*dst = range_from_raw(HERE, afi,
 				      ip_bytes_blit(afi, start_address.bytes,
 						    &keep_routing_prefix,
 						    &clear_host_identifier,
-						    maskbits),
+						    prefix),
 				      ip_bytes_blit(afi, start_address.bytes,
 						    &keep_routing_prefix,
 						    &set_host_identifier,
-						    maskbits));
+						    prefix),
+				      subprefix);
 		return NULL;
 	}
 	case '-':
@@ -102,7 +127,8 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		}
 		*dst = range_from_raw(HERE, afi,
 				      start_address.bytes,
-				      end_address.bytes);
+				      end_address.bytes,
+				      afi->mask_cnt);
 		return NULL;
 	}
 	default:

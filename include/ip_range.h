@@ -30,21 +30,25 @@ typedef struct {
 
 	struct ip_bytes lo;
 	struct ip_bytes hi;
+	/* nr of bits to deligate */
+	unsigned subprefix;
 } ip_range;
 
-#define PRI_RANGE "<range-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>"
+#define PRI_RANGE "<range-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>/%u"
 #define pri_range(R)					\
 	((R)->ip.is_set ? "set" : "unset"),		\
 		pri_ip_version((R)->ip.version),	\
 		pri_ip_bytes((R)->lo),			\
-		pri_ip_bytes((R)->hi)
+		pri_ip_bytes((R)->hi),			\
+		(R)->subprefix
 
 void pexpect_range(const ip_range *r, where_t where);
 
 /* caller knows best */
 ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes start,
-			const struct ip_bytes end);
+			const struct ip_bytes end,
+			unsigned subprefix);
 
 ip_range range_from_address(const ip_address subnet);
 ip_range range_from_subnet(const ip_subnet subnet);
