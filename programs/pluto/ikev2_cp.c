@@ -299,11 +299,8 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 		return true; /*non-fatal*/
 	}
 
-	ip_address assigned_address; /* ignore */
-	diag_t d = assign_remote_lease(cc, /*xauth-username*/NULL, afi,
-				       /*preferred-address*/unset_address,
-				       &assigned_address,
-				       child->sa.logger);
+	/* XXX: should provide provide prefered address */
+	diag_t d = assign_remote_ikev2_lease(cc, afi, child->sa.logger);
 	if (d != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
 			afi->ip_name, str_diag(d));

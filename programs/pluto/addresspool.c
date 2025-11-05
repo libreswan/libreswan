@@ -776,12 +776,12 @@ static diag_t assign_requested_lease(struct connection *c,
 	return NULL;
 }
 
-diag_t assign_remote_lease(struct connection *c,
-			   const char *xauth_username,
-			   const struct ip_info *afi,
-			   const ip_address preferred_address,
-			   ip_address *assigned_address,
-			   struct logger *logger)
+static diag_t assign_remote_lease(struct connection *c,
+				  const char *xauth_username,
+				  const struct ip_info *afi,
+				  const ip_address preferred_address,
+				  ip_address *assigned_address,
+				  struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() xauth=%s family=%s",
@@ -926,6 +926,29 @@ diag_t assign_remote_lease(struct connection *c,
 	}
 
 	return NULL;
+}
+
+diag_t assign_remote_ikev1_lease(struct connection *c,
+				 const char *xauth_username/*possibly-NULL|NUL*/,
+				 const struct ip_info *afi,
+				 const ip_address preferred_address,
+				 ip_address *assigned_address,
+				 struct logger *logger)
+{
+	return assign_remote_lease(c, xauth_username, afi,
+				   preferred_address, assigned_address,
+				   logger);
+}
+
+diag_t assign_remote_ikev2_lease(struct connection *c,
+				 const struct ip_info *afi,
+				 struct logger *logger)
+{
+	ip_address assigned_address;
+	return assign_remote_lease(c, /*xauth_username*/NULL, afi,
+				   unset_address,
+				   &assigned_address,
+				   logger);
 }
 
 void addresspool_delref(struct addresspool **poolparty, struct logger *logger)

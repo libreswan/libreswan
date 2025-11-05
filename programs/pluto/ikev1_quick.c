@@ -1198,11 +1198,11 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		ip_address assigned_address;
 
 		assigned_address = preferred_address; // ikev1 mandatory
-		diag_t d = assign_remote_lease(c, ike->sa.st_xauth_username,
-					       address_info(preferred_address),
-					       preferred_address,
-					       &assigned_address,
-					       ike->sa.logger);
+		diag_t d = assign_remote_ikev1_lease(c, ike->sa.st_xauth_username,
+						     address_info(preferred_address),
+						     preferred_address,
+						     &assigned_address,
+						     ike->sa.logger);
 		if (d != NULL) {
 			selector_buf cb;
 			llog(RC_LOG, ike->sa.logger,
