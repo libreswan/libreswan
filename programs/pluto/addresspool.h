@@ -35,8 +35,7 @@ diag_t assign_remote_ikev1_lease(struct connection *c,
 				 const char *xauth_username/*possibly-NULL|NUL*/,
 				 const struct ip_info *afi,
 				 const ip_address preferred_address,
-				 ip_address *assigned_address,
-				 struct logger *logger);
+				 struct verbose verbose);
 diag_t assign_remote_ikev2_lease(struct connection *c,
 				 const struct ip_info *afi,
 				 struct logger *logger);

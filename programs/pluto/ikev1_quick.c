@@ -1195,14 +1195,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 		vdbg("connection already has a lease");
 	} else {
 		ip_address preferred_address = selector_prefix(remote_client);
-		ip_address assigned_address;
-
-		assigned_address = preferred_address; // ikev1 mandatory
 		diag_t d = assign_remote_ikev1_lease(c, ike->sa.st_xauth_username,
 						     address_info(preferred_address),
 						     preferred_address,
-						     &assigned_address,
-						     ike->sa.logger);
+						     verbose);
 		if (d != NULL) {
 			selector_buf cb;
 			llog(RC_LOG, ike->sa.logger,
@@ -1213,20 +1209,10 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 
-		if (!vexpect(address_eq_address(preferred_address, assigned_address))) {
-			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
-		}
-
 		selector_buf sb;
 		llog(RC_LOG, ike->sa.logger,
 		     "Quick Mode without mode-config, assigned lease %s",
 		     str_selector(&remote_client, &sb));
-
-		vdbg("another hack to get the SPD in sync");
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			spd->remote->client = selector_from_address(assigned_address);
-			spd_db_rehash_remote_client(spd);
-		}
 	}
 
 	/* fill in the client's true ip address/subnet */

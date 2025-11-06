@@ -574,6 +574,7 @@ static bool emit_empty_mode_cfg_attr(struct modecfg_pbs *modecfg_pbs,
 
 static bool get_internal_address(struct ike_sa *ike)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL);
 	struct connection *c = ike->sa.st_connection;
 	/* our IKEv1 doesn't do IPv6 */
 	const struct ip_info *afi = &ipv4_info;
@@ -581,22 +582,14 @@ static bool get_internal_address(struct ike_sa *ike)
 	const char *from;
 	if (c->pool[afi->ip.version] != NULL) {
 
-		ip_address assigned_address;
 		diag_t d = assign_remote_ikev1_lease(c, ike->sa.st_xauth_username, afi,
 						     /*preferred-address*/unset_address,
-						     &assigned_address,
-						     ike->sa.logger);
+						     verbose);
 		if (d != NULL) {
 			llog(RC_LOG, ike->sa.logger, "leasing %s address failed: %s",
 			     afi->ip_name, str_diag(d));
 			pfree_diag(&d);
 			return false;
-		}
-
-		ldbg(c->logger, "another hack to get the SPD in sync");
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			spd->remote->client = selector_from_address(assigned_address);
-			spd_db_rehash_remote_client(spd);
 		}
 
 		from = "lease";

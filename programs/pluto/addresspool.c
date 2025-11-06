@@ -320,7 +320,8 @@ static void vdbg_lease(struct verbose verbose,
 static void scribble_remote_lease(struct connection *c,
 				  ip_address ia,
 				  unsigned assigned_nr,
-				  struct logger *logger, where_t where)
+				  const struct logger *logger,
+				  where_t where)
 {
 	/* assign the lease */
 	const struct ip_info *afi = address_info(ia);
@@ -781,9 +782,8 @@ static diag_t assign_remote_lease(struct connection *c,
 				  const struct ip_info *afi,
 				  const ip_address preferred_address,
 				  ip_address *assigned_address,
-				  struct logger *logger)
+				  struct verbose verbose)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("%s() xauth=%s family=%s",
 	     __func__, (xauth_username == NULL ? "n/a" : xauth_username),
 	     afi->ip_name);
@@ -793,13 +793,13 @@ static diag_t assign_remote_lease(struct connection *c,
 
 	if (c->remote->child.lease[afi->ip.version].ip.is_set &&
 	    connection_lease(c, afi, verbose) != NULL) {
-		ldbg(logger, "connection both thinks it has, and really has a lease");
+		vdbg("connection both thinks it has, and really has a lease");
 		(*assigned_address) = c->remote->child.lease[afi->ip.version];
 		return NULL;
 	}
 
 	struct addresspool *pool = c->pool[afi->ip.version];
-	if (PBAD(logger, pool == NULL)) {
+	if (vbad(pool == NULL)) {
 		return diag("confused, no address pool");
 	}
 
@@ -901,12 +901,12 @@ static diag_t assign_remote_lease(struct connection *c,
 	 */
 	err_t err = pool_lease_to_address(pool, new_lease, assigned_address);
 	if (err != NULL) {
-		llog_pexpect(logger, HERE, "%s", err);
-		return diag("confused, bad address");
+		vlog_pexpect(HERE, "%s", err);
+		return diag("confused, bad address: %s", err);
 	}
 
 	/* assign and back link */
-	scribble_remote_lease(c, (*assigned_address), next_lease_nr, logger, HERE);
+	scribble_remote_lease(c, (*assigned_address), next_lease_nr, verbose.logger, HERE);
 	new_lease->assigned_to = c->serialno;
 
 	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
@@ -932,23 +932,41 @@ diag_t assign_remote_ikev1_lease(struct connection *c,
 				 const char *xauth_username/*possibly-NULL|NUL*/,
 				 const struct ip_info *afi,
 				 const ip_address preferred_address,
-				 ip_address *assigned_address,
-				 struct logger *logger)
+				 struct verbose verbose)
 {
-	return assign_remote_lease(c, xauth_username, afi,
-				   preferred_address, assigned_address,
-				   logger);
+	ip_address assigned_address;
+	diag_t d = assign_remote_lease(c, xauth_username, afi,
+				       preferred_address,
+				       &assigned_address,
+				       verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (preferred_address.ip.is_set &&
+	    !vexpect(address_eq_address(preferred_address, assigned_address))) {
+		return diag("confused, should have got back prefered address");
+	}
+
+	vdbg("another hack to get the SPD in sync");
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		spd->remote->client = selector_from_address(assigned_address);
+		spd_db_rehash_remote_client(spd);
+	}
+
+	return NULL;
 }
 
 diag_t assign_remote_ikev2_lease(struct connection *c,
 				 const struct ip_info *afi,
 				 struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	ip_address assigned_address;
 	return assign_remote_lease(c, /*xauth_username*/NULL, afi,
 				   unset_address,
 				   &assigned_address,
-				   logger);
+				   verbose);
 }
 
 void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
