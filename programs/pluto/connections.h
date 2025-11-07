@@ -615,7 +615,7 @@ struct child_end {
 		 end_->child.lease[IPv6].ip.is_set);		\
 	})
 
-	ip_address lease[IP_VERSION_ROOF];
+	ip_cidr lease[IP_VERSION_ROOF];
 	bool has_cat;		/* add a CAT iptable rule when a valid
 				   INTERNAL_IP4_ADDRESS is received */
 };

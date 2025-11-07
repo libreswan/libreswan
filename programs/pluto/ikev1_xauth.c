@@ -1930,7 +1930,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 			ike->sa.hidden_variables.st_lease_ip = a;
 
 			const struct ip_info *afi = address_info(a);
-			c->local->child.lease[afi->ip.version] = a;
+			c->local->child.lease[afi->ip.version] = cidr_from_address(a);
 
 #if 0
 /*
