@@ -318,18 +318,18 @@ static void vdbg_lease(struct verbose verbose,
 }
 
 static void scribble_remote_lease(struct connection *c,
-				  ip_cidr cidr,
+				  ip_address ia,
 				  unsigned assigned_nr,
 				  const struct logger *logger,
 				  where_t where)
 {
 	/* assign the lease */
-	const struct ip_info *afi = cidr_info(cidr);
-	c->remote->child.lease[afi->ip.version] = cidr;
+	const struct ip_info *afi = address_info(ia);
+	c->remote->child.lease[afi->ip.version] = ia;
 	set_child_has_client(c, remote, true);
 
 	/* update the selectors */
-	ip_selector selector = selector_from_cidr(cidr);
+	ip_selector selector = selector_from_address(ia);
 	struct child_end_selectors *remote_selectors = &c->remote->child.selectors;
 	if (!PEXPECT_WHERE(logger, where, assigned_nr < elemsof(remote_selectors->assigned))) {
 		return;
@@ -434,7 +434,7 @@ static struct lease *connection_lease(struct connection *c,
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	ip_cidr  = c->remote->child.lease[afi->ip.version];
+	ip_address prefix = c->remote->child.lease[afi->ip.version];
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {

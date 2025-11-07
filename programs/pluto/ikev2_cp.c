@@ -112,16 +112,10 @@ bool send_v2CP_request(const struct connection *const cc,
 	return send;
 }
 
-/*
- * For IKEv4, also emits the mask when needed.
- *
- * IP can be unset, yet still have info!
- */
-
-static bool emit_v2CP_attribute_cidr(const ip_address *ip,
-				     const char *story, struct pbs_out *outpbs)
+/* Misleading name, also used for NULL sized type's */
+static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
+					const char *story, struct pbs_out *outpbs)
 {
-	const struct ip_info *afi = afi_type(ip);
 	struct pbs_out a_pbs;
 
 	struct ikev2_cp_attribute attr = {
@@ -133,27 +127,36 @@ static bool emit_v2CP_attribute_cidr(const ip_address *ip,
 	}
 
 	/* could be NULL */
+	const struct ip_info *afi = address_type(ip);
+	if (afi == NULL) {
+		attr.len = 0;
+	} else {
+		attr.len = address_type(ip)->ip_size;
+	}
 
-	if (ip->is_set) {
+	if (afi == &ipv6_info) {
+		/* RFC hack to append 1-byte IPv6 prefix len */
+		attr.len += sizeof(uint8_t);
+	}
+
+	if (attr.len > 0) {
 		if (!pbs_out_address(&a_pbs, *ip, story)) {
 			/* already logged */
 			return false;
 		}
+	}
 
-		if (afi == &ipv6_info) {
-			uint8_t ipv6_prefix_len = cidr_prefix_len(ip);
-			if (!pbs_out_thing(&a_pbs, ipv6_prefix_len, "INTERNAL_IP6_PREFIX_LEN")) {
-				/* already logged */
-				return false;
-			}
+	if (afi == &ipv6_info) {
+		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN; /*128*/
+		if (!pbs_out_thing(&a_pbs, ipv6_prefix_len, "INTERNAL_IP6_PREFIX_LEN")) {
+			/* already logged */
+			return false;
 		}
 	}
 
 	close_pbs_out(&a_pbs);
 	return true;
 }
-
-/* Misleading name, also used for NULL sized type's */
 
 static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 				uint16_t type, shunk_t attrib,
@@ -204,7 +207,9 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 
 	FOR_EACH_ELEMENT(lease, c->remote->child.lease) {
 		if (lease->ip.is_set) {
-			if (!emit_v2CP_attribute_cidr(lease, "Internal IP Address", &cp_pbs)) {
+			const struct ip_info *lease_afi = address_type(lease);
+			if (!emit_v2CP_attribute_address(lease_afi->ikev2_internal_address,
+							 lease, "Internal IP Address", &cp_pbs)) {
 				return false;
 			}
 		}
