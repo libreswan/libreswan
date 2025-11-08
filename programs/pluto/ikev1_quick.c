@@ -1205,14 +1205,14 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 
 	selector_buf csb;
 	selector_buf rcb;
-	address_buf lb;
+	cidr_buf lb;
 	vdbg("%s() client: %s %s; port wildcard: %s; virtual-private: %s; addresspool %s; current remote: %u %s",
 	     __func__,
 	     bool_str(c->remote->child.has_client),
 	     str_selector(&c->child.spds.list->remote->client, &rcb),
 	     bool_str(c->remote->config->child.protoport.has_port_wildcard),
 	     bool_str(is_virtual_remote(c, verbose)),
-	     str_address(&c->remote->child.lease[client_afi->ip.version], &lb),
+	     str_cidr(&c->remote->child.lease[client_afi->ip.version], &lb),
 	     c->remote->child.selectors.proposed.len,
 	     str_selector(&c->remote->child.selectors.proposed.list[0], &csb));
 

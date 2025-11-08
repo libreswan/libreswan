@@ -1928,7 +1928,7 @@ diag_t process_mode_cfg_attrs(struct ike_sa *ike,
 
 			set_child_has_client(c, local, true);
 			const struct ip_info *afi = address_info(a);
-			c->local->child.lease[IPv4] = a;
+			c->local->child.lease[IPv4] = cidr_from_address(a);
 			set_child_has_client(c, local, true);
 
 #if 0

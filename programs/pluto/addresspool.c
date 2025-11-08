@@ -252,17 +252,15 @@ static void unhash_lease_id(struct addresspool *pool, struct lease *lease)
 	pool->nr_reusable--;
 }
 
-static err_t pool_lease_to_address(const struct addresspool *pool,
-				   const struct lease *lease,
-				   ip_address *address)
+static err_t pool_lease_to_cidr(const struct addresspool *pool,
+				const struct lease *lease,
+				ip_cidr *lease_cidr)
 {
-	ip_cidr cidr = {0};
-	err_t e = range_offset_to_cidr(pool->r, lease - pool->leases, &cidr);
+	err_t e = range_offset_to_cidr(pool->r, lease - pool->leases, lease_cidr);
 	if (e != NULL) {
 		return e;
 	}
 
-	*address = cidr_prefix(cidr);
 	return NULL;
 }
 
@@ -303,12 +301,12 @@ static void vdbg_lease(struct verbose verbose,
 			jam_connection(buf, c);
 			jam_string(buf, " ");
 		}
-		ip_address addr;
-		err_t err = pool_lease_to_address(pool, lease, &addr);
+		ip_cidr cidr;
+		err_t err = pool_lease_to_cidr(pool, lease, &cidr);
 		if (err != NULL) {
 			jam(buf, "["PEXPECT_PREFIX"%s]", err);
 		}
-		jam_address(buf, &addr);
+		jam_cidr(buf, &cidr);
 		if (lease->assigned_to != COS_NOBODY) {
 			jam(buf, " "PRI_CO, pri_co(lease->assigned_to));
 		} else {
@@ -326,18 +324,18 @@ static void vdbg_lease(struct verbose verbose,
 }
 
 static void scribble_remote_lease(struct connection *c,
-				  ip_address ia,
+				  ip_cidr cidr,
 				  unsigned assigned_nr,
 				  const struct logger *logger,
 				  where_t where)
 {
 	/* assign the lease */
-	const struct ip_info *afi = address_info(ia);
-	c->remote->child.lease[afi->ip.version] = ia;
+	const struct ip_info *afi = cidr_info(cidr);
+	c->remote->child.lease[afi->ip.version] = cidr;
 	set_child_has_client(c, remote, true);
 
 	/* update the selectors */
-	ip_selector selector = selector_from_address(ia);
+	ip_selector selector = selector_from_cidr(cidr);
 	struct child_end_selectors *remote_selectors = &c->remote->child.selectors;
 	if (!PEXPECT_WHERE(logger, where, assigned_nr < elemsof(remote_selectors->assigned))) {
 		return;
@@ -442,7 +440,7 @@ static struct lease *connection_lease(struct connection *c,
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	ip_cidr prefix = cidr_from_address(c->remote->child.lease[afi->ip.version]);
+	ip_cidr prefix = c->remote->child.lease[afi->ip.version];
 	uintmax_t offset;
 	err_t err = cidr_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
@@ -501,7 +499,7 @@ void free_that_address_lease(struct connection *c,
 	struct lease *lease = connection_lease(c, afi, verbose);
 	if (lease == NULL) {
 		vdbg("connection lost its %s lease", afi->ip_name);
-		c->remote->child.lease[afi->ip.version] = unset_address;
+		c->remote->child.lease[afi->ip.version] = unset_cidr;
 		return;
 	}
 
@@ -523,7 +521,7 @@ void free_that_address_lease(struct connection *c,
 	}
 
 	/* break the link */
-	c->remote->child.lease[afi->ip.version] = unset_address;
+	c->remote->child.lease[afi->ip.version] = unset_cidr;
 	lease->assigned_to = COS_NOBODY;
 }
 
@@ -790,7 +788,7 @@ static diag_t assign_remote_lease(struct connection *c,
 				  const char *xauth_username,
 				  const struct ip_info *afi,
 				  const ip_address preferred_address,
-				  ip_address *assigned_address,
+				  ip_cidr *assigned_cidr,
 				  struct verbose verbose)
 {
 	vdbg("%s() xauth=%s family=%s",
@@ -798,12 +796,12 @@ static diag_t assign_remote_lease(struct connection *c,
 	     afi->ip_name);
 	verbose.level++;
 
-	(*assigned_address) = unset_address;
+	(*assigned_cidr) = unset_cidr;
 
 	if (c->remote->child.lease[afi->ip.version].ip.is_set &&
 	    connection_lease(c, afi, verbose) != NULL) {
 		vdbg("connection both thinks it has, and really has a lease");
-		(*assigned_address) = c->remote->child.lease[afi->ip.version];
+		(*assigned_cidr) = c->remote->child.lease[afi->ip.version];
 		return NULL;
 	}
 
@@ -908,14 +906,14 @@ static diag_t assign_remote_lease(struct connection *c,
 	 * Convert the leases offset into the address pool's range,
 	 * into an IP_address.
 	 */
-	err_t err = pool_lease_to_address(pool, new_lease, assigned_address);
+	err_t err = pool_lease_to_cidr(pool, new_lease, assigned_cidr);
 	if (err != NULL) {
 		vlog_pexpect(HERE, "%s", err);
 		return diag("confused, bad address: %s", err);
 	}
 
 	/* assign and back link */
-	scribble_remote_lease(c, (*assigned_address), next_lease_nr, verbose.logger, HERE);
+	scribble_remote_lease(c, (*assigned_cidr), next_lease_nr, verbose.logger, HERE);
 	new_lease->assigned_to = c->serialno;
 
 	LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
@@ -925,7 +923,7 @@ static diag_t assign_remote_lease(struct connection *c,
 			jam_string(buf, " recoverable");
 		}
 		jam_string(buf, " lease ");
-		jam_address_sensitive(buf, assigned_address);
+		jam_cidr_sensitive(buf, assigned_cidr);
 		jam_string(buf, " from addresspool ");
 		jam_range(buf, &pool->r);
 		if (old_growth != pool->nr_leases) {
@@ -943,23 +941,24 @@ diag_t assign_remote_ikev1_lease(struct connection *c,
 				 const ip_address preferred_address,
 				 struct verbose verbose)
 {
-	ip_address assigned_address;
+	ip_cidr assigned_cidr;
 	diag_t d = assign_remote_lease(c, xauth_username, afi,
 				       preferred_address,
-				       &assigned_address,
+				       &assigned_cidr,
 				       verbose);
 	if (d != NULL) {
 		return d;
 	}
 
-	if (preferred_address.ip.is_set &&
-	    !vexpect(address_eq_address(preferred_address, assigned_address))) {
+	ip_cidr preferred_cidr = cidr_from_address(preferred_address);
+	if (preferred_cidr.ip.is_set &&
+	    !vexpect(cidr_eq_cidr(preferred_cidr, assigned_cidr))) {
 		return diag("confused, should have got back prefered address");
 	}
 
 	vdbg("another hack to get the SPD in sync");
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd->remote->client = selector_from_address(assigned_address);
+		spd->remote->client = selector_from_cidr(assigned_cidr);
 		spd_db_rehash_remote_client(spd);
 	}
 
@@ -971,10 +970,10 @@ diag_t assign_remote_ikev2_lease(struct connection *c,
 				 struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
-	ip_address assigned_address;
+	ip_cidr assigned_cidr;
 	return assign_remote_lease(c, /*xauth_username*/NULL, afi,
 				   unset_address,
-				   &assigned_address,
+				   &assigned_cidr,
 				   verbose);
 }
 
@@ -1159,13 +1158,13 @@ void whack_addresspoolstatus(const struct whack_message *wm UNUSED, struct show 
 		unsigned nr_reusable_names = 0;
 		for (unsigned l = 0; l < pool->nr_leases; l++) {
 			struct lease *lease = &pool->leases[l];
-			ip_address lease_ip;
-			err_t err = pool_lease_to_address(pool, lease, &lease_ip);
+			ip_cidr lease_cidr;
+			err_t err = pool_lease_to_cidr(pool, lease, &lease_cidr);
 			if (err != NULL) {
 				llog_pexpect(show_logger(s), HERE, "%s", err);
 			}
-			address_buf lease_ipb;
-			const char *lease_str = str_address(&lease_ip, &lease_ipb);
+			cidr_buf lease_ipb;
+			const char *lease_str = str_cidr(&lease_cidr, &lease_ipb);
 			struct connection *c = connection_by_serialno(lease->assigned_to);
 			nr_free += IS_INSERTED(lease, free_entry) ? 1 : 0;
 			nr_reusable_entries += IS_INSERTED(lease, reusable_entry) ? 1 : 0;

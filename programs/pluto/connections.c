@@ -193,7 +193,7 @@ void vdbg_connection(const struct connection *c,
 			FOR_EACH_ELEMENT(lease, end->lease) {
 				if (lease->ip.is_set) {
 					jam_string(buf, " ");
-					jam_address(buf, lease);
+					jam_cidr(buf, lease);
 				}
 			}
 			jam_string(buf, " ->");
@@ -2076,8 +2076,8 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	    spde->child->lease[afi->ip.version].ip.is_set &&
 	    !spde->child->config->has_client_address_translation) {
 		/* XXX: same as .lease[]? */
-		ip_address a = selector_prefix(spde->client);
-		pexpect(address_eq_address(a, spde->child->lease[afi->ip.version]));
+		ip_cidr a = cidr_from_address(selector_prefix(spde->client));
+		pexpect(cidr_eq_cidr(a, spde->child->lease[afi->ip.version]));
 		return selector_prefix(spde->client);
 	}
 
