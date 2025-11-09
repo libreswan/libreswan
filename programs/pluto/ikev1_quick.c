@@ -583,25 +583,6 @@ struct child_sa *quick_outI1(struct ike_sa *ike,
 	child->sa.st_v1_msgid.id = generate_msgid(&ike->sa);
 	change_v1_state(&child->sa, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
-	/* if not forbidden by config, try to re-use a given lease */
-	if (c->config->share_lease && ike->sa.hidden_variables.st_lease_ip.ip.is_set) {
-		ip_address lease = ike->sa.hidden_variables.st_lease_ip;
-
-		if (!c->local->child.has_client) {
-			const struct ip_info *afi = address_info(lease);
-			if (c->local->child.config->selectors.len <= 0) {
-				c->local->child.lease[afi->ip.version] = lease;
-				update_end_selector(c, c->local->config->index,
-					selector_from_address(lease),
-					"^*(&^(* IKEv1 mangling lease IP onto local subnet");
-				subnet_buf caddr;
-				str_selector_range(&c->child.spds.list->local->client, &caddr);
-				llog(RC_LOG, ike->sa.logger, "overwriting lease IP over subnet: %s",
-					caddr.buf);
-			}
-		}
-	}
-
 	binlog_refresh_state(&child->sa);
 
 	/* figure out PFS group, if any */
