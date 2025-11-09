@@ -185,7 +185,11 @@ uintmax_t range_size(const ip_range range)
 		return 0;
 	}
 
-	struct ip_bytes diff_bytes = ip_bytes_sub(afi, range.hi, range.lo);
+	struct ip_bytes diff_bytes = {0};
+	err_t e = ip_bytes_sub(afi, &diff_bytes, range.hi, range.lo);
+	if (e != NULL) {
+		return UINTMAX_MAX;
+	}
 
 	/* more than uintmax_t-bits of host-prefix always overflows. */
 	unsigned prefix_bits = ip_bytes_first_set_bit(afi, diff_bytes);
@@ -360,6 +364,7 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 
 err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address *address)
 {
+	err_t e;
 	*address = unset_address;
 
 	const struct ip_info *afi = range_info(range);
@@ -367,24 +372,16 @@ err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address
 		return "invalid range";
 	}
 
-	int carry = 0;
-	struct ip_bytes sum = unset_ip_bytes;/*be safe*/
-	for (int j = afi->ip_size - 1; j >= 0; j--) {
-		/* extract the next byte to add */
-		unsigned add = offset & 0xff;
-		offset >>= 8;
-		/* update */
-		unsigned val = range.lo.byte[j] + add + carry;
-		carry = val > 0xff;
-		sum.byte[j] = val; /* truncates */
+	struct ip_bytes ip_offset;
+	e = uintmax_to_ip_bytes(afi, offset, &ip_offset);
+	if (e != NULL) {
+		return e;
 	}
 
-	if (offset > 0) {
-		return "offset overflow";
-	}
-
-	if (carry > 0) {
-		return "address overflow";
+	struct ip_bytes sum = {0};
+	e = ip_bytes_add(afi, &sum, range.lo, ip_offset);
+	if (e != NULL) {
+		return e;
 	}
 
 	ip_address tmp = address_from_raw(HERE, afi, sum);
@@ -398,6 +395,7 @@ err_t range_offset_to_address(const ip_range range, uintmax_t offset, ip_address
 
 err_t address_to_range_offset(const ip_range range, const ip_address address, uintmax_t *offset)
 {
+	err_t e;
 	*offset = UINTMAX_MAX;
 
 	const struct ip_info *afi = range_info(range);
@@ -413,12 +411,15 @@ err_t address_to_range_offset(const ip_range range, const ip_address address, ui
 		return "address out-of-bounds";
 	}
 
-	struct ip_bytes diff = ip_bytes_sub(afi, address.bytes, range.lo);
+	struct ip_bytes diff = {0};
+	e = ip_bytes_sub(afi, &diff, address.bytes, range.lo);
+	if (e != NULL) {
+		return e;
+	}
 
-	*offset = raw_ntoh(diff.byte, afi->ip_size);
-
-	if (*offset == UINTMAX_MAX) {
-		return "offset overflow";
+	e = ip_bytes_to_uintmax(afi, diff, offset);
+	if (e != NULL) {
+		return e;
 	}
 
 	return NULL;
