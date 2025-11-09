@@ -185,13 +185,9 @@ const char *str_endpoint(const ip_endpoint *endpoint, endpoint_buf *dst)
 size_t jam_endpoint_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi;
-	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	size_t s = jam_sensitive_ip(buf, "endpoint", endpoint, &afi);
 	if (s > 0) {
 		return s;
-	}
-
-	if (!log_ip) {
-		return jam_string(buf, "<endpoint>");
 	}
 
 	return jam_endpoint(buf, endpoint);
@@ -241,13 +237,9 @@ const char *str_endpoint_address_protocol_port(const ip_endpoint *endpoint, endp
 size_t jam_endpoint_address_protocol_port_sensitive(struct jambuf *buf, const ip_endpoint *endpoint)
 {
 	const struct ip_info *afi;
-	size_t s = jam_invalid_ip(buf, "endpoint", endpoint, &afi);
+	size_t s = jam_sensitive_ip(buf, "endpoint", endpoint, &afi);
 	if (s > 0) {
 		return s;
-	}
-
-	if (!log_ip) {
-		return jam_string(buf, "<endpoint>");
 	}
 
 	return jam_endpoint_address_protocol_port(buf, endpoint);

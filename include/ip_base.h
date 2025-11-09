@@ -44,6 +44,19 @@ struct ip_base {
 	jam_ip_invalid(BUF, WHAT, ((IP) == NULL ? NULL : &(IP)->ip), AFI)
 
 size_t jam_ip_invalid(struct jambuf *buf, const char *what,
-		      const struct ip_base *ip, const struct ip_info **afi);
+		      const struct ip_base *ip,
+		      const struct ip_info **afi);
+
+/*
+ * Handle sensitive IPs (NULL, unset, bogus AFI).  Returns >0 (the
+ * bytes written) when the IP isn't valid.  Sets AFI when IP is valid
+ */
+
+#define jam_sensitive_ip(BUF, WHAT, IP, AFI)				\
+	jam_ip_sensitive(BUF, WHAT, ((IP) == NULL ? NULL : &(IP)->ip), AFI)
+
+size_t jam_ip_sensitive(struct jambuf *buf, const char *what,
+			const struct ip_base *ip,
+			const struct ip_info **afi);
 
 #endif
