@@ -370,6 +370,19 @@ ip_selector selector_from_range(const ip_range range)
 	return selector_from_range_protocol_port(range, &ip_protocol_all, unset_port);
 }
 
+ip_selector selector_from_pool(const ip_pool pool)
+{
+	const struct ip_info *afi = pool_info(pool);
+	if (afi == NULL) {
+		return unset_selector;
+	}
+
+	return selector_from_raw(HERE, afi,
+				 pool.lo, pool.hi,
+				 &ip_protocol_all,
+				 unset_port);
+}
+
 ip_selector selector_from_range_protocol_port(const ip_range range,
 					      const struct ip_protocol *protocol,
 					      const ip_port port)

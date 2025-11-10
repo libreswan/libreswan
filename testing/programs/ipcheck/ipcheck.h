@@ -37,6 +37,7 @@ extern void ip_port_range_check(void);
 extern void ip_cidr_check(void);
 extern void ip_protocol_check(void);
 extern void ip_packet_check(void);
+extern void ip_pool_check(struct logger *logger);
 
 /*
  * See: https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html

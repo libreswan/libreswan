@@ -25,6 +25,7 @@
 #include "ip_protocol.h"
 #include "ip_cidr.h"
 #include "ip_range.h"
+#include "ip_pool.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
 
@@ -92,6 +93,8 @@ ip_selector selector_from_subnet(const ip_subnet subnet);
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port);
+
+ip_selector selector_from_pool(const ip_pool pool);
 
 ip_selector selector_from_range(const ip_range range);
 ip_selector selector_from_range_protocol_port(const ip_range range,

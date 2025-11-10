@@ -10,6 +10,9 @@
 #include "ip_selector.h"
 #include "ip_sockaddr.h"
 #include "ip_version.h"
+#include "ip_range.h"
+#include "ip_pool.h"
+
 #include "constants.h"			/* for enum ikev2_ts_addr_range_type; et.al. */
 
 struct ip_info {
@@ -52,7 +55,7 @@ struct ip_info {
 	 * ip_endpoint
 	 */
 	struct {
-		const ip_address unset;
+		const ip_endpoint unset;
 	} endpoint;
 
 	/*
@@ -61,7 +64,7 @@ struct ip_info {
 	struct {
 		const ip_subnet zero;		/* ::/128 or 0.0.0.0/32 */
 		const ip_subnet all;		/* ::/0 or 0.0.0.0/0 */
-		const ip_address unset;
+		const ip_subnet unset;
 	} subnet;
 
 	/*
@@ -70,8 +73,17 @@ struct ip_info {
 	struct {
 		const ip_range zero;
 		const ip_range all;
-		const ip_address unset;
+		const ip_range unset;
 	} range;
+
+	/*
+	 * ip_pool.
+	 */
+	struct {
+		const ip_pool zero;
+		const ip_pool all;
+		const ip_pool unset;
+	} pool;
 
 	/*
 	 * ip_selector

@@ -32,6 +32,7 @@ OBJS += ip_port_range_check.o
 OBJS += ip_cidr_check.o
 OBJS += ip_protocol_check.o
 OBJS += ip_packet_check.o
+OBJS += ip_pool_check.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
