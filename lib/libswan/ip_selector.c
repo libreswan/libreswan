@@ -192,8 +192,17 @@ size_t jam_selector_pair_sensitive(struct jambuf *buf,
 				   const ip_selector *src,
 				   const ip_selector *dst)
 {
-	if(!log_ip) {
-		return jam_string(buf, "<selectors>");
+	const struct ip_info *afi;
+	size_t s;
+
+	s = jam_sensitive_ip(buf, "selectors", src, &afi);
+	if (s > 0) {
+		return s;
+	}
+
+	s = jam_sensitive_ip(buf, "selectors", dst, &afi);
+	if (s > 0) {
+		return s;
 	}
 
 	return jam_selector_pair(buf, src, dst);

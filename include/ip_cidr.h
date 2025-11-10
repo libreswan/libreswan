@@ -97,4 +97,7 @@ typedef struct {
 size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr);
 const char *str_cidr(const ip_cidr *cidr, cidr_buf*buf);
 
+size_t jam_cidr_sensitive(struct jambuf *buf, const ip_cidr *cidr);
+const char *str_cidr_sensitive(const ip_cidr *cidr, cidr_buf*buf);
+
 #endif

@@ -51,6 +51,7 @@ ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			unsigned subprefix);
 
 ip_range range_from_address(const ip_address subnet);
+ip_range range_from_cidr(const ip_cidr cidr);
 ip_range range_from_subnet(const ip_subnet subnet);
 
 err_t addresses_to_nonzero_range(const ip_address start, const ip_address end,
@@ -114,6 +115,7 @@ bool range_eq_range(const ip_range l, const ip_range r);
 
 bool address_in_range(const ip_address address, const ip_range range);
 bool subnet_in_range(const ip_subnet subnet, const ip_range range);
+bool cidr_in_range(const ip_cidr cidr, const ip_range range);
 bool range_in_range(const ip_range inner, const ip_range outer);
 
 bool range_overlaps_range(const ip_range l, const ip_range r);
@@ -145,10 +147,11 @@ uintmax_t range_size(const ip_range r);
 ip_address range_start(const ip_range range); /* floor */
 ip_address range_end(const ip_range range); /* ceiling */
 
-err_t range_offset_to_address(const ip_range range, uintmax_t offset,
-			      ip_address *address) MUST_USE_RESULT;
+err_t range_offset_to_cidr(const ip_range range, uintmax_t offset,
+			   ip_cidr *cidr) MUST_USE_RESULT;
 
-err_t address_to_range_offset(const ip_range range, const ip_address address,
-			      uintmax_t *offset) MUST_USE_RESULT;
+err_t cidr_to_range_offset(const ip_range range,
+			   const ip_cidr cidr,
+			   uintmax_t *offset) MUST_USE_RESULT;
 
 #endif

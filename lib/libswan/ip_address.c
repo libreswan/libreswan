@@ -131,14 +131,11 @@ size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
 	const struct ip_info *afi;
-	size_t s = jam_invalid_ip(buf, "address", address, &afi);
+	size_t s = jam_sensitive_ip(buf, "address", address, &afi);
 	if (s > 0) {
 		return s;
 	}
 
-	if (!log_ip) {
-		return jam_string(buf, "<address>");
-	}
 	return jam_address(buf, address);
 }
 

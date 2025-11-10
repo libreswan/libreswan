@@ -54,3 +54,23 @@ size_t jam_ip_invalid(struct jambuf *buf,
 
 	return 0;
 }
+
+size_t jam_ip_sensitive(struct jambuf *buf,
+		      const char *what,
+		      const struct ip_base *ip,
+		      const struct ip_info **afi)
+{
+	size_t s = jam_ip_invalid(buf, what, ip, afi);
+	if (s > 0) {
+		return s;
+	}
+
+	if (!log_ip) {
+		s += jam_string(buf, "<");
+		s += jam_string(buf, what);
+		s += jam_string(buf, ">");
+		return s;
+	}
+
+	return 0;
+}
