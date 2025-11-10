@@ -22,6 +22,7 @@ import os
 import sys
 import pexpect
 import re
+from enum import Enum
 
 import alpine
 import debian
@@ -95,34 +96,97 @@ class AsciiDecoder(object):
 # This strips things on the output side, problem is that it often
 # doesn't see the full escape sequence so can miss things.  Hence,
 # also stripping out simple control characters.
-#
-# https://web.archive.org/web/20200805075926/http://ascii-table.com/ansi-escape-sequences.php
+
+# there must be a python version of this table?
+class Char(Enum):
+    NUL = 0x00
+    BEL = 0x07
+    BS  = 0x08
+    HT  = 0x09
+    LF  = 0x0a
+    VT  = 0x0b
+    FF  = 0x0c
+    CR  = 0x0d
+    ESC = 0x1b
+    DEL = 0x7f
+
+class State(Enum):
+    NORMAL = 1,
+    ESCAPE_SEQUENCE = 2,
+    PARAMETER = 3,
+    INTERMEDIATE = 4,
+
+_parameter = re.compile(rb'[0-9:;<=>?]')
+_intermediate = re.compile(rb'[!"#$%&\'()*+,-./]')
+_final = re.compile(rb'[\x40-\x7e]')
 
 class Filter:
     def __init__(self):
         self.stream=sys.stdout.buffer
+        self.state = State.NORMAL
+        self.sequence = b''
+
+    def _putChar(self, char):
+        if  char == Char.CR.value or char == Char.LF.value:
+            self.stream.write(bytes([char]))
+            return
+        if char in Char:
+            self.stream.write(f'<{Char(char).name}>'.encode())
+            return
+        if char <= 0x1f or char > 0x7f:
+            self.stream.write(f'<{char}>'.encode())
+            return
+        self.stream.write(bytes([char]));
+
+    def _processChar(self, char):
+        # print(self.state, type(char), char)
+        byte = bytes([char])
+        match self.state:
+            case State.NORMAL:
+                if char == Char.ESC.value:
+                    self.state = State.ESCAPE_SEQUENCE
+                    self.sequence = b'<ESC>'
+                    return
+                self._putChar(char)
+                return
+            case State.ESCAPE_SEQUENCE:
+                # https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
+                if char == ord('['):
+                    # https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
+                    self.state = State.PARAMETER
+                    self.sequence += byte
+                    return
+            case State.PARAMETER:
+                if _parameter.match(byte):
+                    self.sequence += byte
+                    return
+                if _intermediate.match(byte):
+                    self.sequence += byte;
+                    self.state = State.INTERMEDIATE
+                    return
+                if _final.match(byte):
+                    self.sequence += byte
+                    self.state = State.NORMAL
+                    return
+            case State.INTERMEDIATE:
+                if _intermediate.match(byte):
+                    self.sequence += byte
+                    return
+                if _final.match(byte):
+                    self.sequence += byte
+                    self.state = State.NORMAL
+                    return
+
+        # escape engine failed, dump the sequence and go back to
+        # normal
+        self.state = State.NORMAL
+        self.stream.write(self.sequence)
+        self._putChar(char)
+
     def write(self, record):
-        #print(record)
-        d = record
-        # stip out some known escape sequences
-        d = re.sub(rb'\x1b\[[0-9;=?]*[HfABCDsuJKmhlr]', b'', d)
-        # strip out other non-print characters but leave NL,CR; given
-        # well known control characters a name
-        d = re.sub(rb'\x00', b'<NUL>', d)
-        d = re.sub(rb'[\x01-\x06]', b'', d)
-        d = re.sub(rb'[\x07]', b'<BEL>', d)
-        d = re.sub(rb'[\x08]', b'<BS>', d)
-        d = re.sub(rb'[\x09]', b'<HT>', d)
-        # new-line LF [\x0a]
-        d = re.sub(rb'[\x0b]', b'<VT>', d)
-        d = re.sub(rb'[\x0c]', b'<FF>', d)
-        # return   CR [\x0d]
-        d = re.sub(rb'[\x0e-\x1a]', b'', d)
-        d = re.sub(rb'[\x1b]', b'<ESC>', d)
-        d = re.sub(rb'[\x1c-\x1f]', b'', d)
-        d = re.sub(rb'[\x7f]', b'<DEL>', d)
-        d = re.sub(rb'[\x80-\xff]', b'', d)
-        self.stream.write(d);
+        for char in record:
+            self._processChar(char)
+
     def flush(self):
         self.stream.flush()
 
