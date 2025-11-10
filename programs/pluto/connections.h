@@ -38,6 +38,7 @@
 #include "ip_selector.h"
 #include "ip_protoport.h"
 #include "ip_packet.h"
+#include "ip_pool.h"
 #include "refcnt.h"
 #include "encap_mode.h"
 #include "verbose.h"
@@ -158,7 +159,7 @@ struct child_end_config {
 	 * Should more than one pool for each address be allowed?
 	 * Should an addresspool combined with selectors be allowed?
 	 */
-	ip_ranges addresspools;
+	ip_pools addresspools;
 	struct addresspool *addresspool[IP_VERSION_ROOF]; /* list? */
 
 	/*

@@ -931,8 +931,8 @@ void build_connection_proposals_from_hosts_and_configs(struct connection *d,
 			 * MODE_CFG, or hard-wired in the config
 			 * file).
 			 */
-			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
-				ip_selector selector = selector_from_range((*range));
+			FOR_EACH_ITEM(pool, &end->child.config->addresspools) {
+				ip_selector selector = selector_from_pool((*pool));
 				selector_buf sb;
 				vdbg("%s proposals formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));
