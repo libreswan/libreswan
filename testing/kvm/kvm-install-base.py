@@ -68,34 +68,8 @@ for os in OS:
 
 os = OS[param.os]
 
-# Strip output of any escape sequences on the input side of pexpect.
-#
-# It isn't used as it seems to cause pexpect to hang.
-#
-# See
-# https://web.archive.org/web/20200805075926/http://ascii-table.com/ansi-escape-sequences.php
-
-class AsciiDecoder(object):
-    def __init__(self):
-        self.buf = b''
-    def encode(self, b, final=False):
-        return b
-    def decode(self, b, final=False):
-        self.buf = self.buf + b
-        i = self.buf.find(b'\n')
-        if i >= 0:
-            c = self.buf[0:i+1]
-            self.buf = self.buf[i+1:]
-            d = re.sub(rb'\x1b\[[0-9;=?]*[HfABCDsuJKmhlr]', b'*', c)
-            e = re.sub(rb'\x1b', b'<ESC>', d)
-            if e != e:
-                print(">", e, "<")
-            return e
-        return b''
-
-# This strips things on the output side, problem is that it often
-# doesn't see the full escape sequence so can miss things.  Hence,
-# also stripping out simple control characters.
+# This strips things on the output side.  So that full escape
+# sequences are seen it runs a little state machine, ewww!
 
 # there must be a python version of this table?
 class Char(Enum):
@@ -111,13 +85,36 @@ class Char(Enum):
     DEL = 0x7f
 
 class State(Enum):
-    NORMAL = 1,
-    ESCAPE_SEQUENCE = 2,
-    PARAMETER = 3,
-    INTERMEDIATE = 4,
+    NORMAL = 1
+    # https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
+    ESCAPE_SEQUENCE = 2
+    # https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
+    CONTROL_SEQUENCE_INTRODUCER = 3
+    CONTROL_SEQUENCE_INTERMEDIATE = 4
+    #
+    STRING_TERMINATOR = 5
 
 _parameter = re.compile(rb'[0-9:;<=>?]')
 _intermediate = re.compile(rb'[!"#$%&\'()*+,-./]')
+
+class EscapeStringSequence(Enum):
+    OSC = ord(']')
+    ST  = ord('\\')
+    DCS = ord('P')
+    SOS = ord('X')
+    PM  = ord('^')
+    APC = ord('_')
+
+class Final(Enum):
+    CURSOR_UP = ord('A')
+    CURSOR_DOWN = ord('B')
+    CURSOR_FORWARD = ord('C')
+    CURSOR_BACK = ord('D')
+    CURSOR_NEXT_LINE = ord('E')
+    CURSOR_PREVIOUS_LINE = ord('F')
+    CURSOR_HORIZONTAL_ABSOLUTE = ord('G')
+    CURSOR_POSITION = ord('H')
+
 _final = re.compile(rb'[\x40-\x7e]')
 
 class Filter:
@@ -142,35 +139,57 @@ class Filter:
         # print(self.state, type(char), char)
         byte = bytes([char])
         match self.state:
+
             case State.NORMAL:
                 if char == Char.ESC.value:
                     self.state = State.ESCAPE_SEQUENCE
-                    self.sequence = b'<ESC>'
+                    self.sequence = b''
                     return
                 self._putChar(char)
                 return
+
             case State.ESCAPE_SEQUENCE:
                 # https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
                 if char == ord('['):
                     # https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
-                    self.state = State.PARAMETER
+                    self.state = State.CONTROL_SEQUENCE_INTRODUCER
                     self.sequence += byte
                     return
-            case State.PARAMETER:
+                if char in EscapeStringSequence:
+                    # https://en.wikipedia.org/wiki/ANSI_escape_code#OSC et.al.
+                    self.stream.write(b'<')
+                    self.stream.write(EscapeStringSequence(char).name.encode());
+                    self.stream.write(b'>')
+                    self.state = State.NORMAL
+                    return
+
+            case State.CONTROL_SEQUENCE_INTRODUCER:
                 if _parameter.match(byte):
                     self.sequence += byte
                     return
                 if _intermediate.match(byte):
                     self.sequence += byte;
-                    self.state = State.INTERMEDIATE
+                    self.state = State.CONTROL_SEQUENCE_INTERMEDIATE
+                    return
+                if char in Final:
+                    self.stream.write(b'<')
+                    self.stream.write(Final(char).name.encode());
+                    self.stream.write(b'>')
+                    self.state = State.NORMAL
                     return
                 if _final.match(byte):
                     self.sequence += byte
                     self.state = State.NORMAL
                     return
-            case State.INTERMEDIATE:
+            case State.CONTROL_SEQUENCE_INTERMEDIATE:
                 if _intermediate.match(byte):
                     self.sequence += byte
+                    return
+                if char in Final:
+                    self.stream.write(b'<')
+                    self.stream.write(Final(char).name.encode());
+                    self.stream.write(b'>')
+                    self.state = State.NORMAL
                     return
                 if _final.match(byte):
                     self.sequence += byte
@@ -180,6 +199,7 @@ class Filter:
         # escape engine failed, dump the sequence and go back to
         # normal
         self.state = State.NORMAL
+        self.stream.write(b'<ESC>')
         self.stream.write(self.sequence)
         self._putChar(char)
 
