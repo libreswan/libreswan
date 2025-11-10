@@ -80,9 +80,11 @@ err_t ip_bytes_add(const struct ip_info *afi,
 		   const struct ip_bytes l,
 		   const struct ip_bytes r);
 err_t uintmax_to_ip_bytes(const struct ip_info *afi,
+			  uintmax_t bit_length,
 			  uintmax_t uintmax,
 			  struct ip_bytes *bytes);
 err_t ip_bytes_to_uintmax(const struct ip_info *afi,
+			  uintmax_t bit_length,
 			  const struct ip_bytes bytes,
 			  uintmax_t *uintmax);
 

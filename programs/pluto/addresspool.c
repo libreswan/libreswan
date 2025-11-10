@@ -252,10 +252,18 @@ static void unhash_lease_id(struct addresspool *pool, struct lease *lease)
 	pool->nr_reusable--;
 }
 
-static err_t pool_lease_to_address(const struct addresspool *pool, const struct lease *lease,
+static err_t pool_lease_to_address(const struct addresspool *pool,
+				   const struct lease *lease,
 				   ip_address *address)
 {
-	return range_offset_to_address(pool->r, lease - pool->leases, address);
+	ip_cidr cidr = {0};
+	err_t e = range_offset_to_cidr(pool->r, lease - pool->leases, &cidr);
+	if (e != NULL) {
+		return e;
+	}
+
+	*address = cidr_prefix(cidr);
+	return NULL;
 }
 
 PRINTF_LIKE(3)
@@ -434,9 +442,9 @@ static struct lease *connection_lease(struct connection *c,
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	ip_address prefix = c->remote->child.lease[afi->ip.version];
+	ip_cidr prefix = cidr_from_address(c->remote->child.lease[afi->ip.version]);
 	uintmax_t offset;
-	err_t err = address_to_range_offset(pool->r, prefix, &offset);
+	err_t err = cidr_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
 		llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
 		return NULL;
@@ -689,7 +697,8 @@ static diag_t assign_requested_lease(struct connection *c,
 	 * the address pool's range, hence pexpect.
 	 */
 	uintmax_t offset;
-	err_t err = address_to_range_offset(pool->r, (*lease_address), &offset);
+	ip_cidr lease_cidr = cidr_from_address(*lease_address);
+	err_t err = cidr_to_range_offset(pool->r, lease_cidr, &offset);
 	if (err != NULL) {
 		llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
 		return diag("confused, address should be within addresspool");

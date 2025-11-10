@@ -1,7 +1,7 @@
 /* low-level ip_byte ugliness
  *
  * Copyright (C) 2000  Henry Spencer.
- * Copyright (C) 2018, 2021  Andrew Cagney.
+ * Copyright (C) 2018, 2021, 2025  Andrew Cagney.
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -168,33 +168,64 @@ err_t ip_bytes_add(const struct ip_info *afi,
 }
 
 err_t uintmax_to_ip_bytes(const struct ip_info *afi,
+			  uintmax_t bit_length,
 			  uintmax_t uintmax,
-			  struct ip_bytes *bytes)
+			  struct ip_bytes *bytes_out)
 {
-	*bytes = unset_ip_bytes;/*be safe*/
-	for (int j = afi->ip_size - 1; j >= 0; j--) {
+	*bytes_out = unset_ip_bytes;
+
+	if (bit_length > afi->mask_cnt) {
+		return "bit overflow";
+	}
+
+	/* byte(0)|..|byte(nr_bytes)|nr_bits */
+	int nr_bits = bit_length % 8;
+	int nr_bytes = bit_length / 8;
+	struct ip_bytes bytes = unset_ip_bytes;
+
+	if (nr_bits != 0) {
+		bytes.byte[nr_bytes] = (uintmax << (8 - nr_bits));
+		uintmax >>= nr_bits;
+	}
+
+	for (int j = nr_bytes - 1; j >= 0; j--) {
 		/* extract the next byte to add */
-		bytes->byte[j] = uintmax & 0xff;
+		bytes.byte[j] = uintmax & 0xff;
 		uintmax >>= 8;
 	}
 
-	if (uintmax > 0) {
+	if (uintmax != 0) {
 		return "offset overflow";
 	}
 
+	*bytes_out = bytes;
 	return NULL;
 }
 
 err_t ip_bytes_to_uintmax(const struct ip_info *afi,
+			  uintmax_t bit_length,
 			  struct ip_bytes bytes,
-			  uintmax_t *uintmax)
+			  uintmax_t *uintmax_out)
 {
-	*uintmax = raw_ntoh(bytes.byte, afi->ip_size);
+	*uintmax_out = 0;
 
-	if (*uintmax == UINTMAX_MAX) {
+	if (bit_length > afi->mask_cnt) {
+		return "bit overflow";
+	}
+
+	int nr_bits = bit_length % 8;
+	int nr_bytes = bit_length / 8;
+	uintmax_t uintmax = raw_ntoh(bytes.byte, nr_bytes);
+	if (uintmax == UINTMAX_MAX) {
 		return "offset overflow";
 	}
 
+	if (nr_bits > 0) {
+		uintmax <<= nr_bits;
+		uintmax |= (bytes.byte[nr_bytes] >> (8 - nr_bits));
+	}
+
+	*uintmax_out = uintmax;
 	return NULL;
 }
 
