@@ -79,8 +79,7 @@ static void check_iprange_bits(void)
 		}
 
 		ip_range range = range_from_raw(HERE, afi,
-						lo.bytes, hi.bytes,
-						afi->mask_cnt);
+						lo.bytes, hi.bytes);
 		int host_len = range_host_len(range);
 		if (host_len != t->host_len) {
 			FAIL("range_host_len(range) returned '%d', expected '%d'",
@@ -111,8 +110,6 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::1-::1", "::1/128", 1, },
 		{ LN, &ipv4_info, "4.3.2.1/32", "4.3.2.1/32", 1, },
 		{ LN, &ipv6_info, "::2/128", "::2/128", 1, },
-		{ LN, &ipv4_info, "4.3.2.1/32/32", "4.3.2.1/32", 1, },
-		{ LN, &ipv6_info, "::2/128/128", "::2/128", 1, },
 
 		/* normal range */
 		{ LN, &ipv6_info, "::1-::2", "::1-::2", 2, },
@@ -164,12 +161,6 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "2000::/3", "2000::/3", UINTMAX_MAX, },
 		{ LN, &ipv6_info, "4000::/2", "4000::/2", UINTMAX_MAX, },
 		{ LN, &ipv6_info, "8000::/1", "8000::/1", UINTMAX_MAX, },
-
-		/* allow CIDR prefix / subprefix */
-		{ LN, &ipv4_info, "1.2.3.0/31/32", "1.2.3.0/31", 2, },
-		{ LN, &ipv6_info, "1:0:3:0:0:0:0:2/127/128", "1:0:3::2/127", 2, },
-		{ LN, &ipv4_info, "1.2.3.0/24/28", "1.2.3.0/24/28", 256, },
-		{ LN, &ipv6_info, "1:0:3::/124/126", "1:0:3::/124/126", 16, },
 
 		/* reject port */
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:0", NULL, -1, },
@@ -354,8 +345,7 @@ static void check_range_is(void)
 
 		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
 				range_from_raw(HERE, afi,
-					       lo.bytes, hi.bytes,
-					       afi->mask_cnt));
+					       lo.bytes, hi.bytes));
 		ip_range *range = &tmp;
 		CHECK_INFO(range);
 		CHECK_STR2(range);
@@ -444,140 +434,6 @@ static void check_range_op_range(void)
 	}
 }
 
-static void check_range_offset_to_cidr(void)
-{
-	static const struct test {
-		int line;
-		const char *range;
-		uintmax_t offset;
-		const char *cidr;
-	} tests[] = {
-		{ LN, "1.0.0.0/32",	         0, "1.0.0.0/32", },
-		{ LN, "1.0.0.0/31",	         1, "1.0.0.1/32", },
-		{ LN, "1.0.0.0/24",	       255, "1.0.0.255/32", },
-		{ LN, "1.0.0.0/24",            256, NULL, },
-		{ LN, "1.0.0.0/23",            256, "1.0.1.0/32", },
-
-		/* bits */
-		{ LN, "::1-::2",                 0, "::1/128", },
-		{ LN, "::1-::2",                 1, "::2/128", },
-
-		/* cidr */
-		{ LN, "1.0.0.0/24/28",           0, "1.0.0.0/28", },
-		{ LN, "1.0.0.0/24/28",           8, "1.0.0.128/28", },
-		{ LN, "1.0.0.0/24/28",           15, "1.0.0.240/28", },
-
-		/* carry/overflow */
-		{ LN, "::ffff-::1:0000",         1, "::1:0/128", },
-		{ LN, "::ffff-::1:ffff",   0x10001, NULL, },
-		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX-1ULL, "255.255.255.255/32", },
-		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX,      NULL, },
-		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX+1ULL, NULL, },
-	};
-
-	err_t err;
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT("%s + %jd -> %s", t->range, t->offset,
-		      t->cidr == NULL ? "<unset>" : t->cidr);
-
-		/* convert it *to* internal format */
-		ip_range range;
-		err = ttorange_num(shunk1(t->range), NULL/*auto-detect*/, &range);
-		if (err != NULL) {
-			FAIL("ttorange(%s) failed: %s", t->range, err);
-		}
-
-		ip_cidr cidr;
-		err = range_offset_to_cidr(range, t->offset, &cidr);
-		cidr_buf out;
-		str_cidr(&cidr, &out);
-
-		if (t->cidr == NULL) {
-			if (cidr.ip.is_set) {
-				FAIL("range_offset_to_cidr(%s + %jd -> %s) should have returned <unset>",
-				     t->range, t->offset, out.buf);
-			}
-		} else if (!streq(out.buf, t->cidr)) {
-			FAIL("range_offset_to_cidr(%s + %jd -> %s) should have returned %s",
-			     t->range, t->offset, out.buf, t->cidr);
-		}
-
-		PRINT("range_offset_to_cidr(%s + %jd -> %s): %s",
-		      t->range, t->offset, out.buf, err == NULL ? "<ok>" : err);
-
-	}
-}
-
-static void check_cidr_to_range_offset(void)
-{
-	static const struct test {
-		int line;
-		const char *range;
-		const char *cidr;
-		uintmax_t offset;
-		bool ok;
-	} tests[] = {
-		{ LN, "1.0.0.0/32",              "1.0.0.0", 0, true, },
-		{ LN, "0.0.0.1-255.255.255.255", "255.255.255.255", UINT32_MAX-1ULL, true, },
-
-		/* full subnet cidrs */
-		{ LN, "1.0.0.0/24/28",           "1.0.0.0", 0, true, },
-		{ LN, "1.0.0.0/24/28",           "1.0.0.128/28", 8, true, },
-		{ LN, "1.0.0.0/24/28",           "1.0.0.255/28", 15, true, },
-
-		/* out of range */
-		{ LN, "1.0.0.0/32",              "0.255.255.255", UINTMAX_MAX, false, },
-		{ LN, "1.0.0.0/32",              "1.0.0.1", UINTMAX_MAX, false, },
-	};
-
-	err_t err;
-
-	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		const struct test *t = &tests[ti];
-		PRINT("%s - %s -> %ju ok: %s",
-		      t->range,
-		      t->cidr,
-		      t->offset,
-		      bool_str(t->ok));
-
-		ip_range range;
-		err = ttorange_num(shunk1(t->range), NULL/*auto-detect*/, &range);
-		if (err != NULL) {
-			FAIL("ttorange(%s) failed: %s", t->range, err);
-		}
-
-		ip_cidr cidr;
-		err = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
-		if (err != NULL) {
-			FAIL("ttocidr_num(%s) failed: %s", t->cidr, err);
-		}
-
-		uintmax_t offset;
-		err = cidr_to_range_offset(range, cidr, &offset);
-
-		if (t->ok) {
-			if (err != NULL) {
-				FAIL("cidr_to_range_offset(%s - %s -> %ju) unexpectedly failed: %s",
-				     t->range, t->cidr, offset, err);
-			}
-		} else if (err == NULL) {
-			FAIL("cidr_to_range_offset(%s - %s -> %ju) unexpectedly succeeded",
-			     t->range, t->cidr, offset);
-		}
-
-		if (offset != t->offset) {
-			FAIL("cidr_to_range_offset(%s - %s -> %ju) should have returned %jx",
-			     t->range, t->cidr, offset, t->offset);
-		}
-
-		PRINT("cidr_to_range_offset(%s - %s -> %ju): %s",
-		      t->range, t->cidr, offset, err == NULL ? "<ok>" : err);
-
-	}
-}
-
 void ip_range_check(struct logger *logger UNUSED)
 {
 	check_iprange_bits();
@@ -585,6 +441,4 @@ void ip_range_check(struct logger *logger UNUSED)
 	check_range_from_subnet();
 	check_range_is();
 	check_range_op_range();
-	check_range_offset_to_cidr();
-	check_cidr_to_range_offset();
 }

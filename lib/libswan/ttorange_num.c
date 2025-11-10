@@ -60,42 +60,20 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		/* single address */
 		*dst = range_from_raw(HERE, afi,
 				      start_address.bytes,
-				      start_address.bytes,
-				      afi->mask_cnt);
+				      start_address.bytes);
 		return NULL;
 	}
 	case '/':
 	{
 		/* START/PREFIX[/SUBPREFIX] */
 		uintmax_t prefix = afi->mask_cnt; /* TBD */
-		err = shunk_to_uintmax(cursor, &cursor, 0, &prefix);
+		err = shunk_to_uintmax(cursor, NULL, 0, &prefix);
 		if (err != NULL) {
 			return err;
 		}
 
 		if (prefix > afi->mask_cnt) {
 			return "too large";
-		}
-
-		uintmax_t subprefix = afi->mask_cnt;
-		if (cursor.len > 0) {
-			if (hunk_char(cursor, 0) != '/') {
-				return "invalid subprefix, expecting '/'";
-			}
-			
-			cursor = shunk_slice(cursor, 1, cursor.len);
-			err = shunk_to_uintmax(cursor, NULL, 0, &subprefix);
-			if (err != NULL) {
-				return err;
-			}
-
-			if (subprefix < prefix) {
-				return "subprefix is too small";
-			}
-
-			if (subprefix > afi->mask_cnt) {
-				return "subprefix is too big";
-			}
 		}
 
 		/* XXX: should this reject bad addresses */
@@ -107,8 +85,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 				      ip_bytes_blit(afi, start_address.bytes,
 						    &keep_routing_prefix,
 						    &set_host_identifier,
-						    prefix),
-				      subprefix);
+						    prefix));
 		return NULL;
 	}
 	case '-':
@@ -127,8 +104,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		}
 		*dst = range_from_raw(HERE, afi,
 				      start_address.bytes,
-				      end_address.bytes,
-				      afi->mask_cnt);
+				      end_address.bytes);
 		return NULL;
 	}
 	default:

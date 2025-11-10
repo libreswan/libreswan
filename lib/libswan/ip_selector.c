@@ -455,8 +455,7 @@ ip_range selector_range(const ip_selector selector)
 	}
 
 	return range_from_raw(HERE, afi,
-			      selector.lo, selector.hi,
-			      afi->mask_cnt);
+			      selector.lo, selector.hi);
 }
 
 ip_address selector_prefix(const ip_selector selector)
