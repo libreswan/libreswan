@@ -3,19 +3,24 @@ See also https://libreswan.org/
 v5.4 (unreleased)
 * IKEv2:
   - update multiple key exchanges using IKE_INTERMEDIATE to RFC 9370 [Daiki Ueno, Andrew]
-  - support ML_KEM_768 in IKE_INTERMEDIATE exchanges [Andrew]
+  - support ML_KEM_768 in IKE_SA_INIT and IKE_INTERMEDIATE exchanges [Andrew]
+  - treat broken IKE_AUTH Child SA response as INVALID_SYNTAX [mamtagambhir, Anddrew, #2348]
 * X.509:
   - fix loop when crlcheckinterval=0+`ipsec fetchcrls` [Wofferl #2383]
 * config:
   - fix plutodebug=all,add-prefix [Andrew #2338]
   - fix per-connection debug= option (experimental in v5.0) [Andrew]
+  - support lease subnets with syntax leftaddresspool=2025::/56/64 (experimental) [Andrew]
 * building:
-  - on Linux, prefer system's xfrm.h [Andrew Antony #2431 #2396]
-    Note: old distros may need USE_XFRM_HEADER_COPY=true
+  - on Linux, prefer system's xfrm.h [Andrew, Antony, Vukasink, #2431 #2396 #2501]
+    Note: old Linux distros may need USE_XFRM_HEADER_COPY=true
+  - fix RPM package file/directory ownership [Joseph Marreo Corchado, Tuomo, #2167]
+  - fix seccomp rules to work with Bash 5.3 [Maciej S. Szmigiero, #2371]
 * testing:
-  - FreeBSD test domain upgraded to 14.3 [Andrew #2341]
   - Alpine test domain upgraded to 3.22.1 [Andrew]
   - Debian test domain upgraded to 12.12 [Andrew]
+  - Fedora test domain upgraded to f43 [Andrew]
+  - FreeBSD test domain upgraded to 14.3 [Andrew, Ueno #2341]
 
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)
