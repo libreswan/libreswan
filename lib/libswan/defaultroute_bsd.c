@@ -38,7 +38,7 @@
 #endif
 
 #include "constants.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "constants.h"
 #include "ipsecconf/confread.h"
 #include "lswlog.h"		/* for fatal() */

@@ -13,8 +13,8 @@
  * for more details.
  */
 
-#ifndef ADDR_LOOKUP_H
-#define ADDR_LOOKUP_H
+#ifndef DEFAULTROUTE_H
+#define DEFAULTROUTE_H
 
 #include <stdbool.h>
 

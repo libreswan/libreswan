@@ -75,7 +75,7 @@
 #include "ikev2_send.h"
 #include "pluto_stats.h"
 #include "ipsecconf/confread.h"		/* for struct starter_end */
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "impair.h"
 #include "ikev2_message.h"
 #include "ikev2_notification.h"

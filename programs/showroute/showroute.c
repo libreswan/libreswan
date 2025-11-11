@@ -17,7 +17,7 @@
 
 #include "lswtool.h"
 #include "lswlog.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "ip_address.h"
 #include "ip_info.h"
 #include "optarg.h"
