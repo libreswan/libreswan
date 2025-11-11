@@ -139,9 +139,9 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 /*
  * Add RTA_SRC or RTA_DST attribute to netlink query message.
  */
-static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
-			      const ip_address *addr, const char *what,
-			      struct verbose verbose)
+static void netlink_query_add_address(struct nlmsghdr *nlmsg, int rta_type,
+				      const ip_address *addr, const char *what,
+				      struct verbose verbose)
 {
 	struct rtmsg *rtmsg;
 	struct rtattr *rtattr;
@@ -521,18 +521,18 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 		 * address and not the global address.
 		 */
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
-				  "host->nexthop.addr", verbose);
+		netlink_query_add_address(msgbuf, RTA_DST, &host->nexthop.addr,
+					  "host->nexthop.addr", verbose);
 	} else if (peer->host.type == KH_IPADDR) {
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
-				  "peer->host.addr(ip)", verbose);
+		netlink_query_add_address(msgbuf, RTA_DST, &peer->host.addr,
+					  "peer->host.addr(ip)", verbose);
 	} else if (host->nexthop.type == KH_IPADDR &&
 		   (peer->host.type == KH_GROUP ||
 		    peer->host.type == KH_OPPOGROUP)) {
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
-				  "host->nexthop.addr peer=group", verbose);
+		netlink_query_add_address(msgbuf, RTA_DST, &host->nexthop.addr,
+					  "host->nexthop.addr peer=group", verbose);
 	} else {
 		added_dst = false;
 	}
@@ -540,8 +540,8 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 	if (added_dst && host->host.type == KH_IPADDR) {
 		/* SRC works only with DST */
 		pexpect(seeking == GATEWAY);
-		netlink_query_add(msgbuf, RTA_SRC, &host->host.addr,
-				  "host->host.addr", verbose);
+		netlink_query_add_address(msgbuf, RTA_SRC, &host->host.addr,
+					  "host->host.addr", verbose);
 	}
 
 	/* Send netlink get_route request */
