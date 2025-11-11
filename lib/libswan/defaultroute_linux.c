@@ -239,8 +239,8 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 
 		/* Parse one route entry */
 
-		char r_interface[IF_NAMESIZE+1];
-		zero(&r_interface);
+		char interface_name[IF_NAMESIZE+1] = {0};
+		int interface_index = -1;
 		ip_address src = unset_address;
 		ip_address prefsrc = unset_address;
 		ip_address gateway = unset_address;
@@ -262,8 +262,9 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			unsigned len = RTA_PAYLOAD(rtattr);
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
-				if_indextoname(*(int *)RTA_DATA(rtattr),
-					       r_interface);
+				interface_index = *(int *)RTA_DATA(rtattr);
+				if_indextoname(interface_index, interface_name);
+				verbose("RTA_OIF=%s (%d)", interface_name, interface_index);
 				break;
 			case RTA_PREFSRC:
 #define PARSE_ADDRESS(OUT, WHAT)					\
@@ -352,6 +353,8 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			rtattr = RTA_NEXT(rtattr, rtlen);
 		}
 
+		verbose.level--;
+
 		/*
 		 * Ignore if not main table.
 		 * Ignore ipsecX or mastX interfaces.
@@ -359,13 +362,16 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		 * XXX: instead of rtm_table, should this be checking
 		 * TABLE?
 		 */
+		verbose("Update seeking:");
+		verbose.level++;
 		address_buf sb, psb, db, gb;
-		verbose("using src=%s prefsrc=%s gateway=%s dst=%s dev='%s' priority=%d pref=%d table=%d%s%s",
+		verbose("src=%s prefsrc=%s gateway=%s dst=%s dev=%s(%d) priority=%d pref=%d table=%d%s%s",
 			str_address(&src, &sb),
 			str_address(&prefsrc, &psb),
 			str_address(&gateway, &gb),
 			str_address(&dst, &db),
-			(r_interface[0] ? r_interface : "?"),
+			(interface_name[0] ? interface_name : "?"),
+			interface_index,
 			priority, pref,
 			rtmsg->rtm_table,
 			cacheinfo, uid);
@@ -376,9 +382,9 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			return true;
 		}
 
-		if (startswith(r_interface, "ipsec") ||
-		    startswith(r_interface, "mast")) {
-			verbose("IGNORE: interface %s", r_interface);
+		if (startswith(interface_name, "ipsec") ||
+		    startswith(interface_name, "mast")) {
+			verbose("IGNORE: interface %s", interface_name);
 			return true;
 		}
 
@@ -395,13 +401,13 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			break;
 		case GATEWAY:
 			if (address_is_unset(&dst)) {
-				if (address_is_unset(&gateway) && r_interface[0] != '\0') {
+				if (address_is_unset(&gateway) && interface_name[0] != '\0') {
 					/*
 					 * Point-to-Point default gw without
 					 * "via IP".  Attempt to find gateway
 					 * as the IP address on the interface.
 					 */
-					resolve_point_to_point_peer(r_interface,
+					resolve_point_to_point_peer(interface_name,
 								    context->host_afi,
 								    &gateway, verbose);
 				}
