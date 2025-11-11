@@ -262,7 +262,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 			unsigned len = RTA_PAYLOAD(rtattr);
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
-				interface_index = *(int *)RTA_DATA(rtattr);
+				interface_index = *(uint32_t *)RTA_DATA(rtattr);
 				if_indextoname(interface_index, interface_name);
 				verbose("RTA_OIF=%s (%d)", interface_name, interface_index);
 				break;
