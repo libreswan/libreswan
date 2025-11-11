@@ -415,6 +415,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		context->status = RESOLVE_SUCCESS;
 		context->host->host.type = KH_IPADDR;
 		context->host->host.addr = prefsrc;
+		context->host->host.interface = interface_index;
 		address_buf ab;
 		verbose("saving prefsrc(host.addr): %s",
 			str_address(&context->host->host.addr, &ab));
@@ -455,6 +456,7 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 		context->status = RESOLVE_PLEASE_CALL_AGAIN;
 		context->host->nexthop.type = KH_IPADDR;
 		context->host->nexthop.addr = gateway;
+		context->host->nexthop.interface = interface_index;
 		address_buf ab;
 		verbose("saving gateway(nexthop.addr): %s",
 			str_address(&context->host->nexthop.addr, &ab));

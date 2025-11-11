@@ -28,6 +28,7 @@ struct resolve_host {
 	enum keyword_host type;
 	ip_address addr;
 	const char *name;
+	unsigned interface;		/* 0 invalid? for if_indextoname() */
 };
 
 struct resolve_end {
