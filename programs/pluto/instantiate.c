@@ -573,8 +573,8 @@ static bool update_v1_quick_n_dirty_selectors(struct connection *d,
 			 * MODE_CFG, or hard-wired in the config
 			 * file).
 			 */
-			FOR_EACH_ITEM(range, &end->child.config->addresspools) {
-				ip_selector selector = selector_from_range((*range));
+			FOR_EACH_ITEM(pool, &end->child.config->addresspools) {
+				ip_selector selector = selector_from_pool((*pool));
 				selector_buf sb;
 				vdbg("%s selector formed from address pool %s",
 				     leftright, str_selector(&selector, &sb));

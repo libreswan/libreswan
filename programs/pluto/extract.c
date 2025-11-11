@@ -1877,27 +1877,27 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				    leftright, leftright);
 		}
 
-		diag_t d = ttoranges_num(shunk1(src->we_addresspool), ", ", NULL,
-					 &child_config->addresspools);
+		diag_t d = ttopools_num(shunk1(src->we_addresspool), ", ", NULL,
+					&child_config->addresspools);
 		if (d != NULL) {
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright,
 					 src->we_addresspool);
 		}
 
-		FOR_EACH_ITEM(range, &child_config->addresspools) {
+		FOR_EACH_ITEM(pool, &child_config->addresspools) {
 
-			const struct ip_info *afi = range_type(range);
+			const struct ip_info *afi = pool_type(pool);
 
 			if (ike_version == IKEv1 && afi == &ipv6_info) {
 				return diag("%saddresspool=%s invalid, IKEv1 does not support IPv6 address pool",
 					    leftright, src->we_addresspool);
 			}
 
-			if (afi == &ipv6_info && !range_is_cidr((*range))) {
-				range_buf rb;
+			if (afi == &ipv6_info && !pool_is_cidr((*pool))) {
+				pool_buf rb;
 				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
 					    leftright, src->we_addresspool,
-					    str_range(range, &rb));
+					    str_pool(pool, &rb));
 			}
 
 			/*
@@ -1912,7 +1912,8 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			 * This also detetects and rejects multiple
 			 * pools with the same address family.
 			 */
-			diag_t d = install_addresspool((*range), child_config->addresspool,
+			diag_t d = install_addresspool((*pool),
+						       child_config->addresspool,
 						       verbose.logger);
 			if (d != NULL) {
 				return diag_diag(&d, "%saddresspool=%s invalid, ",
@@ -4199,7 +4200,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	} end_family[END_ROOF][IP_VERSION_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
-		const ip_ranges *const pools = &c->end[end].config->child.addresspools;
+		const ip_pools *const pools = &c->end[end].config->child.addresspools;
 		if (selectors->len > 0) {
 			FOR_EACH_ITEM(selector, selectors) {
 				const struct ip_info *afi = selector_type(selector);
@@ -4211,8 +4212,8 @@ diag_t extract_connection(const struct whack_message *wm,
 				}
 			}
 		} else if (pools->len > 0) {
-			FOR_EACH_ITEM(range, pools) {
-				const struct ip_info *afi = range_type(range);
+			FOR_EACH_ITEM(pool, pools) {
+				const struct ip_info *afi = pool_type(pool);
 				/* only one for now */
 				struct end_family *family = &end_family[end][afi->ip.version];
 				vassert(family->used == false);

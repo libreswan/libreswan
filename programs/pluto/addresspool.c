@@ -187,7 +187,7 @@ struct lease {
 struct addresspool {
 	struct refcnt refcnt;
 	struct logger *logger;
-	ip_range r;
+	ip_pool r;
 	uint32_t size; /* number of addresses within range */
 
 	unsigned nr_reusable;
@@ -207,7 +207,7 @@ struct addresspool {
 
 static struct addresspool *pluto_pools = NULL;
 
-ip_range addresspool_range(struct addresspool *pool)
+ip_pool addresspool_pool(struct addresspool *pool)
 {
 	return pool->r;
 }
@@ -256,7 +256,7 @@ static err_t pool_lease_to_cidr(const struct addresspool *pool,
 				const struct lease *lease,
 				ip_cidr *lease_cidr)
 {
-	err_t e = range_offset_to_cidr(pool->r, lease - pool->leases, lease_cidr);
+	err_t e = pool_offset_to_cidr(pool->r, lease - pool->leases, lease_cidr);
 	if (e != NULL) {
 		return e;
 	}
@@ -272,7 +272,7 @@ static void vdbg_pool(struct verbose verbose,
 	LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam(buf, "pool ");
-		jam_range(buf, &pool->r);
+		jam_pool(buf, &pool->r);
 		jam(buf, ": ");
 		va_list args;
 		va_start(args, format);
@@ -295,7 +295,7 @@ static void vdbg_lease(struct verbose verbose,
 	LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
 		jam(buf, PRI_VERBOSE, pri_verbose);
 		jam(buf, "pool ");
-		jam_range(buf, &pool->r);
+		jam_pool(buf, &pool->r);
 		jam(buf, " lease ");
 		if (c != NULL) {
 			jam_connection(buf, c);
@@ -442,7 +442,7 @@ static struct lease *connection_lease(struct connection *c,
 	 */
 	ip_cidr prefix = c->remote->child.lease[afi->ip.version];
 	uintmax_t offset;
-	err_t err = cidr_to_range_offset(pool->r, prefix, &offset);
+	err_t err = cidr_to_pool_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
 		llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
 		return NULL;
@@ -696,7 +696,7 @@ static diag_t assign_requested_lease(struct connection *c,
 	 */
 	uintmax_t offset;
 	ip_cidr lease_cidr = cidr_from_address(*lease_address);
-	err_t err = cidr_to_range_offset(pool->r, lease_cidr, &offset);
+	err_t err = cidr_to_pool_offset(pool->r, lease_cidr, &offset);
 	if (err != NULL) {
 		llog_pexpect(verbose.logger, HERE, "offset of address in range failed: %s", err);
 		return diag("confused, address should be within addresspool");
@@ -925,7 +925,7 @@ static diag_t assign_remote_lease(struct connection *c,
 		jam_string(buf, " lease ");
 		jam_cidr_sensitive(buf, assigned_cidr);
 		jam_string(buf, " from addresspool ");
-		jam_range(buf, &pool->r);
+		jam_pool(buf, &pool->r);
 		if (old_growth != pool->nr_leases) {
 			jam(buf, "; addresspool grown from %u to %u leases",
 			    old_growth, pool->nr_leases);
@@ -1021,24 +1021,24 @@ struct addresspool *addresspool_addref(struct addresspool *pool)
  * Otherwise (nothing matches), return NULL and *POOL=NULL.
  */
 
-static diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
+static diag_t find_addresspool(const ip_pool pool_range, struct addresspool **pool)
 {
 	struct addresspool *h;
 
 	*pool = NULL;	/* nothing found (yet) */
 	for (h = pluto_pools; h != NULL; h = h->next) {
 
-		if (range_eq_range(pool_range, h->r)) {
+		if (pool_eq_pool(pool_range, h->r)) {
 			/* exact match */
 			*pool = h;
 			return NULL;
 		}
 
-		if (range_overlaps_range(pool_range, h->r)) {
+		if (pool_overlaps_pool(pool_range, h->r)) {
 			/* bad */
-			range_buf hbuf;
+			pool_buf hbuf;
 			return diag("range inexactly overlaps existing address pool %s",
-				    str_range(&h->r, &hbuf));
+				    str_pool(&h->r, &hbuf));
 		}
 	}
 	return NULL;
@@ -1048,31 +1048,31 @@ static diag_t find_addresspool(const ip_range pool_range, struct addresspool **p
  * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-diag_t install_addresspool(const ip_range pool_range,
+diag_t install_addresspool(const ip_pool pool,
 			   struct addresspool *addresspool[],
 			   const struct logger *logger)
 {
-	range_buf rb;
+	pool_buf rb;
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
-	vdbg("installing address pool %s", str_range(&pool_range, &rb));
+	vdbg("installing address pool %s", str_pool(&pool, &rb));
 	verbose.level++;
 
 	/* can't be empty */
-	uintmax_t pool_size = range_size(pool_range);
-	if (pool_size == 0) {
+	uintmax_t size = pool_size(pool);
+	if (size == 0) {
 		/*
 		 * Minimum address pool size is 1, so can't happen
 		 * (unless caller fed us an invalid address pool).
 		 */
-		range_buf rb;
+		pool_buf rb;
 		llog_pexpect(logger, HERE, "address pool %s is empty",
-			     str_range(&pool_range, &rb));
+			     str_pool(&pool, &rb));
 		return diag("confused, address pool is empty");
 	}
 
-	if (pool_size >= UINT32_MAX) {
+	if (size >= UINT32_MAX) {
 		/*
-		 * POOL_SIZE is truncated to UINTMAX_MAX when there's
+		 * SIZE is truncated to UINTMAX_MAX when there's
 		 * major overflow.  Hence, it's value isn't always
 		 * correct.
 		 *
@@ -1080,28 +1080,28 @@ diag_t install_addresspool(const ip_range pool_range,
 		 * uint32_t overflow, 2001:db8:0:3:1::/96, truncated by 1
 		 */
 		humber_buf psb;
-		pool_size = UINT32_MAX;
+		size = UINT32_MAX;
 		llog(WARNING_STREAM, logger, "limiting the address pool %s to %s addresses",
-		     str_range(&pool_range, &rb),
-		     str_humber(pool_size, &psb));
+		     str_pool(&pool, &rb),
+		     str_humber(size, &psb));
 	}
 
 	/* can't start at 0 */
-	ip_address start = range_start(pool_range);
+	ip_address start = pool_start(pool);
 	if (!address_is_specified(start)) {
-		range_buf rb;
+		pool_buf rb;
 		return diag("address pool %s starts at address zero",
-			    str_range(&pool_range, &rb));
+			    str_pool(&pool, &rb));
 	}
 
 	/* can't overlap or duplicate */
 	struct addresspool *existing_pool = NULL;
-	diag_t d = find_addresspool(pool_range, &existing_pool);
+	diag_t d = find_addresspool(pool, &existing_pool);
 	if (d != NULL) {
 		return d;
 	}
 
-	const struct ip_info *afi = range_info(pool_range);
+	const struct ip_info *afi = pool_info(pool);
 	if (addresspool[afi->ip.version] != NULL) {
 		llog_pexpect(verbose.logger, HERE,
 			     "connection already has a %s address pool", afi->ip_name);
@@ -1117,14 +1117,14 @@ diag_t install_addresspool(const ip_range pool_range,
 
 	/* make a new pool */
 	struct addresspool *new_pool = refcnt_alloc(struct addresspool, logger, HERE);
-	new_pool->r = pool_range;
-	new_pool->size = pool_size;
+	new_pool->r = pool;
+	new_pool->size = size;
 	new_pool->nr_in_use = 0;
 	new_pool->nr_leases = 0;
 	new_pool->free_list = empty_list;
 	new_pool->leases = NULL;
 
-	new_pool->logger = string_logger(HERE, "%s", str_range(&pool_range, &rb));
+	new_pool->logger = string_logger(HERE, "%s", str_pool(&pool, &rb));
 
 	/* insert at front */
 	new_pool->next = pluto_pools;
@@ -1147,9 +1147,9 @@ void whack_addresspoolstatus(const struct whack_message *wm UNUSED, struct show 
 	}
 	for (struct addresspool *pool = pluto_pools;
 	     pool != NULL; pool = pool->next) {
-		range_buf rb;
+		pool_buf rb;
 		show(s, "address pool %s: %u addresses, %u leases, %u in-use, %u free (%u reusable)",
-			     str_range(&pool->r, &rb),
+			     str_pool(&pool->r, &rb),
 			     pool->size, pool->nr_leases, pool->nr_in_use,
 			     pool->free_list.nr,
 			     pool->nr_reusable);

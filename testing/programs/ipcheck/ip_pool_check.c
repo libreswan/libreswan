@@ -1,4 +1,4 @@
-/* ip range tests, for libreswan
+/* ip pool tests, for libreswan
  *
  * Copyright (C) 2000  Henry Spencer.
  * Copyright (C) 2019  Andrew Cagney
@@ -20,11 +20,11 @@
 #include "lswlog.h"
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for streq() */
-#include "ip_range.h"
+#include "ip_pool.h"
 #include "ip_subnet.h"
 #include "ipcheck.h"
 
-static void check_iprange_bits(void)
+static void check_ippool_bits(void)
 {
 	static const struct test {
 		int line;
@@ -78,30 +78,31 @@ static void check_iprange_bits(void)
 			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
 		}
 
-		ip_range range = range_from_raw(HERE, afi,
-						lo.bytes, hi.bytes);
-		int host_len = range_host_len(range);
+		ip_pool pool = pool_from_raw(HERE, afi,
+						lo.bytes, hi.bytes,
+						afi->mask_cnt);
+		int host_len = pool_host_len(pool);
 		if (host_len != t->host_len) {
-			FAIL("range_host_len(range) returned '%d', expected '%d'",
+			FAIL("pool_host_len(pool) returned '%d', expected '%d'",
 			     host_len, t->host_len);
 		}
 
-		int prefix_len = range_prefix_len(range);
+		int prefix_len = pool_prefix_len(pool);
 		if (prefix_len != t->prefix_len) {
-			FAIL("range_prefix_len(range) returned '%d', expected '%d'",
+			FAIL("pool_prefix_len(pool) returned '%d', expected '%d'",
 			     prefix_len, t->prefix_len);
 		}
 	}
 }
 
-static void check_ttorange__to__str_range(void)
+static void check_ttopool__to__str_pool(void)
 {
 	static const struct test {
 		int line;
 		const struct ip_info *afi;
 		const char *in;
 		const char *str;
-		uintmax_t range_size;
+		uintmax_t pool_size;
 	} tests[] = {
 		/* single address */
 		{ LN, &ipv4_info, "4.3.2.1", "4.3.2.1/32", 1, },
@@ -110,8 +111,10 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "::1-::1", "::1/128", 1, },
 		{ LN, &ipv4_info, "4.3.2.1/32", "4.3.2.1/32", 1, },
 		{ LN, &ipv6_info, "::2/128", "::2/128", 1, },
+		{ LN, &ipv4_info, "4.3.2.1/32/32", "4.3.2.1/32", 1, },
+		{ LN, &ipv6_info, "::2/128/128", "::2/128", 1, },
 
-		/* normal range */
+		/* normal pool */
 		{ LN, &ipv6_info, "::1-::2", "::1-::2", 2, },
 		{ LN, &ipv4_info, "1.2.3.0-1.2.3.9", "1.2.3.0-1.2.3.9", 10, },
 
@@ -162,6 +165,12 @@ static void check_ttorange__to__str_range(void)
 		{ LN, &ipv6_info, "4000::/2", "4000::/2", UINTMAX_MAX, },
 		{ LN, &ipv6_info, "8000::/1", "8000::/1", UINTMAX_MAX, },
 
+		/* allow CIDR prefix / subprefix */
+		{ LN, &ipv4_info, "1.2.3.0/31/32", "1.2.3.0/31", 2, },
+		{ LN, &ipv6_info, "1:0:3:0:0:0:0:2/127/128", "1:0:3::2/127", 2, },
+		{ LN, &ipv4_info, "1.2.3.0/24/28", "1.2.3.0/24/28", 256, },
+		{ LN, &ipv6_info, "1:0:3::/124/126", "1:0:3::/124/126", 16, },
+
 		/* reject port */
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:0", NULL, -1, },
 		{ LN, &ipv6_info, "2001:db8:0:7::/97:30", NULL, -1, },
@@ -192,42 +201,42 @@ static void check_ttorange__to__str_range(void)
 		const struct test *t = &tests[ti];
 		if (t->str != NULL) {
 			PRINT("%s '%s' -> %s pool-size %ju",
-			      pri_afi(t->afi), t->in, t->str, t->range_size);
+			      pri_afi(t->afi), t->in, t->str, t->pool_size);
 		} else {
 			PRINT("%s '%s' -> <error>", pri_afi(t->afi), t->in);
 		}
 		const char *oops = NULL;
 
-		ip_range tmp, *range = &tmp;
-		oops = ttorange_num(shunk1(t->in), t->afi, range);
+		ip_pool tmp, *pool = &tmp;
+		oops = ttopool_num(shunk1(t->in), t->afi, pool);
 		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttorange() failed: %s", oops);
+			FAIL("ttopool() failed: %s", oops);
 		}
 
-		CHECK_INFO(range);
+		CHECK_INFO(pool);
 		if (t->str == NULL) {
 			continue;
 		}
-		CHECK_STR2(range);
+		CHECK_STR2(pool);
 
-		if (t->range_size > 0) {
-			uintmax_t size = range_size(*range);
-			if (t->range_size != size) {
-				range_buf rb;
-				FAIL("range_size(%s) returned %ju, expecting %ju",
-				     str_range(range, &rb),
-				     size, t->range_size);
+		if (t->pool_size > 0) {
+			uintmax_t size = pool_size(*pool);
+			if (t->pool_size != size) {
+				pool_buf rb;
+				FAIL("pool_size(%s) returned %ju, expecting %ju",
+				     str_pool(pool, &rb),
+				     size, t->pool_size);
 			}
 		}
 	}
 }
 
-static void check_range_from_subnet(void)
+static void check_pool_from_subnet(void)
 {
 	static const struct test {
 		int line;
@@ -270,11 +279,11 @@ static void check_range_from_subnet(void)
 
 		CHECK_INFO(subnet);
 
-		ip_range tr = range_from_subnet(*subnet), *range = &tr;
-		CHECK_INFO(range);
+		ip_pool tr = pool_from_subnet(*subnet), *pool = &tr;
+		CHECK_INFO(pool);
 
 		address_buf start_buf;
-		ip_address r_start = range_start(*range);
+		ip_address r_start = pool_start(*pool);
 		const char *start = str_address(&r_start, &start_buf);
 		if (!streq(t->start, start)) {
 			FAIL("r.start is '%s', expected '%s'",
@@ -283,7 +292,7 @@ static void check_range_from_subnet(void)
 		CHECK_AFI(t->afi, address, &r_start);
 
 		address_buf end_buf;
-		ip_address r_end = range_end(*range);
+		ip_address r_end = pool_end(*pool);
 		const char *end = str_address(&r_end, &end_buf);
 		if (!streq(t->end, end)) {
 			FAIL("r.end is '%s', expected '%s'",
@@ -294,7 +303,7 @@ static void check_range_from_subnet(void)
 	}
 }
 
-static void check_range_is(void)
+static void check_pool_is(void)
 {
 	static const struct test {
 		int line;
@@ -306,7 +315,7 @@ static void check_range_is(void)
 		bool is_zero;
 		uintmax_t size;
 	} tests[] = {
-		{ LN, NULL, "", "",                "<unset-range>",   .is_unset = true, },
+		{ LN, NULL, "", "",                "<unset-pool>",   .is_unset = true, },
 
 		{ LN, &ipv4_info, "0.0.0.0", "0.0.0.0",  "0.0.0.0/32", .is_zero = true, .size = 1, },
 		{ LN, &ipv4_info, "0.0.0.1", "0.0.0.2",  "0.0.0.1-0.0.0.2", .size = 2, },
@@ -343,29 +352,30 @@ static void check_range_is(void)
 			hi = unset_address;
 		}
 
-		ip_range tmp = (strlen(t->lo) == 0 ? unset_range :
-				range_from_raw(HERE, afi,
-					       lo.bytes, hi.bytes));
-		ip_range *range = &tmp;
-		CHECK_INFO(range);
-		CHECK_STR2(range);
-		CHECK_COND(range, is_unset);
-		CHECK_COND2(range, is_zero);
-		CHECK_UNOP(range, size, "%ju", );
+		ip_pool tmp = (strlen(t->lo) == 0 ? unset_pool :
+				pool_from_raw(HERE, afi,
+					       lo.bytes, hi.bytes,
+					       afi->mask_cnt));
+		ip_pool *pool = &tmp;
+		CHECK_INFO(pool);
+		CHECK_STR2(pool);
+		CHECK_COND(pool, is_unset);
+		CHECK_COND2(pool, is_zero);
+		CHECK_UNOP(pool, size, "%ju", );
 	}
 }
 
-static void check_range_op_range(void)
+static void check_pool_op_pool(void)
 {
 	static const struct test {
 		int line;
 		const struct ip_info *afi;
 		const char *l;
 		const char *r;
-		bool range_eq_range;
-		bool range_in_range;
-		bool range_overlaps_range;
-		bool address_in_range;
+		bool pool_eq_pool;
+		bool pool_in_pool;
+		bool pool_overlaps_pool;
+		bool address_in_pool;
 	} tests[] = {
 
 		/* eq */
@@ -403,14 +413,14 @@ static void check_range_op_range(void)
 		PRINT("%s vs %s", t->l, t->r);
 
 #define TT(R)								\
-		ip_range R;						\
+		ip_pool R;						\
 		if (t->R != NULL) {					\
-			oops = ttorange_num(shunk1(t->R), 0, &R);	\
+			oops = ttopool_num(shunk1(t->R), 0, &R);	\
 			if (oops != NULL) {				\
-				FAIL("ttorange(%s) failed: %s", t->R, oops); \
+				FAIL("ttopool(%s) failed: %s", t->R, oops); \
 			}						\
 		} else {						\
-			R = unset_range;				\
+			R = unset_pool;				\
 		}
 		TT(l);
 		TT(r);
@@ -426,19 +436,155 @@ static void check_range_op_range(void)
 				     bool_str(t->OP));			\
 			}						\
 		}
-		T(range_eq_range, l, r);
-		T(range_in_range, l, r);
-		T(range_overlaps_range, l, r);
-		ip_address a = range_start(l);
-		T(address_in_range,a,r);
+		T(pool_eq_pool, l, r);
+		T(pool_in_pool, l, r);
+		T(pool_overlaps_pool, l, r);
+		ip_address a = pool_start(l);
+		T(address_in_pool,a,r);
 	}
 }
 
-void ip_range_check(struct logger *logger UNUSED)
+static void check_pool_offset_to_cidr(void)
 {
-	check_iprange_bits();
-	check_ttorange__to__str_range();
-	check_range_from_subnet();
-	check_range_is();
-	check_range_op_range();
+	static const struct test {
+		int line;
+		const char *pool;
+		uintmax_t offset;
+		const char *cidr;
+	} tests[] = {
+		{ LN, "1.0.0.0/32",	         0, "1.0.0.0/32", },
+		{ LN, "1.0.0.0/31",	         1, "1.0.0.1/32", },
+		{ LN, "1.0.0.0/24",	       255, "1.0.0.255/32", },
+		{ LN, "1.0.0.0/24",            256, NULL, },
+		{ LN, "1.0.0.0/23",            256, "1.0.1.0/32", },
+
+		/* bits */
+		{ LN, "::1-::2",                 0, "::1/128", },
+		{ LN, "::1-::2",                 1, "::2/128", },
+
+		/* cidr */
+		{ LN, "1.0.0.0/24/28",           0, "1.0.0.0/28", },
+		{ LN, "1.0.0.0/24/28",           8, "1.0.0.128/28", },
+		{ LN, "1.0.0.0/24/28",           15, "1.0.0.240/28", },
+
+		/* carry/overflow */
+		{ LN, "::ffff-::1:0000",         1, "::1:0/128", },
+		{ LN, "::ffff-::1:ffff",   0x10001, NULL, },
+		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX-1ULL, "255.255.255.255/32", },
+		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX,      NULL, },
+		{ LN, "0.0.0.1-255.255.255.255", UINT32_MAX+1ULL, NULL, },
+	};
+
+	err_t err;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT("%s + %jd -> %s", t->pool, t->offset,
+		      t->cidr == NULL ? "<unset>" : t->cidr);
+
+		/* convert it *to* internal format */
+		ip_pool pool;
+		err = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
+		if (err != NULL) {
+			FAIL("ttopool(%s) failed: %s", t->pool, err);
+		}
+
+		ip_cidr cidr;
+		err = pool_offset_to_cidr(pool, t->offset, &cidr);
+		cidr_buf out;
+		str_cidr(&cidr, &out);
+
+		if (t->cidr == NULL) {
+			if (cidr.ip.is_set) {
+				FAIL("pool_offset_to_cidr(%s + %jd -> %s) should have returned <unset>",
+				     t->pool, t->offset, out.buf);
+			}
+		} else if (!streq(out.buf, t->cidr)) {
+			FAIL("pool_offset_to_cidr(%s + %jd -> %s) should have returned %s",
+			     t->pool, t->offset, out.buf, t->cidr);
+		}
+
+		PRINT("pool_offset_to_cidr(%s + %jd -> %s): %s",
+		      t->pool, t->offset, out.buf, err == NULL ? "<ok>" : err);
+
+	}
+}
+
+static void check_cidr_to_pool_offset(void)
+{
+	static const struct test {
+		int line;
+		const char *pool;
+		const char *cidr;
+		uintmax_t offset;
+		bool ok;
+	} tests[] = {
+		{ LN, "1.0.0.0/32",              "1.0.0.0", 0, true, },
+		{ LN, "0.0.0.1-255.255.255.255", "255.255.255.255", UINT32_MAX-1ULL, true, },
+
+		/* full subnet cidrs */
+		{ LN, "1.0.0.0/24/28",           "1.0.0.0", 0, true, },
+		{ LN, "1.0.0.0/24/28",           "1.0.0.128/28", 8, true, },
+		{ LN, "1.0.0.0/24/28",           "1.0.0.255/28", 15, true, },
+
+		/* out of pool */
+		{ LN, "1.0.0.0/32",              "0.255.255.255", UINTMAX_MAX, false, },
+		{ LN, "1.0.0.0/32",              "1.0.0.1", UINTMAX_MAX, false, },
+	};
+
+	err_t err;
+
+	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		const struct test *t = &tests[ti];
+		PRINT("%s - %s -> %ju ok: %s",
+		      t->pool,
+		      t->cidr,
+		      t->offset,
+		      bool_str(t->ok));
+
+		ip_pool pool;
+		err = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
+		if (err != NULL) {
+			FAIL("ttopool(%s) failed: %s", t->pool, err);
+		}
+
+		ip_cidr cidr;
+		err = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
+		if (err != NULL) {
+			FAIL("ttocidr_num(%s) failed: %s", t->cidr, err);
+		}
+
+		uintmax_t offset;
+		err = cidr_to_pool_offset(pool, cidr, &offset);
+
+		if (t->ok) {
+			if (err != NULL) {
+				FAIL("cidr_to_pool_offset(%s - %s -> %ju) unexpectedly failed: %s",
+				     t->pool, t->cidr, offset, err);
+			}
+		} else if (err == NULL) {
+			FAIL("cidr_to_pool_offset(%s - %s -> %ju) unexpectedly succeeded",
+			     t->pool, t->cidr, offset);
+		}
+
+		if (offset != t->offset) {
+			FAIL("cidr_to_pool_offset(%s - %s -> %ju) should have returned %jx",
+			     t->pool, t->cidr, offset, t->offset);
+		}
+
+		PRINT("cidr_to_pool_offset(%s - %s -> %ju): %s",
+		      t->pool, t->cidr, offset, err == NULL ? "<ok>" : err);
+
+	}
+}
+
+void ip_pool_check(struct logger *logger UNUSED)
+{
+	check_ippool_bits();
+	check_ttopool__to__str_pool();
+	check_pool_from_subnet();
+	check_pool_is();
+	check_pool_op_pool();
+	check_pool_offset_to_cidr();
+	check_cidr_to_pool_offset();
 }

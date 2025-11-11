@@ -30,25 +30,21 @@ typedef struct {
 
 	struct ip_bytes lo;
 	struct ip_bytes hi;
-	/* nr of bits to deligate */
-	unsigned subprefix;
 } ip_range;
 
-#define PRI_RANGE "<range-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>/%u"
+#define PRI_RANGE "<range-%s:"PRI_IP_VERSION"["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>"
 #define pri_range(R)					\
 	((R)->ip.is_set ? "set" : "unset"),		\
 		pri_ip_version((R)->ip.version),	\
 		pri_ip_bytes((R)->lo),			\
-		pri_ip_bytes((R)->hi),			\
-		(R)->subprefix
+		pri_ip_bytes((R)->hi)
 
 void pexpect_range(const ip_range *r, where_t where);
 
 /* caller knows best */
 ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes start,
-			const struct ip_bytes end,
-			unsigned subprefix);
+			const struct ip_bytes end);
 
 ip_range range_from_address(const ip_address subnet);
 ip_range range_from_cidr(const ip_cidr cidr);
@@ -146,12 +142,5 @@ uintmax_t range_size(const ip_range r);
 
 ip_address range_start(const ip_range range); /* floor */
 ip_address range_end(const ip_range range); /* ceiling */
-
-err_t range_offset_to_cidr(const ip_range range, uintmax_t offset,
-			   ip_cidr *cidr) MUST_USE_RESULT;
-
-err_t cidr_to_range_offset(const ip_range range,
-			   const ip_cidr cidr,
-			   uintmax_t *offset) MUST_USE_RESULT;
 
 #endif

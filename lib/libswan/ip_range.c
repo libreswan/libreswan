@@ -34,15 +34,13 @@ const ip_range unset_range; /* all zeros */
 
 ip_range range_from_raw(where_t where, const struct ip_info *afi,
 			const struct ip_bytes lo,
-			const struct ip_bytes hi,
-			unsigned subprefix)
+			const struct ip_bytes hi)
 {
 	ip_range r = {
 		.ip.is_set = true,
 		.ip.version = afi->ip.version,
 		.lo = lo,
 		.hi = hi,
-		.subprefix = subprefix,
 	};
 	pexpect_range(&r, where);
 	return r;
@@ -84,10 +82,6 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	}
 
 	s += jam_ip_bytes_range(buf, afi, range->lo, range->hi);
-	if (range->subprefix != afi->mask_cnt) {
-		s += jam(buf, "/%u", range->subprefix);
-	}
-
 	return s;
 }
 
@@ -107,8 +101,7 @@ ip_range range_from_address(const ip_address address)
 	}
 
 	return range_from_raw(HERE, afi,
-			      address.bytes, address.bytes,
-			      afi->mask_cnt);
+			      address.bytes, address.bytes);
 }
 
 ip_range range_from_cidr(const ip_cidr cidr)
@@ -127,8 +120,7 @@ ip_range range_from_cidr(const ip_cidr cidr)
 			      ip_bytes_blit(afi, cidr.bytes,
 					    &keep_routing_prefix,
 					    &set_host_identifier,
-					    cidr.prefix_len),
-			      afi->mask_cnt);
+					    cidr.prefix_len));
 }
 
 ip_range range_from_subnet(const ip_subnet subnet)
@@ -147,8 +139,7 @@ ip_range range_from_subnet(const ip_subnet subnet)
 			      ip_bytes_blit(afi, subnet.bytes,
 					    &keep_routing_prefix,
 					    &set_host_identifier,
-					    subnet.maskbits),
-			      afi->mask_cnt);
+					    subnet.maskbits));
 }
 
 const struct ip_info *range_type(const ip_range *range)
@@ -361,8 +352,7 @@ err_t addresses_to_nonzero_range(const ip_address lo, const ip_address hi, ip_ra
 	}
 
 	*dst = range_from_raw(HERE, lo_afi,
-			      lo.bytes, hi.bytes,
-			      lo_afi->mask_cnt);
+			      lo.bytes, hi.bytes);
 	return NULL;
 }
 
@@ -385,71 +375,6 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	}
 
 	*dst = subnet_from_raw(HERE, afi, range.lo, prefix_bits);
-	return NULL;
-}
-
-err_t range_offset_to_cidr(const ip_range range,
-			   uintmax_t offset,
-			   ip_cidr *cidr_out)
-{
-	err_t e;
-	*cidr_out = unset_cidr;
-
-	const struct ip_info *afi = range_info(range);
-	if (afi == NULL) {
-		return "invalid range";
-	}
-
-	struct ip_bytes ip_offset;
-	e = uintmax_to_ip_bytes(afi, range.subprefix, offset, &ip_offset);
-	if (e != NULL) {
-		return e;
-	}
-
-	struct ip_bytes sum = {0};
-	e = ip_bytes_add(afi, &sum, range.lo, ip_offset);
-	if (e != NULL) {
-		return e;
-	}
-
-	ip_cidr cidr = cidr_from_raw(HERE, afi, sum, range.subprefix);
-	if (!cidr_in_range(cidr, range)) {
-		return "range overflow";
-	}
-
-	*cidr_out = cidr;
-	return NULL;
-}
-
-err_t cidr_to_range_offset(const ip_range range, const ip_cidr cidr, uintmax_t *offset)
-{
-	err_t e;
-	*offset = UINTMAX_MAX;
-
-	const struct ip_info *afi = range_info(range);
-	if (afi == NULL) {
-		return "range invalid";
-	}
-
-	if (cidr_info(cidr) != afi) {
-		return "address is not from range";
-	}
-
-	if (!cidr_in_range(cidr, range)) {
-		return "address out-of-bounds";
-	}
-
-	struct ip_bytes diff = {0};
-	e = ip_bytes_sub(afi, &diff, cidr.bytes, range.lo);
-	if (e != NULL) {
-		return e;
-	}
-
-	e = ip_bytes_to_uintmax(afi, range.subprefix, diff, offset);
-	if (e != NULL) {
-		return e;
-	}
-
 	return NULL;
 }
 

@@ -169,12 +169,14 @@ const struct ip_info ip_families[IP_VERSION_ROOF] = {
 
 		/* none / zero / invalid yet valid */
 		.address.zero = { .ip.is_set = true, .ip.version = IPv4, }, /* 0.0.0.0 */
-		.range.zero = { .ip.is_set = true, .ip.version = IPv4, .subprefix = 32, },
+		.range.zero = { .ip.is_set = true, .ip.version = IPv4, },
+		.pool.zero = { .ip.is_set = true, .ip.version = IPv4, .subprefix = 32, },
 		.selector.zero = { .ip.is_set = true, .ip.version = IPv4, }, /* 0.0.0.0/0 */
 		.subnet.zero = { .ip.is_set = true, .ip.version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
 
 		/* all addresses */
-		.range.all = { .ip.is_set = true, .ip.version = IPv4, .hi = IPv4_FF, .subprefix = 32, }, /* 0.0.0.0-255.255.255.255 */
+		.range.all = { .ip.is_set = true, .ip.version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0-255.255.255.255 */
+		.pool.all = { .ip.is_set = true, .ip.version = IPv4, .hi = IPv4_FF, .subprefix = 32, }, /* 0.0.0.0-255.255.255.255 */
 		.selector.all = { .ip.is_set = true, .ip.version = IPv4, .hi = IPv4_FF, }, /* 0.0.0.0-255.255.255.255 */
 		.subnet.all = { .ip.is_set = true, .ip.version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
@@ -241,12 +243,14 @@ const struct ip_info ip_families[IP_VERSION_ROOF] = {
 
 		/* none / zero / invalid yet valid  */
 		.address.zero = { .ip.is_set = true, .ip.version = IPv6, }, /* :: */
-		.range.zero = { .ip.is_set = true, .ip.version = IPv6, .subprefix = 128, },
+		.range.zero = { .ip.is_set = true, .ip.version = IPv6, },
+		.pool.zero = { .ip.is_set = true, .ip.version = IPv6, .subprefix = 128, },
 		.selector.zero = { .ip.is_set = true, .ip.version = IPv6, }, /* ::/0 */
 		.subnet.zero = { .ip.is_set = true, .ip.version = IPv6, .maskbits = 128, }, /* ::/128 */
 
 		/* all addresses */
-		.range.all = { .ip.is_set = true, .ip.version = IPv6, .hi = IPv6_FF, .subprefix = 128, }, /* ::-ffff:..:ffff */
+		.range.all = { .ip.is_set = true, .ip.version = IPv6, .hi = IPv6_FF, }, /* ::-ffff:..:ffff */
+		.pool.all = { .ip.is_set = true, .ip.version = IPv6, .hi = IPv6_FF, .subprefix = 128, }, /* ::-ffff:..:ffff */
 		.selector.all = { .ip.is_set = true, .ip.version = IPv6, .hi = IPv6_FF, }, /* ::-ffff:..:ffff */
 		.subnet.all = { .ip.is_set = true, .ip.version = IPv6, .maskbits = 0, }, /* ::/0 */
 

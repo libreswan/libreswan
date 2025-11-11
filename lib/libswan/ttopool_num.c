@@ -1,4 +1,4 @@
-/* ip_range type, for libreswan
+/* ip_pool type, for libreswan
  *
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2000 Henry Spencer.
@@ -17,24 +17,24 @@
  */
 
 /*
- * convert from text form of IP address range specification to binary;
+ * convert from text form of IP address pool specification to binary;
  * and more minor utilities for prefix length calculations for IKEv2
  */
 
 #include "jambuf.h"
-#include "ip_range.h"
+#include "ip_pool.h"
 #include "ip_info.h"
 #include "passert.h"
 #include "lswlog.h"		/* for pexpect() */
 
 /*
- * ttorange_num()
+ * ttopool_num()
  *
- * Convert "addr1-addr2" or subnet/prefix[/subprefix] to an address range.
+ * Convert "addr1-addr2" or subnet/prefix[/subprefix] to an address pool.
  */
-err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
+err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
 {
-	*dst = unset_range;
+	*dst = unset_pool;
 	err_t err;
 
 	shunk_t cursor = input;
@@ -58,16 +58,17 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 	case '\0':
 	{
 		/* single address */
-		*dst = range_from_raw(HERE, afi,
+		*dst = pool_from_raw(HERE, afi,
 				      start_address.bytes,
-				      start_address.bytes);
+				      start_address.bytes,
+				      afi->mask_cnt);
 		return NULL;
 	}
 	case '/':
 	{
 		/* START/PREFIX[/SUBPREFIX] */
 		uintmax_t prefix = afi->mask_cnt; /* TBD */
-		err = shunk_to_uintmax(cursor, NULL, 0, &prefix);
+		err = shunk_to_uintmax(cursor, &cursor, 0, &prefix);
 		if (err != NULL) {
 			return err;
 		}
@@ -76,8 +77,29 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 			return "too large";
 		}
 
+		uintmax_t subprefix = afi->mask_cnt;
+		if (cursor.len > 0) {
+			if (hunk_char(cursor, 0) != '/') {
+				return "invalid subprefix, expecting '/'";
+			}
+			
+			cursor = shunk_slice(cursor, 1, cursor.len);
+			err = shunk_to_uintmax(cursor, NULL, 0, &subprefix);
+			if (err != NULL) {
+				return err;
+			}
+
+			if (subprefix < prefix) {
+				return "subprefix is too small";
+			}
+
+			if (subprefix > afi->mask_cnt) {
+				return "subprefix is too big";
+			}
+		}
+
 		/* XXX: should this reject bad addresses */
-		*dst = range_from_raw(HERE, afi,
+		*dst = pool_from_raw(HERE, afi,
 				      ip_bytes_blit(afi, start_address.bytes,
 						    &keep_routing_prefix,
 						    &clear_host_identifier,
@@ -85,7 +107,8 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 				      ip_bytes_blit(afi, start_address.bytes,
 						    &keep_routing_prefix,
 						    &set_host_identifier,
-						    prefix));
+						    prefix),
+				      subprefix);
 		return NULL;
 	}
 	case '-':
@@ -100,11 +123,12 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		passert(afi == address_info(end_address));
 		if (ip_bytes_cmp(start_address.ip.version, start_address.bytes,
 				 end_address.ip.version, end_address.bytes) > 0) {
-			return "start of range is greater than end";
+			return "start of pool is greater than end";
 		}
-		*dst = range_from_raw(HERE, afi,
+		*dst = pool_from_raw(HERE, afi,
 				      start_address.bytes,
-				      end_address.bytes);
+				      end_address.bytes,
+				      afi->mask_cnt);
 		return NULL;
 	}
 	default:

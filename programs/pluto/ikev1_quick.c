@@ -2070,21 +2070,21 @@ static struct connection *fc_try(const struct connection *c,
 		 * from a file.
 		 */
 		if (c->pool[IPv4] != NULL) {
-			ip_range pool_range = addresspool_range(c->pool[IPv4]);
+			ip_pool pool = addresspool_pool(c->pool[IPv4]);
 			if (!selector_is_address(*remote_client)) {
-				range_buf rb;
+				pool_buf rb;
 				selector_buf cb;
 				vdbg("skipping connection with address pool %s, remote client %s is not an address",
-				     str_range(&pool_range, &rb),
+				     str_pool(&pool, &rb),
 				     str_selector(remote_client, &cb));
 				continue;
 			}
 			ip_address remote_address = selector_prefix(*remote_client);
-			if (!address_in_range(remote_address, pool_range)) {
-				range_buf rb;
+			if (!address_in_pool(remote_address, pool)) {
+				pool_buf rb;
 				selector_buf cb;
 				vdbg("skipping connection with address pool %s, remote client %s is not in range",
-				     str_range(&pool_range, &rb),
+				     str_pool(&pool, &rb),
 				     str_selector(remote_client, &cb));
 				continue;
 			}

@@ -1111,7 +1111,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		addresspool_delref(&c->pool[IPv4], logger);
 	}
 
-	diag_t d = install_addresspool(pool_range, c->pool, logger);
+	diag_t d = install_addresspool(pool_from_range(pool_range), c->pool, logger);
 	if (d != NULL) {
 		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
 		     addresspool, userid, str_diag(d));
