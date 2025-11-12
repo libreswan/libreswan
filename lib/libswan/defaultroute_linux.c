@@ -36,7 +36,7 @@
 #include "lswalloc.h"
 #include "ipsecconf/confread.h"
 #include "linux_netlink.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
@@ -588,6 +588,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 	struct resolve_end that = {
 		.leftright = "that",
 		.host.type = KH_IPADDR,
+		.host.addr = dest,
 	};
 
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);

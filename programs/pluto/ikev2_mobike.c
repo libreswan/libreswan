@@ -39,7 +39,7 @@
 #include "ikev2_send.h"
 #include "iface.h"
 #include "kernel.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "ipsecconf/confread.h"
 #include "ikev2_message.h"
 #include "routing.h"

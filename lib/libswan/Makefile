@@ -121,10 +121,10 @@ endif
 
 # implement resolve_default_route()
 ifneq ($(LINUX_VARIANT),)
-OBJS += resolve_default_route_linux.o
+OBJS += defaultroute_linux.o
 endif
 ifneq ($(BSD_VARIANT),)
-OBJS += resolve_default_route_bsd.o
+OBJS += defaultroute_bsd.o
 endif
 
 OBJS += log_ip.o

@@ -106,7 +106,7 @@
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
 #include "whack_pubkey.h"
 #include "binaryscale-iec-60027-2.h"
-#include "addr_lookup.h"
+#include "defaultroute.h"
 #include "ipsecconf/config_setup.h"
 #include "extract.h"
 

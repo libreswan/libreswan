@@ -1475,7 +1475,12 @@ kvmplutotest	whack-hostkey-06-ikev2-pubkey-ecdsa	good
 kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-rsa		good
 kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-ecdsa	good
 
+# ipsec showroute
+
+kvmplutotest	whack-showroute-01			good
+
 # up edge cases
+
 kvmplutotest	whack-up-01-async-ikev1			good
 kvmplutotest	whack-up-01-async-ikev2			good
 kvmplutotest	whack-up-02-config			good	github/1726

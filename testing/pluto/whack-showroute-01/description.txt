@@ -1,0 +1,10 @@
+run "ipsec showroute" on west against IPv[46] east and road
+
+calls get_route() which performs the quivalent of resolving
+%defaultroute in:
+
+    left=%defaultroute
+    leftnexthop=%defaultroute
+    right={east,road}
+    hostfamily=IPv{4,6}
+
