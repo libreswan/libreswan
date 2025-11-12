@@ -4280,6 +4280,16 @@ diag_t extract_connection(const struct whack_message *wm,
 	connection_db_add(c);
 	vdbg_connection(c, verbose, HERE, "extracted");
 
+	if (verbose.debug) {
+		VDBG_log("oriented; maybe");
+		connection_db_check(verbose.logger, HERE);
+	}
+
+	return NULL;
+}
+
+void resolve_connection(struct connection *c, struct verbose verbose)
+{
 	/*
 	 * Now try to resolve the host/nexthop in .config, copying the
 	 * result into the connection.
@@ -4316,5 +4326,18 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-	return NULL;
+	/* log all about this connection */
+
+	err_t tss = connection_requires_tss(c);
+	if (tss != NULL) {
+		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
+	}
+
+	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+		jam_string(buf, "added");
+		jam_string(buf, " ");
+		jam_orientation(buf, c, /*oriented_details*/false);
+	}
+
+	release_whack(c->logger, HERE);
 }

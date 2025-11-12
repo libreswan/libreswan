@@ -1333,33 +1333,7 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 		return d;
 	}
 
-	/* log all about this connection */
-
-	/* connection is good-to-go: log against it */
-
-	err_t tss = connection_requires_tss(c);
-	if (tss != NULL) {
-		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
-	}
-
-	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
-		jam_string(buf, "added");
-		jam_string(buf, " ");
-		jam_orientation(buf, c, /*oriented_details*/false);
-	}
-
-	policy_buf pb;
-	ldbg(c->logger,
-	     "ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %ju; policy: %s ipsec_max_bytes: %ju ipsec_max_packets %ju",
-	     deltasecs(c->config->sa_ike_max_lifetime),
-	     deltasecs(c->config->sa_ipsec_max_lifetime),
-	     deltasecs(c->config->sa_rekey_margin),
-	     c->config->sa_rekey_fuzz,
-	     c->config->child.replay_window,
-	     str_connection_policies(c, &pb),
-	     c->config->sa_ipsec_max_bytes,
-	     c->config->sa_ipsec_max_packets);
-	release_whack(c->logger, HERE);
+	resolve_connection(c, verbose);
 	return NULL;
 }
 
