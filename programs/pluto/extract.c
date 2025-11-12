@@ -631,6 +631,11 @@ static deltatime_t extract_deltatimescale(const char *leftright,
 					  const struct whack_message *wm,
 					  diag_t *d, struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
@@ -655,7 +660,10 @@ static unsigned extract_enum_name(const char *leftright,
 				  diag_t *d,
 				  struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
@@ -681,7 +689,10 @@ static unsigned extract_sparse_name(const char *leftright,
 				    diag_t *d,
 				    struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
@@ -719,6 +730,10 @@ static uintmax_t check_range(const char *story,
 			     diag_t *d,
 			     struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
 
 	if (range.clamp.min != 0 && value < range.clamp.min) {
 		humber_buf hb;
@@ -779,8 +794,12 @@ static uintmax_t extract_yn_uintmax(const char *story,
 				    diag_t *d,
 				    struct verbose verbose)
 {
-	(*d) = NULL;
 	(*yna) = 0; /* unset */
+
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
@@ -821,7 +840,11 @@ static uintmax_t extract_uintmax(const char *story,
 				 diag_t *d,
 				 struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
+
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
 	}
@@ -846,7 +869,10 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 					diag_t *d,
 					struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
@@ -868,7 +894,10 @@ static uintmax_t extract_percent(const char *leftright, const char *name, const 
 				 diag_t *d,
 				 struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
@@ -905,8 +934,12 @@ static ip_cidr extract_cidr_num(const char *leftright,
 				diag_t *d,
 				struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return unset_cidr;
+	}
+
 	err_t err;
-	(*d) = NULL;
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return unset_cidr;
@@ -2419,6 +2452,11 @@ static const struct ike_info *const ike_info[] = {
 static enum ike_version extract_ike_version(const struct whack_message *wm,
 					    diag_t *d, struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return 0;
+	}
+
 	enum ike_version keyexchange = extract_sparse_name("", "keyexchange",
 							   wm->wm_keyexchange,
 							   /*value_when_unset*/0,
