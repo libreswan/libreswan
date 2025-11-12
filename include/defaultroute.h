@@ -50,6 +50,7 @@ enum route_status {
 };
 
 struct ip_route {
+	unsigned interface;	/* feed to if_indextoname () */
 	ip_address source;
 	ip_address gateway;
 };

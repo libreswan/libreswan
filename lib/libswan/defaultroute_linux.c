@@ -665,6 +665,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 		return ROUTE_FATAL;
 	}
 
+	route->interface = this.host.interface;
 	route->source = this.host.addr;
 	route->gateway = this.nexthop.addr;
 	return ROUTE_SUCCESS;
