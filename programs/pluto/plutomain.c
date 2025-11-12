@@ -82,6 +82,7 @@
 #include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
 #include "updown.h"		/* for pluto_dns_resolver; */
 #include "ddos.h"
+#include "helper.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -1511,7 +1512,9 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	start_server_helpers(config_setup_option(oco, KBF_NHELPERS), logger);
+	uintmax_t nhelpers = config_setup_option(oco, KBF_NHELPERS);
+	start_server_helpers(nhelpers, logger);
+	start_helpers(PMIN(1, nhelpers), logger);
 
 	init_kernel(oco, logger);
 
