@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftprotoport</option>
+    <option>leftprotoport=&ip_protoport;</option>
   </term>
   <term>
-    <option>rightprotoport</option>
+    <option>rightprotoport=&ip_protoport;</option>
   </term>
   <listitem>
     <para>
@@ -59,12 +59,12 @@
 
     <important>
       <title>
-	<code>use with leftsubnet</code>
+	Use with <option>leftsubnet=</option>.
       </title>
       <para>
-	With IKEv2, the <code>leftsubnet</code> specification can
+	With IKEv2, the <option>leftsubnet=</option> specification can
 	include the protocol and port.  Combining that syntax with
-	<code>protoport</code> is not supported.
+	<option>protoport=</option> is not supported.
       </para>
     </important>
 

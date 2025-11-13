@@ -1,15 +1,18 @@
 <varlistentry>
   <term>
-    <option>leftsubnet</option>
+    <option>leftsubnet=&ip_selector;[,...]</option>
   </term>
   <term>
-    <option>rightsubnet</option>
+    <option>rightsubnet=&ip_selector;[,...]</option>
   </term>
   <listitem>
     <para>
-      A comma separated list of traffic selectors behind the left
-      participant.  Each expressed as: <systemitem class="ipaddress">
-      <replaceable>network-prefix</replaceable> /
+      A comma separated list of traffic selectors behind the
+      <option>left</option> or <option>right</option> participant.
+    </para>
+    <para>
+      Each traffic selector expressed as: <systemitem
+      class="ipaddress"> <replaceable>network-prefix</replaceable> /
       <replaceable>netmask</replaceable>/
       <replaceable>protocol</replaceable>/
       <replaceable>port</replaceable> </systemitem> where trailing
