@@ -188,9 +188,18 @@ void *refcnt_delref_where(const char *what,
 
 	LDBG_REF("delref");
 
-	if (new == 0) {
-		return refcnt;
+	if (new != 0) {
+		/* not the last ref */
+		return NULL;
 	}
 
-	return NULL;
+	/* last ref and have cleanup */
+	const struct refcnt_base *base = refcnt->base;
+	if (base != NULL && base->discard != NULL) {
+		base->discard(refcnt, owner, where);
+		return NULL;
+	}
+
+	/* last ref, but no cleanup, leave it to caller */
+	return refcnt;
 }

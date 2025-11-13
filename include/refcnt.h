@@ -27,6 +27,9 @@ struct logger;
 
 struct refcnt_base {
 	const char *what;
+	void (*discard)(void *pointer,
+			const struct logger *logger,
+			where_t where);
 };
 
 typedef struct refcnt {

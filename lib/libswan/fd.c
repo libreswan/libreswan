@@ -25,9 +25,16 @@
 #include "refcnt.h"
 #include "lswlog.h"		/* for pexpect() */
 
+static void discard_fd(void *pointer, const struct logger *owner, where_t where);
+
 struct fd {
 	refcnt_t refcnt;	/* must be first */
 	int fd;
+};
+
+static const struct refcnt_base fd_refcnt_base = {
+	.what = "fd",
+	.discard = discard_fd,
 };
 
 struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_t where)
@@ -35,22 +42,27 @@ struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_
 	return addref_where(fd, new_owner, where);
 }
 
-void fd_delref_where(struct fd **fdp, const struct logger *ex_owner, where_t where)
+void fd_delref_where(struct fd **fdp, const struct logger *owner, where_t where)
 {
-	struct fd *fd = delref_where(fdp, ex_owner, where);
-	if (fd != NULL) {
-		if (close(fd->fd) != 0) {
-			if (LDBGP(DBG_BASE, ex_owner)) {
-				llog_errno(DEBUG_STREAM, ex_owner, errno,
-					   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
-					   pri_fd(fd), pri_where(where));
-			}
-		} else {
-			ldbg(ex_owner, "freeref "PRI_FD" "PRI_WHERE"",
-			     pri_fd(fd), pri_where(where));
+	struct fd *fd = delref_where(fdp, owner, where);
+	PASSERT(owner, fd == NULL);
+}
+
+void discard_fd(void *pointer, const struct logger *owner, where_t where)
+{
+	struct fd *fd = pointer;
+	if (close(fd->fd) != 0) {
+		int error = errno;
+		if (LDBGP(DBG_BASE, owner)) {
+			LDBG_errno(owner, error,
+				   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
+				   pri_fd(fd), pri_where(where));
 		}
-		pfree(fd);
+	} else {
+		ldbg(owner, "freeref "PRI_FD" "PRI_WHERE"",
+		     pri_fd(fd), pri_where(where));
 	}
+	pfree(fd);
 }
 
 void fd_leak(struct fd *fd, struct logger *logger, where_t where)
@@ -89,7 +101,9 @@ struct fd *fd_accept(int socket, const struct logger *owner, where_t where)
 		return NULL;
 	}
 
-	struct fd *fdt = refcnt_alloc(struct fd, owner, where);
+	struct fd *fdt = alloc_thing(struct fd, "fd");
+	refcnt_init(fdt, &fdt->refcnt, &fd_refcnt_base, owner, where);
+
 	fdt->fd = fd;
 	ldbg(owner, "%s: new "PRI_FD" "PRI_WHERE"",
 	     __func__, pri_fd(fdt), pri_where(where));
