@@ -198,12 +198,6 @@
 <!ENTITY xauthfail SYSTEM "d.ipsec.conf/xauthfail.xml">
 <!ENTITY expire-lifetime SYSTEM "d.ipsec.conf/expire-lifetime.xml">
 
-<!-- definitely wrong but nothing better? -->
-<!ENTITY yN_options '{yes,<emphasis>no</emphasis>}'>
-<!ENTITY Yn_options '{<emphasis>yes</emphasis>,no}'>
-<!ENTITY ip_cidr '<replaceable>ip-address</replaceable>[/<replaceable>netmask</replaceable>]'>
-<!ENTITY ip_pool '<replaceable>ip-address</replaceable>[/<replaceable>netmask</replaceable>[/<replaceable>subnet-mask</replaceable>]|<replaceable>ip-address</replaceable>-<replaceable>ip-address</replaceable>'>
-
 ]>
 
 <refentry>

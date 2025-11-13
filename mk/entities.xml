@@ -113,3 +113,17 @@
 <!ENTITY syslogd.8 '<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY systemd.8 '<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY systemd.service.5 '<citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+
+<!-- definitely wrong but nothing better? -->
+<!ENTITY yn_options '{yes,no}'>
+<!ENTITY yna_options '{yes,no,auto}'>
+<!ENTITY yN_options '{yes,<emphasis>no</emphasis>}'>
+<!ENTITY Yn_options '{<emphasis>yes</emphasis>,no}'>
+<!ENTITY ip_cidr '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>]'>
+<!ENTITY ip_pool '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>subnet-mask</replaceable>]|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
+<!ENTITY ip_range '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
+<!ENTITY ip_address '<replaceable>address</replaceable>'>
+<!ENTITY ip_selector '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>protocol</replaceable>][/<replaceable>port</replaceable>]'>
+<!ENTITY ip_subnet '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>'>
+<!ENTITY ip_endpoint '<replaceable>address</replaceable>:<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
+<!ENTITY ip_protoport '<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
