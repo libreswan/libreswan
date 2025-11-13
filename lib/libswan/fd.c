@@ -26,7 +26,7 @@
 #include "lswlog.h"		/* for pexpect() */
 
 struct fd {
-	refcnt_t refcnt;
+	refcnt_t refcnt;	/* must be first */
 	int fd;
 };
 

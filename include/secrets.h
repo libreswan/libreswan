@@ -286,7 +286,7 @@ const struct pubkey_type *pubkey_type_from_SECKEYPublicKey(SECKEYPublicKey *publ
  * subject public key info.
  */
 struct pubkey {
-	refcnt_t refcnt;	/* reference counted! */
+	refcnt_t refcnt;	/* must be first */
 	struct id id;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
