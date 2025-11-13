@@ -153,8 +153,7 @@ enum v1_pb {
  */
 
 struct msg_digest {
-
-	refcnt_t refcnt;
+	refcnt_t refcnt;	/* must be first */
 	chunk_t v1_raw_packet;			/* (v1) if encrypted,
 						 * received packet
 						 * before

@@ -26,15 +26,12 @@
 #include "lswlog.h"		/* for pexpect() */
 
 struct fd {
-#define FD_MAGIC 0xf00d1e
-	unsigned magic;
+	refcnt_t refcnt;	/* must be first */
 	int fd;
-	refcnt_t refcnt;
 };
 
 struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_t where)
 {
-	pexpect(fd == NULL || fd->magic == FD_MAGIC);
 	return addref_where(fd, new_owner, where);
 }
 
@@ -42,7 +39,6 @@ void fd_delref_where(struct fd **fdp, const struct logger *ex_owner, where_t whe
 {
 	struct fd *fd = delref_where(fdp, ex_owner, where);
 	if (fd != NULL) {
-		PEXPECT(ex_owner, fd->magic == FD_MAGIC);
 		if (close(fd->fd) != 0) {
 			if (LDBGP(DBG_BASE, ex_owner)) {
 				llog_errno(DEBUG_STREAM, ex_owner, errno,
@@ -53,7 +49,6 @@ void fd_delref_where(struct fd **fdp, const struct logger *ex_owner, where_t whe
 			ldbg(ex_owner, "freeref "PRI_FD" "PRI_WHERE"",
 			     pri_fd(fd), pri_where(where));
 		}
-		fd->magic = ~FD_MAGIC;
 		pfree(fd);
 	}
 }
@@ -70,14 +65,6 @@ void fd_leak(struct fd *fd, struct logger *logger, where_t where)
 
 ssize_t fd_sendmsg(const struct fd *fd, const struct msghdr *msg, int flags)
 {
-	if (fd == NULL || fd->magic != FD_MAGIC) {
-		/*
-		 * XXX: passert() / pexpect() would be recursive -
-		 * they will call this function when trying to write
-		 * to whack.
-		 */
-		return -EFAULT;
-	}
 	ssize_t s = sendmsg(fd->fd, msg, flags);
 	return s < 0 ? -errno : s;
 }
@@ -104,7 +91,6 @@ struct fd *fd_accept(int socket, const struct logger *owner, where_t where)
 
 	struct fd *fdt = refcnt_alloc(struct fd, owner, where);
 	fdt->fd = fd;
-	fdt->magic = FD_MAGIC;
 	ldbg(owner, "%s: new "PRI_FD" "PRI_WHERE"",
 	     __func__, pri_fd(fdt), pri_where(where));
 	return fdt;
@@ -112,9 +98,6 @@ struct fd *fd_accept(int socket, const struct logger *owner, where_t where)
 
 ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes)
 {
-	if (fd == NULL || fd->magic != FD_MAGIC) {
-		return -EFAULT;
-	}
 	ssize_t s = read(fd->fd, buf, nbytes);
 	return s < 0 ? -errno : s;
 }
@@ -122,11 +105,6 @@ ssize_t fd_read(const struct fd *fd, void *buf, size_t nbytes)
 bool fd_p(const struct fd *fd)
 {
 	if (fd == NULL) {
-		return false;
-	}
-	if (fd->magic != FD_MAGIC) {
-		llog_pexpect(&global_logger, HERE,
-			     "wrong magic for "PRI_FD"", pri_fd(fd));
 		return false;
 	}
 	return true;

@@ -65,7 +65,7 @@
 #include "sa_role.h"
 
 struct dh_local_secret {
-	refcnt_t refcnt;
+	refcnt_t refcnt;	/* must be first */
 	const struct kem_desc *kem;
 	SECKEYPrivateKey *private_key;
 	SECKEYPublicKey *public_key;

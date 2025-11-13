@@ -83,8 +83,8 @@ extern const struct iface_io iketcp_iface_io; /*IKETCP specific*/
  */
 
 struct iface_device {
+	refcnt_t refcnt;	/* must be first */
 	struct list_entry entry;
-	refcnt_t refcnt;
 	char *real_device_name;
 	bool nic_offload;
 	ip_address local_address;
@@ -102,7 +102,7 @@ void iface_device_delref_where(struct iface_device **ifp, where_t where);
 #define iface_device_delref(IFP) iface_device_delref_where(IFP, HERE)
 
 struct iface_endpoint {
-	refcnt_t refcnt;
+	refcnt_t refcnt;	/* must be first */
 	struct iface_device *ip_dev;
 	const struct iface_io *io;
 	ip_endpoint local_endpoint;	/* interface IP address:port */
