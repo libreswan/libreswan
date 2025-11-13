@@ -49,7 +49,7 @@ static void ldbg_ref(const struct logger *logger,
 }
 
 #define LDBG_REF(WHY)						\
-	ldbg_ref(logger, owner, WHY, refcnt->base->what, pointer, where, old, new)
+	ldbg_ref(logger, owner, WHY, refcnt->base->what, refcnt, where, old, new)
 
 /*
  * So existing code can use the refcnt tracer.
@@ -90,6 +90,12 @@ void refcnt_init(const void *pointer,
 		 const struct logger *logger,
 		 const struct where *where)
 {
+	if (refcnt != pointer) {
+		llog_passert(logger, where,
+			     "%s() %s@%p should have been at the start of %p",
+			     __func__, base->what, refcnt, pointer);
+	}
+
 	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
 	{
@@ -99,6 +105,7 @@ void refcnt_init(const void *pointer,
 		new = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
+
 	if (old != 0 || new != 1) {
 		llog_passert(logger, where,
 			     "%s() %s@%p should have been 0 initialized",
@@ -108,7 +115,6 @@ void refcnt_init(const void *pointer,
 }
 
 void refcnt_addref_where(const char *what,
-			 const void *pointer,
 			 refcnt_t *refcnt,
 			 const struct logger *logger,
 			 const struct logger *owner,
@@ -126,7 +132,7 @@ void refcnt_addref_where(const char *what,
 	if (old == 0) {
 		llog_passert(logger, where,
 			     "%s() refcnt for %s@%p should have been non-0",
-			     __func__, what, pointer);
+			     __func__, what, refcnt);
 	}
 
 	LDBG_REF("add");
@@ -136,8 +142,7 @@ void refcnt_addref_where(const char *what,
  * look at refcnt atomically
  * This is a bit slow but it is used rarely.
  */
-unsigned refcnt_peek_where(const void *pointer,
-			   const refcnt_t *refcnt,
+unsigned refcnt_peek_where(const refcnt_t *refcnt,
 			   const struct logger *logger,
 			   where_t where)
 {
@@ -147,11 +152,11 @@ unsigned refcnt_peek_where(const void *pointer,
 		val = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
-	ldbg_ref(logger, /*owner*/NULL, "peek", /*what*/NULL, pointer, where, val, val);
+	ldbg_ref(logger, /*owner*/NULL, "peek", /*what*/NULL, refcnt, where, val, val);
 	return val;
 }
 
-void *refcnt_delref_where(const char *what, void *pointer,
+void *refcnt_delref_where(const char *what,
 			  struct refcnt *refcnt,
 			  const struct logger *logger,
 			  const struct logger *owner,
@@ -172,13 +177,13 @@ void *refcnt_delref_where(const char *what, void *pointer,
 	if (old == 0) {
 		llog_passert(logger, where,
 			     "%s() refcnt for %s@%p should have been non-0",
-			     __func__, what, pointer);
+			     __func__, what, refcnt);
 	}
 
 	LDBG_REF("del");
 
 	if (new == 0) {
-		return pointer;
+		return refcnt;
 	}
 
 	return NULL;
