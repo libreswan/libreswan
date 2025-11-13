@@ -73,12 +73,12 @@ define transform-doc
 endef
 
 $(builddir)/%.man: $(srcdir)/%.xml $(top_srcdir)/mk/entities.xml | $(builddir)/
-	$(XMLTO) $(XMLTO_FLAGS) man $< -o $(builddir)
+	$(XMLTO) -v $(XMLTO_FLAGS) man -m $(top_srcdir)/mk/xmlto-man.xsl $< -o $(builddir)
 	set -e $(foreach r, $(shell $(top_srcdir)/packaging/utils/refnames.sh $<), \
 		; echo Transform: $(builddir)/$(r) ; $(TRANSFORM_VARIABLES) -i $(builddir)/$(r))
 	touch $@
 
 $(builddir)/%.html: $(srcdir)/%.xml $(top_srcdir)/mk/entities.xml | $(builddir)/
-	$(XMLTO) $(XMLTO_FLAGS) html-nochunks -m $(top_srcdir)/mk/man-html-link.xsl $< -o $(top_builddir)/html
+	$(XMLTO) $(XMLTO_FLAGS) html-nochunks -m $(top_srcdir)/mk/xmlto-html.xsl $< -o $(top_builddir)/html
 	$(TRANSFORM_VARIABLES) -i $(top_builddir)/html/$*.html
 	touch $@

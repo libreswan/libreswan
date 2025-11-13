@@ -4,6 +4,10 @@
   <!-- Turn citerefentry elements into HTML links -->
   <xsl:param name="citerefentry.link" select="1"/>
 
+  <!-- Put one term per line in itemised lists -->
+  <xsl:param name="variablelist.term.separator"></xsl:param>
+  <xsl:param name="variablelist.term.break.after">1</xsl:param>
+
   <!-- Code to generate the URL for a given citerefentry element -->
   <xsl:template name="generate.citerefentry.link">
     <xsl:value-of select="refentrytitle"/>
