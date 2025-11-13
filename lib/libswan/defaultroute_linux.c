@@ -139,9 +139,9 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 /*
  * Add RTA_SRC or RTA_DST attribute to netlink query message.
  */
-static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
-			      const ip_address *addr, const char *what,
-			      struct verbose verbose)
+static void netlink_query_add_address(struct nlmsghdr *nlmsg, int rta_type,
+				      const ip_address *addr, const char *what,
+				      struct verbose verbose)
 {
 	struct rtmsg *rtmsg;
 	struct rtattr *rtattr;
@@ -219,216 +219,252 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 				  struct verbose verbose)
 {
 	const struct ip_info *const host_afi = context->host_afi;
-	if (context->status == RESOLVE_FAILURE) {
-
-		if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_DONE)) {
-			return false;
-		}
-
-		if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_ERROR)) {
-			context->status = RESOLVE_FAILURE;
-			return false;
-		}
-
-		/* ignore all but IPv4 and IPv6 */
-		struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
-		if (rtmsg->rtm_family != host_afi->af) {
-			verbose("wrong family");
-			return true;
-		}
-
-		/* Parse one route entry */
-
-		char r_interface[IF_NAMESIZE+1];
-		zero(&r_interface);
-		ip_address src = unset_address;
-		ip_address prefsrc = unset_address;
-		ip_address gateway = unset_address;
-		ip_address dst = unset_address;
-		int priority = -1;
-		signed char pref = -1;
-		int table;
-		const char *cacheinfo = "";
-		const char *uid = "";
-
-		struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
-		int rtlen = RTM_PAYLOAD(nlmsg);
-
-		verbose("parsing route entry (RTA payloads)");
-		verbose.level++;
-
-		while (RTA_OK(rtattr, rtlen)) {
-			const void *data = RTA_DATA(rtattr);
-			unsigned len = RTA_PAYLOAD(rtattr);
-			switch (rtattr->rta_type) {
-			case RTA_OIF:
-				if_indextoname(*(int *)RTA_DATA(rtattr),
-					       r_interface);
-				break;
-			case RTA_PREFSRC:
-#define PARSE_ADDRESS(OUT, WHAT)					\
-				{					\
-					diag_t diag =			\
-						data_to_address(data, len, \
-								host_afi, OUT); \
-					if (diag != NULL) {		\
-						verbose("invalid RTA_%s from kernel: %s", \
-							WHAT, str_diag(diag)); \
-						pfree_diag(&diag);	\
-					} else {			\
-						address_buf ab;		\
-						verbose("RTA_%s=%s",	\
-							WHAT, str_address(OUT, &ab)); \
-					}				\
-				}
-				PARSE_ADDRESS(&prefsrc, "PREFSRC");
-				break;
-			case RTA_GATEWAY:
-				PARSE_ADDRESS(&gateway, "GATEWAY");
-				break;
-			case RTA_DST:
-				PARSE_ADDRESS(&dst, "DST");
-				break;
-			case RTA_SRC:
-				PARSE_ADDRESS(&src, "SRC");
-				break;
-#undef PARSE_ADDRESS
-			case RTA_PRIORITY:
-#define PARSE_NUMBER(OUT, WHAT)						\
-				{					\
-					if (len != sizeof(OUT)) {	\
-						verbose("ignoring RTA_%s with wrong size %d", WHAT, len); \
-					} else {			\
-						memcpy(&OUT, data, len); \
-						verbose("RTA_%s=%d", WHAT, OUT); \
-					}				\
-				}
-				PARSE_NUMBER(priority, "PRIORITY");
-				break;
-			case RTA_PREF:
-				PARSE_NUMBER(pref, "PREF");
-				break;
-			case RTA_TABLE:
-				PARSE_NUMBER(table, "TABLE");
-				break;
-#undef PARSE_NUMBER
-			case RTA_CACHEINFO:
-				cacheinfo = " +cacheinfo";
-				break;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,11,16)
-			case RTA_UID:
-				/*
-				 * XXX: Above kernel version matches
-				 * when this code was added to this
-				 * file and not when RTA_UID was added
-				 * to the kernel herders.  That was:
-				 *
-				 *  commit 4fb74506838b3e34eaaebfcf90ebcd1fd52ab813
-				 *  Merge: 0d53072aa42b e2d118a1cb5e
-				 *  Author: David S. Miller <davem@davemloft.net>
-				 *  Date:   Fri Nov 4 14:45:24 2016 -0400
-				 *
-				 *    Merge branch 'uid-routing'
-				 *
-				 * but who knows what that kernel
-				 * version was.
-				 *
-				 * A sane kernel would include:
-				 *
-				 *   #define RTA_UID RTA_UID
-				 *
-				 * when adding the enum so that:
-				 *
-				 *   #ifdef RTA_ID
-				 *
-				 * could do the right thing.  Sigh.
-				 */
-				uid = " +uid";
-				break;
-#endif
-			default:
-				verbose("ignoring RTA type %d", rtattr->rta_type);
-			}
-			rtattr = RTA_NEXT(rtattr, rtlen);
-		}
-
-		/*
-		 * Ignore if not main table.
-		 * Ignore ipsecX or mastX interfaces.
-		 *
-		 * XXX: instead of rtm_table, should this be checking
-		 * TABLE?
-		 */
-		address_buf sb, psb, db, gb;
-		verbose("using src=%s prefsrc=%s gateway=%s dst=%s dev='%s' priority=%d pref=%d table=%d%s%s",
-			str_address(&src, &sb),
-			str_address(&prefsrc, &psb),
-			str_address(&gateway, &gb),
-			str_address(&dst, &db),
-			(r_interface[0] ? r_interface : "?"),
-			priority, pref,
-			rtmsg->rtm_table,
-			cacheinfo, uid);
-
-		if (rtmsg->rtm_table != RT_TABLE_MAIN) {
-			verbose("IGNORE: table %d is not main(%d)",
-				rtmsg->rtm_table, RT_TABLE_MAIN);
-			return true;
-		}
-
-		if (startswith(r_interface, "ipsec") ||
-		    startswith(r_interface, "mast")) {
-			verbose("IGNORE: interface %s", r_interface);
-			return true;
-		}
-
-		switch (context->seeking) {
-		case PREFSRC:
-			if (!address_is_unset(&prefsrc)) {
-				context->status = RESOLVE_SUCCESS;
-				context->host->host.type = KH_IPADDR;
-				context->host->host.addr = prefsrc;
-				address_buf ab;
-				verbose("found prefsrc(host_addr): %s",
-					str_address(&context->host->host.addr, &ab));
-			}
-			break;
-		case GATEWAY:
-			if (address_is_unset(&dst)) {
-				if (address_is_unset(&gateway) && r_interface[0] != '\0') {
-					/*
-					 * Point-to-Point default gw without
-					 * "via IP".  Attempt to find gateway
-					 * as the IP address on the interface.
-					 */
-					resolve_point_to_point_peer(r_interface,
-								    context->host_afi,
-								    &gateway, verbose);
-				}
-				if (!address_is_unset(&gateway)) {
-					/*
-					 * Note: Use first even if
-					 * multiple.
-					 *
-					 * XXX: assume a gateway
-					 * always requires a second
-					 * call to get PREFSRC, code
-					 * above will quickly return
-					 * when it isn't.
-					 */
-					context->status = RESOLVE_PLEASE_CALL_AGAIN;
-					context->host->nexthop.type = KH_IPADDR;
-					context->host->nexthop.addr = gateway;
-					address_buf ab;
-					verbose("found gateway(host_nexthop): %s",
-						str_address(&context->host->nexthop.addr, &ab));
-				}
-			}
-			break;
-		default:
-			bad_case(context->seeking);
-		}
+	switch (context->status) {
+	case RESOLVE_FAILURE:
+		break;
+	case RESOLVE_PLEASE_CALL_AGAIN:
+		verbose("skipping route entry as already RESOLVE_PLEASE_CALL_AGAIN");
+		return true;
+	case RESOLVE_SUCCESS:
+		verbose("skipping route entry as already RESOLVE_SUCCESS");
+		return true;
+	default:
+		bad_case(context->status);
 	}
+
+	if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_DONE)) {
+		return false;
+	}
+
+	if (PBAD(verbose.logger, nlmsg->nlmsg_type == NLMSG_ERROR)) {
+		context->status = RESOLVE_FAILURE;
+		return false;
+	}
+
+	/* ignore all but IPv4 and IPv6 */
+	struct rtmsg *rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
+	if (rtmsg->rtm_family != host_afi->af) {
+		verbose("wrong family");
+		return true;
+	}
+
+	/* Parse one route entry */
+
+	char interface_name[IF_NAMESIZE+1] = {0};
+	int interface_index = -1;
+	ip_address src = unset_address;
+	ip_address prefsrc = unset_address;
+	ip_address gateway = unset_address;
+	ip_address dst = unset_address;
+	int priority = -1;
+	signed char pref = -1;
+	int table;
+	const char *cacheinfo = "";
+	const char *uid = "";
+
+	struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
+	int rtlen = RTM_PAYLOAD(nlmsg);
+
+	verbose("parsing route entry (RTA payloads)");
+	verbose.level++;
+
+	while (RTA_OK(rtattr, rtlen)) {
+		const void *data = RTA_DATA(rtattr);
+		unsigned len = RTA_PAYLOAD(rtattr);
+
+		switch (rtattr->rta_type) {
+
+		case RTA_OIF:
+			interface_index = *(uint32_t *)RTA_DATA(rtattr);
+			if_indextoname(interface_index, interface_name);
+			verbose("RTA_OIF=%s (%d)", interface_name, interface_index);
+			break;
+
+#define PARSE_ADDRESS(OUT, WHAT)					\
+			{						\
+				diag_t diag =				\
+					data_to_address(data, len,	\
+							host_afi, OUT); \
+				if (diag != NULL) {			\
+					verbose("invalid RTA_%s from kernel: %s", \
+						WHAT, str_diag(diag));	\
+					pfree_diag(&diag);		\
+				} else {				\
+					address_buf ab;			\
+					verbose("RTA_%s=%s",		\
+						WHAT, str_address(OUT, &ab)); \
+				}					\
+			}
+		case RTA_PREFSRC:
+			PARSE_ADDRESS(&prefsrc, "PREFSRC");
+			break;
+		case RTA_GATEWAY:
+			PARSE_ADDRESS(&gateway, "GATEWAY");
+			break;
+		case RTA_DST:
+			PARSE_ADDRESS(&dst, "DST");
+			break;
+		case RTA_SRC:
+			PARSE_ADDRESS(&src, "SRC");
+			break;
+#undef PARSE_ADDRESS
+
+#define PARSE_NUMBER(OUT, WHAT)						\
+			{						\
+				if (len != sizeof(OUT)) {		\
+					verbose("ignoring RTA_%s with wrong size %d", WHAT, len); \
+				} else {				\
+					memcpy(&OUT, data, len);	\
+					verbose("RTA_%s=%d", WHAT, OUT); \
+				}					\
+			}
+		case RTA_PRIORITY:
+			PARSE_NUMBER(priority, "PRIORITY");
+			break;
+		case RTA_PREF:
+			PARSE_NUMBER(pref, "PREF");
+			break;
+		case RTA_TABLE:
+			PARSE_NUMBER(table, "TABLE");
+			break;
+#undef PARSE_NUMBER
+
+		case RTA_CACHEINFO:
+			cacheinfo = " +cacheinfo";
+			break;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,11,16)
+		case RTA_UID:
+			/*
+			 * XXX: Above kernel version matches when this
+			 * code was added to this file and not when
+			 * RTA_UID was added to the kernel herders.
+			 * That was:
+			 *
+			 *  commit
+			 *  4fb74506838b3e34eaaebfcf90ebcd1fd52ab813
+			 *  Merge: 0d53072aa42b e2d118a1cb5e Author:
+			 *  David S. Miller <davem@davemloft.net>
+			 *  Date: Fri Nov 4 14:45:24 2016 -0400
+			 *
+			 *    Merge branch 'uid-routing'
+			 *
+			 * but who knows what that kernel version was.
+			 *
+			 * A sane kernel would include:
+			 *
+			 *   #define RTA_UID RTA_UID
+			 *
+			 * when adding the enum so that:
+			 *
+			 *   #ifdef RTA_ID
+			 *
+			 * could do the right thing.  Sigh.
+			 */
+			uid = " +uid";
+			break;
+#endif
+		default:
+			verbose("ignoring RTA type %d", rtattr->rta_type);
+		}
+		rtattr = RTA_NEXT(rtattr, rtlen);
+	}
+
+	verbose.level--;
+
+	/*
+	 * Ignore if not main table.
+	 *
+	 * Ignore ipsecX or mastX interfaces.
+	 *
+	 * XXX: instead of rtm_table, should this be checking TABLE?
+	 */
+	verbose("Update seeking:");
+	verbose.level++;
+	address_buf sb, psb, db, gb;
+	verbose("src=%s prefsrc=%s gateway=%s dst=%s dev=%s(%d) priority=%d pref=%d table=%d%s%s",
+		str_address(&src, &sb),
+		str_address(&prefsrc, &psb),
+		str_address(&gateway, &gb),
+		str_address(&dst, &db),
+		(interface_name[0] ? interface_name : "?"),
+		interface_index,
+		priority, pref,
+		rtmsg->rtm_table,
+		cacheinfo, uid);
+
+	if (rtmsg->rtm_table != RT_TABLE_MAIN) {
+		verbose("IGNORE: table %d is not main(%d)",
+			rtmsg->rtm_table, RT_TABLE_MAIN);
+		return true;
+	}
+
+	if (startswith(interface_name, "ipsec") ||
+	    startswith(interface_name, "mast")) {
+		verbose("IGNORE: interface %s", interface_name);
+		return true;
+	}
+
+	switch (context->seeking) {
+
+	case PREFSRC:
+	{
+		if (!prefsrc.ip.is_set) {
+			verbose("IGNORE: seeking PREFSRC but no RTA_PREFSRC in message");
+			return true;
+		}
+		context->status = RESOLVE_SUCCESS;
+		context->host->host.type = KH_IPADDR;
+		context->host->host.addr = prefsrc;
+		address_buf ab;
+		verbose("saving prefsrc(host.addr): %s",
+			str_address(&context->host->host.addr, &ab));
+		break;
+	}
+
+	case GATEWAY:
+	{
+		if (dst.ip.is_set) {
+			verbose("IGNORE: seeking GATEWAY but RTA_DST is set");
+			return true;
+		}
+		if (!gateway.ip.is_set && interface_name[0] != '\0') {
+			/*
+			 * Point-to-Point default gw without "via IP".
+			 * Attempt to find gateway as the IP address
+			 * on the interface.
+			 */
+			verbose("trying to find GATEWAY using interface %s as GATEWAY is not set",
+				interface_name);
+			resolve_point_to_point_peer(interface_name,
+						    context->host_afi,
+						    &gateway, verbose);
+		}
+		if (!gateway.ip.is_set) {
+			verbose("IGNORE: seeking GATEWAY but GATEWAY is not set");
+		}
+		/*
+		 * Note: Use first even if
+		 * multiple.
+		 *
+		 * XXX: assume a gateway
+		 * always requires a second
+		 * call to get PREFSRC, code
+		 * above will quickly return
+		 * when it isn't.
+		 */
+		context->status = RESOLVE_PLEASE_CALL_AGAIN;
+		context->host->nexthop.type = KH_IPADDR;
+		context->host->nexthop.addr = gateway;
+		address_buf ab;
+		verbose("saving gateway(nexthop.addr): %s",
+			str_address(&context->host->nexthop.addr, &ab));
+		break;
+	}
+
+	default:
+		bad_case(context->seeking);
+	}
+
 	return true;
 }
 
@@ -515,18 +551,18 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 		 * address and not the global address.
 		 */
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
-				  "host->nexthop.addr", verbose);
+		netlink_query_add_address(msgbuf, RTA_DST, &host->nexthop.addr,
+					  "host->nexthop.addr", verbose);
 	} else if (peer->host.type == KH_IPADDR) {
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &peer->host.addr,
-				  "peer->host.addr(ip)", verbose);
+		netlink_query_add_address(msgbuf, RTA_DST, &peer->host.addr,
+					  "peer->host.addr(ip)", verbose);
 	} else if (host->nexthop.type == KH_IPADDR &&
 		   (peer->host.type == KH_GROUP ||
 		    peer->host.type == KH_OPPOGROUP)) {
 		added_dst = true;
-		netlink_query_add(msgbuf, RTA_DST, &host->nexthop.addr,
-				  "host->nexthop.addr peer=group", verbose);
+		netlink_query_add_address(msgbuf, RTA_DST, &host->nexthop.addr,
+					  "host->nexthop.addr peer=group", verbose);
 	} else {
 		added_dst = false;
 	}
@@ -534,8 +570,8 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 	if (added_dst && host->host.type == KH_IPADDR) {
 		/* SRC works only with DST */
 		pexpect(seeking == GATEWAY);
-		netlink_query_add(msgbuf, RTA_SRC, &host->host.addr,
-				  "host->host.addr", verbose);
+		netlink_query_add_address(msgbuf, RTA_SRC, &host->host.addr,
+					  "host->host.addr", verbose);
 	}
 
 	/* Send netlink get_route request */
@@ -575,6 +611,8 @@ static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
 enum route_status get_route(ip_address dest, struct ip_route *route,
 			    struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 	/* let's re-discover local address */
 
 	const struct ip_info *host_afi = address_info(dest);
@@ -590,8 +628,6 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 		.host.type = KH_IPADDR,
 		.host.addr = dest,
 	};
-
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 
 	/*
 	 * mobike need two lookups. one for the gateway and the one
