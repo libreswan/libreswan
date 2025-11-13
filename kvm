@@ -334,6 +334,7 @@ while test $# -gt 0 ; do
 	retest )     ops[${#ops[@]}]=recheck ;;
 	test-clean ) ops[${#ops[@]}]=check-clean ;;
 	all )        ops[${#ops[@]}]=install-all ;;
+	all-* )        ops[${#ops[@]}]=install-$1 ;;
 
 	sh )
 	    # remainder of line is host + optional commands
