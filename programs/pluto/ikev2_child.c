@@ -1036,6 +1036,18 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		ldbg_sa(child, "skipping TS processing, mainly to stop tests failing but rumored to cause connection flips?!?");
 	}
 
+	/* It is possible that Child SA switched to permanent connection
+	 * where initiator has IKE SA with IKE_AUTH request outstanding,
+	 * in that case send TEMPORARY_FAILURE and terminate this IKE SA.
+	 * This is to prevent potential crossing streams scenario for
+	 * IKE AUTH exchange.
+	 */
+	if (has_outstanding_ike_auth_request(child->sa.st_connection, ike, md)) {
+		record_v2N_response(ike->sa.logger, ike, md, v2N_TEMPORARY_FAILURE,
+				empty_shunk, ENCRYPTED_PAYLOAD);
+		return v2N_AUTHENTICATION_FAILED;
+	}
+
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",
 					ike, child, md,
 					child->sa.st_connection->config->child.v2_ike_auth_proposals,
