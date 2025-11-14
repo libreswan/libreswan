@@ -293,11 +293,11 @@ static unsigned visit_connection_node(struct connection *c,
 				      const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
-	PEXPECT(logger, refcnt_peek(c) > 1);
+	PEXPECT(logger, refcnt_peek(c, logger) > 1);
 	unsigned result = param->node.visitor(param->wm, param->s,
 					      c,
 					      param->node.context);
-	PEXPECT(logger, refcnt_peek(c) >= 1);
+	PEXPECT(logger, refcnt_peek(c, logger) >= 1);
 	return result;
 }
 
@@ -341,7 +341,7 @@ static unsigned visit_connection_tree(struct connection *c,
 				      const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
-	PEXPECT(logger, refcnt_peek(c) > 1);
+	PEXPECT(logger, refcnt_peek(c, logger) > 1);
 
 	unsigned nr = 0;
 
@@ -372,7 +372,7 @@ static unsigned visit_connection_tree(struct connection *c,
 		nr += param->tree.visitor(c, param);
 	}
 
-	PEXPECT(logger, refcnt_peek(c) >= 1);
+	PEXPECT(logger, refcnt_peek(c, logger) >= 1);
 	return nr;
 }
 
@@ -498,11 +498,11 @@ unsigned visit_connection_state(struct connection *c,
 				const struct connection_visitor_param *param)
 {
 	struct logger *logger = show_logger(param->s);
-	PEXPECT(logger, refcnt_peek(c) > 1);
+	PEXPECT(logger, refcnt_peek(c, logger) > 1);
 	whack_attach(c, logger);
 	visit_connection_states(c, param->state.visitor, param->state.context, HERE);
 	whack_detach(c, logger);
-	PEXPECT(logger, refcnt_peek(c) >= 1);
+	PEXPECT(logger, refcnt_peek(c, logger) >= 1);
 	return 1;
 }
 

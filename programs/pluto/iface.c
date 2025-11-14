@@ -270,18 +270,19 @@ static void release_dead_interfaces(struct verbose verbose)
 		 */
 		if (is_from_group(c) &&
 		    is_group(c->clonedfrom) &&
-		    vexpect(refcnt_peek(c) > 1)) {
+		    vexpect(refcnt_peek(c, verbose.logger) > 1)) {
 			struct connection *cp = c;
 			terminate_and_down_and_unroute_connections(cp, HERE);
-			vdbg("%s has a count of %d (%p %p)", c->name, refcnt_peek(c), c->logger, verbose.logger);
+			vdbg("%s has a count of %d (%p %p)", c->name,
+			     refcnt_peek(c, verbose.logger), c->logger, verbose.logger);
 			connection_delref(&cp, verbose.logger);
 			connection_delref(&c, verbose.logger);
 			continue;
 		}
 
-		vexpect(refcnt_peek(c) > 1);
+		vexpect(refcnt_peek(c, verbose.logger) > 1);
 		terminate_all_connection_states(c, HERE);
-		vexpect(refcnt_peek(c) >= 1);
+		vexpect(refcnt_peek(c, verbose.logger) >= 1);
 
 		/*
 		 * ... and then disorient it, moving it to the

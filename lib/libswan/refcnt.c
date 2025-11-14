@@ -139,21 +139,23 @@ void refcnt_addref_where(const char *what,
 }
 
 /*
- * look at refcnt atomically
+ * Look at refcnt atomically
+ *
  * This is a bit slow but it is used rarely.
  */
 unsigned refcnt_peek_where(const refcnt_t *refcnt,
 			   const struct logger *logger,
+			   const struct logger *owner,
 			   where_t where)
 {
-	unsigned val;
+	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
 	{
-		val = refcnt->count;
+		old = new = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
-	ldbg_ref(logger, /*owner*/NULL, "peek", /*what*/NULL, refcnt, where, val, val);
-	return val;
+	LDBG_REF("peek");
+	return old;
 }
 
 void *refcnt_delref_where(const char *what,

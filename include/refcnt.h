@@ -64,15 +64,19 @@ void refcnt_init(const void *pointer,
 /* look at refcnt atomically */
 
 unsigned refcnt_peek_where(const refcnt_t *refcnt,
+			   const struct logger *logger,
 			   const struct logger *owner,
 			   where_t where)
-	NONNULL(1,2);
+	NONNULL(1,2,3);
 
-#define refcnt_peek(OBJ)						\
+#define refcnt_peek(OBJ, OWNER)						\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
 		(o_ == NULL ? 0 : /* a NULL pointer has no references */ \
-		 refcnt_peek_where(&o_->refcnt, o_->logger, HERE));	\
+		 refcnt_peek_where(&o_->refcnt,				\
+				   o_->logger,				\
+				   OWNER,				\
+				   HERE));				\
 	})
 
 /*
