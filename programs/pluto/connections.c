@@ -681,13 +681,10 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	peer->nexthop = peer_nexthop;
 }
 
-bool resolve_connection_hosts_from_configs(struct connection *c,
-					   struct verbose verbose)
+bool resolve_hosts_from_configs(const struct config *config,
+				struct resolve_end *resolve/*[END_ROOF]*/,
+				struct verbose verbose)
 {
-	const struct config *config = c->config;
-
-	struct resolve_end resolve[END_ROOF] = {0};
-
 	bool can_resolve = true;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct host_end_config *src = &config->end[lr].host;
@@ -737,6 +734,13 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 				      verbose);
 	}
 
+	return can_resolve;
+}
+
+void build_connection_host_and_proposals_from_resolve(struct connection *c,
+						      struct resolve_end *resolve/*[END_ROOF]*/,
+						      struct verbose verbose)
+{
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		update_hosts_from_end_host_addr(c, lr,
 						resolve[lr].host.addr,
@@ -754,7 +758,18 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-	return can_resolve;
+	/*
+	 * Fill in the child's selector proposals from the config.  It
+	 * might use subnet or host or addresspool.
+	 */
+
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
+
+	if (verbose.debug) {
+		VDBG_log("proposals built");
+		connection_db_check(verbose.logger, HERE);
+	}
+
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
@@ -1333,33 +1348,7 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger)
 		return d;
 	}
 
-	/* log all about this connection */
-
-	/* connection is good-to-go: log against it */
-
-	err_t tss = connection_requires_tss(c);
-	if (tss != NULL) {
-		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
-	}
-
-	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
-		jam_string(buf, "added");
-		jam_string(buf, " ");
-		jam_orientation(buf, c, /*oriented_details*/false);
-	}
-
-	policy_buf pb;
-	ldbg(c->logger,
-	     "ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %ju; policy: %s ipsec_max_bytes: %ju ipsec_max_packets %ju",
-	     deltasecs(c->config->sa_ike_max_lifetime),
-	     deltasecs(c->config->sa_ipsec_max_lifetime),
-	     deltasecs(c->config->sa_rekey_margin),
-	     c->config->sa_rekey_fuzz,
-	     c->config->child.replay_window,
-	     str_connection_policies(c, &pb),
-	     c->config->sa_ipsec_max_bytes,
-	     c->config->sa_ipsec_max_packets);
-	release_whack(c->logger, HERE);
+	resolve_connection(c, verbose);
 	return NULL;
 }
 

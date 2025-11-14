@@ -42,4 +42,6 @@ diag_t extract_connection(const struct whack_message *wm,
 			  struct config *config,
 			  struct verbose verbose);
 
+void resolve_connection(struct connection *c, struct verbose verbose);
+
 #endif
