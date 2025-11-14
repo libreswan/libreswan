@@ -46,6 +46,7 @@
 #include "deltatime.h"
 #include "timescale.h"
 #include "kernel_alg.h"
+#include "defaultroute.h"
 
 #include "log.h"
 #include "connections.h"
@@ -4295,9 +4296,9 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 	 * result into the connection.
 	 */
 
-	if (!resolve_connection_hosts_from_configs(c, verbose)) {
-		vdbg("could not resolve connection");
-	}
+	struct resolve_end resolve[END_ROOF];
+	resolve_hosts_from_configs(c->config, resolve, verbose);
+	update_connection_hosts_from_resolve(c, resolve, verbose);
 
 	/*
 	 * Fill in the child's selector proposals from the config.  It
