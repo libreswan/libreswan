@@ -1477,7 +1477,10 @@ kvmplutotest	whack-hostkey-07-ikev2-ckaid-pubkey-ecdsa	good
 
 # ipsec showroute
 
-kvmplutotest	whack-showroute-01			good
+kvmplutotest	whack-showroute-01-linux		good
+kvmplutotest	whack-showroute-01-netbsd		good
+kvmplutotest	whack-showroute-01-freebsd		good
+kvmplutotest	whack-showroute-01-openbsd		good
 
 # up edge cases
 

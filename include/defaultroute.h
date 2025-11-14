@@ -28,6 +28,7 @@ struct resolve_host {
 	enum keyword_host type;
 	ip_address addr;
 	const char *name;
+	unsigned interface;		/* 0 invalid? for if_indextoname() */
 };
 
 struct resolve_end {
@@ -49,6 +50,7 @@ enum route_status {
 };
 
 struct ip_route {
+	unsigned interface;	/* feed to if_indextoname () */
 	ip_address source;
 	ip_address gateway;
 };

@@ -1,0 +1,20 @@
+../../guestbin/prep.sh
+west.conf -> PATH/etc/ipsec.conf
+west #
+ # east
+west #
+ ipsec showroute 192.1.2.23
+192.1.2.45 192.1.2.45 192.1.2.23
+west #
+ ipsec showroute 2001:db8:1:2::23
+2001:db8:1:2::45 2001:db8:1:2::45 2001:db8:1:2::23
+west #
+ # road
+west #
+ ipsec showroute 192.1.3.209
+198.19.13.173 198.19.0.1 192.1.3.209
+west #
+ ipsec showroute 2001:db8:1:3::209
+ipsec showroute: ERROR: write failed: No such process (errno 3)
+ipsec showroute: ERROR: 2001:db8:1:3::209: fatal
+west #
