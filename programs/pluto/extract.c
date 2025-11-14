@@ -4298,18 +4298,8 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 
 	struct resolve_end resolve[END_ROOF];
 	resolve_hosts_from_configs(c->config, resolve, verbose);
-	update_connection_hosts_from_resolve(c, resolve, verbose);
 
-	/*
-	 * Fill in the child's selector proposals from the config.  It
-	 * might use subnet or host or addresspool.
-	 */
-
-	build_connection_proposals_from_hosts_and_configs(c, verbose);
-	if (verbose.debug) {
-		VDBG_log("proposals built");
-		connection_db_check(verbose.logger, HERE);
-	}
+	build_connection_host_and_proposals_from_resolve(c, resolve, verbose);
 
 	/*
 	 * Force orientation (currently kind of unoriented?).

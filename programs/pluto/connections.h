@@ -947,9 +947,9 @@ diag_t add_connection(const struct whack_message *wm, struct logger *logger);
 bool resolve_hosts_from_configs(const struct config *config,
 				struct resolve_end *resolve/*[END_ROOF]*/,
 				struct verbose verbose);
-void update_connection_hosts_from_resolve(struct connection *c,
-					  struct resolve_end *resolve/*[END_ROOF]*/,
-					  struct verbose verbose);
+void build_connection_host_and_proposals_from_resolve(struct connection *c,
+						      struct resolve_end *resolve/*[END_ROOF]*/,
+						      struct verbose verbose);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,
 				     ip_address this_host_addr,

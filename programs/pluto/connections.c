@@ -737,11 +737,10 @@ bool resolve_hosts_from_configs(const struct config *config,
 	return can_resolve;
 }
 
-void update_connection_hosts_from_resolve(struct connection *c,
-					  struct resolve_end *resolve/*[END_ROOF]*/,
-					  struct verbose verbose)
+void build_connection_host_and_proposals_from_resolve(struct connection *c,
+						      struct resolve_end *resolve/*[END_ROOF]*/,
+						      struct verbose verbose)
 {
-
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		update_hosts_from_end_host_addr(c, lr,
 						resolve[lr].host.addr,
@@ -758,6 +757,19 @@ void update_connection_hosts_from_resolve(struct connection *c,
 	if (verbose.debug) {
 		connection_db_check(verbose.logger, HERE);
 	}
+
+	/*
+	 * Fill in the child's selector proposals from the config.  It
+	 * might use subnet or host or addresspool.
+	 */
+
+	build_connection_proposals_from_hosts_and_configs(c, verbose);
+
+	if (verbose.debug) {
+		VDBG_log("proposals built");
+		connection_db_check(verbose.logger, HERE);
+	}
+
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
