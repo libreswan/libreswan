@@ -212,23 +212,23 @@ void init_seccomp_main(const struct config_setup *oco, struct logger *logger)
 
 }
 
-void init_seccomp_cryptohelper(int helpernum, struct logger *logger)
+void init_seccomp_helper(struct logger *logger)
 {
 	const struct config_setup *oco = config_setup_singleton();
 	switch (seccomp_mode(oco)) {
 	case SECCOMP_ENABLED:
 		init_seccomp(SCMP_ACT_KILL, false, logger);
-		llog(RC_LOG, logger, "seccomp security enabled in strict mode for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security enabled in strict mode");
 		break;
 	case SECCOMP_TOLERANT:
 		init_seccomp(SCMP_ACT_TRAP, false, logger);
-		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode for crypto helper %d", helpernum);
+		llog(RC_LOG, logger, "seccomp security enabled in tolerant mode");
 		break;
 	case SECCOMP_DISABLED:
 		/*
 		 * XXX: see above; also skip log as not helpful.
 		 */
-		ldbg(logger, "seccomp security is not enabled for crypto helper %d", helpernum);
+		ldbg(logger, "seccomp security is not enabled");
 		break;
 	default:
 		bad_case(seccomp_mode(oco));

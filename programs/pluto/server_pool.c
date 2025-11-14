@@ -212,7 +212,7 @@ static void *helper_thread(void *arg)
 	ldbg(w->logger, "starting thread");
 
 #ifdef USE_SECCOMP
-	init_seccomp_cryptohelper(w->helper_id, w->logger);
+	init_seccomp_helper(w->logger);
 #else
 	llog(RC_LOG, w->logger, "seccomp security for helper not supported");
 #endif
