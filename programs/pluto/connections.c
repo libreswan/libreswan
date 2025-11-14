@@ -681,13 +681,10 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	peer->nexthop = peer_nexthop;
 }
 
-bool resolve_connection_hosts_from_configs(struct connection *c,
-					   struct verbose verbose)
+bool resolve_hosts_from_configs(const struct config *config,
+				struct resolve_end *resolve/*[END_ROOF]*/,
+				struct verbose verbose)
 {
-	const struct config *config = c->config;
-
-	struct resolve_end resolve[END_ROOF] = {0};
-
 	bool can_resolve = true;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct host_end_config *src = &config->end[lr].host;
@@ -737,6 +734,14 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 				      verbose);
 	}
 
+	return can_resolve;
+}
+
+void update_connection_hosts_from_resolve(struct connection *c,
+					  struct resolve_end *resolve/*[END_ROOF]*/,
+					  struct verbose verbose)
+{
+
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		update_hosts_from_end_host_addr(c, lr,
 						resolve[lr].host.addr,
@@ -753,8 +758,6 @@ bool resolve_connection_hosts_from_configs(struct connection *c,
 	if (verbose.debug) {
 		connection_db_check(verbose.logger, HERE);
 	}
-
-	return can_resolve;
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
