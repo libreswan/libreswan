@@ -136,12 +136,13 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	delete_connection_proposals(c);
 	struct resolve_end resolve[END_ROOF];
 	bool resolved = resolve_hosts_from_configs(c->config, resolve, verbose);
-	update_connection_hosts_from_resolve(c, resolve, verbose);
-	build_connection_proposals_from_hosts_and_configs(c, verbose);
+	build_connection_host_and_proposals_from_resolve(c, resolve, verbose);
+
 	if (!resolved) {
 		vlog("not resolved");
 		return;
 	}
+
 	/*
 	 * Caller holds reference.
 	 */
