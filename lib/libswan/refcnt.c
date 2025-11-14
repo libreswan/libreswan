@@ -20,7 +20,7 @@
 
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-NONNULL(1,3,5)
+NONNULL(1,2,3,4,5)
 static void ldbg_ref(const struct logger *logger,
 		     const struct logger *owner,
 		     const char *why,
@@ -29,18 +29,19 @@ static void ldbg_ref(const struct logger *logger,
 		     where_t where,
 		     int old_count, int new_count)
 {
-	if (LDBGP(DBG_REFCNT, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_logger_prefix(buf, logger);
-			if (what != NULL) {
-				jam_string(buf, what);
-				jam_string(buf, ": ");
+	if (LDBGP(DBG_REFCNT, owner)) {
+		LLOG_JAMBUF(DEBUG_STREAM, owner, buf) {
+			jam_string(buf, why);
+			jam_string(buf, " ");
+			jam_string(buf, what);
+			if (old_count == new_count) {
+				jam(buf, "%s[%p](%u)", what, pointer, new_count);
+			} else {
+				jam(buf, " %s@%p(%u->%u)", what, pointer, old_count, new_count);
 			}
-			jam(buf, "%sref @%p(%u->%u)",
-			    why, pointer, old_count, new_count);
-			if (owner != NULL) {
+			if (logger != &global_logger) {
 				jam_string(buf, " ");
-				jam_logger_prefix(buf, owner);
+				jam_logger_prefix(buf, logger);
 			}
 			jam_string(buf, " ");
 			jam_where(buf, where);
@@ -87,11 +88,13 @@ void ldbg_delref_where(const struct logger *logger, const char *what,
 void refcnt_init(const void *pointer,
 		 struct refcnt *refcnt,
 		 const struct refcnt_base *base,
-		 const struct logger *logger,
+		 const struct logger *owner,
 		 const struct where *where)
 {
+	const struct logger *logger = &global_logger;
+
 	if (refcnt != pointer) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() %s@%p should have been at the start of %p",
 			     __func__, base->what, refcnt, pointer);
 	}
@@ -107,11 +110,12 @@ void refcnt_init(const void *pointer,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old != 0 || new != 1) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() %s@%p should have been 0 initialized",
 			     __func__, base->what, pointer);
 	}
-	ldbg_ref(logger, NULL, "new", base->what, pointer, where, old, new);
+
+	LDBG_REF("newref");
 }
 
 void refcnt_addref_where(const char *what,
@@ -135,7 +139,7 @@ void refcnt_addref_where(const char *what,
 			     __func__, what, refcnt);
 	}
 
-	LDBG_REF("add");
+	LDBG_REF("addref");
 }
 
 /*
@@ -182,7 +186,7 @@ void *refcnt_delref_where(const char *what,
 			     __func__, what, refcnt);
 	}
 
-	LDBG_REF("del");
+	LDBG_REF("delref");
 
 	if (new == 0) {
 		return refcnt;

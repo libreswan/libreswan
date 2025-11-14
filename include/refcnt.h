@@ -46,17 +46,17 @@ typedef struct refcnt {
 void refcnt_init(const void *pointer,
 		 struct refcnt *refcnt,
 		 const struct refcnt_base *base,
-		 const struct logger *logger, where_t where)
+		 const struct logger *owner, where_t where)
 	NONNULL(1,2,3,4);
 
-#define refcnt_overalloc(THING, EXTRA, LOGGER, WHERE)		       \
-	({							       \
-		static const struct refcnt_base b_ = {		       \
-			.what = #THING,				       \
-		};						       \
-		THING *t_ = overalloc_thing(THING, EXTRA);	       \
-		refcnt_init(t_, &t_->refcnt, &b_, LOGGER, WHERE);      \
-		t_;						       \
+#define refcnt_overalloc(THING, EXTRA, OWNER, WHERE)			\
+	({								\
+		static const struct refcnt_base b_ = {			\
+			.what = #THING,					\
+		};							\
+		THING *t_ = overalloc_thing(THING, EXTRA);		\
+		refcnt_init(t_, &t_->refcnt, &b_, OWNER, WHERE);	\
+		t_;							\
 	})
 
 #define refcnt_alloc(THING, LOGGER, WHERE)				\
