@@ -18,11 +18,13 @@
 #define REFCNT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "lswcdefs.h"		/* for MUST_USE_RESULT */
 #include "where.h"
 #include "global_logger.h"
 
+struct jambuf;
 struct logger;
 
 struct refcnt_base {
@@ -30,6 +32,7 @@ struct refcnt_base {
 	void (*discard)(void *pointer,
 			const struct logger *logger,
 			where_t where);
+	size_t (*jam)(struct jambuf *buf, const void *pointer);
 };
 
 typedef struct refcnt {

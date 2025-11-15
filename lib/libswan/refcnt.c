@@ -24,8 +24,7 @@ NONNULL(1,2,3,4,5)
 static void ldbg_ref(const struct logger *logger,
 		     const struct logger *owner,
 		     const char *why,
-		     const char *what,
-		     const void *pointer,
+		     const struct refcnt *refcnt,
 		     where_t where,
 		     int old_count, int new_count)
 {
@@ -33,15 +32,22 @@ static void ldbg_ref(const struct logger *logger,
 		LLOG_JAMBUF(DEBUG_STREAM, owner, buf) {
 			jam_string(buf, why);
 			jam_string(buf, " ");
-			jam_string(buf, what);
-			if (old_count == new_count) {
-				jam(buf, "%s[%p](%u)", what, pointer, new_count);
-			} else {
-				jam(buf, " %s@%p(%u->%u)", what, pointer, old_count, new_count);
-			}
-			if (logger != &global_logger) {
-				jam_string(buf, " ");
+			jam_string(buf, refcnt->base->what);
+			/* append object if possible */
+			if (refcnt->base->jam != NULL) {
+				jam_string(buf, "<");
+				refcnt->base->jam(buf, refcnt);
+				jam_string(buf, ">");
+			} else if (logger != &global_logger) {
+				jam_string(buf, "<");
 				jam_logger_prefix(buf, logger);
+				jam_string(buf, ">");
+			}
+			/* when peek(), avoid refcnt.awk syntax */
+			if (old_count == new_count) {
+				jam(buf, "[%p](%u)", refcnt, new_count);
+			} else {
+				jam(buf, "@%p(%u->%u)", refcnt, old_count, new_count);
 			}
 			jam_string(buf, " ");
 			jam_where(buf, where);
@@ -49,8 +55,10 @@ static void ldbg_ref(const struct logger *logger,
 	}
 }
 
-#define LDBG_REF(WHY)						\
-	ldbg_ref(logger, owner, WHY, refcnt->base->what, refcnt, where, old, new)
+#define LDBG_REF(WHY)				\
+	ldbg_ref(logger, owner, WHY,		\
+		 refcnt,			\
+		 where, old, new)
 
 /*
  * So existing code can use the refcnt tracer.

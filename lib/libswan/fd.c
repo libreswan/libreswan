@@ -26,15 +26,23 @@
 #include "lswlog.h"		/* for pexpect() */
 
 static void discard_fd(void *pointer, const struct logger *owner, where_t where);
+static size_t jam_fd(struct jambuf *buf, const void *pointer);
 
 struct fd {
 	refcnt_t refcnt;	/* must be first */
 	int fd;
 };
 
+size_t jam_fd(struct jambuf *buf, const void *pointer)
+{
+	const struct fd *fd = pointer;
+	return jam(buf, "%d", fd->fd);
+}
+
 static const struct refcnt_base fd_refcnt_base = {
 	.what = "fd",
 	.discard = discard_fd,
+	.jam = jam_fd,
 };
 
 struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_t where)
