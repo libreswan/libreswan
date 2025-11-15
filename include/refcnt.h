@@ -27,14 +27,14 @@
 struct jambuf;
 struct logger;
 
-typedef	void (refcnt_discard_func)(void *pointer,
-				   const struct logger *logger,
-				   where_t where);
+typedef	void (refcnt_discard_contents_func)(void *pointer,
+					    const struct logger *logger,
+					    where_t where);
 typedef size_t (refcnt_jam_func)(struct jambuf *buf, const void *pointer);
 
 struct refcnt_base {
 	const char *what;
-	refcnt_discard_func *discard;
+	refcnt_discard_contents_func *discard_contents;
 	refcnt_jam_func *jam;
 };
 
