@@ -20,13 +20,11 @@
 
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-NONNULL(1,2,3,4,5)
-static void ldbg_ref(const struct logger *logger,
-		     const struct logger *owner,
-		     const char *why,
+NONNULL(1,2,5)
+static void ldbg_ref(const char *why,
 		     const struct refcnt *refcnt,
-		     where_t where,
-		     int old_count, int new_count)
+		     int old_count, int new_count,
+		     const struct logger *owner, where_t where)
 {
 	if (LDBGP(DBG_REFCNT, owner)) {
 		LLOG_JAMBUF(DEBUG_STREAM, owner, buf) {
@@ -37,10 +35,6 @@ static void ldbg_ref(const struct logger *logger,
 			if (refcnt->base->jam != NULL) {
 				jam_string(buf, "<");
 				refcnt->base->jam(buf, refcnt);
-				jam_string(buf, ">");
-			} else if (logger != &global_logger) {
-				jam_string(buf, "<");
-				jam_logger_prefix(buf, logger);
 				jam_string(buf, ">");
 			}
 			/* when peek(), avoid refcnt.awk syntax */
@@ -56,9 +50,10 @@ static void ldbg_ref(const struct logger *logger,
 }
 
 #define LDBG_REF(WHY)				\
-	ldbg_ref(logger, owner, WHY,		\
+	ldbg_ref(WHY,				\
 		 refcnt,			\
-		 where, old, new)
+		 old, new,			\
+		 owner, where)
 
 /*
  * So existing code can use the refcnt tracer.
@@ -99,8 +94,6 @@ void refcnt_init(const void *pointer,
 		 const struct logger *owner,
 		 const struct where *where)
 {
-	const struct logger *logger = &global_logger;
-
 	if (refcnt != pointer) {
 		llog_passert(owner, where,
 			     "%s() %s@%p should have been at the start of %p",
@@ -128,7 +121,6 @@ void refcnt_init(const void *pointer,
 
 void refcnt_addref_where(const char *what,
 			 refcnt_t *refcnt,
-			 const struct logger *logger,
 			 const struct logger *owner,
 			 where_t where)
 {
@@ -142,7 +134,7 @@ void refcnt_addref_where(const char *what,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() refcnt for %s@%p should have been non-0",
 			     __func__, what, refcnt);
 	}
@@ -156,7 +148,6 @@ void refcnt_addref_where(const char *what,
  * This is a bit slow but it is used rarely.
  */
 unsigned refcnt_peek_where(const refcnt_t *refcnt,
-			   const struct logger *logger,
 			   const struct logger *owner,
 			   where_t where)
 {
@@ -172,7 +163,6 @@ unsigned refcnt_peek_where(const refcnt_t *refcnt,
 
 void *refcnt_delref_where(const char *what,
 			  struct refcnt *refcnt,
-			  const struct logger *logger,
 			  const struct logger *owner,
 			  const struct where *where)
 {
@@ -189,7 +179,7 @@ void *refcnt_delref_where(const char *what,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() refcnt for %s@%p should have been non-0",
 			     __func__, what, refcnt);
 	}
