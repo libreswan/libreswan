@@ -279,7 +279,7 @@ static void vdbg_pool(struct verbose verbose,
 		jam_va_list(buf, format, args);
 		va_end(args);
 		jam(buf, "; pool-refcount %u size %u leases %u in-use %u free %u reusable %u",
-		    refcnt_peek(pool),
+		    refcnt_peek(pool, verbose.logger),
 		    pool->size, pool->nr_leases,
 		    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
 	}

@@ -18,14 +18,21 @@
 #define REFCNT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "lswcdefs.h"		/* for MUST_USE_RESULT */
 #include "where.h"
+#include "global_logger.h"
 
+struct jambuf;
 struct logger;
 
 struct refcnt_base {
 	const char *what;
+	void (*discard)(void *pointer,
+			const struct logger *logger,
+			where_t where);
+	size_t (*jam)(struct jambuf *buf, const void *pointer);
 };
 
 typedef struct refcnt {
@@ -45,34 +52,37 @@ typedef struct refcnt {
 void refcnt_init(const void *pointer,
 		 struct refcnt *refcnt,
 		 const struct refcnt_base *base,
-		 const struct logger *logger, where_t where)
-	NONNULL(1,2,3,4);
+		 const struct logger *owner,
+		 where_t where)
+	NONNULL(1,2,3,4,5);
 
-#define refcnt_overalloc(THING, EXTRA, LOGGER, WHERE)		       \
-	({							       \
-		static const struct refcnt_base b_ = {		       \
-			.what = #THING,				       \
-		};						       \
-		THING *t_ = overalloc_thing(THING, EXTRA);	       \
-		refcnt_init(t_, &t_->refcnt, &b_, LOGGER, WHERE);      \
-		t_;						       \
+#define refcnt_overalloc(THING, EXTRA, OWNER, WHERE)			\
+	({								\
+		static const struct refcnt_base b_ = {			\
+			.what = #THING,					\
+		};							\
+		THING *t_ = overalloc_thing(THING, EXTRA);		\
+		refcnt_init(t_, &t_->refcnt, &b_, OWNER, WHERE);	\
+		t_;							\
 	})
 
-#define refcnt_alloc(THING, LOGGER, WHERE)				\
-	refcnt_overalloc(THING, /*extra*/0, LOGGER, WHERE)
+#define refcnt_alloc(THING, OWNER, WHERE)				\
+	refcnt_overalloc(THING, /*extra*/0, OWNER, WHERE)
 
 /* look at refcnt atomically */
 
 unsigned refcnt_peek_where(const refcnt_t *refcnt,
 			   const struct logger *owner,
 			   where_t where)
-	NONNULL(1,2);
+	NONNULL(1,2,3);
 
-#define refcnt_peek(OBJ)						\
+#define refcnt_peek(OBJ, OWNER)						\
 	({								\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */		\
 		(o_ == NULL ? 0 : /* a NULL pointer has no references */ \
-		 refcnt_peek_where(&o_->refcnt, o_->logger, HERE));	\
+		 refcnt_peek_where(&o_->refcnt,				\
+				   OWNER,				\
+				   HERE));				\
 	})
 
 /*
@@ -81,21 +91,19 @@ unsigned refcnt_peek_where(const refcnt_t *refcnt,
 
 void refcnt_addref_where(const char *what,
 			 refcnt_t *refcnt,
-			 const struct logger *logger,
-			 const struct logger *new_owner,
+			 const struct logger *owner,
 			 where_t where)
-	NONNULL(1,2,3);
+	NONNULL(1,2,3,4);
 
 /* old */
 
-#define addref_where(OBJ, LOGGER, WHERE)			\
+#define addref_where(OBJ, OWNER, WHERE)			\
 	({							\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */	\
 		if (o_ != NULL) {				\
 			refcnt_addref_where(#OBJ,		\
 					    &o_->refcnt,	\
-					    LOGGER,		\
-					    NULL, WHERE);	\
+					    OWNER, WHERE);	\
 		}						\
 		o_; /* result */				\
 	})
@@ -108,7 +116,6 @@ void refcnt_addref_where(const char *what,
 		if (o_ != NULL) {				\
 			refcnt_addref_where(#OBJ,		\
 					    &o_->refcnt,	\
-					    o_->logger,		\
 					    OWNER, WHERE);	\
 		}						\
 		o_; /* result */				\
@@ -123,13 +130,12 @@ void refcnt_addref_where(const char *what,
 
 void *refcnt_delref_where(const char *what,
 			  struct refcnt *refcnt,
-			  const struct logger *logger,
 			  const struct logger *owner,
 			  where_t where)
 	MUST_USE_RESULT
-	NONNULL(1,2,3);
+	NONNULL(1,2,3,4);
 
-#define delref_where(OBJP, LOGGER, WHERE)				\
+#define delref_where(OBJP, OWNER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
@@ -137,7 +143,7 @@ void *refcnt_delref_where(const char *what,
 		if (o_ != NULL) {					\
 			o_ = refcnt_delref_where(#OBJP,			\
 						 &o_->refcnt,		\
-						 LOGGER, NULL, WHERE);	\
+						 OWNER, WHERE);		\
 		}							\
 		o_; /* NULL or last OBJ */				\
 	})
@@ -150,7 +156,6 @@ void *refcnt_delref_where(const char *what,
 		if (o_ != NULL) {					\
 			o_ = refcnt_delref_where(#OBJP,			\
 						 &o_->refcnt,		\
-						 o_->logger,		\
 						 OWNER, WHERE);		\
 		}							\
 		o_; /* NULL or last OBJ */				\
@@ -161,21 +166,21 @@ void *refcnt_delref_where(const char *what,
  * internal reference counting (e.g., NSS).
  */
 
-void ldbg_newref_where(const struct logger *logger, const char *what,
+void ldbg_newref_where(const struct logger *owner, const char *what,
 		       const void *pointer, where_t where)
-	NONNULL(1,2);
+	NONNULL(1,2,4);
 
-void ldbg_addref_where(const struct logger *logger, const char *what,
+void ldbg_addref_where(const struct logger *owner, const char *what,
 		       const void *pointer, where_t where)
-	NONNULL(1,2);
+	NONNULL(1,2,4);
 
-void ldbg_delref_where(const struct logger *logger, const char *what,
+void ldbg_delref_where(const struct logger *owner, const char *what,
 		       const void *pointer, where_t where)
-	NONNULL(1,2);
+	NONNULL(1,2,4);
 
-#define ldbg_newref(LOGGER, POINTER) ldbg_newref_where(LOGGER, #POINTER, POINTER, HERE)
-#define ldbg_addref(LOGGER, POINTER) ldbg_addref_where(LOGGER, #POINTER, POINTER, HERE)
-#define ldbg_delref(LOGGER, POINTER) ldbg_delref_where(LOGGER, #POINTER, POINTER, HERE)
+#define ldbg_newref(OWNER, POINTER) ldbg_newref_where(OWNER, #POINTER, POINTER, HERE)
+#define ldbg_addref(OWNER, POINTER) ldbg_addref_where(OWNER, #POINTER, POINTER, HERE)
+#define ldbg_delref(OWNER, POINTER) ldbg_delref_where(OWNER, #POINTER, POINTER, HERE)
 
 #define vdbg_newref(POINTER) ldbg_newref_where(verbose.logger, #POINTER, POINTER, HERE)
 #define vdbg_addref(POINTER) ldbg_addref_where(verbose.logger, #POINTER, POINTER, HERE)

@@ -439,7 +439,7 @@ void terminate_and_delete_connections(struct connection *c,
 				      const struct logger *logger,
 				      where_t where)
 {
-	PEXPECT(logger, refcnt_peek(c) > 1);
+	PEXPECT(logger, refcnt_peek(c, logger) > 1);
 
 	switch (c->local->kind) {
 	case CK_LABELED_PARENT:

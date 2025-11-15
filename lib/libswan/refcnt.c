@@ -20,27 +20,28 @@
 
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-NONNULL(1,3,5)
-static void ldbg_ref(const struct logger *logger,
-		     const struct logger *owner,
-		     const char *why,
-		     const char *what,
-		     const void *pointer,
-		     where_t where,
-		     int old_count, int new_count)
+NONNULL(1,2,5)
+static void ldbg_ref(const char *why,
+		     const struct refcnt *refcnt,
+		     int old_count, int new_count,
+		     const struct logger *owner, where_t where)
 {
-	if (LDBGP(DBG_REFCNT, logger)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_logger_prefix(buf, logger);
-			if (what != NULL) {
-				jam_string(buf, what);
-				jam_string(buf, ": ");
+	if (LDBGP(DBG_REFCNT, owner)) {
+		LLOG_JAMBUF(DEBUG_STREAM, owner, buf) {
+			jam_string(buf, why);
+			jam_string(buf, " ");
+			jam_string(buf, refcnt->base->what);
+			/* append object if possible */
+			if (refcnt->base->jam != NULL) {
+				jam_string(buf, "<");
+				refcnt->base->jam(buf, refcnt);
+				jam_string(buf, ">");
 			}
-			jam(buf, "%sref @%p(%u->%u)",
-			    why, pointer, old_count, new_count);
-			if (owner != NULL) {
-				jam_string(buf, " ");
-				jam_logger_prefix(buf, owner);
+			/* when peek(), avoid refcnt.awk syntax */
+			if (old_count == new_count) {
+				jam(buf, "[%p](%u)", refcnt, new_count);
+			} else {
+				jam(buf, "@%p(%u->%u)", refcnt, old_count, new_count);
 			}
 			jam_string(buf, " ");
 			jam_where(buf, where);
@@ -48,8 +49,11 @@ static void ldbg_ref(const struct logger *logger,
 	}
 }
 
-#define LDBG_REF(WHY)						\
-	ldbg_ref(logger, owner, WHY, refcnt->base->what, refcnt, where, old, new)
+#define LDBG_REF(WHY)				\
+	ldbg_ref(WHY,				\
+		 refcnt,			\
+		 old, new,			\
+		 owner, where)
 
 /*
  * So existing code can use the refcnt tracer.
@@ -87,11 +91,11 @@ void ldbg_delref_where(const struct logger *logger, const char *what,
 void refcnt_init(const void *pointer,
 		 struct refcnt *refcnt,
 		 const struct refcnt_base *base,
-		 const struct logger *logger,
+		 const struct logger *owner,
 		 const struct where *where)
 {
 	if (refcnt != pointer) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() %s@%p should have been at the start of %p",
 			     __func__, base->what, refcnt, pointer);
 	}
@@ -107,16 +111,16 @@ void refcnt_init(const void *pointer,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old != 0 || new != 1) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() %s@%p should have been 0 initialized",
 			     __func__, base->what, pointer);
 	}
-	ldbg_ref(logger, NULL, "new", base->what, pointer, where, old, new);
+
+	LDBG_REF("newref");
 }
 
 void refcnt_addref_where(const char *what,
 			 refcnt_t *refcnt,
-			 const struct logger *logger,
 			 const struct logger *owner,
 			 where_t where)
 {
@@ -130,35 +134,35 @@ void refcnt_addref_where(const char *what,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() refcnt for %s@%p should have been non-0",
 			     __func__, what, refcnt);
 	}
 
-	LDBG_REF("add");
+	LDBG_REF("addref");
 }
 
 /*
- * look at refcnt atomically
+ * Look at refcnt atomically
+ *
  * This is a bit slow but it is used rarely.
  */
 unsigned refcnt_peek_where(const refcnt_t *refcnt,
-			   const struct logger *logger,
+			   const struct logger *owner,
 			   where_t where)
 {
-	unsigned val;
+	unsigned old, new;
 	pthread_mutex_lock(&refcnt_mutex);
 	{
-		val = refcnt->count;
+		old = new = refcnt->count;
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
-	ldbg_ref(logger, /*owner*/NULL, "peek", /*what*/NULL, refcnt, where, val, val);
-	return val;
+	LDBG_REF("peek");
+	return old;
 }
 
 void *refcnt_delref_where(const char *what,
 			  struct refcnt *refcnt,
-			  const struct logger *logger,
 			  const struct logger *owner,
 			  const struct where *where)
 {
@@ -175,16 +179,25 @@ void *refcnt_delref_where(const char *what,
 	pthread_mutex_unlock(&refcnt_mutex);
 
 	if (old == 0) {
-		llog_passert(logger, where,
+		llog_passert(owner, where,
 			     "%s() refcnt for %s@%p should have been non-0",
 			     __func__, what, refcnt);
 	}
 
-	LDBG_REF("del");
+	LDBG_REF("delref");
 
-	if (new == 0) {
-		return refcnt;
+	if (new != 0) {
+		/* not the last ref */
+		return NULL;
 	}
 
-	return NULL;
+	/* last ref and have cleanup */
+	const struct refcnt_base *base = refcnt->base;
+	if (base != NULL && base->discard != NULL) {
+		base->discard(refcnt, owner, where);
+		return NULL;
+	}
+
+	/* last ref, but no cleanup, leave it to caller */
+	return refcnt;
 }
