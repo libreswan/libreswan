@@ -25,8 +25,8 @@
 #include "refcnt.h"
 #include "lswlog.h"		/* for pexpect() */
 
-static void discard_fd(void *pointer, const struct logger *owner, where_t where);
-static size_t jam_fd(struct jambuf *buf, const void *pointer);
+static refcnt_discard_func discard_fd;
+static refcnt_jam_func jam_fd;
 
 struct fd {
 	refcnt_t refcnt;	/* must be first */
