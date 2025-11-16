@@ -26,7 +26,7 @@ export LC_CTYPE
 
 echo ==== cut ====
 
-count=10
+count=20
 while count=$(expr $count - 1) && test $count -gt 0 ; do
     # both need to attach ...
     if ps=$(ipsec whack --processstatus) ; then
