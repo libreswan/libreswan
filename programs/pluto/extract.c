@@ -1728,7 +1728,17 @@ static diag_t extract_host_end(struct host_end *host,
 	 * configured (for instance expecting leftaddresspool).
 	 */
 
-	if (src->modecfgserver == YN_YES && src->modecfgclient == YN_YES) {
+	bool modecfgserver = extract_bool(leftright, "modecfgserver",
+					  src->we_modecfgserver,
+					  YN_NO, wm, &d, verbose);
+	bool modecfgclient = extract_bool(leftright, "modecfgclient",
+					  src->we_modecfgclient,
+					  YN_NO, wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (modecfgserver && modecfgclient) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1738,7 +1748,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgserver == YN_YES && src->cat == YN_YES) {
+	if (modecfgserver && src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1748,7 +1758,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgclient == YN_YES && other_src->cat == YN_YES) {
+	if (modecfgclient && other_src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1758,7 +1768,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgserver == YN_YES && src->we_addresspool != NULL) {
+	if (modecfgserver && src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
 				leftright, src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1786,7 +1796,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 #endif
 
-	if (src->modecfgclient == YN_YES && other_src->we_addresspool != NULL) {
+	if (modecfgclient && other_src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1823,8 +1833,8 @@ static diag_t extract_host_end(struct host_end *host,
 	 * both a client and a server.
 	 */
 
-	host_config->modecfg.server |= (src->modecfgserver == YN_YES);
-	host_config->modecfg.client |= (src->modecfgclient == YN_YES);
+	host_config->modecfg.server |= modecfgserver;
+	host_config->modecfg.client |= modecfgclient;
 
 	if (src->we_addresspool != NULL) {
 		other_host_config->modecfg.server = true;
@@ -4063,7 +4073,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Look for contradictions.
+	 * Look for contradictions in the extracted connection.
 	 */
 
 	if (wm->end[LEFT_END].we_addresspool != NULL &&
@@ -4071,8 +4081,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		return diag("both leftaddresspool= and rightaddresspool= defined");
 	}
 
-	if (wm->end[LEFT_END].modecfgserver == YN_YES &&
-	    wm->end[RIGHT_END].modecfgserver == YN_YES) {
+	if (config->end[LEFT_END].host.modecfg.server &&
+	    config->end[RIGHT_END].host.modecfg.server) {
 		diag_t d = diag("both leftmodecfgserver=yes and rightmodecfgserver=yes defined");
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
@@ -4081,8 +4091,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->end[LEFT_END].modecfgclient == YN_YES &&
-	    wm->end[RIGHT_END].modecfgclient == YN_YES) {
+	if (config->end[LEFT_END].host.modecfg.client &&
+	    config->end[RIGHT_END].host.modecfg.client) {
 		diag_t d = diag("both leftmodecfgclient=yes and rightmodecfgclient=yes defined");
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;

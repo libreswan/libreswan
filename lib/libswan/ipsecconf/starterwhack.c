@@ -59,8 +59,6 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	w->groundhog = l->values[KWYN_GROUNDHOG].option;
-	w->modecfgserver = l->values[KWYN_MODECONFIGSERVER].option;
-	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
 	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
 
 	return true;

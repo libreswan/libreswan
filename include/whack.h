@@ -190,8 +190,9 @@ struct whack_end {
 #define we_autheap conn->value[KWS_AUTHEAP]
 	enum ike_cert_type certtype;
 
-	enum yn_options modecfgserver;	/* for MODECFG */
-	enum yn_options modecfgclient;
+#define we_modecfgserver conn->value[KWS_MODECFGSERVER]	/* for MODECFG */
+#define we_modecfgclient conn->value[KWS_MODECFGCLIENT]
+
 	enum yn_options groundhog;	/* Is this end a groundhog? */
 
 	struct whack_config_conn *conn;

@@ -125,8 +125,8 @@ enum config_conn_keyword {
 
 	KWS_XAUTHSERVER,	/* left/right */
 	KWS_XAUTHCLIENT,	/* left/right */
-	KWYN_MODECONFIGSERVER,	/* left/right */
-	KWYN_MODECONFIGCLIENT,	/* left/right */
+	KWS_MODECFGSERVER,	/* left/right */
+	KWS_MODECFGCLIENT,	/* left/right */
 	KWYN_CAT,	/* left/right */
 	KWS_SENDCERT,	/* left/right */
 	KWS_IKEPORT,		/* left/right: IKE Port that must be used */
