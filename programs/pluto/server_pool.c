@@ -29,9 +29,6 @@
 
 #include <pthread.h>    /* Must be the first include file */
 
-#include <prthread.h>	/* for hacking around NSPR */
-#include <private/pprthred.h>	/* for PR_DetachThread() */
-
 #include <unistd.h>	/* for sleep() */
 #include <limits.h>	/* for UINT_MAX, ULONG_MAX */
 
@@ -276,42 +273,27 @@ static void *helper_thread(void *arg)
 		do_job(job, w->helper_id);
 	}
 
-	if (LDBGP(DBG_BASE, w->logger)) {
-		PRThread *self = PR_GetCurrentThread();
-		PRThreadType type = PR_GetThreadType(self);
-#define THINKS(T) case T: ldbg(w->logger, "NSPR thinks I'm a "#T" thread"); break
-		switch (type) {
-			THINKS(PR_USER_THREAD);
-			THINKS(PR_SYSTEM_THREAD);
-		default:
-			ldbg(w->logger, "NSPR doesn't no what to think about ThreadType %d", type);
-			break;
-		}
-		PRThreadScope scope = PR_GetThreadScope(self);
-		switch (scope) {
-			THINKS(PR_LOCAL_THREAD);
-			THINKS(PR_GLOBAL_THREAD);
-			THINKS(PR_GLOBAL_BOUND_THREAD);
-		default:
-			ldbg(w->logger, "NSPR doesn't no what to think about ThreadScope: %d", type);
-			break;
-		}
-		PRThreadState state = PR_GetThreadState(self);
-		switch (state) {
-			THINKS(PR_JOINABLE_THREAD);
-			THINKS(PR_UNJOINABLE_THREAD);
-		default:
-			ldbg(w->logger, "NSPR doesn't no what to think abouth ThreadState: %d", type);
-			break;
-		}
-#undef THINKS
-		ldbg(w->logger, "detaching NSPR");
-		PR_DetachThread();
-	}
-
 	ldbg(w->logger, "helper %u: telling main thread that it is exiting", w->helper_id);
-	schedule_callback("helper stopped", deltatime(0), SOS_NOBODY,
-			  helper_thread_stopped_callback, NULL, w->logger);
+	schedule_callback("helper stopping", deltatime(0), SOS_NOBODY,
+			  helper_thread_stopped_callback,
+			  /*w, but r/w*/arg,
+			  w->logger);
+	/*
+	 * Danger.  This isn't the end.
+	 *
+	 * NSS still has stuff in thread-exit handlers to execute and
+	 * there's no clean way of forcing its execution (and if it
+	 * isn't allowed to run NSS crashes!).  Hence, the main thread
+	 * will need to wait for this thread to exit.
+	 *
+	 * But wait, there's more.  The main thread also needs to keep
+	 * the event loop running while these threads are exiting so
+	 * ptread_join() needs to be called with care.
+	 *
+	 * See: Race condition in helper_thread_stopped_callback() #2461
+	 * See: PR_Cleanup() doesn't wait for pthread_create() threads
+	 * https://bugzilla.mozilla.org/show_bug.cgi?id=1992272
+	 */
 	return NULL;
 }
 
@@ -616,21 +598,30 @@ void start_server_helpers(uintmax_t nhelpers, struct logger *logger)
 
 /*
  * Repeatedly nudge the helper threads until they all exit.
- *
- * Note that pthread_join() doesn't work here: an any-thread join may
- * end up joining an unrelated thread (for instance the CRL helper);
- * and a specific thread join may block waiting for the wrong thread.
  */
 
 static void (*server_helpers_stopped_callback)(void);
 
 static void helper_thread_stopped_callback(const char *story UNUSED,
 					   struct state *st UNUSED,
-					   void *context UNUSED)
+					   void *context)
 {
+	struct helper_thread *w = context;
+
 	helper_threads_stopped++;
-	ldbg(&global_logger, "one helper thread exited, %u remaining",
+	ldbg(w->logger, "helper thread exiting, %u remaining",
 	    helper_threads_started-helper_threads_stopped);
+
+	/*
+	 * Danger:
+	 *
+	 * Delay joining W.pid until all helper threads have exited.
+	 * This way the event-loop is kept running.
+	 *
+	 * Even though W is on the exit path it still needs to execute
+	 * NSS's thread exit code - who knows what that is doing and
+	 * how long it will take -
+	 */
 
 	/* wait for more? */
 	if (helper_threads_started > helper_threads_stopped) {
@@ -639,9 +630,18 @@ static void helper_thread_stopped_callback(const char *story UNUSED,
 		return;
 	}
 
-	/* all done; cleanup */
+	 /*
+	  * All done; cleanup
+	  *
+	  * All helper threads are on the exit war-path so, hopefully,
+	  * this join will not block (but no telling what NSS did).
+	  */
 	for (unsigned h = 0; h < helper_threads_started; h++) {
 		struct helper_thread *w = &helper_threads[h];
+		int e = pthread_join(w->pid, NULL);
+		if (e != 0) {
+			llog_errno(WARNING_STREAM, w->logger, e, "pthread_join() failed, ");
+		}
 		free_logger(&w->logger, HERE);
 	}
 
