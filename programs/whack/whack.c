@@ -1944,11 +1944,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver[={yes,no}] */
-			end->xauthserver = optarg_yn(logger, YN_YES);
+			end->we_xauthserver = optarg;
 			continue;
-
 		case END_XAUTHCLIENT:	/* --xauthclient[={yes,no}] */
-			end->xauthclient =  optarg_yn(logger, YN_YES);
+			end->we_xauthclient = optarg;
 			continue;
 
 		case OPT_USERNAME:	/* --username, was --xauthname */
@@ -1978,10 +1977,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			end->modecfgclient = optarg_yn(logger, YN_YES);
+			end->we_modecfgclient = optarg;
 			continue;
 		case END_MODECFGSERVER:	/* --modeconfigserver */
-			end->modecfgserver = optarg_yn(logger, YN_YES);
+			end->we_modecfgserver = optarg;
 			continue;
 		case CD_MODECFGPULL:	/* --modecfgpull */
 			msg.modecfgpull = optarg_yn(logger, YN_YES);

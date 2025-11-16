@@ -79,10 +79,10 @@ static const struct keyword_def config_conn_keyword[] = {
   K("ckaid",  kv_leftright,  kt_string,  KWS_CKAID),
   K("sendcert",  kv_leftright,  kt_string,  KWS_SENDCERT),
   K("ca",  kv_leftright,  kt_string,  KWS_CA),
-  K("xauthserver",  kv_leftright,  kt_sparse_name,  KWYN_XAUTHSERVER, .sparse_names = &yn_option_names),
-  K("xauthclient",  kv_leftright,  kt_sparse_name,  KWYN_XAUTHCLIENT, .sparse_names = &yn_option_names),
-  K("modecfgserver",  kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGSERVER, .sparse_names = &yn_option_names),
-  K("modecfgclient",  kv_leftright,  kt_sparse_name,  KWYN_MODECONFIGCLIENT, .sparse_names = &yn_option_names),
+  K("xauthserver",  kv_leftright,  kt_string,  KWS_XAUTHSERVER),
+  K("xauthclient",  kv_leftright,  kt_string,  KWS_XAUTHCLIENT),
+  K("modecfgserver",  kv_leftright,  kt_string,  KWS_MODECFGSERVER),
+  K("modecfgclient",  kv_leftright,  kt_string,  KWS_MODECFGCLIENT),
   K("username",  kv_leftright,  kt_string,  KWS_USERNAME),
   K("addresspool",  kv_leftright,  kt_string,  KWS_ADDRESSPOOL),
   K("auth",  kv_leftright, kt_string,  KWS_AUTH),
@@ -97,7 +97,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),
   K("autheap",  kv_leftright,  kt_string,  KWS_AUTHEAP),
-  K("groundhog",  kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, .sparse_names = &yn_option_names),
+  K("groundhog",  kv_leftright,  kt_string,  KWS_GROUNDHOG),
 
   /* these are conn statements which are not left/right */
 

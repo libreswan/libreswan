@@ -77,7 +77,7 @@ enum config_conn_keyword {
 	 * left/right variants.
 	 */
 
-	KWYN_GROUNDHOG,	/* left/right */
+	KWS_GROUNDHOG,	/* left/right */
 	KWS_UPDOWN,	/* left/right */
 	KWS_ID,		/* left/right */
 	KWS_CERT,	/* left/right */
@@ -123,10 +123,10 @@ enum config_conn_keyword {
 	 * initial ones come in left/right variants.
 	 */
 
-	KWYN_XAUTHSERVER,	/* left/right */
-	KWYN_XAUTHCLIENT,	/* left/right */
-	KWYN_MODECONFIGSERVER,	/* left/right */
-	KWYN_MODECONFIGCLIENT,	/* left/right */
+	KWS_XAUTHSERVER,	/* left/right */
+	KWS_XAUTHCLIENT,	/* left/right */
+	KWS_MODECFGSERVER,	/* left/right */
+	KWS_MODECFGCLIENT,	/* left/right */
 	KWYN_CAT,	/* left/right */
 	KWS_SENDCERT,	/* left/right */
 	KWS_IKEPORT,		/* left/right: IKE Port that must be used */

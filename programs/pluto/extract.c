@@ -631,6 +631,11 @@ static deltatime_t extract_deltatimescale(const char *leftright,
 					  const struct whack_message *wm,
 					  diag_t *d, struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
 	}
@@ -655,7 +660,10 @@ static unsigned extract_enum_name(const char *leftright,
 				  diag_t *d,
 				  struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
@@ -681,7 +689,10 @@ static unsigned extract_sparse_name(const char *leftright,
 				    diag_t *d,
 				    struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
@@ -696,6 +707,28 @@ static unsigned extract_sparse_name(const char *leftright,
 	}
 
 	return sparse->value;
+}
+
+static bool extract_bool(const char *leftright,
+			 const char *name,
+			 const char *value,
+			 enum yn_options value_when_unset,
+			 const struct whack_message *wm,
+			 diag_t *d, struct verbose verbose)
+{
+	enum yn_options yn = extract_sparse_name(leftright, name, value,
+						 value_when_unset,
+						 &yn_option_names,
+						 wm, d, verbose);
+	switch (yn) {
+	case YN_YES:
+		return true;
+	case YN_NO:
+		return false;
+	default:
+		vexpect(*d != NULL);
+		return false;
+	}
 }
 
 struct range {
@@ -719,6 +752,10 @@ static uintmax_t check_range(const char *story,
 			     diag_t *d,
 			     struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
 
 	if (range.clamp.min != 0 && value < range.clamp.min) {
 		humber_buf hb;
@@ -779,8 +816,12 @@ static uintmax_t extract_yn_uintmax(const char *story,
 				    diag_t *d,
 				    struct verbose verbose)
 {
-	(*d) = NULL;
 	(*yna) = 0; /* unset */
+
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
@@ -821,7 +862,11 @@ static uintmax_t extract_uintmax(const char *story,
 				 diag_t *d,
 				 struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
+
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
 	}
@@ -846,7 +891,10 @@ static uintmax_t extract_scaled_uintmax(const char *story,
 					diag_t *d,
 					struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return range.value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return range.value_when_unset;
@@ -868,7 +916,10 @@ static uintmax_t extract_percent(const char *leftright, const char *name, const 
 				 diag_t *d,
 				 struct verbose verbose)
 {
-	(*d) = NULL;
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return value_when_unset;
@@ -905,8 +956,12 @@ static ip_cidr extract_cidr_num(const char *leftright,
 				diag_t *d,
 				struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return unset_cidr;
+	}
+
 	err_t err;
-	(*d) = NULL;
 
 	if (!can_extract_string(leftright, name, value, wm, verbose)) {
 		return unset_cidr;
@@ -1109,8 +1164,14 @@ static diag_t extract_host_end(struct host_end *host,
 	diag_t d = NULL;
 	const char *leftright = host_config->leftright;
 
-	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
-				    /*value_when_unset*/YN_NO, wm, verbose);
+	bool groundhog = extract_bool(leftright, "groundhog",
+				      src->we_groundhog,
+				      /*value_when_unset*/YN_NO,
+				      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (groundhog) {
 		if (is_fips_mode()) {
 			return diag("%sgroundhog=yes is invalid in FIPS mode",
@@ -1491,10 +1552,12 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* the rest is simple copying of corresponding fields */
 
-	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
-					       YN_NO, wm, verbose);
-	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
-					       YN_NO, wm, verbose);
+	host_config->xauth.server = extract_bool(leftright, "xauthserver",
+						 src->we_xauthserver,
+						 YN_NO, wm, &d, verbose);
+	host_config->xauth.client = extract_bool(leftright, "xauthclient",
+						 src->we_xauthclient,
+						 YN_NO, wm, &d, verbose);
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->we_xauthusername,
 						     wm, verbose);
@@ -1671,7 +1734,17 @@ static diag_t extract_host_end(struct host_end *host,
 	 * configured (for instance expecting leftaddresspool).
 	 */
 
-	if (src->modecfgserver == YN_YES && src->modecfgclient == YN_YES) {
+	bool modecfgserver = extract_bool(leftright, "modecfgserver",
+					  src->we_modecfgserver,
+					  YN_NO, wm, &d, verbose);
+	bool modecfgclient = extract_bool(leftright, "modecfgclient",
+					  src->we_modecfgclient,
+					  YN_NO, wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (modecfgserver && modecfgclient) {
 		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1681,7 +1754,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgserver == YN_YES && src->cat == YN_YES) {
+	if (modecfgserver && src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1691,7 +1764,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgclient == YN_YES && other_src->cat == YN_YES) {
+	if (modecfgclient && other_src->cat == YN_YES) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1701,7 +1774,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->modecfgserver == YN_YES && src->we_addresspool != NULL) {
+	if (modecfgserver && src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgserver=yes does not expect %saddresspool=",
 				leftright, src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1729,7 +1802,7 @@ static diag_t extract_host_end(struct host_end *host,
 	}
 #endif
 
-	if (src->modecfgclient == YN_YES && other_src->we_addresspool != NULL) {
+	if (modecfgclient && other_src->we_addresspool != NULL) {
 		diag_t d = diag("%smodecfgclient=yes does not expect %saddresspool=",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1766,8 +1839,8 @@ static diag_t extract_host_end(struct host_end *host,
 	 * both a client and a server.
 	 */
 
-	host_config->modecfg.server |= (src->modecfgserver == YN_YES);
-	host_config->modecfg.client |= (src->modecfgclient == YN_YES);
+	host_config->modecfg.server |= modecfgserver;
+	host_config->modecfg.client |= modecfgclient;
 
 	if (src->we_addresspool != NULL) {
 		other_host_config->modecfg.server = true;
@@ -2419,6 +2492,11 @@ static const struct ike_info *const ike_info[] = {
 static enum ike_version extract_ike_version(const struct whack_message *wm,
 					    diag_t *d, struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return 0;
+	}
+
 	enum ike_version keyexchange = extract_sparse_name("", "keyexchange",
 							   wm->wm_keyexchange,
 							   /*value_when_unset*/0,
@@ -4001,7 +4079,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Look for contradictions.
+	 * Look for contradictions in the extracted connection.
 	 */
 
 	if (wm->end[LEFT_END].we_addresspool != NULL &&
@@ -4009,8 +4087,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		return diag("both leftaddresspool= and rightaddresspool= defined");
 	}
 
-	if (wm->end[LEFT_END].modecfgserver == YN_YES &&
-	    wm->end[RIGHT_END].modecfgserver == YN_YES) {
+	if (config->end[LEFT_END].host.modecfg.server &&
+	    config->end[RIGHT_END].host.modecfg.server) {
 		diag_t d = diag("both leftmodecfgserver=yes and rightmodecfgserver=yes defined");
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
@@ -4019,8 +4097,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->end[LEFT_END].modecfgclient == YN_YES &&
-	    wm->end[RIGHT_END].modecfgclient == YN_YES) {
+	if (config->end[LEFT_END].host.modecfg.client &&
+	    config->end[RIGHT_END].host.modecfg.client) {
 		diag_t d = diag("both leftmodecfgclient=yes and rightmodecfgclient=yes defined");
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;

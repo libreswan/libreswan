@@ -181,8 +181,8 @@ struct whack_end {
 #define we_updown conn->value[KWS_UPDOWN]	/* string */
 #define we_addresspool conn->value[KWS_ADDRESSPOOL]
 
-	enum yn_options xauthserver;	/* for XAUTH */
-	enum yn_options xauthclient;
+#define we_xauthserver conn->value[KWS_XAUTHSERVER]	/* for XAUTH */
+#define we_xauthclient conn->value[KWS_XAUTHCLIENT]
 #define we_xauthusername conn->value[KWS_USERNAME]
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */
@@ -190,9 +190,11 @@ struct whack_end {
 #define we_autheap conn->value[KWS_AUTHEAP]
 	enum ike_cert_type certtype;
 
-	enum yn_options modecfgserver;	/* for MODECFG */
-	enum yn_options modecfgclient;
-	enum yn_options groundhog;	/* Is this end a groundhog? */
+#define we_modecfgserver conn->value[KWS_MODECFGSERVER]	/* for MODECFG */
+#define we_modecfgclient conn->value[KWS_MODECFGCLIENT]
+
+#define we_groundhog conn->value[KWS_GROUNDHOG]	/* Is this end a
+						 * groundhog? */
 
 	struct whack_config_conn *conn;
 };
