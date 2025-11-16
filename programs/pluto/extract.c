@@ -206,7 +206,7 @@ static diag_t check_afi(struct afi_winner *winner,
 }
 
 static diag_t extract_host_addr(struct afi_winner *winner,
-				struct host_addr_config *end,
+				struct extracted_addr *end,
 				const char *leftright,
 				const char *name,
 				const char *value,
@@ -228,7 +228,7 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 		return NULL;
 	}
 
-	end->name = clone_str(value, "host name");
+	end->name = value;
 
 	if (value[0] == '%') {
 		/* either keyword, or %interface */
@@ -286,9 +286,9 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 
 }
 
-static diag_t extract_host_addrs(const struct whack_message *wm,
-				 struct config *config,
-				 struct verbose verbose)
+diag_t extract_host_addrs(const struct whack_message *wm,
+			  struct extracted_host_addrs *config,
+			  struct verbose verbose)
 {
 	/* source of AFI */
 	diag_t d;
@@ -314,8 +314,8 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = &wm->end[lr];
 		const char *leftright = we->leftright;
-		struct host_addr_config *host = &config->end[lr].host.host;
-		struct host_addr_config *nexthop = &config->end[lr].host.nexthop;
+		struct extracted_addr *host = &config->end[lr].host;
+		struct extracted_addr *nexthop = &config->end[lr].nexthop;
 
 		d = extract_host_addr(&winner, host, leftright, "",
 				      we->we_host, verbose);
@@ -356,8 +356,8 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct host_addr_config *host = &config->end[lr].host.host;
-		struct host_addr_config *nexthop = &config->end[lr].host.nexthop;
+		struct extracted_addr *host = &config->end[lr].host;
+		struct extracted_addr *nexthop = &config->end[lr].nexthop;
  		const char *leftright = wm->end[lr].leftright;
 		const char *name = "";
 		const char *value = host->name;
@@ -427,8 +427,8 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 	}
 
 	if (!can_orient) {
-		const char *left = config->end[LEFT_END].host.host.name;
-		const char *right = config->end[RIGHT_END].host.host.name;
+		const char *left = config->end[LEFT_END].host.name;
+		const char *right = config->end[RIGHT_END].host.name;
 		return diag("neither 'left=%s' nor 'right=%s' specify the local host's IP address",
 			    (left == NULL ? "" : left),
 			    (right == NULL ? "" : right));
@@ -440,7 +440,7 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct host_addr_config *nexthop = &config->end[lr].host.nexthop;
+		struct extracted_addr *nexthop = &config->end[lr].nexthop;
  		const char *leftright = wm->end[lr].leftright;
 		const char *name = "nexthop";
 		const char *value = nexthop->name;
@@ -464,7 +464,7 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 
 		case KH_NOTSET:
 		{
-			struct host_addr_config *host = &config->end[lr].host.host;
+			struct extracted_addr *host = &config->end[lr].host;
 			nexthop->addr = winner.afi->address.zero;
 			nexthop->type = (host->type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE : KH_NOTSET);
 			break;
@@ -486,7 +486,7 @@ static diag_t extract_host_addrs(const struct whack_message *wm,
 
 	}
 
-	config->host.afi = winner.afi;
+	config->afi = winner.afi;
 	return NULL;
 }
 
@@ -2608,7 +2608,16 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 	return NULL;
 }
 
+static void host_config_from_extracted_addr(struct host_addr_config *host,
+					    const struct extracted_addr *addr)
+{
+	host->type = addr->type;
+	host->addr = addr->addr;
+	host->name = clone_str(addr->name, "config");
+}
+
 diag_t extract_connection(const struct whack_message *wm,
+			  const struct extracted_host_addrs *extracted_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose)
@@ -2638,9 +2647,13 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * the table HOST_ADDRS[] is created and passed around.
 	 */
 
-	d = extract_host_addrs(wm, config, verbose);
-	if (d != NULL) {
-		return d;
+	/* copy extracted addrs to config */
+	config->host.afi = extracted_host_addrs->afi;
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		host_config_from_extracted_addr(&config->end[end].host.host,
+						&extracted_host_addrs->end[end].host);
+		host_config_from_extracted_addr(&config->end[end].host.nexthop,
+						&extracted_host_addrs->end[end].nexthop);
 	}
 
 	const struct ip_info *host_afi = config->host.afi;

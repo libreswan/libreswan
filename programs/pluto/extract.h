@@ -32,16 +32,38 @@
 
 #include "diag.h"
 #include "verbose.h"
+#include "ip_address.h"
+#include "end.h"
 
 struct whack_message;
 struct connection;
 struct config;
+struct extracted_host_addrs;
 
 diag_t extract_connection(const struct whack_message *wm,
+			  const struct extracted_host_addrs *extracted_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose);
 
 void resolve_connection(struct connection *c, struct verbose verbose);
+
+struct extracted_addr {
+	enum keyword_host type;
+	const char *name;	/* points into whack_message! */
+	ip_address addr;
+};
+
+struct extracted_host_addrs {
+	struct {
+		struct extracted_addr host;
+		struct extracted_addr nexthop;
+	} end[END_ROOF];
+	const struct ip_info *afi;
+};
+
+diag_t extract_host_addrs(const struct whack_message *wm,
+			  struct extracted_host_addrs *config,
+			  struct verbose verbose);
 
 #endif

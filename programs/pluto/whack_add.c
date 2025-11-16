@@ -21,20 +21,21 @@
 #include "show.h"
 #include "connections.h"
 #include "whack_delete.h"
+#include "extract.h"
 
 PRINTF_LIKE(3)
 static void llog_add_connection_failed(const struct whack_message *wm,
-				       struct logger *logger,
+				       struct verbose verbose,
 				       const char *fmt, ...)
 {
-	LLOG_JAMBUF(RC_LOG, logger, buf) {
+	VLOG_JAMBUF(buf) {
 		jam(buf, "\"%s\": failed to add connection: ", wm->name);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
 	}
-	whack_rc(RC_FATAL, logger);
+	whack_rc(RC_FATAL, verbose.logger);
 }
 
 /*
@@ -62,7 +63,7 @@ struct subnets {
 static bool parse_subnets(struct subnets *sn,
 			  const struct whack_message *wm,
 			  const struct whack_end *end,
-			  struct logger *logger)
+			  struct verbose verbose)
 {
 	*sn = (struct subnets) {
 		.name = wm->name,
@@ -79,13 +80,13 @@ static bool parse_subnets(struct subnets *sn,
 		err_t e = ttosubnet_num(shunk1(end->we_subnet), /*afi*/NULL,
 					&subnet, &nonzero_host);
 		if (e != NULL) {
-			llog_add_connection_failed(wm, logger, 
+			llog_add_connection_failed(wm, verbose,
 						   "%ssubnet=%s invalid, %s",
 						   end->leftright, end->we_subnet, e);
 			return false;
 		}
 		if (nonzero_host.ip.is_set) {
-			llog_add_connection_failed(wm, logger,
+			llog_add_connection_failed(wm, verbose,
 						   "%ssubnet=%s contains non-zero host identifier",
 						   end->leftright, end->we_subnet);
 			return false;
@@ -98,7 +99,7 @@ static bool parse_subnets(struct subnets *sn,
 	if (end->we_subnets != NULL) {
 		diag_t d = ttosubnets_num(shunk1(end->we_subnets), /*afi*/NULL, &subnets);
 		if (d != NULL) {
-			llog_add_connection_failed(wm, logger,
+			llog_add_connection_failed(wm, verbose,
 						   "%ssubnets=%s invalid, %s",
 						   end->leftright, end->we_subnets,
 						   str_diag(d));
@@ -171,9 +172,10 @@ static const struct ip_info *next_subnet(char **subnetstr,
  */
 
 static void permutate_connection_subnets(const struct whack_message *wm,
+					 const struct extracted_host_addrs *host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
-					 struct logger *logger)
+					 struct verbose verbose)
 {
 	/*
 	 * The first combination is the current leftsubnet/rightsubnet
@@ -245,9 +247,10 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
 			    right_afi == NULL) {
-				diag_t d = add_connection(&wam, logger);
+				diag_t d = add_connection(&wam, host_addrs, verbose.logger);
 				if (d != NULL) {
-					llog_add_connection_failed(&wam, logger, "%s", str_diag(d));
+					llog_add_connection_failed(&wam, verbose,
+								   "%s", str_diag(d));
 					pfree_diag(&d);
 					pfreeany(name);
 					pfreeany(left_subnet);
@@ -255,17 +258,16 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 					return;
 				}
 			} else {
-				PEXPECT(logger, (wam.end[LEFT_END].we_subnet != NULL &&
-						 wam.end[RIGHT_END].we_subnet != NULL));
+				vexpect(wam.end[LEFT_END].we_subnet != NULL &&
+					wam.end[RIGHT_END].we_subnet != NULL);
 				/*
 				 * Fudge up what looks like the
 				 * connection's prefix.
 				 */
-				llog(WARNING_STREAM, logger,
-				     "\"%s\": skipping mismatched leftsubnets=%s rightsubnets=%s",
-				     wm->name,
-				     wam.end[LEFT_END].we_subnet,
-				     wam.end[RIGHT_END].we_subnet);
+				vwarning("\"%s\": skipping mismatched leftsubnets=%s rightsubnets=%s",
+					 wm->name,
+					 wam.end[LEFT_END].we_subnet,
+					 wam.end[RIGHT_END].we_subnet);
 			}
 
 			pfreeany(name);
@@ -276,8 +278,9 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 }
 
-static void add_connections(const struct whack_message *wm, struct logger *logger)
+static void add_connections(const struct whack_message *wm, struct verbose verbose)
 {
+	diag_t d = NULL;
 	/*
 	 * Reject {left,right}subnets=... combined with
 	 * {left,right}subnet=a,b
@@ -301,7 +304,7 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 				continue;
 			}
 			/* have subnets=.. and subnet=a,b... */
-			llog_add_connection_failed(wm, logger,
+			llog_add_connection_failed(wm, verbose,
 						   "multi-selector %ssubnet=\"%s\" combined with %ssubnets=\"%s\"",
 						   subnet->leftright, subnet->we_subnet,
 						   subnets->leftright, subnets->we_subnets);
@@ -309,30 +312,38 @@ static void add_connections(const struct whack_message *wm, struct logger *logge
 		}
 	}
 
+	struct extracted_host_addrs host_addrs = {0};
+	d = extract_host_addrs(wm, &host_addrs, verbose);
+	if (d != NULL) {
+		llog_add_connection_failed(wm, verbose, "%s", str_diag(d));
+		pfree_diag(&d);
+		return;
+	}
+
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
-		diag_t d = add_connection(wm, logger);
+		diag_t d = add_connection(wm, &host_addrs, verbose.logger);
 		if (d != NULL) {
-			llog_add_connection_failed(wm, logger, "%s", str_diag(d));
+			llog_add_connection_failed(wm, verbose, "%s", str_diag(d));
 			pfree_diag(&d);
 		}
 		return;
 	}
 
 	struct subnets left = {0};
-	if (!parse_subnets(&left, wm, &wm->end[LEFT_END], logger)) {
+	if (!parse_subnets(&left, wm, &wm->end[LEFT_END], verbose)) {
 		pfreeany(left.subnets.list);
 		return;
 	}
 
 	struct subnets right = {0};
-	if (!parse_subnets(&right, wm, &wm->end[RIGHT_END], logger)) {
+	if (!parse_subnets(&right, wm, &wm->end[RIGHT_END], verbose)) {
 		pfreeany(left.subnets.list);
 		pfreeany(right.subnets.list);
 		return;
 	}
 
-	permutate_connection_subnets(wm, &left, &right, logger);
+	permutate_connection_subnets(wm, &host_addrs, &left, &right, verbose);
 	pfreeany(left.subnets.list);
 	pfreeany(right.subnets.list);
 }
@@ -381,5 +392,6 @@ void whack_add(const struct whack_message *wm, struct show *s)
 		break;
 	}
 
-	add_connections(wm, show_logger(s));
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, show_logger(s), NULL);
+	add_connections(wm, verbose);
 }
