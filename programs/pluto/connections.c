@@ -1184,7 +1184,7 @@ struct connection *alloc_connection(const char *name,
 				    struct connection *t,
 				    struct config *root_config,
 				    lset_t debugging,
-				    struct logger *logger,
+				    const struct logger *logger,
 				    where_t where)
 {
 	struct connection *c = refcnt_alloc(struct connection, logger, where);
@@ -1299,7 +1299,8 @@ const struct ike_info ikev2_info = {
 	.retransmit_event = EVENT_v2_RETRANSMIT,
 };
 
-diag_t add_connection(const struct whack_message *wm, struct logger *logger)
+diag_t add_connection(const struct whack_message *wm,
+		      const struct logger *logger)
 {
 	/*
 	 * For instance ipsec add --debug.
