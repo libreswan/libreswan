@@ -67,6 +67,7 @@
 #include "state.h"
 #include "whack.h"
 
+struct extracted_host_addrs;
 struct resolve_end;
 struct kernel_acquire;
 
@@ -942,7 +943,9 @@ struct connection {
 extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d);
 
-diag_t add_connection(const struct whack_message *wm, const struct logger *logger);
+diag_t add_connection(const struct whack_message *wm,
+		      const struct extracted_host_addrs *host_addrs,
+		      const struct logger *logger);
 
 bool resolve_hosts_from_configs(const struct config *config,
 				struct resolve_end *resolve/*[END_ROOF]*/,

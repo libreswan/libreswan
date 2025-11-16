@@ -21,6 +21,7 @@
 #include "show.h"
 #include "connections.h"
 #include "whack_delete.h"
+#include "extract.h"
 
 PRINTF_LIKE(3)
 static void llog_add_connection_failed(const struct whack_message *wm,
@@ -171,6 +172,7 @@ static const struct ip_info *next_subnet(char **subnetstr,
  */
 
 static void permutate_connection_subnets(const struct whack_message *wm,
+					 const struct extracted_host_addrs *host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
 					 struct verbose verbose)
@@ -245,7 +247,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
 			    right_afi == NULL) {
-				diag_t d = add_connection(&wam, verbose.logger);
+				diag_t d = add_connection(&wam, host_addrs, verbose.logger);
 				if (d != NULL) {
 					llog_add_connection_failed(&wam, verbose,
 								   "%s", str_diag(d));
@@ -278,6 +280,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 static void add_connections(const struct whack_message *wm, struct verbose verbose)
 {
+	diag_t d = NULL;
 	/*
 	 * Reject {left,right}subnets=... combined with
 	 * {left,right}subnet=a,b
@@ -309,9 +312,17 @@ static void add_connections(const struct whack_message *wm, struct verbose verbo
 		}
 	}
 
+	struct extracted_host_addrs host_addrs = {0};
+	d = extract_host_addrs(wm, &host_addrs, verbose);
+	if (d != NULL) {
+		llog_add_connection_failed(wm, verbose, "%s", str_diag(d));
+		pfree_diag(&d);
+		return;
+	}
+
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
-		diag_t d = add_connection(wm, verbose.logger);
+		diag_t d = add_connection(wm, &host_addrs, verbose.logger);
 		if (d != NULL) {
 			llog_add_connection_failed(wm, verbose, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -332,7 +343,7 @@ static void add_connections(const struct whack_message *wm, struct verbose verbo
 		return;
 	}
 
-	permutate_connection_subnets(wm, &left, &right, verbose);
+	permutate_connection_subnets(wm, &host_addrs, &left, &right, verbose);
 	pfreeany(left.subnets.list);
 	pfreeany(right.subnets.list);
 }

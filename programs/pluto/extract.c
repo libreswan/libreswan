@@ -2539,6 +2539,7 @@ static void host_config_from_extracted_addr(struct host_addr_config *host,
 }
 
 diag_t extract_connection(const struct whack_message *wm,
+			  const struct extracted_host_addrs *extracted_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose)
@@ -2568,19 +2569,13 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * the table HOST_ADDRS[] is created and passed around.
 	 */
 
-	struct extracted_host_addrs extracted_host_addrs = {0};
-	d = extract_host_addrs(wm, &extracted_host_addrs, verbose);
-	if (d != NULL) {
-		return d;
-	}
-
 	/* copy extracted addrs to config */
-	config->host.afi = extracted_host_addrs.afi;
+	config->host.afi = extracted_host_addrs->afi;
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		host_config_from_extracted_addr(&config->end[end].host.host,
-						&extracted_host_addrs.end[end].host);
+						&extracted_host_addrs->end[end].host);
 		host_config_from_extracted_addr(&config->end[end].host.nexthop,
-						&extracted_host_addrs.end[end].nexthop);
+						&extracted_host_addrs->end[end].nexthop);
 	}
 
 	const struct ip_info *host_afi = config->host.afi;

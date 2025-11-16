@@ -38,8 +38,10 @@
 struct whack_message;
 struct connection;
 struct config;
+struct extracted_host_addrs;
 
 diag_t extract_connection(const struct whack_message *wm,
+			  const struct extracted_host_addrs *extracted_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose);
