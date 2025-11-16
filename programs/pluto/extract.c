@@ -1164,8 +1164,14 @@ static diag_t extract_host_end(struct host_end *host,
 	diag_t d = NULL;
 	const char *leftright = host_config->leftright;
 
-	bool groundhog = extract_yn(leftright, "groundhog", src->groundhog,
-				    /*value_when_unset*/YN_NO, wm, verbose);
+	bool groundhog = extract_bool(leftright, "groundhog",
+				      src->we_groundhog,
+				      /*value_when_unset*/YN_NO,
+				      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (groundhog) {
 		if (is_fips_mode()) {
 			return diag("%sgroundhog=yes is invalid in FIPS mode",

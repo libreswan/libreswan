@@ -97,7 +97,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),
   K("autheap",  kv_leftright,  kt_string,  KWS_AUTHEAP),
-  K("groundhog",  kv_leftright,  kt_sparse_name,  KWYN_GROUNDHOG, .sparse_names = &yn_option_names),
+  K("groundhog",  kv_leftright,  kt_string,  KWS_GROUNDHOG),
 
   /* these are conn statements which are not left/right */
 

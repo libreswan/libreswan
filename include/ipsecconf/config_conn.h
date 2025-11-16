@@ -77,7 +77,7 @@ enum config_conn_keyword {
 	 * left/right variants.
 	 */
 
-	KWYN_GROUNDHOG,	/* left/right */
+	KWS_GROUNDHOG,	/* left/right */
 	KWS_UPDOWN,	/* left/right */
 	KWS_ID,		/* left/right */
 	KWS_CERT,	/* left/right */

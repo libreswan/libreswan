@@ -193,7 +193,8 @@ struct whack_end {
 #define we_modecfgserver conn->value[KWS_MODECFGSERVER]	/* for MODECFG */
 #define we_modecfgclient conn->value[KWS_MODECFGCLIENT]
 
-	enum yn_options groundhog;	/* Is this end a groundhog? */
+#define we_groundhog conn->value[KWS_GROUNDHOG]	/* Is this end a
+						 * groundhog? */
 
 	struct whack_config_conn *conn;
 };
