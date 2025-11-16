@@ -86,7 +86,6 @@ static bool pluto_leave_state;
 
 static void exit_prologue(enum pluto_exit_code code, struct logger *logger);
 static void exit_epilogue(struct logger *logger) NEVER_RETURNS;
-static void server_helpers_stopped_callback(void);
 static void helpers_stopped_callback(void);
 
 void libreswan_exit(enum pluto_exit_code exit_code)
@@ -183,7 +182,6 @@ void exit_epilogue(struct logger *logger)
 	 */
 	delete_every_connection(logger);
 
-	free_server_helper_jobs(logger);
 	free_help_requests(logger);
 
 	free_root_certs(logger);
@@ -292,11 +290,6 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * code to be changed so that helper tasks can be "cancelled"
 	 * after the've completed?
 	 */
-	stop_server_helpers(server_helpers_stopped_callback, logger);
-}
-
-void server_helpers_stopped_callback(void)
-{
 	stop_helpers(helpers_stopped_callback, &global_logger);
 }
 

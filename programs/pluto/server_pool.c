@@ -27,33 +27,26 @@
  *
  */
 
-#include <pthread.h>    /* Must be the first include file */
-
 #include <unistd.h>	/* for sleep() */
-#include <limits.h>	/* for UINT_MAX, ULONG_MAX */
 
-#include "ttodata.h"
 #include "refcnt.h"
 
 #include "defs.h"
 #include "log.h"
 #include "state.h"
-#include "server.h"
-#include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "server_pool.h"
-#include "list_entry.h"
 #include "pluto_timing.h"
 #include "connections.h"
 #include "demux.h"			/* for md_addref() md_delref() */
+#include "helper.h"
 
-#ifdef USE_SECCOMP
-# include "pluto_seccomp.h"
-#endif
+static callback_cb delayed_help_request;
 
-static callback_cb helper_thread_stopped_callback;	/* type assertion */
-static resume_cb handle_helper_answer;			/* type assertion */
-static callback_cb inline_worker;			/* type assertion */
-static callback_cb call_server_helpers_stopped_callback; /* type assertion */
+static helper_fn server_pool_helper;			/* type assertion */
+static helper_cb server_pool_callback;
+
+static refcnt_discard_content_fn discard_server_pool_help_request_content;
+
 /*
  * The job structure
  *
@@ -63,253 +56,49 @@ static callback_cb call_server_helpers_stopped_callback; /* type assertion */
  * cannot be on the stack or in simple global variables.
  *
  * A job is used to hold such state.
- *
- * XXX:
- *
- * Define job_id_t and helper_id_t as enums so that GCC 10 will detect
- * and complain when code attempts to assign the wrong type.
-
- * An enum's size is always an <<int>.  Presumably this is so that the
- * size of the declaration <<enum foo;>> (i.e., with no other
- * information) is always known - this means the upper bound is always
- * UINT_MAX.  See note further down on overflow.
  */
 
-typedef enum { JOB_ID_MIN = 1, JOB_ID_MAX = UINT_MAX, } job_id_t;
-typedef enum { HELPER_ID_MIN = 1, HELPER_ID_MAX = UINT_MAX, } helper_id_t;
-
-struct job {
-	struct task *task;
-	const struct task_handler *handler;
-	struct list_entry backlog;
-	so_serial_t callback_so;		/* sponsoring state-object's serial number */
-	so_serial_t task_so;			/* sponsoring state-object's serial number */
-	struct msg_digest *md;
+struct help_request {
+	struct refcnt refcnt;
 	bool cancelled;
+	struct msg_digest *md;
+	so_serial_t callback_so;	/* state to notify when crypto
+					 * completed; for IKEv2 this
+					 * is the IKE SA */
 	where_t where;
-	job_id_t job_id;
-	helper_id_t helper_id;
 	struct cpu_usage time_used;
 
-	/* where to send messages */
-	struct logger *logger;
+	unsigned task_nr;
+	so_serial_t task_so;		/* state requiring crypto; for
+					 * IKEv2 this is either IKE or
+					 * Child SA */
+	struct task *task;
+	const struct task_handler *handler;
+	struct logger *task_logger;
 };
 
-#define PRI_JOB "job %u helper %u "PRI_SO"/"PRI_SO" %s (%s)"
-#define pri_job(JOB)							\
-	JOB->job_id,							\
-		JOB->helper_id,						\
-		pri_so(JOB->callback_so),				\
-		pri_so(JOB->task_so),					\
-		JOB->where->func,					\
-		JOB->handler->name
+/* .task_logger will add the #state prefix */
+#define PRI_REQUEST "task %u, %s for %s()"
+#define pri_request(REQUEST)			\
+	(REQUEST)->task_nr,			\
+		(REQUEST)->handler->name,	\
+		(REQUEST)->where->func
 
-/*
- * The work queue.  Accesses must be locked.
- */
-
-static size_t jam_backlog(struct jambuf *buf, const void *data)
+void discard_server_pool_help_request_content(void *pointer,
+					      const struct logger *owner UNUSED,
+					      where_t where)
 {
-	if (data == NULL) {
-		return jam(buf, "no job");
-	}
+	struct help_request *request = pointer;
+	ldbg(request->task_logger,
+	     PRI_REQUEST": discarding request content "PRI_WHERE,
+	     pri_request(request), pri_where(where));
 
-	size_t s = 0;
-	const struct job *job = data;
-	s += jam(buf, "job %ju", (uintmax_t)job->job_id);
-	if (job->callback_so != SOS_NOBODY) {
-		s += jam(buf, " state "PRI_SO, pri_so(job->callback_so));
-	}
-	if (job->task_so != SOS_NOBODY && job->task_so != job->callback_so) {
-		s += jam(buf, " state "PRI_SO, pri_so(job->task_so));
-	}
-	if (job->helper_id != 0) {
-		s += jam(buf, " helper %u", job->helper_id);
-	}
-	if (job->cancelled) {
-		s += jam(buf, " cancelled");
-	}
-	if (job->where != NULL) {
-		s += jam(buf, " %s", job->where->func);
-	}
-	if (job->handler != NULL) {
-		s += jam(buf, " (%s)", job->handler->name);
-	}
-	return s;
-}
-
-LIST_INFO(job, backlog, backlog_info, jam_backlog);
-
-static pthread_mutex_t backlog_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t backlog_cond = PTHREAD_COND_INITIALIZER;
-
-struct list_head backlog = INIT_LIST_HEAD(&backlog, &backlog_info);
-static int backlog_queue_len = 0;
-
-static void message_helpers(struct job *job)
-{
-	pthread_mutex_lock(&backlog_mutex);
-	if (job != NULL) {
-		insert_list_entry(&backlog, &job->backlog);
-		backlog_queue_len++;
-	}
-	/* wake up threads waiting for work */
-	pthread_cond_signal(&backlog_cond);
-	pthread_mutex_unlock(&backlog_mutex);
-}
-
-/*
- * Note: this per-helper struct is never modified in a helper thread
- */
-
-struct helper_thread {
-	struct logger *logger;
-	helper_id_t helper_id;
-	pthread_t pid;
-};
-
-/* may be NULL if we are to do all the work ourselves */
-
-static struct helper_thread *helper_threads = NULL;
-static unsigned helper_threads_started = 0;
-static unsigned helper_threads_stopped = 0;
-
-unsigned server_nhelpers(void)
-{
-	return (helper_threads_started - helper_threads_stopped);
-}
-
-/*
- * If there are any helper threads, this code is always executed IN A HELPER
- * THREAD. Otherwise it is executed in the main (only) thread.
- */
-
-static void do_job(struct job *job, helper_id_t helper_id)
-{
-	logtime_t start = logtime_start(job->logger);
-
-	if (job->cancelled) {
-		ldbg(job->logger, PRI_JOB": skipping as cancelled", pri_job(job));
-	} else {
-		ldbg(job->logger, PRI_JOB": started", pri_job(job));
-		job->handler->computer_fn(job->logger, job->task, helper_id);
-		ldbg(job->logger, PRI_JOB": finished", pri_job(job));
-	}
-
-	job->time_used = logtime_stop(&start, PRI_JOB, pri_job(job));
-	schedule_resume("sending job back to main thread",
-			job->callback_so, &job->md/*stolen*/,
-			handle_helper_answer, job);
-}
-
-/* IN A HELPER THREAD */
-static void *helper_thread(void *arg)
-{
-	const struct helper_thread *w = arg;
-	ldbg(w->logger, "starting thread");
-
-#ifdef USE_SECCOMP
-	init_seccomp_helper(w->logger);
-#else
-	llog(RC_LOG, w->logger, "seccomp security for helper not supported");
-#endif
-
-	/* OS X does not have pthread_setschedprio */
-#if USE_PTHREAD_SETSCHEDPRIO
-	int status = pthread_setschedprio(pthread_self(), 10);
-	ldbg(w->logger, "status value returned by setting the priority of this thread: %d", status);
-#endif
-
-	while (true) {
-		struct job *job = NULL;
-		pthread_mutex_lock(&backlog_mutex);
-		{
-			/*
-			 * Search the backlog[] for something to do.
-			 * If needed wait.
-			 */
-			pexpect(job == NULL);
-			while (!exiting_pluto) {
-				/* grab the next entry, if there is one */
-				pexpect(job == NULL);
-				FOR_EACH_LIST_ENTRY_OLD2NEW(job, &backlog) { break; }
-				if (job != NULL) {
-					/*
-					 * Assign the entry to this
-					 * thread, removing it from
-					 * the backlog.
-					 *
-					 * XXX: logged when job
-					 * started.
-					 */
-					remove_list_entry(&job->backlog);
-					job->helper_id = w->helper_id;
-					break;
-				}
-				ldbg(&global_logger, "helper %u: waiting for work", w->helper_id);
-				pthread_cond_wait(&backlog_cond, &backlog_mutex);
-			}
-			if (job == NULL) {
-				/*
-				 * No JOB implies pluto is exiting but
-				 * not reverse - could grab a JOB in
-				 * parallel to pluto starting to exit.
-				 */
-				pexpect(exiting_pluto);
-			}
-		}
-		pthread_mutex_unlock(&backlog_mutex);
-		if (job == NULL) {
-			/* per above, must be shutting down */
-			break;
-		}
-		/* might be cancelled */
-		if (impair.helper_thread_delay.enabled) {
-			llog(RC_LOG, job->logger,
-			     "IMPAIR: "PRI_JOB": helper is pausing for %u seconds",
-			     pri_job(job), impair.helper_thread_delay.value);
-			sleep(impair.helper_thread_delay.value);
-		}
-		do_job(job, w->helper_id);
-	}
-
-	ldbg(w->logger, "helper %u: telling main thread that it is exiting", w->helper_id);
-	schedule_callback("helper stopping", deltatime(0), SOS_NOBODY,
-			  helper_thread_stopped_callback,
-			  /*w, but r/w*/arg,
-			  w->logger);
-	/*
-	 * Danger.  This isn't the end.
-	 *
-	 * NSS still has stuff in thread-exit handlers to execute and
-	 * there's no clean way of forcing its execution (and if it
-	 * isn't allowed to run NSS crashes!).  Hence, the main thread
-	 * will need to wait for this thread to exit.
-	 *
-	 * But wait, there's more.  The main thread also needs to keep
-	 * the event loop running while these threads are exiting so
-	 * ptread_join() needs to be called with care.
-	 *
-	 * See: Race condition in helper_thread_stopped_callback() #2461
-	 * See: PR_Cleanup() doesn't wait for pthread_create() threads
-	 * https://bugzilla.mozilla.org/show_bug.cgi?id=1992272
-	 */
-	return NULL;
-}
-
-/*
- * Do the work 'inline' which really means on the event queue.
- *
- * Step one is to perform the crypto in a state-free context (just
- * like for a worker thread); and step two is to resume the thread
- * with the possibly cancelled result.
- */
-
-static void inline_worker(const char *story UNUSED, struct state *unused_st UNUSED, void *arg)
-{
-	struct job *job = arg;
-	/* might be cancelled */
-	do_job(job, -1);
+	md_delref(&request->md);
+	passert(request->handler->cleanup_cb != NULL);
+	request->handler->cleanup_cb(&request->task, request->task_logger);
+	pexpect(request->task == NULL); /* did your job */
+	/* now free up the continuation */
+	free_logger(&request->task_logger, HERE);
 }
 
 /*
@@ -356,40 +145,26 @@ void submit_task(struct state *callback_sa,
 		 const struct task_handler *handler,
 		 where_t where)
 {
-	if (callback_sa->st_offloaded_task != NULL) {
-		llog_pexpect(callback_sa->logger, where,
-			     "state already has outstanding crypto ["PRI_WHERE"]",
-			     pri_where(callback_sa->st_offloaded_task->where));
+	if (task_sa->st_offloaded_task != NULL) {
+		llog_pexpect(task_sa->logger, where,
+			     "state already has outstanding crypto %p",
+			     task_sa->st_offloaded_task);
 		return;
 	}
 
-	struct job *job = alloc_thing(struct job, where->func);
-	ldbg_newref(&global_logger, job);
-	job->cancelled = false;
-	job->where = where;
-	init_list_entry(&backlog_info, job, &job->backlog);
-	job->callback_so = callback_sa->st_serialno;
-	job->task_so = task_sa->st_serialno;
-
-	/*
-	 * set up the id
-	 *
-	 * XXX: job_id is used as a short lifetime identifier so
-	 * rolling (after several years of up-time) isn't a concern.
-	 */
-	static job_id_t job_id = 0;	/* counter for generating unique request IDs */
-	job->job_id = ++job_id;
-
-	job->handler = handler;
-	job->task = task;
-
-	/*
-	 * Save in case it needs to be cancelled.
-	 */
-	task_sa->st_offloaded_task = job;
-	job->logger = clone_logger(task_sa->logger, HERE);
-	job->md = md_addref(md);
-	ldbg(job->logger, PRI_JOB": added to pending queue", pri_job(job));
+	struct help_request *request = alloc_help_request("crypto",
+							  &discard_server_pool_help_request_content,
+							  task_sa->logger);
+	static unsigned task_nr;
+	request->where = where;
+	request->md = md_addref(md);
+	request->callback_so = callback_sa->st_serialno;
+	request->handler = handler;
+	request->task = task;
+	request->task_nr = ++task_nr;
+	request->task_so = task_sa->st_serialno;
+	request->task_logger = clone_logger(task_sa->logger, HERE);
+	task_sa->st_offloaded_task = refcnt_addref(request, task_sa->logger, HERE);
 
 	if (callback_sa->st_ike_version == IKEv1) {
 		/*
@@ -403,288 +178,166 @@ void submit_task(struct state *callback_sa,
 		 * in the background (for instance when assembling
 		 * fragments), there's a DISCARD timer running.
 		 */
+		ldbg(task_sa->logger, PRI_REQUEST": scheduling crtpto-timeout of callback sa "PRI_SO,
+		     pri_request(request), pri_so(callback_sa->st_serialno));
 		delete_v1_event(callback_sa);
 		event_schedule(EVENT_v1_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
 	}
 
-	/*
-	 * do it all ourselves?
-	 */
-	if (helper_threads == NULL) {
-		/*
-		 * Invoke the inline worker as if it is on a separate
-		 * thread - no resume (aka unsuspend) and no state
-		 * (hence SOS_NOBODY).  Caller will return
-		 * STF_SUSPEND, and then the event-loop will invoke
-		 * the callback.
-		 */
-		deltatime_t delay = deltatime(0);
+	deltatime_t delay = deltatime(0);
+	if (nhelpers() == 0) {
 		if (impair.helper_thread_delay.enabled) {
 			if (impair.helper_thread_delay.value == 0) {
 				static uint64_t warp = 0;
 				delay = deltatime_from_milliseconds(++warp);
-				llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is warped by %ju milliseconds",
-				     pri_job(job), warp);
+				llog(IMPAIR_STREAM, task_sa->logger,
+				     PRI_REQUEST": helper is warped by %ju milliseconds",
+				     pri_request(request), warp);
 			} else {
 				delay = deltatime(impair.helper_thread_delay.value);
-				llog(RC_LOG, job->logger, "IMPAIR: "PRI_JOB": helper is pausing for %ju seconds",
-				     pri_job(job), deltasecs(delay));
+				llog(IMPAIR_STREAM, task_sa->logger,
+				     PRI_REQUEST": helper is pausing for %ju seconds",
+				     pri_request(request), deltasecs(delay));
 			}
 		}
+	}
 
-		if (detach_whack) {
-			whack_detach(job, task_sa->logger);
-		}
+	/*
+	 * Do the detach after the IMPAIR log so the impair appears on
+	 * the console.
+	 */
+	if (detach_whack) {
+		whack_detach_where(request->task_logger, task_sa->logger, HERE);
+	}
 
-		schedule_callback("inline crypto", delay,
-				  SOS_NOBODY, inline_worker, job,
-				  job->logger);
+	/*
+	 * Stall the crypto without locking up the event queue (which
+	 * is what sleep() will do).
+	 */
+
+	if (deltatime_cmp(delay, >, deltatime(0))) {
+		schedule_callback("delayed crypto", delay,
+				  SOS_NOBODY,
+				  delayed_help_request,
+				  request,
+				  task_sa->logger);
 		return;
 	}
 
-	if (detach_whack) {
-		whack_detach(job, task_sa->logger);
+	request_help(request, server_pool_helper, task_sa->logger);
+}
+
+void delayed_help_request(const char *story UNUSED,
+			  struct state *st,
+			  void *context)
+{
+	struct help_request *request = context;
+	PEXPECT(request->task_logger, st == NULL);
+	request_help(request, server_pool_helper, request->task_logger);
+}
+
+helper_cb *server_pool_helper(struct help_request *request,
+			      const struct logger *task_logger,
+			      enum helper_id helper_id)
+{
+	/* might be cancelled */
+	if (nhelpers() > 0) {
+		if (impair.helper_thread_delay.enabled) {
+			llog(IMPAIR_STREAM, task_logger,
+			     PRI_REQUEST": helper is pausing for %u seconds",
+			     pri_request(request), impair.helper_thread_delay.value);
+			sleep(impair.helper_thread_delay.value);
+		}
 	}
 
-	/* add to backlog */
-	message_helpers(job);
+	if (request->cancelled) {
+		/*
+		 * Callback must be called so that state can be
+		 * cleaned up.
+		 */
+		return server_pool_callback;
+	}
+
+	logtime_t start = logtime_start(request->task_logger); /* needs to be RW */
+	request->handler->computer_fn(request->task_logger, request->task, helper_id);
+	request->time_used = logtime_stop(&start, "%d", helper_id);
+
+	return server_pool_callback;
 }
 
 void delete_cryptographic_continuation(struct state *st)
 {
 	passert(in_main_thread());
 	passert(st->st_serialno != SOS_NOBODY);
-	struct job *job = st->st_offloaded_task;
-	if (job == NULL) {
+	struct help_request *request = st->st_offloaded_task;
+	if (request == NULL) {
 		return;
 	}
-	pmemory(job);
+	pmemory(request);
 	/* shut it down */
-	job->cancelled = true;
-	st->st_offloaded_task = NULL;
-	/* thread pool will throw the task back for cleanup */
+	request->cancelled = true;
+	refcnt_delref(&st->st_offloaded_task, st->logger, HERE);
 }
 
-/*
- * This function is called when a helper passes work back to the main
- * thread using the event loop.
- *
- */
-
-static void free_job(struct job **jobp)
+void server_pool_callback(struct help_request *request,
+			  const struct logger *task_logger)
 {
-	struct job *job = *jobp;
-	passert(job->handler->cleanup_cb != NULL);
-	job->handler->cleanup_cb(&job->task, job->logger);
-	pexpect(job->task == NULL); /* did your job */
-	md_delref(&job->md);
-	/* now free up the continuation */
-	free_logger(&job->logger, HERE);
-	ldbg_delref(&global_logger, job);
-	pfree(job);
-	*jobp = NULL;
-}
-
-static stf_status handle_helper_answer(struct state *callback_sa,
-				       struct msg_digest *md,
-				       void *arg)
-{
-	passert(in_main_thread());
-	struct job *job = arg;
-	passert(job->handler != NULL);
-	struct state *task_sa = state_by_serialno(job->task_so);
-
-	/*
-	 * call the continuation (skip if suppressed)
-	 */
-	stf_status status;
-	if (job->cancelled) {
-		/* suppressed */
-		ldbg(job->logger, PRI_JOB": job cancelled!", pri_job(job));
-		PEXPECT(job->logger, task_sa == NULL || task_sa->st_offloaded_task == NULL);
-		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
-	} else if (callback_sa == NULL) {
-		/* oops, the callback state disappeared! */
-		llog_pexpect(job->logger, HERE, PRI_JOB": callback disappeared!", pri_job(job));
-		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
-	} else if (task_sa == NULL) {
-		/* oops, the task state disappeared! */
-		llog_pexpect(job->logger, HERE, PRI_JOB": task disappeared!", pri_job(job));
-		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
-	} else {
-		ldbg(job->logger, PRI_JOB": calling state's callback function", pri_job(job));
-		PEXPECT(job->logger, task_sa->st_offloaded_task == job);
-		task_sa->st_offloaded_task = NULL;
-		/* bill the thread time */
-		cpu_usage_add(task_sa->st_timing.helper_usage, job->time_used);
-		/* wall clock time not billed */
-		/* run the callback */
-		PASSERT(job->logger, job->handler->completed_cb != NULL);
-		status = job->handler->completed_cb(callback_sa, md, job->task);
-	}
-	name_buf buf;
-	ldbg(job->logger, PRI_JOB": final status %s; cleaning up",
-	     pri_job(job), str_enum_long(&stf_status_names, status, &buf));
-	free_job(&job);
-	return status;
-}
-
-/*
- * initialize the helpers.
- *
- * Later we will have to make provisions for helpers that have hardware
- * underneath them, in which case, they may be able to accept many
- * more requests than average.
- *
- */
-void start_server_helpers(uintmax_t nhelpers, struct logger *logger)
-{
-	/* redundant */
-	helper_threads = NULL;
-	helper_threads_started = 0;
-	helper_threads_stopped = 0;
-
-	/*
-	 * When nhelpers==-1 (aka MAX), find out how many CPUs there
-	 * are.  When nhelpers=0, everything is done on the main
-	 * thread.
-	 */
-
-	if (nhelpers > 1000/*arbitrary*/ && nhelpers < UINTMAX_MAX) {
-		llog(WARNING_STREAM, logger, "nhelpers=%ju is huge, limiting to number of CPUs", nhelpers);
-		nhelpers = UINTMAX_MAX;
-	}
-
-	if (nhelpers == UINTMAX_MAX) {
-		int ncpu_online = nr_processors_online();
-		/* The theory is reserve one CPU for the event loop */
-		llog(RC_LOG, logger, "%d CPU cores online", ncpu_online);
-		if (ncpu_online < 4)
-			nhelpers = ncpu_online;
-		else
-			nhelpers = ncpu_online - 1;
-	}
-
-	if (nhelpers > 0) {
-		llog(RC_LOG, logger, "starting up %ju helper threads", nhelpers);
-
-		/*
-		 * create the threads.  Set nr_helpers_started after
-		 * the threads have been created so that shutdown code
-		 * only tries to run when there really are threads.
-		 */
-		helper_threads = alloc_things(struct helper_thread, nhelpers,
-					      "pluto helpers");
-		for (unsigned n = 0; n < nhelpers; n++) {
-			struct helper_thread *w = &helper_threads[n];
-			w->helper_id = n + 1; /* i.e., not 0 */
-			w->logger = string_logger(HERE, "helper(%d)", w->helper_id);
-			int thread_status = pthread_create(&w->pid, NULL,
-							   helper_thread, (void *)w);
-			if (thread_status != 0) {
-				llog(RC_LOG, logger,
-					    "failed to start child thread for helper %d, error = %d",
-					    n, thread_status);
-			} else {
-				llog(RC_LOG, logger, "started thread for helper %d", n);
-			}
-		}
-		helper_threads_started = nhelpers;
-	} else {
-		llog(RC_LOG, logger,
-			    "no helpers will be started; all cryptographic operations will be done inline");
-	}
-}
-
-/*
- * Repeatedly nudge the helper threads until they all exit.
- */
-
-static void (*server_helpers_stopped_callback)(void);
-
-static void helper_thread_stopped_callback(const char *story UNUSED,
-					   struct state *st UNUSED,
-					   void *context)
-{
-	struct helper_thread *w = context;
-
-	helper_threads_stopped++;
-	ldbg(w->logger, "helper thread exiting, %u remaining",
-	    helper_threads_started-helper_threads_stopped);
-
-	/*
-	 * Danger:
-	 *
-	 * Delay joining W.pid until all helper threads have exited.
-	 * This way the event-loop is kept running.
-	 *
-	 * Even though W is on the exit path it still needs to execute
-	 * NSS's thread exit code - who knows what that is doing and
-	 * how long it will take -
-	 */
-
-	/* wait for more? */
-	if (helper_threads_started > helper_threads_stopped) {
-		/* poke threads waiting for work */
-		message_helpers(NULL);
+	struct state *callback_sa = state_by_serialno(request->callback_so);
+	if (callback_sa == NULL) {
+		ldbg(task_logger, PRI_REQUEST": callback sa "PRI_SO" disappeared",
+		     pri_request(request),
+		     pri_so(request->callback_so));
+		/* Cancelling is part of deleting the SA. */
+		PEXPECT(task_logger, request->cancelled);
 		return;
 	}
 
-	 /*
-	  * All done; cleanup
-	  *
-	  * All helper threads are on the exit war-path so, hopefully,
-	  * this join will not block (but no telling what NSS did).
-	  */
-	for (unsigned h = 0; h < helper_threads_started; h++) {
-		struct helper_thread *w = &helper_threads[h];
-		int e = pthread_join(w->pid, NULL);
-		if (e != 0) {
-			llog_errno(WARNING_STREAM, w->logger, e, "pthread_join() failed, ");
+	struct state *task_sa = state_by_serialno(request->task_so);
+	if (task_sa == NULL) {
+		/* oops, the task state disappeared! */
+		llog_pexpect(task_logger, HERE,
+			     PRI_REQUEST": task sa disappeared",
+			     pri_request(request));
+		PEXPECT(task_logger, request->cancelled);
+		return;
+	}
+
+	if (request->cancelled) {
+		ldbg(task_logger, PRI_REQUEST": request cancelled", pri_request(request));
+		PEXPECT(task_logger, task_sa->st_offloaded_task == NULL);
+		return;
+	}
+
+	if (task_sa->st_offloaded_task != request) {
+		llog_pexpect(task_logger, HERE,
+			     PRI_REQUEST": .st_offloaded_task @%p does not match request @%p",
+			     pri_request(request),
+			     task_sa->st_offloaded_task,
+			     request);
+		/* probably bad! */
+		return;
+	}
+
+	refcnt_delref(&task_sa->st_offloaded_task, task_logger, HERE);
+
+	/* add the helper's time to the bill */
+	cpu_usage_add(task_sa->st_timing.helper_usage, request->time_used);
+
+	statetime_t start = statetime_start(callback_sa);
+	{
+		/* run the callback */
+		PASSERT(task_logger, request->handler != NULL);
+		PASSERT(task_logger, request->handler->completed_cb != NULL);
+		stf_status status = request->handler->completed_cb(callback_sa, request->md, request->task);
+		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
+			/* ST may have been freed! */
+			ldbg(task_logger,
+			     PRI_REQUEST": resume suppressed by complete_state_transition()",
+			     pri_request(request));
+		} else {
+			complete_state_transition(callback_sa, request->md, status);
 		}
-		free_logger(&w->logger, HERE);
+
 	}
-
-	pfreeany(helper_threads);
-	helper_threads = NULL;
-	server_helpers_stopped_callback();
-}
-
-static void call_server_helpers_stopped_callback(const char *story UNUSED,
-						 struct state *st UNUSED,
-						 void *context UNUSED)
-{
-	server_helpers_stopped_callback();
-}
-
-void stop_server_helpers(void (*server_helpers_stopped_cb)(void), struct logger *logger)
-{
-	server_helpers_stopped_callback = server_helpers_stopped_cb;
-	if (helper_threads_started > 0) {
-		/* poke threads waiting for work */
-		message_helpers(NULL);
-	} else {
-		/*
-		 * Always finish things using a callback so this call stack
-		 * can cleanup all its allocated data.
-		 */
-		ldbg(logger, "no helper threads to shutdown");
-		pexpect(helper_threads == NULL);
-		schedule_callback("no helpers to stop", deltatime(0), SOS_NOBODY,
-				  call_server_helpers_stopped_callback, NULL, logger);
-	}
-}
-
-void free_server_helper_jobs(struct logger *logger)
-{
-	if (helper_threads_started == helper_threads_stopped) {
-		passert(helper_threads == NULL);
-		struct job *job = NULL;
-		FOR_EACH_LIST_ENTRY_OLD2NEW(job, &backlog) {
-			remove_list_entry(&job->backlog);
-			free_job(&job);
-		}
-	} else {
-		llog(RC_LOG, logger, "WARNING: helper threads still running");
-	}
+	statetime_stop(&start, "resume");
 }

@@ -1513,8 +1513,7 @@ int main(int argc, char **argv)
 	}
 
 	uintmax_t nhelpers = config_setup_option(oco, KBF_NHELPERS);
-	start_server_helpers(nhelpers, logger);
-	start_helpers(PMIN(1, nhelpers), logger);
+	start_helpers(nhelpers, logger);
 
 	init_kernel(oco, logger);
 
