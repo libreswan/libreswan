@@ -181,8 +181,8 @@ struct whack_end {
 #define we_updown conn->value[KWS_UPDOWN]	/* string */
 #define we_addresspool conn->value[KWS_ADDRESSPOOL]
 
-	enum yn_options xauthserver;	/* for XAUTH */
-	enum yn_options xauthclient;
+#define we_xauthserver conn->value[KWS_XAUTHSERVER]	/* for XAUTH */
+#define we_xauthclient conn->value[KWS_XAUTHCLIENT]
 #define we_xauthusername conn->value[KWS_USERNAME]
 
 	enum yn_options cat;		/* IPv4 Client Address Translation */

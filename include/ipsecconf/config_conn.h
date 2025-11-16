@@ -123,8 +123,8 @@ enum config_conn_keyword {
 	 * initial ones come in left/right variants.
 	 */
 
-	KWYN_XAUTHSERVER,	/* left/right */
-	KWYN_XAUTHCLIENT,	/* left/right */
+	KWS_XAUTHSERVER,	/* left/right */
+	KWS_XAUTHCLIENT,	/* left/right */
 	KWYN_MODECONFIGSERVER,	/* left/right */
 	KWYN_MODECONFIGCLIENT,	/* left/right */
 	KWYN_CAT,	/* left/right */

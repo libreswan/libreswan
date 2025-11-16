@@ -709,6 +709,28 @@ static unsigned extract_sparse_name(const char *leftright,
 	return sparse->value;
 }
 
+static bool extract_bool(const char *leftright,
+			 const char *name,
+			 const char *value,
+			 enum yn_options value_when_unset,
+			 const struct whack_message *wm,
+			 diag_t *d, struct verbose verbose)
+{
+	enum yn_options yn = extract_sparse_name(leftright, name, value,
+						 value_when_unset,
+						 &yn_option_names,
+						 wm, d, verbose);
+	switch (yn) {
+	case YN_YES:
+		return true;
+	case YN_NO:
+		return false;
+	default:
+		vexpect(*d != NULL);
+		return false;
+	}
+}
+
 struct range {
 	uintmax_t value_when_unset; /* also no? */
 	uintmax_t value_when_yes;
@@ -1524,10 +1546,12 @@ static diag_t extract_host_end(struct host_end *host,
 
 	/* the rest is simple copying of corresponding fields */
 
-	host_config->xauth.server = extract_yn(leftright, "xauthserver", src->xauthserver,
-					       YN_NO, wm, verbose);
-	host_config->xauth.client = extract_yn(leftright, "xauthclient", src->xauthclient,
-					       YN_NO, wm, verbose);
+	host_config->xauth.server = extract_bool(leftright, "xauthserver",
+						 src->we_xauthserver,
+						 YN_NO, wm, &d, verbose);
+	host_config->xauth.client = extract_bool(leftright, "xauthclient",
+						 src->we_xauthclient,
+						 YN_NO, wm, &d, verbose);
 	host_config->xauth.username = extract_string(leftright, "xauthusername",
 						     src->we_xauthusername,
 						     wm, verbose);

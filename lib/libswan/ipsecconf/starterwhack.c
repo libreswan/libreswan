@@ -58,9 +58,6 @@ static bool set_whack_end(struct whack_end *w,
 		w->conn->value[kw] = l->values[kw].string;
 	}
 
-	w->xauthserver = l->values[KWYN_XAUTHSERVER].option;
-	w->xauthclient = l->values[KWYN_XAUTHCLIENT].option;
-	w->we_xauthusername = l->values[KWS_USERNAME].string;
 	w->groundhog = l->values[KWYN_GROUNDHOG].option;
 	w->modecfgserver = l->values[KWYN_MODECONFIGSERVER].option;
 	w->modecfgclient = l->values[KWYN_MODECONFIGCLIENT].option;
