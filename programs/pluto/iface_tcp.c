@@ -210,9 +210,8 @@ static struct msg_digest *read_espintcp_packet(const char *what,
 	packet_len -= sizeof(zero_esp_marker);
 	packet_ptr += sizeof(zero_esp_marker);
 
-	struct msg_digest *md = alloc_md(*ifp, &(*ifp)->iketcp_remote_endpoint,
-					 packet_ptr, packet_len, HERE);
-	return md;
+	return alloc_md(*ifp, (*ifp)->iketcp_remote_endpoint,
+			packet_ptr, packet_len, logger, HERE);
 }
 
 static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,

@@ -423,24 +423,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, enum stre
 const struct logger_object_vec logger_global_vec = {
 	.name = "global",
 	.jam_object_prefix = jam_object_prefix_none,
-	.free_object = false,
 };
-
-struct logger logger_from(struct logger *global, const ip_endpoint *from)
-{
-	struct logger logger = {
-		.where = HERE,
-		.object = from,
-		.object_vec = &logger_from_vec,
-	};
-	struct fd **fd = logger.whackfd;
-	FOR_EACH_ELEMENT(gfd, global->whackfd) {
-		if (*gfd != NULL) {
-			*fd++ = *gfd;
-		}
-	}
-	return logger;
-}
 
 static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
@@ -462,31 +445,25 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 	return s;
 }
 
-const struct logger_object_vec logger_from_vec = {
-	.name = "from",
-	.jam_object_prefix = jam_from_prefix,
-	.free_object = false,
-};
-
-static size_t jam_message_prefix(struct jambuf *buf, const void *object)
+struct logger logger_from(struct logger *global, const ip_endpoint *from)
 {
-	size_t s = 0;
-	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
-	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
-	} else {
-		const struct msg_digest *md = object;
-		s += jam_from_prefix(buf, &md->sender);
+	static const struct logger_object_vec logger_from_vec = {
+		.name = "from",
+		.jam_object_prefix = jam_from_prefix,
+	};
+	struct logger logger = {
+		.where = HERE,
+		.object = from,
+		.object_vec = &logger_from_vec,
+	};
+	struct fd **fd = logger.whackfd;
+	FOR_EACH_ELEMENT(gfd, global->whackfd) {
+		if (*gfd != NULL) {
+			*fd++ = *gfd;
+		}
 	}
-	return s;
+	return logger;
 }
-
-const struct logger_object_vec logger_message_vec = {
-	.name = "message",
-	.jam_object_prefix = jam_message_prefix,
-	.free_object = false,
-};
 
 static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 {
@@ -506,7 +483,6 @@ static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 const struct logger_object_vec logger_connection_vec = {
 	.name = "connection",
 	.jam_object_prefix = jam_connection_prefix,
-	.free_object = false,
 };
 
 size_t jam_state(struct jambuf *buf, const struct state *st)
@@ -559,7 +535,6 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 const struct logger_object_vec logger_state_vec = {
 	.name = "state",
 	.jam_object_prefix = jam_state_prefix,
-	.free_object = false,
 };
 
 static size_t jam_string_prefix(struct jambuf *buf, const void *object)
@@ -571,25 +546,46 @@ static size_t jam_string_prefix(struct jambuf *buf, const void *object)
 static const struct logger_object_vec logger_string_vec = {
 	.name = "string(never-suppress)",
 	.jam_object_prefix = jam_string_prefix,
-	.free_object = true,
+	.refcountable = true,
+};
+
+static void discard_logger_contents(void *pointer,
+				    const struct logger *owner UNUSED,
+				    where_t where UNUSED)
+{
+	struct logger *logger = pointer;
+	release_whack(logger, where);
+	if (logger->object_vec->refcountable) {
+		pfree((void*)logger->object);
+		logger->object = NULL;
+	}
+}
+
+static const struct refcnt_base logger_refcnt_base = {
+	.what = "logger",
+	.discard_contents = discard_logger_contents,
 };
 
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
 			    lset_t debugging, where_t where)
 {
-	struct logger logger = {
-		.object = object,
-		.object_vec = vec,
-		.where = where,
-		.debugging = debugging,
-	};
-	struct logger *l = clone_thing(logger, "logger");
-	ldbg_newref(&global_logger, l);
-	return l;
+	struct logger *logger = alloc_thing(struct logger, vec->name);
+	refcnt_init(logger, &logger->refcnt,
+		    &logger_refcnt_base,
+		    &global_logger, where);
+	logger->object = object;
+	logger->object_vec = vec;
+	logger->where = where;
+	logger->debugging = debugging;
+	return logger;
 }
 
-struct logger *clone_logger(const struct logger *stack, where_t where)
+struct logger *clone_logger(struct logger *stack, where_t where)
 {
+	if (stack->object_vec->refcountable) {
+		return refcnt_addref(stack, &global_logger, where);
+	}
+
 	/*
 	 * Convert the dynamicically generated OBJECT prefix into an
 	 * unchanging string.  This way the prefix can be safely
@@ -599,54 +595,21 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 	 * ":_" as added by jam_logger_prefix().
 	 */
 	prefix_buf pb;
-	const char *prefix = str_prefix(stack, &pb);
-	/* construct the clone */
-	struct logger heap = {
-		.where = stack->where,
-		.object_vec = &logger_string_vec,
-		.object = clone_str(prefix, "heap logger prefix"),
-		.debugging = stack->debugging,
-	};
-	/* and clone it */
-	struct logger *l = clone_thing(heap, "heap logger");
-	ldbg_newref(&global_logger, l);
-	/* copy over whacks */
-	unsigned h = 0;
-	FOR_EACH_ELEMENT(sfd, stack->whackfd) {
-		if (*sfd != NULL) {
-			ldbg(l, "attach whack "PRI_FD" to logger %p slot %u "PRI_WHERE,
-			     pri_fd(*sfd), l, h, pri_where(where));
-			l->whackfd[h++] = fd_addref_where(*sfd, l, where);
-		}
-	}
-	return l;
+	char *prefix = clone_str(str_prefix(stack, &pb), "clone logger prefix");
+	struct logger *logger = alloc_logger(prefix, &logger_string_vec,
+					     stack->debugging, where);
+	whack_attach_where(logger, stack, where);
+	return logger;
 }
 
 struct logger *string_logger(where_t where, const char *fmt, ...)
 {
-	/*
-	 * Convert the dynamicically generated OBJECT prefix into an
-	 * unchanging string.  This way the prefix can be safely
-	 * accessed on a helper thread.
-	 */
-	char prefix[LOG_WIDTH];
-	{
-		struct jambuf prefix_buf = ARRAY_AS_JAMBUF(prefix);
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(&prefix_buf, fmt, ap);
-		va_end(ap);
-	}
-	/* construct the clone */
-	struct logger logger = {
-		.where = where,
-		.object_vec = &logger_string_vec,
-		.object = clone_str(prefix, "string logger prefix"),
-	};
-	/* and clone it */
-	struct logger *l = clone_thing(logger, "string logger");
-	ldbg_newref(&global_logger, l);
-	return l;
+	va_list ap;
+	va_start(ap, fmt);
+	char *prefix = alloc_vprintf(fmt, ap);
+	va_end(ap);
+
+	return alloc_logger(prefix, &logger_string_vec, LEMPTY, where);
 }
 
 void release_whack(struct logger *logger, where_t where)
@@ -668,18 +631,11 @@ void release_whack(struct logger *logger, where_t where)
 
 void free_logger(struct logger **logp, where_t where)
 {
-	release_whack(*logp, where);
 	/*
 	 * For instance the string allocated by clone_logger().  More
 	 * complex objects are freed by other means.
 	 */
-	ldbg_delref(&global_logger, *logp);
-	if ((*logp)->object_vec->free_object) {
-		pfree((void*) (*logp)->object);
-	}
-	/* done */
-	pfree(*logp);
-	*logp = NULL;
+	refcnt_delref(logp, &global_logger, where);
 }
 
 static struct fd *logger_fd(const struct logger *logger)

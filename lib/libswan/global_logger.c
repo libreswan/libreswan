@@ -24,7 +24,6 @@ size_t jam_object_prefix_none(struct jambuf *buf UNUSED, const void *object UNUS
 static const struct logger_object_vec logger_global_vec = {
 	.name = "global",
 	.jam_object_prefix = jam_object_prefix_none,
-	.free_object = false,
 };
 
 const struct where global_where = {

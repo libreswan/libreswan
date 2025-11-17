@@ -245,8 +245,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		return NULL;
 	}
 
-	struct msg_digest *md = alloc_md(ifp, &sender, packet_ptr, packet_len, HERE);
-	return md;
+	return alloc_md(ifp, sender, packet_ptr, packet_len, logger, HERE);
 }
 
 #ifdef USE_XFRM_INTERFACE

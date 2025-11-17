@@ -15,6 +15,7 @@
 
 #include <pthread.h>
 
+#include "lswalloc.h"
 #include "refcnt.h"
 #include "lswlog.h"		/* for DBG*() et.al. */
 
@@ -193,8 +194,9 @@ void *refcnt_delref_where(const char *what,
 
 	/* last ref and have cleanup */
 	const struct refcnt_base *base = refcnt->base;
-	if (base != NULL && base->discard != NULL) {
-		base->discard(refcnt, owner, where);
+	if (base != NULL && base->discard_contents != NULL) {
+		base->discard_contents(refcnt, owner, where);
+		pfreeany(refcnt);
 		return NULL;
 	}
 

@@ -21,16 +21,14 @@
 #include "iface.h"
 
 struct msg_digest *alloc_md(struct iface_endpoint *ifp,
-			    const ip_endpoint *sender,
+			    const ip_endpoint sender,
 			    const uint8_t *packet, size_t packet_len,
-			    where_t where)
+			    struct logger *logger, where_t where)
 {
-	struct logger *logger = &global_logger;
 	struct msg_digest *md = refcnt_alloc(struct msg_digest, logger, where);
 	md->iface = iface_endpoint_addref_where(ifp, where);
-	md->sender = *sender;
-	md->logger = alloc_logger(md, &logger_message_vec,
-				  /*debugging*/LEMPTY, where);
+	md->sender = sender;
+	md->logger = clone_logger(logger, where);
 	md->packet = (packet == NULL ? alloc_chunk(packet_len, "packet") :
 		      clone_bytes_as_chunk(packet, packet_len, "packet"));
 	return md;
@@ -38,9 +36,9 @@ struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 {
-	struct msg_digest *clone = alloc_md(md->iface, &md->sender,
+	struct msg_digest *clone = alloc_md(md->iface, md->sender,
 					    md->packet.ptr, md->packet.len,
-					    where);
+					    md->logger, where);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
 	return clone;

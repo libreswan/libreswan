@@ -1256,8 +1256,9 @@ void process_v1_packet(struct msg_digest *md)
 					break; /* fragment list incomplete */
 				} else if (frag->index == last_frag_index) {
 					struct msg_digest *whole_md = alloc_md(frag->md->iface,
-									       &frag->md->sender,
+									       frag->md->sender,
 									       NULL/*packet*/, size,
+									       frag->md->logger,
 									       HERE);
 
 					/*
