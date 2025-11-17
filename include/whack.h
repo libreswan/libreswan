@@ -189,7 +189,6 @@ struct whack_end {
 						 * Translation */
 #define we_sendcert conn->value[KWS_SENDCERT]
 #define we_autheap conn->value[KWS_AUTHEAP]
-	enum ike_cert_type certtype;
 
 #define we_modecfgserver conn->value[KWS_MODECFGSERVER]	/* for MODECFG */
 #define we_modecfgclient conn->value[KWS_MODECFGCLIENT]
