@@ -47,6 +47,9 @@
 #include "ip_info.h"
 #include "pluto_stats.h"
 
+static struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
+					       struct logger *logger);
+
 static void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sockaddr,
 				 void *arg, struct logger *logger);
 
@@ -215,14 +218,21 @@ static struct msg_digest *read_espintcp_packet(const char *what,
 }
 
 static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
-					     struct logger *logger)
+					     struct logger *outer)
 {
 	/*
 	 * Switch to an on-stack "from" logger that includes more
 	 * context.
 	 */
-	struct logger from_logger = logger_from(logger, &(*ifp)->iketcp_remote_endpoint);
-	logger = &from_logger;
+	struct logger *logger = from_logger(outer, (*ifp)->iketcp_remote_endpoint);
+	struct msg_digest *md = iketcp_read_packet_1(ifp, logger);
+	free_logger(&logger, HERE);
+	return md;
+}
+
+struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
+					struct logger *logger)
+{
 
 	switch ((*ifp)->iketcp_state) {
 
@@ -418,11 +428,11 @@ static void iketcp_cleanup(struct iface_endpoint *ifp,
 static void iketcp_server_timeout(void *arg, const struct timer_event *event)
 {
 	struct iface_endpoint *ifp = arg;
-	/* build up the logger using the stack */
-	struct logger from_logger = logger_from(event->logger, &ifp->iketcp_remote_endpoint);
-	llog_iketcp(RC_LOG, &from_logger, ifp, /*no-error*/0,
+	struct logger *logger = from_logger(event->logger, ifp->iketcp_remote_endpoint);
+	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
 	iface_endpoint_delref(&ifp);
+	free_logger(&logger, HERE);
 }
 
 static void iketcp_listen(struct iface_endpoint *ifp,
@@ -595,8 +605,8 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 	return iface_endpoint_addref(ifp);
 }
 
-void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
-			  void *arg, struct logger *logger)
+void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa, void *arg,
+			  struct logger *event_logger)
 {
 	struct iface_endpoint *bind_ifp = arg;
 	ip_address remote_tcp_address;
@@ -604,7 +614,7 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 	err_t err = sockaddr_to_address_port(&sa->sa.sa, sa->len,
 					     &remote_tcp_address, &remote_tcp_port);
 	if (err != NULL) {
-		llog(RC_LOG, logger, "TCP: invalid remote address: %s", err);
+		llog(RC_LOG, event_logger, "TCP: invalid remote address: %s", err);
 		close(accepted_fd);
 		return;
 	}
@@ -623,9 +633,8 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 	ifp->iketcp_state = IKETCP_ACCEPTED;
 	ifp->iketcp_server = true;
 
-	struct logger from_logger = logger_from(logger, &remote_tcp_endpoint);
-	logger = &from_logger;
-	llog_iketcp(RC_LOG, logger, ifp,  /*no-error*/0, "accepted connection");
+	struct logger *md_logger = from_logger(event_logger, remote_tcp_endpoint);
+	llog_iketcp(RC_LOG, md_logger, ifp,  /*no-error*/0, "accepted connection");
 
 	/*
 	 * Set up a timeout to kill the socket when nothing happens.
@@ -638,4 +647,6 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa,
 				"IKETCP", process_iface_packet, ifp);
 
 	pstats_iketcp_started[ifp->iketcp_server]++;
+
+	free_logger(&md_logger, HERE);
 }

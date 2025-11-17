@@ -425,43 +425,14 @@ const struct logger_object_vec logger_global_vec = {
 	.jam_object_prefix = jam_object_prefix_none,
 };
 
-static size_t jam_from_prefix(struct jambuf *buf, const void *object)
+struct logger *from_logger(const struct logger *outer, const ip_endpoint from)
 {
-	size_t s = 0;
-	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
-	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
-	} else {
-		const ip_endpoint *from = object;
-		/* peer's IP address */
-		if (endpoint_protocol(*from) == &ip_protocol_tcp) {
-			s += jam(buf, "connection from ");
-		} else {
-			s += jam(buf, "packet from ");
-		}
-		s += jam_endpoint_sensitive(buf, from);
-	}
-	return s;
-}
-
-struct logger logger_from(struct logger *global, const ip_endpoint *from)
-{
-	static const struct logger_object_vec logger_from_vec = {
-		.name = "from",
-		.jam_object_prefix = jam_from_prefix,
-	};
-	struct logger logger = {
-		.where = HERE,
-		.object = from,
-		.object_vec = &logger_from_vec,
-	};
-	struct fd **fd = logger.whackfd;
-	FOR_EACH_ELEMENT(gfd, global->whackfd) {
-		if (*gfd != NULL) {
-			*fd++ = *gfd;
-		}
-	}
+	endpoint_buf eb;
+	struct logger *logger =
+		string_logger(HERE, "%s from %s",
+			      (endpoint_protocol(from) == &ip_protocol_tcp ? "connection" : "packet"),
+			      str_endpoint_sensitive(&from, &eb));
+	whack_attach_where(logger, outer, HERE);
 	return logger;
 }
 

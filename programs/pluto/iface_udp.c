@@ -48,6 +48,11 @@
 #include "ip_info.h"
 #include "ip_sockaddr.h"
 
+static struct msg_digest *unpack_udp_packet(struct logger *logger,
+					    ip_endpoint sender,
+					    struct iface_endpoint *ifp,
+					    shunk_t packet);
+
 #ifdef UDP_ENCAP
 static int espinudp_enable_esp_encapsulation(int fd, struct logger *logger)
 {
@@ -134,10 +139,9 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	ip_sockaddr from = {
 		.len = sizeof(from.sa),
 	};
-	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE]; /* ??? this buffer seems *way* too big */
-	ssize_t packet_len = recvfrom(ifp->fd, bigbuffer, sizeof(bigbuffer),
-				      /*flags*/ 0, &from.sa.sa, &from.len);
-	uint8_t *packet_ptr = bigbuffer;
+	uint8_t bigbuffer[MAX_INPUT_UDP_SIZE];
+	ssize_t packet_slen = recvfrom(ifp->fd, bigbuffer, sizeof(bigbuffer),
+				       /*flags*/ 0, &from.sa.sa, &from.len);
 	int packet_errno = errno; /* save!!! */
 
 	/*
@@ -149,9 +153,10 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	ip_address sender_udp_address;
 	ip_port sender_udp_port;
 	const char *from_ugh = sockaddr_to_address_port(&from.sa.sa, from.len,
-							&sender_udp_address, &sender_udp_port);
+							&sender_udp_address,
+							&sender_udp_port);
 	if (from_ugh != NULL) {
-		if (packet_len >= 0) {
+		if (packet_slen >= 0) {
 			/* technically it worked, but returned value was useless */
 			llog(RC_LOG, logger,
 			     "recvfrom on %s returned malformed source sockaddr: %s",
@@ -181,19 +186,32 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 								 &ip_protocol_udp,
 								 sender_udp_port);
 
+	if (packet_slen < 0) {
+		endpoint_buf eb;
+		llog_errno(RC_LOG, logger, packet_errno,
+			   "recvfrom on %s from %s failed: ",
+			   str_endpoint_sensitive(&sender, &eb),
+			   ifp->ip_dev->real_device_name);
+		return NULL;
+	}
+
 	/*
 	 * Managed to decode the from address; change LOGGER to an
 	 * on-stack "from" logger so that messages can include more
 	 * context.
 	 */
-	struct logger from_logger = logger_from(logger, &sender);
-	logger = &from_logger;
+	shunk_t packet = shunk2(bigbuffer, packet_slen);
+	struct logger *md_logger = from_logger(logger, sender);
+	struct msg_digest *md = unpack_udp_packet(md_logger, sender, ifp, packet);
+	free_logger(&md_logger, HERE);
+	return md;
+}
 
-	if (packet_len < 0) {
-		llog_errno(RC_LOG, logger, packet_errno,
-			   "recvfrom on %s failed: ", ifp->ip_dev->real_device_name);
-		return NULL;
-	}
+struct msg_digest *unpack_udp_packet(struct logger *logger,
+				     ip_endpoint sender,
+				     struct iface_endpoint *ifp,
+				     shunk_t packet)
+{
 
 	/*
 	 * If the socket is in encapsulation mode (where each packet
@@ -203,18 +221,19 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	if (ifp->esp_encapsulation_enabled) {
 		uint32_t non_esp;
 
-		if (packet_len < (int)sizeof(uint32_t)) {
+		if (packet.len < (int)sizeof(uint32_t)) {
 			llog(RC_LOG, logger, "too small packet (%zd)",
-			     packet_len);
+			     packet.len);
 			return NULL;
 		}
-		memcpy(&non_esp, packet_ptr, sizeof(uint32_t));
+
+		memcpy(&non_esp, packet.ptr, sizeof(uint32_t));
 		if (non_esp != 0) {
 			llog(RC_LOG, logger, "has no Non-ESP marker");
 			return NULL;
 		}
-		packet_ptr += sizeof(uint32_t);
-		packet_len -= sizeof(uint32_t);
+		packet.ptr += sizeof(uint32_t);
+		packet.len -= sizeof(uint32_t);
 	}
 
 	/*
@@ -224,15 +243,15 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	{
 		static const uint8_t non_ESP_marker[NON_ESP_MARKER_SIZE] = { 0x00, };
 		if (ifp->esp_encapsulation_enabled &&
-		    packet_len >= NON_ESP_MARKER_SIZE &&
-		    memeq(packet_ptr, non_ESP_marker, NON_ESP_MARKER_SIZE)) {
+		    packet.len >= NON_ESP_MARKER_SIZE &&
+		    memeq(packet.ptr, non_ESP_marker, NON_ESP_MARKER_SIZE)) {
 			llog(RC_LOG, logger,
 			     "mangled with potential spurious non-esp marker");
 			return NULL;
 		}
 	}
 
-	if (packet_len == 1 && packet_ptr[0] == 0xff) {
+	if (packet.len == 1 && *(const uint8_t*)packet.ptr == 0xff) {
 		/**
 		 * NAT-T Keep-alive packets should be discarded by kernel ESPinUDP
 		 * layer. But bogus keep-alive packets (sent with a non-esp marker)
@@ -245,7 +264,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		return NULL;
 	}
 
-	return alloc_md(ifp, sender, packet_ptr, packet_len, logger, HERE);
+	return alloc_md(ifp, sender, packet.ptr, packet.len, logger, HERE);
 }
 
 #ifdef USE_XFRM_INTERFACE
