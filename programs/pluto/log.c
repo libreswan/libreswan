@@ -426,22 +426,6 @@ const struct logger_object_vec logger_global_vec = {
 	.free_object = false,
 };
 
-struct logger logger_from(struct logger *global, const ip_endpoint *from)
-{
-	struct logger logger = {
-		.where = HERE,
-		.object = from,
-		.object_vec = &logger_from_vec,
-	};
-	struct fd **fd = logger.whackfd;
-	FOR_EACH_ELEMENT(gfd, global->whackfd) {
-		if (*gfd != NULL) {
-			*fd++ = *gfd;
-		}
-	}
-	return logger;
-}
-
 static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
@@ -462,31 +446,26 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 	return s;
 }
 
-const struct logger_object_vec logger_from_vec = {
-	.name = "from",
-	.jam_object_prefix = jam_from_prefix,
-	.free_object = false,
-};
-
-static size_t jam_message_prefix(struct jambuf *buf, const void *object)
+struct logger logger_from(struct logger *global, const ip_endpoint *from)
 {
-	size_t s = 0;
-	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
-	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
-	} else {
-		const struct msg_digest *md = object;
-		s += jam_from_prefix(buf, &md->sender);
+	static const struct logger_object_vec logger_from_vec = {
+		.name = "from",
+		.jam_object_prefix = jam_from_prefix,
+		.free_object = false,
+	};
+	struct logger logger = {
+		.where = HERE,
+		.object = from,
+		.object_vec = &logger_from_vec,
+	};
+	struct fd **fd = logger.whackfd;
+	FOR_EACH_ELEMENT(gfd, global->whackfd) {
+		if (*gfd != NULL) {
+			*fd++ = *gfd;
+		}
 	}
-	return s;
+	return logger;
 }
-
-const struct logger_object_vec logger_message_vec = {
-	.name = "message",
-	.jam_object_prefix = jam_message_prefix,
-	.free_object = false,
-};
 
 static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 {

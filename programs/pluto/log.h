@@ -84,13 +84,12 @@ void init_binlog(const struct config_setup *oco, struct logger *logger);
 
 extern void set_debugging(lset_t deb);
 
-extern const struct logger_object_vec logger_from_vec;
-extern const struct logger_object_vec logger_message_vec;
 extern const struct logger_object_vec logger_connection_vec;
 extern const struct logger_object_vec logger_state_vec;
 
 struct logger *string_logger(where_t where, const char *fmt, ...)
-	PRINTF_LIKE(2) MUST_USE_RESULT; /* must free */
+	PRINTF_LIKE(2)
+	MUST_USE_RESULT; /* must free */
 
 struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
