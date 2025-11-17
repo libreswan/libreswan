@@ -107,11 +107,7 @@ struct logger_object_vec {
 	size_t (*jam_object_prefix)(struct jambuf *buf, const void *object);
 };
 
-/* these omit ": " always */
-typedef struct {
-	char buf[100];/* completely made up size */
-} prefix_buf;
-const char *str_prefix(const struct logger *logger, prefix_buf *buf);
+/* this omits ": " always */
 size_t jam_prefix(struct jambuf *buf, const struct logger *logger);
 
 /* these include ": " when jam_prefix() is non-empty */

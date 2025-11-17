@@ -594,12 +594,12 @@ struct logger *clone_logger(struct logger *stack, where_t where)
 	 * Use str_prefix() so that the prefix doesn't include
 	 * ":_" as added by jam_logger_prefix().
 	 */
-	prefix_buf pb;
-	char *prefix = clone_str(str_prefix(stack, &pb), "clone logger prefix");
-	struct logger *logger = alloc_logger(prefix, &logger_string_vec,
-					     stack->debugging, where);
-	whack_attach_where(logger, stack, where);
-	return logger;
+	char prefix[LOG_WIDTH]; /* must-clone */
+	struct jambuf buf = ARRAY_AS_JAMBUF(prefix);
+	jam_prefix(&buf, stack);
+
+	return alloc_logger(clone_str(prefix, "logger-clone"), &logger_string_vec,
+			    stack->debugging, where);
 }
 
 struct logger *string_logger(where_t where, const char *fmt, ...)
