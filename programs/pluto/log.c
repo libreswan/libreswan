@@ -580,6 +580,14 @@ struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
 	return logger;
 }
 
+/*
+ * Create a clone of STACK, copying everything including attached
+ * whacks.
+ *
+ * When the logger is readonly (refcountable), cheat by adding a
+ * reference.
+ */
+
 struct logger *clone_logger(struct logger *stack, where_t where)
 {
 	if (stack->object_vec->refcountable) {
@@ -598,8 +606,11 @@ struct logger *clone_logger(struct logger *stack, where_t where)
 	struct jambuf buf = ARRAY_AS_JAMBUF(prefix);
 	jam_prefix(&buf, stack);
 
-	return alloc_logger(clone_str(prefix, "logger-clone"), &logger_string_vec,
-			    stack->debugging, where);
+	struct logger *logger = alloc_logger(clone_str(prefix, "logger-clone"),
+					     &logger_string_vec,
+					     stack->debugging, where);
+	whack_attach_where(logger, stack, where);
+	return logger;
 }
 
 struct logger *string_logger(where_t where, const char *fmt, ...)
