@@ -736,7 +736,7 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 }
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      struct resolve_end *resolve/*[END_ROOF]*/,
+						      const struct resolve_end *resolve/*[END_ROOF]*/,
 						      struct verbose verbose)
 {
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
@@ -1348,7 +1348,6 @@ diag_t add_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	resolve_connection(c, verbose);
 	return NULL;
 }
 

@@ -4432,21 +4432,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-	return NULL;
-}
-
-void resolve_connection(struct connection *c, struct verbose verbose)
-{
-	/*
-	 * Now try to resolve the host/nexthop in .config, copying the
-	 * result into the connection.
-	 */
-
-	struct extracted_host_addrs host_addrs =
-		extracted_host_addrs_from_host_configs(c->config);
-	resolve_extracted_host_addrs(&host_addrs, verbose);
-
-	build_connection_host_and_proposals_from_resolve(c, host_addrs.resolve, verbose);
+	build_connection_host_and_proposals_from_resolve(c, extracted_host_addrs->resolve, verbose);
 
 	/*
 	 * Force orientation (currently kind of unoriented?).
@@ -4460,7 +4446,7 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 	orient(c, verbose.logger);
 
 	if (verbose.debug) {
-		VDBG_log("oriented; maybe");
+		VDBG_log("oriented; still maybe");
 		connection_db_check(verbose.logger, HERE);
 	}
 
@@ -4478,4 +4464,5 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 	}
 
 	release_whack(c->logger, HERE);
+	return NULL;
 }
