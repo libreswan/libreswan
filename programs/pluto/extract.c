@@ -2639,6 +2639,43 @@ static void host_config_from_extracted_addr(struct host_addr_config *host,
 	host->name = clone_str(addr->value, "config");
 }
 
+static void host_configs_from_extracted_host_addrs(struct config *config,
+						   const struct extracted_host_addrs *host_addrs)
+{
+	config->host.afi = host_addrs->afi;
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		host_config_from_extracted_addr(&config->end[end].host.host,
+						&host_addrs->end[end].host);
+		host_config_from_extracted_addr(&config->end[end].host.nexthop,
+						&host_addrs->end[end].nexthop);
+	}
+}
+
+static void extracted_addr_from_host_config(const char *key,
+					    struct extracted_addr *addr,
+					    const struct host_addr_config *host)
+{
+	addr->key = key;
+	addr->type = host->type;
+	addr->addr = host->addr;
+	addr->value = host->name;
+}
+
+struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config)
+{
+	struct extracted_host_addrs host_addrs = {
+		.afi = config->host.afi,
+	};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		host_addrs.end[end].leftright = (end == LEFT_END ? "left" : "right");
+		extracted_addr_from_host_config("", &host_addrs.end[end].host,
+						&config->end[end].host.host);
+		extracted_addr_from_host_config("nexthop", &host_addrs.end[end].nexthop,
+						&config->end[end].host.nexthop);
+	}
+	return host_addrs;
+}
+
 diag_t extract_connection(const struct whack_message *wm,
 			  const struct extracted_host_addrs *extracted_host_addrs,
 			  struct connection *c,
@@ -2671,13 +2708,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	/* copy extracted addrs to config */
-	config->host.afi = extracted_host_addrs->afi;
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		host_config_from_extracted_addr(&config->end[end].host.host,
-						&extracted_host_addrs->end[end].host);
-		host_config_from_extracted_addr(&config->end[end].host.nexthop,
-						&extracted_host_addrs->end[end].nexthop);
-	}
+	host_configs_from_extracted_host_addrs(config, extracted_host_addrs);
 
 	const struct ip_info *host_afi = config->host.afi;
 	vassert(host_afi != NULL);
@@ -4411,10 +4442,11 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 	 * result into the connection.
 	 */
 
-	struct resolve_end resolve[END_ROOF];
-	resolve_hosts_from_configs(c->config, resolve, verbose);
+	struct extracted_host_addrs host_addrs =
+		extracted_host_addrs_from_host_configs(c->config);
+	resolve_extracted_host_addrs(&host_addrs, verbose);
 
-	build_connection_host_and_proposals_from_resolve(c, resolve, verbose);
+	build_connection_host_and_proposals_from_resolve(c, host_addrs.resolve, verbose);
 
 	/*
 	 * Force orientation (currently kind of unoriented?).

@@ -34,6 +34,7 @@
 #include "verbose.h"
 #include "ip_address.h"
 #include "end.h"
+#include "defaultroute.h"
 
 struct whack_message;
 struct connection;
@@ -61,11 +62,15 @@ struct extracted_host_addrs {
 		struct extracted_addr nexthop;
 		const char *leftright;
 	} end[END_ROOF];
+	struct resolve_end resolve[END_ROOF];
+	bool resolved;
 	const struct ip_info *afi;
 };
 
 diag_t extract_host_addrs(const struct whack_message *wm,
 			  struct extracted_host_addrs *config,
 			  struct verbose verbose);
+
+struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config);
 
 #endif
