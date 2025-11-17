@@ -50,7 +50,8 @@ void resolve_connection(struct connection *c, struct verbose verbose);
 
 struct extracted_addr {
 	enum keyword_host type;
-	const char *name;	/* points into whack_message! */
+	const char *key;
+	const char *value;	/* points into whack_message! */
 	ip_address addr;
 };
 
