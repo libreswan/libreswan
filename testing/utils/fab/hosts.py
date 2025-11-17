@@ -49,7 +49,7 @@ for xml in utilsdir.glob("../kvm/vm/*.xml"):
 
 # should have kvm/platform/*
 PLATFORMS = Set()
-for t in utilsdir.glob("../kvm/*/upgrade.sh"):
+for t in utilsdir.glob("../kvm/platform/*/upgrade.sh"):
     # what matched "*" in above pattern
     p = path.basename(path.dirname(t))
     PLATFORMS.add(p)

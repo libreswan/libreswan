@@ -24,13 +24,13 @@ import pexpect
 import re
 from enum import Enum
 
-import alpine
-import debian
-import fedora
-import linux
-import freebsd
-import netbsd
-import openbsd
+from platform import alpine
+from platform import debian
+from platform import fedora
+from platform import linux
+from platform import freebsd
+from platform import netbsd
+from platform import openbsd
 
 args = sys.argv[1:]
 

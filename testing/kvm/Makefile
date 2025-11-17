@@ -1239,7 +1239,7 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 		$(KVM_BASEDIR)/$(KVM_PREFIX)%-base \
 		| \
 		$(KVM_UPGRADEDIR)/ \
-		%/upgrade.sh \
+		platform/%/upgrade.sh \
 		$(KVM_HOST_OK)
 	: @=$@ *=$*
 	./kvm-uninstall-domain.sh $@
@@ -1261,7 +1261,7 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
-		$*/upgrade.sh \
+		platform/$*/upgrade.sh \
 		> $@.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).sh $(KVM_$($*)_UPGRADE_FLAGS)
@@ -1309,7 +1309,7 @@ $(KVM_BUILD_DOMAINS): \
 $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 		$(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade \
 		| \
-		%/transmogrify.sh \
+		platform/%/transmogrify.sh \
 		$(KVM_BUILDDIR)/ \
 		$(KVM_HOST_OK)
 	: @=$@ *=$*
@@ -1340,7 +1340,7 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 		-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 		-e 's;@@PLATFORM@@;$*;' \
-		$*/transmogrify.sh \
+		platform/$*/transmogrify.sh \
 		> $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
