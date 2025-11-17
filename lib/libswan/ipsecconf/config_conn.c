@@ -92,7 +92,7 @@ static const struct keyword_def config_conn_keyword[] = {
 #else
 # define S U
 #endif
-  S("cat",  kv_leftright,  kt_sparse_name,  KWYN_CAT, .sparse_names = &yn_option_names),
+  S("cat",  kv_leftright,  kt_string,  KWS_CAT),
 #undef S
 
   K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),

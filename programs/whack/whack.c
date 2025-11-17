@@ -1969,7 +1969,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CAT:		/* --cat */
-			end->cat = optarg_yn(logger, YN_YES);
+			end->we_cat = optarg;
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
