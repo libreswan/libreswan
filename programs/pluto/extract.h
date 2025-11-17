@@ -56,9 +56,10 @@ struct extracted_addr {
 };
 
 struct extracted_host_addrs {
-	struct {
+	struct extracted_addrs {
 		struct extracted_addr host;
 		struct extracted_addr nexthop;
+		const char *leftright;
 	} end[END_ROOF];
 	const struct ip_info *afi;
 };

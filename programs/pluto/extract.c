@@ -315,16 +315,19 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = &wm->end[lr];
 		const char *leftright = we->leftright;
-		struct extracted_addr *host = &config->end[lr].host;
-		struct extracted_addr *nexthop = &config->end[lr].nexthop;
+		struct extracted_addrs *addrs = &config->end[lr];
 
-		d = extract_host_addr(&winner, host, leftright, "",
+		addrs->leftright = leftright;
+
+		d = extract_host_addr(&winner, &addrs->host,
+				      leftright, "",
 				      we->we_host, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
-		d = extract_host_addr(&winner, nexthop, leftright, "nexthop",
+		d = extract_host_addr(&winner, &addrs->nexthop,
+				      leftright, "nexthop",
 				      we->we_nexthop, verbose);
 		if (d != NULL) {
 			return d;
@@ -357,9 +360,10 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addr *host = &config->end[lr].host;
-		struct extracted_addr *nexthop = &config->end[lr].nexthop;
- 		const char *leftright = wm->end[lr].leftright;
+		struct extracted_addrs *addrs = &config->end[lr];
+		struct extracted_addr *host = &addrs->host;
+		struct extracted_addr *nexthop = &addrs->nexthop;
+ 		const char *leftright = addrs->leftright;
 		const char *key = "";
 		const char *value = host->value;
 		bool end_can_orient = false;
@@ -441,8 +445,9 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addr *nexthop = &config->end[lr].nexthop;
- 		const char *leftright = wm->end[lr].leftright;
+		struct extracted_addrs *addrs = &config->end[lr];
+ 		const char *leftright = addrs->leftright;
+		struct extracted_addr *nexthop = &addrs->nexthop;
 		const char *key = "nexthop";
 		const char *value = nexthop->value;
 		enum keyword_host type = nexthop->type;
