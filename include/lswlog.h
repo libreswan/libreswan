@@ -24,6 +24,7 @@
 #include <stdio.h>		/* for FILE */
 #include <stddef.h>		/* for size_t */
 
+#include "refcnt.h"
 #include "lset.h"
 #include "lswcdefs.h"
 #include "jambuf.h"
@@ -102,7 +103,7 @@ enum rc_type {
 
 struct logger_object_vec {
 	const char *name;
-	bool free_object;
+	bool refcountable;
 	size_t (*jam_object_prefix)(struct jambuf *buf, const void *object);
 };
 
@@ -118,6 +119,7 @@ size_t jam_logger_prefix(struct jambuf *buf, const struct logger *logger);
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
 struct logger {
+	refcnt_t refcnt;
 	/* support up to two whacks */
 	struct fd *whackfd[2];
 	const void *object;
