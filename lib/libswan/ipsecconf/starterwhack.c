@@ -58,8 +58,6 @@ static bool set_whack_end(struct whack_end *w,
 		w->conn->value[kw] = l->values[kw].string;
 	}
 
-	w->cat = l->values[KWYN_CAT].option;		/* yn_options */
-
 	return true;
 }
 

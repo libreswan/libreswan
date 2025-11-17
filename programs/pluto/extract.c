@@ -1754,7 +1754,17 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (modecfgserver && src->cat == YN_YES) {
+	bool cat = extract_bool(leftright, "cat",
+				src->we_cat,
+				YN_NO, wm, &d, verbose);
+	bool other_cat = extract_bool(other_src->leftright, "cat",
+				      other_src->we_cat,
+				      YN_NO, wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (modecfgserver && cat) {
 		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
 				leftright, leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1764,7 +1774,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (modecfgclient && other_src->cat == YN_YES) {
+	if (modecfgclient && other_cat) {
 		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1812,7 +1822,7 @@ static diag_t extract_host_end(struct host_end *host,
 		pfree_diag(&d);
 	}
 
-	if (src->cat == YN_YES && other_src->we_addresspool != NULL) {
+	if (cat && other_src->we_addresspool != NULL) {
 		diag_t d = diag("both %scat=yes and %saddresspool= defined",
 				leftright, other_src->leftright);
 		if (!is_opportunistic_wm(host_addrs)) {
@@ -1876,14 +1886,21 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	switch (ike_version) {
 	case IKEv2:
 #ifdef USE_CAT
-		child_config->has_client_address_translation = (src->cat == YN_YES);
+	{
+		bool cat = extract_bool(leftright, "cat",
+					src->we_cat,
+					YN_NO, wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
+		child_config->has_client_address_translation = cat;
+	}
 #endif
 		break;
 	case IKEv1:
-		if (src->cat != YN_UNSET) {
-			name_buf nb;
+		if (src->we_cat != NULL) {
 			vwarning("IKEv1, ignoring %scat=%s (client address translation)",
-				 leftright, str_sparse_long(&yn_option_names, src->cat, &nb));
+				 leftright, src->we_cat);
 		}
 		break;
 	default:
@@ -4107,7 +4124,8 @@ diag_t extract_connection(const struct whack_message *wm,
 		pfree_diag(&d);
 	}
 
-	if (wm->end[LEFT_END].cat == YN_YES && wm->end[RIGHT_END].cat == YN_YES) {
+	if (config->end[LEFT_END].child.has_client_address_translation &&
+	    config->end[RIGHT_END].child.has_client_address_translation) {
 		diag_t d = diag("both leftcat=yes and rightcat=yes defined");
 		if (!is_opportunistic_wm(host_addrs)) {
 			return d;
