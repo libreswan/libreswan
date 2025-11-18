@@ -425,44 +425,12 @@ const struct logger_object_vec logger_global_vec = {
 	.jam_object_prefix = jam_object_prefix_none,
 };
 
-static size_t jam_from_prefix(struct jambuf *buf, const void *object)
+struct logger *from_logger(const ip_endpoint from)
 {
-	size_t s = 0;
-	if (!in_main_thread()) {
-		s += jam(buf, PEXPECT_PREFIX"%s in main thread", __func__);
-	} else if (object == NULL) {
-		s += jam(buf, PEXPECT_PREFIX"%s NULL", __func__);
-	} else {
-		const ip_endpoint *from = object;
-		/* peer's IP address */
-		if (endpoint_protocol(*from) == &ip_protocol_tcp) {
-			s += jam(buf, "connection from ");
-		} else {
-			s += jam(buf, "packet from ");
-		}
-		s += jam_endpoint_sensitive(buf, from);
-	}
-	return s;
-}
-
-struct logger logger_from(struct logger *global, const ip_endpoint *from)
-{
-	static const struct logger_object_vec logger_from_vec = {
-		.name = "from",
-		.jam_object_prefix = jam_from_prefix,
-	};
-	struct logger logger = {
-		.where = HERE,
-		.object = from,
-		.object_vec = &logger_from_vec,
-	};
-	struct fd **fd = logger.whackfd;
-	FOR_EACH_ELEMENT(gfd, global->whackfd) {
-		if (*gfd != NULL) {
-			*fd++ = *gfd;
-		}
-	}
-	return logger;
+	endpoint_buf eb;
+	return string_logger(HERE, "%s from %s",
+			     (endpoint_protocol(from) == &ip_protocol_tcp ? "connection" : "packet"),
+			     str_endpoint_sensitive(&from, &eb));
 }
 
 static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
@@ -580,6 +548,14 @@ struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
 	return logger;
 }
 
+/*
+ * Create a clone of STACK, copying everything including attached
+ * whacks.
+ *
+ * When the logger is readonly (refcountable), cheat by adding a
+ * reference.
+ */
+
 struct logger *clone_logger(struct logger *stack, where_t where)
 {
 	if (stack->object_vec->refcountable) {
@@ -594,9 +570,12 @@ struct logger *clone_logger(struct logger *stack, where_t where)
 	 * Use str_prefix() so that the prefix doesn't include
 	 * ":_" as added by jam_logger_prefix().
 	 */
-	prefix_buf pb;
-	char *prefix = clone_str(str_prefix(stack, &pb), "clone logger prefix");
-	struct logger *logger = alloc_logger(prefix, &logger_string_vec,
+	char prefix[LOG_WIDTH]; /* must-clone */
+	struct jambuf buf = ARRAY_AS_JAMBUF(prefix);
+	jam_prefix(&buf, stack);
+
+	struct logger *logger = alloc_logger(clone_str(prefix, "logger-clone"),
+					     &logger_string_vec,
 					     stack->debugging, where);
 	whack_attach_where(logger, stack, where);
 	return logger;
