@@ -1348,8 +1348,6 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
-KVM_FEDORA_TRANSMOGRIFY_FILES += $(wildcard fedora/network/*.network)
-KVM_LINUX_TRANSMOGRIFY_FILES += $(wildcard linux/network/*.network)
 KVM_FREEBSD_TRANSMOGRIFY_FILES += freebsd/rc.conf
 KVM_NETBSD_TRANSMOGRIFY_FILES += netbsd/rc.local
 KVM_OPENBSD_TRANSMOGRIFY_FILES += openbsd/rc.local
