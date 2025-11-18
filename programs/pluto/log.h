@@ -91,7 +91,7 @@ struct logger *string_logger(where_t where, const char *fmt, ...)
 	PRINTF_LIKE(2)
 	MUST_USE_RESULT; /* must free */
 
-struct logger *from_logger(const struct logger *outer, const ip_endpoint endpoint);
+struct logger *from_logger(const ip_endpoint endpoint);
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
 			    lset_t debugging, where_t where);
 struct logger *clone_logger(struct logger *stack, where_t where);

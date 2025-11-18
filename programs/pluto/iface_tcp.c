@@ -224,7 +224,8 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 	 * Switch to an on-stack "from" logger that includes more
 	 * context.
 	 */
-	struct logger *logger = from_logger(outer, (*ifp)->iketcp_remote_endpoint);
+	struct logger *logger = from_logger((*ifp)->iketcp_remote_endpoint);
+	whack_attach_where(logger, outer, HERE);
 	struct msg_digest *md = iketcp_read_packet_1(ifp, logger);
 	free_logger(&logger, HERE);
 	return md;
@@ -428,7 +429,8 @@ static void iketcp_cleanup(struct iface_endpoint *ifp,
 static void iketcp_server_timeout(void *arg, const struct timer_event *event)
 {
 	struct iface_endpoint *ifp = arg;
-	struct logger *logger = from_logger(event->logger, ifp->iketcp_remote_endpoint);
+	struct logger *logger = from_logger(ifp->iketcp_remote_endpoint);
+	whack_attach_where(logger, event->logger, HERE);
 	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
 	iface_endpoint_delref(&ifp);
@@ -633,7 +635,9 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa, void *arg,
 	ifp->iketcp_state = IKETCP_ACCEPTED;
 	ifp->iketcp_server = true;
 
-	struct logger *md_logger = from_logger(event_logger, remote_tcp_endpoint);
+	struct logger *md_logger = from_logger(remote_tcp_endpoint);
+	whack_attach_where(md_logger, event_logger, HERE);
+
 	llog_iketcp(RC_LOG, md_logger, ifp,  /*no-error*/0, "accepted connection");
 
 	/*

@@ -425,15 +425,12 @@ const struct logger_object_vec logger_global_vec = {
 	.jam_object_prefix = jam_object_prefix_none,
 };
 
-struct logger *from_logger(const struct logger *outer, const ip_endpoint from)
+struct logger *from_logger(const ip_endpoint from)
 {
 	endpoint_buf eb;
-	struct logger *logger =
-		string_logger(HERE, "%s from %s",
-			      (endpoint_protocol(from) == &ip_protocol_tcp ? "connection" : "packet"),
-			      str_endpoint_sensitive(&from, &eb));
-	whack_attach_where(logger, outer, HERE);
-	return logger;
+	return string_logger(HERE, "%s from %s",
+			     (endpoint_protocol(from) == &ip_protocol_tcp ? "connection" : "packet"),
+			     str_endpoint_sensitive(&from, &eb));
 }
 
 static size_t jam_connection_prefix(struct jambuf *buf, const void *object)

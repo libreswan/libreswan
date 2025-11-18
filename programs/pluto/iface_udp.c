@@ -201,7 +201,8 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 	 * context.
 	 */
 	shunk_t packet = shunk2(bigbuffer, packet_slen);
-	struct logger *md_logger = from_logger(logger, sender);
+	struct logger *md_logger = from_logger(sender);
+	whack_attach_where(md_logger, logger, HERE);
 	struct msg_digest *md = unpack_udp_packet(md_logger, sender, ifp, packet);
 	free_logger(&md_logger, HERE);
 	return md;
