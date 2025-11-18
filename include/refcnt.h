@@ -127,12 +127,12 @@ void *refcnt_delref_where(const char *what,
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
-		*op_ = NULL; /* always kill pointer; and early */	\
 		if (o_ != NULL) {					\
 			o_ = refcnt_delref_where(#OBJP,			\
 						 &o_->refcnt,		\
 						 OWNER, WHERE);		\
 		}							\
+		*op_ = NULL; /* always kill pointer */			\
 		o_; /* NULL or last OBJ */				\
 	})
 
