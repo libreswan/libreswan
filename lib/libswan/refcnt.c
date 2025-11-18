@@ -194,8 +194,8 @@ void *refcnt_delref_where(const char *what,
 
 	/* last ref and have cleanup */
 	const struct refcnt_base *base = refcnt->base;
-	if (base != NULL && base->discard_contents != NULL) {
-		base->discard_contents(refcnt, owner, where);
+	if (base != NULL && base->discard_content != NULL) {
+		base->discard_content(refcnt, owner, where);
 		pfreeany(refcnt);
 		return NULL;
 	}

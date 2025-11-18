@@ -44,6 +44,7 @@
 #include "show.h"
 #include "ipsecconf/config_setup.h"
 
+static refcnt_discard_content_fn discard_logger_content;
 static struct fd *logger_fd(const struct logger *logger);
 static void log_raw(int severity, const char *prefix, struct jambuf *buf);
 
@@ -517,9 +518,9 @@ static const struct logger_object_vec logger_string_vec = {
 	.refcountable = true,
 };
 
-static void discard_logger_contents(void *pointer,
-				    const struct logger *owner UNUSED,
-				    where_t where UNUSED)
+void discard_logger_content(void *pointer,
+			    const struct logger *owner UNUSED,
+			    where_t where UNUSED)
 {
 	struct logger *logger = pointer;
 	release_whack(logger, where);
@@ -531,7 +532,7 @@ static void discard_logger_contents(void *pointer,
 
 static const struct refcnt_base logger_refcnt_base = {
 	.what = "logger",
-	.discard_contents = discard_logger_contents,
+	.discard_content = discard_logger_content,
 };
 
 struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,

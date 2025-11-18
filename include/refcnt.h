@@ -18,24 +18,23 @@
 #define REFCNT_H
 
 #include <stdbool.h>
-#include <stdint.h>
+#include <stdlib.h>		/* for size_t */
 
-#include "lswcdefs.h"		/* for MUST_USE_RESULT */
+#include "lswcdefs.h"		/* for MUST_USE_RESULT et.al. */
 #include "where.h"
-#include "global_logger.h"
 
 struct jambuf;
 struct logger;
 
-typedef	void (refcnt_discard_contents_func)(void *pointer,
-					    const struct logger *logger,
-					    where_t where);
-typedef size_t (refcnt_jam_func)(struct jambuf *buf, const void *pointer);
+typedef	void (refcnt_discard_content_fn)(void *pointer,
+					 const struct logger *logger,
+					 where_t where);
+typedef size_t (refcnt_jam_fn)(struct jambuf *buf, const void *pointer);
 
 struct refcnt_base {
 	const char *what;
-	refcnt_discard_contents_func *discard_contents;
-	refcnt_jam_func *jam;
+	refcnt_discard_content_fn *discard_content;
+	refcnt_jam_fn *jam;
 };
 
 typedef struct refcnt {

@@ -25,8 +25,8 @@
 #include "refcnt.h"
 #include "lswlog.h"		/* for pexpect() */
 
-static refcnt_discard_contents_func discard_fd_contents;
-static refcnt_jam_func jam_fd;
+static refcnt_discard_content_fn discard_fd_content;
+static refcnt_jam_fn jam_fd;
 
 struct fd {
 	refcnt_t refcnt;	/* must be first */
@@ -41,7 +41,7 @@ size_t jam_fd(struct jambuf *buf, const void *pointer)
 
 static const struct refcnt_base fd_refcnt_base = {
 	.what = "fd",
-	.discard_contents = discard_fd_contents,
+	.discard_content = discard_fd_content,
 	.jam = jam_fd,
 };
 
@@ -56,7 +56,7 @@ void fd_delref_where(struct fd **fdp, const struct logger *owner, where_t where)
 	PASSERT(owner, fd == NULL);
 }
 
-void discard_fd_contents(void *pointer, const struct logger *owner, where_t where)
+void discard_fd_content(void *pointer, const struct logger *owner, where_t where)
 {
 	struct fd *fd = pointer;
 	if (close(fd->fd) != 0) {
