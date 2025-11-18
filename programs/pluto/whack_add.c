@@ -347,8 +347,10 @@ static void add_connections(const struct whack_message *wm, struct verbose verbo
 	pfreeany(right.subnets.list);
 }
 
-void whack_add(const struct whack_message *wm, struct show *s)
+void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 {
+	const struct whack_message *wm = &wmr->wm;
+
 	if (wm->name == NULL) {
 		show_rc(RC_FATAL, s,
 			"received command to add a connection, but did not receive the connection name - ignored");

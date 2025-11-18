@@ -81,6 +81,9 @@
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
 
+static void whack_handle_1(struct fd *whackfd, struct logger *whack_logger,
+			   struct whack_message_refcnt *rwm);
+
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
 	struct logger *logger = show_logger(s);
@@ -298,12 +301,15 @@ static void whack_list(const struct whack_message *wm, struct show *s)
 	}
 }
 
-static void dispatch_command(const struct whack_message *const wm, struct show *s)
+static void dispatch_command(struct whack_message_refcnt *const wmr, struct show *s)
 {
+	const struct whack_message *wm = &wmr->wm;
+
 	static const struct command {
 		const char *name;
 		void (*jam)(struct jambuf *buf, const struct whack_message *wm);
 		void (*op)(const struct whack_message *wm, struct show *s);
+		void (*wop)(struct whack_message_refcnt *wmr, struct show *s);
 	} commands[] = {
 		[WHACK_FETCHCRLS] = {
 			.name = "fetchcrls",
@@ -365,7 +371,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		},
 		[WHACK_ADD] = {
 			.name = "add",
-			.op = whack_add,
+			.wop = whack_add,
 			.jam = jam_whack_name,
 		},
 		[WHACK_ROUTE] = {
@@ -513,8 +519,7 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 	PASSERT(logger, wm->whack_command < elemsof(commands));
 	const struct command *command = &commands[wm->whack_command];
 
-	if (PBAD(logger, command->name == NULL) ||
-	    PBAD(logger, command->op == NULL)) {
+	if (PBAD(logger, command->name == NULL)) {
 		return;
 	}
 
@@ -531,7 +536,17 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
 		}
 	}
 
-	command->op(wm, s);
+	if (PBAD(logger, (command->op == NULL &&
+			  command->wop == NULL))) {
+		return;
+	}
+
+	if (command->op != NULL) {
+		command->op(wm, s);
+	}
+	if (command->wop != NULL) {
+		command->wop(wmr, s);
+	}
 
 	if (LDBGP(DBG_BASE, logger)) {
 		struct logger *logger = show_logger(s);
@@ -552,8 +567,10 @@ static void dispatch_command(const struct whack_message *const wm, struct show *
  * handle a whack message.
  */
 
-static void whack_process(const struct whack_message *const m, struct show *s)
+static void whack_process(struct whack_message_refcnt *const wmr, struct show *s)
 {
+	const struct whack_message *const m = &wmr->wm;
+
 	/*
 	 * XXX: keep code below compiling.
 	 *
@@ -595,7 +612,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 */
 
 	if (m->whack_command != 0) {
-		dispatch_command(m, s);
+		dispatch_command(wmr, s);
 	}
 
 	if (m->whack_key) {
@@ -649,9 +666,15 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 * properly initialize msg - needed because short reads are
 	 * sometimes OK
 	 */
-	struct whack_message msg = {0};
+	struct whack_message_refcnt *rwm = alloc_whack_message(whack_logger, HERE);
+	whack_handle_1(whackfd, whack_logger, rwm);
+	refcnt_delref(&rwm, whack_logger, HERE);
+}
 
-	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
+void whack_handle_1(struct fd *whackfd, struct logger *whack_logger,
+		    struct whack_message_refcnt *wmr)
+{
+	ssize_t n = fd_read(whackfd, &wmr->wm, sizeof(wmr->wm));
 	if (n <= 0) {
 		llog_errno(ERROR_STREAM, whack_logger, -(int)n,
 			   "read() failed in whack_handle(): ");
@@ -667,7 +690,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 */
 
 	struct whackpacker wp = {
-		.msg = &msg,
+		.msg = &wmr->wm,
 		.n = n,
 	};
 
@@ -685,12 +708,12 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	 * Handle basic commands here.
 	 */
 
-	if (msg.basic.whack_shutdown) {
+	if (wmr->wm.basic.whack_shutdown) {
 		whack_shutdown(whack_logger, false);
 		return; /* force shutting down */
 	}
 
-	if (msg.basic.whack_status) {
+	if (wmr->wm.basic.whack_status) {
 		struct show *s = alloc_show(whack_logger);
 		whack_status(s, mononow());
 		free_show(&s);
@@ -699,6 +722,6 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 	}
 
 	struct show *s = alloc_show(whack_logger);
-	whack_process(&msg, s);
+	whack_process(wmr, s);
 	free_show(&s);
 }
