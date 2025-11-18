@@ -53,7 +53,7 @@ void md_delref_where(struct msg_digest **mdp, where_t where)
 {
 	/* need non-NULL so .logger is available */
 	const struct logger *logger = (*mdp != NULL ? (*mdp)->logger : &global_logger);
-	struct msg_digest *md = delref_where(mdp, logger, where);
+	struct msg_digest *md = refcnt_delref(mdp, logger, where);
 	if (md != NULL) {
 		free_chunk_content(&md->v1_raw_packet);
 		free_chunk_content(&md->packet);

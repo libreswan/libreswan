@@ -1343,7 +1343,7 @@ diag_t add_connection(const struct whack_message *wm,
 	diag_t d = extract_connection(wm, host_addrs, c, root_config, verbose);
 	if (d != NULL) {
 		struct connection *cp = c;
-		vassert(delref_where(&cp, c->logger, HERE) == c);
+		vassert(refcnt_delref(&cp, c->logger, HERE) == c);
 		discard_connection(&c, false/*not-valid*/, HERE);
 		return d;
 	}

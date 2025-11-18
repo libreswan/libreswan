@@ -52,7 +52,7 @@ struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_
 
 void fd_delref_where(struct fd **fdp, const struct logger *owner, where_t where)
 {
-	struct fd *fd = delref_where(fdp, owner, where);
+	struct fd *fd = refcnt_delref(fdp, owner, where);
 	PASSERT(owner, fd == NULL);
 }
 

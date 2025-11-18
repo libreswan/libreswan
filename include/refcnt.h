@@ -138,19 +138,6 @@ void *refcnt_delref_where(const char *what,
 	MUST_USE_RESULT
 	NONNULL(1,2,3,4);
 
-#define delref_where(OBJP, OWNER, WHERE)				\
-	({								\
-		typeof(OBJP) op_ = OBJP;				\
-		typeof(*OBJP) o_ = *op_;				\
-		*op_ = NULL; /* always kill pointer; and early */	\
-		if (o_ != NULL) {					\
-			o_ = refcnt_delref_where(#OBJP,			\
-						 &o_->refcnt,		\
-						 OWNER, WHERE);		\
-		}							\
-		o_; /* NULL or last OBJ */				\
-	})
-
 #define refcnt_delref(OBJP, OWNER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\

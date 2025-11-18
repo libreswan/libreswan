@@ -188,7 +188,7 @@ static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct verbose verbo
 void iface_device_delref_where(struct iface_device **ifdp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct iface_device *ifd = delref_where(ifdp, logger, where);
+	struct iface_device *ifd = refcnt_delref(ifdp, logger, where);
 	if (ifd != NULL) {
 		/* i.e., last reference */
 		remove_list_entry(&ifd->entry);
@@ -396,7 +396,7 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 {
 	struct logger *logger = &global_logger;
 
-	struct iface_endpoint *ifp = delref_where(ifpp, logger, where);
+	struct iface_endpoint *ifp = refcnt_delref(ifpp, logger, where);
 	if (ifp != NULL) {
 		/* drop any lists */
 		PEXPECT(logger, ifp->next == NULL);

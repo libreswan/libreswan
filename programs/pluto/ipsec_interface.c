@@ -168,7 +168,7 @@ static void ipsec_interface_address_delref(struct ipsec_interface *ipsec_if,
 	 * - Returns a pointer to the object to be deleted when its
          *   the last one.
 	 */
-	struct ipsec_interface_address *address = delref_where(ipsec_if_address, verbose.logger, HERE);
+	struct ipsec_interface_address *address = refcnt_delref(ipsec_if_address, verbose.logger, HERE);
 	if (address == NULL) {
 		vdbg("%s() delref returned NULL, simple delref", __func__);
 		return;
@@ -485,7 +485,7 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 	vdbg("%s() %p ...", __func__, *ipsec_if);
 	verbose.level++;
 
-	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
+	struct ipsec_interface *ipsec_interface = refcnt_delref(ipsec_if, logger, where);
 	if (ipsec_interface == NULL) {
 		return;
 	}

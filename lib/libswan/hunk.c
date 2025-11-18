@@ -42,7 +42,7 @@ void rw_hunk_delref_where(struct rw_hunk **rw_hunkp,
 			  const struct logger *logger,
 			  where_t where)
 {
-	struct rw_hunk *rw_hunk = delref_where(rw_hunkp, logger, where);
+	struct rw_hunk *rw_hunk = refcnt_delref(rw_hunkp, logger, where);
 	if (rw_hunk != NULL) {
 		pfreeany(rw_hunk);
 	}
@@ -76,7 +76,7 @@ void ro_hunk_delref_where(struct ro_hunk **ro_hunkp,
 			  const struct logger *logger,
 			  where_t where)
 {
-	struct ro_hunk *ro_hunk = delref_where(ro_hunkp, logger, where);
+	struct ro_hunk *ro_hunk = refcnt_delref(ro_hunkp, logger, where);
 	if (ro_hunk != NULL) {
 		pfreeany(ro_hunk);
 	}
