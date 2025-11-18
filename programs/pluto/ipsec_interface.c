@@ -152,7 +152,7 @@ static struct ipsec_interface_address *ipsec_interface_address_addref(struct ips
 								      where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(address, logger, where);
+	return refcnt_addref(address, logger, where);
 }
 
 static void ipsec_interface_address_delref(struct ipsec_interface *ipsec_if,
@@ -475,7 +475,7 @@ static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 					       struct logger *logger, where_t where)
 {
-	return addref_where(ipsec_if, logger, where);
+	return refcnt_addref(ipsec_if, logger, where);
 }
 
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,

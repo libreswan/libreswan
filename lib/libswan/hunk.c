@@ -35,7 +35,7 @@ struct rw_hunk *rw_hunk_addref_where(struct rw_hunk *rw_hunk,
 				     const struct logger *logger,
 				     where_t where)
 {
-	return addref_where(rw_hunk, logger, where);
+	return refcnt_addref(rw_hunk, logger, where);
 }
 
 void rw_hunk_delref_where(struct rw_hunk **rw_hunkp,
@@ -69,7 +69,7 @@ struct ro_hunk *ro_hunk_addref_where(struct ro_hunk *ro_hunk,
 				     const struct logger *logger,
 				     where_t where)
 {
-	return addref_where(ro_hunk, logger, where);
+	return refcnt_addref(ro_hunk, logger, where);
 }
 
 void ro_hunk_delref_where(struct ro_hunk **ro_hunkp,

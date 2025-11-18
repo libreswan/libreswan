@@ -47,7 +47,7 @@ static const struct refcnt_base fd_refcnt_base = {
 
 struct fd *fd_addref_where(struct fd *fd, const struct logger *new_owner, where_t where)
 {
-	return addref_where(fd, new_owner, where);
+	return refcnt_addref(fd, new_owner, where);
 }
 
 void fd_delref_where(struct fd **fdp, const struct logger *owner, where_t where)

@@ -992,7 +992,7 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(pk, logger, where);
+	return refcnt_addref(pk, logger, where);
 }
 
 /*
@@ -1184,7 +1184,7 @@ struct secret_pubkey_stuff *secret_pubkey_stuff_addref(struct secret_pubkey_stuf
 						       where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(pks, logger, where);
+	return refcnt_addref(pks, logger, where);
 }
 
 void secret_pubkey_stuff_delref(struct secret_pubkey_stuff **pks, where_t where)

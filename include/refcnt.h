@@ -98,21 +98,6 @@ void refcnt_addref_where(const char *what,
 			 where_t where)
 	NONNULL(1,2,3,4);
 
-/* old */
-
-#define addref_where(OBJ, OWNER, WHERE)			\
-	({							\
-		typeof(OBJ) o_ = OBJ; /* evaluate once */	\
-		if (o_ != NULL) {				\
-			refcnt_addref_where(#OBJ,		\
-					    &o_->refcnt,	\
-					    OWNER, WHERE);	\
-		}						\
-		o_; /* result */				\
-	})
-
-/* new */
-
 #define refcnt_addref(OBJ, OWNER, WHERE)			\
 	({							\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */	\

@@ -636,7 +636,7 @@ void show_virtual_private(struct show *s)
 struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(vip, logger, where);
+	return refcnt_addref(vip, logger, where);
 }
 
 void virtual_ip_delref_where(struct virtual_ip **vipp, where_t where)
