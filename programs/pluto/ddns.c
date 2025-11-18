@@ -36,6 +36,7 @@
 #include "orient.h"
 #include "show.h"
 #include "defaultroute.h"	/* for struct resolve_end */
+#include "extract.h"
 
 /* time before retrying DDNS host lookup for phase 1 */
 #define PENDING_DDNS_INTERVAL secs_per_minute
@@ -134,11 +135,12 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	 */
 
 	delete_connection_proposals(c);
-	struct resolve_end resolve[END_ROOF];
-	bool resolved = resolve_hosts_from_configs(c->config, resolve, verbose);
-	build_connection_host_and_proposals_from_resolve(c, resolve, verbose);
+	struct extracted_host_addrs host_addrs =
+		extracted_host_addrs_from_host_configs(c->config);
+	resolve_extracted_host_addrs(&host_addrs, verbose);
+	build_connection_host_and_proposals_from_resolve(c, host_addrs.resolve, verbose);
 
-	if (!resolved) {
+	if (!host_addrs.resolved) {
 		vlog("not resolved");
 		return;
 	}

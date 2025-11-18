@@ -208,15 +208,16 @@ static diag_t check_afi(struct afi_winner *winner,
 static diag_t extract_host_addr(struct afi_winner *winner,
 				struct extracted_addr *end,
 				const char *leftright,
-				const char *name,
+				const char *key,
 				const char *value,
 				struct verbose verbose)
 {
 	diag_t d;
 	err_t e;
 
-	vdbg("extracting '%s%s=%s':", leftright, name, (value == NULL ? "" : value));
+	vdbg("extracting '%s%s=%s':", leftright, key, (value == NULL ? "" : value));
 	verbose.level++;
+	end->key = key;
 
 	/*
 	 * {left,right}: when the value '%...' a keywords,
@@ -228,7 +229,7 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 		return NULL;
 	}
 
-	end->name = value;
+	end->value = value;
 
 	if (value[0] == '%') {
 		/* either keyword, or %interface */
@@ -239,10 +240,10 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 		shunk_t keyword = shunk_token(&cursor, &delim, "46");
 		if (cursor.len > 0) {
 			return diag("'%s%s=%s' contains the trailing junk '"PRI_SHUNK"'",
-				    leftright, name, value, pri_shunk(cursor));
+				    leftright, key, value, pri_shunk(cursor));
 		}
 
-		d = check_afi(winner, leftright, name, value,
+		d = check_afi(winner, leftright, key, value,
 			      (delim == '4' ? &ipv4_info : delim == '6' ? &ipv6_info : NULL),
 			      verbose);
 		if (d != NULL) {
@@ -264,7 +265,7 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 	e = ttoaddress_num(shunk1(value), NULL, &end->addr);
 	if (e == NULL) {
 		const struct ip_info *afi = address_info(end->addr);
-		d = check_afi(winner, leftright, name, value, afi, verbose);
+		d = check_afi(winner, leftright, key, value, afi, verbose);
 		if (d != NULL) {
 			return d;
 		}
@@ -314,16 +315,19 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = &wm->end[lr];
 		const char *leftright = we->leftright;
-		struct extracted_addr *host = &config->end[lr].host;
-		struct extracted_addr *nexthop = &config->end[lr].nexthop;
+		struct extracted_addrs *addrs = &config->end[lr];
 
-		d = extract_host_addr(&winner, host, leftright, "",
+		addrs->leftright = leftright;
+
+		d = extract_host_addr(&winner, &addrs->host,
+				      leftright, "",
 				      we->we_host, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
-		d = extract_host_addr(&winner, nexthop, leftright, "nexthop",
+		d = extract_host_addr(&winner, &addrs->nexthop,
+				      leftright, "nexthop",
 				      we->we_nexthop, verbose);
 		if (d != NULL) {
 			return d;
@@ -356,11 +360,12 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addr *host = &config->end[lr].host;
-		struct extracted_addr *nexthop = &config->end[lr].nexthop;
- 		const char *leftright = wm->end[lr].leftright;
-		const char *name = "";
-		const char *value = host->name;
+		struct extracted_addrs *addrs = &config->end[lr];
+		struct extracted_addr *host = &addrs->host;
+		struct extracted_addr *nexthop = &addrs->nexthop;
+ 		const char *leftright = addrs->leftright;
+		const char *key = "";
+		const char *value = host->value;
 		bool end_can_orient = false;
 
 		switch (host->type) {
@@ -399,7 +404,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 						&host->addr,
 						&nexthop->addr)) {
 				return diag("%s%s=%s does not appear to be an interface",
-					    leftright, name, value);
+					    leftright, key, value);
 			}
 
 			end_can_orient = true;
@@ -407,17 +412,17 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 		}
 
 		case KH_NOTSET:
-			return diag("%s%s= is not set", leftright, name);
+			return diag("%s%s= is not set", leftright, key);
 
 		case KH_DIRECT:
-			return diag("%s%s=%s invalid", leftright, name, value);
+			return diag("%s%s=%s invalid", leftright, key, value);
 
 		}
 
 		name_buf nb;
 		address_buf hab, nab;
 		vdbg("%s%s=%s aka %s set to %s -> %s%s",
-		     leftright, name, (value == NULL ? "<null>" : value),
+		     leftright, key, (value == NULL ? "<null>" : value),
 		     str_sparse_short(&keyword_host_names, host->type, &nb),
 		     str_address(&host->addr, &hab),
 		     str_address(&nexthop->addr, &nab),
@@ -427,8 +432,8 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 	}
 
 	if (!can_orient) {
-		const char *left = config->end[LEFT_END].host.name;
-		const char *right = config->end[RIGHT_END].host.name;
+		const char *left = config->end[LEFT_END].host.value;
+		const char *right = config->end[RIGHT_END].host.value;
 		return diag("neither 'left=%s' nor 'right=%s' specify the local host's IP address",
 			    (left == NULL ? "" : left),
 			    (right == NULL ? "" : right));
@@ -440,10 +445,11 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addr *nexthop = &config->end[lr].nexthop;
- 		const char *leftright = wm->end[lr].leftright;
-		const char *name = "nexthop";
-		const char *value = nexthop->name;
+		struct extracted_addrs *addrs = &config->end[lr];
+ 		const char *leftright = addrs->leftright;
+		struct extracted_addr *nexthop = &addrs->nexthop;
+		const char *key = "nexthop";
+		const char *value = nexthop->value;
 		enum keyword_host type = nexthop->type;
 
 		switch (type) {
@@ -453,7 +459,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 		case KH_OPPOGROUP:
 		case KH_GROUP:
 		case KH_IPHOSTNAME:
-			return diag("%s%s=%s invalid", leftright, name, value);
+			return diag("%s%s=%s invalid", leftright, key, value);
 
 		case KH_IPADDR:
 			break;
@@ -479,7 +485,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 		name_buf tb, nb;
 		address_buf nab;
 		vdbg("%s%s=%s aka %s set to %s %s",
-		     leftright, name, (value == NULL ? "<null>" : value),
+		     leftright, key, (value == NULL ? "<null>" : value),
 		     str_sparse_short(&keyword_host_names, type, &tb),
 		     str_sparse_short(&keyword_host_names, nexthop->type, &nb),
 		     str_address(&nexthop->addr, &nab));
@@ -2630,7 +2636,44 @@ static void host_config_from_extracted_addr(struct host_addr_config *host,
 {
 	host->type = addr->type;
 	host->addr = addr->addr;
-	host->name = clone_str(addr->name, "config");
+	host->name = clone_str(addr->value, "config");
+}
+
+static void host_configs_from_extracted_host_addrs(struct config *config,
+						   const struct extracted_host_addrs *host_addrs)
+{
+	config->host.afi = host_addrs->afi;
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		host_config_from_extracted_addr(&config->end[end].host.host,
+						&host_addrs->end[end].host);
+		host_config_from_extracted_addr(&config->end[end].host.nexthop,
+						&host_addrs->end[end].nexthop);
+	}
+}
+
+static void extracted_addr_from_host_config(const char *key,
+					    struct extracted_addr *addr,
+					    const struct host_addr_config *host)
+{
+	addr->key = key;
+	addr->type = host->type;
+	addr->addr = host->addr;
+	addr->value = host->name;
+}
+
+struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config)
+{
+	struct extracted_host_addrs host_addrs = {
+		.afi = config->host.afi,
+	};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		host_addrs.end[end].leftright = (end == LEFT_END ? "left" : "right");
+		extracted_addr_from_host_config("", &host_addrs.end[end].host,
+						&config->end[end].host.host);
+		extracted_addr_from_host_config("nexthop", &host_addrs.end[end].nexthop,
+						&config->end[end].host.nexthop);
+	}
+	return host_addrs;
 }
 
 diag_t extract_connection(const struct whack_message *wm,
@@ -2665,13 +2708,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	/* copy extracted addrs to config */
-	config->host.afi = extracted_host_addrs->afi;
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		host_config_from_extracted_addr(&config->end[end].host.host,
-						&extracted_host_addrs->end[end].host);
-		host_config_from_extracted_addr(&config->end[end].host.nexthop,
-						&extracted_host_addrs->end[end].nexthop);
-	}
+	host_configs_from_extracted_host_addrs(config, extracted_host_addrs);
 
 	const struct ip_info *host_afi = config->host.afi;
 	vassert(host_afi != NULL);
@@ -4395,20 +4432,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-	return NULL;
-}
-
-void resolve_connection(struct connection *c, struct verbose verbose)
-{
-	/*
-	 * Now try to resolve the host/nexthop in .config, copying the
-	 * result into the connection.
-	 */
-
-	struct resolve_end resolve[END_ROOF];
-	resolve_hosts_from_configs(c->config, resolve, verbose);
-
-	build_connection_host_and_proposals_from_resolve(c, resolve, verbose);
+	build_connection_host_and_proposals_from_resolve(c, extracted_host_addrs->resolve, verbose);
 
 	/*
 	 * Force orientation (currently kind of unoriented?).
@@ -4422,7 +4446,7 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 	orient(c, verbose.logger);
 
 	if (verbose.debug) {
-		VDBG_log("oriented; maybe");
+		VDBG_log("oriented; still maybe");
 		connection_db_check(verbose.logger, HERE);
 	}
 
@@ -4440,4 +4464,5 @@ void resolve_connection(struct connection *c, struct verbose verbose)
 	}
 
 	release_whack(c->logger, HERE);
+	return NULL;
 }

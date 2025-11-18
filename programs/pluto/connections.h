@@ -947,11 +947,10 @@ diag_t add_connection(const struct whack_message *wm,
 		      const struct extracted_host_addrs *host_addrs,
 		      const struct logger *logger);
 
-bool resolve_hosts_from_configs(const struct config *config,
-				struct resolve_end *resolve/*[END_ROOF]*/,
-				struct verbose verbose);
+void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
+				  struct verbose verbose);
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      struct resolve_end *resolve/*[END_ROOF]*/,
+						      const struct resolve_end *resolve/*[static END_ROOF]*/,
 						      struct verbose verbose);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,

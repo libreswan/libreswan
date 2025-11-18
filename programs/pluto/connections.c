@@ -681,29 +681,29 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	peer->nexthop = peer_nexthop;
 }
 
-bool resolve_hosts_from_configs(const struct config *config,
-				struct resolve_end *resolve/*[END_ROOF]*/,
-				struct verbose verbose)
+void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
+				  struct verbose verbose)
 {
-	bool can_resolve = true;
+	host_addrs->resolved = true;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const struct host_end_config *src = &config->end[lr].host;
- 		struct resolve_end *dst = &resolve[lr];
- 		const char *leftright = config->end[lr].leftright;
+		const struct extracted_addrs *src = &host_addrs->end[lr];
+ 		struct resolve_end *dst = &host_addrs->resolve[lr];
+ 		const char *leftright = src->leftright;
 
 		/* leftright */
 		dst->leftright = leftright;
 
 		/* nexthop */
-		dst->nexthop.name = src->nexthop.name;
+		dst->nexthop.name = src->nexthop.value;
 		dst->nexthop.addr = src->nexthop.addr;
 		dst->nexthop.type = src->nexthop.type;
 
 		/* host */
 		ip_address host_addr;
 		if (src->host.type == KH_IPHOSTNAME) {
-			err_t e = ttoaddress_dns(shunk1(src->host.name),
-						 config->host.afi, &host_addr);
+			err_t e = ttoaddress_dns(shunk1(src->host.value),
+						 host_addrs->afi,
+						 &host_addr);
 			if (e != NULL) {
 				/*
 				 * XXX: failing ttoaddress*() sets
@@ -711,34 +711,32 @@ bool resolve_hosts_from_configs(const struct config *config,
 				 * src.host.addr.
 				 */
 				vlog("failed to resolve '%s%s=%s' at load time: %s",
-				     leftright, "", src->host.name, e);
-				can_resolve = false;
+				     leftright, "", src->host.value, e);
+				host_addrs->resolved = false;
 				host_addr = src->host.addr;
 			}
 		} else {
 			host_addr = src->host.addr;
 		}
-		dst->host.name = src->host.name;
+		dst->host.name = src->host.value;
 		dst->host.addr = host_addr;
 		dst->host.type = src->host.type;
 	}
 
-	if (can_resolve) {
-		resolve_default_route(&resolve[LEFT_END],
-				      &resolve[RIGHT_END],
-				      config->host.afi,
+	if (host_addrs->resolved) {
+		resolve_default_route(&host_addrs->resolve[LEFT_END],
+				      &host_addrs->resolve[RIGHT_END],
+				      host_addrs->afi,
 				      verbose);
-		resolve_default_route(&resolve[RIGHT_END],
-				      &resolve[LEFT_END],
-				      config->host.afi,
+		resolve_default_route(&host_addrs->resolve[RIGHT_END],
+				      &host_addrs->resolve[LEFT_END],
+				      host_addrs->afi,
 				      verbose);
 	}
-
-	return can_resolve;
 }
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      struct resolve_end *resolve/*[END_ROOF]*/,
+						      const struct resolve_end *resolve/*[END_ROOF]*/,
 						      struct verbose verbose)
 {
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
@@ -1350,7 +1348,6 @@ diag_t add_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	resolve_connection(c, verbose);
 	return NULL;
 }
 
