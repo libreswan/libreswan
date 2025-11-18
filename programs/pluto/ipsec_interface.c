@@ -152,7 +152,7 @@ static struct ipsec_interface_address *ipsec_interface_address_addref(struct ips
 								      where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(address, logger, where);
+	return refcnt_addref(address, logger, where);
 }
 
 static void ipsec_interface_address_delref(struct ipsec_interface *ipsec_if,
@@ -168,7 +168,7 @@ static void ipsec_interface_address_delref(struct ipsec_interface *ipsec_if,
 	 * - Returns a pointer to the object to be deleted when its
          *   the last one.
 	 */
-	struct ipsec_interface_address *address = delref_where(ipsec_if_address, verbose.logger, HERE);
+	struct ipsec_interface_address *address = refcnt_delref(ipsec_if_address, verbose.logger, HERE);
 	if (address == NULL) {
 		vdbg("%s() delref returned NULL, simple delref", __func__);
 		return;
@@ -475,7 +475,7 @@ static struct ipsec_interface *alloc_ipsec_interface(ipsec_interface_id_t ipsec_
 struct ipsec_interface *ipsec_interface_addref(struct ipsec_interface *ipsec_if,
 					       struct logger *logger, where_t where)
 {
-	return addref_where(ipsec_if, logger, where);
+	return refcnt_addref(ipsec_if, logger, where);
 }
 
 void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
@@ -485,7 +485,7 @@ void ipsec_interface_delref(struct ipsec_interface **ipsec_if,
 	vdbg("%s() %p ...", __func__, *ipsec_if);
 	verbose.level++;
 
-	struct ipsec_interface *ipsec_interface = delref_where(ipsec_if, logger, where);
+	struct ipsec_interface *ipsec_interface = refcnt_delref(ipsec_if, logger, where);
 	if (ipsec_interface == NULL) {
 		return;
 	}

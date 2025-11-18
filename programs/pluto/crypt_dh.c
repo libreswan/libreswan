@@ -149,13 +149,13 @@ const struct kem_desc *dh_local_secret_desc(struct dh_local_secret *local_secret
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(secret, logger, where);
+	return refcnt_addref(secret, logger, where);
 }
 
 void dh_local_secret_delref(struct dh_local_secret **secretp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct dh_local_secret *secret = delref_where(secretp, logger, where);
+	struct dh_local_secret *secret = refcnt_delref(secretp, logger, where);
 	if (secret == NULL) {
 		return;
 	}

@@ -983,7 +983,7 @@ void addresspool_delref(struct addresspool **poolparty, struct logger *logger)
 	vdbg("releasing address pool");
 	verbose.level++;
 
-	struct addresspool *pool = delref_where(poolparty, verbose.logger, HERE);
+	struct addresspool *pool = refcnt_delref(poolparty, verbose.logger, HERE);
 	if (pool != NULL) {
 		for (struct addresspool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
 			if (*pp == pool) {

@@ -139,7 +139,7 @@ static void add_iface(const struct kernel_iface *ifp, struct verbose verbose)
 struct iface_device *iface_device_addref_where(struct iface_device *iface, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(iface, logger, where);
+	return refcnt_addref(iface, logger, where);
 }
 
 struct iface_device *next_iface_device(struct iface_device *iface)
@@ -188,7 +188,7 @@ static void add_or_keep_iface_dev(struct kernel_iface *ifp, struct verbose verbo
 void iface_device_delref_where(struct iface_device **ifdp, where_t where)
 {
 	const struct logger *logger = &global_logger;
-	struct iface_device *ifd = delref_where(ifdp, logger, where);
+	struct iface_device *ifd = refcnt_delref(ifdp, logger, where);
 	if (ifd != NULL) {
 		/* i.e., last reference */
 		remove_list_entry(&ifd->entry);
@@ -382,7 +382,7 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 
 	struct iface_endpoint *ifp = refcnt_alloc(struct iface_endpoint, logger, where);
 	ifp->fd = fd;
-	ifp->ip_dev = addref_where(ifd, logger, where);
+	ifp->ip_dev = refcnt_addref(ifd, logger, where);
 	ifp->io = io;
 	ifp->esp_encapsulation_enabled = (esp_encapsulation == ESP_ENCAPSULATION_ENABLED);
 	ifp->float_nat_initiator = (initiator_port == INITIATOR_PORT_FLOATS);
@@ -396,7 +396,7 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 {
 	struct logger *logger = &global_logger;
 
-	struct iface_endpoint *ifp = delref_where(ifpp, logger, where);
+	struct iface_endpoint *ifp = refcnt_delref(ifpp, logger, where);
 	if (ifp != NULL) {
 		/* drop any lists */
 		PEXPECT(logger, ifp->next == NULL);
@@ -414,7 +414,7 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, where_t where)
 {
 	struct logger *logger = &global_logger;
-	return addref_where(ifp, logger, where);
+	return refcnt_addref(ifp, logger, where);
 }
 
 struct iface_endpoint *bind_iface_endpoint(struct iface_device *ifd,

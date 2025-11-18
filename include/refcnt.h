@@ -98,21 +98,6 @@ void refcnt_addref_where(const char *what,
 			 where_t where)
 	NONNULL(1,2,3,4);
 
-/* old */
-
-#define addref_where(OBJ, OWNER, WHERE)			\
-	({							\
-		typeof(OBJ) o_ = OBJ; /* evaluate once */	\
-		if (o_ != NULL) {				\
-			refcnt_addref_where(#OBJ,		\
-					    &o_->refcnt,	\
-					    OWNER, WHERE);	\
-		}						\
-		o_; /* result */				\
-	})
-
-/* new */
-
 #define refcnt_addref(OBJ, OWNER, WHERE)			\
 	({							\
 		typeof(OBJ) o_ = OBJ; /* evaluate once */	\
@@ -138,29 +123,16 @@ void *refcnt_delref_where(const char *what,
 	MUST_USE_RESULT
 	NONNULL(1,2,3,4);
 
-#define delref_where(OBJP, OWNER, WHERE)				\
-	({								\
-		typeof(OBJP) op_ = OBJP;				\
-		typeof(*OBJP) o_ = *op_;				\
-		*op_ = NULL; /* always kill pointer; and early */	\
-		if (o_ != NULL) {					\
-			o_ = refcnt_delref_where(#OBJP,			\
-						 &o_->refcnt,		\
-						 OWNER, WHERE);		\
-		}							\
-		o_; /* NULL or last OBJ */				\
-	})
-
 #define refcnt_delref(OBJP, OWNER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
-		*op_ = NULL; /* always kill pointer; and early */	\
 		if (o_ != NULL) {					\
 			o_ = refcnt_delref_where(#OBJP,			\
 						 &o_->refcnt,		\
 						 OWNER, WHERE);		\
 		}							\
+		*op_ = NULL; /* always kill pointer */			\
 		o_; /* NULL or last OBJ */				\
 	})
 

@@ -101,7 +101,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 void root_certs_delref_where(struct root_certs **root_certsp,
 			     struct logger *logger, where_t where)
 {
-	struct root_certs *root_certs = delref_where(root_certsp, logger, where);
+	struct root_certs *root_certs = refcnt_delref(root_certsp, logger, where);
 	if (root_certs != NULL) {
 		llog(RC_LOG, logger, "freeing root certificate cache");
 		CERT_DestroyCertList(root_certs->trustcl);
