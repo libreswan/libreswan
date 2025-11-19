@@ -21,6 +21,7 @@ v5.4 (unreleased)
   - Debian test domain upgraded to 12.12 [Andrew]
   - Fedora test domain upgraded to f43 [Andrew]
   - FreeBSD test domain upgraded to 14.3 [Andrew, Ueno #2341]
+  - OpenBSD test domain upgraded to 7.8 [Andrew]
 
 v5.3 (July 3, 2025)
 * PKIX (Public Key Infrastructure X.509)

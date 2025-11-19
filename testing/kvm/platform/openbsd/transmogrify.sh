@@ -19,7 +19,7 @@ ${GATEWAY}:${TESTINGDIR}  /testing  nfs  rw,tcp
 ${GATEWAY}:${POOLDIR}     /pool  nfs  rw,tcp
 EOF
 
-cp -v /bench/testing/kvm/openbsd/rc.conf.local /etc/rc.conf.local
+cp -v /bench/testing/kvm/platform/openbsd/rc.conf.local /etc/rc.conf.local
 chmod a+r /etc/rc.conf.local
 
 cp -v /bench/testing/kvm/rc.d/rc.local /etc/

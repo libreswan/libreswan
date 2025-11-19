@@ -1162,15 +1162,16 @@ $(KVM_NETBSD_BASE_DOMAIN).iso: | netbsd/base.sh
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_ISO_RELEASE ?= 7.7
+KVM_OPENBSD_ISO_RELEASE ?= 7.8
+KVM_OPENBSD_MACHINE ?= amd64
 KVM_OPENBSD_OSINFO ?= $(strip $(shell osinfo-query -f short-id os | grep ' openbsd' | sort -V | tail -1))
 
-KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)/amd64/
+KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_ISO_RELEASE)/$(KVM_OPENBSD_MACHINE)/
 
 # not openbsd... as gets deleted by rm openbsd.*
-KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install.iso
+KVM_OPENBSD_ISO = $(KVM_POOLDIR)/OpenBSD-$(KVM_OPENBSD_ISO_RELEASE)-install-$(KVM_OPENBSD_MACHINE).iso
 KVM_OPENBSD_ISO_HASH ?= SHA256
-KVM_OPENBSD_ISO_CKSUM ?= da0106e39463f015524dca806f407c37a9bdd17e6dfffe533b06a2dd2edd8a27
+KVM_OPENBSD_ISO_CKSUM ?= a228d0a1ef558b4d9ec84c698f0d3ffd13cd38c64149487cba0f1ad873be07b2
 # note: need to strip "." from version as upstream ISO file omits it
 KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL)/install$(subst .,,$(KVM_OPENBSD_ISO_RELEASE)).iso
 
@@ -1184,13 +1185,13 @@ KVM_OPENBSD_VIRT_INSTALL_FLAGS = \
 $(KVM_OPENBSD_BASE_DOMAIN): $(KVM_OPENBSD_BASE_DOMAIN).iso
 
 $(KVM_OPENBSD_BASE_DOMAIN).iso: $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.conf
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/boot.conf
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.sh
-$(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.disk
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.conf
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/boot.conf
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.sh
+$(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		openbsd/base.sh \
+		platform/openbsd/base.sh \
 		> $(KVM_OPENBSD_BASE_DOMAIN).sh
 	: boot.conf sets up a serial console
 	: base.conf configures the installer
@@ -1198,10 +1199,10 @@ $(KVM_OPENBSD_BASE_DOMAIN).iso: | openbsd/base.disk
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/base.conf=openbsd/base.conf \
-		/etc/boot.conf=openbsd/boot.conf \
+		/base.conf=platform/openbsd/base.conf \
+		/etc/boot.conf=platform/openbsd/boot.conf \
 		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).sh \
-		/base.disk=openbsd/base.disk
+		/base.disk=platform/openbsd/base.disk
 	mv $@.tmp $@
 
 ##
@@ -1350,8 +1351,6 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 
 KVM_FREEBSD_TRANSMOGRIFY_FILES += freebsd/rc.conf
 KVM_NETBSD_TRANSMOGRIFY_FILES += netbsd/rc.local
-KVM_OPENBSD_TRANSMOGRIFY_FILES += openbsd/rc.local
-
 
 ##
 ## Build/Install libreswan into the build domain.
