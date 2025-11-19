@@ -17,7 +17,7 @@ v5.4 (unreleased)
   - fix RPM package file/directory ownership [Joseph Marreo Corchado, Tuomo, #2167]
   - fix seccomp rules to work with Bash 5.3 [Maciej S. Szmigiero, #2371]
 * testing:
-  - Alpine test domain upgraded to 3.22.1 [Andrew]
+  - Alpine test domain upgraded to 3.22.2 [Andrew]
   - Debian test domain upgraded to 12.12 [Andrew]
   - Fedora test domain upgraded to f43 [Andrew]
   - FreeBSD test domain upgraded to 14.3 [Andrew, Ueno #2341]
