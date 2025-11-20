@@ -946,10 +946,10 @@ $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_DEBIAN_ISO_URL) $(KVM_DEBIAN_ISO_HASH) $(KVM_DEBIAN_ISO_CKSUM)
 
 $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_BASE_DOMAIN).iso: | debian/base.sh
+$(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		debian/base.sh \
+		platform/debian/base.sh \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
@@ -961,7 +961,7 @@ $(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso \
-	--initrd-inject=debian/preseed.cfg \
+	--initrd-inject=platform/debian/preseed.cfg \
 	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 
@@ -985,7 +985,7 @@ KVM_FEDORA_ISO_HASH = SHA256
 KVM_FEDORA_ISO_CKSUM ?= aca06983bef83da9b43144c1a2ff4c8483e4745167c17f53725c16a16742e643
 KVM_FEDORA_ISO_URL ?= $(KVM_FEDORA_URL)/$(notdir $(KVM_FEDORA_ISO))
 
-KVM_FEDORA_KICKSTART_FILE ?= fedora/base.ks
+KVM_FEDORA_KICKSTART_FILE ?= platform/fedora/base.ks
 
 $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_FEDORA_ISO_URL) $(KVM_FEDORA_ISO_HASH) $(KVM_FEDORA_ISO_CKSUM)
@@ -1036,17 +1036,20 @@ KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FREEBSD_BASE_DOMAIN): $(KVM_FREEBSD_BASE_DOMAIN).iso
 
+KVM_FREEBSD_BASE_CONF ?= platform/freebsd/base.conf
+KVM_FREEBSD_LOADER_CONF ?= platform/freebsd/loader.conf
+
 $(KVM_FREEBSD_BASE_DOMAIN).iso: $(KVM_FREEBSD_ISO)
-$(KVM_FREEBSD_BASE_DOMAIN).iso: | freebsd/loader.conf
-$(KVM_FREEBSD_BASE_DOMAIN).iso: | freebsd/base.conf
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		freebsd/base.conf \
+		$(KVM_FREEBSD_BASE_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/boot/loader.conf=freebsd/loader.conf \
+		/boot/loader.conf=$(KVM_FREEBSD_LOADER_CONF) \
 		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).conf
 	mv $@.tmp $@
 
@@ -1071,7 +1074,7 @@ KVM_LINUX_ISO_HASH ?= SHA256
 KVM_LINUX_ISO_CKSUM ?= 6037e489103401a6ad4e54a4bcb2df7525693bdc3f2ce4aa895838b65647e551
 KVM_LINUX_ISO_URL ?= $(KVM_LINUX_URL)/$(notdir $(KVM_LINUX_ISO))
 
-KVM_LINUX_KICKSTART_FILE ?= linux/base.ks
+KVM_LINUX_KICKSTART_FILE ?= platform/linux/base.ks
 
 ifneq ($(KVM_LINUX_ISO),$(KVM_FEDORA_ISO))
 $(KVM_LINUX_ISO): | $(KVM_POOLDIR)
@@ -1134,11 +1137,13 @@ KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 $(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BOOT_ISO)
 $(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BASE_DOMAIN).iso
 
+KVM_NETBSD_BASE_SH ?= platform/netbsd/base.sh
+
 $(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
-$(KVM_NETBSD_BASE_DOMAIN).iso: | netbsd/base.sh
+$(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		netbsd/base.sh \
+		$(KVM_NETBSD_BASE_SH) \
 		> $(KVM_NETBSD_BASE_DOMAIN).sh
 	: this mangles file/directory names
 	growisofs -M $@.tmp -l \
@@ -1348,9 +1353,6 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	: only shutdown after transmogrify succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
-
-KVM_FREEBSD_TRANSMOGRIFY_FILES += freebsd/rc.conf
-KVM_NETBSD_TRANSMOGRIFY_FILES += netbsd/rc.local
 
 ##
 ## Build/Install libreswan into the build domain.
