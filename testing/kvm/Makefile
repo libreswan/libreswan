@@ -946,10 +946,10 @@ $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
 	$(KVM_GET) $(KVM_DEBIAN_ISO_URL) $(KVM_DEBIAN_ISO_HASH) $(KVM_DEBIAN_ISO_CKSUM)
 
 $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
-$(KVM_DEBIAN_BASE_DOMAIN).iso: | debian/base.sh
+$(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		debian/base.sh \
+		platform/debian/base.sh \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
@@ -961,7 +961,7 @@ $(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso \
-	--initrd-inject=debian/preseed.cfg \
+	--initrd-inject=platform/debian/preseed.cfg \
 	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 
