@@ -587,4 +587,17 @@ extern bool lsw_alias_cmp(const char *name, const char *aliases);
 
 extern unsigned whack_magic(void);
 
+/*
+ * The receiver saves a refcnt'd message so it can be offloaded.
+ *
+ * Can't clone whack_message as that contains internal pointers.
+ */
+
+struct whack_message_refcnt {
+	refcnt_t refcnt;
+	struct whack_message wm;
+};
+
+struct whack_message_refcnt *alloc_whack_message(const struct logger *owner, where_t where);
+
 #endif /* WHACK_H */

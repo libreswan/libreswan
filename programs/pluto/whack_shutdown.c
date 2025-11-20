@@ -66,6 +66,7 @@
 #include "pending.h"
 #include "connection_event.h"
 #include "terminate.h"
+#include "helper.h"
 
 server_stopped_cb server_stopped_callback NEVER_RETURNS;
 
@@ -86,6 +87,7 @@ static bool pluto_leave_state;
 static void exit_prologue(enum pluto_exit_code code, struct logger *logger);
 static void exit_epilogue(struct logger *logger) NEVER_RETURNS;
 static void server_helpers_stopped_callback(void);
+static void helpers_stopped_callback(void);
 
 void libreswan_exit(enum pluto_exit_code exit_code)
 {
@@ -182,6 +184,7 @@ void exit_epilogue(struct logger *logger)
 	delete_every_connection(logger);
 
 	free_server_helper_jobs(logger);
+	free_help_requests(logger);
 
 	free_root_certs(logger);
 	free_preshared_secrets(logger);
@@ -269,10 +272,15 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	exit_prologue(PLUTO_EXIT_OK, logger);
 
 	/*
-	 * Wait for the crypto-helper threads to notice EXITING_PLUTO
-	 * and exit (if necessary, wake any sleeping helpers from
-	 * their slumber).  Without this any helper using NSS after
-	 * the code below has shutdown the NSS DB will crash.
+	 * Wait for the helper threads to notice EXITING_PLUTO and
+	 * exit (if necessary, wake any sleeping helpers from their
+	 * slumber).  Without this any helper using NSS after the code
+	 * below has shutdown the NSS DB will crash.
+	 *
+	 * Since there's two pools of helpers, both need to be nudged.
+	 *
+	 * Since the helpers interact with the eventloop, this code
+	 * needs be in the event.
 	 *
 	 * This does not try to delete any tasks left waiting on the
 	 * helper queue.  Instead, code further down deleting
@@ -285,28 +293,16 @@ void whack_shutdown(struct logger *logger, bool leave_state)
 	 * after the've completed?
 	 */
 	stop_server_helpers(server_helpers_stopped_callback, logger);
-
-	/*
-	 * helper_threads_stopped_callback() is called once both all
-	 * helper-threads have exited, and all helper-thread events
-	 * lurking in the event-queue have been processed).
-	 */
 }
 
 void server_helpers_stopped_callback(void)
 {
-	/*
-	 * As libevent to shutdown the event-loop, once completed
-	 * SERVER_STOPPED_CALLBACK is called.
-	 *
-	 * XXX: don't hardwire the callback - passing it in as an
-	 * explicit parameter hopefully makes following the code flow
-	 * a little easier(?).
-	 */
+	stop_helpers(helpers_stopped_callback, &global_logger);
+}
+
+void helpers_stopped_callback(void)
+{
 	stop_server(server_stopped_callback);
-	/*
-	 * server_stopped() is called once the event-loop exits.
-	 */
 }
 
 void server_stopped_callback(int r, struct logger *logger)

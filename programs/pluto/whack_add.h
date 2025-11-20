@@ -20,6 +20,6 @@
 struct whack_message;
 struct show;
 
-void whack_add(const struct whack_message *m, struct show *s);
+void whack_add(struct whack_message_refcnt *wmr, struct show *s);
 
 #endif
