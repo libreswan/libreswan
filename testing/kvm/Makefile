@@ -1036,17 +1036,20 @@ KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FREEBSD_BASE_DOMAIN): $(KVM_FREEBSD_BASE_DOMAIN).iso
 
+KVM_FREEBSD_BASE_CONF ?= platform/freebsd/base.conf
+KVM_FREEBSD_LOADER_CONF ?= platform/freebsd/loader.conf
+
 $(KVM_FREEBSD_BASE_DOMAIN).iso: $(KVM_FREEBSD_ISO)
-$(KVM_FREEBSD_BASE_DOMAIN).iso: | freebsd/loader.conf
-$(KVM_FREEBSD_BASE_DOMAIN).iso: | freebsd/base.conf
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
+$(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		freebsd/base.conf \
+		$(KVM_FREEBSD_BASE_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
 		-input-charset utf-8 \
 		-graft-points \
-		/boot/loader.conf=freebsd/loader.conf \
+		/boot/loader.conf=$(KVM_FREEBSD_LOADER_CONF) \
 		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).conf
 	mv $@.tmp $@
 
@@ -1350,8 +1353,6 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	: only shutdown after transmogrify succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
-
-KVM_FREEBSD_TRANSMOGRIFY_FILES += freebsd/rc.conf
 
 ##
 ## Build/Install libreswan into the build domain.
