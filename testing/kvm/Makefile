@@ -1134,11 +1134,13 @@ KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 $(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BOOT_ISO)
 $(KVM_NETBSD_BASE_DOMAIN): $(KVM_NETBSD_BASE_DOMAIN).iso
 
+KVM_NETBSD_BASE_SH ?= platform/netbsd/base.sh
+
 $(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
-$(KVM_NETBSD_BASE_DOMAIN).iso: | netbsd/base.sh
+$(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		netbsd/base.sh \
+		$(KVM_NETBSD_BASE_SH) \
 		> $(KVM_NETBSD_BASE_DOMAIN).sh
 	: this mangles file/directory names
 	growisofs -M $@.tmp -l \
@@ -1350,7 +1352,6 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	touch $@
 
 KVM_FREEBSD_TRANSMOGRIFY_FILES += freebsd/rc.conf
-KVM_NETBSD_TRANSMOGRIFY_FILES += netbsd/rc.local
 
 ##
 ## Build/Install libreswan into the build domain.
