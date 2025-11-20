@@ -133,33 +133,33 @@ initiating all connections with alias "westnet-eastnet-subnets"
 "westnet-eastnet-subnets/2x1": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/1x1" #1 negotiating with 192.1.2.23
 "westnet-eastnet-subnets/2x2": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/1x1" #1 negotiating with 192.1.2.23
 initiating 4 connections
-"westnet-eastnet-subnets/1x1" #1: IMPAIR: job 1 helper 0 #1/#1 main_inR1_outI2 (dh): helper is warped by 1 milliseconds
+IMPAIR: "westnet-eastnet-subnets/1x1" #1: task 1, dh for main_inR1_outI2(): helper is warped by 1 milliseconds
 "westnet-eastnet-subnets/1x1" #1: sent Main Mode I2
-"westnet-eastnet-subnets/1x1" #1: IMPAIR: job 2 helper 0 #1/#1 main_inR2_outI3 (dh): helper is warped by 2 milliseconds
+IMPAIR: "westnet-eastnet-subnets/1x1" #1: task 2, dh for main_inR2_outI3(): helper is warped by 2 milliseconds
 "westnet-eastnet-subnets/1x1" #1: sent Main Mode I3
 "westnet-eastnet-subnets/1x1" #1: Peer ID is FQDN: '@east'
 "westnet-eastnet-subnets/1x1" #1: authenticated peer using preloaded certificate '@east' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet-subnets/1x1" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "westnet-eastnet-subnets/1x1" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/28===192.0.2.16/28}
-"westnet-eastnet-subnets/1x1" #2: IMPAIR: job 3 helper 0 #2/#2 quick_outI1 (dh): helper is warped by 3 milliseconds
+IMPAIR: "westnet-eastnet-subnets/1x1" #2: task 3, dh for quick_outI1(): helper is warped by 3 milliseconds
 "westnet-eastnet-subnets/1x2" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.0/28===192.0.2.64/30}
-"westnet-eastnet-subnets/1x2" #3: IMPAIR: job 4 helper 0 #3/#3 quick_outI1 (dh): helper is warped by 4 milliseconds
+IMPAIR: "westnet-eastnet-subnets/1x2" #3: task 4, dh for quick_outI1(): helper is warped by 4 milliseconds
 "westnet-eastnet-subnets/2x1" #4: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.128/28===192.0.2.16/28}
-"westnet-eastnet-subnets/2x1" #4: IMPAIR: job 5 helper 0 #4/#4 quick_outI1 (dh): helper is warped by 5 milliseconds
+IMPAIR: "westnet-eastnet-subnets/2x1" #4: task 5, dh for quick_outI1(): helper is warped by 5 milliseconds
 "westnet-eastnet-subnets/2x2" #5: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#1 msgid:MSGID proposal=AES_CBC-HMAC_SHA1_96, AES_CBC-HMAC_SHA2_512_256, AES_CBC-HMAC_SHA2_256_128, AES_GCM_16_128, AES_GCM_16_256, 3DES_CBC-HMAC_SHA1_96, 3DES_CBC-HMAC_SHA2_512_256, 3DES_CBC-HMAC_SHA2_256_128 pfsgroup=MODP2048 192.0.1.128/28===192.0.2.64/30}
-"westnet-eastnet-subnets/2x2" #5: IMPAIR: job 6 helper 0 #5/#5 quick_outI1 (dh): helper is warped by 6 milliseconds
+IMPAIR: "westnet-eastnet-subnets/2x2" #5: task 6, dh for quick_outI1(): helper is warped by 6 milliseconds
 "westnet-eastnet-subnets/1x1" #2: sent Quick Mode request
+"westnet-eastnet-subnets/2x1" #4: sent Quick Mode request
 "westnet-eastnet-subnets/1x2" #3: sent Quick Mode request
 "westnet-eastnet-subnets/2x2" #5: sent Quick Mode request
-"westnet-eastnet-subnets/2x1" #4: sent Quick Mode request
-"westnet-eastnet-subnets/1x1" #2: IMPAIR: job 7 helper 0 #2/#2 quick_inR1_outI2 (dh): helper is warped by 7 milliseconds
-"westnet-eastnet-subnets/1x2" #3: IMPAIR: job 8 helper 0 #3/#3 quick_inR1_outI2 (dh): helper is warped by 8 milliseconds
+IMPAIR: "westnet-eastnet-subnets/1x1" #2: task 7, dh for quick_inR1_outI2(): helper is warped by 7 milliseconds
+IMPAIR: "westnet-eastnet-subnets/2x1" #4: task 8, dh for quick_inR1_outI2(): helper is warped by 8 milliseconds
+IMPAIR: "westnet-eastnet-subnets/1x2" #3: task 9, dh for quick_inR1_outI2(): helper is warped by 9 milliseconds
 "westnet-eastnet-subnets/1x1" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-"westnet-eastnet-subnets/2x2" #5: IMPAIR: job 9 helper 0 #5/#5 quick_inR1_outI2 (dh): helper is warped by 9 milliseconds
-"westnet-eastnet-subnets/1x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-"westnet-eastnet-subnets/2x1" #4: IMPAIR: job 10 helper 0 #4/#4 quick_inR1_outI2 (dh): helper is warped by 10 milliseconds
-"westnet-eastnet-subnets/2x2" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+IMPAIR: "westnet-eastnet-subnets/2x2" #5: task 10, dh for quick_inR1_outI2(): helper is warped by 10 milliseconds
 "westnet-eastnet-subnets/2x1" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-subnets/1x2" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+"westnet-eastnet-subnets/2x2" #5: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec whack --trafficstatus
 #2: "westnet-eastnet-subnets/1x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'

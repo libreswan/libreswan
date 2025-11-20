@@ -38,7 +38,7 @@ west #
 west #
  ipsec up west-cuckoo --asynchronous
 "west-cuckoo" #3: initiating Child SA using IKE SA #1
-"west-cuckoo" #3: IMPAIR: job 3 helper 0 #3/#3 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is pausing for 5 seconds
+IMPAIR: "west-cuckoo" #3: task 3, dh for submit_v2_CREATE_CHILD_SA_new_child(): helper is pausing for 5 seconds
 west #
  ipsec whack --impair helper_thread_delay:no
 west #

@@ -18,32 +18,32 @@ west #
  ipsec up --asynchronous westnet-eastnet-ikev2
 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
- ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 1 helper 1 #1/#1 initiate_v2_IKE_SA_INIT_request'
-"westnet-eastnet-ikev2" #1: IMPAIR: job 1 helper 1 #1/#1 initiate_v2_IKE_SA_INIT_request (dh): helper is pausing for 5 seconds
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 1, .* initiate_v2_IKE_SA_INIT_request'
+IMPAIR: "westnet-eastnet-ikev2" #1: task 1, dh for initiate_v2_IKE_SA_INIT_request(): helper is pausing for 5 seconds
 west #
  ipsec rereadsecrets
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
- ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 2 helper 1 #1/#1 process_v2_IKE_SA_INIT_response'
-"westnet-eastnet-ikev2" #1: IMPAIR: job 2 helper 1 #1/#1 process_v2_IKE_SA_INIT_response (dh): helper is pausing for 5 seconds
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 2, .* process_v2_IKE_SA_INIT_response'
+IMPAIR: "westnet-eastnet-ikev2" #1: task 2, dh for process_v2_IKE_SA_INIT_response(): helper is pausing for 5 seconds
 west #
  ipsec rereadsecrets
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
- ../../guestbin/wait-for-pluto.sh '#1: initiator established IKE SA'
+ ../../guestbin/wait-for-pluto.sh 'initiator established IKE SA'
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' and 3nnn-bit RSASSA-PSS with SHA2_512 digital signature issued by 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 west #
- ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 3 helper 1 #1/#1 submit_v2_IKE_AUTH_request_signature'
-"westnet-eastnet-ikev2" #1: IMPAIR: job 3 helper 1 #1/#1 submit_v2_IKE_AUTH_request_signature (signature): helper is pausing for 5 seconds
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 3, .* submit_v2_IKE_AUTH_request_signature'
+IMPAIR: "westnet-eastnet-ikev2" #1: task 3, signature for submit_v2_IKE_AUTH_request_signature(): helper is pausing for 5 seconds
 west #
  ipsec rereadsecrets
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 west #
- ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 4 helper 1 #1/#1 process_v2_IKE_AUTH_response'
-"westnet-eastnet-ikev2" #1: IMPAIR: job 4 helper 1 #1/#1 process_v2_IKE_AUTH_response (decode certificate payload): helper is pausing for 5 seconds
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: task 4, .* process_v2_IKE_AUTH_response'
+IMPAIR: "westnet-eastnet-ikev2" #1: task 4, decode certificate payload for process_v2_IKE_AUTH_response(): helper is pausing for 5 seconds
 west #
  ipsec rereadsecrets
 forgetting secrets
