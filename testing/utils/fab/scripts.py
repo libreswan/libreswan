@@ -169,16 +169,18 @@ def commands(directory, logger):
         for script in in_scripts:
             guests.update(_script_guests(script, hosts.GUESTS))
         guests = sorted(guests)
-        logger.debug("guests: %s", ",".join(str(g) for g in guests))
         GUESTS = dict()
         for guest in guests:
             GUESTS[guest.host.name] = guest
+        logger.debug(f"GUESTS: {', '.join(str(g) for g in GUESTS)}")
 
         commands = Commands()
         for script in in_scripts:
             if not path.isfile(script):
                 continue
+            logger.debug(f"script: {script}")
             for line in open(script, "r"):
+                logger.debug(f"{line[0:-1]}")
                 # regex matches both:
                 #   <host># command
                 # and
@@ -187,9 +189,8 @@ def commands(directory, logger):
                 if command:
                     host = command.group("guest")
                     line = command.group("line")
-                    guest = GUESTS[host]
-                    logger.debug(f"HOST {host} GUEST {guest} LINE {line}")
                     if host:
+                        guest = GUESTS[host]
                         commands.append(Command(guest, line, script))
                     elif line:
                         commands.append(Command(None, "# "+line, script))
