@@ -132,8 +132,7 @@ def _guest_scripts(directory, logger):
 # for line in open("r").line includes; when <guest> is blank, a
 # comment is assumed.
 
-_GUEST_COMMAND_PATTERN = r'^(?P<guest>[a-z]*)# ?(?P<line>.*)[\n]$'
-_GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
+_GUEST_COMMAND_REGEX = re.compile(r'^(?P<guest>[a-z]*)# ?(?P<line>.*)[\n]$')
 
 def commands(directory, logger):
 
@@ -176,27 +175,27 @@ def commands(directory, logger):
         return commands
 
     # match experimental all.console.txt
-    for script in ("all.sh", "all.console.txt"):
-        all = path.join(directory, script)
-        if os.path.exists(all):
-            commands = Commands()
-            # read includes '\n';
-            for line in open(all, "r"):
-                # regex matches both:
-                #   <host># command
-                # and
-                #   # comment
-                command = _GUEST_COMMAND_REGEX.match(line)
-                if command:
-                    guest = command.group("guest")
-                    line = command.group("line")
-                    if guest:
-                        commands.append(Command(hosts.lookup(guest), line, script))
-                    elif line:
-                        commands.append(Command(None, "# "+line, script))
-                    else:
-                        commands.append(Command(None, "#", script))
-            return commands
+    script = "all.console.txt"
+    all = path.join(directory, script)
+    if os.path.exists(all):
+        commands = Commands()
+        # read includes '\n';
+        for line in open(all, "r"):
+            # regex matches both:
+            #   <host># command
+            # and
+            #   # comment
+            command = _GUEST_COMMAND_REGEX.match(line)
+            if command:
+                guest = command.group("guest")
+                line = command.group("line")
+                if guest:
+                    commands.append(Command(hosts.lookup(guest), line, script))
+                elif line:
+                    commands.append(Command(None, "# "+line, script))
+                else:
+                    commands.append(Command(None, "#", script))
+        return commands
 
     # match *.sh
     return _guest_scripts(directory, logger)

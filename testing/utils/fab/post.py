@@ -284,8 +284,7 @@ class TestResult:
         sanitize = []
         for guest in test.guests:
             sanitize.append(guest.host.name)
-        if os.path.exists(os.path.join(test.directory, "all.sh")) \
-        or os.path.exists(os.path.join(test.directory, "all.console.txt")):
+        if os.path.exists(os.path.join(test.directory, "all.console.txt")):
             sanitize.append("all")
 
         # Check the raw console output for problems and that it
