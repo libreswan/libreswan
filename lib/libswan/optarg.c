@@ -200,15 +200,37 @@ void optarg_usage(const char *progname, const char *synopsys, const char *detail
 		const char *argument = (*meta == '\0' ? "<argument>" : meta);
 
 		char option[sizeof(line) - 1];
+		struct jambuf buf = ARRAY_AS_JAMBUF(option);
+
+		/* single character option */
+		if (char_isprint(opt->val)) {
+			newline(stream, &line);
+			switch (opt->has_arg) {
+			case no_argument:
+				jam(&buf,  "[-%c]", opt->val);
+				break;
+			case optional_argument:
+				jam(&buf,  "[-%c[%s]]", opt->val, argument);
+				break;
+			case required_argument:
+				jam(&buf,  "[-%c %s]", opt->val, argument);
+				break;
+			default:
+				bad_case(opt->has_arg);
+			}
+			jam(&buf, " ");
+		}
+
+		/* multi-character option */
 		switch (opt->has_arg) {
 		case no_argument:
-			snprintf(option, sizeof(option),  "[--%s]", nm);
+			jam(&buf,  "[--%s]", nm);
 			break;
 		case optional_argument:
-			snprintf(option, sizeof(option),  "[--%s[=%s]]", nm, argument);
+			jam(&buf,  "[--%s[=%s]]", nm, argument);
 			break;
 		case required_argument:
-			snprintf(option, sizeof(option),  "[--%s %s]", nm, argument);
+			jam(&buf,  "[--%s %s]", nm, argument);
 			break;
 		default:
 			bad_case(opt->has_arg);
