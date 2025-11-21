@@ -1088,3 +1088,56 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
 	}
 	}
 }
+
+/*
+ * Check if a given permanent connection has another IKE SA with
+ * IKE_AUTH request outstanding. This is useful to detect potential
+ * IKE_AUTH crossing streams scenarios.
+ */
+bool has_outstanding_ike_auth_request(const struct connection *c,
+		const struct ike_sa *ike,
+		const struct msg_digest *md)
+{
+	/* Check can be disabled in a connection config */
+	if (!c->config->reject_simultaneous_ike_auth) {
+		return false;
+	}
+
+	/* Connection must be permanent and request must be incoming */
+	if (v2_msg_role(md) != MESSAGE_REQUEST || !is_permanent(c)) {
+		return false;
+	}
+
+	struct state_filter sf = {
+	  .connection_serialno = c->serialno,
+	  .search = {
+		.order = NEW2OLD,
+		.verbose.logger = ike->sa.logger,
+		.where = HERE,
+	  },
+	};
+
+	while (next_state(&sf)) {
+		if (!IS_IKE_SA(sf.st)) {
+			continue;
+		}
+
+		struct ike_sa *simultaneous_ike = pexpect_ike_sa(sf.st);
+		if (simultaneous_ike == NULL || simultaneous_ike == ike) {
+			continue;
+		} else if (simultaneous_ike->sa.st_sa_role != SA_INITIATOR) {
+			continue;
+		} else if (!v2_msgid_request_outstanding(simultaneous_ike)) {
+			continue;
+		}
+
+		const struct v2_exchange *outstanding_request =
+			simultaneous_ike->sa.st_v2_msgid_windows.initiator.exchange;
+		if (outstanding_request != NULL && outstanding_request->type == ISAKMP_v2_IKE_AUTH) {
+			llog(RC_LOG, ike->sa.logger, "IKE SA "PRI_SO" has outstanding IKE_AUTH request",
+					pri_so(simultaneous_ike->sa.st_serialno));
+			return true;
+		}
+	}
+	return false;
+}
