@@ -677,6 +677,20 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		return STF_FATAL;
        }
 
+	const struct connection *c = ike->sa.st_connection;
+
+	/* If initiator has another IKE SA with IKE_AUTH request
+	 * outstanding for the same permanent connection then send
+	 * AUTHENTICATION_FAILED instead of IKE_AUTH response for this
+	 * IKE_AUTH request and terminate current IKE SA. This is to
+	 * prevent potential crossing streams scenario.
+	 */
+	if (has_outstanding_ike_auth_request(c, ike, md)) {
+		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
+				empty_shunk, ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
 	/*
 	 * This both decodes the initiator's ID and, when necessary,
 	 * switches connection based on that ID.
@@ -685,7 +699,6 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * switch based on the contents of the CERTREQ.
 	 */
 
-	const struct connection *c = ike->sa.st_connection;
 	bool found_ppk = false;
 
 	/*
