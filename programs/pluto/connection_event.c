@@ -89,8 +89,8 @@ void schedule_connection_event(struct connection *c,
 	c->events[event_kind] = d;
 
 	if (impair != NULL) {
-		llog(RC_LOG, logger,
-		     "IMPAIR: %s: skip scheduling %s event",
+		llog(IMPAIR_STREAM, logger,
+		     "%s: skip scheduling %s event",
 		     impair, impair);
 		return;
 	}
@@ -147,8 +147,8 @@ void whack_impair_call_connection_event_handler(struct connection *c,
 	struct connection_event *event = c->events[event_kind];
 	if (event != NULL) {
 		threadtime_t inception = threadtime_start();
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam_string(buf, "IMPAIR: dispatch");
+		LLOG_JAMBUF(IMPAIR_STREAM, logger, buf) {
+			jam_string(buf, "dispatch");
 			jam_connection_event(buf, event);
 		}
 		/* dispatch will delete */
@@ -156,7 +156,7 @@ void whack_impair_call_connection_event_handler(struct connection *c,
 		return;
 	}
 	name_buf eb;
-	llog(RC_LOG, logger, "IMPAIR: no %s event for connection found",
+	llog(IMPAIR_STREAM, logger, "no %s event for connection found",
 	     str_enum_short(&connection_event_kind_names, event_kind, &eb));
 }
 
