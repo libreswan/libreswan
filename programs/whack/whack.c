@@ -337,10 +337,6 @@ enum opt_seen_ix {
 
 enum opt {
 
-	OPT_HELP = 'h',
-	OPT_VERSION = 'v',
-	OPT_LABEL = 'l',
-
 /*
  * Start the the non-ASCIC options at 256 so that they can't clash
  * with ASCII options.
@@ -357,6 +353,10 @@ enum opt {
 
 	OPT_STATUS = OPT_START,
 	OPT_SHUTDOWN,
+
+	OPT_HELP,
+	OPT_VERSION,
+	OPT_LABEL,
 
 	OPT_ASYNC,
 

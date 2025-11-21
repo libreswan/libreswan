@@ -281,10 +281,10 @@ static void print_option(const struct configsetup_options po,
 }
 
 enum opt {
-	OPT_HELP = 'h',
-	OPT_CONFIG = 256,
+	OPT_DEBUG = 256,
+	OPT_HELP,
+	OPT_CONFIG,
 	OPT_VERBOSE,
-	OPT_DEBUG,
 	OPT_AUTOALL,
 	OPT_LISTALL,
 	OPT_LISTADD,

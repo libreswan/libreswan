@@ -38,10 +38,10 @@
 enum opt {
 	OPT_VERBOSE = 256,
 	OPT_DEBUG,
-	OPT_CONFIG = 'C',
-	OPT_CONN = 'c',
-	OPT_HELP = 'h',
-	OPT_NOSETUP = 'n',
+	OPT_CONFIG,
+	OPT_CONN,
+	OPT_HELP,
+	OPT_NOSETUP,
 };
 
 const struct option optarg_options[] =
@@ -52,8 +52,8 @@ const struct option optarg_options[] =
 	{ "verbose\0",           no_argument, NULL, OPT_VERBOSE, },
 	{ IGNORE_OPT("rootdir", "5.3"), no_argument, NULL, 0, },
 	{ IGNORE_OPT("rootdir2", "5.3"), no_argument, NULL, 0, },
-	{ "nosetup",             no_argument, NULL, OPT_NOSETUP },
-	{ "help",                no_argument, NULL, OPT_HELP },
+	{ "nosetup\0",             no_argument, NULL, OPT_NOSETUP },
+	{ "help\0",                no_argument, NULL, OPT_HELP },
 	{ 0, 0, 0, 0 }
 };
 
