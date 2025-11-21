@@ -33,8 +33,34 @@
 int optarg_index = -1;
 unsigned verbose;
 
-int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options)
+static bool options_extracted;
+static char options[10];
+
+int optarg_getopt(struct logger *logger, int argc, char **argv)
 {
+	if (!options_extracted) {
+		struct jambuf buf = ARRAY_AS_JAMBUF(options);
+		for (const struct option *opt = optarg_options;
+		     opt->name != NULL; opt++) {
+			if (char_isprint(opt->val)) {
+				switch (opt->has_arg) {
+				case no_argument:
+					jam(&buf,  "%c", opt->val);
+					break;
+				case optional_argument:
+					jam(&buf,  "%c::", opt->val);
+					break;
+				case required_argument:
+					jam(&buf,  "%c:",opt->val);
+					break;
+				default:
+					bad_case(opt->has_arg);
+				}
+			}
+		}
+		PASSERT(logger, jambuf_ok(&buf));
+	}
+
 	while (true) {
 		int c = getopt_long(argc, argv, options, optarg_options, &optarg_index);
 		if (c < 0) {

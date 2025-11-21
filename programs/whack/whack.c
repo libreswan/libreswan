@@ -1022,7 +1022,7 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}

@@ -449,7 +449,7 @@ int main(int argc, char *argv[])
 
 	while (true) {
 
-		int c = optarg_getopt(logger, argc, argv, "v?d:lrg");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}
