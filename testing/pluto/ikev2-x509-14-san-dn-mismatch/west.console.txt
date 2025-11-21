@@ -29,7 +29,7 @@ west #
 "san" #1: X509: authentication failed; peer ID DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=NOTeast.testing.libreswan.org, E=user-NOTeast@testing.libreswan.org'
 "san" #1: deleting IKE SA (IKE_AUTH_I) and sending notification
 "san" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"san" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "san" #2: revival: skip scheduling revival event
 west #
  echo "done"
 done

@@ -48,7 +48,7 @@ west #
 "west-east" #1: IKE SA established but initiator rejected Child SA response
 "west-east" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-east" #2: revival: skip scheduling revival event
 west #
  # expect the on-demand kernel policy
 west #
@@ -66,7 +66,7 @@ west #
 down
 west #
  ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
-"west-east" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-east" #3: revival: skip scheduling revival event
 west #
  ipsec _kernel state
 src 192.0.1.254 dst 192.0.2.254

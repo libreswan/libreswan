@@ -45,7 +45,7 @@ west #
 "west-east" #2: sent Quick Mode request
 "west-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-east" #2: revival: skip scheduling revival event
 "west-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
@@ -671,7 +671,7 @@ output: | revival: skip update_remote_port(), not an instance
 output: "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 output: | string logger: newref @0x7ff4d060efc8(0->1) (schedule_connection_event() +44 programs/pluto/connection_event.c)
 output: | "west-east": addref @0x7ff4d1066a78(4->5) event CONNECTION_REVIVAL for "west-east":  (schedule_connection_event() +49 programs/pluto/connection_event.c)
-output: "west-east" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: output: "west-east" #2: revival: skip scheduling revival event
 output: | spd_owner() looking for SPD owner of 192.0.1.0/24===192.0.2.0/24 with routing >= ROUTED_ONDEMAND[ONDEMAND]
 output: | FOR_EACH_SPD_ROUTE[remote_client_range=192.0.2.0/24]... in (routed_negotiation_to_routed_ondemand() +911 programs/pluto/routing.c)
 output: |   found "west-east" 192.0.1.0/24===192.0.2.0/24

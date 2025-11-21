@@ -5,7 +5,7 @@
 # While revival is pending, the kernel policy have transitioned to
 # on-demand.
 
-../../guestbin/wait-for-pluto.sh '#2: IMPAIR: revival: skip scheduling revival event'
+../../guestbin/wait-for-pluto.sh '#2: revival: skip scheduling revival event'
 ipsec _kernel policy
 
 # Now trigger the revival.  Since ROAD is down it will fail.  And

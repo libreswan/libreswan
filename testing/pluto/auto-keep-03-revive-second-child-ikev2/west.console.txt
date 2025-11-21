@@ -54,7 +54,7 @@ west #
  ipsec whack --deletestate 3
 "west-cuckoo" #3: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-cuckoo" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-cuckoo" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-cuckoo" #3: revival: skip scheduling revival event
 "west-cuckoo" #3: ESP traffic information: in=84B out=84B
 west #
  ../../guestbin/ping-once.sh --up 192.0.2.254

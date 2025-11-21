@@ -578,7 +578,7 @@ Redirecting to: [initsystem]
 "west-eku-codeSigning" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "west-eku-codeSigning" #1: encountered fatal error in state IKE_AUTH_I
 "west-eku-codeSigning" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-eku-codeSigning" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-eku-codeSigning" #2: revival: skip scheduling revival event
 "west-eku-codeSigning" #1: deleting IKE SA (sent IKE_AUTH request)
  ipsec stop
 Redirecting to: [initsystem]
