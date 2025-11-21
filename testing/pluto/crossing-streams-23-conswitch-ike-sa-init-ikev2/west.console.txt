@@ -29,8 +29,8 @@ west #
  ipsec up a --asynchronous
 "a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 west #
- ../../guestbin/wait-for-pluto.sh --match '"a" #1: IMPAIR: blocking outbound message 1'
-"a" #1: IMPAIR: blocking outbound message 1
+ ../../guestbin/wait-for-pluto.sh --match 'IMPAIR: "a" #1: blocking outbound message 1'
+IMPAIR: "a" #1: blocking outbound message 1
 west #
  ../../guestbin/wait-for-pluto.sh --match '"a" #1: sent IKE_SA_INIT request'
 "a" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

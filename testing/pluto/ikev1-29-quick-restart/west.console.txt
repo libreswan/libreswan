@@ -26,19 +26,19 @@ west #
 "west-to-east" #1: sent Main Mode request
 west #
  ../../guestbin/drip-inbound.sh 1 '#1: sent Main Mode I2'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 "west-to-east" #1: sent Main Mode I2
 west #
  ../../guestbin/drip-inbound.sh 2 '#1: sent Main Mode I3'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
 "west-to-east" #1: sent Main Mode I3
 west #
  ../../guestbin/drip-inbound.sh 3 '#1: ISAKMP SA established'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
 "west-to-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP2048}
@@ -49,7 +49,7 @@ west #
 "west-to-east" #2: sent Quick Mode request
 west #
  ../../guestbin/wait-for-inbound.sh 4
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4
 west #
  # now restart
 west #

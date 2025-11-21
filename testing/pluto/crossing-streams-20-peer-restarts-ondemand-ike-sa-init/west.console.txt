@@ -45,7 +45,7 @@ west #
 "east-west" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 west #
  ../../guestbin/wait-for-inbound.sh 1
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 west #
  # should be the block
 west #
@@ -58,13 +58,13 @@ west #
  # west receives IKE_SA_INIT request
 west #
  ../../guestbin/drip-inbound.sh 2 '#2: sent IKE_SA_INIT response'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
 "east-west" #2: sent IKE_SA_INIT response to 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, expecting IKE_AUTH, IKE_INTERMEDIATE, or IKE_AUTH (EAP)
 west #
  ../../guestbin/drip-inbound.sh 3 '#3: responder established Child SA'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
 IMPAIR: start processing inbound drip packet 3
 IMPAIR: stop processing inbound drip packet 3
 "east-west" #3: responder established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}

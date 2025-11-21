@@ -50,8 +50,8 @@ IMPAIR: block all outbound messages: no -> yes
 west #
  ipsec whack --down-ike --name west-cuckold --asynchronous
 west #
- ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: blocking outbound message 1'
-"west-cuckold" #1: IMPAIR: blocking outbound message 1
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: blocking outbound message 1'
+IMPAIR: "west-cuckold" #1: blocking outbound message 1
 west #
  ipsec whack --no-impair block_outbound
 IMPAIR: block all outbound messages: yes -> no

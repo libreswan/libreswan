@@ -51,52 +51,52 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
 east #
- sed -n -e '/IMPAIR: start processing inbound replay forward/,/IMPAIR: stop processing inbound replay forward/ { /^[^|]/ p }' /tmp/pluto.log
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
+ sed -n -e '/IMPAIR: .*: start processing inbound replay forward/,/IMPAIR: .*: stop processing inbound replay forward/ { /^[^|]/ p }' /tmp/pluto.log
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: responding to Main Mode
 "westnet-eastnet" #1: sent Main Mode R1
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R1
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R2
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 3
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 3
 "westnet-eastnet" #1: Peer ID is FQDN: '@west'
 "westnet-eastnet" #1: authenticated peer using preloaded certificate '@west' and 2nnn-bit RSA with SHA1 signature
 "westnet-eastnet" #1: ISAKMP SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 3
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 3
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R3
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 2
 "westnet-eastnet" #1: packet rejected: should have been encrypted
 "westnet-eastnet" #1: sending notification INVALID_FLAGS to 192.1.2.45:500
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 3
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 3
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 3
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 4
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 3
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 4
 "westnet-eastnet" #1: the peer proposed: 192.0.2.0/24===192.0.1.0/24
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 4
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 4
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 1
 "westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R3
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 1
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 1
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 2
 "westnet-eastnet" #1: packet rejected: should have been encrypted
 "westnet-eastnet" #1: sending notification INVALID_FLAGS to 192.1.2.45:500
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 2
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 3
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 2
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 3
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 3
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 4
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 4
-packet from 192.1.2.45:500: IMPAIR: start processing inbound replay forward packet 5
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 3
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 4
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 4
+IMPAIR: packet from 192.1.2.45:500: start processing inbound replay forward packet 5
 "westnet-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-packet from 192.1.2.45:500: IMPAIR: stop processing inbound replay forward packet 5
+IMPAIR: packet from 192.1.2.45:500: stop processing inbound replay forward packet 5
 east #

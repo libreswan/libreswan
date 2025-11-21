@@ -43,7 +43,7 @@ west #
  # helper.
 west #
  ../../guestbin/drip-inbound.sh 1 'IMPAIR: "cuckoo" #3: task 4, dh for process_v2_CREATE_CHILD_SA_child_response'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 IMPAIR: "cuckoo" #3: task 4, dh for process_v2_CREATE_CHILD_SA_child_response(): helper is pausing for 5 seconds
@@ -59,7 +59,7 @@ west #
  # XXX: it is tied to #1/#1 but should be #1/#4
 west #
  ../../guestbin/drip-inbound.sh 2 'IMPAIR: "cuckoo" #4: task 5'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
 IMPAIR: "cuckoo" #4: task 5, dh for process_v2_CREATE_CHILD_SA_request(): helper is pausing for 5 seconds

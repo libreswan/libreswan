@@ -58,7 +58,7 @@ east# ipsec up --asynchronous east-west
 
 west# ../../guestbin/wait-for-inbound.sh 1
 
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 
 #
 # initiate west (create IKE #1)
@@ -75,7 +75,7 @@ west# ../../guestbin/wait-for-pluto.sh '^".*#1: sent IKE_SA_INIT request'
 
 west# ../../guestbin/wait-for-inbound.sh 2
 
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 2
 
 #
 # on west, respond to east's IKE_SA_INIT request (message 1) (create IKE #2)
@@ -93,7 +93,7 @@ west# ../../guestbin/wait-for-pluto.sh '^".*#2: sent IKE_SA_INIT'
 
 west# ../../guestbin/wait-for-inbound.sh 3
 
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 3
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 3
 
 #
 # on west, process east's IKE_SA_INIT response (message 2) (create Child #3)
@@ -111,7 +111,7 @@ west# ../../guestbin/wait-for.sh --match '^".*#1: sent IKE_AUTH request'  -- cat
 
 west# ../../guestbin/wait-for-inbound.sh 4
 
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 4
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 4
 
 #
 # on west, process east's IKE_SA_AUTH request (message 3) (create Child #4)
