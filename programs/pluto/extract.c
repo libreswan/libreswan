@@ -4098,6 +4098,12 @@ diag_t extract_connection(const struct whack_message *wm,
 			   wm->send_esp_tfc_padding_not_supported,
 			   YN_NO, wm, verbose);
 
+	if (wm->reject_simultaneous_ike_auth && ike_version < IKEv2) {
+		return diag("cannot specify reject-simultaneous-ike-auth for IKEv1");
+	}
+	config->reject_simultaneous_ike_auth = extract_yn("", "reject-simultaneous-ike-auth",
+			wm->reject_simultaneous_ike_auth, /*value_when_unset*/YN_YES, wm, verbose);
+
 	/*
 	 * Since security labels use the same REQID for everything,
 	 * pre-assign it.

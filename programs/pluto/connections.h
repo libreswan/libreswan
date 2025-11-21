@@ -442,6 +442,8 @@ struct config {
 		uint32_t id;
 	} ipsec_interface;
 
+	bool reject_simultaneous_ike_auth;
+
 	struct end_config end[END_ROOF];
 };
 
