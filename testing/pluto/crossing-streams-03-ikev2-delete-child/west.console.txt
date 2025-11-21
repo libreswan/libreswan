@@ -41,14 +41,14 @@ west #
  ipsec whack --delete-child --name east-west --asynchronous
 west #
  ../../guestbin/wait-for-outbound.sh 1
-"east-west" #1: IMPAIR: blocking outbound message 1
+IMPAIR: "east-west" #1: blocking outbound message 1
 west #
  # now do same on east
 west #
  # wait for EAST's delete message to be blocked
 west #
  ../../guestbin/wait-for-inbound.sh 1
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 west #
  # stop further blocking so revival can occur
 west #
@@ -69,7 +69,7 @@ west #
  # inbound SPIs.
 west #
  ../../guestbin/drip-inbound.sh 1 '#2: connection is supposed to remain up'
-packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
 "east-west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -84,7 +84,7 @@ west #
  # SA's already deleted the response is ignored.
 west #
  ../../guestbin/drip-outbound.sh 1 '#1: Child SA #2 no longer exists'
-"east-west" #1: IMPAIR: blocking outbound message 1
+IMPAIR: "east-west" #1: blocking outbound message 1
 IMPAIR: start processing outbound drip packet 1
 IMPAIR: stop processing outbound drip packet 1
 "east-west" #1: Child SA #2 no longer exists, ignoring delete response

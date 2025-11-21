@@ -174,7 +174,7 @@ static void impair_message_drip(struct direction_impairment *direction,
 		}
 	}
 	if (m == NULL) {
-		llog(RC_LOG, logger, "IMPAIR: %s message %u not found",
+		llog(IMPAIR_STREAM, logger, "%s message %u not found",
 		     direction->name, nr);
 		return;
 	}
@@ -192,14 +192,14 @@ void add_message_impairment(enum impair_action impair_action,
 
 	if (!(*direction->recording)) {
 		/* auto-enable; can disable with --impair record_*:no */
-		llog(RC_LOG, logger, "IMPAIR: recording all %s messages",
+		llog(IMPAIR_STREAM, logger, "recording all %s messages",
 		     direction->name);
 		(*direction->recording) = true;
 	}
 
 	switch (impair_action) {
 	case CALL_IMPAIR_MESSAGE_BLOCK:
-		llog(RC_LOG, logger, "IMPAIR: block all %s messages: %s -> %s",
+		llog(IMPAIR_STREAM, logger, "block all %s messages: %s -> %s",
 		     direction->name,
 		     bool_str(direction->block),
 		     bool_str(whack_enable));
@@ -216,19 +216,19 @@ void add_message_impairment(enum impair_action impair_action,
 		/* add to list */
 		m->next = direction->impairments;
 		direction->impairments = m;
-		llog(RC_LOG, logger, "IMPAIR: will drop %s message %u",
+		llog(IMPAIR_STREAM, logger, "will drop %s message %u",
 		     direction->name, /*message_nr*/whack_value);
 		break;
 	}
 	case CALL_IMPAIR_MESSAGE_DUPLICATE:
-		llog(RC_LOG, logger, "IMPAIR: replay duplicate of all %s messages: %s -> %s",
+		llog(IMPAIR_STREAM, logger, "replay duplicate of all %s messages: %s -> %s",
 		     direction->name,
 		     bool_str(direction->duplicate),
 		     bool_str(whack_enable));
 		direction->duplicate = whack_enable;
 		return;
 	case CALL_IMPAIR_MESSAGE_REPLAY:
-		llog(RC_LOG, logger, "IMPAIR: replay all %s messages old-to-new: %s -> %s",
+		llog(IMPAIR_STREAM, logger, "replay all %s messages old-to-new: %s -> %s",
 		     direction->name,
 		     bool_str(direction->replay),
 		     bool_str(whack_enable));
@@ -249,10 +249,10 @@ static bool impair_message(const struct message *message,
 
 	if (direction->block) {
 		if (message->count > 0) {
-			llog(RC_LOG, logger, "IMPAIR: blocking retransmit %u of %s message %u",
+			llog(IMPAIR_STREAM, logger, "blocking retransmit %u of %s message %u",
 			     message->count, direction->name, message->nr);
 		} else {
-			llog(RC_LOG, logger, "IMPAIR: blocking %s message %u",
+			llog(IMPAIR_STREAM, logger, "blocking %s message %u",
 			     direction->name, message->nr);
 		}
 		return true;
@@ -275,15 +275,14 @@ static bool impair_message(const struct message *message,
 			while (next_state(&sf)) {
 				struct state *st = sf.st;
 				if (whack_attached(st->logger)) {
-					llog(RC_LOG, st->logger,
-					     "IMPAIR: drop %s message %u",
+					llog(IMPAIR_STREAM, st->logger, "drop %s message %u",
 					     direction->name,
 					     m->message_nr);
 					whacked = true;
 				}
 			}
 			if (!whacked) {
-				llog(RC_LOG, logger, "IMPAIR: dropping %s message %u",
+				llog(IMPAIR_STREAM, logger, "dropping %s message %u",
 				     direction->name, message->nr);
 			}
 			/*
@@ -348,8 +347,7 @@ static void drip_message(const struct direction_impairment *direction,
 			 const struct message *m, const char *reason,
 			 struct logger *logger)
 {
-	llog(RC_LOG, logger,
-	     "IMPAIR: start processing %s %s packet %u",
+	llog(IMPAIR_STREAM, logger, "start processing %s %s packet %u",
 	     direction->name, reason, m->nr);
 	if (LDBGP(DBG_BASE, logger)) {
 		llog_hunk(DEBUG_STREAM, logger, &m->body);
@@ -357,8 +355,7 @@ static void drip_message(const struct direction_impairment *direction,
 
 	direction->drip(m, logger);
 
-	llog(RC_LOG, logger,
-	     "IMPAIR: stop processing %s %s packet %u",
+	llog(IMPAIR_STREAM, logger, "stop processing %s %s packet %u",
 	     direction->name, reason, m->nr);
 }
 

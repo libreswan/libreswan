@@ -48,7 +48,7 @@ done
 north #
  # wait for NORTH to block on revival
 north #
- ../../guestbin/wait-for-pluto.sh "IMPAIR: redirect"
+ ../../guestbin/wait-for-pluto.sh "IMPAIR: .*: redirect"
 IMPAIR: "north-east" #2: redirect: skip scheduling redirect event
 north #
  ipsec whack --impair trigger_revival:1

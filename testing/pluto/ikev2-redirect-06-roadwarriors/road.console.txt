@@ -48,7 +48,7 @@ done
 road #
  # wait for ROAD to block on revival
 road #
- ../../guestbin/wait-for-pluto.sh "IMPAIR: redirect"
+ ../../guestbin/wait-for-pluto.sh "IMPAIR: .*: redirect"
 IMPAIR: "road-east" #2: redirect: skip scheduling redirect event
 road #
  ipsec whack --impair trigger_revival:1

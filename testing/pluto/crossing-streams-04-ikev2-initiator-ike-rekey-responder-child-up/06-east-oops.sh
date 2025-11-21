@@ -1,5 +1,5 @@
 # Wait for WEST's rekey request to arrive (and be blocked).
-../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
+../../guestbin/wait-for-pluto.sh 'IMPAIR: .*: blocking inbound message 1'
 ipsec whack --no-impair block_inbound
 
 # now get the request onto the crypto queue

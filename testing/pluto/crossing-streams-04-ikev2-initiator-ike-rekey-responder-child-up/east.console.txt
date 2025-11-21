@@ -34,7 +34,7 @@ east #
  # Wait for WEST's rekey request to arrive (and be blocked).
 east #
  ../../guestbin/wait-for-pluto.sh 'IMPAIR: blocking inbound message 1'
-packet from 192.1.2.45:500: IMPAIR: blocking inbound message 1
+IMPAIR: packet from 192.1.2.45:500: blocking inbound message 1
 east #
  ipsec whack --no-impair block_inbound
 IMPAIR: block all inbound messages: yes -> no
