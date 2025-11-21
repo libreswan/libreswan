@@ -124,6 +124,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.wm_tfc = conn->values[KWS_TFC].string;
 	msg.send_esp_tfc_padding_not_supported =
 		conn->values[KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED].option;
+	msg.reject_simultaneous_ike_auth = conn->values[KWYN_REJECT_SIMULTANEOUS_IKE_AUTH].option;
 	msg.wm_nflog_group = conn->values[KWS_NFLOG_GROUP].string;
 	msg.wm_reqid = conn->values[KWS_REQID].string;
 

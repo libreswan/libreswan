@@ -432,6 +432,7 @@ struct whack_message {
 #define wm_priority conn[END_ROOF].value[KWS_PRIORITY]
 #define wm_tfc conn[END_ROOF].value[KWS_TFC]
 	enum yn_options send_esp_tfc_padding_not_supported;
+	enum yn_options reject_simultaneous_ike_auth;
 
 	enum yn_options iptfs;
 	enum yn_options iptfs_fragmentation;
