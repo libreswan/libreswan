@@ -81,7 +81,7 @@ road #
 IMPAIR: "road-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.44; delete IKE SA
 "road-east" #5: initiating IKEv2 connection to 192.1.2.44 using UDP
 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
-"road-east" #5: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "road-east" #5: retransmit so timing out SA (may retry)
 "road-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "road-east" #5: revival: skip scheduling revival event
 "road-east" #5: deleting IKE SA (sent IKE_SA_INIT request)

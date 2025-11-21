@@ -22,7 +22,7 @@ west #
  ipsec auto --up westnet-eastnet
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #1: sent Main Mode request
-"westnet-eastnet" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
@@ -30,7 +30,7 @@ west #
 "westnet-eastnet-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2" #3: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"westnet-eastnet-ikev2" #3: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ikev2" #3: retransmit so timing out SA (may retry)
 "westnet-eastnet-ikev2" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 "westnet-eastnet-ikev2" #3: deleting IKE SA (sent IKE_SA_INIT request)
 west #

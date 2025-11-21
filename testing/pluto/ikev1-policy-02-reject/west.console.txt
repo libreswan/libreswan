@@ -20,7 +20,7 @@ west #
 "ikev1" #1: initiating IKEv1 Main Mode connection
 "ikev1" #1: sent Main Mode request
 "ikev1" #1: ignoring unsecured informational payload INVALID_MAJOR_VERSION, length=12
-"ikev1" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "ikev1" #1: retransmit so timing out SA (may retry)
 "ikev1" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "ikev1" #1: revival: skip scheduling revival event
 "ikev1" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
