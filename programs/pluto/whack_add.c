@@ -305,7 +305,7 @@ static void submit_add_connections(struct whack_message_refcnt *wmr,
 
 helper_cb *add_connections_resolve_helper(struct help_request *request,
 					  const struct logger *logger,
-					  enum helper_id UNUSED)
+					  enum helper_id helper_id UNUSED)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	diag_t d = extract_host_addrs(&request->wmr->wm, &request->host_addrs, verbose);
