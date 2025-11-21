@@ -43,10 +43,10 @@ west #
 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
 "westnet-eastnet-ikev2a" #1: IMPAIR: retransmit so timing out SA (may retry)
 "westnet-eastnet-ikev2a" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2a" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ikev2a" #2: revival: skip scheduling revival event
 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ikev2b" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2b" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ikev2b" #3: revival: skip scheduling revival event
 "westnet-eastnet-ikev2a" #1: deleting IKE SA (established IKE SA)
 west #
  echo done

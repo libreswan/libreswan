@@ -58,7 +58,7 @@ west #
 "nss-cert-crl" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "nss-cert-crl" #1: STATE_MAIN_I3: 15 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "nss-cert-crl" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"nss-cert-crl" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "nss-cert-crl" #1: revival: skip scheduling revival event
 "nss-cert-crl" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  # check there's a pending CRL; fetch it and confirm it has cleared
@@ -89,7 +89,7 @@ west #
  # cert is revoked.
 west #
  ipsec whack --impair trigger_revival:1
-"nss-cert-crl": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
+IMPAIR: "nss-cert-crl": dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
 "nss-cert-crl": reviving connection which timeout IKE SA but must remain up per local policy (serial $1)
 "nss-cert-crl" #2: initiating IKEv1 Main Mode connection
 "nss-cert-crl" #2: sent Main Mode request
@@ -103,7 +103,7 @@ west #
 "nss-cert-crl" #2: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "nss-cert-crl" #2: STATE_MAIN_I3: 15 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "nss-cert-crl" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-"nss-cert-crl" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "nss-cert-crl" #2: revival: skip scheduling revival event
 "nss-cert-crl" #2: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log

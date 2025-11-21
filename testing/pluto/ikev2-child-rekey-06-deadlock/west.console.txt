@@ -91,7 +91,7 @@ west #
 "west" #4: sent CREATE_CHILD_SA request to rekey Child SA #3 using IKE SA #1 {ESP <0xESPESP}
 "west" #1: ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
 "west" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #3: revival: skip scheduling revival event
 "west" #3: ESP traffic information: in=0B out=0B
 "west" #4: deleting larval Child SA
 "west" #1: deleting IKE SA (established IKE SA)

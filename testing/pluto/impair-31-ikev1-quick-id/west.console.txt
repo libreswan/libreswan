@@ -32,7 +32,7 @@ west #
 "west" #2: sent Quick Mode request
 "west" #2: IMPAIR: retransmit so timing out SA (may retry)
 "west" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #2: revival: skip scheduling revival event
 "west" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair v1_emit_quick_id:1
@@ -43,7 +43,7 @@ west #
 "west" #3: sent Quick Mode request
 "west" #3: IMPAIR: retransmit so timing out SA (may retry)
 "west" #3: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-"west" #3: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #3: revival: skip scheduling revival event
 "west" #3: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair v1_emit_quick_id:3
@@ -54,7 +54,7 @@ west #
 "west" #4: sent Quick Mode request
 "west" #4: IMPAIR: retransmit so timing out SA (may retry)
 "west" #4: connection is supposed to remain up; revival attempt 3 scheduled in 10 seconds
-"west" #4: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west" #4: revival: skip scheduling revival event
 "west" #4: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

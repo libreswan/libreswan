@@ -23,13 +23,13 @@ west #
 "west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-east" #1: IMPAIR: retransmit so timing out SA (may retry)
 "west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-east" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-east" #1: revival: skip scheduling revival event
 "west-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  grep IMPAIR: /tmp/pluto.log
 "west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
 "west-east" #1: IMPAIR: retransmit so timing out SA (may retry)
-"west-east" #1: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-east" #1: revival: skip scheduling revival event
 west #
  grep '^packet from 192.1.2.45' /tmp/pluto.log
 west #

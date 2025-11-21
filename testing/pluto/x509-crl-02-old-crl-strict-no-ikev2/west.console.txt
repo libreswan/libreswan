@@ -55,7 +55,7 @@ west #
 "nss-cert-crl" #1: X509: certificate payload rejected for this connection
 "nss-cert-crl" #1: encountered fatal error in state IKE_AUTH_I
 "nss-cert-crl" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"nss-cert-crl" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "nss-cert-crl" #2: revival: skip scheduling revival event
 "nss-cert-crl" #1: deleting IKE SA (sent IKE_AUTH request)
 west #
  # check there's a pending CRL; fetch it and confirm it has cleared
@@ -86,7 +86,7 @@ west #
  # cert is revoked.
 west #
  ipsec whack --impair trigger_revival:1
-"nss-cert-crl": IMPAIR: dispatch REVIVAL; attempt 1 next in 5s; delete Child SA
+IMPAIR: "nss-cert-crl": dispatch REVIVAL; attempt 1 next in 5s; delete Child SA
 "nss-cert-crl": reviving connection which delete Child SA but must remain up per local policy (serial $1)
 "nss-cert-crl" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "nss-cert-crl" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -97,7 +97,7 @@ west #
 "nss-cert-crl" #3: X509: certificate payload rejected for this connection
 "nss-cert-crl" #3: encountered fatal error in state IKE_AUTH_I
 "nss-cert-crl" #4: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-"nss-cert-crl" #4: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "nss-cert-crl" #4: revival: skip scheduling revival event
 "nss-cert-crl" #3: deleting IKE SA (sent IKE_AUTH request)
 west #
  test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log

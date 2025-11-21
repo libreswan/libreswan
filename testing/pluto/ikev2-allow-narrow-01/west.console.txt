@@ -67,7 +67,7 @@ west #
 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "westnet-eastnet-ikev2" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"westnet-eastnet-ikev2" #2: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ikev2" #2: revival: skip scheduling revival event
 west #
  echo done
 done

@@ -36,11 +36,11 @@ west #
 "west-cuckoo" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckoo" #1: IKE_AUTH response redirects to new gateway 192.1.3.33
 "west-cuckoo" #2: scheduling redirect 1 to 192.1.3.33
-"west-cuckoo" #2: IMPAIR: redirect: skip scheduling redirect event
+IMPAIR: "west-cuckoo" #2: redirect: skip scheduling redirect event
 "west-cuckoo" #1: deleting IKE SA (established IKE SA)
 west #
  ipsec whack --impair trigger_revival:1 # sanitize-retransmits
-"west-cuckoo": IMPAIR: dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.3.33; delete Child SA
+IMPAIR: "west-cuckoo": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.3.33; delete Child SA
 "west-cuckoo" #3: initiating IKEv2 connection to 192.1.3.33 using UDP
 "west-cuckoo" #3: sent IKE_SA_INIT request to 192.1.3.33:UDP/500
 "west-cuckoo" #3: processed IKE_SA_INIT response from 192.1.3.33:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -62,7 +62,7 @@ west #
 "west-cuckold" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "west-cuckold" #6: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "west-cuckold" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-"west-cuckold" #6: IMPAIR: revival: skip scheduling revival event
+IMPAIR: "west-cuckold" #6: revival: skip scheduling revival event
 west #
  ipsec trafficstatus
 #4: "west-cuckoo", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
