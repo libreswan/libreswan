@@ -69,9 +69,4 @@ extern void submit_task(struct state *callback_sa,
 			const struct task_handler *handler,
 			where_t where);
 
-void start_server_helpers(uintmax_t nhelpers, struct logger *logger);
-void stop_server_helpers(void (*all_server_helpers_stopped)(void), struct logger *logger);
-void free_server_helper_jobs(struct logger *logger);
-unsigned server_nhelpers(void);
-
 #endif

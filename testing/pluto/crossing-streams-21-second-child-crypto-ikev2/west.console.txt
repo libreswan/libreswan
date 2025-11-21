@@ -31,7 +31,7 @@ IMPAIR: block all inbound messages: no -> yes
 west #
  ipsec up --asynchronous cuckoo
 "cuckoo" #3: initiating Child SA using IKE SA #1
-"cuckoo" #3: IMPAIR: job 3 helper 0 #3/#3 submit_v2_CREATE_CHILD_SA_new_child (dh): helper is pausing for 5 seconds
+IMPAIR: "cuckoo" #3: task 3, dh for submit_v2_CREATE_CHILD_SA_new_child(): helper is pausing for 5 seconds
 west #
  ../../guestbin/wait-for-pluto.sh '#3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1'
 "cuckoo" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
@@ -42,11 +42,11 @@ west #
 west #
  # helper.
 west #
- ../../guestbin/drip-inbound.sh 1 '#3: IMPAIR: job 4 helper 0 #1/#3 .* pausing for 5 seconds'
+ ../../guestbin/drip-inbound.sh 1 'IMPAIR: "cuckoo" #3: task 4, dh for process_v2_CREATE_CHILD_SA_child_response'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 1
 IMPAIR: start processing inbound drip packet 1
 IMPAIR: stop processing inbound drip packet 1
-"cuckoo" #3: IMPAIR: job 4 helper 0 #1/#3 process_v2_CREATE_CHILD_SA_child_response (dh): helper is pausing for 5 seconds
+IMPAIR: "cuckoo" #3: task 4, dh for process_v2_CREATE_CHILD_SA_child_response(): helper is pausing for 5 seconds
 west #
  # Now process the peer's CREATE_CHILD_SA request.  This two needs a
 west #
@@ -58,11 +58,11 @@ west #
 west #
  # XXX: it is tied to #1/#1 but should be #1/#4
 west #
- ../../guestbin/drip-inbound.sh 2 '#4: IMPAIR: job 5 helper 0 #1/#4 .* pausing for 5 seconds'
+ ../../guestbin/drip-inbound.sh 2 'IMPAIR: "cuckoo" #4: task 5'
 packet from 192.1.2.23:500: IMPAIR: blocking inbound message 2
 IMPAIR: start processing inbound drip packet 2
 IMPAIR: stop processing inbound drip packet 2
-"cuckoo" #4: IMPAIR: job 5 helper 0 #1/#4 process_v2_CREATE_CHILD_SA_request (dh): helper is pausing for 5 seconds
+IMPAIR: "cuckoo" #4: task 5, dh for process_v2_CREATE_CHILD_SA_request(): helper is pausing for 5 seconds
 west #
  # finally wait for things to establish
 west #

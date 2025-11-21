@@ -21,5 +21,4 @@ initdone
 east #
  grep "done inline" /tmp/pluto.log
 no helpers will be started; all cryptographic operations will be done inline
-no helpers will be started; all cryptographic operations will be done inline
 east #

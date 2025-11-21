@@ -570,7 +570,7 @@ struct state {
 	 * the crypto calculation completes that MD will be fed into
 	 * the state machine.
 	 */
-	struct job *st_offloaded_task;
+	struct help_request *st_offloaded_task;
 	bool st_v1_offloaded_task_in_background;
 	struct msg_digest *st_v1_background_md;	/* arrived during background task */
 
