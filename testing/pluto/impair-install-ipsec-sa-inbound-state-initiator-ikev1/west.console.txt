@@ -70,7 +70,7 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #3: revival'
 IMPAIR: "west-east" #3: revival: skip scheduling revival event
 west #
  ipsec _kernel state

@@ -64,8 +64,8 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- ../../guestbin/wait-for-pluto.sh '#3: IMPAIR: revival'
-timeout waiting 30 seconds for cat /tmp/pluto.log to match #3: IMPAIR: revival
+ ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #3: revival'
+timeout waiting 30 seconds for cat /tmp/pluto.log to match IMPAIR: .* #3: revival
 output: |    next payload type: ISAKMP_NEXT_KE (0x4)
 output: |    ISAKMP version: ISAKMP Version 1.0 (rfc2407) (0x10)
 output: |    exchange type: ISAKMP_XCHG_IDPROT (0x2)
