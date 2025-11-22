@@ -1078,7 +1078,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * The IKE SA always processes requests.
 		 */
 		if (md->fake_clone) {
-			llog_sa(RC_LOG, ike, "IMPAIR: processing a fake (cloned) message");
+			llog_sa(IMPAIR_STREAM, ike, "processing a fake (cloned) request");
 		}
 		/*
 		 * Based on the Message ID, is this a true duplicate?
@@ -1102,7 +1102,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * longer.
 		 */
 		if (md->fake_clone) {
-			llog_sa(RC_LOG, ike, "IMPAIR: processing a fake (cloned) message");
+			llog_sa(IMPAIR_STREAM, ike, "processing a fake (cloned) response");
 		}
 		if (is_duplicate_response(ike, md)) {
 			return;
