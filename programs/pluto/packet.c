@@ -2648,7 +2648,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				llog_pexpect(outs->logger, HERE, MSG);
 				return false;
 			}
-			llog(RC_LOG, outs->logger, "IMPAIR: emitting "MSG);
+			llog(IMPAIR_STREAM, outs->logger, "emitting "MSG);
 		}
 		break;
 	}
@@ -2664,8 +2664,8 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 					     n, n);
 				return false;
 			}
-			llog(RC_LOG, outs->logger,
-			     "IMPAIR: %s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+			llog(IMPAIR_STREAM, outs->logger,
+			     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 			     fp->name, sd->name, n, n);
 		}
 		break;
@@ -2689,8 +2689,8 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				return false;
 			}
 			lset_buf lb;
-			llog(RC_LOG, outs->logger,
-			     "IMPAIR: bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+			llog(IMPAIR_STREAM, outs->logger,
+			     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 			     fp->name, sd->name,
 			     str_lset(fp->desc, n, &lb),
 			     n);
@@ -2773,8 +2773,9 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
-				llog(RC_LOG, outs->logger,
-				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				llog(IMPAIR_STREAM, outs->logger,
+				     "setting %zu byte zero/ignore field to %"PRIu8" (0x%"PRIx8", '%c')",
+				     fp->size, byte, byte, (char_isprint(byte) ? byte : '.'));
 			} else {
 				byte = 0;
 			}
