@@ -27,7 +27,7 @@ west #
 "westnet-eastnet-ikev2-major" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ikev2-major" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ikev2-major" #1: ignoring IKE_SA_INIT response containing INVALID_MAJOR_VERSION notification (Message ID 0; message payloads N, missing SA,KE,Ni)
-"westnet-eastnet-ikev2-major" #1: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "westnet-eastnet-ikev2-major" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-ikev2-major" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "westnet-eastnet-ikev2-major" #1: revival: skip scheduling revival event
 "westnet-eastnet-ikev2-major" #1: deleting IKE SA (sent IKE_SA_INIT request)

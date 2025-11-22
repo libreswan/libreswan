@@ -38,7 +38,7 @@ north #
 IMPAIR: "north-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.44; delete IKE SA
 "north-east" #2: initiating IKEv2 connection to 192.1.2.44 using UDP
 "north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
-"north-east" #2: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "north-east" #2: retransmit so timing out SA (may retry)
 "north-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "north-east" #2: revival: skip scheduling revival event
 "north-east" #2: deleting IKE SA (sent IKE_SA_INIT request)
@@ -66,7 +66,7 @@ north #
 IMPAIR: "north-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.46; delete IKE SA
 "north-east" #4: initiating IKEv2 connection to 192.1.2.46 using UDP
 "north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:UDP/500
-"north-east" #4: IMPAIR: retransmit so timing out SA (may retry)
+IMPAIR: "north-east" #4: retransmit so timing out SA (may retry)
 "north-east" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "north-east" #4: revival: skip scheduling revival event
 "north-east" #4: deleting IKE SA (sent IKE_SA_INIT request)
