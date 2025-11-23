@@ -1954,12 +1954,12 @@ static void LDBG_print_struct(struct logger *logger,
 	LDBG_log(logger, "%s%s%s:", stars, label, sd->name);
 
 	for (fp = sd->fields; fp->field_type != ft_end; fp++) {
-		int i = fp->size;
+
 		uintmax_t n = 0;
 
 		switch (fp->field_type) {
 		case ft_zig:		/* zero (ignore violations) */
-			inp += i;
+			inp += fp->size;
 			break;
 		case ft_nat:            /* natural number (may be 0) */
 		case ft_len:            /* length of this struct and any following crud */
@@ -1974,7 +1974,7 @@ static void LDBG_print_struct(struct logger *logger,
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_lset:           /* bits representing set */
 			/* grab bytes in host-byte-order */
-			switch (i) {
+			switch (fp->size) {
 			case 8 / BITS_IN_BYTE:
 				n = *(const uint8_t *)inp;
 				break;
@@ -1985,7 +1985,7 @@ static void LDBG_print_struct(struct logger *logger,
 				n = *(const uint32_t *)inp;
 				break;
 			default:
-				bad_case(i);
+				bad_case(fp->size);
 			}
 
 			/* display the result */
@@ -2059,15 +2059,15 @@ static void LDBG_print_struct(struct logger *logger,
 			default:
 				bad_case(fp->field_type);
 			}
-			inp += i;
+			inp += fp->size;
 			break;
 
 		case ft_raw:            /* bytes to be left in network-order */
 			LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 				jam(buf, "   %s: ", fp->name);
-				jam_dump_bytes(buf, inp, i);
+				jam_dump_bytes(buf, inp, fp->size);
 			}
-			inp += i;
+			inp += fp->size;
 			break;
 
 		default:
@@ -2648,7 +2648,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				llog_pexpect(outs->logger, HERE, MSG);
 				return false;
 			}
-			llog(RC_LOG, outs->logger, "IMPAIR: emitting "MSG);
+			llog(IMPAIR_STREAM, outs->logger, "emitting "MSG);
 		}
 		break;
 	}
@@ -2664,8 +2664,8 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 					     n, n);
 				return false;
 			}
-			llog(RC_LOG, outs->logger,
-			     "IMPAIR: %s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+			llog(IMPAIR_STREAM, outs->logger,
+			     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
 			     fp->name, sd->name, n, n);
 		}
 		break;
@@ -2689,8 +2689,8 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				return false;
 			}
 			lset_buf lb;
-			llog(RC_LOG, outs->logger,
-			     "IMPAIR: bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+			llog(IMPAIR_STREAM, outs->logger,
+			     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
 			     fp->name, sd->name,
 			     str_lset(fp->desc, n, &lb),
 			     n);
@@ -2753,13 +2753,12 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 	};
 
 	for (field_desc *fp = sd->fields; ; fp++) {
-		size_t i = fp->size;
 
 		/* make sure that there is space for the next structure element */
-		PASSERT(outs->logger, outs->roof - cur >= (ptrdiff_t)i);
+		PASSERT(outs->logger, outs->roof - cur >= (ptrdiff_t)fp->size);
 
 		/* verify that the spot is correct in the offset */
-		PASSERT(outs->logger, cur - outs->cur <= (ptrdiff_t)(sd->size - i));
+		PASSERT(outs->logger, cur - outs->cur <= (ptrdiff_t)(sd->size - fp->size));
 
 		/* verify that we are at the right place in the input structure */
 		PASSERT(outs->logger, inp - (cur - outs->cur) == struct_ptr);
@@ -2774,14 +2773,15 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 			uint8_t byte;
 			if (impair.send_nonzero_reserved) {
 				byte = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
-				llog(RC_LOG, outs->logger,
-				     "IMPAIR: setting zero/ignore field to 0x%02x", byte);
+				llog(IMPAIR_STREAM, outs->logger,
+				     "setting %zu byte zero/ignore field to %"PRIu8" (0x%"PRIx8", '%c')",
+				     fp->size, byte, byte, (char_isprint(byte) ? byte : '.'));
 			} else {
 				byte = 0;
 			}
-			memset(cur, byte, i);
-			inp += i;
-			cur += i;
+			memset(cur, byte, fp->size);
+			inp += fp->size;
+			cur += fp->size;
 			break;
 		}
 
@@ -2846,7 +2846,7 @@ bool pbs_out_struct_desc(struct pbs_out *outs,
 			break;
 
 		case ft_raw: /* bytes to be left in network-order */
-			for (; i != 0; i--)
+			for (size_t i = fp->size; i != 0; i--)
 				*cur++ = *inp++;
 			break;
 
