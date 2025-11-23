@@ -18,7 +18,7 @@ west #
  ipsec whack --impair ike_initiator_spi:0
 west #
  ipsec up west-east
-"west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
+IMPAIR: "west-east" #1: forcing IKE initiator SPI to 0x0
 "west-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 IMPAIR: "west-east" #1: retransmit so timing out SA (may retry)
@@ -27,7 +27,7 @@ IMPAIR: "west-east" #1: revival: skip scheduling revival event
 "west-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  grep IMPAIR: /tmp/pluto.log
-"west-east" #1: IMPAIR: forcing IKE initiator SPI to 0x0
+IMPAIR: "west-east" #1: forcing IKE initiator SPI to 0x0
 IMPAIR: "west-east" #1: retransmit so timing out SA (may retry)
 IMPAIR: "west-east" #1: revival: skip scheduling revival event
 west #
