@@ -164,7 +164,7 @@ west #
 "aes128": added IKEv2 connection
 "aes128" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #17: IMPAIR: emitting variable-size key-length attribute with no key
-"aes128" #17: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
+IMPAIR: "aes128" #17: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #17: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 IMPAIR: "aes128" #17: retransmit so timing out SA (may retry)
@@ -183,7 +183,7 @@ west #
 "aes128": added IKEv2 connection
 "aes128" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #19: IMPAIR: emitting variable-size key-length attribute with no key
-"aes128" #19: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
+IMPAIR: "aes128" #19: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #19: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #19: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 IMPAIR: "aes128" #19: retransmit so timing out SA (may retry)
