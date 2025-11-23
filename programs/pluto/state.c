@@ -505,7 +505,7 @@ static struct state *new_state(struct connection *c,
 	if (sa_kind == IKE_SA && sa_role == SA_INITIATOR &&
 	    impair.ike_initiator_spi.enabled) {
 		uintmax_t v = impair.ike_initiator_spi.value;
-		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE initiator SPI to 0x%jx", v);
+		llog(IMPAIR_STREAM, st->logger, "forcing IKE initiator SPI to 0x%jx", v);
 		hton_thing(v, st->st_ike_spis.initiator);
 	}
 
@@ -513,7 +513,7 @@ static struct state *new_state(struct connection *c,
 	if (sa_kind == IKE_SA && sa_role == SA_RESPONDER &&
 	    impair.ike_responder_spi.enabled) {
 		uintmax_t v = impair.ike_responder_spi.value;
-		llog(RC_LOG, st->logger, "IMPAIR: forcing IKE responder SPI to 0x%jx", v);
+		llog(IMPAIR_STREAM, st->logger, "forcing IKE responder SPI to 0x%jx", v);
 		hton_thing(v, st->st_ike_spis.responder);
 	}
 
