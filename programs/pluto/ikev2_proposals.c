@@ -1399,19 +1399,19 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 				     "%s", "should have been handled");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			llog(RC_LOG, transform_pbs->logger,
-			     "IMPAIR: emitting variable-size key-length attribute with no key");
+			llog(IMPAIR_STREAM, transform_pbs->logger,
+			     "emitting variable-size key-length attribute with no key");
 			if (!v2_out_attr_variable(transform_pbs, IKEv2_KEY_LENGTH, EMPTY_CHUNK)) {
 				return false;
 			}
 			break;
 		case IMPAIR_EMIT_OMIT:
-			llog(RC_LOG, transform_pbs->logger,
-			     "IMPAIR: omitting fixed-size key-length attribute");
+			llog(IMPAIR_STREAM, transform_pbs->logger,
+			     "omitting fixed-size key-length attribute");
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
-			llog(RC_LOG, transform_pbs->logger,
-			     "IMPAIR: duplicating key-length attribute");
+			llog(IMPAIR_STREAM, transform_pbs->logger,
+			     "duplicating key-length attribute");
 			for (unsigned dup = 0; dup < 2; dup++) {
 				/* regardless of value */
 				if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH,
@@ -1423,8 +1423,8 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 		default:
 		{
 			uint16_t keylen = impair_key_length_attribute - IMPAIR_EMIT_ROOF; /* remove bias */
-			llog(RC_LOG, transform_pbs->logger,
-			     "IMPAIR: emitting fixed-length key-length attribute with %u key", keylen);
+			llog(IMPAIR_STREAM, transform_pbs->logger,
+			     "emitting fixed-length key-length attribute with %u key", keylen);
 			if (!v2_out_attr_fixed(transform_pbs, IKEv2_KEY_LENGTH, keylen)) {
 				return false;
 			}
@@ -1543,19 +1543,22 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			switch (impairment) {
 			case IMPAIR_v2_TRANSFORM_ALLOW_NONE:
 				if (transform->id == none) {
-					vlog("IMPAIR: proposal %d transform %s=%s included when %s",
+					llog(IMPAIR_STREAM, verbose.logger,
+					     "proposal %d transform %s=%s included when %s",
 					     propnum, transform_type_name, transform_id_name, what);
 				}
 				break;
 			case IMPAIR_v2_TRANSFORM_DROP_NONE:
 				if (transform->id == none) {
-					vlog("IMPAIR: proposal %d transform %s=%s excluded when %s",
+					llog(IMPAIR_STREAM, verbose.logger,
+					     "proposal %d transform %s=%s excluded when %s",
 					     propnum, transform_type_name, transform_id_name, what);
 					continue;
 				}
 				break;
 			case IMPAIR_v2_TRANSFORM_OMIT:
-				vlog("IMPAIR: proposal %d transform %s=%s excluded when %s",
+				llog(IMPAIR_STREAM, verbose.logger,
+				     "proposal %d transform %s=%s excluded when %s",
 				     propnum, transform_type_name, transform_id_name, what);
 				continue;
 			case IMPAIR_v2_TRANSFORM_NO:
@@ -1599,8 +1602,8 @@ static int walk_transforms(struct pbs_out *proposal_pbs, int nr_trans,
 			unsigned type = (type_id >> 16) & 0xff;
 			enum ikev2_trans_type transform_type =
 				(type == IKEv2_TRANS_TYPE_IMPAIR_ROOF ? IKEv2_TRANS_TYPE_ROOF : type);
-			VLOG_JAMBUF(buf) {
-				jam_string(buf, "IMPAIR: adding");
+			LLOG_JAMBUF(IMPAIR_STREAM, verbose.logger, buf) {
+				jam_string(buf, "adding");
 				/* type */
 				jam_string(buf, " transform type ");
 				if (type == IKEv2_TRANS_TYPE_IMPAIR_ROOF) {
@@ -1648,8 +1651,8 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 	if (impair.v2_proposal_protoid.enabled) {
 		name_buf ebo, ebn;
 		enum ikev2_sec_proto_id protoid = impair.v2_proposal_protoid.value;
-		llog(RC_LOG, sa_pbs->logger,
-		     "IMPAIR: changing proposal substructure Protocol ID from %s to %s (%u)",
+		llog(IMPAIR_STREAM, sa_pbs->logger,
+		     "changing proposal substructure Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_proposal_protocol_id_names, proposal_protoid, &ebo),
 		     str_enum_short(&ikev2_proposal_protocol_id_names, protoid, &ebn),
 		     protoid);
