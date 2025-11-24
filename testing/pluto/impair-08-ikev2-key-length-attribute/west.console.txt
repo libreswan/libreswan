@@ -79,7 +79,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
 "aes128" #8: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #8: IMPAIR: duplicating key-length attribute
+IMPAIR: "aes128" #8: duplicating key-length attribute
 "aes128" #8: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #8: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
 "aes128" #8: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #9 {ESP <0xESPESP}
@@ -103,7 +103,7 @@ west #
 "aes128" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"aes128" #10: IMPAIR: duplicating key-length attribute
+IMPAIR: "aes128" #10: duplicating key-length attribute
 "aes128" #10: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #11 {ESP <0xESPESP}
 "aes128" #10: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "aes128" #10: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -125,7 +125,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
 "aes128" #12: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #12: IMPAIR: omitting fixed-size key-length attribute
+IMPAIR: "aes128" #12: omitting fixed-size key-length attribute
 "aes128" #12: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #12: ignoring IKE_SA_INIT response containing NO_PROPOSAL_CHOSEN notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 IMPAIR: "aes128" #12: retransmit so timing out SA (may retry)
@@ -143,7 +143,7 @@ west #
 "aes128" #14: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #14: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #14: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
-"aes128" #14: IMPAIR: omitting fixed-size key-length attribute
+IMPAIR: "aes128" #14: omitting fixed-size key-length attribute
 "aes128" #14: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #15 {ESP <0xESPESP}
 "aes128" #14: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,N(NO_PROPOSAL_CHOSEN)}
 "aes128" #14: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
@@ -163,7 +163,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
 "aes128" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #17: IMPAIR: emitting variable-size key-length attribute with no key
+IMPAIR: "aes128" #17: emitting variable-size key-length attribute with no key
 IMPAIR: "aes128" #17: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #17: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
@@ -182,7 +182,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv2 connection
 "aes128" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
-"aes128" #19: IMPAIR: emitting variable-size key-length attribute with no key
+IMPAIR: "aes128" #19: emitting variable-size key-length attribute with no key
 IMPAIR: "aes128" #19: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
 "aes128" #19: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #19: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
