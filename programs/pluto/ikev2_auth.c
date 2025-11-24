@@ -160,7 +160,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 
 	if (impair.force_v2_auth_method.enabled) {
 		name_buf eb;
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: forcing auth method %s",
+		llog(IMPAIR_STREAM, ike->sa.logger, "forcing auth method %s",
 		     str_enum_long(&ikev2_auth_method_names,
 				   impair.force_v2_auth_method.value, &eb));
 		return impair.force_v2_auth_method.value;
