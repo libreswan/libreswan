@@ -5,61 +5,31 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+ ipsec whack --impair revival
 east #
- echo "initdone"
-initdone
+ ipsec whack --impair suppress_retransmits
 east #
- ../../guestbin/ipsec-look.sh
-east NOW
-XFRM state:
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	lastused YYYY-MM-DD HH:MM:SS
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-XFRM policy:
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.1.0/24 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.1.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode tunnel
-XFRM done
-IPSEC mangle TABLES
-iptables filter TABLE
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
-ROUTING TABLES
-default via 192.1.2.254 dev eth1
-192.0.1.0/24 via 192.1.2.45 dev eth1
-192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
-192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
+ ipsec auto --add east-west
+"east-west": added IKEv2 connection
+east #
+ ipsec whack --impair revival
+east #
+ ipsec up --asynchronous east-west
+"east-west" #1: initiating IKEv2 connection to 192.1.2.45 using UDP
+east #
+ ipsec showstates
+#1: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
+#2: "east-west":500 ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
+#3: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+#3: "east-west" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+#4: "east-west":500 ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; IKE SA #2; idle;
+#4: "east-west" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
+east #
+ ipsec down '#1'
+"east-west": initiating delete of connection's IKE SA #1 (and Child SA #3)
+"east-west" #4: ESP traffic information: in=0B out=0B
+"east-west" #2: deleting IKE SA (established IKE SA)
+"east-west" #1: sent INFORMATIONAL request to delete IKE SA
+"east-west" #3: ESP traffic information: in=0B out=0B
+"east-west" #1: deleting IKE SA (established IKE SA)
 east #
