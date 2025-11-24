@@ -5,12 +5,12 @@ set -xe ; exec < /dev/null
 # update /etc/fstab with current /source and /testing
 
 mkdir -p /source /testing
-sed -e '/:/d' /etc/fstab > /tmp/fstab
+sed -e '/bench/d' /etc/fstab > /tmp/fstab
 
 cat <<EOF >> /tmp/fstab
-@@GATEWAY@@:@@SOURCEDIR@@   /source         nfs     rw	0 0
-@@GATEWAY@@:@@TESTINGDIR@@  /testing        nfs     rw	0 0
-@@GATEWAY@@:@@POOLDIR@@     /pool        nfs     rw	0 0
+source   /source         9p     rw	0 0
+testing  /testing        9p     rw	0 0
+pool     /pool           9p     rw	0 0
 EOF
 
 mv /tmp/fstab /etc/fstab

@@ -26,14 +26,30 @@ iface eth$n inet6 static
 EOF
 }
 
-start() {
-	cat <<EOF > /etc/network/interfaces.new
+libreswan_lo()
+{
+	cat <<EOF >> /etc/network/interfaces.new
 auto lo
 iface lo inet loopback
-
-auto eth0
-iface eth0 inet dhcp
 EOF
+}
+
+libreswan_dhcp()
+{
+	local n=$1
+	local auth=$2
+	cat <<EOF >> /etc/network/interfaces.new
+$auto eth$n
+iface eth$n inet dhcp
+EOF
+}
+
+start() {
+
+	cp /dev/null /etc/network/interfaces.new
+	libreswan_lo
+	libreswan_dhcp 1 '#auto'
+
 	mac=$(ip addr show eth1 | awk '/link.ether/ { print $2}')
 	echo mac=$mac 1>&2
 	case "$mac" in
