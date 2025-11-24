@@ -136,7 +136,39 @@ _GUEST_COMMAND_REGEX = re.compile(r'^(?P<guest>[a-z]*)# ?(?P<line>.*)[\n]$')
 
 def commands(directory, logger):
 
-    # match experimental HOST*.in
+    # match *.sh first
+    commands = _guest_scripts(directory, logger)
+    if commands:
+        return commands
+
+    # Match experimental all.console.txt which contains the names of
+    # the domains embeded as prompts as in "DOMAIN#"
+
+    script = "all.console.txt"
+    all = path.join(directory, script)
+    if os.path.exists(all):
+        commands = Commands()
+        # read includes '\n';
+        for line in open(all, "r"):
+            # regex matches both:
+            #   <host># command
+            # and
+            #   # comment
+            command = _GUEST_COMMAND_REGEX.match(line)
+            if command:
+                guest = command.group("guest")
+                line = command.group("line")
+                if guest:
+                    commands.append(Command(hosts.lookup(guest), line, script))
+                elif line:
+                    commands.append(Command(None, "# "+line, script))
+                else:
+                    commands.append(Command(None, "#", script))
+        return commands
+
+    # Match experimental *DOMAIN*.in which contains prompts using the
+    # domain's host names.
+
     in_scripts = glob(path.join(directory, "*.in"))
     if in_scripts:
 
@@ -174,28 +206,5 @@ def commands(directory, logger):
                         commands.append(Command(None, "#", script))
         return commands
 
-    # match experimental all.console.txt
-    script = "all.console.txt"
-    all = path.join(directory, script)
-    if os.path.exists(all):
-        commands = Commands()
-        # read includes '\n';
-        for line in open(all, "r"):
-            # regex matches both:
-            #   <host># command
-            # and
-            #   # comment
-            command = _GUEST_COMMAND_REGEX.match(line)
-            if command:
-                guest = command.group("guest")
-                line = command.group("line")
-                if guest:
-                    commands.append(Command(hosts.lookup(guest), line, script))
-                elif line:
-                    commands.append(Command(None, "# "+line, script))
-                else:
-                    commands.append(Command(None, "#", script))
-        return commands
-
-    # match *.sh
-    return _guest_scripts(directory, logger)
+    logger.warning(f"no scripts in {directory}")
+    return Commands()
