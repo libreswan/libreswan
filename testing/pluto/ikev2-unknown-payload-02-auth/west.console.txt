@@ -22,7 +22,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: adding an unknown payload of type 255 to unencrypted IKE_AUTH message
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: adding an unknown payload of type 255 to unencrypted IKE_AUTH message
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-ipv4-psk-ikev2" #1: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
 "westnet-eastnet-ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing 255?,SK{IDr,AUTH,SA,TSi,TSr}
@@ -49,7 +49,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
-"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to unencrypted IKE_AUTH message
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: adding an unknown critical payload of type 255 to unencrypted IKE_AUTH message
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: setting (should be off) critical payload bit
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #4 {ESP <0xESPESP}
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: retransmit so timing out SA (may retry)

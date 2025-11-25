@@ -24,7 +24,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: omitting KE payload
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: omitting KE payload
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: ignoring IKE_SA_INIT response containing INVALID_SYNTAX notification (Message ID 0; message payloads N, missing SA,KE,Ni)
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: retransmit so timing out SA (may retry)
