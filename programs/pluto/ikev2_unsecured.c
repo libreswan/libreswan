@@ -173,7 +173,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 		PEXPECT(md->logger, msgid == 0); /* per above */
 		/* XXX: keep test results happy */
 		if (md->fake_clone) {
-			llog(RC_LOG, old->sa.logger, "IMPAIR: processing a fake (cloned) message");
+			llog(IMPAIR_STREAM, old->sa.logger, "processing a fake (cloned) message");
 		}
 
 		if (old->sa.st_state != &state_v2_IKE_SA_INIT_R) {
@@ -376,7 +376,7 @@ static void process_v2_UNSECURED_request(struct msg_digest *md)
 	statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 	/* XXX: keep test results happy */
 	if (md->fake_clone) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: processing a fake (cloned) message");
+		llog(IMPAIR_STREAM, ike->sa.logger, "processing a fake (cloned) message");
 	}
 	v2_dispatch(ike, md, transition);
 	statetime_stop(&start, "%s()", __func__);

@@ -102,8 +102,8 @@ bool emit_v2UNKNOWN(const char *victim,
 	}
 
 	name_buf xb;
-	llog(RC_LOG, outs->logger,
-	     "IMPAIR: adding an unknown%s payload of type %d to %s %s message",
+	llog(IMPAIR_STREAM, outs->logger,
+	     "adding an unknown%s payload of type %d to %s %s message",
 	     impair.unknown_v2_payload_critical ? " critical" : "",
 	     ikev2_unknown_payload_desc.pt,
 	     victim,

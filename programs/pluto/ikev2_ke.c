@@ -33,7 +33,7 @@
 bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
 {
 	if (impair.ke_payload == IMPAIR_EMIT_OMIT) {
-		llog(RC_LOG, outs->logger, "IMPAIR: omitting KE payload");
+		llog(IMPAIR_STREAM, outs->logger, "omitting KE payload");
 		return true;
 	}
 
@@ -48,15 +48,15 @@ bool emit_v2KE(shunk_t ke, const struct kem_desc *kem, struct pbs_out *outs)
 
 	if (impair.ke_payload >= IMPAIR_EMIT_ROOF) {
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, outs->logger,
-		     "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
+		llog(IMPAIR_STREAM, outs->logger,
+		     "sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		if (!pbs_out_repeated_byte(&ke_pbs, byte, ke.len, "ikev2 impair KE (g^x) == 0")) {
 			/* already logged */
 			return false; /*fatal*/
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
-		llog(RC_LOG, outs->logger, "IMPAIR: sending an empty KE value");
+		llog(IMPAIR_STREAM, outs->logger, "sending an empty KE value");
 		if (!pbs_out_zero(&ke_pbs, 0, "ikev2 impair KE (g^x) == empty")) {
 			/* already logged */
 			return false; /*fatal*/
