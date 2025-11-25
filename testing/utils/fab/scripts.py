@@ -132,7 +132,7 @@ def _guest_scripts(directory, logger):
 # for line in open("r").line includes; when <guest> is blank, a
 # comment is assumed.
 
-_GUEST_COMMAND_REGEX = re.compile(r'^(?P<guest>[a-z]*)# ?(?P<line>.*)[\n]$')
+_HOSTNAME_COMMAND_REGEX = re.compile(r'^(?P<hostname>[a-z]*)# ?(?P<command>.*)[\n]$')
 
 def commands(directory, logger):
 
@@ -151,60 +151,64 @@ def commands(directory, logger):
         # read includes '\n';
         for line in open(all, "r"):
             # regex matches both:
-            #   <host># command
+            #   <hostname># command
             # and
-            #   # comment
-            command = _GUEST_COMMAND_REGEX.match(line)
-            if command:
-                guest = command.group("guest")
-                line = command.group("line")
+            #   # command
+            hostname_command = _HOSTNAME_COMMAND_REGEX.match(line)
+            if hostname_command:
+                guest = hostname_command.group("hostname")
+                command = hostname_command.group("command")
                 if guest:
-                    commands.append(Command(hosts.lookup(guest), line, script))
+                    commands.append(Command(hosts.lookup(guest), command, script))
                 elif line:
-                    commands.append(Command(None, "# "+line, script))
+                    commands.append(Command(None, "# "+command, script))
                 else:
                     commands.append(Command(None, "#", script))
         return commands
 
-    # Match experimental *DOMAIN*.in which contains prompts using the
-    # domain's host names.
+    # Match experimental *DOMAIN*.in, or *DOMAIN*.console.txt, which
+    # contains prompts using the domain's host names.
+    #
+    # .in is known to work .console.txt is experimental.
 
-    in_scripts = glob(path.join(directory, "*.in"))
-    if in_scripts:
+    for match in ("*.in", "*.console.txt"):
 
-        # figure out the guest names
-        guests = set()
-        for script in in_scripts:
-            guests.update(_script_guests(script, hosts.GUESTS))
-        guests = sorted(guests)
-        GUESTS = dict()
-        for guest in guests:
-            GUESTS[guest.host.name] = guest
-        logger.debug(f"GUESTS: {', '.join(str(g) for g in GUESTS)}")
+        scripts = glob(path.join(directory, match))
+        if scripts:
 
-        commands = Commands()
-        for script in in_scripts:
-            if not path.isfile(script):
-                continue
-            logger.debug(f"script: {script}")
-            for line in open(script, "r"):
-                logger.debug(f"{line[0:-1]}")
-                # regex matches both:
-                #   <host># command
-                # and
-                #   # comment
-                command = _GUEST_COMMAND_REGEX.match(line)
-                if command:
-                    host = command.group("guest")
-                    line = command.group("line")
-                    if host:
-                        guest = GUESTS[host]
-                        commands.append(Command(guest, line, script))
-                    elif line:
-                        commands.append(Command(None, "# "+line, script))
-                    else:
-                        commands.append(Command(None, "#", script))
-        return commands
+            # figure out the host->domain map
+            domains = set()
+            for script in scripts:
+                domains.update(_script_guests(script, hosts.GUESTS))
+            domains = sorted(domains)
+            DOMAIN_BY_HOSTNAME = dict()
+            for domain in domains:
+                DOMAIN_BY_HOSTNAME[domain.host.name] = domain
+            logger.debug(f"DOMAIN_BY_HOSTNAME: {', '.join(str(g) for g in DOMAIN_BY_HOSTNAME)}")
+
+            commands = Commands()
+            for script in scripts:
+                if not path.isfile(script):
+                    continue
+                logger.debug(f"script: {script}")
+                for line in open(script, "r"):
+                    logger.debug(f"{line[0:-1]}")
+                    # regex matches both:
+                    #   <hostname># command
+                    # and
+                    #   # command
+                    hostname_command = _HOSTNAME_COMMAND_REGEX.match(line)
+                    if hostname_command:
+                        hostname = hostname_command.group("hostname")
+                        command = hostname_command.group("command")
+                        if hostname:
+                            domain = DOMAIN_BY_HOSTNAME[hostname]
+                            commands.append(Command(domain, command, script))
+                        elif line:
+                            commands.append(Command(None, "# "+command, script))
+                        else:
+                            commands.append(Command(None, "#", script))
+            return commands
 
     logger.warning(f"no scripts in {directory}")
     return Commands()
