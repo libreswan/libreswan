@@ -52,7 +52,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: adding an unknown critical payload of type 255 to unencrypted IKE_SA_INIT message
-"westnet-eastnet-ipv4-psk-ikev2" #3: IMPAIR: setting (should be off) critical payload bit
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: setting (should be off) critical payload bit
 "westnet-eastnet-ipv4-psk-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #3: non-critical payload ignored because it contains an unknown or unexpected payload type (255) at the outermost level
 "westnet-eastnet-ipv4-psk-ikev2" #3: ignoring IKE_SA_INIT response containing UNSUPPORTED_CRITICAL_PAYLOAD notification (Message ID 0; message payloads N, missing SA,KE,Ni)
