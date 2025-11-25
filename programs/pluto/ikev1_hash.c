@@ -37,8 +37,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 	fixup->impair = (impair.v1_hash_exchange == exchange
 			 ? impair.v1_hash_payload : IMPAIR_EMIT_NO);
 	if (fixup->impair == IMPAIR_EMIT_OMIT) {
-		llog(RC_LOG, fixup->logger,
-		     "IMPAIR: omitting HASH payload for %s", what);
+		llog(IMPAIR_STREAM, fixup->logger, "omitting HASH payload for %s", what);
 		return true;
 	}
 	struct pbs_out hash_pbs;
@@ -46,8 +45,7 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 		return false;
 	}
 	if (fixup->impair == IMPAIR_EMIT_EMPTY) {
-		llog(RC_LOG, fixup->logger,
-		     "IMPAIR: sending HASH payload with no data for %s", what);
+		llog(IMPAIR_STREAM, fixup->logger, "sending HASH payload with no data for %s", what);
 	} else {
 		/* reserve space for HASH data */
 		fixup->hash_data = chunk2(hash_pbs.cur, st->st_oakley.ta_prf->prf_output_size);
@@ -69,8 +67,7 @@ void fixup_v1_HASH(struct state *st, const struct v1_hash_fixup *fixup,
 
 	if (fixup->impair >= IMPAIR_EMIT_ROOF) {
 		unsigned byte = fixup->impair - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, fixup->logger,
-		     "IMPAIR: setting HASH payload bytes to %02x", byte);
+		llog(IMPAIR_STREAM, fixup->logger, "setting HASH payload bytes to %02x", byte);
 		/* chunk_fill()? */
 		memset(fixup->hash_data.ptr, byte, fixup->hash_data.len);
 		return;
@@ -139,13 +136,12 @@ bool check_v1_HASH(enum v1_hash_type type, const char *what,
 	}
 
 	if (impair.v1_hash_check) {
-		llog(RC_LOG, logger, "IMPAIR: skipping check of '%s' HASH payload", what);
+		llog(IMPAIR_STREAM, logger, "skipping check of '%s' HASH payload", what);
 		return true;
 	}
 
 	if (md->hdr.isa_np != ISAKMP_NEXT_HASH) {
-		llog(RC_LOG, logger,
-		     "received '%s' message is missing a HASH(%u) payload",
+		llog(RC_LOG, logger, "received '%s' message is missing a HASH(%u) payload",
 		     what, type);
 		return false;
 	}
