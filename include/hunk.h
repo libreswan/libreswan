@@ -420,18 +420,18 @@ int raw_byte(const void *ptr, size_t len, long index);
 #define is_digit(HUNK) char_isdigit(hunk_char(HUNK, 0))
 #define is_char(HUNK, CHAR) (hunk_char(HUNK, 0) == CHAR)
 
-bool char_isbdigit(char c);
-bool char_isblank(char c);
-bool char_isdigit(char c);
-bool char_islower(char c);
-bool char_isodigit(char c);
-bool char_isprint(char c);
-bool char_isspace(char c);
-bool char_isupper(char c);
-bool char_isxdigit(char c);
+bool char_isbdigit(intmax_t c);
+bool char_isblank(intmax_t c);
+bool char_isdigit(intmax_t c);
+bool char_islower(intmax_t c);
+bool char_isodigit(intmax_t c);
+bool char_isprint(intmax_t c);
+bool char_isspace(intmax_t c);
+bool char_isupper(intmax_t c);
+bool char_isxdigit(intmax_t c);
 
-char  char_tolower(char c);
-char  char_toupper(char c);
+char  char_tolower(intmax_t c);
+char  char_toupper(intmax_t c);
 
 #define hunk_cpy(DST, SRC)						\
 	({								\

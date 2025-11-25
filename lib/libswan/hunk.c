@@ -208,17 +208,17 @@ uintmax_t raw_ntoh(const void *bytes, size_t size)
 	return h;
 }
 
-bool char_isupper(char c)
+bool char_isupper(intmax_t c)
 {
 	return (c >= 'A' && c <= 'Z');
 }
 
-bool char_islower(char c)
+bool char_islower(intmax_t c)
 {
 	return (c >= 'a' && c <= 'z');
 }
 
-bool char_isspace(char c)
+bool char_isspace(intmax_t c)
 {
 	return (c == ' ' ||
 		c == '\f' ||
@@ -228,45 +228,45 @@ bool char_isspace(char c)
 		c == '\v');
 }
 
-bool char_isblank(char c)
+bool char_isblank(intmax_t c)
 {
 	return (c == ' ' ||
 		c == '\t');
 }
 
-bool char_isdigit(char c)
+bool char_isdigit(intmax_t c)
 {
 	return (c >= '0' && c <= '9');
 }
 
-bool char_isbdigit(char c)
+bool char_isbdigit(intmax_t c)
 {
 	return (c >= '0' && c <= '1');
 }
 
-bool char_isodigit(char c)
+bool char_isodigit(intmax_t c)
 {
 	return (c >= '0' && c <= '7');
 }
 
-bool char_isxdigit(char c)
+bool char_isxdigit(intmax_t c)
 {
 	return ((c >= '0' && c <= '9') ||
 		(c >= 'a' && c <= 'f') ||
 		(c >= 'A' && c <= 'F'));
 }
 
-bool char_isprint(char c)
+bool char_isprint(intmax_t c)
 {
 	return (c >= 0x20 && c <= 0x7e);
 }
 
-char char_tolower(char c)
+char char_tolower(intmax_t c)
 {
 	return char_isupper(c) ? c - 'A' + 'a' : c;
 }
 
-char char_toupper(char c)
+char char_toupper(intmax_t c)
 {
 	return char_islower(c) ? c - 'a' + 'A' : c;
 }
