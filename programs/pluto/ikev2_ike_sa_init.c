@@ -227,7 +227,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ldbg(ike->sa.logger,
 		     "omitting CHILD SA payloads from the IKE_AUTH request as no child policy");
 	} else if (impair.omit_v2_ike_auth_child) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
+		llog(IMPAIR_STREAM, ike->sa.logger, "omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (is_labeled(c)) {
 		/*
 		 * Need to release the reference returned by
@@ -389,7 +389,7 @@ static bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, outs->logger, "IMPAIR: omitting %s notification",
+		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}
@@ -437,7 +437,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	switch (impair.ddos_cookie) {
 	case IMPAIR_DDOS_COOKIE_ADD:
 		if (ike->sa.st_dcookie.ptr == NULL) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: adding unsolicited and mangled DDOS cookie");
+			llog(IMPAIR_STREAM, ike->sa.logger, "adding unsolicited and mangled DDOS cookie");
 			uint8_t byte = 0;
 			messupn(&byte, sizeof(byte));
 			replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
@@ -446,7 +446,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	case IMPAIR_DDOS_COOKIE_MANGLE:
 		/* add or mangle a dcookie so what we will send is bogus */
 		if (ike->sa.st_dcookie.ptr != NULL) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: mangling DDOS cookie sent by peer");
+			llog(IMPAIR_STREAM, ike->sa.logger, "mangling DDOS cookie sent by peer");
 			uint8_t byte = 0;
 			messupn(&byte, sizeof(byte));
 			replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
@@ -914,7 +914,7 @@ stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	if (impair.childless_ikev2_supported) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: omitting CHILDESS_IKEV2_SUPPORTED notify");
+		llog(IMPAIR_STREAM, ike->sa.logger, "omitting CHILDESS_IKEV2_SUPPORTED notify");
 	} else {
 		if (!emit_v2N(v2N_CHILDLESS_IKEV2_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
@@ -1087,7 +1087,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		llog(IMPAIR_STREAM, ike->sa.logger, "SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
 
@@ -1124,7 +1124,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 			llog(RC_LOG, ike->sa.logger, "IKE_SA_INIT response has zero IKE SA Responder SPI; dropping packet");
 			return STF_FATAL;
 		}
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway");
+		llog(IMPAIR_STREAM, ike->sa.logger, "IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway");
 	}
 
 	/*

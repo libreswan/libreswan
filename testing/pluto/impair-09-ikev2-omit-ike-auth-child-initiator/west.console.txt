@@ -19,7 +19,7 @@ west #
 initdone
 west #
  ipsec up westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: omitting CHILD SA payloads from the IKE_AUTH request
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-ipv4-psk-ikev2" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}, initiating IKE_AUTH

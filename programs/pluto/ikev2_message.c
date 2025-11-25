@@ -77,13 +77,13 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
 	uint8_t octet = 0;
 	if (impaired) {
 		/* flip the expected bit */
-		llog(RC_LOG, logger, "IMPAIR: setting (should be off) critical payload bit");
+		llog(IMPAIR_STREAM, logger, "setting (should be off) critical payload bit");
 		octet = ISAKMP_PAYLOAD_CRITICAL;
 	} else {
 		octet = ISAKMP_PAYLOAD_NONCRITICAL;
 	}
 	if (impair.send_bogus_payload_flag) {
-		llog(RC_LOG, logger, "IMPAIR: adding bogus bit to critical octet");
+		llog(IMPAIR_STREAM, logger, "adding bogus bit to critical octet");
 		octet |= ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
 	}
 	return octet;
@@ -207,7 +207,7 @@ static bool open_v2_message_body(struct pbs_out *message,
 	}
 
 	if (impair.bad_ike_auth_xchg) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
+		llog(IMPAIR_STREAM, ike->sa.logger, "instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
 		if ((hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) && exchange_type == ISAKMP_v2_IKE_AUTH) {
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 		}
@@ -1241,8 +1241,8 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	 * decrypted in-place (but only once).
 	 */
 	if (impair.replay_encrypted && !md->fake_clone) {
-		llog(RC_LOG, ike->sa.logger,
-		     "IMPAIR: cloning incoming encrypted message and scheduling its replay");
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "cloning incoming encrypted message and scheduling its replay");
 		schedule_md_event("replay encrypted message",
 				  clone_raw_md(md, HERE));
 	}
@@ -1253,8 +1253,8 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	 */
 	size_t iv_offset = sk_pbs->cur - md->packet.ptr;
 	if (impair.corrupt_encrypted && !md->fake_clone) {
-		llog(RC_LOG, ike->sa.logger,
-		     "IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
+		llog(IMPAIR_STREAM, ike->sa.logger,
+		     "corrupting incoming encrypted message's SK payload's first byte");
 		md->packet.ptr[iv_offset] = ~(md->packet.ptr[iv_offset]);
 	}
 
@@ -1631,7 +1631,7 @@ struct ikev2_id build_v2_id_payload(const struct host_end *end, shunk_t *body,
 		.isai_critical = build_ikev2_critical(false, logger),
 	};
 	if (impair.send_nonzero_reserved_id) {
-		llog(RC_LOG, logger, "IMPAIR: setting reserved byte 3 of %s to 0x%02x",
+		llog(IMPAIR_STREAM, logger, "setting reserved byte 3 of %s to 0x%02x",
 		     what, ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS);
 		id_header.isai_res3 = ISAKMP_PAYLOAD_FLAG_LIBRESWAN_BOGUS;
 	}

@@ -42,7 +42,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
@@ -66,7 +66,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: down-client output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
@@ -90,7 +90,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2": deleting template instances
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: send_no_delete set - not sending Delete/Notify
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: down-client output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23

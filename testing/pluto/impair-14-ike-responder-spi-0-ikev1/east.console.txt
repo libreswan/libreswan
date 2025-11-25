@@ -14,7 +14,7 @@ east #
 initdone
 east #
  grep IMPAIR: /tmp/pluto.log
-"west-east" #1: IMPAIR: forcing IKE responder SPI to 0x0
+IMPAIR: "west-east" #1: forcing IKE responder SPI to 0x0
 east #
  grep '^packet from 192.1.2.45' /tmp/pluto.log
 east #

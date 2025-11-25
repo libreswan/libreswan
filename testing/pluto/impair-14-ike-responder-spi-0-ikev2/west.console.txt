@@ -31,7 +31,7 @@ west #
  ipsec up west-east
 "west-east" #2: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-east" #2: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
-"west-east" #2: IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
+IMPAIR: "west-east" #2: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
 "west-east" #2: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
 "west-east" #2: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@west'; Child SA #3 {ESP <0xESPESP}
 "west-east" #2: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
@@ -40,7 +40,7 @@ west #
 west #
  grep IMPAIR: /tmp/pluto.log
 IMPAIR: "west-east" #1: revival: skip scheduling revival event
-"west-east" #2: IMPAIR: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
+IMPAIR: "west-east" #2: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
 west #
  grep '^packet from 192.1.2.45' /tmp/pluto.log
 west #

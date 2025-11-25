@@ -87,7 +87,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 	}
 
 	if (impair.send_no_delete) {
-		llog(RC_LOG, st->logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		llog(IMPAIR_STREAM, st->logger, "send_no_delete set - not sending Delete/Notify");
 		return;
 	}
 
