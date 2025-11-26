@@ -23,7 +23,7 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode request
-"westnet-eastnet-ipv4-psk" #1: IMPAIR: sending bogus KE (g^x) == 0 value to break DH calculations
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending bogus KE (g^x) == 0 value to break DH calculations
 "westnet-eastnet-ipv4-psk" #1: sent Main Mode I2
 "westnet-eastnet-ipv4-psk" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500

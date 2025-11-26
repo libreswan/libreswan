@@ -25,18 +25,18 @@ west #
  ipsec whack --impair lifetime
 west #
  ipsec auto --add TUNNEL-C
-"TUNNEL-C": IMPAIR: skipping ikelifetime=60 checks
-"TUNNEL-C": IMPAIR: skipping ipsec-lifetime=28800 checks
+IMPAIR: "TUNNEL-C": skipping ikelifetime=60 checks
+IMPAIR: "TUNNEL-C": skipping ipsec-lifetime=28800 checks
 "TUNNEL-C": added IKEv1 connection
 west #
  ipsec auto --add TUNNEL-A
-"TUNNEL-A": IMPAIR: skipping ikelifetime=60 checks
-"TUNNEL-A": IMPAIR: skipping ipsec-lifetime=28800 checks
+IMPAIR: "TUNNEL-A": skipping ikelifetime=60 checks
+IMPAIR: "TUNNEL-A": skipping ipsec-lifetime=28800 checks
 "TUNNEL-A": added IKEv1 connection
 west #
  ipsec auto --add TUNNEL-B
-"TUNNEL-B": IMPAIR: skipping ikelifetime=60 checks
-"TUNNEL-B": IMPAIR: skipping ipsec-lifetime=28800 checks
+IMPAIR: "TUNNEL-B": skipping ikelifetime=60 checks
+IMPAIR: "TUNNEL-B": skipping ipsec-lifetime=28800 checks
 "TUNNEL-B": added IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
