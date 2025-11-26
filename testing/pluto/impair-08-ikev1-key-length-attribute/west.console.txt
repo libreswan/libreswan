@@ -49,8 +49,8 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
 "aes128" #3: initiating IKEv1 Main Mode connection
-"aes128" #3: IMPAIR: stripping key-length
-"aes128" #3: IMPAIR: duplicating key-length
+IMPAIR: "aes128" #3: stripping key-length
+IMPAIR: "aes128" #3: duplicating key-length
 "aes128" #3: sent Main Mode request
 "aes128" #3: ignoring unsecured informational payload BAD_PROPOSAL_SYNTAX, length=12
 IMPAIR: "aes128" #3: retransmit so timing out SA (may retry)
@@ -75,8 +75,8 @@ west #
 "aes128" #4: Peer ID is FQDN: '@east'
 "aes128" #4: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 "aes128" #5: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#4 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
-"aes128" #5: IMPAIR: stripping key-length
-"aes128" #5: IMPAIR: duplicating key-length
+IMPAIR: "aes128" #5: stripping key-length
+IMPAIR: "aes128" #5: duplicating key-length
 "aes128" #5: sent Quick Mode request
 IMPAIR: "aes128" #5: retransmit so timing out SA (may retry)
 "aes128" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -96,8 +96,8 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
 "aes128" #6: initiating IKEv1 Main Mode connection
-"aes128" #6: IMPAIR: stripping key-length
-"aes128" #6: IMPAIR: sending key-length attribute value 0
+IMPAIR: "aes128" #6: stripping key-length
+IMPAIR: "aes128" #6: sending key-length attribute value 0
 "aes128" #6: sent Main Mode request
 "aes128" #6: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 IMPAIR: "aes128" #6: retransmit so timing out SA (may retry)
@@ -122,8 +122,8 @@ west #
 "aes128" #7: Peer ID is FQDN: '@east'
 "aes128" #7: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 "aes128" #8: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#7 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
-"aes128" #8: IMPAIR: stripping key-length
-"aes128" #8: IMPAIR: sending key-length attribute value 0
+IMPAIR: "aes128" #8: stripping key-length
+IMPAIR: "aes128" #8: sending key-length attribute value 0
 "aes128" #8: sent Quick Mode request
 IMPAIR: "aes128" #8: retransmit so timing out SA (may retry)
 "aes128" #8: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -143,8 +143,8 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
 "aes128" #9: initiating IKEv1 Main Mode connection
-"aes128" #9: IMPAIR: stripping key-length
-"aes128" #9: IMPAIR: not sending key-length attribute
+IMPAIR: "aes128" #9: stripping key-length
+IMPAIR: "aes128" #9: not sending key-length attribute
 "aes128" #9: sent Main Mode request
 "aes128" #9: sent Main Mode I2
 "aes128" #9: sent Main Mode I3
@@ -176,8 +176,8 @@ west #
 "aes128" #11: Peer ID is FQDN: '@east'
 "aes128" #11: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 "aes128" #12: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#11 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
-"aes128" #12: IMPAIR: stripping key-length
-"aes128" #12: IMPAIR: not sending key-length attribute
+IMPAIR: "aes128" #12: stripping key-length
+IMPAIR: "aes128" #12: not sending key-length attribute
 "aes128" #12: sent Quick Mode request
 IMPAIR: "aes128" #12: retransmit so timing out SA (may retry)
 "aes128" #12: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -199,8 +199,8 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
 "aes128": added IKEv1 connection
 "aes128" #13: initiating IKEv1 Main Mode connection
-"aes128" #13: IMPAIR: stripping key-length
-"aes128" #13: IMPAIR: key-length-attribute:empty not implemented
+IMPAIR: "aes128" #13: stripping key-length
+IMPAIR: "aes128" #13: key-length-attribute:empty not implemented
 "aes128" #13: sent Main Mode request
 "aes128" #13: sent Main Mode I2
 "aes128" #13: sent Main Mode I3
@@ -234,8 +234,8 @@ west #
 "aes128" #15: Peer ID is FQDN: '@east'
 "aes128" #15: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_128 integ=HMAC_SHA1 group=MODP2048}
 "aes128" #16: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES {using isakmp#15 msgid:MSGID proposal=AES_CBC_128-HMAC_SHA1_96-MODP2048 pfsgroup=MODP2048 192.0.1.0/24===192.0.2.0/24}
-"aes128" #16: IMPAIR: stripping key-length
-"aes128" #16: IMPAIR: key-length-attribute:empty not implemented
+IMPAIR: "aes128" #16: stripping key-length
+IMPAIR: "aes128" #16: key-length-attribute:empty not implemented
 "aes128" #16: sent Quick Mode request
 IMPAIR: "aes128" #16: retransmit so timing out SA (may retry)
 "aes128" #16: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
@@ -286,7 +286,7 @@ west #
  ../../guestbin/libreswan-up-down.sh 3des --down -I 192.0.1.254 192.0.2.254
 "3des": added IKEv1 connection
 "3des" #19: initiating IKEv1 Main Mode connection
-"3des" #19: IMPAIR: sending key-length attribute value 0
+IMPAIR: "3des" #19: sending key-length attribute value 0
 "3des" #19: sent Main Mode request
 "3des" #19: ignoring unsecured informational payload NO_PROPOSAL_CHOSEN, length=12
 IMPAIR: "3des" #19: retransmit so timing out SA (may retry)
@@ -307,7 +307,7 @@ west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
 "3des": added IKEv1 connection
 "3des" #20: initiating IKEv1 Main Mode connection
-"3des" #20: IMPAIR: sending key-length attribute value 192
+IMPAIR: "3des" #20: sending key-length attribute value 192
 "3des" #20: sent Main Mode request
 "3des" #20: sent Main Mode I2
 "3des" #20: sent Main Mode I3

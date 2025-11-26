@@ -87,7 +87,7 @@ west #
 "intermediate" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "intermediate" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "intermediate" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP8192}, initiating IKE_INTERMEDIATE
-"intermediate" #1: IMPAIR: adding an unknown payload of type 255 to unencrypted IKE_INTERMEDIATE message
+IMPAIR: "intermediate" #1: adding an unknown payload of type 255 to unencrypted IKE_INTERMEDIATE message
 "intermediate" #1: sent IKE_INTERMEDIATE request to 192.1.2.23:UDP/500 {addke1=ML_KEM_768}
 "intermediate" #1: processing IKE_INTERMEDIATE response from 192.1.2.23:UDP/500 containing SK{KE}
 "intermediate" #1: initiator processed IKE_INTERMEDIATE, initiating IKE_AUTH

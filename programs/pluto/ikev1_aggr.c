@@ -730,7 +730,7 @@ stf_status aggr_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	 * unravel the ID payload.
 	 */
 	if (impair.drop_i2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: dropping Aggressive Mode I2 packet as per impair");
+		llog(IMPAIR_STREAM, ike->sa.logger, "dropping Aggressive Mode I2 packet as per impair");
 		return STF_IGNORE;
 	}
 

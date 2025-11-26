@@ -514,7 +514,7 @@ stf_status main_inR1_outI2(struct state *ike_sa, struct msg_digest *md)
 	     __func__, pri_so(ike->sa.st_serialno));
 
 	if (impair.drop_i2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: dropping Main Mode I2 packet as per impair");
+		llog(IMPAIR_STREAM, ike->sa.logger, "dropping Main Mode I2 packet as per impair");
 		return STF_IGNORE;
 	}
 
@@ -591,7 +591,7 @@ static stf_status main_inR1_outI2_continue(struct state *ike_sa,
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mi2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: busting MI2 with pointlessly large VID payload");
+		llog(IMPAIR_STREAM, ike->sa.logger, "busting MI2 with pointlessly large VID payload");
 		/*
 		 * generate a pointless large VID payload to push message
 		 * over MTU
@@ -720,7 +720,7 @@ static stf_status main_inI2_outR2_continue1(struct state *ike_sa,
 		return STF_INTERNAL_ERROR;
 
 	if (impair.bust_mr2) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: busting MR2 with pointlessly large VID payload");
+		llog(IMPAIR_STREAM, ike->sa.logger, "busting MR2 with pointlessly large VID payload");
 		/*
 		 * generate a pointless large VID payload to push
 		 * message over MTU
@@ -1010,7 +1010,7 @@ static stf_status main_inR2_outI3_continue(struct state *ike_sa,
 
 	/* CERT out */
 	if (send_cert && impair.send_pkcs7_thingie) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: sending cert as pkcs7 blob");
+		llog(IMPAIR_STREAM, ike->sa.logger, "sending cert as pkcs7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts,
 						ike->sa.logger);
 		if (!pexpect(pkcs7 != NULL)) {
@@ -1240,7 +1240,7 @@ stf_status main_inI3_outR3(struct state *ike_sa, struct msg_digest *md)
 
 	/* CERT out, if we have one */
 	if (send_cert && impair.send_pkcs7_thingie) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: sending cert as pkcs7 blob");
+		llog(IMPAIR_STREAM, ike->sa.logger, "sending cert as pkcs7 blob");
 		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_authcerts,
 						ike->sa.logger);
 		if (!pexpect(pkcs7 != NULL)) {
