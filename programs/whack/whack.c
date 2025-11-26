@@ -338,10 +338,6 @@ enum opt_seen_ix {
 
 enum opt {
 
-	OPT_HELP = 'h',
-	OPT_VERSION = 'v',
-	OPT_LABEL = 'l',
-
 /*
  * Start the the non-ASCIC options at 256 so that they can't clash
  * with ASCII options.
@@ -358,6 +354,10 @@ enum opt {
 
 	OPT_STATUS = OPT_START,
 	OPT_SHUTDOWN,
+
+	OPT_HELP,
+	OPT_VERSION,
+	OPT_LABEL,
 
 	OPT_ASYNC,
 
@@ -1025,7 +1025,7 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hp:d:c:o:eatfs" "NARXPECK".
 		 */
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}

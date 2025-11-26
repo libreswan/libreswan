@@ -646,7 +646,7 @@ int main(int argc, char **argv)
 		 * string as the list.  It could be "hvdenp:l:s:"
 		 * "NARXPECK".
 		 */
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}

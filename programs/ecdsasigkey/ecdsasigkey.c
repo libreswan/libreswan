@@ -81,14 +81,14 @@ static const struct curve curves[] = {
 };
 
 enum opt {
-	OPT_VERSION = 'V',
-	OPT_VERBOSE = 'v',
-	OPT_SEEDDEV = 'S',
-	OPT_NSSDIR = 'd',
-	OPT_PASSWORD = 'P',
-	OPT_SEEDBITS = 's',
-	OPT_HELP = 'h',
 	OPT_DEBUG = 256,
+	OPT_VERSION,
+	OPT_VERBOSE,
+	OPT_SEEDDEV,
+	OPT_NSSDIR,
+	OPT_PASSWORD,
+	OPT_SEEDBITS,
+	OPT_HELP,
 };
 
 const struct option optarg_options[] = {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
 	while (true) {
 
-		int c = optarg_getopt(logger, argc, argv, "");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}

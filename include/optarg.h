@@ -39,7 +39,7 @@ extern const struct option optarg_options[]; 	/* defined by program */
  * see below.
  */
 
-int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options);
+int optarg_getopt(struct logger *logger, int argc, char **argv);
 
 /*
  * Using OPTARG_OPTIONS[] table, which is assumed to contain METAOPT

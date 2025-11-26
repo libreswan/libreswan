@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 	struct logger *logger = tool_logger(argc, argv);
 
 	while (true) {
-		int c = optarg_getopt(logger, argc, argv, "vd46");
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}

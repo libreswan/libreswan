@@ -99,46 +99,44 @@ const char usage[] =
  */
 enum opt {
 	OPT_HELP = '?',
-	OPT_IPSECKEY = 'K',
 	OPT_GATEWAY = 'g',
 	OPT_LEFT = 'l',
 	OPT_RIGHT = 'r',
-	OPT_LIST = 'L',
 	OPT_NSSDIR = 'd', /* nss-tools use -d */
 	OPT_VERBOSE = 'v',
-	OPT_VERSION = 'V',
-	OPT_RSAID = 'I',
-	OPT_PRECIDENCE = 'p',
 	OPT_CONFIGDIR = 256,
+	OPT_IPSECKEY,
+	OPT_LIST,
+	OPT_PRECIDENCE,
+	OPT_RSAID,
 	OPT_DUMP,
 	OPT_PASSWORD,
 	OPT_CKAID,
 	OPT_DEBUG,
 	OPT_PEM,
 	OPT_PUBKEY,
+	OPT_VERSION,
 };
 
-const char short_opts[] = "v?d:lrg";
-
 const struct option optarg_options[] = {
-	{ "help",       no_argument,            NULL,   OPT_HELP, },
-	{ "left",       no_argument,            NULL,   OPT_LEFT, },
-	{ "right",      no_argument,            NULL,   OPT_RIGHT, },
-	{ "dump",       no_argument,            NULL,   OPT_DUMP, },
+	{ "help\0",       no_argument,            NULL,   OPT_HELP, },
+	{ "left\0",       no_argument,            NULL,   OPT_LEFT, },
+	{ "right\0",      no_argument,            NULL,   OPT_RIGHT, },
+	{ "dump\0",       no_argument,            NULL,   OPT_DUMP, },
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
-	{ "list",       no_argument,            NULL,   OPT_LIST, },
-	{ "ipseckey",   no_argument,            NULL,   OPT_IPSECKEY, },
-	{ "gateway",    required_argument,      NULL,   OPT_GATEWAY, },
-	{ "precedence", required_argument,      NULL,   OPT_PRECIDENCE, },
-	{ "ckaid",      required_argument,      NULL,   OPT_CKAID, },
-	{ "rsaid",      required_argument,      NULL,   OPT_RSAID, },
-	{ "version",    no_argument,            NULL,   OPT_VERSION, },
-	{ "verbose",    no_argument,            NULL,   OPT_VERBOSE, },
-	{ "configdir",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
-	{ "nssdir",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
-	{ "password",   required_argument,      NULL,   OPT_PASSWORD, },
-	{ "pem",        no_argument,            NULL,   OPT_PEM, },
-	{ "pubkey",     no_argument,            NULL,   OPT_PUBKEY, },
+	{ "list\0",       no_argument,            NULL,   OPT_LIST, },
+	{ "ipseckey\0",   no_argument,            NULL,   OPT_IPSECKEY, },
+	{ "gateway\0",    required_argument,      NULL,   OPT_GATEWAY, },
+	{ "precedence\0", required_argument,      NULL,   OPT_PRECIDENCE, },
+	{ "ckaid\0",      required_argument,      NULL,   OPT_CKAID, },
+	{ "rsaid\0",      required_argument,      NULL,   OPT_RSAID, },
+	{ "version\0",    no_argument,            NULL,   OPT_VERSION, },
+	{ "verbose\0",    no_argument,            NULL,   OPT_VERBOSE, },
+	{ "configdir\0",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
+	{ "nssdir\0",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
+	{ "password\0",   required_argument,      NULL,   OPT_PASSWORD, },
+	{ "pem\0",        no_argument,            NULL,   OPT_PEM, },
+	{ "pubkey\0",     no_argument,            NULL,   OPT_PUBKEY, },
 	{ 0,            0,                      NULL,   0, }
 };
 
@@ -451,7 +449,7 @@ int main(int argc, char *argv[])
 
 	while (true) {
 
-		int c = optarg_getopt(logger, argc, argv, short_opts);
+		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
 			break;
 		}

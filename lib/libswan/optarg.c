@@ -33,8 +33,34 @@
 int optarg_index = -1;
 unsigned verbose;
 
-int optarg_getopt(struct logger *logger, int argc, char **argv, const char *options)
+static bool options_extracted;
+static char options[10];
+
+int optarg_getopt(struct logger *logger, int argc, char **argv)
 {
+	if (!options_extracted) {
+		struct jambuf buf = ARRAY_AS_JAMBUF(options);
+		for (const struct option *opt = optarg_options;
+		     opt->name != NULL; opt++) {
+			if (char_isprint(opt->val)) {
+				switch (opt->has_arg) {
+				case no_argument:
+					jam(&buf,  "%c", opt->val);
+					break;
+				case optional_argument:
+					jam(&buf,  "%c::", opt->val);
+					break;
+				case required_argument:
+					jam(&buf,  "%c:",opt->val);
+					break;
+				default:
+					bad_case(opt->has_arg);
+				}
+			}
+		}
+		PASSERT(logger, jambuf_ok(&buf));
+	}
+
 	while (true) {
 		int c = getopt_long(argc, argv, options, optarg_options, &optarg_index);
 		if (c < 0) {
@@ -200,15 +226,37 @@ void optarg_usage(const char *progname, const char *synopsys, const char *detail
 		const char *argument = (*meta == '\0' ? "<argument>" : meta);
 
 		char option[sizeof(line) - 1];
+		struct jambuf buf = ARRAY_AS_JAMBUF(option);
+
+		/* single character option */
+		if (char_isprint(opt->val)) {
+			newline(stream, &line);
+			switch (opt->has_arg) {
+			case no_argument:
+				jam(&buf,  "[-%c]", opt->val);
+				break;
+			case optional_argument:
+				jam(&buf,  "[-%c[%s]]", opt->val, argument);
+				break;
+			case required_argument:
+				jam(&buf,  "[-%c %s]", opt->val, argument);
+				break;
+			default:
+				bad_case(opt->has_arg);
+			}
+			jam(&buf, " ");
+		}
+
+		/* multi-character option */
 		switch (opt->has_arg) {
 		case no_argument:
-			snprintf(option, sizeof(option),  "[--%s]", nm);
+			jam(&buf,  "[--%s]", nm);
 			break;
 		case optional_argument:
-			snprintf(option, sizeof(option),  "[--%s[=%s]]", nm, argument);
+			jam(&buf,  "[--%s[=%s]]", nm, argument);
 			break;
 		case required_argument:
-			snprintf(option, sizeof(option),  "[--%s %s]", nm, argument);
+			jam(&buf,  "[--%s %s]", nm, argument);
 			break;
 		default:
 			bad_case(opt->has_arg);
