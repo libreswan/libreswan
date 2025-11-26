@@ -782,7 +782,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* IDci (we are initiator) followed by ... */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 1) {
-			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client initiator ID (IDci)");
+			llog(IMPAIR_STREAM, child->sa.logger, "skipping Quick Mode client initiator ID (IDci)");
 		} else {
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->child.spds.list->local->client),
@@ -794,7 +794,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* ... IDcr (peer is responder) */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value < 2) {
-			llog(RC_LOG, child->sa.logger, "IMPAIR: skipping Quick Mode client responder ID (IDcr)");
+			llog(IMPAIR_STREAM, child->sa.logger, "skipping Quick Mode client responder ID (IDcr)");
 		} else if (c->child.spds.len > 1) {
 			/*
 			 * Multiple SPDs means that CISCO_SPLIT was
@@ -828,7 +828,7 @@ static stf_status quick_outI1_continue_tail(struct ike_sa *ike,
 		/* bonus? */
 		if (impair.v1_emit_quick_id.enabled &&
 		    impair.v1_emit_quick_id.value > 2) {
-			llog(RC_LOG, child->sa.logger, "IMPAIR: adding bonus Quick Mode client ID");
+			llog(IMPAIR_STREAM, child->sa.logger, "adding bonus Quick Mode client ID");
 			if (!emit_subnet_id(LOCAL_PERSPECTIVE,
 					    selector_subnet(c->child.spds.list->local->client),
 					    c->child.spds.list->local->client.ipproto,
