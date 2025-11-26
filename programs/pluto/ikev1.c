@@ -1941,7 +1941,7 @@ void process_v1_packet_tail(struct ike_sa *ike_or_null,
 		 * see ikev1-aggr-08-copy-r1-spis-to-i1
 		 */
 		if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
+			llog(IMPAIR_STREAM, ike->sa.logger, "copying notify response SPIs to recorded message and then resending it");
 			/* skip non-ESP marker if needed */
 			size_t skip = (ike->sa.st_iface_endpoint->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
 			size_t spis = sizeof(md->hdr.isa_ike_spis);
@@ -2290,8 +2290,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			    impair.send_no_main_r2) {
 				/* record-only so we properly emulate packet drop */
 				record_outbound_v1_ike_msg(st, &reply_stream, smc->message);
-				llog(RC_LOG, st->logger,
-				     "IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
+				llog(IMPAIR_STREAM, st->logger, "skipped sending STATE_MAIN_R2 response packet");
 			} else {
 				record_and_send_v1_ike_msg(st, &reply_stream, smc->message);
 			}

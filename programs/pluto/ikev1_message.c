@@ -76,17 +76,17 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs)
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs, *g,
 					       "keyex value");
 	case IMPAIR_EMIT_OMIT:
-		llog(RC_LOG, logger, "IMPAIR: sending no KE (g^x) payload");
+		llog(IMPAIR_STREAM, logger, "sending no KE (g^x) payload");
 		return true;
 	case IMPAIR_EMIT_EMPTY:
-		llog(RC_LOG, logger, "IMPAIR: sending empty KE (g^x)");
+		llog(IMPAIR_STREAM, logger, "sending empty KE (g^x)");
 		return ikev1_out_generic_chunk(&isakmp_keyex_desc, outs,
 					       EMPTY_CHUNK, "empty KE");
 	default:
 	{
 		struct pbs_out z;
 		uint8_t byte = impair.ke_payload - IMPAIR_EMIT_ROOF;
-		llog(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
+		llog(IMPAIR_STREAM, logger, "sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
 			pbs_out_repeated_byte(&z, byte, g->len, "fake g^x") &&

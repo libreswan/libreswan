@@ -927,7 +927,7 @@ stf_status xauth_send_request(struct ike_sa *ike)
 			send_pbs_out_using_state(&ike->sa, "XAUTH: req (unrecorded)", &reply);
 		}
 	} else {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: Skipped sending XAUTH user/pass packet");
+		llog(IMPAIR_STREAM, ike->sa.logger, "skipped sending XAUTH user/pass packet");
 		if (p_state == STATE_AGGR_R2) {
 			/* record-only so we properly emulate packet drop */
 			record_outbound_v1_ike_msg(&ike->sa, &reply, "XAUTH: req");
@@ -2607,7 +2607,7 @@ stf_status xauth_inI0(struct state *ike_sa, struct msg_digest *md)
 	ldbg(ike->sa.logger, "arrived in xauth_inI0");
 
 	if (impair.drop_xauth_r0) {
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: drop XAUTH R0 message ");
+		llog(IMPAIR_STREAM, ike->sa.logger, "drop XAUTH R0 message ");
 		return STF_FAIL_v1N;
 	}
 
