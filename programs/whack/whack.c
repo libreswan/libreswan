@@ -1589,10 +1589,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IPTFS: /* --iptfs[={yes,no}] */
-			msg.iptfs = optarg_yn(logger, YN_YES);
+			msg.wm_iptfs = optarg;
 			continue;
 		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
-			msg.iptfs_fragmentation = optarg_yn(logger, YN_YES);
+			msg.wm_iptfs_fragmentation = optarg;
 			continue;
 		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
 			msg.wm_iptfs_packet_size = optarg;
@@ -1601,10 +1601,10 @@ int main(int argc, char **argv)
 			msg.wm_iptfs_max_queue_size = optarg;
 			continue;
 		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
-			msg.iptfs_drop_time = optarg_deltatime(logger);
+			msg.wm_iptfs_drop_time = optarg;
 			continue;
 		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
-			msg.iptfs_init_delay = optarg_deltatime(logger);
+			msg.wm_iptfs_init_delay = optarg;
 			continue;
 		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
 			msg.wm_iptfs_reorder_window = optarg;

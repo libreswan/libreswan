@@ -434,14 +434,6 @@ struct whack_message {
 	enum yn_options send_esp_tfc_padding_not_supported;
 	enum yn_options reject_simultaneous_ike_auth;
 
-	enum yn_options iptfs;
-	enum yn_options iptfs_fragmentation;
-#define wm_iptfs_packet_size conn[END_ROOF].value[KWS_IPTFS_PACKET_SIZE] /* 0 for PMTU */
-#define wm_iptfs_max_queue_size conn[END_ROOF].value[KWS_IPTFS_MAX_QUEUE_SIZE]
-#define wm_iptfs_reorder_window conn[END_ROOF].value[KWS_IPTFS_REORDER_WINDOW]
-	deltatime_t iptfs_drop_time;
-	deltatime_t iptfs_init_delay;
-
 #define wm_reqid conn[END_ROOF].value[KWS_REQID]
 #define wm_nflog_group conn[END_ROOF].value[KWS_NFLOG_GROUP]
 
@@ -537,13 +529,22 @@ struct whack_message {
 	 * (end, index, string) emitted from this table.  That, again,
 	 * gets us one step closer to accepting JSON.
 	 *
-	 * This is not sent over the wire (the message is truncated
-	 * somewhere within .string[].
+	 * This array is not sent over the wire (the message is
+	 * truncated somewhere within .string[].
 	 *
 	 * This array is likely very very empty.
 	 *
 	 * END_ROOF is used to store global (vs per-end) options.
 	 */
+
+#define wm_iptfs                conn[END_ROOF].value[KWS_IPTFS]
+#define wm_iptfs_fragmentation  conn[END_ROOF].value[KWS_IPTFS_FRAGMENTATION]
+#define wm_iptfs_packet_size    conn[END_ROOF].value[KWS_IPTFS_PACKET_SIZE] /* 0 for PMTU */
+#define wm_iptfs_max_queue_size conn[END_ROOF].value[KWS_IPTFS_MAX_QUEUE_SIZE]
+#define wm_iptfs_reorder_window conn[END_ROOF].value[KWS_IPTFS_REORDER_WINDOW]
+#define wm_iptfs_drop_time      conn[END_ROOF].value[KWS_IPTFS_DROP_TIME]
+#define wm_iptfs_init_delay     conn[END_ROOF].value[KWS_IPTFS_INIT_DELAY]
+
 #define wm_clones conn[END_ROOF].value[KWS_CLONES]
 	struct whack_config_conn conn[END_ROOF+1];
 };

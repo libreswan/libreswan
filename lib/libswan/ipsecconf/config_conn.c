@@ -132,13 +132,13 @@ static const struct keyword_def config_conn_keyword[] = {
   K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, .sparse_names = &yn_option_names),
   K("reject-simultaneous-ike-auth", LEMPTY, kt_sparse_name, KWYN_REJECT_SIMULTANEOUS_IKE_AUTH, .sparse_names = &yn_option_names),
 
-  K("iptfs",  LEMPTY,  kt_sparse_name,  KWYN_IPTFS, .sparse_names = &yn_option_names),
-  K("iptfs-fragmentation",  LEMPTY,  kt_sparse_name,  KWYN_IPTFS_FRAGMENTATION, .sparse_names = &yn_option_names),
+  K("iptfs",  LEMPTY,  kt_string,  KWS_IPTFS),
+  K("iptfs-fragmentation",  LEMPTY,  kt_string,  KWS_IPTFS_FRAGMENTATION),
   K("iptfs-packet-size",  LEMPTY,  kt_string,  KWS_IPTFS_PACKET_SIZE),
   K("iptfs-max-queue-size",  LEMPTY,  kt_string,  KWS_IPTFS_MAX_QUEUE_SIZE),
   K("iptfs-reorder-window",  LEMPTY,  kt_string,  KWS_IPTFS_REORDER_WINDOW),
-  K("iptfs-init-delay",  LEMPTY,  kt_seconds,  KNCF_IPTFS_INIT_DELAY),
-  K("iptfs-drop-time",  LEMPTY,  kt_seconds,  KNCF_IPTFS_DROP_TIME),
+  K("iptfs-init-delay",  LEMPTY,  kt_string,  KWS_IPTFS_INIT_DELAY),
+  K("iptfs-drop-time",  LEMPTY,  kt_string,  KWS_IPTFS_DROP_TIME),
 
   K("fake-strongswan",  LEMPTY,  kt_sparse_name,  KWYN_FAKE_STRONGSWAN, .sparse_names = &yn_option_names),
   K("send-vendorid",  LEMPTY,  kt_sparse_name,  KWYN_SEND_VENDORID, .sparse_names = &yn_option_names),

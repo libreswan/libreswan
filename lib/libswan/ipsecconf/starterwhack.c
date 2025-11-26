@@ -206,13 +206,13 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.modecfgpull = conn->values[KWYN_MODECFGPULL].option; /* yn_options */
 	msg.aggressive = conn->values[KWYN_AGGRESSIVE].option; /* yn_options */
 
-	msg.iptfs = conn->values[KWYN_IPTFS].option; /* yn_options */
-	msg.iptfs_fragmentation = conn->values[KWYN_IPTFS_FRAGMENTATION].option; /* yn_options */
+	msg.wm_iptfs = conn->values[KWS_IPTFS].string;
+	msg.wm_iptfs_fragmentation = conn->values[KWS_IPTFS_FRAGMENTATION].string;
 	msg.wm_iptfs_packet_size = conn->values[KWS_IPTFS_PACKET_SIZE].string;
 	msg.wm_iptfs_max_queue_size = conn->values[KWS_IPTFS_MAX_QUEUE_SIZE].string;
 	msg.wm_iptfs_reorder_window = conn->values[KWS_IPTFS_REORDER_WINDOW].string;
-	msg.iptfs_init_delay = conn->values[KNCF_IPTFS_INIT_DELAY].deltatime;
-	msg.iptfs_drop_time = conn->values[KNCF_IPTFS_DROP_TIME].deltatime;
+	msg.wm_iptfs_init_delay = conn->values[KWS_IPTFS_INIT_DELAY].string;
+	msg.wm_iptfs_drop_time = conn->values[KWS_IPTFS_DROP_TIME].string;
 
 	msg.decap_dscp = conn->values[KWYN_DECAP_DSCP].option; /* yn_options */
 	msg.encap_dscp = conn->values[KWYN_ENCAP_DSCP].option; /* yn_options */

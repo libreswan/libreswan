@@ -32,6 +32,11 @@ diag_t diag_errno(int error, const char *message, ...) PRINTF_LIKE(2) MUST_USE_R
 diag_t diag_va_list(const char *message, va_list ap) VPRINTF_LIKE(1) MUST_USE_RESULT;
 diag_t diag_jambuf(struct jambuf *buf);
 
+/*
+ * Builds and returns a new diag by concatentating MESSAGE and DIAG
+ * (it's assumed MESSAGE includes trailing separator such as ", ").
+ * DIAG is then released.
+ */
 diag_t diag_diag(diag_t *diag, const char *message, ...) PRINTF_LIKE(2) MUST_USE_RESULT;
 
 const char *str_diag(diag_t diag);

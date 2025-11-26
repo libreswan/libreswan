@@ -41,6 +41,7 @@
 #include "passert.h"
 #include "ipsecconf/interfaces.h"
 #include "nss_cert_load.h"
+#include "ipsecconf/config_conn.h"
 #include "ipsecconf/config_setup.h"
 #include "scale.h"
 #include "deltatime.h"
@@ -534,57 +535,6 @@ static bool extract_yn(const char *leftright, const char *name,
 	}
 }
 
-/*
- * YN option that is only used when P is enabled.  When P is disabled a
- * warning is issued but the value is saved regardless:
- *
- * This is to stop:
- *   iptfs=no; iptfs-fragmentation=yes
- * showing as:
- *   iptfs: no; fragmentation: no;
- */
-
-static bool extract_yn_p(const char *leftright, const char *name, enum yn_options yn,
-			 enum yn_options value_when_unset,
-			 const struct whack_message *wm, struct verbose verbose,
-			 const char *p_leftright, const char *p_name, enum yn_options p)
-{
-	const struct sparse_names *names = &yn_option_names;
-
-	if (yn == 0) {
-		/* no argument */
-		return value_when_unset;
-	}
-
-	bool value;
-	switch (yn) {
-	case YN_NO: value = false; break;
-	case YN_YES: value = true; break;
-	default:
-		bad_sparse(verbose.logger, &yn_option_names, yn);
-	}
-
-	/* complain? */
-	if (never_negotiate_sparse_option(leftright, name, yn,
-					  &yn_option_names, wm, verbose)) {
-		return value;
-	}
-
-	if (p == YN_UNSET) {
-		name_buf sb;
-		vwarning("%s%s=%s ignored without %s%s=yes",
-			 leftright, name, str_sparse_long(names, value, &sb),
-			 p_leftright, p_name);
-	} else if (p == YN_NO) {
-		name_buf sb;
-		vwarning("%s%s=%s ignored when %s%s=no",
-			 leftright, name, str_sparse_long(names, value, &sb),
-			 p_leftright, p_name);
-	}
-
-	return value;
-}
-
 static enum yna_options extract_yna(const char *leftright, const char *name,
 				    enum yna_options yna,
 				    enum yna_options value_when_unset,
@@ -722,6 +672,11 @@ static bool extract_bool(const char *leftright,
 			 const struct whack_message *wm,
 			 diag_t *d, struct verbose verbose)
 {
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
 	enum yn_options yn = extract_sparse_name(leftright, name, value,
 						 value_when_unset,
 						 &yn_option_names,
@@ -735,6 +690,65 @@ static bool extract_bool(const char *leftright,
 		vexpect(*d != NULL);
 		return false;
 	}
+}
+
+static void predicate_warning(const char *leftright, const char *name, const char *value,
+			      const char *p_leftright, const char *p_name, enum yn_options p,
+			      const struct whack_message *wm, diag_t *d, struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return;
+	}
+
+	if (is_never_negotiate_wm(wm)) {
+		return;
+	}
+
+	if (value == NULL) {
+		return;
+	}
+
+	switch (p) {
+	case YN_UNSET:
+		vwarning("%s%s=%s ignored without %s%s=yes",
+			 leftright, name, value,
+			 p_leftright, p_name);
+		break;
+	case YN_NO:
+		vwarning("%s%s=%s ignored when %s%s=no",
+			 leftright, name, value,
+			 p_leftright, p_name);
+		break;
+	case YN_YES:
+		break;
+	}
+}
+
+static deltatime_t extract_deltatime(const char *leftright,
+				     const char *name,
+				     const char *value,
+				     deltatime_t value_when_unset,
+				     const struct whack_message *wm,
+				     diag_t *d, struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+		return value_when_unset;
+	}
+
+	deltatime_t deltatime;
+	diag_t diag = ttodeltatime(shunk1(value), &deltatime);
+	if (diag != NULL) {
+		(*d) = diag_diag(&diag, "%s%s=%s invalid, ", leftright, name, value);
+		return value_when_unset;
+	}
+
+	return deltatime;
 }
 
 struct range {
@@ -3052,9 +3066,14 @@ diag_t extract_connection(const struct whack_message *wm,
 
 
 	/* this warns when never_negotiate() */
-	bool iptfs = extract_yn("", "iptfs", wm->iptfs,
-				/*value_when_unset*/YN_NO,
-				wm, verbose);
+	bool iptfs = extract_bool("", "iptfs",
+				  wm->wm_iptfs,
+				  /*value_when_unset*/YN_NO,
+				  wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (iptfs) {
 		/* lots of incompatibility */
 		if (ike_version < IKEv2) {
@@ -3112,19 +3131,31 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		if (deltatime_cmp(wm->iptfs_drop_time, >=, uint32_max)) {
+		deltatime_t iptfs_drop_time = extract_deltatime("", "iptfs-drop-time",
+								wm->wm_iptfs_drop_time,
+								(deltatime_t) {0},
+								wm, &d, verbose);
+		deltatime_t iptfs_init_delay = extract_deltatime("", "iptfs-init-delay",
+								 wm->wm_iptfs_init_delay,
+								 (deltatime_t) {0},
+								 wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
+
+		if (deltatime_cmp(iptfs_drop_time, >=, uint32_max)) {
 			deltatime_buf tb;
 			return diag("iptfs-drop-time cannot larger than %s",
 				    str_deltatime(uint32_max, &tb));
 		}
-		config->child.iptfs.drop_time = wm->iptfs_drop_time;
+		config->child.iptfs.drop_time = iptfs_drop_time;
 
-			if (deltatime_cmp(wm->iptfs_init_delay, >=, uint32_max)) {
+		if (deltatime_cmp(iptfs_init_delay, >=, uint32_max)) {
 			deltatime_buf tb;
 			return diag("iptfs-init-delay cannot larger than %s",
 				    str_deltatime(uint32_max, &tb));
 		}
-		config->child.iptfs.init_delay = wm->iptfs_init_delay;
+		config->child.iptfs.init_delay = iptfs_init_delay;
 
 		config->child.iptfs.reorder_window =
 			extract_scaled_uintmax("", "", "iptfs-reorder-window",
@@ -3145,11 +3176,16 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * consistent and toggling iptfs= doesn't seem to change the
 	 * field.  Could warn about this but meh.
 	 */
-	config->child.iptfs.fragmentation =
-		extract_yn_p("", "iptfs-fragmentation", wm->iptfs_fragmentation,
-			     /*value_when_unset*/YN_YES,
-			     wm, verbose,
-			     "", "iptfs", wm->iptfs);
+	config->child.iptfs.fragmentation = extract_bool("", "iptfs-fragmentation",
+							 wm->wm_iptfs_fragmentation,
+							 /*value_when_unset*/YN_YES,
+							 wm, &d, verbose);
+	predicate_warning("", "iptfs-fragmentation", wm->wm_iptfs_fragmentation,
+			  "", "iptfs", iptfs,
+			  wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
 	/*
 	 * RFC 5685 - IKEv2 Redirect mechanism.
