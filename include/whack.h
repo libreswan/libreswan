@@ -29,7 +29,6 @@
 #include "ietf_constants.h"
 #include "lset.h"
 #include "lmod.h"
-#include "deltatime.h"
 #include "chunk.h"
 #include "reqid.h"
 #include "err.h"

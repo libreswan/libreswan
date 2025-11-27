@@ -119,6 +119,7 @@ static void check_config_keywords(struct logger *logger,
 			ok &= pexpect((k->validity & (kv_leftright | kv_both)) == LEMPTY);
 			break;
 		case CONFIG_CONN:
+			ok &= pexpect(k->type != kt_seconds);
 			break;
 		}
 
