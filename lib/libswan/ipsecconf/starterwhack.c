@@ -93,10 +93,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.rekey = conn->values[KWYN_REKEY].option;
 	msg.reauth = conn->values[KWYN_REAUTH].option;
 
-	msg.send_esp_tfc_padding_not_supported =
-		conn->values[KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED].option;
-	msg.reject_simultaneous_ike_auth = conn->values[KWYN_REJECT_SIMULTANEOUS_IKE_AUTH].option;
-
 	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
 		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;
 	}
@@ -111,14 +107,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	/* can be 0 aka unset */
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
-
-	/* Activate sending out own vendorid */
-	msg.send_vendorid = conn->values[KWYN_SEND_VENDORID].option;
-
-	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
-	msg.initial_contact = conn->values[KWYN_INITIAL_CONTACT].option;
-
-	msg.fake_strongswan = conn->values[KWYN_FAKE_STRONGSWAN].option;
 
 	/*
 	 * Cisco (UNITY).

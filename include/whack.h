@@ -388,45 +388,12 @@ struct whack_message {
 	/* Option to tweak sending NATT drafts, rfc or both */
 	enum ikev1_natt_policy nat_ikev1_method;
 
-	/* Option to allow sending INITIAL-CONTACT payload */
-	enum yn_options initial_contact;
-
-	/*
-	 * Option to just send the Cisco VID - the other end will behave
-	 * differently (ModeCFG + RSA?)
-	 */
-#define wm_remote_peer_type conn[END_ROOF].value[KWS_REMOTE_PEER_TYPE]
-#define wm_cisco_unity conn[END_ROOF].value[KWS_CISCO_UNITY]
-#define wm_cisco_split conn[END_ROOF].value[KWS_CISCO_SPLIT]
-
-	/* Option to send strongswan VID to allow better interop */
-	enum yn_options fake_strongswan;
-
-	/* send our own libreswan vendorid or not */
-	enum yn_options send_vendorid;
-
-	/* Checking if this connection is configured by Network Manager */
-#define wm_nm_configured conn[END_ROOF].value[KWS_NM_CONFIGURED]
-
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum xauthby xauthby;
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum xauthfail xauthfail;
 #define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
-
-	/* Force the MTU for this connection */
-#define wm_mtu  conn[END_ROOF].value[KWS_MTU]
-#define wm_priority conn[END_ROOF].value[KWS_PRIORITY]
-#define wm_tfc conn[END_ROOF].value[KWS_TFC]
-	enum yn_options send_esp_tfc_padding_not_supported;
-	enum yn_options reject_simultaneous_ike_auth;
-
-#define wm_reqid conn[END_ROOF].value[KWS_REQID]
-#define wm_nflog_group conn[END_ROOF].value[KWS_NFLOG_GROUP]
-
-	/* sec_label string (if any) -- decoded by pluto */
-#define wm_sec_label conn[END_ROOF].value[KWS_SEC_LABEL]
 
 	struct whack_end end[END_ROOF];
 
@@ -470,17 +437,6 @@ struct whack_message {
 	bool whack_utc;
 	lset_t whack_list;
 
-	/* for connalias string */
-#define wm_connalias conn[END_ROOF].value[KWS_CONNALIAS]
-
-	/* for IKEv1 MODECFG and IKEv2 CP */
-#define wm_modecfgdns conn[END_ROOF].value[KWS_MODECFGDNS]
-#define wm_modecfgdomains conn[END_ROOF].value[KWS_MODECFGDOMAINS]
-#define wm_modecfgbanner conn[END_ROOF].value[KWS_MODECFGBANNER]
-
-	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
-#define wm_ppk_ids conn[END_ROOF].value[KWS_PPK_IDS]
-
 	/*
 	 * For RFC 5685 - IKEv2 Redirect mechanism.
 	 *
@@ -514,6 +470,50 @@ struct whack_message {
 	 *
 	 * END_ROOF is used to store global (vs per-end) options.
 	 */
+
+	/* Option to allow sending INITIAL-CONTACT payload */
+#define wm_initial_contact conn[END_ROOF].value[KWS_INITIAL_CONTACT]
+
+	/*
+	 * Option to just send the Cisco VID - the other end will behave
+	 * differently (ModeCFG + RSA?)
+	 */
+#define wm_remote_peer_type conn[END_ROOF].value[KWS_REMOTE_PEER_TYPE]
+#define wm_cisco_unity conn[END_ROOF].value[KWS_CISCO_UNITY]
+#define wm_cisco_split conn[END_ROOF].value[KWS_CISCO_SPLIT]
+
+	/* Option to send strongswan VID to allow better interop */
+#define wm_fake_strongswan conn[END_ROOF].value[KWS_FAKE_STRONGSWAN]
+
+	/* send our own libreswan vendorid or not */
+#define wm_send_vendorid conn[END_ROOF].value[KWS_SEND_VENDORID]
+
+	/* Checking if this connection is configured by Network Manager */
+#define wm_nm_configured conn[END_ROOF].value[KWS_NM_CONFIGURED]
+
+	/* Force the MTU for this connection */
+#define wm_mtu  conn[END_ROOF].value[KWS_MTU]
+#define wm_priority conn[END_ROOF].value[KWS_PRIORITY]
+#define wm_tfc conn[END_ROOF].value[KWS_TFC]
+#define wm_send_esp_tfc_padding_not_supported conn[END_ROOF].value[KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED]
+#define wm_reject_simultaneous_ike_auth conn[END_ROOF].value[KWS_REJECT_SIMULTANEOUS_IKE_AUTH]
+
+#define wm_reqid conn[END_ROOF].value[KWS_REQID]
+#define wm_nflog_group conn[END_ROOF].value[KWS_NFLOG_GROUP]
+
+	/* sec_label string (if any) -- decoded by pluto */
+#define wm_sec_label conn[END_ROOF].value[KWS_SEC_LABEL]
+
+	/* for connalias string */
+#define wm_connalias conn[END_ROOF].value[KWS_CONNALIAS]
+
+	/* for IKEv1 MODECFG and IKEv2 CP */
+#define wm_modecfgdns conn[END_ROOF].value[KWS_MODECFGDNS]
+#define wm_modecfgdomains conn[END_ROOF].value[KWS_MODECFGDOMAINS]
+#define wm_modecfgbanner conn[END_ROOF].value[KWS_MODECFGBANNER]
+
+	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
+#define wm_ppk_ids conn[END_ROOF].value[KWS_PPK_IDS]
 
 #define wm_mark conn[END_ROOF].value[KWS_MARK]
 #define wm_mark_in conn[END_ROOF].value[KWS_MARK_IN]

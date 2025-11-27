@@ -2285,6 +2285,7 @@ static deltatime_t extract_lifetime(const char *lifetime_name,
 				    struct verbose verbose)
 {
 	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
 		return default_lifetime;
 	}
 
@@ -4002,15 +4003,21 @@ diag_t extract_connection(const struct whack_message *wm,
 		} else {
 			config->ikev1_natt = wm->nat_ikev1_method;
 		}
-		config->send_initial_contact = extract_yn("", "initial-contact", wm->initial_contact,
-							  /*value_when_unset*/YN_NO,
-							  wm, verbose);
-		config->send_vid_fake_strongswan = extract_yn("", "fake-strongswan", wm->fake_strongswan,
-							      /*value_when_unset*/YN_NO,
-							      wm, verbose);
-		config->send_vendorid = extract_yn("", "send-vendorid", wm->send_vendorid,
-						   /*value_when_unset*/YN_NO,
-						   wm, verbose);
+		config->send_initial_contact =
+			extract_bool("", "initial-contact",
+				     wm->wm_initial_contact,
+				     /*value_when_unset*/YN_NO,
+				     wm, &d, verbose);
+		config->send_vid_fake_strongswan =
+			extract_bool("", "fake-strongswan",
+				     wm->wm_fake_strongswan,
+				     /*value_when_unset*/YN_NO,
+				     wm, &d, verbose);
+		config->send_vendorid =
+			extract_bool("", "send-vendorid",
+				     wm->wm_send_vendorid,
+				     /*value_when_unset*/YN_NO,
+				     wm, &d, verbose);
 
 		config->send_ca = extract_enum_name("", "sendca",
 						    wm->wm_sendca,
@@ -4163,15 +4170,25 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->child.send.esp_tfc_padding_not_supported =
-		extract_yn("", "send-esp-tfc-padding-not-supported",
-			   wm->send_esp_tfc_padding_not_supported,
-			   YN_NO, wm, verbose);
+		extract_bool("", "send-esp-tfc-padding-not-supported",
+			     wm->wm_send_esp_tfc_padding_not_supported,
+			     /*value_when_unset*/YN_NO,
+			     wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
-	if (wm->reject_simultaneous_ike_auth && ike_version < IKEv2) {
+	if (wm->wm_reject_simultaneous_ike_auth && ike_version < IKEv2) {
 		return diag("cannot specify reject-simultaneous-ike-auth for IKEv1");
 	}
-	config->reject_simultaneous_ike_auth = extract_yn("", "reject-simultaneous-ike-auth",
-			wm->reject_simultaneous_ike_auth, /*value_when_unset*/YN_YES, wm, verbose);
+	config->reject_simultaneous_ike_auth =
+		extract_bool("", "reject-simultaneous-ike-auth",
+			     wm->wm_reject_simultaneous_ike_auth,
+			     /*value_when_unset*/YN_YES,
+			     wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
 	/*
 	 * Since security labels use the same REQID for everything,

@@ -82,10 +82,10 @@ static void help(void)
 		"	[--vti <ip-address>/mask] \\\n"
 		"	[--updown <updown>] \\\n"
 		"	[--authby <psk | rsasig | rsa | ecdsa | null | eaponly>] \\\n"
-		"	[--autheap <none | tls>] \\\n"
+		"	[--autheap {none,tls} \\\n"
 		"	[--cert <friendly_name> | --ckaid <ckaid>] \\\n"
 		"	[--ca <distinguished name>] \\\n"
-		"	[--sendca no|issuer|all] [--sendcert yes|always|no|never|ifasked] \\\n"
+		"	[--sendca {no,issuer,all} [--sendcert {yes,always,no,never,ifasked} \\\n"
 		"	[--nexthop <ip-address>] \\\n"
 		"	[--client <subnet> \\\n"
 		"	[--clientprotoport <protocol>/<port>] \\\n"
@@ -102,15 +102,15 @@ static void help(void)
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
-		"	[--send-redirect] [--redirect-to <ip>] \\\n"
-		"	[--accept-redirect] [--accept-redirect-to <ip>] \\\n"
+		"	[--send-redirect {yes,no,auto}] [--redirect-to <ip>] \\\n"
+		"	[--accept-redirect {yes,no}] [--accept-redirect-to <ip>] \\\n"
 		"	[--replay-window <num>] \\\n"
 		"	[--esp <esp-algos>] \\\n"
 		"	[--remote-peer-type <cisco>] \\\n"
 		"	[--mtu <mtu>] \\\n"
 		"	[--priority <prio>] [--reqid <reqid>] \\\n"
-		"	[--tfc <size>] [--send-esp-tfc-padding-not-supported] \\\n"
-		"	[--reject-simultaneous-ike-auth] \\\n"
+		"	[--tfc <size>] [--send-esp-tfc-padding-not-supported[={yes,no}] \\\n"
+		"	[--reject-simultaneous-ike-auth[={yes,no}]] \\\n"
 		"	[--iptfs[={yes,no}] \\\n"
 		"         [--iptfs-fragmentation[={yes,no}]] \\\n"
 		"         [--iptfs-packet-size <size>] \\\n"
@@ -171,7 +171,7 @@ static void help(void)
 		"active redirect: whack [--name <connection_name>] \\\n"
 		"	--redirect-to <ip-address(es)> \n"
 		"\n"
-		"global redirect: whack --global-redirect yes|no|auto\n"
+		"global redirect: whack --global-redirect {yes,no,auto}\n"
 		"	--global-redirect-to <ip-address, dns-domain, ..> \n"
 		"\n"
 		"opportunistic initiation: whack [--tunnelipv4 | --tunnelipv6] \\\n"
@@ -1245,18 +1245,18 @@ int main(int argc, char **argv)
 			whack_command(&msg, WHACK_DELETEUSER);
 			continue;
 
-		case OPT_REDIRECT_TO:	/* --redirect-to */
+		case OPT_REDIRECT_TO:	/* --redirect-to <ip> */
 			/* either active, or or add */
 			/* .whack_command deciphered below */
 			msg.wm_redirect_to = optarg;
 			continue;
 
-		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
+		case OPT_GLOBAL_REDIRECT:	/* --global-redirect  {yes,no,auto} */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
 			msg.global_redirect = optarg_sparse(logger, 0, &global_redirect_names);
 			continue;
 
-		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to */
+		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to <ip> */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
 			msg.wm_redirect_to = optarg; /* could be empty string */
 			continue;
@@ -1423,7 +1423,7 @@ int main(int argc, char **argv)
 			whack_command(&msg, WHACK_ACQUIRE);
 			msg.whack.acquire.remote.port = optarg_port(logger);
 			continue;
-		case OPT_OPPO_LABEL:
+		case OPT_OPPO_LABEL:	/* --oppolabel <security-label> */
 			whack_command(&msg, WHACK_ACQUIRE);
 			msg.whack.acquire.label = optarg;
 			continue;
@@ -1470,7 +1470,7 @@ int main(int argc, char **argv)
 			end->we_id = optarg;	/* decoded by Pluto */
 			continue;
 
-		case END_SENDCERT:	/* --sendcert */
+		case END_SENDCERT:	/* --sendcert {yes,always,no,never,ifasked} */
 			end->we_sendcert = optarg;
 			continue;
 
@@ -1514,17 +1514,16 @@ int main(int argc, char **argv)
 			end->we_auth = optarg;
 			continue;
 
-		case END_AUTHEAP:
+		case END_AUTHEAP:	/* --autheap {none,tls} */
 			end->we_autheap = optarg;
 			continue;
 
-		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */
+		case END_SUBNET:	/* --subnet <subnet> | --client <subnet> */
 			end->we_subnet = optarg;	/* decoded by Pluto */
 			msg.type = KS_TUNNEL;	/* client => tunnel */
 			continue;
 
-		/* --clientprotoport <protocol>/<port> */
-		case END_CLIENTPROTOPORT:
+		case END_CLIENTPROTOPORT:	/* --clientprotoport <protocol>/<port> */
 			end->we_protoport = optarg;
 			continue;
 
@@ -1588,25 +1587,25 @@ int main(int argc, char **argv)
 			msg.reauth = YN_YES;
 			continue;
 
-		case CD_IPTFS: /* --iptfs[={yes,no}] */
-			msg.wm_iptfs = optarg;
+		case CD_IPTFS:			/* --iptfs[={yes,no}] */
+			msg.wm_iptfs = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case CD_IPTFS_FRAGMENTATION: /* --iptfs-fragmentation={yes,no} */
-			msg.wm_iptfs_fragmentation = optarg;
+		case CD_IPTFS_FRAGMENTATION:	/* --iptfs-fragmentation={yes,no} */
+			msg.wm_iptfs_fragmentation = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size */
+		case CD_IPTFS_PACKET_SIZE:	/* --iptfs-packet-size <size> */
 			msg.wm_iptfs_packet_size = optarg;
 			continue;
-		case CD_IPTFS_MAX_QUEUE_SIZE: /* --iptfs-max-queue-size */
+		case CD_IPTFS_MAX_QUEUE_SIZE:	/* --iptfs-max-queue-size <size> */
 			msg.wm_iptfs_max_queue_size = optarg;
 			continue;
-		case CD_IPTFS_DROP_TIME: /* --iptfs-drop-time */
+		case CD_IPTFS_DROP_TIME:	/* --iptfs-drop-time <seconds> */
 			msg.wm_iptfs_drop_time = optarg;
 			continue;
-		case CD_IPTFS_INIT_DELAY: /* --iptfs-init-delay */
+		case CD_IPTFS_INIT_DELAY:	/* --iptfs-init-delay <seconds> */
 			msg.wm_iptfs_init_delay = optarg;
 			continue;
-		case CD_IPTFS_REORDER_WINDOW: /* --iptfs-reorder-window */
+		case CD_IPTFS_REORDER_WINDOW:	/* --iptfs-reorder-window <window-size> */
 			msg.wm_iptfs_reorder_window = optarg;
 			continue;
 
@@ -1793,7 +1792,7 @@ int main(int argc, char **argv)
 			msg.wm_replay_window = optarg;
 			continue;
 
-		case CD_SENDCA:	/* --sendca */
+		case CD_SENDCA:		/* --sendca {no,issuer,all} */
 			msg.wm_sendca = optarg;
 			continue;
 
@@ -1816,8 +1815,8 @@ int main(int argc, char **argv)
 			msg.nat_ikev1_method = optarg_sparse(logger, 0, &nat_ikev1_method_option_names);
 			continue;
 
-		case CD_INITIAL_CONTACT:	/* --initial-contact */
-			msg.initial_contact = optarg_yn(logger, YN_YES);
+		case CD_INITIAL_CONTACT:	/* --initial-contact[={yes,no}] */
+			msg.wm_initial_contact = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_CISCO_UNITY:	/* --cisco-unity */
@@ -1825,7 +1824,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_FAKE_STRONGSWAN:	/* --fake-strongswan[=YES|NO] */
-			msg.fake_strongswan = optarg_yn(logger, YN_YES);
+			msg.wm_fake_strongswan = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
@@ -1841,15 +1840,15 @@ int main(int argc, char **argv)
 			     "obsolete --%s option ignored", optarg_options[optarg_index].name);
 			continue;
 
-		case CD_SEND_REDIRECT:	/* --send-redirect */
+		case CD_SEND_REDIRECT:		/* --send-redirect {yes,no,auto} */
 			msg.send_redirect = optarg_yna(logger, 0/*no-default*/);
 			continue;
 
-		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
+		case CD_ACCEPT_REDIRECT:	/* --accept-redirect {yes,no} */
 			msg.accept_redirect = optarg_yn(logger, 0/*no-default*/);
 			continue;
 
-		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to */
+		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to <ip> */
 			msg.wm_accept_redirect_to = optarg;
 			continue;
 
@@ -1887,7 +1886,7 @@ int main(int argc, char **argv)
 			/* ignore */
 			continue;
 
-		case CD_SEC_LABEL:	/* --sec-label */
+		case CD_SEC_LABEL:	/* --sec-label <label> */
 			msg.wm_sec_label = optarg;
 			continue;
 
@@ -1947,13 +1946,13 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver[={yes,no}] */
-			end->we_xauthserver = optarg;
+			end->we_xauthserver = (optarg == NULL ? "yes" : optarg);
 			continue;
 		case END_XAUTHCLIENT:	/* --xauthclient[={yes,no}] */
-			end->we_xauthclient = optarg;
+			end->we_xauthclient = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case OPT_USERNAME:	/* --username, was --xauthname */
+		case OPT_USERNAME:	/* --username <name>, was --xauthname */
 			/*
 			 * we can't tell if this is going to be --initiate, or
 			 * if this is going to be an conn definition, so do
@@ -1971,55 +1970,55 @@ int main(int argc, char **argv)
 			xauthpasslen = jam_str(xauthpass, sizeof(xauthpass), optarg) - xauthpass + 1;
 			continue;
 
-		case END_CAT:		/* --cat */
-			end->we_cat = optarg;
+		case END_CAT:		/* --cat[={yes,no}] */
+			end->we_cat = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case END_ADDRESSPOOL:	/* --addresspool */
+		case END_ADDRESSPOOL:	/* --addresspool <range> */
 			end->we_addresspool = optarg;
 			continue;
 
-		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			end->we_modecfgclient = optarg;
+		case END_MODECFGCLIENT:	/* --modeconfigclient[={yes,no}] */
+			end->we_modecfgclient = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case END_MODECFGSERVER:	/* --modeconfigserver */
-			end->we_modecfgserver = optarg;
+		case END_MODECFGSERVER:	/* --modeconfigserver[={yes,no}] */
+			end->we_modecfgserver = (optarg == NULL ? "yes" : optarg);
 			continue;
-		case CD_MODECFGPULL:	/* --modecfgpull */
+		case CD_MODECFGPULL:	/* --modecfgpull[={yes,no}] */
 			msg.modecfgpull = optarg_yn(logger, YN_YES);
 			continue;
 
-		case CD_MODECFGDNS:	/* --modecfgdns */
+		case CD_MODECFGDNS:	/* --modecfgdns <address> */
 			msg.wm_modecfgdns = optarg;
 			continue;
-		case CD_MODECFGDOMAINS:	/* --modecfgdomains */
+		case CD_MODECFGDOMAINS:	/* --modecfgdomains <domain>,... */
 			msg.wm_modecfgdomains = optarg;
 			continue;
-		case CD_MODECFGBANNER:	/* --modecfgbanner */
+		case CD_MODECFGBANNER:	/* --modecfgbanner <banner> */
 			msg.wm_modecfgbanner = optarg;
 			continue;
 
-		case CD_CONN_MARK:      /* --conn-mark */
+		case CD_CONN_MARK:	/* --conn-mark <mark/mask> */
 			msg.wm_mark = optarg;
 			continue;
-		case CD_CONN_MARK_IN:      /* --conn-mark-in */
+		case CD_CONN_MARK_IN:	/* --conn-mark-in <mark/mask> */
 			msg.wm_mark_in = optarg;
 			continue;
-		case CD_CONN_MARK_OUT:      /* --conn-mark-out */
+		case CD_CONN_MARK_OUT:	/* --conn-mark-out <mark/mask> */
 			msg.wm_mark_out = optarg;
 			continue;
 
-		case CD_VTI_INTERFACE:      /* --vti-interface=IFACE */
+		case CD_VTI_INTERFACE:      /* --vti-interface <iface> */
 			msg.wm_vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
-			msg.wm_vti_routing = optarg;
+			msg.wm_vti_routing = (optarg == NULL ? "yes" : optarg);
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
-			msg.wm_vti_shared = optarg;
+			msg.wm_vti_shared = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */
+		case CD_IPSEC_INTERFACE:      /* --ipsec-interface <number> */
 			msg.wm_ipsec_interface = optarg;
 			continue;
 
@@ -2035,36 +2034,35 @@ int main(int argc, char **argv)
 			msg.metric = optarg_uintmax(logger);
 			continue;
 
-		case CD_MTU:	/* --mtu */
+		case CD_MTU:	/* --mtu <mtu> */
 			msg.wm_mtu = optarg;
 			continue;
 
-		case CD_PRIORITY:	/* --priority */
+		case CD_PRIORITY:	/* --priority <prio> */
 			msg.wm_priority = optarg;
 			continue;
 
-		case CD_TFC:	/* --tfc */
+		case CD_TFC:	/* --tfc <size> */
 			msg.wm_tfc = optarg;
 			continue;
 
-		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported */
-			msg.send_esp_tfc_padding_not_supported =
-				optarg_yn(logger, YN_YES);
+		case CD_SEND_ESP_TFC_PADDING_NOT_SUPPORTED:	/* --send-esp-tfc-padding-not-supported[={yes,no} */
+			msg.wm_send_esp_tfc_padding_not_supported = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_REJECT_SIMULTANEOUS_IKE_AUTH: /* --reject-simultaneous-ike-auth */
-			msg.reject_simultaneous_ike_auth = optarg_yn(logger, YN_YES);
+		case CD_REJECT_SIMULTANEOUS_IKE_AUTH: /* --reject-simultaneous-ike-auth[={yes,no}] */
+			msg.wm_reject_simultaneous_ike_auth = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_PFS:	/* --pfs */
 			msg.pfs = optarg_yn(logger, YN_YES);
 			continue;
 
-		case CD_NFLOG_GROUP:	/* --nflog-group */
+		case CD_NFLOG_GROUP:	/* --nflog-group <groupnum> */
 			msg.wm_nflog_group = optarg;
 			continue;
 
-		case CD_REQID:	/* --reqid */
+		case CD_REQID:	/* --reqid <reqid> */
 			msg.wm_reqid = optarg;
 			continue;
 
