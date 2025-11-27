@@ -892,7 +892,7 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 	}
 
 	if (impair.install_ipsec_sa_inbound_policy) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_inbound_policy in %s()", __func__);
+		llog(IMPAIR_STREAM, logger, "kernel: install_ipsec_sa_inbound_policy in %s()", __func__);
 		return false;
 	}
 
@@ -1016,7 +1016,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	}
 
 	if (impair.install_ipsec_sa_outbound_policy) {
-		llog(RC_LOG, logger, "IMPAIR: kernel: install_ipsec_sa_outbound_policy in %s()", __func__);
+		llog(IMPAIR_STREAM, logger, "kernel: install_ipsec_sa_outbound_policy in %s()", __func__);
 		return false;
 	}
 
