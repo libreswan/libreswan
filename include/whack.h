@@ -360,19 +360,8 @@ struct whack_message {
 						 * IKEv2 Session
 						 * Resumption */
 
-#define wm_ipsec_max_bytes conn[END_ROOF].value[KWS_IPSEC_MAX_BYTES]
-#define wm_ipsec_max_packets conn[END_ROOF].value[KWS_IPSEC_MAX_PACKETS]
-
-	deltatime_t ikelifetime;
-	deltatime_t ipsec_lifetime;
-
-	deltatime_t rekeymargin; /* which SA? */
-#define wm_rekeyfuzz conn[END_ROOF].value[KWS_REKEYFUZZ]
-
 #define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
-	deltatime_t retransmit_timeout;
-	/* milliseconds, not seconds!*/
-#define wm_retransmit_interval conn[END_ROOF].value[KWS_RETRANSMIT_INTERVAL]
+
 	enum nic_offload_options nic_offload;
 #define wm_ipsec_interface conn[END_ROOF].value[KWS_IPSEC_INTERFACE]
 
@@ -544,6 +533,19 @@ struct whack_message {
 #define wm_iptfs_reorder_window conn[END_ROOF].value[KWS_IPTFS_REORDER_WINDOW]
 #define wm_iptfs_drop_time      conn[END_ROOF].value[KWS_IPTFS_DROP_TIME]
 #define wm_iptfs_init_delay     conn[END_ROOF].value[KWS_IPTFS_INIT_DELAY]
+
+#define wm_ipsec_max_bytes      conn[END_ROOF].value[KWS_IPSEC_MAX_BYTES]
+#define wm_ipsec_max_packets    conn[END_ROOF].value[KWS_IPSEC_MAX_PACKETS]
+
+#define wm_ikelifetime          conn[END_ROOF].value[KWS_IKELIFETIME]
+#define wm_ipsec_lifetime       conn[END_ROOF].value[KWS_IPSEC_LIFETIME]
+#define wm_rekeymargin          conn[END_ROOF].value[KWS_REKEYMARGIN]	/* which
+									 * SA? */
+#define wm_rekeyfuzz            conn[END_ROOF].value[KWS_REKEYFUZZ]
+#define wm_retransmit_timeout   conn[END_ROOF].value[KWS_RETRANSMIT_TIMEOUT]
+#define wm_retransmit_interval  conn[END_ROOF].value[KWS_RETRANSMIT_INTERVAL]	/* milliseconds,
+										 * not
+										 * seconds!*/
 
 #define wm_clones conn[END_ROOF].value[KWS_CLONES]
 	struct whack_config_conn conn[END_ROOF+1];

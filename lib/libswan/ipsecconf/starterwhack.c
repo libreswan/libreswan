@@ -76,11 +76,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
-	msg.ikelifetime = conn->values[KNCF_IKELIFETIME].deltatime;
-	msg.ipsec_lifetime = conn->values[KNCF_IPSEC_LIFETIME].deltatime;
-	msg.rekeymargin = conn->values[KNCF_REKEYMARGIN].deltatime;
-
-	msg.retransmit_timeout = conn->values[KNCF_RETRANSMIT_TIMEOUT].deltatime;
 
 	msg.pfs = conn->values[KWYN_PFS].option;
 	msg.compress = conn->values[KWYN_COMPRESS].option;

@@ -2273,24 +2273,36 @@ static diag_t mark_parse(const char *leftright, const char *name, const char *ma
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
 
-static diag_t extract_lifetime(deltatime_t *lifetime,
-			       const char *lifetime_name,
-			       deltatime_t whack_lifetime,
-			       deltatime_t default_lifetime,
-			       deltatime_t lifetime_max,
-			       deltatime_t lifetime_fips,
-			       deltatime_t rekeymargin,
-			       uintmax_t rekeyfuzz_percent,
-			       struct verbose verbose,
-			       const struct whack_message *wm)
+static deltatime_t extract_lifetime(const char *lifetime_name,
+				    const char *lifetime_value,
+				    deltatime_t default_lifetime,
+				    deltatime_t lifetime_max,
+				    deltatime_t lifetime_fips,
+				    deltatime_t rekeymargin,
+				    uintmax_t rekeyfuzz_percent,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct verbose verbose)
 {
+	if (*d != NULL) {
+		return default_lifetime;
+	}
+
+	deltatime_t lifetime = extract_deltatime("",
+						 lifetime_name,
+						 lifetime_value,
+						 unset_deltatime,
+						 wm, d, verbose);
+	if (*d != NULL) {
+		return default_lifetime;
+	}
+
 	const char *source;
-	if (whack_lifetime.is_set) {
+	if (lifetime.is_set) {
 		source = "whack";
-		*lifetime = whack_lifetime;
 	} else {
 		source = "default";
-		*lifetime = default_lifetime;
+		lifetime = default_lifetime;
 	}
 
 	/*
@@ -2310,8 +2322,8 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 
 	if (impair.lifetime) {
 		vlog("IMPAIR: skipping %s=%jd checks",
-		     lifetime_name, deltasecs(*lifetime));
-		return NULL;
+		     lifetime_name, deltasecs(lifetime));
+		return lifetime;
 	}
 
 	/*
@@ -2328,33 +2340,34 @@ static diag_t extract_lifetime(deltatime_t *lifetime,
 						   100);
 
 	if (deltatime_cmp(max_lifetime, <, min_lifetime)) {
-		return diag("%s%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%% yet less than the maximum allowed %ju",
-			    fips, 
-			    lifetime_name, deltasecs(*lifetime),
-			    deltasecs(rekeymargin), rekeyfuzz_percent,
-			    deltasecs(min_lifetime));
+		*d = diag("%s%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%% yet less than the maximum allowed %ju",
+			  fips, 
+			  lifetime_name, deltasecs(lifetime),
+			  deltasecs(rekeymargin), rekeyfuzz_percent,
+			  deltasecs(min_lifetime));
+		return default_lifetime;
 	}
 
-	if (deltatime_cmp(*lifetime, >, max_lifetime)) {
+	if (deltatime_cmp(lifetime, >, max_lifetime)) {
 		vlog("%s%s=%ju seconds exceeds maximum of %ju seconds, setting to the maximum allowed",
 		     fips,
-		     lifetime_name, deltasecs(*lifetime),
+		     lifetime_name, deltasecs(lifetime),
 		     deltasecs(max_lifetime));
 		source = "max";
-		*lifetime = max_lifetime;
-	} else if (deltatime_cmp(*lifetime, <, min_lifetime)) {
+		lifetime = max_lifetime;
+	} else if (deltatime_cmp(lifetime, <, min_lifetime)) {
 		vlog("%s=%jd must be greater than rekeymargin=%jus + rekeyfuzz=%jd%%, setting to %jd seconds",
-		     lifetime_name, deltasecs(*lifetime),
-		     deltasecs(wm->rekeymargin),
+		     lifetime_name, deltasecs(lifetime),
+		     deltasecs(rekeymargin),
 		     rekeyfuzz_percent,
 		     deltasecs(min_lifetime));
 		source = "min";
-		*lifetime = min_lifetime;
+		lifetime = min_lifetime;
 	}
 
 	deltatime_buf db;
-	vdbg("%s=%s (%s)", lifetime_name, source, str_deltatime(*lifetime, &db));
-	return NULL;
+	vdbg("%s=%s (%s)", lifetime_name, source, str_deltatime(lifetime, &db));
+	return lifetime;
 }
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
@@ -3133,11 +3146,11 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		deltatime_t iptfs_drop_time = extract_deltatime("", "iptfs-drop-time",
 								wm->wm_iptfs_drop_time,
-								(deltatime_t) {0},
+								unset_deltatime,
 								wm, &d, verbose);
 		deltatime_t iptfs_init_delay = extract_deltatime("", "iptfs-init-delay",
 								 wm->wm_iptfs_init_delay,
-								 (deltatime_t) {0},
+								 unset_deltatime,
 								 wm, &d, verbose);
 		if (d != NULL) {
 			return d;
@@ -3797,44 +3810,57 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		deltatime_t rekeymargin;
-		if (wm->rekeymargin.is_set) {
-			if (deltasecs(wm->rekeymargin) > (INT_MAX / (100 + (intmax_t)rekeyfuzz_percent))) {
-				return diag("rekeymargin=%jd is so large it causes overflow",
-					    deltasecs(wm->rekeymargin));
+		deltatime_t rekeymargin = extract_deltatime("", "rekeymargin",
+							    wm->wm_rekeymargin,
+							    unset_deltatime,
+							    wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
+
+		if (rekeymargin.is_set) {
+			if (deltasecs(rekeymargin) > (INT_MAX / (100 + (intmax_t)rekeyfuzz_percent))) {
+				return diag("rekeymargin=%s is so large it causes overflow",
+					    wm->wm_rekeymargin);
 			}
-			rekeymargin = wm->rekeymargin;
 		} else {
 			rekeymargin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 		};
 		config->sa_rekey_margin = rekeymargin;
 
-		d = extract_lifetime(&config->sa_ike_max_lifetime,
-				     "ikelifetime", wm->ikelifetime,
-				     IKE_SA_LIFETIME_DEFAULT,
-				     IKE_SA_LIFETIME_MAXIMUM,
-				     FIPS_IKE_SA_LIFETIME_MAXIMUM,
-				     rekeymargin, rekeyfuzz_percent,
-				     verbose, wm);
+		config->sa_ike_max_lifetime = extract_lifetime("ikelifetime",
+							       wm->wm_ikelifetime,
+							       IKE_SA_LIFETIME_DEFAULT,
+							       IKE_SA_LIFETIME_MAXIMUM,
+							       FIPS_IKE_SA_LIFETIME_MAXIMUM,
+							       rekeymargin,
+							       rekeyfuzz_percent,
+							       wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
-		d = extract_lifetime(&config->sa_ipsec_max_lifetime,
-				     "ipsec-lifetime", wm->ipsec_lifetime,
-				     IPSEC_SA_LIFETIME_DEFAULT,
-				     IPSEC_SA_LIFETIME_MAXIMUM,
-				     FIPS_IPSEC_SA_LIFETIME_MAXIMUM,
-				     rekeymargin, rekeyfuzz_percent,
-				     verbose, wm);
+
+		config->sa_ipsec_max_lifetime = extract_lifetime("ipsec-lifetime",
+								 wm->wm_ipsec_lifetime,
+								 IPSEC_SA_LIFETIME_DEFAULT,
+								 IPSEC_SA_LIFETIME_MAXIMUM,
+								 FIPS_IPSEC_SA_LIFETIME_MAXIMUM,
+								 rekeymargin, rekeyfuzz_percent,
+								 wm, &d, verbose);
 		if (d != NULL) {
 			return d;
 		}
 
 		config->sa_rekey_fuzz = rekeyfuzz_percent;
 
-		config->retransmit_timeout =
-			(wm->retransmit_timeout.is_set ? wm->retransmit_timeout :
-			 deltatime_from_milliseconds(RETRANSMIT_TIMEOUT_DEFAULT * 1000));
+		config->retransmit_timeout = extract_deltatime("", "retransmit-timeout",
+							       wm->wm_retransmit_timeout,
+							       deltatime(RETRANSMIT_TIMEOUT_DEFAULT),
+							       wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
+
 		config->retransmit_interval =
 			extract_deltatimescale("", "retransmit-interval",
 					       wm->wm_retransmit_interval,
