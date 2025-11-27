@@ -45,7 +45,7 @@ west #
 "west-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "west-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+ROUTE+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "west-east" #2: sent Quick Mode request
-"west-east" #2: IMPAIR: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
+IMPAIR: "west-east" #2: kernel: install_ipsec_sa_outbound_state in setup_half_kernel_state()
 "west-east" #2: state transition failed: failed
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 IMPAIR: "west-east" #2: revival: skip scheduling revival event
