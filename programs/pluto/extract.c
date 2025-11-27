@@ -2375,6 +2375,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 							enum end this_end,
 							const struct host_addr_config *const host_addrs[END_ROOF],
 							const ip_protoport protoport[END_ROOF],
+							bool narrowing,
 							struct verbose verbose)
 {
 	const struct whack_end *this = &wm->end[this_end];
@@ -2391,8 +2392,8 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 		     this->leftright, wm->wm_sec_label);
 		return CK_LABELED_TEMPLATE;
 	}
-	if(wm->narrowing == YN_YES) {
-		vdbg("%s connection is CK_TEMPLATE: narrowing=yes",
+	if (wm->wm_narrowing != NULL && narrowing) {
+		vdbg("%s connection is CK_TEMPLATE: narrowing=yes is explict",
 		     this->leftright);
 		return CK_TEMPLATE;
 	}
@@ -2808,6 +2809,52 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * narrowing=?
+	 *
+	 * In addition to explicit narrowing=yes, seeing any sort of
+	 * port wildcard (tcp/%any) implies narrowing.  This is
+	 * largely IKEv1 and L2TP (it's the only test) but nothing
+	 * implies that they can't.
+	 */
+
+	bool narrowing = extract_bool("", "narrowing",
+				      wm->wm_narrowing,
+				      /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
+							   wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :
+							   wm->end[RIGHT_END].we_addresspool != NULL ? YN_YES :
+							   YN_NO),
+				      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (narrowing && ike_version < IKEv2) {
+		return diag("narrowing=yes requires IKEv2");
+	}
+	if (wm->wm_narrowing != NULL && !narrowing) {
+		/* explict NO */
+		FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
+			if (end->we_addresspool != NULL) {
+				return diag("narrowing=no conflicts with %saddresspool=%s",
+					    end->leftright,
+					    end->we_addresspool);
+			}
+		}
+	}
+#if 0
+	/*
+	 * Not yet: tcp/%any means narrow past the selector and down
+	 * to a single port; while narrwing means narrow down to the
+	 * selector.
+	 */
+	FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
+		narrowing |= (end->protoport.ip.is_set &&
+			      end->protoport.has_port_wildcard);
+	}
+#endif
+	config->narrowing = narrowing;
+
+	/*
 	 * Determine the connection KIND from the wm.
 	 *
 	 * Save it in a local variable so code can use that (and be
@@ -2818,6 +2865,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		c->end[end].kind = extract_connection_end_kind(wm, end,
 							       host_addrs,
 							       protoport,
+							       narrowing,
 							       verbose);
 	}
 
@@ -2844,14 +2892,19 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * Extract policy bits.
 	 */
 
-	bool pfs = extract_yn("", "pfs", wm->pfs,
-			      /*value_when_unset*/YN_YES,
-			      wm, verbose);
+	bool pfs = extract_bool("", "pfs",
+				wm->wm_pfs,
+				/*value_when_unset*/YN_YES,
+				wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 	config->child.pfs = pfs;
 
-	bool compress = extract_yn("", "compress", wm->compress,
-				   /*value_when_unset*/YN_NO,
-				   wm, verbose);
+	bool compress = extract_bool("", "compress",
+				     wm->wm_compress,
+				     /*value_when_unset*/YN_NO,
+				     wm, &d, verbose);
 	config->child.ipcomp = compress;
 
 	/*
@@ -2951,9 +3004,13 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	bool intermediate = extract_yn("", "intermediate", wm->intermediate,
-				       /*value_when_unset*/YN_NO,
-				       wm, verbose);
+	bool intermediate = extract_bool("", "intermediate",
+					 wm->wm_intermediate,
+					 /*value_when_unset*/YN_NO,
+					 wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 	if (intermediate) {
 		if (ike_version < IKEv2) {
 			return diag("intermediate requires IKEv2");
@@ -2961,39 +3018,63 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->intermediate = intermediate;
 
-	config->session_resumption = extract_yn("", "session_resumption", wm->session_resumption,
-						/*value_when_unset*/YN_NO,
-						wm, verbose);
+	config->session_resumption = extract_bool("", "session_resumption",
+						  wm->wm_session_resumption,
+						  /*value_when_unset*/YN_NO,
+						  wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (config->session_resumption) {
 		if (ike_version < IKEv2) {
 			return diag("session resumption requires IKEv2");
 		}
 	}
 
-	config->sha2_truncbug = extract_yn("", "sha2-truncbug", wm->sha2_truncbug,
-					   /*value_when_unset*/YN_NO,
-					   wm, verbose);
-	config->share_lease = extract_yn("", "share_lease", wm->share_lease,
+	config->sha2_truncbug = extract_bool("", "sha2-truncbug",
+					     wm->wm_sha2_truncbug,
+					     /*value_when_unset*/YN_NO,
+					     wm, &d, verbose);
+	config->share_lease = extract_bool("", "share_lease",
+					   wm->wm_share_lease,
 					   /*value_when_unset*/YN_YES,
-					   wm, verbose);
-	config->overlapip = extract_yn("", "overlapip", wm->overlapip,
-				       /*value_when_unset*/YN_NO, wm, verbose);
+					   wm, &d, verbose);
+	config->overlapip = extract_bool("", "overlapip",
+					 wm->wm_overlapip,
+					 /*value_when_unset*/YN_NO,
+					 wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
-	bool ms_dh_downgrade = extract_yn("", "ms-dh-downgrade", wm->ms_dh_downgrade,
-					  /*value_when_unset*/YN_NO, wm, verbose);
-	bool pfs_rekey_workaround = extract_yn("", "pfs-rekey-workaround", wm->pfs_rekey_workaround,
-					       /*value_when_unset*/YN_NO, wm, verbose);
+	bool ms_dh_downgrade = extract_bool("", "ms-dh-downgrade",
+					    wm->wm_ms_dh_downgrade,
+					    /*value_when_unset*/YN_NO,
+					    wm, &d, verbose);
+	bool pfs_rekey_workaround = extract_bool("", "pfs-rekey-workaround",
+						 wm->wm_pfs_rekey_workaround,
+						 /*value_when_unset*/YN_NO,
+						 wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (ms_dh_downgrade && pfs_rekey_workaround) {
 		return diag("cannot specify both ms-dh-downgrade=yes and pfs-rekey-workaround=yes");
 	}
 	config->ms_dh_downgrade = ms_dh_downgrade;
 	config->pfs_rekey_workaround = pfs_rekey_workaround;
 
-	config->dns_match_id = extract_yn("", "dns-match-id", wm->dns_match_id,
-					  /*value_when_unset*/YN_NO, wm, verbose);
+	config->dns_match_id = extract_bool("", "dns-match-id",
+					    wm->wm_dns_match_id,
+					  /*value_when_unset*/YN_NO,
+					    wm, &d, verbose);
 	/* IKEv2 only; IKEv1 uses xauth=pam */
-	config->ikev2_pam_authorize = extract_yn("", "pam-authorize", wm->pam_authorize,
-						 /*value_when_unset*/YN_NO, wm, verbose);
+	config->ikev2_pam_authorize = extract_bool("", "pam-authorize",
+						   wm->wm_pam_authorize,
+						   /*value_when_unset*/YN_NO,
+						   wm, &d, verbose);
 
 	if (ike_version >= IKEv2) {
 		if (wm->ikepad != YNA_UNSET) {
@@ -3010,34 +3091,54 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->v1_ikepad.message = (wm->ikepad != YNA_NO);
 	}
 
-	config->require_id_on_certificate = extract_yn("", "require-id-on-certificate", wm->require_id_on_certificate,
-						       /*value_when_unset*/YN_YES,wm, verbose);
+	config->require_id_on_certificate = extract_bool("", "require-id-on-certificate",
+							 wm->wm_require_id_on_certificate,
+							 /*value_when_unset*/YN_YES,
+							 wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
-	if (wm->aggressive == YN_YES && ike_version >= IKEv2) {
+	bool aggressive = extract_bool("", "aggressive",
+				       wm->wm_aggressive,
+				       /*value_when_unset*/YN_NO,
+				       wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (aggressive && ike_version >= IKEv2) {
 		return diag("cannot specify aggressive mode with IKEv2");
 	}
-	if (wm->aggressive == YN_YES && wm->wm_ike == NULL) {
+	if (aggressive && wm->wm_ike == NULL) {
 		return diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
-	config->aggressive = extract_yn("", "aggressive", wm->aggressive,
-					/*value_when_unset*/YN_NO,
-					wm, verbose);
+	config->aggressive = aggressive;
 
-	config->decap_dscp = extract_yn("", "decap-dscp", wm->decap_dscp,
-					/*value_when_unset*/YN_NO,
-					wm, verbose);
+	config->decap_dscp = extract_bool("", "decap-dscp",
+					  wm->wm_decap_dscp,
+					  /*value_when_unset*/YN_NO,
+					  wm, &d, verbose);
+	config->encap_dscp = extract_bool("", "encap-dscp",
+					  wm->wm_encap_dscp,
+					  /*value_when_unset*/YN_YES,
+					  wm, &d, verbose);
+	config->nopmtudisc = extract_bool("", "nopmtudisc",
+					  wm->wm_nopmtudisc,
+					  /*value_when_unset*/YN_NO,
+					  wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
-	config->encap_dscp = extract_yn("", "encap-dscp", wm->encap_dscp,
-					/*value_when_unset*/YN_YES,
-					wm, verbose);
+	bool mobike = extract_bool("", "mobike",
+				   wm->wm_mobike,
+				   /*value_when_unset*/YN_NO,
+				   wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
-	config->nopmtudisc = extract_yn("", "nopmtudisc", wm->nopmtudisc,
-					/*value_when_unset*/YN_NO,
-					wm, verbose);
-
-	bool mobike = extract_yn("", "mobike", wm->mobike,
-				 /*value_when_unset*/YN_NO,
-				 wm, verbose);
 	config->mobike = mobike;
 	if (mobike) {
 		if (ike_version < IKEv2) {
@@ -3236,14 +3337,17 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	if (ike_version == IKEv1) {
-		if (wm->accept_redirect != YN_UNSET) {
+		if (wm->wm_accept_redirect != NULL) {
 			vwarning("IKEv1 connection ignores accept-redirect=");
 		}
 	} else {
-		config->redirect.accept =
-			extract_yn("", "acceept-redirect", wm->accept_redirect,
-				   /*value_when_unset*/YN_NO,
-				   wm, verbose);
+		config->redirect.accept = extract_bool("", "acceept-redirect",
+						       wm->wm_accept_redirect,
+						       /*value_when_unset*/YN_NO,
+						       wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
 	}
 
 	/* fragmentation */
@@ -3335,53 +3439,17 @@ diag_t extract_connection(const struct whack_message *wm,
 	/* duplicate any alias, adding spaces to the beginning and end */
 	config->connalias = clone_str(wm->wm_connalias, "connection alias");
 
-	/*
-	 * narrowing=?
-	 *
-	 * In addition to explicit narrowing=yes, seeing any sort of
-	 * port wildcard (tcp/%any) implies narrowing.  This is
-	 * largely IKEv1 and L2TP (it's the only test) but nothing
-	 * implies that they can't.
-	 */
-
-	if (wm->narrowing == YN_NO && ike_version < IKEv2) {
-		return diag("narrowing=yes requires IKEv2");
+	config->rekey = extract_bool("", "rekey",
+				     wm->wm_rekey,
+				     /*value_when_unset*/YN_YES,
+				     wm, &d, verbose);
+	config->reauth = extract_bool("", "reauth",
+				      wm->wm_reauth,
+				      /*value_when_unset*/YN_NO,
+				      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
 	}
-	if (wm->narrowing == YN_NO) {
-		FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-			if (end->we_addresspool != NULL) {
-				return diag("narrowing=no conflicts with %saddresspool=%s",
-					    end->leftright,
-					    end->we_addresspool);
-			}
-		}
-	}
-	bool narrowing =
-		extract_yn("", "narrowing", wm->narrowing,
-			   /*value_when_unset*/(ike_version < IKEv2 ? YN_NO :
-						wm->end[LEFT_END].we_addresspool != NULL ? YN_YES :
-						wm->end[RIGHT_END].we_addresspool != NULL ? YN_YES :
-						YN_NO),
-			   wm, verbose);
-#if 0
-	/*
-	 * Not yet: tcp/%any means narrow past the selector and down
-	 * to a single port; while narrwing means narrow down to the
-	 * selector.
-	 */
-	FOR_EACH_THING(end, &wm->end[LEFT_END], &wm->end[RIGHT_END]) {
-		narrowing |= (end->protoport.ip.is_set &&
-			      end->protoport.has_port_wildcard);
-	}
-#endif
-	config->narrowing = narrowing;
-
-	config->rekey = extract_yn("", "rekey", wm->rekey,
-				   /*value_when_unset*/YN_YES,
-				   wm, verbose);
-	config->reauth = extract_yn("", "reauth", wm->reauth,
-				    /*value_when_unset*/YN_NO,
-				    wm, verbose);
 
 	switch (wm->autostart) {
 	case AUTOSTART_UP:
@@ -4047,9 +4115,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * modecfg/cp
 	 */
 
-	config->modecfg.pull = extract_yn("", "modecfgpull", wm->modecfgpull,
-					  /*value_when_unset*/YN_NO,
-					  wm, verbose);
+	config->modecfg.pull = extract_bool("", "modecfgpull",
+					    wm->wm_modecfgpull,
+					    /*value_when_unset*/YN_NO,
+					    wm, &d, verbose);
 
 	if (can_extract_string("", "modecfgdns", wm->wm_modecfgdns, wm, verbose)) {
 		diag_t d = ttoaddresses_num(shunk1(wm->wm_modecfgdns), ", ",

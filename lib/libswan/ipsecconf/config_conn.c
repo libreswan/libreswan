@@ -110,21 +110,21 @@ static const struct keyword_def config_conn_keyword[] = {
   K("ikev2",  LEMPTY,  kt_string,  KWS_IKEv2),
   K("ppk",  LEMPTY, kt_sparse_name, KNCF_PPK, .sparse_names = &nppi_option_names),
   K("ppk-ids",  LEMPTY, kt_string, KWS_PPK_IDS),
-  K("intermediate",  LEMPTY, kt_sparse_name, KWYN_INTERMEDIATE, .sparse_names = &yn_option_names),
+  K("intermediate",  LEMPTY, kt_string, KWS_INTERMEDIATE),
   K("esn",  LEMPTY,  kt_sparse_name,  KNCF_ESN, .sparse_names = &yne_option_names),
-  K("decap-dscp",  LEMPTY,  kt_sparse_name,  KWYN_DECAP_DSCP, .sparse_names = &yn_option_names),
-  K("encap-dscp",  LEMPTY,  kt_sparse_name,  KWYN_ENCAP_DSCP, .sparse_names = &yn_option_names),
-  K("nopmtudisc",  LEMPTY,  kt_sparse_name,  KWYN_NOPMTUDISC, .sparse_names = &yn_option_names),
+  K("decap-dscp",  LEMPTY,  kt_string,  KWS_DECAP_DSCP),
+  K("encap-dscp",  LEMPTY,  kt_string,  KWS_ENCAP_DSCP),
+  K("nopmtudisc",  LEMPTY,  kt_string,  KWS_NOPMTUDISC),
   K("fragmentation",  LEMPTY,  kt_sparse_name,  KNCF_FRAGMENTATION, .sparse_names = &ynf_option_names),
-  K("mobike",  LEMPTY,  kt_sparse_name,  KWYN_MOBIKE, .sparse_names = &yn_option_names),
-  K("narrowing",  LEMPTY,  kt_sparse_name,  KWYN_NARROWING, .sparse_names = &yn_option_names),
-  K("pam-authorize",  LEMPTY,  kt_sparse_name,  KWYN_PAM_AUTHORIZE, .sparse_names = &yn_option_names),
+  K("mobike",  LEMPTY,  kt_string,  KWS_MOBIKE),
+  K("narrowing",  LEMPTY,  kt_string,  KWS_NARROWING),
+  K("pam-authorize",  LEMPTY,  kt_string,  KWS_PAM_AUTHORIZE),
   K("send-redirect",  LEMPTY,  kt_sparse_name,  KNCF_SEND_REDIRECT, .sparse_names = &yna_option_names),
   K("redirect-to",  LEMPTY,  kt_string,  KWS_REDIRECT_TO),
-  K("accept-redirect",  LEMPTY,  kt_sparse_name, KWYN_ACCEPT_REDIRECT, .sparse_names = &yn_option_names),
+  K("accept-redirect",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT),
   K("accept-redirect-to",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT_TO),
-  K("pfs",  LEMPTY,  kt_sparse_name,  KWYN_PFS, .sparse_names = &yn_option_names),
-  K("session-resumption",  LEMPTY,  kt_sparse_name,  KWYN_SESSION_RESUMPTION, .sparse_names = &yn_option_names),
+  K("pfs",  LEMPTY,  kt_string,  KWS_PFS),
+  K("session-resumption",  LEMPTY,  kt_string,  KWS_SESSION_RESUMPTION),
 
   K("nat-keepalive",  LEMPTY,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, .sparse_names = &yn_option_names),
 
@@ -142,12 +142,12 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("fake-strongswan",  LEMPTY,  kt_string,  KWS_FAKE_STRONGSWAN),
   K("send-vendorid",  LEMPTY,  kt_string,  KWS_SEND_VENDORID),
-  K("sha2-truncbug",  LEMPTY,  kt_sparse_name,  KWYN_SHA2_TRUNCBUG, .sparse_names = &yn_option_names),
-  K("share-lease",  LEMPTY,  kt_sparse_name,  KWYN_SHARE_LEASE, .sparse_names = &yn_option_names),
-  K("ms-dh-downgrade",  LEMPTY,  kt_sparse_name,  KWYN_MS_DH_DOWNGRADE, .sparse_names = &yn_option_names),
-  K("pfs-rekey-workaround",  LEMPTY,  kt_sparse_name,  KWYN_PFS_REKEY_WORKAROUND, .sparse_names = &yn_option_names),
-  K("require-id-on-certificate",  LEMPTY,  kt_sparse_name,  KWYN_REQUIRE_ID_ON_CERTIFICATE, .sparse_names = &yn_option_names),
-  K("dns-match-id,",  LEMPTY,  kt_sparse_name,  KWYN_DNS_MATCH_ID, .sparse_names = &yn_option_names),
+  K("sha2-truncbug",  LEMPTY,  kt_string,  KWS_SHA2_TRUNCBUG),
+  K("share-lease",  LEMPTY,  kt_string,  KWS_SHARE_LEASE),
+  K("ms-dh-downgrade",  LEMPTY,  kt_string,  KWS_MS_DH_DOWNGRADE),
+  K("pfs-rekey-workaround",  LEMPTY,  kt_string,  KWS_PFS_REKEY_WORKAROUND),
+  K("require-id-on-certificate",  LEMPTY,  kt_string,  KWS_REQUIRE_ID_ON_CERTIFICATE),
+  K("dns-match-id,",  LEMPTY,  kt_string,  KWS_DNS_MATCH_ID),
   K("ipsec-max-bytes",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_BYTES),
   K("ipsec-max-packets",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_PACKETS),
   K("ipsec-lifetime",  LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME),
@@ -169,11 +169,11 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("xauthby",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHBY, .sparse_names = &xauthby_names),
   K("xauthfail",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHFAIL, .sparse_names = &xauthfail_names),
-  K("modecfgpull",  LEMPTY,  kt_sparse_name,  KWYN_MODECFGPULL, .sparse_names = &yn_option_names),
+  K("modecfgpull",  LEMPTY,  kt_string,  KWS_MODECFGPULL),
   K("modecfgdns",  LEMPTY,  kt_string,  KWS_MODECFGDNS),
   K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),
   K("modecfgbanner",  LEMPTY,  kt_string,  KWS_MODECFGBANNER),
-  K("ignore-peer-dns",  LEMPTY,  kt_sparse_name,  KWYN_IGNORE_PEER_DNS, .sparse_names = &yn_option_names),
+  K("ignore-peer-dns",  LEMPTY,  kt_string,  KWS_IGNORE_PEER_DNS),
 
   K("mark",  LEMPTY,  kt_string,  KWS_MARK),
   K("mark-in",  LEMPTY,  kt_string,  KWS_MARK_IN),
@@ -191,9 +191,9 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("encapsulation",  LEMPTY,  kt_sparse_name,  KNCF_ENCAPSULATION, .sparse_names = &yna_option_names),
 
-  K("overlapip",  LEMPTY,  kt_sparse_name,  KWYN_OVERLAPIP, .sparse_names = &yn_option_names),
-  K("reauth",  LEMPTY,  kt_sparse_name,  KWYN_REAUTH, .sparse_names = &yn_option_names),
-  K("rekey",  LEMPTY,  kt_sparse_name,  KWYN_REKEY, .sparse_names = &yn_option_names),
+  K("overlapip",  LEMPTY,  kt_string,  KWS_OVERLAPIP),
+  K("reauth",  LEMPTY,  kt_string,  KWS_REAUTH),
+  K("rekey",  LEMPTY,  kt_string,  KWS_REKEY),
   K("rekeymargin",  LEMPTY,  kt_string,  KWS_REKEYMARGIN),
   K("rekeyfuzz",  LEMPTY,  kt_string,  KWS_REKEYFUZZ),
   K("replay-window",  LEMPTY,  kt_string,  KWS_REPLAY_WINDOW),
@@ -214,7 +214,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("phase2",  LEMPTY,  kt_sparse_name,  KNCF_PHASE2, .sparse_names = &kw_phase2types_names),
   K("phase2alg",  LEMPTY,  kt_string,  KWS_PHASE2ALG),
 
-  K("compress",  LEMPTY,  kt_sparse_name,  KWYN_COMPRESS, .sparse_names = &yn_option_names),
+  K("compress",  LEMPTY,  kt_string,  KWS_COMPRESS),
 
   /* route metric */
   K("metric",  LEMPTY,  kt_unsigned,  KNCF_METRIC),
@@ -238,7 +238,7 @@ static const struct keyword_def config_conn_keyword[] = {
   S("nflog-group",  LEMPTY,  kt_string,  KWS_NFLOG_GROUP),
 #undef S
 
-  K("aggressive",  LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
+  K("aggressive",  LEMPTY,  kt_string,  KWS_AGGRESSIVE),
 
   /*
    * Force first alias/obsolete keyword into slot following all
@@ -252,7 +252,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
 #define A(KEYNAME, VALIDITY, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = VALIDITY|kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
 
-  A("aggrmode", LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
+  A("aggrmode", LEMPTY,  kt_string,  KWS_AGGRESSIVE),
   A("keylife", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
   A("lifetime", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
   A("phase2alg", LEMPTY,  kt_string,  KWS_ESP),	/* obsolete */

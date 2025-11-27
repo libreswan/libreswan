@@ -138,12 +138,12 @@ enum config_conn_keyword {
 	KWS_AUTH,	/* left/right */
 	KWS_AUTHEAP,	/* left/right */
 
-	KWYN_PFS_REKEY_WORKAROUND,
+	KWS_PFS_REKEY_WORKAROUND,
 
 	KNCF_FAILURESHUNT,
 	KNCF_NEGOTIATIONSHUNT,
 	KNCF_TYPE,
-	KWYN_MOBIKE,
+	KWS_MOBIKE,
 	KWS_MTU,
 	KWS_PRIORITY,
 	KWS_TFC,
@@ -160,12 +160,12 @@ enum config_conn_keyword {
 	KWS_SENDCA,
 	KNCF_METRIC,
 	KNCF_AUTO,
-	KWYN_PFS,
-	KWYN_SHA2_TRUNCBUG,
-	KWYN_SHARE_LEASE,
-	KWYN_MS_DH_DOWNGRADE,
-	KWYN_REQUIRE_ID_ON_CERTIFICATE,
-	KWYN_DNS_MATCH_ID,
+	KWS_PFS,
+	KWS_SHA2_TRUNCBUG,
+	KWS_SHARE_LEASE,
+	KWS_MS_DH_DOWNGRADE,
+	KWS_REQUIRE_ID_ON_CERTIFICATE,
+	KWS_DNS_MATCH_ID,
 
 	KWS_IPSEC_LIFETIME,
 	KWS_IKELIFETIME,
@@ -174,29 +174,29 @@ enum config_conn_keyword {
 	KWS_IPSEC_MAX_BYTES,
 	KWS_IPSEC_MAX_PACKETS,
 
-	KWYN_REKEY,
-	KWYN_REAUTH,
+	KWS_REKEY,
+	KWS_REAUTH,
 	KWS_REKEYMARGIN,
 	KWS_REKEYFUZZ,
-	KWYN_COMPRESS,
+	KWS_COMPRESS,
 	KWS_REPLAY_WINDOW,
-	KWYN_AGGRESSIVE,
-	KWYN_MODECFGPULL,
+	KWS_AGGRESSIVE,
+	KWS_MODECFGPULL,
 	KNCF_ENCAPSULATION,
 	KWS_IKEv2,		/* obsolete, use KEYEXCHANGE */
 	KWS_KEYEXCHANGE,
 	KNCF_PPK,
-	KWYN_INTERMEDIATE,	/* enable support for Intermediate Exchange */
+	KWS_INTERMEDIATE,	/* enable support for Intermediate Exchange */
 	KNCF_ESN,
-	KWYN_DECAP_DSCP,
-	KWYN_ENCAP_DSCP,
-	KWYN_NOPMTUDISC,
-	KWYN_NARROWING,
-	KWYN_PAM_AUTHORIZE,
+	KWS_DECAP_DSCP,
+	KWS_ENCAP_DSCP,
+	KWS_NOPMTUDISC,
+	KWS_NARROWING,
+	KWS_PAM_AUTHORIZE,
 	KNCF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
-	KWYN_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
+	KWS_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
-	KWYN_OVERLAPIP,		/* Allow overlapping IPsec policies */
+	KWS_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
@@ -219,10 +219,10 @@ enum config_conn_keyword {
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
-	KWYN_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
-	KWYN_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
+	KWS_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
+	KWS_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
-#define CONFIG_CONN_KEYWORD_ROOF (KWYN_SESSION_RESUMPTION + 1)
+#define CONFIG_CONN_KEYWORD_ROOF (KWS_SESSION_RESUMPTION + 1)
 };
 
 #endif

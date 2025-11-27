@@ -314,66 +314,19 @@ struct whack_message {
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
-	enum yn_options mobike;		/* allow MOBIKE */
-	enum yn_options intermediate;	/* allow Intermediate Exchange */
-	enum yn_options sha2_truncbug;	/* allow Intermediate Exchange */
-	enum yn_options share_lease;	/* allow further connections to use lease IP */
-	enum yn_options overlapip;	/* can two conns that have
-					 * subnet=vhost: declare the
-					 * same IP? */
-	enum yn_options ms_dh_downgrade;	/* allow IKEv2 rekey
-						 * to downgrade DH
-						 * group - Microsoft
-						 * bug */
-	enum yn_options pfs_rekey_workaround;	/* during IKEv2 rekey
-						 * use full esp=
-						 * proposal */
-	enum yn_options dns_match_id;	/* perform reverse DNS lookup
-					 * on IP to confirm ID */
-	enum yn_options pam_authorize;	/* non-standard, custom PAM
-					 * authorize call on ID
-					 * (IKEv2) */
-	enum yn_options ignore_peer_dns;	/* install obtained
-						 * DNS servers
-						 * locally */
+
 	enum yna_options ikepad;	/* pad ike packets and
 					 * payloads to 4 bytes or
 					 * not */
-	enum yn_options require_id_on_certificate;
-					/* require certificates to
-					 * have IKE ID on cert SAN */
-	enum yn_options modecfgpull;	/* is modecfg pulled by
-					 * client? */
-	enum yn_options aggressive;	/* do we do aggressive
-					 * mode? */
-	enum yn_options decap_dscp;	/* decap ToS/DSCP bits */
-	enum yn_options encap_dscp;	/* encap ToS/DSCP bits */
-	enum yn_options nopmtudisc;	/* ??? */
 	enum ynf_options fragmentation;	/* fragment IKE payload */
 	enum yne_options esn;		/* accept or request ESN{yes,no} */
 	enum nppi_options ppk;		/* pre-shared post-quantum key */
-	enum yn_options pfs;
-	enum yn_options compress;
 	enum type_options type;		/* type=tunnel|transport|SHUNT */
-	enum yn_options session_resumption;	/* for RFC 5723 -
-						 * IKEv2 Session
-						 * Resumption */
-
 #define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
 
 	enum nic_offload_options nic_offload;
-#define wm_ipsec_interface conn[END_ROOF].value[KWS_IPSEC_INTERFACE]
-
-	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
-#define wm_dpddelay conn[END_ROOF].value[KWS_DPDDELAY]		/* seconds */
-#define wm_dpdtimeout conn[END_ROOF].value[KWS_DPDTIMEOUT]	/* seconds */
-
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encapsulation;
-
-	enum yn_options narrowing;	/* IKEv2 only? */
-	enum yn_options rekey;
-	enum yn_options reauth;
 
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
@@ -444,7 +397,7 @@ struct whack_message {
 	 * WHACK_GLOBAL_REDIRECT.
 	 */
 	enum global_redirect global_redirect;
-	enum yn_options accept_redirect;
+#define wm_accept_redirect conn[END_ROOF].value[KWS_ACCEPT_REDIRECT]
 	enum yna_options send_redirect;
 #define wm_redirect_to conn[END_ROOF].value[KWS_REDIRECT_TO]
 #define wm_accept_redirect_to conn[END_ROOF].value[KWS_ACCEPT_REDIRECT_TO]
@@ -471,7 +424,57 @@ struct whack_message {
 	 * END_ROOF is used to store global (vs per-end) options.
 	 */
 
-	/* Option to allow sending INITIAL-CONTACT payload */
+#define wm_session_resumption conn[END_ROOF].value[KWS_SESSION_RESUMPTION]	/* for RFC 5723 -
+										 * IKEv2 Session
+										 * Resumption */
+
+#define wm_ipsec_interface conn[END_ROOF].value[KWS_IPSEC_INTERFACE]
+
+	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
+#define wm_dpddelay conn[END_ROOF].value[KWS_DPDDELAY]		/* seconds */
+#define wm_dpdtimeout conn[END_ROOF].value[KWS_DPDTIMEOUT]	/* seconds */
+
+#define wm_narrowing conn[END_ROOF].value[KWS_NARROWING]	/* IKEv2 only? */
+#define wm_rekey conn[END_ROOF].value[KWS_REKEY]
+#define wm_reauth conn[END_ROOF].value[KWS_REAUTH]
+
+#define wm_require_id_on_certificate conn[END_ROOF].value[KWS_REQUIRE_ID_ON_CERTIFICATE]
+					/* require certificates to
+					 * have IKE ID on cert SAN */
+#define wm_modecfgpull conn[END_ROOF].value[KWS_MODECFGPULL]	/* is modecfg pulled by
+					 * client? */
+#define wm_aggressive conn[END_ROOF].value[KWS_AGGRESSIVE]	/* do we do aggressive
+					 * mode? */
+#define wm_decap_dscp conn[END_ROOF].value[KWS_DECAP_DSCP]	/* decap ToS/DSCP bits */
+#define wm_encap_dscp conn[END_ROOF].value[KWS_ENCAP_DSCP]	/* encap ToS/DSCP bits */
+#define wm_nopmtudisc conn[END_ROOF].value[KWS_NOPMTUDISC]	/* ??? */
+#define wm_pfs conn[END_ROOF].value[KWS_PFS]
+#define wm_compress conn[END_ROOF].value[KWS_COMPRESS]
+
+#define wm_mobike conn[END_ROOF].value[KWS_MOBIKE]		/* allow MOBIKE */
+#define wm_intermediate conn[END_ROOF].value[KWS_INTERMEDIATE]	/* allow Intermediate Exchange */
+#define wm_sha2_truncbug conn[END_ROOF].value[KWS_SHA2_TRUNCBUG]	/* allow Intermediate Exchange */
+#define wm_share_lease conn[END_ROOF].value[KWS_SHARE_LEASE]	/* allow further connections to use lease IP */
+#define wm_overlapip conn[END_ROOF].value[KWS_OVERLAPIP]	/* can two conns that have
+								 * subnet=vhost: declare the
+								 * same IP? */
+#define wm_ms_dh_downgrade conn[END_ROOF].value[KWS_MS_DH_DOWNGRADE]	/* allow IKEv2 rekey
+									 * to downgrade DH
+									 * group - Microsoft
+									 * bug */
+#define wm_pfs_rekey_workaround conn[END_ROOF].value[KWS_PFS_REKEY_WORKAROUND]	/* during IKEv2 rekey
+										 * use full esp=
+										 * proposal */
+#define wm_dns_match_id conn[END_ROOF].value[KWS_DNS_MATCH_ID]	/* perform reverse DNS lookup
+								 * on IP to confirm ID */
+#define wm_pam_authorize conn[END_ROOF].value[KWS_PAM_AUTHORIZE]	/* non-standard, custom PAM
+									 * authorize call on ID
+									 * (IKEv2) */
+#define wm_ignore_peer_dns conn[END_ROOF].value[KWS_IGNORE_PEER_DNS]	/* install obtained
+									 * DNS servers
+									 * locally */
+
+/* Option to allow sending INITIAL-CONTACT payload */
 #define wm_initial_contact conn[END_ROOF].value[KWS_INITIAL_CONTACT]
 
 	/*

@@ -93,10 +93,10 @@ static void help(void)
 		"	[--psk] | [--rsasig] | [--rsa-sha1] | [--rsa-sha2] | \\\n"
 		"		[--rsa-sha2_256] | [--rsa-sha2_384 ] | [--rsa-sha2_512 ] | \\\n"
 		"		[ --auth-null] | [--auth-never] \\\n"
-		"	[--encrypt] [--authenticate] [--compress] [--sha2-truncbug] \\\n"
-		"	[--ms-dh-downgrade] \\\n"
-		"	[--overlapip] [--tunnel] \\\n"
-		"	[--allow-cert-without-san-id] [--dns-match-id] \\\n"
+		"	[--encrypt] [--authenticate] [--compress[={yes,no}]] [--sha2-truncbug[={yes,no}]] \\\n"
+		"	[--ms-dh-downgrade[={yes,no}]] \\\n"
+		"	[--overlapip[={yes,no}]] [--tunnel] \\\n"
+		"	[--allow-cert-without-san-id] [--dns-match-id[={yes,no}]] \\\n"
 		"	[--ike-lifetime <seconds>] [--ipsec-lifetime <seconds>] \\\n"
 		"	[--ipsec-max-bytes <num>] [--ipsec-max-packets <num>] \\\n"
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
@@ -122,7 +122,7 @@ static void help(void)
 		"	[--narrowing {yes,no}] \\\n"
 		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] \\\n"
-		"	[--esn ] [--no-esn] [--decap-dscp] [--encap-dscp] [--nopmtudisc] [--mobike] \\\n"
+		"	[--esn ] [--no-esn] [--decap-dscp[={yes,no}]] [--encap-dscp[={yes,no}]] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 		"	[--session-resumption[={yes,no}]] \\\n"
 		"	[--nm-configured] \\\n"
@@ -762,6 +762,7 @@ const struct option optarg_options[] = {
 	{ "down-child\0", no_argument, NULL, OPT_DOWN_CHILD },
 
 	{ "suspend\0", no_argument, NULL, OPT_SUSPEND, },
+
 	{ "session-resumption\0", optional_argument, NULL, CD_SESSION_RESUMPTION, },
 
 	/* list options */
@@ -822,7 +823,7 @@ const struct option optarg_options[] = {
 	{ "allow-cert-without-san-id\0", no_argument, NULL, CD_ALLOW_CERT_WITHOUT_SAN_ID },
 	{ "sha2-truncbug\0", optional_argument, NULL, CD_SHA2_TRUNCBUG },
 	{ "sha2_truncbug\0", no_argument, NULL, CD_SHA2_TRUNCBUG }, /* backwards compatibility */
-	{ "dont-share-lease\0", optional_argument, NULL, CD_DONT_SHARE_LEASE },
+	{ "dont-share-lease\0", no_argument, NULL, CD_DONT_SHARE_LEASE },
 	{ "aggressive\0", optional_argument, NULL, CD_AGGRESSIVE },
 	{ "aggrmode\0", no_argument, NULL, CD_AGGRESSIVE }, /*  backwards compatibility */
 
@@ -958,8 +959,8 @@ const struct option optarg_options[] = {
 	{ "ikev2-allow\0", no_argument, NULL, CD_IKEv2 }, /* obsolete name */
 	{ "ikev2-propose\0", no_argument, NULL, CD_IKEv2 }, /* obsolete, map onto allow */
 
-	{ "allow-narrowing\0", optional_argument, NULL, CD_NARROWING, }, /* undocumented but tested name */
 	{ "narrowing\0", required_argument, NULL, CD_NARROWING, },
+	{ "allow-narrowing\0", optional_argument, NULL, CD_NARROWING, }, /* undocumented but tested name */
 	{ "ikefrag-allow\0", no_argument, NULL, CD_IKEFRAG_ALLOW }, /* obsolete name */
 	{ "ikefrag-force\0", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
 	{ "fragmentation\0", required_argument, NULL, CD_FRAGMENTATION },
@@ -1208,8 +1209,9 @@ int main(int argc, char **argv)
 		case OPT_SUSPEND: /* --suspend */
 			whack_command(&msg, WHACK_SUSPEND);
 			continue;
-		case CD_SESSION_RESUMPTION:
-			msg.session_resumption = optarg_yn(logger, YN_YES);
+
+		case CD_SESSION_RESUMPTION:	/* --session-resumption[={yes,no}] */
+			msg.wm_session_resumption = (optarg == NULL ? "yes" : optarg);
 			break;
 
 		case OPT_DELETE:	/* --delete */
@@ -1572,19 +1574,18 @@ int main(int argc, char **argv)
 			msg.wm_keyexchange = "IKEv2";
 			continue;
 
-		/* --allow-narrowing */
-		case CD_NARROWING:
-			msg.narrowing = optarg_yn(logger, YN_YES);
+		case CD_NARROWING:		/* --narrowing={yes,no} */
+			msg.wm_narrowing = (optarg = NULL ? "yes" : optarg);
 			continue;
 
 		/* --dontrekey */
 		case CD_DONT_REKEY:
-			msg.rekey = YN_NO;
+			msg.wm_rekey = "no";
 			continue;
 
 		/* --rekey */
 		case CD_REAUTH:
-			msg.reauth = YN_YES;
+			msg.wm_reauth = "yes";
 			continue;
 
 		case CD_IPTFS:			/* --iptfs[={yes,no}] */
@@ -1609,8 +1610,8 @@ int main(int argc, char **argv)
 			msg.wm_iptfs_reorder_window = optarg;
 			continue;
 
-		case CD_COMPRESS:	/* --compress */
-			msg.compress = optarg_yn(logger, YN_YES);
+		case CD_COMPRESS:	/* --compress[={yes,no}] */
+			msg.wm_compress = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
@@ -1661,27 +1662,26 @@ int main(int argc, char **argv)
 
 		/* --nopmtudisc */
 		case CD_NOPMTUDISC:
-			msg.nopmtudisc = optarg_yn(logger, YN_YES);
+			msg.wm_nopmtudisc = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		/* --decap-dscp */
 		case CD_DECAP_DSCP:
-			msg.decap_dscp = optarg_yn(logger, YN_YES);
+			msg.wm_decap_dscp = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		/* --encap-dscp */
 		case CD_ENCAP_DSCP:
-			msg.encap_dscp = optarg_yn(logger, YN_YES);
+			msg.wm_encap_dscp = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --aggressive | --aggrmode */
-		case CD_AGGRESSIVE:
-			msg.aggressive = optarg_yn(logger, YN_YES);
+		case CD_AGGRESSIVE:	/* --aggressive[={yes,no} */
+			msg.wm_aggressive = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		/* --allow-cert-without-san-id */
 		case CD_ALLOW_CERT_WITHOUT_SAN_ID:
-			msg.require_id_on_certificate = YN_NO;
+			msg.wm_require_id_on_certificate = "yes";
 			continue;
 
 		/* --no-ikepad */
@@ -1689,47 +1689,41 @@ int main(int argc, char **argv)
 			msg.ikepad = optarg_yna(logger, YNA_YES);
 			continue;
 
-		/* --ignore-peer-dns */
-		case CD_IGNORE_PEER_DNS:
-			msg.ignore_peer_dns = optarg_yn(logger, YN_YES);
+
+		case CD_IGNORE_PEER_DNS:	/* --ignore-peer-dns[={yes,no}] */
+			msg.wm_ignore_peer_dns = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --dns-match-id */
-		case CD_DNS_MATCH_ID:
-			msg.dns_match_id = optarg_yn(logger, YN_YES);
+		case CD_DNS_MATCH_ID:		/* --dns-match-id[={yes,no}] */
+			msg.wm_dns_match_id = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --ms-dh-downgrade */
-		case CD_MS_DH_DOWNGRADE:
-			msg.ms_dh_downgrade = optarg_yn(logger, YN_YES);
+		case CD_MS_DH_DOWNGRADE:	/* --ms-dh-downgrade[={yes,no}] */
+			msg.wm_ms_dh_downgrade = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[=yes] */
-			msg.pfs_rekey_workaround = optarg_yn(logger, YN_YES);
+		case CD_PFS_REKEY_WORKAROUND:	/* --pfs-rekey-workaround[={yes,no}] */
+			msg.wm_pfs_rekey_workaround = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --overlapip */
-		case CD_OVERLAPIP:
-			msg.overlapip = optarg_yn(logger, YN_YES);
+		case CD_OVERLAPIP:		/* --overlapip[={yes,no}] */
+			msg.wm_overlapip = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --sha2-truncbug or --sha2_truncbug */
-		case CD_SHA2_TRUNCBUG:
-			msg.sha2_truncbug = optarg_yn(logger, YN_YES);
+		case CD_SHA2_TRUNCBUG:		/* --sha2-truncbug[={yes,no}] */
+			msg.wm_sha2_truncbug = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --dont-share-lease */
-		case CD_DONT_SHARE_LEASE:
-			msg.share_lease = YN_NO;
+		case CD_DONT_SHARE_LEASE:		/* --dont-share-lease */
+			msg.wm_share_lease = "no";
 			continue;
 
-		case CD_INTERMEDIATE:		/* --intermediate[=yes] */
-			msg.intermediate = optarg_yn(logger, YN_YES);
+		case CD_INTERMEDIATE:		/* --intermediate[={yes,no}] */
+			msg.wm_intermediate = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		/* --mobike */
-		case CD_MOBIKE:
-			msg.mobike = optarg_yn(logger, YN_YES);
+		case CD_MOBIKE:		/* --mobike[={yes,no}] */
+			msg.wm_mobike = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CDS_NEVER_NEGOTIATE_PASS:	/* --pass */
@@ -1845,7 +1839,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect {yes,no} */
-			msg.accept_redirect = optarg_yn(logger, 0/*no-default*/);
+			msg.wm_accept_redirect = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_ACCEPT_REDIRECT_TO:	/* --accept-redirect-to <ip> */
@@ -1985,7 +1979,7 @@ int main(int argc, char **argv)
 			end->we_modecfgserver = (optarg == NULL ? "yes" : optarg);
 			continue;
 		case CD_MODECFGPULL:	/* --modecfgpull[={yes,no}] */
-			msg.modecfgpull = optarg_yn(logger, YN_YES);
+			msg.wm_modecfgpull = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns <address> */
@@ -2054,8 +2048,8 @@ int main(int argc, char **argv)
 			msg.wm_reject_simultaneous_ike_auth = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CD_PFS:	/* --pfs */
-			msg.pfs = optarg_yn(logger, YN_YES);
+		case CD_PFS:	/* --pfs[={yes,no} */
+			msg.wm_pfs = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_NFLOG_GROUP:	/* --nflog-group <groupnum> */
