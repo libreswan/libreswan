@@ -478,16 +478,6 @@ struct whack_message {
 #define wm_modecfgdomains conn[END_ROOF].value[KWS_MODECFGDOMAINS]
 #define wm_modecfgbanner conn[END_ROOF].value[KWS_MODECFGBANNER]
 
-#define wm_mark conn[END_ROOF].value[KWS_MARK]
-#define wm_mark_in conn[END_ROOF].value[KWS_MARK_IN]
-#define wm_mark_out conn[END_ROOF].value[KWS_MARK_OUT]
-
-#define wm_vti_interface conn[END_ROOF].value[KWS_VTI_INTERFACE]
-	enum yn_options vti_routing;	/* perform routing into vti
-					 * device or not */
-	enum yn_options vti_shared;	/* use remote %any and skip
-					 * cleanup on down? */
-
 	/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 #define wm_ppk_ids conn[END_ROOF].value[KWS_PPK_IDS]
 
@@ -524,6 +514,16 @@ struct whack_message {
 	 *
 	 * END_ROOF is used to store global (vs per-end) options.
 	 */
+
+#define wm_mark conn[END_ROOF].value[KWS_MARK]
+#define wm_mark_in conn[END_ROOF].value[KWS_MARK_IN]
+#define wm_mark_out conn[END_ROOF].value[KWS_MARK_OUT]
+
+#define wm_vti_interface conn[END_ROOF].value[KWS_VTI_INTERFACE]
+	/* perform routing into vti device or not */
+#define wm_vti_routing conn[END_ROOF].value[KWS_VTI_ROUTING]
+	/* use remote %any and skip cleanup on down? */
+#define wm_vti_shared conn[END_ROOF].value[KWS_VTI_SHARED]
 
 #define wm_iptfs                conn[END_ROOF].value[KWS_IPTFS]
 #define wm_iptfs_fragmentation  conn[END_ROOF].value[KWS_IPTFS_FRAGMENTATION]

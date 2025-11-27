@@ -110,10 +110,15 @@ enum config_conn_keyword {
 	KWS_ACCEPT_REDIRECT_TO,
 	KWS_CONNALIAS,
 	KWS_SEC_LABEL,
+
 	KWS_MARK,
 	KWS_MARK_IN,
 	KWS_MARK_OUT,
+
 	KWS_VTI_INTERFACE,
+	KWS_VTI_ROUTING,	/* let updown do routing into VTI device */
+	KWS_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
+
 	KWS_DPDDELAY,
 	KWS_DPDTIMEOUT,
 
@@ -211,8 +216,6 @@ enum config_conn_keyword {
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
-	KWYN_VTI_ROUTING,	/* let updown do routing into VTI device */
-	KWYN_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */

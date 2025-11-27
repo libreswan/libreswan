@@ -3717,17 +3717,24 @@ diag_t extract_connection(const struct whack_message *wm,
 					    /*value_when_never_negotiate*/YNA_NO,
 					    wm, verbose);
 
-	config->vti.shared = extract_yn("", "vti-shared", wm->vti_shared,
-					/*value_when_unset*/YN_NO, wm, verbose);
-	config->vti.routing = extract_yn("", "vti-routing", wm->vti_routing,
-					 /*value_when_unset*/YN_NO, wm, verbose);
 	if (wm->wm_vti_interface != NULL && strlen(wm->wm_vti_interface) >= IFNAMSIZ) {
 		vwarning("length of vti-interface '%s' exceeds IFNAMSIZ (%u)",
 			 wm->wm_vti_interface, (unsigned) IFNAMSIZ);
 	}
+	config->vti.shared = extract_bool("", "vti-shared",
+					  wm->wm_vti_shared,
+					  /*value_when_unset*/YN_NO,
+					  wm, &d, verbose);
+	config->vti.routing = extract_bool("", "vti-routing",
+					   wm->wm_vti_routing,
+					   /*value_when_unset*/YN_NO,
+					   wm, &d, verbose);
 	config->vti.interface = extract_string("",  "vti-interface",
 					       wm->wm_vti_interface,
 					       wm, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
 	if (never_negotiate_sparse_option("", "nic-offload", wm->nic_offload,
 					  &nic_offload_option_names, wm, verbose)) {

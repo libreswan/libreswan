@@ -2013,10 +2013,10 @@ int main(int argc, char **argv)
 			msg.wm_vti_interface = optarg;
 			continue;
 		case CD_VTI_ROUTING:	/* --vti-routing[=yes|no] */
-			msg.vti_routing = optarg_yn(logger, YN_YES);
+			msg.wm_vti_routing = optarg;
 			continue;
 		case CD_VTI_SHARED:	/* --vti-shared[=yes|no] */
-			msg.vti_shared = optarg_yn(logger, YN_YES);
+			msg.wm_vti_shared = optarg;
 			continue;
 
 		case CD_IPSEC_INTERFACE:      /* --ipsec-interface=... */

@@ -174,12 +174,15 @@ static const struct keyword_def config_conn_keyword[] = {
   K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),
   K("modecfgbanner",  LEMPTY,  kt_string,  KWS_MODECFGBANNER),
   K("ignore-peer-dns",  LEMPTY,  kt_sparse_name,  KWYN_IGNORE_PEER_DNS, .sparse_names = &yn_option_names),
+
   K("mark",  LEMPTY,  kt_string,  KWS_MARK),
   K("mark-in",  LEMPTY,  kt_string,  KWS_MARK_IN),
   K("mark-out",  LEMPTY,  kt_string,  KWS_MARK_OUT),
+
   K("vti-interface",  LEMPTY,  kt_string,  KWS_VTI_INTERFACE),
-  K("vti-routing",  LEMPTY,  kt_sparse_name,  KWYN_VTI_ROUTING, .sparse_names = &yn_option_names),
-  K("vti-shared",  LEMPTY,  kt_sparse_name,  KWYN_VTI_SHARED, .sparse_names = &yn_option_names),
+  K("vti-routing",  LEMPTY,  kt_string,  KWS_VTI_ROUTING),
+  K("vti-shared",  LEMPTY,  kt_string,  KWS_VTI_SHARED),
+
   K("ipsec-interface",  LEMPTY, kt_string, KWS_IPSEC_INTERFACE),
 
   K("clones", LEMPTY, kt_string, KWS_CLONES),

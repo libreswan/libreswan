@@ -125,9 +125,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	 */
 	msg.debug = conn->values[KWS_DEBUG].string;
 
-	msg.vti_routing = conn->values[KWYN_VTI_ROUTING].option;
-	msg.vti_shared = conn->values[KWYN_VTI_SHARED].option;
-
 	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
 
 	msg.session_resumption = conn->values[KWYN_SESSION_RESUMPTION].option;
