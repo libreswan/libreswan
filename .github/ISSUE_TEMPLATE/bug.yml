@@ -65,7 +65,7 @@ body:
         - if necessary, remove sensitive details such as addresses and
           certificate IDs<br> but keep as much information as possible
         - please resist the temptation to enable and include debug output<br>
-	  _We can't see the forest for the trees_
+          Remember, _We can't see the forest for the trees._
         - this text will be automatically formatted into code, so no
           need for backticks.
       render: shell
