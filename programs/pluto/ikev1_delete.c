@@ -139,15 +139,15 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 			break;
 		}
 		case IMPAIR_EMIT_OMIT:
-			llog(RC_LOG, st->logger, "IMPAIR: omitting ISKMP delete payload");
+			llog(IMPAIR_STREAM, st->logger, "omitting ISKMP delete payload");
 			break;
 		case IMPAIR_EMIT_EMPTY:
-			llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) ISKMP delete payload");
+			llog(IMPAIR_STREAM, st->logger, "emitting empty (i.e., no SPI) ISKMP delete payload");
 			passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, NULL));
 			break;
 		case IMPAIR_EMIT_DUPLICATE:
 		{
-			llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate ISKMP delete payloads");
+			llog(IMPAIR_STREAM, st->logger, "emitting duplicate ISKMP delete payloads");
 			for (unsigned nr = 0; nr < 2; nr++) {
 				struct pbs_out del_pbs;
 				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
@@ -180,15 +180,15 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 				break;
 			}
 			case IMPAIR_EMIT_OMIT:
-				llog(RC_LOG, st->logger, "IMPAIR: omitting IPsec delete payload");
+				llog(IMPAIR_STREAM, st->logger, "omitting IPsec delete payload");
 				break;
 			case IMPAIR_EMIT_EMPTY:
 				passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, NULL));
-				llog(RC_LOG, st->logger, "IMPAIR: emitting empty (i.e., no SPI) IPsec delete payload");
+				llog(IMPAIR_STREAM, st->logger, "emitting empty (i.e., no SPI) IPsec delete payload");
 				break;
 			case IMPAIR_EMIT_DUPLICATE:
 			{
-				llog(RC_LOG, st->logger, "IMPAIR: emitting duplicate IPsec delete payloads");
+				llog(IMPAIR_STREAM, st->logger, "emitting duplicate IPsec delete payloads");
 				for (unsigned nr = 0; nr < 2; nr++) {
 					struct pbs_out del_pbs;
 					passert(pbs_out_struct(&r_hdr_pbs, isad, &isakmp_delete_desc, &del_pbs));
@@ -202,7 +202,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 			if (impair.ikev1_del_with_notify) {
 				struct pbs_out cruft_pbs;
 
-				llog(RC_LOG, st->logger, "IMPAIR: adding bogus Notify payload after IKE Delete payload");
+				llog(IMPAIR_STREAM, st->logger, "adding bogus Notify payload after ISAKMP Delete payload");
 				struct isakmp_notification isan = {
 					.isan_doi = ISAKMP_DOI_IPSEC,
 					.isan_protoid = PROTO_ISAKMP,
@@ -224,8 +224,7 @@ void send_v1_delete(struct ike_sa *ike, struct state *st, where_t where)
 	 * We use the Phase 1 State.  This is the one with right IV,
 	 * for one thing.
 	 */
-	struct crypt_mac iv = new_phase2_iv(ike, msgid,
-					    "IKE sending delete", HERE);
+	struct crypt_mac iv = new_phase2_iv(ike, msgid, "ISAKMP sending delete", HERE);
 	passert(close_and_encrypt_v1_message(ike, &r_hdr_pbs, &iv));
 
 	send_pbs_out_using_state(&ike->sa, "delete notify", &reply_pbs);

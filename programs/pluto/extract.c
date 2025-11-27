@@ -2322,8 +2322,8 @@ static deltatime_t extract_lifetime(const char *lifetime_name,
 	}
 
 	if (impair.lifetime) {
-		vlog("IMPAIR: skipping %s=%jd checks",
-		     lifetime_name, deltasecs(lifetime));
+		llog(IMPAIR_STREAM, verbose.logger, "skipping %s=%jd checks",
+		     lifetime_name, deltasecs(*lifetime));
 		return lifetime;
 	}
 

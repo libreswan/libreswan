@@ -1588,15 +1588,13 @@ static bool setup_half_kernel_state(struct child_sa *child, enum direction direc
 	switch (direction) {
 	case DIRECTION_OUTBOUND:
 		if (impair.install_ipsec_sa_outbound_state) {
-			llog(RC_LOG, child->sa.logger,
-			     "IMPAIR: kernel: install_ipsec_sa_outbound_state in %s()", __func__);
+			llog(IMPAIR_STREAM, child->sa.logger, "kernel: install_ipsec_sa_outbound_state in %s()", __func__);
 			goto fail;
 		}
 		break;
 	case DIRECTION_INBOUND:
 		if (impair.install_ipsec_sa_inbound_state && direction == DIRECTION_INBOUND) {
-			llog(RC_LOG, child->sa.logger,
-			     "IMPAIR: kernel: install_ipsec_sa_inbound_state in %s()", __func__);
+			llog(IMPAIR_STREAM, child->sa.logger, "kernel: install_ipsec_sa_inbound_state in %s()", __func__);
 			goto fail;
 		}
 		break;
@@ -2274,8 +2272,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address dst,
 	if ((hard && impair.ignore_hard_expire) ||
 	    (!hard && impair.ignore_soft_expire)) {
 		address_buf a;
-		llog(RC_LOG, child->sa.logger,
-		     "IMPAIR: suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
+		llog(IMPAIR_STREAM, child->sa.logger, "suppressing a %s EXPIRE event spi "PRI_IPSEC_SPI" dst %s bytes %" PRIu64 " packets %" PRIu64,
 		     hard ? "hard" : "soft",
 		     pri_ipsec_spi(spi),
 		     str_address(&dst, &a),

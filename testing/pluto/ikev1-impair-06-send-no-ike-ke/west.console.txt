@@ -25,7 +25,7 @@ west #
  ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode request
-"westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: sending no KE (g^x) payload
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: sending no KE (g^x) payload
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode I2
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
