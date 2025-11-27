@@ -287,8 +287,8 @@ struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
 		 * their length and reads are auto-blocked.
 		 */
 		if (impair.tcp_skip_setsockopt_espintcp) {
-			llog_iketcp(RC_LOG, logger, (*ifp), /*no-error*/0,
-				    "IMPAIR: skipping setsockopt(ESPINTCP)");
+			llog_iketcp(IMPAIR_STREAM, logger, (*ifp), /*no-error*/0,
+				    "skipping setsockopt(ESPINTCP)");
 		} else {
 
 			ldbg_iketcp(logger, *ifp, "enabling ESPINTCP");
@@ -375,8 +375,8 @@ static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 {
 	int flags = 0;
 	if (impair.tcp_use_blocking_write) {
-		llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
-			    "IMPAIR: switching off NONBLOCK before write");
+		llog_iketcp(IMPAIR_STREAM, logger, ifp, /*no-error*/0,
+			    "switching off NONBLOCK before write");
 		flags = fcntl(ifp->fd, F_GETFL, 0);
 		if (flags == -1) {
 			int e = errno;
@@ -393,8 +393,8 @@ static ssize_t iketcp_write_packet(const struct iface_endpoint *ifp,
 	ssize_t wlen = write(ifp->fd, packet.ptr, packet.len);
 	ldbg_iketcp(logger, ifp, "wrote %zd of %zu bytes", wlen, packet.len);
 	if (impair.tcp_use_blocking_write && flags >= 0) {
-		llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
-			    "IMPAIR: restoring flags 0%o after write", flags);
+		llog_iketcp(IMPAIR_STREAM, logger, ifp, /*no-error*/0,
+			    "restoring flags 0%o after write", flags);
 		if (fcntl(ifp->fd, F_SETFL, flags) == -1) {
 			int e = errno;
 			llog_iketcp(RC_LOG, logger, ifp, e,
@@ -568,7 +568,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 	 * length and reads are auto-blocked.
 	 */
 	if (impair.tcp_skip_setsockopt_espintcp) {
-		llog(RC_LOG, logger, "IMPAIR: TCP: skipping setsockopt(espintcp)");
+		llog(IMPAIR_STREAM, logger, "TCP: skipping setsockopt(espintcp)");
 	} else {
 		ldbg(logger, "TCP: socket %d: enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
