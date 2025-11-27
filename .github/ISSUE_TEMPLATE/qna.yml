@@ -1,9 +1,9 @@
-name: Bug Report
-title: What seems to be wrong?
-type: bug
+name: Q&A
+title: What isn't working?
+type: qna
 description: |
 
-  Libreswan isn't behaving as expected.
+  Help with a problem encountered when using Libreswan.
 
 body:
   - type: markdown
@@ -53,9 +53,8 @@ body:
           IP-TFS?<br> AH has been made obsolete by ESP and NULL
           authentication (the only exception is AH+TRANSPORT).
 
-        - (on Linux) are you using VTI or IPsec Interfaces
-          (XFRMI)?<br> If you're using VTI then please try IPsec
-          Interfaces.
+        - (on Linux) are you using VTI or IPsec Interfaces (XFRMI)?<br>
+          If you're using VTI then please try IPsec Interfaces.
 
       placeholder: |
 
@@ -68,7 +67,9 @@ body:
     attributes:
       label: Please Tell Us What Happened?
       placeholder: |
+
         Also tell us, what you expected to happen?
+
     validations:
       required: true
   - type: textarea
@@ -93,6 +94,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for taking the time to raise this issue.
     validations:
       required: false
