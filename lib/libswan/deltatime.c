@@ -23,6 +23,7 @@
 #include "timescale.h"
 #include "lswlog.h"
 
+const deltatime_t unset_deltatime = { .is_set = false, };
 const deltatime_t deltatime_zero = { .is_set = true, };
 const deltatime_t one_day = DELTATIME_INIT(secs_per_day);
 const deltatime_t one_hour = DELTATIME_INIT(secs_per_hour);

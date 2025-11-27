@@ -132,13 +132,13 @@ static const struct keyword_def config_conn_keyword[] = {
   K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, .sparse_names = &yn_option_names),
   K("reject-simultaneous-ike-auth", LEMPTY, kt_sparse_name, KWYN_REJECT_SIMULTANEOUS_IKE_AUTH, .sparse_names = &yn_option_names),
 
-  K("iptfs",  LEMPTY,  kt_sparse_name,  KWYN_IPTFS, .sparse_names = &yn_option_names),
-  K("iptfs-fragmentation",  LEMPTY,  kt_sparse_name,  KWYN_IPTFS_FRAGMENTATION, .sparse_names = &yn_option_names),
+  K("iptfs",  LEMPTY,  kt_string,  KWS_IPTFS),
+  K("iptfs-fragmentation",  LEMPTY,  kt_string,  KWS_IPTFS_FRAGMENTATION),
   K("iptfs-packet-size",  LEMPTY,  kt_string,  KWS_IPTFS_PACKET_SIZE),
   K("iptfs-max-queue-size",  LEMPTY,  kt_string,  KWS_IPTFS_MAX_QUEUE_SIZE),
   K("iptfs-reorder-window",  LEMPTY,  kt_string,  KWS_IPTFS_REORDER_WINDOW),
-  K("iptfs-init-delay",  LEMPTY,  kt_seconds,  KNCF_IPTFS_INIT_DELAY),
-  K("iptfs-drop-time",  LEMPTY,  kt_seconds,  KNCF_IPTFS_DROP_TIME),
+  K("iptfs-init-delay",  LEMPTY,  kt_string,  KWS_IPTFS_INIT_DELAY),
+  K("iptfs-drop-time",  LEMPTY,  kt_string,  KWS_IPTFS_DROP_TIME),
 
   K("fake-strongswan",  LEMPTY,  kt_sparse_name,  KWYN_FAKE_STRONGSWAN, .sparse_names = &yn_option_names),
   K("send-vendorid",  LEMPTY,  kt_sparse_name,  KWYN_SEND_VENDORID, .sparse_names = &yn_option_names),
@@ -150,9 +150,9 @@ static const struct keyword_def config_conn_keyword[] = {
   K("dns-match-id,",  LEMPTY,  kt_sparse_name,  KWYN_DNS_MATCH_ID, .sparse_names = &yn_option_names),
   K("ipsec-max-bytes",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_BYTES),
   K("ipsec-max-packets",  LEMPTY,  kt_string,  KWS_IPSEC_MAX_PACKETS),
-  K("ipsec-lifetime",  LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME),
+  K("ipsec-lifetime",  LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME),
 
-  K("retransmit-timeout",  LEMPTY,  kt_seconds,  KNCF_RETRANSMIT_TIMEOUT),
+  K("retransmit-timeout",  LEMPTY,  kt_string,  KWS_RETRANSMIT_TIMEOUT),
   K("retransmit-interval",  LEMPTY,  kt_string,  KWS_RETRANSMIT_INTERVAL),
 
   K("ikepad",  LEMPTY,  kt_sparse_name,  KNCF_IKEPAD, .sparse_names = &yna_option_names),
@@ -191,10 +191,10 @@ static const struct keyword_def config_conn_keyword[] = {
   K("overlapip",  LEMPTY,  kt_sparse_name,  KWYN_OVERLAPIP, .sparse_names = &yn_option_names),
   K("reauth",  LEMPTY,  kt_sparse_name,  KWYN_REAUTH, .sparse_names = &yn_option_names),
   K("rekey",  LEMPTY,  kt_sparse_name,  KWYN_REKEY, .sparse_names = &yn_option_names),
-  K("rekeymargin",  LEMPTY,  kt_seconds,  KNCF_REKEYMARGIN),
+  K("rekeymargin",  LEMPTY,  kt_string,  KWS_REKEYMARGIN),
   K("rekeyfuzz",  LEMPTY,  kt_string,  KWS_REKEYFUZZ),
   K("replay-window",  LEMPTY,  kt_string,  KWS_REPLAY_WINDOW),
-  K("ikelifetime",  LEMPTY,  kt_seconds,  KNCF_IKELIFETIME),
+  K("ikelifetime",  LEMPTY,  kt_string,  KWS_IKELIFETIME),
   K("failureshunt",  LEMPTY,  kt_sparse_name,  KNCF_FAILURESHUNT, .sparse_names = &failure_shunt_names),
   K("negotiationshunt",  LEMPTY,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, .sparse_names = &negotiation_shunt_names),
 
@@ -250,14 +250,14 @@ static const struct keyword_def config_conn_keyword[] = {
 #define A(KEYNAME, VALIDITY, TYPE, FIELD, ...) { .keyname = KEYNAME, .validity = VALIDITY|kv_alias, .type = TYPE, .field = FIELD, ##__VA_ARGS__ }
 
   A("aggrmode", LEMPTY,  kt_sparse_name,  KWYN_AGGRESSIVE, .sparse_names = &yn_option_names),
-  A("keylife", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
-  A("lifetime", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
+  A("keylife", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
+  A("lifetime", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
   A("phase2alg", LEMPTY,  kt_string,  KWS_ESP),	/* obsolete */
   A("dpdtimeout", LEMPTY,  kt_string,  KWS_DPDTIMEOUT), /* old name */
 #ifdef USE_NFLOG
   A("nflog", LEMPTY,  kt_string,  KWS_NFLOG_GROUP), /* old-name */
 #endif
-  A("salifetime", LEMPTY,  kt_seconds,  KNCF_IPSEC_LIFETIME), /* old name */
+  A("salifetime", LEMPTY,  kt_string,  KWS_IPSEC_LIFETIME), /* old name */
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   A("xauthusername",  kv_leftright,  kt_string,  KWS_USERNAME), /* old alias */
   A("ah", LEMPTY,  kt_string,  KWS_ESP),

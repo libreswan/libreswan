@@ -46,6 +46,7 @@ typedef struct {
 	bool is_set;
 } deltatime_t;
 
+extern const deltatime_t unset_deltatime;
 extern const deltatime_t deltatime_zero;
 extern const deltatime_t one_day;
 extern const deltatime_t one_hour;
