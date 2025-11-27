@@ -2306,6 +2306,12 @@ static deltatime_t extract_lifetime(const char *lifetime_name,
 		lifetime = default_lifetime;
 	}
 
+	if (impair.lifetime) {
+		llog(IMPAIR_STREAM, verbose.logger, "skipping %s=%jd checks",
+		     lifetime_name, deltasecs(lifetime));
+		return lifetime;
+	}
+
 	/*
 	 * Determine the MAX lifetime
 	 *
@@ -2319,12 +2325,6 @@ static deltatime_t extract_lifetime(const char *lifetime_name,
 	} else {
 		fips = "";
 		max_lifetime = lifetime_max;
-	}
-
-	if (impair.lifetime) {
-		llog(IMPAIR_STREAM, verbose.logger, "skipping %s=%jd checks",
-		     lifetime_name, deltasecs(*lifetime));
-		return lifetime;
 	}
 
 	/*
