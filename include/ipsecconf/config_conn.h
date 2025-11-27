@@ -110,10 +110,15 @@ enum config_conn_keyword {
 	KWS_ACCEPT_REDIRECT_TO,
 	KWS_CONNALIAS,
 	KWS_SEC_LABEL,
+
 	KWS_MARK,
 	KWS_MARK_IN,
 	KWS_MARK_OUT,
+
 	KWS_VTI_INTERFACE,
+	KWS_VTI_ROUTING,	/* let updown do routing into VTI device */
+	KWS_VTI_SHARED,		/* VTI device is shared - enable checks and disable cleanup */
+
 	KWS_DPDDELAY,
 	KWS_DPDTIMEOUT,
 
@@ -196,7 +201,7 @@ enum config_conn_keyword {
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
 	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
 	KWYN_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
-	KWYN_INITIAL_CONTACT,	/* send initial contact VID */
+	KWS_INITIAL_CONTACT,	/* send initial contact VID */
 
 	/* cisco unity stuff */
 	KWS_REMOTE_PEER_TYPE,	/* Cisco interop: remote peer type */
@@ -204,15 +209,13 @@ enum config_conn_keyword {
 	KWS_NM_CONFIGURED,	/* Network Manager support */
 	KWS_CISCO_SPLIT,	/* send cisco unity VID */
 
-	KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
-	KWYN_REJECT_SIMULTANEOUS_IKE_AUTH,
-	KWYN_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
-	KWYN_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
+	KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED,
+	KWS_REJECT_SIMULTANEOUS_IKE_AUTH,
+	KWS_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
+	KWS_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
-	KWYN_VTI_ROUTING,	/* let updown do routing into VTI device */
-	KWYN_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */

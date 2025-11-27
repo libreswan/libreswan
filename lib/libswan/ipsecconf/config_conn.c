@@ -128,9 +128,9 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("nat-keepalive",  LEMPTY,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, .sparse_names = &yn_option_names),
 
-  K("initial-contact",  LEMPTY,  kt_sparse_name,  KWYN_INITIAL_CONTACT, .sparse_names = &yn_option_names),
-  K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, .sparse_names = &yn_option_names),
-  K("reject-simultaneous-ike-auth", LEMPTY, kt_sparse_name, KWYN_REJECT_SIMULTANEOUS_IKE_AUTH, .sparse_names = &yn_option_names),
+  K("initial-contact",  LEMPTY,  kt_string,  KWS_INITIAL_CONTACT),
+  K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_string,  KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED),
+  K("reject-simultaneous-ike-auth", LEMPTY, kt_string, KWS_REJECT_SIMULTANEOUS_IKE_AUTH),
 
   K("iptfs",  LEMPTY,  kt_string,  KWS_IPTFS),
   K("iptfs-fragmentation",  LEMPTY,  kt_string,  KWS_IPTFS_FRAGMENTATION),
@@ -140,8 +140,8 @@ static const struct keyword_def config_conn_keyword[] = {
   K("iptfs-init-delay",  LEMPTY,  kt_string,  KWS_IPTFS_INIT_DELAY),
   K("iptfs-drop-time",  LEMPTY,  kt_string,  KWS_IPTFS_DROP_TIME),
 
-  K("fake-strongswan",  LEMPTY,  kt_sparse_name,  KWYN_FAKE_STRONGSWAN, .sparse_names = &yn_option_names),
-  K("send-vendorid",  LEMPTY,  kt_sparse_name,  KWYN_SEND_VENDORID, .sparse_names = &yn_option_names),
+  K("fake-strongswan",  LEMPTY,  kt_string,  KWS_FAKE_STRONGSWAN),
+  K("send-vendorid",  LEMPTY,  kt_string,  KWS_SEND_VENDORID),
   K("sha2-truncbug",  LEMPTY,  kt_sparse_name,  KWYN_SHA2_TRUNCBUG, .sparse_names = &yn_option_names),
   K("share-lease",  LEMPTY,  kt_sparse_name,  KWYN_SHARE_LEASE, .sparse_names = &yn_option_names),
   K("ms-dh-downgrade",  LEMPTY,  kt_sparse_name,  KWYN_MS_DH_DOWNGRADE, .sparse_names = &yn_option_names),
@@ -174,12 +174,15 @@ static const struct keyword_def config_conn_keyword[] = {
   K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),
   K("modecfgbanner",  LEMPTY,  kt_string,  KWS_MODECFGBANNER),
   K("ignore-peer-dns",  LEMPTY,  kt_sparse_name,  KWYN_IGNORE_PEER_DNS, .sparse_names = &yn_option_names),
+
   K("mark",  LEMPTY,  kt_string,  KWS_MARK),
   K("mark-in",  LEMPTY,  kt_string,  KWS_MARK_IN),
   K("mark-out",  LEMPTY,  kt_string,  KWS_MARK_OUT),
+
   K("vti-interface",  LEMPTY,  kt_string,  KWS_VTI_INTERFACE),
-  K("vti-routing",  LEMPTY,  kt_sparse_name,  KWYN_VTI_ROUTING, .sparse_names = &yn_option_names),
-  K("vti-shared",  LEMPTY,  kt_sparse_name,  KWYN_VTI_SHARED, .sparse_names = &yn_option_names),
+  K("vti-routing",  LEMPTY,  kt_string,  KWS_VTI_ROUTING),
+  K("vti-shared",  LEMPTY,  kt_string,  KWS_VTI_SHARED),
+
   K("ipsec-interface",  LEMPTY, kt_string, KWS_IPSEC_INTERFACE),
 
   K("clones", LEMPTY, kt_string, KWS_CLONES),
@@ -264,7 +267,7 @@ static const struct keyword_def config_conn_keyword[] = {
   A("policy-label", LEMPTY,  kt_string,  KWS_SEC_LABEL), /* obsolete variant */
   /* another alias used by NetworkManager-libreswan :/ */
   A("remote_peer_type", LEMPTY,  kt_string,  KWS_REMOTE_PEER_TYPE),
-  A("send-no-esp-tfc", LEMPTY,  kt_sparse_name,  KWYN_SEND_ESP_TFC_PADDING_NOT_SUPPORTED, .sparse_names = &yn_option_names), /*compat, but forever*/
+  A("send-no-esp-tfc", LEMPTY,  kt_string,  KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED), /*compat, but forever*/
 
   /* obsolete config setup options */
 
