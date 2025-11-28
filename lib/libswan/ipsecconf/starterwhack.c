@@ -77,8 +77,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
 
-	msg.pfs = conn->values[KWYN_PFS].option;
-	msg.compress = conn->values[KWYN_COMPRESS].option;
 	msg.type = conn->values[KNCF_TYPE].option;
 	msg.authby = conn->values[KWS_AUTHBY].string;
 
@@ -88,10 +86,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.autostart = conn->values[KNCF_AUTO].option;
 
 	msg.metric = conn->values[KNCF_METRIC].option;
-
-	msg.narrowing = conn->values[KWYN_NARROWING].option;
-	msg.rekey = conn->values[KWYN_REKEY].option;
-	msg.reauth = conn->values[KWYN_REAUTH].option;
 
 	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
 		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;
@@ -115,27 +109,8 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
 
-	msg.session_resumption = conn->values[KWYN_SESSION_RESUMPTION].option;
-
-	msg.mobike = conn->values[KWYN_MOBIKE].option; /*yn_options*/
-	msg.intermediate = conn->values[KWYN_INTERMEDIATE].option; /*yn_options*/
-	msg.sha2_truncbug = conn->values[KWYN_SHA2_TRUNCBUG].option; /*yn_options*/
-	msg.share_lease = conn->values[KWYN_SHARE_LEASE].option; /*yn_options*/
-	msg.overlapip = conn->values[KWYN_OVERLAPIP].option; /*yn_options*/
-	msg.ms_dh_downgrade = conn->values[KWYN_MS_DH_DOWNGRADE].option; /*yn_options*/
-	msg.pfs_rekey_workaround = conn->values[KWYN_PFS_REKEY_WORKAROUND].option;
-	msg.dns_match_id = conn->values[KWYN_DNS_MATCH_ID].option; /* yn_options */
-	msg.pam_authorize = conn->values[KWYN_PAM_AUTHORIZE].option; /* yn_options */
-	msg.ignore_peer_dns = conn->values[KWYN_IGNORE_PEER_DNS].option; /* yn_options */
 	msg.ikepad = conn->values[KNCF_IKEPAD].option; /* yna_options */
-	msg.require_id_on_certificate = conn->values[KWYN_REQUIRE_ID_ON_CERTIFICATE].option; /* yn_options */
-	msg.modecfgpull = conn->values[KWYN_MODECFGPULL].option; /* yn_options */
-	msg.aggressive = conn->values[KWYN_AGGRESSIVE].option; /* yn_options */
 
-	msg.decap_dscp = conn->values[KWYN_DECAP_DSCP].option; /* yn_options */
-	msg.encap_dscp = conn->values[KWYN_ENCAP_DSCP].option; /* yn_options */
-	msg.nopmtudisc = conn->values[KWYN_NOPMTUDISC].option; /* yn_options */
-	msg.accept_redirect = conn->values[KWYN_ACCEPT_REDIRECT].option; /* yn_options */
 	msg.fragmentation = conn->values[KNCF_FRAGMENTATION].option; /* yna_options */
 	msg.esn = conn->values[KNCF_ESN].option; /* yne_options */
 	msg.ppk = conn->values[KNCF_PPK].option; /* nppi_options */

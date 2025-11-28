@@ -236,8 +236,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			break;
 		}
 
-		cwyn("compress", KWYN_COMPRESS);
-		cwyn("pfs", KWYN_PFS);
 		cwyn("ikepad", KNCF_IKEPAD);
 		ckws("auth", AUTH);
 
