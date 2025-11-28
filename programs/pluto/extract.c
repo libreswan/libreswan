@@ -2664,9 +2664,8 @@ static void host_config_from_extracted_addr(struct route_addr *host,
 					    char **heap,
 					    const struct route_addr *addr)
 {
-	host->type = addr->type;
-	host->addr = addr->addr;
-	host->key = addr->key;
+	*host = *addr;
+	/* need to clone the string value */
 	(*heap) = clone_str(addr->value, "config");
 	host->value = (*heap);
 }
@@ -2685,15 +2684,6 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	}
 }
 
-static void extracted_addr_from_host_config(struct route_addr *addr,
-					    const struct route_addr *host)
-{
-	addr->type = host->type;
-	addr->addr = host->addr;
-	addr->key = host->key;
-	addr->value = host->value;
-}
-
 struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config)
 {
 	struct extracted_host_addrs host_addrs = {
@@ -2701,10 +2691,8 @@ struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct 
 	};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		host_addrs.end[end].leftright = (end == LEFT_END ? "left" : "right");
-		extracted_addr_from_host_config(&host_addrs.end[end].host,
-						&config->end[end].host.host);
-		extracted_addr_from_host_config(&host_addrs.end[end].nexthop,
-						&config->end[end].host.nexthop);
+		host_addrs.end[end].host = config->end[end].host.host;
+		host_addrs.end[end].nexthop = config->end[end].host.nexthop;
 	}
 	return host_addrs;
 }

@@ -694,10 +694,7 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 		dst->leftright = leftright;
 
 		/* nexthop */
-		dst->nexthop.key = src->nexthop.key;
-		dst->nexthop.value = src->nexthop.value;
-		dst->nexthop.addr = src->nexthop.addr;
-		dst->nexthop.type = src->nexthop.type;
+		dst->nexthop = src->nexthop;
 
 		/* host */
 		ip_address host_addr;
@@ -719,10 +716,8 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 		} else {
 			host_addr = src->host.addr;
 		}
-		dst->host.key = src->host.key;
-		dst->host.value = src->host.value;
+		dst->host = src->host;
 		dst->host.addr = host_addr;
-		dst->host.type = src->host.type;
 	}
 
 	if (host_addrs->resolved) {
