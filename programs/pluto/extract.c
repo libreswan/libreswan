@@ -207,7 +207,7 @@ static diag_t check_afi(struct afi_winner *winner,
 }
 
 static diag_t extract_host_addr(struct afi_winner *winner,
-				struct extracted_addr *end,
+				struct route_addr *end,
 				const char *leftright,
 				const char *key,
 				const char *value,
@@ -362,8 +362,8 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
 		struct extracted_addrs *addrs = &config->end[lr];
-		struct extracted_addr *host = &addrs->host;
-		struct extracted_addr *nexthop = &addrs->nexthop;
+		struct route_addr *host = &addrs->host;
+		struct route_addr *nexthop = &addrs->nexthop;
  		const char *leftright = addrs->leftright;
 		const char *key = "";
 		const char *value = host->value;
@@ -448,7 +448,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 		struct extracted_addrs *addrs = &config->end[lr];
  		const char *leftright = addrs->leftright;
-		struct extracted_addr *nexthop = &addrs->nexthop;
+		struct route_addr *nexthop = &addrs->nexthop;
 		const char *key = "nexthop";
 		const char *value = nexthop->value;
 		enum keyword_host type = nexthop->type;
@@ -471,7 +471,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 		case KH_NOTSET:
 		{
-			struct extracted_addr *host = &config->end[lr].host;
+			struct route_addr *host = &config->end[lr].host;
 			nexthop->addr = winner.afi->address.zero;
 			nexthop->type = (host->type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE : KH_NOTSET);
 			break;
@@ -2662,7 +2662,7 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 
 static void host_config_from_extracted_addr(struct route_addr *host,
 					    char **heap,
-					    const struct extracted_addr *addr)
+					    const struct route_addr *addr)
 {
 	host->type = addr->type;
 	host->addr = addr->addr;
@@ -2685,7 +2685,7 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	}
 }
 
-static void extracted_addr_from_host_config(struct extracted_addr *addr,
+static void extracted_addr_from_host_config(struct route_addr *addr,
 					    const struct route_addr *host)
 {
 	addr->type = host->type;
