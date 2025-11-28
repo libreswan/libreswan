@@ -53,7 +53,7 @@ west #
 "nss-cert-crl" #1: I am sending a certificate request
 "nss-cert-crl" #1: sent Main Mode I3
 "nss-cert-crl" #1: certificate payload rejected; crl-strict=yes and Certificate Revocation List (CRL) is expired or missing, forcing CRL update
-"nss-cert-crl" #1: IMPAIR: not initiating FETCH_CRL
+IMPAIR: "nss-cert-crl" #1: not initiating FETCH_CRL
 "nss-cert-crl" #1: X509: certificate rejected for this connection
 "nss-cert-crl" #1: X509: CERT payload bogus or revoked
 "nss-cert-crl" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500

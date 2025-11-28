@@ -53,8 +53,8 @@ east #
  date
 Tue Jan 30 07:50:27 AM EST 2024
 east #
- ../../guestbin/wait-for-pluto.sh '#1: IMPAIR: job 3 helper 0 #1 process_v2_CREATE_CHILD_SA_rekey_ike_request '
-"east/0x2" #1: IMPAIR: job 3 helper 0 #1 process_v2_CREATE_CHILD_SA_rekey_ike_request (dh): helper is pausing for 5 seconds
+../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #1: .* process_v2_CREATE_CHILD_SA_rekey_ike_request '
+IMPAIR: "east/0x2" #1: job 3 helper 0 #1 process_v2_CREATE_CHILD_SA_rekey_ike_request (dh): helper is pausing for 5 seconds
 east #
  ipsec whack --impair helper_thread_delay:no
 east #

@@ -117,7 +117,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 			return;
 		}
 		struct logger *loggers = merge_loggers(ike->sa.logger, detach_whack, logger);
-		llog(RC_LOG, loggers, "IMPAIR: initiating liveness");
+		llog(IMPAIR_STREAM, loggers, "initiating liveness");
 		submit_v2_liveness_exchange(ike, st->st_serialno);
 		free_logger(&loggers, HERE);
 		break;
@@ -132,7 +132,7 @@ static void whack_impair_action(enum impair_action impairment_action,
 		/* will log */
 		struct logger *loggers = merge_loggers(st->logger,
 						       true/*detach_whack*/, logger);
-		llog(RC_LOG, loggers, "IMPAIR: sending keepalive");
+		llog(IMPAIR_STREAM, loggers, "sending keepalive");
 		send_keepalive_using_state(st, "inject keep-alive");
 		free_logger(&loggers, HERE);
 		break;

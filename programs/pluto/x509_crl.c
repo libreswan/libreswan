@@ -220,7 +220,7 @@ void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger)
 	add_crl_fetch_request(issuer_dn, /*URL*/null_shunk, logger);
 
 	if (impair.event_check_crls) {
-		llog(RC_LOG, logger, "IMPAIR: not initiating FETCH_CRL");
+		llog(IMPAIR_STREAM, logger, "not initiating FETCH_CRL");
 		return;
 	}
 
@@ -527,7 +527,7 @@ bool init_x509_crl_queue(struct logger *logger)
 	}
 
 	if (impair.event_check_crls) {
-		llog(RC_LOG, logger, "IMPAIR: not scheduling EVENT_CHECK_CRLS");
+		llog(IMPAIR_STREAM, logger, "not scheduling EVENT_CHECK_CRLS");
 		return true; /*technically still enabled*/
 	}
 
