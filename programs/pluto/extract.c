@@ -2661,12 +2661,14 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 }
 
 static void host_config_from_extracted_addr(struct host_addr_config *host,
+					    char **heap,
 					    const struct extracted_addr *addr)
 {
 	host->type = addr->type;
 	host->addr = addr->addr;
 	host->key = addr->key;
-	host->value = clone_str(addr->value, "config");
+	(*heap) = clone_str(addr->value, "config");
+	host->value = (*heap);
 }
 
 static void host_configs_from_extracted_host_addrs(struct config *config,
@@ -2675,8 +2677,10 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	config->host.afi = host_addrs->afi;
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		host_config_from_extracted_addr(&config->end[end].host.host,
+						&config->end[end].heap.host,
 						&host_addrs->end[end].host);
 		host_config_from_extracted_addr(&config->end[end].host.nexthop,
+						&config->end[end].heap.nexthop,
 						&host_addrs->end[end].nexthop);
 	}
 }

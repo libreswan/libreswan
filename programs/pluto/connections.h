@@ -87,7 +87,7 @@ struct connection *connection_by_serialno(co_serial_t serialno);
 struct host_addr_config {
 	enum keyword_host type;
 	const char *key;
-	char *value;	/* string version from whack */
+	const char *value;	/* string version from whack */
 	ip_address addr;
 };
 
@@ -195,6 +195,14 @@ struct end_config {
 	const char *leftright;
 	struct host_end_config host;
 	struct child_end_config child;
+	/*
+	 * Things that need to be deleted, but are otherwise treated
+	 * as readonly.
+	 */
+	struct {
+		char *host;
+		char *nexthop;
+	} heap;
 };
 
 struct ike_info {
