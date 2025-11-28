@@ -66,6 +66,7 @@
 #include "reqid.h"
 #include "state.h"
 #include "whack.h"
+#include "defaultroute.h"
 
 struct extracted_host_addrs;
 struct route_addrs;
@@ -84,18 +85,11 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  * then authenticate the IKE SA.
  */
 
-struct host_addr_config {
-	enum keyword_host type;
-	const char *key;
-	const char *value;	/* string version from whack */
-	ip_address addr;
-};
-
 struct host_end_config {
 	const char *leftright;
 
-	struct host_addr_config host;
-	struct host_addr_config nexthop;
+	struct route_addr host;
+	struct route_addr nexthop;
 
 	ip_port ikeport;
 	enum tcp_options iketcp;	/* Allow TCP as fallback,
