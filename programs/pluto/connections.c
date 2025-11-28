@@ -694,7 +694,8 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 		dst->leftright = leftright;
 
 		/* nexthop */
-		dst->nexthop.name = src->nexthop.value;
+		dst->nexthop.key = src->nexthop.key;
+		dst->nexthop.value = src->nexthop.value;
 		dst->nexthop.addr = src->nexthop.addr;
 		dst->nexthop.type = src->nexthop.type;
 
@@ -718,7 +719,8 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 		} else {
 			host_addr = src->host.addr;
 		}
-		dst->host.name = src->host.value;
+		dst->host.key = src->host.key;
+		dst->host.value = src->host.value;
 		dst->host.addr = host_addr;
 		dst->host.type = src->host.type;
 	}

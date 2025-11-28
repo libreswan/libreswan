@@ -180,7 +180,7 @@ static void netlink_query_add_address(struct nlmsghdr *nlmsg, int rta_type,
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 
-static unsigned jam_pa(struct jambuf *buf, const struct resolve_host *host)
+static unsigned jam_pa(struct jambuf *buf, const struct route_addr *host)
 {
 	size_t s = 0;
 	if (host->addr.ip.is_set) {
@@ -193,7 +193,9 @@ static unsigned jam_pa(struct jambuf *buf, const struct resolve_host *host)
 
 	if (host->type == KH_IPHOSTNAME) {
 		s += jam_string(buf, "(");
-		s += jam_string(buf, host->name);
+		s += jam_string(buf, host->key);
+		s += jam_string(buf, "=");
+		s += jam_string(buf, host->value);
 		s += jam_string(buf, ")");
 	}
 
