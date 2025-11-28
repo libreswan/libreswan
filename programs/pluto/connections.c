@@ -686,7 +686,7 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 {
 	host_addrs->resolved = true;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const struct extracted_addrs *src = &host_addrs->end[lr];
+		const struct route_addrs *src = &host_addrs->end[lr];
  		struct route_addrs *dst = &host_addrs->resolve[lr];
  		const char *leftright = src->leftright;
 

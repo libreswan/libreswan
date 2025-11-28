@@ -48,11 +48,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			  struct verbose verbose);
 
 struct extracted_host_addrs {
-	struct extracted_addrs {
-		struct route_addr host;
-		struct route_addr nexthop;
-		const char *leftright;
-	} end[END_ROOF];
+	struct route_addrs end[END_ROOF];
 	struct route_addrs resolve[END_ROOF];
 	bool resolved;
 	const struct ip_info *afi;

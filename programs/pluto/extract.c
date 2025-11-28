@@ -316,7 +316,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = &wm->end[lr];
 		const char *leftright = we->leftright;
-		struct extracted_addrs *addrs = &config->end[lr];
+		struct route_addrs *addrs = &config->end[lr];
 
 		addrs->leftright = leftright;
 
@@ -361,7 +361,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addrs *addrs = &config->end[lr];
+		struct route_addrs *addrs = &config->end[lr];
 		struct route_addr *host = &addrs->host;
 		struct route_addr *nexthop = &addrs->nexthop;
  		const char *leftright = addrs->leftright;
@@ -446,7 +446,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addrs *addrs = &config->end[lr];
+		struct route_addrs *addrs = &config->end[lr];
  		const char *leftright = addrs->leftright;
 		struct route_addr *nexthop = &addrs->nexthop;
 		const char *key = "nexthop";
