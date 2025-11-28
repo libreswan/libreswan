@@ -1285,7 +1285,7 @@ static diag_t extract_host_end(struct host_end *host,
 		err_t e = atoid(str_address(&host_addr->addr, &ab), &id);
 		if (e != NULL) {
 			return diag("%sid=%s invalid: %s",
-				    leftright, host_addr->name, e);
+				    leftright, host_addr->value, e);
 		}
 
 		id_buf idb;
@@ -2665,7 +2665,8 @@ static void host_config_from_extracted_addr(struct host_addr_config *host,
 {
 	host->type = addr->type;
 	host->addr = addr->addr;
-	host->name = clone_str(addr->value, "config");
+	host->key = addr->key;
+	host->value = clone_str(addr->value, "config");
 }
 
 static void host_configs_from_extracted_host_addrs(struct config *config,
@@ -2680,14 +2681,13 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	}
 }
 
-static void extracted_addr_from_host_config(const char *key,
-					    struct extracted_addr *addr,
+static void extracted_addr_from_host_config(struct extracted_addr *addr,
 					    const struct host_addr_config *host)
 {
-	addr->key = key;
 	addr->type = host->type;
 	addr->addr = host->addr;
-	addr->value = host->name;
+	addr->key = host->key;
+	addr->value = host->value;
 }
 
 struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config)
@@ -2697,9 +2697,9 @@ struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct 
 	};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		host_addrs.end[end].leftright = (end == LEFT_END ? "left" : "right");
-		extracted_addr_from_host_config("", &host_addrs.end[end].host,
+		extracted_addr_from_host_config(&host_addrs.end[end].host,
 						&config->end[end].host.host);
-		extracted_addr_from_host_config("nexthop", &host_addrs.end[end].nexthop,
+		extracted_addr_from_host_config(&host_addrs.end[end].nexthop,
 						&config->end[end].host.nexthop);
 	}
 	return host_addrs;

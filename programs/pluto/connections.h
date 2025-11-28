@@ -86,7 +86,8 @@ struct connection *connection_by_serialno(co_serial_t serialno);
 
 struct host_addr_config {
 	enum keyword_host type;
-	char *name;	/* string version from whack */
+	const char *key;
+	char *value;	/* string version from whack */
 	ip_address addr;
 };
 

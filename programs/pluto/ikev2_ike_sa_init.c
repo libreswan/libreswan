@@ -293,7 +293,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 #endif
 		if (c->remote->config->host.host.type == KH_IPHOSTNAME) {
 			jam_string(buf, " (");
-			jam_string(buf, c->remote->config->host.host.name);
+			jam_string(buf, c->remote->config->host.host.value);
 			jam_string(buf, ")");
 		}
 #if 0

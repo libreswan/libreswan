@@ -85,7 +85,7 @@ void jam_end_host(struct jambuf *buf,
 	if (!address_is_specified(end->addr)) {
 		if (end->config->host.type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", end->config->host.name);
+			jam(buf, "<%s>", end->config->host.value);
 		} else {
 			if (is_group(c)) {
 				if (is_opportunistic(c)) {
@@ -137,9 +137,9 @@ void jam_end_host(struct jambuf *buf,
 		address_buf ab;
 		if (end->config->host.type == KH_IPHOSTNAME ||
 		    (end->config->host.type == KH_IPADDR &&
-		     end->config->host.name[0] != '%' &&
-		     !streq(str_address(&end->addr, &ab), end->config->host.name))) {
-			jam(buf, "<%s>", end->config->host.name);
+		     end->config->host.value[0] != '%' &&
+		     !streq(str_address(&end->addr, &ab), end->config->host.value))) {
+			jam(buf, "<%s>", end->config->host.value);
 		}
 	}
 }

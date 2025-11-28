@@ -527,8 +527,8 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
-			pfreeany(end->host.host.name);
-			pfreeany(end->host.nexthop.name);
+			pfreeany(end->host.host.value);
+			pfreeany(end->host.nexthop.value);
 			free_id_content(&end->host.id);
 			/* child */
 			pfreeany(end->child.updown);
