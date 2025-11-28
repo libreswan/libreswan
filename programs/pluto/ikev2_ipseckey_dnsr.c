@@ -411,7 +411,7 @@ err_t process_dns_resp(struct p_dns_req *dnsr)
 
 	case UB_EVENT_INSECURE:
 		if (impair.allow_dns_insecure) {
-			llog(RC_LOG, dnsr->logger, "IMPAIR: allowing insecure DNS response");
+			llog(IMPAIR_STREAM, dnsr->logger, "allowing insecure DNS response");
 			return parse_rr(dnsr, ldnspkt);
 		}
 		return "unbound returned INSECURE response - ignored";

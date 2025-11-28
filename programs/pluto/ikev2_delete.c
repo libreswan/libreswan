@@ -49,8 +49,7 @@ bool emit_v2DELETE(struct ike_sa *ike, struct child_sa *child, struct pbs_out *p
 	if (impair.v2_delete_protoid.enabled) {
 		name_buf ebo, ebn;
 		enum ikev2_sec_proto_id new_protoid = impair.v2_delete_protoid.value;
-		llog(RC_LOG, ike->sa.logger,
-		     "IMPAIR: changing Delete payload Protocol ID from %s to %s (%u)",
+		llog(IMPAIR_STREAM, ike->sa.logger, "changing Delete payload Protocol ID from %s to %s (%u)",
 		     str_enum_short(&ikev2_delete_protocol_id_names, protoid, &ebo),
 		     str_enum_short(&ikev2_delete_protocol_id_names, new_protoid, &ebn),
 		     protoid);

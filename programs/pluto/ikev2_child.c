@@ -1137,7 +1137,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 		/* Try to ignore missing CHILD SA payloads. */
 		if (has_v2_IKE_AUTH_child_payloads(response_md)) {
 			llog_pexpect(ike->sa.logger, HERE,
-				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
+				     "IMPAIRED IKE_AUTH response should have omitted CHILD SA payloads");
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
 		llog(IMPAIR_STREAM, ike->sa.logger, "as expected, IKE_AUTH response omitted CHILD SA payloads");

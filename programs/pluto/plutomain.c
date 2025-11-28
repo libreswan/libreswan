@@ -1348,7 +1348,7 @@ int main(int argc, char **argv)
 	 */
 
 	if (impair.force_fips) {
-		llog(RC_LOG, logger, "IMPAIR: forcing FIPS checks to true to emulate FIPS mode");
+		llog(IMPAIR_STREAM, logger, "forcing FIPS checks to true to emulate FIPS mode");
 		set_fips_mode(FIPS_MODE_ON);
 	}
 

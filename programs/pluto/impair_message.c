@@ -337,7 +337,7 @@ static void free_direction(struct direction_impairment *direction, struct logger
 		m->next = NULL;
 		/* complain */
 		llog_pexpect(logger, HERE,
-			     "IMPAIR: outstanding %s impairment for message %u",
+			     "outstanding %s IMPAIR for message %u",
 			     direction->name, m->message_nr);
 		pfree(m);
 	}

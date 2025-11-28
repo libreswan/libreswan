@@ -276,13 +276,12 @@ void whack_impair_call_global_event_handler(enum global_timer timer,
 	struct global_timer_desc *gt = &global_timers[timer];
 	passert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
-		llog(RC_LOG, logger,
-			    "IMPAIR: timer %s is not initialized",
-			    gt->name);
+		llog(IMPAIR_STREAM, logger, "timer %s is not initialized",
+		     gt->name);
 		return;
 	}
 
-	llog(RC_LOG, logger, "IMPAIR: injecting timer event %s", gt->name);
+	llog(IMPAIR_STREAM, logger, "injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);
 	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);

@@ -688,8 +688,7 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 	/* sanity checks */
 	struct state_event **evp = state_event_slot(st, event_type);
 	if (evp == NULL) {
-		llog(RC_LOG, logger, "IMPAIR: %s is not a valid event",
-		     event_name.buf);
+		llog(IMPAIR_STREAM, logger, "%s is not a valid event", event_name.buf);
 		return;
 	}
 
@@ -699,24 +698,21 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 	 */
 	deltatime_t event_delay = deltatime(1);
 	if (*evp == NULL) {
-		llog(RC_LOG, logger,
-		     "IMPAIR: no existing %s event to delete",
+		llog(IMPAIR_STREAM, logger, "no existing %s event to delete",
 		     event_name.buf);
 	} else if ((*evp)->ev_type != event_type) {
 		name_buf tb;
-		llog(RC_LOG, logger,
-		     "IMPAIR: deleting existing %s event occupying the slot shared with %s",
+		llog(IMPAIR_STREAM, logger, "deleting existing %s event occupying the slot shared with %s",
 		     str_enum_long(&event_type_names, (*evp)->ev_type, &tb),
 		     event_name.buf);
 		delete_state_event(evp, HERE);
 	} else {
-		llog(RC_LOG, logger,
-		     "IMPAIR: deleting existing %s event",
+		llog(IMPAIR_STREAM, logger, "deleting existing %s event",
 		     event_name.buf);
 		event_delay = (*evp)->ev_delay;
 		delete_state_event(evp, HERE);
 	}
 
-	llog(RC_LOG, logger, "IMPAIR: calling %s event handler", event_name.buf);
+	llog(IMPAIR_STREAM, logger, "calling %s event handler", event_name.buf);
 	dispatch_event(st, event_type, event_delay, logger, detach_whack);
 }

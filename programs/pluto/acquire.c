@@ -82,7 +82,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	threadtime_t inception = threadtime_start();
 
 	if (impair.cannot_ondemand) {
-		llog(RC_LOG, b->logger, "IMPAIR: cannot ondemand forced");
+		llog(IMPAIR_STREAM, b->logger, "cannot ondemand forced");
 		return;
 	}
 
