@@ -182,7 +182,7 @@ enum config_conn_keyword {
 	KWS_REPLAY_WINDOW,
 	KWS_AGGRESSIVE,
 	KWS_MODECFGPULL,
-	KNCF_ENCAPSULATION,
+	KWS_ENCAPSULATION,
 	KWS_IKEv2,		/* obsolete, use KEYEXCHANGE */
 	KWS_KEYEXCHANGE,
 	KNCF_PPK,
@@ -193,7 +193,7 @@ enum config_conn_keyword {
 	KWS_NOPMTUDISC,
 	KWS_NARROWING,
 	KWS_PAM_AUTHORIZE,
-	KNCF_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
+	KWS_SEND_REDIRECT,	/* this and next word are used for IKEv2 Redirect Mechanism */
 	KWS_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
 	KWS_OVERLAPIP,		/* Allow overlapping IPsec policies */
@@ -213,7 +213,7 @@ enum config_conn_keyword {
 	KWS_REJECT_SIMULTANEOUS_IKE_AUTH,
 	KWS_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KWS_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
-	KNCF_IKEPAD,		/* pad IKE packets to 4 bytes */
+	KWS_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */

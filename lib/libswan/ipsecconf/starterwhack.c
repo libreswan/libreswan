@@ -95,8 +95,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.enable_tcp = conn->values[KNCF_ENABLE_TCP].option;
 	}
 
-	msg.encapsulation = conn->values[KNCF_ENCAPSULATION].option;
-
 	msg.nat_keepalive = conn->values[KWYN_NAT_KEEPALIVE].option;
 
 	/* can be 0 aka unset */
@@ -106,10 +104,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	 * Cisco (UNITY).
 	 */
 	msg.debug = conn->values[KWS_DEBUG].string;
-
-	msg.send_redirect = conn->values[KNCF_SEND_REDIRECT].option;
-
-	msg.ikepad = conn->values[KNCF_IKEPAD].option; /* yna_options */
 
 	msg.fragmentation = conn->values[KNCF_FRAGMENTATION].option; /* yna_options */
 	msg.esn = conn->values[KNCF_ESN].option; /* yne_options */

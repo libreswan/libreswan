@@ -119,7 +119,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("mobike",  LEMPTY,  kt_string,  KWS_MOBIKE),
   K("narrowing",  LEMPTY,  kt_string,  KWS_NARROWING),
   K("pam-authorize",  LEMPTY,  kt_string,  KWS_PAM_AUTHORIZE),
-  K("send-redirect",  LEMPTY,  kt_sparse_name,  KNCF_SEND_REDIRECT, .sparse_names = &yna_option_names),
+  K("send-redirect",  LEMPTY,  kt_string,  KWS_SEND_REDIRECT),
   K("redirect-to",  LEMPTY,  kt_string,  KWS_REDIRECT_TO),
   K("accept-redirect",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT),
   K("accept-redirect-to",  LEMPTY,  kt_string, KWS_ACCEPT_REDIRECT_TO),
@@ -155,7 +155,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("retransmit-timeout",  LEMPTY,  kt_string,  KWS_RETRANSMIT_TIMEOUT),
   K("retransmit-interval",  LEMPTY,  kt_string,  KWS_RETRANSMIT_INTERVAL),
 
-  K("ikepad",  LEMPTY,  kt_sparse_name,  KNCF_IKEPAD, .sparse_names = &yna_option_names),
+  K("ikepad",  LEMPTY,  kt_string,  KWS_IKEPAD),
   K("nat-ikev1-method",  LEMPTY,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, .sparse_names = &nat_ikev1_method_option_names),
 
   K("sec-label",  LEMPTY,  kt_string,  KWS_SEC_LABEL),
@@ -189,7 +189,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("nic-offload",  LEMPTY,  kt_sparse_name,  KNCF_NIC_OFFLOAD, .sparse_names = &nic_offload_option_names),
 
-  K("encapsulation",  LEMPTY,  kt_sparse_name,  KNCF_ENCAPSULATION, .sparse_names = &yna_option_names),
+  K("encapsulation",  LEMPTY,  kt_string,  KWS_ENCAPSULATION),
 
   K("overlapip",  LEMPTY,  kt_string,  KWS_OVERLAPIP),
   K("reauth",  LEMPTY,  kt_string,  KWS_REAUTH),

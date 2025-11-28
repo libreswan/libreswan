@@ -315,9 +315,11 @@ struct whack_message {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
-	enum yna_options ikepad;	/* pad ike packets and
-					 * payloads to 4 bytes or
-					 * not */
+#define wm_ikepad conn[END_ROOF].value[KWS_IKEPAD]	/* pad ike
+							 * packets and
+							 * payloads to
+							 * 4 bytes or
+							 * not */
 	enum ynf_options fragmentation;	/* fragment IKE payload */
 	enum yne_options esn;		/* accept or request ESN{yes,no} */
 	enum nppi_options ppk;		/* pre-shared post-quantum key */
@@ -326,7 +328,7 @@ struct whack_message {
 
 	enum nic_offload_options nic_offload;
 	/* Force the use of NAT-T on a connection */
-	enum yna_options encapsulation;
+#define wm_encapsulation conn[END_ROOF].value[KWS_ENCAPSULATION]
 
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
@@ -398,7 +400,7 @@ struct whack_message {
 	 */
 	enum global_redirect global_redirect;
 #define wm_accept_redirect conn[END_ROOF].value[KWS_ACCEPT_REDIRECT]
-	enum yna_options send_redirect;
+#define wm_send_redirect conn[END_ROOF].value[KWS_SEND_REDIRECT]
 #define wm_redirect_to conn[END_ROOF].value[KWS_REDIRECT_TO]
 #define wm_accept_redirect_to conn[END_ROOF].value[KWS_ACCEPT_REDIRECT_TO]
 

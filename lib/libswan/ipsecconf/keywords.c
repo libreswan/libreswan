@@ -120,6 +120,7 @@ static void check_config_keywords(struct logger *logger,
 			break;
 		case CONFIG_CONN:
 			ok &= pexpect(k->type != kt_seconds);
+			ok &= pexpect(k->sparse_names != &yna_option_names);
 			break;
 		}
 

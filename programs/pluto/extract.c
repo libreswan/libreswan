@@ -535,19 +535,6 @@ static bool extract_yn(const char *leftright, const char *name,
 	}
 }
 
-static enum yna_options extract_yna(const char *leftright, const char *name,
-				    enum yna_options yna,
-				    enum yna_options value_when_unset,
-				    enum yna_options value_when_never_negotiate,
-				    const struct whack_message *wm,
-				    struct verbose verbose)
-{
-	return extract_sparse(leftright, name, yna,
-			      value_when_unset,
-			      value_when_never_negotiate,
-			      &yna_option_names, wm, verbose);
-}
-
 /* terrible name */
 
 static bool can_extract_string(const char *leftright,
@@ -690,6 +677,30 @@ static bool extract_bool(const char *leftright,
 		vexpect(*d != NULL);
 		return false;
 	}
+}
+
+static enum yna_options extract_yna(const char *leftright,
+				    const char *name,
+				    const char *value,
+				    enum yna_options value_when_unset,
+				    enum yna_options value_when_never_negotiate,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
+		return value_when_never_negotiate;
+	}
+
+	return extract_sparse_name(leftright, name, value,
+				   value_when_unset,
+				   &yna_option_names,
+				   wm, d, verbose);
 }
 
 static void predicate_warning(const char *leftright, const char *name, const char *value,
@@ -3076,19 +3087,28 @@ diag_t extract_connection(const struct whack_message *wm,
 						   /*value_when_unset*/YN_NO,
 						   wm, &d, verbose);
 
+	enum yna_options ikepad = extract_yna("", "ikepad",
+					      wm->wm_ikepad,
+					      /*value_when_unset*/YNA_UNSET,
+					      /*value_when_never_negotiate*/YNA_UNSET,
+					      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (ike_version >= IKEv2) {
-		if (wm->ikepad != YNA_UNSET) {
-			name_buf vn, pn;
+		if (ikepad != YNA_UNSET) {
+			name_buf vn;
 			vwarning("%s connection ignores ikepad=%s",
-			     str_enum_long(&ike_version_names, ike_version, &vn),
-			     str_sparse_long(&yna_option_names, wm->ikepad, &pn));
+				 str_enum_long(&ike_version_names, ike_version, &vn),
+				 wm->wm_ikepad);
 		}
 		/* default */
 		config->v1_ikepad.message = true;
 		config->v1_ikepad.modecfg = false;
 	} else {
-		config->v1_ikepad.modecfg = (wm->ikepad == YNA_YES);
-		config->v1_ikepad.message = (wm->ikepad != YNA_NO);
+		config->v1_ikepad.modecfg = (ikepad == YNA_YES);
+		config->v1_ikepad.message = (ikepad != YNA_NO);
 	}
 
 	config->require_id_on_certificate = extract_bool("", "require-id-on-certificate",
@@ -3308,12 +3328,21 @@ diag_t extract_connection(const struct whack_message *wm,
 	config->redirect.to = clone_str(wm->wm_redirect_to, "connection redirect_to");
 	config->redirect.accept_to = clone_str(wm->wm_accept_redirect_to,
 					       "connection accept_redirect_to");
+	enum yna_options send_redirect = extract_yna("", "send-redirect",
+						     wm->wm_send_redirect,
+						     /*value_when_unset*/YNA_UNSET,
+						     /*value_when_never_negotiate*/YNA_UNSET,
+						     wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (ike_version == IKEv1) {
-		if (wm->send_redirect != YNA_UNSET) {
-			vwarning("IKEv1 connection ignores send-redirect=");
+		if (send_redirect != YNA_UNSET) {
+			vwarning("IKEv1 connection ignores send-redirect=%s", wm->wm_send_redirect);
 		}
 	} else {
-		switch (wm->send_redirect) {
+		switch (send_redirect) {
 		case YNA_YES:
 			if (wm->wm_redirect_to == NULL) {
 				vwarning("send-redirect=yes ignored, redirect-to= was not specified");
@@ -3781,10 +3810,14 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	config->encapsulation = extract_yna("", "encapsulation", wm->encapsulation,
+	config->encapsulation = extract_yna("", "encapsulation",
+					    wm->wm_encapsulation,
 					    /*value_when_unset*/YNA_AUTO,
 					    /*value_when_never_negotiate*/YNA_NO,
-					    wm, verbose);
+					    wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
 
 	if (wm->wm_vti_interface != NULL && strlen(wm->wm_vti_interface) >= IFNAMSIZ) {
 		vwarning("length of vti-interface '%s' exceeds IFNAMSIZ (%u)",

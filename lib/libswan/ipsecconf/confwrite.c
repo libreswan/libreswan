@@ -215,7 +215,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	} else if (conn->values[KNCF_PHASE2].option != 0) {
 		enum encap_proto encap_proto = conn->values[KNCF_PHASE2].option;
 		enum type_options satype = conn->values[KNCF_TYPE].option;
-		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
 		/*
 		 * config-write-yn: for writing out optional
 		 * yn_options fields.
@@ -236,7 +235,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			break;
 		}
 
-		cwyn("ikepad", KNCF_IKEPAD);
 		ckws("auth", AUTH);
 
 		if (encap_proto != ENCAP_PROTO_UNSET) {

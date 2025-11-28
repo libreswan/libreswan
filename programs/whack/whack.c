@@ -120,7 +120,7 @@ static void help(void)
 		"	  [--iptfs-reorder-window <window>] \\\n"
 		"	[--ikev1 | --ikev2] \\\n"
 		"	[--narrowing {yes,no}] \\\n"
-		"	[--fragmentation {yes,no,force}] [--no-ikepad]  \\\n"
+		"	[--fragmentation {yes,no,force}] [--ikepad[={yes,no,auto}]  \\\n"
 		"	[--ikefrag-allow | --ikefrag-force] \\\n"
 		"	[--esn ] [--no-esn] [--decap-dscp[={yes,no}]] [--encap-dscp[={yes,no}]] [--nopmtudisc] [--mobike] \\\n"
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
@@ -131,7 +131,7 @@ static void help(void)
 #endif
 		"	[--dontrekey] [--dont-share-lease] [--aggressive] \\\n"
 		"	[--initial-contact[={yes,no}]] [--cisco-unity[={yes,no}]] [--fake-strongswan] \\\n"
-		"	[--encapsulation[={auto,yes,no}] [--nat-keepalive {yes,no}] \\\n"
+		"	[--encapsulation[={yes,no,auto}] [--nat-keepalive {yes,no}] \\\n"
 		"	[--ikev1-natt <both|rfc|drafts>] \\\n"
 		"	[--dpddelay <seconds> --dpdtimeout <seconds>] \\\n"
 		"	[--xauthby file|pam|alwaysok] [--xauthfail hard|soft] \\\n"
@@ -965,7 +965,7 @@ const struct option optarg_options[] = {
 	{ "ikefrag-force\0", no_argument, NULL, CD_IKEFRAG_FORCE }, /* obsolete name */
 	{ "fragmentation\0", required_argument, NULL, CD_FRAGMENTATION },
 
-	{ "ikepad\0", no_argument, NULL, CD_IKEPAD },
+	{ "ikepad\0", optional_argument, NULL, CD_IKEPAD },
 
 	{ "no-esn\0", no_argument, NULL, CD_NO_ESN }, /* obsolete */
 	{ "esn\0", optional_argument, NULL, CD_ESN },
@@ -1684,11 +1684,9 @@ int main(int argc, char **argv)
 			msg.wm_require_id_on_certificate = "yes";
 			continue;
 
-		/* --no-ikepad */
-		case CD_IKEPAD:
-			msg.ikepad = optarg_yna(logger, YNA_YES);
+		case CD_IKEPAD:		/* --ikepad[={yes,no,auto}] */
+			msg.wm_ikepad = (optarg == NULL ? "yes" : optarg);
 			continue;
-
 
 		case CD_IGNORE_PEER_DNS:	/* --ignore-peer-dns[={yes,no}] */
 			msg.wm_ignore_peer_dns = (optarg == NULL ? "yes" : optarg);
@@ -1790,8 +1788,8 @@ int main(int argc, char **argv)
 			msg.wm_sendca = optarg;
 			continue;
 
-		case CD_ENCAPSULATION:	/* --encapsulation */
-			msg.encapsulation = optarg_yna(logger, YNA_YES);
+		case CD_ENCAPSULATION:	/* --encapsulation[={yes,no,auto}] */
+			msg.wm_encapsulation = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
@@ -1835,7 +1833,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_SEND_REDIRECT:		/* --send-redirect {yes,no,auto} */
-			msg.send_redirect = optarg_yna(logger, 0/*no-default*/);
+			msg.wm_send_redirect = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect {yes,no} */
