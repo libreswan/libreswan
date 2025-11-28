@@ -20,7 +20,7 @@ east #
  ipsec whack --impair ignore_viable_parent
 east #
  ipsec up b
-"b": IMPAIR: ignoring viable IKE SA "a" #1
+IMPAIR: "b": ignoring viable IKE SA "a" #1
 "b" #3: initiating IKEv2 connection to 192.1.2.45 using UDP
 "b" #3: sent IKE_SA_INIT request to 192.1.2.45:UDP/500
 "b" #3: processed IKE_SA_INIT response from 192.1.2.45:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

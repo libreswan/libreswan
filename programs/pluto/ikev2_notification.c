@@ -99,7 +99,7 @@ void decode_v2N_payload(struct logger *logger, struct msg_digest *md,
 	if (impair.ignore_v2_notification.enabled &&
 	    impair.ignore_v2_notification.value == n) {
 		name_buf eb;
-		llog(RC_LOG, logger, "IMPAIR: ignoring %s notification",
+		llog(IMPAIR_STREAM, logger, "ignoring %s notification",
 		     str_enum_short(&v2_notification_names, n, &eb));
 		return;
 	}
@@ -262,8 +262,7 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, outs->logger,
-		     "IMPAIR: omitting %s notification",
+		llog(IMPAIR_STREAM, outs->logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}

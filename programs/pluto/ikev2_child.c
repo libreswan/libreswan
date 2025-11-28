@@ -152,7 +152,7 @@ static bool emit_v2N_IPCOMP_SUPPORTED(const struct child_sa *child, struct pbs_o
 	if (impair.omit_v2_notification.enabled &&
 	    impair.omit_v2_notification.value == ntype) {
 		name_buf eb;
-		llog(RC_LOG, logger, "IMPAIR: omitting %s notification",
+		llog(IMPAIR_STREAM, logger, "omitting %s notification",
 		     str_enum_short(&v2_notification_names, ntype, &eb));
 		return true;
 	}
@@ -1073,9 +1073,9 @@ bool process_any_v2_IKE_AUTH_request_child_payloads(struct ike_sa *ike,
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
 		if (has_v2_IKE_AUTH_child_payloads(md)) {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: ignoring Child SA payloads");
+			llog(IMPAIR_STREAM, ike->sa.logger, "ignoring Child SA payloads");
 		} else {
-			llog(RC_LOG, ike->sa.logger, "IMPAIR: no Child SA payloads to ignore");
+			llog(IMPAIR_STREAM, ike->sa.logger, "no Child SA payloads to ignore");
 		}
 		return true;
 	}
@@ -1140,7 +1140,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_payloads(struct ike_sa *ike
 				     "IMPAIR: IKE_AUTH response should have omitted CHILD SA payloads");
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
-		llog(RC_LOG, ike->sa.logger, "IMPAIR: as expected, IKE_AUTH response omitted CHILD SA payloads");
+		llog(IMPAIR_STREAM, ike->sa.logger, "as expected, IKE_AUTH response omitted CHILD SA payloads");
 		return v2N_NOTHING_WRONG;
 	}
 
