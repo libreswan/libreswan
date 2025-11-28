@@ -35,7 +35,7 @@
 #include "initiate.h"
 #include "orient.h"
 #include "show.h"
-#include "defaultroute.h"	/* for struct resolve_end */
+#include "defaultroute.h"	/* for struct route_addrs */
 #include "extract.h"
 
 /* time before retrying DDNS host lookup for phase 1 */

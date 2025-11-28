@@ -60,7 +60,7 @@ struct extracted_host_addrs {
 		struct extracted_addr nexthop;
 		const char *leftright;
 	} end[END_ROOF];
-	struct resolve_end resolve[END_ROOF];
+	struct route_addrs resolve[END_ROOF];
 	bool resolved;
 	const struct ip_info *afi;
 };

@@ -60,8 +60,8 @@ static const struct sparse_names rta_names = {
 	},
 };
 
-void resolve_default_route(struct resolve_end *host,
-			   struct resolve_end *peer,
+void resolve_default_route(struct route_addrs *host,
+			   struct route_addrs *peer,
                            const struct ip_info *host_afi UNUSED,
 			   struct verbose verbose UNUSED)
 {

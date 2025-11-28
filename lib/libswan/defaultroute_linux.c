@@ -212,8 +212,8 @@ struct linux_netlink_context {
 	enum resolve_status status;
 	const struct ip_info *host_afi;
 	enum seeking { NOTHING, PREFSRC, GATEWAY, } seeking;
-	struct resolve_end *host;
-	struct resolve_end *peer;
+	struct route_addrs *host;
+	struct route_addrs *peer;
 };
 
 static bool process_netlink_route(struct nlmsghdr *nlmsg,
@@ -472,8 +472,8 @@ static bool process_netlink_route(struct nlmsghdr *nlmsg,
 	return true;
 }
 
-static enum resolve_status resolve_defaultroute_one(struct resolve_end *host,
-						    struct resolve_end *peer,
+static enum resolve_status resolve_defaultroute_one(struct route_addrs *host,
+						    struct route_addrs *peer,
 						    const struct ip_info *host_afi,
 						    struct verbose verbose)
 {
@@ -621,13 +621,13 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 
 	const struct ip_info *host_afi = address_info(dest);
 
-	struct resolve_end this = {
+	struct route_addrs this = {
 		.leftright = "this",
 		.host.type = KH_DEFAULTROUTE,
 		.nexthop.type = KH_DEFAULTROUTE,
 	};
 
-	struct resolve_end that = {
+	struct route_addrs that = {
 		.leftright = "that",
 		.host.type = KH_IPADDR,
 		.host.addr = dest,
@@ -673,8 +673,8 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 	return ROUTE_SUCCESS;
 }
 
-void resolve_default_route(struct resolve_end *host,
-			   struct resolve_end *peer,
+void resolve_default_route(struct route_addrs *host,
+			   struct route_addrs *peer,
 			   const struct ip_info *host_afi,
 			   struct verbose verbose)
 {

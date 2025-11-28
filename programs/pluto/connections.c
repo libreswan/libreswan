@@ -687,7 +687,7 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 	host_addrs->resolved = true;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct extracted_addrs *src = &host_addrs->end[lr];
- 		struct resolve_end *dst = &host_addrs->resolve[lr];
+ 		struct route_addrs *dst = &host_addrs->resolve[lr];
  		const char *leftright = src->leftright;
 
 		/* leftright */
@@ -738,7 +738,7 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 }
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      const struct resolve_end *resolve/*[END_ROOF]*/,
+						      const struct route_addrs *resolve/*[END_ROOF]*/,
 						      struct verbose verbose)
 {
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
