@@ -504,8 +504,7 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 
 	if (impaired_len->enabled) {
 		unsigned new_nr = impaired_len->value;
-		llog(RC_LOG, outpbs->logger,
-		     "IMPAIR: forcing number of %s selectors from %u to %u",
+		llog(IMPAIR_STREAM, outpbs->logger, "forcing number of %s selectors from %u to %u",
 		     name, nr_ts, new_nr);
 		nr_ts = new_nr;
 	}
@@ -538,28 +537,28 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 		    impair.rekey_respond_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf sb;
-			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-respond-subnet %s set to %s",
+			llog(IMPAIR_STREAM, child->sa.logger, "rekey-respond-subnet %s set to %s",
 			     name, str_selector(&ts, &sb));
 		}
 		if (child->sa.st_state == &state_v2_REKEY_CHILD_R0 &&
 		    impair.rekey_respond_supernet) {
 			ts = impair_selector_to_supernet(ts);
 			selector_buf sb;
-			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-respond-supernet %s set to %s",
+			llog(IMPAIR_STREAM, child->sa.logger, "rekey-respond-supernet %s set to %s",
 			     name, str_selector(&ts, &sb));
 		}
 		if (child->sa.st_state == &state_v2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_supernet) {
 			ts = impair_selector_to_supernet(ts);
 			selector_buf tsb;
-			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-initiate-supernet %s set to %s",
+			llog(IMPAIR_STREAM, child->sa.logger, "rekey-initiate-supernet %s set to %s",
 			     name, str_selector(&ts, &tsb));
 		}
 		if (child->sa.st_state == &state_v2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf tsb;
-			llog(RC_LOG, child->sa.logger, "IMPAIR: rekey-initiate-subnet %s set to %s",
+			llog(IMPAIR_STREAM, child->sa.logger, "rekey-initiate-subnet %s set to %s",
 			     name, str_selector(&ts, &tsb));
 		}
 

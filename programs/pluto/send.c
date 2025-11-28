@@ -203,8 +203,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 		usleep(500000);
 		endpoint_buf b;
 		endpoint_buf ib;
-		llog(RC_LOG, logger,
-		     "IMPAIR: JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
+		llog(IMPAIR_STREAM, logger, "JACOB 2-2: resending %zu bytes for %s through %s from %s to %s:",
 		     len, where,
 		     interface->ip_dev->real_device_name,
 		     str_endpoint(&interface->local_endpoint, &ib),

@@ -349,7 +349,7 @@ void initiate(struct connection *c,
 	 */
 	if (ike != NULL && impair.ignore_viable_parent) {
 		state_buf sb;
-		llog(RC_LOG, logger, "IMPAIR: ignoring viable %s "PRI_STATE,
+		llog(IMPAIR_STREAM, logger, "ignoring viable %s "PRI_STATE,
 		     ike->sa.st_connection->config->ike_info->parent_sa_name,
 		     pri_state(&ike->sa, &sb));
 		ike = NULL;
