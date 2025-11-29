@@ -108,14 +108,14 @@ static const struct keyword_def config_conn_keyword[] = {
   K("authby",  LEMPTY,  kt_string,  KWS_AUTHBY),
   K("keyexchange",  LEMPTY,  kt_string,  KWS_KEYEXCHANGE),
   K("ikev2",  LEMPTY,  kt_string,  KWS_IKEv2),
-  K("ppk",  LEMPTY, kt_sparse_name, KNCF_PPK, .sparse_names = &nppi_option_names),
+  K("ppk",  LEMPTY, kt_string, KWS_PPK),
   K("ppk-ids",  LEMPTY, kt_string, KWS_PPK_IDS),
   K("intermediate",  LEMPTY, kt_string, KWS_INTERMEDIATE),
-  K("esn",  LEMPTY,  kt_sparse_name,  KNCF_ESN, .sparse_names = &yne_option_names),
+  K("esn",  LEMPTY,  kt_string,  KWS_ESN),
   K("decap-dscp",  LEMPTY,  kt_string,  KWS_DECAP_DSCP),
   K("encap-dscp",  LEMPTY,  kt_string,  KWS_ENCAP_DSCP),
   K("nopmtudisc",  LEMPTY,  kt_string,  KWS_NOPMTUDISC),
-  K("fragmentation",  LEMPTY,  kt_sparse_name,  KNCF_FRAGMENTATION, .sparse_names = &ynf_option_names),
+  K("fragmentation",  LEMPTY,  kt_string,  KWS_FRAGMENTATION),
   K("mobike",  LEMPTY,  kt_string,  KWS_MOBIKE),
   K("narrowing",  LEMPTY,  kt_string,  KWS_NARROWING),
   K("pam-authorize",  LEMPTY,  kt_string,  KWS_PAM_AUTHORIZE),
@@ -126,7 +126,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("pfs",  LEMPTY,  kt_string,  KWS_PFS),
   K("session-resumption",  LEMPTY,  kt_string,  KWS_SESSION_RESUMPTION),
 
-  K("nat-keepalive",  LEMPTY,  kt_sparse_name,  KWYN_NAT_KEEPALIVE, .sparse_names = &yn_option_names),
+  K("nat-keepalive",  LEMPTY,  kt_string,  KWS_NAT_KEEPALIVE),
 
   K("initial-contact",  LEMPTY,  kt_string,  KWS_INITIAL_CONTACT),
   K("send-esp-tfc-padding-not-supported",  LEMPTY,  kt_string,  KWS_SEND_ESP_TFC_PADDING_NOT_SUPPORTED),
@@ -187,7 +187,7 @@ static const struct keyword_def config_conn_keyword[] = {
 
   K("clones", LEMPTY, kt_string, KWS_CLONES),
 
-  K("nic-offload",  LEMPTY,  kt_sparse_name,  KNCF_NIC_OFFLOAD, .sparse_names = &nic_offload_option_names),
+  K("nic-offload",  LEMPTY,  kt_string,  KWS_NIC_OFFLOAD),
 
   K("encapsulation",  LEMPTY,  kt_string,  KWS_ENCAPSULATION),
 
