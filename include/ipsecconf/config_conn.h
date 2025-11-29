@@ -185,9 +185,9 @@ enum config_conn_keyword {
 	KWS_ENCAPSULATION,
 	KWS_IKEv2,		/* obsolete, use KEYEXCHANGE */
 	KWS_KEYEXCHANGE,
-	KNCF_PPK,
+	KWS_PPK,
 	KWS_INTERMEDIATE,	/* enable support for Intermediate Exchange */
-	KNCF_ESN,
+	KWS_ESN,
 	KWS_DECAP_DSCP,
 	KWS_ENCAP_DSCP,
 	KWS_NOPMTUDISC,
@@ -199,8 +199,8 @@ enum config_conn_keyword {
 	KWS_OVERLAPIP,		/* Allow overlapping IPsec policies */
 	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
 	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
-	KNCF_FRAGMENTATION,	/* Enable support for IKE fragmentation */
-	KWYN_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
+	KWS_FRAGMENTATION,	/* Enable support for IKE fragmentation */
+	KWS_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KWS_INITIAL_CONTACT,	/* send initial contact VID */
 
 	/* cisco unity stuff */
@@ -216,7 +216,7 @@ enum config_conn_keyword {
 	KWS_IKEPAD,		/* pad IKE packets to 4 bytes */
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
-	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
+	KWS_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
 	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KWS_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */

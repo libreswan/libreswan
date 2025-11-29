@@ -306,29 +306,11 @@ struct whack_message {
 		struct whack_acquire acquire;
 	} whack;
 
-#define wm_keyexchange conn[END_ROOF].value[KWS_KEYEXCHANGE]
-#define wm_ikev2 conn[END_ROOF].value[KWS_IKEv2]
-
 	const char *authby;
 	const char *debug;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
-
-#define wm_ikepad conn[END_ROOF].value[KWS_IKEPAD]	/* pad ike
-							 * packets and
-							 * payloads to
-							 * 4 bytes or
-							 * not */
-	enum ynf_options fragmentation;	/* fragment IKE payload */
-	enum yne_options esn;		/* accept or request ESN{yes,no} */
-	enum nppi_options ppk;		/* pre-shared post-quantum key */
-	enum type_options type;		/* type=tunnel|transport|SHUNT */
-#define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
-
-	enum nic_offload_options nic_offload;
-	/* Force the use of NAT-T on a connection */
-#define wm_encapsulation conn[END_ROOF].value[KWS_ENCAPSULATION]
 
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
@@ -407,24 +389,23 @@ struct whack_message {
 	/* what metric to put on ipsec routes */
 	int metric;
 
-	/* space for strings (hope there is enough room) */
-	size_t str_size;
-	unsigned char string[4096];
+#define wm_keyexchange conn[END_ROOF].value[KWS_KEYEXCHANGE]
+#define wm_ikev2 conn[END_ROOF].value[KWS_IKEv2]
 
-	/*
-	 * Danger zone:
-	 *
-	 * Objective is to replace all the above fields with tupples
-	 * (end, index, string) emitted from this table.  That, again,
-	 * gets us one step closer to accepting JSON.
-	 *
-	 * This array is not sent over the wire (the message is
-	 * truncated somewhere within .string[].
-	 *
-	 * This array is likely very very empty.
-	 *
-	 * END_ROOF is used to store global (vs per-end) options.
-	 */
+#define wm_ikepad conn[END_ROOF].value[KWS_IKEPAD]	/* pad ike
+							 * packets and
+							 * payloads to
+							 * 4 bytes or
+							 * not */
+#define wm_fragmentation conn[END_ROOF].value[KWS_FRAGMENTATION]	/* fragment IKE payload */
+#define wm_esn conn[END_ROOF].value[KWS_ESN]		/* accept or request ESN{yes,no} */
+#define wm_ppk conn[END_ROOF].value[KWS_PPK]		/* pre-shared post-quantum key */
+	enum type_options type;		/* type=tunnel|transport|SHUNT */
+#define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
+
+#define wm_nic_offload conn[END_ROOF].value[KWS_NIC_OFFLOAD]
+	/* Force the use of NAT-T on a connection */
+#define wm_encapsulation conn[END_ROOF].value[KWS_ENCAPSULATION]
 
 #define wm_session_resumption conn[END_ROOF].value[KWS_SESSION_RESUMPTION]	/* for RFC 5723 -
 										 * IKEv2 Session
@@ -550,6 +531,25 @@ struct whack_message {
 #define wm_retransmit_interval  conn[END_ROOF].value[KWS_RETRANSMIT_INTERVAL]	/* milliseconds,
 										 * not
 										 * seconds!*/
+
+	/*
+	 * Danger zone:
+	 *
+	 * Objective is to replace all the above fields with tupples
+	 * (end, index, string) emitted from this table.  That, again,
+	 * gets us one step closer to accepting JSON.
+	 *
+	 * This array is not sent over the wire (the message is
+	 * truncated somewhere within .string[].
+	 *
+	 * This array is likely very very empty.
+	 *
+	 * END_ROOF is used to store global (vs per-end) options.
+	 */
+
+	/* space for strings (hope there is enough room) */
+	size_t str_size;
+	unsigned char string[4096];
 
 #define wm_clones conn[END_ROOF].value[KWS_CLONES]
 	struct whack_config_conn conn[END_ROOF+1];

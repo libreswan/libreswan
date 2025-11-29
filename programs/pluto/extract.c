@@ -703,6 +703,82 @@ static enum yna_options extract_yna(const char *leftright,
 				   wm, d, verbose);
 }
 
+static enum ynf_options extract_ynf(const char *leftright,
+				    const char *name,
+				    const char *value,
+				    enum ynf_options value_when_unset,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	return extract_sparse_name(leftright, name, value,
+				   value_when_unset,
+				   &ynf_option_names,
+				   wm, d, verbose);
+}
+
+static enum yne_options extract_yne(const char *leftright,
+				    const char *name,
+				    const char *value,
+				    enum yne_options value_when_unset,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	return extract_sparse_name(leftright, name, value,
+				   value_when_unset,
+				   &yne_option_names,
+				   wm, d, verbose);
+}
+
+static enum nppi_options extract_nppi(const char *leftright,
+				      const char *name,
+				      const char *value,
+				      enum nppi_options value_when_unset,
+				      const struct whack_message *wm,
+				      diag_t *d,
+				      struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	return extract_sparse_name(leftright, name, value,
+				   value_when_unset,
+				   &nppi_option_names,
+				   wm, d, verbose);
+}
+
+static enum nic_offload_options extract_nic_offload(const char *leftright,
+				      const char *name,
+				      const char *value,
+				      enum nic_offload_options value_when_unset,
+				      const struct whack_message *wm,
+				      diag_t *d,
+				      struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	return extract_sparse_name(leftright, name, value,
+				   value_when_unset,
+				   &nic_offload_option_names,
+				   wm, d, verbose);
+}
+
 static void predicate_warning(const char *leftright, const char *name, const char *value,
 			      const char *p_leftright, const char *p_name, enum yn_options p,
 			      const struct whack_message *wm, diag_t *d, struct verbose verbose)
@@ -3381,21 +3457,21 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* fragmentation */
 
-	/*
-	 * some options are set as part of our default, but
-	 * some make no sense for shunts, so remove those again
-	 */
-	if (never_negotiate_sparse_option("", "fragmentation", wm->fragmentation,
-					  &ynf_option_names, wm, verbose)) {
-		vdbg("never-negotiate fragmentation");
-	} else if (ike_version >= IKEv2 && wm->fragmentation == YNF_FORCE) {
-		name_buf fb;
+	enum ynf_options fragmentation = extract_ynf("", "fragmentation",
+						     wm->wm_fragmentation,
+						     /*value_when_unset*/YNF_UNSET,
+						     wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (ike_version >= IKEv2 && fragmentation == YNF_FORCE) {
 		vwarning("IKEv1 only fragmentation=%s ignored; using fragmentation=yes",
-			 str_sparse_long(&ynf_option_names, wm->fragmentation, &fb));
+			 wm->wm_fragmentation);
 		config->ike_frag.allow = true;
 	} else {
-		switch (wm->fragmentation) {
-		case YNF_UNSET: /*default*/
+		switch (fragmentation) {
+		case YNF_UNSET:
 		case YNF_YES:
 			config->ike_frag.allow = true;
 			break;
@@ -3579,10 +3655,15 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 	config->child.replay_window = replay_window;
 
-	if (never_negotiate_sparse_option("", "esn", wm->esn,
-					  &yne_option_names, wm, verbose)) {
-		vdbg("never-negotiate esn");
-	} else if (replay_window == 0) {
+	enum yne_options esn = extract_yne("", "esn",
+					   wm->wm_esn,
+					   /*value_when_unset*/YNE_UNSET,
+					   wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (replay_window == 0) {
 		/*
 		 * RFC 4303 states:
 		 *
@@ -3596,7 +3677,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		 * is generally contrary to the notion of disabling
 		 * anti-replay for an SA.
 		 */
-		if (wm->esn != YNE_UNSET && wm->esn != YNE_NO) {
+		if (esn != YNE_UNSET && esn != YNE_NO) {
 			vwarning("forcing esn=no as replay-window=0");
 		} else {
 			vdbg("ESN: disabled as replay-window=0"); /* XXX: log? */
@@ -3606,12 +3687,11 @@ diag_t extract_connection(const struct whack_message *wm,
 		/*
 		 * Only warn when there's an explicit esn=yes.
 		 */
-		if (wm->esn == YNE_YES ||
-		    wm->esn == YNE_EITHER) {
-			name_buf nb;
+		if (esn == YNE_YES ||
+		    esn == YNE_EITHER) {
 			vwarning("%s kernel interface does not support ESN, ignoring esn=%s",
 				 kernel_ops->interface_name,
-				 str_sparse_long(&yne_option_names, wm->esn, &nb));
+				 wm->wm_esn);
 		}
 		config->esn.no = true;
 #ifdef USE_IKEv1
@@ -3630,7 +3710,7 @@ diag_t extract_connection(const struct whack_message *wm,
 				 str_sparse_long(yne_option_names, wm->esn, &nb));
 		}
 #endif
-		switch (wm->esn) {
+		switch (esn) {
 		case YNE_UNSET:
 		case YNE_EITHER:
 			config->esn.no = true;
@@ -3645,7 +3725,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 #endif
 	} else {
-		switch (wm->esn) {
+		switch (esn) {
 		case YNE_UNSET:
 		case YNE_EITHER:
 			config->esn.no = true;
@@ -3660,14 +3740,21 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	enum nppi_options ppk = extract_nppi("", "ppk",
+					     wm->wm_ppk,
+					     NPPI_UNSET,
+					     wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
 	if (ike_version == IKEv1) {
-		if (wm->ppk != NPPI_UNSET) {
-			name_buf sb;
+		if (wm->wm_ppk != NULL) {
 			vwarning("ignoring ppk=%s as IKEv1",
-				 str_sparse_long(&nppi_option_names, wm->ppk, &sb));
+				 wm->wm_ppk);
 		}
 	} else {
-		switch (wm->ppk) {
+		switch (ppk) {
 		case NPPI_UNSET:
 		case NPPI_NEVER:
 			break;
@@ -3838,64 +3925,64 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	if (never_negotiate_sparse_option("", "nic-offload", wm->nic_offload,
-					  &nic_offload_option_names, wm, verbose)) {
-		vdbg("never-negotiate nic-offload");
-		/* keep <<ipsec connectionstatus>> simple */
-		config->nic_offload = NIC_OFFLOAD_NO;
-	} else {
-		switch (wm->nic_offload) {
-		case NIC_OFFLOAD_UNSET:
-		case NIC_OFFLOAD_NO:
-			config->nic_offload = NIC_OFFLOAD_NO; /* default */
+	enum nic_offload_options nic_offload = extract_nic_offload("", "nic-offload",
+								   wm->wm_nic_offload,
+								   NIC_OFFLOAD_NO,
+								   wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+
+	switch (nic_offload) {
+	case NIC_OFFLOAD_UNSET:
+	case NIC_OFFLOAD_NO:
+		config->nic_offload = NIC_OFFLOAD_NO; /* default */
+		break;
+	case NIC_OFFLOAD_PACKET:
+	case NIC_OFFLOAD_CRYPTO:
+		if (kernel_ops->detect_nic_offload == NULL) {
+			return diag("no kernel support for nic-offload[=%s]",
+				    wm->wm_nic_offload);
+		}
+		config->nic_offload = nic_offload;
+	}
+
+	if (nic_offload == NIC_OFFLOAD_PACKET) {
+		if (encap_mode != ENCAP_MODE_TRANSPORT) {
+			return diag("nic-offload=packet restricted to type=transport");
+		}
+		if (encap_proto != ENCAP_PROTO_ESP) {
+			return diag("nic-offload=packet restricted to phase2=esp");
+		}
+		if (compress) {
+			return diag("nic-offload=packet restricted to compression=no");
+		}
+		if (config->encapsulation == YNA_YES) {
+			return diag("nic-offload=packet cannot specify encapsulation=yes");
+		}
+
+		/* byte/packet counters for packet offload on linux requires >= 6.7 */
+		if (wm->wm_ipsec_max_bytes != NULL ||
+		    wm->wm_ipsec_max_packets != NULL) {
+			if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
+				return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
+			}
+			vdbg("kernel >= 6.7 is GTG for h/w offload");
+		}
+
+		/* limited replay windows supported for packet offload */
+		switch (replay_window) {
+		case 32:
+		case 64:
+		case 128:
+		case 256:
+			vdbg("packet offload replay-window compatible with all known hardware and Linux kernels");
 			break;
-		case NIC_OFFLOAD_PACKET:
-		case NIC_OFFLOAD_CRYPTO:
-			if (kernel_ops->detect_nic_offload == NULL) {
-				name_buf nb;
-				return diag("no kernel support for nic-offload[=%s]",
-					    str_sparse_long(&nic_offload_option_names, wm->nic_offload, &nb));
-			}
-			config->nic_offload = wm->nic_offload;
+		default:
+			return diag("current packet offload hardware only supports replay-window of 32, 64, 128 or 256");
 		}
-
-		if (wm->nic_offload == NIC_OFFLOAD_PACKET) {
-			if (encap_mode != ENCAP_MODE_TRANSPORT) {
-				return diag("nic-offload=packet restricted to type=transport");
-			}
-			if (encap_proto != ENCAP_PROTO_ESP) {
-				return diag("nic-offload=packet restricted to phase2=esp");
-			}
-			if (compress) {
-				return diag("nic-offload=packet restricted to compression=no");
-			}
-			if (config->encapsulation == YNA_YES) {
-				return diag("nic-offload=packet cannot specify encapsulation=yes");
-			}
-
-			/* byte/packet counters for packet offload on linux requires >= 6.7 */
-			if (wm->wm_ipsec_max_bytes != NULL ||
-			    wm->wm_ipsec_max_packets != NULL) {
-				if (!kernel_ge(KINFO_LINUX, 6, 7, 0)) {
-					return diag("Linux kernel 6.7+ required for byte/packet counters and hardware offload");
-				}
-				vdbg("kernel >= 6.7 is GTG for h/w offload");
-			}
-
-			/* limited replay windows supported for packet offload */
-			switch (replay_window) {
-			case 32:
-			case 64:
-			case 128:
-			case 256:
-				vdbg("packet offload replay-window compatible with all known hardware and Linux kernels");
-				break;
-			default:
-				return diag("current packet offload hardware only supports replay-window of 32, 64, 128 or 256");
-			}
-			/* check if we need checks for tfcpad= , encap-dscp, nopmtudisc, ikepad, encapsulation, etc? */
-		}
-
+		/* check if we need checks for tfcpad= , encap-dscp,
+		 * nopmtudisc, ikepad, encapsulation, etc? */
 	}
 
 	/*

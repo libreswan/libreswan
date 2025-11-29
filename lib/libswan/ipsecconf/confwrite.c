@@ -202,11 +202,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("auto", str_sparse_long(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
 	}
 
-	if (conn->values[KNCF_PPK].option != NPPI_UNSET) {
-		name_buf sb;
-		cwf("ppk", str_sparse_long(&nppi_option_names, conn->values[KNCF_PPK].option, &sb));
-	}
-
 	if (conn->never_negotiate_shunt != SHUNT_UNSET) {
 		name_buf nb;
 		cwf("type", str_sparse_long(&never_negotiate_shunt_names,
@@ -249,27 +244,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwf("keyexchange", conn->values[KWS_KEYEXCHANGE].string);
 		} else if (conn->values[KWS_IKEv2].string != NULL) {
 			cwf("ikev2", conn->values[KWS_IKEv2].string);
-		}
-
-		/* esn= */
-		if (conn->values[KNCF_ESN].option != YNE_UNSET) {
-			name_buf nb;
-			cwf("esn", str_sparse_long(&yne_option_names,
-					      conn->values[KNCF_ESN].option, &nb));
-		}
-
-		switch (conn->values[KNCF_FRAGMENTATION].option) {
-		case YNF_UNSET:
-			/* it's the default, do not print anything */
-			break;
-		case YNF_FORCE:
-			cwf("fragmentation", "force");
-			break;
-		case YNF_NO:
-			cwf("fragmentation", "no");
-			break;
-		case YNF_YES:
-			cwf("fragmentation", "yes");
 		}
 
 #undef cwyn

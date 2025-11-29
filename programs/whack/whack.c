@@ -1013,6 +1013,7 @@ int main(int argc, char **argv)
 	struct optarg_family child_family = { 0, };
 
 	char *authby = NULL;
+	enum yne_options esn = YNE_UNSET;
 
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_WHACK);
@@ -1630,34 +1631,36 @@ int main(int argc, char **argv)
 			msg.phase2 = ENCAP_PROTO_AH;
 			continue;
 
-		/* --no-esn */
-		case CD_NO_ESN:
-			msg.esn = (msg.esn == YNE_EITHER ? YNE_EITHER :
-				   msg.esn == YNE_YES ? YNE_EITHER : YNE_NO);
+		case CD_NO_ESN:		/* --no-esn */
+			esn = (esn == YNE_EITHER ? YNE_EITHER :
+			       esn == YNE_YES ? YNE_EITHER :
+			       YNE_NO);
+			msg.wm_esn = (esn == YNE_EITHER ? "either" :
+				      esn == YNE_NO ? "no" :
+				      esn == YNE_YES ? "yes" :
+				      NULL);
 			continue;
-		/* --esn */
-		case CD_ESN:
-			msg.esn = optarg_yne(logger, (msg.esn == YNE_EITHER ? YNE_EITHER :
-						      msg.esn == YNE_NO ? YNE_EITHER :
-						      YNE_YES));
+		case CD_ESN:		/* --esn */
+			esn = optarg_yne(logger, (esn == YNE_EITHER ? YNE_EITHER :
+						  esn == YNE_NO ? YNE_EITHER :
+						  YNE_YES));
+			msg.wm_esn = (esn == YNE_EITHER ? "either" :
+				      esn == YNE_NO ? "no" :
+				      esn == YNE_YES ? "yes" :
+				      NULL);
 			continue;
 
 		/* --ikefrag-allow */
 		case CD_IKEFRAG_ALLOW: /* obsolete name */
-			if (msg.fragmentation == YNF_UNSET) {
-				msg.fragmentation = YNF_YES;
-			} else {
-				passert(msg.fragmentation == YNF_YES ||
-					msg.fragmentation == YNF_FORCE);
-			}
+			msg.wm_fragmentation = "yes";
 			continue;
 		/* --ikefrag-force */
 		case CD_IKEFRAG_FORCE: /* obsolete name */
-			msg.fragmentation = YNF_FORCE;
+			msg.wm_fragmentation = "force";
 			continue;
 
 		case CD_FRAGMENTATION: /* --fragmentation {yes,no,force} */
-			msg.fragmentation = optarg_sparse(logger, YNF_YES, &ynf_option_names);
+			msg.wm_fragmentation = optarg;
 			continue;
 
 		/* --nopmtudisc */
@@ -1793,7 +1796,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
-			msg.nic_offload = optarg_sparse(logger, 0, &nic_offload_option_names);
+			msg.wm_nic_offload = optarg;
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat-keepalive */

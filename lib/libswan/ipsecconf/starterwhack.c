@@ -75,8 +75,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;
 	}
 
-	msg.nic_offload = conn->values[KNCF_NIC_OFFLOAD].option;
-
 	msg.type = conn->values[KNCF_TYPE].option;
 	msg.authby = conn->values[KWS_AUTHBY].string;
 
@@ -95,19 +93,10 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.enable_tcp = conn->values[KNCF_ENABLE_TCP].option;
 	}
 
-	msg.nat_keepalive = conn->values[KWYN_NAT_KEEPALIVE].option;
-
 	/* can be 0 aka unset */
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
 
-	/*
-	 * Cisco (UNITY).
-	 */
 	msg.debug = conn->values[KWS_DEBUG].string;
-
-	msg.fragmentation = conn->values[KNCF_FRAGMENTATION].option; /* yna_options */
-	msg.esn = conn->values[KNCF_ESN].option; /* yne_options */
-	msg.ppk = conn->values[KNCF_PPK].option; /* nppi_options */
 
 	if (conn->values[KNCF_XAUTHBY].set)
 		msg.xauthby = conn->values[KNCF_XAUTHBY].option;
