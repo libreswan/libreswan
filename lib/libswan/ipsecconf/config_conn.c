@@ -156,7 +156,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("retransmit-interval",  LEMPTY,  kt_string,  KWS_RETRANSMIT_INTERVAL),
 
   K("ikepad",  LEMPTY,  kt_string,  KWS_IKEPAD),
-  K("nat-ikev1-method",  LEMPTY,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, .sparse_names = &nat_ikev1_method_option_names),
+  K("nat-ikev1-method",  LEMPTY,  kt_string,  KWS_NAT_IKEv1_METHOD),
 
   K("sec-label",  LEMPTY,  kt_string,  KWS_SEC_LABEL),
 

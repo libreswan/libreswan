@@ -519,22 +519,6 @@ static unsigned extract_sparse(const char *leftright, const char *name,
 	return value;
 }
 
-static bool extract_yn(const char *leftright, const char *name,
-		       enum yn_options value, enum yn_options value_when_unset,
-		       const struct whack_message *wm, struct verbose verbose)
-{
-	enum yn_options yn = extract_sparse(leftright, name, value,
-					    value_when_unset, /*never*/YN_NO,
-					    &yn_option_names, wm, verbose);
-
-	switch (yn) {
-	case YN_NO: return false;
-	case YN_YES: return true;
-	default:
-		bad_sparse(verbose.logger, &yn_option_names, yn);
-	}
-}
-
 /* terrible name */
 
 static bool can_extract_string(const char *leftright,
@@ -4187,14 +4171,23 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		config->nat_keepalive = extract_yn("", "nat-keepalive", wm->nat_keepalive,
-						   /*value_when_unset*/YN_YES,
-						   wm, verbose);
-		if (wm->nat_ikev1_method == 0) {
-			config->ikev1_natt = NATT_BOTH;
-		} else {
-			config->ikev1_natt = wm->nat_ikev1_method;
+		bool nat_keepalive = extract_bool("", "nat-keepalive",
+						  wm->wm_nat_keepalive,
+						  /*value_when_unset*/YN_YES,
+						  wm, &d, verbose);
+		enum ikev1_natt_policy nat_ikev1_method =
+			extract_sparse_name("", "nat-ikev1-method",
+					    wm->wm_nat_ikev1_method,
+					    /*value_when_unset*/NATT_BOTH,
+					    &nat_ikev1_method_option_names,
+					    wm, &d, verbose);
+		if (d != NULL) {
+			return d;
 		}
+
+		config->nat_keepalive = nat_keepalive;
+		config->ikev1_natt = nat_ikev1_method;
+
 		config->send_initial_contact =
 			extract_bool("", "initial-contact",
 				     wm->wm_initial_contact,

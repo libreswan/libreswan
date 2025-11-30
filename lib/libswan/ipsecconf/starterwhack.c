@@ -85,9 +85,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.metric = conn->values[KNCF_METRIC].option;
 
-	/* can be 0 aka unset */
-	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
-
 	msg.debug = conn->values[KWS_DEBUG].string;
 
 	if (conn->values[KNCF_XAUTHBY].set)

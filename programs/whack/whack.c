@@ -1800,14 +1800,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat-keepalive */
-			msg.nat_keepalive = YN_NO;
+			msg.wm_nat_keepalive = "no";
 			continue;
 		case CD_NAT_KEEPALIVE:	/* --nat-keepalive {yes,no} */
-			msg.nat_keepalive = optarg_yn(logger, YN_YES);
+			msg.wm_nat_keepalive = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			msg.nat_ikev1_method = optarg_sparse(logger, 0, &nat_ikev1_method_option_names);
+			msg.wm_nat_ikev1_method = optarg;
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initial-contact[={yes,no}] */

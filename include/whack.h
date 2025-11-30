@@ -312,12 +312,6 @@ struct whack_message {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
-	/* Option to allow per-conn setting of sending of NAT-T
-	 * keepalives - default is enabled */
-	enum yn_options nat_keepalive;
-	/* Option to tweak sending NATT drafts, rfc or both */
-	enum ikev1_natt_policy nat_ikev1_method;
-
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 	enum xauthby xauthby;
 
@@ -368,6 +362,12 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for WHACK_ADD */
+
+	/* Option to allow per-conn setting of sending of NAT-T
+	 * keepalives - default is enabled */
+#define wm_nat_keepalive conn[END_ROOF].value[KWS_NAT_KEEPALIVE]
+	/* Option to tweak sending NATT drafts, rfc or both */
+#define wm_nat_ikev1_method conn[END_ROOF].value[KWS_NAT_IKEv1_METHOD]
 
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and

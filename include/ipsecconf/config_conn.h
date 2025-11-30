@@ -214,7 +214,7 @@ enum config_conn_keyword {
 	KWS_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KWS_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KWS_IKEPAD,		/* pad IKE packets to 4 bytes */
-	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
+	KWS_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
 	KWS_NIC_OFFLOAD,	/* xfrm offload to network device */
 	KWS_ENABLE_TCP,		/* TCP (yes/no/fallback) */
