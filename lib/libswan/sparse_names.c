@@ -133,21 +133,53 @@ const char *sparse_sparse_name(const struct sparse_sparse_names *ssn, unsigned l
 	return NULL;
 }
 
-size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator)
+static size_t jam_sparse_name_quoted(struct jambuf *buf, const struct sparse_name *i)
 {
-	const char *sep = "";
 	size_t s = 0;
-	for (const struct sparse_name *i = names->list; i->name != NULL; i++) {
+	s += jam_string(buf, "\"");
+	s += jam_string(buf, i->name);
+	s += jam_string(buf, "\"");
+	return s;
+}
+
+static const struct sparse_name *next_sparse_name(const struct sparse_names *names,
+						  const struct sparse_name *i)
+{
+	/* find next */
+	for (i++; i->name != NULL; i++) {
+		/* skip if seen before? */
 		const struct sparse_name *j = names->list;
 		while (j < i && j->value != i->value) {
 			j++;
 		}
-		/* not a duplicate */
-		if (i == j) {
-			s += jam_string(buf, sep);
-			s += jam_string(buf, i->name);
-			sep = separator;
+		if (j < i) {
+			/* duplicate */
+			continue;
 		}
+		return i;
+	}
+	return NULL;
+}
+
+size_t jam_sparse_names_quoted(struct jambuf *buf, const struct sparse_names *names)
+{
+	size_t s = 0;
+	const struct sparse_name *i = names->list;
+	if (i->name == NULL) {
+		return jam_string(buf, "EXPECTATION FAILED: no names");
+	}
+	s += jam_sparse_name_quoted(buf, i);
+
+	i = next_sparse_name(names, i);
+	while (i != NULL) {
+		const struct sparse_name *ii = next_sparse_name(names, i);
+		if (ii == NULL) {
+			s += jam_string(buf, ", and ");
+		} else {
+			s += jam_string(buf, ", ");
+		}
+		s += jam_sparse_name_quoted(buf, i);
+		i = ii;
 	}
 	return s;
 }
