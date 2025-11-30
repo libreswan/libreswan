@@ -2019,7 +2019,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_METRIC:	/* --metric */
-			msg.metric = optarg_uintmax(logger);
+			msg.wm_metric = optarg;
 			continue;
 
 		case CD_MTU:	/* --mtu <mtu> */

@@ -217,7 +217,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("compress",  LEMPTY,  kt_string,  KWS_COMPRESS),
 
   /* route metric */
-  K("metric",  LEMPTY,  kt_unsigned,  KNCF_METRIC),
+  K("metric",  LEMPTY,  kt_string,  KWS_METRIC),
 
   /* DPD */
   K("dpddelay",  LEMPTY,  kt_string,  KWS_DPDDELAY),

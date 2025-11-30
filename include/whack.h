@@ -389,7 +389,7 @@ struct whack_message {
 #define wm_accept_redirect_to conn[END_ROOF].value[KWS_ACCEPT_REDIRECT_TO]
 
 	/* what metric to put on ipsec routes */
-	int metric;
+#define wm_metric conn[END_ROOF].value[KWS_METRIC]
 
 #define wm_keyexchange conn[END_ROOF].value[KWS_KEYEXCHANGE]
 #define wm_ikev2 conn[END_ROOF].value[KWS_IKEv2]

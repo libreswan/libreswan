@@ -4157,7 +4157,16 @@ diag_t extract_connection(const struct whack_message *wm,
 			break;
 		}
 
-		config->child.metric = wm->metric;
+		config->child.metric =
+			extract_uintmax("", "metric",
+					wm->wm_metric,
+					(struct range) {.
+						limit.min = 1,
+					},
+					wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
 
 		config->child.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
 							   "", "mtu",

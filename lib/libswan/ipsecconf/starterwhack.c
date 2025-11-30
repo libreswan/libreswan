@@ -83,8 +83,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.failure_shunt = conn->failure_shunt;
 	msg.autostart = conn->values[KNCF_AUTO].option;
 
-	msg.metric = conn->values[KNCF_METRIC].option;
-
 	msg.debug = conn->values[KWS_DEBUG].string;
 
 	if (conn->values[KNCF_XAUTHBY].set)
