@@ -93,7 +93,7 @@ size_t jam_sparse_short(struct jambuf *buf, const struct sparse_names *sd, unsig
 /* drop prefix + transform [_A-Z]->[-a-z] */
 size_t jam_enum_human(struct jambuf *, const struct enum_names *en, unsigned long val);
 
-size_t jam_sparse_names(struct jambuf *buf, const struct sparse_names *names, const char *separator);
+size_t jam_sparse_names_quoted(struct jambuf *buf, const struct sparse_names *names);
 
 /*
  * Recommended for determining an enum's validity:

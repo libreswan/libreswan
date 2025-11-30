@@ -643,10 +643,13 @@ static unsigned extract_sparse_name(const char *leftright,
 
 	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
 	if (sparse == NULL) {
-		/* include allowed names? */
-		(*d) = diag("%s%s=%s invalid, '%s' unrecognized",
-			    leftright, name, value, value);
-		return 0;
+		JAMBUF(buf) {
+			jam(buf, "%s%s=%s is invalid, valid options are ",
+			    leftright, name, value);
+			jam_sparse_names_quoted(buf, names);
+			(*d) = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+		}
+		return value_when_unset;
 	}
 
 	return sparse->value;

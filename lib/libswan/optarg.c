@@ -404,8 +404,8 @@ uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const st
 	const struct sparse_name *name = sparse_lookup_by_name(names, shunk1(optarg));
 	if (name == NULL) {
 		JAMBUF(buf) {
-			jam(buf, "'%s' is not recognised; valid arguments are: ", optarg);
-			jam_sparse_names(buf, names, ", ");
+			jam(buf, "'%s' is not recognised; valid arguments are ", optarg);
+			jam_sparse_names_quoted(buf, names);
 			optarg_fatal(logger, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 		}
 	}
