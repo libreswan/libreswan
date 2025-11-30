@@ -85,14 +85,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.metric = conn->values[KNCF_METRIC].option;
 
-	if (conn->values[KNCF_TCP_REMOTEPORT].set) {
-		msg.tcp_remoteport = conn->values[KNCF_TCP_REMOTEPORT].option;
-	}
-
-	if (conn->values[KNCF_ENABLE_TCP].set) {
-		msg.enable_tcp = conn->values[KNCF_ENABLE_TCP].option;
-	}
-
 	/* can be 0 aka unset */
 	msg.nat_ikev1_method = conn->values[KNCF_NAT_IKEv1_METHOD].option;
 

@@ -201,8 +201,8 @@ static const struct keyword_def config_conn_keyword[] = {
   K("failureshunt",  LEMPTY,  kt_sparse_name,  KNCF_FAILURESHUNT, .sparse_names = &failure_shunt_names),
   K("negotiationshunt",  LEMPTY,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, .sparse_names = &negotiation_shunt_names),
 
-  K("enable-tcp",  LEMPTY, kt_sparse_name, KNCF_ENABLE_TCP, .sparse_names = &tcp_option_names),
-  K("tcp-remoteport",  LEMPTY, kt_unsigned, KNCF_TCP_REMOTEPORT),
+  K("enable-tcp",  LEMPTY, kt_string, KWS_ENABLE_TCP),
+  K("tcp-remoteport",  LEMPTY, kt_string, KWS_TCP_REMOTEPORT),
 
   K("connalias",  LEMPTY,  kt_appendstring,  KWS_CONNALIAS),
 

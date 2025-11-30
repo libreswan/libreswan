@@ -1864,17 +1864,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TCP: /* --tcp */
-			if (streq(optarg, "yes"))
-				msg.enable_tcp = IKE_TCP_ONLY;
-			else if (streq(optarg, "no"))
-				msg.enable_tcp = IKE_TCP_NO;
-			else if (streq(optarg, "fallback"))
-				msg.enable_tcp = IKE_TCP_FALLBACK;
-			else
-				diagw("--tcp-options are 'yes', 'no' or 'fallback'");
+			msg.wm_enable_tcp = optarg;
 			continue;
 		case CD_TCP_REMOTE_PORT:
-			msg.tcp_remoteport = optarg_uintmax(logger);
+			msg.wm_tcp_remoteport = optarg;
 			continue;
 
 		case CD_LABELED_IPSEC:	/* obsolete --labeledipsec */

@@ -312,13 +312,6 @@ struct whack_message {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
-	/*
-	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
-	 * the port.
-	 */
-	enum tcp_options enable_tcp;
-	uintmax_t tcp_remoteport;
-
 	/* Option to allow per-conn setting of sending of NAT-T
 	 * keepalives - default is enabled */
 	enum yn_options nat_keepalive;
@@ -373,6 +366,15 @@ struct whack_message {
 	/* for WHACK_LIST */
 	bool whack_utc;
 	lset_t whack_list;
+
+	/* for WHACK_ADD */
+
+	/*
+	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
+	 * the port.
+	 */
+#define wm_enable_tcp conn[END_ROOF].value[KWS_ENABLE_TCP]
+#define wm_tcp_remoteport conn[END_ROOF].value[KWS_TCP_REMOTEPORT]
 
 	/*
 	 * For RFC 5685 - IKEv2 Redirect mechanism.

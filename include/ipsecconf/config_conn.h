@@ -217,8 +217,8 @@ enum config_conn_keyword {
 	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
 	KWS_NIC_OFFLOAD,	/* xfrm offload to network device */
-	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
-	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
+	KWS_ENABLE_TCP,		/* TCP (yes/no/fallback) */
+	KWS_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KWS_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 	KWS_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 

@@ -963,8 +963,7 @@ static uintmax_t extract_yn_uintmax(const char *story,
 	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
-static uintmax_t extract_uintmax(const char *story,
-				 const char *leftright,
+static uintmax_t extract_uintmax(const char *leftright,
 				 const char *name,
 				 const char *value,
 				 struct range range,
@@ -988,7 +987,7 @@ static uintmax_t extract_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	return check_range(story, leftright, name, number, range, d, verbose);
+	return check_range("", leftright, name, number, range, d, verbose);
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
@@ -3258,7 +3257,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->wm_tfc,
+	uintmax_t tfc = extract_uintmax("", "tfc", wm->wm_tfc,
 					(struct range) {
 						.value_when_unset = 0,
 						.limit.max = UINT32_MAX,
@@ -3488,45 +3487,47 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* RFC 8229 TCP encap*/
 
-	enum tcp_options iketcp;
-	if (never_negotiate_sparse_option("", "enable-tcp", wm->enable_tcp,
-					  &tcp_option_names, wm, verbose)) {
-		/* cleanup inherited default; XXX: ? */
-		vdbg("never-negotiate enable-tcp");
-		iketcp = IKE_TCP_NO;
-	} else if (c->config->ike_version < IKEv2) {
-		if (wm->enable_tcp != 0 &&
-		    wm->enable_tcp != IKE_TCP_NO) {
+	enum tcp_options iketcp = extract_sparse_name("", "enable-tcp",
+						      wm->wm_enable_tcp,
+						      IKE_TCP_NO,
+						      &tcp_option_names,
+						      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+	if (c->config->ike_version < IKEv2) {
+		if (wm->wm_enable_tcp != NULL &&
+		    iketcp != IKE_TCP_NO) {
 			return diag("enable-tcp= requires IKEv2");
 		}
 		iketcp = IKE_TCP_NO;
-	} else if (wm->enable_tcp == 0) {
-		iketcp = IKE_TCP_NO; /* default */
-	} else {
-		iketcp = wm->enable_tcp;
 	}
 	config->end[LEFT_END].host.iketcp = config->end[RIGHT_END].host.iketcp = iketcp;
 
+	uintmax_t tcp_remoteport = extract_uintmax("", "tcp-remoteport",
+						   wm->wm_tcp_remoteport,
+						   (struct range) {
+							   .value_when_unset = 4500,
+							   .value_when_yes = 4500,
+							   .limit.min = 1,
+							   .limit.max = 65535,
+						   },
+						   wm, &d, verbose);
 	switch (iketcp) {
 	case IKE_TCP_NO:
-		if (wm->tcp_remoteport != 0) {
-			vwarning("tcp-remoteport=%ju ignored for non-TCP connections",
-				 wm->tcp_remoteport);
+		if (wm->wm_tcp_remoteport != NULL) {
+			vwarning("tcp-remoteport=%s ignored for non-TCP connections",
+				 wm->wm_tcp_remoteport);
 		}
 		/* keep tests happy, value ignored */
 		config->remote_tcpport = ip_hport(NAT_IKE_UDP_PORT);
 		break;
 	case IKE_TCP_ONLY:
 	case IKE_TCP_FALLBACK:
-		if (wm->tcp_remoteport == 500) {
+		if (tcp_remoteport == 500) {
 			return diag("tcp-remoteport cannot be 500");
 		}
-		if (wm->tcp_remoteport > 65535/*magic?*/) {
-			return diag("tcp-remoteport=%ju is too big", wm->tcp_remoteport);
-		}
-		config->remote_tcpport =
-			ip_hport(wm->tcp_remoteport == 0 ? NAT_IKE_UDP_PORT:
-				 wm->tcp_remoteport);
+		config->remote_tcpport = ip_hport(tcp_remoteport);
 		break;
 	default:
 		/* must  have been set */
@@ -3646,7 +3647,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "", "replay-window",
+		extract_uintmax("", "replay-window",
 				wm->wm_replay_window,
 				(struct range) {
 					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
@@ -4337,7 +4338,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "", "nflog-group",
+	c->nflog_group = extract_uintmax("", "nflog-group",
 					 wm->wm_nflog_group,
 					 (struct range) {
 						 .value_when_unset = 0,
@@ -4350,7 +4351,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->child.priority = extract_uintmax("", "", "priority",
+	config->child.priority = extract_uintmax("", "priority",
 						 wm->wm_priority,
 						 (struct range) {
 							 .value_when_unset = 0,
@@ -4389,7 +4390,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "", "reqid",
+	uintmax_t reqid = extract_uintmax("", "reqid",
 					  wm->wm_reqid,
 					  (struct range) {
 						  .value_when_unset = 0,
