@@ -79,6 +79,10 @@ static void llog_never_negotiate_option(struct verbose verbose,
 					const char *name,
 					const char *value)
 {
+	if (value == NULL) {
+		/* nothing to ignore */
+		return;
+	}
 	/* need to reverse engineer type= */
 	enum shunt_policy shunt = wm->never_negotiate_shunt;
 	vwarning("%s%s=%s ignored for never-negotiate (type=%s) connection",
@@ -95,30 +99,10 @@ static bool never_negotiate_string_option(const char *leftright,
 					  struct verbose verbose)
 {
 	if (is_never_negotiate_wm(wm)) {
-		if (value != NULL) {
-			llog_never_negotiate_option(verbose, wm, leftright, name, value);
-		}
+		llog_never_negotiate_option(verbose, wm, leftright, name, value);
 		return true;
 	}
 
-	return false;
-}
-
-static bool never_negotiate_enum_option(const char *leftright,
-					const char *name,
-					unsigned value,
-					const struct enum_names *names,
-					const struct whack_message *wm,
-					struct verbose verbose)
-{
-	if (is_never_negotiate_wm(wm)) {
-		if (value != 0) {
-			name_buf sb;
-			llog_never_negotiate_option(verbose, wm, leftright, name,
-						    str_enum_short(names, value, &sb));
-		}
-		return true;
-	}
 	return false;
 }
 
@@ -542,6 +526,7 @@ static unsigned extract_enum_name(const char *leftright,
 				  const char *name,
 				  const char *value,
 				  unsigned value_when_unset,
+				  unsigned value_when_never_negotiate,
 				  const struct enum_names *names,
 				  const struct whack_message *wm,
 				  diag_t *d,
@@ -552,7 +537,11 @@ static unsigned extract_enum_name(const char *leftright,
 		return value_when_unset;
 	}
 
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+	if (never_negotiate_string_option(leftright, name, value, wm, verbose)) {
+		return value_when_never_negotiate;
+	}
+
+	if (value == NULL) {
 		return value_when_unset;
 	}
 
@@ -1628,6 +1617,7 @@ static diag_t extract_host_end(struct host_end *host,
 	enum auth auth = extract_enum_name(leftright, "auth",
 					   src->we_auth,
 					   /*value_when_unset*/AUTH_UNSET,
+					   /*value_when_never_negotiate*/AUTH_UNSET,
 					   &auth_names,
 					   wm, &d, verbose);
 	if (d != NULL) {
@@ -2626,30 +2616,53 @@ static enum ike_version extract_ike_version(const struct whack_message *wm,
 }
 
 static diag_t extract_encap_alg(const char **encap_alg,
-				const char *name, const char *value,
+				const char *good_name, const char *good_value,
+				const char *bad_name, const char *bad_value,
 				const struct whack_message *wm)
 {
-	if (wm->wm_phase2alg == NULL) {
-		(*encap_alg) = value; /* could be NULL */
+	if (bad_value != NULL) {
+		if (good_value != NULL) {
+			return diag("%s=\"%s\" conficts with %s=\"%s\"",
+				    good_name, good_value, bad_name, bad_value);
+		}
+		return diag("phase2=\"%s\" conflicts with %s=\"%s\"",
+			    good_name, bad_name, bad_value);
+	}
+
+	if (wm->wm_phase2alg != NULL) {
+		if (good_value != NULL) {
+			return diag("%s=\"%s\" conficts with phase2alg=\"%s\"",
+				    good_name, good_value, wm->wm_phase2alg);
+		}
+		(*encap_alg) = wm->wm_phase2alg;
 		return NULL;
 	}
-	if (value == NULL) {
-		(*encap_alg) = wm->wm_phase2alg; /* can't be NULL */
-		return NULL;
-	}
-	return diag("'%s=%s conficts with 'phase2alg=%s'",
-		    name, value, wm->wm_phase2alg);
+
+	(*encap_alg) = good_value; /* could be NULL */
+	return NULL;
 }
 
-static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **encap_alg,
-				  const struct whack_message *wm, struct verbose verbose)
+static diag_t extract_encap_proto(enum encap_proto *encap_proto,
+				  const char **encap_alg,
+				  const struct whack_message *wm,
+				  struct verbose verbose)
 {
-	if (never_negotiate_enum_option("", "phase2", wm->phase2,
-					&encap_proto_story, wm, verbose)) {
-		vdbg("never-negotiate phase2");
-		(*encap_proto) = ENCAP_PROTO_UNSET;
-		(*encap_alg) = NULL;
-		return NULL;
+	(*encap_proto) = ENCAP_PROTO_UNSET;
+	(*encap_alg) = NULL;
+
+	enum encap_proto default_proto = (wm->wm_esp != NULL ? ENCAP_PROTO_ESP :
+					  wm->wm_ah != NULL ? ENCAP_PROTO_AH :
+					  ENCAP_PROTO_ESP);
+
+	diag_t d = NULL;
+	enum encap_proto phase2 = extract_enum_name("", "phase2",
+						    wm->wm_phase2,
+						    /*value_when_unset*/default_proto,
+						    /*value_when_never_negotiate*/ENCAP_PROTO_UNSET,
+						    &encap_proto_names,
+						    wm, &d, verbose);
+	if (d != NULL) {
+		return d;
 	}
 
 	/*
@@ -2657,37 +2670,27 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 	 * phase2=...
 	 */
 
-	(*encap_proto) = wm->phase2;
-
-	switch ((*encap_proto)) {
+	switch (phase2) {
 
 	case ENCAP_PROTO_AH:
-		return extract_encap_alg(encap_alg, "ah", wm->wm_ah, wm);
+		/* check ah= vs esp= vs phase2alg= */
+		(*encap_proto) = phase2;
+		return extract_encap_alg(encap_alg,
+					 "ah", wm->wm_ah,
+					 "esp", wm->wm_esp,
+					 wm);
 
 	case ENCAP_PROTO_ESP:
-		return extract_encap_alg(encap_alg, "esp", wm->wm_esp, wm);
+		/* check esp= vs ah= vs phase2alg= */
+		(*encap_proto) = phase2;
+		return extract_encap_alg(encap_alg,
+					 "esp", wm->wm_esp,
+					 "ah", wm->wm_ah,
+					 wm);
 
 	case ENCAP_PROTO_UNSET:
-		if (wm->wm_ah == NULL && wm->wm_esp == NULL) {
-			(*encap_alg) = wm->wm_phase2alg;
-			(*encap_proto) = ENCAP_PROTO_ESP;
-			break;
-		}
-
-		if (wm->wm_ah != NULL) {
-			(*encap_proto) = ENCAP_PROTO_AH;
-			(*encap_alg) = wm->wm_ah;
-			break;
-		}
-
-		if (wm->wm_esp != NULL) {
-			(*encap_proto) = ENCAP_PROTO_ESP;
-			(*encap_alg) = wm->wm_esp;
-			break;
-		}
-
-		return diag("can not distinguish between 'ah=%s' and 'esp=%s' without 'phase2='",
-			    wm->wm_ah, wm->wm_esp);
+		/* aka never-negotiate */
+		break;
 	}
 
 	return NULL;
@@ -4167,7 +4170,8 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->send_ca = extract_enum_name("", "sendca",
 						    wm->wm_sendca,
-						    CA_SEND_ALL,
+						    /*value_when_unset*/CA_SEND_ALL,
+						    /*value_when_never_negotiate*/CA_SEND_ALL,
 						    &send_ca_policy_names,
 						    wm, &d, verbose);
 

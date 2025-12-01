@@ -1624,11 +1624,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_ENCRYPT:	/* --encrypt */
-			msg.phase2 = ENCAP_PROTO_ESP;
+			msg.wm_phase2 = "esp";
 			continue;
 
 		case CD_AUTHENTICATE:	/* --authenticate */
-			msg.phase2 = ENCAP_PROTO_AH;
+			msg.wm_phase2 = "ah";
 			continue;
 
 		case CD_NO_ESN:		/* --no-esn */

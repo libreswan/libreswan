@@ -314,23 +314,6 @@ struct whack_message {
 
 	struct whack_end end[END_ROOF];
 
-#define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
-
-#define wm_ike conn[END_ROOF].value[KWS_IKE]	/* ike algo string
-						 * (separated by
-						 * commas) */
-	enum encap_proto phase2;		/* outer protocol:
-						 * ESP|AH */
-#define wm_phase2alg conn[END_ROOF].value[KWS_PHASE2ALG]
-						/* outer protocol:
-						 * alg */
-#define wm_esp conn[END_ROOF].value[KWS_ESP]	/* esp algo string
-						 * (separated by
-						 * commas) */
-#define wm_ah conn[END_ROOF].value[KWS_AH]	/* esp algo string
-						 * (separated by
-						 * commas) */
-
 	/* for WHACK_KEY: */
 	bool whack_key;
 	bool whack_addkey;
@@ -355,6 +338,24 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for WHACK_ADD */
+
+#define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
+
+#define wm_ike conn[END_ROOF].value[KWS_IKE]	/* ike algo string
+						 * (separated by
+						 * commas) */
+#define wm_phase2 conn[END_ROOF].value[KWS_PHASE2]	/* outer
+							 * protocol:
+							 * ESP|AH */
+#define wm_phase2alg conn[END_ROOF].value[KWS_PHASE2ALG]
+						/* outer protocol:
+						 * alg */
+#define wm_esp conn[END_ROOF].value[KWS_ESP]	/* esp algo string
+						 * (separated by
+						 * commas) */
+#define wm_ah conn[END_ROOF].value[KWS_AH]	/* esp algo string
+						 * (separated by
+						 * commas) */
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 #define wm_xauthby conn[END_ROOF].value[KWS_XAUTHBY]

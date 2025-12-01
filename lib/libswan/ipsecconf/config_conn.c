@@ -38,17 +38,6 @@
  * Values for right= and left=
  */
 
-static const struct sparse_names kw_phase2types_names = {
-	.list = {
-		/* note: these POLICY bits happen to fit in an unsigned int */
-		/* note2: ah+esp is no longer supported as per RFC-8221 Section 4 */
-		SPARSE("esp",      ENCAP_PROTO_ESP),
-		SPARSE("ah",       ENCAP_PROTO_AH),
-		SPARSE("default",  ENCAP_PROTO_UNSET), /* i.e., let pluto decide */
-		SPARSE_NULL
-	},
-};
-
 static const struct keyword_def config_conn_keyword[] = {
 #define K(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, .validity = VALIDITY, ##__VA_ARGS__ }
 #define U(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = kt_nosup, }
@@ -211,7 +200,7 @@ static const struct keyword_def config_conn_keyword[] = {
   /* attributes of the phase2 policy */
   K("esp",  LEMPTY,  kt_string,  KWS_ESP),
   K("ah",   LEMPTY,  kt_string,  KWS_AH),
-  K("phase2",  LEMPTY,  kt_sparse_name,  KNCF_PHASE2, .sparse_names = &kw_phase2types_names),
+  K("phase2",  LEMPTY,  kt_string,  KWS_PHASE2),
   K("phase2alg",  LEMPTY,  kt_string,  KWS_PHASE2ALG),
 
   K("compress",  LEMPTY,  kt_string,  KWS_COMPRESS),
