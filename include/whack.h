@@ -374,9 +374,6 @@ struct whack_message {
 	/* for REMOTE_HOST */
 	const char *remote_host;
 
-	/* for WHACK_NFLOG_GROUP: */
-	long unsigned int whack_nfloggroup;
-
 	/* for WHACK_ADD */
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
