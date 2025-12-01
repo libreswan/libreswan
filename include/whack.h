@@ -312,26 +312,6 @@ struct whack_message {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
-	/*
-	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
-	 * the port.
-	 */
-	enum tcp_options enable_tcp;
-	uintmax_t tcp_remoteport;
-
-	/* Option to allow per-conn setting of sending of NAT-T
-	 * keepalives - default is enabled */
-	enum yn_options nat_keepalive;
-	/* Option to tweak sending NATT drafts, rfc or both */
-	enum ikev1_natt_policy nat_ikev1_method;
-
-	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
-	enum xauthby xauthby;
-
-	/* XAUTH failure mode can be hard (default) or soft */
-	enum xauthfail xauthfail;
-#define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
-
 	struct whack_end end[END_ROOF];
 
 #define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
@@ -374,6 +354,28 @@ struct whack_message {
 	bool whack_utc;
 	lset_t whack_list;
 
+	/* for WHACK_ADD */
+
+	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
+#define wm_xauthby conn[END_ROOF].value[KWS_XAUTHBY]
+
+	/* XAUTH failure mode can be hard (default) or soft */
+#define wm_xauthfail conn[END_ROOF].value[KWS_XAUTHFAIL]
+#define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
+
+	/* Option to allow per-conn setting of sending of NAT-T
+	 * keepalives - default is enabled */
+#define wm_nat_keepalive conn[END_ROOF].value[KWS_NAT_KEEPALIVE]
+	/* Option to tweak sending NATT drafts, rfc or both */
+#define wm_nat_ikev1_method conn[END_ROOF].value[KWS_NAT_IKEv1_METHOD]
+
+	/*
+	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
+	 * the port.
+	 */
+#define wm_enable_tcp conn[END_ROOF].value[KWS_ENABLE_TCP]
+#define wm_tcp_remoteport conn[END_ROOF].value[KWS_TCP_REMOTEPORT]
+
 	/*
 	 * For RFC 5685 - IKEv2 Redirect mechanism.
 	 *
@@ -387,7 +389,7 @@ struct whack_message {
 #define wm_accept_redirect_to conn[END_ROOF].value[KWS_ACCEPT_REDIRECT_TO]
 
 	/* what metric to put on ipsec routes */
-	int metric;
+#define wm_metric conn[END_ROOF].value[KWS_METRIC]
 
 #define wm_keyexchange conn[END_ROOF].value[KWS_KEYEXCHANGE]
 #define wm_ikev2 conn[END_ROOF].value[KWS_IKEv2]

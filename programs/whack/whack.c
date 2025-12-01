@@ -1800,14 +1800,14 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat-keepalive */
-			msg.nat_keepalive = YN_NO;
+			msg.wm_nat_keepalive = "no";
 			continue;
 		case CD_NAT_KEEPALIVE:	/* --nat-keepalive {yes,no} */
-			msg.nat_keepalive = optarg_yn(logger, YN_YES);
+			msg.wm_nat_keepalive = (optarg == NULL ? "yes" : optarg);
 			continue;
 
 		case CD_IKEV1_NATT:	/* --ikev1-natt */
-			msg.nat_ikev1_method = optarg_sparse(logger, 0, &nat_ikev1_method_option_names);
+			msg.wm_nat_ikev1_method = optarg;
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initial-contact[={yes,no}] */
@@ -1864,17 +1864,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TCP: /* --tcp */
-			if (streq(optarg, "yes"))
-				msg.enable_tcp = IKE_TCP_ONLY;
-			else if (streq(optarg, "no"))
-				msg.enable_tcp = IKE_TCP_NO;
-			else if (streq(optarg, "fallback"))
-				msg.enable_tcp = IKE_TCP_FALLBACK;
-			else
-				diagw("--tcp-options are 'yes', 'no' or 'fallback'");
+			msg.wm_enable_tcp = optarg;
 			continue;
 		case CD_TCP_REMOTE_PORT:
-			msg.tcp_remoteport = optarg_uintmax(logger);
+			msg.wm_tcp_remoteport = optarg;
 			continue;
 
 		case CD_LABELED_IPSEC:	/* obsolete --labeledipsec */
@@ -2018,15 +2011,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
-			msg.xauthby = optarg_sparse(logger, 0, &xauthby_names);
+			msg.wm_xauthby = optarg;
 			continue;
 
 		case CD_XAUTHFAIL:	/* --xauthfail */
-			msg.xauthfail = optarg_sparse(logger, 0, &xauthfail_names);
+			msg.wm_xauthfail = optarg;
 			continue;
 
 		case CD_METRIC:	/* --metric */
-			msg.metric = optarg_uintmax(logger);
+			msg.wm_metric = optarg;
 			continue;
 
 		case CD_MTU:	/* --mtu <mtu> */

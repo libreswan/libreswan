@@ -104,24 +104,6 @@ static bool never_negotiate_string_option(const char *leftright,
 	return false;
 }
 
-static bool never_negotiate_sparse_option(const char *leftright,
-					  const char *name,
-					  unsigned value,
-					  const struct sparse_names *names,
-					  const struct whack_message *wm,
-					  struct verbose verbose)
-{
-	if (is_never_negotiate_wm(wm)) {
-		if (value != 0) {
-			name_buf sb;
-			llog_never_negotiate_option(verbose, wm, leftright, name,
-						    str_sparse_long(names, value, &sb));
-		}
-		return true;
-	}
-	return false;
-}
-
 static bool never_negotiate_enum_option(const char *leftright,
 					const char *name,
 					unsigned value,
@@ -495,44 +477,6 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	config->afi = winner.afi;
 	return NULL;
-}
-
-/* assume 0 is unset */
-
-static unsigned extract_sparse(const char *leftright, const char *name,
-			       unsigned value,
-			       unsigned value_when_unset /*i.e., 0*/,
-			       unsigned value_when_never_negotiate,
-			       const struct sparse_names *names,
-			       const struct whack_message *wm,
-			       struct verbose verbose)
-{
-	if (never_negotiate_sparse_option(leftright, name, value,
-					  names, wm, verbose)) {
-		return value_when_never_negotiate;
-	}
-
-	if (value == 0) {
-		return value_when_unset;
-	}
-
-	return value;
-}
-
-static bool extract_yn(const char *leftright, const char *name,
-		       enum yn_options value, enum yn_options value_when_unset,
-		       const struct whack_message *wm, struct verbose verbose)
-{
-	enum yn_options yn = extract_sparse(leftright, name, value,
-					    value_when_unset, /*never*/YN_NO,
-					    &yn_option_names, wm, verbose);
-
-	switch (yn) {
-	case YN_NO: return false;
-	case YN_YES: return true;
-	default:
-		bad_sparse(verbose.logger, &yn_option_names, yn);
-	}
 }
 
 /* terrible name */
@@ -963,8 +907,7 @@ static uintmax_t extract_yn_uintmax(const char *story,
 	return check_range(story, leftright, name, number, range, d, verbose);
 }
 
-static uintmax_t extract_uintmax(const char *story,
-				 const char *leftright,
+static uintmax_t extract_uintmax(const char *leftright,
 				 const char *name,
 				 const char *value,
 				 struct range range,
@@ -988,7 +931,7 @@ static uintmax_t extract_uintmax(const char *story,
 		return range.value_when_unset;
 	}
 
-	return check_range(story, leftright, name, number, range, d, verbose);
+	return check_range("", leftright, name, number, range, d, verbose);
 }
 
 static uintmax_t extract_scaled_uintmax(const char *story,
@@ -3250,7 +3193,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	uintmax_t tfc = extract_uintmax("", "", "tfc", wm->wm_tfc,
+	uintmax_t tfc = extract_uintmax("", "tfc", wm->wm_tfc,
 					(struct range) {
 						.value_when_unset = 0,
 						.limit.max = UINT32_MAX,
@@ -3480,45 +3423,47 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/* RFC 8229 TCP encap*/
 
-	enum tcp_options iketcp;
-	if (never_negotiate_sparse_option("", "enable-tcp", wm->enable_tcp,
-					  &tcp_option_names, wm, verbose)) {
-		/* cleanup inherited default; XXX: ? */
-		vdbg("never-negotiate enable-tcp");
-		iketcp = IKE_TCP_NO;
-	} else if (c->config->ike_version < IKEv2) {
-		if (wm->enable_tcp != 0 &&
-		    wm->enable_tcp != IKE_TCP_NO) {
+	enum tcp_options iketcp = extract_sparse_name("", "enable-tcp",
+						      wm->wm_enable_tcp,
+						      IKE_TCP_NO,
+						      &tcp_option_names,
+						      wm, &d, verbose);
+	if (d != NULL) {
+		return d;
+	}
+	if (c->config->ike_version < IKEv2) {
+		if (wm->wm_enable_tcp != NULL &&
+		    iketcp != IKE_TCP_NO) {
 			return diag("enable-tcp= requires IKEv2");
 		}
 		iketcp = IKE_TCP_NO;
-	} else if (wm->enable_tcp == 0) {
-		iketcp = IKE_TCP_NO; /* default */
-	} else {
-		iketcp = wm->enable_tcp;
 	}
 	config->end[LEFT_END].host.iketcp = config->end[RIGHT_END].host.iketcp = iketcp;
 
+	uintmax_t tcp_remoteport = extract_uintmax("", "tcp-remoteport",
+						   wm->wm_tcp_remoteport,
+						   (struct range) {
+							   .value_when_unset = 4500,
+							   .value_when_yes = 4500,
+							   .limit.min = 1,
+							   .limit.max = 65535,
+						   },
+						   wm, &d, verbose);
 	switch (iketcp) {
 	case IKE_TCP_NO:
-		if (wm->tcp_remoteport != 0) {
-			vwarning("tcp-remoteport=%ju ignored for non-TCP connections",
-				 wm->tcp_remoteport);
+		if (wm->wm_tcp_remoteport != NULL) {
+			vwarning("tcp-remoteport=%s ignored for non-TCP connections",
+				 wm->wm_tcp_remoteport);
 		}
 		/* keep tests happy, value ignored */
 		config->remote_tcpport = ip_hport(NAT_IKE_UDP_PORT);
 		break;
 	case IKE_TCP_ONLY:
 	case IKE_TCP_FALLBACK:
-		if (wm->tcp_remoteport == 500) {
+		if (tcp_remoteport == 500) {
 			return diag("tcp-remoteport cannot be 500");
 		}
-		if (wm->tcp_remoteport > 65535/*magic?*/) {
-			return diag("tcp-remoteport=%ju is too big", wm->tcp_remoteport);
-		}
-		config->remote_tcpport =
-			ip_hport(wm->tcp_remoteport == 0 ? NAT_IKE_UDP_PORT:
-				 wm->tcp_remoteport);
+		config->remote_tcpport = ip_hport(tcp_remoteport);
 		break;
 	default:
 		/* must  have been set */
@@ -3638,7 +3583,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 
 	uintmax_t replay_window =
-		extract_uintmax("", "", "replay-window",
+		extract_uintmax("", "replay-window",
 				wm->wm_replay_window,
 				(struct range) {
 					.value_when_unset = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
@@ -4164,7 +4109,16 @@ diag_t extract_connection(const struct whack_message *wm,
 			break;
 		}
 
-		config->child.metric = wm->metric;
+		config->child.metric =
+			extract_uintmax("", "metric",
+					wm->wm_metric,
+					(struct range) {.
+						limit.min = 1,
+					},
+					wm, &d, verbose);
+		if (d != NULL) {
+			return d;
+		}
 
 		config->child.mtu = extract_scaled_uintmax("Maximum Transmission Unit",
 							   "", "mtu",
@@ -4178,14 +4132,23 @@ diag_t extract_connection(const struct whack_message *wm,
 			return d;
 		}
 
-		config->nat_keepalive = extract_yn("", "nat-keepalive", wm->nat_keepalive,
-						   /*value_when_unset*/YN_YES,
-						   wm, verbose);
-		if (wm->nat_ikev1_method == 0) {
-			config->ikev1_natt = NATT_BOTH;
-		} else {
-			config->ikev1_natt = wm->nat_ikev1_method;
+		bool nat_keepalive = extract_bool("", "nat-keepalive",
+						  wm->wm_nat_keepalive,
+						  /*value_when_unset*/YN_YES,
+						  wm, &d, verbose);
+		enum ikev1_natt_policy nat_ikev1_method =
+			extract_sparse_name("", "nat-ikev1-method",
+					    wm->wm_nat_ikev1_method,
+					    /*value_when_unset*/NATT_BOTH,
+					    &nat_ikev1_method_option_names,
+					    wm, &d, verbose);
+		if (d != NULL) {
+			return d;
 		}
+
+		config->nat_keepalive = nat_keepalive;
+		config->ikev1_natt = nat_ikev1_method;
+
 		config->send_initial_contact =
 			extract_bool("", "initial-contact",
 				     wm->wm_initial_contact,
@@ -4208,14 +4171,16 @@ diag_t extract_connection(const struct whack_message *wm,
 						    &send_ca_policy_names,
 						    wm, &d, verbose);
 
-		config->xauthby = extract_sparse("", "xauthby", wm->xauthby,
-						 /*value_when_unset*/XAUTHBY_FILE,
-						 /*value_when_never_negotiate*/XAUTHBY_FILE,
-						 &xauthby_names, wm, verbose);
-		config->xauthfail = extract_sparse("", "xauthfail", wm->xauthfail,
-						   /*value_when_unset*/XAUTHFAIL_HARD,
-						   /*value_when_never_negotiate*/XAUTHFAIL_HARD,
-						   &xauthfail_names, wm, verbose);
+		config->xauthby = extract_sparse_name("", "xauthby",
+						      wm->wm_xauthby,
+						      /*value_when_unset*/XAUTHBY_FILE,
+						      &xauthby_names,
+						      wm, &d, verbose);
+		config->xauthfail = extract_sparse_name("", "xauthfail",
+							wm->wm_xauthfail,
+							/*value_when_unset*/XAUTHFAIL_HARD,
+							&xauthfail_names,
+							wm, &d, verbose);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->wm_ppk_ids, "connection ppk_ids");
@@ -4329,7 +4294,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 #ifdef USE_NFLOG
-	c->nflog_group = extract_uintmax("", "", "nflog-group",
+	c->nflog_group = extract_uintmax("", "nflog-group",
 					 wm->wm_nflog_group,
 					 (struct range) {
 						 .value_when_unset = 0,
@@ -4342,7 +4307,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 #endif
 
-	config->child.priority = extract_uintmax("", "", "priority",
+	config->child.priority = extract_uintmax("", "priority",
 						 wm->wm_priority,
 						 (struct range) {
 							 .value_when_unset = 0,
@@ -4381,7 +4346,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	 * HACK; extract_uintmax() returns 0, when there's no reqid.
 	 */
 
-	uintmax_t reqid = extract_uintmax("", "", "reqid",
+	uintmax_t reqid = extract_uintmax("", "reqid",
 					  wm->wm_reqid,
 					  (struct range) {
 						  .value_when_unset = 0,

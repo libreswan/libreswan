@@ -156,7 +156,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("retransmit-interval",  LEMPTY,  kt_string,  KWS_RETRANSMIT_INTERVAL),
 
   K("ikepad",  LEMPTY,  kt_string,  KWS_IKEPAD),
-  K("nat-ikev1-method",  LEMPTY,  kt_sparse_name,  KNCF_NAT_IKEv1_METHOD, .sparse_names = &nat_ikev1_method_option_names),
+  K("nat-ikev1-method",  LEMPTY,  kt_string,  KWS_NAT_IKEv1_METHOD),
 
   K("sec-label",  LEMPTY,  kt_string,  KWS_SEC_LABEL),
 
@@ -167,8 +167,8 @@ static const struct keyword_def config_conn_keyword[] = {
   K("cisco-unity",  LEMPTY,  kt_string,  KWS_CISCO_UNITY),
   K("cisco-split",  LEMPTY,  kt_string,  KWS_CISCO_SPLIT),
 
-  K("xauthby",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHBY, .sparse_names = &xauthby_names),
-  K("xauthfail",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHFAIL, .sparse_names = &xauthfail_names),
+  K("xauthby",  LEMPTY,  kt_string,  KWS_XAUTHBY),
+  K("xauthfail",  LEMPTY,  kt_string,  KWS_XAUTHFAIL),
   K("modecfgpull",  LEMPTY,  kt_string,  KWS_MODECFGPULL),
   K("modecfgdns",  LEMPTY,  kt_string,  KWS_MODECFGDNS),
   K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),
@@ -201,8 +201,8 @@ static const struct keyword_def config_conn_keyword[] = {
   K("failureshunt",  LEMPTY,  kt_sparse_name,  KNCF_FAILURESHUNT, .sparse_names = &failure_shunt_names),
   K("negotiationshunt",  LEMPTY,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, .sparse_names = &negotiation_shunt_names),
 
-  K("enable-tcp",  LEMPTY, kt_sparse_name, KNCF_ENABLE_TCP, .sparse_names = &tcp_option_names),
-  K("tcp-remoteport",  LEMPTY, kt_unsigned, KNCF_TCP_REMOTEPORT),
+  K("enable-tcp",  LEMPTY, kt_string, KWS_ENABLE_TCP),
+  K("tcp-remoteport",  LEMPTY, kt_string, KWS_TCP_REMOTEPORT),
 
   K("connalias",  LEMPTY,  kt_appendstring,  KWS_CONNALIAS),
 
@@ -217,7 +217,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("compress",  LEMPTY,  kt_string,  KWS_COMPRESS),
 
   /* route metric */
-  K("metric",  LEMPTY,  kt_unsigned,  KNCF_METRIC),
+  K("metric",  LEMPTY,  kt_string,  KWS_METRIC),
 
   /* DPD */
   K("dpddelay",  LEMPTY,  kt_string,  KWS_DPDDELAY),

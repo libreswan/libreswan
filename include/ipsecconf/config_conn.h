@@ -156,10 +156,11 @@ enum config_conn_keyword {
 	KWS_IPTFS_INIT_DELAY,
 	KWS_IPTFS_DROP_TIME,
 
+	KNCF_AUTO,
+
 	KWS_REQID,
 	KWS_SENDCA,
-	KNCF_METRIC,
-	KNCF_AUTO,
+	KWS_METRIC,
 	KWS_PFS,
 	KWS_SHA2_TRUNCBUG,
 	KWS_SHARE_LEASE,
@@ -197,8 +198,8 @@ enum config_conn_keyword {
 	KWS_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
 	KWS_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
-	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
+	KWS_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
+	KWS_XAUTHFAIL,		/* method of failing, soft or hard */
 	KWS_FRAGMENTATION,	/* Enable support for IKE fragmentation */
 	KWS_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KWS_INITIAL_CONTACT,	/* send initial contact VID */
@@ -214,11 +215,11 @@ enum config_conn_keyword {
 	KWS_FAKE_STRONGSWAN,	/* send strongswan VID (required for twofish/serpent) */
 	KWS_SEND_VENDORID,	/* per conn sending of our own libreswan vendorid */
 	KWS_IKEPAD,		/* pad IKE packets to 4 bytes */
-	KNCF_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
+	KWS_NAT_IKEv1_METHOD,	/* ikev1 NAT-T payloads to send/process */
 	KWS_NFLOG_GROUP,	/* Enable per-conn nflog device */
 	KWS_NIC_OFFLOAD,	/* xfrm offload to network device */
-	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
-	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
+	KWS_ENABLE_TCP,		/* TCP (yes/no/fallback) */
+	KWS_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KWS_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 	KWS_SESSION_RESUMPTION,	/* RFC 5723 IKE_RESUME */
 
