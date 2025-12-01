@@ -231,6 +231,24 @@ struct whack_crash {
 };
 
 /*
+ * Order matters - it determines the order in which ALL appears.
+ */
+enum whack_lists {
+#define WHACK_LIST_FLOOR WHACK_LIST_PUBKEYS
+	WHACK_LIST_PUBKEYS,	/* list all public keys */
+	WHACK_LIST_PSKS,	/* list all preshared keys (by name) */
+	WHACK_LIST_CERTS,	/* list all host/user certs */
+	WHACK_LIST_CACERTS,	/* list all ca certs */
+	WHACK_LIST_CRLS,	/* list all crls */
+	WHACK_LIST_EVENTS,	/* list all queued events */
+#define WHACK_LIST_ROOF (WHACK_LIST_EVENTS+1)
+};
+
+struct whack_list {
+	bool list[WHACK_LIST_ROOF];
+};
+
+/*
  */
 
 struct whack_config_conn {
@@ -297,7 +315,10 @@ struct whack_message {
 	} whack_from;			/* whack and addconn have
 					 * different .whack_add
 					 * semantics */
+
+	/* generic options applying to anything */
 	bool whack_async;
+	bool whack_utc;
 
 	/*
 	 * Command specific parameters.  Commands also share some
@@ -315,6 +336,7 @@ struct whack_message {
 		struct whack_acquire acquire;
 		struct whack_deletestate deletestate;
 		struct whack_crash crash;
+		struct whack_list list;
 	} whack;
 
 	const char *authby;
@@ -354,10 +376,6 @@ struct whack_message {
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
-
-	/* for WHACK_LIST */
-	bool whack_utc;
-	lset_t whack_list;
 
 	/* for WHACK_ADD */
 
@@ -564,23 +582,6 @@ struct whack_message {
 
 void init_whack_message(struct whack_message *wm,
 			enum whack_from from);
-
-/*
- * Options of whack --list*** command
- *
- * These should be kept in order of option_enums LST_ values
- */
-enum whack_list {
-	LIST_PUBKEYS,	/* list all public keys */
-	LIST_CERTS,	/* list all host/user certs */
-	LIST_CACERTS,	/* list all ca certs */
-	LIST_CRLS,	/* list all crls */
-	LIST_PSKS,	/* list all preshared keys (by name) */
-	LIST_EVENTS,	/* list all queued events */
-};
-
-/* omit events from listing options */
-#define LIST_ALL	LRANGE(LIST_PUBKEYS, LIST_PSKS)  /* almost all list options */
 
 struct whackpacker {
 	struct whack_message *msg;

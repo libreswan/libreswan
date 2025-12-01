@@ -445,14 +445,15 @@ enum opt {
 
 	/* List options */
 
-	LST_UTC,
-	LST_CHECKPUBKEYS,
-	LST_PUBKEYS = LST_CHECKPUBKEYS + 1 + LIST_PUBKEYS,
-	LST_CERTS =   LST_CHECKPUBKEYS + 1 + LIST_CERTS,
-	LST_CACERTS = LST_CHECKPUBKEYS + 1 + LIST_CACERTS,
-	LST_CRLS =    LST_CHECKPUBKEYS + 1 + LIST_CRLS,
-	LST_PSKS =    LST_CHECKPUBKEYS + 1 + LIST_PSKS,
-	LST_EVENTS =  LST_CHECKPUBKEYS + 1 + LIST_EVENTS,
+	OPT_UTC,
+	OPT_CHECKPUBKEYS,
+
+	LST_PUBKEYS = OPT_CHECKPUBKEYS + 1 + WHACK_LIST_PUBKEYS,
+	LST_CERTS =   OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CERTS,
+	LST_CACERTS = OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CACERTS,
+	LST_CRLS =    OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CRLS,
+	LST_PSKS =    OPT_CHECKPUBKEYS + 1 + WHACK_LIST_PSKS,
+	LST_EVENTS =  OPT_CHECKPUBKEYS + 1 + WHACK_LIST_EVENTS,
 	LST_ALL,
 
 #define LAST_NORMAL_OPT		LST_ALL		/* last "normal" option */
@@ -767,8 +768,9 @@ const struct option optarg_options[] = {
 
 	/* list options */
 
-	{ "utc\0", no_argument, NULL, LST_UTC },
-	{ "checkpubkeys\0", no_argument, NULL, LST_CHECKPUBKEYS },
+	{ "utc\0", no_argument, NULL, OPT_UTC },
+	{ "checkpubkeys\0", no_argument, NULL, OPT_CHECKPUBKEYS },
+
 	{ "listpubkeys\0", no_argument, NULL, LST_PUBKEYS },
 	{ "listcerts\0", no_argument, NULL, LST_CERTS },
 	{ "listcacerts\0", no_argument, NULL, LST_CACERTS },
@@ -1434,12 +1436,11 @@ int main(int argc, char **argv)
 		case OPT_ASYNC:	/* --asynchronous */
 			msg.whack_async = true;
 			continue;
-
-		/* List options */
-
-		case LST_UTC:	/* --utc */
+		case OPT_UTC:	/* --utc */
 			msg.whack_utc = true;
 			continue;
+
+		/* List options */
 
 		case LST_CERTS:	/* --listcerts */
 		case LST_CACERTS:	/* --listcacerts */
@@ -1448,18 +1449,22 @@ int main(int argc, char **argv)
 		case LST_EVENTS:	/* --listevents */
 		case LST_PUBKEYS:	/* --listpubkeys */
 			whack_command(&msg, WHACK_LIST);
-			msg.whack_list |= LELEM(c - LST_PUBKEYS);
-			ignore_errors = true;
-			continue;
-
-		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
-			whack_command(&msg, WHACK_CHECKPUBKEYS);
+			passert((size_t)c - LST_PUBKEYS < elemsof(msg.whack.list.list));
+			msg.whack.list.list[c - LST_PUBKEYS] = true;
 			ignore_errors = true;
 			continue;
 
 		case LST_ALL:	/* --listall */
 			whack_command(&msg, WHACK_LIST);
-			msg.whack_list = LIST_ALL; /* most!?! */
+			/* most */
+			for (enum whack_lists o = WHACK_LIST_FLOOR; o < WHACK_LIST_EVENTS; o++) {
+				msg.whack.list.list[o] = true;
+			}
+			ignore_errors = true;
+			continue;
+
+		case OPT_CHECKPUBKEYS:	/* --checkpubkeys */
+			whack_command(&msg, WHACK_CHECKPUBKEYS);
 			ignore_errors = true;
 			continue;
 
