@@ -1225,7 +1225,7 @@ int main(int argc, char **argv)
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			whack_command(&msg, WHACK_DELETESTATE);
-			msg.whack_deletestateno = optarg_uintmax(logger);
+			msg.whack.deletestate.state_nr = optarg_uintmax(logger);
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */

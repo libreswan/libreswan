@@ -221,6 +221,10 @@ struct whack_acquire {
 	unsigned ipproto;
 };
 
+struct whack_deletestate {
+	long unsigned int state_nr;
+};
+
 /*
  */
 
@@ -304,6 +308,7 @@ struct whack_message {
 		struct whack_listen listen;
 		struct whack_ddos ddos;
 		struct whack_acquire acquire;
+		struct whack_deletestate deletestate;
 	} whack;
 
 	const char *authby;
@@ -340,9 +345,6 @@ struct whack_message {
 
 	/* for REMOTE_HOST */
 	const char *remote_host;
-
-	/* for WHACK_DELETESTATE: */
-	long unsigned int whack_deletestateno;
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;

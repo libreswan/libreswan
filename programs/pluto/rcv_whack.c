@@ -146,10 +146,10 @@ static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
 
 static void jam_whack_deletestateno(struct jambuf *buf, const struct whack_message *wm)
 {
-	if (wm->whack_deletestateno > SOS_MAX) {
+	if (wm->whack.deletestate.state_nr > SOS_MAX) {
 		jam_string(buf, "<so-overflow>");
 	}
-	so_serial_t so = wm->whack_deletestateno;
+	so_serial_t so = wm->whack.deletestate.state_nr;
 	jam_so(buf, so);
 }
 
