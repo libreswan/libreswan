@@ -225,6 +225,11 @@ struct whack_deletestate {
 	long unsigned int state_nr;
 };
 
+struct whack_crash {
+	/* note if a remote peer is known to have rebooted */
+	ip_address peer;
+};
+
 /*
  */
 
@@ -309,6 +314,7 @@ struct whack_message {
 		struct whack_ddos ddos;
 		struct whack_acquire acquire;
 		struct whack_deletestate deletestate;
+		struct whack_crash crash;
 	} whack;
 
 	const char *authby;
@@ -348,9 +354,6 @@ struct whack_message {
 
 	/* for WHACK_NFLOG_GROUP: */
 	long unsigned int whack_nfloggroup;
-
-	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
-	ip_address whack_crash_peer;
 
 	/* for WHACK_LIST */
 	bool whack_utc;

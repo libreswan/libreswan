@@ -367,7 +367,7 @@ enum opt {
 	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
 
-	OPT_DELETECRASH,
+	OPT_CRASH,
 	OPT_USERNAME,
 	OPT_XAUTHPASS,
 
@@ -693,7 +693,7 @@ const struct option optarg_options[] = {
 	{ "deleteid\0", no_argument, NULL, OPT_DELETEID },
 	{ "deletestate\0", required_argument, NULL, OPT_DELETESTATE },
 	{ "deleteuser\0", no_argument, NULL, OPT_DELETEUSER },
-	{ "crash\0", required_argument, NULL, OPT_DELETECRASH },
+	{ "crash\0", required_argument, NULL, OPT_CRASH },
 
 	{ OPT("listen"), no_argument, NULL, OPT_LISTEN },
 	{ OPT("unlisten"), no_argument, NULL, OPT_UNLISTEN },
@@ -1228,17 +1228,17 @@ int main(int argc, char **argv)
 			msg.whack.deletestate.state_nr = optarg_uintmax(logger);
 			continue;
 
-		case OPT_DELETECRASH:	/* --crash <ip-address> */
+		case OPT_CRASH:	/* --crash <ip-address> */
 		{
 			struct optarg_family any_family = { 0, };
 			whack_command(&msg, WHACK_CRASH);
-			msg.whack_crash_peer = optarg_address_dns(logger, &any_family);
-			if (!address_is_specified(msg.whack_crash_peer)) {
+			msg.whack.crash.peer = optarg_address_dns(logger, &any_family);
+			if (!address_is_specified(msg.whack.crash.peer)) {
 				/* either :: or 0.0.0.0; unset already
 				 * rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.whack_crash_peer, &ab));
+					     str_address(&msg.whack.crash.peer, &ab));
 			}
 			continue;
 		}

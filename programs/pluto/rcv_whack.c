@@ -155,7 +155,7 @@ static void jam_whack_deletestateno(struct jambuf *buf, const struct whack_messa
 
 static void jam_whack_crash_peer(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam_address(buf, &wm->whack_crash_peer);
+	jam_address(buf, &wm->whack.crash.peer);
 }
 
 static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *wm)
