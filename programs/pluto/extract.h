@@ -40,17 +40,17 @@ struct whack_message;
 struct connection;
 struct config;
 struct extracted_host_addrs;
+struct resolved_host_addrs;
 
 diag_t extract_connection(const struct whack_message *wm,
 			  const struct extracted_host_addrs *extracted_host_addrs,
+			  const struct resolved_host_addrs *resolved_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose);
 
 struct extracted_host_addrs {
 	struct route_addrs end[END_ROOF];
-	struct route_addrs resolve[END_ROOF];
-	bool resolved;
 	const struct ip_info *afi;
 };
 
@@ -58,6 +58,6 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 			  struct extracted_host_addrs *config,
 			  struct verbose verbose);
 
-struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config);
+struct extracted_host_addrs extract_host_addrs_from_host_configs(const struct config *config);
 
 #endif

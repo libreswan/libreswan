@@ -681,13 +681,16 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	peer->nexthop = peer_nexthop;
 }
 
-void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
-				  struct verbose verbose)
+struct resolved_host_addrs resolve_extracted_host_addrs(const struct extracted_host_addrs *host_addrs,
+							struct verbose verbose)
 {
-	host_addrs->resolved = true;
+	struct resolved_host_addrs resolved = {
+		.ok = true, /* hope for the best */
+	};
+
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct route_addrs *src = &host_addrs->end[lr];
- 		struct route_addrs *dst = &host_addrs->resolve[lr];
+ 		struct route_addrs *dst = &resolved.resolve[lr];
  		const char *leftright = src->leftright;
 
 		/* leftright */
@@ -710,7 +713,7 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 				 */
 				vlog("failed to resolve '%s%s=%s' at load time: %s",
 				     leftright, "", src->host.value, e);
-				host_addrs->resolved = false;
+				resolved.ok = false;
 				host_addr = src->host.addr;
 			}
 		} else {
@@ -720,26 +723,28 @@ void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 		dst->host.addr = host_addr;
 	}
 
-	if (host_addrs->resolved) {
-		resolve_default_route(&host_addrs->resolve[LEFT_END],
-				      &host_addrs->resolve[RIGHT_END],
+	if (resolved.ok) {
+		resolve_default_route(&resolved.resolve[LEFT_END],
+				      &resolved.resolve[RIGHT_END],
 				      host_addrs->afi,
 				      verbose);
-		resolve_default_route(&host_addrs->resolve[RIGHT_END],
-				      &host_addrs->resolve[LEFT_END],
+		resolve_default_route(&resolved.resolve[RIGHT_END],
+				      &resolved.resolve[LEFT_END],
 				      host_addrs->afi,
 				      verbose);
 	}
+
+	return resolved;
 }
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      const struct route_addrs *resolve/*[END_ROOF]*/,
+						      const struct resolved_host_addrs *resolved,
 						      struct verbose verbose)
 {
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		update_hosts_from_end_host_addr(c, lr,
-						resolve[lr].host.addr,
-						resolve[!lr].nexthop.addr,
+						resolved->resolve[lr].host.addr,
+						resolved->resolve[!lr].nexthop.addr,
 						HERE); /* from add */
 	}
 
@@ -1295,7 +1300,8 @@ const struct ike_info ikev2_info = {
 };
 
 diag_t add_connection(const struct whack_message *wm,
-		      const struct extracted_host_addrs *host_addrs,
+		      const struct extracted_host_addrs *extracted_host_addrs,
+		      const struct resolved_host_addrs *resolved_host_addrs,
 		      const struct logger *logger)
 {
 	/*
@@ -1337,7 +1343,10 @@ diag_t add_connection(const struct whack_message *wm,
 		vwarning("debug=%s invalid, ignored", wm->debug);
 	}
 
-	diag_t d = extract_connection(wm, host_addrs, c, root_config, verbose);
+	diag_t d = extract_connection(wm,
+				      extracted_host_addrs,
+				      resolved_host_addrs,
+				      c, root_config, verbose);
 	if (d != NULL) {
 		struct connection *cp = c;
 		vassert(refcnt_delref(&cp, c->logger, HERE) == c);

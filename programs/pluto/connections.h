@@ -69,6 +69,7 @@
 #include "defaultroute.h"
 
 struct extracted_host_addrs;
+struct resolved_host_addrs;
 struct route_addrs;
 struct kernel_acquire;
 
@@ -949,13 +950,22 @@ extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d);
 
 diag_t add_connection(const struct whack_message *wm,
-		      const struct extracted_host_addrs *host_addrs,
+		      const struct extracted_host_addrs *extracted_host_addrs,
+		      const struct resolved_host_addrs *resolved_host_addrs,
 		      const struct logger *logger);
 
-void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
-				  struct verbose verbose);
+
+struct resolved_host_addrs {
+	struct route_addrs resolve[END_ROOF];
+	const struct ip_info *afi;
+	bool ok;
+};
+
+struct resolved_host_addrs resolve_extracted_host_addrs(const struct extracted_host_addrs *host_addrs,
+							struct verbose verbose);
+
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      const struct route_addrs *resolve/*[static END_ROOF]*/,
+						      const struct resolved_host_addrs *resolved,
 						      struct verbose verbose);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,

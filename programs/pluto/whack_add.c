@@ -32,7 +32,8 @@ static refcnt_discard_content_fn discard_whack_add_request_content;
 struct help_request {
 	refcnt_t refcnt;
 	struct whack_message_refcnt *wmr;
-	struct extracted_host_addrs host_addrs;
+	struct extracted_host_addrs extracted_host_addrs;
+	struct resolved_host_addrs resolved_host_addrs;
 };
 
 void discard_whack_add_request_content(void *pointer, const struct logger *owner, where_t where)
@@ -189,7 +190,8 @@ static const struct ip_info *next_subnet(char **subnetstr,
  */
 
 static void permutate_connection_subnets(const struct whack_message *wm,
-					 const struct extracted_host_addrs *host_addrs,
+					 const struct extracted_host_addrs *extracted_host_addrs,
+					 const struct resolved_host_addrs *resolved_host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
 					 struct verbose verbose)
@@ -264,7 +266,10 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			if (left_afi == right_afi ||
 			    left_afi == NULL ||
 			    right_afi == NULL) {
-				diag_t d = add_connection(&wam, host_addrs, verbose.logger);
+				diag_t d = add_connection(&wam,
+							  extracted_host_addrs,
+							  resolved_host_addrs,
+							  verbose.logger);
 				if (d != NULL) {
 					llog_add_connection_failed(verbose, "%s", str_diag(d));
 					pfree_diag(&d);
@@ -308,14 +313,16 @@ helper_cb *add_connections_resolve_helper(struct help_request *request,
 					  enum helper_id helper_id UNUSED)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
-	diag_t d = extract_host_addrs(&request->wmr->wm, &request->host_addrs, verbose);
+	diag_t d = extract_host_addrs(&request->wmr->wm,
+				      &request->extracted_host_addrs,
+				      verbose);
 	if (d != NULL) {
 		llog_add_connection_failed(verbose, "%s", str_diag(d));
 		pfree_diag(&d);
 		return NULL;
 	}
 
-	resolve_extracted_host_addrs(&request->host_addrs, verbose);
+	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs, verbose);
 	return add_connections_resolve_continue;
 }
 
@@ -358,7 +365,10 @@ void add_connections_resolve_continue(struct help_request *request,
 
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
-		diag_t d = add_connection(wm, &request->host_addrs, verbose.logger);
+		diag_t d = add_connection(wm,
+					  &request->extracted_host_addrs,
+					  &request->resolved_host_addrs,
+					  verbose.logger);
 		if (d != NULL) {
 			llog_add_connection_failed(verbose, "%s", str_diag(d));
 			pfree_diag(&d);
@@ -379,7 +389,10 @@ void add_connections_resolve_continue(struct help_request *request,
 		return;
 	}
 
-	permutate_connection_subnets(wm, &request->host_addrs, &left, &right, verbose);
+	permutate_connection_subnets(wm,
+				     &request->extracted_host_addrs,
+				     &request->resolved_host_addrs,
+				     &left, &right, verbose);
 	pfreeany(left.subnets.list);
 	pfreeany(right.subnets.list);
 }
