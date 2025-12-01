@@ -66,9 +66,10 @@
 #include "reqid.h"
 #include "state.h"
 #include "whack.h"
+#include "defaultroute.h"
 
 struct extracted_host_addrs;
-struct resolve_end;
+struct route_addrs;
 struct kernel_acquire;
 
 /*
@@ -84,17 +85,11 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  * then authenticate the IKE SA.
  */
 
-struct host_addr_config {
-	enum keyword_host type;
-	char *name;	/* string version from whack */
-	ip_address addr;
-};
-
 struct host_end_config {
 	const char *leftright;
 
-	struct host_addr_config host;
-	struct host_addr_config nexthop;
+	struct route_addr host;
+	struct route_addr nexthop;
 
 	ip_port ikeport;
 	enum tcp_options iketcp;	/* Allow TCP as fallback,
@@ -194,6 +189,14 @@ struct end_config {
 	const char *leftright;
 	struct host_end_config host;
 	struct child_end_config child;
+	/*
+	 * Things that need to be deleted, but are otherwise treated
+	 * as readonly.
+	 */
+	struct {
+		char *host;
+		char *nexthop;
+	} heap;
 };
 
 struct ike_info {
@@ -952,7 +955,7 @@ diag_t add_connection(const struct whack_message *wm,
 void resolve_extracted_host_addrs(struct extracted_host_addrs *host_addrs,
 				  struct verbose verbose);
 void build_connection_host_and_proposals_from_resolve(struct connection *c,
-						      const struct resolve_end *resolve/*[static END_ROOF]*/,
+						      const struct route_addrs *resolve/*[static END_ROOF]*/,
 						      struct verbose verbose);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum end end,

@@ -140,25 +140,25 @@ static bool never_negotiate_enum_option(const char *leftright,
 	return false;
 }
 
-static bool is_opportunistic_wm_end(const struct host_addr_config *host_addr)
+static bool is_opportunistic_wm_end(const struct route_addr *host_addr)
 {
 	return (host_addr->type == KH_OPPO ||
 		host_addr->type == KH_OPPOGROUP);
 }
 
-static bool is_opportunistic_wm(const struct host_addr_config *const host_addrs[END_ROOF])
+static bool is_opportunistic_wm(const struct route_addr *const host_addrs[END_ROOF])
 {
 	return (is_opportunistic_wm_end(host_addrs[LEFT_END]) ||
 		is_opportunistic_wm_end(host_addrs[RIGHT_END]));
 }
 
-static bool is_group_wm_end(const struct host_addr_config *host_addr)
+static bool is_group_wm_end(const struct route_addr *host_addr)
 {
 	return (host_addr->type == KH_GROUP ||
 		host_addr->type == KH_OPPOGROUP);
 }
 
-static bool is_group_wm(const struct host_addr_config *const host_addrs[END_ROOF])
+static bool is_group_wm(const struct route_addr *const host_addrs[END_ROOF])
 {
 	return (is_group_wm_end(host_addrs[LEFT_END]) ||
 		is_group_wm_end(host_addrs[RIGHT_END]));
@@ -207,7 +207,7 @@ static diag_t check_afi(struct afi_winner *winner,
 }
 
 static diag_t extract_host_addr(struct afi_winner *winner,
-				struct extracted_addr *end,
+				struct route_addr *end,
 				const char *leftright,
 				const char *key,
 				const char *value,
@@ -316,7 +316,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = &wm->end[lr];
 		const char *leftright = we->leftright;
-		struct extracted_addrs *addrs = &config->end[lr];
+		struct route_addrs *addrs = &config->end[lr];
 
 		addrs->leftright = leftright;
 
@@ -361,9 +361,9 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addrs *addrs = &config->end[lr];
-		struct extracted_addr *host = &addrs->host;
-		struct extracted_addr *nexthop = &addrs->nexthop;
+		struct route_addrs *addrs = &config->end[lr];
+		struct route_addr *host = &addrs->host;
+		struct route_addr *nexthop = &addrs->nexthop;
  		const char *leftright = addrs->leftright;
 		const char *key = "";
 		const char *value = host->value;
@@ -446,9 +446,9 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 
-		struct extracted_addrs *addrs = &config->end[lr];
+		struct route_addrs *addrs = &config->end[lr];
  		const char *leftright = addrs->leftright;
-		struct extracted_addr *nexthop = &addrs->nexthop;
+		struct route_addr *nexthop = &addrs->nexthop;
 		const char *key = "nexthop";
 		const char *value = nexthop->value;
 		enum keyword_host type = nexthop->type;
@@ -471,7 +471,7 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 		case KH_NOTSET:
 		{
-			struct extracted_addr *host = &config->end[lr].host;
+			struct route_addr *host = &config->end[lr].host;
 			nexthop->addr = winner.afi->address.zero;
 			nexthop->type = (host->type == KH_DEFAULTROUTE ? KH_DEFAULTROUTE : KH_NOTSET);
 			break;
@@ -1263,8 +1263,8 @@ static diag_t extract_host_end(struct host_end *host,
 			       const struct whack_message *wm,
 			       const struct whack_end *src,
 			       const struct whack_end *other_src,
-			       const struct host_addr_config *host_addr,
-			       const struct host_addr_config *const host_addrs[END_ROOF],
+			       const struct route_addr *host_addr,
+			       const struct route_addr *const host_addrs[END_ROOF],
 			       enum ike_version ike_version,
 			       struct authby whack_authby,
 			       bool *same_ca,
@@ -1375,7 +1375,7 @@ static diag_t extract_host_end(struct host_end *host,
 		err_t e = atoid(str_address(&host_addr->addr, &ab), &id);
 		if (e != NULL) {
 			return diag("%sid=%s invalid: %s",
-				    leftright, host_addr->name, e);
+				    leftright, host_addr->value, e);
 		}
 
 		id_buf idb;
@@ -1983,7 +1983,7 @@ static bool is_virt(const struct whack_end *we)
 
 static diag_t extract_child_end_config(const struct whack_message *wm,
 				       const struct whack_end *src,
-				       const struct host_addr_config *host_addr,
+				       const struct route_addr *host_addr,
 				       ip_protoport protoport,
 				       enum ike_version ike_version,
 				       struct connection *c,
@@ -2463,7 +2463,7 @@ static deltatime_t extract_lifetime(const char *lifetime_name,
 
 static enum connection_kind extract_connection_end_kind(const struct whack_message *wm,
 							enum end this_end,
-							const struct host_addr_config *const host_addrs[END_ROOF],
+							const struct route_addr *const host_addrs[END_ROOF],
 							const ip_protoport protoport[END_ROOF],
 							bool narrowing,
 							struct verbose verbose)
@@ -2509,7 +2509,7 @@ static enum connection_kind extract_connection_end_kind(const struct whack_messa
 	}
 	if (!is_never_negotiate_wm(wm)) {
 		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-			const struct host_addr_config *re = host_addrs[lr];
+			const struct route_addr *re = host_addrs[lr];
 			if (re->type != KH_IPADDR &&
 			    re->type != KH_IFACE &&
 			    re->type != KH_DEFAULTROUTE &&
@@ -2750,12 +2750,14 @@ static diag_t extract_encap_proto(enum encap_proto *encap_proto, const char **en
 	return NULL;
 }
 
-static void host_config_from_extracted_addr(struct host_addr_config *host,
-					    const struct extracted_addr *addr)
+static void host_config_from_extracted_addr(struct route_addr *host,
+					    char **heap,
+					    const struct route_addr *addr)
 {
-	host->type = addr->type;
-	host->addr = addr->addr;
-	host->name = clone_str(addr->value, "config");
+	*host = *addr;
+	/* need to clone the string value */
+	(*heap) = clone_str(addr->value, "config");
+	host->value = (*heap);
 }
 
 static void host_configs_from_extracted_host_addrs(struct config *config,
@@ -2764,20 +2766,12 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	config->host.afi = host_addrs->afi;
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		host_config_from_extracted_addr(&config->end[end].host.host,
+						&config->end[end].heap.host,
 						&host_addrs->end[end].host);
 		host_config_from_extracted_addr(&config->end[end].host.nexthop,
+						&config->end[end].heap.nexthop,
 						&host_addrs->end[end].nexthop);
 	}
-}
-
-static void extracted_addr_from_host_config(const char *key,
-					    struct extracted_addr *addr,
-					    const struct host_addr_config *host)
-{
-	addr->key = key;
-	addr->type = host->type;
-	addr->addr = host->addr;
-	addr->value = host->name;
 }
 
 struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config)
@@ -2787,10 +2781,8 @@ struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct 
 	};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		host_addrs.end[end].leftright = (end == LEFT_END ? "left" : "right");
-		extracted_addr_from_host_config("", &host_addrs.end[end].host,
-						&config->end[end].host.host);
-		extracted_addr_from_host_config("nexthop", &host_addrs.end[end].nexthop,
-						&config->end[end].host.nexthop);
+		host_addrs.end[end].host = config->end[end].host.host;
+		host_addrs.end[end].nexthop = config->end[end].host.nexthop;
 	}
 	return host_addrs;
 }
@@ -2832,7 +2824,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	const struct ip_info *host_afi = config->host.afi;
 	vassert(host_afi != NULL);
 
-	const struct host_addr_config *const host_addrs[END_ROOF] = {
+	const struct route_addr *const host_addrs[END_ROOF] = {
 		[LEFT_END] = &config->end[LEFT_END].host.host,
 		[RIGHT_END] = &config->end[RIGHT_END].host.host,
 	};

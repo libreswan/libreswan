@@ -24,21 +24,22 @@
 struct starter_end;
 struct logger;
 
-struct resolve_host {
+struct route_addr {
 	enum keyword_host type;
 	ip_address addr;
-	const char *name;
+	const char *key;
+	const char *value;
 	unsigned interface;		/* 0 invalid? for if_indextoname() */
 };
 
-struct resolve_end {
+struct route_addrs {
 	const char *leftright;
-	struct resolve_host host;
-	struct resolve_host nexthop; /* aka gateway */
+	struct route_addr host;
+	struct route_addr nexthop; /* aka gateway */
 };
 
-void resolve_default_route(struct resolve_end *host,
-			   struct resolve_end *peer,
+void resolve_default_route(struct route_addrs *host,
+			   struct route_addrs *peer,
 			   const struct ip_info *host_afi,
 			   struct verbose verbose);
 

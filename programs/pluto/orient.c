@@ -461,8 +461,8 @@ static void jam_host_addr(struct jambuf *buf, struct connection_end *end)
 {
 	jam_string(buf, end->host.config->leftright);
 	jam_string(buf, "=");
-	if (end->host.config->host.name != NULL) {
-		jam_string(buf, end->host.config->host.name);
+	if (end->host.config->host.value != NULL) {
+		jam_string(buf, end->host.config->host.value);
 	} else {
 		jam_address(buf, &end->host.addr);
 	}
