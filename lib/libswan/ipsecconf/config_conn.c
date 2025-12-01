@@ -167,8 +167,8 @@ static const struct keyword_def config_conn_keyword[] = {
   K("cisco-unity",  LEMPTY,  kt_string,  KWS_CISCO_UNITY),
   K("cisco-split",  LEMPTY,  kt_string,  KWS_CISCO_SPLIT),
 
-  K("xauthby",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHBY, .sparse_names = &xauthby_names),
-  K("xauthfail",  LEMPTY,  kt_sparse_name,  KNCF_XAUTHFAIL, .sparse_names = &xauthfail_names),
+  K("xauthby",  LEMPTY,  kt_string,  KWS_XAUTHBY),
+  K("xauthfail",  LEMPTY,  kt_string,  KWS_XAUTHFAIL),
   K("modecfgpull",  LEMPTY,  kt_string,  KWS_MODECFGPULL),
   K("modecfgdns",  LEMPTY,  kt_string,  KWS_MODECFGDNS),
   K("modecfgdomains",  LEMPTY,  kt_string,  KWS_MODECFGDOMAINS),

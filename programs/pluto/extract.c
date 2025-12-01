@@ -104,24 +104,6 @@ static bool never_negotiate_string_option(const char *leftright,
 	return false;
 }
 
-static bool never_negotiate_sparse_option(const char *leftright,
-					  const char *name,
-					  unsigned value,
-					  const struct sparse_names *names,
-					  const struct whack_message *wm,
-					  struct verbose verbose)
-{
-	if (is_never_negotiate_wm(wm)) {
-		if (value != 0) {
-			name_buf sb;
-			llog_never_negotiate_option(verbose, wm, leftright, name,
-						    str_sparse_long(names, value, &sb));
-		}
-		return true;
-	}
-	return false;
-}
-
 static bool never_negotiate_enum_option(const char *leftright,
 					const char *name,
 					unsigned value,
@@ -495,28 +477,6 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 
 	config->afi = winner.afi;
 	return NULL;
-}
-
-/* assume 0 is unset */
-
-static unsigned extract_sparse(const char *leftright, const char *name,
-			       unsigned value,
-			       unsigned value_when_unset /*i.e., 0*/,
-			       unsigned value_when_never_negotiate,
-			       const struct sparse_names *names,
-			       const struct whack_message *wm,
-			       struct verbose verbose)
-{
-	if (never_negotiate_sparse_option(leftright, name, value,
-					  names, wm, verbose)) {
-		return value_when_never_negotiate;
-	}
-
-	if (value == 0) {
-		return value_when_unset;
-	}
-
-	return value;
 }
 
 /* terrible name */
@@ -4219,14 +4179,16 @@ diag_t extract_connection(const struct whack_message *wm,
 						    &send_ca_policy_names,
 						    wm, &d, verbose);
 
-		config->xauthby = extract_sparse("", "xauthby", wm->xauthby,
-						 /*value_when_unset*/XAUTHBY_FILE,
-						 /*value_when_never_negotiate*/XAUTHBY_FILE,
-						 &xauthby_names, wm, verbose);
-		config->xauthfail = extract_sparse("", "xauthfail", wm->xauthfail,
-						   /*value_when_unset*/XAUTHFAIL_HARD,
-						   /*value_when_never_negotiate*/XAUTHFAIL_HARD,
-						   &xauthfail_names, wm, verbose);
+		config->xauthby = extract_sparse_name("", "xauthby",
+						      wm->wm_xauthby,
+						      /*value_when_unset*/XAUTHBY_FILE,
+						      &xauthby_names,
+						      wm, &d, verbose);
+		config->xauthfail = extract_sparse_name("", "xauthfail",
+							wm->wm_xauthfail,
+							/*value_when_unset*/XAUTHFAIL_HARD,
+							&xauthfail_names,
+							wm, &d, verbose);
 
 		/* RFC 8784 and draft-ietf-ipsecme-ikev2-qr-alt-04 */
 		config->ppk_ids = clone_str(wm->wm_ppk_ids, "connection ppk_ids");

@@ -198,8 +198,8 @@ enum config_conn_keyword {
 	KWS_ACCEPT_REDIRECT,	/* see RFC 5685 for more details */
 	KWS_HOSTADDRFAMILY,
 	KWS_OVERLAPIP,		/* Allow overlapping IPsec policies */
-	KNCF_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
-	KNCF_XAUTHFAIL,		/* method of failing, soft or hard */
+	KWS_XAUTHBY,		/* method of xauth user auth - file, pam or alwaysok */
+	KWS_XAUTHFAIL,		/* method of failing, soft or hard */
 	KWS_FRAGMENTATION,	/* Enable support for IKE fragmentation */
 	KWS_NAT_KEEPALIVE,	/* per conn enabling/disabling of sending keep-alives */
 	KWS_INITIAL_CONTACT,	/* send initial contact VID */

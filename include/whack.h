@@ -312,13 +312,6 @@ struct whack_message {
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
-	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
-	enum xauthby xauthby;
-
-	/* XAUTH failure mode can be hard (default) or soft */
-	enum xauthfail xauthfail;
-#define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
-
 	struct whack_end end[END_ROOF];
 
 #define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
@@ -362,6 +355,13 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for WHACK_ADD */
+
+	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
+#define wm_xauthby conn[END_ROOF].value[KWS_XAUTHBY]
+
+	/* XAUTH failure mode can be hard (default) or soft */
+#define wm_xauthfail conn[END_ROOF].value[KWS_XAUTHFAIL]
+#define wm_sendca conn[END_ROOF].value[KWS_SENDCA]
 
 	/* Option to allow per-conn setting of sending of NAT-T
 	 * keepalives - default is enabled */

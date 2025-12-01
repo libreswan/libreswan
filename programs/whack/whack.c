@@ -2011,11 +2011,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:	/* --xauthby */
-			msg.xauthby = optarg_sparse(logger, 0, &xauthby_names);
+			msg.wm_xauthby = optarg;
 			continue;
 
 		case CD_XAUTHFAIL:	/* --xauthfail */
-			msg.xauthfail = optarg_sparse(logger, 0, &xauthfail_names);
+			msg.wm_xauthfail = optarg;
 			continue;
 
 		case CD_METRIC:	/* --metric */

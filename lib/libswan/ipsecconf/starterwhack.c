@@ -85,11 +85,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.debug = conn->values[KWS_DEBUG].string;
 
-	if (conn->values[KNCF_XAUTHBY].set)
-		msg.xauthby = conn->values[KNCF_XAUTHBY].option;
-	if (conn->values[KNCF_XAUTHFAIL].set)
-		msg.xauthfail = conn->values[KNCF_XAUTHFAIL].option;
-
 	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {
 		return -1;
 	}
