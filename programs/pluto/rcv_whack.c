@@ -146,23 +146,23 @@ static void jam_whack_name(struct jambuf *buf, const struct whack_message *wm)
 
 static void jam_whack_deletestateno(struct jambuf *buf, const struct whack_message *wm)
 {
-	if (wm->whack_deletestateno > SOS_MAX) {
+	if (wm->whack.deletestate.state_nr > SOS_MAX) {
 		jam_string(buf, "<so-overflow>");
 	}
-	so_serial_t so = wm->whack_deletestateno;
+	so_serial_t so = wm->whack.deletestate.state_nr;
 	jam_so(buf, so);
 }
 
 static void jam_whack_crash_peer(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam_address(buf, &wm->whack_crash_peer);
+	jam_address(buf, &wm->whack.crash.peer);
 }
 
 static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam(buf, "initiate: start: name='%s' remote='%s' async=%s",
+	jam(buf, "name='%s' remote='%s' async=%s",
 	    (wm->name == NULL ? "<null>" : wm->name),
-	    (wm->remote_host != NULL ? wm->remote_host : "<null>"),
+	    (wm->whack.initiate.remote_host != NULL ? wm->whack.initiate.remote_host : "<null>"),
 	    bool_str(wm->whack_async));
 }
 
@@ -260,44 +260,52 @@ static void whack_list(const struct whack_message *wm, struct show *s)
 {
 	monotime_t now = mononow();
 
-	if (wm->whack_list & LELEM(LIST_PUBKEYS)) {
-		dbg_whack(s, "listpubkeys: start:");
-		show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
-		dbg_whack(s, "listpubkeys: stop:");
-	}
+	for (enum whack_lists list = WHACK_LIST_FLOOR; list < WHACK_LIST_ROOF; list++) {
+		if (!wm->whack.list.list[list]) {
+			continue;
+		}
+		switch (list) {
 
-	if (wm->whack_list & LELEM(LIST_PSKS)) {
-		dbg_whack(s, "list & LIST_PSKS: start:");
-		list_psks(s);
-		dbg_whack(s, "list & LIST_PSKS: stop:");
-	}
+		case WHACK_LIST_PUBKEYS:
+			dbg_whack(s, "listpubkeys: start:");
+			show_pubkeys(s, wm->whack_utc, SHOW_ALL_KEYS);
+			dbg_whack(s, "listpubkeys: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_CERTS)) {
-		dbg_whack(s, "listcerts: start:");
-		list_certs(s);
-		dbg_whack(s, "listcerts: stop:");
-	}
+		case WHACK_LIST_PSKS:
+			dbg_whack(s, "list & LIST_PSKS: start:");
+			list_psks(s);
+			dbg_whack(s, "list & LIST_PSKS: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_CACERTS)) {
-		dbg_whack(s, "listcacerts: start");
-		whack_listcacerts(s);
-		dbg_whack(s, "listcacerts: stop:");
-	}
+		case WHACK_LIST_CERTS:
+			dbg_whack(s, "listcerts: start:");
+			list_certs(s);
+			dbg_whack(s, "listcerts: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_CRLS)) {
-		dbg_whack(s, "listcrls: start:");
-		list_crls(s);
+		case WHACK_LIST_CACERTS:
+			dbg_whack(s, "listcacerts: start");
+			whack_listcacerts(s);
+			dbg_whack(s, "listcacerts: stop:");
+			break;
+
+		case WHACK_LIST_CRLS:
+			dbg_whack(s, "listcrls: start:");
+			list_crls(s);
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
-		list_crl_fetch_requests(s, wm->whack_utc);
+			list_crl_fetch_requests(s, wm->whack_utc);
 #endif
-		dbg_whack(s, "listcrls: stop:");
-	}
+			dbg_whack(s, "listcrls: stop:");
+			break;
 
-	if (wm->whack_list & LELEM(LIST_EVENTS)) {
-		dbg_whack(s, "listevents: start:");
-		list_timers(s, now);
-		list_state_events(s, now);
-		dbg_whack(s, "listevents: stop:");
+		case WHACK_LIST_EVENTS:
+			dbg_whack(s, "listevents: start:");
+			list_timers(s, now);
+			list_state_events(s, now);
+			dbg_whack(s, "listevents: stop:");
+			break;
+		}
 	}
 }
 

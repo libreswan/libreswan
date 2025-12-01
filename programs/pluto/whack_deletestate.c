@@ -34,14 +34,17 @@
 #include "ikev2_delete.h"	/* for record_n_send_n_log_v2_delete() */
 #include "ikev1_delete.h"	/* for record_n_send_n_log_v2_delete() */
 
-void whack_deletestate(const struct whack_message *m, struct show *s)
+void whack_deletestate(const struct whack_message *wm, struct show *s)
 {
-	if (m->whack_deletestateno > SOS_MAX) {
-		show_rc(RC_FATAL, s, "received whack command to delete state #%lu but value is out-of-range", m->whack_deletestateno);
+	const struct whack_deletestate *deletestate = &wm->whack.deletestate;
+
+	if (deletestate->state_nr > SOS_MAX) {
+		show_rc(RC_FATAL, s, "received whack command to delete state #%lu but value is out-of-range",
+			deletestate->state_nr);
 		return;
 	}
 
-	so_serial_t so = m->whack_deletestateno;
+	so_serial_t so = deletestate->state_nr;
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
 		llog_rc(RC_UNKNOWN_NAME, show_logger(s), "no state "PRI_SO" to delete",
@@ -50,7 +53,7 @@ void whack_deletestate(const struct whack_message *m, struct show *s)
 	}
 
 	struct logger *logger = merge_loggers(st->logger,
-					      m->whack_async/*background*/,
+					      wm->whack_async/*background*/,
 					      show_logger(s));
 	llog(LOG_STREAM/*not-whack*/, logger,
 	     "received whack to delete %s state "PRI_SO" %s",

@@ -91,5 +91,5 @@ static void delete_states_by_peer(struct show *s, const ip_address *peer)
 
 void whack_crash(const struct whack_message *m, struct show *s)
 {
-	delete_states_by_peer(s, &m->whack_crash_peer);
+	delete_states_by_peer(s, &m->whack.crash.peer);
 }

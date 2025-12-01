@@ -238,8 +238,6 @@ static const char *label = NULL;
 /* --name operand, saved for diagnostics */
 static const char *name = NULL;
 
-static const char *remote_host = NULL;
-
 /*
  * Print a string as a diagnostic, then exit whack unhappily
  *
@@ -367,7 +365,7 @@ enum opt {
 	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
 
-	OPT_DELETECRASH,
+	OPT_CRASH,
 	OPT_USERNAME,
 	OPT_XAUTHPASS,
 
@@ -445,14 +443,15 @@ enum opt {
 
 	/* List options */
 
-	LST_UTC,
-	LST_CHECKPUBKEYS,
-	LST_PUBKEYS = LST_CHECKPUBKEYS + 1 + LIST_PUBKEYS,
-	LST_CERTS =   LST_CHECKPUBKEYS + 1 + LIST_CERTS,
-	LST_CACERTS = LST_CHECKPUBKEYS + 1 + LIST_CACERTS,
-	LST_CRLS =    LST_CHECKPUBKEYS + 1 + LIST_CRLS,
-	LST_PSKS =    LST_CHECKPUBKEYS + 1 + LIST_PSKS,
-	LST_EVENTS =  LST_CHECKPUBKEYS + 1 + LIST_EVENTS,
+	OPT_UTC,
+	OPT_CHECKPUBKEYS,
+
+	LST_PUBKEYS = OPT_CHECKPUBKEYS + 1 + WHACK_LIST_PUBKEYS,
+	LST_CERTS =   OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CERTS,
+	LST_CACERTS = OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CACERTS,
+	LST_CRLS =    OPT_CHECKPUBKEYS + 1 + WHACK_LIST_CRLS,
+	LST_PSKS =    OPT_CHECKPUBKEYS + 1 + WHACK_LIST_PSKS,
+	LST_EVENTS =  OPT_CHECKPUBKEYS + 1 + WHACK_LIST_EVENTS,
 	LST_ALL,
 
 #define LAST_NORMAL_OPT		LST_ALL		/* last "normal" option */
@@ -693,7 +692,7 @@ const struct option optarg_options[] = {
 	{ "deleteid\0", no_argument, NULL, OPT_DELETEID },
 	{ "deletestate\0", required_argument, NULL, OPT_DELETESTATE },
 	{ "deleteuser\0", no_argument, NULL, OPT_DELETEUSER },
-	{ "crash\0", required_argument, NULL, OPT_DELETECRASH },
+	{ "crash\0", required_argument, NULL, OPT_CRASH },
 
 	{ OPT("listen"), no_argument, NULL, OPT_LISTEN },
 	{ OPT("unlisten"), no_argument, NULL, OPT_UNLISTEN },
@@ -767,8 +766,9 @@ const struct option optarg_options[] = {
 
 	/* list options */
 
-	{ "utc\0", no_argument, NULL, LST_UTC },
-	{ "checkpubkeys\0", no_argument, NULL, LST_CHECKPUBKEYS },
+	{ "utc\0", no_argument, NULL, OPT_UTC },
+	{ "checkpubkeys\0", no_argument, NULL, OPT_CHECKPUBKEYS },
+
 	{ "listpubkeys\0", no_argument, NULL, LST_PUBKEYS },
 	{ "listcerts\0", no_argument, NULL, LST_CERTS },
 	{ "listcacerts\0", no_argument, NULL, LST_CACERTS },
@@ -1137,8 +1137,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REMOTE_HOST:	/* --remote-host <ip or hostname> */
-			remote_host = optarg;
-			msg.remote_host = optarg;
+			whack_command(&msg, WHACK_INITIATE);
+			msg.whack.initiate.remote_host = optarg;
 			continue;
 
 		case OPT_CONNALIAS:	/* --connalias name */
@@ -1225,20 +1225,20 @@ int main(int argc, char **argv)
 
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			whack_command(&msg, WHACK_DELETESTATE);
-			msg.whack_deletestateno = optarg_uintmax(logger);
+			msg.whack.deletestate.state_nr = optarg_uintmax(logger);
 			continue;
 
-		case OPT_DELETECRASH:	/* --crash <ip-address> */
+		case OPT_CRASH:	/* --crash <ip-address> */
 		{
 			struct optarg_family any_family = { 0, };
 			whack_command(&msg, WHACK_CRASH);
-			msg.whack_crash_peer = optarg_address_dns(logger, &any_family);
-			if (!address_is_specified(msg.whack_crash_peer)) {
+			msg.whack.crash.peer = optarg_address_dns(logger, &any_family);
+			if (!address_is_specified(msg.whack.crash.peer)) {
 				/* either :: or 0.0.0.0; unset already
 				 * rejected */
 				address_buf ab;
 				optarg_fatal(logger, "invalid address %s",
-					     str_address(&msg.whack_crash_peer, &ab));
+					     str_address(&msg.whack.crash.peer, &ab));
 			}
 			continue;
 		}
@@ -1434,12 +1434,11 @@ int main(int argc, char **argv)
 		case OPT_ASYNC:	/* --asynchronous */
 			msg.whack_async = true;
 			continue;
-
-		/* List options */
-
-		case LST_UTC:	/* --utc */
+		case OPT_UTC:	/* --utc */
 			msg.whack_utc = true;
 			continue;
+
+		/* List options */
 
 		case LST_CERTS:	/* --listcerts */
 		case LST_CACERTS:	/* --listcacerts */
@@ -1448,18 +1447,22 @@ int main(int argc, char **argv)
 		case LST_EVENTS:	/* --listevents */
 		case LST_PUBKEYS:	/* --listpubkeys */
 			whack_command(&msg, WHACK_LIST);
-			msg.whack_list |= LELEM(c - LST_PUBKEYS);
-			ignore_errors = true;
-			continue;
-
-		case LST_CHECKPUBKEYS:	/* --checkpubkeys */
-			whack_command(&msg, WHACK_CHECKPUBKEYS);
+			passert((size_t)c - LST_PUBKEYS < elemsof(msg.whack.list.list));
+			msg.whack.list.list[c - LST_PUBKEYS] = true;
 			ignore_errors = true;
 			continue;
 
 		case LST_ALL:	/* --listall */
 			whack_command(&msg, WHACK_LIST);
-			msg.whack_list = LIST_ALL; /* most!?! */
+			/* most */
+			for (enum whack_lists o = WHACK_LIST_FLOOR; o < WHACK_LIST_EVENTS; o++) {
+				msg.whack.list.list[o] = true;
+			}
+			ignore_errors = true;
+			continue;
+
+		case OPT_CHECKPUBKEYS:	/* --checkpubkeys */
+			whack_command(&msg, WHACK_CHECKPUBKEYS);
 			ignore_errors = true;
 			continue;
 

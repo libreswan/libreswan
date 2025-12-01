@@ -49,7 +49,7 @@ static unsigned whack_initiate_connection(const struct whack_message *m,
 	case CK_PERMANENT:
 		/* abuse bool; for connection counts */
 		return initiate_connection(c,
-					   m->remote_host,
+					   m->whack.initiate.remote_host,
 					   m->whack_async/*background*/,
 					   logger);
 	case CK_LABELED_PARENT:
