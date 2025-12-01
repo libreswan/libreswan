@@ -160,9 +160,9 @@ static void jam_whack_crash_peer(struct jambuf *buf, const struct whack_message 
 
 static void jam_whack_initiate(struct jambuf *buf, const struct whack_message *wm)
 {
-	jam(buf, "initiate: start: name='%s' remote='%s' async=%s",
+	jam(buf, "name='%s' remote='%s' async=%s",
 	    (wm->name == NULL ? "<null>" : wm->name),
-	    (wm->remote_host != NULL ? wm->remote_host : "<null>"),
+	    (wm->whack.initiate.remote_host != NULL ? wm->whack.initiate.remote_host : "<null>"),
 	    bool_str(wm->whack_async));
 }
 

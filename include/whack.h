@@ -248,6 +248,13 @@ struct whack_list {
 	bool list[WHACK_LIST_ROOF];
 };
 
+struct whack_initiate {
+	const char *remote_host;
+#if 0
+	const char *name;
+#endif
+};
+
 /*
  */
 
@@ -337,6 +344,7 @@ struct whack_message {
 		struct whack_deletestate deletestate;
 		struct whack_crash crash;
 		struct whack_list list;
+		struct whack_initiate initiate;
 	} whack;
 
 	const char *authby;
@@ -370,9 +378,6 @@ struct whack_message {
 	const char *keyid;	/* string 8 */
 	enum ipseckey_algorithm_type pubkey_alg;
 	const char *pubkey;
-
-	/* for REMOTE_HOST */
-	const char *remote_host;
 
 	/* for WHACK_ADD */
 

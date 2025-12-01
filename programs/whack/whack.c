@@ -238,8 +238,6 @@ static const char *label = NULL;
 /* --name operand, saved for diagnostics */
 static const char *name = NULL;
 
-static const char *remote_host = NULL;
-
 /*
  * Print a string as a diagnostic, then exit whack unhappily
  *
@@ -1139,8 +1137,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REMOTE_HOST:	/* --remote-host <ip or hostname> */
-			remote_host = optarg;
-			msg.remote_host = optarg;
+			whack_command(&msg, WHACK_INITIATE);
+			msg.whack.initiate.remote_host = optarg;
 			continue;
 
 		case OPT_CONNALIAS:	/* --connalias name */
