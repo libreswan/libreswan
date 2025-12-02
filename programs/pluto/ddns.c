@@ -135,12 +135,13 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	 */
 
 	delete_connection_proposals(c);
-	struct extracted_host_addrs host_addrs =
-		extracted_host_addrs_from_host_configs(c->config);
-	resolve_extracted_host_addrs(&host_addrs, verbose);
-	build_connection_host_and_proposals_from_resolve(c, host_addrs.resolve, verbose);
+	struct extracted_host_addrs extracted_host_addrs =
+		extract_host_addrs_from_host_configs(c->config);
+	struct resolved_host_addrs resolved_host_addrs =
+		resolve_extracted_host_addrs(&extracted_host_addrs, verbose);
+	build_connection_host_and_proposals_from_resolve(c, &resolved_host_addrs, verbose);
 
-	if (!host_addrs.resolved) {
+	if (!resolved_host_addrs.ok) {
 		vlog("not resolved");
 		return;
 	}

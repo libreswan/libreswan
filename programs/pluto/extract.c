@@ -2720,7 +2720,7 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	}
 }
 
-struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct config *config)
+struct extracted_host_addrs extract_host_addrs_from_host_configs(const struct config *config)
 {
 	struct extracted_host_addrs host_addrs = {
 		.afi = config->host.afi,
@@ -2735,6 +2735,7 @@ struct extracted_host_addrs extracted_host_addrs_from_host_configs(const struct 
 
 diag_t extract_connection(const struct whack_message *wm,
 			  const struct extracted_host_addrs *extracted_host_addrs,
+			  const struct resolved_host_addrs *resolved_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose)
@@ -4677,7 +4678,7 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-	build_connection_host_and_proposals_from_resolve(c, extracted_host_addrs->resolve, verbose);
+	build_connection_host_and_proposals_from_resolve(c, resolved_host_addrs, verbose);
 
 	/*
 	 * Force orientation (currently kind of unoriented?).
