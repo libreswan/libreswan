@@ -31,12 +31,17 @@
  * down the main thread with cryptography, increasing throughput.
  */
 
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef HELPER_H
+#define HELPER_H
+
+#include <stdint.h>	/* for uintmax_t; */
+
+#include "where.h"
 
 #include "verbose.h"
 
 struct help_request;
+struct refcnt;
 
 #define alloc_help_request(WHAT, DISCARD_CONTENT, OWNER)		\
 	({								\

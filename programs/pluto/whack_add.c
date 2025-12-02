@@ -22,25 +22,9 @@
 #include "connections.h"
 #include "whack_delete.h"
 #include "extract.h"
-#include "helper.h"
+#include "resolve_helper.h"
 
-static helper_fn add_connections_resolve_helper;
-static helper_cb add_connections_resolve_continue;
-
-static refcnt_discard_content_fn discard_whack_add_request_content;
-
-struct help_request {
-	refcnt_t refcnt;
-	struct whack_message_refcnt *wmr;
-	struct extracted_host_addrs extracted_host_addrs;
-	struct resolved_host_addrs resolved_host_addrs;
-};
-
-void discard_whack_add_request_content(void *pointer, const struct logger *owner, where_t where)
-{
-	struct help_request *request = pointer;
-	refcnt_delref(&request->wmr, owner, where);
-}
+static resolve_helper_cb add_connections_resolve_continue;
 
 PRINTF_LIKE(2)
 static void llog_add_connection_failed(struct verbose verbose,
@@ -298,30 +282,12 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 }
 
-static void submit_add_connections(struct whack_message_refcnt *wmr,
-				   const struct extracted_host_addrs *extracted_host_addrs,
-				   struct logger *logger)
-{
-	struct help_request *request = alloc_help_request("ipsec add: resolve",
-							  discard_whack_add_request_content,
-							  logger);
-	request->wmr = refcnt_addref(wmr, logger, HERE);
-	request->extracted_host_addrs = (*extracted_host_addrs);
-	request_help(request, add_connections_resolve_helper, logger);
-}
-
-helper_cb *add_connections_resolve_helper(struct help_request *request,
-					  struct verbose verbose,
-					  enum helper_id helper_id UNUSED)
-{
-	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs, verbose);
-	return add_connections_resolve_continue;
-}
-
-void add_connections_resolve_continue(struct help_request *request,
+void add_connections_resolve_continue(struct whack_message_refcnt *wmr,
+				      const struct extracted_host_addrs *extracted_host_addrs,
+				      const struct resolved_host_addrs *resolved_host_addrs,
 				      struct verbose verbose)
 {
-	const struct whack_message *wm = &request->wmr->wm;
+	const struct whack_message *wm = &wmr->wm;
 
 	/*
 	 * Reject {left,right}subnets=... combined with
@@ -357,8 +323,8 @@ void add_connections_resolve_continue(struct help_request *request,
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
 		diag_t d = add_connection(wm,
-					  &request->extracted_host_addrs,
-					  &request->resolved_host_addrs,
+					  extracted_host_addrs,
+					  resolved_host_addrs,
 					  verbose.logger);
 		if (d != NULL) {
 			llog_add_connection_failed(verbose, "%s", str_diag(d));
@@ -381,8 +347,8 @@ void add_connections_resolve_continue(struct help_request *request,
 	}
 
 	permutate_connection_subnets(wm,
-				     &request->extracted_host_addrs,
-				     &request->resolved_host_addrs,
+				     extracted_host_addrs,
+				     resolved_host_addrs,
 				     &left, &right, verbose);
 	pfreeany(left.subnets.list);
 	pfreeany(right.subnets.list);
@@ -451,7 +417,9 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 			return;
 		}
 
-		submit_add_connections(wmr, &extracted_host_addrs, conn_logger);
+		request_resolve_help(wmr, &extracted_host_addrs,
+				     add_connections_resolve_continue,
+				     conn_logger);
 	}
 	free_logger(&conn_logger, HERE);
 }
