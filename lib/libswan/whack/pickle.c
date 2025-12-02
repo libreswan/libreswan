@@ -440,7 +440,6 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		PICKLE_STRING(&wm->pubkey) &&
 		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
 		PICKLE_STRING(&wm->authby) &&
-		PICKLE_STRING(&wm->debug) &&
 		PICKLE_STRING(&wm->whack.initiate.remote_host) &&
 		PICKLE_STRING(&wm->whack.acquire.label) &&
 		pickle->conn(wp, logger) &&

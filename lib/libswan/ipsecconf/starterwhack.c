@@ -83,8 +83,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 	msg.failure_shunt = conn->failure_shunt;
 	msg.autostart = conn->values[KNCF_AUTO].option;
 
-	msg.debug = conn->values[KWS_DEBUG].string;
-
 	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {
 		return -1;
 	}

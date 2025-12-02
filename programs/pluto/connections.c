@@ -1312,9 +1312,9 @@ diag_t add_connection(const struct whack_message *wm,
 	 * connection to log against.
 	 */
 	lmod_t debug = {0};
-	if (wm->debug != NULL) {
+	if (wm->wm_debug != NULL) {
 		/* failure handled below */
-		ttolmod(shunk1(wm->debug), &debug, &debug_lmod_info, true/*enable*/);
+		ttolmod(shunk1(wm->wm_debug), &debug, &debug_lmod_info, true/*enable*/);
 	}
 
 	/*
@@ -1333,8 +1333,8 @@ diag_t add_connection(const struct whack_message *wm,
 	 * Now that there's a connection to log against, complain
 	 * about broken debug=.
 	 */
-	if (wm->debug != NULL && debug.set == LEMPTY) {
-		vwarning("debug=%s invalid, ignored", wm->debug);
+	if (wm->wm_debug != NULL && debug.set == LEMPTY) {
+		vwarning("debug=%s invalid, ignored", wm->wm_debug);
 	}
 
 	diag_t d = extract_connection(wm, host_addrs, c, root_config, verbose);
