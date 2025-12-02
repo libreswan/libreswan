@@ -278,14 +278,3 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 		cpu_usage_add(st->st_timing.main_usage, usage);
 	}
 }
-
-monotime_t monotime_from_threadtime(const threadtime_t time)
-{
-	monotime_t m = {
-		.mt = {
-			.tv_sec = time.wall_clock.tv_sec,
-			.tv_usec = time.wall_clock.tv_nsec / 1000,
-		}
-	};
-	return m;
-}

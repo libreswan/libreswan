@@ -21,7 +21,6 @@
 #include <time.h>		/* for struct timespec */
 
 #include "lswcdefs.h"		/* for PRINTF_LIKE() */
-#include "monotime.h"
 
 struct state;
 struct logger;
@@ -62,7 +61,6 @@ typedef struct cpu_timing threadtime_t;
 threadtime_t threadtime_start(void);
 void threadtime_stop(const threadtime_t *start,
 		     const char *fmt, ...) PRINTF_LIKE(2);
-monotime_t monotime_from_threadtime(const threadtime_t start);
 
 /*
  * For helper threads that have some context.
