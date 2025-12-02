@@ -25,50 +25,9 @@
 #define INDENT " "
 #define MISSING_FUDGE 0.001
 
-static struct timespec thread_clock(void)
-{
-	static const clockid_t clock_id = CLOCK_THREAD_CPUTIME_ID;
-	struct timespec now;
-	int e = clock_gettime(clock_id, &now);
-	passert(e == 0);
-	return now;
-}
-
-static struct timespec wall_clock(void)
-{
-	struct timespec now;
-	/* use the same clockid as monotime */
-	int e = clock_gettime(monotime_clockid(), &now);
-	passert(e == 0);
-	return now;
-}
-
-static double seconds_sub(struct timespec stop, const struct timespec start)
-{
-	/* compute seconds */
-	double seconds = (stop.tv_sec - start.tv_sec);
-	/* adjust for nanoseconds */
-	seconds += (double) stop.tv_nsec / 1000 / 1000 / 1000;
-	seconds -= (double) start.tv_nsec / 1000 / 1000 / 1000;
-	return seconds;
-}
-
-static struct cpu_usage threadtime_sub(threadtime_t l, threadtime_t r)
-{
-	struct cpu_usage s = {
-		.thread_seconds = seconds_sub(l.thread_clock, r.thread_clock),
-		.wall_seconds = seconds_sub(l.wall_clock, r.wall_clock),
-	};
-	return s;
-}
-
 threadtime_t threadtime_start(void)
 {
-	threadtime_t start = {
-		.thread_clock = thread_clock(),
-		.wall_clock = wall_clock(),
-	};
-	return start;
+	return cputime_start();
 }
 
 void threadtime_stop(const threadtime_t *start, const char *fmt, ...)
@@ -76,7 +35,7 @@ void threadtime_stop(const threadtime_t *start, const char *fmt, ...)
 	struct logger *logger = &global_logger;
 
 	if (LDBGP(DBG_CPU_USAGE, logger)) {
-		struct cpu_usage usage = threadtime_sub(threadtime_start(), *start);
+		struct cpu_usage usage = cputime_stop(*start);
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
 			va_list ap;
@@ -90,7 +49,7 @@ void threadtime_stop(const threadtime_t *start, const char *fmt, ...)
 logtime_t logtime_start(struct logger *logger)
 {
 	logtime_t start = {
-		.time = threadtime_start(),
+		.time = cputime_start(),
 		.logger = logger,
 		.level = logger->timing_level++,
 	};
@@ -101,7 +60,7 @@ struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 {
 	struct logger *logger = &global_logger;
 
-	struct cpu_usage usage = threadtime_sub(threadtime_start(), start->time);
+	struct cpu_usage usage = cputime_stop(start->time);
 	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			/* update is indented by 2 indents */
@@ -125,14 +84,14 @@ static const statetime_t disabled_statetime = {
 	.level = -1,
 };
 
-static void DBG_missing(const statetime_t *start, threadtime_t now,
-			threadtime_t last_log)
+static void DBG_missing(const statetime_t *start, cputime_t now,
+			cputime_t last_log)
 {
 	/*
 	 * If there a large blob of time unaccounted for since LAST,
 	 * log it as a separate line item.
 	 */
-	struct cpu_usage missing = threadtime_sub(now, last_log);
+	struct cpu_usage missing = cputime_sub(now, last_log);
 	if (missing.thread_seconds > MISSING_FUDGE) {
 		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			for (int i = 0; i < start->level; i++) {
@@ -145,7 +104,7 @@ static void DBG_missing(const statetime_t *start, threadtime_t now,
 }
 
 static statetime_t start_statetime(struct state *st,
-				   threadtime_t inception)
+				   cputime_t inception)
 {
 	statetime_t start = {
 		.so = st->st_serialno,
@@ -177,8 +136,8 @@ statetime_t statetime_start(struct state *st)
 		return disabled_statetime;
 	}
 	/* save last_log before start_statetime() updates it */
-	threadtime_t last_log = st->st_timing.last_log.time;
-	statetime_t start = start_statetime(st, threadtime_start());
+	cputime_t last_log = st->st_timing.last_log.time;
+	statetime_t start = start_statetime(st, cputime_start());
 	if (LDBGP(DBG_CPU_USAGE, logger) && start.level > 0) {
 		/*
 		 * If there a large blob of time unaccounted for since
@@ -190,7 +149,7 @@ statetime_t statetime_start(struct state *st)
 	return start;
 }
 
-statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
+statetime_t statetime_backdate(struct state *st, const cputime_t *inception)
 {
 	struct logger *logger = &global_logger;
 
@@ -215,7 +174,7 @@ statetime_t statetime_backdate(struct state *st, const threadtime_t *inception)
 	 * inception time so isn't useful.
 	 */
 	if (LDBGP(DBG_CPU_USAGE, logger)) {
-		DBG_missing(&start, threadtime_start(), *inception);
+		DBG_missing(&start, cputime_start(), *inception);
 	}
 	return start;
 }
@@ -241,7 +200,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 		return;
 	}
 
-	threadtime_t stop_time = threadtime_start();
+	cputime_t stop_time = cputime_start();
 
 	/*
 	 * If there a large blob of time unaccounted for since the
@@ -253,7 +212,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	}
 
 	/* time since start */
-	struct cpu_usage usage = threadtime_sub(stop_time, start->time);
+	struct cpu_usage usage = cputime_sub(stop_time, start->time);
 	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			/* update is indented by 2 indents */
