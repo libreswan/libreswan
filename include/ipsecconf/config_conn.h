@@ -101,7 +101,7 @@ enum config_conn_keyword {
 	KWS_IKE,
 	KWS_ESP,
 	KWS_AH,
-	KNCF_PHASE2,
+	KWS_PHASE2,
 	KWS_PHASE2ALG,
 
 	KWS_MODECFGBANNER,

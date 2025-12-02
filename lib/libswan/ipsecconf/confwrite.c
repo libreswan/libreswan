@@ -207,46 +207,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("type", str_sparse_long(&never_negotiate_shunt_names,
 					    conn->never_negotiate_shunt,
 					    &nb));
-	} else if (conn->values[KNCF_PHASE2].option != 0) {
-		enum encap_proto encap_proto = conn->values[KNCF_PHASE2].option;
-		enum type_options satype = conn->values[KNCF_TYPE].option;
-		/*
-		 * config-write-yn: for writing out optional
-		 * yn_options fields.
-		 */
-#define cwyn(NAME, KNCF)						\
-		{							\
-			if (conn->values[KNCF].option != YN_UNSET)	\
-				cwf(NAME, noyes[conn->values[KNCF].option == YN_YES]); \
-		}
-		switch (satype) {
-		case KS_TUNNEL:
-			cwf("type", "tunnel");
-			break;
-		case KS_TRANSPORT:
-			cwf("type", "transport");
-			break;
-		default:
-			break;
-		}
-
-		ckws("auth", AUTH);
-
-		if (encap_proto != ENCAP_PROTO_UNSET) {
-			/* story is lower-case */
-			name_buf eb;
-			cwf("phase2", str_enum_short(&encap_proto_story, encap_proto, &eb));
-		}
-
-		/* key-exchange= */
-
-		if (conn->values[KWS_KEYEXCHANGE].string != NULL) {
-			cwf("keyexchange", conn->values[KWS_KEYEXCHANGE].string);
-		} else if (conn->values[KWS_IKEv2].string != NULL) {
-			cwf("ikev2", conn->values[KWS_IKEv2].string);
-		}
-
-#undef cwyn
 	}
 
 	if (verbose)

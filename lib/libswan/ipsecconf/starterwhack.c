@@ -92,8 +92,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 		return -1;
 	}
 
-	msg.phase2 = conn->values[KNCF_PHASE2].option;
-
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
 	if (r != 0)
 		return r;

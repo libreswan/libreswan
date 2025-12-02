@@ -355,13 +355,23 @@ struct whack_message {
 
 	struct whack_end end[END_ROOF];
 
+	/* for WHACK_KEY: */
+	bool whack_key;
+	bool whack_addkey;
+	const char *keyid;	/* string 8 */
+	enum ipseckey_algorithm_type pubkey_alg;
+	const char *pubkey;
+
+	/* for WHACK_ADD */
+
 #define wm_hostaddrfamily conn[END_ROOF].value[KWS_HOSTADDRFAMILY]
 
 #define wm_ike conn[END_ROOF].value[KWS_IKE]	/* ike algo string
 						 * (separated by
 						 * commas) */
-	enum encap_proto phase2;		/* outer protocol:
-						 * ESP|AH */
+#define wm_phase2 conn[END_ROOF].value[KWS_PHASE2]	/* outer
+							 * protocol:
+							 * ESP|AH */
 #define wm_phase2alg conn[END_ROOF].value[KWS_PHASE2ALG]
 						/* outer protocol:
 						 * alg */
@@ -371,15 +381,6 @@ struct whack_message {
 #define wm_ah conn[END_ROOF].value[KWS_AH]	/* esp algo string
 						 * (separated by
 						 * commas) */
-
-	/* for WHACK_KEY: */
-	bool whack_key;
-	bool whack_addkey;
-	const char *keyid;	/* string 8 */
-	enum ipseckey_algorithm_type pubkey_alg;
-	const char *pubkey;
-
-	/* for WHACK_ADD */
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */
 #define wm_xauthby conn[END_ROOF].value[KWS_XAUTHBY]
