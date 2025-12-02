@@ -299,12 +299,14 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 }
 
 static void submit_add_connections(struct whack_message_refcnt *wmr,
+				   const struct extracted_host_addrs *extracted_host_addrs,
 				   struct logger *logger)
 {
 	struct help_request *request = alloc_help_request("ipsec add: resolve",
 							  discard_whack_add_request_content,
 							  logger);
 	request->wmr = refcnt_addref(wmr, logger, HERE);
+	request->extracted_host_addrs = (*extracted_host_addrs);
 	request_help(request, add_connections_resolve_helper, logger);
 }
 
@@ -313,15 +315,6 @@ helper_cb *add_connections_resolve_helper(struct help_request *request,
 					  enum helper_id helper_id UNUSED)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
-	diag_t d = extract_host_addrs(&request->wmr->wm,
-				      &request->extracted_host_addrs,
-				      verbose);
-	if (d != NULL) {
-		llog_add_connection_failed(verbose, "%s", str_diag(d));
-		pfree_diag(&d);
-		return NULL;
-	}
-
 	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs, verbose);
 	return add_connections_resolve_continue;
 }
@@ -450,7 +443,17 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 	struct logger *conn_logger = string_logger(HERE, "\"%s\"", wm->name);
 	whack_attach_where(conn_logger, show_logger(s), HERE);
 	{
-		submit_add_connections(wmr, conn_logger);
+		struct verbose verbose = VERBOSE(DEBUG_STREAM, conn_logger, NULL);
+		struct extracted_host_addrs extracted_host_addrs = {0};
+		diag_t d = extract_host_addrs(wm, &extracted_host_addrs, verbose);
+		if (d != NULL) {
+			llog_add_connection_failed(verbose, "%s", str_diag(d));
+			pfree_diag(&d);
+			free_logger(&conn_logger, HERE);
+			return;
+		}
+
+		submit_add_connections(wmr, &extracted_host_addrs, conn_logger);
 	}
 	free_logger(&conn_logger, HERE);
 }
