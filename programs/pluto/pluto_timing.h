@@ -55,13 +55,13 @@ struct cpu_usage {
  *
  * threadtime_t start = threadtime_start();
  * do something;
- * seconds_used = threadtime_stop(&start, serialno, "do something");
+ * threadtime_stop(&start, "do something");
  */
 
 typedef struct cpu_timing threadtime_t;
 threadtime_t threadtime_start(void);
-void threadtime_stop(const threadtime_t *start, so_serial_t serialno,
-		     const char *fmt, ...) PRINTF_LIKE(3);
+void threadtime_stop(const threadtime_t *start,
+		     const char *fmt, ...) PRINTF_LIKE(2);
 monotime_t monotime_from_threadtime(const threadtime_t start);
 
 /*

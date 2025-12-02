@@ -65,7 +65,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 	 */
 	threadtime_t get_time = threadtime_start();
 	CERTCertList *allcerts = PK11_ListCertsInSlot(slot);
-	threadtime_stop(&get_time, SOS_NOBODY, "%s() calling PK11_ListCertsInSlot()", __func__);
+	threadtime_stop(&get_time, "%s() calling PK11_ListCertsInSlot()", __func__);
 	if (allcerts == NULL) {
 		return root_certs;
 	}
@@ -93,7 +93,7 @@ struct root_certs *root_certs_addref_where(where_t where, struct logger *owner)
 		CERT_AddCertToListTail(root_certs->trustcl, dup);
 	}
 	CERT_DestroyCertList(allcerts);
-	threadtime_stop(&ca_time, SOS_NOBODY, "%s() filtering CAs", __func__);
+	threadtime_stop(&ca_time, "%s() filtering CAs", __func__);
 
 	return root_certs;
 }

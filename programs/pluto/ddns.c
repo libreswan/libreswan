@@ -190,7 +190,7 @@ static void connection_check_ddns(struct logger *logger)
 		connection_delref(&c, logger);
 	}
 
-	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
+	threadtime_stop(&start, "in %s for hostname lookup", __func__);
 }
 
 void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)

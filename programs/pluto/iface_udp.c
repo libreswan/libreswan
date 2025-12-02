@@ -122,7 +122,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		threadtime_t errqueue_start = threadtime_start();
 		bool errqueue_ok = check_msg_errqueue(ifp, POLLIN, __func__,
 						      logger);
-		threadtime_stop(&errqueue_start, SOS_NOBODY,
+		threadtime_stop(&errqueue_start,
 				"%s() calling check_incoming_msg_errqueue()", __func__);
 		if (!errqueue_ok) {
 			return false; /* no normal message to read */

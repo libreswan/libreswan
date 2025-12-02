@@ -71,21 +71,14 @@ threadtime_t threadtime_start(void)
 	return start;
 }
 
-void threadtime_stop(const threadtime_t *start, so_serial_t serialno, const char *fmt, ...)
+void threadtime_stop(const threadtime_t *start, const char *fmt, ...)
 {
 	struct logger *logger = &global_logger;
 
 	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		struct cpu_usage usage = threadtime_sub(threadtime_start(), *start);
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			if (serialno > 0) {
-				/* on thread so in background */
-				jam_string(buf, "(");
-				jam_so(buf, serialno);
-				jam_string(buf, ") ");
-			}
-			jam(buf, PRI_CPU_USAGE" in ",
-				pri_cpu_usage(usage));
+			jam(buf, PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
