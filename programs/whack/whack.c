@@ -1015,6 +1015,8 @@ int main(int argc, char **argv)
 	/* used to accumulate authby options such as --psk, et.al. */
 	char *authby = NULL;
 	enum yne_options esn = YNE_UNSET;
+	/* --redirect-to or --global-redirect-to */
+	const char *redirect_to = NULL;
 
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_WHACK);
@@ -1248,19 +1250,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REDIRECT_TO:	/* --redirect-to <ip> */
-			/* either active, or or add */
+			/* either active, global, or or add */
 			/* .whack_command deciphered below */
-			msg.wm_redirect_to = optarg;
+			redirect_to = optarg;
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect  {yes,no,auto} */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.global_redirect = optarg_sparse(logger, 0, &global_redirect_names);
+			msg.whack.global_redirect.kind = optarg_sparse(logger, 0, &global_redirect_names);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to <ip> */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.wm_redirect_to = optarg; /* could be empty string */
+			redirect_to = optarg;
 			continue;
 
 		case OPT_DDOS_MODE:
@@ -2191,14 +2193,18 @@ int main(int argc, char **argv)
 	 * --to sets WHACK_ADD and global-redirect-to sets
 	 * --WHACK_GLOBAL_REDIRECT.
 	 */
-	if (msg.wm_redirect_to != NULL) {
+	if (redirect_to != NULL) {
 		switch (msg.whack_command) {
 		case 0:
+		case WHACK_ACTIVE_REDIRECT:
 			whack_command(&msg, WHACK_ACTIVE_REDIRECT);
+			msg.whack.active_redirect.to = redirect_to;
+			break;
+		case WHACK_GLOBAL_REDIRECT:
+			msg.whack.global_redirect.to = redirect_to;
 			break;
 		case WHACK_ADD:
-		case WHACK_ACTIVE_REDIRECT:
-		case WHACK_GLOBAL_REDIRECT:
+			msg.wm_redirect_to = redirect_to;
 			break;
 		default:
 			diagw("unexpected --redirect-to");

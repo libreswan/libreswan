@@ -248,10 +248,22 @@ struct whack_list {
 };
 
 struct whack_initiate {
-	const char *remote_host;
 #if 0
-	const char *name;
+	const char *connection;
 #endif
+	const char *remote_host;
+};
+
+struct whack_global_redirect {
+	enum global_redirect kind;
+	const char *to; /* either --global-redirect-to or --redirect-to */
+};
+
+struct whack_active_redirect {
+#if 0
+	const char *connection;
+#endif
+	const char *to;
 };
 
 /*
@@ -344,6 +356,8 @@ struct whack_message {
 		struct whack_crash crash;
 		struct whack_list list;
 		struct whack_initiate initiate;
+		struct whack_global_redirect global_redirect;
+		struct whack_active_redirect active_redirect;
 	} whack;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
@@ -408,7 +422,6 @@ struct whack_message {
 	 * REDIRECT_TO is used by WHACK_ADD, WHACK_ACTIVE_REDIRECT and
 	 * WHACK_GLOBAL_REDIRECT.
 	 */
-	enum global_redirect global_redirect;
 #define wm_accept_redirect conn[END_ROOF].value[KWS_ACCEPT_REDIRECT]
 #define wm_send_redirect conn[END_ROOF].value[KWS_SEND_REDIRECT]
 #define wm_redirect_to conn[END_ROOF].value[KWS_REDIRECT_TO]
