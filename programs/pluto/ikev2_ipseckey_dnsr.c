@@ -44,7 +44,7 @@ void free_ipseckey_dns(struct p_dns_req *d)
 		return;
 
 	if (d->ub_async_id != 0) {
-		ub_cancel(get_unbound_ctx(), d->ub_async_id);
+		ub_cancel(d->ctx, d->ub_async_id);
 		d->ub_async_id = 0;
 	}
 
@@ -484,12 +484,12 @@ dns_status dns_qry_start(struct p_dns_req *dnsr)
 	int ub_ret;
 	dns_status ret;
 
-	PASSERT(dnsr->logger, get_unbound_ctx() != NULL);
+	PASSERT(dnsr->logger, dnsr->ctx != NULL);
 	ldbg(dnsr->logger, "start %s", dnsr->log_buf);
 
 	dnsr->start_time = realnow();
 
-	ub_ret = ub_resolve_event(get_unbound_ctx(), dnsr->qname, dnsr->qtype,
+	ub_ret = ub_resolve_event(dnsr->ctx, dnsr->qname, dnsr->qtype,
 				  dnsr->qclass, dnsr, ipseckey_ub_cb, &dnsr->ub_async_id);
 
 	if (ub_ret != 0) {

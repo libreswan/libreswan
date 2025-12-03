@@ -396,6 +396,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	}
 
 	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
+	p->ctx = get_unbound_ctx();
 	p->so_serial = ike->sa.st_serialno;
 	p->md = md_addref(md);
 	p->callback = callback;
