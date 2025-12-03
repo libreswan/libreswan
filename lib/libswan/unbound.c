@@ -41,6 +41,7 @@
 #include "ip_info.h"
 
 static struct ub_ctx *dns_ctx = NULL;
+static lswglob_match_cb add_trust_anchors;
 
 void unbound_ctx_free(void)
 {
@@ -52,7 +53,7 @@ void unbound_ctx_free(void)
 
 static void add_trust_anchors(unsigned count, char **files,
 			      struct lswglob_context *context UNUSED,
-			      struct logger *logger)
+			      const struct logger *logger)
 {
 	for (unsigned i = 0; i < count; i++) {
 		const char *file = files[i];
