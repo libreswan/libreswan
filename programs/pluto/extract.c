@@ -1106,9 +1106,9 @@ static diag_t extract_authby(struct authby *authby, lset_t *sighash_policy,
 		return NULL;
 	}
 
-	if (wm->authby != NULL) {
+	if (wm->wm_authby != NULL) {
 
-		shunk_t curseby = shunk1(wm->authby);
+		shunk_t curseby = shunk1(wm->wm_authby);
 		while (true) {
 
 			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
