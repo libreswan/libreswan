@@ -263,7 +263,7 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 	ldbg(logger, "processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);
-	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
+	threadtime_stop(&start, "global timer %s", gt->name);
 }
 
 void whack_impair_call_global_event_handler(enum global_timer timer,
@@ -284,7 +284,7 @@ void whack_impair_call_global_event_handler(enum global_timer timer,
 	llog(IMPAIR_STREAM, logger, "injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
 	gt->cb(logger);
-	threadtime_stop(&start, SOS_NOBODY, "global timer %s", gt->name);
+	threadtime_stop(&start, "global timer %s", gt->name);
 }
 
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
@@ -418,7 +418,7 @@ static void signal_handler_handler(evutil_socket_t fd UNUSED,
 	ldbg(logger, "processing signal %s", se->name);
 	threadtime_t start = threadtime_start();
 	se->cb(logger);
-	threadtime_stop(&start, SOS_NOBODY, "signal handler %s", se->name);
+	threadtime_stop(&start, "signal handler %s", se->name);
 }
 
 static void install_signal_handlers(const struct logger *logger)
@@ -635,7 +635,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 		threadtime_t start = threadtime_start();
 		stf_status status = e->callback(NULL, NULL, e->context);
 		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
-		threadtime_stop(&start, e->serialno, "resume %s", e->name);
+		threadtime_stop(&start, "("PRI_SO") resume %s",
+				pri_so(e->serialno), e->name);
 	} else {
 		/* no previous state */
 		statetime_t start = statetime_start(st);
@@ -779,7 +780,7 @@ static void callback_handler(void *arg, const struct timer_event *event)
 
 	threadtime_t start = threadtime_start();
 	e.callback(e.story, st, e.context);
-	threadtime_stop(&start, SOS_NOBODY, "callback %s", e.story);
+	threadtime_stop(&start, "callback %s", e.story);
 }
 
 void schedule_callback(const char *story,

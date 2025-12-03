@@ -661,7 +661,7 @@ void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
 
 		fd_delref(&whackfd, &whack_logger);
 	}
-	threadtime_stop(&start, SOS_NOBODY, "whack");
+	threadtime_stop(&start, "whack");
 }
 
 /*

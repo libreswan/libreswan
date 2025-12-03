@@ -328,8 +328,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 		pexpect(md == NULL);
 	}
 
-	threadtime_stop(&md_start, SOS_NOBODY,
-			"%s() reading and processing packet", __func__);
+	threadtime_stop(&md_start, "%s() reading and processing packet", __func__);
 }
 
 static void handle_md_event(const char *story UNUSED, struct state *st, void *context)

@@ -907,7 +907,7 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed,
 	struct secret_pubkey_stuff *pks;
 	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert,
 						     &pks, load_needed, logger);
-	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
+	threadtime_stop(&start, "%s() loading private key %s", __func__,
 			cert->nss_cert->nickname);
 	return err;
 }
@@ -919,6 +919,6 @@ err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed,
 	struct secret_pubkey_stuff *pks;
 	err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, ckaid,
 						      &pks, load_needed, logger);
-	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key using CKAID", __func__);
+	threadtime_stop(&start, "%s() loading private key using CKAID", __func__);
 	return err;
 }
