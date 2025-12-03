@@ -311,18 +311,16 @@ static void submit_add_connections(struct whack_message_refcnt *wmr,
 }
 
 helper_cb *add_connections_resolve_helper(struct help_request *request,
-					  const struct logger *logger,
+					  struct verbose verbose,
 					  enum helper_id helper_id UNUSED)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs, verbose);
 	return add_connections_resolve_continue;
 }
 
 void add_connections_resolve_continue(struct help_request *request,
-				      const struct logger *logger)
+				      struct verbose verbose)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	const struct whack_message *wm = &request->wmr->wm;
 
 	/*

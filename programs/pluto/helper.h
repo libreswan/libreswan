@@ -34,6 +34,8 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
+#include "verbose.h"
+
 struct help_request;
 
 #define alloc_help_request(WHAT, DISCARD_CONTENT, OWNER)		\
@@ -56,9 +58,9 @@ enum helper_id {
 };
 
 typedef void (helper_cb)(struct help_request *request,
-			 const struct logger *logger);
+			 struct verbose verbose);
 typedef helper_cb *(helper_fn)(struct help_request *request,
-			       const struct logger *logger,
+			       struct verbose verbose,
 			       enum helper_id id);
 
 void request_help_where(struct refcnt *request,

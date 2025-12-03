@@ -161,10 +161,11 @@ unsigned nhelpers(void)
 
 static void do_job(struct job *job)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, job->logger, NULL);
 	ldbg(job->logger, PRI_JOB_HELPER": request started",
 	     pri_job_helper(job));
 	job->callback = job->helper((struct help_request*) job->request,
-				    job->logger, job->helper_id);
+				    verbose, job->helper_id);
 	ldbg(job->logger, PRI_JOB_HELPER": request %s",
 	     pri_job_helper(job),
 	     (job->callback == NULL ? "failed" : "succeeded"));
@@ -401,7 +402,7 @@ static void resume_main_thread(const char *story,
 	if (job->callback != NULL) {
 		vtime_t start = vdbg_start(PRI_JOB_HELPER": %s: resuming",
 					   pri_job_helper(job), story);
-		job->callback((struct help_request *)job->request, job->logger);
+		job->callback((struct help_request *)job->request, verbose);
 		vdbg_stop(start, PRI_JOB_HELPER, pri_job_helper(job));
 	} else {
 		/* should already be logged */

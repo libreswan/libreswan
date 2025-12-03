@@ -237,13 +237,13 @@ void delayed_help_request(const char *story UNUSED,
 }
 
 helper_cb *server_pool_helper(struct help_request *request,
-			      const struct logger *task_logger,
+			      struct verbose verbose, /*task*/
 			      enum helper_id helper_id)
 {
 	/* might be cancelled */
 	if (nhelpers() > 0) {
 		if (impair.helper_thread_delay.enabled) {
-			llog(IMPAIR_STREAM, task_logger,
+			llog(IMPAIR_STREAM, verbose.logger,
 			     PRI_REQUEST": helper is pausing for %u seconds",
 			     pri_request(request), impair.helper_thread_delay.value);
 			sleep(impair.helper_thread_delay.value);
@@ -258,9 +258,9 @@ helper_cb *server_pool_helper(struct help_request *request,
 		return server_pool_callback;
 	}
 
-	logtime_t start = logtime_start(request->task_logger); /* needs to be RW */
+	vtime_t start = vdbg_start("%d", helper_id);
 	request->handler->computer_fn(request->task_logger, request->task, helper_id);
-	request->time_used = logtime_stop(&start, "%d", helper_id);
+	request->time_used = vdbg_stop(start, "%d", helper_id);
 
 	return server_pool_callback;
 }
@@ -280,36 +280,36 @@ void delete_cryptographic_continuation(struct state *st)
 }
 
 void server_pool_callback(struct help_request *request,
-			  const struct logger *task_logger)
+			  struct verbose verbose/*task*/)
 {
 	struct state *callback_sa = state_by_serialno(request->callback_so);
 	if (callback_sa == NULL) {
-		ldbg(task_logger, PRI_REQUEST": callback sa "PRI_SO" disappeared",
+		vdbg(PRI_REQUEST": callback sa "PRI_SO" disappeared",
 		     pri_request(request),
 		     pri_so(request->callback_so));
 		/* Cancelling is part of deleting the SA. */
-		PEXPECT(task_logger, request->cancelled);
+		vexpect(request->cancelled);
 		return;
 	}
 
 	struct state *task_sa = state_by_serialno(request->task_so);
 	if (task_sa == NULL) {
 		/* oops, the task state disappeared! */
-		llog_pexpect(task_logger, HERE,
+		llog_pexpect(verbose.logger, HERE,
 			     PRI_REQUEST": task sa disappeared",
 			     pri_request(request));
-		PEXPECT(task_logger, request->cancelled);
+		vexpect(request->cancelled);
 		return;
 	}
 
 	if (request->cancelled) {
-		ldbg(task_logger, PRI_REQUEST": request cancelled", pri_request(request));
-		PEXPECT(task_logger, task_sa->st_offloaded_task == NULL);
+		vdbg(PRI_REQUEST": request cancelled", pri_request(request));
+		vexpect(task_sa->st_offloaded_task == NULL);
 		return;
 	}
 
 	if (task_sa->st_offloaded_task != request) {
-		llog_pexpect(task_logger, HERE,
+		llog_pexpect(verbose.logger, HERE,
 			     PRI_REQUEST": .st_offloaded_task @%p does not match request @%p",
 			     pri_request(request),
 			     task_sa->st_offloaded_task,
@@ -318,7 +318,7 @@ void server_pool_callback(struct help_request *request,
 		return;
 	}
 
-	refcnt_delref(&task_sa->st_offloaded_task, task_logger, HERE);
+	refcnt_delref(&task_sa->st_offloaded_task, verbose.logger, HERE);
 
 	/* add the helper's time to the bill */
 	cpu_usage_add(task_sa->st_timing.helper_usage, request->time_used);
@@ -326,13 +326,12 @@ void server_pool_callback(struct help_request *request,
 	statetime_t start = statetime_start(callback_sa);
 	{
 		/* run the callback */
-		PASSERT(task_logger, request->handler != NULL);
-		PASSERT(task_logger, request->handler->completed_cb != NULL);
+		vassert(request->handler != NULL);
+		vassert(request->handler->completed_cb != NULL);
 		stf_status status = request->handler->completed_cb(callback_sa, request->md, request->task);
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* ST may have been freed! */
-			ldbg(task_logger,
-			     PRI_REQUEST": resume suppressed by complete_state_transition()",
+			vdbg(PRI_REQUEST": resume suppressed by complete_state_transition()",
 			     pri_request(request));
 		} else {
 			complete_state_transition(callback_sa, request->md, status);
