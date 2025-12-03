@@ -233,17 +233,19 @@ typedef struct {
 		start_;						\
 	})
 
-#define vdbg_stop(START, FMT, ...)					\
-	{								\
-		verbose.level = (START).level;				\
-		if (verbose.debug ||					\
-		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {		\
-			struct cpu_usage usage = cputime_stop((START).time); \
-			VDBG_log(PRI_CPU_USAGE" in %s() "FMT,		\
-				 pri_cpu_usage(usage),			\
-				 __func__,				\
-				 ##__VA_ARGS__);			\
-		}							\
-	}
+#define vdbg_stop(START, FMT, ...)				\
+	({							\
+		struct cpu_usage usage_ = {0};			\
+		verbose.level = (START).level;			\
+		if (verbose.debug ||				\
+		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {	\
+			usage_ = cputime_stop((START).time);	\
+			VDBG_log(PRI_CPU_USAGE" in %s() "FMT,	\
+				 pri_cpu_usage(usage_),		\
+				 __func__,			\
+				 ##__VA_ARGS__);		\
+		}						\
+		usage_;						\
+	})
 
 #endif
