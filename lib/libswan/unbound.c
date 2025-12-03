@@ -40,24 +40,20 @@
 #include "lswlog.h"
 #include "ip_info.h"
 
-static struct ub_ctx *dns_ctx = NULL;
 static lswglob_match_cb add_trust_anchors;
 
-void unbound_ctx_free(void)
-{
-	if (dns_ctx != NULL) {
-		ub_ctx_delete(dns_ctx);
-		dns_ctx = NULL;
-	}
-}
+struct lswglob_context {
+	struct ub_ctx *ub;
+};
 
 static void add_trust_anchors(unsigned count, char **files,
-			      struct lswglob_context *context UNUSED,
+			      struct lswglob_context *context,
 			      const struct logger *logger)
 {
+	struct ub_ctx *ub_ctx = context->ub;
 	for (unsigned i = 0; i < count; i++) {
 		const char *file = files[i];
-		int ugh = ub_ctx_add_ta_file(dns_ctx, file);
+		int ugh = ub_ctx_add_ta_file(ub_ctx, file);
 		if (ugh != 0) {
 			llog(RC_LOG, logger, "ignored trusted key file %s: %s",
 			     file,  ub_strerror(ugh));
@@ -67,19 +63,19 @@ static void add_trust_anchors(unsigned count, char **files,
 	}
 }
 
-static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
-			       const char *trusted,
-			       struct logger *logger)
+void unbound_ctx_config(struct ub_ctx *ub_ctx,
+			const struct dnssec_config *config,
+			const struct logger *logger)
 {
 	int ugh;
 
 	if (LDBGP(DBG_BASE, logger)) {
-		ub_ctx_debuglevel(dns_ctx, 5);
+		ub_ctx_debuglevel(ub_ctx, 5);
 		LDBG_log(logger, "unbound context created - setting debug level to 5");
 	}
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
-	ugh = ub_ctx_hosts(dns_ctx, "/etc/hosts");
+	ugh = ub_ctx_hosts(ub_ctx, "/etc/hosts");
 	if (ugh != 0) {
 		llog(RC_LOG, logger,
 			    "error reading hosts: %s: %s",
@@ -101,7 +97,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	 *  Not other cases (eg. socket errors happen too far away in the code)."
 	 */
 	errno = 0;
-	ugh = ub_ctx_resolvconf(dns_ctx, "/etc/resolv.conf");
+	ugh = ub_ctx_resolvconf(ub_ctx, "/etc/resolv.conf");
 	if (ugh != 0) {
 		int e = errno;	/* protect value from ub_strerror */
 
@@ -116,7 +112,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	 * Limit outgoing ports to those allowed by common SELinux policy
 	 */
 	errno = 0;
-	ugh = ub_ctx_set_option(dns_ctx, "outgoing-port-avoid:", "0-65535");
+	ugh = ub_ctx_set_option(ub_ctx, "outgoing-port-avoid:", "0-65535");
 	if (ugh != 0) {
 		llog(RC_LOG, logger,
 			    "error setting outgoing-port-avoid: %s: %s",
@@ -126,7 +122,7 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 	}
 
 	errno = 0;
-	ugh = ub_ctx_set_option(dns_ctx, "outgoing-port-permit:", "32768-60999");
+	ugh = ub_ctx_set_option(ub_ctx, "outgoing-port-permit:", "32768-60999");
 		if (ugh != 0) {
 		llog(RC_LOG, logger,
 			    "error setting outgoing-port-permit: %s: %s",
@@ -135,28 +131,28 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 		ldbg(logger, "outgoing-port-permit set 32768-60999");
 	}
 
-	if (!do_dnssec) {
+	if (!config->enable) {
 		/* No DNSSEC - nothing more to configure */
 		ldbg(logger, "dnssec validation disabled by configuration");
 		return;
 	}
 
 	/* Only DNSSEC related configuration from here */
-	if (rootfile == NULL) {
-		if (trusted == NULL) {
+	if (config->rootkey_file == NULL) {
+		if (config->anchors == NULL) {
 			llog(RC_LOG, logger,
-				    "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
+			     "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
 			llog(RC_LOG, logger,
-				    "WARNING: DNSSEC validation disabled");
+			     "WARNING: DNSSEC validation disabled");
 			return;
 		} else {
 			llog(RC_LOG, logger,
-				    "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
+			     "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
 		}
 	} else {
-		ldbg(logger, "loading dnssec root key from:%s", rootfile);
+		ldbg(logger, "loading dnssec root key from:%s", config->rootkey_file);
 		errno = 0;
-		ugh = ub_ctx_add_ta_file(dns_ctx, rootfile);
+		ugh = ub_ctx_add_ta_file(ub_ctx, config->rootkey_file);
 		if (ugh != 0) {
 			int e = errno;	/* protect value from ub_strerror */
 
@@ -168,14 +164,17 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
 		}
 	}
 
-	if (trusted == NULL) {
+	if (config->anchors == NULL) {
 		ldbg(logger, "no additional dnssec trust anchors defined via dnssec-trusted= option");
 		return;
 	}
 
-	if (!lswglob(trusted, "trusted anchor", add_trust_anchors,
-		     /*lswglob_context*/NULL, logger)) {
-		llog(RC_LOG, logger, "no trust anchor files matched '%s'", trusted);
+	struct lswglob_context lswglob_context = {
+		.ub = ub_ctx,
+	};
+	if (!lswglob(config->anchors, "trusted anchor", add_trust_anchors,
+		     &lswglob_context, logger)) {
+		llog(RC_LOG, logger, "no trust anchor files matched '%s'", config->anchors);
 	}
 }
 
@@ -183,8 +182,19 @@ static void unbound_ctx_config(bool do_dnssec, const char *rootfile,
  * initialize a ub_ctx for asynchronous calls using libevent from pluto.
  *  only call once
  */
-diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
-			  const char *rootfile, const char *trusted,
+
+static struct ub_ctx *dns_ctx = NULL;
+
+void unbound_ctx_free(void)
+{
+	if (dns_ctx != NULL) {
+		ub_ctx_delete(dns_ctx);
+		dns_ctx = NULL;
+	}
+}
+
+diag_t unbound_event_init(struct event_base *eb,
+			  const struct dnssec_config *config,
 			  struct logger *logger)
 {
 	PASSERT(logger, dns_ctx == NULL); /* block re-entry to the function */
@@ -192,7 +202,7 @@ diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
 	if (dns_ctx == NULL) {
 		return diag("failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
 	}
-	unbound_ctx_config(do_dnssec, rootfile, trusted, logger);
+	unbound_ctx_config(dns_ctx, config, logger);
 	return NULL;
 }
 
@@ -201,13 +211,13 @@ diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
  * Call this function once directly, such as addconn.
  * dns_ctx is static in this file. call unbound_ctx_free() to free it.
  */
-void unbound_sync_init(bool do_dnssec, const char *rootfile,
-		       const char *trusted, struct logger *logger)
+void unbound_sync_init(const struct dnssec_config *config,
+		       struct logger *logger)
 {
 	PASSERT(logger, dns_ctx == NULL); /* block re-entry to the function */
 	dns_ctx = ub_ctx_create();
 	PASSERT(logger, dns_ctx != NULL);
-	unbound_ctx_config(do_dnssec, rootfile, trusted, logger);
+	unbound_ctx_config(dns_ctx, config, logger);
 }
 
 /*

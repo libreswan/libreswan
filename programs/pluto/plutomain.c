@@ -95,10 +95,7 @@
 #include "labeled_ipsec.h"		/* for init_labeled_ipsec() */
 
 # include "pluto_sd.h"		/* for pluto_sd_init() */
-
-#ifdef USE_DNSSEC
-#include "dnssec.h"
-#endif
+#include "dnssec.h"		/* for struct dnssec_config; */
 
 #ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
@@ -115,11 +112,7 @@ static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
 static char *conffile = NULL;
 
-static struct {
-	bool enable;
-	const char *rootkey_file;
-	const char *anchors;
-} pluto_dnssec = {0}; /* see config_setup.[hc] for defaults */
+static struct dnssec_config pluto_dnssec; /* see config_setup.[hc] for defaults */
 
 void free_pluto_main(void)
 {
@@ -1527,22 +1520,23 @@ int main(int argc, char **argv)
 	pluto_sd_init(logger);
 #endif
 
-#ifdef USE_DNSSEC
 	pluto_dnssec.enable = config_setup_yn(oco, KYN_DNSSEC_ENABLE);
 	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
 	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
+#ifdef USE_DNSSEC
 	d = unbound_event_init(get_pluto_event_base(),
-			       pluto_dnssec.enable,
-			       pluto_dnssec.rootkey_file,
-			       pluto_dnssec.anchors,
+			       &pluto_dnssec,
 			       logger/*for-warnings*/);
 	if (d != NULL) {
 		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0, "%s", str_diag(d));
 	}
-	llog(RC_LOG, logger, "DNSSEC support [%s]",
-	     (pluto_dnssec.enable ? "enabled" : "disabled"));
+	llog(RC_LOG, logger, "DNSSEC support [%s]", (pluto_dnssec.enable ? "enabled" : "disabled"));
 #else
 	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");
+	if (pluto_dnssec.enable) {
+		llog(WARNING_STREAM, logger, "dnssec= ignored");
+		pluto_dnssec.enable = false;
+	}
 #endif
 
 	/*
