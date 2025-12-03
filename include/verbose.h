@@ -19,6 +19,7 @@
 
 #include "where.h"
 #include "pluto_constants.h"	/* for enum stream; */
+#include "cputime.h"
 
 /*
  * Pass-by-value wrapper around logger to make it easy to generate
@@ -210,5 +211,39 @@ struct verbose {
 		LLOG_JAMBUF(verbose.stream, verbose.logger, BUF)	\
 			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
 			     cond_; cond_ = false)
+
+/*
+ * Verbose timing.
+ */
+
+typedef struct {
+	int level;
+	cputime_t time;
+} vtime_t;
+
+#define vdbg_start(FMT, ...)					\
+	({							\
+		vtime_t start_ = {0};				\
+		if (verbose.debug ||				\
+		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {	\
+			VDBG_log(FMT, ##__VA_ARGS__);		\
+			start_.time = cputime_start();		\
+		};						\
+		start_.level = verbose.level++,			\
+		start_;						\
+	})
+
+#define vdbg_stop(START, FMT, ...)					\
+	{								\
+		verbose.level = (START).level;				\
+		if (verbose.debug ||					\
+		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {		\
+			struct cpu_usage usage = cputime_stop((START).time); \
+			VDBG_log(PRI_CPU_USAGE" in %s() "FMT,		\
+				 pri_cpu_usage(usage),			\
+				 __func__,				\
+				 ##__VA_ARGS__);			\
+		}							\
+	}
 
 #endif

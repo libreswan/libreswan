@@ -15,7 +15,7 @@
  */
 
 #ifndef CPUTIME_H
-#define CPUIMTE_H    /* seen it, no need to see it again */
+#define CPUTIME_H    /* seen it, no need to see it again */
 
 #include <time.h>		/* for struct timespec */
 

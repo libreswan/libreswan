@@ -31,6 +31,7 @@
 
 #include "defs.h"
 #include "log.h"
+#include "verbose.h"
 #include "server.h"
 #include "whack_shutdown.h"		/* for exiting_pluto; */
 #include "helper.h"
@@ -390,20 +391,21 @@ static void resume_main_thread(const char *story,
 			       void *arg)
 {
 	struct job *job = arg;
-	PASSERT(job->logger, in_main_thread());
-	PEXPECT(job->logger, st == NULL);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, job->logger, NULL);
+	vassert(in_main_thread());
+	vexpect(st == NULL);
 
 	/*
 	 * call the continuation (skip if suppressed)
 	 */
 	if (job->callback != NULL) {
-		ldbg(job->logger, PRI_JOB_HELPER": %s: resuming",
-		     pri_job_helper(job), story);
+		vtime_t start = vdbg_start(PRI_JOB_HELPER": %s: resuming",
+					   pri_job_helper(job), story);
 		job->callback((struct help_request *)job->request, job->logger);
+		vdbg_stop(start, PRI_JOB_HELPER, pri_job_helper(job));
 	} else {
 		/* should already be logged */
-		ldbg(job->logger, PRI_JOB_HELPER": %s: aborted",
-		     pri_job_helper(job), story);
+		vdbg(PRI_JOB_HELPER": %s: aborted", pri_job_helper(job), story);
 	}
 
 	free_job(&job);
