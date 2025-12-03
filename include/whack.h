@@ -347,8 +347,6 @@ struct whack_message {
 		struct whack_initiate initiate;
 	} whack;
 
-	const char *authby;
-
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
@@ -362,6 +360,8 @@ struct whack_message {
 	const char *pubkey;
 
 	/* for WHACK_ADD */
+
+#define wm_authby conn[END_ROOF].value[KWS_AUTHBY]
 
 #define wm_debug conn[END_ROOF].value[KWS_DEBUG]
 

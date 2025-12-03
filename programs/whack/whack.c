@@ -1012,6 +1012,7 @@ int main(int argc, char **argv)
 
 	struct optarg_family child_family = { 0, };
 
+	/* used to accumulate authby options such as --psk, et.al. */
 	char *authby = NULL;
 	enum yne_options esn = YNE_UNSET;
 
@@ -2150,7 +2151,7 @@ int main(int argc, char **argv)
 		diagq("unexpected argument", argv[optind]);
 	}
 
-	msg.authby = authby;
+	msg.wm_authby = authby;
 
 	/*
 	 * For each possible form of the command, figure out if an argument
