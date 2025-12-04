@@ -38,9 +38,6 @@
 #include "defaultroute.h"	/* for struct route_addrs */
 #include "extract.h"
 
-/* time before retrying DDNS host lookup for phase 1 */
-#define PENDING_DDNS_INTERVAL secs_per_minute
-
 /*
  * Call me periodically to check to see if any DDNS tunnel can come up.
  * The order matters, we try to do the cheapest checks first.

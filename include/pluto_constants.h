@@ -189,8 +189,9 @@ enum global_timer {
 
 enum connection_event_kind {
 	CONNECTION_REVIVAL = 1,
+	CONNECTION_CHECK_DDNS,
 };
-#define CONNECTION_EVENT_KIND_ROOF (CONNECTION_REVIVAL+1)
+#define CONNECTION_EVENT_ROOF (CONNECTION_CHECK_DDNS+1)
 
 extern const struct enum_names connection_event_kind_names;
 
@@ -951,6 +952,12 @@ extern void init_pluto_constants(void);
 #define MAX_EXPIRE_SHUNT_INTERVAL_SECONDS 1000
 
 #define DEFAULT_SHUNT_LIFETIME_SECONDS (15 * secs_per_minute)
+
+/* DDNS
+ *
+ * Time before retrying DDNS host lookup for phase 1.
+ */
+#define PENDING_DDNS_INTERVAL secs_per_minute
 
 /*
  * By default messages are broadcast (to both log files and whack),
