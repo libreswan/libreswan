@@ -31,10 +31,17 @@
  * down the main thread with cryptography, increasing throughput.
  */
 
-#ifndef HELPERS_H
-#define HELPERS_H
+#ifndef HELPER_H
+#define HELPER_H
+
+#include <stdint.h>	/* for uintmax_t; */
+
+#include "where.h"
+
+#include "verbose.h"
 
 struct help_request;
+struct refcnt;
 
 #define alloc_help_request(WHAT, DISCARD_CONTENT, OWNER)		\
 	({								\
@@ -56,9 +63,9 @@ enum helper_id {
 };
 
 typedef void (helper_cb)(struct help_request *request,
-			 const struct logger *logger);
+			 struct verbose verbose);
 typedef helper_cb *(helper_fn)(struct help_request *request,
-			       const struct logger *logger,
+			       struct verbose verbose,
 			       enum helper_id id);
 
 void request_help_where(struct refcnt *request,
