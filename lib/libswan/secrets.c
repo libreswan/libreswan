@@ -68,6 +68,8 @@ struct fld {
 	ssize_t offset;
 };
 
+static lswglob_match_cb process_secret_files;
+
 static void process_secrets_file(struct file_lex_position *flp,
 				 struct secret **psecrets, const char *file_pat);
 
@@ -899,7 +901,7 @@ struct lswglob_context {
 
 static void process_secret_files(unsigned count, char **files,
 				 struct lswglob_context *context,
-				 struct logger *logger UNUSED)
+				 const struct logger *logger UNUSED)
 {
 	for (unsigned i = 0; i < count; i++) {
 		const char *file = files[i];

@@ -52,6 +52,7 @@ struct parser;
 #define MAX_INCLUDE_DEPTH	10
 
 static bool scanner_next_file(struct parser *parser);
+static lswglob_match_cb glob_include_callback;
 
 /* we want no actual output! */
 #define ECHO
@@ -172,9 +173,9 @@ struct lswglob_context {
 	const char *try;
 };
 
-static void glob_include_callback(unsigned count, char **files,
-				  struct lswglob_context *context,
-				  struct logger *logger)
+void glob_include_callback(unsigned count, char **files,
+			   struct lswglob_context *context,
+			   const struct logger *logger)
 {
 	/* success */
 

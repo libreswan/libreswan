@@ -4,23 +4,26 @@
 #include <stdbool.h>
 
 #include "ip_address.h"
-#include "diag.h"
 
 struct logger;
 struct event_base;
+struct ub_ctx;
+
+struct dnssec_config {
+	bool enable;
+	const char *rootkey_file;
+	const char *anchors;
+};
+
+void unbound_ctx_config(struct ub_ctx *dns_ctx,
+			const struct dnssec_config *config,
+			const struct logger *logger);
 
 extern void unbound_ctx_free(void);
-extern void unbound_sync_init(bool do_dnssec, const char *rootfile,
-			      const char *trusted, struct logger *logger);
-
-extern diag_t unbound_event_init(struct event_base *eb, bool do_dnssec,
-				 const char *rootfile, const char *trusted,
-				 struct logger *logger);
-
+extern void unbound_sync_init(const struct dnssec_config *config,
+			      struct logger *logger);
 extern bool unbound_resolve(const char *src, const struct ip_info *afi,
 			    ip_address *ipaddr, const struct logger *logger);
-
-extern struct ub_ctx *get_unbound_ctx(void);
 
 /*
  * returned in callback of ub_resolve_event

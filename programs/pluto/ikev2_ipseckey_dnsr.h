@@ -42,6 +42,7 @@ struct p_dns_req {
 	uint16_t qclass;
 
 	int ub_async_id;	/* used to track libunbound query, to cancel */
+	struct ub_ctx *ctx;
 
 	int rcode;		/* libunbound dns query rcode */
 	const char *rcode_name; /* rcode return txt defined by ldns */

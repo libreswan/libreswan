@@ -24,10 +24,14 @@
 struct logger;
 struct lswglob_context;
 
+typedef void (lswglob_match_cb)(unsigned count, char **files,
+				struct lswglob_context *,
+				const struct logger *logger);
+
 /* only returns false when no match */
 bool lswglob(const char *pattern, const char *what,
-	     void (*file)(unsigned count, char **files, struct lswglob_context *, struct logger *logger),
+	     lswglob_match_cb *matches,
 	     struct lswglob_context *context,
-	     struct logger *logger);
+	     const struct logger *logger);
 
 #endif
