@@ -193,19 +193,6 @@ void unbound_ctx_free(void)
 	}
 }
 
-diag_t unbound_event_init(struct event_base *eb,
-			  const struct dnssec_config *config,
-			  struct logger *logger)
-{
-	PASSERT(logger, dns_ctx == NULL); /* block re-entry to the function */
-	dns_ctx = ub_ctx_create_event(eb);
-	if (dns_ctx == NULL) {
-		return diag("failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
-	}
-	unbound_ctx_config(dns_ctx, config, logger);
-	return NULL;
-}
-
 /*
  * initialize a ub_ct for blocking dns calls. Do not call from pluto.
  * Call this function once directly, such as addconn.
@@ -305,9 +292,4 @@ bool unbound_resolve(const char *src, const struct ip_info *afi,
 
 	ldbg(logger, "success for %s lookup", afi->ip_name);
 	return true;
-}
-
-struct ub_ctx * get_unbound_ctx(void)
-{
-	return dns_ctx;
 }

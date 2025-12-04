@@ -81,6 +81,7 @@
 #include "lock_file.h"
 #include "ikev2_unsecured.h"	/* for pluto_drop_oppo_null; */
 #include "updown.h"		/* for pluto_dns_resolver; */
+#include "ikev2_ipseckey.h"	/* for init_ikev2_ipseckey() */
 #include "ddos.h"
 #include "helper.h"
 
@@ -1524,12 +1525,7 @@ int main(int argc, char **argv)
 	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
 	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
 #ifdef USE_DNSSEC
-	d = unbound_event_init(get_pluto_event_base(),
-			       &pluto_dnssec,
-			       logger/*for-warnings*/);
-	if (d != NULL) {
-		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0, "%s", str_diag(d));
-	}
+	init_ikev2_ipseckey(get_pluto_event_base(), &pluto_dnssec, logger);
 	llog(RC_LOG, logger, "DNSSEC support [%s]", (pluto_dnssec.enable ? "enabled" : "disabled"));
 #else
 	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");

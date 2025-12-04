@@ -3,8 +3,6 @@
 
 #include <stdbool.h>
 
-#include "diag.h"
-
 #include "ip_address.h"
 
 struct logger;
@@ -24,13 +22,8 @@ void unbound_ctx_config(struct ub_ctx *dns_ctx,
 extern void unbound_ctx_free(void);
 extern void unbound_sync_init(const struct dnssec_config *config,
 			      struct logger *logger);
-extern diag_t unbound_event_init(struct event_base *eb,
-				 const struct dnssec_config *config,
-				 struct logger *logger);
 extern bool unbound_resolve(const char *src, const struct ip_info *afi,
 			    ip_address *ipaddr, const struct logger *logger);
-
-extern struct ub_ctx *get_unbound_ctx(void);
 
 /*
  * returned in callback of ub_resolve_event

@@ -26,6 +26,9 @@
 #include <arpa/inet.h>	/* for inet_ntop */
 #include <arpa/nameser.h>
 
+#include <unbound.h>
+#include <unbound-event.h>
+
 #include "ttodata.h"
 #include "ip_address.h"
 #include "ip_info.h"
@@ -47,6 +50,8 @@
 
 #define LDNS_RR_TYPE_A 1
 #define LDNS_RR_TYPE_IPSECKEY 45
+
+static struct ub_ctx *ipseckey_unbound_ctx;
 
 static void ikev2_ipseckey_log_dns_err(struct ike_sa *ike,
 				       struct p_dns_req *dnsr,
@@ -396,7 +401,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	}
 
 	struct p_dns_req *p = alloc_thing(struct p_dns_req, "id remote dns");
-	p->ctx = get_unbound_ctx();
+	p->ctx = ipseckey_unbound_ctx;
 	p->so_serial = ike->sa.st_serialno;
 	p->md = md_addref(md);
 	p->callback = callback;
@@ -532,4 +537,25 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 	}
 
 	return DNS_FATAL;
+}
+
+void init_ikev2_ipseckey(struct event_base *event_base,
+			 const struct dnssec_config *config,
+			 const struct logger *logger)
+{
+	ldbg(logger, "allocating ipseckey's unbound ctx");
+	ipseckey_unbound_ctx = ub_ctx_create_event(event_base);
+	if (ipseckey_unbound_ctx == NULL) {
+		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0,
+		      "failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
+	}
+
+	unbound_ctx_config(ipseckey_unbound_ctx, config, logger);
+}
+
+void shutdown_ikev2_ipseckey(const struct logger *logger)
+{
+	ldbg(logger, "freeing ipseckey's unbound ctx");
+	ub_ctx_delete(ipseckey_unbound_ctx);
+	ipseckey_unbound_ctx = NULL;
 }
