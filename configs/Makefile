@@ -121,18 +121,21 @@ list-local-base:
 # Custom rules for ipsec.conf.5; manpages.mk should be updated to
 # mimic this behaviour.
 
-$(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml $(srcdir)/d.ipsec.conf/*.xml
+
+
+$(builddir)/ipsec.conf.5.man: $(srcdir)/ipsec.conf.5.xml
+$(builddir)/ipsec.conf.5.man: $(srcdir)/d.ipsec.conf/*/*.xml
 $(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.ok
-$(builddir)/ipsec.conf.5.ok:  $(srcdir)/d.ipsec.conf/*.xml
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
-	for x in d.ipsec.conf/*.xml ; do \
+	for x in d.ipsec.conf/*/*.xml ; do \
+		d=$$(basename $$(dirname $${x})) ; \
 		b=$$(basename $${x} .xml) ; \
 		if ! grep '"'$${x}'"' ipsec.conf.5.xml > /dev/null ; then \
-			echo '"'$${x}'"' missing ; \
+			echo 'ENTITY ... "'$${x}'"' missing ; \
 			exit 1 ; \
 		fi ; \
-		if ! grep '&'$${b}';' ipsec.conf.5.xml > /dev/null ; then \
-			echo $${b} missing ; \
+		if ! grep '&'$${d}.$${b}';' ipsec.conf.5.xml > /dev/null ; then \
+			echo '&'$${d}.$${b}';' missing ; \
 			exit 1 ; \
 		fi ; \
 	done
