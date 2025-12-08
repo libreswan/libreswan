@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>reject-simultaneous-ike-auth</option>
+    <option>reject-simultaneous-ike-auth=&yn_option;</option>
   </term>
   <listitem>
 

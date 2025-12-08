@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>ikepad=</option>
+    <option>ikepad=&yn_option;</option>
   </term>
   <listitem>
     <para>
@@ -20,6 +20,9 @@
       incorrectly padded to 4-bytes which caused interoperability
       issues.  To restore this behaviour, specify
       <option>ikepad=yes</option>.
+    </para>
+    <para>
+      The default value is <option>no</option>.
     </para>
     <para>
       In IKEv2, this option is ignored.

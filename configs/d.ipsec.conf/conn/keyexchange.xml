@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>keyexchange</option>
+    <option>keyexchange={ikev1,ikev2}</option>
   </term>
   <listitem>
     <para>

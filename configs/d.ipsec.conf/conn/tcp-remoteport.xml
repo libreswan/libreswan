@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>tcp-remoteport</option>
+    <option>tcp-remoteport=</option>
   </term>
   <listitem>
     <para>

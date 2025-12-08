@@ -1,23 +1,26 @@
 <varlistentry>
   <term>
-    <option>logappend</option>=&Yn_options;
+    <option>logappend=&yn_option;</option>
   </term>
   <listitem>
     <para>
-      If pluto is instructed to log to a file using
-      <option>logfile=</option>, this option determines whether the
-      log file should be appended to or overwritten.  Valid options
-      are <option>yes</option> (the default) to append and
-      <option>no</option> to overwrite.  Since on modern systems,
-      pluto is restarted by other daemons, such as systemd, this
-      option should be left at its default <option>yes</option> value
-      to preserve the log entries of previous runs of pluto.  This
-      option is mainly of use for running the test suite, which needs
-      to create new log files from scratch.
+      When pluto is logging to a file, as specified by
+      <option>logfile=</option>, open the log file in append mode or
+      truncate mode.  Since, on modern systems, &pluto; is restarted
+      by other daemons, such as &systemd;, this option should be left
+      as its default, <option>yes</option>, to preserve the log
+      entries of previous runs of &pluto;.
     </para>
     <para>
-      Prior to &Libreswan; version 5.3 <command>pluto</command>, when
-      invoked without a config file, had this option disabled.
+      This option is mainly intended for developers when running the
+      test suite, which needs to create new log files from scratch.
+    </para>
+    <para>
+      The default value is <option>yes</option>.
+    </para>
+    <para>
+      Prior to &Libreswan; version 5.3 &pluto;, when invoked without a
+      config file, would set this option to <option>no</option>.
     </para>
   </listitem>
 </varlistentry>

@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftusername</option>
+    <option>leftusername=</option>
   </term>
   <term>
-    <option>rightusername</option>
+    <option>rightusername=</option>
   </term>
   <listitem>
     <para>

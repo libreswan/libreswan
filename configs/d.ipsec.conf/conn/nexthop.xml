@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftnexthop</option>
+    <option>leftnexthop=&hostname;</option>
   </term>
   <term>
-    <option>rightnexthop</option>
+    <option>rightnexthop=&hostname;</option>
   </term>
   <listitem>
     <para>

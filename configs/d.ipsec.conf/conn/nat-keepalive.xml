@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>nat-keepalive</option>
+    <option>nat-keepalive=&yn_option;</option>
   </term>
   <listitem>
     <para>

@@ -1,12 +1,11 @@
 <varlistentry>
   <term>
-    <option>pam-authorize</option>
+    <option>pam-authorize=&yn_option;</option>
   </term>
   <listitem>
     <para>
       IKEv2 does not support receiving a plaintext username and
-      password.  &Libreswan; does not yet support EAP authentication
-      methods for IKE.  The pam-authorize=yes option performs an
+      password.  The pam-authorize=yes option performs an
       authorization call via PAM, but only includes the remote ID (not
       username or password). This allows for backends to disallow an
       ID based on non-password situations, such as "user disabled" or

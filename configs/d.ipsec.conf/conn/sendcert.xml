@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftsendcert</option>
+    <option>leftsendcert=</option>
   </term>
   <term>
-    <option>rightsendcert</option>
+    <option>rightsendcert=</option>
   </term>
   <listitem>
     <para>

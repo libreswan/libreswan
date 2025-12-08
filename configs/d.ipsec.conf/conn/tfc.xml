@@ -1,5 +1,5 @@
 <varlistentry>
-  <term><option>tfc</option></term>
+  <term><option>tfc=</option></term>
   <listitem>
     <para>
       Enable Traffic Flow Confidentiality ("TFC") (RFC-4303) for outgoing ESP

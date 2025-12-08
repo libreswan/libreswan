@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>mark-out</option>
+    <option>mark-out=</option>
   </term>
   <listitem>
     <para>

@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>mtu</option>
+    <option>mtu=</option>
   </term>
   <listitem>
     <para>

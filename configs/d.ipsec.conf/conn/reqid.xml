@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>reqid</option>
+    <option>reqid=</option>
   </term>
   <listitem>
     <para>

@@ -1,5 +1,7 @@
 <varlistentry>
-  <term><option>send-no-esp-tfc</option></term>
+  <term>
+    <option>send-no-esp-tfc=&yn_option;</option>
+  </term>
   <listitem>
     <para>
       Whether or not to tell the remote peer that we do not support Traffic Flow Confidentiality ("TFC")

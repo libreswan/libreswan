@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>require-id-on-certificate</option>
+    <option>require-id-on-certificate=&yn_option;</option>
   </term>
   <listitem>
     <para>

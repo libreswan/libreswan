@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>ipsec-max-bytes</option>
+    <option>ipsec-max-bytes=&byte_count;</option>
   </term>
   <listitem>
     <para>

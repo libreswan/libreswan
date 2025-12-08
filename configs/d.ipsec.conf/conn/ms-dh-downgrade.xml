@@ -1,5 +1,7 @@
 <varlistentry>
-  <term><option>ms-dh-downgrade</option></term>
+  <term>
+    <option>ms-dh-downgrade=&yn_option;</option>
+  </term>
   <listitem>
     <para>
       Whether to allow a downgrade of Diffie-Hellman group during

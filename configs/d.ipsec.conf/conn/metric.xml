@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>metric</option>
+    <option>metric=<replaceable>number</replaceable></option>
   </term>
   <listitem>
     <para>

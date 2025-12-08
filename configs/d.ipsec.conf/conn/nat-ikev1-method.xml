@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>nat-ikev1-method</option>
+    <option>nat-ikev1-method=</option>
   </term>
   <listitem>
     <para>

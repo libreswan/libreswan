@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>xauthfail</option>
+    <option>xauthfail=</option>
   </term>
   <listitem>
     <para>

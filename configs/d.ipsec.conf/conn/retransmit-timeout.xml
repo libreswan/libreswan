@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>retransmit-timeout</option>
+    <option>retransmit-timeout=&seconds;</option>
   </term>
   <listitem>
     <para>

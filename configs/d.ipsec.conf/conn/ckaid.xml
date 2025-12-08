@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftckaid</option>
+    <option>leftckaid=</option>
   </term>
   <term>
-    <option>rightckaid</option>
+    <option>rightckaid=</option>
   </term>
   <listitem>
     <para>

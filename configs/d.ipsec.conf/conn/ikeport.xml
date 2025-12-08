@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftikeport</option>
+    <option>leftikeport=&ip_port;</option>
   </term>
   <term>
-    <option>rightikeport</option>
+    <option>rightikeport=&ip_port;</option>
   </term>
   <listitem>
     <para>

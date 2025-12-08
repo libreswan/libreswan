@@ -1,12 +1,12 @@
 <varlistentry>
   <term>
-    <option>modecfgdns</option>
+    <option>modecfgdns=</option>
   </term>
   <term>
-    <option>modecfgdomains</option>
+    <option>modecfgdomains=</option>
   </term>
   <term>
-    <option>modecfgbanner</option>
+    <option>modecfgbanner=</option>
   </term>
   <listitem>
     <para>

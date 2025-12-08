@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>hostaddrfamily</option>
+    <option>hostaddrfamily={ipv4,ipv6}</option>
   </term>
   <listitem>
     <para>

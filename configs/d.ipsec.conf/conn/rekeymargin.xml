@@ -1,14 +1,16 @@
 <varlistentry>
   <term>
-    <option>rekeymargin</option>
+    <option>rekeymargin=&seconds;</option>
   </term>
   <listitem>
     <para>
       how long before connection expiry or keying-channel expiry
       should attempts to negotiate a replacement begin; acceptable
-      values as for <option>salifetime</option> (default
-      <option>9m</option>).  Relevant only locally, other end need not
-      agree on it.
+      values as for <option>salifetime</option>.  Relevant only
+      locally, other end need not agree on it.
+    </para>
+    <para>
+      The default value is <option>9m</option> (9 minutes).
     </para>
   </listitem>
 </varlistentry>

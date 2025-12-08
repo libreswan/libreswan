@@ -1,5 +1,7 @@
 <varlistentry>
-  <term><option>ike</option></term>
+  <term>
+    <option>ike=</option>
+  </term>
   <listitem>
     <para>
       IKE encryption/authentication algorithm to be used for the

@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>accept-redirect-to</option>
+    <option>accept-redirect-to=&ip_address;,...</option>
   </term>
   <listitem>
     <para>
@@ -11,8 +11,8 @@
       address gateway sends us in REDIRECT notify payload.
     </para>
     <para>
-      The value of this option is not considered at all if
-      accept-redirect is set to no.
+      The value of this option is ignored when
+      <option>accept-redirect=no</option>.
     </para>
   </listitem>
 </varlistentry>

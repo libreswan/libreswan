@@ -1,10 +1,10 @@
 <varlistentry>
   <term>
-    <option>vti-interface</option>
+    <option>vti-interface=</option>
   </term>
   <listitem>
     <para>
-      This option is deprecated. See <option>ipsec-interface</option>
+      This option is deprecated.  See <option>ipsec-interface</option>
       instead.
     </para>
     <para>

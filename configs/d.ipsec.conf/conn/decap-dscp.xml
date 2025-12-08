@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>decap-dscp</option>
+    <option>decap-dscp=&yn_option;</option>
   </term>
   <listitem>
     <para>

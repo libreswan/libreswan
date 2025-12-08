@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>share-lease</option>
+    <option>share-lease=&yn_option;</option>
   </term>
   <listitem>
     <para>

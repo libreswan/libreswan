@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>aggressive</option>
+    <option>aggressive=&yn_option;</option>
   </term>
   <listitem>
 

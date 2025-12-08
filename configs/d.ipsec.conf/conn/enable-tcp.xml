@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>enable-tcp</option>
+    <option>enable-tcp=</option>
   </term>
   <listitem>
     <para>

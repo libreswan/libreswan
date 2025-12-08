@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>ipsec-max-packets</option>
+    <option>ipsec-max-packets=&count;</option>
   </term>
   <listitem>
     <para>

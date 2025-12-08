@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftrsasigkey</option>
+    <option>leftrsasigkey=</option>
   </term>
   <term>
-    <option>rightrsasigkey</option>
+    <option>rightrsasigkey=</option>
   </term>
   <listitem>
     <para>

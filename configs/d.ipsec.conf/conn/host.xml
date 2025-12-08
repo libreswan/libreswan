@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>left</option>
+    <option>left=&hostname;</option>
   </term>
   <term>
-    <option>right</option>
+    <option>right=&hostname;</option>
   </term>
   <listitem>
     <para>

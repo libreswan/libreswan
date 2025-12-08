@@ -1,5 +1,7 @@
 <varlistentry>
-  <term><option>compress</option></term>
+  <term>
+    <option>compress=&yn_option;</option>
+  </term>
   <listitem>
     <para>
       whether IPComp compression of content is proposed on the

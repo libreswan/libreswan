@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftsourceip</option>
+    <option>leftsourceip=&ip_address;</option>
   </term>
   <term>
-    <option>rightsourceip</option>
+    <option>rightsourceip=&ip_address;</option>
   </term>
   <listitem>
     <para>

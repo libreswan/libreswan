@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftautheap</option>
+    <option>leftautheap=</option>
   </term>
   <term>
-    <option>rightautheap</option>
+    <option>rightautheap=</option>
   </term>
   <listitem>
     <para>

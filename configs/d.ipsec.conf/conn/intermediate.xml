@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>intermediate</option>
+    <option>intermediate=&yn_option;</option>
   </term>
   <listitem>
     <para>

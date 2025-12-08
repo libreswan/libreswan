@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftmodecfgserver</option>
+    <option>leftmodecfgserver=&yn_option;</option>
   </term>
   <term>
-    <option>rightmodecfgserver</option>
+    <option>rightmodecfgserver=&yn_option;</option>
   </term>
   <listitem>
     <para>

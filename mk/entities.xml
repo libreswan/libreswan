@@ -1,21 +1,41 @@
 <!-- common applications -->
 
-<!ENTITY FreeBSD '<application>FreeBSD</application>'>
 <!ENTITY Libreswan '<application>Libreswan</application>'>
+
+<!-- os -->
+<!ENTITY FreeBSD '<application>FreeBSD</application>'>
 <!ENTITY Linux '<application>Linux</application>'>
 <!ENTITY NetBSD '<application>NetBSD</application>'>
 <!ENTITY OpenBSD '<application>OpenBSD</application>'>
 
+<!-- products -->
+<!ENTITY Cisco '<application>Cisco</application>'>
+<!ENTITY Racoon '<application>Racoon</application>'>
+<!ENTITY strongSwan '<application>strongSwan</application>'>
+<!ENTITY Checkpoint '<application>Checkpoint</application>'>
+<!ENTITY RADIUS '<application>RADIUS</application>'>
+<!ENTITY systemd '<application>systemd</application>'>
+
+<!-- kernel -->
 <!ENTITY Linux.XFRM '<application>Linux XFRM</application>'>
 <!ENTITY BSD.KAME '<application>BSD KAME</application>'>
-<!ENTITY NSS '<application>NSS</application>'>
-<!ENTITY Cisco '<application>Cisco</application>'>
 <!ENTITY KLIPS '<application>KLIPS</application>'>
-<!ENTITY IKE '<application>IKE</application>'>
-<!ENTITY Racoon '<application>Racoon</application>'>
+
+<!ENTITY NSS '<application>NSS</application>'>
 <!ENTITY letsencrypt '<application>letsencrypt</application>'>
-<!ENTITY Checkpoint '<application>Checkpoint</application>'>
+
 <!ENTITY X.509 '<application>X.509</application>'>
+
+<!ENTITY IETF '<application>IETF</application>'>
+<!ENTITY IKE '<application>IKE</application>'>
+<!ENTITY ESP '<application>ESP</application>'>
+<!ENTITY AH '<application>AH</application>'>
+<!ENTITY BEET '<application>BEET</application>'>
+<!ENTITY EAP '<application>EAP</application>'>
+<!ENTITY IKEv1 '<application>IKEv1</application>'>
+<!ENTITY IKEv2 '<application>IKEv2</application>'>
+
+<!ENTITY pluto '<command>pluto</command>'>
 
 <!-- libreswan manpages -->
 
@@ -114,16 +134,26 @@
 <!ENTITY systemd.8 '<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY systemd.service.5 '<citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 
-<!-- definitely wrong but nothing better? -->
-<!ENTITY yn_options '{yes,no}'>
-<!ENTITY yna_options '{yes,no,auto}'>
-<!ENTITY yN_options '{yes,<emphasis>no</emphasis>}'>
-<!ENTITY Yn_options '{<emphasis>yes</emphasis>,no}'>
-<!ENTITY ip_cidr '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>]'>
-<!ENTITY ip_pool '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>subnet-mask</replaceable>]|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
-<!ENTITY ip_range '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
+<!-- options accepted by ipsec.conf -->
+
+<!ENTITY yn_option '{yes,no}'>
+<!ENTITY yna_option '{yes,no,auto}'>
+
 <!ENTITY ip_address '<replaceable>address</replaceable>'>
+<!ENTITY ip_cidr '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>]'>
+<!ENTITY ip_endpoint '<replaceable>address</replaceable>:<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
+<!ENTITY ip_pool '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>subnet-mask</replaceable>]|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
+<!ENTITY ip_port '<replaceable>port</replaceable>'>
+<!ENTITY ip_protoport '<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
+<!ENTITY ip_range '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
 <!ENTITY ip_selector '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>protocol</replaceable>][/<replaceable>port</replaceable>]'>
 <!ENTITY ip_subnet '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>'>
-<!ENTITY ip_endpoint '<replaceable>address</replaceable>:<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
-<!ENTITY ip_protoport '<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
+
+<!ENTITY hostname '{<replaceable>hostname</replaceable>,&ip_address;}'>
+
+<!ENTITY byte_count '{<replaceable>bytes</replaceable>,<replaceable>count{KiB,MiB,GiB,...}</replaceable>'>
+<!ENTITY count '{<replaceable>count</replaceable>,<replaceable>count{Ki,Mi,Gi,...}</replaceable>'>
+<!ENTITY percent '<replaceable>percent</replaceable>;&#37;'>
+
+<!ENTITY seconds '{<replaceable>seconds</replaceable>,<replaceable>delay{us,ms,s,m,h,d,w}</replaceable>}'>
+<!ENTITY milliseconds '{<replaceable>milliseconds</replaceable>,<replaceable>delay{us,ms,s,m,h,d,w}</replaceable>}'>

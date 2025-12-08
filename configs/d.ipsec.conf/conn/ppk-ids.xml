@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>ppk-ids</option>
+    <option>ppk-ids=</option>
   </term>
   <listitem>
     <para>

@@ -1,22 +1,28 @@
 <varlistentry>
   <term>
-    <option>fake-strongswan</option>=&yN_options;
+    <option>fake-strongswan=&yn_option;</option>
   </term>
   <listitem>
     <para>
-      whether to send a STRONGSWAN Vendor ID payload to the peer.
-      Acceptable values are: <option>no</option> (the
-      default) and <option>yes</option>. Strongswan enables some
-      non-standard features and private algorithms only when it detects
-      the strongswan Vendor ID. The exact capabilities depend on the
-      strongswan version. At the time of writing this entry this option
-      can enable negotiation of BEET mode (until the IETF assigns a
-      code point), enable some private algorithms (eg some experimental
-      post-quantum algorithms) and eanbles forwarding RADIUS attributes
-      (which should not have any affects with the current EAP support
-      in libreswan). Note that experimental algorithms on strongswan
-      can also be enabled using charon.accept_private_algs and then this
-      option is not needed.
+      Whether to send a fake &strongSwan; Vendor ID payload to the
+      peer.
+    </para>
+    <para>
+      &strongSwan; enables some non-standard features and private
+      algorithms only when it detects the &strongSwan; Vendor ID. The
+      exact capabilities depend on the &strongSwan; version.  At the
+      time of writing this entry this option can enable negotiation of
+      &BEET; mode (until the &IETF; assigns a code point), enable some
+      private algorithms (eg some experimental post-quantum
+      algorithms) and enables forwarding &RADIUS; attributes (which
+      should not have any affects with the current &EAP; support in
+      libreswan). Note that experimental algorithms on &strongSwan;
+      can also be enabled using
+      <option>charon.accept_private_algs</option> and then this option
+      is not needed.
+    </para>
+    <para>
+      The default value is <option>no</option>.
     </para>
   </listitem>
 </varlistentry>

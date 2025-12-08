@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>negotiationshunt</option>
+    <option>negotiationshunt=</option>
   </term>
   <listitem>
     <para>

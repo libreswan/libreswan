@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>vti-shared</option>
+    <option>vti-shared=&yn_option;</option>
   </term>
   <listitem>
     <para>

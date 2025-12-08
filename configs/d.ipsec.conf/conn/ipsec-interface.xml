@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>ipsec-interface</option>
+    <option>ipsec-interface=<replaceable>device-number</replaceable></option>
   </term>
   <listitem>
     <para>
@@ -39,51 +39,50 @@
       Interface Device and &Libreswan; are in separate namespace.
     </para>
     <para>
-    </para>
-    <para>
-    </para>
-    <para>
       Possible values are:
+      <variablelist>
+	<varlistentry>
+	  <term>
+	    <option>no</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Do not use "Routing based IPsec VPN".
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option>yes</option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Enable "Routing based IPsec VPNs".  In managed mode, use
+	      IPsec Interface device 1 (for instance,
+	      <option>ipsec1</option>).  In unmanaged mode, use the
+	      kernel device 1.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <option><replaceable>number</replaceable></option>
+	  </term>
+	  <listitem>
+	    <para>
+	      Enable "Routing based IPsec VPNs" using the device
+	      <replaceable>number</replaceable>.  For instance,
+	      <option>ipsec-interface=5</option> will use
+	      <option>ipsec5</option> in managed mode, and kernel xfrm interface
+	      with if_id <option>5</option> in unmanaged mode.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
     </para>
-    <variablelist>
-      <varlistentry>
-	<term>
-	  <option>no</option> (default)
-	</term>
-	<listitem>
-	  <para>
-	    Do not use "Routing based IPsec VPN".
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>
-	  <option>yes</option>
-	</term>
-	<listitem>
-	  <para>
-	    Enable "Routing based IPsec VPNs".  In managed mode, use
-	    IPsec Interface device 1 (for instance,
-	    <option>ipsec1</option>).  In unmanaged mode, use the
-	    kernel device 1.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>
-	  <option><replaceable>number</replaceable></option>
-	</term>
-	<listitem>
-	  <para>
-	    Enable "Routing based IPsec VPNs" using the device
-	    <replaceable>number</replaceable>.  For instance,
-	    <option>ipsec-interface=5</option> will use
-	    <option>ipsec5</option> in managed mode, and kernel xfrm interface
-	    with if_id <option>5</option> in unmanaged mode.
-	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
+    <para>
+      The default value is <option>no</option>.
+    </para>
     <para>
       Kernel Support:
     </para>

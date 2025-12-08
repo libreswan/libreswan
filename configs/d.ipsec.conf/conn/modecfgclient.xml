@@ -1,15 +1,18 @@
 <varlistentry>
   <term>
-    <option>leftmodecfgclient</option>
+    <option>leftmodecfgclient=&yn_option;</option>
   </term>
   <term>
-    <option>rightmodecfgclient</option>
+    <option>rightmodecfgclient=&yn_option;</option>
   </term>
   <listitem>
-    <para>Left is a Mode Config client. It can receive network
-    configuration from the server.  Acceptable values are
-    <option>yes</option> or <option>no</option> (the
-    default).</para>
+    <para>
+      Specify that the end is a Mode Config client (it can receive
+      network configuration from the server).
+    </para>
+    <para>
+      The default value is <option>no</option>.
+    </para>
   </listitem>
 </varlistentry>
 

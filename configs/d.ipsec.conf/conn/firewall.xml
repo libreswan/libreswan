@@ -1,9 +1,9 @@
 <varlistentry>
   <term>
-    <option>leftfirewall</option>
+    <option>leftfirewall=</option>
   </term>
   <term>
-    <option>rightirewall</option>
+    <option>rightirewall=</option>
   </term>
   <listitem>
     <para>

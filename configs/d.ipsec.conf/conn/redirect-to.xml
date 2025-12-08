@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>redirect-to</option>
+    <option>redirect-to=&hostname;,...</option>
   </term>
   <listitem>
     <para>

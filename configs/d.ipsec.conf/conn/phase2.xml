@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>phase2</option>
+    <option>phase2=</option>
   </term>
   <listitem>
     <para>
