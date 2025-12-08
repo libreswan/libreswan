@@ -15,7 +15,7 @@
       internally. They will inherit this policy bit.
     </para>
     <para>
-      The default is no.
+      The default is &no;.
     </para>
     <para>
       This feature is only available with kernel drivers that support

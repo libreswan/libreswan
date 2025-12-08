@@ -1,8 +1,11 @@
 <varlistentry>
-  <term><option>crl-timeout</option></term>
+  <term><option>crl-timeout=&seconds;</option></term>
   <listitem>
     <para>
-      The timeout for used when fetching CRLs.  The default is 5s.
+      The timeout for used when fetching CRLs.
+    </para>
+    <para>
+      The default is 5 seconds (<literal>5s</literal>).
     </para>
   </listitem>
 </varlistentry>

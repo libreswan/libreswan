@@ -6,12 +6,17 @@
     <para>
       When IKEv1 XAUTH support is available, set the method used by
       XAUTH to authenticate the user with IKEv1. The currently
-      supported values are <option>file</option> (the default),
-      <option>pam</option> or <option>alwaysok</option>.  The password
-      file is located at <option>/etc/ipsec.d/passwd</option>, and
-      follows a syntax similar to the Apache htpasswd file, except an
-      additional connection name argument (and optional static IP
-      address) are also present:
+      supported values are &filelit;, &pam;, and &alwaysok;.
+    </para>
+    <para>
+      The default is &filelit;.
+    </para>
+    <para>
+      The password file is located at
+      <filename>/etc/ipsec.d/passwd</filename>, and follows a syntax
+      similar to the Apache htpasswd file, except an additional
+      connection name argument (and optional static IP address) are
+      also present:
     </para>
     <para>
       <option>username:password:conname:ipaddress</option>
@@ -27,7 +32,7 @@
       user authentication is not really used, but is required for
       interoperability, as it defeats the whole point of XAUTH which
       is to rely on a secret only known by a human.  See also
-      <option>pam-authorize=yes</option>
+      <option>pam-authorize=&yes;</option>
     </para>
   </listitem>
 </varlistentry>

@@ -12,7 +12,7 @@
     </para>
     <para>
       The value of this option is ignored when
-      <option>accept-redirect=no</option>.
+      <option>accept-redirect=&no;</option>.
     </para>
   </listitem>
 </varlistentry>

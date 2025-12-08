@@ -1,11 +1,14 @@
 <varlistentry>
   <term>
-    <option>ocsp-timeout</option>
+    <option>ocsp-timeout=&seconds;</option>
   </term>
   <listitem>
     <para>
       The time until an OCSP request is aborted and considered
-      failed. The default value is 2 seconds.
+      failed.
+    </para>
+    <para>
+      The default is 2 seconds (<literal>2s</literal>).
     </para>
   </listitem>
 </varlistentry>

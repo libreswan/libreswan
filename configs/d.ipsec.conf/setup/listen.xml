@@ -1,11 +1,13 @@
 <varlistentry>
   <term>
-    <option>listen</option>
+    <option>listen=&ip_address;</option>
   </term>
   <listitem>
     <para>
-      IP address to listen on, defaults to ANY.  Currently only
-      accepts one IP address.
+      IP address to listen on.  Currently only accepts one IP address.
+    </para>
+    <para>
+      By default all addresses are listend to.
     </para>
   </listitem>
 </varlistentry>

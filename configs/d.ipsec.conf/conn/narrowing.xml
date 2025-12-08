@@ -5,9 +5,9 @@
   <listitem>
     <para>
       IKEv2 (RFC5996) Section 2.9 Traffic Selector narrowing options.
-      Currently the accepted values are <option>no</option>, (the
+      Currently the accepted values are &no;, (the
       default) signifying no narrowing will be proposed or accepted,
-      or <option>yes</option>, signifying IKEv2 negotiation may allow
+      or &yes;, signifying IKEv2 negotiation may allow
       establishing an IPsec connection with narrowed down traffic
       selectors. This option is ignored for IKEv1.
     </para>

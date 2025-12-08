@@ -36,13 +36,13 @@
     </para>
     <para>
       For IKEv1, when <option>right</option> is configured as a server
-      using <option>rightxauthserver=yes</option>, this option
+      using <option>rightxauthserver=&yes;</option>, this option
       specifies the address pool from which IP addresses are taken to
       assign the <option>left</option> clients during the Mode Config
       exchange.  Generally, the <option>leftaddresspool=</option>
       option will be accompanied by
-      <option>leftxauthclient=yes</option>,
-      <option>rightxauthserver=yes</option> and
+      <option>leftxauthclient=&yes;</option>,
+      <option>rightxauthserver=&yes;</option> and
       <option>rightsubnet=0.0.0.0/0</option> option.
     </para>
     <para>

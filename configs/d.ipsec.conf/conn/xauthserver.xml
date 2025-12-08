@@ -15,10 +15,12 @@
       <option>ipsec.secrets</option>.  The other side of the
       connection should be configured as
       <option>rightxauthclient</option>. XAUTH connections cannot
-      rekey, so <option>rekey=no</option> should be specified in this
-      conn.  For further details on how to compile and use XAUTH, see
-      README.XAUTH.  Acceptable values are <option>yes</option> or
-      <option>no</option> (the default).
+      rekey, so <option>rekey=&no;</option> should be specified in
+      this conn.  For further details on how to compile and use XAUTH,
+      see README.XAUTH.
+    </para>
+    <para>
+      The default is &no;.
     </para>
   </listitem>
 </varlistentry>

@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>seedbits</option>
+    <option>seedbits=</option>
   </term>
   <listitem>
     <para>
@@ -10,10 +10,12 @@
       before drawing random from the NSS library, despite the NSS
       library itself already seeding its internal state. This process
       can block pluto for an extended time during startup, depending
-      on the entropy of the system. Therefore, the default is to not
-      perform this redundant seeding. If specifying a value, it is
+      on the entropy of the system.  If specifying a value, it is
       recommended to specify at least 460 bits (for FIPS) or 440 bits
       (for BSI).
+    </para>
+    <para>
+      The default is to not perform this redundant seeding.
     </para>
   </listitem>
 </varlistentry>

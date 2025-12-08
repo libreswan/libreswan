@@ -4,9 +4,11 @@
   </term>
   <listitem>
     <para>
-      the &syslog.2; <replaceable>facility</replaceable> name and
-      priority to use for startup/shutdown log messages, default
-      <option>daemon.error</option>.
+      The &syslog.2; <replaceable>facility</replaceable> name and
+      priority to use for startup/shutdown log messages.
+    </para>
+    <para>
+      The default is <literal>daemon.error</literal>.
     </para>
   </listitem>
 </varlistentry>

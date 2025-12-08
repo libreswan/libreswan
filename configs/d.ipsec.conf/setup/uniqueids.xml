@@ -11,10 +11,10 @@
     </para>
     <para>
       When the connection is defined to be a server (using
-      xauthserver=) and the connection policy is authby=secret, this
-      option is ignored (as of 3.20) and old connections will never be
-      replaced.  This situation is commonly known as clients using a
-      "Group ID".
+      <option>xauthserver=</option>) and the connection policy is
+      <option>authby=secret</option>, this option is ignored (as of
+      3.20) and old connections will never be replaced.  This
+      situation is commonly known as clients using a "Group ID".
     </para>
     <para>
       This option may disappear in the near future.  People using
@@ -22,12 +22,12 @@
       upgrade to use separate certificates per client and device.
     </para>
     <para>
-      The default value is <option>yes</option>.
+      The default is &yes;.
     </para>
     <para>
-      Prior to &Libreswan; version 5.3, when <command>pluto</command>
-      was started directly and without a configuration file, this
-      option was set to <option>no</option>.
+      Prior to &Libreswan; version 5.3, when &pluto; was started
+      directly and without a configuration file, this option was set
+      to <literal>no</literal>.
     </para>
   </listitem>
 </varlistentry>

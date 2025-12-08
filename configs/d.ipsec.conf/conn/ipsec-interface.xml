@@ -43,7 +43,7 @@
       <variablelist>
 	<varlistentry>
 	  <term>
-	    <option>no</option>
+	    &no;
 	  </term>
 	  <listitem>
 	    <para>
@@ -53,7 +53,7 @@
 	</varlistentry>
 	<varlistentry>
 	  <term>
-	    <option>yes</option>
+	    &yes;
 	  </term>
 	  <listitem>
 	    <para>
@@ -81,7 +81,7 @@
       </variablelist>
     </para>
     <para>
-      The default value is <option>no</option>.
+      The default is &no;.
     </para>
     <para>
       Kernel Support:

@@ -11,7 +11,7 @@
       By default, &Libreswan; pads messages
       to a minimum of 4-bytes.  While this is allowed it may cause
       interoperability issues.  To remove this padding, specify
-      <option>ikepad=no</option> (note that this does not affect
+      <option>ikepad=&no;</option> (note that this does not affect
       messages encrypted using a block-mode cipher where padding is
       always added).
     </para>
@@ -19,10 +19,10 @@
       Prior to &Libreswan; version 5.2, some MODECFG payloads were
       incorrectly padded to 4-bytes which caused interoperability
       issues.  To restore this behaviour, specify
-      <option>ikepad=yes</option>.
+      <option>ikepad=&yes;</option>.
     </para>
     <para>
-      The default value is <option>no</option>.
+      The default is &no;.
     </para>
     <para>
       In IKEv2, this option is ignored.
@@ -35,11 +35,11 @@
 	It was thought that padding messages by 4-bytes was causing
 	interoperability issues with
 	&Checkpoint;
-	(<option>ikepad=no</option> was added as a workaround).
+	(<option>ikepad=&no;</option> was added as a workaround).
 	However, it's since been determined that &Racoon; also had
 	interoperability issues and the cause was the padding of some
 	XAUTH and MODECFG payloads.  Setting
-	<option>ikepad=no</option> fixed interoperability because it
+	<option>ikepad=&no;</option> fixed interoperability because it
 	was also disabling that padding.  The padding of XAUTH and
 	MODECFG was removed in &Libreswan; version 5.2.
       </para>

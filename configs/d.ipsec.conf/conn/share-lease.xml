@@ -7,8 +7,8 @@
       Whether multiple outoging IKEv1 connections that are not
       specifying a local subnet should use the lease IP given by
       the server of the first connection. The default and expected
-      behaviour (of emulating a Cisco client) is <option>yes</option>.
-      It can be disabled by setting it to <option>no</option>.
+      behaviour (of emulating a Cisco client) is &yes;.
+      It can be disabled by setting it to &no;.
     </para>
   </listitem>
 </varlistentry>

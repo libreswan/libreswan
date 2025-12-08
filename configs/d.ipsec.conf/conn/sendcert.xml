@@ -13,7 +13,7 @@
       <variablelist spacing="compact">
 
 	<varlistentry>
-	  <term><option>yes</option></term>
+	  <term>&yes;</term>
 	  <term><option>always</option></term>
 	  <listitem><para>always send a certificate</para></listitem>
 	</varlistentry>
@@ -26,7 +26,7 @@
 	</varlistentry>
 
 	<varlistentry>
-	  <term><option>no</option></term>
+	  <term>&no;</term>
 	  <term><option>never</option></term>
 	  <listitem><para>never send a certificate</para></listitem>
 	</varlistentry>

@@ -8,10 +8,10 @@
       should last before being replaced.
     </para>
     <para>
-      The default value is eight hours (<option>8h</option>>.
+      The default is 8 hours (<literal>8h</literal>>.
     </para>
     <para>
-      Prior to &Libreswan; version 4.2 the value was
+      Prior to &Libreswan; version 4.2, the value was
       <option>1h</option>.
     </para>
   </listitem>

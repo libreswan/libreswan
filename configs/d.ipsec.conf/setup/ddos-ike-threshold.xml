@@ -1,14 +1,16 @@
 <varlistentry>
   <term>
-    <option>ddos-ike-threshold</option>
+    <option>ddos-ike-threshold=</option>
   </term>
   <listitem>
     <para>
       The number of half-open IKE SAs before the pluto IKE daemon will
-      be placed in busy mode. When in busy mode, pluto activates
-      anti-DDoS counter measures. The default is 25000.  See also
-      <option>ddos-mode</option> and <command>ipsec whack
-      --ddos-XXX</command>.
+      be placed in busy mode. When in busy mode, &pluto; activates
+      anti-DDoS counter measures. See also <option>ddos-mode</option>
+      and <command>ipsec whack --ddos-XXX</command>.
+    </para>
+    <para>
+      The default is <literal>25000</literal>.
     </para>
   </listitem>
 </varlistentry>

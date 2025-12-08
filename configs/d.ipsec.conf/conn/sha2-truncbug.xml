@@ -17,7 +17,7 @@
       to <option>sha2_512</option>.
     </para>
     <para>
-      The default is <option>no</option>.
+      The default is &no;.
     </para>
   </listitem>
 </varlistentry>

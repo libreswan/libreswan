@@ -1,18 +1,19 @@
 <varlistentry>
   <term>
-    <option>crlcheckinterval</option>
+    <option>crlcheckinterval=&seconds;</option>
   </term>
   <listitem>
     <para>
-      interval expressed in second units, for example
+      Interval expressed in second units, for example
       crlcheckinterval=8h for 8 hours, after which pluto will fetch
       new Certificate Revocation List (CRL) from crl distribution
       points. List of used CRL distribution points are collected from
       CA certificates and end certificates. Loaded X.509 CRL's are
       verified to be valid and updates are imported to NSS database.
-      If set to <option>0</option>, which is also the
-      default value if this option is not specified, CRL updating is
-      disabled.
+      If set to <option>0</option> CRL updating is disabled.
+    </para>
+    <para>
+      By default CRL updating is disabled (0).
     </para>
   </listitem>
 </varlistentry>

@@ -32,7 +32,7 @@
       See &libreswan.7; for details.
     </para>
     <para>
-      The default value is <command>ipsec _updown</command>.
+      The default is <command>ipsec _updown</command>.
     </para>
     <para>
       Relevant only locally, other end need not agree on it.

@@ -45,7 +45,7 @@
       able to receive a packet for processing.
     </para>
     <para>
-      The default value is <option>drop</option>.
+      The default is <literal>drop</literal>.
     </para>
   </listitem>
 </varlistentry>

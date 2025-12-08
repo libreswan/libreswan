@@ -7,8 +7,10 @@
       whether IPComp compression of content is proposed on the
       connection (link-level compression does not work on encrypted
       data, so to be effective, compression must be done
-      <option>before</option> encryption); acceptable values are
-      <option>yes</option> and <option>no</option> (the default).
+      <option>before</option> encryption).
+    </para>
+    <para>
+      The default is &no;.
     </para>
     <para>
       For IKEv1, compress settings on both peers must match. For

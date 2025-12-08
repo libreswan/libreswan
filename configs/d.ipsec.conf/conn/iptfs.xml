@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>iptfs=</option>
+    <option>iptfs=&yn_option;</option>
   </term>
   <listitem>
     <para>
@@ -8,8 +8,7 @@
       Security Payload (ESP) and its use for IP Traffic Flow Security
       (IP-TFS) as defined in RFC 9347.  Currently, this is only
       supported for the Linux XFRM stack and will likely be merged
-      into Linux 6.7 or 6.8. Valid options are <option>no</option>
-      (the default) or <option>yes</option>.  IP-TFS allow the kernel
+      into Linux 6.7 or 6.8. IP-TFS allow the kernel
       to combine multiple small packets into one ESP packet, which
       should cause a performance gain when many small packets (eg
       iperf packets) are sent.  It also allows the kernel to fragment
@@ -18,14 +17,17 @@
       avoid common MTU issues with IPsec.  IP-TFS can only be used
       with tunnel mode and ESP.  It cannot be combined with
       <option>type=transport</option>, <option>phase2=ah</option>,
-      <option>compress=yes</option> or <option>tfc=yes</option>.  A
+      <option>compress=&yes;</option> or <option>tfc=yes</option>.  A
       number of IP-TFS options can be tuned.
+    </para>
+    <para>
+      The default is &no;.
     </para>
   </listitem>
 </varlistentry>
 <varlistentry>
   <term>
-    <option>iptfs-fragmentation={yes,no}</option>
+    <option>iptfs-fragmentation=&yn_option;</option>
   </term>
   <listitem>
     <para>
@@ -33,18 +35,20 @@
     </para>
     <para>
       On &Linux; and
-      <option>iptfs-fragmentation=no</option>, this passes
+      <option>iptfs-fragmentation=&no;</option>, this passes
       <option>XFRMA_IPTFS_DONT_FRAG</option> to the kernel.  (Unclear
       to at least one author if this means regular ICMP Dont Fragment
       sending, or whether it stops IP-TFS from fragmenting).
     </para>
     <para>
-      Default is <option>iptfs-fragmentation=yes</option>
+      The default is &yes;.
     </para>
   </listitem>
 </varlistentry>
 <varlistentry>
-  <term><option>iptfs-max-queue-size</option></term>
+  <term>
+    <option>iptfs-max-queue-size=</option>
+  </term>
   <listitem>
     <para>
       The default IP-TFS max output queue size in octets. The output
@@ -53,12 +57,14 @@
       aggregated/fragmented form over the IP-TFS tunnel.
     </para>
     <para>
-      Default 1000000.
+      The default is <literal>1000000</literal>.
     </para>
   </listitem>
 </varlistentry>
 <varlistentry>
-  <term><option>iptfs-drop-time=<replaceable>duration</replaceable></option></term>
+  <term>
+    <option>iptfs-drop-time=&seconds;</option>
+  </term>
   <listitem>
     <para>
       The amount of time before a missing out-of-order IP-TFS tunnel
@@ -66,26 +72,28 @@
       <option>iptfs-reorder-window</option>.
     </para>
     <para>
-      The default is 1s.  The default time unit is seconds (see
-      <replaceable>duration</replaceable>).
+      The default is 1 second (<literal>1s</literal>.
     </para>
   </listitem>
 </varlistentry>
 <varlistentry>
-  <term><option>iptfs-init-delay=<replaceable>duration</replaceable></option></term>
+  <term>
+    <option>iptfs-init-delay=&seconds;</option>
+  </term>
   <listitem>
     <para>
       The amount of time prior to servicing the output queue after
       queueing the first packet on said queue.
     </para>
     <para>
-      The default is 0s.  The default time unit is seconds (see
-      <replaceable>duration</replaceable>).
+      The default is 0 seconds (<literal>0s</literal>).
     </para>
   </listitem>
 </varlistentry>
 <varlistentry>
-  <term><option>iptfs-reorder-window</option></term>
+  <term>
+    <option>iptfs-reorder-window=&count;</option>
+  </term>
   <listitem>
     <para>
       The default IP-TFS reorder window size. The reorder window size
@@ -93,7 +101,7 @@
       sequence that may arrive out of order.
     </para>
     <para>
-      Default 3.
+      The default is <literal>3</literal>.
     </para>
   </listitem>
 </varlistentry>

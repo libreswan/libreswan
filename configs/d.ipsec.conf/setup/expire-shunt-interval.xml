@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>expire-shunt-interval=<replaceable>seconds</replaceable></option>
+    <option>expire-shunt-interval=&seconds;</option>
   </term>
   <listitem>
     <para>
@@ -15,7 +15,10 @@
       <option>shuntlifetime</option>) after which time they expire and
       should be removed.  The option
       <option>expire-shunt-interval</option> determines how frequently
-      these shunts are checked.  The default interval is 20 seconds.
+      these shunts are checked.
+    </para>
+    <para>
+      The default is 20 seconds (<literal>20s</literal>).
     </para>
     <para>
       Note: because these shunts (kernel policies) are not

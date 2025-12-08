@@ -10,7 +10,7 @@
       install kernel policy that includes all the subnets.
     </para>
     <para>
-      The default value is <option>no</option>.
+      The default is &no;.
     </para>
     <para>
       The <option>cisco-split</option> option was added in &Libreswan;

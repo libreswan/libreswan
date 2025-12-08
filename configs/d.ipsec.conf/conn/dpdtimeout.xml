@@ -12,7 +12,7 @@
       <option>dpddelay</option> also needs to be set.
     </para>
     <para>
-      The default value is <option>0</option> meaning disabled.
+      The default is <option>0</option> meaning disabled.
     </para>
     <para>
       This option is only valid for IKEv1.  IKEv2 only uses the

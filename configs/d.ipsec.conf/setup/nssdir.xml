@@ -1,33 +1,35 @@
 <varlistentry>
   <term>
-    <option>nssdir</option>
+    <option>nssdir=&directory;</option>
   </term>
   <listitem>
     <para>
-      Specifies a directory for NSS database files. The default value
-      is <option>@@IPSEC_NSSDIR@@</option>.  It may contain the
-      following files:
+      Specifies a directory for NSS database files.  It may contain
+      the following files:
+      <variablelist>
+	<varlistentry>
+          <term>pkcs11.txt</term>
+          <listitem><para>
+            Detailed info about NSS database creation parameters.
+          </para></listitem>
+	</varlistentry>
+	<varlistentry>
+          <term>cert9.db</term>
+          <listitem><para>
+            NSS Certificate database.
+          </para></listitem>
+	</varlistentry>
+	<varlistentry>
+          <term>key4.db</term>
+          <listitem><para>
+            NSS Key database.
+          </para></listitem>
+	</varlistentry>
+      </variablelist>
     </para>
-    <variablelist>
-      <varlistentry>
-        <term>pkcs11.txt</term>
-        <listitem><para>
-          Detailed info about NSS database creation parameters.
-        </para></listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>cert9.db</term>
-        <listitem><para>
-          NSS Certificate database.
-        </para></listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>key4.db</term>
-        <listitem><para>
-          NSS Key database.
-        </para></listitem>
-      </varlistentry>
-    </variablelist>
+    <para>
+      The default is <filename>@@IPSEC_NSSDIR@@</filename>.
+    </para>
     <para>
       When SELinux runs in enforced mode, changing this requires a similar
       change in the SELinux policy for the pluto daemon.

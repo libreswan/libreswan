@@ -3,26 +3,30 @@
 <!ENTITY Libreswan '<application>Libreswan</application>'>
 
 <!-- os -->
+
 <!ENTITY FreeBSD '<application>FreeBSD</application>'>
 <!ENTITY Linux '<application>Linux</application>'>
 <!ENTITY NetBSD '<application>NetBSD</application>'>
 <!ENTITY OpenBSD '<application>OpenBSD</application>'>
 
 <!-- products -->
+
 <!ENTITY Cisco '<application>Cisco</application>'>
 <!ENTITY Racoon '<application>Racoon</application>'>
 <!ENTITY strongSwan '<application>strongSwan</application>'>
 <!ENTITY Checkpoint '<application>Checkpoint</application>'>
 <!ENTITY RADIUS '<application>RADIUS</application>'>
-<!ENTITY systemd '<application>systemd</application>'>
+<!ENTITY letsencrypt '<application>letsencrypt</application>'>
 
-<!-- kernel -->
+<!-- kernels -->
+
 <!ENTITY Linux.XFRM '<application>Linux XFRM</application>'>
 <!ENTITY BSD.KAME '<application>BSD KAME</application>'>
 <!ENTITY KLIPS '<application>KLIPS</application>'>
 
+<!-- terminology -->
+
 <!ENTITY NSS '<application>NSS</application>'>
-<!ENTITY letsencrypt '<application>letsencrypt</application>'>
 
 <!ENTITY X.509 '<application>X.509</application>'>
 
@@ -36,6 +40,31 @@
 <!ENTITY IKEv2 '<application>IKEv2</application>'>
 
 <!ENTITY pluto '<command>pluto</command>'>
+
+<!-- system stuff -->
+
+<!ENTITY certutil.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY crlutil.1 '<citerefentry><refentrytitle>crlutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY modutil.1 '<citerefentry><refentrytitle>modutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY pk12util.1 '<citerefentry><refentrytitle>pk12util</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY vfychain.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+
+<!ENTITY sh.1 '<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+
+<!ENTITY crypt.3 '<citerefentry><refentrytitle>crypt</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY efence.2 '<citerefentry><refentrytitle>efence</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
+<!ENTITY glob.3 '<citerefentry><refentrytitle>glob</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY init.8 '<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY ip.8 '<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY libunbound.3 '<citerefentry><refentrytitle>libunbound</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY random.4 '<citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>'>
+<!ENTITY rc.8 '<citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY rngd.8 '<citerefentry><refentrytitle>rngd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY syslog.2 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
+<!ENTITY syslog.3 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
+<!ENTITY syslogd.8 '<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY systemd.8 '<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY systemd.service.5 '<citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 
 <!-- libreswan manpages -->
 
@@ -110,34 +139,68 @@
 <!ENTITY ipsec.8 '<citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY pluto.8 '<citerefentry><refentrytitle>pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 
-<!-- system stuff -->
+<!-- literals and options accepted by ipsec.conf -->
 
-<!ENTITY certutil.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
-<!ENTITY crlutil.1 '<citerefentry><refentrytitle>crlutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
-<!ENTITY modutil.1 '<citerefentry><refentrytitle>modutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
-<!ENTITY pk12util.1 '<citerefentry><refentrytitle>pk12util</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
-<!ENTITY vfychain.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY ah '<literal>ah</literal>'>
+<!ENTITY all '<literal>all</literal>'>
+<!ENTITY alwaysok '<literal>alwaysok</literal>'>
+<!ENTITY auto '<literal>auto</literal>'>
+<!ENTITY both '<literal>both</literal>'>
+<!ENTITY busy '<literal>busy</literal>'>
+<!ENTITY crypto '<literal>crypto</literal>'>
+<!ENTITY drafts '<literal>drafts</literal>'>
+<!ENTITY drop '<literal>drop</literal>'>
+<!ENTITY either '<literal>either</literal>'>
+<!ENTITY esp '<literal>esp</literal>'>
+<!ENTITY fallback '<literal>fallback</literal>'>
+<!ENTITY filelit '<literal>file</literal>'>
+<!ENTITY force '<literal>force</literal>'>
+<!ENTITY get '<literal>get</literal>'>
+<!ENTITY hard '<literal>hard</literal>'>
+<!ENTITY hold '<literal>hold</literal>'>
+<!ENTITY ikev1 '<literal>ikev1</literal>'>
+<!ENTITY ikev2 '<literal>ikev2</literal>'>
+<!ENTITY insist '<literal>insist</literal>'>
+<!ENTITY issuer '<literal>issuer</literal>'>
+<!ENTITY never '<literal>never</literal>'>
+<!ENTITY no '<literal>no</literal>'>
+<!ENTITY none '<literal>none</literal>'>
+<!ENTITY packet '<literal>packet</literal>'>
+<!ENTITY pam '<literal>pam</literal>'>
+<!ENTITY pass '<literal>pass</literal>'>
+<!ENTITY passthrough '<literal>passthrough</literal>'>
+<!ENTITY permit '<literal>permit</literal>'>
+<!ENTITY post '<literal>post</literal>'>
+<!ENTITY propose '<literal>propose</literal>'>
+<!ENTITY reject '<literal>reject</literal>'>
+<!ENTITY rfc '<literal>rfc</literal>'>
+<!ENTITY soft '<literal>soft</literal>'>
+<!ENTITY tls '<literal>tls</literal>'>
+<!ENTITY transport '<literal>transport</literal>'>
+<!ENTITY tunnel '<literal>tunnel</literal>'>
+<!ENTITY unlimited '<literal>unlimited</literal>'>
+<!ENTITY yes '<literal>yes</literal>'>
 
-<!ENTITY sh.1 '<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!ENTITY yn_option '{&yes;,&no;}'>
+<!ENTITY yna_option '{&yes;,&no;,&auto;}'>
+<!ENTITY ddos_mode_option '{&busy;,&unlimited;,&auto;}'>
+<!ENTITY http_method_option '{&get;,&post;}'>
+<!ENTITY failureshunt_option '{&none;,&pass;,&drop;,&reject;}'>
+<!ENTITY negotiationshunt_option '{&hold;,&pass;}'>
+<!ENTITY nic_offload_option '{&no;,&crypto;,&packet;}'>
+<!ENTITY enable_tcp_option '{&no;,&fallback;,&yes;}'>
+<!ENTITY ppk_option '{&no;,&propose;,&yes;,&insist;,&never;}'>
+<!ENTITY xauthfail_option '{&hard;,&soft;}'>
+<!ENTITY xauthby_opion '{&filelit;,&pam;,&alwaysok;}'>
+<!ENTITY keyexchange_option '{&ikev1;,&ikev2;}'>
+<!ENTITY type_option '{&tunnel;,&transport;,&passthrough;,&drop;}'>
+<!ENTITY nat_ikev1_method_option '{&drafts;,&rfc;,&both;,&none;}'>
+<!ENTITY sendca_option '{&none;,&issuer;,&all;}'>
+<!ENTITY esn_option '{&yes;,&no;,&either;}'>
+<!ENTITY phase2_option '{&esp;,&ah;}'>
+<!ENTITY autheap_option '{&none;,&tls;}'>
 
-<!ENTITY crypt.3 '<citerefentry><refentrytitle>crypt</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
-<!ENTITY efence.2 '<citerefentry><refentrytitle>efence</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
-<!ENTITY glob.3 '<citerefentry><refentrytitle>glob</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
-<!ENTITY init.8 '<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
-<!ENTITY ip.8 '<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
-<!ENTITY random.4 '<citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>'>
-<!ENTITY rc.8 '<citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
-<!ENTITY rngd.8 '<citerefentry><refentrytitle>rngd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
-<!ENTITY syslog.2 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
-<!ENTITY syslog.3 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
-<!ENTITY syslogd.8 '<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
-<!ENTITY systemd.8 '<citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
-<!ENTITY systemd.service.5 '<citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
-
-<!-- options accepted by ipsec.conf -->
-
-<!ENTITY yn_option '{yes,no}'>
-<!ENTITY yna_option '{yes,no,auto}'>
+<!-- -->
 
 <!ENTITY ip_address '<replaceable>address</replaceable>'>
 <!ENTITY ip_cidr '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>]'>
@@ -145,15 +208,29 @@
 <!ENTITY ip_pool '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>subnet-mask</replaceable>]|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
 <!ENTITY ip_port '<replaceable>port</replaceable>'>
 <!ENTITY ip_protoport '<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
-<!ENTITY ip_range '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
+<!ENTITY ip_range '{<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>],<replaceable>address</replaceable>-<replaceable>address</replaceable>}'>
 <!ENTITY ip_selector '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>protocol</replaceable>][/<replaceable>port</replaceable>]'>
 <!ENTITY ip_subnet '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>'>
 
+<!ENTITY directory '<filename><replaceable>directory</replaceable></filename>'>
+<!ENTITY file '<filename><replaceable>file</replaceable></filename>'>
+<!ENTITY string '<replaceable>string</replaceable>'>
+<!ENTITY URI '<replaceable>URI</replaceable>'>
+
 <!ENTITY hostname '{<replaceable>hostname</replaceable>,&ip_address;}'>
 
-<!ENTITY byte_count '{<replaceable>bytes</replaceable>,<replaceable>count{KiB,MiB,GiB,...}</replaceable>'>
-<!ENTITY count '{<replaceable>count</replaceable>,<replaceable>count{Ki,Mi,Gi,...}</replaceable>'>
-<!ENTITY percent '<replaceable>percent</replaceable>;&#37;'>
+<!ENTITY byte_count_unit '{<literal>KiB</literal>,<literal>MiB</literal>,<literal>GiB</literal>,<literal>TiB</literal>,<literal>PiB</literal>,<literal>EiB</literal>}'>
+<!ENTITY byte_count '<replaceable>bytes</replaceable>[&byte_count_unit;]'>
 
-<!ENTITY seconds '{<replaceable>seconds</replaceable>,<replaceable>delay{us,ms,s,m,h,d,w}</replaceable>}'>
-<!ENTITY milliseconds '{<replaceable>milliseconds</replaceable>,<replaceable>delay{us,ms,s,m,h,d,w}</replaceable>}'>
+<!ENTITY count_unit '{<literal>Ki</literal>,<literal>Mi</literal>,<literal>Gi</literal>,<literal>Ti</literal>,<literal>Pi</literal>,<literal>Ei</literal>}'>
+<!ENTITY count '<replaceable>count</replaceable>[&count_unit;]'>
+
+<!ENTITY percent '<replaceable>percent</replaceable><literal>;&#37;</literal>'>
+
+<!ENTITY duration_unit '{<literal>us</literal>,<literal>ms</literal>,<literal>s</literal>,<literal>m</literal>,<literal>h</literal>,<literal>d</literal>,<literal>w</literal>}'>
+<!ENTITY seconds '<replaceable>seconds</replaceable>[&duration_unit;]'>
+<!ENTITY milliseconds '<replaceable>milliseconds</replaceable>[&duration_unit;]'>
+
+<!ENTITY yes '<literal>yes</literal>'>
+<!ENTITY no '<literal>no</literal>'>
+<!ENTITY auto '<literal>auto</literal>'>

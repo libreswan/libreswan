@@ -6,12 +6,16 @@
 
     <para>
       Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode. This
-      option has no effect when IKEv2 is used.  Acceptable values are
-      <option>no</option> (the default) or <option>yes</option>.
-      When this option is enabled, IKEv1 Main Mode will no longer be
-      allowed for this connection. The old name of this option was
+      option has no effect when IKEv2 is used.  When this option is
+      enabled, IKEv1 Main Mode will no longer be allowed for this
+      connection. The old name of this option was
       <option>aggrmode</option>.
     </para>
+
+    <para>
+      The default is &no;.
+    </para>
+
 
     <para>
       Aggressive Mode is less secure, and more vulnerable to Denial Of

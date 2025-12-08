@@ -9,7 +9,7 @@
       are sent for this connection.  Set to enable checking.
     </para>
     <para>
-      The default value is <option>0</option> meaning disabled.
+      The default is <option>0</option> meaning disabled.
     </para>
     <para>
       If <option>dpddelay</option> is set, you might need to adjust

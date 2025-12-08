@@ -1,12 +1,14 @@
 <varlistentry>
   <term>
-    <option>phase2=</option>
+    <option>phase2=&phase2_option;</option>
   </term>
   <listitem>
     <para>
       Sets the type of SA that will be produced.  Valid options are:
-      <option>esp</option> for encryption (the default),
-      <option>ah</option> for authentication only.
+      &esp; for encryption, &ah; for authentication only.
+    </para>
+    <para>
+      The default is &esp;.
     </para>
     <para>
       The very first IPsec designs called for use of AH plus ESP to

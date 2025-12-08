@@ -5,8 +5,8 @@
   <listitem>
     <para>
       Whether requests of the remote peer to redirect IKE/IPsec SA's
-      are accepted. Valid options are <option>no</option> (the
-      default) and <option>yes</option>. See also
+      are accepted. Valid options are &no; (the
+      default) and &yes;. See also
       <option>accept-redirect-to</option>.
     </para>
   </listitem>

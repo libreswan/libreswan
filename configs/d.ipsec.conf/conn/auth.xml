@@ -18,11 +18,13 @@
       <option>ecdsa</option> for ECDSA digital signatures based
       authentication, <option>secret</option> for shared
       secrets (PSK) authentication and <option>null</option> for
-      null-authentication. There is no default value - if unset, the
-      symmetrical <option>authby=</option> keyword is used to
-      determine the authentication policy of the connection.
+      null-authentication.
     </para>
-
+    <para>
+      There is no default value - if unset, the symmetrical
+      <option>authby=</option> keyword is used to determine the
+      authentication policy of the connection.
+    </para>
     <para>
       Asymmetric authentication is only supported with IKEv2. If symmetric
       authentication is required, use <option>authby=</option> instead

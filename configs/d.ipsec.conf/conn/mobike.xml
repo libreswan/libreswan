@@ -7,11 +7,13 @@
       Whether to allow MOBIKE (RFC 4555) to enable a connection to
       migrate its endpoint without needing to restart the connection
       from scratch. This is used on mobile devices that switch between
-      wired, wireless or mobile data connections. Current values are
-      <option>no</option> (the default) or <option>yes</option>, Only
-      connection acting as modecfgclient will allow the initiator to
-      migrate using mobike. Only connections acting as modecfgserver
-      will allow clients to migrate.
+      wired, wireless or mobile data connections.  Only connection
+      acting as modecfgclient will allow the initiator to migrate
+      using mobike. Only connections acting as modecfgserver will
+      allow clients to migrate.
+    </para>
+    <para>
+      The default is &no;.
     </para>
     <para>
       VTI and MOBIKE might not work well when used together.

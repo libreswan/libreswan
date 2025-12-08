@@ -1,16 +1,18 @@
 <varlistentry>
   <term>
-    <option>type=</option>
+    <option>type=&type_option;</option>
   </term>
   <listitem>
     <para>
       the type of the connection; currently the accepted values are
-      <option>tunnel</option> (the default) signifying a host-to-host,
-      host-to-subnet, or subnet-to-subnet tunnel;
-      <option>transport</option>, signifying host-to-host transport
-      mode; <option>passthrough</option>, signifying that no IPsec
-      processing should be done at all; <option>drop</option>,
-      signifying that packets should be discarded.
+      &tunnel;, signifying a host-to-host, host-to-subnet, or
+      subnet-to-subnet tunnel; &transport;, signifying host-to-host
+      transport mode; &passthrough;, signifying that no IPsec
+      processing should be done at all; &drop;, signifying that
+      packets should be discarded.
+    </para>
+    <para>
+      The default is &tunnel;.
     </para>
     <para>
       Historic Note: &KLIPS; supported the option

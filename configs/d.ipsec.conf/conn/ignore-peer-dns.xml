@@ -4,9 +4,7 @@
   </term>
   <listitem>
     <para>
-      whether to ignore received DNS configuration.  Acceptable values
-      are: <option>no</option> (the default) and
-      <option>yes</option>.  Normally, when a
+      whether to ignore received DNS configuration.  Normally, when a
       roadwarrior connects to a remote VPN, the remote VPN server
       sends a list of DNS domains and DNS nameserver IP addresses that
       the roadwarrior can use to reach internal only resources through
@@ -17,6 +15,9 @@
       /etc/resolv.conf directly, or reconfigure a locally running DNS
       server (unbound, knot, stubby or systemd-resolved) or inform
       NetworkManager.
+    </para>
+    <para>
+      The default is &no;.
     </para>
   </listitem>
 </varlistentry>

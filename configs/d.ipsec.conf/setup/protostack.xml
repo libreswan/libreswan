@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>protostack</option>
+    <option>protostack=</option>
   </term>
   <listitem>
     <para>

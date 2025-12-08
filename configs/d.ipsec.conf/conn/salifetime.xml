@@ -15,7 +15,7 @@
       on <option>salifetime</option>.
     </para>
     <para>
-      The default value is eight hours (<option>8h</option>)).
+      The default is 8 hours (<literal>8h</literal>)).
     </para>
     <para>
       The keywords "keylife" and "lifetime" are obsoleted aliases for

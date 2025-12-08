@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>nat-ikev1-method=</option>
+    <option>nat-ikev1-method=&nat_ikev1_method_option;</option>
   </term>
   <listitem>
     <para>
@@ -17,14 +17,14 @@
     </para>
     <para>
       This option allows fine tuning which of the NAT-T payloads to
-      consider for sending and processing.  Currently the accepted
-      values are <option>drafts</option>, <option>rfc</option>,
-      <option>both</option> (the default) and
-      <option>none</option>. To interoperate with known broken
-      devices, use nat-ikev1-method=drafts.  To prevent the other end
-      from triggering IKEv1 NAT-T encapsulation, set this to
+      consider for sending and processing.  To interoperate with known
+      broken devices, use nat-ikev1-method=drafts.  To prevent the
+      other end from triggering IKEv1 NAT-T encapsulation, set this to
       none. This will omit the NAT-T payloads used to determine NAT,
       forcing the other end not to use encapsulation.
+    </para>
+    <para>
+      The default is &both;.
     </para>
   </listitem>
 </varlistentry>

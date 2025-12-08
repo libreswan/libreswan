@@ -1,18 +1,19 @@
 <varlistentry>
   <term>
-    <option>negotiationshunt=</option>
+    <option>negotiationshunt=&negotiationshunt_option;</option>
   </term>
   <listitem>
     <para>
-      What to do with packets during the IKE negotiation.  Valid
-      options are <option>hold</option> (the default) or
-      <option>pass</option>. This should almost always be left to the
-      default <option>hold</option> value to avoid cleartext packet
-      leaking. The only reason to set this to <option>pass</option> is
-      if plaintext service availability is more important than service
-      security or privacy, a scenario that also implies
-      <option>failureshunt=pass</option> and most likely
+      What to do with packets during the IKE negotiation.  This should
+      almost always be left to the default &hold; value to avoid
+      cleartext packet leaking.  The only reason to set this to &pass;
+      is if plaintext service availability is more important than
+      service security or privacy, a scenario that also implies
+      <option>failureshunt=&pass;</option> and most likely
       <option>authby=%null</option> using Opportunistic Encryption.
+    </para>
+    <para>
+      The default is &hold;.
     </para>
   </listitem>
 </varlistentry>

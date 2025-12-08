@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>curl-iface</option>
+    <option>curl-iface=</option>
   </term>
   <listitem>
     <para>

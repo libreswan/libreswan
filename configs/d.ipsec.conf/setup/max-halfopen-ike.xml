@@ -1,12 +1,15 @@
 <varlistentry>
   <term>
-    <option>max-halfopen-ike</option>
+    <option>max-halfopen-ike=&count;</option>
   </term>
   <listitem>
     <para>
       The number of half-open IKE SAs before the IKE daemon starts
       refusing all new IKE attempts.  Established IKE peers are not
-      affected. The default value is 50000.
+      affected.
+    </para>
+    <para>
+      The default is <literal>50000</literal>.
     </para>
   </listitem>
 </varlistentry>

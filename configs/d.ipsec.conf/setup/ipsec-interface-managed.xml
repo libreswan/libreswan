@@ -1,6 +1,6 @@
 <varlistentry>
   <term>
-    <option>ipsec-interface-managed</option>
+    <option>ipsec-interface-managed=&yn_option;</option>
   </term>
   <listitem>
     <para>
@@ -13,7 +13,7 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <option>yes</option>
+	  &yes;
 	</term>
 	<listitem>
 	  <para>
@@ -33,7 +33,7 @@
       </varlistentry>
       <varlistentry>
 	<term>
-	  <option>no</option>
+	  &no;
 	</term>
 	<listitem>
 	  <para>
@@ -52,7 +52,7 @@
     </variablelist>
     </para>
     <para>
-      The default value is <option>yes</option>.
+      The default is &yes;.
     </para>
   </listitem>
 </varlistentry>

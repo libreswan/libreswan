@@ -6,8 +6,10 @@
     <para>
       whether to send any NAT-T keep-alives. These one byte packets
       prevent the NAT router from closing its port when there is not
-      enough traffic on the IPsec connection.  Acceptable values are:
-      <option>yes</option> (the default) and <option>no</option>.
+      enough traffic on the IPsec connection.
+    </para>
+    <para>
+      The default is &yes;.
     </para>
   </listitem>
 </varlistentry>

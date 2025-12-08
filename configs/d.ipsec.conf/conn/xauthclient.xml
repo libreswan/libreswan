@@ -19,7 +19,7 @@
       --ipsecgroup-xauth --xauthname badusername --xauthpass password
       --initiate</command> The other side of the connection should be
       configured as <option>rightxauthserver</option>.  Acceptable
-      values are <option>yes</option> or <option>no</option> (the
+      values are &yes; or &no; (the
       default).
     </para>
   </listitem>

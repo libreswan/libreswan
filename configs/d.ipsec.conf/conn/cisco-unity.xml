@@ -4,9 +4,10 @@
   </term>
   <listitem>
     <para>
-      whether to send a CISCO_UNITY payload to the peer.  Acceptable
-      values are: <option>no</option> (the default) and
-      <option>yes</option>.
+      whether to send a CISCO_UNITY payload to the peer.
+    </para>
+    <para>
+      The default is &no;.
     </para>
     <para>
       It is recommended to leave this option unset, unless the remote

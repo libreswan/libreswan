@@ -22,7 +22,7 @@
       is not needed.
     </para>
     <para>
-      The default value is <option>no</option>.
+      The default is &no;.
     </para>
   </listitem>
 </varlistentry>

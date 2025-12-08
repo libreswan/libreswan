@@ -14,7 +14,7 @@
       only locally, other end need not agree on it.
     </para>
     <para>
-      The default value is <option>100%</option>.
+      The default is <literal>100%</literal>.
     </para>
   </listitem>
 </varlistentry>

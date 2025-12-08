@@ -7,8 +7,8 @@
       When pluto is logging to a file, as specified by
       <option>logfile=</option>, open the log file in append mode or
       truncate mode.  Since, on modern systems, &pluto; is restarted
-      by other daemons, such as &systemd;, this option should be left
-      as its default, <option>yes</option>, to preserve the log
+      by other daemons, such as &systemd.8;, this option should be left
+      as its default, &yes;, to preserve the log
       entries of previous runs of &pluto;.
     </para>
     <para>
@@ -16,11 +16,11 @@
       test suite, which needs to create new log files from scratch.
     </para>
     <para>
-      The default value is <option>yes</option>.
+      The default is &yes;.
     </para>
     <para>
       Prior to &Libreswan; version 5.3 &pluto;, when invoked without a
-      config file, would set this option to <option>no</option>.
+      config file, would set this option to &no;.
     </para>
   </listitem>
 </varlistentry>

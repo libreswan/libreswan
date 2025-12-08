@@ -1,13 +1,10 @@
 <varlistentry>
   <term>
-    <option>expire-lifetime</option>
+    <option>expire-lifetime=&seconds;</option>
   </term>
   <listitem>
     <para>
-      The time in seconds until the acquire kernel state times out.
-      On &Linux;, the default value, determined by
-      <filename>/proc/sys/net/core/xfrm_acq_expires</filename> is 30
-      seconds.  On BSD, this option is ignored.
+      The time until the acquire kernel state times out.
     </para>
     <para>
       On-demand connections (such as Opportunistic,
@@ -24,6 +21,12 @@
     <para>
       See also <option>failureshunt</option> and
       <option>negotiationshunt</option>
+    </para>
+    <para>
+      The default, on &Linux;, as determined by
+      <filename>/proc/sys/net/core/xfrm_acq_expires</filename>, is 30
+      seconds (<literal>30s</literal>).  On BSD, this option is
+      ignored.
     </para>
     <para>
       Prior to &Libreswan; version 5.3 this option was called

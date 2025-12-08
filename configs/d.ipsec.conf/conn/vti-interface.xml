@@ -26,7 +26,7 @@
       interfaces settings required for proper functioning
       (disable_policy, rp_filter, forwarding, etc). Interface names
       are limited to 16 characters and may not allow all characters to
-      be used. If marking and <option>vti-routing=yes</option> is
+      be used. If marking and <option>vti-routing=&yes;</option> is
       used, no manual iptables should be required. However,
       administrators can use the iptables mangle table to mark traffic
       manually if desired.
