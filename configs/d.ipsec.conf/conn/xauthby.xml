@@ -1,15 +1,15 @@
 <varlistentry id='conn.xauthby'>
   <term>
-    <option>xauthby=</option>
+    <option>xauthby=&xauthby_option;</option>
   </term>
   <listitem>
     <para>
       When IKEv1 XAUTH support is available, set the method used by
       XAUTH to authenticate the user with IKEv1. The currently
-      supported values are &filelit;, &pam;, and &alwaysok;.
+      supported values are &file;, &pam;, and &alwaysok;.
     </para>
     <para>
-      The default is &filelit;.
+      The default is &file;.
     </para>
     <para>
       The password file is located at

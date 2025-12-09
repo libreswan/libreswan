@@ -141,6 +141,8 @@
 
 <!-- literals and options accepted by ipsec.conf -->
 
+<!-- NOTE: FILE is the literal, FILENAME is the replaceable -->
+
 <!ENTITY ah '<literal>ah</literal>'>
 <!ENTITY all '<literal>all</literal>'>
 <!ENTITY alwaysok '<literal>alwaysok</literal>'>
@@ -153,7 +155,7 @@
 <!ENTITY either '<literal>either</literal>'>
 <!ENTITY esp '<literal>esp</literal>'>
 <!ENTITY fallback '<literal>fallback</literal>'>
-<!ENTITY filelit '<literal>file</literal>'>
+<!ENTITY file '<literal>file</literal>'>
 <!ENTITY force '<literal>force</literal>'>
 <!ENTITY get '<literal>get</literal>'>
 <!ENTITY hard '<literal>hard</literal>'>
@@ -181,24 +183,24 @@
 <!ENTITY unlimited '<literal>unlimited</literal>'>
 <!ENTITY yes '<literal>yes</literal>'>
 
-<!ENTITY yn_option '{&yes;,&no;}'>
-<!ENTITY yna_option '{&yes;,&no;,&auto;}'>
-<!ENTITY ddos_mode_option '{&busy;,&unlimited;,&auto;}'>
-<!ENTITY http_method_option '{&get;,&post;}'>
-<!ENTITY failureshunt_option '{&none;,&pass;,&drop;,&reject;}'>
-<!ENTITY negotiationshunt_option '{&hold;,&pass;}'>
-<!ENTITY nic_offload_option '{&no;,&crypto;,&packet;}'>
-<!ENTITY enable_tcp_option '{&no;,&fallback;,&yes;}'>
-<!ENTITY ppk_option '{&no;,&propose;,&yes;,&insist;,&never;}'>
-<!ENTITY xauthfail_option '{&hard;,&soft;}'>
-<!ENTITY xauthby_opion '{&filelit;,&pam;,&alwaysok;}'>
-<!ENTITY keyexchange_option '{&ikev1;,&ikev2;}'>
-<!ENTITY type_option '{&tunnel;,&transport;,&passthrough;,&drop;}'>
-<!ENTITY nat_ikev1_method_option '{&drafts;,&rfc;,&both;,&none;}'>
-<!ENTITY sendca_option '{&none;,&issuer;,&all;}'>
-<!ENTITY esn_option '{&yes;,&no;,&either;}'>
-<!ENTITY phase2_option '{&esp;,&ah;}'>
-<!ENTITY autheap_option '{&none;,&tls;}'>
+<!ENTITY yn_option '{&yes;|&no;}'>
+<!ENTITY yna_option '{&yes;|&no;|&auto;}'>
+<!ENTITY ddos_mode_option '{&busy;|&unlimited;|&auto;}'>
+<!ENTITY http_method_option '{&get;|&post;}'>
+<!ENTITY failureshunt_option '{&none;|&pass;|&drop;|&reject;}'>
+<!ENTITY negotiationshunt_option '{&hold;|&pass;}'>
+<!ENTITY nic_offload_option '{&no;|&crypto;|&packet;}'>
+<!ENTITY enable_tcp_option '{&no;|&fallback;|&yes;}'>
+<!ENTITY ppk_option '{&no;|&propose;|&yes;|&insist;|&never;}'>
+<!ENTITY xauthfail_option '{&hard;|&soft;}'>
+<!ENTITY xauthby_option '{&file;|&pam;|&alwaysok;}'>
+<!ENTITY keyexchange_option '{&ikev1;|&ikev2;}'>
+<!ENTITY type_option '{&tunnel;|&transport;|&passthrough;|&drop;}'>
+<!ENTITY nat_ikev1_method_option '{&drafts;|&rfc;|&both;|&none;}'>
+<!ENTITY sendca_option '{&none;|&issuer;|&all;}'>
+<!ENTITY esn_option '{&yes;|&no;|&either;}'>
+<!ENTITY phase2_option '{&esp;|&ah;}'>
+<!ENTITY autheap_option '{&none;|&tls;}'>
 
 <!-- -->
 
@@ -207,29 +209,29 @@
 <!ENTITY ip_endpoint '<replaceable>address</replaceable>:<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
 <!ENTITY ip_pool '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>subnet-mask</replaceable>]|<replaceable>address</replaceable>-<replaceable>address</replaceable>'>
 <!ENTITY ip_port '<replaceable>port</replaceable>'>
-<!ENTITY ip_protoport '<replaceable>protocol</replaceable>/<replaceable>port</replaceable>]'>
-<!ENTITY ip_range '{<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>],<replaceable>address</replaceable>-<replaceable>address</replaceable>}'>
+<!ENTITY ip_protoport '<replaceable>protocol</replaceable>[/<replaceable>port</replaceable>]'>
+<!ENTITY ip_range '{<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>]|<replaceable>address</replaceable>-<replaceable>address</replaceable>}'>
 <!ENTITY ip_selector '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>[/<replaceable>protocol</replaceable>][/<replaceable>port</replaceable>]'>
-<!ENTITY ip_subnet '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>'>
+<!ENTITY ip_subnet '<replaceable>address</replaceable>[/<replaceable>prefix</replaceable>]'>
 
+<!ENTITY filename '<filename><replaceable>file</replaceable></filename>'>
 <!ENTITY directory '<filename><replaceable>directory</replaceable></filename>'>
-<!ENTITY file '<filename><replaceable>file</replaceable></filename>'>
 <!ENTITY string '<replaceable>string</replaceable>'>
 <!ENTITY URI '<replaceable>URI</replaceable>'>
 
-<!ENTITY hostname '{<replaceable>hostname</replaceable>,&ip_address;}'>
+<!ENTITY hostname '{<replaceable>hostname</replaceable>|&ip_address;}'>
 
-<!ENTITY byte_count_unit '{<literal>KiB</literal>,<literal>MiB</literal>,<literal>GiB</literal>,<literal>TiB</literal>,<literal>PiB</literal>,<literal>EiB</literal>}'>
-<!ENTITY byte_count '<replaceable>bytes</replaceable>[&byte_count_unit;]'>
+<!ENTITY byte_count_unit '[<literal>KiB</literal>|<literal>MiB</literal>|<literal>GiB</literal>|<literal>TiB</literal>|<literal>PiB</literal>|<literal>EiB</literal>]'>
+<!ENTITY byte_count '<replaceable>bytes</replaceable>&byte_count_unit;'>
 
-<!ENTITY count_unit '{<literal>Ki</literal>,<literal>Mi</literal>,<literal>Gi</literal>,<literal>Ti</literal>,<literal>Pi</literal>,<literal>Ei</literal>}'>
-<!ENTITY count '<replaceable>count</replaceable>[&count_unit;]'>
+<!ENTITY count_unit '[<literal>Ki</literal>|<literal>Mi</literal>|<literal>Gi</literal>|<literal>Ti</literal>|<literal>Pi</literal>|<literal>Ei</literal>]'>
+<!ENTITY count '<replaceable>count</replaceable>&count_unit;'>
 
 <!ENTITY percent '<replaceable>percent</replaceable><literal>;&#37;</literal>'>
 
-<!ENTITY duration_unit '{<literal>us</literal>,<literal>ms</literal>,<literal>s</literal>,<literal>m</literal>,<literal>h</literal>,<literal>d</literal>,<literal>w</literal>}'>
-<!ENTITY seconds '<replaceable>seconds</replaceable>[&duration_unit;]'>
-<!ENTITY milliseconds '<replaceable>milliseconds</replaceable>[&duration_unit;]'>
+<!ENTITY duration_unit '<literal>us</literal>|<literal>ms</literal>|<literal>s</literal>|<literal>m</literal>|<literal>h</literal>|<literal>d</literal>|<literal>w</literal>]'>
+<!ENTITY seconds '<replaceable>seconds</replaceable>&duration_unit;'>
+<!ENTITY milliseconds '<replaceable>milliseconds</replaceable>&duration_unit;'>
 
 <!ENTITY yes '<literal>yes</literal>'>
 <!ENTITY no '<literal>no</literal>'>

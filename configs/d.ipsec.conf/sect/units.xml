@@ -1,6 +1,6 @@
 <refsect1 id='sect.units'>
   <title>
-    SPECIFYING UNITS
+    UNITS
   </title>
 
   <refsect2 id='unit_bytes'>
@@ -13,27 +13,27 @@
       following multipliers as a suffix:
       <variablelist>
 	<varlistentry>
-	  <term><option>KiB</option></term>
+	  <term><literal>KiB</literal></term>
 	  <listitem><para>kilobytes (1024 bytes)</para></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>MiB</option></term>
+	  <term><literal>MiB</literal></term>
 	  <listitem><para>megabytes (1024*1024 bytes)</para></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>GiB</option></term>
+	  <term><literal>GiB</literal></term>
 	  <listitem><para>gigabytes (1024*1024*1024 bytes)</para></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>TiB</option></term>
+	  <term><literal>TiB</literal></term>
 	  <listitem><para>terabytes (1024*1024*1024*1024 bytes)</para></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>PiB</option></term>
+	  <term><literal>PiB</literal></term>
 	  <listitem><para>petabytes (1024*1024*1024*1024*1024 bytes)</para></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>EiB</option></term>
+	  <term><literal>EiB</literal></term>
 	  <listitem><para>exabytes (1024*1024*1024*1024*1024*1024 bytes)</para></listitem>
 	</varlistentry>
       </variablelist>
@@ -50,35 +50,79 @@
       the following multipliers as a suffix:
       <variablelist>
 	<varlistentry>
-	  <term><option>us</option></term>
-	  <listitem><para>microseconds (1/1000000 seconds)</para></listitem>
+	  <term>
+	    <literal>us</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      microseconds (1/1_000_000 seconds)
+	    </para>
+	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>ms</option></term>
-	  <listitem><para>milliseconds (1/1000 seconds)</para></listitem>
+	  <term>
+	    <literal>ms</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      milliseconds (1/1_000 seconds)
+	    </para>
+	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>s</option></term>
-	<listitem><para>seconds</para></listitem></varlistentry>
-	<varlistentry><term><option>m</option></term>
-	<listitem><para>minutes (60 seconds)</para></listitem>
+	  <term>
+	    <literal>s</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      seconds
+	    </para>
+	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>h</option></term>
-	  <listitem><para>hours (60*60 seconds)</para></listitem>
+	  <term>
+	    <literal>m</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      minutes (60 seconds)
+	    </para>
+	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>d</option></term>
-	  <listitem><para>days (24*60*60 seconds)</para></listitem>
+	  <term>
+	    <literal>h</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      hours (60*60 seconds)
+	    </para>
+	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><option>w</option></term>
-	  <listitem><para>weeks (7*24*60*60 seconds)</para></listitem>
+	  <term>
+	    <literal>d</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      days (24*60*60 seconds)
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>
+	    <literal>w</literal>
+	  </term>
+	  <listitem>
+	    <para>
+	      weeks (7*24*60*60 seconds)
+	    </para>
+	  </listitem>
 	</varlistentry>
       </variablelist>
-      For instance, 1ms and 1000us, 0.5s and 500ms, 1.5h and 90m, are
-      each equivalent.
+      For instance, the following are each equivalent: 1ms and 1000us;
+      0.5s and 500ms; 1.5h and 90m.
     </para>
-</refsect2>
+  </refsect2>
 
 </refsect1>

@@ -1,10 +1,10 @@
 <varlistentry id='setup.dnssec-rootkey-file'>
   <term>
-    <option>dnssec-rootkey-file=&file;</option>
+    <option>dnssec-rootkey-file=&filename;</option>
   </term>
   <listitem>
     <para>
-      The location of the DNSSEC root zone public key file.
+      The file that contains the DNSSEC root zone public key.
     </para>
     <para>
       The default is <filename>@@DEFAULT_DNSSEC_ROOTKEY_FILE@@</filename>.

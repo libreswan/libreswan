@@ -1,15 +1,15 @@
 <varlistentry id='conn.subnets'>
   <term>
-    <option>leftsubnets=&ip_subnet;[,...]</option>
+    <option>leftsubnets=&ip_subnet;,...</option>
   </term>
   <term>
-    <option>rightsubnets=&ip_subnet;[,...]</option>
+    <option>rightsubnets=&ip_subnet;,...</option>
   </term>
   <listitem>
     <para>
       Specify multiple private subnets behind the participant,
       expressed as
-      <option>networkA</option><option>/</option><option>netmaskA</option>,<option>networkB</option><option>/</option><option>netmaskB</option><option>[,...]</option>.
+      <option>networkA</option><option>/</option><option>netmaskA</option>,<option>networkB</option><option>/</option><option>netmaskB</option><option>,...</option>.
       If both a <option>leftsubnets=</option> and
       <option>rightsubnets=</option> are defined, all combinations of
       subnet tunnels will be established as separate IPsec tunnels.
