@@ -53,7 +53,7 @@
 #include "lsw_socket.h"
 
 #include "constants.h"
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 #include "defs.h"
 #include "state.h"
 #include "id.h"

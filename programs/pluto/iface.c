@@ -37,7 +37,7 @@
 #endif
 
 #include "lsw_socket.h"
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "defs.h"
 

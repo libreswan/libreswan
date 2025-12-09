@@ -25,8 +25,8 @@
 #include <sys/queue.h>		/* for TAILQ_ENTRY() */
 #include <stdint.h>
 
-#include "ipsecconf/config_setup.h"
-#include "ipsecconf/config_conn.h"
+#include "ipsecconf/setup.h"
+#include "ipsecconf/conn.h"
 
 #include "deltatime.h"
 #include "ip_address.h"

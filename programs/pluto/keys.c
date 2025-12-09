@@ -60,7 +60,7 @@
 #include <secerr.h>
 #include <secport.h>
 #include <time.h>
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 #include "lswnss.h"
 #include "secrets.h"
 #include "ike_alg_hash.h"

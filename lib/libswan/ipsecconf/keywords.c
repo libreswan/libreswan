@@ -24,8 +24,8 @@
  */
 
 #include "ipsecconf/keywords.h"
-#include "ipsecconf/config_setup.h"
-#include "ipsecconf/config_conn.h"
+#include "ipsecconf/setup.h"
+#include "ipsecconf/conn.h"
 #include "lswlog.h"
 #include "lswalloc.h"
 

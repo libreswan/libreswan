@@ -42,7 +42,7 @@
 #include "demux.h"	/* for struct msg_digest */
 #include "pending.h"
 #include "show.h"
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 
 static refcnt_discard_content_fn discard_logger_content;
 static struct fd *logger_fd(const struct logger *logger);

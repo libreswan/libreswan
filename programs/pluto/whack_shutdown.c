@@ -62,7 +62,7 @@
 #include "spd_db.h"	/* for check_spd_db() */
 #include "server_fork.h"	/* for check_server_fork() */
 #include "ikev2_redirect.h"	/* for free_global_redirect_dests() */
-#include "ipsecconf/config_setup.h"	/* for free_config_setup() */
+#include "ipsecconf/setup.h"	/* for free_config_setup() */
 #include "ikev2_ipseckey.h"	/* for shutdown_ikev2_ipseckey() */
 #include "pending.h"
 #include "connection_event.h"

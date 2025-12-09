@@ -25,7 +25,7 @@
 #include "lswtool.h"
 #include "lswalloc.h"
 #include "lswlog.h"
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "optarg.h"

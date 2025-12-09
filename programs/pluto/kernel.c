@@ -48,7 +48,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "defs.h"
 #include "rnd.h"

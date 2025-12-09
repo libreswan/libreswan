@@ -41,7 +41,7 @@
 #include "hunk.h"		/* for char_is_space() */
 #include "ip_cidr.h"
 #include "ttodata.h"
-#include "ipsecconf/config_setup.h"
+#include "ipsecconf/setup.h"
 
 #include "ipsecconf/parser.h"
 #include "ipsecconf/confread.h"

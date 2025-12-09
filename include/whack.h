@@ -46,7 +46,7 @@
 #include "xauthby.h"
 #include "xauthfail.h"
 #include "ddos_mode.h"
-#include "ipsecconf/config_conn.h"	/* for CONFIG_CONN_KEYWORD_ROOF */
+#include "ipsecconf/conn.h"	/* for CONFIG_CONN_KEYWORD_ROOF */
 
 #ifndef DEFAULT_CTL_SOCKET
 # define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"

@@ -26,7 +26,7 @@
 #include "constants.h"		/* for yn_option_names; */
 #include "lswcdefs.h"		/* for elemsof() */
 
-#include "ipsecconf/config_conn.h"
+#include "ipsecconf/conn.h"
 #include "ipsecconf/keywords.h"
 #include "xauthby.h"
 #include "xauthfail.h"

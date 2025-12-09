@@ -346,8 +346,8 @@ $(builddir)/whack/whack_magic.c: whack/whack_magic.in.c
 
 $(OBJS): | $(builddir)/ipsecconf/
 
-OBJS += ipsecconf/config_conn.o
-OBJS += ipsecconf/config_setup.o
+OBJS += ipsecconf/conn.o
+OBJS += ipsecconf/setup.o
 OBJS += ipsecconf/confread.o
 OBJS += ipsecconf/confwrite.o
 OBJS += ipsecconf/interfaces.o
