@@ -24,6 +24,7 @@
 #include "revival.h"			/* for revive_connection() */
 #include "list_entry.h"
 #include "iface.h"			/* for struct iface_endpoint */
+#include "ddns.h"
 
 static void connection_event_handler(void *arg, const struct timer_event *event);
 
@@ -66,16 +67,19 @@ static void jam_connection_event(struct jambuf *buf, const struct connection_eve
 			}
 		}
 		break;
+	case CONNECTION_CHECK_DDNS:
+		break;
 	}
 	jam_string(buf, "; ");
 	jam_string(buf, event->subplot);
 }
 
-void schedule_connection_event(struct connection *c,
-			       enum connection_event_kind event_kind,
-			       const char *subplot,
-			       deltatime_t delay,
-			       const char *impair, struct logger *logger)
+static void schedule_connection_event(struct connection *c,
+				      enum connection_event_kind event_kind,
+				      const char *subplot,
+				      deltatime_t delay,
+				      const char *impair,
+				      const struct logger *logger)
 {
 	struct connection_event *d = alloc_thing(struct connection_event, "data");
 	connection_buf cb;
@@ -98,6 +102,22 @@ void schedule_connection_event(struct connection *c,
 	schedule_timeout(str_enum_long(&connection_event_kind_names, event_kind, &kb),
 			 &d->timeout, delay,
 			 connection_event_handler, d);
+}
+
+void schedule_connection_revival(struct connection *c,
+				 const char *subplot,
+				 deltatime_t delay,
+				 const char *impair, struct logger *logger)
+{
+	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay, impair, logger);
+}
+
+void schedule_connection_check_ddns(struct connection *c,
+				    struct verbose verbose)
+{
+	schedule_connection_event(c, CONNECTION_CHECK_DDNS,
+				  "DDNS", deltatime(PENDING_DDNS_INTERVAL),
+				  /*impair*/NULL, verbose.logger);
 }
 
 static void discard_connection_event(struct connection_event **e)
@@ -129,6 +149,9 @@ static void dispatch_connection_event(struct connection_event *e,
 	switch (e->kind) {
 	case CONNECTION_REVIVAL:
 		revive_connection(e->connection, e->subplot, inception);
+		break;
+	case CONNECTION_CHECK_DDNS:
+		bad_case(e->kind); /* not yet implemented */
 		break;
 	}
 
@@ -179,7 +202,7 @@ bool flush_connection_event(struct connection *c,
 bool flush_connection_events(struct connection *c)
 {
 	bool flushed = false;
-	for (enum connection_event_kind e = 0; e < CONNECTION_EVENT_KIND_ROOF; e++) {
+	for (enum connection_event_kind e = 0; e < CONNECTION_EVENT_ROOF; e++) {
 		flushed |= flush_connection_event(c, e);
 
 	}

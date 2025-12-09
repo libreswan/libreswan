@@ -294,7 +294,7 @@ west #
          jam_enum_short 7: EAPONLY OK
          jam_enum_human 7: eaponly OK
          match EAPONLY [short]: OK
-  connection_event_kind_names: [1..2)
+  connection_event_kind_names: [1..3)
     1 -> CONNECTION_REVIVAL
          jam_enum 1: CONNECTION_REVIVAL OK
          match CONNECTION_REVIVAL: OK
@@ -302,6 +302,13 @@ west #
          jam_enum_short 1: REVIVAL OK
          jam_enum_human 1: revival OK
          match REVIVAL [short]: OK
+    2 -> CONNECTION_CHECK_DDNS
+         jam_enum 2: CONNECTION_CHECK_DDNS OK
+         match CONNECTION_CHECK_DDNS: OK
+         short_name 2: CHECK_DDNS OK
+         jam_enum_short 2: CHECK_DDNS OK
+         jam_enum_human 2: check-ddns OK
+         match CHECK_DDNS [short]: OK
   connection_kind_names: [0..8)
     0 -> CK_INVALID
          jam_enum 0: CK_INVALID OK

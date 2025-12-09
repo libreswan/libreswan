@@ -187,8 +187,9 @@ static void schedule_revival_event(struct connection *c, struct logger *logger, 
 	     c->revival.attempt,
 	     str_deltatime(delay, &db));
 
-	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay,
-				  (impair.revival ? "revival" : NULL), logger);
+	schedule_connection_revival(c, subplot, delay,
+				    (impair.revival ? "revival" : NULL),
+				    logger);
 }
 
 static bool scheduled_revival(struct connection *c, struct state *st/*can be NULL*/,
@@ -208,8 +209,9 @@ static bool scheduled_revival(struct connection *c, struct state *st/*can be NUL
 			     c->redirect.attempt,
 			     str_address_sensitive(&c->redirect.ip, &ab));
 
-			schedule_connection_event(c, CONNECTION_REVIVAL, subplot, deltatime_zero,
-						  (impair.revival ? "redirect" : NULL), logger);
+			schedule_connection_revival(c, subplot, deltatime_zero,
+						    (impair.revival ? "redirect" : NULL),
+						    logger);
 			return true;
 		}
 	}

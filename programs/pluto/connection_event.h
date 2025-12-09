@@ -31,12 +31,13 @@ struct connection_event;
 bool connection_event_is_scheduled(const struct connection *c,
 				   enum connection_event_kind event);
 
-void schedule_connection_event(struct connection *c,
-			       enum connection_event_kind event,
-			       const char *subplot,
-			       deltatime_t delay,
-			       const char *impair,
-			       struct logger *logger);
+void schedule_connection_revival(struct connection *c,
+				 const char *subplot,
+				 deltatime_t delay,
+				 const char *impair,
+				 struct logger *logger);
+void schedule_connection_check_ddns(struct connection *c,
+				    struct verbose verbose);
 
 bool flush_connection_event(struct connection *c,
 			    enum connection_event_kind event);

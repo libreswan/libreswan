@@ -83,7 +83,7 @@ struct verbose {
  */
 
 #define VERBOSE(STREAM, LOGGER, PREFIX)					\
-	{								\
+	(struct verbose) {						\
 		.logger = LOGGER,					\
 			.prefix = PREFIX,				\
 			.stream = (STREAM != DEBUG_STREAM ? STREAM :	\
