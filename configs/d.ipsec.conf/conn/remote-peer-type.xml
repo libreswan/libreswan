@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.remote-peer-type'>
   <term>
     <option>remote-peer-type=</option>
   </term>

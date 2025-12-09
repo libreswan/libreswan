@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nexthop'>
   <term>
     <option>leftnexthop=&hostname;</option>
   </term>

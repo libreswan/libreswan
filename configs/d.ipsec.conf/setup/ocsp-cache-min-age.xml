@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-cache-min-age'>
   <term>
     <option>ocsp-cache-min-age=&seconds;</option>
   </term>

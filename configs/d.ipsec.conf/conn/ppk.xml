@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ppk'>
   <term>
     <option>ppk=&ppk_option;</option>
   </term>

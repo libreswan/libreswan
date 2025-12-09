@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.seccomp'>
   <term>
     <option>seccomp={enabled,tolerant,disabled}</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.enable-tcp'>
   <term>
     <option>enable-tcp=&enable_tcp_option;</option>
   </term>

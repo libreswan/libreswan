@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.mobike'>
   <term>
     <option>mobike=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ipsec-max-packets'>
   <term>
     <option>ipsec-max-packets=&count;</option>
   </term>

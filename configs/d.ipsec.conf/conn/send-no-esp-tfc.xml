@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.send-no-esp-tfc'>
   <term>
     <option>send-no-esp-tfc=&yn_option;</option>
   </term>

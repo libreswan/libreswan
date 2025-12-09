@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.debug'>
   <term>
     <option>debug=<replaceable>option</replaceable></option>
   </term>

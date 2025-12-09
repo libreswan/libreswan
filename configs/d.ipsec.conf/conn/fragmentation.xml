@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.fragmentation'>
   <term>
     <option>fragmentation=&yn_option;</option>
   </term>

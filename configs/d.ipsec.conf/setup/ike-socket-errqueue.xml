@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ike-socket-errqueue'>
   <term>
     <option>ike-socket-errqueue=&yn_option;</option>
   </term>

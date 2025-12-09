@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.tcp-remoteport'>
   <term>
     <option>tcp-remoteport=</option>
   </term>

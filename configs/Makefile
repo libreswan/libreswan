@@ -133,18 +133,21 @@ $(builddir)/ipsec.conf.5.man: $(builddir)/ipsec.conf.5.ok
 
 $(builddir)/ipsec.conf.5.ok: $(D_IPSEC_CONF_XML)
 	: do all d.ipsec.conf/*.xml files appear in ipsec.conf.5.xml?
-	: '$$^' $^
 	for x in $(D_IPSEC_CONF_XML) ; do \
 		d=$$(basename $$(dirname $${x})) ; \
 		b=$$(basename $${x} .xml) ; \
 		f=d.ipsec.conf/$${d}/$${b}.xml ; \
 		e=$${d}.$${b} ; \
 		if ! grep '"'$${f}'"' ipsec.conf.5.xml > /dev/null ; then \
-			echo 'ENTITY ... "'$${f}'"' missing ; \
+			echo include 'ENTITY ... "'$${f}'"' missing ; \
 			exit 1 ; \
 		fi ; \
 		if ! grep '&'$${e}';' ipsec.conf.5.xml > /dev/null ; then \
-			echo '&'$${e}';' missing ; \
+			echo use '&'$${e}';' missing ; \
+			exit 1 ; \
+		fi ; \
+		if ! grep "id='$${d}.$${b}'" $${x} > /dev/null ; then \
+			echo anchor "id='$${d}.$${b}'" missing ; \
 			exit 1 ; \
 		fi ; \
 	done

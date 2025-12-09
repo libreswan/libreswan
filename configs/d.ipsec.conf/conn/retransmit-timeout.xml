@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.retransmit-timeout'>
   <term>
     <option>retransmit-timeout=&seconds;</option>
   </term>

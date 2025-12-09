@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.sourceip'>
   <term>
     <option>leftsourceip=&ip_address;</option>
   </term>

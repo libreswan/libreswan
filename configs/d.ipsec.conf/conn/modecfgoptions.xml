@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.modecfgoptions'>
   <term>
     <option>modecfgdns=</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nm-configured'>
   <term>
     <option>nm-configured=&yn_option;</option>
   </term>

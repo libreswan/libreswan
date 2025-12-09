@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.policy-label'>
   <term>
     <option>policy-label=</option>
   </term>

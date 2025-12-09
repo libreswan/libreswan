@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.vti-routing'>
   <term>
     <option>vti-routing=&yn_option;</option>
   </term>

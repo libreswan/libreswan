@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.virtual-private'>
   <term>
     <option>virtual-private=&ip_subnet;,...</option>
   </term>

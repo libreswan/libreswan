@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ignore-peer-dns'>
   <term>
     <option>ignore-peer-dns=&yn_option;</option>
   </term>

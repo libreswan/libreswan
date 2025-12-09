@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.autheap'>
   <term>
     <option>leftautheap=&autheap_option;</option>
   </term>

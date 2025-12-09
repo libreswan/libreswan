@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.aggressive'>
   <term>
     <option>aggressive=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ms-dh-downgrade'>
   <term>
     <option>ms-dh-downgrade=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.dns-match-id'>
   <term>
     <option>dns-match-id=&yn_option;</option>
   </term>

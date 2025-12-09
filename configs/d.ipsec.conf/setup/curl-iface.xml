@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.curl-iface'>
   <term>
     <option>curl-iface=</option>
   </term>

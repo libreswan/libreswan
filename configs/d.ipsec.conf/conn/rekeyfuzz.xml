@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.rekeyfuzz'>
   <term>
     <option>rekeyfuzz=&percent;</option>
   </term>

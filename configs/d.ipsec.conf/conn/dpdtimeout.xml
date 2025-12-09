@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.dpdtimeout'>
   <term>
     <option>dpdtimeout=&seconds;</option>
   </term>

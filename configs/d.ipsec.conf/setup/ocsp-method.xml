@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-method'>
   <term>
     <option>ocsp-method=&http_method_option;</option>
   </term>

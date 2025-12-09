@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.pam-authorize'>
   <term>
     <option>pam-authorize=&yn_option;</option>
   </term>

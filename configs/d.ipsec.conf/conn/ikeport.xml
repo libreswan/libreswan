@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ikeport'>
   <term>
     <option>leftikeport=&ip_port;</option>
   </term>

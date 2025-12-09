@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.syslog'>
   <term>
     <option>syslog</option>
   </term>

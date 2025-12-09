@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.auth'>
   <term>
     <option>leftauth=</option>
   </term>

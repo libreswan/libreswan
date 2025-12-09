@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.cert'>
   <term>
     <option>leftcert=</option>
   </term>

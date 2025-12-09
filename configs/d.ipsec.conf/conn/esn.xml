@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.esn'>
   <term>
     <option>esn=&esn_option;</option>
   </term>

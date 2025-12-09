@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.initial-contact'>
   <term>
     <option>initial-contact=&yn_option;</option>
   </term>

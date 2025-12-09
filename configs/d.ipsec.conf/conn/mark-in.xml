@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.mark-in'>
   <term>
     <option>mark-in=</option>
   </term>

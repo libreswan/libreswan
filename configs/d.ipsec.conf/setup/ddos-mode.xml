@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ddos-mode'>
   <term>
     <option>ddos-mode=&ddos_mode_option;</option>
   </term>

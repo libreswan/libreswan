@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.share-lease'>
   <term>
     <option>share-lease=&yn_option;</option>
   </term>

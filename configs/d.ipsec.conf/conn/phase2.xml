@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.phase2'>
   <term>
     <option>phase2=&phase2_option;</option>
   </term>

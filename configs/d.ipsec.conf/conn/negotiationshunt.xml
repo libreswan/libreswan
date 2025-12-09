@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.negotiationshunt'>
   <term>
     <option>negotiationshunt=&negotiationshunt_option;</option>
   </term>

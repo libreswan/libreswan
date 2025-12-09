@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.subnet'>
   <term>
     <option>leftsubnet=&ip_selector;[,...]</option>
   </term>

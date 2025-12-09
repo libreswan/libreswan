@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.pfs'>
   <term>
     <option>pfs=&yn_option;</option>
   </term>

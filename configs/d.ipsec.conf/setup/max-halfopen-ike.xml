@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.max-halfopen-ike'>
   <term>
     <option>max-halfopen-ike=&count;</option>
   </term>

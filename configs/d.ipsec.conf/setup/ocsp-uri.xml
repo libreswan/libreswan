@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-uri'>
   <term>
     <option>ocsp-uri=&URI;</option>
   </term>

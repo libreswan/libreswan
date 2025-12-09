@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.crl-timeout'>
   <term><option>crl-timeout=&seconds;</option></term>
   <listitem>
     <para>

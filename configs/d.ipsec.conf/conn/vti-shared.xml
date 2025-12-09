@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.vti-shared'>
   <term>
     <option>vti-shared=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.protoport'>
   <term>
     <option>leftprotoport=&ip_protoport;</option>
   </term>

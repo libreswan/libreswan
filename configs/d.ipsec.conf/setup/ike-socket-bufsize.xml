@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ike-socket-bufsize'>
   <term>
     <option>ike-socket-bufsize=&count;</option>
   </term>

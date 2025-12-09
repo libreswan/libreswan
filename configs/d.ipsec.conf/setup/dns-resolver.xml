@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.dns-resolver'>
   <term>
     <option>dns-resolver={<literal>file</literal>,<literal>systemd</literal>}</option>
   </term>

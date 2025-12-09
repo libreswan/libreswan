@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.uniqueids'>
   <term>
     <option>uniqueids=&yn_option;</option>
   </term>

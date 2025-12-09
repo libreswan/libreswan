@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ipsec-max-bytes'>
   <term>
     <option>ipsec-max-bytes=&byte_count;</option>
   </term>

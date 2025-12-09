@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ipsec-interface-managed'>
   <term>
     <option>ipsec-interface-managed=&yn_option;</option>
   </term>

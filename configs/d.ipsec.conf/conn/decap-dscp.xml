@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.decap-dscp'>
   <term>
     <option>decap-dscp=&yn_option;</option>
   </term>

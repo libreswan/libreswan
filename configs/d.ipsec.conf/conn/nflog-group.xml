@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nflog-group'>
   <term>
     <option>nflog-group=</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.listen-udp'>
   <term>
     <option>listen-udp=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.iptfs'>
   <term>
     <option>iptfs=&yn_option;</option>
   </term>
@@ -25,7 +25,7 @@
     </para>
   </listitem>
 </varlistentry>
-<varlistentry>
+<varlistentry id='conn.iptfs-fragmentation'>
   <term>
     <option>iptfs-fragmentation=&yn_option;</option>
   </term>
@@ -45,7 +45,7 @@
     </para>
   </listitem>
 </varlistentry>
-<varlistentry>
+<varlistentry id='conn.iptfs-max-queue-size'>
   <term>
     <option>iptfs-max-queue-size=</option>
   </term>
@@ -61,7 +61,7 @@
     </para>
   </listitem>
 </varlistentry>
-<varlistentry>
+<varlistentry id='conn.iptfs-drop-time'>
   <term>
     <option>iptfs-drop-time=&seconds;</option>
   </term>
@@ -76,7 +76,7 @@
     </para>
   </listitem>
 </varlistentry>
-<varlistentry>
+<varlistentry id='conn.iptfs-init-delay'>
   <term>
     <option>iptfs-init-delay=&seconds;</option>
   </term>
@@ -90,7 +90,7 @@
     </para>
   </listitem>
 </varlistentry>
-<varlistentry>
+<varlistentry id='conn.iptfs-reorder-window'>
   <term>
     <option>iptfs-reorder-window=&count;</option>
   </term>

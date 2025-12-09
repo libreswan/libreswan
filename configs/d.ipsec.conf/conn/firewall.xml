@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.firewall'>
   <term>
     <option>leftfirewall=</option>
   </term>

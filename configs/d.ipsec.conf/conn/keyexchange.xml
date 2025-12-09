@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.keyexchange'>
   <term>
     <option>keyexchange=&keyexchange_option;</option>
   </term>

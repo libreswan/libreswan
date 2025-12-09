@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.cisco-split'>
   <term>
     <option>cisco-split=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.dnssec-anchors'>
   <term>
     <option>dnssec-anchors=&file;</option>
   </term>

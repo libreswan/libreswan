@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-enable'>
   <term>
     <option>ocsp-enable=&yn_option;</option>
   </term>

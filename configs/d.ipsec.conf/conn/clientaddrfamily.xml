@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.clientaddrfamily'>
   <term>
     <option>clientaddrfamily={ipv4,ipv6}</option>
   </term>

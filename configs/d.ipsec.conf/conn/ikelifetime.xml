@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ikelifetime'>
   <term>
     <option>ikelifetime=&seconds;</option>
   </term>

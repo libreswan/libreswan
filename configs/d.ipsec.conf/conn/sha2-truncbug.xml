@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.sha2-truncbug'>
   <term>
     <option>sha2-truncbug=&yn_option;</option>
   </term>

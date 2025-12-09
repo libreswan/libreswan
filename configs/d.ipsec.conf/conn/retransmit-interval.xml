@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.retransmit-interval'>
   <term>
     <option>retransmit-interval=&milliseconds;</option>
   </term>

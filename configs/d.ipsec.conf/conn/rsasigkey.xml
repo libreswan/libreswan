@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.rsasigkey'>
   <term>
     <option>leftrsasigkey=</option>
   </term>

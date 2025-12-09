@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-timeout'>
   <term>
     <option>ocsp-timeout=&seconds;</option>
   </term>

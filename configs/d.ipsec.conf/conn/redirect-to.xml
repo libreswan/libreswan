@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.redirect-to'>
   <term>
     <option>redirect-to=&hostname;,...</option>
   </term>

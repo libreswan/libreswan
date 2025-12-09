@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.require-id-on-certificate'>
   <term>
     <option>require-id-on-certificate=&yn_option;</option>
   </term>

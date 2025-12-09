@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ddos-ike-threshold'>
   <term>
     <option>ddos-ike-threshold=</option>
   </term>

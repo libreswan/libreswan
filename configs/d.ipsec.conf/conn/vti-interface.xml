@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.vti-interface'>
   <term>
     <option>vti-interface=</option>
   </term>

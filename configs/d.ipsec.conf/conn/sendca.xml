@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.sendca'>
   <term>
     <option>sendca=&sendca_option;</option>
   </term>

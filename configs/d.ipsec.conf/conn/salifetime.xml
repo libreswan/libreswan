@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.salifetime'>
   <term>
     <option>salifetime=&seconds;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.listen'>
   <term>
     <option>listen=&ip_address;</option>
   </term>

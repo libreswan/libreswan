@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-strict'>
   <term>
     <option>ocsp-strict=&yn_option;</option>
   </term>

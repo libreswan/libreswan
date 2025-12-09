@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.dumpdir'>
   <term>
     <option>dumpdir=&directory;</option>
   </term>

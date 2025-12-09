@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.seedbits'>
   <term>
     <option>seedbits=</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.host'>
   <term>
     <option>left=&hostname;</option>
   </term>

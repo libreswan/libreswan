@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.logappend'>
   <term>
     <option>logappend=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nat-ikev1-method'>
   <term>
     <option>nat-ikev1-method=&nat_ikev1_method_option;</option>
   </term>

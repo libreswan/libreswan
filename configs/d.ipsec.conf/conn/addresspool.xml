@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.addresspool'>
   <term>
     <option>leftaddresspool=&ip_pool;,...</option>
   </term>

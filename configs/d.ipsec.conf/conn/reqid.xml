@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.reqid'>
   <term>
     <option>reqid=</option>
   </term>

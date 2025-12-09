@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.dnssec-rootkey-file'>
   <term>
     <option>dnssec-rootkey-file=&file;</option>
   </term>

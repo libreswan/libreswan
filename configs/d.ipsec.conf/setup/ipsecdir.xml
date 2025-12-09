@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ipsecdir'>
   <term>
     <option>ipsecdir=&directory;</option>
   </term>

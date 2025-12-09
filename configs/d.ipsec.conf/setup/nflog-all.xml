@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.nflog-all'>
   <term>
     <option>nflog-all=</option>
   </term>

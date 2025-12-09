@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.shuntlifetime'>
   <term>
     <option>shuntlifetime=&seconds;</option>
   </term>

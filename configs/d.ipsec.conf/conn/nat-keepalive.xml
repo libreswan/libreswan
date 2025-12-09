@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nat-keepalive'>
   <term>
     <option>nat-keepalive=&yn_option;</option>
   </term>

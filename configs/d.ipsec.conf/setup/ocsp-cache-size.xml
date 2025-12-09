@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-cache-size'>
   <term>
     <option>ocsp-cache-size=&count;</option>
   </term>

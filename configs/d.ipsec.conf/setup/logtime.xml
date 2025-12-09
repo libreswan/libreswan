@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.logtime'>
   <term>
     <option>logtime=&yn_option;</option>
   </term>

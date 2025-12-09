@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.send-vendorid'>
   <term>
     <option>send-vendorid=&yn_option;</option>
   </term>

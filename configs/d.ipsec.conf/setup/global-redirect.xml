@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.global-redirect'>
   <term>
     <option>global-redirect=&yna_option;</option>
   </term>

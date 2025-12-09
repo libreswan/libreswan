@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.crl-strict'>
   <term>
     <option>crl-strict=&yn_option;</option>
   </term>

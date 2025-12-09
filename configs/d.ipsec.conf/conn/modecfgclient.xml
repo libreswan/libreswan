@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.modecfgclient'>
   <term>
     <option>leftmodecfgclient=&yn_option;</option>
   </term>

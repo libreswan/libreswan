@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.type'>
   <term>
     <option>type=&type_option;</option>
   </term>

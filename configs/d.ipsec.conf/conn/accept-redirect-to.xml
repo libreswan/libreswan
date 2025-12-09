@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.accept-redirect-to'>
   <term>
     <option>accept-redirect-to=&ip_address;,...</option>
   </term>

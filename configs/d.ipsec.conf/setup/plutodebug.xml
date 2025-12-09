@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.plutodebug'>
   <term>
     <option>plutodebug=<replaceable>option</replaceable></option>
   </term>

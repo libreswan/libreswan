@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.listen-tcp'>
   <term>
     <option>listen-tcp=&yn_option;</option>
   </term>

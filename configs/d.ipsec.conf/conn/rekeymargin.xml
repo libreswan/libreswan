@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.rekeymargin'>
   <term>
     <option>rekeymargin=&seconds;</option>
   </term>

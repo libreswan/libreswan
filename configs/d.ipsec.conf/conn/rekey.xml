@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.rekey'>
   <term>
     <option>rekey=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.modecfgpull'>
   <term>
     <option>modecfgpull=&yn_option;</option>
   </term>

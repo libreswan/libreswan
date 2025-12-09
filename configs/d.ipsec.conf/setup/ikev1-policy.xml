@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ikev1-policy'>
   <term>
     <option>ikev1-policy={drop,accept,reject}</option>
   </term>

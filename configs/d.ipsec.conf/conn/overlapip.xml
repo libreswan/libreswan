@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.overlapip'>
   <term>
     <option>overlapip=&yn_option;</option>
   </term>

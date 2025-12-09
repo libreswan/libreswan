@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.interface-ip'>
   <term>
     <option>leftinterface-ip=&ip_cidr;</option>
   </term>

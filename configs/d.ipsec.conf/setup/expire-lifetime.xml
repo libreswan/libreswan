@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.expire-lifetime'>
   <term>
     <option>expire-lifetime=&seconds;</option>
   </term>

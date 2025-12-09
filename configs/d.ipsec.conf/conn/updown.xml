@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.updown'>
   <term>
     <option>leftupdown=</option>
   </term>

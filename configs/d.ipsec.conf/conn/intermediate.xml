@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.intermediate'>
   <term>
     <option>intermediate=&yn_option;</option>
   </term>

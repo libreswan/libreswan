@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.reject-simultaneous-ike-auth'>
   <term>
     <option>reject-simultaneous-ike-auth=&yn_option;</option>
   </term>

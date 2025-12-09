@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.fake-strongswan'>
   <term>
     <option>fake-strongswan=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.protostack'>
   <term>
     <option>protostack=</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.narrowing'>
   <term>
     <option>narrowing=&yn_option;</option>
   </term>

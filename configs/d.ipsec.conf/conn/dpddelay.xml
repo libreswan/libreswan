@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.dpddelay'>
   <term>
     <option>dpddelay=&seconds;</option>
   </term>

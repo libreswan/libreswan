@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.keep-alive'>
   <term>
     <option>keep-alive=&seconds;</option>
   </term>

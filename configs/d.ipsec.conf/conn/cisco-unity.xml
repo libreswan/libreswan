@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.cisco-unity'>
   <term>
     <option>cisco-unity=&yn_option;</option>
   </term>

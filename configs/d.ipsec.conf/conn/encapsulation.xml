@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.encapsulation'>
   <term>
     <option>encapsulation=&yna_option;</option>
   </term>

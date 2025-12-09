@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.compress'>
   <term>
     <option>compress=&yn_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.global-redirect-to'>
   <term>
     <option>global-redirect-to=&hostname;,...</option>
   </term>

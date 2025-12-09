@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.audit-log'>
   <term>
     <option>audit-log=&yn_option;</option>
   </term>

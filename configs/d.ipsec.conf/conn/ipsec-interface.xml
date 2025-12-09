@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.ipsec-interface'>
   <term>
     <option>ipsec-interface=<replaceable>device-number</replaceable></option>
   </term>

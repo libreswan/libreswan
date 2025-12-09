@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.xauthserver'>
   <term>
     <option>leftxauthserver=&yn_option;</option>
   </term>

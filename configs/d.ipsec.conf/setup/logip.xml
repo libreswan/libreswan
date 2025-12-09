@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.logip'>
   <term>
     <option>logip=&yn_option;</option>
   </term>

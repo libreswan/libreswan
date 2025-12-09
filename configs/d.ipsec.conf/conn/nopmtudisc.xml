@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nopmtudisc'>
   <term>
     <option>nopmtudisc=&yn_option;</option>
   </term>

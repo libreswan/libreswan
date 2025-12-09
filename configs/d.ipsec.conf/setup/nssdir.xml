@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.nssdir'>
   <term>
     <option>nssdir=&directory;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.xauthby'>
   <term>
     <option>xauthby=</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.nic-offload'>
   <term>
     <option>nic-offload=&nic_offload_option;</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.metric'>
   <term>
     <option>metric=<replaceable>number</replaceable></option>
   </term>

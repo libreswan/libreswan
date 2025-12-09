@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.ocsp-trustname'>
   <term>
     <option>ocsp-trustname=</option>
   </term>

@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.cat'>
   <term>
     <option>leftcat=&yn_option;</option>
   </term>

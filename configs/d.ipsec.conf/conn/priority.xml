@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.priority'>
   <term>
     <option>priority=</option>
   </term>

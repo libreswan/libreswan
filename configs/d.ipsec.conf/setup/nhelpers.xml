@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='setup.nhelpers'>
   <term>
     <option>nhelpers=count</option>
   </term>

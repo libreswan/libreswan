@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.send-redirect'>
   <term>
     <option>send-redirect=&yn_option;</option>
   </term>

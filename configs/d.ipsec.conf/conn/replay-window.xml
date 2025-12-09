@@ -1,4 +1,4 @@
-<varlistentry>
+<varlistentry id='conn.replay-window'>
   <term>
     <option>replay-window=</option>
   </term>
