@@ -238,7 +238,7 @@ struct secret *foreach_secret(struct secret *secrets,
 
 static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 						    const ckaid_t *ckaid,/*truncated?*/
-						    const struct logger *logger)
+						    struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 
@@ -1258,7 +1258,7 @@ static err_t find_or_load_private_key_by_cert_3(struct secret **secrets, CERTCer
 
 static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCertificate *cert,
 						struct secret_pubkey_stuff **pks, bool *load_needed,
-						const struct logger *logger,
+						struct logger *logger,
 						SECKEYPublicKey *pubk, SECItem *ckaid_nss)
 {
 	/* XXX: see also nss_cert_key_kind(cert) */
@@ -1291,7 +1291,7 @@ static err_t find_or_load_private_key_by_cert_2(struct secret **secrets, CERTCer
 static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCertificate *cert,
 						struct secret_pubkey_stuff **pks,
 						bool *load_needed,
-						const struct logger *logger,
+						struct logger *logger,
 						SECKEYPublicKey *pubk)
 {
 	/*
@@ -1315,7 +1315,7 @@ static err_t find_or_load_private_key_by_cert_1(struct secret **secrets, CERTCer
 
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
 				       struct secret_pubkey_stuff **pks, bool *load_needed,
-				       const struct logger *logger)
+				       struct logger *logger)
 {
 	*load_needed = false;
 
@@ -1371,7 +1371,7 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets,
 					const ckaid_t *ckaid,
 					struct secret_pubkey_stuff **pks,
 					bool *load_needed,
-					const struct logger *logger)
+					struct logger *logger)
 {
 	*load_needed = false;
 	PASSERT(logger, ckaid != NULL);

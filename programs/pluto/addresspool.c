@@ -1050,7 +1050,7 @@ static diag_t find_addresspool(const ip_pool pool_range, struct addresspool **po
 
 diag_t install_addresspool(const ip_pool pool,
 			   struct addresspool *addresspool[],
-			   const struct logger *logger)
+			   struct logger *logger)
 {
 	pool_buf rb;
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);

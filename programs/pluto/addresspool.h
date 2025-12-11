@@ -26,7 +26,7 @@ struct addresspool;        /* abstract object */
 
 diag_t install_addresspool(const ip_pool pool_range,
 			   struct addresspool *addresspool[],
-			   const struct logger *logger) MUST_USE_RESULT;
+			   struct logger *logger) MUST_USE_RESULT;
 
 void addresspool_delref(struct addresspool **pool, struct logger *logger);
 struct addresspool *addresspool_addref(struct addresspool *pool);

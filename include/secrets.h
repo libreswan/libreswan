@@ -368,10 +368,10 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
 				       struct secret_pubkey_stuff **pks, bool *load_needed,
-				       const struct logger *logger);
+				       struct logger *logger);
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
 					struct secret_pubkey_stuff **pks, bool *load_needed,
-					const struct logger *logger);
+					struct logger *logger);
 
 diag_t create_pubkey_from_cert(const struct id *id,
 			       CERTCertificate *cert, struct pubkey **pk,

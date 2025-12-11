@@ -436,7 +436,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 }
 
 void terminate_and_delete_connections(struct connection *c,
-				      const struct logger *logger,
+				      struct logger *logger,
 				      where_t where)
 {
 	PEXPECT(logger, refcnt_peek(c, logger) > 1);

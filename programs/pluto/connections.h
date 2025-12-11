@@ -988,7 +988,7 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 bool connection_with_name_exists(const char *name);
 struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
-					      const struct logger *logger);
+					      struct logger *logger);
 
 /* "name"[1]... OE-MAGIC */
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
@@ -1038,7 +1038,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st);
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
-					    const struct logger *logger);
+					    struct logger *logger);
 
 ip_port end_host_port(const struct host_end *this, const struct host_end *that);
 ip_port local_host_port(const struct connection *c);

@@ -39,7 +39,7 @@
  */
 
 struct verbose {
-	const struct logger *logger;
+	/*const*/struct logger *logger;
 	enum stream stream;
 	bool debug;
 	int level;

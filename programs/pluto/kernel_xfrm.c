@@ -123,7 +123,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      const char *description, const char *story,
 			      int *recv_errno,
 			      const struct logger *logger);
-static err_t xfrm_iptfs_ipsec_sa_is_enabled(const struct logger *logger);
+static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger);
 static err_t xfrm_directional_ipsec_sa_is_enabled(struct logger *logger);
 
 static struct {
@@ -1586,8 +1586,9 @@ static bool xfrm_detect_nic_offload(const char *ifname, const struct logger *log
  * @param replace boolean - true if this replaces an existing SA
  * @return bool True if successful
  */
-static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
-			   const struct logger *logger)
+static bool netlink_add_sa(const struct kernel_state *sa,
+			   bool replace,
+			   struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2079,7 +2080,7 @@ static bool xfrm_del_ipsec_spi(ipsec_spi_t spi,
 			       const ip_address *src_address,
 			       const ip_address *dst_address,
 			       const char *story,
-			       const struct logger *logger)
+			       struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -3010,8 +3011,9 @@ static void kernel_xfrm_plug_holes(struct logger *logger)
 	}
 }
 
-static bool qry_xfrm_base_support(const struct logger *logger,
-				  bool check_iptfs, bool check_directional) {
+static bool qry_xfrm_base_support(struct logger *logger,
+				  bool check_iptfs,
+				  bool check_directional) {
 
 	if (!check_iptfs && !check_directional) {
 		ldbg(logger, "kernel: unexpected use of qry_xfrm_base_support()");
@@ -3071,7 +3073,7 @@ static bool qry_xfrm_directional_support(struct logger *logger) {
 	return qry_xfrm_base_support(logger, false, true);
 }
 
-static bool qry_xfrm_iptfs_support(const struct logger *logger) {
+static bool qry_xfrm_iptfs_support(struct logger *logger) {
 	return qry_xfrm_base_support(logger, true, true);
 }
 
@@ -3163,7 +3165,7 @@ static bool qry_xfrm_migrate_support(const struct logger *logger)
 	return true;
 }
 
-static err_t xfrm_migrate_ipsec_sa_is_enabled(const struct logger *logger)
+static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 {
 	static enum {
 		UNKNOWN, ENABLED, DISABLED,
@@ -3203,7 +3205,7 @@ static err_t xfrm_directional_ipsec_sa_is_enabled(struct logger *logger)
 	}
 }
 
-static err_t xfrm_iptfs_ipsec_sa_is_enabled(const struct logger *logger)
+static err_t xfrm_iptfs_ipsec_sa_is_enabled(struct logger *logger)
 {
 	static enum {
 		UNKNOWN, ENABLED, DISABLED,

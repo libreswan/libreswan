@@ -901,7 +901,7 @@ void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
 }
 
 err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed,
-				  const struct logger *logger)
+				  struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 	struct secret_pubkey_stuff *pks;
@@ -913,7 +913,7 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed,
 }
 
 err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed,
-				   const struct logger *logger)
+				   struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
 	struct secret_pubkey_stuff *pks;

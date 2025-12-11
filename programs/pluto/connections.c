@@ -775,7 +775,7 @@ void build_connection_host_and_proposals_from_resolve(struct connection *c,
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
-					    const struct logger *logger)
+					    struct logger *logger)
 {
 	PASSERT(logger, cert != NULL);
 	const char *nickname = cert->nickname;
@@ -1705,7 +1705,7 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
 
 struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
-					      const struct logger *logger)
+					      struct logger *logger)
 {
 	packet_buf pb;
 	ldbg(logger, "%s() looking for an out-going connection that matches packet %s sec_label="PRI_SHUNK,

@@ -57,7 +57,7 @@ void terminate_all_connection_states(struct connection *c, where_t where);
 void terminate_and_down_and_unroute_connections(struct connection *c, where_t where);
 
 void terminate_and_delete_connections(struct connection *,
-				      const struct logger *logger,
+				      struct logger *logger,
 				      where_t where);
 
 void terminate_ike_family(struct ike_sa **ike, enum terminate_reason reason, where_t where);
