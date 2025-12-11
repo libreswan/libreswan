@@ -210,14 +210,16 @@ bool listening = false;  /* should we pay attention to IKE messages? */
  * Libevent that an event should no longer be considered as assigned."
  */
 
-#define EVENT_ADD(EVP, EVENTS, FD, TIME, CB, LOGGER)			\
+#define EVENT_ADD(EVP, PRIORITY, EVENTS, FD, TIME, CB, LOGGER)		\
 	{								\
 		struct event *ev = &(EVP)->ev;				\
 		short events = EVENTS;					\
 		PASSERT(LOGGER, !event_initialized(ev));		\
 		event_assign(ev, pluto_eb, FD, events, CB, EVP);	\
+		event_priority_set(ev, PRIORITY);			\
 		PASSERT(LOGGER, event_get_events(ev) == events);	\
-		PASSERT(LOGGER, event_add(ev, TIME) >= 0);		\
+		int r = event_add(ev, TIME);				\
+		PASSERT(LOGGER, r >= 0);				\
 	}
 
 #define EVENT_DEL(EVP, LOGGER)				\
@@ -229,6 +231,25 @@ bool listening = false;  /* should we pay attention to IKE messages? */
 		event_debug_unassign(ev);		\
 		zero(ev);				\
 	}
+
+/*
+ * Event priority.
+ *
+ * libevent defines 0 as most important and highest priority through
+ * to EVENT_PRIORITY_ROOF-1 as least important and lowest priority.
+ */
+enum event_priority {
+	EVENT_PRIORITY_GLOBAL,
+	EVENT_PRIORITY_OTHER,
+	/*
+	 * To quote libevent:
+	 *
+	 * "By default, all new events associated with this base will
+	 * be initialized with priority equal to n_priorities / 2."
+	 */
+#define EVENT_PRIORITY_DEFAULT (EVENT_PRIORITY_ROOF / 2)
+#define EVENT_PRIORITY_ROOF (EVENT_PRIORITY_OTHER+1)
+};
 
 /*
  * Global timer events.
@@ -299,7 +320,8 @@ void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 	PASSERT(logger, gt->name != NULL);
 	gt->cb = cb;
 	struct timeval t = timeval_from_deltatime(period);
-	EVENT_ADD(gt, EV_TIMEOUT|EV_PERSIST,
+	EVENT_ADD(gt, EVENT_PRIORITY_GLOBAL,
+		  EV_TIMEOUT|EV_PERSIST,
 		  (evutil_socket_t)-1, &t,
 		  global_timer_event_cb,
 		  logger);
@@ -315,12 +337,18 @@ void init_oneshot_timer(enum global_timer type, global_timer_cb *cb,
 	PASSERT(logger, in_main_thread());
 	PASSERT(logger, type < elemsof(global_timers));
 	struct global_timer_desc *gt = &global_timers[type];
-	/* initialize */
+	/*
+	 * Initialize
+	 *
+	 * Unlike this code path, EVENT_ADD() also calls
+	 * event_add(TIME) scheduling an event.
+	 */
 	PASSERT(logger, gt->name != NULL);
 	PASSERT(logger, !event_initialized(&gt->ev));
 	event_assign(&gt->ev, pluto_eb, (evutil_socket_t)-1,
 		     EV_TIMEOUT,
 		     global_timer_event_cb, gt/*arg*/);
+	event_priority_set(&gt->ev, EVENT_PRIORITY_GLOBAL);
 	gt->cb = cb;
 	PASSERT(logger, event_get_events(&gt->ev) == (EV_TIMEOUT));
 	ldbg(logger, "global one-shot timer %s initialized", gt->name);
@@ -428,7 +456,8 @@ static void install_signal_handlers(const struct logger *logger)
 {
 	for (unsigned i = 0; i < elemsof(signal_handlers); i++) {
 		struct signal_handler *se = &signal_handlers[i];
-		EVENT_ADD(se, EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
+		EVENT_ADD(se, EVENT_PRIORITY_DEFAULT,
+			  EV_SIGNAL | (se->persist ? EV_PERSIST : 0),
 			  (evutil_socket_t)se->signal,
 			  (struct timeval*)NULL,
 			  signal_handler_handler,
@@ -567,7 +596,8 @@ void schedule_timeout(const char *name,
 	 * before it is used.
 	 */
 	struct timeval t = timeval_from_deltatime(delay);
-	EVENT_ADD(*tt, EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout,
+	EVENT_ADD(*tt, EVENT_PRIORITY_DEFAULT,
+		  EV_TIMEOUT, (evutil_socket_t)-1, &t, timeout,
 		  &global_logger);
 }
 
@@ -842,7 +872,8 @@ void attach_fd_read_listener(struct fd_read_listener **fdl,
 	(*fdl)->name = name;
 	(*fdl)->arg = arg;
 	(*fdl)->cb = cb;
-	EVENT_ADD(*fdl, EV_READ|EV_PERSIST,
+	EVENT_ADD(*fdl, EVENT_PRIORITY_DEFAULT,
+		  EV_READ|EV_PERSIST,
 		  (evutil_socket_t)fd,
 		  (struct timeval*)NULL,
 		  fd_read_listener_event_handler,
@@ -1023,19 +1054,54 @@ void init_server(struct logger *logger)
 	ldbg(logger, "libevent is using its own memory allocator");
 #endif
 	llog(RC_LOG, logger,
-		    "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
-		    LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
-		    event_get_version(), event_get_version_number());
+	     "initializing libevent in pthreads mode: headers: %s (%" PRIx32 "); library: %s (%" PRIx32 ")",
+	     LIBEVENT_VERSION, (ev_uint32_t)LIBEVENT_VERSION_NUMBER,
+	     event_get_version(), event_get_version_number());
+
 	/*
 	 * According to section 'setup Library setup', libevent needs
 	 * to be set up in pthreads mode before doing anything else.
 	 */
 	int r = evthread_use_pthreads();
-	passert(r >= 0);
+	PASSERT(logger, r >= 0);
+
+	/*
+	 * Force the event queue to run global events at least once a
+	 * second.  This should prevent a priority inversion locking
+	 * out the SYSTEMD watchdog timer.
+	 *
+	 * Note: If more priorities are added, then this will need to
+	 * be tweaked.  While 1s is fine for global timers it is too
+	 * course grained for other events.
+	 *
+	 * Note: this is unfortunately global.  It isn't possible to
+	 * put limits on specific priority queues.
+	 *
+	 * Note: libevent's documentation is a little confusing here.
+	 * It talks about how the limit applies to `min_priority` or
+	 * HIGHER, but the code has it applying to `min_priority` or
+	 * LOWER - which makes far more sense.
+	 *
+	 * https://github.com/libevent/libevent/issues/1831
+	 */
+	struct event_config *cfg = event_config_new();
+	struct timeval one_second = from_seconds(1);
+	event_config_set_max_dispatch_interval(cfg, &one_second,
+					       /*no-nr-events-limit*/-1,
+					       EVENT_PRIORITY_GLOBAL-1);
+
 	/* now do anything */
 	ldbg(logger, "creating event base");
-	pluto_eb = event_base_new();
+	pluto_eb = event_base_new_with_config(cfg);
 	passert(pluto_eb != NULL);
+	event_config_free(cfg);
+	cfg = NULL;
+
+	/*
+	 * Allow priorities.
+	 */
+	event_base_priority_init(pluto_eb, EVENT_PRIORITY_ROOF);
+
 	int s = evthread_make_base_notifiable(pluto_eb);
 	passert(s >= 0);
 	ldbg(logger, "libevent initialized");
