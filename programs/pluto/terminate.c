@@ -61,6 +61,7 @@
 #include "ikev2_delete.h"
 #include "pluto_stats.h"
 #include "revival.h"
+#include "connection_event.h"
 
 static void terminate_v1_state(struct connection *c,
 			       struct ike_sa **ike,
@@ -294,8 +295,8 @@ void terminate_connection(struct connection *c, where_t where)
 	 *
 	 * Since the +UP and +KEEP bits have been stripped, deleting
 	 * states won't trigger a revival.  However, when there are no
-	 * states, the connection may be on the revival queue.  That
-	 * is handled below.
+	 * states, the connection may already be on the revival queue.
+	 * That is handled further down.
 	 */
 	terminate_all_connection_states(c, HERE);
 	pmemory(c); /* should not disappear; caller holds ref */
@@ -323,10 +324,11 @@ void terminate_connection(struct connection *c, where_t where)
 	 * the former's pending queue (i.e., no states).
 	 */
 	remove_connection_from_pending(c);
+
 	pmemory(c); /* should not disappear; caller holds ref */
 }
 
-static void terminate_and_unroute_connection(struct connection *c, where_t where)
+static void terminate_and_down_and_unroute_connection(struct connection *c, where_t where)
 {
 	/*
 	 * Strip the +UP bit so that the connection (when its state is
@@ -339,6 +341,20 @@ static void terminate_and_unroute_connection(struct connection *c, where_t where
 	del_policy(c, policy.up);
 	del_policy(c, policy.keep);
 	del_policy(c, policy.route);
+
+	/*
+	 * Remove pending DDNS.
+	 *
+	 * For instance, a disoriented connection trying to resolve or
+	 * orient being deleted.
+	 *
+	 * Running "down" on a dis-oriented connection will also loose
+	 * the CHECK_DDNS event.  But "up" should put it back.  Pluto
+	 * needs a way to indicate that a connection is "idle" -
+	 * igoring everything.
+	 */
+	flush_connection_event(c, CONNECTION_CHECK_DDNS);
+
 	terminate_connection(c, where);
 }
 
@@ -349,7 +365,7 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 	case CK_PERMANENT:
 	case CK_LABELED_PARENT:
 		/* caller holds ref; whack already attached */
-		terminate_and_unroute_connection(c, where);
+		terminate_and_down_and_unroute_connection(c, where);
 		pmemory(c); /* should not disappear; caller holds ref */
 		return;
 
@@ -392,13 +408,19 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 			/* stop it disappearing */
 			connection_addref(cq.c, c->logger);
 			whack_attach(cq.c, c->logger);
-			terminate_and_unroute_connection(cq.c, where);
+			terminate_and_down_and_unroute_connection(cq.c, where);
 			/* leave whack attached during death */
 			connection_delref(&cq.c, c->logger);
 		}
 		pmemory(c); /* should not disappear */
 		/* to be sure */
 		connection_unroute(c, where);
+		/*
+		 * Remove pending DDNS.  For instance, a template
+		 * needing DNS resolution, and nence never made it to
+		 * orient.
+		 */
+		flush_connection_event(c, CONNECTION_CHECK_DDNS);
 		return;
 	}
 
@@ -424,6 +446,12 @@ void terminate_and_down_and_unroute_connections(struct connection *c, where_t wh
 				whack_detach(cq.c, c->logger); /* propagate whack */
 			} while (next_connection(&cq));
 		}
+		/*
+		 * Remove pending DDNS.  For instance, a template
+		 * needing DNS resolution, and nence never made it to
+		 * orient.
+		 */
+		flush_connection_event(c, CONNECTION_CHECK_DDNS);
 		pmemory(c); /* should not disappear */
 		return;
 	}

@@ -37,13 +37,17 @@
 #include "show.h"
 #include "defaultroute.h"	/* for struct route_addrs */
 #include "extract.h"
+#include "connection_event.h"
 
 /*
- * Call me periodically to check to see if any DDNS tunnel can come up.
+ * Call me periodically to check to see if any DDNS tunnel can come
+ * up.
+ *
  * The order matters, we try to do the cheapest checks first.
  */
 
-static void connection_check_ddns1(struct connection *c, struct verbose verbose)
+static void connection_check_ddns1(struct connection *c,
+				   struct verbose verbose)
 {
 	/* This is the cheapest check, so do it first */
 	if (never_negotiate(c)) {
@@ -139,7 +143,8 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	build_connection_host_and_proposals_from_resolve(c, &resolved_host_addrs, verbose);
 
 	if (!resolved_host_addrs.ok) {
-		vlog("not resolved");
+		vlog("not resolved; retrying");
+		schedule_connection_check_ddns(c, verbose);
 		return;
 	}
 
@@ -149,7 +154,7 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	vdbg("orienting?");
 	vassert(!oriented(c));	/* see above */
 	if (!orient(c, verbose.logger)) {
-		vdbg("connection was updated, but did not orient");
+		vdbg("connection was updated, but did not orient; retrying");
 		return;
 	}
 
@@ -166,11 +171,28 @@ static void connection_check_ddns1(struct connection *c, struct verbose verbose)
 	}
 }
 
-static void connection_check_ddns(struct verbose verbose)
+void connection_check_ddns(struct connection *c, struct verbose verbose)
 {
-	struct logger *logger = verbose.logger;
+	/* addref, delref is probably over kill */
+	connection_addref(c, verbose.logger);
+	{
+		vtime_t start = vdbg_start("check_dns");
+		whack_attach(c, verbose.logger);
+		{
+			struct verbose v = verbose;
+			v.logger = c->logger;
+			connection_check_ddns1(c, v);
+		}
+		whack_detach(c, verbose.logger);
+		vdbg_stop(start, "check_dns");
+	}
+	connection_delref(&c, verbose.logger);
+}
 
-	threadtime_t start = threadtime_start();
+static void connections_check_ddns(struct logger *logger)
+{
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "DDNS");
+	vtime_t start = vdbg_start("checking DDNS");
 
 	struct connection_filter cf = {
 		.search = {
@@ -180,27 +202,15 @@ static void connection_check_ddns(struct verbose verbose)
 		},
 	};
 	while (next_connection(&cf)) {
-		/* addref, delref is probably over kill */
-		struct connection *c = connection_addref(cf.c, logger);
-		whack_attach(c, logger);
-		struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, "pending ddns");
-		connection_check_ddns1(c, verbose);
-		whack_detach(c, logger);
-		connection_delref(&c, logger);
+		connection_check_ddns(cf.c, verbose);
 	}
 
-	threadtime_stop(&start, "in %s for hostname lookup", __func__);
+	vdbg_stop(start, "in %s() for hostname lookup", __func__);
 }
 
 void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	llog(RC_LOG, logger, "updating pending dns lookups");
-	connection_check_ddns(VERBOSE(DEBUG_STREAM, logger, NULL));
-}
-
-void init_ddns(const struct logger *logger)
-{
-	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
-			      deltatime(PENDING_DDNS_INTERVAL), logger);
+	connections_check_ddns(logger);
 }

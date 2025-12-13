@@ -79,8 +79,13 @@ static void schedule_connection_event(struct connection *c,
 				      const char *subplot,
 				      deltatime_t delay,
 				      const char *impair,
-				      const struct logger *logger)
+				      const struct logger *logger,
+				      where_t where)
 {
+	if (PBAD(logger, c->events[event_kind] != NULL)) {
+		return;
+	}
+
 	struct connection_event *d = alloc_thing(struct connection_event, "data");
 	connection_buf cb;
 	name_buf kb;
@@ -89,7 +94,7 @@ static void schedule_connection_event(struct connection *c,
 				  pri_connection(c, &cb));
 	d->kind = event_kind;
 	d->subplot = subplot;
-	d->connection = connection_addref(c, d->logger);
+	d->connection = connection_addref_where(c, d->logger, where);
 	c->events[event_kind] = d;
 
 	if (impair != NULL) {
@@ -109,7 +114,8 @@ void schedule_connection_revival(struct connection *c,
 				 deltatime_t delay,
 				 const char *impair, struct logger *logger)
 {
-	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay, impair, logger);
+	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay,
+				  impair, logger, HERE);
 }
 
 void schedule_connection_check_ddns(struct connection *c,
@@ -117,7 +123,7 @@ void schedule_connection_check_ddns(struct connection *c,
 {
 	schedule_connection_event(c, CONNECTION_CHECK_DDNS,
 				  "DDNS", deltatime(PENDING_DDNS_INTERVAL),
-				  /*impair*/NULL, verbose.logger);
+				  /*impair*/NULL, verbose.logger, HERE);
 }
 
 static void discard_connection_event(struct connection_event **e)
@@ -151,7 +157,7 @@ static void dispatch_connection_event(struct connection_event *e,
 		revive_connection(e->connection, e->subplot, inception);
 		break;
 	case CONNECTION_CHECK_DDNS:
-		bad_case(e->kind); /* not yet implemented */
+		connection_check_ddns(e->connection, VERBOSE(DEBUG_STREAM, e->logger, "DDNS"));
 		break;
 	}
 
