@@ -99,7 +99,7 @@ static void whack_rereadsecrets(const struct whack_message *wm UNUSED, struct sh
 static void whack_rereadcerts(const struct whack_message *wm UNUSED, struct show *s)
 {
 	reread_cert_connections(show_logger(s));
-	free_root_certs(show_logger(s));
+	free_root_certs(VERBOSE(DEBUG_STREAM, show_logger(s), NULL));
 }
 
 static void whack_fetchcrls(const struct whack_message *wm UNUSED, struct show *s)

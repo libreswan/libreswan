@@ -93,7 +93,8 @@ static deltatime_t pluto_shunt_patience; /* see kernel_init() */
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
-					    struct logger *logger, where_t where);
+					    struct verbose verbose,
+					    where_t where);
 
 /*
  * The priority assigned to a kernel policy.
@@ -298,18 +299,18 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	}
 }
 
-static void llog_bare_shunt(enum stream stream, struct logger *logger,
+static void vlog_bare_shunt(struct verbose verbose,
 			    const struct bare_shunt *bs, const char *op)
 {
-	LLOG_JAMBUF(stream, logger, buf) {
+	VLOG_JAMBUF(buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
 	}
 }
 
-static void ldbg_bare_shunt(const struct logger *logger, const char *op, const struct bare_shunt *bs)
+static void vdbg_bare_shunt(struct verbose verbose, const char *op, const struct bare_shunt *bs)
 {
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+	VDBG_JAMBUF(buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
 	}
@@ -326,14 +327,15 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 					 const ip_selector *peer_client,
 					 enum shunt_policy shunt_policy,
 					 co_serial_t template_serialno,
-					 const char *why, struct logger *logger)
+					 const char *why,
+					 struct verbose verbose)
 {
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, why);
 
 	if (bspp != NULL) {
 		/* maybe: passert(bsp == NULL); */
-		llog_bare_shunt(RC_LOG, logger, *bspp,
+		vlog_bare_shunt(verbose, *bspp,
 				"CONFLICTING existing");
 	}
 
@@ -353,11 +355,11 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 
 	bs->next = bare_shunts;
 	bare_shunts = bs;
-	ldbg_bare_shunt(logger, "add", bs);
+	vdbg_bare_shunt(verbose, "add", bs);
 
 	/* report duplication; this should NOT happen */
 	if (bspp != NULL) {
-		llog_bare_shunt(RC_LOG, logger, bs,
+		vlog_bare_shunt(verbose, bs,
 				"CONFLICTING      new");
 	}
 
@@ -1010,7 +1012,7 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		PEXPECT(c->logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
-			free_bare_shunt(bspp, c->logger);
+			free_bare_shunt(bspp, VERBOSE(DEBUG_STREAM, c->logger, NULL));
 		}
 	}
 
@@ -1033,14 +1035,14 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const char *why)
 
 {
-	struct logger *logger = &global_logger;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
 
 	selector_pair_buf sb;
-	ldbg(logger, "kernel: %s looking for %s",
+	vdbg("kernel: %s looking for %s",
 	     why, str_selector_pair(our_client, peer_client, &sb));
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
-		ldbg_bare_shunt(logger, "comparing", p);
+		vdbg_bare_shunt(verbose, "comparing", p);
 		if (selector_in_selector(*our_client, p->our_client) &&
 		    selector_in_selector(*peer_client, p->peer_client)) {
 			return pp;
@@ -1052,16 +1054,16 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 /*
  * Free a bare_shunt entry, given a pointer to the pointer.
  */
-void free_bare_shunt(struct bare_shunt **pp, struct logger *logger)
+void free_bare_shunt(struct bare_shunt **pp, struct verbose verbose)
 {
 	struct bare_shunt *p;
 
-	passert(pp != NULL);
+	vassert(pp != NULL);
 
 	p = *pp;
 
 	*pp = p->next;
-	ldbg_bare_shunt(logger, "delete", p);
+	vdbg_bare_shunt(verbose, "delete", p);
 	pfree(p);
 }
 
@@ -1102,7 +1104,8 @@ void whack_shuntstatus(const struct whack_message *wm UNUSED, struct show *s)
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
-					    struct logger *logger, where_t where)
+					    struct verbose verbose,
+					    where_t where)
 {
 	/*
 	 * XXX: bare_kernel_policy() does not strip the port but this
@@ -1132,9 +1135,9 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 				  DEFAULT_KERNEL_POLICY_ID,
 				  /* bare-shunt: no sec_label XXX: ?!? */
 				  null_shunk,
-				  logger, where, "bare shunt")) {
+				  verbose.logger, where, "bare shunt")) {
 		/* ??? we could not delete a bare shunt */
-		llog_bare_shunt(RC_LOG, logger, bsp, "failed to delete kernel policy");
+		vlog_bare_shunt(verbose, bsp, "failed to delete kernel policy");
 	}
 }
 
@@ -1148,6 +1151,8 @@ void clear_narrow_holds(const ip_selector *src_client,
 			const ip_selector *dst_client,
 			struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(src_client->ipproto);
 	struct bare_shunt **bspp = &bare_shunts;
 	while (*bspp != NULL) {
@@ -1160,8 +1165,8 @@ void clear_narrow_holds(const ip_selector *src_client,
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 		} else {
 			bspp = &(*bspp)->next;
 		}
@@ -2095,6 +2100,8 @@ void orphan_holdpass(struct connection *c,
 		     struct spd *sr,
 		     struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 	/*
 	 * ... UPDATE kernel policy if needed.
 	 *
@@ -2103,7 +2110,7 @@ void orphan_holdpass(struct connection *c,
 	 * shunt.
 	 */
 
-	ldbg(logger, "kernel: installing bare_shunt/failure_shunt");
+	vdbg("kernel: installing bare_shunt/failure_shunt");
 
 	/* fudge up parameter list */
 	const ip_address *src_address = &sr->local->host->addr;
@@ -2112,14 +2119,14 @@ void orphan_holdpass(struct connection *c,
 
 	/* fudge up replace_bare_shunt() */
 	const struct ip_info *afi = address_type(src_address);
-	passert(afi == address_type(dst_address));
+	vassert(afi == address_type(dst_address));
 	const struct ip_protocol *protocol = protocol_from_ipproto(sr->local->client.ipproto);
 	/* ports? assumed wide? */
 	ip_selector src = selector_from_address_protocol(*src_address, protocol);
 	ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
 	selector_pair_buf sb;
-	ldbg(logger, "kernel: replace bare shunt %s for %s",
+	vdbg("kernel: replace bare shunt %s for %s",
 	     str_selector_pair(&src, &dst, &sb), why);
 
 	/*
@@ -2173,34 +2180,33 @@ void orphan_holdpass(struct connection *c,
 			add_bare_shunt(&src, &dst,
 				       c->config->failure_shunt,
 				       template_serialno,
-				       why, logger);
-		ldbg_bare_shunt(logger, "replace", bs);
+				       why, verbose);
+		vdbg_bare_shunt(verbose, "replace", bs);
 	} else {
-		llog(RC_LOG, logger,
-		     "replace kernel shunt %s failed - deleting from pluto shunt table",
+		vlog("replace kernel shunt %s failed - deleting from pluto shunt table",
 		     str_selector_pair_sensitive(&src, &dst, &sb));
 	}
 
 }
 
-static void expire_bare_shunts(struct logger *logger)
+static void expire_bare_shunts(struct verbose verbose)
 {
-	ldbg(logger, "kernel: checking for aged bare shunts from shunt table to expire");
+	vdbg("kernel: checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; /*see-loop*/) {
 		struct bare_shunt *bsp = *bspp;
 		deltatime_t age = monotime_diff(mononow(), bsp->last_activity);
 
 		if (deltatime_cmp(age, <, pluto_shunt_lifetime)) {
-			ldbg_bare_shunt(logger, "keeping recent", bsp);
+			vdbg_bare_shunt(verbose, "keeping recent", bsp);
 			bspp = &bsp->next;
 			continue;
 		}
 
 		if (bsp->template_serialno == COS_NOBODY) {
-			ldbg_bare_shunt(logger, "expiring old (no template connection)", bsp);
+			vdbg_bare_shunt(verbose, "expiring old (no template connection)", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 			continue;
 		}
 
@@ -2213,41 +2219,41 @@ static void expire_bare_shunts(struct logger *logger)
 		 */
 		struct connection *c = connection_by_serialno(bsp->template_serialno);
 		if (c == NULL) {
-			ldbg_bare_shunt(logger, "expiring old (template connection disappeard)", bsp);
+			vdbg_bare_shunt(verbose, "expiring old (template connection disappeard)", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 			continue;
 		}
 
-		PEXPECT(logger, is_template(c));
+		vexpect(is_template(c));
 		if (!kernel_policy_installed(c)) {
-			ldbg_bare_shunt(logger, "expiring old (template connection has no kernel_policy_installed())", bsp);
+			vdbg_bare_shunt(verbose, "expiring old (template connection has no kernel_policy_installed())", bsp);
 			delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-							logger, HERE);
-			free_bare_shunt(bspp, logger);
+							verbose, HERE);
+			free_bare_shunt(bspp, verbose);
 			continue;
 		}
 
 		/*
 		 * It passed all checks; need to replace.
 		 */
-		ldbg_bare_shunt(logger, "expiring old (restoring template connection)", bsp);
+		vdbg_bare_shunt(verbose, "expiring old (restoring template connection)", bsp);
 		install_prospective_kernel_policy(c->child.spds.list,
 						  SHUNT_KIND_ONDEMAND,
-						  logger, HERE);
-		free_bare_shunt(bspp, logger);
+						  verbose.logger, HERE);
+		free_bare_shunt(bspp, verbose);
 	}
 }
 
-static void delete_bare_shunt_kernel_policies(struct logger *logger)
+static void delete_bare_shunt_kernel_policies(struct verbose verbose)
 {
-	ldbg(logger, "kernel: emptying bare shunt table");
+	vdbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
 		delete_bare_shunt_kernel_policy(bsp, KERNEL_POLICY_PRESENT,
-						logger, HERE);
-		free_bare_shunt(&bare_shunts, logger); /* also updates BARE_SHUNTS */
+						verbose, HERE);
+		free_bare_shunt(&bare_shunts, verbose); /* also updates BARE_SHUNTS */
 	}
 }
 
@@ -2381,9 +2387,9 @@ static bool kernel_initialized = false;
 
 static global_timer_cb kernel_scan_shunts;
 
-static void kernel_scan_shunts(struct logger *logger)
+static void kernel_scan_shunts(struct verbose verbose)
 {
-	expire_bare_shunts(logger);
+	expire_bare_shunts(verbose);
 }
 
 void init_kernel(const struct config_setup *oco, struct logger *logger)
@@ -2463,7 +2469,7 @@ void show_kernel_interface(struct show *s)
 void shutdown_kernel(struct logger *logger)
 {
 	if (kernel_initialized) {
-		delete_bare_shunt_kernel_policies(logger);
+		delete_bare_shunt_kernel_policies(VERBOSE(DEBUG_STREAM, logger, NULL));
 		kernel_ops->plug_holes(logger);
 		kernel_ops->flush(logger);
 		kernel_ops->shutdown(logger);

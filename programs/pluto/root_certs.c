@@ -126,8 +126,10 @@ void init_root_certs(const struct logger *logger)
 	init_oneshot_timer(EVENT_FREE_ROOT_CERTS, free_root_certs, logger);
 }
 
-void free_root_certs(struct logger *logger)
+void free_root_certs(struct verbose verbose)
 {
+	struct logger *logger = verbose.logger;
+
 	passert(in_main_thread());
 
 	/*

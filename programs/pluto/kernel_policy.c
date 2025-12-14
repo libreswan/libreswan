@@ -1040,7 +1040,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		PEXPECT(logger, spd->wip.ok);
 		struct bare_shunt **bspp = spd->wip.conflicting.bare_shunt;
 		if (bspp != NULL) {
-			free_bare_shunt(bspp, c->logger);
+			free_bare_shunt(bspp, VERBOSE(DEBUG_STREAM, c->logger, NULL));
 		}
 		/* clear host shunts that clash with freshly installed route */
 		clear_narrow_holds(&spd->local->client, &spd->remote->client, logger);

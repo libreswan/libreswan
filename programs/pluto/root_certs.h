@@ -19,9 +19,10 @@
 #include "lswnss.h"
 #include "refcnt.h"
 #include "where.h"
+#include "verbose.h"
 
 void init_root_certs(const struct logger *logger);
-void free_root_certs(struct logger *logger);
+void free_root_certs(struct verbose verbose);
 
 struct root_certs {
 	refcnt_t refcnt;

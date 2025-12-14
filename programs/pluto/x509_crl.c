@@ -436,8 +436,10 @@ stf_status fork_cb(struct state *st UNUSED,
  * when it merges these requests with any still unprocessed requests.
  */
 
-static void event_check_crls(struct logger *logger)
+static void event_check_crls(struct verbose verbose)
 {
+	struct logger *logger = verbose.logger;
+
 	/*
 	 * CERT_GetDefaultCertDB() simply returns the contents of a
 	 * static variable set by NSS_Initialize().  It doesn't check
@@ -505,7 +507,7 @@ static void event_check_crls(struct logger *logger)
 
 void fetch_x509_crls(struct show *s)
 {
-	event_check_crls(show_logger(s));
+	event_check_crls(VERBOSE(DEBUG_STREAM, show_logger(s), NULL));
 }
 
 /*
