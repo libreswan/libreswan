@@ -170,7 +170,6 @@ enum global_timer {
 #define GLOBAL_TIMER_FLOOR 0
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
-	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 	EVENT_SD_WATCHDOG,		/* update systemd's watchdog interval */
 	EVENT_CHECK_CRLS,		/* check/update CRLS */
 

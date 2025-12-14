@@ -243,7 +243,6 @@ static struct global_timer_desc global_timers[] = {
 #define E(T) [T] = { .name = #T, }
 	E(EVENT_REINIT_SECRET),
 	E(EVENT_SHUNT_SCAN),
-	E(EVENT_PENDING_DDNS),
 	E(EVENT_SD_WATCHDOG),
 	E(EVENT_CHECK_CRLS),
 	E(EVENT_FREE_ROOT_CERTS),
