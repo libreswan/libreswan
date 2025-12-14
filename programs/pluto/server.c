@@ -254,21 +254,23 @@ static struct global_timer_desc global_timers[] = {
 static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 				  const short event, void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	passert(in_main_thread());
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
 	struct global_timer_desc *gt = arg;
-	passert(event & EV_TIMEOUT);
-	passert(gt >= global_timers);
-	passert(gt < global_timers + elemsof(global_timers));
-	ldbg(logger, "processing global timer %s", gt->name);
+	vassert(event & EV_TIMEOUT);
+	vassert(gt >= global_timers);
+	vassert(gt < global_timers + elemsof(global_timers));
+	vdbg("processing global timer %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb(logger);
+	gt->cb(verbose);
 	threadtime_stop(&start, "global timer %s", gt->name);
 }
 
 void whack_impair_call_global_event_handler(enum global_timer timer,
 					    struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL); /* event-handler */
+
 	passert(in_main_thread());
 	/* timer is hardwired so shouldn't happen */
 	passert(timer < elemsof(global_timers));
@@ -283,7 +285,7 @@ void whack_impair_call_global_event_handler(enum global_timer timer,
 
 	llog(IMPAIR_STREAM, logger, "injecting timer event %s", gt->name);
 	threadtime_t start = threadtime_start();
-	gt->cb(logger);
+	gt->cb(verbose);
 	threadtime_stop(&start, "global timer %s", gt->name);
 }
 

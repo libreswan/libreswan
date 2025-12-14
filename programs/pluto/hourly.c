@@ -20,7 +20,7 @@
  */
 
 #include "defs.h"
-
+#include "log.h"
 #include "hourly.h"
 #include "timer.h"
 
@@ -28,20 +28,20 @@
 #include "ikev2_cookie.h"	/* for refresh_v2_cookie_secret() */
 #include "ikev2_ike_session_resume.h"
 
-static void refresh_secrets(struct logger *logger)
+static void refresh_secrets(struct verbose verbose)
 {
 	/*
 	 * Generate the secret value for responder cookies, and
 	 * schedule an event for refresh.
 	 */
-	refresh_ike_spi_secret(logger);
-	refresh_v2_cookie_secret(logger);
-	refresh_v2_ike_session_resume(logger);
+	refresh_ike_spi_secret(verbose.logger);
+	refresh_v2_cookie_secret(verbose.logger);
+	refresh_v2_ike_session_resume(verbose.logger);
 }
 
 void init_secret_timer(struct logger *logger)
 {
 	enable_periodic_timer(EVENT_REINIT_SECRET, refresh_secrets,
 			      deltatime(EVENT_REINIT_SECRET_DELAY), logger);
-	refresh_secrets(logger);
+	refresh_secrets(VERBOSE(DEBUG_STREAM, logger, NULL));
 }

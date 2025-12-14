@@ -185,7 +185,7 @@ void exit_epilogue(struct logger *logger)
 
 	free_help_requests(logger);
 
-	free_root_certs(logger);
+	free_root_certs(VERBOSE(DEBUG_STREAM, logger, NULL));
 	free_preshared_secrets(logger);
 	free_remembered_public_keys();
 	/*

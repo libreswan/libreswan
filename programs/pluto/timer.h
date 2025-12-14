@@ -23,6 +23,7 @@
 #include "deltatime.h"
 #include "monotime.h"
 #include "where.h"
+#include "verbose.h"
 
 struct state;   /* forward declaration */
 struct fd;
@@ -70,7 +71,7 @@ extern char *revive_conn;
  * is just easier.
  */
 
-typedef void (global_timer_cb)(struct logger *logger);
+typedef void (global_timer_cb)(struct verbose verbose);
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
 			   deltatime_t period, const struct logger *logger);
 

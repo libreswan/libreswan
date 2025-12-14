@@ -2387,9 +2387,9 @@ static bool kernel_initialized = false;
 
 static global_timer_cb kernel_scan_shunts;
 
-static void kernel_scan_shunts(struct logger *logger)
+static void kernel_scan_shunts(struct verbose verbose)
 {
-	expire_bare_shunts(VERBOSE(DEBUG_STREAM, logger, NULL));
+	expire_bare_shunts(verbose);
 }
 
 void init_kernel(const struct config_setup *oco, struct logger *logger)

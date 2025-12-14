@@ -88,7 +88,7 @@ void pluto_sd(int action, int status, struct logger *logger)
 	}
 }
 
-void sd_watchdog_event(struct logger *logger)
+void sd_watchdog_event(struct verbose verbose)
 {
-	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS, logger);
+	pluto_sd(PLUTO_SD_WATCHDOG, SD_REPORT_NO_STATUS, verbose.logger);
 }

@@ -22,6 +22,8 @@
 #include "defs.h"
 #include "demux.h"
 
+static global_timer_cb reset_log_limiter;	/* type check */
+
 #define RATE_LIMIT 1000
 
 struct limiter {
@@ -118,15 +120,13 @@ void limited_llog(struct logger *logger, enum log_limiter log_limiter,
 	}
 }
 
-static global_timer_cb reset_log_limiter;	/* type check */
-
-static void reset_log_limiter(struct logger *logger)
+static void reset_log_limiter(struct verbose verbose)
 {
 	FOR_EACH_ELEMENT(limiter, log_limiters) {
 		pthread_mutex_lock(&limiter->mutex);
 		{
 			if (limiter->count > log_limit(limiter)) {
-				llog(RC_LOG, logger, "%s rate limited log reset",
+				vlog("%s rate limited log reset",
 				     limiter->what);
 			}
 			limiter->count = 0;
