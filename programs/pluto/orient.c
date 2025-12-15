@@ -36,6 +36,7 @@
 #include "initiate.h"
 #include "ipsec_interface.h"
 #include "addresspool.h"
+#include "connection_event.h"
 
 static void terminate_and_disorient_connection(struct connection *c,
 					       where_t where)
@@ -220,8 +221,10 @@ static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 	jam_address(buf, &iface->local_address);
 }
 
-bool orient(struct connection *c, const struct logger *logger)
+bool orient(struct connection *c, struct logger *logger)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+
 	if (LDBGP(DBG_BASE, logger)) {
 		LDBG_log(c->logger, "orienting %s", c->name);
 		LDBG_orient_end(c, LEFT_END);
@@ -269,9 +272,8 @@ bool orient(struct connection *c, const struct logger *logger)
 				jam_string(buf, " and right ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_disorient_connection(c, HERE);
-			whack_detach(c, logger);
-			return false;
+			matching_iface = NULL; /* force failure */
+			break;
 		}
 
 		passert(left != right); /* only one */
@@ -314,9 +316,8 @@ bool orient(struct connection *c, const struct logger *logger)
 				jam_string(buf, " ");
 				jam_iface(buf, iface);
 			}
-			terminate_and_disorient_connection(c, HERE);
-			whack_detach(c, logger);
-			return false;
+			matching_iface = NULL; /* force failure */
+			break;
 		}
 
 		/* save match, and then continue search */
@@ -336,13 +337,18 @@ bool orient(struct connection *c, const struct logger *logger)
 	PEXPECT(c->logger, c->iface == old_iface); /* wasn't updated */
 
 	if (matching_iface == NULL) {
+		whack_attach(c, logger);
 		if (old_iface != NULL) {
-			/* when there's no interface, there's nothing
-			 * to terminate */
-			whack_attach(c, logger);
+			/* only when there's an interface is there a
+			 * chance of something to terminate */
 			terminate_and_disorient_connection(c, HERE);
-			whack_detach(c, logger);
 		}
+		if (old_iface != NULL) {
+			/* when there's an interface, CHECK_DDNS is
+			 * disabled; re-enable it */
+			schedule_connection_check_ddns(c, verbose);
+		}
+		whack_detach(c, logger);
 		return false;
 	}
 
@@ -366,6 +372,7 @@ bool orient(struct connection *c, const struct logger *logger)
 	/* ignoring ipsec-interface=no */
 	if (c->config->ipsec_interface.enabled) {
 		if (!add_ipsec_interface(c, matching_iface)) {
+			schedule_connection_check_ddns(c, verbose);
 			return false;
 		}
 	}
@@ -379,6 +386,11 @@ bool orient(struct connection *c, const struct logger *logger)
 
 	c->local = local;
 	c->remote = remote;
+
+	/*
+	 * Just in case.
+	 */
+	flush_connection_event(c, CONNECTION_CHECK_DDNS);
 
 	/*
 	 * Now that things are oriented, generate tentative kernel

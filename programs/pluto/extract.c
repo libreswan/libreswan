@@ -66,6 +66,7 @@
 #include "binaryscale-iec-60027-2.h"
 #include "server.h"		/* for nr_processors_online() */
 #include "ipsecconf/keywords.h"
+#include "connection_event.h"
 
 static bool is_never_negotiate_wm(const struct whack_message *wm)
 {
@@ -4687,8 +4688,10 @@ diag_t extract_connection(const struct whack_message *wm,
 	vassert(!oriented(c));
 	if (!resolved_host_addrs->ok) {
 		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
 	} else if (!orient(c, verbose.logger)) {
 		vdbg("connection did not orient, scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
 	} else {
 		vdbg("connection oriented, re-checking DB");
 		connection_db_check(verbose.logger, HERE);

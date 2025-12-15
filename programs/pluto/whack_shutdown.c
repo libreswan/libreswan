@@ -135,9 +135,15 @@ static void delete_every_connection(struct logger *logger)
 		}
 
 		/*
+		 * Check that the last connection deleted hasn't come
+		 * back to haunt us.  If it has then most likely
+		 * there's a stray reference lurking somewhere.
+		 *
 		 * Always going forward, never in reverse.
 		 */
-		PASSERT(logger, last != cq.c);
+		if (last == cq.c) {
+			llog_passert(cq.c->logger, HERE, "failed to delete connection; stray reference?");
+		}
 		last = cq.c;
 
 		/*
