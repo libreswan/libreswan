@@ -1054,7 +1054,7 @@ west #
          jam_enum_short 2: ON OK
          jam_enum_human 2: on OK
          match ON [short]: OK
-  global_timer_names: [0..7)
+  global_timer_names: [0..6)
     0 -> EVENT_REINIT_SECRET
          jam_enum 0: EVENT_REINIT_SECRET OK
          match EVENT_REINIT_SECRET: OK
@@ -1069,40 +1069,33 @@ west #
          jam_enum_short 1: SHUNT_SCAN OK
          jam_enum_human 1: shunt-scan OK
          match SHUNT_SCAN [short]: OK
-    2 -> EVENT_PENDING_DDNS
-         jam_enum 2: EVENT_PENDING_DDNS OK
-         match EVENT_PENDING_DDNS: OK
-         short_name 2: PENDING_DDNS OK
-         jam_enum_short 2: PENDING_DDNS OK
-         jam_enum_human 2: pending-ddns OK
-         match PENDING_DDNS [short]: OK
-    3 -> EVENT_SD_WATCHDOG
-         jam_enum 3: EVENT_SD_WATCHDOG OK
+    2 -> EVENT_SD_WATCHDOG
+         jam_enum 2: EVENT_SD_WATCHDOG OK
          match EVENT_SD_WATCHDOG: OK
-         short_name 3: SD_WATCHDOG OK
-         jam_enum_short 3: SD_WATCHDOG OK
-         jam_enum_human 3: sd-watchdog OK
+         short_name 2: SD_WATCHDOG OK
+         jam_enum_short 2: SD_WATCHDOG OK
+         jam_enum_human 2: sd-watchdog OK
          match SD_WATCHDOG [short]: OK
-    4 -> EVENT_CHECK_CRLS
-         jam_enum 4: EVENT_CHECK_CRLS OK
+    3 -> EVENT_CHECK_CRLS
+         jam_enum 3: EVENT_CHECK_CRLS OK
          match EVENT_CHECK_CRLS: OK
-         short_name 4: CHECK_CRLS OK
-         jam_enum_short 4: CHECK_CRLS OK
-         jam_enum_human 4: check-crls OK
+         short_name 3: CHECK_CRLS OK
+         jam_enum_short 3: CHECK_CRLS OK
+         jam_enum_human 3: check-crls OK
          match CHECK_CRLS [short]: OK
-    5 -> EVENT_FREE_ROOT_CERTS
-         jam_enum 5: EVENT_FREE_ROOT_CERTS OK
+    4 -> EVENT_FREE_ROOT_CERTS
+         jam_enum 4: EVENT_FREE_ROOT_CERTS OK
          match EVENT_FREE_ROOT_CERTS: OK
-         short_name 5: FREE_ROOT_CERTS OK
-         jam_enum_short 5: FREE_ROOT_CERTS OK
-         jam_enum_human 5: free-root-certs OK
+         short_name 4: FREE_ROOT_CERTS OK
+         jam_enum_short 4: FREE_ROOT_CERTS OK
+         jam_enum_human 4: free-root-certs OK
          match FREE_ROOT_CERTS [short]: OK
-    6 -> EVENT_RESET_LOG_LIMITER
-         jam_enum 6: EVENT_RESET_LOG_LIMITER OK
+    5 -> EVENT_RESET_LOG_LIMITER
+         jam_enum 5: EVENT_RESET_LOG_LIMITER OK
          match EVENT_RESET_LOG_LIMITER: OK
-         short_name 6: RESET_LOG_LIMITER OK
-         jam_enum_short 6: RESET_LOG_LIMITER OK
-         jam_enum_human 6: reset-log-limiter OK
+         short_name 5: RESET_LOG_LIMITER OK
+         jam_enum_short 5: RESET_LOG_LIMITER OK
+         jam_enum_human 5: reset-log-limiter OK
          match RESET_LOG_LIMITER [short]: OK
   ike_cert_type_names: [1..11)
     1 -> CERT_PKCS7_WRAPPED_X509
