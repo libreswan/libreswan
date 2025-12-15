@@ -184,16 +184,11 @@ static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
 
 bool trusted_ca(asn1_t a, asn1_t b, int *pathlen, struct verbose verbose)
 {
-	if (verbose.stream != NO_STREAM) {
-		dn_buf abuf;
-		llog(verbose.stream, verbose.logger,
-		     PRI_VERBOSE"trustee A = '%s'",
-		     pri_verbose, str_dn(a, &abuf));
-		dn_buf bbuf;
-		llog(verbose.stream, verbose.logger,
-		     PRI_VERBOSE"trustor B = '%s'",
-		     pri_verbose, str_dn(b, &bbuf));
-	}
+	dn_buf abuf;
+	verbose("trustee A = '%s'", str_dn(a, &abuf));
+	dn_buf bbuf;
+	verbose("trustor B = '%s'", str_dn(b, &bbuf));
+
 	verbose.level++;
 
 	/* no CA b specified => any CA a is accepted */

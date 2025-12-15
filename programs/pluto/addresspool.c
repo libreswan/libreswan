@@ -269,8 +269,7 @@ static void vdbg_pool(struct verbose verbose,
 		      const struct addresspool *pool,
 		      const char *format, ...)
 {
-	LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-		jam(buf, PRI_VERBOSE, pri_verbose);
+	VDBG_JAMBUF(buf) {
 		jam(buf, "pool ");
 		jam_pool(buf, &pool->r);
 		jam(buf, ": ");
@@ -292,8 +291,7 @@ static void vdbg_lease(struct verbose verbose,
 		       const struct connection *c,
 		       const char *format, ...)
 {
-	LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-		jam(buf, PRI_VERBOSE, pri_verbose);
+	VDBG_JAMBUF(buf) {
 		jam(buf, "pool ");
 		jam_pool(buf, &pool->r);
 		jam(buf, " lease ");

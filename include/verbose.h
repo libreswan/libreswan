@@ -1,6 +1,6 @@
 /* verbose wrapper around logger
  *
- * Copyright (C) 2024  Andrew Cagney
+ * Copyright (C) 2024-2025  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -98,10 +98,10 @@ struct verbose {
  */
 
 #define PRI_VERBOSE "%s%s%*s"
-#define pri_verbose \
-	(verbose.prefix == NULL ? "" : verbose.prefix), \
-		(verbose.prefix == NULL ? "" : ": "),	\
-		(verbose.level * 2), ""
+#define pri_verbose(VERBOSE)					\
+	((VERBOSE)->prefix == NULL ? "" : (VERBOSE)->prefix),	\
+		((VERBOSE)->prefix == NULL ? "" : ": "),	\
+		((VERBOSE)->level * 2), ""
 
 /*
  * Normal logging: the message is always logged (no indentation); just
@@ -163,7 +163,8 @@ struct verbose {
 #define VDBG_log(FMT, ...)			\
 	llog(DEBUG_STREAM, verbose.logger,	\
 	     PRI_VERBOSE""FMT,			\
-	     pri_verbose, ##__VA_ARGS__)
+	     pri_verbose(&verbose),		\
+	     ##__VA_ARGS__)
 
 #define vdbg_errno(ERRNO, FMT, ...)				\
 	{							\
@@ -177,13 +178,14 @@ struct verbose {
 		int errno_ = ERRNO; /* save value across va args */	\
 		llog_errno(DEBUG_STREAM, verbose.logger, errno_,	\
 			   PRI_VERBOSE""FMT,				\
-			   pri_verbose, ##__VA_ARGS__);			\
+			   pri_verbose(&verbose),			\
+			   ##__VA_ARGS__);				\
 	}
 
 #define VDBG_JAMBUF(BUF)						\
 	for (bool cond_ = verbose.debug; cond_; cond_ = false)		\
 		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose(&verbose)); \
 			     cond_; cond_ = false)
 
 /*
@@ -201,7 +203,8 @@ struct verbose {
 		if (verbose.stream != NO_STREAM) {			\
 			llog(verbose.stream, verbose.logger,		\
 			     PRI_VERBOSE""FMT,				\
-			     pri_verbose, ##__VA_ARGS__);		\
+			     pri_verbose(&verbose),			\
+			     ##__VA_ARGS__);				\
 		}							\
 	}
 
@@ -209,7 +212,7 @@ struct verbose {
 	for (bool cond_ = (verbose.stream != NO_STREAM);		\
 	     cond_; cond_ = false)					\
 		LLOG_JAMBUF(verbose.stream, verbose.logger, BUF)	\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose(&verbose)); \
 			     cond_; cond_ = false)
 
 /*
