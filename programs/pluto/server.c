@@ -255,14 +255,14 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
 	vassert(in_main_thread());
-	struct global_timer_desc *gt = arg;
 	vassert(event & EV_TIMEOUT);
+	struct global_timer_desc *gt = arg;
 	vassert(gt >= global_timers);
 	vassert(gt < global_timers + elemsof(global_timers));
-	vdbg("processing global timer %s", gt->name);
-	threadtime_t start = threadtime_start();
+	const char *name = gt->name; /*save*/
+	vtime_t start = vdbg_start("processing global timer %s", name);
 	gt->cb(verbose);
-	threadtime_stop(&start, "global timer %s", gt->name);
+	vdbg_stop(&start, "global timer %s", name);
 }
 
 void whack_impair_call_global_event_handler(enum global_timer timer,
@@ -270,22 +270,23 @@ void whack_impair_call_global_event_handler(enum global_timer timer,
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL); /* event-handler */
 
-	passert(in_main_thread());
+	vassert(in_main_thread());
 	/* timer is hardwired so shouldn't happen */
-	passert(timer < elemsof(global_timers));
+	vassert(timer < elemsof(global_timers));
 
 	struct global_timer_desc *gt = &global_timers[timer];
-	passert(gt->name != NULL);
+	vassert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
 		llog(IMPAIR_STREAM, logger, "timer %s is not initialized",
 		     gt->name);
 		return;
 	}
 
-	llog(IMPAIR_STREAM, logger, "injecting timer event %s", gt->name);
-	threadtime_t start = threadtime_start();
+	const char *name = gt->name; /*save*/
+	llog(IMPAIR_STREAM, verbose.logger, "injecting timer event %s", name);
+	vtime_t start = vdbg_start("processing global timer %s", name);
 	gt->cb(verbose);
-	threadtime_stop(&start, "global timer %s", gt->name);
+	vdbg_stop(&start, "global timer %s", name);
 }
 
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
