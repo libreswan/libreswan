@@ -70,8 +70,9 @@ void schedule_timeout(const char *name,
 		      void *arg);
 void destroy_timeout(struct timeout **to);
 
-typedef void (fd_accept_listener_cb)(int fd, ip_sockaddr *sa,
-				     void *arg, struct logger *logger);
+typedef void (fd_accept_listener_cb)(struct verbose verbose,
+				     int fd, ip_sockaddr *sa,
+				     void *arg);
 void attach_fd_accept_listener(const char *name,
 			       struct fd_accept_listener **fdl, int fd,
 			       fd_accept_listener_cb *cb, void *arg);

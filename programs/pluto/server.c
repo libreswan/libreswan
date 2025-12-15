@@ -872,14 +872,20 @@ static void fd_accept_listener(struct evconnlistener *efc UNUSED,
 			       struct sockaddr *sockaddr, int sockaddr_len,
 			       void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	struct fd_accept_listener *fdl = arg;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
 	};
-	passert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
+	vassert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
 	memcpy(&sa.sa, sockaddr, sockaddr_len);
-	fdl->cb(fd, &sa, fdl->arg, logger);
+
+	struct fd_accept_listener *fdl = arg;
+	const char *name = fdl->name; /*save*/
+	vtime_t start = vdbg_start("processing accept %d listener %s", fd, name);
+	fdl->cb(verbose, fd, &sa, fdl->arg);
+	vdbg_stop(&start, "accept %d listener %s", fd, name);
 }
 
 void attach_fd_accept_listener(const char *name,
