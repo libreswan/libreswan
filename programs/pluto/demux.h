@@ -32,6 +32,7 @@
 #include "refcnt.h"
 #include "where.h"
 #include "crypt_mac.h"
+#include "verbose.h"
 
 struct state;   /* forward declaration of tag */
 struct iface_endpoint;
@@ -41,7 +42,7 @@ struct logger;
  * Used by UDP and TCP to inject packets.
  */
 
-void process_iface_packet(int fd, void *ifp_arg, struct logger *logger);
+void process_iface_packet(struct verbose verbose, int fd, void *ifp_arg);
 
 /* State transition function infrastructure
  *

@@ -77,7 +77,7 @@ void attach_fd_accept_listener(const char *name,
 			       fd_accept_listener_cb *cb, void *arg);
 void detach_fd_accept_listener(struct fd_accept_listener **fdl);
 
-typedef void (fd_read_listener_cb)(int fd, void *arg, struct logger *logger);
+typedef void (fd_read_listener_cb)(struct verbose verbose, int fd, void *arg);
 
 void attach_fd_read_listener(struct fd_read_listener **fdl,
 			     int fd, const char *name,

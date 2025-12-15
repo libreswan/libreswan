@@ -20,6 +20,6 @@
 
 struct logger;
 
-extern void whack_handle_cb(int fd, void *arg, struct logger *logger);
+extern void whack_handle_cb(struct verbose verbose, int fd, void *arg);
 
 #endif

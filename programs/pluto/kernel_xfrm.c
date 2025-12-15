@@ -116,8 +116,8 @@
 #include "kernel_iface.h"
 #include "rnd.h" /* for get_rnd_bytes() */
 
-static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
-static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
+static void netlink_process_xfrm_messages(struct verbose verbose, int fd, void *arg);
+static void netlink_process_rtm_messages(struct verbose verbose, int fd, void *arg);
 static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      unsigned expected_resp_type, struct nlm_resp *rbuf,
 			      const char *description, const char *story,
@@ -2726,14 +2726,18 @@ static void netlink_rtm_message_processor(struct nlm_resp *rsp, struct logger *l
 
 }
 
-static void netlink_process_xfrm_messages(int fd, void *arg UNUSED, struct logger *logger)
+static void netlink_process_xfrm_messages(struct verbose verbose, int fd, void *arg UNUSED)
 {
+	struct logger *logger = verbose.logger;
+
 	ldbg(logger, "kernel: %s() process messages", __func__);
 	do {} while (netlink_get(fd, netlink_xfrm_message_processor, logger));
 }
 
-static void netlink_process_rtm_messages(int fd, void *arg UNUSED, struct logger *logger)
+static void netlink_process_rtm_messages(struct verbose verbose, int fd, void *arg UNUSED)
 {
+	struct logger *logger = verbose.logger;
+
 	ldbg(logger, "kernel: %s() process messages", __func__);
 	do {} while (netlink_get(fd, netlink_rtm_message_processor, logger));
 }

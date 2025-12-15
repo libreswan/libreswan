@@ -81,6 +81,8 @@
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
 
+static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
+
 static void whack_handle_1(struct fd *whackfd, struct logger *whack_logger,
 			   struct whack_message_refcnt *rwm);
 
@@ -633,35 +635,30 @@ static void whack_process(struct whack_message_refcnt *const wmr, struct show *s
 	return;
 }
 
-static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
-
-void whack_handle_cb(int fd, void *arg UNUSED, struct logger *global_logger)
+void whack_handle_cb(struct verbose verbose, int fd, void *arg UNUSED)
 {
-	threadtime_t start = threadtime_start();
-	{
-		struct fd *whackfd = fd_accept(fd, global_logger, HERE);
-		if (whackfd == NULL) {
-			/* already logged */
-			return;
-		}
-
-		/*
-		 * Hack to get the whack fd attached to the initial
-		 * event handler logger.  With this done, everything
-		 * from here on can use attach_whack() et.al.
-		 *
-		 * See also whack_shutdown() which deliberately leaks
-		 * this fd.
-		 */
-		struct logger whack_logger = *global_logger;
-		whack_logger.whackfd[0] = whackfd;
-		whack_logger.where = HERE;
-
-		whack_handle(whackfd, &whack_logger);
-
-		fd_delref(&whackfd, &whack_logger);
+	struct fd *whackfd = fd_accept(fd, verbose.logger, HERE);
+	if (whackfd == NULL) {
+		/* already logged */
+		return;
 	}
-	threadtime_stop(&start, "whack");
+
+	/*
+	 * Hack to get the whack fd attached to the initial
+	 * event handler logger.  With this done, everything
+	 * from here on can use attach_whack() et.al.
+	 *
+	 * See also whack_shutdown() which deliberately leaks
+	 * this fd.
+	 */
+	struct logger *global_logger = verbose.logger;
+	struct logger whack_logger = *global_logger;
+	whack_logger.whackfd[0] = whackfd;
+	whack_logger.where = HERE;
+
+	whack_handle(whackfd, &whack_logger);
+
+	fd_delref(&whackfd, &whack_logger);
 }
 
 /*

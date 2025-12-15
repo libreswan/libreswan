@@ -232,11 +232,11 @@ static bool drain_fd(struct pid_entry *pid_entry)
 	return true; /* try again */
 }
 
-static void child_output_listener(int fd, void *arg, struct logger *logger)
+static void child_output_listener(struct verbose verbose, int fd, void *arg)
 {
 	struct pid_entry *pid_entry = arg;
-	PASSERT(logger, pid_entry->fdl != NULL);
-	PASSERT(logger, pid_entry->fd == fd);
+	vassert(pid_entry->fdl != NULL);
+	vassert(pid_entry->fd == fd);
 	drain_fd(pid_entry);
 }
 

@@ -809,12 +809,17 @@ void schedule_callback(const char *story,
 }
 
 static void fd_read_listener_event_handler(evutil_socket_t fd,
-					   short events UNUSED,
+					   const short event,
 					   void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_READ);
 	struct fd_read_listener *fdl = arg;
-	fdl->cb(fd, fdl->arg, logger);
+	const char *name = fdl->name;
+	vtime_t start = vdbg_start("processing read %d listener %s", fd, name);
+	fdl->cb(verbose, fd, fdl->arg);
+	vdbg_stop(&start, "read %d listener %s", fd, name);
 }
 
 void attach_fd_read_listener(struct fd_read_listener **fdl,
