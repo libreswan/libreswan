@@ -859,7 +859,7 @@ void revert_kernel_policy(struct spd *spd,
 	if (spd->wip.installed.up) {
 		PEXPECT(logger, child != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, spd, child, logger)) {
+		if (!updown_child_spd(UPDOWN_DOWN, child, spd)) {
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		spd->wip.installed.up = false;

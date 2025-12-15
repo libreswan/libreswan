@@ -472,17 +472,51 @@ bool do_updown(enum updown updown_verb,
 			   (struct updown_env) {0}, verbose);
 }
 
-void do_updown_child(enum updown updown_verb, struct child_sa *child)
+static bool updown_child_spd_1(enum updown updown_verb,
+			       struct child_sa *child,
+			       const struct spd *spd,
+			       struct verbose verbose)
+{
+	return do_updown_1(updown_verb, child->sa.st_connection, spd, child,
+			   (struct updown_env) {0}, verbose);
+}
+
+bool updown_child_spd(enum updown updown_verb,
+		      struct child_sa *child,
+		      const struct spd *spd)
 {
 	/* use full UPDOWN_UP as prefix */
 	name_buf vb;
 	enum_long(&updown_names, updown_verb, &vb);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
 
-	struct connection *c = child->sa.st_connection;
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		do_updown_1(updown_verb, c, spd, child,
-			    (struct updown_env) {0}, verbose);
+	/*
+	 * XXX: struct spds .list[] is a pointer, not an array, so
+	 * need to search .list[] for SPD.
+	 */
+	if (verbose.debug) {
+		bool found = false;
+		FOR_EACH_ITEM(sspd, &child->sa.st_connection->child.spds) {
+			if (sspd == spd) {
+				found = true;
+				break;
+			}
+		}
+		vexpect(found);
+	}
+
+	return updown_child_spd_1(updown_verb, child, spd, verbose);
+}
+
+void updown_child_spds(enum updown updown_verb, struct child_sa *child)
+{
+	/* use full UPDOWN_UP as prefix */
+	name_buf vb;
+	enum_long(&updown_names, updown_verb, &vb);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
+
+	FOR_EACH_ITEM(spd, &child->sa.st_connection->child.spds) {
+		updown_child_spd_1(updown_verb, child, spd, verbose);
 	}
 }
 

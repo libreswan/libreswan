@@ -59,7 +59,11 @@ bool do_updown(enum updown updown_verb,
 	       const struct connection *c, const struct spd *sr,
 	       struct child_sa *child, struct logger *logger);
 
-void do_updown_child(enum updown updown_verb, struct child_sa *child);
+bool updown_child_spd(enum updown updown_verb,
+		      struct child_sa *child,
+		      const struct spd *spd);
+void updown_child_spds(enum updown updown_verb,
+		       struct child_sa *child);
 
 /*
  * Value of some environment variables passed down to updown.
