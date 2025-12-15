@@ -12,6 +12,7 @@ core dump dir: /run/pluto
 secrets file: /etc/ipsec.secrets
 Initializing NSS using read-only database "sql:/var/lib/ipsec/nss"
 FATAL ERROR: NSS: initialization using read-only database "sql:/var/lib/ipsec/nss" failed: SEC_ERROR_BAD_DATABASE: security library: bad database.
+systemd watchdog: sending action: stopping, status 1
 west #
  # rhbz#1041576 start pluto in dir not owned by root; should not fail
 west #

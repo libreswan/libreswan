@@ -36,6 +36,7 @@ west #
 west #
  ipsec pluto --config bad-config-setup-key.conf
 FATAL ERROR: ipsec pluto: bad-config-setup-key.conf:7: unrecognized 'config setup' keyword 'unknown'
+systemd watchdog: sending action: stopping, status 1
 west #
  # should fail but doesn't, hence shutdown
 west #
@@ -63,6 +64,7 @@ west #
 west #
  ipsec pluto --config bad-conn-key.conf
 FATAL ERROR: ipsec pluto: bad-conn-key.conf:9: unrecognized 'conn' keyword 'unknown'
+systemd watchdog: sending action: stopping, status 1
 west #
  # should fail?
 west #
