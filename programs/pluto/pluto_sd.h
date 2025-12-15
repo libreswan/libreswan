@@ -17,6 +17,8 @@
 #ifndef _PLUTO_SD_H
 #define _PLUTO_SD_H
 
+#include "verbose.h"
+
 #ifdef USE_SYSTEMD_WATCHDOG
 
 #define SD_REPORT_NO_STATUS 0
