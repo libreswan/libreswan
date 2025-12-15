@@ -4672,27 +4672,25 @@ diag_t extract_connection(const struct whack_message *wm,
 	 */
 	connection_db_add(c);
 	vdbg_connection(c, verbose, HERE, "extracted");
-
 	if (verbose.debug) {
-		VDBG_log("oriented; maybe");
 		connection_db_check(verbose.logger, HERE);
 	}
 
 	build_connection_host_and_proposals_from_resolve(c, resolved_host_addrs, verbose);
 
 	/*
-	 * Force orientation (currently kind of unoriented?).
+	 * When possible, try to orient the connection.
 	 *
-	 * If the connection orients,the SPDs and host-pair hash
-	 * tables are updated.
-	 *
-	 * This function holds the just allocated reference.
+	 * This logic can probably be smashed together with logic
+	 * found in ddns.c.
 	 */
 	vassert(!oriented(c));
-	orient(c, verbose.logger);
-
-	if (verbose.debug) {
-		VDBG_log("oriented; still maybe");
+	if (!resolved_host_addrs->ok) {
+		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
+	} else if (!orient(c, verbose.logger)) {
+		vdbg("connection did not orient, scheduling CHECK_DDNS");
+	} else {
+		vdbg("connection oriented, re-checking DB");
 		connection_db_check(verbose.logger, HERE);
 	}
 
