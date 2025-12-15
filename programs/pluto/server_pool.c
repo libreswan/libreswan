@@ -260,7 +260,7 @@ helper_cb *server_pool_helper(struct help_request *request,
 
 	vtime_t start = vdbg_start("%d", helper_id);
 	request->handler->computer_fn(request->task_logger, request->task, helper_id);
-	request->time_used = vdbg_stop(start, "%d", helper_id);
+	request->time_used = vdbg_stop(&start, "%d", helper_id);
 
 	return server_pool_callback;
 }

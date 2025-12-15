@@ -17,6 +17,7 @@
 #ifndef VERBOSE_H
 #define VERBOSE_H
 
+#include "lswcdefs.h"		/* for PRINTF_LIKE() */
 #include "where.h"
 #include "pluto_constants.h"	/* for enum stream; */
 #include "cputime.h"
@@ -224,31 +225,17 @@ typedef struct {
 	cputime_t time;
 } vtime_t;
 
-#define vdbg_start(FMT, ...)					\
-	({							\
-		vtime_t start_ = {0};				\
-		if (verbose.debug ||				\
-		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {	\
-			VDBG_log(FMT, ##__VA_ARGS__);		\
-			start_.time = cputime_start();		\
-		};						\
-		start_.level = verbose.level++,			\
-		start_;						\
-	})
+vtime_t vdbg_start_where(struct verbose *verbose,
+			 const char *fmt, ...) PRINTF_LIKE(2);
 
-#define vdbg_stop(START, FMT, ...)				\
-	({							\
-		struct cpu_usage usage_ = {0};			\
-		verbose.level = (START).level;			\
-		if (verbose.debug ||				\
-		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {	\
-			usage_ = cputime_stop((START).time);	\
-			VDBG_log(PRI_CPU_USAGE" in %s() "FMT,	\
-				 pri_cpu_usage(usage_),		\
-				 __func__,			\
-				 ##__VA_ARGS__);		\
-		}						\
-		usage_;						\
-	})
+#define vdbg_start(FMT, ...)				\
+	vdbg_start_where(&verbose, FMT, ##__VA_ARGS__)
+
+struct cpu_usage vdbg_stop_where(struct verbose *verbose,
+				 const vtime_t *start,
+				 const char *fmt, ...) PRINTF_LIKE(3);
+
+#define vdbg_stop(START, FMT, ...)			\
+	vdbg_stop_where(&verbose, START, FMT, ##__VA_ARGS__)
 
 #endif
