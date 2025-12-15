@@ -425,11 +425,13 @@ static void iketcp_cleanup(struct iface_endpoint *ifp,
 	stop_iketcp_timeout("cleaning up", ifp, logger);
 }
 
-static void iketcp_server_timeout(void *arg, const struct timer_event *event)
+static void iketcp_server_timeout(struct verbose verbose,
+				  vtime_t inception UNUSED,
+				  void *arg)
 {
 	struct iface_endpoint *ifp = arg;
 	struct logger *logger = from_logger(ifp->iketcp_remote_endpoint);
-	whack_attach_where(logger, event->logger, HERE);
+	whack_attach_where(logger, verbose.logger, HERE);
 	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
 	iface_endpoint_delref(&ifp);

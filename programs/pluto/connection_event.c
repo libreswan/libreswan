@@ -26,7 +26,7 @@
 #include "iface.h"			/* for struct iface_endpoint */
 #include "ddns.h"
 
-static void connection_event_handler(void *arg, const struct timer_event *event);
+static timeout_event_cb connection_event_handler;
 
 struct connection_event {
 	enum connection_event_kind kind;
@@ -164,9 +164,9 @@ static void dispatch_connection_event(struct connection_event *e,
 	discard_connection_event(&e);
 }
 
-void connection_event_handler(void *arg, const struct timer_event *event)
+void connection_event_handler(struct verbose verbose UNUSED, vtime_t inception, void *arg)
 {
-	dispatch_connection_event(arg, &event->inception);
+	dispatch_connection_event(arg, &inception.time);
 }
 
 void whack_impair_call_connection_event_handler(struct connection *c,

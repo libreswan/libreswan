@@ -73,6 +73,8 @@
 #include "ikev1_nat.h"
 #include "ikev2_nat.h"
 
+static timeout_event_cb timer_event_cb;
+
 static void dispatch_event(struct state *st, enum event_type event_type,
 			   deltatime_t event_delay, struct logger *logger,
 			   bool detach_whack);
@@ -192,7 +194,9 @@ void delete_state_event(struct state_event **evp, where_t where UNUSED)
  * to event specific data (for example, to a state structure).
  */
 
-static void timer_event_cb(void *arg, const struct timer_event *event)
+void timer_event_cb(struct verbose verbose,
+		    vtime_t inception,
+		    void *arg)
 {
 	/*
 	 * Get rid of the old timer event before calling the timer
@@ -205,14 +209,14 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 
 	{
 		struct state_event *ev = arg;
-		passert(ev != NULL);
+		vassert(ev != NULL);
 		event_type = ev->ev_type;
-		PASSERT(event->logger, enum_long(&event_type_names, event_type, &event_name));
+		vassert(enum_long(&event_type_names, event_type, &event_name));
 		event_delay = ev->ev_delay;
 		st = ev->ev_state;	/* note: *st might be changed; XXX: why? */
-		passert(st != NULL);
+		vassert(st != NULL);
 
-		ldbg(event->logger, "%s: processing %s-event@%p for %s SA "PRI_SO" in state %s",
+		vdbg("%s: processing %s-event@%p for %s SA "PRI_SO" in state %s",
 		     __func__, event_name.buf, ev,
 		     IS_IKE_SA(st) ? "IKE" : "CHILD",
 		     pri_so(st->st_serialno), st->st_state->short_name);
@@ -237,8 +241,8 @@ static void timer_event_cb(void *arg, const struct timer_event *event)
 		arg = ev = *evp = NULL; /* all gone */
 	}
 
-	statetime_t start = statetime_backdate(st, &event->inception);
-	dispatch_event(st, event_type, event_delay, event->logger,
+	statetime_t start = statetime_backdate(st, &inception.time);
+	dispatch_event(st, event_type, event_delay, verbose.logger,
 		       /*detach_whack*/false);
 	statetime_stop(&start, "%s() %s", __func__, event_name.buf);
 }

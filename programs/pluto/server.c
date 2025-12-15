@@ -527,7 +527,7 @@ static void link_pluto_event_list(struct fd_read_listener *e) {
 
 struct timeout {
 	const char *name;
-	void (*cb)(void *arg, const struct timer_event *event);
+	timeout_event_cb *cb;
 	void *arg;
 	struct event ev;
 };
@@ -535,17 +535,19 @@ struct timeout {
 static void timeout(evutil_socket_t fd UNUSED,
 		    const short ev_event UNUSED, void *arg)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	struct timeout *tt = arg;
-	struct timer_event event = {
-		.inception = threadtime_start(),
-		.logger = &global_logger,
-	};
-	tt->cb(tt->arg, &event);
+	const char *name = tt->name; /*save*/
+
+	vtime_t start = vdbg_start("processing timer %s", name);
+	tt->cb(verbose, start, tt->arg);
+	vdbg_stop(&start, "timer %s", name);
 }
 
 void schedule_timeout(const char *name,
 		      struct timeout **tt, const deltatime_t delay,
-		      void (*cb)(void *arg, const struct timer_event *event),
+		      timeout_event_cb *cb,
 		      void *arg)
 {
 	*tt = alloc_thing(struct timeout, name);
@@ -615,9 +617,12 @@ void complete_state_transition(struct state *st, struct msg_digest *md, stf_stat
 	}
 }
 
-static void resume_handler(void *arg, const struct timer_event *event)
+static void resume_handler(struct verbose verbose,
+			   vtime_t inception UNUSED,
+			   void *arg)
 {
 	struct resume_event *e = (struct resume_event *)arg;
+	const char *name = e->name;
 	/*
 	 * At one point, .ne_event was was being set after the event
 	 * was enabled.  With multiple threads this resulted in a race
@@ -625,20 +630,21 @@ static void resume_handler(void *arg, const struct timer_event *event)
 	 * pexpect() followed by the passert() demonstrated this - the
 	 * pexpect() failed yet the passert() passed.
 	 */
-	pexpect(e->timer != NULL);
-	ldbg(event->logger, "processing resume %s for "PRI_SO"",
-	     e->name, pri_so(e->serialno));
+	vexpect(e->timer != NULL);
+	vdbg("processing resume %s for "PRI_SO"",
+	     name, pri_so(e->serialno));
 	/*
 	 * XXX: Don't confuse this and the "callback") code path.
+	 *
 	 * This unsuspends MD, "callback" does not.
 	 */
 	struct state *st = state_by_serialno(e->serialno);
 	if (st == NULL) {
-		threadtime_t start = threadtime_start();
+		vtime_t start = vdbg_start("processing ("PRI_SO") resume %s",
+					   pri_so(e->serialno), name);
 		stf_status status = e->callback(NULL, NULL, e->context);
-		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
-		threadtime_stop(&start, "("PRI_SO") resume %s",
-				pri_so(e->serialno), e->name);
+		vexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
+		vdbg_stop(&start, "("PRI_SO") resume %s", pri_so(e->serialno), name);
 	} else {
 		/* no previous state */
 		statetime_t start = statetime_start(st);
@@ -658,9 +664,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
-			ldbg(event->logger,
-			     "resume %s for "PRI_SO" suppressed complete_v%d_state_transition()%s",
-			     e->name, pri_so(e->serialno), ike_version,
+			vdbg("resume %s for "PRI_SO" suppressed complete_v%d_state_transition()%s",
+			     name, pri_so(e->serialno), ike_version,
 			     (old_md_st != SOS_NOBODY && e->md->v1_st == NULL ? "; MD.ST disappeared" :
 			      old_md_st != SOS_NOBODY && e->md->v1_st != st ? "; MD.ST was switched" :
 			      ""));
@@ -689,7 +694,7 @@ static void resume_handler(void *arg, const struct timer_event *event)
 			}
 			complete_state_transition(st, e->md, status);
 		}
-		statetime_stop(&start, "resume %s", e->name);
+		statetime_stop(&start, "resume %s", name);
 	}
 	passert(e->timer != NULL);
 	destroy_timeout(&e->timer);
@@ -725,7 +730,7 @@ void schedule_resume(const char *name, so_serial_t serialno,
 	};
 	struct resume_event *e = clone_thing(tmp, name);
 	ldbg(&global_logger, "scheduling resume %s for "PRI_SO"",
-	     e->name, pri_so(e->serialno));
+	     name, pri_so(e->serialno));
 
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
@@ -747,7 +752,9 @@ struct callback_event {
 	struct timeout *timer;
 };
 
-static void callback_handler(void *arg, const struct timer_event *event)
+static void callback_handler(struct verbose verbose,
+			     vtime_t inception UNUSED,
+			     void *arg)
 {
 	/*
 	 * Save all fields so that all event-loop memory can be freed
@@ -762,27 +769,27 @@ static void callback_handler(void *arg, const struct timer_event *event)
 	 * ran and was deleted .event was valid.  Oops!
 	 */
 	struct callback_event e = *(struct callback_event *)arg;
-	passert(e.timer != NULL);
+	vassert(e.timer != NULL);
 	destroy_timeout(&e.timer);
 	pfree(arg);
 
 	struct state *st;
 	if (e.serialno == SOS_NOBODY) {
-		ldbg(event->logger, "processing callback %s", e.story);
+		vdbg("processing callback %s", e.story);
 		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		ldbg(event->logger, "processing callback %s for "PRI_SO"",
+		vdbg("processing callback %s for "PRI_SO"",
 		     e.story, pri_so(e.serialno));
 		st = state_by_serialno(e.serialno);
 	}
 
-	threadtime_t start = threadtime_start();
+	vtime_t start = vdbg_start("callback %s", e.story);
 	e.callback(e.story, st, e.context);
-	threadtime_stop(&start, "callback %s", e.story);
+	vdbg_stop(&start, "callback %s", e.story);
 }
 
 void schedule_callback(const char *story,
