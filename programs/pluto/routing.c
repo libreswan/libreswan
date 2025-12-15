@@ -648,14 +648,14 @@ static bool unrouted_to_routed_ondemand_sec_label(struct connection *c,
 	}
 
 	/* a new route: no deletion required, but preparation is */
-	if (!do_updown(UPDOWN_PREPARE, c, c->child.spds.list, NULL/*ST*/, logger)) {
+	if (!updown_connection_spd(UPDOWN_PREPARE, c, c->child.spds.list, logger)) {
 		ldbg(logger, "kernel: %s() prepare command returned an error", __func__);
 	}
 
-	if (!do_updown(UPDOWN_ROUTE, c, c->child.spds.list, NULL/*ST*/, logger)) {
+	if (!updown_connection_spd(UPDOWN_ROUTE, c, c->child.spds.list, logger)) {
 		/* Failure!  Unwind our work. */
 		ldbg(logger, "kernel: %s() route command returned an error", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, c->child.spds.list, NULL/*st*/, logger)) {
+		if (!updown_connection_spd(UPDOWN_DOWN, c, c->child.spds.list, logger)) {
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		/* go back to old routing */

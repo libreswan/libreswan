@@ -55,9 +55,10 @@ enum updown {
 extern const struct enum_names updown_stories;
 extern const struct enum_names updown_names;
 
-bool do_updown(enum updown updown_verb,
-	       const struct connection *c, const struct spd *sr,
-	       struct child_sa *child, struct logger *logger);
+bool updown_connection_spd(enum updown updown_verb,
+			   const struct connection *c,
+			   const struct spd *spd,
+			   struct logger *logger/*state-or-connection*/);
 
 bool updown_child_spd(enum updown updown_verb,
 		      struct child_sa *child,
