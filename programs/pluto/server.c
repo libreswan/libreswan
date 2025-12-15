@@ -388,7 +388,7 @@ static void list_global_timers(struct show *s, const monotime_t now)
  * Global signal events.
  */
 
-typedef void (signal_handler_cb)(struct logger *logger);
+typedef void (signal_handler_cb)(struct verbose verbose);
 
 struct signal_handler {
 	struct event ev;
@@ -413,14 +413,14 @@ static struct signal_handler signal_handlers[] = {
 static void signal_handler_handler(evutil_socket_t fd UNUSED,
 				   const short event, void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	PASSERT(logger, in_main_thread());
-	PASSERT(logger, event & EV_SIGNAL);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_SIGNAL);
 	struct signal_handler *se = arg;
-	ldbg(logger, "processing signal %s", se->name);
-	threadtime_t start = threadtime_start();
-	se->cb(logger);
-	threadtime_stop(&start, "signal handler %s", se->name);
+	const char *name = se->name; /*save*/
+	vtime_t start = vdbg_start("processing signal %s", name);
+	se->cb(verbose);
+	vdbg_stop(&start, "signal handler %s", name);
 }
 
 static void install_signal_handlers(const struct logger *logger)
@@ -938,14 +938,14 @@ void show_debug_status(struct show *s)
 	}
 }
 
-static void huphandler_cb(struct logger *logger)
+static void huphandler_cb(struct verbose verbose)
 {
-	llog(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	vlog("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
-static void termhandler_cb(struct logger *logger)
+static void termhandler_cb(struct verbose verbose)
 {
-	whack_shutdown(logger, PLUTO_EXIT_OK);
+	whack_shutdown(verbose.logger, PLUTO_EXIT_OK);
 }
 
 static server_fork_cb addconn_exited; /* type assertion */

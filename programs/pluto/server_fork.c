@@ -406,7 +406,7 @@ static void jam_status(struct jambuf *buf, int status)
 	jam_string(buf, ")");
 }
 
-void server_fork_sigchld_handler(struct logger *logger)
+void server_fork_sigchld_handler(struct verbose verbose)
 {
 	while (true) {
 		int status;
@@ -415,26 +415,23 @@ void server_fork_sigchld_handler(struct logger *logger)
 		switch (child) {
 		case -1: /* error? */
 			if (errno == ECHILD) {
-				ldbg(logger, "waitpid returned ECHILD (no child processes left)");
+				vdbg("waitpid returned ECHILD (no child processes left)");
 			} else {
-				llog_errno(ERROR_STREAM, logger, errno,
-					   "waitpid unexpectedly failed: ");
+				verror(errno, "waitpid unexpectedly failed: ");
 			}
 			return;
 		case 0: /* nothing to do */
-			ldbg(logger, "waitpid returned nothing left to do (all child processes are busy)");
+			vdbg("waitpid returned nothing left to do (all child processes are busy)");
 			return;
 		default:
-			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-				jam(buf, "waitpid returned pid %d",
-					child);
+			VDBG_JAMBUF(buf) {
+				jam(buf, "waitpid returned pid %d", child);
 				jam_status(buf, status);
 			}
 			struct pid_entry *pid_entry = pid_entry_by_pid(child);
 			if (pid_entry == NULL) {
-				LLOG_JAMBUF(RC_LOG, logger, buf) {
-					jam(buf, "waitpid return unknown child pid %d",
-						child);
+				VLOG_JAMBUF(buf) {
+					jam(buf, "waitpid return unknown child pid %d", child);
 					jam_status(buf, status);
 				}
 				continue;
@@ -453,7 +450,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else if (st == NULL) {
-				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				LDBGP_JAMBUF(DBG_BASE, pid_entry->logger, buf) {
 					jam_pid_entry(buf, pid_entry);
 					jam_string(buf, " disappeared");
 				}
