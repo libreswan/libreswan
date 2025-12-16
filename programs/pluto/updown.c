@@ -468,6 +468,11 @@ bool updown_connection_spd(enum updown updown_verb,
 	enum_long(&updown_names, updown_verb, &vb);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, vb.buf);
 
+	selector_pair_buf sb;
+	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
+
+	logtime_t start = logtime_start(logger);
+
 	/*
 	 * XXX: struct spds .list[] is a pointer, not an array, so
 	 * need to search .list[] for SPD.
@@ -484,8 +489,10 @@ bool updown_connection_spd(enum updown updown_verb,
 		vexpect(found);
 	}
 
-	return do_updown_1(updown_verb, c, spd, /*child*/NULL,
-			   (struct updown_env) {0}, verbose);
+	bool ok = do_updown_1(updown_verb, c, spd, /*child*/NULL,
+			      (struct updown_env) {0}, verbose);
+	logtime_stop(&start, "%s", sb.buf);
+	return ok;
 }
 
 static bool updown_child_spd_1(enum updown updown_verb,
@@ -493,8 +500,13 @@ static bool updown_child_spd_1(enum updown updown_verb,
 			       const struct spd *spd,
 			       struct verbose verbose)
 {
-	return do_updown_1(updown_verb, child->sa.st_connection, spd, child,
-			   (struct updown_env) {0}, verbose);
+	statetime_t start = statetime_start(&child->sa);
+	bool ok = do_updown_1(updown_verb, child->sa.st_connection, spd, child,
+			      (struct updown_env) {0}, verbose);
+	selector_pair_buf sb;
+	statetime_stop(&start, "%s %s", verbose.prefix/*see-below*/,
+		       str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb));
+	return ok;
 }
 
 bool updown_child_spd(enum updown updown_verb,
@@ -521,6 +533,7 @@ bool updown_child_spd(enum updown updown_verb,
 		vexpect(found);
 	}
 
+	/* counted by */
 	return updown_child_spd_1(updown_verb, child, spd, verbose);
 }
 
@@ -531,9 +544,15 @@ void updown_child_spds(enum updown updown_verb, struct child_sa *child)
 	enum_long(&updown_names, updown_verb, &vb);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
 
+	statetime_t start = statetime_start(&child->sa);
+
+	verbose.level++;
 	FOR_EACH_ITEM(spd, &child->sa.st_connection->child.spds) {
 		updown_child_spd_1(updown_verb, child, spd, verbose);
 	}
+	verbose.level--;
+
+	statetime_stop(&start, "%s", verbose.prefix/*see-below*/);
 }
 
 /*
@@ -541,16 +560,25 @@ void updown_child_spds(enum updown updown_verb, struct child_sa *child)
  * isn't shared.
  */
 
-void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
-			   struct child_sa *child, struct logger *logger,
+void do_updown_unroute_spd(const struct spd *spd,
+			   const struct spd_owner *owner,
+			   struct child_sa *child/*could-be-null*/,
+			   struct logger *logger/*could-be-ST-or-connection*/,
 			   struct updown_env updown_env)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "UNBOUND_UNROUTE");
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "UPDOWN_UNROUTE");
 	if (owner->bare_route != NULL) {
 		vdbg("skip as has owner->bare_route");
 		return;
 	}
 
+	vexpect(spd != NULL);
+
+	selector_pair_buf sb;
+	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
+
+	logtime_t start = logtime_start(logger);
 	do_updown_1(UPDOWN_UNROUTE, spd->connection, spd, child,
 		    updown_env, verbose);
+	logtime_stop(&start, "%s %s", verbose.prefix, sb.buf);
 }
