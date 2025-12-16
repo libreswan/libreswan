@@ -859,7 +859,7 @@ void revert_kernel_policy(struct spd *spd,
 	if (spd->wip.installed.up) {
 		PEXPECT(logger, child != NULL);
 		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!do_updown(UPDOWN_DOWN, c, spd, child, logger)) {
+		if (!updown_child_spd(UPDOWN_DOWN, child, spd)) {
 			ldbg(logger, "kernel: down command returned an error");
 		}
 		spd->wip.installed.up = false;
@@ -976,14 +976,14 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		PEXPECT(c->logger, spd->wip.ok);
 		if (owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
+			if (!updown_connection_spd(UPDOWN_PREPARE, c, spd, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
 		}
 
 		ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
 		if (owner.bare_route == NULL) {
 			ok &= spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
+				updown_connection_spd(UPDOWN_ROUTE, c, spd, c->logger);
 		}
 
 		if (!ok) {

@@ -973,7 +973,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		PEXPECT(logger, spd->wip.ok);
 		if ((updown.route || updown.up) && owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, child, logger))
+			if (!updown_child_spd(UPDOWN_PREPARE, child, spd))
 				ldbg(logger, "kernel: prepare command returned an error");
 		} else {
 			ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
@@ -983,7 +983,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		if (updown.route && owner.bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, child, logger);
+				updown_child_spd(UPDOWN_ROUTE, child, spd);
 		} else {
 			ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
 		}
@@ -1007,7 +1007,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		if (updown.up) {
 			PEXPECT(logger, spd->wip.ok);
 			ok = spd->wip.installed.up =
-				do_updown(UPDOWN_UP, c, spd, child, logger);
+				updown_child_spd(UPDOWN_UP, child, spd);
 		}
 
 		if (!ok) {

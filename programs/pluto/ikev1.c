@@ -2581,11 +2581,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			"encountered fatal error in state %s", st->st_state->name);
 		if (st->st_connection->config->host.cisco.peer &&
 		    st->st_connection->config->host.cisco.nm) {
-			if (!do_updown(UPDOWN_DISCONNECT_NM,
-				       st->st_connection,
-				       st->st_connection->child.spds.list,
-				       pexpect_child_sa(st),
-				       st->logger))
+			if (!updown_child_spd(UPDOWN_DISCONNECT_NM,
+					      pexpect_child_sa(st),
+					      st->st_connection->child.spds.list))
 				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
 		}
 
@@ -2638,11 +2636,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (st->st_connection->config->host.cisco.peer &&
 		    st->st_connection->config->host.cisco.nm) {
-			if (!do_updown(UPDOWN_DISCONNECT_NM,
-				       st->st_connection,
-				       st->st_connection->child.spds.list,
-				       pexpect_child_sa(st),
-				       st->logger))
+			if (!updown_child_spd(UPDOWN_DISCONNECT_NM,
+					      pexpect_child_sa(st),
+					      st->st_connection->child.spds.list/*first*/))
 				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
 		}
 
