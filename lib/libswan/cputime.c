@@ -70,3 +70,10 @@ struct cpu_usage cputime_stop(const cputime_t start)
 	cputime_t stop = cputime_start();
 	return cputime_sub(stop, start);
 }
+
+size_t jam_cpu_usage(struct jambuf *buf, struct cpu_usage usage)
+{
+	return jam(buf, "spent %.3g (%.3g) milliseconds",
+		   usage.thread_seconds * 1000,
+		   usage.wall_seconds * 1000);
+}

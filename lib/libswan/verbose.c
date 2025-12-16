@@ -56,7 +56,8 @@ struct cpu_usage vdbg_stop_where(struct verbose *verbose,
 		usage = cputime_stop(start->time);
 		LLOG_JAMBUF(DEBUG_STREAM, verbose->logger, buf) {
 			jam_vtime_prefix(buf, verbose);
-			jam(buf, PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
+			jam_cpu_usage(buf, usage);
+			jam_string(buf, " in ");
 			/* FMT, ... */
 			va_list ap;
 			va_start(ap, fmt);
