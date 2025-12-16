@@ -4689,7 +4689,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (!resolved_host_addrs->ok) {
 		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
 		schedule_connection_check_ddns(c, verbose);
-	} else if (!orient(c, verbose.logger)) {
+	} else if (!orient(c, verbose)) {
 		vdbg("connection did not orient, scheduling CHECK_DDNS");
 		schedule_connection_check_ddns(c, verbose);
 	} else {

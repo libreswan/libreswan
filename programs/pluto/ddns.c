@@ -153,7 +153,7 @@ static void connection_check_ddns1(struct connection *c,
 	 */
 	vdbg("orienting?");
 	vassert(!oriented(c));	/* see above */
-	if (!orient(c, verbose.logger)) {
+	if (!orient(c, verbose)) {
 		vdbg("connection was updated, but did not orient; retrying");
 		return;
 	}
