@@ -1647,9 +1647,18 @@ void jam_humber_uintmax(struct jambuf *buf,
 void whack_briefstatus(const struct whack_message *wm UNUSED, struct show *s)
 {
 	show_separator(s);
-	show(s, "State Information: DDoS cookies %s, %s new IKE connections",
-	     require_ddos_cookies() ? "REQUIRED" : "not required",
-	     (drop_new_exchanges(show_logger(s)) == NULL ? "Accepting" : "NOT ACCEPTING"));
+	SHOW_JAMBUF(s, buf) {
+		jam_string(buf, "State Information: ");
+		/*DDoS*/
+		jam_string(buf, "DDoS cookies ");
+		jam_string(buf, (require_ddos_cookies() ? "REQUIRED" : "not required"));
+		/* IKE */
+		jam_string(buf, ", ");
+		jam_string(buf, (drop_new_exchanges(show_logger(s)) != NULL ? "NOT ACCEPTING" :
+				 listening ? "Accepting" :
+				 "IGNORING"));
+		jam_string(buf, " new IKE connections");
+	}
 
 	show(s, "IKE SAs: total("PRI_CAT"), half-open("PRI_CAT"), open("PRI_CAT"), authenticated("PRI_CAT"), anonymous("PRI_CAT")",
 		  total_ike_sa(),
