@@ -471,7 +471,7 @@ bool updown_connection_spd(enum updown updown_verb,
 	selector_pair_buf sb;
 	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
 
-	logtime_t start = logtime_start(logger);
+	vtime_t start = vdbg_start("%s", sb.buf);
 
 	/*
 	 * XXX: struct spds .list[] is a pointer, not an array, so
@@ -491,7 +491,8 @@ bool updown_connection_spd(enum updown updown_verb,
 
 	bool ok = do_updown_1(updown_verb, c, spd, /*child*/NULL,
 			      (struct updown_env) {0}, verbose);
-	logtime_stop(&start, "%s", sb.buf);
+
+	vdbg_stop(&start, "%s", sb.buf);
 	return ok;
 }
 
@@ -500,12 +501,15 @@ static bool updown_child_spd_1(enum updown updown_verb,
 			       const struct spd *spd,
 			       struct verbose verbose)
 {
-	statetime_t start = statetime_start(&child->sa);
+	selector_pair_buf sb;
+	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
+
+	vtime_t start = vdbg_start("%s", sb.buf);
+
 	bool ok = do_updown_1(updown_verb, child->sa.st_connection, spd, child,
 			      (struct updown_env) {0}, verbose);
-	selector_pair_buf sb;
-	statetime_stop(&start, "%s %s", verbose.prefix/*see-below*/,
-		       str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb));
+
+	vdbg_stop(&start, "%s", sb.buf);
 	return ok;
 }
 
@@ -544,7 +548,7 @@ void updown_child_spds(enum updown updown_verb, struct child_sa *child)
 	enum_long(&updown_names, updown_verb, &vb);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
 
-	statetime_t start = statetime_start(&child->sa);
+	vtime_t start = vdbg_start("spds");
 
 	verbose.level++;
 	FOR_EACH_ITEM(spd, &child->sa.st_connection->child.spds) {
@@ -552,7 +556,7 @@ void updown_child_spds(enum updown updown_verb, struct child_sa *child)
 	}
 	verbose.level--;
 
-	statetime_stop(&start, "%s", verbose.prefix/*see-below*/);
+	vdbg_stop(&start, "spds");
 }
 
 /*
@@ -577,8 +581,7 @@ void do_updown_unroute_spd(const struct spd *spd,
 	selector_pair_buf sb;
 	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
 
-	logtime_t start = logtime_start(logger);
-	do_updown_1(UPDOWN_UNROUTE, spd->connection, spd, child,
-		    updown_env, verbose);
-	logtime_stop(&start, "%s %s", verbose.prefix, sb.buf);
+	vtime_t start = vdbg_start("%s", sb.buf);
+	do_updown_1(UPDOWN_UNROUTE, spd->connection, spd, child, updown_env, verbose);
+	vdbg_stop(&start, "%s", sb.buf);
 }
