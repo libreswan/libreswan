@@ -8,8 +8,8 @@ road #
 road #
  ipsec auto --add road
 "road/0x1": added IKEv2 connection
-"road/0x2": added IKEv2 connection
 "road/0x3": added IKEv2 connection
+"road/0x2": added IKEv2 connection
 "road/0x4": added IKEv2 connection
 road #
  echo "initdone"
