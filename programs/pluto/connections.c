@@ -106,7 +106,7 @@
 #include "ikev2_ike_session_resume.h"	/* for pfree_session() */
 #include "whack_pubkey.h"
 #include "binaryscale-iec-60027-2.h"
-#include "defaultroute.h"
+#include "resolve_helper.h"
 #include "ipsecconf/setup.h"
 #include "extract.h"
 
@@ -670,62 +670,6 @@ void update_hosts_from_end_host_addr(struct connection *c,
 	    str_address(&peer->nexthop, &old_nh),
 	    str_address(&peer_nexthop, &new_nh));
 	peer->nexthop = peer_nexthop;
-}
-
-struct resolved_host_addrs resolve_extracted_host_addrs(const struct extracted_host_addrs *host_addrs,
-							struct verbose verbose)
-{
-	struct resolved_host_addrs resolved = {
-		.ok = true, /* hope for the best */
-	};
-
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const struct route_addrs *src = &host_addrs->end[lr];
- 		struct route_addrs *dst = &resolved.resolve[lr];
- 		const char *leftright = src->leftright;
-
-		/* leftright */
-		dst->leftright = leftright;
-
-		/* nexthop */
-		dst->nexthop = src->nexthop;
-
-		/* host */
-		ip_address host_addr;
-		if (src->host.type == KH_IPHOSTNAME) {
-			err_t e = ttoaddress_dns(shunk1(src->host.value),
-						 host_addrs->afi,
-						 &host_addr);
-			if (e != NULL) {
-				/*
-				 * XXX: failing ttoaddress*() sets
-				 * host_addr to unset but want
-				 * src.host.addr.
-				 */
-				vlog("failed to resolve '%s%s=%s' at load time: %s",
-				     leftright, "", src->host.value, e);
-				resolved.ok = false;
-				host_addr = src->host.addr;
-			}
-		} else {
-			host_addr = src->host.addr;
-		}
-		dst->host = src->host;
-		dst->host.addr = host_addr;
-	}
-
-	if (resolved.ok) {
-		resolve_default_route(&resolved.resolve[LEFT_END],
-				      &resolved.resolve[RIGHT_END],
-				      host_addrs->afi,
-				      verbose);
-		resolve_default_route(&resolved.resolve[RIGHT_END],
-				      &resolved.resolve[LEFT_END],
-				      host_addrs->afi,
-				      verbose);
-	}
-
-	return resolved;
 }
 
 void build_connection_host_and_proposals_from_resolve(struct connection *c,

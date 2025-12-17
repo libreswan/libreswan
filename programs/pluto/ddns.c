@@ -38,28 +38,31 @@
 #include "defaultroute.h"	/* for struct route_addrs */
 #include "extract.h"
 #include "connection_event.h"
+#include "resolve_helper.h"
+
+static resolve_helper_cb connection_check_ddns1_continue;
 
 /*
  * Call me periodically to check to see if any DDNS tunnel can come
  * up.
  *
  * The order matters, we try to do the cheapest checks first.
+ *
+ * Return true when connection needs further processing.
  */
 
-static void connection_check_ddns1(struct connection *c,
+static bool connection_check_ddns1(struct connection *c,
 				   struct verbose verbose)
 {
 	/* This is the cheapest check, so do it first */
 	if (never_negotiate(c)) {
-		vdbg("skipping connection %s, is never_negotiate",
-		     c->name);
-		return;
+		vdbg("skipping connection %s, is never_negotiate", c->name);
+		return false;
 	}
 
 	if (!is_permanent(c)) {
-		vdbg("skipping connection %s, is not permanent",
-		     c->name);
-		return;
+		vdbg("skipping connection %s, is not permanent", c->name);
+		return false;
 	}
 
 	/*
@@ -70,16 +73,14 @@ static void connection_check_ddns1(struct connection *c,
 	 */
 	if (address_is_specified(c->local->host.addr) &&
 	    address_is_specified(c->remote->host.addr)) {
-		vdbg("skipping connection %s, already has addresses",
-		     c->name);
-		return;
+		vdbg("skipping connection %s, already has addresses", c->name);
+		return false;
 	}
 
 	/* should have been handled by above is_permanent() */
 	if (pbad(id_has_wildcards(&c->remote->host.id))) {
-		vdbg("skipping connection %s, remote has wildcard ID",
-		     c->name);
-		return;
+		vdbg("skipping connection %s, remote has wildcard ID", c->name);
+		return false;
 	}
 
 	/*
@@ -94,9 +95,9 @@ static void connection_check_ddns1(struct connection *c,
 		/* also require viable? */
 		PEXPECT(established_ike->sa.logger, (IS_IKE_SA_ESTABLISHED(&established_ike->sa) ||
 						     IS_V1_ISAKMP_SA_ESTABLISHED(&established_ike->sa)));
-		vdbg("skipping connection %s, is established as "PRI_SO,
-		     c->name, pri_so(established_ike->sa.st_serialno));
-		return;
+		vdbg("skipping connection %s, is established as "PRI_SO, c->name,
+		     pri_so(established_ike->sa.st_serialno));
+		return false;
 	}
 
 	vdbg("updating connection IP addresses");
@@ -136,25 +137,18 @@ static void connection_check_ddns1(struct connection *c,
 	 */
 
 	delete_connection_proposals(c);
-	struct extracted_host_addrs extracted_host_addrs =
-		extract_host_addrs_from_host_configs(c->config);
-	struct resolved_host_addrs resolved_host_addrs =
-		resolve_extracted_host_addrs(&extracted_host_addrs, verbose);
-	build_connection_host_and_proposals_from_resolve(c, &resolved_host_addrs, verbose);
 
-	if (!resolved_host_addrs.ok) {
-		vlog("not resolved; retrying");
-		schedule_connection_check_ddns(c, verbose);
-		return;
-	}
+	request_resolve_help(c, connection_check_ddns1_continue, c->logger);
+	return true;
+}
 
-	/*
-	 * Caller holds reference.
-	 */
-	vdbg("orienting?");
-	vassert(!oriented(c));	/* see above */
-	if (!orient(c, verbose)) {
-		vdbg("connection was updated, but did not orient; retrying");
+void connection_check_ddns1_continue(struct connection *c,
+				     const struct resolved_host_addrs *resolved_host_addrs,
+				     struct verbose verbose)
+{
+	if (!resolved_host_addrs->ok) {
+		vlog("not resolved");
+		whack_detach(c, verbose.logger);
 		return;
 	}
 
@@ -169,6 +163,8 @@ static void connection_check_ddns1(struct connection *c,
 				    /*background*/true,
 				    verbose.logger);
 	}
+
+	whack_detach(c, verbose.logger);
 }
 
 void connection_check_ddns(struct connection *c, struct verbose verbose)
@@ -178,13 +174,12 @@ void connection_check_ddns(struct connection *c, struct verbose verbose)
 	{
 		vtime_t start = vdbg_start("check_dns");
 		whack_attach(c, verbose.logger);
-		{
-			struct verbose v = verbose;
-			v.logger = c->logger;
-			connection_check_ddns1(c, v);
+		struct verbose v = verbose;
+		v.logger = c->logger;
+		if (!connection_check_ddns1(c, v)) {
+			whack_detach(c, verbose.logger);
 		}
-		whack_detach(c, verbose.logger);
-		vdbg_stop(&start, "check_dns");
+		vdbg_stop(start, "check_dns");
 	}
 	connection_delref(&c, verbose.logger);
 }

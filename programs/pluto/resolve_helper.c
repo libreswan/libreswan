@@ -22,7 +22,10 @@
 #include "extract.h"
 #include "helper.h"
 #include "connections.h"
+#include "connection_db.h"
 #include "log.h"
+#include "orient.h"
+#include "connection_event.h"
 
 static helper_fn resolve_helper;
 static helper_cb resolve_continue;
@@ -56,18 +59,94 @@ void request_resolve_help(struct connection *c,
 	request_help(request, resolve_helper, logger);
 }
 
+static struct resolved_host_addrs resolve_extracted_host_addrs(const struct extracted_host_addrs *host_addrs,
+							       struct verbose verbose)
+{
+	struct resolved_host_addrs resolved = {
+		.ok = true, /* hope for the best */
+	};
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		const struct route_addrs *src = &host_addrs->end[lr];
+ 		struct route_addrs *dst = &resolved.resolve[lr];
+ 		const char *leftright = src->leftright;
+
+		/* leftright */
+		dst->leftright = leftright;
+
+		/* nexthop */
+		dst->nexthop = src->nexthop;
+
+		/* host */
+		ip_address host_addr;
+		if (src->host.type == KH_IPHOSTNAME) {
+			err_t e = ttoaddress_dns(shunk1(src->host.value),
+						 host_addrs->afi,
+						 &host_addr);
+			if (e != NULL) {
+				/*
+				 * XXX: failing ttoaddress*() sets
+				 * host_addr to unset but want
+				 * src.host.addr.
+				 */
+				vlog("failed to resolve '%s%s=%s' at load time: %s",
+				     leftright, "", src->host.value, e);
+				resolved.ok = false;
+				host_addr = src->host.addr;
+			}
+		} else {
+			host_addr = src->host.addr;
+		}
+		dst->host = src->host;
+		dst->host.addr = host_addr;
+	}
+
+	if (resolved.ok) {
+		resolve_default_route(&resolved.resolve[LEFT_END],
+				      &resolved.resolve[RIGHT_END],
+				      host_addrs->afi,
+				      verbose);
+		resolve_default_route(&resolved.resolve[RIGHT_END],
+				      &resolved.resolve[LEFT_END],
+				      host_addrs->afi,
+				      verbose);
+	}
+
+	return resolved;
+}
+
 helper_cb *resolve_helper(struct help_request *request,
 			  struct verbose verbose,
 			  enum helper_id helper_id UNUSED)
 {
-	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs, verbose);
+	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs,
+								    verbose);
 	return resolve_continue;
 }
 
 void resolve_continue(struct help_request *request,
 		      struct verbose verbose)
 {
-	request->callback(request->connection,
-			  &request->resolved_host_addrs,
+	struct connection *c = request->connection;
+
+	build_connection_host_and_proposals_from_resolve(c, &request->resolved_host_addrs,
+							 verbose);
+
+	/*
+	 * When possible, try to orient the connection.
+	 */
+	vassert(!oriented(c));
+	if (!request->resolved_host_addrs.ok) {
+		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
+	} else if (!orient(c, verbose)) {
+		vdbg("connection did not orient, scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
+	} else if (verbose.debug) {
+		vdbg("connection oriented, re-checking DB");
+		connection_db_check(verbose.logger, HERE);
+	}
+
+	request->callback(c, &request->resolved_host_addrs,
 			  verbose);
 }
