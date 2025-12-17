@@ -76,6 +76,7 @@
 #include "whack_shutdown.h"	/* for whack_shutdown() and exiting_pluto; */
 #include "show.h"
 #include "nat_traversal.h"
+#include "whack_listen.h"
 
 #include "fips_mode.h"
 
@@ -953,9 +954,13 @@ static stf_status addconn_exited(struct state *null_st UNUSED,
 				 struct msg_digest *null_mdp UNUSED,
 				 int status, shunk_t output UNUSED,
 				 void *context UNUSED,
-				 struct logger *logger UNUSED)
+				 struct logger *logger)
 {
 	ldbg(logger, "reaped addconn helper child (status %d)", status);
+	struct whack_listen wl = {0};
+	whack_listen_1(&wl, logger);
+	/* XXX: test startup scripts look for this message */
+	llog(RC_LOG, logger, "Pluto is up");
 	return STF_OK;
 }
 

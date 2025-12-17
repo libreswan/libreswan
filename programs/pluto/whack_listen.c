@@ -37,10 +37,8 @@
 #include "keys.h"		/* for load_preshared_secrets() */
 #include "foodgroups.h"		/* for load_groups() */
 
-void whack_listen(const struct whack_message *wm, struct show *s)
+void whack_listen_1(const struct whack_listen *wl, struct logger *logger)
 {
-	struct logger *logger = show_logger(s);
-	const struct whack_listen *wl = &wm->whack.listen;
 
 	/* first extract current values from config */
 
@@ -99,4 +97,11 @@ void whack_listen(const struct whack_message *wm, struct show *s)
 #ifdef USE_SYSTEMD_WATCHDOG
 	pluto_sd(PLUTO_SD_READY, SD_REPORT_NO_STATUS, logger);
 #endif
+}
+
+void whack_listen(const struct whack_message *wm, struct show *s)
+{
+	struct logger *logger = show_logger(s);
+	const struct whack_listen *wl = &wm->whack.listen;
+	whack_listen_1(wl, logger);
 }

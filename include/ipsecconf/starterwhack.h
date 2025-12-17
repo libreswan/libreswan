@@ -23,8 +23,6 @@ struct logger;
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger);
-extern int starter_whack_listen(const char *ctlsocket,
-				struct logger *logger);
 
 #endif /* _STARTER_WHACK_H_ */
 

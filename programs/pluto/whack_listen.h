@@ -19,7 +19,10 @@
 
 struct whack_message;
 struct show;
+struct whack_listen;
+struct logger;
 
+void whack_listen_1(const struct whack_listen *wl, struct logger *logger);
 void whack_listen(const struct whack_message *wm, struct show *s);
 
 #endif
