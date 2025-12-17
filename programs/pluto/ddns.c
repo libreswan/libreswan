@@ -146,22 +146,8 @@ void connection_check_ddns1_continue(struct connection *c,
 				     const struct resolved_host_addrs *resolved_host_addrs,
 				     struct verbose verbose)
 {
-	build_connection_host_and_proposals_from_resolve(c, resolved_host_addrs, verbose);
-
 	if (!resolved_host_addrs->ok) {
-		vlog("not resolved; retrying");
-		schedule_connection_check_ddns(c, verbose);
-		whack_detach(c, verbose.logger);
-		return;
-	}
-
-	/*
-	 * Caller holds reference.
-	 */
-	vdbg("orienting?");
-	vassert(!oriented(c));	/* see above */
-	if (!orient(c, verbose)) {
-		vdbg("connection was updated, but did not orient; retrying");
+		vlog("not resolved");
 		whack_detach(c, verbose.logger);
 		return;
 	}

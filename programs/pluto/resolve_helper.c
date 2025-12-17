@@ -22,7 +22,10 @@
 #include "extract.h"
 #include "helper.h"
 #include "connections.h"
+#include "connection_db.h"
 #include "log.h"
+#include "orient.h"
+#include "connection_event.h"
 
 static helper_fn resolve_helper;
 static helper_cb resolve_continue;
@@ -124,7 +127,26 @@ helper_cb *resolve_helper(struct help_request *request,
 void resolve_continue(struct help_request *request,
 		      struct verbose verbose)
 {
-	request->callback(request->connection,
-			  &request->resolved_host_addrs,
+	struct connection *c = request->connection;
+
+	build_connection_host_and_proposals_from_resolve(c, &request->resolved_host_addrs,
+							 verbose);
+
+	/*
+	 * When possible, try to orient the connection.
+	 */
+	vassert(!oriented(c));
+	if (!request->resolved_host_addrs.ok) {
+		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
+	} else if (!orient(c, verbose)) {
+		vdbg("connection did not orient, scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
+	} else if (verbose.debug) {
+		vdbg("connection oriented, re-checking DB");
+		connection_db_check(verbose.logger, HERE);
+	}
+
+	request->callback(c, &request->resolved_host_addrs,
 			  verbose);
 }

@@ -4689,27 +4689,8 @@ void extract_connection_resolve_continue(struct connection *c,
 					 const struct resolved_host_addrs *resolved_host_addrs,
 					 struct verbose verbose)
 {
-	build_connection_host_and_proposals_from_resolve(c, resolved_host_addrs, verbose);
-
-	/*
-	 * When possible, try to orient the connection.
-	 *
-	 * This logic can probably be smashed together with logic
-	 * found in ddns.c.
-	 */
-	vassert(!oriented(c));
-	if (!resolved_host_addrs->ok) {
-		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
-		schedule_connection_check_ddns(c, verbose);
-	} else if (!orient(c, verbose)) {
-		vdbg("connection did not orient, scheduling CHECK_DDNS");
-		schedule_connection_check_ddns(c, verbose);
-	} else {
-		vdbg("connection oriented, re-checking DB");
-		connection_db_check(verbose.logger, HERE);
-	}
-
 	/* log all about this connection */
+	vdbg("resolved %s", bool_str(resolved_host_addrs->ok));
 
 	err_t tss = connection_requires_tss(c);
 	if (tss != NULL) {
