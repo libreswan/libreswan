@@ -18,12 +18,17 @@
 #define RESOLVE_HELPER_H
 
 #include "verbose.h"
+#include "end.h"
+#include "defaultroute.h"
 
-struct whack_message_refcnt;
-struct extracted_host_addrs;
-struct resolved_host_addrs;
 struct logger;
 struct connection;
+
+struct resolved_host_addrs {
+	struct route_addrs resolve[END_ROOF];
+	const struct ip_info *afi;
+	bool ok;
+};
 
 typedef void (resolve_helper_cb)(struct connection *c,
 				 const struct resolved_host_addrs *resolved_host_addrs,
