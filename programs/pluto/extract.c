@@ -67,6 +67,9 @@
 #include "server.h"		/* for nr_processors_online() */
 #include "ipsecconf/keywords.h"
 #include "connection_event.h"
+#include "resolve_helper.h"
+
+static resolve_helper_cb extract_connection_resolve_continue;
 
 static bool is_never_negotiate_wm(const struct whack_message *wm)
 {
@@ -2736,7 +2739,6 @@ struct extracted_host_addrs extract_host_addrs_from_host_configs(const struct co
 
 diag_t extract_connection(const struct whack_message *wm,
 			  const struct extracted_host_addrs *extracted_host_addrs,
-			  const struct resolved_host_addrs *resolved_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose)
@@ -4677,6 +4679,16 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
+
+	request_resolve_help(c, extract_connection_resolve_continue,
+			     verbose.logger);
+	return NULL;
+}
+
+void extract_connection_resolve_continue(struct connection *c,
+					 const struct resolved_host_addrs *resolved_host_addrs,
+					 struct verbose verbose)
+{
 	build_connection_host_and_proposals_from_resolve(c, resolved_host_addrs, verbose);
 
 	/*
@@ -4689,7 +4701,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (!resolved_host_addrs->ok) {
 		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
 		schedule_connection_check_ddns(c, verbose);
-	} else if (!orient(c, verbose.logger)) {
+	} else if (!orient(c, verbose)) {
 		vdbg("connection did not orient, scheduling CHECK_DDNS");
 		schedule_connection_check_ddns(c, verbose);
 	} else {
@@ -4711,5 +4723,4 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	release_whack(c->logger, HERE);
-	return NULL;
 }

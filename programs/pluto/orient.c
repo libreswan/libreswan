@@ -197,14 +197,14 @@ static bool host_end_matches_iface(const struct connection *c,
 	return address_eq_address(this->addr, iface->local_address);
 }
 
-static void LDBG_orient_end(struct connection *c, enum end end)
+static void VDBG_orient_end(struct verbose verbose, struct connection *c, enum end end)
 {
 	const struct host_end *this = &c->end[end].host;
 	const struct host_end *that = &c->end[!end].host;
 	address_buf ab;
 	name_buf enb;
 	name_buf tcpb;
-	LDBG_log(c->logger, "  %s host type=%s address=%s port="PRI_HPORT" ikeport="PRI_HPORT" encap=%s tcp=%s",
+	VDBG_log("%s host type=%s address=%s port="PRI_HPORT" ikeport="PRI_HPORT" encap=%s tcp=%s",
 		 this->config->leftright,
 		 str_sparse_short(&keyword_host_names, this->config->host.type, &enb),
 		 str_address(&this->addr, &ab),
@@ -221,15 +221,15 @@ static void jam_iface(struct jambuf *buf, const struct iface_device *iface)
 	jam_address(buf, &iface->local_address);
 }
 
-bool orient(struct connection *c, struct logger *logger)
+bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attached*/)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
-
-	if (LDBGP(DBG_BASE, logger)) {
-		LDBG_log(c->logger, "orienting %s", c->name);
-		LDBG_orient_end(c, LEFT_END);
-		LDBG_orient_end(c, RIGHT_END);
+	if (verbose.debug) {
+		VDBG_log("orienting %s", c->name);
+		verbose.level++;
+		VDBG_orient_end(verbose, c, LEFT_END);
+		VDBG_orient_end(verbose, c, RIGHT_END);
 	}
+	unsigned base_level = verbose.level;
 
 	struct iface_device *old_iface = c->iface; /* for sanity checking below */
 
@@ -240,10 +240,12 @@ bool orient(struct connection *c, struct logger *logger)
 	 */
 
 	bool need_offload = ((c->config->nic_offload == NIC_OFFLOAD_PACKET) ||
-				(c->config->nic_offload == NIC_OFFLOAD_CRYPTO));
+			     (c->config->nic_offload == NIC_OFFLOAD_CRYPTO));
 
 	enum end matching_end = END_ROOF;/*invalid*/
 	struct iface_device *matching_iface = NULL;
+
+	verbose.level = base_level+1;
 
 	for (struct iface_device *iface = next_iface_device(NULL);
 	     iface != NULL; iface = next_iface_device(iface)) {
@@ -253,20 +255,17 @@ bool orient(struct connection *c, struct logger *logger)
 		bool right = host_end_matches_iface(c, RIGHT_END, iface);
 
 		if (!left && !right) {
-			if (LDBGP(DBG_BASE, logger)) {
-				LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-					jam_string(buf, "    interface ");
-					jam_iface(buf, iface);
-					jam_string(buf, " does not match left or right");
-				}
+			VDBG_JAMBUF(buf) {
+				jam_string(buf, "interface ");
+				jam_iface(buf, iface);
+				jam_string(buf, " does not match left or right");
 			}
 			continue;
 		}
 
 		if (left && right) {
 			/* too many choices */
-			whack_attach(c, logger);
-			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+			VLOG_JAMBUF(buf) {
 				jam_string(buf, "connection matches both left ");
 				jam_iface(buf, iface);
 				jam_string(buf, " and right ");
@@ -276,15 +275,14 @@ bool orient(struct connection *c, struct logger *logger)
 			break;
 		}
 
-		passert(left != right); /* only one */
+		vassert(left != right); /* only one */
 		enum end end = (left ? LEFT_END :
-				       right ? RIGHT_END :
-				       END_ROOF);
-		passert(end != END_ROOF);
+				right ? RIGHT_END :
+				END_ROOF);
+		vassert(end != END_ROOF);
 
 		if (need_offload && !iface->nic_offload) {
-			llog(RC_LOG, c->logger,
-			     "interface search skipped interface %s as it does not have nic-offload support",
+			vlog("interface search skipped interface %s as it does not have nic-offload support",
 			     iface->real_device_name);
 			continue;
 		}
@@ -302,9 +300,8 @@ bool orient(struct connection *c, struct logger *logger)
 			 * <<ip addr add 192.1.2.23/24 dev eth1>> this
 			 * log line doesn't differentiate.
 			 */
-			pexpect(end != matching_end);
-			whack_attach(c, logger);
-			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+			vexpect(end != matching_end);
+			VLOG_JAMBUF(buf) {
 				jam_string(buf, "connection matches both ");
 				/*previous-match*/
 				jam_string(buf, c->end[matching_end].config->leftright);
@@ -321,46 +318,48 @@ bool orient(struct connection *c, struct logger *logger)
 		}
 
 		/* save match, and then continue search */
-		if (LDBGP(DBG_BASE, logger)) {
-			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-				jam_string(buf, "    interface ");
-				jam_iface(buf, iface);
-				jam_string(buf, " matches '");
-				jam_string(buf, c->end[end].config->leftright);
-				jam_string(buf, "'; orienting");
-			}
+		VDBG_JAMBUF(buf) {
+			jam_string(buf, "interface ");
+			jam_iface(buf, iface);
+			jam_string(buf, " matches '");
+			jam_string(buf, c->end[end].config->leftright);
+			jam_string(buf, "'; saving");
 		}
 		matching_iface = iface;
 		matching_end = end;
 	}
 
-	PEXPECT(c->logger, c->iface == old_iface); /* wasn't updated */
+	verbose.level = base_level;
+	vexpect(c->iface == old_iface); /* wasn't updated */
 
 	if (matching_iface == NULL) {
-		whack_attach(c, logger);
 		if (old_iface != NULL) {
+			vdbg("becoming disoriented");
 			/* only when there's an interface is there a
 			 * chance of something to terminate */
 			terminate_and_disorient_connection(c, HERE);
-		}
-		if (old_iface != NULL) {
 			/* when there's an interface, CHECK_DDNS is
 			 * disabled; re-enable it */
 			schedule_connection_check_ddns(c, verbose);
+		} else {
+			vdbg("still disoriented");
 		}
-		whack_detach(c, logger);
 		return false;
 	}
 
 	if (matching_iface == c->iface) {
 		/* well that was pointless */
+		VDBG_JAMBUF(buf) {
+			jam(buf, "already oriented to ");
+			jam_iface(buf, c->iface);
+		}
 		return true;
 	}
 
 	/*
 	 * Switch interfaces (still not properly oriented).
 	 */
-	PASSERT(c->logger, matching_end != END_ROOF);
+	vassert(matching_end != END_ROOF);
 
 	/*
 	 * Start by scrubbing anything hanging over from the old
@@ -381,8 +380,9 @@ bool orient(struct connection *c, struct logger *logger)
 	struct connection_end *local = &c->end[matching_end];
 	struct connection_end *remote = &c->end[!matching_end];
 
-	ldbg(c->logger, "  orienting %s=local %s=remote",
-	     local->config->leftright, remote->config->leftright);
+	vdbg("orienting %s=local %s=remote",
+	     local->config->leftright,
+	     remote->config->leftright);
 
 	c->local = local;
 	c->remote = remote;
@@ -420,12 +420,12 @@ bool orient(struct connection *c, struct logger *logger)
 	 * when needed.
 	 */
 	if (old_iface == NULL/*i.e., unoriented*/) {
-		PEXPECT(c->logger, c->routing.state == RT_UNROUTED);
+		vexpect(c->routing.state == RT_UNROUTED);
 		if (c->policy.route) {
 			connection_route(c, HERE);
 		}
 		if (c->policy.up) {
-			initiate_connection(c, /*REMOTE_HOST*/NULL, /*background*/true, logger);
+			initiate_connection(c, /*REMOTE_HOST*/NULL, /*background*/true, c->logger);
 		}
 	}
 
@@ -449,23 +449,25 @@ void check_orientations(struct logger *logger)
 	struct connection_filter cq = {
 		.search = {
 			.order = OLD2NEW,
-			.verbose.logger = logger,
+			.verbose = VERBOSE(DEBUG_STREAM, logger, NULL),
 			.where = HERE,
 		},
 	};
 	while (next_connection(&cq)) {
 		struct connection *c = cq.c;
+		struct verbose verbose = cq.search.verbose;
+		whack_attach(c, logger);
+		verbose.logger = c->logger;
 		/* just try */
 		bool was_oriented = oriented(c);
-		bool is_oriented = orient(c, logger);
+		bool is_oriented = orient(c, verbose);
 		/* log when it becomes oriented */
 		if (!was_oriented && is_oriented) {
-			whack_attach(c, logger);
-			LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+			VLOG_JAMBUF(buf) {
 				jam_orientation(buf, c, /*orientation_details*/true);
 			}
-			whack_detach(c, logger);
 		}
+		whack_detach(c, logger);
 	}
 }
 

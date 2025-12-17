@@ -23,14 +23,13 @@ struct whack_message_refcnt;
 struct extracted_host_addrs;
 struct resolved_host_addrs;
 struct logger;
+struct connection;
 
-typedef void (resolve_helper_cb)(struct whack_message_refcnt *wmr,
-				 const struct extracted_host_addrs *extracted_host_addrs,
+typedef void (resolve_helper_cb)(struct connection *c,
 				 const struct resolved_host_addrs *resolved_host_addrs,
 				 struct verbose verbose);
 
-void request_resolve_help(struct whack_message_refcnt *wmr,
-			  const struct extracted_host_addrs *extracted_host_addrs,
+void request_resolve_help(struct connection *c,
 			  resolve_helper_cb *callback,
 			  struct logger *logger);
 

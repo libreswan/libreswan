@@ -186,7 +186,8 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 	 *
 	 * Since IKE holds a reference to C, C can't be deleted.
 	 */
-	if (!orient(c, ike->sa.logger)) {
+	bool oriented = orient(c, VERBOSE(DEBUG_STREAM, ike->sa.logger, NULL));
+	if (!oriented) {
 		llog_pexpect(ike->sa.logger, HERE,
 			     "%s after mobike failed", "orient");
 		return false;

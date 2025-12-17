@@ -180,22 +180,26 @@ static void netlink_query_add_address(struct nlmsghdr *nlmsg, int rta_type,
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 
-static unsigned jam_pa(struct jambuf *buf, const struct route_addr *host)
+static unsigned jam_pa(struct jambuf *buf,
+		       const struct route_addrs *host,
+		       const struct route_addr *addr)
 {
 	size_t s = 0;
-	if (host->addr.ip.is_set) {
-		s += jam_address(buf, &host->addr);
+	s += jam_string(buf, host->leftright);
+	s += jam_string(buf, addr->key);
+	s += jam_string(buf, "=");
+
+	if (addr->addr.ip.is_set) {
+		s += jam_address(buf, &addr->addr);
 	}
 
-	if (host->type > 0) {
-		s += jam_sparse_short(buf, &keyword_host_names, host->type);
+	if (addr->type > 0) {
+		s += jam_sparse_short(buf, &keyword_host_names, addr->type);
 	}
 
-	if (host->type == KH_IPHOSTNAME) {
+	if (addr->value != NULL) {
 		s += jam_string(buf, "(");
-		s += jam_string(buf, host->key);
-		s += jam_string(buf, "=");
-		s += jam_string(buf, host->value);
+		s += jam_string(buf, addr->value);
 		s += jam_string(buf, ")");
 	}
 
@@ -485,12 +489,12 @@ static enum resolve_status resolve_defaultroute_one(struct route_addrs *host,
 	VERBOSE_JAMBUF(buf) {
 		jam_string(buf, "resolving family=");
 		jam_string(buf, (host_afi == NULL ? "<unset>" : host_afi->ip_name));
-		jam(buf, " %s=", host->leftright);
-		jam_pa(buf, &host->host);
-		jam(buf, " %snexthop=", host->leftright);
-		jam_pa(buf, &host->nexthop);
-		jam(buf, " (peer) %s=", peer->leftright);
-		jam_pa(buf, &peer->host);
+		jam_string(buf, " ");
+		jam_pa(buf, host, &host->host);
+		jam_string(buf, " ");
+		jam_pa(buf, host, &host->nexthop);
+		jam_string(buf, " (peer) ");
+		jam_pa(buf, peer, &peer->host);
 	}
 	verbose.level++;
 
@@ -603,10 +607,10 @@ static enum resolve_status resolve_defaultroute_one(struct route_addrs *host,
 		case RESOLVE_SUCCESS: jam_string(buf, "success"); break;
 		case RESOLVE_PLEASE_CALL_AGAIN: jam_string(buf, "please-call-again");
 		}
-		jam(buf, " %s=", host->leftright);
-		jam_pa(buf, &host->host);
-		jam(buf, " %snexthop=", host->leftright);
-		jam_pa(buf, &host->nexthop);
+		jam_string(buf, " ");
+		jam_pa(buf, host, &host->host);
+		jam_string(buf, " ");
+		jam_pa(buf, host, &host->nexthop);
 	}
 	pfree(msgbuf);
 	return context.status;
@@ -623,14 +627,18 @@ enum route_status get_route(ip_address dest, struct ip_route *route,
 
 	struct route_addrs this = {
 		.leftright = "this",
+		.host.key = "",
 		.host.type = KH_DEFAULTROUTE,
 		.nexthop.type = KH_DEFAULTROUTE,
+		.nexthop.key = "nexthop",
 	};
 
 	struct route_addrs that = {
 		.leftright = "that",
+		.host.key = "",
 		.host.type = KH_IPADDR,
 		.host.addr = dest,
+		.nexthop.key = "nexthop",
 	};
 
 	/*
