@@ -31,7 +31,7 @@ static refcnt_discard_content_fn discard_resolve_help_request_content;
 
 struct help_request {
 	refcnt_t refcnt;
-	struct whack_message_refcnt *wmr;
+	struct connection *connection;
 	struct extracted_host_addrs extracted_host_addrs;
 	struct resolved_host_addrs resolved_host_addrs;
 	resolve_helper_cb *callback;
@@ -40,19 +40,18 @@ struct help_request {
 void discard_resolve_help_request_content(void *pointer, const struct logger *owner, where_t where)
 {
 	struct help_request *request = pointer;
-	refcnt_delref(&request->wmr, owner, where);
+	connection_delref_where(&request->connection, owner, where);
 }
 
-void request_resolve_help(struct whack_message_refcnt *wmr,
-			  const struct extracted_host_addrs *extracted_host_addrs,
+void request_resolve_help(struct connection *c,
 			  resolve_helper_cb *callback,
 			  struct logger *logger)
 {
 	struct help_request *request = alloc_help_request("resolve helper",
 							  discard_resolve_help_request_content,
 							  logger);
-	request->wmr = refcnt_addref(wmr, logger, HERE);
-	request->extracted_host_addrs = (*extracted_host_addrs);
+	request->connection = connection_addref(c, logger);
+	request->extracted_host_addrs = extract_host_addrs_from_host_configs(c->config);
 	request->callback = callback;
 	request_help(request, resolve_helper, logger);
 }
@@ -68,8 +67,7 @@ helper_cb *resolve_helper(struct help_request *request,
 void resolve_continue(struct help_request *request,
 		      struct verbose verbose)
 {
-	request->callback(request->wmr,
-			  &request->extracted_host_addrs,
+	request->callback(request->connection,
 			  &request->resolved_host_addrs,
 			  verbose);
 }

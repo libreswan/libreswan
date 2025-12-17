@@ -22,9 +22,6 @@
 #include "connections.h"
 #include "whack_delete.h"
 #include "extract.h"
-#include "resolve_helper.h"
-
-static resolve_helper_cb add_connections_resolve_continue;
 
 PRINTF_LIKE(2)
 static void llog_add_connection_failed(struct verbose verbose,
@@ -175,7 +172,6 @@ static const struct ip_info *next_subnet(char **subnetstr,
 
 static void permutate_connection_subnets(const struct whack_message *wm,
 					 const struct extracted_host_addrs *extracted_host_addrs,
-					 const struct resolved_host_addrs *resolved_host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
 					 struct verbose verbose)
@@ -252,7 +248,6 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 			    right_afi == NULL) {
 				diag_t d = add_connection(&wam,
 							  extracted_host_addrs,
-							  resolved_host_addrs,
 							  verbose.logger);
 				if (d != NULL) {
 					llog_add_connection_failed(verbose, "%s", str_diag(d));
@@ -282,13 +277,10 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 
 }
 
-void add_connections_resolve_continue(struct whack_message_refcnt *wmr,
-				      const struct extracted_host_addrs *extracted_host_addrs,
-				      const struct resolved_host_addrs *resolved_host_addrs,
-				      struct verbose verbose)
+static void add_connections(const struct whack_message *wm,
+			    const struct extracted_host_addrs *extracted_host_addrs,
+			    struct verbose verbose)
 {
-	const struct whack_message *wm = &wmr->wm;
-
 	/*
 	 * Reject {left,right}subnets=... combined with
 	 * {left,right}subnet=a,b
@@ -322,9 +314,7 @@ void add_connections_resolve_continue(struct whack_message_refcnt *wmr,
 
 	/* basic case, nothing special to synthize! */
 	if (!have_subnets) {
-		diag_t d = add_connection(wm,
-					  extracted_host_addrs,
-					  resolved_host_addrs,
+		diag_t d = add_connection(wm, extracted_host_addrs,
 					  verbose.logger);
 		if (d != NULL) {
 			llog_add_connection_failed(verbose, "%s", str_diag(d));
@@ -348,7 +338,6 @@ void add_connections_resolve_continue(struct whack_message_refcnt *wmr,
 
 	permutate_connection_subnets(wm,
 				     extracted_host_addrs,
-				     resolved_host_addrs,
 				     &left, &right, verbose);
 	pfreeany(left.subnets.list);
 	pfreeany(right.subnets.list);
@@ -417,9 +406,7 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 			return;
 		}
 
-		request_resolve_help(wmr, &extracted_host_addrs,
-				     add_connections_resolve_continue,
-				     conn_logger);
+		add_connections(wm, &extracted_host_addrs, verbose);
 	}
 	free_logger(&conn_logger, HERE);
 }
