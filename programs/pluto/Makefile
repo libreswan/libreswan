@@ -105,6 +105,7 @@ OBJS += whack_deleteuser.o
 OBJS += whack_down.o
 OBJS += whack_impair.o
 OBJS += whack_initiate.o
+OBJS += whack_listen.o
 OBJS += whack_pubkey.o
 OBJS += whack_route.o
 OBJS += whack_sa.o
