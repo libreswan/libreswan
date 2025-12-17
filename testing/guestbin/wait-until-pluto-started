@@ -29,13 +29,10 @@ echo ==== cut ====
 count=20
 while count=$(expr $count - 1) && test $count -gt 0 ; do
     # both need to attach ...
-    if ps=$(ipsec whack --processstatus) ; then
+    if ps=$(ipsec briefstatus) ; then
 	echo "${ps}"
 	# ... and not find addconn
-	if echo "${ps}" | grep addconn ; then
-	    echo try again
-	else
-	    echo addconn exited
+	if echo "${ps}" | grep 'Accepting' ; then
 	    break
 	fi
     fi
