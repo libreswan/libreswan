@@ -184,7 +184,7 @@ void connection_check_ddns(struct connection *c, struct verbose verbose)
 			connection_check_ddns1(c, v);
 		}
 		whack_detach(c, verbose.logger);
-		vdbg_stop(start, "check_dns");
+		vdbg_stop(&start, "check_dns");
 	}
 	connection_delref(&c, verbose.logger);
 }
@@ -205,7 +205,7 @@ static void connections_check_ddns(struct logger *logger)
 		connection_check_ddns(cf.c, verbose);
 	}
 
-	vdbg_stop(start, "in %s() for hostname lookup", __func__);
+	vdbg_stop(&start, "in %s() for hostname lookup", __func__);
 }
 
 void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)

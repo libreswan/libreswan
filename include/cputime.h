@@ -19,6 +19,8 @@
 
 #include <time.h>		/* for struct timespec */
 
+struct jambuf;
+
 /*
  * Try to format all cpu usage messaages the same.  All delta-times
  * use double and are in seconds.
@@ -34,8 +36,7 @@ struct cpu_usage {
 	double wall_seconds;
 };
 
-#define PRI_CPU_USAGE "spent %.3g (%.3g) milliseconds"
-#define pri_cpu_usage(C) ((C).thread_seconds * 1000), ((C).wall_seconds * 1000)
+size_t jam_cpu_usage(struct jambuf *buf, struct cpu_usage usage);
 
 #define cpu_usage_add(TOTAL, USAGE)					\
 	{								\

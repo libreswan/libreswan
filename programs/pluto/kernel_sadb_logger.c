@@ -85,7 +85,7 @@ typedef uint64_t u64_t;
 	struct logjam logjam;						\
 	struct jambuf *buf = jambuf_from_logjam(&logjam, verbose.logger, \
 						0, NULL, verbose.stream); \
-	jam(buf, PRI_VERBOSE, pri_verbose);				\
+	jam(buf, PRI_VERBOSE, pri_verbose(&verbose));			\
 	jam_string(buf, #T" @");					\
 	if (b != NULL) {						\
 		jam(buf, "%td", (const uint8_t*)m - (const uint8_t*)b); \

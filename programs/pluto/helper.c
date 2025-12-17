@@ -403,7 +403,7 @@ static void resume_main_thread(const char *story,
 		vtime_t start = vdbg_start(PRI_JOB_HELPER": %s: resuming",
 					   pri_job_helper(job), story);
 		job->callback((struct help_request *)job->request, verbose);
-		vdbg_stop(start, PRI_JOB_HELPER, pri_job_helper(job));
+		vdbg_stop(&start, PRI_JOB_HELPER, pri_job_helper(job));
 	} else {
 		/* should already be logged */
 		vdbg(PRI_JOB_HELPER": %s: aborted", pri_job_helper(job), story);

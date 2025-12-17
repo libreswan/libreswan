@@ -352,8 +352,7 @@ static struct list_head *state_filter_head(struct state_filter *filter)
 	/* select list head */
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
-		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-			jam(buf, PRI_VERBOSE, pri_verbose);
+		VDBG_JAMBUF(buf) {
 			jam(buf, "FOR_EACH_STATE[ike_spis=");
 			jam_ike_spis(buf, filter->ike_spis);
 			jam_string(buf, "]... in ");

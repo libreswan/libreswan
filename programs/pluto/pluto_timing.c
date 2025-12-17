@@ -37,7 +37,8 @@ void threadtime_stop(const threadtime_t *start, const char *fmt, ...)
 	if (LDBGP(DBG_CPU_USAGE, logger)) {
 		struct cpu_usage usage = cputime_stop(*start);
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
+			jam_cpu_usage(buf, usage);
+			jam_string(buf, " in ");
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
@@ -68,7 +69,8 @@ struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 				jam_string(buf, INDENT INDENT);
 			}
 			jam_logger_prefix(buf, start->logger);
-			jam(buf, PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
+			jam_cpu_usage(buf, usage);
+			jam_string(buf, " in ");
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);
@@ -98,7 +100,8 @@ static void DBG_missing(const statetime_t *start, cputime_t now,
 				jam_string(buf, INDENT INDENT);
 			}
 			jam_so(buf, start->so);
-			jam(buf, " "PRI_CPU_USAGE, pri_cpu_usage(missing));
+			jam_string(buf, " ");
+			jam_cpu_usage(buf, missing);
 		}
 	}
 }
@@ -220,7 +223,9 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 				jam_string(buf, INDENT INDENT);
 			}
 			jam_so(buf, st->st_serialno);
-			jam(buf, " "PRI_CPU_USAGE" in ", pri_cpu_usage(usage));
+			jam_string(buf, " ");
+			jam_cpu_usage(buf, usage);
+			jam_string(buf," in ");
 			va_list ap;
 			va_start(ap, fmt);
 			jam_va_list(buf, fmt, ap);

@@ -1243,8 +1243,7 @@ stf_status quick_inI1_outR1(struct state *ike_sa, struct msg_digest *md)
 			set_child_has_client(c, remote, false);
 		}
 
-		LDBGP_JAMBUF(DBG_BASE, verbose.logger, buf) {
-			jam(buf, PRI_VERBOSE, pri_verbose);
+		VDBG_JAMBUF(buf) {
 			jam(buf, "setting phase 2 virtual values to ");
 			jam_spd_ends(buf, c, c->child.spds.list->remote, "...", c->child.spds.list->local);
 		}

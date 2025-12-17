@@ -913,11 +913,16 @@ void delete_state(struct state *st)
 	 * it when debugging - values range from very approximate to
 	 * (in the case of IKEv1) simply wrong.
 	 */
-	if (LDBGP(DBG_CPU_USAGE, st->logger) || LDBGP(DBG_BASE, st->logger)) {
-		LDBG_log(st->logger, PRI_SO" main thread "PRI_CPU_USAGE" helper thread "PRI_CPU_USAGE" in total",
-			 pri_so(st->st_serialno),
-			 pri_cpu_usage(st->st_timing.main_usage),
-			 pri_cpu_usage(st->st_timing.helper_usage));
+	if (LDBGP(DBG_CPU_USAGE, st->logger) ||
+	    LDBGP(DBG_BASE, st->logger)) {
+		LLOG_JAMBUF(DEBUG_STREAM, st->logger, buf) {
+			jam_so(buf, st->st_serialno);
+			jam_string(buf, " main thread ");
+			jam_cpu_usage(buf, st->st_timing.main_usage);
+			jam_string(buf, " helper thread ");
+			jam_cpu_usage(buf, st->st_timing.helper_usage);
+			jam_string(buf, " in total");
+		}
 	}
 
 	/*

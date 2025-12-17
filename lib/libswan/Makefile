@@ -187,6 +187,7 @@ OBJS += impair.o
 OBJS += cur_debugging.o
 OBJS += ldbg.o
 OBJS += cur_debugging.o
+OBJS += verbose.o
 
 OBJS += llog_base64_bytes.o
 OBJS += llog_pem_bytes.o

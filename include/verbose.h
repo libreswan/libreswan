@@ -1,6 +1,6 @@
 /* verbose wrapper around logger
  *
- * Copyright (C) 2024  Andrew Cagney
+ * Copyright (C) 2024-2025  Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +17,7 @@
 #ifndef VERBOSE_H
 #define VERBOSE_H
 
+#include "lswcdefs.h"		/* for PRINTF_LIKE() */
 #include "where.h"
 #include "pluto_constants.h"	/* for enum stream; */
 #include "cputime.h"
@@ -98,10 +99,10 @@ struct verbose {
  */
 
 #define PRI_VERBOSE "%s%s%*s"
-#define pri_verbose \
-	(verbose.prefix == NULL ? "" : verbose.prefix), \
-		(verbose.prefix == NULL ? "" : ": "),	\
-		(verbose.level * 2), ""
+#define pri_verbose(VERBOSE)					\
+	((VERBOSE)->prefix == NULL ? "" : (VERBOSE)->prefix),	\
+		((VERBOSE)->prefix == NULL ? "" : ": "),	\
+		((VERBOSE)->level * 2), ""
 
 /*
  * Normal logging: the message is always logged (no indentation); just
@@ -163,7 +164,8 @@ struct verbose {
 #define VDBG_log(FMT, ...)			\
 	llog(DEBUG_STREAM, verbose.logger,	\
 	     PRI_VERBOSE""FMT,			\
-	     pri_verbose, ##__VA_ARGS__)
+	     pri_verbose(&verbose),		\
+	     ##__VA_ARGS__)
 
 #define vdbg_errno(ERRNO, FMT, ...)				\
 	{							\
@@ -177,13 +179,14 @@ struct verbose {
 		int errno_ = ERRNO; /* save value across va args */	\
 		llog_errno(DEBUG_STREAM, verbose.logger, errno_,	\
 			   PRI_VERBOSE""FMT,				\
-			   pri_verbose, ##__VA_ARGS__);			\
+			   pri_verbose(&verbose),			\
+			   ##__VA_ARGS__);				\
 	}
 
 #define VDBG_JAMBUF(BUF)						\
 	for (bool cond_ = verbose.debug; cond_; cond_ = false)		\
 		LLOG_JAMBUF(DEBUG_STREAM, verbose.logger, BUF)		\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose(&verbose)); \
 			     cond_; cond_ = false)
 
 /*
@@ -201,7 +204,8 @@ struct verbose {
 		if (verbose.stream != NO_STREAM) {			\
 			llog(verbose.stream, verbose.logger,		\
 			     PRI_VERBOSE""FMT,				\
-			     pri_verbose, ##__VA_ARGS__);		\
+			     pri_verbose(&verbose),			\
+			     ##__VA_ARGS__);				\
 		}							\
 	}
 
@@ -209,7 +213,7 @@ struct verbose {
 	for (bool cond_ = (verbose.stream != NO_STREAM);		\
 	     cond_; cond_ = false)					\
 		LLOG_JAMBUF(verbose.stream, verbose.logger, BUF)	\
-			for (jam(BUF, PRI_VERBOSE, pri_verbose);	\
+			for (jam(BUF, PRI_VERBOSE, pri_verbose(&verbose)); \
 			     cond_; cond_ = false)
 
 /*
@@ -221,31 +225,17 @@ typedef struct {
 	cputime_t time;
 } vtime_t;
 
-#define vdbg_start(FMT, ...)					\
-	({							\
-		vtime_t start_ = {0};				\
-		if (verbose.debug ||				\
-		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {	\
-			VDBG_log(FMT, ##__VA_ARGS__);		\
-			start_.time = cputime_start();		\
-		};						\
-		start_.level = verbose.level++,			\
-		start_;						\
-	})
+vtime_t vdbg_start_where(struct verbose *verbose,
+			 const char *fmt, ...) PRINTF_LIKE(2);
 
-#define vdbg_stop(START, FMT, ...)				\
-	({							\
-		struct cpu_usage usage_ = {0};			\
-		verbose.level = (START).level;			\
-		if (verbose.debug ||				\
-		    LDBGP(DBG_CPU_USAGE, verbose.logger)) {	\
-			usage_ = cputime_stop((START).time);	\
-			VDBG_log(PRI_CPU_USAGE" in %s() "FMT,	\
-				 pri_cpu_usage(usage_),		\
-				 __func__,			\
-				 ##__VA_ARGS__);		\
-		}						\
-		usage_;						\
-	})
+#define vdbg_start(FMT, ...)				\
+	vdbg_start_where(&verbose, FMT, ##__VA_ARGS__)
+
+struct cpu_usage vdbg_stop_where(struct verbose *verbose,
+				 const vtime_t *start,
+				 const char *fmt, ...) PRINTF_LIKE(3);
+
+#define vdbg_stop(START, FMT, ...)			\
+	vdbg_stop_where(&verbose, START, FMT, ##__VA_ARGS__)
 
 #endif
