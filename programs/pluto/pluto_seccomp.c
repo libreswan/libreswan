@@ -312,20 +312,20 @@ void show_seccomp(const struct config_setup *oco, struct show *s)
 	}
 }
 
-void seccomp_sigsys_handler(struct logger *logger)
+void seccomp_sigsys_handler(struct verbose verbose)
 {
 	const struct config_setup *oco = config_setup_singleton();
 
 	switch (seccomp_mode(oco)) {
 	case SECCOMP_ENABLED:
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0,
-		      "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
+		vfatal(PLUTO_EXIT_SECCOMP_FAIL, /*no-errno*/0,
+		       "pluto received SIGSYS - seccomp=enabled mandates daemon restart");
 	case SECCOMP_TOLERANT:
-		llog(RC_LOG, logger, "pluto received SIGSYS - seccomp=tolerant - possible SECCOMP violation!");
+		vlog("pluto received SIGSYS - seccomp=tolerant - possible SECCOMP violation!");
 		return;
 	case SECCOMP_DISABLED:
-		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0,
-		      "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
+		vfatal(PLUTO_EXIT_FAIL, /*no-errno*/0,
+		       "pluto received SIGSYS - seccomp=disabled - aborting due to bad system call");
 	}
 	bad_case(seccomp_mode(oco));
 }

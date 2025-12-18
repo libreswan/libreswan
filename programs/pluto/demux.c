@@ -276,8 +276,10 @@ void process_md(struct msg_digest *md)
  * input packet buffer, an auto.
  */
 
-void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
+void process_iface_packet(struct verbose verbose, int fd, void *ifp_arg)
 {
+	struct logger *logger = verbose.logger;
+
 	struct iface_endpoint *ifp = ifp_arg;
 	ifp_arg = NULL; /* can no longer be trusted */
 

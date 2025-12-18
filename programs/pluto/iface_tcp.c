@@ -50,8 +50,7 @@
 static struct msg_digest *iketcp_read_packet_1(struct iface_endpoint **ifp,
 					       struct logger *logger);
 
-static void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sockaddr,
-				 void *arg, struct logger *logger);
+static fd_accept_listener_cb accept_ike_in_tcp_cb;
 
 /*
  * IKETCP or TCP?
@@ -426,11 +425,13 @@ static void iketcp_cleanup(struct iface_endpoint *ifp,
 	stop_iketcp_timeout("cleaning up", ifp, logger);
 }
 
-static void iketcp_server_timeout(void *arg, const struct timer_event *event)
+static void iketcp_server_timeout(struct verbose verbose,
+				  vtime_t inception UNUSED,
+				  void *arg)
 {
 	struct iface_endpoint *ifp = arg;
 	struct logger *logger = from_logger(ifp->iketcp_remote_endpoint);
-	whack_attach_where(logger, event->logger, HERE);
+	whack_attach_where(logger, verbose.logger, HERE);
 	llog_iketcp(RC_LOG, logger, ifp, /*no-error*/0,
 		    "timeout out before first message received");
 	iface_endpoint_delref(&ifp);
@@ -607,8 +608,9 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,
 	return iface_endpoint_addref(ifp);
 }
 
-void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa, void *arg,
-			  struct logger *event_logger)
+void accept_ike_in_tcp_cb(struct verbose verbose,
+			  int accepted_fd, ip_sockaddr *sa,
+			  void *arg)
 {
 	struct iface_endpoint *bind_ifp = arg;
 	ip_address remote_tcp_address;
@@ -616,7 +618,7 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa, void *arg,
 	err_t err = sockaddr_to_address_port(&sa->sa.sa, sa->len,
 					     &remote_tcp_address, &remote_tcp_port);
 	if (err != NULL) {
-		llog(RC_LOG, event_logger, "TCP: invalid remote address: %s", err);
+		vlog("TCP: invalid remote address: %s", err);
 		close(accepted_fd);
 		return;
 	}
@@ -636,7 +638,7 @@ void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sa, void *arg,
 	ifp->iketcp_server = true;
 
 	struct logger *md_logger = from_logger(remote_tcp_endpoint);
-	whack_attach_where(md_logger, event_logger, HERE);
+	whack_attach_where(md_logger, verbose.logger, HERE);
 
 	llog_iketcp(RC_LOG, md_logger, ifp,  /*no-error*/0, "accepted connection");
 

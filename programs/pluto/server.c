@@ -256,14 +256,14 @@ static void global_timer_event_cb(evutil_socket_t fd UNUSED,
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
 	vassert(in_main_thread());
-	struct global_timer_desc *gt = arg;
 	vassert(event & EV_TIMEOUT);
+	struct global_timer_desc *gt = arg;
 	vassert(gt >= global_timers);
 	vassert(gt < global_timers + elemsof(global_timers));
-	vdbg("processing global timer %s", gt->name);
-	threadtime_t start = threadtime_start();
+	const char *name = gt->name; /*save*/
+	vtime_t start = vdbg_start("processing global timer %s", name);
 	gt->cb(verbose);
-	threadtime_stop(&start, "global timer %s", gt->name);
+	vdbg_stop(&start, "global timer %s", name);
 }
 
 void whack_impair_call_global_event_handler(enum global_timer timer,
@@ -271,22 +271,23 @@ void whack_impair_call_global_event_handler(enum global_timer timer,
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL); /* event-handler */
 
-	passert(in_main_thread());
+	vassert(in_main_thread());
 	/* timer is hardwired so shouldn't happen */
-	passert(timer < elemsof(global_timers));
+	vassert(timer < elemsof(global_timers));
 
 	struct global_timer_desc *gt = &global_timers[timer];
-	passert(gt->name != NULL);
+	vassert(gt->name != NULL);
 	if (!event_initialized(&gt->ev)) {
 		llog(IMPAIR_STREAM, logger, "timer %s is not initialized",
 		     gt->name);
 		return;
 	}
 
-	llog(IMPAIR_STREAM, logger, "injecting timer event %s", gt->name);
-	threadtime_t start = threadtime_start();
+	const char *name = gt->name; /*save*/
+	llog(IMPAIR_STREAM, verbose.logger, "injecting timer event %s", name);
+	vtime_t start = vdbg_start("processing global timer %s", name);
 	gt->cb(verbose);
-	threadtime_stop(&start, "global timer %s", gt->name);
+	vdbg_stop(&start, "global timer %s", name);
 }
 
 void enable_periodic_timer(enum global_timer type, global_timer_cb *cb,
@@ -388,7 +389,7 @@ static void list_global_timers(struct show *s, const monotime_t now)
  * Global signal events.
  */
 
-typedef void (signal_handler_cb)(struct logger *logger);
+typedef void (signal_handler_cb)(struct verbose verbose);
 
 struct signal_handler {
 	struct event ev;
@@ -413,14 +414,14 @@ static struct signal_handler signal_handlers[] = {
 static void signal_handler_handler(evutil_socket_t fd UNUSED,
 				   const short event, void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	PASSERT(logger, in_main_thread());
-	PASSERT(logger, event & EV_SIGNAL);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_SIGNAL);
 	struct signal_handler *se = arg;
-	ldbg(logger, "processing signal %s", se->name);
-	threadtime_t start = threadtime_start();
-	se->cb(logger);
-	threadtime_stop(&start, "signal handler %s", se->name);
+	const char *name = se->name; /*save*/
+	vtime_t start = vdbg_start("processing signal %s", name);
+	se->cb(verbose);
+	vdbg_stop(&start, "signal handler %s", name);
 }
 
 static void install_signal_handlers(const struct logger *logger)
@@ -527,7 +528,7 @@ static void link_pluto_event_list(struct fd_read_listener *e) {
 
 struct timeout {
 	const char *name;
-	void (*cb)(void *arg, const struct timer_event *event);
+	timeout_event_cb *cb;
 	void *arg;
 	struct event ev;
 };
@@ -535,17 +536,19 @@ struct timeout {
 static void timeout(evutil_socket_t fd UNUSED,
 		    const short ev_event UNUSED, void *arg)
 {
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL);
+
 	struct timeout *tt = arg;
-	struct timer_event event = {
-		.inception = threadtime_start(),
-		.logger = &global_logger,
-	};
-	tt->cb(tt->arg, &event);
+	const char *name = tt->name; /*save*/
+
+	vtime_t start = vdbg_start("processing timer %s", name);
+	tt->cb(verbose, start, tt->arg);
+	vdbg_stop(&start, "timer %s", name);
 }
 
 void schedule_timeout(const char *name,
 		      struct timeout **tt, const deltatime_t delay,
-		      void (*cb)(void *arg, const struct timer_event *event),
+		      timeout_event_cb *cb,
 		      void *arg)
 {
 	*tt = alloc_thing(struct timeout, name);
@@ -615,9 +618,12 @@ void complete_state_transition(struct state *st, struct msg_digest *md, stf_stat
 	}
 }
 
-static void resume_handler(void *arg, const struct timer_event *event)
+static void resume_handler(struct verbose verbose,
+			   vtime_t inception UNUSED,
+			   void *arg)
 {
 	struct resume_event *e = (struct resume_event *)arg;
+	const char *name = e->name;
 	/*
 	 * At one point, .ne_event was was being set after the event
 	 * was enabled.  With multiple threads this resulted in a race
@@ -625,20 +631,21 @@ static void resume_handler(void *arg, const struct timer_event *event)
 	 * pexpect() followed by the passert() demonstrated this - the
 	 * pexpect() failed yet the passert() passed.
 	 */
-	pexpect(e->timer != NULL);
-	ldbg(event->logger, "processing resume %s for "PRI_SO"",
-	     e->name, pri_so(e->serialno));
+	vexpect(e->timer != NULL);
+	vdbg("processing resume %s for "PRI_SO"",
+	     name, pri_so(e->serialno));
 	/*
 	 * XXX: Don't confuse this and the "callback") code path.
+	 *
 	 * This unsuspends MD, "callback" does not.
 	 */
 	struct state *st = state_by_serialno(e->serialno);
 	if (st == NULL) {
-		threadtime_t start = threadtime_start();
+		vtime_t start = vdbg_start("processing ("PRI_SO") resume %s",
+					   pri_so(e->serialno), name);
 		stf_status status = e->callback(NULL, NULL, e->context);
-		pexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
-		threadtime_stop(&start, "("PRI_SO") resume %s",
-				pri_so(e->serialno), e->name);
+		vexpect(status == STF_SKIP_COMPLETE_STATE_TRANSITION);
+		vdbg_stop(&start, "("PRI_SO") resume %s", pri_so(e->serialno), name);
 	} else {
 		/* no previous state */
 		statetime_t start = statetime_start(st);
@@ -658,9 +665,8 @@ static void resume_handler(void *arg, const struct timer_event *event)
 
 		if (status == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 			/* MD.ST may have been freed! */
-			ldbg(event->logger,
-			     "resume %s for "PRI_SO" suppressed complete_v%d_state_transition()%s",
-			     e->name, pri_so(e->serialno), ike_version,
+			vdbg("resume %s for "PRI_SO" suppressed complete_v%d_state_transition()%s",
+			     name, pri_so(e->serialno), ike_version,
 			     (old_md_st != SOS_NOBODY && e->md->v1_st == NULL ? "; MD.ST disappeared" :
 			      old_md_st != SOS_NOBODY && e->md->v1_st != st ? "; MD.ST was switched" :
 			      ""));
@@ -689,7 +695,7 @@ static void resume_handler(void *arg, const struct timer_event *event)
 			}
 			complete_state_transition(st, e->md, status);
 		}
-		statetime_stop(&start, "resume %s", e->name);
+		statetime_stop(&start, "resume %s", name);
 	}
 	passert(e->timer != NULL);
 	destroy_timeout(&e->timer);
@@ -725,7 +731,7 @@ void schedule_resume(const char *name, so_serial_t serialno,
 	};
 	struct resume_event *e = clone_thing(tmp, name);
 	ldbg(&global_logger, "scheduling resume %s for "PRI_SO"",
-	     e->name, pri_so(e->serialno));
+	     name, pri_so(e->serialno));
 
 	/*
 	 * Everything set up; arm and fire the timer's photon torpedo.
@@ -747,7 +753,9 @@ struct callback_event {
 	struct timeout *timer;
 };
 
-static void callback_handler(void *arg, const struct timer_event *event)
+static void callback_handler(struct verbose verbose,
+			     vtime_t inception UNUSED,
+			     void *arg)
 {
 	/*
 	 * Save all fields so that all event-loop memory can be freed
@@ -762,27 +770,27 @@ static void callback_handler(void *arg, const struct timer_event *event)
 	 * ran and was deleted .event was valid.  Oops!
 	 */
 	struct callback_event e = *(struct callback_event *)arg;
-	passert(e.timer != NULL);
+	vassert(e.timer != NULL);
 	destroy_timeout(&e.timer);
 	pfree(arg);
 
 	struct state *st;
 	if (e.serialno == SOS_NOBODY) {
-		ldbg(event->logger, "processing callback %s", e.story);
+		vdbg("processing callback %s", e.story);
 		st = NULL;
 	} else {
 		/*
 		 * XXX: Don't confuse this and the "resume" code paths
 		 * - this does not unsuspend MD, "resume" does.
 		 */
-		ldbg(event->logger, "processing callback %s for "PRI_SO"",
+		vdbg("processing callback %s for "PRI_SO"",
 		     e.story, pri_so(e.serialno));
 		st = state_by_serialno(e.serialno);
 	}
 
-	threadtime_t start = threadtime_start();
+	vtime_t start = vdbg_start("callback %s", e.story);
 	e.callback(e.story, st, e.context);
-	threadtime_stop(&start, "callback %s", e.story);
+	vdbg_stop(&start, "callback %s", e.story);
 }
 
 void schedule_callback(const char *story,
@@ -809,12 +817,17 @@ void schedule_callback(const char *story,
 }
 
 static void fd_read_listener_event_handler(evutil_socket_t fd,
-					   short events UNUSED,
+					   const short event,
 					   void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+	vassert(event & EV_READ);
 	struct fd_read_listener *fdl = arg;
-	fdl->cb(fd, fdl->arg, logger);
+	const char *name = fdl->name;
+	vtime_t start = vdbg_start("processing read %d listener %s", fd, name);
+	fdl->cb(verbose, fd, fdl->arg);
+	vdbg_stop(&start, "read %d listener %s", fd, name);
 }
 
 void attach_fd_read_listener(struct fd_read_listener **fdl,
@@ -867,14 +880,20 @@ static void fd_accept_listener(struct evconnlistener *efc UNUSED,
 			       struct sockaddr *sockaddr, int sockaddr_len,
 			       void *arg)
 {
-	struct logger logger[1] = { global_logger, }; /* event-handler */
-	struct fd_accept_listener *fdl = arg;
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, &global_logger, NULL); /* event-handler */
+	vassert(in_main_thread());
+
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
 	};
-	passert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
+	vassert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
 	memcpy(&sa.sa, sockaddr, sockaddr_len);
-	fdl->cb(fd, &sa, fdl->arg, logger);
+
+	struct fd_accept_listener *fdl = arg;
+	const char *name = fdl->name; /*save*/
+	vtime_t start = vdbg_start("processing accept %d listener %s", fd, name);
+	fdl->cb(verbose, fd, &sa, fdl->arg);
+	vdbg_stop(&start, "accept %d listener %s", fd, name);
 }
 
 void attach_fd_accept_listener(const char *name,
@@ -938,14 +957,14 @@ void show_debug_status(struct show *s)
 	}
 }
 
-static void huphandler_cb(struct logger *logger)
+static void huphandler_cb(struct verbose verbose)
 {
-	llog(RC_LOG, logger, "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	vlog("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
-static void termhandler_cb(struct logger *logger)
+static void termhandler_cb(struct verbose verbose)
 {
-	whack_shutdown(logger, PLUTO_EXIT_OK);
+	whack_shutdown(verbose.logger, PLUTO_EXIT_OK);
 }
 
 static server_fork_cb addconn_exited; /* type assertion */

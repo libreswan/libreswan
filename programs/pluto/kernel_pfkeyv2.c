@@ -43,7 +43,7 @@ static pid_t pfkeyv2_pid;
 static uint32_t pfkeyv2_seq;
 static int pfkeyv2_fd;
 
-static void pfkeyv2_process_msg(int fd, void *arg, struct logger *logger);
+static void pfkeyv2_process_msg(struct verbose verbose, int fd, void *arg);
 
 #define SIZEOF_SADB_ADDRESS (sizeof(struct sadb_address) + sizeof(ip_sockaddr))
 #define SIZEOF_SADB_BASE sizeof(struct sadb_msg)
@@ -1770,9 +1770,8 @@ static void process_pending_queue(struct verbose verbose)
 	}
 }
 
-static void pfkeyv2_process_msg(int fd UNUSED, void *arg UNUSED, struct logger *logger)
+static void pfkeyv2_process_msg(struct verbose verbose, int fd UNUSED, void *arg UNUSED)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
 	vdbg("processing message");
 	verbose.level++;
 

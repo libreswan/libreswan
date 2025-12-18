@@ -59,25 +59,22 @@ extern void run_server(const char *conffile, struct logger *logger) NEVER_RETURN
 typedef void (server_stopped_cb)(int r, struct logger *logger);
 extern void stop_server(server_stopped_cb *cb NEVER_RETURNS);
 
-struct timer_event {
-	threadtime_t inception;
-	struct logger *logger;
-};
+typedef void (timeout_event_cb)(struct verbose verbose, vtime_t inception, void *arg);
 
 void schedule_timeout(const char *name,
 		      struct timeout **to, const deltatime_t delay,
-		      void (*cb)(void *arg, const struct timer_event *event),
-		      void *arg);
+		      timeout_event_cb *cb, void *arg);
 void destroy_timeout(struct timeout **to);
 
-typedef void (fd_accept_listener_cb)(int fd, ip_sockaddr *sa,
-				     void *arg, struct logger *logger);
+typedef void (fd_accept_listener_cb)(struct verbose verbose,
+				     int fd, ip_sockaddr *sa,
+				     void *arg);
 void attach_fd_accept_listener(const char *name,
 			       struct fd_accept_listener **fdl, int fd,
 			       fd_accept_listener_cb *cb, void *arg);
 void detach_fd_accept_listener(struct fd_accept_listener **fdl);
 
-typedef void (fd_read_listener_cb)(int fd, void *arg, struct logger *logger);
+typedef void (fd_read_listener_cb)(struct verbose verbose, int fd, void *arg);
 
 void attach_fd_read_listener(struct fd_read_listener **fdl,
 			     int fd, const char *name,
