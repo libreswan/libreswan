@@ -35,7 +35,7 @@ static refcnt_discard_content_fn discard_resolve_help_request_content;
 struct help_request {
 	refcnt_t refcnt;
 	struct connection *connection;
-	struct extracted_host_addrs extracted_host_addrs;
+	struct host_addrs extracted_host_addrs;
 	struct resolved_host_addrs resolved_host_addrs;
 	resolve_helper_cb *callback;
 };
@@ -54,12 +54,12 @@ void request_resolve_help(struct connection *c,
 							  discard_resolve_help_request_content,
 							  logger);
 	request->connection = connection_addref(c, logger);
-	request->extracted_host_addrs = extract_host_addrs_from_host_configs(c->config);
+	request->extracted_host_addrs = host_addrs_from_connection_config(c);
 	request->callback = callback;
 	request_help(request, resolve_helper, logger);
 }
 
-static struct resolved_host_addrs resolve_extracted_host_addrs(const struct extracted_host_addrs *host_addrs,
+static struct resolved_host_addrs resolve_extracted_host_addrs(const struct host_addrs *host_addrs,
 							       struct verbose verbose)
 {
 	struct resolved_host_addrs resolved = {

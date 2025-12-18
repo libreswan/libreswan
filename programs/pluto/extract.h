@@ -39,24 +39,24 @@
 struct whack_message;
 struct connection;
 struct config;
-struct extracted_host_addrs;
+struct host_addrs;
 struct resolved_host_addrs;
 
 diag_t extract_connection(const struct whack_message *wm,
-			  const struct extracted_host_addrs *extracted_host_addrs,
+			  const struct host_addrs *extracted_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose);
 
-struct extracted_host_addrs {
+struct host_addrs {
 	struct route_addrs end[END_ROOF];
 	const struct ip_info *afi;
 };
 
-diag_t extract_host_addrs(const struct whack_message *wm,
-			  struct extracted_host_addrs *config,
-			  struct verbose verbose);
+diag_t host_addrs_from_whack_message(const struct whack_message *wm,
+				     struct host_addrs *config,
+				     struct verbose verbose);
 
-struct extracted_host_addrs extract_host_addrs_from_host_configs(const struct config *config);
+struct host_addrs host_addrs_from_connection_config(const struct connection *c);
 
 #endif

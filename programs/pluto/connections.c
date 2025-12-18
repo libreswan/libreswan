@@ -1235,7 +1235,7 @@ const struct ike_info ikev2_info = {
 };
 
 diag_t add_connection(const struct whack_message *wm,
-		      const struct extracted_host_addrs *extracted_host_addrs,
+		      const struct host_addrs *extracted_host_addrs,
 		      const struct logger *logger)
 {
 	/*
