@@ -15,6 +15,7 @@
 
 PROGRAM=addconn
 OBJS += $(PROGRAM).o
+OBJS += starterwhack.o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 

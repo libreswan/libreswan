@@ -33,7 +33,7 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterwhack.h"
+#include "starterwhack.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
