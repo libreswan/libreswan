@@ -1,6 +1,6 @@
 # rhbz#1313816: should abort, not crash, due to missing nss
 west #
- ../../guestbin/swan-prep # no NSS DB init!
+ /testing/guestbin/swan-prep # no NSS DB init!
 west #
  mkdir /tmp/rhbz1313816
 west #
@@ -25,19 +25,21 @@ Creating empty NSS database
 west #
  rm -rf /var/cache/otheruser
 west #
- mkdir -p /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
+ mkdir -p /var/cache/otheruser/etc
 west #
  mv /etc/ipsec.conf /var/cache/otheruser/etc/
 west #
- chown -R bin:bin /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
+ chown -R bin:bin /var/cache/otheruser/etc
 west #
- chmod -R 755 /var/cache/otheruser
+ mkdir -p /var/cache/otheruser/var/run/pluto
 west #
- ipsec pluto --rundir /var/cache/otheruser/var/run/pluto --secretsfile /var/cache/otheruser/etc/ipsec.secrets
+ chown -R bin:bin /var/cache/otheruser/var/run/pluto
 west #
- # give pluto time to start and create its socket and pid files
+ chmod -R u=rwx,go=rx /var/cache/otheruser
 west #
- sleep 3
+ ipsec pluto --config /var/cache/otheruser/etc/ipsec.conf --rundir /var/cache/otheruser/var/run/pluto --secretsfile /var/cache/otheruser/etc/ipsec.secrets --logfile /tmp/pluto.log
+west #
+ /testing/guestbin/wait-until-pluto-started --rundir /var/cache/otheruser/var/run/pluto
 west #
  # show it is running
 west #
