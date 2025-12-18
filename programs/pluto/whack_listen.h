@@ -1,5 +1,6 @@
-/* Libreswan whack functions to communicate with pluto (whack.h)
- * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
+/* <<ipsec listen ...>> aka addconn, for libreswan
+ *
+ * Copyright (C) 2025 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,16 +14,15 @@
  *
  */
 
-#ifndef _STARTER_WHACK_H_
-#define _STARTER_WHACK_H_
+#ifndef WHACK_LISTEN_H
+#define WHACK_LISTEN_H
 
-struct starter_conn;
-struct starter_config;
+struct whack_message;
+struct show;
+struct whack_listen;
 struct logger;
 
-int starter_whack_add_conn(const char *ctlsocket,
-			   const struct starter_conn *conn,
-			   struct logger *logger);
+void whack_listen_1(const struct whack_listen *wl, struct logger *logger);
+void whack_listen(const struct whack_message *wm, struct show *s);
 
-#endif /* _STARTER_WHACK_H_ */
-
+#endif

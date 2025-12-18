@@ -95,11 +95,3 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	return 0;
 }
-
-int starter_whack_listen(const char *ctlsocket, struct logger *logger)
-{
-	struct whack_message msg;
-	init_whack_message(&msg, WHACK_FROM_ADDCONN);
-	msg.whack_command = WHACK_LISTEN;
-	return whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
-}

@@ -574,19 +574,6 @@ int main(int argc, char *argv[])
 			starter_whack_add_conn(ctlsocket, conn, logger);
 		}
 
-		/*
-		 * We loaded all connections. Now tell pluto to
-		 * listen, then route the conns and resolve default
-		 * route.
-		 *
-		 * Any connections that orient and have +ROUTE will be
-		 * routed.
-		 */
-		if (verbose > 0)
-			printf("  Step #2: Listening which will then orient, route, up connections\n");
-
-		starter_whack_listen(ctlsocket, logger);
-
 		if (verbose > 0)
 			printf("\n");
 
