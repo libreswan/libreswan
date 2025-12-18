@@ -4710,11 +4710,13 @@ diag_t extract_connection(const struct whack_message *wm,
 }
 
 void extract_connection_resolve_continue(struct connection *c,
-					 const struct resolved_host_addrs *resolved_host_addrs,
+					 const struct host_addrs *resolved_host_addrs,
 					 struct verbose verbose)
 {
 	/* log all about this connection */
-	vdbg("resolved %s", bool_str(resolved_host_addrs->ok));
+	vdbg("needs.dns %s needs.route %s",
+	     bool_str(resolved_host_addrs->needs.dns),
+	     bool_str(resolved_host_addrs->needs.route));
 
 	err_t tss = connection_requires_tss(c);
 	if (tss != NULL) {

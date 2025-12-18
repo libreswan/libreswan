@@ -23,15 +23,10 @@
 
 struct logger;
 struct connection;
-
-struct resolved_host_addrs {
-	struct route_addrs resolve[END_ROOF];
-	const struct ip_info *afi;
-	bool ok;
-};
+struct host_addrs;
 
 typedef void (resolve_helper_cb)(struct connection *c,
-				 const struct resolved_host_addrs *resolved_host_addrs,
+				 const struct host_addrs *resolved_host_addrs,
 				 struct verbose verbose);
 
 void request_resolve_help(struct connection *c,
