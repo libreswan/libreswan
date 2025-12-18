@@ -46,7 +46,8 @@ static bool set_whack_end(struct whack_end *w,
 
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
-			   struct logger *logger)
+			   struct logger *logger,
+			   enum whack_noise noise)
 {
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_ADDCONN);
@@ -72,7 +73,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		return -1;
 	}
 
-	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
+	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger, noise);
 	if (r != 0)
 		return r;
 

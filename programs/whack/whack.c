@@ -2265,7 +2265,7 @@ int main(int argc, char **argv)
 					 (ctlsocket == NULL ? DEFAULT_CTL_SOCKET : ctlsocket),
 					 xauthusername, xauthpass,
 					 usernamelen, xauthpasslen,
-					 logger);
+					 logger, NOISY_WHACK);
 
 	if (ignore_errors)
 		return 0;
