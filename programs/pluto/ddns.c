@@ -179,7 +179,7 @@ void connection_check_ddns(struct connection *c, struct verbose verbose)
 		if (!connection_check_ddns1(c, v)) {
 			whack_detach(c, verbose.logger);
 		}
-		vdbg_stop(start, "check_dns");
+		vdbg_stop(&start, "check_dns");
 	}
 	connection_delref(&c, verbose.logger);
 }
