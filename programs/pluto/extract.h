@@ -51,6 +51,10 @@ diag_t extract_connection(const struct whack_message *wm,
 struct host_addrs {
 	struct route_addrs end[END_ROOF];
 	const struct ip_info *afi;
+	struct {
+		bool dns;
+		bool route; /* %defaultroute et.al. */
+	} needs;
 };
 
 diag_t host_addrs_from_whack_message(const struct whack_message *wm,
