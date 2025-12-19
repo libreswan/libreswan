@@ -105,7 +105,8 @@ static int whack_read_reply(int sock,
 			    char xauthpass[XAUTH_MAX_PASS_LENGTH],
 			    int usernamelen,
 			    int xauthpasslen,
-			    struct logger *logger)
+			    struct logger *logger,
+			    enum whack_noise noise)
 {
 	char buf[4097]; /* arbitrary limit on log line length */
 	char *be = buf;
@@ -157,9 +158,11 @@ static int whack_read_reply(int sock,
 
 			ls = lpe + 1; /* skip NNN_ */
 
-			if (write(STDOUT_FILENO, ls, le - ls) == -1) {
-				int e = errno;
-				llog_errno(RC_LOG, logger, e, "write() failed, and ignored");
+			if (s > 0 || noise >= NOISY_WHACK) {
+				if (write(STDOUT_FILENO, ls, le - ls) == -1) {
+					int e = errno;
+					llog_errno(RC_LOG, logger, e, "write() failed, and ignored");
+				}
 			}
 
 			/*
@@ -244,7 +247,8 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 		   char xauthusername[MAX_XAUTH_USERNAME_LEN],
 		   char xauthpass[XAUTH_MAX_PASS_LENGTH],
 		   int usernamelen, int xauthpasslen,
-		   struct logger *logger)
+		   struct logger *logger,
+		   enum whack_noise noise)
 {
 	struct sockaddr_un ctl_addr = {
 		.sun_family = AF_UNIX,
@@ -331,7 +335,8 @@ int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 	}
 
 	/* read reply (possibly send further messages) */
-	int ret = whack_read_reply(sock, xauthusername, xauthpass, usernamelen, xauthpasslen, logger);
+	int ret = whack_read_reply(sock, xauthusername, xauthpass, usernamelen, xauthpasslen,
+				   logger, noise);
 	close(sock);
 
 	return ret;

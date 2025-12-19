@@ -25,28 +25,11 @@
  * for more details.
  */
 
-#include <sys/types.h>
-#include <sys/un.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
+#include <stdbool.h>
 
-#include "lsw_socket.h"
-
-#include "ttodata.h"
-
-#include "ipsecconf/starterwhack.h"
-#include "ipsecconf/confread.h"
-#include "ipsecconf/keywords.h"
-#include "lswalloc.h"
-#include "lswlog.h"
+#include "starterwhack.h"
 #include "whack.h"
-#include "id.h"
-#include "ip_address.h"
-#include "ip_info.h"
-#include "lswlog.h"
+#include "ipsecconf/confread.h"
 
 static bool set_whack_end(struct whack_end *w,
 			  const struct starter_end *l)
@@ -63,7 +46,8 @@ static bool set_whack_end(struct whack_end *w,
 
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
-			   struct logger *logger)
+			   struct logger *logger,
+			   enum whack_noise noise)
 {
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_ADDCONN);
@@ -89,7 +73,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 		return -1;
 	}
 
-	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger);
+	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger, noise);
 	if (r != 0)
 		return r;
 

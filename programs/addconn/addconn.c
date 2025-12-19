@@ -33,7 +33,7 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "ipsecconf/starterwhack.h"
+#include "starterwhack.h"
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
@@ -159,7 +159,8 @@ static void fprint_conn(FILE *file,
 
 static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL*/,
 		     const char *ctlsocket, int *exit_status,
-		     struct logger *logger)
+		     struct logger *logger,
+		     enum whack_noise noise)
 {
 	/* found name or alias */
 	if (conn->state == STATE_ADDED) {
@@ -201,7 +202,7 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		fprintf(stdout, "\n");
 	}
 
-	int status = starter_whack_add_conn(ctlsocket, conn, logger);
+	int status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -213,13 +214,14 @@ static bool find_and_add_conn_by_name(const char *connname,
 				      struct starter_config *cfg,
 				      const char *ctlsocket,
 				      int *exit_status,
-				      struct logger *logger)
+				      struct logger *logger,
+				      enum whack_noise noise)
 {
 	/* find first name match, if any */
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link)  {
 		if (streq(conn->name, connname)) {
-			add_conn(conn, NULL, ctlsocket, exit_status, logger);
+			add_conn(conn, NULL, ctlsocket, exit_status, logger, noise);
 			return true;
 		}
 	}
@@ -231,7 +233,8 @@ static bool find_and_add_conn_by_alias(const char *connname,
 				       struct starter_config *cfg,
 				       const char *ctlsocket,
 				       int *exit_status,
-				       struct logger *logger)
+				       struct logger *logger,
+				       enum whack_noise noise)
 {
 	bool found = false;
 
@@ -239,7 +242,7 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
 				  conn->values[KWS_CONNALIAS].string)) {
-			add_conn(conn, connname, ctlsocket, exit_status, logger);
+			add_conn(conn, connname, ctlsocket, exit_status, logger, noise);
 			found = true;
 		}
 	}
@@ -285,6 +288,7 @@ enum opt {
 	OPT_HELP,
 	OPT_CONFIG,
 	OPT_VERBOSE,
+	OPT_QUIET,
 	OPT_AUTOALL,
 	OPT_LISTALL,
 	OPT_LISTADD,
@@ -313,6 +317,7 @@ const struct option optarg_options[] =
 	HEADING_OPT("  Display more details:"),
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
+	{ OPT("quiet"), no_argument, NULL, OPT_QUIET, },
 
 	HEADING_OPT("  Display content of 'ipsec.conf' 'conn' sections:"),
 	{ OPT("listall"), no_argument, NULL, OPT_LISTALL, },
@@ -366,6 +371,7 @@ int main(int argc, char *argv[])
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 	const char *name = NULL;
+	enum whack_noise noise = NOISY_WHACK;
 
 #if 0
 	/* efence settings */
@@ -402,6 +408,10 @@ int main(int argc, char *argv[])
 
 		case OPT_DEBUG:
 			optarg_debug(OPTARG_DEBUG_YES);
+			continue;
+
+		case OPT_QUIET:
+			noise = QUIET_WHACK;
 			continue;
 
 		case OPT_CONFIGSETUP:
@@ -571,7 +581,7 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			starter_whack_add_conn(ctlsocket, conn, logger);
+			starter_whack_add_conn(ctlsocket, conn, logger, noise);
 		}
 
 		if (verbose > 0)
@@ -585,7 +595,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		exit_status = starter_whack_add_conn(ctlsocket, conn, logger);
+		exit_status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
 
 	} else {
 
@@ -600,13 +610,13 @@ int main(int argc, char *argv[])
 			}
 
 			if (find_and_add_conn_by_name(connname, cfg, ctlsocket,
-						      &exit_status, logger)) {
+						      &exit_status, logger, noise)) {
 				continue;
 			}
 
 			/* We didn't find name; look for first alias */
 			if (find_and_add_conn_by_alias(connname, cfg, ctlsocket,
-						       &exit_status, logger)) {
+						       &exit_status, logger, noise)) {
 				continue;
 			}
 

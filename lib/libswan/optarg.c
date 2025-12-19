@@ -186,7 +186,7 @@ void optarg_usage(const char *progname, const char *synopsys, const char *detail
 		const char *nm = opt->name;
 
 		/*
-		 * "\r\a\n\t<HEADING>"
+		 * "\r\a\n\t<HEADING\0>"
 		 *
 		 * Experimental, is this portable?
 		 */

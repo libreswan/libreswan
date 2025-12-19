@@ -19,10 +19,12 @@
 struct starter_conn;
 struct starter_config;
 struct logger;
+enum whack_noise;
 
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
-			   struct logger *logger);
+			   struct logger *logger,
+			   enum whack_noise noise);
 
 #endif /* _STARTER_WHACK_H_ */
 

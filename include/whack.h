@@ -597,11 +597,17 @@ struct whackpacker {
 extern err_t pack_whack_msg(struct whackpacker *wp, struct logger *logger);
 extern diag_t unpack_whack_msg(struct whackpacker *wp, struct logger *logger);
 
+enum whack_noise {
+	QUIET_WHACK,
+	NOISY_WHACK,
+};
+
 int whack_send_msg(struct whack_message *msg, const char *ctlsocket,
 		   char xauthusername[MAX_XAUTH_USERNAME_LEN],
 		   char xauthpass[XAUTH_MAX_PASS_LENGTH],
 		   int usernamelen, int xauthpasslen,
-		   struct logger *logger);
+		   struct logger *logger,
+		   enum whack_noise noise);
 
 extern bool lsw_alias_cmp(const char *name, const char *aliases);
 

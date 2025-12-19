@@ -1149,6 +1149,7 @@ void run_server(const char *conffile, struct logger *logger)
 		DISCARD_CONST(char *, "--config"),
 		DISCARD_CONST(char *, conffile),
 		DISCARD_CONST(char *, "--autoall"),
+		DISCARD_CONST(char *, "--quiet"),
 		NULL,
 	};
 	char *newenv[] = { NULL };
