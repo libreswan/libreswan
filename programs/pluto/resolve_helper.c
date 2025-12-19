@@ -93,17 +93,6 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 		end->host.addr = host_addr;
 	}
 
-	if (!resolved.needs.dns) {
-		resolve_default_route(&resolved.end[LEFT_END],
-				      &resolved.end[RIGHT_END],
-				      host_addrs->afi,
-				      verbose);
-		resolve_default_route(&resolved.end[RIGHT_END],
-				      &resolved.end[LEFT_END],
-				      host_addrs->afi,
-				      verbose);
-	}
-
 	return resolved;
 }
 
@@ -120,11 +109,22 @@ void resolve_continue(struct help_request *request,
 		      struct verbose verbose)
 {
 	struct connection *c = request->connection;
-	const struct host_addrs *resolved = &request->resolved_host_addrs;
+	struct host_addrs *resolved = &request->resolved_host_addrs;
 
 	vdbg("needs.dns = %s needs.route = %s",
 	     bool_str(resolved->needs.dns),
 	     bool_str(resolved->needs.route));
+
+	if (!resolved->needs.dns) {
+		resolve_default_route(&resolved->end[LEFT_END],
+				      &resolved->end[RIGHT_END],
+				      resolved->afi,
+				      verbose);
+		resolve_default_route(&resolved->end[RIGHT_END],
+				      &resolved->end[LEFT_END],
+				      resolved->afi,
+				      verbose);
+	}
 
 	build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
 
