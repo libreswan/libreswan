@@ -62,43 +62,35 @@ void request_resolve_help(struct connection *c,
 static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *host_addrs,
 						      struct verbose verbose)
 {
-	struct host_addrs resolved = {
-		.needs.dns = false, /* hope for the best */
-	};
+	struct host_addrs resolved = *host_addrs;
+	/*hope for the best*/
+	resolved.needs.route = false;
+	resolved.needs.dns = false;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		const struct route_addrs *src = &host_addrs->end[lr];
- 		struct route_addrs *dst = &resolved.end[lr];
- 		const char *leftright = src->leftright;
-
-		/* leftright */
-		dst->leftright = leftright;
-
-		/* nexthop */
-		dst->nexthop = src->nexthop;
+ 		struct route_addrs *end = &resolved.end[lr];
+ 		const char *leftright = end->leftright;
 
 		/* host */
-		ip_address host_addr;
-		if (src->host.type == KH_IPHOSTNAME) {
-			err_t e = ttoaddress_dns(shunk1(src->host.value),
-						 host_addrs->afi,
-						 &host_addr);
-			if (e != NULL) {
-				/*
-				 * XXX: failing ttoaddress*() sets
-				 * host_addr to unset but want
-				 * src.host.addr.
-				 */
-				vlog("failed to resolve '%s%s=%s' at load time: %s",
-				     leftright, "", src->host.value, e);
-				resolved.needs.dns = true;
-				host_addr = src->host.addr;
-			}
-		} else {
-			host_addr = src->host.addr;
+		if (end->host.type != KH_IPHOSTNAME) {
+			continue;
 		}
-		dst->host = src->host;
-		dst->host.addr = host_addr;
+
+		ip_address host_addr;
+		err_t e = ttoaddress_dns(shunk1(end->host.value),
+					 resolved.afi,
+					 &host_addr);
+		if (e != NULL) {
+			/*
+			 * XXX: failing ttoaddress*() sets host_addr
+			 * to unset but want existing value.
+			 */
+			vlog("failed to resolve '%s%s=%s' at load time: %s",
+			     leftright, "", end->host.value, e);
+			resolved.needs.dns = true;
+			continue;
+		}
+		end->host.addr = host_addr;
 	}
 
 	if (!resolved.needs.dns) {
