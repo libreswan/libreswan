@@ -17,8 +17,8 @@
  * for more details.
  */
 
-#ifndef USE_DNSSEC
-# error this file should only be compiled when using DNSSEC
+#ifndef USE_UNBOUND
+# error this file should only be compiled when using UNBOUND
 #endif
 
 #include <stdlib.h>

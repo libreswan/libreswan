@@ -37,9 +37,6 @@
 #include "ipsecconf/confread.h"
 #include "linux_netlink.h"
 #include "defaultroute.h"
-#ifdef USE_DNSSEC
-# include "dnssec.h"
-#endif
 
 #include "ip_info.h"
 #include "lswlog.h"

@@ -84,6 +84,7 @@
 #include "ikev2_ipseckey.h"	/* for init_ikev2_ipseckey() */
 #include "ddos.h"
 #include "helper.h"
+#include "resolve_helper.h"	/* for init_resolve_helper() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -160,6 +161,12 @@ static const char compile_time_interop_options[] = ""
 	" (NSS-KDF)"
 #else
 	" (native-KDF)"
+#endif
+#ifdef USE_UNBOUND
+	" UNBOUND"
+#endif
+#ifdef USE_UNBOUND
+	" UNBOUND"
 #endif
 #ifdef USE_DNSSEC
 	" DNSSEC"

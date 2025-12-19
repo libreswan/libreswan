@@ -733,11 +733,16 @@ endif
 # default/*.mk; look for auto-trust-anchor-file in unbound.conf.
 
 USE_DNSSEC ?= true
+USE_UNBOUND ?= $(USE_DNSSEC)
 # DEFAULT_DNSSEC_ROOTKEY_FILE=<unspecified>
 
+ifeq ($(USE_UNBOUND),true)
+USERLAND_CFLAGS += -DUSE_UNBOUND
+UNBOUND_LDFLAGS ?= -lunbound
+endif
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS += -DUSE_DNSSEC
-UNBOUND_LDFLAGS ?= -lunbound -lldns
+DNSSEC_LDFLAGS ?= -lldns
 ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
 $(error DEFAULT_DNSSEC_ROOTKEY_FILE unknown)
 endif
