@@ -59,13 +59,15 @@ void request_resolve_help(struct connection *c,
 	request_help(request, resolve_helper, logger);
 }
 
-static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *host_addrs,
-						      struct verbose verbose)
+helper_cb *resolve_helper(struct help_request *request,
+			  struct verbose verbose,
+			  enum helper_id helper_id UNUSED)
 {
-	struct host_addrs resolved = *host_addrs;
+	struct host_addrs *resolved = &request->resolved_host_addrs;
+	*resolved = request->extracted_host_addrs;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
- 		struct route_addrs *end = &resolved.end[lr];
+ 		struct route_addrs *end = &resolved->end[lr];
  		const char *leftright = end->leftright;
 
 		/* host */
@@ -75,7 +77,7 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 
 		ip_address host_addr;
 		err_t e = ttoaddress_dns(shunk1(end->host.value),
-					 resolved.afi,
+					 resolved->afi,
 					 &host_addr);
 		if (e != NULL) {
 			/*
@@ -89,15 +91,6 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 		end->host.addr = host_addr;
 	}
 
-	return resolved;
-}
-
-helper_cb *resolve_helper(struct help_request *request,
-			  struct verbose verbose,
-			  enum helper_id helper_id UNUSED)
-{
-	request->resolved_host_addrs = resolve_extracted_host_addrs(&request->extracted_host_addrs,
-								    verbose);
 	return resolve_continue;
 }
 
