@@ -65,6 +65,7 @@
 #include "connection_event.h"
 #include "terminate.h"
 #include "helper.h"
+#include "resolve_helper.h"	/* for shutdown_resolve_helper() */
 
 server_stopped_cb server_stopped_callback NEVER_RETURNS;
 
@@ -215,6 +216,7 @@ void exit_epilogue(struct logger *logger)
 	shutdown_kernel(logger);
 	shutdown_ike_session_resume(logger); /* before NSS! */
 	shutdown_nss();
+
 	delete_lock_file();	/* delete any lock files */
 
 	/*
@@ -222,6 +224,7 @@ void exit_epilogue(struct logger *logger)
 	 *
 	 * THESE FUNCTIONS JUST DELETE MEMORY (hence free*())
 	 */
+	free_resolve_helper(logger);
 	free_server_fork(logger);
 	free_server(logger);
 

@@ -14,10 +14,18 @@
  *
  */
 
+#ifdef USE_UNBOUND
+#include <unbound.h>
+#endif
+
 #include "resolve_helper.h"
 
 #include "refcnt.h"
 #include "defaultroute.h"
+
+#ifdef USE_UNBOUND
+#include "dnssec.h"	/* for unbound_sync_resolve() et.al. */
+#endif
 
 #include "extract.h"
 #include "helper.h"
@@ -26,6 +34,27 @@
 #include "log.h"
 #include "orient.h"
 #include "connection_event.h"
+
+#ifdef USE_UNBOUND
+struct dnssec_config unbound_config;
+#endif
+
+void init_resolve_helper(const struct dnssec_config *config, struct logger *logger)
+{
+	const char *result;
+#ifdef USE_UNBOUND
+	unbound_config = *config;
+	result = "unbound";
+#else
+	result = "getaddrinfo(3)";
+#endif
+	llog(RC_LOG, logger, "resolve helper [%s]", result);
+}
+
+void free_resolve_helper(struct logger *logger)
+{
+	ldbg(logger, "shutting down resolve helper");
+}
 
 static helper_fn resolve_helper;
 static helper_cb resolve_continue;
@@ -77,6 +106,21 @@ helper_cb *resolve_helper(struct help_request *request,
 
 		vexpect(!address_is_specified(end->host.addr));
 		ip_address host_addr;
+#ifdef USE_UNBOUND
+		struct ub_ctx *unbound_context = unbound_sync_init(&unbound_config,
+								   verbose.logger);
+		diag_t d = unbound_sync_resolve(unbound_context, end->host.value,
+						resolved->afi, &host_addr,
+						verbose);
+		ub_ctx_delete(unbound_context);
+		if (d != NULL) {
+			vlog("failed to resolve '%s%s=%s', %s",
+			     leftright, "", end->host.value,
+			     str_diag(d));
+			pfree_diag(&d);
+			continue;
+		}
+#else
 		err_t e = ttoaddress_dns(shunk1(end->host.value),
 					 resolved->afi,
 					 &host_addr);
@@ -85,10 +129,11 @@ helper_cb *resolve_helper(struct help_request *request,
 			 * XXX: failing ttoaddress*() sets host_addr
 			 * to unset but want existing value.
 			 */
-			vlog("failed to resolve '%s%s=%s' at load time: %s",
+			vlog("failed to resolve '%s%s=%s', %s",
 			     leftright, "", end->host.value, e);
 			continue;
 		}
+#endif
 		end->host.addr = host_addr;
 	}
 
