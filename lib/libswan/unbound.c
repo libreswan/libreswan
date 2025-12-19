@@ -179,117 +179,92 @@ void unbound_ctx_config(struct ub_ctx *ub_ctx,
 }
 
 /*
- * initialize a ub_ctx for asynchronous calls using libevent from pluto.
- *  only call once
+ * Initialize a ub_ctx for blocking dns calls.
  */
 
-static struct ub_ctx *dns_ctx = NULL;
-
-void unbound_ctx_free(void)
+struct ub_ctx *unbound_sync_init(const struct dnssec_config *config,
+				 struct logger *logger)
 {
-	if (dns_ctx != NULL) {
-		ub_ctx_delete(dns_ctx);
-		dns_ctx = NULL;
-	}
-}
-
-/*
- * initialize a ub_ct for blocking dns calls. Do not call from pluto.
- * Call this function once directly, such as addconn.
- * dns_ctx is static in this file. call unbound_ctx_free() to free it.
- */
-void unbound_sync_init(const struct dnssec_config *config,
-		       struct logger *logger)
-{
-	PASSERT(logger, dns_ctx == NULL); /* block re-entry to the function */
-	dns_ctx = ub_ctx_create();
+	struct ub_ctx *dns_ctx = ub_ctx_create();
 	PASSERT(logger, dns_ctx != NULL);
 	unbound_ctx_config(dns_ctx, config, logger);
+	return dns_ctx;
 }
 
 /*
  * synchronous blocking resolving - simple replacement of ttoaddress_dns()
- * src_len == 0 means "apply strlen"
  * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */
-bool unbound_resolve(const char *src, const struct ip_info *afi,
-		     ip_address *ipaddr, const struct logger *logger)
+diag_t unbound_sync_resolve(struct ub_ctx *dns_ctx,
+			    const char *src, const struct ip_info *afi,
+			    ip_address *ipaddr,
+			    struct verbose verbose)
 {
 	/* 28 = AAAA record, 1 = A record */
 	const int qtype = (afi == &ipv6_info) ? 28/*AAAA*/ : 1/*A*/;
 
-	PASSERT(logger, dns_ctx != NULL);
+	vassert(dns_ctx != NULL);
 
-	if (strlen(src) == 0) {
-		return diag("empty hostname in host lookup");
-	}
-
-	struct ub_result *result;
+	struct ub_result *result = NULL;
 	int ugh = ub_resolve(dns_ctx, src, qtype, 1 /* CLASS IN */, &result);
 	if (ugh != 0) {
-		llog(RC_LOG, logger, "unbound error: %s", ub_strerror(ugh));
-		ub_resolve_free(result);
-		return false;
+		vexpect(result == NULL);
+		return diag("unbound error: %s", ub_strerror(ugh));
 	}
 
+	vexpect(result != NULL);
+
 	if (result->bogus) {
-		llog(ERROR_STREAM, logger, "%s failed DNSSEC validation", result->qname);
+		diag_t d = diag("domain '%s' is bogus: %s", src, result->why_bogus);
 		ub_resolve_free(result);
-		return false;
+		return d;
 	}
 
 	if (!result->havedata) {
-		if (result->secure) {
-			ldbg(logger, "validated reply proves '%s' does not exist",
-				src);
-		} else {
-			ldbg(logger, "failed to resolve '%s' (%s)", src,
-				result->bogus ? "BOGUS" : "insecure");
-		}
+		diag_t d = (result->secure ? diag("domain '%s' does not exist (proved by validated reply)", src) :
+			    result->nxdomain ? diag("domain '%s' does not exist (no data, rcode %d)", src, result->rcode) :
+			    diag("domain '%s' has no data (rcode %d)", src, result->rcode));
 		ub_resolve_free(result);
-		return false;
+		return d;
 	}
 
 	if (!result->secure) {
-		ldbg(logger, "%s lookup was not protected by DNSSEC!", result->qname);
+		vdbg("%s lookup was not protected by DNSSEC!", result->qname);
 	}
 
-	if (LDBGP(DBG_TMI, logger)) {
+	if (LDBGP(DBG_TMI, verbose.logger)) {
 		int i = 0;
-		LDBG_log(logger, "The result has:");
-		LDBG_log(logger, "qname: %s", result->qname);
-		LDBG_log(logger, "qtype: %d", result->qtype);
-		LDBG_log(logger, "qclass: %d", result->qclass);
+		LDBG_log(verbose.logger, "The result has:");
+		LDBG_log(verbose.logger, "qname: %s", result->qname);
+		LDBG_log(verbose.logger, "qtype: %d", result->qtype);
+		LDBG_log(verbose.logger, "qclass: %d", result->qclass);
 		if (result->canonname) {
-			LDBG_log(logger, "canonical name: %s", result->canonname);
+			LDBG_log(verbose.logger, "canonical name: %s", result->canonname);
 		}
-		LDBG_log(logger, "DNS rcode: %d", result->rcode);
+		LDBG_log(verbose.logger, "DNS rcode: %d", result->rcode);
 
 		for (i = 0; result->data[i] != NULL; i++) {
-			LDBG_log(logger, "result data element %d has length %d",
+			LDBG_log(verbose.logger, "result data element %d has length %d",
 				 i, result->len[i]);
 		}
-		LDBG_log(logger, "result has %d data element(s)", i);
+		LDBG_log(verbose.logger, "result has %d data element(s)", i);
 	}
 
 	/* XXX: for now pick the first one and return that */
-	PASSERT(logger, result->data != NULL);
-	PASSERT(logger, result->data[0] != NULL);
-	PASSERT(logger, result->len != NULL);
+	vassert(result->data != NULL);
+	vassert(result->data[0] != NULL);
+	vassert(result->len != NULL);
 
 	/*
 	 * XXX: data_to_address() only requires the length >=
 	 * address-length.
 	 */
 	diag_t diag = data_to_address(result->data[0], (size_t)result->len[0], afi, ipaddr);
+	ub_resolve_free(result);
+
 	if (diag != NULL) {
-		llog_pexpect(logger, HERE, "invalid dns address record: %s",
-			     str_diag(diag));
-		pfree_diag(&diag);
-		ub_resolve_free(result);
-		return false;
+		return diag_diag(&diag, "domain '%s' has invalid dns address record, ", src);
 	}
 
-	ldbg(logger, "success for %s lookup", afi->ip_name);
-	return true;
+	return NULL;
 }
