@@ -258,9 +258,28 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 
 }
 
-diag_t extract_host_addrs(const struct whack_message *wm,
-			  struct extracted_host_addrs *config,
-			  struct verbose verbose)
+static void set_host_addr_needs(struct host_addrs *config,
+				struct verbose verbose)
+{
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct route_addrs *end = &config->end[lr];
+		FOR_EACH_THING(type, end->host.type, end->nexthop.type) {
+			if (type == KH_IPHOSTNAME) {
+				config->needs.dns = true;
+			}
+			if (type == KH_DEFAULTROUTE) {
+				config->needs.route = true;
+			}
+		}
+ 	}
+	vdbg("needs.dns %s needs.route %s",
+	     bool_str(config->needs.dns),
+	     bool_str(config->needs.route));
+}
+
+diag_t host_addrs_from_whack_message(const struct whack_message *wm,
+				     struct host_addrs *config,
+				     struct verbose verbose)
 {
 	/* source of AFI */
 	diag_t d;
@@ -462,6 +481,8 @@ diag_t extract_host_addrs(const struct whack_message *wm,
 		     str_address(&nexthop->addr, &nab));
 
 	}
+
+	set_host_addr_needs(config, verbose);
 
 	config->afi = winner.afi;
 	return NULL;
@@ -2711,7 +2732,7 @@ static void host_config_from_extracted_addr(struct route_addr *host,
 }
 
 static void host_configs_from_extracted_host_addrs(struct config *config,
-						   const struct extracted_host_addrs *host_addrs)
+						   const struct host_addrs *host_addrs)
 {
 	config->host.afi = host_addrs->afi;
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
@@ -2724,21 +2745,24 @@ static void host_configs_from_extracted_host_addrs(struct config *config,
 	}
 }
 
-struct extracted_host_addrs extract_host_addrs_from_host_configs(const struct config *config)
+struct host_addrs host_addrs_from_connection_config(const struct connection *c)
 {
-	struct extracted_host_addrs host_addrs = {
+	const struct config *config = c->config;
+	struct host_addrs host_addrs = {
 		.afi = config->host.afi,
 	};
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		host_addrs.end[end].leftright = (end == LEFT_END ? "left" : "right");
-		host_addrs.end[end].host = config->end[end].host.host;
-		host_addrs.end[end].nexthop = config->end[end].host.nexthop;
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		struct route_addrs *end = &host_addrs.end[lr];
+		end->leftright = (lr == LEFT_END ? "left" : "right");
+		end->host = config->end[lr].host.host;
+		end->nexthop = config->end[lr].host.nexthop;
 	}
+	set_host_addr_needs(&host_addrs, VERBOSE(DEBUG_STREAM, c->logger, NULL));
 	return host_addrs;
 }
 
 diag_t extract_connection(const struct whack_message *wm,
-			  const struct extracted_host_addrs *extracted_host_addrs,
+			  const struct host_addrs *extracted_host_addrs,
 			  struct connection *c,
 			  struct config *config,
 			  struct verbose verbose)
@@ -4686,11 +4710,13 @@ diag_t extract_connection(const struct whack_message *wm,
 }
 
 void extract_connection_resolve_continue(struct connection *c,
-					 const struct resolved_host_addrs *resolved_host_addrs,
+					 const struct host_addrs *resolved_host_addrs,
 					 struct verbose verbose)
 {
 	/* log all about this connection */
-	vdbg("resolved %s", bool_str(resolved_host_addrs->ok));
+	vdbg("needs.dns %s needs.route %s",
+	     bool_str(resolved_host_addrs->needs.dns),
+	     bool_str(resolved_host_addrs->needs.route));
 
 	err_t tss = connection_requires_tss(c);
 	if (tss != NULL) {

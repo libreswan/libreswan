@@ -143,10 +143,10 @@ static bool connection_check_ddns1(struct connection *c,
 }
 
 void connection_check_ddns1_continue(struct connection *c,
-				     const struct resolved_host_addrs *resolved_host_addrs,
+				     const struct host_addrs *resolved_host_addrs,
 				     struct verbose verbose)
 {
-	if (!resolved_host_addrs->ok) {
+	if (resolved_host_addrs->needs.dns) {
 		vlog("not resolved");
 		whack_detach(c, verbose.logger);
 		return;

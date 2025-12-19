@@ -171,7 +171,7 @@ static const struct ip_info *next_subnet(char **subnetstr,
  */
 
 static void permutate_connection_subnets(const struct whack_message *wm,
-					 const struct extracted_host_addrs *extracted_host_addrs,
+					 const struct host_addrs *extracted_host_addrs,
 					 const struct subnets *left,
 					 const struct subnets *right,
 					 struct verbose verbose)
@@ -278,7 +278,7 @@ static void permutate_connection_subnets(const struct whack_message *wm,
 }
 
 static void add_connections(const struct whack_message *wm,
-			    const struct extracted_host_addrs *extracted_host_addrs,
+			    const struct host_addrs *extracted_host_addrs,
 			    struct verbose verbose)
 {
 	/*
@@ -397,8 +397,8 @@ void whack_add(struct whack_message_refcnt *wmr, struct show *s)
 	whack_attach_where(conn_logger, show_logger(s), HERE);
 	{
 		struct verbose verbose = VERBOSE(DEBUG_STREAM, conn_logger, NULL);
-		struct extracted_host_addrs extracted_host_addrs = {0};
-		diag_t d = extract_host_addrs(wm, &extracted_host_addrs, verbose);
+		struct host_addrs extracted_host_addrs = {0};
+		diag_t d = host_addrs_from_whack_message(wm, &extracted_host_addrs, verbose);
 		if (d != NULL) {
 			llog_add_connection_failed(verbose, "%s", str_diag(d));
 			pfree_diag(&d);
