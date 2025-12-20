@@ -82,16 +82,20 @@ static void schedule_connection_event(struct connection *c,
 				      const struct logger *logger,
 				      where_t where)
 {
-	if (PBAD(logger, c->events[event_kind] != NULL)) {
+	if (PBAD_WHERE(logger, where, c->events[event_kind] != NULL)) {
 		return;
 	}
 
+	name_buf name;
+	str_enum_long(&connection_event_kind_names, event_kind, &name);
+	deltatime_buf time;
+	str_deltatime(delay, &time);
+
 	struct connection_event *d = alloc_thing(struct connection_event, "data");
 	connection_buf cb;
-	name_buf kb;
-	d->logger = string_logger(HERE, "event %s for "PRI_CONNECTION,
-				  str_enum_long(&connection_event_kind_names, event_kind, &kb),
-				  pri_connection(c, &cb));
+	d->logger = string_logger(HERE, "event %s for "PRI_CONNECTION" in %ss",
+				  name.buf, pri_connection(c, &cb),
+				  time.buf);
 	d->kind = event_kind;
 	d->subplot = subplot;
 	d->connection = connection_addref_where(c, d->logger, where);
@@ -99,13 +103,15 @@ static void schedule_connection_event(struct connection *c,
 
 	if (impair != NULL) {
 		llog(IMPAIR_STREAM, logger,
-		     "%s: skip scheduling %s event",
-		     impair, impair);
+		     "%s: skip scheduling %s event in %s seconds",
+		     impair, name.buf, time.buf);
 		return;
 	}
 
-	schedule_timeout(str_enum_long(&connection_event_kind_names, event_kind, &kb),
-			 &d->timeout, delay,
+	ldbg(logger, "scheduling %s event in %s seconds",
+	     name.buf, time.buf);
+
+	schedule_timeout(name.buf, &d->timeout, delay,
 			 connection_event_handler, d);
 }
 
