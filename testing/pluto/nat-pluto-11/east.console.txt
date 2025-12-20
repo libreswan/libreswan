@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-eastnet
-"road-eastnet": added IKEv1 connection
+"road-eastnet": added oriented IKEv1 connection
 east #
  ipsec status | grep encapsulation:
 "road-eastnet":   nat-traversal: encapsulation:auto; keepalive:20s; ikev1-method:rfc+drafts

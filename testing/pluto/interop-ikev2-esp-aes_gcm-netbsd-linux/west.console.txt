@@ -10,7 +10,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add interop
-"interop": added IKEv2 connection
+"interop": added oriented IKEv2 connection
 west #
  ipsec up interop
 "interop" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

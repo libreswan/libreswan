@@ -23,10 +23,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv2 connection
+"westnet-eastnet": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-passthrough
-"westnet-eastnet-passthrough": added passthrough connection
+"westnet-eastnet-passthrough": added oriented passthrough connection
 west #
  ipsec auto --route westnet-eastnet-passthrough
 west #

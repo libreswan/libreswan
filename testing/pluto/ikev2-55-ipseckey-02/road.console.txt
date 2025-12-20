@@ -9,7 +9,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add road-east-1
-"road-east-1": added IKEv2 connection
+"road-east-1": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -70,7 +70,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add road-east-2
-"road-east-2": added IKEv2 connection
+"road-east-2": added oriented IKEv2 connection
 road #
  ipsec auto --up road-east-2
 "road-east-2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

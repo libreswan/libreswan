@@ -28,7 +28,7 @@ west #
 initdone
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-esp-null-md5 -I 192.0.1.254 192.0.2.254
-"westnet-eastnet-esp-null-md5": added IKEv2 connection
+"westnet-eastnet-esp-null-md5": added oriented IKEv2 connection
 "westnet-eastnet-esp-null-md5" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-esp-null-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-esp-null-md5" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -43,7 +43,7 @@ up
 "westnet-eastnet-esp-null-md5" #1: deleting IKE SA (established IKE SA)
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-esp-null-sha1 -I 192.0.1.254 192.0.2.254
-"westnet-eastnet-esp-null-sha1": added IKEv2 connection
+"westnet-eastnet-esp-null-sha1": added oriented IKEv2 connection
 "westnet-eastnet-esp-null-sha1" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "westnet-eastnet-esp-null-sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "westnet-eastnet-esp-null-sha1" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH

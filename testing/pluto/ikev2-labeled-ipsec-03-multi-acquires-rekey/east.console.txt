@@ -16,7 +16,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add labeled
-"labeled": added IKEv2 connection
+"labeled": added oriented IKEv2 connection
 east #
  ipsec getpeercon_server -d 4300
 PATH/sbin/ipsec: unknown IPsec command "getpeercon_server" ("ipsec help" for list)

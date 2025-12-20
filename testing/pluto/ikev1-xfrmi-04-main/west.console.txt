@@ -10,7 +10,7 @@ west #
 west #
  ipsec auto --add westnet-eastnet
 "westnet-eastnet": created ipsec-interface ipsec1@NONE
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone

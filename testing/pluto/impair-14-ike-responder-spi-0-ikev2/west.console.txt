@@ -10,7 +10,7 @@ west #
  ipsec whack --impair timeout_on_retransmit
 west #
  ipsec add west-east
-"west-east": added IKEv2 connection
+"west-east": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

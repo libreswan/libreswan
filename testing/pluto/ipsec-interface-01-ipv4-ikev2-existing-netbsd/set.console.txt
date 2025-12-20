@@ -50,7 +50,7 @@ set #
 "rise-set": output: 1.12\n\tstatus: active\n\tinet6 fe80::ccae:eeba:9b4a:4c5e%ipsec1/64 ->  flags 0 scopeid 0x5\n\tinet 198.18
 "rise-set": output: .15.15/24 -> 198.18.12.12 flags 0\n
 "rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
-"rise-set": added IKEv2 connection
+"rise-set": added oriented IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 up

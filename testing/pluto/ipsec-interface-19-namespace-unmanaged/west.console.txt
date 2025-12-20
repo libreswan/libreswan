@@ -67,7 +67,7 @@ west #
  # pluto leaves both behind.
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
+"westnet4-eastnet4": added oriented IKEv2 connection
 west #
  ipsec up westnet4-eastnet4
 "westnet4-eastnet4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

@@ -12,7 +12,7 @@ IMPAIR: recording all inbound messages
 IMPAIR: block all inbound messages: no -> yes
 west #
  ipsec auto --add east-west
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 west #
  ../../guestbin/wait-for-inbound.sh 1
 IMPAIR: packet from 192.1.2.23:500: blocking inbound message 1

@@ -29,10 +29,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add road-A
-"road-A": added IKEv1 connection
+"road-A": added oriented IKEv1 connection
 east #
  ipsec add road-chain-B
-"road-chain-B": added IKEv1 connection
+"road-chain-B": added oriented IKEv1 connection
 east #
  ipsec auto --status |grep road
 "road-A": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=unset;

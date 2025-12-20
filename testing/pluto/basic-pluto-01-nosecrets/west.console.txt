@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nosecrets
-"nosecrets": added IKEv1 connection
+"nosecrets": added oriented IKEv1 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm

@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ppk
-"westnet-eastnet-ipv4-psk-ppk": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ppk": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ppk
 "westnet-eastnet-ipv4-psk-ppk": 192.0.2.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;

@@ -39,7 +39,7 @@ west #
  ipsec auto --add west
 "west": WARNING: left is a groundhog
 "west": WARNING: groundhog left certificate 'west-expired' has expired
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec checkpubkeys
 TIMESTAMP, 2048 RSA Key AwXXXXXXX (has private key), until TIMESTAMP fatal (expired)

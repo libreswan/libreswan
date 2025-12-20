@@ -7,7 +7,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north
-"north": added IKEv2 connection
+"north": added oriented IKEv2 connection
 north #
  ipsec auto --route north
 north #

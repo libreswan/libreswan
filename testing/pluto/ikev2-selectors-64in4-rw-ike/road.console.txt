@@ -12,7 +12,7 @@ road #
 road #
  ipsec auto --add road
 "road": connection is using multiple subnets
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone

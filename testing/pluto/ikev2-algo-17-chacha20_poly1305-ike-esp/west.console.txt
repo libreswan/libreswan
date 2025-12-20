@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-chacha
-"westnet-eastnet-chacha": added IKEv2 connection
+"westnet-eastnet-chacha": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

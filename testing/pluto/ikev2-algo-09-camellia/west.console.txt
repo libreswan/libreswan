@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-camellia
-"westnet-eastnet-camellia": added IKEv2 connection
+"westnet-eastnet-camellia": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

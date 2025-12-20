@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -37,7 +37,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #1: sent Main Mode request
 "westnet-eastnet" #1: sent Main Mode I2
@@ -69,7 +69,7 @@ west #
  ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #3: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #3: sent Main Mode request
 "westnet-eastnet" #3: sent Main Mode I2
@@ -91,7 +91,7 @@ west #
  ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #5: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #5: sent Main Mode request
 "westnet-eastnet" #5: sent Main Mode I2
@@ -113,7 +113,7 @@ west #
  ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --down -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #7: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #7: sent Main Mode request
 "westnet-eastnet" #7: sent Main Mode I2
@@ -148,7 +148,7 @@ west #
  ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #9: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #9: sent Main Mode request
 "westnet-eastnet" #9: sent Main Mode I2
@@ -172,7 +172,7 @@ west #
  ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #11: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #11: sent Main Mode request
 "westnet-eastnet" #11: sent Main Mode I2
@@ -196,7 +196,7 @@ west #
  ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #13: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #13: sent Main Mode request
 "westnet-eastnet" #13: sent Main Mode I2
@@ -233,7 +233,7 @@ west #
  ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #15: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #15: sent Main Mode request
 "westnet-eastnet" #15: sent Main Mode I2
@@ -255,7 +255,7 @@ west #
  ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #17: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #17: sent Main Mode request
 "westnet-eastnet" #17: sent Main Mode I2
@@ -277,7 +277,7 @@ west #
  ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #19: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #19: sent Main Mode request
 "westnet-eastnet" #19: sent Main Mode I2
@@ -312,7 +312,7 @@ west #
  ipsec whack --impair v1_hash_payload:omit
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #21: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #21: sent Main Mode request
 "westnet-eastnet" #21: sent Main Mode I2
@@ -334,7 +334,7 @@ west #
  ipsec whack --impair v1_hash_payload:empty
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #23: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #23: sent Main Mode request
 "westnet-eastnet" #23: sent Main Mode I2
@@ -356,7 +356,7 @@ west #
  ipsec whack --impair v1_hash_payload:0
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet --alive -I 192.0.1.254 192.0.2.254
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 "westnet-eastnet" #25: initiating IKEv1 Main Mode connection
 "westnet-eastnet" #25: sent Main Mode request
 "westnet-eastnet" #25: sent Main Mode I2

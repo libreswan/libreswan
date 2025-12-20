@@ -7,7 +7,7 @@ road #
 road #
  ipsec auto --add eastnet-any
 "eastnet-any": created ipsec-interface ipsec1@NONE
-"eastnet-any": added IKEv2 connection
+"eastnet-any": added oriented IKEv2 connection
 road #
  # confirm we have stock resolv.conf
 road #

@@ -8,7 +8,7 @@ east #
 east #
  ipsec auto --add east
 "east": ikev2=no has been replaced by keyexchange=ikev1
-"east": added IKEv1 connection
+"east": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

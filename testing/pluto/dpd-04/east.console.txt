@@ -8,15 +8,15 @@ east #
 east #
  ipsec add westnet-east
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
-"westnet-east": added IKEv1 connection
+"westnet-east": added oriented IKEv1 connection
 east #
  ipsec add west-eastnet
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
-"west-eastnet": added IKEv1 connection
+"west-eastnet": added oriented IKEv1 connection
 east #
  ipsec add west-east
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

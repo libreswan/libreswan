@@ -30,7 +30,7 @@ west #
  # this one should work as %fromcert means for the CERT received with IKE
 west #
  ipsec auto --add cert-allow
-"cert-allow": added IKEv2 connection
+"cert-allow": added oriented IKEv2 connection
 west #
  echo done
 done

@@ -11,13 +11,13 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add TUNNEL-A
-"TUNNEL-A": added IKEv1 connection
+"TUNNEL-A": added oriented IKEv1 connection
 east #
  ipsec auto --add TUNNEL-B
-"TUNNEL-B": added IKEv1 connection
+"TUNNEL-B": added oriented IKEv1 connection
 east #
  ipsec auto --add TUNNEL-C
-"TUNNEL-C": added IKEv1 connection
+"TUNNEL-C": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add north-west-default
-"north-west-default": added IKEv2 connection
+"north-west-default": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

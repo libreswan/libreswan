@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add initiator
-"initiator": added IKEv2 connection
+"initiator": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

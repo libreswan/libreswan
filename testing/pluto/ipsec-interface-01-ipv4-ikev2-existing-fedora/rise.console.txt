@@ -28,7 +28,7 @@ rise #
  ../../guestbin/wait-until-pluto-started
 rise #
  ipsec add rise-set
-"rise-set": added IKEv2 connection
+"rise-set": added oriented IKEv2 connection
 rise #
  ipsec up rise-set
 "rise-set" #1: initiating IKEv2 connection to 198.18.1.15 using UDP

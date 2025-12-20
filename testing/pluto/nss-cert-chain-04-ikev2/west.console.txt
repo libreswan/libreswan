@@ -27,7 +27,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add road-chain-B
-"road-chain-B": added IKEv2 connection
+"road-chain-B": added oriented IKEv2 connection
 west #
  ipsec auto --status |grep road-chain-B
 "road-chain-B": 192.0.1.254/32===192.1.2.45[@west_chain_endcert.testing.libreswan.org]...192.1.2.23[@east.testing.libreswan.org]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=unset;

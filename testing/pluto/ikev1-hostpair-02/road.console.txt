@@ -11,7 +11,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-"westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
  echo "initdone"
 initdone
@@ -58,7 +58,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: send_no_delete set - not sending De
 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
 "westnet-eastnet-ipv4-psk-ikev1" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #1: send_no_delete set - not sending Delete/Notify
-"westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1" #3: initiating IKEv1 Main Mode connection
@@ -92,7 +92,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #4: send_no_delete set - not sending De
 "westnet-eastnet-ipv4-psk-ikev1" #4: ESP traffic information: in=0B out=0B XAUTHuser=use3
 "westnet-eastnet-ipv4-psk-ikev1" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #3: send_no_delete set - not sending Delete/Notify
-"westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1" #5: initiating IKEv1 Main Mode connection
@@ -126,7 +126,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #6: send_no_delete set - not sending De
 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
 "westnet-eastnet-ipv4-psk-ikev1" #5: deleting ISAKMP SA (MAIN_I4) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #5: send_no_delete set - not sending Delete/Notify
-"westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
 "westnet-eastnet-ipv4-psk-ikev1" #7: initiating IKEv1 Main Mode connection

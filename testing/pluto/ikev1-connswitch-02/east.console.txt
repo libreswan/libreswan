@@ -16,11 +16,11 @@ east #
 east #
  ipsec auto --add westnet-eastnet
 "westnet-eastnet": ikev2=no has been replaced by keyexchange=ikev1
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 east #
  ipsec auto --add distraction
 "distraction": ikev2=no has been replaced by keyexchange=ikev1
-"distraction": added IKEv1 connection
+"distraction": added oriented IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet
 "westnet-eastnet": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.45...%any; unrouted; my_ip=unset; their_ip=unset;

@@ -18,14 +18,14 @@ north #
 north #
  ipsec auto --add north
 "north": created ipsec-interface ipsec1@NONE
-"north": added IKEv2 connection
+"north": added oriented IKEv2 connection
 north #
  # test for refcounting when connection has never been up'ed yet
 north #
  ipsec auto --add north
 "north": delete ipsec-interface ipsec1@NONE added by pluto
 "north": created ipsec-interface ipsec1@NONE
-"north": added IKEv2 connection
+"north": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

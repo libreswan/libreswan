@@ -6,7 +6,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-to-east
-"west-to-east": added IKEv1 connection
+"west-to-east": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -62,7 +62,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-to-east
-"west-to-east": added IKEv1 connection
+"west-to-east": added oriented IKEv1 connection
 west #
  ipsec up west-to-east
 "west-to-east" #1: initiating IKEv1 Main Mode connection

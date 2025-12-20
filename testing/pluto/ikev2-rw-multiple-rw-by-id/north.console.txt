@@ -9,7 +9,7 @@ north #
  ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add rw
-"rw": added IKEv2 connection
+"rw": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-ikev2
-"road-eastnet-ikev2": added IKEv2 connection
+"road-eastnet-ikev2": added oriented IKEv2 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #

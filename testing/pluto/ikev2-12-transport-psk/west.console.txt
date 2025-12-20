@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ipv4-psk-ikev2-transport
-"ipv4-psk-ikev2-transport": added IKEv2 connection
+"ipv4-psk-ikev2-transport": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep ipv4-psk-ikev2-transport
 "ipv4-psk-ikev2-transport": 192.1.2.45[@west]...192.1.2.23[@east]; unrouted; my_ip=unset; their_ip=unset;

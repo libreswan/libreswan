@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add nss-cert
-"nss-cert": added IKEv2 connection
+"nss-cert": added oriented IKEv2 connection
 west #
  ipsec auto --status |grep nss-cert
 "nss-cert": 192.0.1.254/32===192.1.2.45[@west.testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;

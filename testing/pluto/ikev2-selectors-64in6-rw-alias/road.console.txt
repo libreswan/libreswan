@@ -14,9 +14,9 @@ road #
 warning: "road": skipping mismatched leftsubnets=2001:db8:0:30::/64 rightsubnets=192.0.2.0/24
 warning: "road": skipping mismatched leftsubnets=192.0.3.0/24 rightsubnets=2001:db8:0:20::/64
 "road/1x1": connection is using multiple sourceips
-"road/1x1": added IKEv2 connection
+"road/1x1": added oriented IKEv2 connection
 "road/2x2": connection is using multiple sourceips
-"road/2x2": added IKEv2 connection
+"road/2x2": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone

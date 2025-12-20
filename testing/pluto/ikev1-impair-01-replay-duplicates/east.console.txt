@@ -11,7 +11,7 @@ IMPAIR: recording all inbound messages
 IMPAIR: replay duplicate of all inbound messages: no -> yes
 east #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

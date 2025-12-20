@@ -11,13 +11,13 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": added IKEv1 connection
+"modecfg-road-eastnet-psk": added oriented IKEv1 connection
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --replace modecfg-road-eastnet-psk
-"modecfg-road-eastnet-psk": added IKEv1 connection
+"modecfg-road-eastnet-psk": added oriented IKEv1 connection
 road #
  ipsec whack --status | grep modecfg-road-eastnet-psk
 "modecfg-road-eastnet-psk": 192.1.3.194[@roadrandom]---192.1.3.254...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;

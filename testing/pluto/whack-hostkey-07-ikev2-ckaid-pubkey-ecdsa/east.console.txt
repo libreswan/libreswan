@@ -49,5 +49,5 @@ conn hostkey
 	leftpubkey=<<PEM-PUBKEY#1>>
 east #
  ipsec auto --add hostkey
-"hostkey": added IKEv2 connection
+"hostkey": added oriented IKEv2 connection
 east #

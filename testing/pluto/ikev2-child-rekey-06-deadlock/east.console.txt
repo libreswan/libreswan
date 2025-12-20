@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep east
 "east": 192.1.2.23[@east]...192.1.2.45[@west]; unrouted; my_ip=unset; their_ip=unset;

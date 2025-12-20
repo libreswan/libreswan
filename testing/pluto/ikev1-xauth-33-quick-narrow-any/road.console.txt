@@ -11,10 +11,10 @@ road #
  ipsec whack --impair revival
 road #
  ipsec add road-east
-"road-east": added IKEv1 connection
+"road-east": added oriented IKEv1 connection
 road #
  ipsec add road-narrows-east
-"road-narrows-east": added IKEv1 connection
+"road-narrows-east": added oriented IKEv1 connection
 road #
  ipsec whack --xauthname 'xroad' --xauthpass 'use1pass' --name road-east --initiate
 "road-east" #1: initiating IKEv1 Main Mode connection

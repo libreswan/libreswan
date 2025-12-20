@@ -7,13 +7,13 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 west #
  ipsec auto --add float-east
 "float-east": added unoriented IKEv1 connection (neither left=192.1.2.66 nor right=192.1.2.23 match an interface)
 west #
  ipsec auto --add west-float
-"west-float": added IKEv1 connection
+"west-float": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone

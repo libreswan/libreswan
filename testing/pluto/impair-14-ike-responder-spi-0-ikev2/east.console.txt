@@ -8,7 +8,7 @@ east #
  ipsec whack --impair ike_responder_spi:0
 east #
  ipsec add west-east
-"west-east": added IKEv2 connection
+"west-east": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

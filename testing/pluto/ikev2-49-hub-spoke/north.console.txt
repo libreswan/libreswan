@@ -9,7 +9,7 @@ north #
  ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add northnet-westnet-ipv4-psk
-"northnet-westnet-ipv4-psk": added IKEv2 connection
+"northnet-westnet-ipv4-psk": added oriented IKEv2 connection
 north #
  ipsec auto --up northnet-westnet-ipv4-psk
 "northnet-westnet-ipv4-psk" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

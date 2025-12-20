@@ -18,7 +18,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add nss-cert-chain
-"nss-cert-chain": added IKEv1 connection
+"nss-cert-chain": added oriented IKEv1 connection
 east #
  ipsec auto --status |grep nss-cert-chain
 "nss-cert-chain": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=192.0.1.254;

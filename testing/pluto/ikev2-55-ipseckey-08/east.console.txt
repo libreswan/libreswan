@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east-any
-"east-any": added IKEv2 connection
+"east-any": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep east-any
 "east-any": 192.1.2.23...%any; unrouted; my_ip=unset; their_ip=unset;

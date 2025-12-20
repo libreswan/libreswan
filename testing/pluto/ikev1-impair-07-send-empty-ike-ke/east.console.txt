@@ -11,7 +11,7 @@ east #
  ipsec whack --impair suppress_retransmits
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-slow
-"westnet-eastnet-ipv4-psk-slow": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-slow": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

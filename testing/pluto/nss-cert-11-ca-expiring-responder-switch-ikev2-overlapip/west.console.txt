@@ -37,10 +37,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add old-west
-"old-west": added IKEv2 connection
+"old-west": added oriented IKEv2 connection
 west #
  ipsec auto --add new-west
-"new-west": added IKEv2 connection
+"new-west": added oriented IKEv2 connection
 west #
  ipsec up old-west # sanitize-retransmits
 "old-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

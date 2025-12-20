@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-encapsulation=yes
-"road-eastnet-encapsulation=yes": added IKEv1 connection
+"road-eastnet-encapsulation=yes": added oriented IKEv1 connection
 road #
  ipsec status | grep encapsulation:
 "road-eastnet-encapsulation=yes":   nat-traversal: encapsulation:yes; keepalive:20s; ikev1-method:rfc+drafts

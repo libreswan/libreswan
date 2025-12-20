@@ -8,7 +8,7 @@ east #
 east #
  ipsec auto --add named
 "named": adding interface eth1 192.1.2.23:UDP/443 (NAT fixed)
-"named": added IKEv2 connection
+"named": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

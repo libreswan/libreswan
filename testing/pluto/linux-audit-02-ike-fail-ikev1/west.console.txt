@@ -13,10 +13,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev1-failtest
-"ikev1-failtest": added IKEv1 connection
+"ikev1-failtest": added oriented IKEv1 connection
 west #
  ipsec auto --add ikev1-aggr-failtest
-"ikev1-aggr-failtest": added IKEv1 connection
+"ikev1-aggr-failtest": added oriented IKEv1 connection
 west #
  ipsec whack --impair revival
 west #

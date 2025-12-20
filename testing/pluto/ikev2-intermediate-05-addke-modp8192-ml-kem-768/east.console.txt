@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add any-east
-"any-east": added IKEv2 connection
+"any-east": added oriented IKEv2 connection
 east #
  ipsec connectionstatus | grep ' policy: '
 "any-east":   policy: IKEv2+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ESN_NO+ESN_YES+INTERMEDIATE;

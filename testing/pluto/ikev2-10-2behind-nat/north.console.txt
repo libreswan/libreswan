@@ -9,7 +9,7 @@ north #
  ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add north
-"north": added IKEv2 connection
+"north": added oriented IKEv2 connection
 north #
  ipsec auto --up north
 "north"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP

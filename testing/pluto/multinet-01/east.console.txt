@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-subnets
-"westnet-eastnet-subnets/1x1": added IKEv1 connection
-"westnet-eastnet-subnets/2x1": added IKEv1 connection
-"westnet-eastnet-subnets/1x2": added IKEv1 connection
-"westnet-eastnet-subnets/2x2": added IKEv1 connection
+"westnet-eastnet-subnets/1x1": added oriented IKEv1 connection
+"westnet-eastnet-subnets/2x1": added oriented IKEv1 connection
+"westnet-eastnet-subnets/1x2": added oriented IKEv1 connection
+"westnet-eastnet-subnets/2x2": added oriented IKEv1 connection
 east #
  ipsec status | grep westnet-eastnet
 "westnet-eastnet-subnets/1x1": 192.0.2.16/28===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/28; unrouted; my_ip=unset; their_ip=unset;

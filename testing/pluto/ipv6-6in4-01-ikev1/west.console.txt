@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-6in4
-"westnet-eastnet-6in4": added IKEv1 connection
+"westnet-eastnet-6in4": added oriented IKEv1 connection
 west #
  ipsec status | grep westnet-eastnet-6in4
 "westnet-eastnet-6in4": 2001:db8:0:1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2001:db8:0:2::/64; unrouted; my_ip=unset; their_ip=unset;

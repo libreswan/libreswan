@@ -10,7 +10,7 @@ east #
 east #
  ipsec auto --add eastnet-road
 "eastnet-road": created ipsec-interface ipsec1@NONE
-"eastnet-road": added IKEv2 connection
+"eastnet-road": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

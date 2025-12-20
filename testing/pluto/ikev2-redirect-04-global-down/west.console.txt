@@ -10,7 +10,7 @@ west #
 whack error: unexpected argument "suppress-retransmits"
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

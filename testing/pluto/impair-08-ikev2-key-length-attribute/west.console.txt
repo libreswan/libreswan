@@ -18,7 +18,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -41,7 +41,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "aes128" #3: emitting fixed-length key-length attribute with 0 key
 "aes128" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -57,7 +57,7 @@ west #
  ipsec whack --impair child_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -77,7 +77,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #8: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "aes128" #8: duplicating key-length attribute
 "aes128" #8: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -99,7 +99,7 @@ west #
  ipsec whack --impair child_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #10: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #10: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #10: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -123,7 +123,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #12: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "aes128" #12: omitting fixed-size key-length attribute
 "aes128" #12: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -139,7 +139,7 @@ west #
  ipsec whack --impair child_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #14: initiating IKEv2 connection to 192.1.2.23 using UDP
 "aes128" #14: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "aes128" #14: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -161,7 +161,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #17: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "aes128" #17: emitting variable-size key-length attribute with no key
 IMPAIR: "aes128" #17: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
@@ -180,7 +180,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv2 connection
+"aes128": added oriented IKEv2 connection
 "aes128" #19: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "aes128" #19: emitting variable-size key-length attribute with no key
 IMPAIR: "aes128" #19: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
@@ -197,7 +197,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
-"3des": added IKEv2 connection
+"3des": added oriented IKEv2 connection
 "3des" #21: initiating IKEv2 connection to 192.1.2.23 using UDP
 "3des" #21: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "3des" #21: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -220,7 +220,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
-"3des": added IKEv2 connection
+"3des": added oriented IKEv2 connection
 "3des" #23: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "3des" #23: emitting fixed-length key-length attribute with 0 key
 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -244,7 +244,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:192
 west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
-"3des": added IKEv2 connection
+"3des": added oriented IKEv2 connection
 "3des" #25: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "3des" #25: emitting fixed-length key-length attribute with 192 key
 "3des" #25: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

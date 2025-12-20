@@ -6,8 +6,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add northnet-eastnet
-"northnet-eastnet/0x1": added IKEv2 connection
-"northnet-eastnet/0x2": added IKEv2 connection
+"northnet-eastnet/0x1": added oriented IKEv2 connection
+"northnet-eastnet/0x2": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep northnet-eastnet
 "northnet-eastnet/0x1": 192.0.2.0/24===192.1.2.23[@east]...192.1.3.33[@north]===192.0.3.0/24; unrouted; my_ip=unset; their_ip=unset;

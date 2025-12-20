@@ -8,7 +8,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev1 ike=aes-md5 esp=3des-sha1
-"algo": added IKEv1 connection
+"algo": added oriented IKEv1 connection
  ipsec up algo
 "algo" #1: initiating IKEv1 Main Mode connection
 "algo" #1: sent Main Mode request
@@ -28,7 +28,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west keyexchange=ikev2 ike=aes-md5 esp=3des-sha1
-"algo": added IKEv2 connection
+"algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500

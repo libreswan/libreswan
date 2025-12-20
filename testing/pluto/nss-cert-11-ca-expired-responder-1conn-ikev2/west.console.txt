@@ -39,10 +39,10 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add old-west
-"old-west": added IKEv2 connection
+"old-west": added oriented IKEv2 connection
 west #
  ipsec auto --add new-west
-"new-west": added IKEv2 connection
+"new-west": added oriented IKEv2 connection
 west #
  # out with the old
 west #

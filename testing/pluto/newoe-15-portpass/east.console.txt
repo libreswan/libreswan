@@ -19,12 +19,12 @@ east #
 Total IPsec connections: loaded 10, routed 5, active 0
 east #
  ipsec auto --add passthrough-in
-"passthrough-in": added passthrough connection
+"passthrough-in": added oriented passthrough connection
 east #
  ipsec auto --route passthrough-in
 east #
  ipsec auto --add passthrough-out
-"passthrough-out": added passthrough connection
+"passthrough-out": added oriented passthrough connection
 east #
  ipsec auto --route passthrough-out
 east #

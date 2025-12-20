@@ -28,7 +28,7 @@ set #
  ../../guestbin/wait-until-pluto-started
 set #
  ipsec add rise-set
-"rise-set": added IKEv2 connection
+"rise-set": added oriented IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 down UNEXPECTED

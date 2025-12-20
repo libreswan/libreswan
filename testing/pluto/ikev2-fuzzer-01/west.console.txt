@@ -11,7 +11,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -23,7 +23,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -35,7 +35,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -47,7 +47,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -59,7 +59,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -71,7 +71,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -83,7 +83,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -95,7 +95,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -107,7 +107,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -119,7 +119,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -131,7 +131,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -143,7 +143,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -155,7 +155,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -167,7 +167,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -179,7 +179,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -191,7 +191,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -203,7 +203,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -215,7 +215,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop
@@ -227,7 +227,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 end #
 begin #
  ipsec stop

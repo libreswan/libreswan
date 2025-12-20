@@ -9,7 +9,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add road-eastnet-encapsulation=yes
-"road-eastnet-encapsulation=yes": added IKEv2 connection
+"road-eastnet-encapsulation=yes": added oriented IKEv2 connection
 road #
  ipsec status | grep encapsulation:
 "road-eastnet-encapsulation=yes":   nat-traversal: encapsulation:yes; keepalive:20s

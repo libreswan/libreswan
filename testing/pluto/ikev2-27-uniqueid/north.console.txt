@@ -7,7 +7,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add road-eastnet-ikev2
-"road-eastnet-ikev2": added IKEv2 connection
+"road-eastnet-ikev2": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone
@@ -43,7 +43,7 @@ north #
  ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add road-eastnet-ikev2
-"road-eastnet-ikev2": added IKEv2 connection
+"road-eastnet-ikev2": added oriented IKEv2 connection
 north #
  ipsec auto --up road-eastnet-ikev2
 "road-eastnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

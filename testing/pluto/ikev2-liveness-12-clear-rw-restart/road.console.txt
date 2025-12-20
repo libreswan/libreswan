@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-x509-ipv4
-"road-east-x509-ipv4": added IKEv2 connection
+"road-east-x509-ipv4": added oriented IKEv2 connection
 road #
  ipsec auto --up road-east-x509-ipv4
 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -36,7 +36,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-x509-ipv4
-"road-east-x509-ipv4": added IKEv2 connection
+"road-east-x509-ipv4": added oriented IKEv2 connection
 road #
  ipsec auto --up road-east-x509-ipv4
 "road-east-x509-ipv4"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP

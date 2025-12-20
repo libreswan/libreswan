@@ -11,7 +11,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec add road-east
-"road-east": added IKEv1 connection
+"road-east": added oriented IKEv1 connection
 road #
  ipsec up road-east
 "road-east" #1: initiating IKEv1 Main Mode connection

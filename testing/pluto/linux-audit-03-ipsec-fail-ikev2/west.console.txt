@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-ipsec-fail
-"ikev2-ipsec-fail": added IKEv2 connection
+"ikev2-ipsec-fail": added oriented IKEv2 connection
 west #
  #ipsec whack --impair timeout_on_retransmit
 west #

@@ -9,10 +9,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add san-openssl
-"san-openssl": added IKEv2 connection
+"san-openssl": added oriented IKEv2 connection
 west #
  ipsec add san-nss
-"san-nss": added IKEv2 connection
+"san-nss": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

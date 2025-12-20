@@ -9,7 +9,7 @@ west #
  ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
-"westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
+"westnet-eastnet-ipv4-psk-ikev1": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone

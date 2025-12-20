@@ -7,9 +7,9 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west # alias; includes west-base, oops!
-"west-base": added IKEv1 connection
-"west-cuckold": added IKEv1 connection
-"west-cuckoo": added IKEv1 connection
+"west-base": added oriented IKEv1 connection
+"west-cuckold": added oriented IKEv1 connection
+"west-cuckoo": added oriented IKEv1 connection
 west #
  ipsec delete west-base
 west #

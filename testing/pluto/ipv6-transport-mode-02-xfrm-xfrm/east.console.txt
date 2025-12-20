@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add v6-transport
-"v6-transport": added IKEv1 connection
+"v6-transport": added oriented IKEv1 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm

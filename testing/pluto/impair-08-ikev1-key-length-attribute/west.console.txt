@@ -20,7 +20,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #1: initiating IKEv1 Main Mode connection
 "aes128" #1: sent Main Mode request
 "aes128" #1: sent Main Mode I2
@@ -47,7 +47,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #3: initiating IKEv1 Main Mode connection
 IMPAIR: "aes128" #3: stripping key-length
 IMPAIR: "aes128" #3: duplicating key-length
@@ -67,7 +67,7 @@ west #
  ipsec whack --impair child_key_length_attribute:duplicate
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #4: initiating IKEv1 Main Mode connection
 "aes128" #4: sent Main Mode request
 "aes128" #4: sent Main Mode I2
@@ -94,7 +94,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #6: initiating IKEv1 Main Mode connection
 IMPAIR: "aes128" #6: stripping key-length
 IMPAIR: "aes128" #6: sending key-length attribute value 0
@@ -114,7 +114,7 @@ west #
  ipsec whack --impair child_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #7: initiating IKEv1 Main Mode connection
 "aes128" #7: sent Main Mode request
 "aes128" #7: sent Main Mode I2
@@ -141,7 +141,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #9: initiating IKEv1 Main Mode connection
 IMPAIR: "aes128" #9: stripping key-length
 IMPAIR: "aes128" #9: not sending key-length attribute
@@ -168,7 +168,7 @@ west #
  ipsec whack --impair child_key_length_attribute:omit
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #11: initiating IKEv1 Main Mode connection
 "aes128" #11: sent Main Mode request
 "aes128" #11: sent Main Mode I2
@@ -197,7 +197,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --alive -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #13: initiating IKEv1 Main Mode connection
 IMPAIR: "aes128" #13: stripping key-length
 IMPAIR: "aes128" #13: key-length-attribute:empty not implemented
@@ -226,7 +226,7 @@ west #
  ipsec whack --impair child_key_length_attribute:empty
 west #
  ../../guestbin/libreswan-up-down.sh aes128 --down -I 192.0.1.254 192.0.2.254
-"aes128": added IKEv1 connection
+"aes128": added oriented IKEv1 connection
 "aes128" #15: initiating IKEv1 Main Mode connection
 "aes128" #15: sent Main Mode request
 "aes128" #15: sent Main Mode I2
@@ -257,7 +257,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
-"3des": added IKEv1 connection
+"3des": added oriented IKEv1 connection
 "3des" #17: initiating IKEv1 Main Mode connection
 "3des" #17: sent Main Mode request
 "3des" #17: sent Main Mode I2
@@ -284,7 +284,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:0
 west #
  ../../guestbin/libreswan-up-down.sh 3des --down -I 192.0.1.254 192.0.2.254
-"3des": added IKEv1 connection
+"3des": added oriented IKEv1 connection
 "3des" #19: initiating IKEv1 Main Mode connection
 IMPAIR: "3des" #19: sending key-length attribute value 0
 "3des" #19: sent Main Mode request
@@ -305,7 +305,7 @@ west #
  ipsec whack --impair ike_key_length_attribute:192
 west #
  ../../guestbin/libreswan-up-down.sh 3des --alive -I 192.0.1.254 192.0.2.254
-"3des": added IKEv1 connection
+"3des": added oriented IKEv1 connection
 "3des" #20: initiating IKEv1 Main Mode connection
 IMPAIR: "3des" #20: sending key-length attribute value 192
 "3des" #20: sent Main Mode request

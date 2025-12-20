@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ipv4-psk-ikev2
-"ipv4-psk-ikev2": added IKEv2 connection
+"ipv4-psk-ikev2": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep iptfs
 "ipv4-psk-ikev2":   iptfs: no; fragmentation: yes; packet-size: 0; max-queue-size: 0; drop-time: 0; init-delay: 0; reorder-window: 0;

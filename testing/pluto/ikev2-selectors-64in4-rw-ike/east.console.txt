@@ -14,7 +14,7 @@ east #
 east #
  ipsec auto --add east
 "east": connection is using multiple subnets
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

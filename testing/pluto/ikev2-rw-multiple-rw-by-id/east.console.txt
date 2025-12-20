@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add road-any
-"road-any": added IKEv2 connection
+"road-any": added oriented IKEv2 connection
 east #
  ipsec auto --add north-any
-"north-any": added IKEv2 connection
+"north-any": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

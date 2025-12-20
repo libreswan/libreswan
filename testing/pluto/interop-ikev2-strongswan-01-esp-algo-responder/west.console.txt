@@ -26,7 +26,7 @@ west #
 initdone
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-md5 -I 192.0.1.254 192.0.2.254
-"esp=null-md5": added IKEv2 connection
+"esp=null-md5": added oriented IKEv2 connection
 "esp=null-md5" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "esp=null-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-md5" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -41,7 +41,7 @@ up
 "esp=null-md5" #1: deleting IKE SA (established IKE SA)
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
-"esp=null-sha1": added IKEv2 connection
+"esp=null-sha1": added oriented IKEv2 connection
 "esp=null-sha1" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "esp=null-sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-sha1" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -56,7 +56,7 @@ up
 "esp=null-sha1" #3: deleting IKE SA (established IKE SA)
 west #
  ../../guestbin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
-"esp=null_auth_aes_gmac-null": added IKEv2 connection
+"esp=null_auth_aes_gmac-null": added oriented IKEv2 connection
 "esp=null_auth_aes_gmac-null" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 "esp=null_auth_aes_gmac-null" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null_auth_aes_gmac-null" #5: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -71,7 +71,7 @@ up
 "esp=null_auth_aes_gmac-null" #5: deleting IKE SA (established IKE SA)
 west #
  modinfo chacha20poly1305 > /dev/null && ../../guestbin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
-"esp=chacha20_poly1305-null": added IKEv2 connection
+"esp=chacha20_poly1305-null": added oriented IKEv2 connection
 "esp=chacha20_poly1305-null" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "esp=chacha20_poly1305-null" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=chacha20_poly1305-null" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH

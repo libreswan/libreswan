@@ -27,10 +27,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-vti-01
-"westnet-eastnet-vti-01": added IKEv1 connection
+"westnet-eastnet-vti-01": added oriented IKEv1 connection
 west #
  ipsec auto --add westnet-eastnet-vti-02
-"westnet-eastnet-vti-02": added IKEv1 connection
+"westnet-eastnet-vti-02": added oriented IKEv1 connection
 west #
  # remove the regular route for 192.0.2.0/24
 west #

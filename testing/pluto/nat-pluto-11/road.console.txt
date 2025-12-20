@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet-nonat
-"road-eastnet-nonat": added IKEv1 connection
+"road-eastnet-nonat": added oriented IKEv1 connection
 road #
  # should show encaps no, natt payloads none
 road #

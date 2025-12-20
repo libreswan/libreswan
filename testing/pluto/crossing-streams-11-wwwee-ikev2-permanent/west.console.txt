@@ -14,7 +14,7 @@ IMPAIR: recording all inbound messages
 IMPAIR: block all inbound messages: no -> yes
 west #
  ipsec auto --add east-west
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 west #
  # First wait for EAST's IKE_SA_INIT request to arrive.
 west #

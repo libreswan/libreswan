@@ -45,14 +45,14 @@ road #
 road #
  ./run.sh left=%defaultroute right=192.1.2.23
  ipsec add defaultroute-ipv4
-"defaultroute-ipv4": added IKEv2 connection
+"defaultroute-ipv4": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-ipv4 | grep ' host: '
 "defaultroute-ipv4":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: 192.1.2.23;
 road #
  ./run.sh left=%defaultroute right=2001:db8:1:2::23
  ipsec add defaultroute-ipv6
-"defaultroute-ipv6": added IKEv2 connection
+"defaultroute-ipv6": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-ipv6 | grep ' host: '
 "defaultroute-ipv6":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: 2001:db8:1:2::23;
@@ -71,14 +71,14 @@ road #
 road #
  ./run.sh left=%defaultroute leftnexthop=%direct right=192.1.2.23
  ipsec add defaultroute-direct-ipv4
-"defaultroute-direct-ipv4": added IKEv2 connection
+"defaultroute-direct-ipv4": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-direct-ipv4 | grep ' host: '
 "defaultroute-direct-ipv4":   host: oriented; local: 192.1.3.209; remote: 192.1.2.23;
 road #
  ./run.sh left=%defaultroute leftnexthop=%direct right=2001:db8:1:2::23
  ipsec add defaultroute-direct-ipv6
-"defaultroute-direct-ipv6": added IKEv2 connection
+"defaultroute-direct-ipv6": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-direct-ipv6 | grep ' host: '
 "defaultroute-direct-ipv6":   host: oriented; local: 2001:db8:1:3::209; remote: 2001:db8:1:2::23;
@@ -87,14 +87,14 @@ road #
 road #
  ./run.sh left=%defaultroute right=%any
  ipsec add defaultroute-any
-"defaultroute-any": added IKEv2 connection
+"defaultroute-any": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-any | grep ' host: '
 "defaultroute-any":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %any;
 road #
  ./run.sh hostaddrfamily=ipv4 left=%defaultroute right=%any
  ipsec add hostaddrfamily-ipv4-defaultroute-any
-"hostaddrfamily-ipv4-defaultroute-any": added IKEv2 connection
+"hostaddrfamily-ipv4-defaultroute-any": added oriented IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-any | grep ' host: '
 "hostaddrfamily-ipv4-defaultroute-any":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %any;
@@ -124,14 +124,14 @@ road #
 road #
  ./run.sh left=%defaultroute leftnexthop=%defaultroute right=%any
  ipsec add defaultroute-defaultroute-any
-"defaultroute-defaultroute-any": added IKEv2 connection
+"defaultroute-defaultroute-any": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-defaultroute-any | grep ' host: '
 "defaultroute-defaultroute-any":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %any;
 road #
  ./run.sh hostaddrfamily=ipv4 left=%defaultroute leftnexthop=%defaultroute right=%any
  ipsec add hostaddrfamily-ipv4-defaultroute-defaultroute-any
-"hostaddrfamily-ipv4-defaultroute-defaultroute-any": added IKEv2 connection
+"hostaddrfamily-ipv4-defaultroute-defaultroute-any": added oriented IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-defaultroute-any | grep ' host: '
 "hostaddrfamily-ipv4-defaultroute-defaultroute-any":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %any;
@@ -147,14 +147,14 @@ road #
 road #
  ./run.sh hostaddrfamily=ipv4 left=%defaultroute right=%group
  ipsec add hostaddrfamily-ipv4-defaultroute-group
-"hostaddrfamily-ipv4-defaultroute-group": added IKEv2 connection
+"hostaddrfamily-ipv4-defaultroute-group": added oriented IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-group | grep ' host: '
 "hostaddrfamily-ipv4-defaultroute-group":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %group;
 road #
  ./run.sh hostaddrfamily=ipv6 left=%defaultroute right=%group
  ipsec add hostaddrfamily-ipv6-defaultroute-group
-"hostaddrfamily-ipv6-defaultroute-group": added IKEv2 connection
+"hostaddrfamily-ipv6-defaultroute-group": added oriented IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-group | grep ' host: '
 "hostaddrfamily-ipv6-defaultroute-group":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: %group;
@@ -183,14 +183,14 @@ default via 2001:db8:1:3::254 dev eth0 proto static
 road #
  ./run.sh hostaddrfamily=ipv4 left=%defaultroute right=%group
  ipsec add hostaddrfamily-ipv4-defaultroute-group
-"hostaddrfamily-ipv4-defaultroute-group": added IKEv2 connection
+"hostaddrfamily-ipv4-defaultroute-group": added oriented IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv4-defaultroute-group | grep ' host: '
 "hostaddrfamily-ipv4-defaultroute-group":   host: oriented; local: 192.1.3.209; nexthop: 192.1.3.254; remote: %group;
 road #
  ./run.sh hostaddrfamily=ipv6 left=%defaultroute right=%group
  ipsec add hostaddrfamily-ipv6-defaultroute-group
-"hostaddrfamily-ipv6-defaultroute-group": added IKEv2 connection
+"hostaddrfamily-ipv6-defaultroute-group": added oriented IKEv2 connection
 road #
  ipsec connectionstatus hostaddrfamily-ipv6-defaultroute-group | grep ' host: '
 "hostaddrfamily-ipv6-defaultroute-group":   host: oriented; local: 2001:db8:1:3::209; nexthop: 2001:db8:1:3::254; remote: %group;
@@ -225,7 +225,7 @@ default via fe80::1000:ff:fe32:64ba dev eth0
 road #
  ./run.sh left=%defaultroute right=2001:db8:1:2::23
  ipsec add defaultroute-ipv6
-"defaultroute-ipv6": added IKEv2 connection
+"defaultroute-ipv6": added oriented IKEv2 connection
 road #
  ipsec connectionstatus defaultroute-ipv6 | grep ' host: '
 "defaultroute-ipv6":   host: oriented; local: 2001:db8:1:3::209; nexthop: fe80::1000:ff:fe32:64ba; remote: 2001:db8:1:2::23;

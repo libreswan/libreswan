@@ -15,7 +15,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add labeled
-"labeled": added IKEv2 connection
+"labeled": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

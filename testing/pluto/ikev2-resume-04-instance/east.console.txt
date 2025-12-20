@@ -10,14 +10,14 @@ east #
 east #
  ipsec add distraction
 "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
-"distraction": added IKEv2 connection
+"distraction": added oriented IKEv2 connection
 east #
  ipsec add resume-distraction
 "resume-distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
-"resume-distraction": added IKEv2 connection
+"resume-distraction": added oriented IKEv2 connection
 east #
  ipsec add any-east
-"any-east": added IKEv2 connection
+"any-east": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-east-sourceip
-"westnet-east-sourceip": added IKEv1 connection
+"westnet-east-sourceip": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

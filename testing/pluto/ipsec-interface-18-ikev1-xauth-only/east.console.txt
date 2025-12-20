@@ -8,7 +8,7 @@ east #
 east #
  ipsec auto --add any-east
 "any-east": created ipsec-interface ipsec1@NONE
-"any-east": added IKEv1 connection
+"any-east": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

@@ -19,7 +19,7 @@ east #
 east #
  ipsec auto --add ikev2
 ipsec addconn: warning: /etc/ipsec.conf:13: overriding earlier 'config setup' keyword with new value: ikev1-policy=reject
-"ikev2": added IKEv2 connection
+"ikev2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

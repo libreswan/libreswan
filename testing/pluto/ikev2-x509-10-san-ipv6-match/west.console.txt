@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add san
-"san": added IKEv2 connection
+"san": added oriented IKEv2 connection
 west #
  ipsec listpubkeys
  

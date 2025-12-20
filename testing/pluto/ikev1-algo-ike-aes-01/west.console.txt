@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aes128
-"westnet-eastnet-aes128": added IKEv1 connection
+"westnet-eastnet-aes128": added oriented IKEv1 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm

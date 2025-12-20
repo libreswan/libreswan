@@ -17,7 +17,7 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-propnum
-"westnet-eastnet-propnum": added IKEv2 connection
+"westnet-eastnet-propnum": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-propnum
 "westnet-eastnet-propnum" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

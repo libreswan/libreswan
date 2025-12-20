@@ -7,7 +7,7 @@ west #
 west #
  ipsec auto --add west-east
 "west-east": ikev2=no has been replaced by keyexchange=ikev1
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 west #
  ipsec whack --impair revival
 west #

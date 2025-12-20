@@ -8,7 +8,7 @@ east #
 east #
  ipsec auto --add westnet-eastnet-ikev2
 "westnet-eastnet-ikev2": adding interface eth1 192.1.2.23:UDP/2500 (NAT fixed)
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm

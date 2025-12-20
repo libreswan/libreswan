@@ -21,7 +21,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add v6-tunnel
-"v6-tunnel": added IKEv2 connection
+"v6-tunnel": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

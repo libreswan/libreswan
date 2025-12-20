@@ -15,8 +15,8 @@ east #
  ipsec auto --add east
 warning: "east": skipping mismatched leftsubnets=2001:db8:0:30::/64 rightsubnets=192.0.2.0/24
 warning: "east": skipping mismatched leftsubnets=192.0.3.0/24 rightsubnets=2001:db8:0:20::/64
-"east/1x1": added IKEv2 connection
-"east/2x2": added IKEv2 connection
+"east/1x1": added oriented IKEv2 connection
+"east/2x2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

@@ -18,7 +18,7 @@ east# ipsec whack --impair suppress_retransmits
 east# ipsec auto --add east-west
 
 WARNING: ipsec auto has been deprecated
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 
 #
 # set up west
@@ -45,7 +45,7 @@ IMPAIR: block all inbound messages: no -> yes
 west# ipsec auto --add east-west
 
 WARNING: ipsec auto has been deprecated
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 
 #
 # initiate east

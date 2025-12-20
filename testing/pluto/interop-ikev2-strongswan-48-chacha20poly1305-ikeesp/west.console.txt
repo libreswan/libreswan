@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add chacha
-"chacha": added IKEv2 connection
+"chacha": added oriented IKEv2 connection
 west #
  ipsec whack --impair timeout_on_retransmit
 west #

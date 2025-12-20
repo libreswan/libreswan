@@ -12,7 +12,7 @@ road #
 road #
  ipsec add road
 ipsec addconn: warning: /etc/ipsec.conf:20: invalid, keyword ignored: mobike=nat
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  ipsec up road
 "road"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP

@@ -25,7 +25,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-ipcomp
-"westnet-eastnet-ipcomp": added IKEv1 connection
+"westnet-eastnet-ipcomp": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone

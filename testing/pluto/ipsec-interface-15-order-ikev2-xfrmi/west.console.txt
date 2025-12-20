@@ -32,10 +32,10 @@ X: ipsec1@NONE: <NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
        valid_lft forever preferred_lft forever
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
+"westnet4-eastnet4": added oriented IKEv2 connection
 west #
  ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
+"westnet6-eastnet6": added oriented IKEv2 connection
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
@@ -119,10 +119,10 @@ west #
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
+"westnet4-eastnet4": added oriented IKEv2 connection
 west #
  ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
+"westnet6-eastnet6": added oriented IKEv2 connection
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000
@@ -199,10 +199,10 @@ Device "ipsec1" does not exist.
 west #
  ipsec add westnet4-eastnet4
 "westnet4-eastnet4": created ipsec-interface ipsec1@NONE
-"westnet4-eastnet4": added IKEv2 connection
+"westnet4-eastnet4": added oriented IKEv2 connection
 west #
  ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
+"westnet6-eastnet6": added oriented IKEv2 connection
 west #
  ip --color=never link show ipsec1 # interface
 X: ipsec1@NONE: <NOARP> mtu 1500 qdisc state DOWN qlen 1000

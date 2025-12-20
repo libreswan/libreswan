@@ -8,7 +8,7 @@ north #
  ../../guestbin/block-non-ipsec.sh
 north #
  ipsec auto --add north-east
-"north-east": added IKEv1 connection
+"north-east": added oriented IKEv1 connection
 north #
  echo initdone
 initdone

@@ -11,7 +11,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add authenticated
-"authenticated": added IKEv2 connection
+"authenticated": added oriented IKEv2 connection
 road #
  # give OE policies time to load
 road #
