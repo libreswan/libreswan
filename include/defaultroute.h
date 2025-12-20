@@ -38,6 +38,9 @@ struct route_addrs {
 	struct route_addr nexthop; /* aka gateway */
 };
 
+bool route_addr_needs_dns(const struct route_addr *addr);
+bool route_addrs_need_dns(const struct route_addrs *addrs);
+
 void resolve_default_route(struct route_addrs *host,
 			   struct route_addrs *peer,
 			   const struct ip_info *host_afi,

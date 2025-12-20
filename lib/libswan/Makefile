@@ -120,6 +120,7 @@ endif
 endif
 
 # implement resolve_default_route()
+OBJS += defaultroute.o
 ifneq ($(LINUX_VARIANT),)
 OBJS += defaultroute_linux.o
 endif

@@ -63,9 +63,6 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 						      struct verbose verbose)
 {
 	struct host_addrs resolved = *host_addrs;
-	/*hope for the best*/
-	resolved.needs.route = false;
-	resolved.needs.dns = false;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
  		struct route_addrs *end = &resolved.end[lr];
@@ -87,7 +84,6 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 			 */
 			vlog("failed to resolve '%s%s=%s' at load time: %s",
 			     leftright, "", end->host.value, e);
-			resolved.needs.dns = true;
 			continue;
 		}
 		end->host.addr = host_addr;
@@ -111,11 +107,10 @@ void resolve_continue(struct help_request *request,
 	struct connection *c = request->connection;
 	struct host_addrs *resolved = &request->resolved_host_addrs;
 
-	vdbg("needs.dns = %s needs.route = %s",
-	     bool_str(resolved->needs.dns),
-	     bool_str(resolved->needs.route));
+	bool needs_dns = host_addrs_need_dns(resolved, verbose);
+	vdbg("needs.dns = %s", bool_str(needs_dns));
 
-	if (!resolved->needs.dns) {
+	if (!needs_dns) {
 		resolve_default_route(&resolved->end[LEFT_END],
 				      &resolved->end[RIGHT_END],
 				      resolved->afi,
@@ -132,7 +127,7 @@ void resolve_continue(struct help_request *request,
 	 * When possible, try to orient the connection.
 	 */
 	vassert(!oriented(c));
-	if (resolved->needs.dns) {
+	if (needs_dns) {
 		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
 		schedule_connection_check_ddns(c, verbose);
 	} else if (!orient(c, verbose)) {

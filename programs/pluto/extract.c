@@ -258,23 +258,19 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 
 }
 
-static void set_host_addr_needs(struct host_addrs *config,
-				struct verbose verbose)
+bool host_addrs_need_dns(const struct host_addrs *config,
+			 struct verbose verbose)
 {
+	bool needs_dns = false;
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		struct route_addrs *end = &config->end[lr];
-		FOR_EACH_THING(type, end->host.type, end->nexthop.type) {
-			if (type == KH_IPHOSTNAME) {
-				config->needs.dns = true;
-			}
-			if (type == KH_DEFAULTROUTE) {
-				config->needs.route = true;
-			}
+		const struct route_addrs *end = &config->end[lr];
+		if (route_addrs_need_dns(end)) {
+			vdbg("%s.needs.dns true", end->leftright);
+			needs_dns = true;
 		}
  	}
-	vdbg("needs.dns %s needs.route %s",
-	     bool_str(config->needs.dns),
-	     bool_str(config->needs.route));
+	vdbg("needs.dns %s", bool_str(needs_dns));
+	return needs_dns;
 }
 
 diag_t host_addrs_from_whack_message(const struct whack_message *wm,
@@ -481,8 +477,6 @@ diag_t host_addrs_from_whack_message(const struct whack_message *wm,
 		     str_address(&nexthop->addr, &nab));
 
 	}
-
-	set_host_addr_needs(config, verbose);
 
 	config->afi = winner.afi;
 	return NULL;
@@ -2757,7 +2751,6 @@ struct host_addrs host_addrs_from_connection_config(const struct connection *c)
 		end->host = config->end[lr].host.host;
 		end->nexthop = config->end[lr].host.nexthop;
 	}
-	set_host_addr_needs(&host_addrs, VERBOSE(DEBUG_STREAM, c->logger, NULL));
 	return host_addrs;
 }
 
@@ -4710,20 +4703,15 @@ diag_t extract_connection(const struct whack_message *wm,
 }
 
 void extract_connection_resolve_continue(struct connection *c,
-					 const struct host_addrs *resolved_host_addrs,
+					 const struct host_addrs *resolved UNUSED,
 					 struct verbose verbose)
 {
-	/* log all about this connection */
-	vdbg("needs.dns %s needs.route %s",
-	     bool_str(resolved_host_addrs->needs.dns),
-	     bool_str(resolved_host_addrs->needs.route));
-
 	err_t tss = connection_requires_tss(c);
 	if (tss != NULL) {
-		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
+		vlog("connection is using multiple %s", tss);
 	}
 
-	LLOG_JAMBUF(RC_LOG, c->logger, buf) {
+	VLOG_JAMBUF(buf) {
 		jam_string(buf, "added");
 		jam_string(buf, " ");
 		jam_orientation(buf, c, /*oriented_details*/false);
