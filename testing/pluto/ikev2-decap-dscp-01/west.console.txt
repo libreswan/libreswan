@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add xfrm
-"xfrm": added IKEv2 connection
+"xfrm": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep DECAP_DSCP
 "xfrm":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DECAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

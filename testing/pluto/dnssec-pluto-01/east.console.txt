@@ -12,7 +12,7 @@ east #
  echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 east #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm

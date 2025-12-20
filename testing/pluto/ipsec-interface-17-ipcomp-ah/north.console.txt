@@ -16,7 +16,7 @@ north #
 north #
  ipsec auto --add north
 "north": created ipsec-interface ipsec1@NONE
-"north": added IKEv2 connection
+"north": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

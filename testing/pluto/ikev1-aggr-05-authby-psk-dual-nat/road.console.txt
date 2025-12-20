@@ -14,7 +14,7 @@ road #
  # bring up server behind NAT "road"
 road #
  ipsec auto --add road-east
-"road-east": added IKEv1 connection
+"road-east": added oriented IKEv1 connection
 road #
  ipsec auto --up road-east
 "road-east" #1: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
@@ -44,7 +44,7 @@ IMPAIR: "road-east" #2: send_no_delete set - not sending Delete/Notify
 IMPAIR: "road-east" #1: send_no_delete set - not sending Delete/Notify
 road #
  ipsec auto --add runner-east
-"runner-east": added IKEv1 connection
+"runner-east": added oriented IKEv1 connection
 road #
  ipsec auto --up runner-east
 "runner-east" #3: IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's

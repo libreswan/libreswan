@@ -11,7 +11,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-eastnet
-"road-eastnet": added IKEv2 connection
+"road-eastnet": added oriented IKEv2 connection
 road #
  echo done
 done

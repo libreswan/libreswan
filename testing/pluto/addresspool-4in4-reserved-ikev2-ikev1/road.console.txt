@@ -13,7 +13,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec add road-east
-"road-east": added IKEv1 connection
+"road-east": added oriented IKEv1 connection
 road #
  echo initdone
 initdone

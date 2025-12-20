@@ -7,8 +7,8 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add north-dpd
-"north-dpd/0x1": added IKEv1 connection
-"north-dpd/0x2": added IKEv1 connection
+"north-dpd/0x1": added oriented IKEv1 connection
+"north-dpd/0x2": added oriented IKEv1 connection
 north #
  echo "initdone"
 initdone

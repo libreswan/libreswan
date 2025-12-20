@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #
  ipsec auto --status | grep east
 "east": 2001:db8:0:2::/64===2001:db8:1:2::23[@east]...%any==={2001:db8:0:3:1::/97}; unrouted; my_ip=unset; their_ip=unset;

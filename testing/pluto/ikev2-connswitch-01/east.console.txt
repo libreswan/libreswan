@@ -10,10 +10,10 @@ east #
 east #
  ipsec add distraction
 "distraction": bad left CA string 'Something bogus': unknown OID in ID_DER_ASN1_DN (ignored)
-"distraction": added IKEv2 connection
+"distraction": added oriented IKEv2 connection
 east #
  ipsec add westnet-eastnet
-"westnet-eastnet": added IKEv2 connection
+"westnet-eastnet": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

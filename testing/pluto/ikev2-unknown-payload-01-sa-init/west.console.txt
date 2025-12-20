@@ -20,7 +20,7 @@ west #
  : good
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: adding an unknown payload of type 255 to unencrypted IKE_SA_INIT message
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -49,7 +49,7 @@ west #
  ipsec whack --impair unknown_v2_payload_critical
 west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: adding an unknown critical payload of type 255 to unencrypted IKE_SA_INIT message
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: setting (should be off) critical payload bit

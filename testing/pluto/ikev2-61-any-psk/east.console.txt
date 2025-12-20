@@ -7,8 +7,8 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add any-east
-"any-east-ipv4": added IKEv2 connection
-"any-east-ipv6": added IKEv2 connection
+"any-east-ipv4": added oriented IKEv2 connection
+"any-east-ipv6": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

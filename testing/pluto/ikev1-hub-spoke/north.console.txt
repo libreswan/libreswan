@@ -7,7 +7,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add northnet-westnet-ipv4-psk
-"northnet-westnet-ipv4-psk": added IKEv1 connection
+"northnet-westnet-ipv4-psk": added oriented IKEv1 connection
 north #
  ipsec auto --up northnet-westnet-ipv4-psk
 "northnet-westnet-ipv4-psk" #1: initiating IKEv1 Main Mode connection

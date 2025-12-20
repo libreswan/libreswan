@@ -9,7 +9,7 @@ west #
 initdone
 west #
  ipsec auto --add percentage-good
-"percentage-good": added IKEv2 connection
+"percentage-good": added oriented IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval
 west #

@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add main
-"main": added IKEv2 connection
+"main": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

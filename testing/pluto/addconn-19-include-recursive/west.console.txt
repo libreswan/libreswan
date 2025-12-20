@@ -80,5 +80,5 @@ ipsec addconn: warning: /etc/ipsec.conf:7: overriding earlier 'config setup' key
 ipsec addconn: warning: /etc/ipsec.conf:8: overriding earlier 'config setup' keyword with new value: plutodebug=all
 ipsec addconn: warning: /etc/ipsec.conf:9: overriding earlier 'config setup' keyword with new value: dumpdir=/tmp
 ipsec addconn: warning: /etc/ipsec.conf:10: overriding earlier 'config setup' keyword with new value: protostack=xfrm
-"west": added IKEv1 connection
+"west": added oriented IKEv1 connection
 west #

@@ -37,7 +37,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add nss-cert-crl
-"nss-cert-crl": added IKEv1 connection
+"nss-cert-crl": added oriented IKEv1 connection
 west #
  # Try to establish, it will fail because the CRL list is out-of-date.
 west #

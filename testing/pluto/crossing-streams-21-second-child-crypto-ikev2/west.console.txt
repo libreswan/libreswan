@@ -7,10 +7,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add cuckold
-"cuckold": added IKEv2 connection
+"cuckold": added oriented IKEv2 connection
 west #
  ipsec add cuckoo
-"cuckoo": added IKEv2 connection
+"cuckoo": added oriented IKEv2 connection
 west #
  ipsec up cuckold
 "cuckold" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

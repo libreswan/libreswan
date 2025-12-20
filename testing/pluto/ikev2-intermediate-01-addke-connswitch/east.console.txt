@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add psk
-"psk": added IKEv2 connection
+"psk": added oriented IKEv2 connection
 east #
  ipsec add rsa-east
-"rsa-east": added IKEv2 connection
+"rsa-east": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

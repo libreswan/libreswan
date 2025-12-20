@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add 6in6
-"6in6": added IKEv2 connection
+"6in6": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

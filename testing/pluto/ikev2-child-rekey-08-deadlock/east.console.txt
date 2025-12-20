@@ -5,10 +5,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
-"west-east/1x0": added IKEv2 connection
-"west-east/2x0": added IKEv2 connection
-"west-east/3x0": added IKEv2 connection
-"west-east/4x0": added IKEv2 connection
+"west-east/1x0": added oriented IKEv2 connection
+"west-east/2x0": added oriented IKEv2 connection
+"west-east/3x0": added oriented IKEv2 connection
+"west-east/4x0": added oriented IKEv2 connection
 east #
  ipsec whack --impair revival
 east #

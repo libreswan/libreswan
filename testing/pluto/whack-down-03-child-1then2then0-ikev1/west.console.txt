@@ -13,13 +13,13 @@ west #
  ipsec whack --impair revival
 west #
  ipsec add west-cuckold
-"west-cuckold": added IKEv1 connection
+"west-cuckold": added oriented IKEv1 connection
 west #
  ipsec add west-cuckoo-1
-"west-cuckoo-1": added IKEv1 connection
+"west-cuckoo-1": added oriented IKEv1 connection
 west #
  ipsec add west-cuckoo-2
-"west-cuckoo-2": added IKEv1 connection
+"west-cuckoo-2": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone

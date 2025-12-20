@@ -6,7 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add xauth-road-eastnet
-"xauth-road-eastnet": added IKEv1 connection
+"xauth-road-eastnet": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
@@ -21,7 +21,7 @@ east #
 06-east-up
 east #
  ipsec auto --add east-to-road-on-east
-"east-to-road-on-east": added IKEv1 connection
+"east-to-road-on-east": added oriented IKEv1 connection
 east #
  ipsec auto --up east-to-road-on-east
 "east-to-road-on-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES

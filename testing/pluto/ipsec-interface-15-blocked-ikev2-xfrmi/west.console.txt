@@ -21,10 +21,10 @@ west #
  ip addr add 2001:db8:0:1::251/64 dev ipsec1
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
+"westnet4-eastnet4": added oriented IKEv2 connection
 west #
  ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
+"westnet6-eastnet6": added oriented IKEv2 connection
 west #
  ipsec up westnet4-eastnet4
 "westnet4-eastnet4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -82,10 +82,10 @@ west #
  ip addr add 2001:db8:0:1::251/64 dev ipsec1
 west #
  ipsec add westnet4-eastnet4
-"westnet4-eastnet4": added IKEv2 connection
+"westnet4-eastnet4": added oriented IKEv2 connection
 west #
  ipsec add westnet6-eastnet6
-"westnet6-eastnet6": added IKEv2 connection
+"westnet6-eastnet6": added oriented IKEv2 connection
 west #
  ipsec up westnet4-eastnet4
 "westnet4-eastnet4" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

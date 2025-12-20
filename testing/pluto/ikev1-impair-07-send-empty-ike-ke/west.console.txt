@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-"westnet-eastnet-ipv4-psk": added IKEv1 connection
+"westnet-eastnet-ipv4-psk": added oriented IKEv1 connection
 west #
  echo "initdone"
 initdone
@@ -48,7 +48,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk
-"westnet-eastnet-ipv4-psk": added IKEv1 connection
+"westnet-eastnet-ipv4-psk": added oriented IKEv1 connection
 west #
  ipsec auto --up westnet-eastnet-ipv4-psk
 "westnet-eastnet-ipv4-psk" #2: initiating IKEv1 Main Mode connection

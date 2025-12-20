@@ -9,7 +9,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec add east-west
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 west #
  ipsec up east-west
 "east-west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

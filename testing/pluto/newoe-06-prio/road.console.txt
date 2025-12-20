@@ -16,7 +16,7 @@ road #
 Total IPsec connections: loaded 10, routed 5, active 0
 road #
  ipsec auto --add road-east-ikev2
-"road-east-ikev2": added IKEv2 connection
+"road-east-ikev2": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone

@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road-east-vti
-"road-east-vti": added IKEv1 connection
+"road-east-vti": added oriented IKEv1 connection
 road #
  echo "initdone"
 initdone

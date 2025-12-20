@@ -116,5 +116,5 @@ east #
 east #
  ipsec auto --add east
 "east": WARNING: left is a groundhog
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #

@@ -15,7 +15,7 @@ east #
  # add / remove 'test'
 east #
  ipsec auto --add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 east #
  ipsec auto --delete test
 east #
@@ -46,7 +46,7 @@ east #
  # re-load should not dump core
 east #
  ipsec auto --add test
-"test": added IKEv2 connection
+"test": added oriented IKEv2 connection
 east #
  ipsec auto --delete test
 east #

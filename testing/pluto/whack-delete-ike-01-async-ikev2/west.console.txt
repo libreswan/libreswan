@@ -11,10 +11,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-cuckold
-"west-cuckold": added IKEv2 connection
+"west-cuckold": added oriented IKEv2 connection
 west #
  ipsec add west-cuckoo
-"west-cuckoo": added IKEv2 connection
+"west-cuckoo": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

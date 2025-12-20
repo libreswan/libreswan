@@ -23,7 +23,7 @@ north #
 north #
  ipsec auto --add north
 "north": ipsec-interface ipsec2 linked to lo (1) and not eth1 (3)
-"north": added IKEv2 connection
+"north": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

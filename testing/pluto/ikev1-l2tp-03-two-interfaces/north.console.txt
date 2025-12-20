@@ -25,7 +25,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add l2tp-north-to-east-on-north
-"l2tp-north-to-east-on-north": added IKEv1 connection
+"l2tp-north-to-east-on-north": added oriented IKEv1 connection
 north #
  ../../guestbin/l2tpd.sh
 north #

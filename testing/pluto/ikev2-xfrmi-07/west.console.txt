@@ -22,7 +22,7 @@ west #
 west #
  ipsec auto --add west
 "west": created ipsec-interface ipsec17@NONE
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

@@ -12,7 +12,7 @@ north #
 north #
  ipsec auto --add northnet-eastnet
 "northnet-eastnet": created ipsec-interface ipsec1@NONE
-"northnet-eastnet": added IKEv2 connection
+"northnet-eastnet": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

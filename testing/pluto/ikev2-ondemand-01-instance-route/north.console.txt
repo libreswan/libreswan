@@ -7,7 +7,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add initiator
-"initiator": added IKEv2 connection
+"initiator": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

@@ -21,10 +21,10 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-x509
-"west-x509": added IKEv2 connection
+"west-x509": added oriented IKEv2 connection
 west #
  ipsec auto --add road-x509
-"road-x509": added IKEv2 connection
+"road-x509": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

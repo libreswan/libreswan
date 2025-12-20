@@ -9,7 +9,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add rw
-"rw": added IKEv2 connection
+"rw": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone

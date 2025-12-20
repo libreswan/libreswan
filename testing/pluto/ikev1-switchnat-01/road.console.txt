@@ -12,7 +12,7 @@ road #
 initdone
 road #
  ipsec auto --add road1
-"road1": added IKEv1 connection
+"road1": added oriented IKEv1 connection
 road #
  ipsec auto --up road1
 "road1" #1: initiating IKEv1 Main Mode connection
@@ -36,7 +36,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road2
-"road2": added IKEv1 connection
+"road2": added oriented IKEv1 connection
 road #
  ipsec auto --up road2
 "road2" #1: initiating IKEv1 Main Mode connection

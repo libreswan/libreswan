@@ -19,34 +19,34 @@ west #
  # temp
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp1536
-"westnet-eastnet-ikev2-modp1536": added IKEv2 connection
+"westnet-eastnet-ikev2-modp1536": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp2048
-"westnet-eastnet-ikev2-modp2048": added IKEv2 connection
+"westnet-eastnet-ikev2-modp2048": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp3072
-"westnet-eastnet-ikev2-modp3072": added IKEv2 connection
+"westnet-eastnet-ikev2-modp3072": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp4096
-"westnet-eastnet-ikev2-modp4096": added IKEv2 connection
+"westnet-eastnet-ikev2-modp4096": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-modp8192
-"westnet-eastnet-ikev2-modp8192": added IKEv2 connection
+"westnet-eastnet-ikev2-modp8192": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh19
-"westnet-eastnet-ikev2-dh19": added IKEv2 connection
+"westnet-eastnet-ikev2-dh19": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh20
-"westnet-eastnet-ikev2-dh20": added IKEv2 connection
+"westnet-eastnet-ikev2-dh20": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh21
-"westnet-eastnet-ikev2-dh21": added IKEv2 connection
+"westnet-eastnet-ikev2-dh21": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh31
-"westnet-eastnet-ikev2-dh31": added IKEv2 connection
+"westnet-eastnet-ikev2-dh31": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-dh20-fallback
-"westnet-eastnet-ikev2-dh20-fallback": added IKEv2 connection
+"westnet-eastnet-ikev2-dh20-fallback": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp2048
 "westnet-eastnet-ikev2-modp2048" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

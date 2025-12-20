@@ -7,8 +7,8 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west-east-psk
-"west-east-psk-ipv4": added IKEv2 connection
-"west-east-psk-ipv6": added IKEv2 connection
+"west-east-psk-ipv4": added oriented IKEv2 connection
+"west-east-psk-ipv6": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

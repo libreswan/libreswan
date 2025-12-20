@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ah-sha1-pfs
-"westnet-eastnet-ah-sha1-pfs": added IKEv1 connection
+"westnet-eastnet-ah-sha1-pfs": added oriented IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-ah-sha1-pfs
 "westnet-eastnet-ah-sha1-pfs": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;

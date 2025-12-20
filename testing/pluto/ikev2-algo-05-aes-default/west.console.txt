@@ -17,7 +17,7 @@ west #
 initdone
 west #
  ipsec auto --add westnet-eastnet-aes-default
-"westnet-eastnet-aes-default": added IKEv2 connection
+"westnet-eastnet-aes-default": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-default
 "westnet-eastnet-aes-default" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -36,7 +36,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-128
-"westnet-eastnet-aes-128": added IKEv2 connection
+"westnet-eastnet-aes-128": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-128
 "westnet-eastnet-aes-128" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -55,7 +55,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-256
-"westnet-eastnet-aes-256": added IKEv2 connection
+"westnet-eastnet-aes-256": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-256
 "westnet-eastnet-aes-256" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -74,7 +74,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-1
-"westnet-eastnet-aes-mix-1": added IKEv2 connection
+"westnet-eastnet-aes-mix-1": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-1
 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -93,7 +93,7 @@ west #
  #
 west #
  ipsec auto --add westnet-eastnet-aes-mix-2
-"westnet-eastnet-aes-mix-2": added IKEv2 connection
+"westnet-eastnet-aes-mix-2": added oriented IKEv2 connection
 west #
  ipsec auto --up westnet-eastnet-aes-mix-2
 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 connection to 192.1.2.23 using UDP

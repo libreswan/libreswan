@@ -41,7 +41,7 @@ east #
  ipsec add east
 "east": WARNING: right is a groundhog
 "east": WARNING: groundhog right certificate 'east-expired' has expired
-"east": added IKEv2 connection
+"east": added oriented IKEv2 connection
 east #
  ipsec checkpubkeys
 TIMESTAMP, 2048 RSA Key AwXXXXXXX (has private key), until TIMESTAMP fatal (expired)

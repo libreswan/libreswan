@@ -12,7 +12,7 @@ west #
  rm -f /etc/ipsec.conf
 west #
  ipsec --config $PWD/ipsec.conf add west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec --config $PWD/ipsec.conf up west
 "west" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -32,7 +32,7 @@ west #
  ipsec --config $PWD/ipsec.conf delete west
 west #
  ipsec add --config $PWD/ipsec.conf west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec up --config $PWD/ipsec.conf west
 "west" #3: initiating IKEv2 connection to 192.1.2.23 using UDP

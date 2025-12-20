@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-mismatch
-"westnet-eastnet-mismatch": added IKEv2 connection
+"westnet-eastnet-mismatch": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

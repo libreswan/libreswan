@@ -14,7 +14,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-"conf": added IKEv2 connection
+"conf": added oriented IKEv2 connection
 "conf" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -37,7 +37,7 @@ west #
  ipsec whack --impair ikev2_add_ike_transform:0xee0000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-"conf": added IKEv2 connection
+"conf": added oriented IKEv2 connection
 "conf" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "conf" #3: adding transform type ROOF (0xf) id 0 (0x0)
 "conf" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -61,7 +61,7 @@ west #
  ipsec whack --impair ikev2_add_ike_transform:0x03ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-"conf": added IKEv2 connection
+"conf": added oriented IKEv2 connection
 "conf" #5: initiating IKEv2 connection to 192.1.2.23 using UDP
 IMPAIR: "conf" #5: adding transform type INTEG (0x3) id IKEv2_INTEG_65535 (0xffff)
 "conf" #5: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -85,7 +85,7 @@ west #
  ipsec whack --impair ikev2_add_child_transform:0xee0000
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-"conf": added IKEv2 connection
+"conf": added oriented IKEv2 connection
 "conf" #7: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #7: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #7: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -109,7 +109,7 @@ west #
  ipsec whack --impair ikev2_add_child_transform:0x03ffff
 west #
  ../../guestbin/libreswan-up-down.sh conf --up -I 192.0.1.254 192.0.2.254
-"conf": added IKEv2 connection
+"conf": added oriented IKEv2 connection
 "conf" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 "conf" #9: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "conf" #9: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH

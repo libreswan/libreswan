@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-6in6
-"westnet-eastnet-6in6": added IKEv1 connection
+"westnet-eastnet-6in6": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #

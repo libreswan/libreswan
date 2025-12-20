@@ -9,7 +9,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add any-northnet-ipv4-psk-ikev2
-"any-northnet-ipv4-psk-ikev2": added IKEv2 connection
+"any-northnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

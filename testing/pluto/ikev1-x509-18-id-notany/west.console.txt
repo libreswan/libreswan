@@ -9,7 +9,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add ikev2-westnet-eastnet-x509-cr
-"ikev2-westnet-eastnet-x509-cr": added IKEv1 connection
+"ikev2-westnet-eastnet-x509-cr": added oriented IKEv1 connection
 west #
  ipsec status | grep idtype
 "ikev2-westnet-eastnet-x509-cr":   our idtype: IPV4_ADDR; our id=192.1.2.45; their idtype: FQDN; their id=@right

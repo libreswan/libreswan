@@ -8,10 +8,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rsasig
-"rsasig": added IKEv1 connection
+"rsasig": added oriented IKEv1 connection
 east #
  ipsec auto --add secret
-"secret": added IKEv1 connection
+"secret": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

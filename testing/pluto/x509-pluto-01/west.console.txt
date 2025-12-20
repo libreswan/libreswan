@@ -34,7 +34,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-x509-nosend
-"westnet-eastnet-x509-nosend": added IKEv1 connection
+"westnet-eastnet-x509-nosend": added oriented IKEv1 connection
 west #
  ipsec auto --status | grep westnet-eastnet-x509-nosend
 "westnet-eastnet-x509-nosend": 192.0.1.0/24===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===192.0.2.0/24; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;

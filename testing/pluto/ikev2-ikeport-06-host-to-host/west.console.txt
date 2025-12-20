@@ -8,7 +8,7 @@ west #
 west #
  ipsec auto --add west-east-ikev2
 "west-east-ikev2": adding interface eth1 192.1.2.45:UDP/2500 (NAT fixed)
-"west-east-ikev2": added IKEv2 connection
+"west-east-ikev2": added oriented IKEv2 connection
 west #
  ipsec auto --status | grep west-east-ikev2
 "west-east-ikev2": 192.1.2.45:2500[@west]...192.1.2.23:4500[@east]; unrouted; my_ip=unset; their_ip=unset;

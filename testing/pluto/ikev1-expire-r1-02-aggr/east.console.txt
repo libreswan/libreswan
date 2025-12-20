@@ -9,7 +9,7 @@ east #
  ipsec whack --impair revival
 east #
  ipsec auto --add westnet-eastnet-aggr
-"westnet-eastnet-aggr": added IKEv1 connection
+"westnet-eastnet-aggr": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

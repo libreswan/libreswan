@@ -11,10 +11,10 @@ west #
  # note order
 west #
  ipsec add a
-"a": added IKEv2 connection
+"a": added oriented IKEv2 connection
 west #
  ipsec add b
-"b": added IKEv2 connection
+"b": added oriented IKEv2 connection
 west #
  ipsec up a
 "a" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

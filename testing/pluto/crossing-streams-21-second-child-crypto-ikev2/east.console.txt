@@ -10,10 +10,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec add cuckold
-"cuckold": added IKEv2 connection
+"cuckold": added oriented IKEv2 connection
 east #
  ipsec add cuckoo
-"cuckoo": added IKEv2 connection
+"cuckoo": added oriented IKEv2 connection
 east #
  ipsec up --asynchronous cuckoo
 "cuckoo" #4: initiating Child SA using IKE SA #1

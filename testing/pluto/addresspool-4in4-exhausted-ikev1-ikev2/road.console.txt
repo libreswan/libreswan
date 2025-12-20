@@ -8,7 +8,7 @@ road #
  ../../guestbin/block-non-ipsec.sh
 road #
  ipsec add road-east
-"road-east": added IKEv2 connection
+"road-east": added oriented IKEv2 connection
 road #
  echo initdone
 initdone

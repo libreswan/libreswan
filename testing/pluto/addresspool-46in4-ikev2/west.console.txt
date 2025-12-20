@@ -7,7 +7,7 @@ west #
 west #
  ipsec auto --add west
 "west": connection is using multiple addresspools
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

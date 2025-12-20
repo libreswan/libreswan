@@ -26,7 +26,7 @@ road #
 opening file: /etc/ipsec.conf
 loading conns matching road:
   sending to pluto
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone

@@ -494,11 +494,12 @@ void jam_orientation(struct jambuf *buf,
 	 * connections can't orient so say nothing.
 	 *
 	 * Should successful orientation also be logged?
+	 *
+	 * XXX: Yes, connections can orient when there's been a
+	 * partial DNS fail; so be clear.
 	 */
 	if (oriented(c)) {
-		if (oriented_details) {
-			jam_string(buf, "oriented ");
-		}
+		jam_string(buf, "oriented ");
 	} else if (listening) {
 		jam_string(buf, "unoriented ");
 	}

@@ -7,7 +7,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  # confirm max bytes for IPsec SA is set
 west #

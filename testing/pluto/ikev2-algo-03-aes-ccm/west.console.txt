@@ -30,7 +30,7 @@ west #
 "badkeysize-shouldnotload": failed to add connection: ESP encryption algorithm AES_CCM_8 with key length 152 invalid; valid key lengths: 128, 192, 256
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
-"westnet-eastnet-ipv4-psk-ikev2-ccm-a": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2-ccm-a": added oriented IKEv2 connection
 west #
  ipsec auto --status
 using kernel interface: xfrm

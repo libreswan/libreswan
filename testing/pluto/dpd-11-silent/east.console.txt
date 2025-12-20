@@ -8,7 +8,7 @@ east #
 east #
  ipsec auto --add west-east
 ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=clear
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone

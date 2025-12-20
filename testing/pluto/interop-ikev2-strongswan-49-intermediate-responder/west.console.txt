@@ -29,7 +29,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes-sha1-modp8192-ml_kem_768
-"algo": added IKEv2 connection
+"algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -50,7 +50,7 @@ west #
  ipsec start
 Redirecting to: [initsystem]
  ipsec addconn --name algo also=west ike=aes-sha1-modp8192-ml_kem_768 fragmentation=no
-"algo": added IKEv2 connection
+"algo": added oriented IKEv2 connection
  ipsec up algo
 "algo" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
@@ -79,7 +79,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add intermediate
-"intermediate": added IKEv2 connection
+"intermediate": added oriented IKEv2 connection
 west #
  ipsec whack --impair add_unknown_v2_payload_to:IKE_INTERMEDIATE
 west #

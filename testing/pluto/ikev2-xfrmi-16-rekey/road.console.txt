@@ -17,7 +17,7 @@ road #
 road #
  ipsec auto --add road
 "road": created ipsec-interface ipsec1@NONE
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  echo "initdone"
 initdone
@@ -73,7 +73,7 @@ road #
 "road" #4: ESP traffic information: in=0B out=0B
 "road": delete ipsec-interface ipsec1@NONE added by pluto
 "road": created ipsec-interface ipsec1@NONE
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  ipsec auto --up road
 "road" #5: initiating IKEv2 connection to 192.1.2.23 using UDP

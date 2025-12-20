@@ -7,13 +7,13 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add distraction
-"distraction": added IKEv2 connection
+"distraction": added oriented IKEv2 connection
 west #
  ipsec auto --add west-to-east
-"west-to-east": added IKEv2 connection
+"west-to-east": added oriented IKEv2 connection
 west #
  ipsec auto --start west-to-east
-"west-to-east": added IKEv2 connection
+"west-to-east": added oriented IKEv2 connection
 "west-to-east" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "west-to-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "west-to-east" #1: omitting CHILD SA payloads

@@ -9,7 +9,7 @@ road #
  ipsec whack --impair revival
 road #
  ipsec auto --add road-eastnet-psk
-"road-eastnet-psk": added IKEv1 connection
+"road-eastnet-psk": added oriented IKEv1 connection
 road #
  echo "initdone"
 initdone

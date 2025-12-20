@@ -7,7 +7,7 @@ north #
  ../../guestbin/wait-until-pluto-started
 north #
  ipsec auto --add road-eastnet-ikev2
-"road-eastnet-ikev2": added IKEv1 connection
+"road-eastnet-ikev2": added oriented IKEv1 connection
 north #
  ipsec whack --impair suppress_retransmits
 north #
@@ -50,7 +50,7 @@ north #
  ipsec whack --impair suppress_retransmits
 north #
  ipsec auto --add road-eastnet-ikev2
-"road-eastnet-ikev2": added IKEv1 connection
+"road-eastnet-ikev2": added oriented IKEv1 connection
 north #
  ipsec auto --up road-eastnet-ikev2
 "road-eastnet-ikev2" #1: initiating IKEv1 Main Mode connection

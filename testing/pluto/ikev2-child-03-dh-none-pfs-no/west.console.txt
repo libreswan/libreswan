@@ -35,20 +35,20 @@ west #
  ipsec whack --impair timeout_on_retransmit
 west #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-00
-"westnet-eastnet-ikev2-00": added IKEv2 connection
+"westnet-eastnet-ikev2-00": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-01
 "westnet-eastnet-ikev2-01": ignoring redundant ESP Key Exchange algorithm 'NONE' as PFS policy is disabled
-"westnet-eastnet-ikev2-01": added IKEv2 connection
+"westnet-eastnet-ikev2-01": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-10
-"westnet-eastnet-ikev2-10": added IKEv2 connection
+"westnet-eastnet-ikev2-10": added oriented IKEv2 connection
 west #
  ipsec auto --add westnet-eastnet-ikev2-11
-"westnet-eastnet-ikev2-11": added IKEv2 connection
+"westnet-eastnet-ikev2-11": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

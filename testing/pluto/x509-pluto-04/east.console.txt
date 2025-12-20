@@ -25,7 +25,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-x509-cr
-"westnet-eastnet-x509-cr": added IKEv1 connection
+"westnet-eastnet-x509-cr": added oriented IKEv1 connection
 east #
  ipsec auto --status | grep westnet-eastnet-x509-cr
 "westnet-eastnet-x509-cr": 192.0.2.0/24===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.0/24; unrouted; my_ip=unset; their_ip=unset;

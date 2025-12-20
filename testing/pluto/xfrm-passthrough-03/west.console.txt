@@ -23,13 +23,13 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
-"west-east": added IKEv2 connection
+"west-east": added oriented IKEv2 connection
 west #
  ipsec auto --add west-east-passthrough-a
-"west-east-passthrough-a": added passthrough connection
+"west-east-passthrough-a": added oriented passthrough connection
 west #
  ipsec auto --add west-east-passthrough-b
-"west-east-passthrough-b": added passthrough connection
+"west-east-passthrough-b": added oriented passthrough connection
 west #
  ipsec auto --route west-east-passthrough-a
 west #

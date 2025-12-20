@@ -75,7 +75,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec addconn --name west-bc-missing-chain-end rightid=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org right=192.1.2.23 left=%defaultroute leftid=%fromcert leftcert=west-bc-missing-chain-end
-"west-bc-missing-chain-end": added IKEv2 connection
+"west-bc-missing-chain-end": added oriented IKEv2 connection
 end #
 begin #
  ipsec up west-bc-missing-chain-end
@@ -204,7 +204,7 @@ Redirecting to: [initsystem]
 end #
 begin #
  ipsec addconn --name bc-n-ca-west rightid=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org right=192.1.2.23 left=%defaultroute leftid=%fromcert leftcert=bc-n-ca-west
-"bc-n-ca-west": added IKEv2 connection
+"bc-n-ca-west": added oriented IKEv2 connection
 end #
 begin #
  ipsec up bc-n-ca-west

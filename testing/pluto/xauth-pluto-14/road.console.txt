@@ -7,7 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-east
-"modecfg-road-east": added IKEv1 connection
+"modecfg-road-east": added oriented IKEv1 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #

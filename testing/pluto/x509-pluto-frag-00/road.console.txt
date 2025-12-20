@@ -17,7 +17,7 @@ road #
  iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j DROP
 road #
  ipsec auto --add x509
-"x509": added IKEv1 connection
+"x509": added oriented IKEv1 connection
 road #
  echo done
 done

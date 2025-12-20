@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-null
-"westnet-eastnet-null": added IKEv1 connection
+"westnet-eastnet-null": added oriented IKEv1 connection
 east #
  ipsec auto --status
 using kernel interface: xfrm

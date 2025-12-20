@@ -41,7 +41,7 @@ west #
  ipsec whack --impair v2_proposal_integ:allow-none
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
-"esp=null-none": added IKEv2 connection
+"esp=null-none": added oriented IKEv2 connection
 "esp=null-none" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "esp=null-none" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-none" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH
@@ -62,7 +62,7 @@ west #
  ipsec whack --impair v2_proposal_integ:drop-none
 west #
  ../../guestbin/libreswan-up-down.sh esp=null-none -I 192.0.1.254 192.0.2.254
-"esp=null-none": added IKEv2 connection
+"esp=null-none": added oriented IKEv2 connection
 "esp=null-none" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "esp=null-none" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "esp=null-none" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}, initiating IKE_AUTH

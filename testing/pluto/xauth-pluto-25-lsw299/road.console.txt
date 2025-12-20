@@ -8,7 +8,7 @@ road #
  ../../guestbin/block-non-ipsec.sh
 road #
  ipsec auto --add road-east
-"road-east": added IKEv1 connection
+"road-east": added oriented IKEv1 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #

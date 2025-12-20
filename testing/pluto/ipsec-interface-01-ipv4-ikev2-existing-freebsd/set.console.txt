@@ -55,7 +55,7 @@ set #
 "rise-set": output: l inet 198.18.1.15 --> 198.18.1.12\n\tinet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00\n\tgroups: i
 "rise-set": output: psec\n\treqid: 100\n\tnd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>\n
 "rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
-"rise-set": added IKEv2 connection
+"rise-set": added oriented IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
 up

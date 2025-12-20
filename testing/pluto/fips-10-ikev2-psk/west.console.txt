@@ -32,7 +32,7 @@ west #
  : default algorithms
 west #
  ../../guestbin/libreswan-up-down.sh ikev2-defaults -I 192.0.1.254 192.0.2.254
-"ikev2-defaults": added IKEv2 connection
+"ikev2-defaults": added oriented IKEv2 connection
 "ikev2-defaults" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-defaults" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-defaults" #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
@@ -49,7 +49,7 @@ west #
  : other combinations
 west #
  ../../guestbin/libreswan-up-down.sh ikev2-ike=aes128-sha2 -I 192.0.1.254 192.0.2.254
-"ikev2-ike=aes128-sha2": added IKEv2 connection
+"ikev2-ike=aes128-sha2": added oriented IKEv2 connection
 "ikev2-ike=aes128-sha2" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 "ikev2-ike=aes128-sha2" #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "ikev2-ike=aes128-sha2" #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_CBC_128 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH19}, initiating IKE_AUTH

@@ -5,7 +5,7 @@ east #
 Redirecting to: [initsystem]
 east #
  ipsec auto --add westnet-eastnet-ikev2
-"westnet-eastnet-ikev2": added IKEv2 connection
+"westnet-eastnet-ikev2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

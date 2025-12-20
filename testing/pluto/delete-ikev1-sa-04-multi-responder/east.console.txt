@@ -5,7 +5,7 @@ east #
 Redirecting to: [initsystem]
 east #
  ipsec add west-east
-"west-east": added IKEv1 connection
+"west-east": added oriented IKEv1 connection
 east #
  ../../guestbin/wait-until-pluto-started
 east #
@@ -19,10 +19,10 @@ east #
 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
  ipsec add west-east-b
-"west-east-b": added IKEv1 connection
+"west-east-b": added oriented IKEv1 connection
 east #
  ipsec add west-east-c
-"west-east-c": added IKEv1 connection
+"west-east-c": added oriented IKEv1 connection
 east #
  ../../guestbin/wait-for-pluto.sh '"west-east-b" #3: IPsec SA established'
 "west-east-b" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}

@@ -12,7 +12,7 @@ road #
 road #
  ipsec auto --add road
 "road": created ipsec-interface ipsec0[16384]@NONE
-"road": added IKEv2 connection
+"road": added oriented IKEv2 connection
 road #
  ipsec auto --route road
 road #

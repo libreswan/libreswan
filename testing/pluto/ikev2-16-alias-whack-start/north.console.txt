@@ -14,8 +14,8 @@ north #
 initdone
 north #
  ipsec auto --start northnet-eastnets
-"northnet-eastnets/0x1": added IKEv2 connection
-"northnet-eastnets/0x2": added IKEv2 connection
+"northnet-eastnets/0x1": added oriented IKEv2 connection
+"northnet-eastnets/0x2": added oriented IKEv2 connection
 initiating all connections with alias "northnet-eastnets"
 "northnet-eastnets/0x1" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
 "northnet-eastnets/0x2": queue Child SA; waiting on IKE SA "northnet-eastnets/0x1" #1 negotiating with 192.1.2.23

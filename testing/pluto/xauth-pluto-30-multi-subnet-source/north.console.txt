@@ -9,13 +9,13 @@ north #
  ../../guestbin/block-non-ipsec.sh
 north #
  ipsec auto --add north-pool
-"north-pool": added IKEv1 connection
+"north-pool": added oriented IKEv1 connection
 north #
  ipsec auto --add north-subnet1
-"north-subnet1": added IKEv1 connection
+"north-subnet1": added oriented IKEv1 connection
 north #
  ipsec auto --add north-subnet2
-"north-subnet2": added IKEv1 connection
+"north-subnet2": added oriented IKEv1 connection
 north #
  ipsec whack --trafficstatus
 north #

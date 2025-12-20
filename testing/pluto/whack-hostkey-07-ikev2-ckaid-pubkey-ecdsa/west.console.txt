@@ -49,7 +49,7 @@ conn hostkey
 	rightpubkey=<<PEM-PUBKEY#1>>
 west #
  ipsec auto --add hostkey
-"hostkey": added IKEv2 connection
+"hostkey": added oriented IKEv2 connection
 west #
  ipsec auto --up hostkey
 "hostkey" #1: initiating IKEv2 connection to 192.1.2.23 using UDP

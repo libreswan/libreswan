@@ -22,7 +22,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 west #
  ipsec whack --impair suppress_retransmits
 west #
@@ -55,7 +55,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (established IKE SA
 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down

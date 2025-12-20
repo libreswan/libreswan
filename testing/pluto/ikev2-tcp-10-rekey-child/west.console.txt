@@ -23,7 +23,7 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add west
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec connectionstatus west
 "west": 192.0.1.0/24===192.1.2.45:4500[@west]...192.1.2.23:4500[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;

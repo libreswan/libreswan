@@ -7,53 +7,53 @@ west #
 west #
  ipsec add ikev2=no
 "ikev2=no": ikev2=no has been replaced by keyexchange=ikev1
-"ikev2=no": added IKEv1 connection
+"ikev2=no": added oriented IKEv1 connection
 west #
  ipsec add ikev2=yes
 "ikev2=yes": ikev2=yes has been replaced by keyexchange=ikev2
-"ikev2=yes": added IKEv2 connection
+"ikev2=yes": added oriented IKEv2 connection
 west #
  ipsec add ikev2=always
 "ikev2=always": ikev2=yes has been replaced by keyexchange=ikev2
-"ikev2=always": added IKEv2 connection
+"ikev2=always": added oriented IKEv2 connection
 west #
  ipsec add ikev2=never
 "ikev2=never": ikev2=no has been replaced by keyexchange=ikev1
-"ikev2=never": added IKEv1 connection
+"ikev2=never": added oriented IKEv1 connection
 west #
  ipsec add keyexchange=default
-"keyexchange=default": added IKEv2 connection
+"keyexchange=default": added oriented IKEv2 connection
 west #
  ipsec add keyexchange=ike
-"keyexchange=ike": added IKEv2 connection
+"keyexchange=ike": added oriented IKEv2 connection
 west #
  ipsec add keyexchange=ikev1
-"keyexchange=ikev1": added IKEv1 connection
+"keyexchange=ikev1": added oriented IKEv1 connection
 west #
  ipsec add keyexchange=ikev2
-"keyexchange=ikev2": added IKEv2 connection
+"keyexchange=ikev2": added oriented IKEv2 connection
 west #
  ipsec add keyexchange=ike-ikev2=n
 "keyexchange=ike-ikev2=n": ikev2=no has been replaced by keyexchange=ikev1
-"keyexchange=ike-ikev2=n": added IKEv1 connection
+"keyexchange=ike-ikev2=n": added oriented IKEv1 connection
 west #
  ipsec add keyexchange=ike-ikev2=y
 "keyexchange=ike-ikev2=y": ikev2=yes has been replaced by keyexchange=ikev2
-"keyexchange=ike-ikev2=y": added IKEv2 connection
+"keyexchange=ike-ikev2=y": added oriented IKEv2 connection
 west #
  ipsec add keyexchange=ikev1-ikev2=n
 "keyexchange=ikev1-ikev2=n": ikev2=no has been replaced by keyexchange=ikev1
-"keyexchange=ikev1-ikev2=n": added IKEv1 connection
+"keyexchange=ikev1-ikev2=n": added oriented IKEv1 connection
 west #
  ipsec add keyexchange=ikev1-ikev2=y
 "keyexchange=ikev1-ikev2=y": ignoring ikev2=yes which conflicts with keyexchange=ikev1
-"keyexchange=ikev1-ikev2=y": added IKEv1 connection
+"keyexchange=ikev1-ikev2=y": added oriented IKEv1 connection
 west #
  ipsec add keyexchange=ikev2-ikev2=n
 "keyexchange=ikev2-ikev2=n": ignoring ikev2=no which conflicts with keyexchange=ikev2
-"keyexchange=ikev2-ikev2=n": added IKEv2 connection
+"keyexchange=ikev2-ikev2=n": added oriented IKEv2 connection
 west #
  ipsec add keyexchange=ikev2-ikev2=y
 "keyexchange=ikev2-ikev2=y": ikev2=yes has been replaced by keyexchange=ikev2
-"keyexchange=ikev2-ikev2=y": added IKEv2 connection
+"keyexchange=ikev2-ikev2=y": added oriented IKEv2 connection
 west #

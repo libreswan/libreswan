@@ -13,7 +13,7 @@ Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
 netbsdw# ipsec auto --add eastnet-westnet-ikev2
-"eastnet-westnet-ikev2": added IKEv2 connection
+"eastnet-westnet-ikev2": added oriented IKEv2 connection
 netbsdw# echo "initdone"
 initdone
 netbsdw# ipsec auto --route eastnet-westnet-ikev2

@@ -11,7 +11,7 @@ road #
  ipsec whack --impair suppress_retransmits
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-"westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+"westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
 road #
  ipsec auto --status
 using kernel interface: xfrm

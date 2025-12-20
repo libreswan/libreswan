@@ -12,7 +12,7 @@ road #
 ../../guestbin/wait-until-pluto-started
 road #
 ipsec auto --add road-eastnet-nonat
-"road-eastnet-nonat": added IKEv2 connection
+"road-eastnet-nonat": added oriented IKEv2 connection
 road #
 ipsec auto --status
 using kernel interface: xfrm

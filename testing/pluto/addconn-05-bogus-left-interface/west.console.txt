@@ -9,7 +9,7 @@ west #
 opening file: /etc/ipsec.conf
 loading conns matching west:
   sending to pluto
-"west": added IKEv2 connection
+"west": added oriented IKEv2 connection
 west #
  ipsec addconn --verbose west-bogus
 opening file: /etc/ipsec.conf

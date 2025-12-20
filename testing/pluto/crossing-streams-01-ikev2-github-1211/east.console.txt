@@ -10,7 +10,7 @@ east #
  ipsec whack --impair suppress_retransmits
 east #
  ipsec auto --add east-west
-"east-west": added IKEv2 connection
+"east-west": added oriented IKEv2 connection
 east #
  ipsec whack --impair revival
 east #

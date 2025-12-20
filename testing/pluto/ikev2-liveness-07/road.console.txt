@@ -8,7 +8,7 @@ road #
 road #
  ipsec auto --add road-east-x509-ipv4
 warning: "road-east-x509-ipv4": IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=
-"road-east-x509-ipv4": added IKEv2 connection
+"road-east-x509-ipv4": added oriented IKEv2 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #

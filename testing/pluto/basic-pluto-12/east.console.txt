@@ -16,11 +16,11 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet
-"westnet-eastnet": added IKEv1 connection
+"westnet-eastnet": added oriented IKEv1 connection
 east #
  ipsec auto --add westnet-eastnet-7
 warning: "westnet-eastnet-7": keyexchange=ikev1 ignored for never-negotiate (type=passthrough) connection
-"westnet-eastnet-7": added passthrough connection
+"westnet-eastnet-7": added oriented passthrough connection
 east #
  ipsec auto --route westnet-eastnet-7
 east #

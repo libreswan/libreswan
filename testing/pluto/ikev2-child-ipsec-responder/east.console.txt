@@ -13,7 +13,7 @@ east #
  # ipsec auto --add westnet-eastnet-ikev2a # this conn has auto=start
 east #
  ipsec auto --add westnet-eastnet-ikev2b
-"westnet-eastnet-ikev2b": added IKEv2 connection
+"westnet-eastnet-ikev2b": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

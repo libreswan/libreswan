@@ -23,7 +23,7 @@ east #
  ipsec whack --impair suppress_retransmits
 east #
  ipsec auto --add nss-cert-ocsp
-"nss-cert-ocsp": added IKEv1 connection
+"nss-cert-ocsp": added oriented IKEv1 connection
 east #
  ipsec auto --status |grep nss-cert-ocsp
 "nss-cert-ocsp": 192.0.2.254/32===192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]...192.1.2.45[%fromcert]===192.0.1.254/32; unrouted; my_ip=192.0.2.254; their_ip=192.0.1.254;

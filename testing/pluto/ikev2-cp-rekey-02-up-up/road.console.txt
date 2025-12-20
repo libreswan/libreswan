@@ -6,7 +6,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add eastnet-any
-"eastnet-any": added IKEv2 connection
+"eastnet-any": added oriented IKEv2 connection
 road #
  # confirm we have stock resolv.conf
 road #

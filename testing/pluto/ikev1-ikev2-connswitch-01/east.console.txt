@@ -7,10 +7,10 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet1
-"westnet-eastnet1": added IKEv1 connection
+"westnet-eastnet1": added oriented IKEv1 connection
 east #
  ipsec auto --add westnet-eastnet2
-"westnet-eastnet2": added IKEv2 connection
+"westnet-eastnet2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

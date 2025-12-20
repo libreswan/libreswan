@@ -11,7 +11,7 @@ road #
 10 0 2 . AwEAAasDxPUyLuhFFZlzgCej1aRIIWI5ht+oiNbOiy1bzvtNHlc7+HNd F6R6MoAcOmaLTCcX5m6srseCyjmcdUF9S926OEv+f4k9Um3Iux30nZ6N C1AJ0P5MIbsCxMf9FyDwYjtYRuA82vy71ekGA6SPklU/K6uV35iGvOgA lTH8lbovm1ZDTWbGSowA+ZXnug4YAz7i/PRQ2oa9iZLwurf+lqqLZgNb 4zrAqLGxrygcNSZOIv22rBdAnOr/T2Op1gBSjNkQ/9dFGpAtD6bJb4Uy B+538334R7xyQfURvcK+lq1eICdC7GecQzECuS3AfHvwuDkkqQ+/ml2p GSp3UbiYmcxyFnhmf6SRfuwOO+tZz6W/MGW4OCRjWTANIpBMAMKIZH60 z2xVDiBSHUvjTBqysepn/4qiEWPmBP02Wu/tHqRwuZHMaaZ7CS6jEzBn QSW95OBmcfDO1DevxrE6aXh+GpNHB8pNxAhFk+0rXgMnKsDX4mjO7neq Z/rOLGIjMONksddkKu84B3BLizD6nFtX
 road #
  ipsec auto --add road-east-ikev2
-"road-east-ikev2": added IKEv2 connection
+"road-east-ikev2": added oriented IKEv2 connection
 road #
  ipsec whack --impair suppress_retransmits
 road #

@@ -7,13 +7,13 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add rekey
-"rekey": added IKEv2 connection
+"rekey": added oriented IKEv2 connection
 east #
  ipsec auto --add rekey1
-"rekey1": added IKEv2 connection
+"rekey1": added oriented IKEv2 connection
 east #
  ipsec auto --add rekey2
-"rekey2": added IKEv2 connection
+"rekey2": added oriented IKEv2 connection
 east #
  echo "initdone"
 initdone

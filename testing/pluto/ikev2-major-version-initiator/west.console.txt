@@ -18,7 +18,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add westnet-eastnet-ikev2-major
-"westnet-eastnet-ikev2-major": added IKEv2 connection
+"westnet-eastnet-ikev2-major": added oriented IKEv2 connection
 west #
  echo "initdone"
 initdone

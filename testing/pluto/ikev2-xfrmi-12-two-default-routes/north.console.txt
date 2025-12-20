@@ -12,11 +12,11 @@ north #
 north #
  ipsec auto --add north-east
 "north-east": created ipsec-interface ipsec3@NONE
-"north-east": added IKEv2 connection
+"north-east": added oriented IKEv2 connection
 north #
  ipsec auto --add north-west
 "north-west": created ipsec-interface ipsec2@NONE
-"north-west": added IKEv2 connection
+"north-west": added oriented IKEv2 connection
 north #
  echo "initdone"
 initdone

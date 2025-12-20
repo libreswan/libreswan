@@ -34,7 +34,7 @@ west #
  ipsec whack --impair revival
 west #
  ipsec auto --add nss-cert-ocsp
-"nss-cert-ocsp": added IKEv2 connection
+"nss-cert-ocsp": added oriented IKEv2 connection
 west #
  ipsec auto --status |grep nss-cert-ocsp
 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org]...192.1.2.23[%fromcert]===192.0.2.254/32; unrouted; my_ip=192.0.1.254; their_ip=192.0.2.254;

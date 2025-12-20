@@ -33,7 +33,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec add nss-cert-crl
-"nss-cert-crl": added IKEv1 connection
+"nss-cert-crl": added oriented IKEv1 connection
 west #
  ipsec up nss-cert-crl
 "nss-cert-crl" #1: initiating IKEv1 Main Mode connection

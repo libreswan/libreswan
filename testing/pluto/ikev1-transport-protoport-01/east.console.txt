@@ -7,7 +7,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add ipv4-psk-ikev2-transport
-"ipv4-psk-ikev2-transport": added IKEv1 connection
+"ipv4-psk-ikev2-transport": added oriented IKEv1 connection
 east #
  echo "initdone"
 initdone
