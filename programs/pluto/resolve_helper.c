@@ -63,9 +63,6 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 						      struct verbose verbose)
 {
 	struct host_addrs resolved = *host_addrs;
-	/*hope for the best*/
-	resolved.needs.route = false;
-	resolved.needs.dns = false;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
  		struct route_addrs *end = &resolved.end[lr];
@@ -87,7 +84,6 @@ static struct host_addrs resolve_extracted_host_addrs(const struct host_addrs *h
 			 */
 			vlog("failed to resolve '%s%s=%s' at load time: %s",
 			     leftright, "", end->host.value, e);
-			resolved.needs.dns = true;
 			continue;
 		}
 		end->host.addr = host_addr;
@@ -111,36 +107,40 @@ void resolve_continue(struct help_request *request,
 	struct connection *c = request->connection;
 	struct host_addrs *resolved = &request->resolved_host_addrs;
 
-	vdbg("needs.dns = %s needs.route = %s",
-	     bool_str(resolved->needs.dns),
-	     bool_str(resolved->needs.route));
-
-	if (!resolved->needs.dns) {
-		resolve_default_route(&resolved->end[LEFT_END],
-				      &resolved->end[RIGHT_END],
-				      resolved->afi,
-				      verbose);
-		resolve_default_route(&resolved->end[RIGHT_END],
-				      &resolved->end[LEFT_END],
-				      resolved->afi,
-				      verbose);
+	unsigned need_dns = (route_addrs_need_dns(&resolved->end[LEFT_END]) +
+			     route_addrs_need_dns(&resolved->end[RIGHT_END]));
+	if (need_dns > 0) {
+		vdbg("connection has unresolved DNS; scheduling CHECK_DDNS");
+		schedule_connection_check_ddns(c, verbose);
 	}
+
+	/*
+	 * Even when need DNS, try to resolve routes.  Connection can
+	 * still orient provided one of the addresses is known.
+	 *
+	 * Should skip end when it has unresolved DNS?
+	 */
+	resolve_default_route(&resolved->end[LEFT_END],
+			      &resolved->end[RIGHT_END],
+			      resolved->afi,
+			      verbose);
+	resolve_default_route(&resolved->end[RIGHT_END],
+			      &resolved->end[LEFT_END],
+			      resolved->afi,
+			      verbose);
 
 	build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
 
 	/*
-	 * When possible, try to orient the connection.
+	 * Always try to orient; should skip when both ends have
+	 * unresolved DNS?
 	 */
 	vassert(!oriented(c));
-	if (resolved->needs.dns) {
-		vdbg("unresolved connection can't orient; scheduling CHECK_DDNS");
-		schedule_connection_check_ddns(c, verbose);
-	} else if (!orient(c, verbose)) {
-		vdbg("connection did not orient, scheduling CHECK_DDNS");
-		schedule_connection_check_ddns(c, verbose);
-	} else if (verbose.debug) {
-		vdbg("connection oriented, re-checking DB");
-		connection_db_check(verbose.logger, HERE);
+	if (orient(c, verbose)) {
+		if (verbose.debug) {
+			vdbg("connection oriented; rechecking DB");
+			connection_db_check(verbose.logger, HERE);
+		}
 	}
 
 	request->callback(c, resolved, verbose);

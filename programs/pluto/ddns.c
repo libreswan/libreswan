@@ -146,7 +146,7 @@ void connection_check_ddns1_continue(struct connection *c,
 				     const struct host_addrs *resolved_host_addrs,
 				     struct verbose verbose)
 {
-	if (resolved_host_addrs->needs.dns) {
+	if (host_addrs_need_dns(resolved_host_addrs, verbose)) {
 		vlog("not resolved");
 		whack_detach(c, verbose.logger);
 		return;
