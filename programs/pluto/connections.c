@@ -2193,6 +2193,12 @@ bool never_negotiate(const struct connection *c)
 	return (c->config->never_negotiate_shunt != SHUNT_UNSET);
 }
 
+bool connection_end_needs_dns(const struct connection_end *end)
+{
+	return (end->config->host.host.type == KH_IPHOSTNAME &&
+		!address_is_specified(end->host.addr));
+}
+
 bool is_opportunistic(const struct connection *c)
 {
 	return (c != NULL && c->config->opportunistic);

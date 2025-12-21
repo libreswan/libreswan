@@ -1220,6 +1220,8 @@ bool is_opportunistic_instance(const struct connection *c);
 
 bool is_xauth(const struct connection *c);
 
+bool connection_end_needs_dns(const struct connection_end *end);
+
 /* IKE SA | ISAKMP SA || Child SA | IPsec SA */
 const char *connection_sa_name(const struct connection *c, enum sa_kind sa_kind);
 /* IKE | ISAKMP || Child | IPsec */
