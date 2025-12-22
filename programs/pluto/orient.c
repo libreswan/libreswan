@@ -528,22 +528,18 @@ void jam_orientation(struct jambuf *buf,
 	 * or hints at where the problem is when it failed.
 	 */
 	if (oriented(c)) {
-		if (oriented_details) {
-			jam_string(buf, " (local: ");
+		bool remote_needs_dns = connection_end_needs_dns(c->remote);
+		if (oriented_details || remote_needs_dns) {
+			jam_string(buf, " (");
+			jam_string(buf, "local: ");
 			jam_host_addr(buf, c->local);
 			jam_string(buf, " ");
-			jam_string(buf, " remote: ");
+			jam_string(buf, "remote: ");
 			jam_host_addr(buf, c->remote);
+			if (remote_needs_dns) {
+				jam_string(buf, " requires DNS lookup");
+			}
 			jam_string(buf, ")");
-		} else if (connection_end_needs_dns(c->remote)) {
-			/*
-			 * Can only be .remote; if .local's lookup
-			 * failed then .local wouldn't have an address
-			 * and couldn't orient.
-			 */
-			jam_string(buf, " (remote: ");
-			jam_host_addr(buf, c->remote);
-			jam_string(buf, " requires DNS lookup)");
 		}
 	} else if (listening) {
 		/*
