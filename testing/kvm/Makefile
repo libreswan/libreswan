@@ -168,6 +168,7 @@ KVM_MAKEFLAGS ?= $(strip \
 	$(call KVM-MAKEFLAG, KVM_USE_ML_KEM_1024) \
 	$(call KVM-MAKEFLAG, KVM_CC) \
 	$(call KVM-MAKEFLAG, KVM_USE_EDDSA) \
+	$(call KVM-MAKEFLAG, KVM_USE_SYSTEMD_WATCHDOG) \
 	)
 
 # Fine-tune the BASE and BUILD machines.
