@@ -97,6 +97,7 @@ OBJS += whack_add.o
 OBJS += whack_briefconnectionstatus.o
 OBJS += whack_connectionstatus.o
 OBJS += whack_crash.o
+OBJS += whack_ddns.o
 OBJS += whack_debug.o
 OBJS += whack_delete.o
 OBJS += whack_deleteid.o

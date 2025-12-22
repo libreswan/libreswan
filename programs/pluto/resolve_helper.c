@@ -75,6 +75,7 @@ helper_cb *resolve_helper(struct help_request *request,
 			continue;
 		}
 
+		vexpect(!address_is_specified(end->host.addr));
 		ip_address host_addr;
 		err_t e = ttoaddress_dns(shunk1(end->host.value),
 					 resolved->afi,

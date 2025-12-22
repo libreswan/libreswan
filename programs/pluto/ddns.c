@@ -183,29 +183,3 @@ void connection_check_ddns(struct connection *c, struct verbose verbose)
 	}
 	connection_delref(&c, verbose.logger);
 }
-
-static void connections_check_ddns(struct logger *logger)
-{
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "DDNS");
-	vtime_t start = vdbg_start("checking DDNS");
-
-	struct connection_filter cf = {
-		.search = {
-			.order = NEW2OLD,
-			.verbose = verbose,
-			.where = HERE,
-		},
-	};
-	while (next_connection(&cf)) {
-		connection_check_ddns(cf.c, verbose);
-	}
-
-	vdbg_stop(&start, "in %s() for hostname lookup", __func__);
-}
-
-void whack_ddns(const struct whack_message *wm UNUSED, struct show *s)
-{
-	struct logger *logger = show_logger(s);
-	llog(RC_LOG, logger, "updating pending dns lookups");
-	connections_check_ddns(logger);
-}

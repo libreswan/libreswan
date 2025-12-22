@@ -1,6 +1,6 @@
-/* DDNS, for libreswan
+/* `ipsec ddns ...`, for libreswan
  *
- * Copyright (C) 2023-2025 Andrew Cagney
+ * Copyright (C) 2025 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,13 +14,12 @@
  *
  */
 
-#ifndef DDNS_H
-#define DDNS_H
+#ifndef WHACK_DDNS_H
+#define WHACK_DDNS_H
 
-#include "verbose.h"
+struct show;
+struct whack_message;
 
-struct connection;
-
-void connection_check_ddns(struct connection *c, struct verbose verbose);
+void whack_ddns(const struct whack_message *wm, struct show *s);
 
 #endif
