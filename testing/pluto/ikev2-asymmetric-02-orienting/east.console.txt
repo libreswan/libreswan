@@ -20,7 +20,7 @@ east #
 listening for IKE messages
 adding interface eth1 192.1.2.24:UDP/500
 adding interface eth1 192.1.2.24:UDP/4500 (NAT)
-"westnet-eastnet-ikev2": oriented IKEv2 connection (local: right=192.1.2.24  remote: left=192.1.2.46)
+"westnet-eastnet-ikev2": oriented IKEv2 connection (local: right=192.1.2.24 remote: left=192.1.2.46)
 forgetting secrets
 loading secrets from "/etc/ipsec.secrets"
 east #
