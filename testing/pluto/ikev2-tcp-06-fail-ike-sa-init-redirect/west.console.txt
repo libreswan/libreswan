@@ -23,7 +23,7 @@ west #
 "west" #1: sent IKE_SA_INIT request to 192.1.2.23:TCP/4500
 "west" #1: IKE_SA_INIT response redirects to new gateway 192.1.3.33
 "west" #1: scheduling redirect 1 to 192.1.3.33
-IMPAIR: "west" #1: redirect: skip scheduling redirect event
+IMPAIR: "west" #1: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec whack --impair trigger_revival:1

@@ -29,7 +29,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: sending no KE (g^x) payload
 "westnet-eastnet-ipv4-psk-ikev2" #1: sent Main Mode I2
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  ipsec whack --impair none

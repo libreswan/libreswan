@@ -31,7 +31,7 @@ west #
 "ikev2-ipsec-fail" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east-v2' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "ikev2-ipsec-fail" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "ikev2-ipsec-fail" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "ikev2-ipsec-fail" #2: revival: skip scheduling revival event
+IMPAIR: "ikev2-ipsec-fail" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  ipsec auto --delete ikev2-ipsec-fail
 "ikev2-ipsec-fail": terminating SAs using this connection

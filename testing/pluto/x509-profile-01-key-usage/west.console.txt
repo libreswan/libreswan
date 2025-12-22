@@ -223,7 +223,7 @@ Redirecting to: [initsystem]
 "west-ku-certSigning" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 "west-ku-certSigning" #1: encountered fatal error in state IKE_AUTH_I
 "west-ku-certSigning" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-ku-certSigning" #2: revival: skip scheduling revival event
+IMPAIR: "west-ku-certSigning" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-ku-certSigning" #1: deleting IKE SA (sent IKE_AUTH request)
  ipsec stop
 Redirecting to: [initsystem]

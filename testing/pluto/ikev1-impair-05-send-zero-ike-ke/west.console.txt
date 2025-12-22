@@ -28,7 +28,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending bogus KE (g^x) == 0 value to brea
 "westnet-eastnet-ipv4-psk" #1: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk" #1: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk" #1: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  ipsec whack --impair none
@@ -49,7 +49,7 @@ west #
 "westnet-eastnet-ipv4-psk" #2: NSS: shared key calculation using MODP failed: SEC_ERROR_NO_MEMORY: security library: memory allocation failure.
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk" #2: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  echo done

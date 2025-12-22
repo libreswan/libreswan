@@ -35,7 +35,7 @@ road #
 "x509" #1: sent Main Mode I3
 IMPAIR: "x509" #1: retransmit so timing out SA (may retry)
 "x509" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "x509" #1: revival: skip scheduling revival event
+IMPAIR: "x509" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "x509" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 road #
  echo done

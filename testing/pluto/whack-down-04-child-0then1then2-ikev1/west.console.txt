@@ -35,7 +35,7 @@ west #
 "west-cuckold" #2: sent Quick Mode request
 "west-cuckold" #2: STATE_QUICK_I1: 5 second timeout exceeded after 4 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "west-cuckold" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-cuckold" #2: revival: skip scheduling revival event
+IMPAIR: "west-cuckold" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-cuckold" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec up west-cuckoo-1

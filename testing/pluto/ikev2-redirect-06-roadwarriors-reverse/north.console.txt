@@ -39,7 +39,7 @@ north #
  # wait for NORTH to block on revival
 north #
  ../../guestbin/wait-for-pluto.sh "IMPAIR: redirect"
-IMPAIR: "north-east" #2: redirect: skip scheduling redirect event
+IMPAIR: "north-east" #2: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 north #
  ipsec whack --impair trigger_revival:1
 IMPAIR: "north-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.45; received Delete/Notify

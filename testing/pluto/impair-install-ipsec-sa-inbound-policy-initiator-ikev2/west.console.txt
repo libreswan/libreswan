@@ -48,7 +48,7 @@ IMPAIR: "west-east" #2: kernel: install_ipsec_sa_inbound_policy in install_inbou
 "west-east" #1: IKE SA established but initiator rejected Child SA response
 "west-east" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "west-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-east" #2: revival: skip scheduling revival event
+IMPAIR: "west-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 ERROR: "west-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  # expect the on-demand kernel policy
@@ -67,7 +67,7 @@ west #
 down
 west #
  ../../guestbin/wait-for-pluto.sh 'IMPAIR: .* #3: revival'
-IMPAIR: "west-east" #3: revival: skip scheduling revival event
+IMPAIR: "west-east" #3: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  ipsec _kernel state
 src 192.0.1.254 dst 192.0.2.254

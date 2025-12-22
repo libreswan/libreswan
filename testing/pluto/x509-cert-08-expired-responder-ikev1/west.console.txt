@@ -41,7 +41,7 @@ west #
 "west" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "west" #1: STATE_MAIN_I3: 60 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "west" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west" #1: revival: skip scheduling revival event
+IMPAIR: "west" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  echo done

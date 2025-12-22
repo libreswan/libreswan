@@ -34,7 +34,7 @@ west #
 "replay" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "replay" #2: IKE_AUTH response rejected Child SA with NO_PROPOSAL_CHOSEN
 "replay" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "replay" #2: revival: skip scheduling revival event
+IMPAIR: "replay" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  echo done
 done

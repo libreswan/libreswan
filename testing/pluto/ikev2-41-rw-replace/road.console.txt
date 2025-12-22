@@ -197,7 +197,7 @@ road #
 | event_schedule_where: EVENT_v2_EXPIRE@0xXXX timeout in N.N seconds for #1
 | event_schedule_where: EVENT_v2_REPLACE@0xXXX timeout in N.N seconds for #3
 | #1 is retaining EVENT_v2_EXPIRE with is previously set timeout
-| timer_event_cb: processing EVENT_v2_EXPIRE-event@0xXXX for IKE SA #1 in state ESTABLISHED_IKE_SA
+|   timer_event_cb: processing EVENT_v2_EXPIRE-event@0xXXX for IKE SA #1 in state ESTABLISHED_IKE_SA
 | #1 deleting EVENT_v2_EXPIRE
 road #
  : "re-authenticateded. The state number should 3 and 2"
