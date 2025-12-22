@@ -15,7 +15,7 @@ west #
 west #
  ipsec auto --add named
 "named": failed to resolve 'right=right.libreswan.org' at load time: not a numeric IPv4 address and name lookup failed (no validation performed)
-"named": added oriented IKEv2 connection (remote: right=right.libreswan.org requires DNS lookup)
+"named": added oriented IKEv2 connection (local: left=192.1.2.45 remote: right=right.libreswan.org requires DNS lookup)
 west #
  ipsec status | grep "===" # should show %dns for pending resolve
 "named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
