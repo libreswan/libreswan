@@ -2232,6 +2232,7 @@ int main(int argc, char **argv)
 		   !seen[OPT_TRAFFICSTATUS] &&
 		   !seen[OPT_CONNECTIONSTATUS] &&
 		   !seen[OPT_BRIEFCONNECTIONSTATUS] &&
+		   !seen[OPT_DDNS] &&
 		   !seen[OPT_SHOW_STATES] &&
 		   !seen[OPT_REDIRECT_TO]) {
 		diagw("no reason for --name");

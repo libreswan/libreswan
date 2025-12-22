@@ -53,15 +53,16 @@
 #include "addresspool.h"		/* for show_addresspool_status() */
 #include "pluto_stats.h"		/* for whack_clear_stats() et.al. */
 #include "server_fork.h"		/* for show_process_status() */
-#include "ddns.h"			/* for connection_check_ddns() */
 #include "ipsecconf/setup.h"
 #include "ddos.h"
 
 #include "visit_connection.h"
+
 #include "whack_add.h"
 #include "whack_briefconnectionstatus.h"
 #include "whack_connectionstatus.h"
 #include "whack_crash.h"
+#include "whack_ddns.h"
 #include "whack_debug.h"
 #include "whack_delete.h"
 #include "whack_deleteid.h"
@@ -70,9 +71,10 @@
 #include "whack_down.h"
 #include "whack_impair.h"
 #include "whack_initiate.h"
+#include "whack_listen.h"
 #include "whack_pubkey.h"
-#include "whack_route.h"
 #include "whack_redirect.h"
+#include "whack_route.h"
 #include "whack_sa.h"
 #include "whack_showstates.h"
 #include "whack_shutdown.h"
@@ -80,7 +82,6 @@
 #include "whack_suspend.h"
 #include "whack_trafficstatus.h"
 #include "whack_unroute.h"
-#include "whack_listen.h"
 
 static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
 
