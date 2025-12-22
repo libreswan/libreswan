@@ -388,11 +388,6 @@ bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attach
 	c->remote = remote;
 
 	/*
-	 * Just in case.
-	 */
-	flush_connection_event(c, CONNECTION_CHECK_DDNS);
-
-	/*
 	 * Now that things are oriented, generate tentative kernel
 	 * policies from the selectors (which also enters them into
 	 * the SPD_DB.
