@@ -21,7 +21,7 @@ west #
 "west-east" #1: IKE_SA_INIT response has zero IKE SA Responder SPI; dropping packet
 "west-east" #1: encountered fatal error in state IKE_SA_INIT_I
 "west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-east" #1: revival: skip scheduling revival event
+IMPAIR: "west-east" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 west #
  ipsec down west-east
@@ -39,7 +39,7 @@ IMPAIR: "west-east" #2: IKE_SA_INIT response has zero IKE SA Responder SPI; allo
 "west-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  grep IMPAIR: /tmp/pluto.log
-IMPAIR: "west-east" #1: revival: skip scheduling revival event
+IMPAIR: "west-east" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 IMPAIR: "west-east" #2: IKE_SA_INIT response has zero IKE SA Responder SPI; allowing anyway
 west #
  grep '^packet from 192.1.2.45' /tmp/pluto.log

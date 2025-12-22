@@ -73,7 +73,7 @@ west #
 "nss-cert-ocsp" #1: ignoring secured informational payload INVALID_ID_INFORMATION, msgid=MSGID, length=12
 IMPAIR: "nss-cert-ocsp" #1: retransmit so timing out SA (may retry)
 "nss-cert-ocsp" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "nss-cert-ocsp" #1: revival: skip scheduling revival event
+IMPAIR: "nss-cert-ocsp" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "nss-cert-ocsp" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  echo done

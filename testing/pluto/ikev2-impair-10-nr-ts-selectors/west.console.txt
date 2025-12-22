@@ -47,7 +47,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #3: forcing number of local TSi selecto
 "westnet-eastnet-ipv4-psk-ikev2" #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #4: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "westnet-eastnet-ipv4-psk-ikev2" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #4: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #4: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": initiating delete of connection's IKE SA #3
@@ -70,7 +70,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #5: forcing number of remote TSr select
 "westnet-eastnet-ipv4-psk-ikev2" #5: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "westnet-eastnet-ipv4-psk-ikev2" #6: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "westnet-eastnet-ipv4-psk-ikev2" #6: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #6: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev2" #6: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": initiating delete of connection's IKE SA #5

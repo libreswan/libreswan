@@ -34,7 +34,7 @@ road #
 "road-east" #2: sent Quick Mode request
 "road-east" #2: STATE_QUICK_I1: 60 second timeout exceeded after 0 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 "road-east" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "road-east" #2: revival: skip scheduling revival event
+IMPAIR: "road-east" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 ERROR: "road-east" #2: netlink response for Del SA esp.ESPSPIi@192.1.3.209: No such process (errno 3)
 road #

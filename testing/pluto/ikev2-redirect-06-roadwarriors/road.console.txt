@@ -49,7 +49,7 @@ road #
  # wait for ROAD to block on revival
 road #
  ../../guestbin/wait-for-pluto.sh "IMPAIR: .*: redirect"
-IMPAIR: "road-east" #2: redirect: skip scheduling redirect event
+IMPAIR: "road-east" #2: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 road #
  ipsec whack --impair trigger_revival:1
 IMPAIR: "road-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192.1.2.45; received Delete/Notify

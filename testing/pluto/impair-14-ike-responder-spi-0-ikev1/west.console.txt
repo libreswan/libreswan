@@ -21,12 +21,12 @@ west #
 "west-east" #1: discarding initial packet; already STATE_MAIN_I1
 IMPAIR: "west-east" #1: retransmit so timing out SA (may retry)
 "west-east" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-east" #1: revival: skip scheduling revival event
+IMPAIR: "west-east" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-east" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 west #
  grep IMPAIR: /tmp/pluto.log
 IMPAIR: "west-east" #1: retransmit so timing out SA (may retry)
-IMPAIR: "west-east" #1: revival: skip scheduling revival event
+IMPAIR: "west-east" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  grep '^packet from 192.1.2.45' /tmp/pluto.log
 west #

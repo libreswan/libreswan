@@ -27,7 +27,7 @@ west #
 "westnet-eastnet-ipv4-psk-ikev1" #2: sent Quick Mode request
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk-ikev1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk-ikev1" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done

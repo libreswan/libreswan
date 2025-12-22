@@ -33,7 +33,7 @@ west #
 "labeled" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
 "labeled" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 "labeled" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "labeled" #2: revival: skip scheduling revival event
+IMPAIR: "labeled" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 west #
  echo done
 done

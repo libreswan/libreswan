@@ -74,7 +74,7 @@ west #
  ipsec whack --deletestate 2
 "west-east-delete1" #2: sent INFORMATIONAL request to delete established Child SA using IKE SA #1
 "west-east-delete1" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "west-east-delete1" #2: revival: skip scheduling revival event
+IMPAIR: "west-east-delete1" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "west-east-delete1" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 2

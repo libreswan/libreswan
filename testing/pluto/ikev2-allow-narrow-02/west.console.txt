@@ -53,7 +53,7 @@ west #
 "westnet-eastnet-ikev2" #1: response for Child SA #2 was rejected with TS_UNACCEPTABLE; initiating delete of Child SA (IKE SA will remain UP)
 "westnet-eastnet-ikev2" #2: sent INFORMATIONAL request to delete larval Child SA using IKE SA #1
 "westnet-eastnet-ikev2" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ikev2" #2: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ikev2" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 ERROR: "westnet-eastnet-ikev2" #2: netlink response for Get SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 ERROR: "westnet-eastnet-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #

@@ -31,7 +31,7 @@ road #
 "road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east" #1: IKE_SA_INIT response redirects to new gateway 192.1.2.45
 "road-east" #1: scheduling redirect 1 to 192.1.2.45
-IMPAIR: "road-east" #1: redirect: skip scheduling redirect event
+IMPAIR: "road-east" #1: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #1: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --impair trigger_revival:1
@@ -74,7 +74,7 @@ road #
 "road-east" #4: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
 "road-east" #4: IKE_SA_INIT response redirects to new gateway 192.1.2.44
 "road-east" #4: scheduling redirect 1 to 192.1.2.44
-IMPAIR: "road-east" #4: redirect: skip scheduling redirect event
+IMPAIR: "road-east" #4: redirect: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #4: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --impair trigger_revival:2
@@ -83,7 +83,7 @@ IMPAIR: "road-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192
 "road-east" #5: sent IKE_SA_INIT request to 192.1.2.44:UDP/500
 IMPAIR: "road-east" #5: retransmit so timing out SA (may retry)
 "road-east" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "road-east" #5: revival: skip scheduling revival event
+IMPAIR: "road-east" #5: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "road-east" #5: deleting IKE SA (sent IKE_SA_INIT request)
 road #
  ipsec whack --trafficstatus

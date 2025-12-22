@@ -30,7 +30,7 @@ IMPAIR: "westnet-eastnet-ipv4-psk" #1: sending empty KE (g^x)
 "westnet-eastnet-ipv4-psk" #1: ignoring unsecured informational payload INVALID_KEY_INFORMATION, length=12
 IMPAIR: "westnet-eastnet-ipv4-psk" #1: retransmit so timing out SA (may retry)
 "westnet-eastnet-ipv4-psk" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk" #1: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk
@@ -58,7 +58,7 @@ west #
 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
 "westnet-eastnet-ipv4-psk" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "westnet-eastnet-ipv4-psk" #2: revival: skip scheduling revival event
+IMPAIR: "westnet-eastnet-ipv4-psk" #2: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk

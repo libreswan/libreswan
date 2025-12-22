@@ -59,7 +59,7 @@ IMPAIR: "nss-cert-crl" #1: not initiating FETCH_CRL
 "nss-cert-crl" #1: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "nss-cert-crl" #1: STATE_MAIN_I3: 15 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "nss-cert-crl" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
-IMPAIR: "nss-cert-crl" #1: revival: skip scheduling revival event
+IMPAIR: "nss-cert-crl" #1: revival: skip scheduling CONNECTION_REVIVAL event in 0 seconds
 "nss-cert-crl" #1: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  # check there's a pending CRL; fetch it and confirm it has cleared
@@ -110,7 +110,7 @@ IMPAIR: "nss-cert-crl": dispatch REVIVAL; attempt 1 next in 5s; timeout IKE SA
 "nss-cert-crl" #2: sending encrypted notification INVALID_ID_INFORMATION to 192.1.2.23:500
 "nss-cert-crl" #2: STATE_MAIN_I3: 15 second timeout exceeded after 0 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 "nss-cert-crl" #2: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
-IMPAIR: "nss-cert-crl" #2: revival: skip scheduling revival event
+IMPAIR: "nss-cert-crl" #2: revival: skip scheduling CONNECTION_REVIVAL event in 5 seconds
 "nss-cert-crl" #2: deleting ISAKMP SA (MAIN_I3) and NOT sending notification
 west #
  test -r /tmp/pluto.log && grep -e '^[^|].*ERROR' /tmp/pluto.log
