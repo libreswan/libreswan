@@ -18,6 +18,7 @@ OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
 USERLAND_LDFLAGS += $(UNBOUND_LDFLAGS)
+USERLAND_LDFLAGS += $(DNSSEC_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

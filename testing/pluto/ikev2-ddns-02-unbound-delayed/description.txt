@@ -1,0 +1,8 @@
+load +UP connection, that is waiting on DNS before it can initiate
+
+- during startup, load a connection with an unresolvable name
+  missing from unbound
+
+- once loaded, fix so the name resolves
+
+- trigger DDNS, name will resolve and connection will initiate

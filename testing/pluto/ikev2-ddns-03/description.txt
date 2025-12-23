@@ -1,4 +1,0 @@
-This tests the (oddly designed) EVENT_PENDING_DDNS
-
-- load a connection with an unresolvable name
-- wait for the even the kick in and confirm an auto=add conn will not initiate

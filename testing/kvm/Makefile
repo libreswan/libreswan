@@ -133,6 +133,7 @@ KVM_LINUX_USE_SECCOMP ?= true
 
 # On Alpine, do a cutdown build
 KVM_ALPINE_USE_DNSSEC ?= false
+KVM_ALPINE_USE_UNBOUND ?= false
 
 # On Debian, EDDSA doesn't yet exist
 KVM_DEBIAN_USE_EDDSA ?= false

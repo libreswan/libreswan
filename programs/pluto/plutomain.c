@@ -84,6 +84,7 @@
 #include "ikev2_ipseckey.h"	/* for init_ikev2_ipseckey() */
 #include "ddos.h"
 #include "helper.h"
+#include "resolve_helper.h"	/* for init_resolve_helper() */
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
@@ -160,6 +161,12 @@ static const char compile_time_interop_options[] = ""
 	" (NSS-KDF)"
 #else
 	" (native-KDF)"
+#endif
+#ifdef USE_UNBOUND
+	" UNBOUND"
+#endif
+#ifdef USE_UNBOUND
+	" UNBOUND"
 #endif
 #ifdef USE_DNSSEC
 	" DNSSEC"
@@ -1523,6 +1530,7 @@ int main(int argc, char **argv)
 	pluto_dnssec.enable = config_setup_yn(oco, KYN_DNSSEC_ENABLE);
 	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
 	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
+	init_resolve_helper(&pluto_dnssec, logger);
 #ifdef USE_DNSSEC
 	init_ikev2_ipseckey(get_pluto_event_base(), &pluto_dnssec, logger);
 	llog(RC_LOG, logger, "DNSSEC support [%s]", (pluto_dnssec.enable ? "enabled" : "disabled"));

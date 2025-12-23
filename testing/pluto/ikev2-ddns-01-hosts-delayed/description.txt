@@ -1,0 +1,8 @@
+load +UP connection, that is waiting on /etc/hosts before it can initiate
+
+- during startup, load a connection with an unresolvable name
+  missing from /etc/hosts
+
+- once loaded, fix so the name resolves
+
+- trigger DDNS, name will resolve and connection will initiate

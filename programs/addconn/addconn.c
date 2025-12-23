@@ -34,9 +34,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "starterwhack.h"
-#ifdef USE_DNSSEC
-# include "dnssec.h"
-#endif
 
 #ifdef USE_SECCOMP
 #include "seccomp_mode.h"

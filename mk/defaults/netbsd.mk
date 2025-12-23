@@ -22,7 +22,6 @@ USE_LIBCAP_NG = false
 
 INITSYSTEM=rc.d
 
-USE_DNSSEC = true
 DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/pkg/etc/unbound/root.key
 
 # not /run/pluto

@@ -51,9 +51,6 @@
 #include "virtual_ip.h"		/* for free_virtual_ip() */
 #include "server.h"		/* for free_server() */
 #include "revival.h"		/* for free_revivals() */
-#ifdef USE_DNSSEC
-#include "dnssec.h"		/* for unbound_ctx_free() */
-#endif
 #include "demux.h"		/* for free_demux() */
 #include "impair_message.h"	/* for free_impair_message() */
 #include "state_db.h"		/* for check_state_db() */
@@ -68,6 +65,7 @@
 #include "connection_event.h"
 #include "terminate.h"
 #include "helper.h"
+#include "resolve_helper.h"	/* for shutdown_resolve_helper() */
 
 server_stopped_cb server_stopped_callback NEVER_RETURNS;
 
@@ -218,16 +216,15 @@ void exit_epilogue(struct logger *logger)
 	shutdown_kernel(logger);
 	shutdown_ike_session_resume(logger); /* before NSS! */
 	shutdown_nss();
+
 	delete_lock_file();	/* delete any lock files */
-#ifdef USE_DNSSEC
-	unbound_ctx_free();	/* needs event-loop aka server */
-#endif
 
 	/*
 	 * NO LIBEVENT EVENTS BEYOND THIS POINT.
 	 *
 	 * THESE FUNCTIONS JUST DELETE MEMORY (hence free*())
 	 */
+	free_resolve_helper(logger);
 	free_server_fork(logger);
 	free_server(logger);
 

@@ -1,0 +1,5 @@
+connection with delayed DDNS but not "up"
+
+- connection loads and orients but still needs further DNS
+- dns resolves; connection does not initiate
+- connection initiated manually

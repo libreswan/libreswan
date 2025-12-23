@@ -299,7 +299,7 @@ OBJS += ikev1_prf.o
 endif
 OBJS += ikev2_prf.o
 
-ifeq ($(USE_DNSSEC),true)
+ifeq ($(USE_UNBOUND),true)
 OBJS += unbound.o
 endif
 

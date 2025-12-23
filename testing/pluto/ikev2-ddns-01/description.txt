@@ -1,9 +1,0 @@
-This tests the (oddly designed) EVENT_PENDING_DDNS
-
-- load a connection with an unresolvable name
-- once loaded, fix so the name resolves
-- wait and a minute later the connection will initiate
-
-Note, this now requires auto=start in the config file, as the previous
-behaviour of wrongly initiating auto=add on ddns updates no longer
-causes that
