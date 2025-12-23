@@ -270,11 +270,15 @@ kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			good
 kvmplutotest	ikev2-28-rw-server-rekey 		good
 kvmplutotest	ikev2-29-no-rekey			good
-kvmplutotest	ikev2-ddns-01				good
-kvmplutotest	ikev2-ddns-02				good
-kvmplutotest	ikev2-ddns-03				good
+
 kvmplutotest	ikev1-cryptoload-01			good
 kvmplutotest	ikev1-cryptoload-00			good
+
+kvmplutotest	ikev2-ddns-01-hosts-ready		good
+kvmplutotest	ikev2-ddns-01-hosts-delayed		good
+kvmplutotest	ikev2-ddns-02-unbound-ready		good
+kvmplutotest	ikev2-ddns-02-unbound-delayed		good
+kvmplutotest	ikev2-ddns-03-manual-delayed		good
 
 kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nhelpers0		good

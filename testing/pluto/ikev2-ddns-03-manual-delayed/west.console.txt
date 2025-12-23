@@ -14,7 +14,7 @@ west #
  ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add named
-"named": failed to resolve 'right=right.libreswan.org' at load time: not a numeric IPv4 address and name lookup failed (no validation performed)
+"named": failed to resolve 'right=right.libreswan.org', domain 'right.libreswan.org' has no data (rcode 2)
 "named": added oriented IKEv2 connection (local: left=192.1.2.45 remote: right=right.libreswan.org requires DNS lookup)
 west #
  ipsec status | grep "===" # should show %dns for pending resolve
