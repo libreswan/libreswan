@@ -39,6 +39,11 @@
 struct dnssec_config unbound_config;
 #endif
 
+static void resolve_finish(struct connection *c,
+			   struct host_addrs *resolved,
+			   resolve_helper_cb *callback,
+			   struct verbose verbose);
+
 void init_resolve_helper(const struct dnssec_config *config, struct logger *logger)
 {
 	const char *result;
@@ -79,13 +84,20 @@ void request_resolve_help(struct connection *c,
 			  resolve_helper_cb *callback,
 			  struct logger *logger)
 {
-	struct help_request *request = alloc_help_request("resolve helper",
-							  discard_resolve_help_request_content,
-							  logger);
-	request->connection = connection_addref(c, logger);
-	request->extracted_host_addrs = host_addrs_from_connection_config(c);
-	request->callback = callback;
-	request_help(request, resolve_helper, logger);
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
+	struct host_addrs raw_addrs = host_addrs_from_connection_config(c);
+	if (host_addrs_need_dns(&raw_addrs, verbose)) {
+		struct help_request *request = alloc_help_request("resolve helper",
+								  discard_resolve_help_request_content,
+								  logger);
+		request->connection = connection_addref(c, logger);
+		request->extracted_host_addrs = raw_addrs;
+		request->callback = callback;
+		request_help(request, resolve_helper, logger);
+		return;
+	}
+
+	resolve_finish(c, &raw_addrs, callback, verbose);
 }
 
 helper_cb *resolve_helper(struct help_request *request,
@@ -143,8 +155,17 @@ helper_cb *resolve_helper(struct help_request *request,
 void resolve_continue(struct help_request *request,
 		      struct verbose verbose)
 {
-	struct connection *c = request->connection;
-	struct host_addrs *resolved = &request->resolved_host_addrs;
+	resolve_finish(request->connection,
+		       &request->resolved_host_addrs,
+		       request->callback,
+		       verbose);
+}
+
+void resolve_finish(struct connection *c,
+		    struct host_addrs *resolved,
+		    resolve_helper_cb *cb,
+		    struct verbose verbose)
+{
 
 	unsigned need_dns = (route_addrs_need_dns(&resolved->end[LEFT_END]) +
 			     route_addrs_need_dns(&resolved->end[RIGHT_END]));
@@ -182,5 +203,5 @@ void resolve_continue(struct help_request *request,
 		}
 	}
 
-	request->callback(c, resolved, verbose);
+	cb(c, resolved, verbose);
 }
