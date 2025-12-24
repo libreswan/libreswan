@@ -87,9 +87,11 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 
 	const struct pubkey_type *type = pubkey_type_from_ipseckey_algorithm(wm->pubkey_alg);
 	struct id keyid; /* must free_id_content() */
-	err = atoid(wm->keyid, &keyid);
-	if (err != NULL) {
-		llog_rc(RC_BADID, logger, "bad --keyid \"%s\": %s", wm->keyid, err);
+	diag_t d = ttoid(wm->keyid, &keyid);
+	if (d != NULL) {
+		llog_rc(RC_BADID, logger, "bad --keyid \"%s\": %s",
+			wm->keyid, str_diag(d));
+		pfree_diag(&d);
 		return;
 	}
 
@@ -147,13 +149,13 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 
 	/* add the public key */
 	struct pubkey *pubkey = NULL; /* must-delref */
-	diag_t d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
-				     /*install_time*/realnow(),
-				     /*until_time*/realtime_epoch,
-				     /*ttl*/0,
-				     HUNK_AS_SHUNK(&rawkey),
-				     &pubkey/*new-public-key:must-delref*/,
-				     logger);
+	d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
+			      /*install_time*/realnow(),
+			      /*until_time*/realtime_epoch,
+			      /*ttl*/0,
+			      HUNK_AS_SHUNK(&rawkey),
+			      &pubkey/*new-public-key:must-delref*/,
+			      logger);
 	if (d != NULL) {
 		llog(RC_LOG, logger, "%s", str_diag(d));
 		pfree_diag(&d);

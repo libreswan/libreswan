@@ -51,7 +51,7 @@ const struct id empty_id = {
 /*
  * Convert textual form of id into a struct id.
  */
-err_t atoid(const char *src, struct id *id)
+diag_t ttoid(const char *src, struct id *id)
 {
 	*id = empty_id;
 
@@ -95,7 +95,7 @@ err_t atoid(const char *src, struct id *id)
 		chunk_t name = empty_chunk;
 		err_t ugh = atodn((*src == '@') ? src + 1 : src, &name);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s", ugh);
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
@@ -121,7 +121,7 @@ err_t atoid(const char *src, struct id *id)
 		ip_address addr;
 		err_t ugh = ttoaddress_dns(shunk1(src), afi, &addr);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s", ugh);
 		}
 		*id = (struct id) {
 			.kind = afi->id_ip_addr,
@@ -137,7 +137,7 @@ err_t atoid(const char *src, struct id *id)
 		chunk_t name = NULL_HUNK;
 		err_t ugh = ttochunk(shunk1(src), 16, &name);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s", ugh);
 		}
 		*id = (struct id) {
 			.kind = ID_KEY_ID,
@@ -154,7 +154,7 @@ err_t atoid(const char *src, struct id *id)
 		chunk_t name = NULL_HUNK;
 		err_t ugh = ttochunk(shunk1(src), 16, &name);
 		if (ugh != NULL) {
-			return ugh;
+			return diag("%s",ugh);
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,

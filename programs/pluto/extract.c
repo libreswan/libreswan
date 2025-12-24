@@ -1299,10 +1299,11 @@ static diag_t extract_host_end(struct host_end *host,
 		 * used.
 		 */
 
-		err_t e = atoid(idstr, &id);
+		diag_t d = ttoid(idstr, &id);
 		pfreeany(idstr);
-		if (e != NULL) {
-			return diag("%sid=%s invalid, %s", leftright, src->we_id, e);
+		if (d != NULL) {
+			return diag_diag(&d, "%sid=%s invalid, ", leftright,
+					 src->we_id);
 		}
 
 		id_buf idb;
@@ -1323,10 +1324,10 @@ static diag_t extract_host_end(struct host_end *host,
 		   host_addr->type == KH_IPADDR) {
 
 		address_buf ab;
-		err_t e = atoid(str_address(&host_addr->addr, &ab), &id);
-		if (e != NULL) {
-			return diag("%sid=%s invalid: %s",
-				    leftright, host_addr->value, e);
+		diag_t d = ttoid(str_address(&host_addr->addr, &ab), &id);
+		if (d != NULL) {
+			return diag_diag(&d, "%sid=%s invalid: ",
+					 leftright, host_addr->value);
 		}
 
 		id_buf idb;
