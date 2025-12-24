@@ -2,7 +2,7 @@
 Creating empty NSS database
 west #
  ../../guestbin/mount-bind.sh /etc/hosts /etc/hosts
-/etc/hosts /tmp/hosts.west.ikev2-ddns-03 /etc/hosts
+/etc/hosts /tmp/hosts.west.ikev2-ddns-03-manual-delayed /etc/hosts
 west #
  if grep right.libreswan.org /etc/hosts ; then echo "TEST FAILED - should not have /etc/hosts entry at start" ; false ; else : ; fi
 west #
