@@ -33,9 +33,9 @@
  *
  */
 
-err_t ttoselector_num(shunk_t cursor,
-		      const struct ip_info *afi, /* could be NULL */
-		      ip_selector *dst, ip_address *nonzero_host)
+diag_t ttoselector_num(shunk_t cursor,
+		       const struct ip_info *afi, /* could be NULL */
+		       ip_selector *dst, ip_address *nonzero_host)
 {
 	*dst = unset_selector;
 	*nonzero_host = unset_address;
@@ -54,7 +54,7 @@ err_t ttoselector_num(shunk_t cursor,
 	ip_address address;
 	oops = ttoaddress_num(address_token, afi/*possibly NULL*/, &address);
 	if (oops != NULL) {
-		return oops;
+		return diag("%s", oops);
 	}
 
 	if (afi == NULL) {
@@ -78,10 +78,10 @@ err_t ttoselector_num(shunk_t cursor,
 		uintmax_t tmp = 0;
 		oops = shunk_to_uintmax(prefix_length_token, NULL, 0, &tmp);
 		if (oops != NULL) {
-			return oops;
+			return diag("%s", oops);
 		}
 		if (tmp > afi->mask_cnt) {
-			return "too large";
+			return diag("too large");
 		}
 		prefix_length = tmp;
 	} else {
@@ -101,7 +101,7 @@ err_t ttoselector_num(shunk_t cursor,
 		/* "1.2.3.4//udp" or "1.2.3.4//udp/" */
 		protocol = protocol_from_shunk(protocol_token);
 		if (protocol == NULL) {
-			return "unknown protocol";
+			return diag("unknown protocol");
 		}
 	} else {
 		protocol = &ip_protocol_all;
@@ -121,13 +121,13 @@ err_t ttoselector_num(shunk_t cursor,
 		uintmax_t hport;
 		err_t oops = shunk_to_uintmax(port_token, NULL, 0, &hport);
 		if (oops != NULL) {
-			return oops;
+			return diag("%s", oops);
 		}
 		if (hport > 65535) {
-			return "too large";
+			return diag("too large");
 		}
 		if (protocol == &ip_protocol_all && hport != 0) {
-			return "a non-zero port requires a valid protocol";
+			return diag("a non-zero port requires a valid protocol");
 		}
 		port = ip_hport(hport);
 	} else {
