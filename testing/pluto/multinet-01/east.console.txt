@@ -8,8 +8,8 @@ east #
 east #
  ipsec auto --add westnet-eastnet-subnets
 "westnet-eastnet-subnets/1x1": added oriented IKEv1 connection
-"westnet-eastnet-subnets/2x1": added oriented IKEv1 connection
 "westnet-eastnet-subnets/1x2": added oriented IKEv1 connection
+"westnet-eastnet-subnets/2x1": added oriented IKEv1 connection
 "westnet-eastnet-subnets/2x2": added oriented IKEv1 connection
 east #
  ipsec status | grep westnet-eastnet
