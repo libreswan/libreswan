@@ -198,6 +198,7 @@ static void check_ttopool__to__str_pool(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		if (t->str != NULL) {
 			PRINT("%s '%s' -> %s pool-size %ju",
@@ -208,9 +209,10 @@ static void check_ttopool__to__str_pool(void)
 		const char *oops = NULL;
 
 		ip_pool tmp, *pool = &tmp;
-		oops = ttopool_num(shunk1(t->in), t->afi, pool);
-		if (oops != NULL && t->str == NULL) {
+		d = ttopool_num(shunk1(t->in), t->afi, pool);
+		if (d != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
+			pfree_diag(&d);
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
@@ -406,8 +408,6 @@ static void check_pool_op_pool(void)
 
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s vs %s", t->l, t->r);
@@ -415,12 +415,13 @@ static void check_pool_op_pool(void)
 #define TT(R)								\
 		ip_pool R;						\
 		if (t->R != NULL) {					\
-			oops = ttopool_num(shunk1(t->R), 0, &R);	\
-			if (oops != NULL) {				\
-				FAIL("ttopool(%s) failed: %s", t->R, oops); \
+			diag_t d = ttopool_num(shunk1(t->R), 0, &R);	\
+			if (d != NULL) {				\
+				FAIL("ttopool(%s) failed: %s", t->R,	\
+				     str_diag(d));			\
 			}						\
 		} else {						\
-			R = unset_pool;				\
+			R = unset_pool;					\
 		}
 		TT(l);
 		TT(r);
@@ -478,15 +479,17 @@ static void check_pool_offset_to_cidr(void)
 	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s + %jd -> %s", t->pool, t->offset,
 		      t->cidr == NULL ? "<unset>" : t->cidr);
 
 		/* convert it *to* internal format */
 		ip_pool pool;
-		err = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
-		if (err != NULL) {
-			FAIL("ttopool(%s) failed: %s", t->pool, err);
+		d = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
+		if (d != NULL) {
+			FAIL("ttopool(%s) failed: %s", t->pool,
+			     str_diag(d));
 		}
 
 		ip_cidr cidr;
@@ -535,6 +538,7 @@ static void check_cidr_to_pool_offset(void)
 	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s - %s -> %ju ok: %s",
 		      t->pool,
@@ -543,9 +547,10 @@ static void check_cidr_to_pool_offset(void)
 		      bool_str(t->ok));
 
 		ip_pool pool;
-		err = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
-		if (err != NULL) {
-			FAIL("ttopool(%s) failed: %s", t->pool, err);
+		d = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
+		if (d != NULL) {
+			FAIL("ttopool(%s) failed: %s", t->pool,
+			     str_diag(d));
 		}
 
 		ip_cidr cidr;

@@ -32,7 +32,8 @@
  *
  * Convert "addr1-addr2" or subnet/prefix[/subprefix] to an address pool.
  */
-err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
+
+diag_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
 {
 	*dst = unset_pool;
 	err_t err;
@@ -47,7 +48,7 @@ err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
 	ip_address start_address;
 	err = ttoaddress_num(start_token, afi/*possibly NULL*/, &start_address);
 	if (err != NULL) {
-		return err;
+		return diag("%s", err);
 	}
 
 	/* get real AFI */
@@ -70,31 +71,31 @@ err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
 		uintmax_t prefix = afi->mask_cnt; /* TBD */
 		err = shunk_to_uintmax(cursor, &cursor, 0, &prefix);
 		if (err != NULL) {
-			return err;
+			return diag("%s", err);
 		}
 
 		if (prefix > afi->mask_cnt) {
-			return "too large";
+			return diag("too large");
 		}
 
 		uintmax_t subprefix = afi->mask_cnt;
 		if (cursor.len > 0) {
 			if (hunk_char(cursor, 0) != '/') {
-				return "invalid subprefix, expecting '/'";
+				return diag("invalid subprefix, expecting '/'");
 			}
-			
+
 			cursor = shunk_slice(cursor, 1, cursor.len);
 			err = shunk_to_uintmax(cursor, NULL, 0, &subprefix);
 			if (err != NULL) {
-				return err;
+				return diag("%s", err);
 			}
 
 			if (subprefix < prefix) {
-				return "subprefix is too small";
+				return diag("subprefix is too small");
 			}
 
 			if (subprefix > afi->mask_cnt) {
-				return "subprefix is too big";
+				return diag("subprefix is too big");
 			}
 		}
 
@@ -118,12 +119,12 @@ err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
 		err = ttoaddress_num(cursor, afi, &end_address);
 		if (err != NULL) {
 			/* includes IPv4 vs IPv6 */
-			return err;
+			return diag("%s", err);
 		}
 		passert(afi == address_info(end_address));
 		if (ip_bytes_cmp(start_address.ip.version, start_address.bytes,
 				 end_address.ip.version, end_address.bytes) > 0) {
-			return "start of pool is greater than end";
+			return diag("start of pool is greater than end");
 		}
 		*dst = pool_from_raw(HERE, afi,
 				      start_address.bytes,
@@ -133,6 +134,6 @@ err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst)
 	}
 	default:
 		/* SEP is invalid, but being more specific means diag_t */
-		return "expecting '-' or '/'";
+		return diag("expecting '-' or '/'");
 	}
 }
