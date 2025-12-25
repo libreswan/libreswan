@@ -199,9 +199,10 @@ static void check_ttorange__to__str_range(void)
 		const char *oops = NULL;
 
 		ip_range tmp, *range = &tmp;
-		oops = ttorange_num(shunk1(t->in), t->afi, range);
-		if (oops != NULL && t->str == NULL) {
+		diag_t d = ttorange_num(shunk1(t->in), t->afi, range);
+		if (d != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
+			pfree_diag(&d);
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
@@ -396,8 +397,6 @@ static void check_range_op_range(void)
 
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s vs %s", t->l, t->r);
@@ -405,9 +404,10 @@ static void check_range_op_range(void)
 #define TT(R)								\
 		ip_range R;						\
 		if (t->R != NULL) {					\
-			oops = ttorange_num(shunk1(t->R), 0, &R);	\
-			if (oops != NULL) {				\
-				FAIL("ttorange(%s) failed: %s", t->R, oops); \
+			diag_t d = ttorange_num(shunk1(t->R), 0, &R);	\
+			if (d != NULL) {				\
+				FAIL("ttorange(%s) failed: %s", t->R,	\
+				     str_diag(d));			\
 			}						\
 		} else {						\
 			R = unset_range;				\

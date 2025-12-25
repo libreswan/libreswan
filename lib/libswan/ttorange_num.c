@@ -32,7 +32,7 @@
  *
  * Convert "addr1-addr2" or subnet/prefix[/subprefix] to an address range.
  */
-err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
+diag_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 {
 	*dst = unset_range;
 	err_t err;
@@ -47,7 +47,7 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 	ip_address start_address;
 	err = ttoaddress_num(start_token, afi/*possibly NULL*/, &start_address);
 	if (err != NULL) {
-		return err;
+		return diag("%s", err);
 	}
 
 	/* get real AFI */
@@ -69,11 +69,11 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		uintmax_t prefix = afi->mask_cnt; /* TBD */
 		err = shunk_to_uintmax(cursor, NULL, 0, &prefix);
 		if (err != NULL) {
-			return err;
+			return diag("%s", err);
 		}
 
 		if (prefix > afi->mask_cnt) {
-			return "too large";
+			return diag("too large");
 		}
 
 		/* XXX: should this reject bad addresses */
@@ -95,12 +95,12 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		err = ttoaddress_num(cursor, afi, &end_address);
 		if (err != NULL) {
 			/* includes IPv4 vs IPv6 */
-			return err;
+			return diag("%s", err);
 		}
 		passert(afi == address_info(end_address));
 		if (ip_bytes_cmp(start_address.ip.version, start_address.bytes,
 				 end_address.ip.version, end_address.bytes) > 0) {
-			return "start of range is greater than end";
+			return diag("start of range is greater than end");
 		}
 		*dst = range_from_raw(HERE, afi,
 				      start_address.bytes,
@@ -109,6 +109,6 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 	}
 	default:
 		/* SEP is invalid, but being more specific means diag_t */
-		return "expecting '-' or '/'";
+		return diag("expecting '-' or '/'");
 	}
 }

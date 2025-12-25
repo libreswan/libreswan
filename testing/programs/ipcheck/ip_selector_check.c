@@ -298,9 +298,9 @@ static diag_t do_selector_from_ttorange(const struct selector *s,
 	}
 
 	ip_range range;
-	err_t err = ttorange_num(shunk1(s->addresses), s->afi, &range);
-	if (err != NULL) {
-		return diag("%s", err);
+	diag_t d = ttorange_num(shunk1(s->addresses), s->afi, &range);
+	if (d != NULL) {
+		return d;
 	}
 
 	*selector = selector_from_range(range);
@@ -505,9 +505,8 @@ static void check_selector_op_selector(void)
 		ip_selector inner_selector;
 		if (strchr(t->inner, '-') != NULL) {
 			ip_range inner_range;
-			err_t err = ttorange_num(shunk1(t->inner), NULL, &inner_range);
+			d = ttorange_num(shunk1(t->inner), NULL, &inner_range);
 			inner_selector = selector_from_range(inner_range);
-			d = (err == NULL ? NULL : diag("%s", err));
 		} else {
 			d = ttoselector_num(shunk1(t->inner), NULL,
 					    &inner_selector, &nonzero_host);
@@ -523,9 +522,8 @@ static void check_selector_op_selector(void)
 		ip_selector outer_selector;
 		if (strchr(t->outer, '-') != NULL) {
 			ip_range outer_range;
-			err_t err = ttorange_num(shunk1(t->outer), NULL, &outer_range);
+			d = ttorange_num(shunk1(t->outer), NULL, &outer_range);
 			outer_selector = selector_from_range(outer_range);
-			d = (err == NULL ? NULL : diag("%s", err));
 		} else {
 			d = ttoselector_num(shunk1(t->outer), NULL,
 					    &outer_selector, &nonzero_host);
