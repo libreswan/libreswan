@@ -554,9 +554,10 @@ static void check_cidr_to_pool_offset(void)
 		}
 
 		ip_cidr cidr;
-		err = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
-		if (err != NULL) {
-			FAIL("ttocidr_num(%s) failed: %s", t->cidr, err);
+		d = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
+		if (d != NULL) {
+			FAIL("ttocidr_num(%s) failed: %s", t->cidr,
+			     str_diag(d));
 		}
 
 		uintmax_t offset;

@@ -464,9 +464,9 @@ ip_address optarg_address_num(const struct logger *logger, struct optarg_family 
 ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *family)
 {
 	ip_cidr cidr;
-	err_t err = ttocidr_num(shunk1(optarg), family->type, &cidr);
-	if (err != NULL) {
-		optarg_fatal(logger, "%s", err);
+	diag_t d = ttocidr_num(shunk1(optarg), family->type, &cidr);
+	if (d != NULL) {
+		optarg_fatal(logger, "%s", str_diag(d));
 	}
 	optarg_family(family, cidr_info(cidr));
 	return cidr;

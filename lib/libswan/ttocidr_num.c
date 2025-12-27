@@ -22,7 +22,7 @@
 #include "ip_cidr.h"
 #include "ip_info.h"
 
-err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
+diag_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 {
 	*cidr = unset_cidr;
 	err_t err;
@@ -36,7 +36,7 @@ err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 	ip_address addr;
 	err = ttoaddress_num(address, afi/*possibly NULL */, &addr);
 	if (err != NULL) {
-		return err;
+		return diag("%s", err);
 	}
 
 	/* Fix AFI, now that it is known */
@@ -51,10 +51,10 @@ err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 		err = shunk_to_uintmax(mask, NULL, 0, &prefix_len);
 		if (err != NULL) {
 			/* not a number */
-			return err;
+			return diag("%s", err);
 		}
 		if (prefix_len > (uintmax_t)afi->mask_cnt) {
-			return "mask is too big";
+			return diag("mask is too big");
 		}
 	}
 

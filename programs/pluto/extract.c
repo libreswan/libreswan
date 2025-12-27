@@ -1029,9 +1029,9 @@ static ip_cidr extract_cidr_num(const char *leftright,
 	}
 
 	ip_cidr cidr;
-	err = ttocidr_num(shunk1(value), NULL, &cidr);
-	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+	diag_t dd = ttocidr_num(shunk1(value), NULL, &cidr);
+	if (dd != NULL) {
+		(*d) = diag_diag(&dd, "%s%s=%s invalid, ", leftright, name, value);
 		return unset_cidr;
 	}
 
