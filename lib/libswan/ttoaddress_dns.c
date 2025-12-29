@@ -23,23 +23,57 @@
  */
 
 #include <string.h>
+
+#ifdef USE_UNBOUND
+#include "dnssec.h"	/* for unbound_sync_resolve() et.al. */
+#else
 #include <netdb.h>		/* for freeaddrinfo(), getaddrinfo() */
 #include <sys/socket.h>		/* for AF_INET/AF_INET6/AF_UNSPEC */
+#endif
 
 #include "passert.h"
 #include "ip_address.h"
 #include "ip_info.h"
 #include "lswalloc.h"
+#include "lswlog.h"
 
 /*
  * ttoaddress_dns
  *
- * ??? numeric addresses are handled by getaddrinfo; perhaps the hex form is lost.
- * ??? change: we no longer filter out bad characters.  Surely getaddrinfo(3) does.
+ * ??? numeric addresses are handled by getaddrinfo; perhaps the hex
+ * form is lost.
+ *
+ * ??? change: we no longer filter out bad characters.  Surely
+ * getaddrinfo(3) does.
  */
+
 diag_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
+	/*
+	 * Try dotted IP first.
+	 *
+	 * While getaddrinfo() can handle a dotted IP, libunbound does
+	 * not.  More consistent to always try.
+	 */
+
+	diag_t d;
+	d = ttoaddress_num(src, afi, dst);
+	if (d == NULL) {
+		return NULL;
+	}
+	pfree_diag(&d);
+
 	*dst = unset_address;
+
+#ifdef USE_UNBOUND
+
+	char *name = clone_hunk_as_string(&src, __func__); /* must free */
+	d = unbound_sync_resolve(name, afi, dst,
+				 VERBOSE(DEBUG_STREAM, &global_logger, NULL));
+	pfreeany(name);
+	return d;
+
+#else
 
 	char *name = clone_hunk_as_string(&src, "ttoaddress_dns"); /* must free */
 	struct addrinfo *res = NULL; /* must-free when EAI==0 */
@@ -105,4 +139,5 @@ diag_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 	freeaddrinfo(res);
 	pfree(name);
 	return (err != NULL ? diag("%s", err) : NULL);
+#endif
 }

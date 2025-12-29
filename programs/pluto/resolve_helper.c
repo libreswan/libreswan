@@ -19,10 +19,6 @@
 #include "refcnt.h"
 #include "defaultroute.h"
 
-#ifdef USE_UNBOUND
-#include "dnssec.h"	/* for unbound_sync_resolve() et.al. */
-#endif
-
 #include "extract.h"
 #include "helper.h"
 #include "connections.h"
@@ -93,19 +89,10 @@ helper_cb *resolve_helper(struct help_request *request,
 
 		vexpect(!address_is_specified(end->host.addr));
 		ip_address host_addr;
-		diag_t d;
 
-#ifdef USE_UNBOUND
-		d = unbound_sync_resolve(end->host.value,
-					 resolved->afi,
-					 &host_addr,
-					 verbose);
-#else
-		d = ttoaddress_dns(shunk1(end->host.value),
-				   resolved->afi,
-				   &host_addr);
-#endif
-
+		diag_t d = ttoaddress_dns(shunk1(end->host.value),
+					  resolved->afi,
+					  &host_addr);
 		if (d != NULL) {
 			vlog("failed to resolve '%s%s=%s', %s",
 			     leftright, "", end->host.value,
