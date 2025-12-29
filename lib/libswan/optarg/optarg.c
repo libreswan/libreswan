@@ -439,28 +439,6 @@ void optarg_family(struct optarg_family *family, const struct ip_info *info)
 	}
 }
 
-ip_address optarg_address_dns(const struct logger *logger, struct optarg_family *family)
-{
-	ip_address address;
-	diag_t d = ttoaddress_dns(shunk1(optarg), family->type, &address);
-	if (d != NULL) {
-		optarg_fatal(logger, "%s", str_diag(d));
-	}
-	optarg_family(family, address_info(address));
-	return address;
-}
-
-ip_address optarg_address_num(const struct logger *logger, struct optarg_family *family)
-{
-	ip_address address;
-	diag_t d = ttoaddress_num(shunk1(optarg), family->type, &address);
-	if (d != NULL) {
-		optarg_fatal(logger, "%s", str_diag(d));
-	}
-	optarg_family(family, address_info(address));
-	return address;
-}
-
 ip_cidr optarg_cidr_num(const struct logger *logger, struct optarg_family *family)
 {
 	ip_cidr cidr;

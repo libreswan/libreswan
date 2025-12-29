@@ -200,8 +200,6 @@ OBJS += bad_sparse_where.o
 
 OBJS += lswglob.o
 
-OBJS += optarg.o
-
 OBJS += global_logger.o
 OBJS += jambuf.o
 OBJS += jam_humber.o
@@ -319,6 +317,16 @@ OBJS += seccomp_mode_names.o
 
 $(builddir)/%/:
 	mkdir -p $@
+
+#
+# optarg stuff
+#
+
+$(OBJS): | $(builddir)/optarg/
+
+OBJS += optarg/optarg.o
+OBJS += optarg/optarg_address_dns.o
+OBJS += optarg/optarg_address_num.o
 
 #
 # DNS stuff
