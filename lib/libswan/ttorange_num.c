@@ -36,6 +36,7 @@ diag_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 {
 	*dst = unset_range;
 	err_t err;
+	diag_t d;
 
 	shunk_t cursor = input;
 
@@ -45,9 +46,9 @@ diag_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 
 	/* convert start address */
 	ip_address start_address;
-	err = ttoaddress_num(start_token, afi/*possibly NULL*/, &start_address);
-	if (err != NULL) {
-		return diag("%s", err);
+	d = ttoaddress_num(start_token, afi/*possibly NULL*/, &start_address);
+	if (d != NULL) {
+		return d;
 	}
 
 	/* get real AFI */
@@ -92,10 +93,10 @@ diag_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START-END */
 		ip_address end_address;
-		err = ttoaddress_num(cursor, afi, &end_address);
-		if (err != NULL) {
+		diag_t d = ttoaddress_num(cursor, afi, &end_address);
+		if (d != NULL) {
 			/* includes IPv4 vs IPv6 */
-			return diag("%s", err);
+			return d;
 		}
 		passert(afi == address_info(end_address));
 		if (ip_bytes_cmp(start_address.ip.version, start_address.bytes,

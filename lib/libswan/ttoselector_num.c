@@ -40,6 +40,7 @@ diag_t ttoselector_num(shunk_t cursor,
 	*dst = unset_selector;
 	*nonzero_host = unset_address;
 	err_t oops;
+	diag_t d;
 
 	/*
 	 * <address> [ / <prefix-length> [ / <protocol> [ / <port> ] ] ]
@@ -52,9 +53,9 @@ diag_t ttoselector_num(shunk_t cursor,
 #endif
 
 	ip_address address;
-	oops = ttoaddress_num(address_token, afi/*possibly NULL*/, &address);
-	if (oops != NULL) {
-		return diag("%s", oops);
+	d = ttoaddress_num(address_token, afi/*possibly NULL*/, &address);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (afi == NULL) {

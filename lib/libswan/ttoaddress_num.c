@@ -26,8 +26,8 @@
 #include "ip_info.h"
 
 static bool tryhex(shunk_t hex, ip_address *dst);
-static err_t trydotted(shunk_t src, ip_address *);
-static err_t colon(shunk_t src, ip_address *);
+static diag_t trydotted(shunk_t src, ip_address *);
+static diag_t colon(shunk_t src, ip_address *);
 
 /*
  * ttoaddress_num - convert "numeric" IP address to binary address.
@@ -35,12 +35,12 @@ static err_t colon(shunk_t src, ip_address *);
  * NULL for success, else static string literal diagnostic.
  */
 
-err_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
+diag_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
 	*dst = unset_address;
 
 	if (src.len == 0) {
-		return "empty string";
+		return diag("empty string");
 	}
 
 	/*
@@ -72,7 +72,7 @@ err_t ttoaddress_num(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		return trydotted(src, dst);
 	}
 
-	return "address family unknown";
+	return diag("address family unknown");
 }
 
 /*
@@ -119,7 +119,7 @@ static bool tryhex(shunk_t hex,
  * fields when they match a very limited format.
  */
 
-static err_t trydotted(shunk_t src, ip_address *dst)
+static diag_t trydotted(shunk_t src, ip_address *dst)
 {
 	struct ip_bytes bytes = unset_ip_bytes;
 
@@ -141,7 +141,7 @@ static err_t trydotted(shunk_t src, ip_address *dst)
 		shunk_t token = shunk_token(&cursor, NULL, ".");
 		if (token.len == 0) {
 			/* ex: 0xa. */
-			return "empty dotted-numeric address field";
+			return diag("empty dotted-numeric address field");
 		}
 #if 0
 		fprintf(stderr, "cursor="PRI_SHUNK" token="PRI_SHUNK"\n",
@@ -177,7 +177,7 @@ static err_t trydotted(shunk_t src, ip_address *dst)
 		err_t err = shunk_to_uintmax(token, NULL, 0, &byte);
 #endif
 		if (err != NULL) {
-			return err;
+			return diag("%s", err);
 		}
 
 		/*
@@ -205,20 +205,20 @@ static err_t trydotted(shunk_t src, ip_address *dst)
 				byte = byte >> 8;
 			}
 			if (byte != 0) {
-				return "overflow in dotted-numeric address";
+				return diag("overflow in dotted-numeric address");
 			}
 			break;
 		}
 
 		/* A non-last bytes need to fit into the byte */
 		if (byte > UINT8_MAX) {
-			return "byte overflow in dotted-numeric address";
+			return diag("byte overflow in dotted-numeric address");
 		}
 
 		bytes.byte[b] = byte;
 	}
 	if (cursor.ptr != NULL) {
-		return "garbage at end of dotted-address";
+		return diag("garbage at end of dotted-address");
 	}
 
 	*dst = address_from_raw(HERE, &ipv4_info, bytes);
@@ -229,7 +229,7 @@ static err_t trydotted(shunk_t src, ip_address *dst)
  * colon - convert IPv6 "numeric" address
  */
 
-static err_t colon(shunk_t src, ip_address *dst)
+static diag_t colon(shunk_t src, ip_address *dst)
 {
 	shunk_t cursor = src;
 	struct ip_bytes u = unset_ip_bytes;
@@ -246,16 +246,16 @@ static err_t colon(shunk_t src, ip_address *dst)
 		if (hunk_strcaseeat(&cursor, ":")) {
 			colon_count++;
 			if (colon_count > 2) {
-				return "::: in " IT;
+				return diag("::: in " IT);
 			}
 			if (colon_count == 2) {
 				if (gapat >= 0) {
-					return "more than one :: in " IT;
+					return diag("more than one :: in " IT);
 				}
 				gapat = i;
 			}
 		} else if (colon_count == 1 && i == 0) {
-			return "single leading `:' in " IT;
+			return diag("single leading `:' in " IT);
 		} else {
 
 			/* parsing: NNNN[:...] */
@@ -263,10 +263,10 @@ static err_t colon(shunk_t src, ip_address *dst)
 			uintmax_t value;
 			err_t oops = shunk_to_uintmax(cursor, &cursor, 16, &value);
 			if (oops != NULL) {
-				return oops;
+				return diag("%s", oops);
 			}
 			if (value > 65535) {
-				return "too large";
+				return diag("too large");
 			}
 
 			/* network order */
@@ -277,19 +277,19 @@ static err_t colon(shunk_t src, ip_address *dst)
 
 	if (cursor.len != 0 && hunk_char(cursor, 0) == ':') {
 		/* special, common case */
-		return "trailing `:' in " IT;
+		return diag("trailing `:' in " IT);
 	}
 
 	if (cursor.len != 0) {
-		return "extra garbage on end of " IT;
+		return diag("extra garbage on end of " IT);
 	}
 
 	if (gapat < 0 && i < sizeof(u.byte)) {
-		return "incomplete " IT;
+		return diag("incomplete " IT);
 	}
 
 	if (gapat >= 0 && i == sizeof(u.byte)) {
-		return "non-abbreviating empty field in " IT;
+		return diag("non-abbreviating empty field in " IT);
 	}
 
 	/* shift bytes; fill gap with zeros */

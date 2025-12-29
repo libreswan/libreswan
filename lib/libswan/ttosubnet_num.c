@@ -59,9 +59,9 @@ diag_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 
 	/* parse ADDR */
 	ip_address address;
-	oops = ttoaddress_num(addr, afi, &address);
-	if (oops != NULL) {
-		return diag("%s", oops);
+	diag_t d = ttoaddress_num(addr, afi, &address);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (afi == NULL) {
@@ -79,9 +79,9 @@ diag_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 			if (afi == &ipv4_info) {
 				/*1.2.3.0/255.255.255.0?*/
 				ip_address masktmp;
-				oops = ttoaddress_num(mask, afi, &masktmp);
-				if (oops != NULL) {
-					return diag("%s", oops);
+				diag_t d = ttoaddress_num(mask, afi, &masktmp);
+				if (d != NULL) {
+					return d;
 				}
 
 				int i = ip_bytes_mask_len(afi, masktmp.bytes);

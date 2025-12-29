@@ -208,13 +208,13 @@ static bool emit_redirect_destination(struct pbs_out *pbs,
 				      shunk_t nonce)
 {
 	ip_address ip_addr;
-	err_t ugh = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
-
-	if (ugh != NULL) {
+	diag_t d = ttoaddress_num(dest, NULL/*UNSPEC*/, &ip_addr);
+	if (d != NULL) {
 		/*
 		* ttoaddr_num failed: just ship dest_str as a FQDN
 		* ??? it may be a bogus string
 		*/
+		pfree_diag(&d);
 		return emit_redirect_common(pbs, GW_FQDN, dest, nonce);
 	}
 
@@ -354,10 +354,11 @@ static bool allow_to_be_redirected(const char *allowed_targets_list,
 			break;	/* no more */
 
 		ip_address ip_addr;
-		err_t ugh = ttoaddress_num(shunk2(t, len), NULL/*UNSPEC*/, &ip_addr);
+		diag_t d = ttoaddress_num(shunk2(t, len), NULL/*UNSPEC*/, &ip_addr);
 
-		if (ugh != NULL) {
+		if (d != NULL) {
 			ldbg(logger, "address %.*s isn't a valid address", len, t);
+			pfree_diag(&d);
 		} else if (address_eq_address(dest_ip, ip_addr)) {
 			ldbg(logger, "address %.*s is a match to received GW identity", len, t);
 			return true;
@@ -440,9 +441,9 @@ static diag_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 			return diag("error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload");
 		}
 
-		err_t ugh = ttoaddress_dns(gw_str, NULL/*UNSPEC*/, redirect_ip);
-		if (ugh != NULL)
-			return diag("%s", ugh);
+		d = ttoaddress_dns(gw_str, NULL/*UNSPEC*/, redirect_ip);
+		if (d != NULL)
+			return d;
 	} else {
 		if (gw_info.gw_identity_len < af->ip_size) {
 			return diag("transferred GW Identity Length is too small for an IP address");

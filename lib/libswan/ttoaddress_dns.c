@@ -37,7 +37,7 @@
  * ??? numeric addresses are handled by getaddrinfo; perhaps the hex form is lost.
  * ??? change: we no longer filter out bad characters.  Surely getaddrinfo(3) does.
  */
-err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
+diag_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
 	*dst = unset_address;
 
@@ -66,11 +66,11 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 		/* RES is not defined */
 		switch (family) {
 		case AF_INET6:
-			return "not a numeric IPv6 address and name lookup failed (no validation performed)";
+			return diag("not a numeric IPv6 address and name lookup failed (no validation performed)");
 		case AF_INET:
-			return "not a numeric IPv4 address and name lookup failed (no validation performed)";
+			return diag("not a numeric IPv4 address and name lookup failed (no validation performed)");
 		default:
-			return "not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)";
+			return diag("not a numeric IPv4 or IPv6 address and name lookup failed (no validation performed)");
 		}
 	}
 
@@ -104,5 +104,5 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 
 	freeaddrinfo(res);
 	pfree(name);
-	return err;
+	return (err != NULL ? diag("%s", err) : NULL);
 }

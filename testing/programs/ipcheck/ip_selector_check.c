@@ -141,15 +141,18 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 static diag_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
 						       ip_selector *selector)
 {
+	diag_t d;
+	err_t err;
+
 	if (s->afi == NULL) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
 	ip_address address;
-	err_t err = ttoaddress_num(shunk1(s->addresses), s->afi, &address);
-	if (err != NULL) {
-		return diag("%s", err);
+	d = ttoaddress_num(shunk1(s->addresses), s->afi, &address);
+	if (d != NULL) {
+		return d;
 	}
 
 	ip_protoport protoport;

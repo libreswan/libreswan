@@ -184,7 +184,6 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 				struct verbose verbose)
 {
 	diag_t d;
-	err_t e;
 
 	vdbg("extracting '%s%s=%s':", leftright, key, (value == NULL ? "" : value));
 	verbose.level++;
@@ -233,8 +232,10 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 
 	/* let parser decide address, then reject after */
 
-	e = ttoaddress_num(shunk1(value), NULL, &end->addr);
-	if (e == NULL) {
+	d = ttoaddress_num(shunk1(value), NULL, &end->addr);
+	if (d != NULL) {
+		pfree_diag(&d);
+	} else {
 		const struct ip_info *afi = address_info(end->addr);
 		d = check_afi(winner, leftright, key, value, afi, verbose);
 		if (d != NULL) {

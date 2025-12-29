@@ -63,19 +63,18 @@ void ip_endpoint_check(void)
 
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s'%d->%s", pri_afi(t->afi), t->in, t->hport, t->str);
 
 		const struct ip_info *type = t->afi;
 
 		ip_address a;
-		oops = ttoaddress_num(shunk1(t->in), type, &a);
-		if (oops != NULL) {
+		d = ttoaddress_num(shunk1(t->in), type, &a);
+		if (d != NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttosubnet failed: %s", oops);
+			FAIL("ttosubnet failed: %s", str_diag(d));
 		}
 
 		ip_endpoint e, *endpoint = &e;

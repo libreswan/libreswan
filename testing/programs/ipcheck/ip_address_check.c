@@ -128,8 +128,6 @@ static void check_ttoaddress_num(void)
 		{ LN, &ipv6_info, ":1:2:3:4:5:6:7:8:", NULL, },
 	};
 
-	err_t err;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 
@@ -152,7 +150,7 @@ static void check_ttoaddress_num(void)
 
 			struct lookup {
 				const char *name;
-				err_t (*ttoaddress)(shunk_t, const struct ip_info *, ip_address *);
+				diag_t (*ttoaddress)(shunk_t, const struct ip_info *, ip_address *);
 				bool need_dns;
 			} lookups[] = {
 				{
@@ -170,6 +168,8 @@ static void check_ttoaddress_num(void)
 				},
 			};
 			for (struct lookup *lookup = lookups; lookup->name != NULL; lookup++) {
+
+				diag_t d;
 
 				/*
 				 * Without DNS a
@@ -189,17 +189,20 @@ static void check_ttoaddress_num(void)
 				}
 
 				ip_address tmp, *address = &tmp;
-				err = lookup->ttoaddress(shunk1(t->in), afi, address);
+				d = lookup->ttoaddress(shunk1(t->in), afi, address);
 				if (err_expected) {
-					if (err == NULL) {
+					if (d == NULL) {
 						FAIL("%s(%s, %s) unexpectedly succeeded",
 						     lookup->name, t->in, pri_afi(afi));
 					}
 					PRINT("%s(%s, %s) returned: %s",
-					      lookup->name, t->in, pri_afi(afi), err);
-				} else if (err != NULL) {
+					      lookup->name, t->in, pri_afi(afi),
+					      str_diag(d));
+					pfree_diag(&d);
+				} else if (d != NULL) {
 					FAIL("%s(%s, %s) unexpectedly failed: %s",
-					     lookup->name, t->in, pri_afi(afi), err);
+					     lookup->name, t->in, pri_afi(afi),
+					     str_diag(d));
 				} else {
 					CHECK_STR2(address);
 				}
@@ -237,9 +240,8 @@ static void check_ttoaddress_dns(void)
 
 	};
 
-	err_t err;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		const struct ip_info *afi = t->afi;
 		bool skip = (have_dns == DNS_NO || (have_dns != DNS_YES && t->need_dns));
@@ -255,14 +257,16 @@ static void check_ttoaddress_dns(void)
 		}
 
 		ip_address tmp, *address = &tmp;
-		err = ttoaddress_dns(shunk1(t->in), afi, address);
-		if (err != NULL) {
+		d = ttoaddress_dns(shunk1(t->in), afi, address);
+		if (d != NULL) {
 			if (t->str != NULL) {
 				FAIL("ttoaddress_dns(%s, %s) unexpectedly failed: %s",
-				     t->in, pri_afi(t->afi), err);
+				     t->in, pri_afi(t->afi),
+				     str_diag(d));
 			}
 			PRINT("ttoaddress_dns(%s, %s) failed as expected: %s",
-			      t->in, pri_afi(t->afi), err);
+			      t->in, pri_afi(t->afi), str_diag(d));
+			pfree_diag(&d);
 		} else if (t->str == NULL) {
 			address_buf b;
 			FAIL("ttoaddress_dns(%s, %s) unexpectedly succeeded with %s",
@@ -295,15 +299,17 @@ static void check_str_address_sensitive(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s' -> '%s'", pri_afi(t->afi), t->in, t->out);
 
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
 		ip_address tmp, *address = &tmp;
-		err_t err = ttoaddress_num(shunk1(t->in), type, address);
-		if (err != NULL) {
-			FAIL("ttoaddress_num() failed: %s", err);
+		d = ttoaddress_num(shunk1(t->in), type, address);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed: %s", str_diag(d));
 		}
 		CHECK_INFO(address);
 		CHECK_STR(address_buf, address_sensitive, t->out, address);
@@ -325,15 +331,17 @@ static void check_str_address_reversed(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s' -> '%s", pri_afi(t->afi), t->in, t->out);
 
 		/* convert it *to* internal format */
 		const struct ip_info *type = NULL;
 		ip_address tmp, *address = &tmp;
-		err_t err = ttoaddress_num(shunk1(t->in), type, address);
-		if (err != NULL) {
-			FAIL("ttoaddress_num() returned: %s", err);
+		d = ttoaddress_num(shunk1(t->in), type, address);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() returned: %s", str_diag(d));
 		}
 		CHECK_INFO(address);
 		CHECK_STR(address_reversed_buf, address_reversed, t->out, address);
@@ -410,7 +418,9 @@ static void check_address_is(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-> unset: %s, specified: %s", pri_afi(t->afi), t->in,
 		      bool_str(t->is_unset), bool_str(t->is_specified));
 
@@ -420,9 +430,9 @@ static void check_address_is(void)
 			tmp = unset_address;
 		} else {
 			const struct ip_info *type = NULL;
-			err_t err = ttoaddress_num(shunk1(t->in), type, &tmp);
-			if (err != NULL) {
-				FAIL("ttoaddress_num() failed: %s", err);
+			d = ttoaddress_num(shunk1(t->in), type, &tmp);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed: %s", str_diag(d));
 			}
 		}
 
@@ -483,7 +493,9 @@ static void check_addresses_to(void)
 	const char *oops;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		/* range falls back to subnet */
 		PRINT("%s-%s -> %s -> %s",
 		      t->lo, t->hi,
@@ -493,15 +505,17 @@ static void check_addresses_to(void)
 		const struct ip_info *type = t->afi;
 
 		ip_address lo;
-		oops = ttoaddress_num(shunk1(t->lo), type, &lo);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num(lo=%s) failed: %s", t->lo, oops);
+		d = ttoaddress_num(shunk1(t->lo), type, &lo);
+		if (d != NULL) {
+			FAIL("ttoaddress_num(lo=%s) failed: %s",
+			     t->lo, str_diag(d));
 		}
 
 		ip_address hi;
-		oops = ttoaddress_num(shunk1(t->hi), type, &hi);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num(hi=%s) failed: %s", t->hi, oops);
+		d = ttoaddress_num(shunk1(t->hi), type, &hi);
+		if (d != NULL) {
+			FAIL("ttoaddress_num(hi=%s) failed: %s",
+			     t->hi, str_diag(d));
 		}
 
 		ip_subnet s;

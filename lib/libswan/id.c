@@ -119,9 +119,9 @@ diag_t ttoid(const char *src, struct id *id)
 			&ipv4_info :
 			&ipv6_info;
 		ip_address addr;
-		err_t ugh = ttoaddress_dns(shunk1(src), afi, &addr);
-		if (ugh != NULL) {
-			return diag("%s", ugh);
+		diag_t d = ttoaddress_dns(shunk1(src), afi, &addr);
+		if (d != NULL) {
+			return d;
 		}
 		*id = (struct id) {
 			.kind = afi->id_ip_addr,

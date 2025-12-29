@@ -26,6 +26,7 @@ diag_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 {
 	*cidr = unset_cidr;
 	err_t err;
+	diag_t d;
 
 	/* split CIDR into ADDRESS [ "/" MASK ]. */
 	char slash = '\0';
@@ -34,9 +35,9 @@ diag_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 
 	/* parse ADDRESS */
 	ip_address addr;
-	err = ttoaddress_num(address, afi/*possibly NULL */, &addr);
-	if (err != NULL) {
-		return diag("%s", err);
+	d = ttoaddress_num(address, afi/*possibly NULL */, &addr);
+	if (d != NULL) {
+		return d;
 	}
 
 	/* Fix AFI, now that it is known */
