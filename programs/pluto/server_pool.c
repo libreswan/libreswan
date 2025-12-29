@@ -189,9 +189,9 @@ void submit_task(struct state *callback_sa,
 		if (impair.helper_thread_delay.enabled) {
 			if (impair.helper_thread_delay.value == 0) {
 				static uint64_t warp = 0;
-				delay = deltatime_from_milliseconds(++warp);
+				delay = deltatime(++warp);
 				llog(IMPAIR_STREAM, task_sa->logger,
-				     PRI_REQUEST": helper is warped by %ju milliseconds",
+				     PRI_REQUEST": helper is warped by %ju seconds",
 				     pri_request(request), warp);
 			} else {
 				delay = deltatime(impair.helper_thread_delay.value);
