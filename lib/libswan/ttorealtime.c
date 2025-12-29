@@ -45,7 +45,7 @@ diag_t ttorealtime(const char *t, realtime_t *rt)
 				return diag("mktime(strptime(\"%s\",\"%s\")) failed", *f, t);
 			}
 			/* and convert that to realtime_t */
-			*rt = realtime(time);
+			*rt = realtime_from_seconds(time);
 			return NULL;
 		}
 	}

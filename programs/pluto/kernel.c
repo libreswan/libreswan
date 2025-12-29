@@ -2088,7 +2088,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 	if (bytes > flow->bytes) {
 		flow->bytes = bytes;
 		if (lastused > 0)
-			flow->last_used = realtime(lastused);
+			flow->last_used = realtime_from_seconds(lastused);
 		else
 			flow->last_used = realnow();
 	}
