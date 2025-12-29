@@ -43,7 +43,7 @@ static struct timeval negate_timeval(struct timeval tv)
 	return res;
 }
 
-deltatime_t deltatime(time_t seconds)
+deltatime_t deltatime_from_seconds(time_t seconds)
 {
 	return (deltatime_t) {
 		.dt = from_seconds(seconds),

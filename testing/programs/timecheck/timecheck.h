@@ -64,7 +64,7 @@ extern const struct time_cmp {
 	}
 
 #define CHECK_TIME_CMP_SECONDS(TIME, ...) \
-	CHECK_TIME_CMP_CONVERT(TIME, TIME)
+	CHECK_TIME_CMP_CONVERT(TIME, TIME##_from_seconds)
 
 #define CHECK_TIME_CMP_MILLISECONDS(TIME, ...) \
 	CHECK_TIME_CMP_CONVERT(TIME, TIME##_from_milliseconds)

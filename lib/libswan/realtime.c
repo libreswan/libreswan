@@ -27,7 +27,7 @@
 
 const realtime_t realtime_epoch = REALTIME_EPOCH;
 
-realtime_t realtime(time_t seconds)
+realtime_t realtime_from_seconds(time_t seconds)
 {
 	return (realtime_t) { .rt = from_seconds(seconds), };
 }
