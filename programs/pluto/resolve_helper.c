@@ -40,22 +40,6 @@ static void resolve_finish(struct connection *c,
 			   resolve_helper_cb *callback,
 			   struct verbose verbose);
 
-void init_resolve_helper(struct logger *logger)
-{
-	const char *result;
-#ifdef USE_UNBOUND
-	result = "unbound";
-#else
-	result = "getaddrinfo(3)";
-#endif
-	llog(RC_LOG, logger, "resolve helper [%s]", result);
-}
-
-void free_resolve_helper(struct logger *logger)
-{
-	ldbg(logger, "shutting down resolve helper");
-}
-
 static helper_fn resolve_helper;
 static helper_cb resolve_continue;
 

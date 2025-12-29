@@ -34,7 +34,4 @@ void request_resolve_help(struct connection *c,
 			  resolve_helper_cb *callback,
 			  struct logger *logger);
 
-void init_resolve_helper(struct logger *logger);
-void free_resolve_helper(struct logger *logger);
-
 #endif
