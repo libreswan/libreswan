@@ -652,7 +652,7 @@ void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 			dbg_v2_msgid(ike,
 				     "wakeing IKE SA for next initiator "PRI_SO", (unack %jd)",
 				     pri_so(pending->who_for), unack);
-			schedule_callback("next initiator", deltatime(0),
+			schedule_callback("next initiator", deltatime_from_seconds(0),
 					  ike->sa.st_serialno,
 					  initiate_next, NULL,
 					  ike->sa.logger);

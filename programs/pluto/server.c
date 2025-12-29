@@ -768,7 +768,7 @@ void schedule_resume(const char *name, so_serial_t serialno,
 	 * Event may have even run on another thread before the below
 	 * call returns.
 	 */
-	schedule_timeout(name, &e->timer, deltatime(0), resume_handler, e);
+	schedule_timeout(name, &e->timer, deltatime_from_seconds(0), resume_handler, e);
 }
 
 /*

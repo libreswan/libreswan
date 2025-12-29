@@ -55,8 +55,6 @@ extern const deltatime_t one_second;
 
 #define DELTATIME_INIT(S) { .dt = { .tv_sec = (S), }, .is_set = true, }
 
-#define deltatime(SECONDS) deltatime_from_seconds(SECONDS)
-
 deltatime_t deltatime_from_seconds(time_t secs);
 deltatime_t deltatime_from_milliseconds(intmax_t milliseconds);
 deltatime_t deltatime_from_microseconds(intmax_t microseconds);

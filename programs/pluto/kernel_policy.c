@@ -301,7 +301,7 @@ bool add_sec_label_kernel_policy(const struct spd *spd,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
-				   deltatime(0),
+				   deltatime_from_seconds(0),
 				   logger, where, what)) {
 		return false;
 	}
@@ -363,7 +363,7 @@ bool add_spd_kernel_policy(const struct spd *spd,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
-				   deltatime(0),
+				   deltatime_from_seconds(0),
 				   logger, where, what)) {
 		return false;
 	}
@@ -454,7 +454,7 @@ bool replace_spd_kernel_policy(const struct spd *spd,
 				 &spd->local->client,
 				 &spd->remote->client,
 				 &kernel_policy,
-				 deltatime(0),
+				 deltatime_from_seconds(0),
 				 logger, where, what);
 
 }
@@ -489,7 +489,7 @@ static bool restore_spd_kernel_policy(const struct spd *spd,
 				 &spd->local->client,
 				 &spd->remote->client,
 				 &kernel_policy,
-				 deltatime(0),
+				 deltatime_from_seconds(0),
 				 logger, where, what);
 
 }
@@ -601,7 +601,7 @@ bool add_cat_kernel_policy(const struct connection *c,
 	ip_selector local_client = selector_from_address(kernel_policy->local.host);
 	if (!add_kernel_policy(KERNEL_POLICY_OP_ADD, direction,
 			       &local_client, &kernel_policy->remote.route,
-			       kernel_policy, deltatime(0),
+			       kernel_policy, deltatime_from_seconds(0),
 			       logger, where, reason)) {
 		llog(RC_LOG, logger, "%s failed", reason);
 		return false;
@@ -702,7 +702,7 @@ bool install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				   &kernel_policy.src.route,	/* src_client */
 				   &kernel_policy.dst.route,	/* dst_client */
 				   &kernel_policy,			/* " */
-				   deltatime(0),		/* lifetime */
+				   deltatime_from_seconds(0),		/* lifetime */
 				   child->sa.logger, where, "add inbound Child SA")) {
 		selector_buf sb, db;
 		llog_sa(RC_LOG, child,
@@ -749,7 +749,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
-					     deltatime(0),
+					     deltatime_from_seconds(0),
 					     logger, where,
 					     "CAT: add client->client kernel policy");
 	} else {
@@ -760,7 +760,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
-					     deltatime(0),
+					     deltatime_from_seconds(0),
 					     logger, where,
 					     "install IPsec policy");
 	}

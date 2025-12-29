@@ -547,10 +547,10 @@ static void check_conf(diag_t d, const char *conf, struct logger *logger)
 
 static diag_t deltatime_ok(deltatime_t timeout, int lower, int upper)
 {
-	if (lower >= 0 && deltatime_cmp(timeout, <, deltatime(lower))) {
+	if (lower >= 0 && deltatime_cmp(timeout, <, deltatime_from_seconds(lower))) {
 		return diag("too small, less than %us", lower);
 	}
-	if (upper >= 0 && deltatime_cmp(timeout, >, deltatime(upper))) {
+	if (upper >= 0 && deltatime_cmp(timeout, >, deltatime_from_seconds(upper))) {
 		return diag("too big, more than %us", upper);
 	}
 	return NULL;

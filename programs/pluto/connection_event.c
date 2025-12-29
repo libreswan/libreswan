@@ -128,7 +128,7 @@ void schedule_connection_check_ddns(struct connection *c,
 				    struct verbose verbose)
 {
 	schedule_connection_event(c, CONNECTION_CHECK_DDNS,
-				  "DDNS", deltatime(PENDING_DDNS_INTERVAL),
+				  "DDNS", deltatime_from_seconds(PENDING_DDNS_INTERVAL),
 				  /*impair*/NULL, verbose.logger, HERE);
 }
 

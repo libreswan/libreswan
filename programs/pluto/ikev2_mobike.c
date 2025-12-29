@@ -201,7 +201,8 @@ static bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest 
 		if (dpd_active_locally(child->sa.st_connection) &&
 		    child->sa.st_v2_liveness_event == NULL) {
 			ldbg(logger, "dpd re-enabled after mobike, scheduling ikev2 liveness checks");
-			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay, deltatime(MIN_LIVENESS));
+			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay,
+							  deltatime_from_seconds(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 		}
 	}
@@ -487,7 +488,7 @@ void record_deladdr(ip_address *ip, char *a_type, struct logger *logger)
 		event_delete(EVENT_v2_LIVENESS, &child->sa);
 
 		if (ike->sa.st_v2_addr_change_event == NULL) {
-			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), &ike->sa);
+			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime_from_seconds(0), &ike->sa);
 		} else {
 			address_buf o, n;
 			ldbg(ike->sa.logger, PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",

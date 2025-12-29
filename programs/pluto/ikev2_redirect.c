@@ -503,7 +503,7 @@ static void save_redirect(struct ike_sa *ike, struct msg_digest *md, ip_address 
 		 */
 		c->redirect.attempt = 0;
 		c->revival.delay = deltatime_min(REVIVE_CONN_DELAY_MAX,
-						 deltatime(REDIRECT_LOOP_DETECT_PERIOD));
+						 deltatime_from_seconds(REDIRECT_LOOP_DETECT_PERIOD));
 		return;
 	}
 

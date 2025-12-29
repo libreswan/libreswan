@@ -184,17 +184,17 @@ void submit_task(struct state *callback_sa,
 		event_schedule(EVENT_v1_CRYPTO_TIMEOUT, EVENT_CRYPTO_TIMEOUT_DELAY, callback_sa);
 	}
 
-	deltatime_t delay = deltatime(0);
+	deltatime_t delay = deltatime_from_seconds(0);
 	if (nhelpers() == 0) {
 		if (impair.helper_thread_delay.enabled) {
 			if (impair.helper_thread_delay.value == 0) {
 				static uint64_t warp = 0;
-				delay = deltatime(++warp);
+				delay = deltatime_from_seconds(++warp);
 				llog(IMPAIR_STREAM, task_sa->logger,
 				     PRI_REQUEST": helper is warped by %ju seconds",
 				     pri_request(request), warp);
 			} else {
-				delay = deltatime(impair.helper_thread_delay.value);
+				delay = deltatime_from_seconds(impair.helper_thread_delay.value);
 				llog(IMPAIR_STREAM, task_sa->logger,
 				     PRI_REQUEST": helper is pausing for %ju seconds",
 				     pri_request(request), deltasecs(delay));
@@ -215,7 +215,7 @@ void submit_task(struct state *callback_sa,
 	 * is what sleep() will do).
 	 */
 
-	if (deltatime_cmp(delay, >, deltatime(0))) {
+	if (deltatime_cmp(delay, >, deltatime_from_seconds(0))) {
 		schedule_callback("delayed crypto", delay,
 				  SOS_NOBODY,
 				  delayed_help_request,

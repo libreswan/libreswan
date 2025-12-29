@@ -67,7 +67,7 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	 * Which means DELAY is reduced.  But don't be too frequent.
 	 */
 	delay = deltatime_sub(delay, time_since_last_contact);
-	delay = deltatime_max(delay, deltatime(MIN_LIVENESS));
+	delay = deltatime_max(delay, deltatime_from_seconds(MIN_LIVENESS));
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
 		jam_string(buf, "liveness: ");
 		jam_so(buf, child->sa.st_serialno);
@@ -77,7 +77,7 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 		jam_deltatime(buf, delay);
 		jam_string(buf, " seconds (");
 		jam_string(buf, reason);
-		if (deltatime_cmp(time_since_last_contact, !=, deltatime(0))) {
+		if (deltatime_cmp(time_since_last_contact, !=, deltatime_from_seconds(0))) {
 			jam_string(buf, " was ");
 			jam_deltatime(buf, time_since_last_contact);
 			jam_string(buf, " seconds ago");
@@ -96,7 +96,7 @@ static bool recent_last_contact(struct child_sa *child,
 	 * close to DELAY doesn't cause a re-schedule.
 	 */
 	deltatime_t fuzz_since_last_contact = deltatime_add(time_since_last_contact,
-							    deltatime(MIN_LIVENESS));
+							    deltatime_from_seconds(MIN_LIVENESS));
 	LDBGP_JAMBUF(DBG_BASE, child->sa.logger, buf) {
 		jam_string(buf, "time_since_last_contact=");
 		jam_deltatime(buf, time_since_last_contact);
@@ -184,7 +184,7 @@ void event_v2_liveness(struct state *st)
 	 * If the exchange fails, liveness will be triggered.
 	 */
 	if (v2_msgid_request_outstanding(ike)) {
-		schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+		schedule_liveness(child, /*time-since-last-exchange*/deltatime_from_seconds(0),
 				  "request outstanding");
 		return;
 	}
@@ -198,7 +198,7 @@ void event_v2_liveness(struct state *st)
 	 * liveness will be triggered.
 	 */
 	if (v2_msgid_request_pending(ike)) {
-		schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+		schedule_liveness(child, /*time-since-last-exchange*/deltatime_from_seconds(0),
 				  "request pending");
 		return;
 	}
@@ -273,7 +273,7 @@ void event_v2_liveness(struct state *st)
 	submit_v2_liveness_exchange(ike, child->sa.st_serialno);
 
 	/* in case above screws up? */
-	schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+	schedule_liveness(child, /*time-since-last-exchange*/deltatime_from_seconds(0),
 			  "backup for liveness probe");
 }
 

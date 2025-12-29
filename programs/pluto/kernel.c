@@ -1866,7 +1866,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 	 * complete an IPsec SA to us.
 	 */
 	child->sa.st_connection->revival.attempt = 0;
-	child->sa.st_connection->revival.delay = deltatime(0);
+	child->sa.st_connection->revival.delay = deltatime_from_seconds(0);
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
 

@@ -120,20 +120,20 @@ const struct config_setup *config_setup_singleton(void)
 
 		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
 
-		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime(5/*seconds*/));
+		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime_from_seconds(5/*seconds*/));
 
 		/* x509_ocsp */
-		update_setup_deltatime(KBF_OCSP_TIMEOUT_SECONDS, deltatime(OCSP_DEFAULT_TIMEOUT));
-		update_setup_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MIN_AGE));
-		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MAX_AGE));
+		update_setup_deltatime(KBF_OCSP_TIMEOUT_SECONDS, deltatime_from_seconds(OCSP_DEFAULT_TIMEOUT));
+		update_setup_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, deltatime_from_seconds(OCSP_DEFAULT_CACHE_MIN_AGE));
+		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime_from_seconds(OCSP_DEFAULT_CACHE_MAX_AGE));
 		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 
 		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
 		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
 
-		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
-		update_setup_deltatime(KBF_SHUNTLIFETIME, deltatime(DEFAULT_SHUNT_LIFETIME_SECONDS));
+		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime_from_seconds(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
+		update_setup_deltatime(KBF_SHUNTLIFETIME, deltatime_from_seconds(DEFAULT_SHUNT_LIFETIME_SECONDS));
 
 		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
 
