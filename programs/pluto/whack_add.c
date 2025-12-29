@@ -76,12 +76,14 @@ static bool parse_subnets(struct subnets *sn,
 	    !startswith(end->we_subnet, "vhost:") &&
 	    !startswith(end->we_subnet, "vnet:")) {
 		ip_address nonzero_host;
-		err_t e = ttosubnet_num(shunk1(end->we_subnet), /*afi*/NULL,
-					&subnet, &nonzero_host);
-		if (e != NULL) {
+		diag_t d = ttosubnet_num(shunk1(end->we_subnet), /*afi*/NULL,
+					 &subnet, &nonzero_host);
+		if (d != NULL) {
 			llog_add_connection_failed(verbose,
 						   "%ssubnet=%s invalid, %s",
-						   end->leftright, end->we_subnet, e);
+						   end->leftright, end->we_subnet,
+						   str_diag(d));
+			pfree_diag(&d);
 			return false;
 		}
 		if (nonzero_host.ip.is_set) {

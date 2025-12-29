@@ -123,8 +123,9 @@ ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
 uintmax_t subnet_size(const ip_subnet subnet);
 
-extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
-			   ip_subnet *dst, ip_address *nonzero_host);
+diag_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
+		     ip_subnet *dst, ip_address *nonzero_host)
+	MUST_USE_RESULT;
 
 /* comma/space separated list */
 

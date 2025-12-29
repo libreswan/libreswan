@@ -21,8 +21,8 @@
 
 diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
 		  void **ptr, unsigned *len,
-		  err_t (*parse_token)(shunk_t, const struct ip_info *,
-				       void **ptr, unsigned len))
+		  diag_t (*parse_token)(shunk_t, const struct ip_info *,
+					void **ptr, unsigned len))
 {
 	*ptr = NULL;
 	*len = 0;
@@ -61,11 +61,11 @@ diag_t ttoips_num(shunk_t input, const struct ip_info *afi,
 		passert(token->len > 0);
 		ldbg(&global_logger, "parsing "PRI_SHUNK" %p %u",
 		     pri_shunk(*token), *ptr, (*len));
-		err_t e = parse_token(*token, afi, ptr, (*len)++);
+		diag_t d = parse_token(*token, afi, ptr, (*len)++);
 		/* validate during first pass */
-		if (e != NULL) {
-			diag_t d = diag(PRI_SHUNK" invalid, %s",
-					pri_shunk(*token), e);
+		if (d != NULL) {
+			d = diag_diag(&d, PRI_SHUNK" invalid, ",
+				      pri_shunk(*token));
 			pfree(tokens);
 			pfreeany(*ptr);
 			(*len) = 0;

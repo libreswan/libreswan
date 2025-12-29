@@ -183,10 +183,10 @@ static diag_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
 
 	ip_subnet subnet;
 	ip_address nonzero_host;
-	err_t err = ttosubnet_num(shunk1(s->addresses), s->afi,
-				  &subnet, &nonzero_host);
-	if (err != NULL) {
-		return diag("%s", err);
+	diag_t d = ttosubnet_num(shunk1(s->addresses), s->afi,
+				 &subnet, &nonzero_host);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (nonzero_host.ip.is_set) {
@@ -194,7 +194,7 @@ static diag_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
 	}
 
 	ip_protoport protoport;
-	err = ttoprotoport(shunk1(s->protoport), &protoport);
+	err_t err = ttoprotoport(shunk1(s->protoport), &protoport);
 	if (err != NULL) {
 		return diag("%s", err);
 	}
