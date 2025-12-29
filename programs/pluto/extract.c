@@ -184,7 +184,6 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 				struct verbose verbose)
 {
 	diag_t d;
-	err_t e;
 
 	vdbg("extracting '%s%s=%s':", leftright, key, (value == NULL ? "" : value));
 	verbose.level++;
@@ -233,8 +232,10 @@ static diag_t extract_host_addr(struct afi_winner *winner,
 
 	/* let parser decide address, then reject after */
 
-	e = ttoaddress_num(shunk1(value), NULL, &end->addr);
-	if (e == NULL) {
+	d = ttoaddress_num(shunk1(value), NULL, &end->addr);
+	if (d != NULL) {
+		pfree_diag(&d);
+	} else {
 		const struct ip_info *afi = address_info(end->addr);
 		d = check_afi(winner, leftright, key, value, afi, verbose);
 		if (d != NULL) {
@@ -1029,9 +1030,9 @@ static ip_cidr extract_cidr_num(const char *leftright,
 	}
 
 	ip_cidr cidr;
-	err = ttocidr_num(shunk1(value), NULL, &cidr);
-	if (err != NULL) {
-		(*d) = diag("%s%s=%s invalid, %s", leftright, name, value, err);
+	diag_t dd = ttocidr_num(shunk1(value), NULL, &cidr);
+	if (dd != NULL) {
+		(*d) = diag_diag(&dd, "%s%s=%s invalid, ", leftright, name, value);
 		return unset_cidr;
 	}
 
@@ -1299,10 +1300,11 @@ static diag_t extract_host_end(struct host_end *host,
 		 * used.
 		 */
 
-		err_t e = atoid(idstr, &id);
+		diag_t d = ttoid(idstr, &id);
 		pfreeany(idstr);
-		if (e != NULL) {
-			return diag("%sid=%s invalid, %s", leftright, src->we_id, e);
+		if (d != NULL) {
+			return diag_diag(&d, "%sid=%s invalid, ", leftright,
+					 src->we_id);
 		}
 
 		id_buf idb;
@@ -1323,10 +1325,10 @@ static diag_t extract_host_end(struct host_end *host,
 		   host_addr->type == KH_IPADDR) {
 
 		address_buf ab;
-		err_t e = atoid(str_address(&host_addr->addr, &ab), &id);
-		if (e != NULL) {
-			return diag("%sid=%s invalid: %s",
-				    leftright, host_addr->value, e);
+		diag_t d = ttoid(str_address(&host_addr->addr, &ab), &id);
+		if (d != NULL) {
+			return diag_diag(&d, "%sid=%s invalid: ",
+					 leftright, host_addr->value);
 		}
 
 		id_buf idb;

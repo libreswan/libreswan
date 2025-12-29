@@ -741,7 +741,9 @@ diag_t cert_verify_subject_alt_name(const char *who,
 	 * and an ID_FQDN containing a textual IP address?
 	 */
 	ip_address myip;
-	bool san_ip = (ttoaddress_num(shunk1(ascii_id), NULL/*UNSPEC*/, &myip) == NULL);
+	diag_t d = ttoaddress_num(shunk1(ascii_id), NULL/*UNSPEC*/, &myip);
+	bool san_ip = (d == NULL);
+	pfree_diag(&d);
 
 	/*
 	 * nameList is a pointer into a non-empty circular linked

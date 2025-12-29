@@ -58,24 +58,26 @@ static void check_ippool_bits(void)
 		{ LN, &ipv6_info, "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 1, 127},
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-'%s'", pri_afi(t->afi), t->lo, t->hi)
 
 		const struct ip_info *afi = t->afi;
 
 		ip_address lo;
-		oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s'", t->lo);
+		d = ttoaddress_num(shunk1(t->lo), afi, &lo);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed converting '%s', %s",
+			     t->lo, str_diag(d));
 		}
 
 		ip_address hi;
-		oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
+		d = ttoaddress_num(shunk1(t->hi), afi, &hi);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed converting '%s', %s",
+			     t->hi, str_diag(d));
 		}
 
 		ip_pool pool = pool_from_raw(HERE, afi,
@@ -198,6 +200,7 @@ static void check_ttopool__to__str_pool(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		if (t->str != NULL) {
 			PRINT("%s '%s' -> %s pool-size %ju",
@@ -208,9 +211,10 @@ static void check_ttopool__to__str_pool(void)
 		const char *oops = NULL;
 
 		ip_pool tmp, *pool = &tmp;
-		oops = ttopool_num(shunk1(t->in), t->afi, pool);
-		if (oops != NULL && t->str == NULL) {
+		d = ttopool_num(shunk1(t->in), t->afi, pool);
+		if (d != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
+			pfree_diag(&d);
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
@@ -260,18 +264,17 @@ static void check_pool_from_subnet(void)
 		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'..'%s'", pri_afi(t->afi), t->in, t->start, t->end);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		oops = ttosubnet_num(shunk1(t->in), t->afi,
-				     subnet, &nonzero_host);
-		if (oops != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		d = ttosubnet_num(shunk1(t->in), t->afi,
+				  subnet, &nonzero_host);
+		if (d != NULL) {
+			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
@@ -324,19 +327,20 @@ static void check_pool_is(void)
 		{ LN, &ipv6_info, "::1", "::2",          "::1-::2",         .size = 2, },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-'%s'", pri_afi(t->afi), t->lo, t->hi)
 
 		const struct ip_info *afi = t->afi;
 
 		ip_address lo;
 		if (strlen(t->lo) > 0) {
-			oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
-			if (oops != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s'", t->lo);
+			d = ttoaddress_num(shunk1(t->lo), afi, &lo);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed converting '%s', %s",
+				     t->lo, str_diag(d));
 			}
 		} else {
 			lo = unset_address;
@@ -344,9 +348,10 @@ static void check_pool_is(void)
 
 		ip_address hi;
 		if (strlen(t->hi) > 0) {
-			oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
-			if (oops != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s'", t->hi);
+			d = ttoaddress_num(shunk1(t->hi), afi, &hi);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed converting '%s', %s",
+				     t->hi, str_diag(d));
 			}
 		} else {
 			hi = unset_address;
@@ -406,8 +411,6 @@ static void check_pool_op_pool(void)
 
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s vs %s", t->l, t->r);
@@ -415,12 +418,13 @@ static void check_pool_op_pool(void)
 #define TT(R)								\
 		ip_pool R;						\
 		if (t->R != NULL) {					\
-			oops = ttopool_num(shunk1(t->R), 0, &R);	\
-			if (oops != NULL) {				\
-				FAIL("ttopool(%s) failed: %s", t->R, oops); \
+			diag_t d = ttopool_num(shunk1(t->R), 0, &R);	\
+			if (d != NULL) {				\
+				FAIL("ttopool(%s) failed: %s", t->R,	\
+				     str_diag(d));			\
 			}						\
 		} else {						\
-			R = unset_pool;				\
+			R = unset_pool;					\
 		}
 		TT(l);
 		TT(r);
@@ -478,15 +482,17 @@ static void check_pool_offset_to_cidr(void)
 	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s + %jd -> %s", t->pool, t->offset,
 		      t->cidr == NULL ? "<unset>" : t->cidr);
 
 		/* convert it *to* internal format */
 		ip_pool pool;
-		err = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
-		if (err != NULL) {
-			FAIL("ttopool(%s) failed: %s", t->pool, err);
+		d = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
+		if (d != NULL) {
+			FAIL("ttopool(%s) failed: %s", t->pool,
+			     str_diag(d));
 		}
 
 		ip_cidr cidr;
@@ -535,6 +541,7 @@ static void check_cidr_to_pool_offset(void)
 	err_t err;
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s - %s -> %ju ok: %s",
 		      t->pool,
@@ -543,15 +550,17 @@ static void check_cidr_to_pool_offset(void)
 		      bool_str(t->ok));
 
 		ip_pool pool;
-		err = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
-		if (err != NULL) {
-			FAIL("ttopool(%s) failed: %s", t->pool, err);
+		d = ttopool_num(shunk1(t->pool), NULL/*auto-detect*/, &pool);
+		if (d != NULL) {
+			FAIL("ttopool(%s) failed: %s", t->pool,
+			     str_diag(d));
 		}
 
 		ip_cidr cidr;
-		err = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
-		if (err != NULL) {
-			FAIL("ttocidr_num(%s) failed: %s", t->cidr, err);
+		d = ttocidr_num(shunk1(t->cidr), NULL/*auto-detect*/, &cidr);
+		if (d != NULL) {
+			FAIL("ttocidr_num(%s) failed: %s", t->cidr,
+			     str_diag(d));
 		}
 
 		uintmax_t offset;

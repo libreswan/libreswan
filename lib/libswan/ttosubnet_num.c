@@ -31,7 +31,7 @@
  * Mask can be integer bit count.
  */
 
-err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
+diag_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 		    ip_subnet *dst, ip_address *nonzero_host)
 {
 	*dst = unset_subnet;
@@ -46,7 +46,7 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 	 */
 	if (hunk_strcaseeq(src, DEFAULTSUBNET)) {
 		if (afi == NULL) {
-			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
+			return diag("unknown address family with %s subnet not allowed.", DEFAULTSUBNET);
 		}
 		*dst = afi->subnet.all; /* 0.0.0.0/0 or ::/0 */
 		return NULL;
@@ -59,9 +59,9 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 
 	/* parse ADDR */
 	ip_address address;
-	oops = ttoaddress_num(addr, afi, &address);
-	if (oops != NULL) {
-		return oops;
+	diag_t d = ttoaddress_num(addr, afi, &address);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (afi == NULL) {
@@ -79,21 +79,21 @@ err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
 			if (afi == &ipv4_info) {
 				/*1.2.3.0/255.255.255.0?*/
 				ip_address masktmp;
-				oops = ttoaddress_num(mask, afi, &masktmp);
-				if (oops != NULL) {
-					return oops;
+				diag_t d = ttoaddress_num(mask, afi, &masktmp);
+				if (d != NULL) {
+					return d;
 				}
 
 				int i = ip_bytes_mask_len(afi, masktmp.bytes);
 				if (i < 0) {
-					return "non-contiguous or otherwise erroneous mask";
+					return diag("non-contiguous or otherwise erroneous mask");
 				}
 				prefix_len = i;
 			} else {
-				return "masks are not permitted for IPv6 addresses";
+				return diag("masks are not permitted for IPv6 addresses");
 			}
 		} else  if (prefix_len > afi->mask_cnt) {
-			return "mask is too big";
+			return diag("mask is too big");
 		}
 	}
 

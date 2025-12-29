@@ -66,13 +66,13 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 	unsigned nr = 0;
 	ITEMS_FOR_EACH(token, tokens) {
 		ip_address tmp_nonzero;
-		err_t e = ttoselector_num(*token, input_afi,
-					  &output->list[nr++],
-					  &tmp_nonzero);
+		diag_t d = ttoselector_num(*token, input_afi,
+					   &output->list[nr++],
+					   &tmp_nonzero);
 		/* validate during first pass */
-		if (e != NULL) {
-			diag_t d = diag(PRI_SHUNK" invalid, %s",
-					pri_shunk(*token), e);
+		if (d != NULL) {
+			d = diag_diag(&d, PRI_SHUNK" invalid, ",
+				      pri_shunk(*token));
 			pfree(tokens);
 			pfree(output->list);
 			zero(output);

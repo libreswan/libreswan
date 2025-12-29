@@ -46,11 +46,11 @@ diag_t ttoaddresses_num(shunk_t input, const char *delims,
 	output->list = alloc_things(ip_address, tokens->len, "addresses");
 
 	ITEMS_FOR_EACH(token, tokens) {
-		err_t e = ttoaddress_num(*token, input_afi,
-					 &output->list[output->len]);
-		if (e != NULL) {
-			diag_t d = diag(PRI_SHUNK" invalid, %s",
-					pri_shunk(*token), e);
+		diag_t d = ttoaddress_num(*token, input_afi,
+					  &output->list[output->len]);
+		if (d != NULL) {
+			diag_t d = diag_diag(&d, PRI_SHUNK" invalid, ",
+					     pri_shunk(*token));
 			pfree(tokens);
 			pfree(output->list);
 			zero(output);

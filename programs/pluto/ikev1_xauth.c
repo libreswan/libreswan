@@ -1080,10 +1080,11 @@ static bool add_xauth_addresspool(struct connection *c,
 	 * Allows <address>, <address>-<address> and <address>/bits.
 	 */
 	ip_range pool_range;
-	err_t err = ttorange_num(shunk1(addresspool), &ipv4_info, &pool_range);
-	if (err != NULL) {
+	diag_t d = ttorange_num(shunk1(addresspool), &ipv4_info, &pool_range);
+	if (d != NULL) {
 		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
-		     addresspool, userid, err);
+		     addresspool, userid, str_diag(d));
+		pfree_diag(&d);
 		return false;
 	}
 
@@ -1111,7 +1112,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		addresspool_delref(&c->pool[IPv4], logger);
 	}
 
-	diag_t d = install_addresspool(pool_from_range(pool_range), c->pool, logger);
+	d = install_addresspool(pool_from_range(pool_range), c->pool, logger);
 	if (d != NULL) {
 		vlog("XAUTH: connection addresspool %s for the user \"%s\" is invalid, %s",
 		     addresspool, userid, str_diag(d));

@@ -833,7 +833,6 @@ static void process_secret_records(struct file_lex_position *flp,
 
 			for (;;) {
 				struct id id;
-				err_t ugh;
 
 				if (tokeq(flp, ":")) {
 					/* found key part */
@@ -847,26 +846,28 @@ static void process_secret_records(struct file_lex_position *flp,
 				 * See RFC2407 IPsec Domain of
 				 * Interpretation 4.6.2
 				 */
+				diag_t d;
 				if (tokeq(flp, "%any")) {
 					id = empty_id;
 					id.kind = ID_IPV4_ADDR;
 					id.ip_addr = ipv4_info.address.zero;
-					ugh = NULL;
+					d = NULL;
 				} else if (tokeq(flp, "%any6")) {
 					id = empty_id;
 					id.kind = ID_IPV6_ADDR;
 					id.ip_addr = ipv6_info.address.zero;
-					ugh = NULL;
+					d = NULL;
 				} else {
-					ugh = atoid(flp->tok, &id);
+					d = ttoid(flp->tok, &id);
 				}
 
-				if (ugh != NULL) {
+				if (d != NULL) {
 					llog(RC_LOG, flp->logger,
-						    "ERROR \"%s\" line %d: index \"%s\" %s",
-						    flp->filename,
-						    flp->lino, flp->tok,
-						    ugh);
+					     "ERROR \"%s\" line %d: index \"%s\" %s",
+					     flp->filename,
+					     flp->lino, flp->tok,
+					     str_diag(d));
+					pfree_diag(&d);
 				} else {
 					struct id_list *i = alloc_thing(
 						struct id_list,

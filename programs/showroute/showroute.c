@@ -103,9 +103,10 @@ int main(int argc, char **argv)
 	}
 
 	ip_address dst;
-	err_t e = ttoaddress_dns(shunk1(argv[optind]), family.type, &dst);
-	if (e != NULL) {
-		llog(WHACK_STREAM, logger, "%s: %s", argv[1], e);
+	diag_t d = ttoaddress_dns(shunk1(argv[optind]), family.type, &dst);
+	if (d != NULL) {
+		llog(WHACK_STREAM, logger, "%s: %s", argv[1], str_diag(d));
+		pfree_diag(&d);
 		exit(1);
 	}
 

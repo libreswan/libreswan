@@ -212,7 +212,10 @@ struct kernel_iface *find_kernel_ifaces6(struct verbose verbose)
 				 xb[6], xb[7]);
 
 			ip_address ifaddr;
-			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr));
+			diag_t d = ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr);
+			if (d != NULL) {
+				llog_passert(verbose.logger, HERE, "%s", str_diag(d));
+			}
 
 			if (address_is_specified(ifaddr)) {
 				struct kernel_iface *ri =

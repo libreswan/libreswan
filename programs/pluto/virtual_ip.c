@@ -64,7 +64,8 @@ static int private_net_excl_len = 0;
  * @return err_t NULL if the format string is valid.
  */
 
-static err_t read_subnet(shunk_t src, ip_subnet *dst, bool *isincl)
+MUST_USE_RESULT
+static diag_t read_subnet(shunk_t src, ip_subnet *dst, bool *isincl)
 {
 	shunk_t cursor = src;
 
@@ -90,16 +91,16 @@ static err_t read_subnet(shunk_t src, ip_subnet *dst, bool *isincl)
 	if (isincl != NULL) {
 		*isincl = incl;
 	} else if (!incl) {
-		return "! invalid";
+		return diag("! invalid");
 	}
 
 	ip_address nonzero_host;
-	err_t e = ttosubnet_num(cursor, afi, dst, &nonzero_host);
-	if (e != NULL) {
-		return e;
+	diag_t d = ttosubnet_num(cursor, afi, dst, &nonzero_host);
+	if (d != NULL) {
+		return d;
 	}
 	if (nonzero_host.ip.is_set) {
-		return "subnet contains non-zero host identifier";
+		return diag("subnet contains non-zero host identifier");
 	}
 	return NULL;
 }
@@ -137,13 +138,15 @@ void init_virtual_ip(const char *private_list,
 		bool incl = false;
 		ip_subnet sub;	/* sink: value never used */
 
-		if (read_subnet(shunk2(str, next - str), &sub, &incl) == NULL/*no-err*/) {
+		diag_t d = read_subnet(shunk2(str, next - str), &sub, &incl);
+		if (d != NULL) {
+			pfree_diag(&d);
+			bad++;
+		} else {
 			if (incl)
 				private_net_incl_len++;
 			else
 				private_net_excl_len++;
-		} else {
-			bad++;
 		}
 		str = *next != '\0' ? next + 1 : NULL;
 	}
@@ -173,8 +176,10 @@ void init_virtual_ip(const char *private_list,
 
 			bool incl = false;
 			ip_subnet sub;
-			if (read_subnet(shunk2(str, next - str),
-					&sub, &incl) == NULL/*no-err*/) {
+			diag_t d = read_subnet(shunk2(str, next - str), &sub, &incl);
+			if (d != NULL) {
+				pfree_diag(&d);
+			} else {
 				if (incl) {
 					private_net_incl[i_incl++] = sub;
 				} else {
@@ -258,10 +263,10 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
 			flags.all = true;
 		} else {
 			/* don't allow ! form */
-			err_t e = read_subnet(shunk2(str, len), &sub, NULL);
-			if (e != NULL) {
-				return diag("virtual %ssubnet=%s invalid, %s",
-					    leftright, string, e);
+			diag_t d = read_subnet(shunk2(str, len), &sub, NULL);
+			if (d != NULL) {
+				return diag_diag(&d, "virtual %ssubnet=%s invalid, ",
+						 leftright, string);
 			}
 			n_net++;
 			if (first_net == NULL)
@@ -306,7 +311,10 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
 
 			/* don't allow ! form; stumble over %entries */
 			ip_subnet sub;
-			if (read_subnet(shunk2(str, next - str), &sub, NULL) == NULL/*no-err*/) {
+			diag_t d = read_subnet(shunk2(str, next - str), &sub, NULL);
+			if (d != NULL) {
+				pfree_diag(&d);
+			} else {
 				passert(i < n_net);
 				v->net[i++] = sub;
 			}

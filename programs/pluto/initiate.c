@@ -142,11 +142,12 @@ static bool initiate_connection_2_address(struct connection *c,
 		}
 
 		ip_address remote_ip;
-		err_t e = ttoaddress_dns(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
-		if (e != NULL) {
+		diag_t diag = ttoaddress_dns(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
+		if (diag != NULL) {
 			llog_rc(RC_NOPEERIP, c->logger,
 				"cannot instantiate connection: resolution of \"%s\" failed: %s",
-				remote_host, e);
+				remote_host, str_diag(diag));
+			pfree_diag(&diag);
 			return false;
 		}
 

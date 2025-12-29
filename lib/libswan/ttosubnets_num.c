@@ -20,18 +20,18 @@
 #include "ip_subnet.h"
 #include "ip_info.h"
 
-static err_t parse_subnets(shunk_t token, const struct ip_info *afi,
-			   void **ptr, unsigned len)
+static diag_t parse_subnets(shunk_t token, const struct ip_info *afi,
+			    void **ptr, unsigned len)
 {
 	ip_subnet tmp_token;
 	ip_address nonzero_host;
-	err_t e = ttosubnet_num(token, afi, &tmp_token, &nonzero_host);
-	if (e != NULL) {
-		return e;
+	diag_t d = ttosubnet_num(token, afi, &tmp_token, &nonzero_host);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (nonzero_host.ip.is_set) {
-		return "subnet has non-zero address identifier";
+		return diag("subnet has non-zero address identifier");
 	}
 
 	/* save it */

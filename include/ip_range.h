@@ -55,7 +55,7 @@ err_t addresses_to_nonzero_range(const ip_address start, const ip_address end,
 
 err_t range_to_subnet(const ip_range range, ip_subnet *subnet) MUST_USE_RESULT;
 
-err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst) MUST_USE_RESULT;
+diag_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst) MUST_USE_RESULT;
 
 /* comma/space separated list */
 

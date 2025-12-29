@@ -61,7 +61,7 @@ err_t addresses_to_nonzero_pool(const ip_address start, const ip_address end,
 
 err_t pool_to_subnet(const ip_pool pool, ip_subnet *subnet) MUST_USE_RESULT;
 
-err_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst) MUST_USE_RESULT;
+diag_t ttopool_num(shunk_t input, const struct ip_info *afi, ip_pool *dst) MUST_USE_RESULT;
 
 /* comma/space separated list */
 

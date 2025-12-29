@@ -679,10 +679,11 @@ static void process_kernel_ifaces(struct kernel_iface *rifaces, struct verbose v
 	ip_address lip;	/* --listen filter option */
 
 	if (pluto_listen != NULL) {
-		err_t e = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
+		diag_t d = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
 
-		if (e != NULL) {
-			vlog("invalid listen= option ignored: %s", e);
+		if (d != NULL) {
+			vlog("invalid listen= option ignored: %s", str_diag(d));
+			pfree_diag(&d);
 			pluto_listen = NULL;
 		}
 		address_buf b;

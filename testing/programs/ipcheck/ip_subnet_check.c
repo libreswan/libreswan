@@ -113,24 +113,24 @@ static void check__ttosubnet_num__str_subnet(struct logger *logger UNUSED)
 		{ LN, &ipv6_info, "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", NULL, false, },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'", pri_afi(t->afi), t->in,
 		      t->str == NULL ? "<error>" : t->str);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		oops = ttosubnet_num(shunk1(t->in), t->afi,
-				     subnet, &nonzero_host);
-		if (oops != NULL && t->str == NULL) {
+		d = ttosubnet_num(shunk1(t->in), t->afi,
+				  subnet, &nonzero_host);
+		if (d != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
+			pfree_diag(&d);
 			continue;
-		} else if (oops != NULL && t->str != NULL) {
+		} else if (d != NULL && t->str != NULL) {
 			/* Error occurred, but we didn't expect one */
-			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
-		} else if (oops == NULL && t->str == NULL) {
+			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
+		} else if (d == NULL && t->str == NULL) {
 			/* If no errors, but we expected one */
 			FAIL("ttosubnet(%s) succeeded unexpectedly", t->in);
 		}
@@ -173,10 +173,10 @@ static void check_subnet_mask(void)
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		err_t oops = ttosubnet_num(shunk1(t->in), t->afi,
-					   subnet, &nonzero_host);
-		if (oops != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		diag_t d = ttosubnet_num(shunk1(t->in), t->afi,
+					 subnet, &nonzero_host);
+		if (d != NULL) {
+			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
@@ -227,10 +227,10 @@ static void check_subnet_prefix(void)
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		err_t oops = ttosubnet_num(shunk1(t->in), t->afi,
-					   subnet, &nonzero_host);
-		if (oops != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		diag_t d = ttosubnet_num(shunk1(t->in), t->afi,
+					 subnet, &nonzero_host);
+		if (d != NULL) {
+			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
@@ -290,10 +290,10 @@ static void check_subnet_is(void)
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
 		if (t->afi != NULL) {
 			ip_address nonzero_host;
-			err_t oops = ttosubnet_num(shunk1(t->in), t->afi,
-						   &tmp, &nonzero_host);
-			if (oops != NULL) {
-				FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+			diag_t d = ttosubnet_num(shunk1(t->in), t->afi,
+						 &tmp, &nonzero_host);
+			if (d != NULL) {
+				FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
 			}
 			if (nonzero_host.ip.is_set) {
 				FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
@@ -323,15 +323,17 @@ static void check_subnet_from_address(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'", pri_afi(t->afi), t->in);
 
 		const struct ip_info *type = t->afi;
 
 		ip_address a;
-		err_t oops = ttoaddress_num(shunk1(t->in), type, &a);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed: %s", oops);
+		d = ttoaddress_num(shunk1(t->in), type, &a);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed: %s", str_diag(d));
 		}
 
 		ip_subnet tmp = subnet_from_address(a), *subnet = &tmp;
@@ -404,25 +406,27 @@ static void check_address_mask_to_subnet(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		err_t err;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s/%s -> %s",
 		      t->address != NULL ? t->address : "N/A",
 		      t->mask != NULL ? t->mask : "N/A",
 		      t->subnet != NULL ? t->subnet : "<error>");
 
 		ip_address address;
-		err = ttoaddress_num(shunk1(t->address), NULL, &address);
-		if (err != NULL) {
+		d = ttoaddress_num(shunk1(t->address), NULL, &address);
+		if (d != NULL) {
 			FAIL("ttoaddress_num(%s) failed: %s",
-			     t->address, err);
+			     t->address, str_diag(d));
 		}
 
 		ip_address mask;
-		err = ttoaddress_num(shunk1(t->mask), NULL, &mask);
-		if (err != NULL) {
+		d = ttoaddress_num(shunk1(t->mask), NULL, &mask);
+		if (d != NULL) {
 			FAIL("ttoaddress_num(%s) failed: %s",
-			     t->mask, err);
+			     t->mask, str_diag(d));
 		}
 
 		ip_subnet subnet;

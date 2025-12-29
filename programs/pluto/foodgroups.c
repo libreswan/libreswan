@@ -201,12 +201,13 @@ static void read_foodgroup(struct file_lex_position *oflp,
 		 */
 		ip_subnet sn;
 		ip_address nonzero_host;
-		err_t err = ttosubnet_num(shunk1(flp->tok), NULL, &sn, &nonzero_host);
+		diag_t d = ttosubnet_num(shunk1(flp->tok), NULL, &sn, &nonzero_host);
 
-		if (err != NULL) {
+		if (d != NULL) {
 			llog(RC_LOG, flp->logger,
 			     "ignored, '%s' is not a subnet: %s",
-			     flp->tok, err);
+			     flp->tok, str_diag(d));
+			pfree_diag(&d);
 			flushline(flp, NULL/*shh*/);
 			continue;
 		}

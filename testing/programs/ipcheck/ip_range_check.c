@@ -58,24 +58,26 @@ static void check_iprange_bits(void)
 		{ LN, &ipv6_info, "::", "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 1, 127},
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-'%s'", pri_afi(t->afi), t->lo, t->hi)
 
 		const struct ip_info *afi = t->afi;
 
 		ip_address lo;
-		oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s'", t->lo);
+		d = ttoaddress_num(shunk1(t->lo), afi, &lo);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed converting '%s', %s",
+			     t->lo, str_diag(d));
 		}
 
 		ip_address hi;
-		oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
-		if (oops != NULL) {
-			FAIL("ttoaddress_num() failed converting '%s'", t->hi);
+		d = ttoaddress_num(shunk1(t->hi), afi, &hi);
+		if (d != NULL) {
+			FAIL("ttoaddress_num() failed converting '%s', %s",
+			     t->hi, str_diag(d));
 		}
 
 		ip_range range = range_from_raw(HERE, afi,
@@ -199,9 +201,10 @@ static void check_ttorange__to__str_range(void)
 		const char *oops = NULL;
 
 		ip_range tmp, *range = &tmp;
-		oops = ttorange_num(shunk1(t->in), t->afi, range);
-		if (oops != NULL && t->str == NULL) {
+		diag_t d = ttorange_num(shunk1(t->in), t->afi, range);
+		if (d != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
+			pfree_diag(&d);
 			continue;
 		}
 		if (oops != NULL && t->str != NULL) {
@@ -251,18 +254,17 @@ static void check_range_from_subnet(void)
 		{ LN, &ipv6_info, "1:2:3:4:5:6:7:8/128", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7:8", },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s '%s' -> '%s'..'%s'", pri_afi(t->afi), t->in, t->start, t->end);
 
 		ip_subnet tmp, *subnet = &tmp;
 		ip_address nonzero_host;
-		oops = ttosubnet_num(shunk1(t->in), t->afi,
-				     subnet, &nonzero_host);
-		if (oops != NULL) {
-			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		d = ttosubnet_num(shunk1(t->in), t->afi,
+				  subnet, &nonzero_host);
+		if (d != NULL) {
+			FAIL("ttosubnet(%s) failed: %s", t->in, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
@@ -315,19 +317,20 @@ static void check_range_is(void)
 		{ LN, &ipv6_info, "::1", "::2",          "::1-::2",         .size = 2, },
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
+		diag_t d;
 		const struct test *t = &tests[ti];
+
 		PRINT("%s '%s'-'%s'", pri_afi(t->afi), t->lo, t->hi)
 
 		const struct ip_info *afi = t->afi;
 
 		ip_address lo;
 		if (strlen(t->lo) > 0) {
-			oops = ttoaddress_num(shunk1(t->lo), afi, &lo);
-			if (oops != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s'", t->lo);
+			d = ttoaddress_num(shunk1(t->lo), afi, &lo);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed converting '%s', %s",
+				     t->lo, str_diag(d));
 			}
 		} else {
 			lo = unset_address;
@@ -335,9 +338,10 @@ static void check_range_is(void)
 
 		ip_address hi;
 		if (strlen(t->hi) > 0) {
-			oops = ttoaddress_num(shunk1(t->hi), afi, &hi);
-			if (oops != NULL) {
-				FAIL("ttoaddress_num() failed converting '%s'", t->hi);
+			d = ttoaddress_num(shunk1(t->hi), afi, &hi);
+			if (d != NULL) {
+				FAIL("ttoaddress_num() failed converting '%s', %s",
+				     t->hi, str_diag(d));
 			}
 		} else {
 			hi = unset_address;
@@ -396,8 +400,6 @@ static void check_range_op_range(void)
 
 	};
 
-	const char *oops;
-
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
 		PRINT("%s vs %s", t->l, t->r);
@@ -405,9 +407,10 @@ static void check_range_op_range(void)
 #define TT(R)								\
 		ip_range R;						\
 		if (t->R != NULL) {					\
-			oops = ttorange_num(shunk1(t->R), 0, &R);	\
-			if (oops != NULL) {				\
-				FAIL("ttorange(%s) failed: %s", t->R, oops); \
+			diag_t d = ttorange_num(shunk1(t->R), 0, &R);	\
+			if (d != NULL) {				\
+				FAIL("ttorange(%s) failed: %s", t->R,	\
+				     str_diag(d));			\
 			}						\
 		} else {						\
 			R = unset_range;				\

@@ -115,9 +115,9 @@ diag_t ttosaid(shunk_t src, ip_said *said)
 
 	ip_address dst;
 	shunk_t dsts = input;
-	oops = ttoaddress_num(input, afi, &dst);
-	if (oops != NULL) {
-		return diag("address "PRI_SHUNK" invalid: %s", pri_shunk(dsts), oops);
+	diag_t d = ttoaddress_num(input, afi, &dst);
+	if (d != NULL) {
+		return diag_diag(&d, "address "PRI_SHUNK" invalid: ", pri_shunk(dsts));
 	}
 
 	*said = said_from_address_protocol_spi(dst, protocol, htonl(hspi));

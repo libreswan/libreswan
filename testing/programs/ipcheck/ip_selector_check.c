@@ -42,7 +42,7 @@ struct from_test {
 
 static void check_selector_from(const struct from_test *tests, unsigned nr_tests,
 				const char *what,
-				err_t (*tto)(const struct selector *from, ip_selector *out))
+				diag_t (*tto)(const struct selector *from, ip_selector *out))
 {
 
 	for (size_t ti = 0; ti < nr_tests; ti++) {
@@ -60,23 +60,24 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 		      t->nport[0], t->nport[1]);
 
 		ip_selector tmp, *selector = &tmp;
-		err_t err = tto(&t->from, selector);
+		diag_t d = tto(&t->from, selector);
 		if (t->selector != NULL) {
-			if (err != NULL) {
+			if (d != NULL) {
 				FAIL("%s(%s %s %s) failed: %s",
 				     what,
 				     pri_afi(t->from.afi),
 				     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 				     (t->from.protoport != NULL ? t->from.protoport : "N/A"),
-				     err);
+				     str_diag(d));
 			}
-		} else if (err == NULL) {
+		} else if (d == NULL) {
 			FAIL("%s(%s %s %s) should have failed",
 			     what,
 			     pri_afi(t->from.afi),
 			     (t->from.addresses != NULL ? t->from.addresses : "N/A"),
 			     (t->from.protoport != NULL ? t->from.protoport : "N/A"));
 		} else {
+			pfree_diag(&d);
 			continue;
 		}
 
@@ -137,24 +138,27 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 	}
 }
 
-static err_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
-						      ip_selector *selector)
+static diag_t do_selector_from_ttoaddress_ttoprotoport(const struct selector *s,
+						       ip_selector *selector)
 {
+	diag_t d;
+	err_t err;
+
 	if (s->afi == NULL) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
 	ip_address address;
-	err_t err = ttoaddress_num(shunk1(s->addresses), s->afi, &address);
-	if (err != NULL) {
-		return err;
+	d = ttoaddress_num(shunk1(s->addresses), s->afi, &address);
+	if (d != NULL) {
+		return d;
 	}
 
 	ip_protoport protoport;
 	err = ttoprotoport(shunk1(s->protoport), &protoport);
 	if (err != NULL) {
-		return err;
+		return diag("%s", err);
 	}
 
 	*selector = selector_from_address_protoport(address, protoport);
@@ -172,8 +176,8 @@ static void check_selector_from_address_protoport(void)
 			    do_selector_from_ttoaddress_ttoprotoport);
 }
 
-static err_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
-						     ip_selector *selector)
+static diag_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
+						      ip_selector *selector)
 {
 	if (s->afi == NULL) {
 		*selector = unset_selector;
@@ -182,20 +186,20 @@ static err_t do_selector_from_ttosubnet_ttoprotoport(const struct selector *s,
 
 	ip_subnet subnet;
 	ip_address nonzero_host;
-	err_t err = ttosubnet_num(shunk1(s->addresses), s->afi,
-				  &subnet, &nonzero_host);
-	if (err != NULL) {
-		return err;
+	diag_t d = ttosubnet_num(shunk1(s->addresses), s->afi,
+				 &subnet, &nonzero_host);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (nonzero_host.ip.is_set) {
-		return "nonzero host identifier";
+		return diag("nonzero host identifier");
 	}
 
 	ip_protoport protoport;
-	err = ttoprotoport(shunk1(s->protoport), &protoport);
+	err_t err = ttoprotoport(shunk1(s->protoport), &protoport);
 	if (err != NULL) {
-		return err;
+		return diag("%s", err);
 	}
 
 	*selector = selector_from_subnet_protoport(subnet, protoport);
@@ -231,7 +235,8 @@ static void check_selector_from_subnet_protoport(void)
 			    do_selector_from_ttosubnet_ttoprotoport);
 }
 
-static err_t do_selector_from_ttoselector(const struct selector *s, ip_selector *selector)
+static diag_t do_selector_from_ttoselector(const struct selector *s,
+					   ip_selector *selector)
 {
 	if (s->afi == NULL) {
 		*selector = unset_selector;
@@ -239,13 +244,13 @@ static err_t do_selector_from_ttoselector(const struct selector *s, ip_selector 
 	}
 
 	ip_address nonzero_host;
-	err_t e = ttoselector_num(shunk1(s->addresses), s->afi,
-				  selector, &nonzero_host);
-	if (e != NULL) {
-		return e;
+	diag_t d = ttoselector_num(shunk1(s->addresses), s->afi,
+				   selector, &nonzero_host);
+	if (d != NULL) {
+		return d;
 	}
 	if (nonzero_host.ip.is_set) {
-		return "non-zero host identifier";
+		return diag("non-zero host identifier");
 	}
 	return NULL;
 }
@@ -287,8 +292,8 @@ static void check_ttoselector_num(void)
 			    do_selector_from_ttoselector);
 }
 
-static err_t do_selector_from_ttorange(const struct selector *s,
-				       ip_selector *selector)
+static diag_t do_selector_from_ttorange(const struct selector *s,
+					ip_selector *selector)
 {
 	if (s->afi == NULL) {
 		*selector = unset_selector;
@@ -296,9 +301,9 @@ static err_t do_selector_from_ttorange(const struct selector *s,
 	}
 
 	ip_range range;
-	err_t err = ttorange_num(shunk1(s->addresses), s->afi, &range);
-	if (err != NULL) {
-		return err;
+	diag_t d = ttorange_num(shunk1(s->addresses), s->afi, &range);
+	if (d != NULL) {
+		return d;
 	}
 
 	*selector = selector_from_range(range);
@@ -345,7 +350,7 @@ static void check_selector_is(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		err_t err;
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("subnet=%s unset=%s zero=%s all=%s address=%s subnet=%s",
 		      (t->selector != NULL ? t->selector : "<unset>"),
@@ -357,9 +362,9 @@ static void check_selector_is(void)
 
 		ip_selector tmp, *selector = &tmp;
 		ip_address nonzero_host;
-		err = ttoselector_num(shunk1(t->selector), NULL, selector, &nonzero_host);
-		if (err != NULL) {
-			FAIL("to_selector() failed: %s", err);
+		d = ttoselector_num(shunk1(t->selector), NULL, selector, &nonzero_host);
+		if (d != NULL) {
+			FAIL("to_selector() failed: %s", str_diag(d));
 		}
 
 		CHECK_COND(selector, is_unset);
@@ -490,7 +495,7 @@ static void check_selector_op_selector(void)
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
-		err_t err;
+		diag_t d;
 		const struct test *t = &tests[ti];
 		PRINT("%s in %s: selector=%s address=%s endpoint=%s",
 		      t->inner, t->outer,
@@ -503,30 +508,31 @@ static void check_selector_op_selector(void)
 		ip_selector inner_selector;
 		if (strchr(t->inner, '-') != NULL) {
 			ip_range inner_range;
-			err = ttorange_num(shunk1(t->inner), NULL, &inner_range);
+			d = ttorange_num(shunk1(t->inner), NULL, &inner_range);
 			inner_selector = selector_from_range(inner_range);
 		} else {
-			err = ttoselector_num(shunk1(t->inner), NULL,
-					      &inner_selector, &nonzero_host);
+			d = ttoselector_num(shunk1(t->inner), NULL,
+					    &inner_selector, &nonzero_host);
 		}
-		if (err != NULL) {
-			FAIL("ttoselector_num(%s) failed: %s", t->inner, err);
+		if (d != NULL) {
+			FAIL("ttoselector_num(%s) failed: %s", t->inner, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->inner);
 		}
+		pfree_diag(&d);
 
 		ip_selector outer_selector;
 		if (strchr(t->outer, '-') != NULL) {
 			ip_range outer_range;
-			err = ttorange_num(shunk1(t->outer), NULL, &outer_range);
+			d = ttorange_num(shunk1(t->outer), NULL, &outer_range);
 			outer_selector = selector_from_range(outer_range);
 		} else {
-			err = ttoselector_num(shunk1(t->outer), NULL,
-					      &outer_selector, &nonzero_host);
+			d = ttoselector_num(shunk1(t->outer), NULL,
+					    &outer_selector, &nonzero_host);
 		}
-		if (err != NULL) {
-			FAIL("ttoselector_num(%s) failed: %s", t->outer, err);
+		if (d != NULL) {
+			FAIL("ttoselector_num(%s) failed: %s", t->outer, str_diag(d));
 		}
 		if (nonzero_host.ip.is_set) {
 			FAIL("ttoselector_num(%s) failed: non-zero host identifier", t->outer);
