@@ -5,6 +5,7 @@
 
 #include "verbose.h"
 #include "ip_address.h"
+#include "shunk.h"
 
 struct logger;
 struct event_base;
@@ -24,10 +25,8 @@ void unbound_ctx_config(struct ub_ctx *dns_ctx,
 			const struct dnssec_config *config,
 			const struct logger *logger);
 
-struct ub_ctx *unbound_sync_init(const struct dnssec_config *config,
-				 struct logger *logger);
-diag_t unbound_sync_resolve(struct ub_ctx *dns_ctx,
-			    const char *src, const struct ip_info *afi,
+diag_t unbound_sync_resolve(const char *src,
+			    const struct ip_info *afi,
 			    ip_address *ipaddr,
 			    struct verbose verbose);
 

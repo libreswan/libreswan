@@ -14,10 +14,6 @@
  *
  */
 
-#ifdef USE_UNBOUND
-#include <unbound.h>
-#endif
-
 #include "resolve_helper.h"
 
 #include "refcnt.h"
@@ -100,12 +96,10 @@ helper_cb *resolve_helper(struct help_request *request,
 		diag_t d;
 
 #ifdef USE_UNBOUND
-		struct ub_ctx *unbound_context = unbound_sync_init(dnssec_config_singleton(verbose.logger),
-								   verbose.logger);
-		d = unbound_sync_resolve(unbound_context, end->host.value,
-					 resolved->afi, &host_addr,
+		d = unbound_sync_resolve(end->host.value,
+					 resolved->afi,
+					 &host_addr,
 					 verbose);
-		ub_ctx_delete(unbound_context);
 #else
 		d = ttoaddress_dns(shunk1(end->host.value),
 				   resolved->afi,
@@ -119,6 +113,7 @@ helper_cb *resolve_helper(struct help_request *request,
 			pfree_diag(&d);
 			continue;
 		}
+
 		end->host.addr = host_addr;
 	}
 
