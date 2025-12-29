@@ -252,10 +252,12 @@ bool report_leaks(struct logger *logger)
 			}
 			if (n != 1)
 				llog(RC_LOG, logger, "leak: %lu * %s, item size: %lu; %p ...",
-				     n, pprev->i.name, pprev->i.size, pprev);
+				     n, pprev->i.name, pprev->i.size,
+				     /*public-pointer*/(pprev + 1));
 			else
 				llog(RC_LOG, logger, "leak: %s, item size: %lu; %p",
-				     pprev->i.name, pprev->i.size, pprev);
+				     pprev->i.name, pprev->i.size,
+				     /*public-pointer*/(pprev + 1));
 			numleaks += n;
 			total += pprev->i.size * n;
 			n = 0;
