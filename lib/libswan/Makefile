@@ -299,10 +299,6 @@ OBJS += ikev1_prf.o
 endif
 OBJS += ikev2_prf.o
 
-ifeq ($(USE_UNBOUND),true)
-OBJS += unbound.o
-endif
-
 OBJS += names.o
 OBJS += enum_names.o
 OBJS += pluto_exit_code_names.o
@@ -318,12 +314,27 @@ OBJS += autostart_names.o
 OBJS += seccomp_mode_names.o
 
 #
+# build dest subdirectories
+#
+
+$(builddir)/%/:
+	mkdir -p $@
+
+#
+# DNS stuff
+#
+
+$(OBJS): | $(builddir)/dnssec/
+
+ifeq ($(USE_UNBOUND),true)
+OBJS += dnssec/unbound.o
+endif
+
+#
 # whack stuff
 #
 
 $(OBJS): | $(builddir)/whack/
-$(builddir)/%/:
-	mkdir -p $@
 
 OBJS += whack/pickle.o
 OBJS += whack/send.o
