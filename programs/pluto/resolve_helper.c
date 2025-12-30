@@ -118,13 +118,21 @@ helper_cb *resolve_helper(struct help_request *request,
 
 		vexpect(!address_is_specified(end->host.addr));
 		ip_address host_addr;
+		diag_t d;
+
 #ifdef USE_UNBOUND
 		struct ub_ctx *unbound_context = unbound_sync_init(&unbound_config,
 								   verbose.logger);
-		diag_t d = unbound_sync_resolve(unbound_context, end->host.value,
-						resolved->afi, &host_addr,
-						verbose);
+		d = unbound_sync_resolve(unbound_context, end->host.value,
+					 resolved->afi, &host_addr,
+					 verbose);
 		ub_ctx_delete(unbound_context);
+#else
+		d = ttoaddress_dns(shunk1(end->host.value),
+				   resolved->afi,
+				   &host_addr);
+#endif
+
 		if (d != NULL) {
 			vlog("failed to resolve '%s%s=%s', %s",
 			     leftright, "", end->host.value,
@@ -132,20 +140,6 @@ helper_cb *resolve_helper(struct help_request *request,
 			pfree_diag(&d);
 			continue;
 		}
-#else
-		err_t e = ttoaddress_dns(shunk1(end->host.value),
-					 resolved->afi,
-					 &host_addr);
-		if (e != NULL) {
-			/*
-			 * XXX: failing ttoaddress*() sets host_addr
-			 * to unset but want existing value.
-			 */
-			vlog("failed to resolve '%s%s=%s', %s",
-			     leftright, "", end->host.value, e);
-			continue;
-		}
-#endif
 		end->host.addr = host_addr;
 	}
 
