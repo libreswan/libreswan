@@ -18,7 +18,8 @@
 #ifndef LSWVERSION_H
 #define LSWVERSION_H    /* seen it, no need to see it again */
 
-extern const char *ipsec_version_code(void);
+extern const char libreswan_version[];
+
 extern const char *ipsec_version_string(void);
 
 extern const char libreswan_vendorid[];

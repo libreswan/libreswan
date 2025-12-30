@@ -229,7 +229,7 @@ static void help(void)
 		"shutdown: whack --shutdown [--leave-state]\n"
 		"\n"
 		"Libreswan %s\n",
-		ipsec_version_code());
+		libreswan_version);
 }
 
 /* --label operand, saved for diagnostics */

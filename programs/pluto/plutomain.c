@@ -1253,7 +1253,7 @@ int main(int argc, char **argv)
 	 */
 
 	llog(RC_LOG, logger, "Starting Pluto (Libreswan Version %s%s) pid:%u",
-	     ipsec_version_code(), compile_time_interop_options, getpid());
+	     libreswan_version, compile_time_interop_options, getpid());
 
 	/*
 	 * Enable debugging from the config file and announce it.
@@ -1601,7 +1601,7 @@ void show_setup_plutomain(struct show *s)
 		IPSEC_EXECDIR);
 
 	show(s, "pluto_version=%s, pluto_vendorid=%s",
-	     ipsec_version_code(),
+	     libreswan_version,
 	     config_setup_vendorid());
 
 	SHOW_JAMBUF(s, buf) {

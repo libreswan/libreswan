@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 			optarg_usage("ipsec rsasigkey", "[<keybits>]", "");
 
 		case OPT_VERSION:       /* version */
-			printf("%s %s\n", progname, ipsec_version_code());
+			printf("%s %s\n", progname, libreswan_version);
 			exit(0);
 			continue;
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */

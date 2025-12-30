@@ -280,7 +280,7 @@ void optarg_usage(const char *progname, const char *synopsys, const char *detail
 		fprintf(stream, "%s", details);
 	}
 
-	fprintf(stream, "Libreswan %s\n", ipsec_version_code());
+	fprintf(stream, "Libreswan %s\n", libreswan_version);
 	exit(0);
 }
 
