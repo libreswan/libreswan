@@ -80,6 +80,29 @@ void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 	kv->set = k_set;
 }
 
+static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
+
+	[KSF_NSSDIR] = IPSEC_NSSDIR,
+	[KSF_SECRETSFILE] = IPSEC_SECRETS,
+	[KSF_DUMPDIR] = IPSEC_RUNDIR,
+	[KSF_IPSECDIR] = IPSEC_CONFDDIR,
+	[KSF_MYVENDORID] = libreswan_vendorid,
+	[KSF_DNSSEC_ROOTKEY_FILE] = DEFAULT_DNSSEC_ROOTKEY_FILE,
+#ifdef USE_LOGFILE
+	[KSF_LOGFILE] = LOGFILE,
+#endif
+	[KSF_RUNDIR] = IPSEC_RUNDIR,
+	[KSF_PROTOSTACK] =
+#ifdef KERNEL_XFRM
+	"xfrm"
+#endif
+#ifdef KERNEL_PFKEYV2
+	"pfkeyv2"
+#endif
+	,
+	[KSF_DNS_RESOLVER] = "file",
+};
+
 const struct config_setup *config_setup_singleton(void)
 {
 	if (!config_setup_is_set) {
@@ -102,23 +125,11 @@ const struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
 #endif
 
-		update_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
-		update_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
-		update_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
-		update_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
-		update_setup_string(KSF_MYVENDORID, libreswan_vendorid);
-
-		update_setup_string(KSF_DNSSEC_ROOTKEY_FILE, DEFAULT_DNSSEC_ROOTKEY_FILE);
 		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
 
 		update_setup_yn(KYN_LOGIP, YN_YES);
 		update_setup_yn(KYN_LOGTIME, YN_YES);
 		update_setup_yn(KYN_LOGAPPEND, YN_YES);
-#ifdef USE_LOGFILE
-		update_setup_string(KSF_LOGFILE, LOGFILE);
-#endif
-
-		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
 
 		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime(5/*seconds*/));
 
@@ -142,17 +153,6 @@ const struct config_setup *config_setup_singleton(void)
 
 		update_setup_yn(KYN_LISTEN_UDP, YN_YES);
 		update_setup_yn(KYN_LISTEN_TCP, YN_NO);
-
-		update_setup_string(KSF_PROTOSTACK,
-#ifdef KERNEL_XFRM
-				    "xfrm"
-#endif
-#ifdef KERNEL_PFKEYV2
-				    "pfkeyv2"
-#endif
-			);
-
-		update_setup_string(KSF_DNS_RESOLVER, "file");
 
 		/*
 		 * Clear .set, which is set by update_setup*().  Don't
@@ -180,7 +180,18 @@ const char *config_setup_string(const struct config_setup *setup,
 				enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
-	return setup->values[field].string;
+	const struct keyword_value *kv = &setup->values[field];
+	if (kv->set == k_set) {
+		return kv->string; /* can be set to NULL? */
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		return value;
+	}
+
+	return NULL;
 }
 
 const char *config_setup_string_or_unset(const struct config_setup *setup,
