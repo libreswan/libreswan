@@ -682,10 +682,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_VERSION:	/* --version */
-			printf("Libreswan %s%s\n", libreswan_version, /* ok */
-			       compile_time_interop_options);
-			/* not exit_pluto because we are not initialized yet */
-			exit(PLUTO_EXIT_OK);
+			/* move these to optarg_version()? */
+			optarg_version(compile_time_interop_options);
 
 		case OPT_NHELPERS:	/* --nhelpers */
 			update_setup_option(KBF_NHELPERS, optarg_uintmax(logger));

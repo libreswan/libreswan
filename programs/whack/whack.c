@@ -1112,9 +1112,7 @@ int main(int argc, char **argv)
 			exit(0);
 
 		case OPT_VERSION:	/* --version */
-			printf("Libreswan %s\n", libreswan_version);
-			/* GNU coding standards say to stop here */
-			exit(0);
+			optarg_version("");
 
 		case OPT_LABEL:	/* --label <string> */
 			label = optarg;	/* remember for diagnostics */

@@ -537,8 +537,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_VERSION:
-			fprintf(stdout, "Libreswan %s\n", libreswan_version);
-			exit(0);
+			optarg_version("");
 
 		}
 

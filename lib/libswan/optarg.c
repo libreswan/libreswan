@@ -579,3 +579,9 @@ void optarg_debug(enum optarg_debug debug)
 		cur_debugging = lmod(cur_debugging, mods);
 	}
 }
+
+void optarg_version(const char *suffix)
+{
+	printf("Libreswan %s%s\n", libreswan_version, suffix);
+	exit(0);
+}
