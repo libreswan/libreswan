@@ -35,20 +35,15 @@
 #include "orient.h"
 #include "connection_event.h"
 
-#ifdef USE_UNBOUND
-struct dnssec_config unbound_config;
-#endif
-
 static void resolve_finish(struct connection *c,
 			   struct host_addrs *resolved,
 			   resolve_helper_cb *callback,
 			   struct verbose verbose);
 
-void init_resolve_helper(const struct dnssec_config *config, struct logger *logger)
+void init_resolve_helper(struct logger *logger)
 {
 	const char *result;
 #ifdef USE_UNBOUND
-	unbound_config = *config;
 	result = "unbound";
 #else
 	result = "getaddrinfo(3)";
@@ -121,7 +116,7 @@ helper_cb *resolve_helper(struct help_request *request,
 		diag_t d;
 
 #ifdef USE_UNBOUND
-		struct ub_ctx *unbound_context = unbound_sync_init(&unbound_config,
+		struct ub_ctx *unbound_context = unbound_sync_init(dnssec_config_singleton(verbose.logger),
 								   verbose.logger);
 		d = unbound_sync_resolve(unbound_context, end->host.value,
 					 resolved->afi, &host_addr,

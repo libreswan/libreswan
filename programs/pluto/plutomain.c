@@ -114,8 +114,6 @@ static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
 static char *conffile = NULL;
 
-static struct dnssec_config pluto_dnssec; /* see config_setup.[hc] for defaults */
-
 void free_pluto_main(void)
 {
 	pfreeany(conffile);
@@ -1522,19 +1520,13 @@ int main(int argc, char **argv)
 	pluto_sd_init(logger);
 #endif
 
-	pluto_dnssec.enable = config_setup_yn(KYN_DNSSEC_ENABLE);
-	pluto_dnssec.rootkey_file = config_setup_string(KSF_DNSSEC_ROOTKEY_FILE);
-	pluto_dnssec.anchors = config_setup_string(KSF_DNSSEC_ANCHORS);
-	init_resolve_helper(&pluto_dnssec, logger);
+	const struct dnssec_config *dnssec = dnssec_config_singleton(logger);
+	init_resolve_helper(logger);
 #ifdef USE_DNSSEC
-	init_ikev2_ipseckey(get_pluto_event_base(), &pluto_dnssec, logger);
-	llog(RC_LOG, logger, "DNSSEC support [%s]", (pluto_dnssec.enable ? "enabled" : "disabled"));
+	init_ikev2_ipseckey(get_pluto_event_base(), logger);
+	llog(RC_LOG, logger, "DNSSEC support [%s]", (dnssec->enable ? "enabled" : "disabled"));
 #else
 	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");
-	if (pluto_dnssec.enable) {
-		llog(WARNING_STREAM, logger, "dnssec= ignored");
-		pluto_dnssec.enable = false;
-	}
 #endif
 
 	/*
@@ -1580,13 +1572,14 @@ void show_setup_plutomain(struct show *s)
 	     config_setup_string_or_unset(KSF_STATSBIN, "unset"));
 
 	SHOW_JAMBUF(s, buf) {
-		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));
+		const struct dnssec_config *dnssec = dnssec_config_singleton(show_logger(s));
+		jam(buf, "dnssec-enable=%s", bool_str(dnssec->enable));
 		jam_string(buf, ", ");
 		jam(buf, "dnssec-rootkey-file=%s",
-		    (pluto_dnssec.rootkey_file == NULL ? "<unset>" : pluto_dnssec.rootkey_file));
+		    (dnssec->rootkey_file == NULL ? "<unset>" : dnssec->rootkey_file));
 		jam_string(buf, ", ");
 		jam(buf, "dnssec-anchors=%s",
-		    (pluto_dnssec.anchors == NULL ? "<unset>" : pluto_dnssec.anchors));
+		    (dnssec->anchors == NULL ? "<unset>" : dnssec->anchors));
 	}
 
 	show(s, "sbindir=%s, libexecdir=%s",

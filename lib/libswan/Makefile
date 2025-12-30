@@ -337,6 +337,7 @@ $(OBJS): | $(builddir)/dnssec/
 ifeq ($(USE_UNBOUND),true)
 OBJS += dnssec/unbound.o
 endif
+OBJS += dnssec/dnssec_config.o
 
 #
 # whack stuff

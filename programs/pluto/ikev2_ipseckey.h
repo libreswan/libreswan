@@ -26,8 +26,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 bool initiator_fetch_idr_ipseckey(struct ike_sa *ike);
 
 void init_ikev2_ipseckey(struct event_base *event_base,
-			 const struct dnssec_config *config,
-			 const struct logger *logger);
+			 struct logger *logger);
 void shutdown_ikev2_ipseckey(const struct logger *logger);
 
 #endif

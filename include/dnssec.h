@@ -9,12 +9,16 @@
 struct logger;
 struct event_base;
 struct ub_ctx;
+struct config_setup;
 
 struct dnssec_config {
 	bool enable;
 	const char *rootkey_file;
 	const char *anchors;
 };
+
+/* singleton */
+const struct dnssec_config *dnssec_config_singleton(struct logger *logger);
 
 void unbound_ctx_config(struct ub_ctx *dns_ctx,
 			const struct dnssec_config *config,
