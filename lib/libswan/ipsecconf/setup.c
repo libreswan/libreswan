@@ -101,6 +101,17 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 #endif
 	,
 	[KSF_DNS_RESOLVER] = "file",
+
+	[KBF_CRL_TIMEOUT_SECONDS] = "5s",
+
+	/* x509_ocsp */
+	[KBF_OCSP_TIMEOUT_SECONDS] = OCSP_DEFAULT_TIMEOUT,
+	[KBF_OCSP_CACHE_MIN_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MIN_AGE,
+	[KBF_OCSP_CACHE_MAX_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MAX_AGE,
+
+	[KSF_EXPIRE_SHUNT_INTERVAL] = DEFAULT_EXPIRE_SHUNT_INTERVAL,
+	[KBF_SHUNTLIFETIME] = DEFAULT_SHUNT_LIFETIME,
+
 };
 
 const struct config_setup *config_setup_singleton(void)
@@ -131,20 +142,11 @@ const struct config_setup *config_setup_singleton(void)
 		update_setup_yn(KYN_LOGTIME, YN_YES);
 		update_setup_yn(KYN_LOGAPPEND, YN_YES);
 
-		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime(5/*seconds*/));
-
-		/* x509_ocsp */
-		update_setup_deltatime(KBF_OCSP_TIMEOUT_SECONDS, deltatime(OCSP_DEFAULT_TIMEOUT));
-		update_setup_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MIN_AGE));
-		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime(OCSP_DEFAULT_CACHE_MAX_AGE));
 		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 
 		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
 		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
-
-		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
-		update_setup_deltatime(KBF_SHUNTLIFETIME, deltatime(DEFAULT_SHUNT_LIFETIME_SECONDS));
 
 		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
 
@@ -222,7 +224,25 @@ deltatime_t config_setup_deltatime(const struct config_setup *setup,
 				   enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
-	return setup->values[field].deltatime;
+	const struct keyword_value *kv = &setup->values[field];
+	if (kv->set == k_set) {
+		deltatime_t deltatime = kv->deltatime;
+		pexpect(deltatime.is_set);
+		return deltatime;
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		deltatime_t deltatime = unset_deltatime;
+		diag_t d = ttodeltatime(shunk1(value), &deltatime);
+		pexpect(d == NULL);
+		pexpect(deltatime.is_set);
+		pfree_diag(&d);
+		return deltatime;
+	}
+
+	return unset_deltatime;
 }
 
 uintmax_t config_setup_option(const struct config_setup *setup,
