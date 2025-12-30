@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_VERSION:
-			fprintf(stdout, "%s\n", ipsec_version_string());
+			fprintf(stdout, "Libreswan %s\n", libreswan_version);
 			exit(0);
 
 		}

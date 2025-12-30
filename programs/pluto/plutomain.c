@@ -682,7 +682,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_VERSION:	/* --version */
-			printf("%s%s\n", ipsec_version_string(), /* ok */
+			printf("Libreswan %s%s\n", libreswan_version, /* ok */
 			       compile_time_interop_options);
 			/* not exit_pluto because we are not initialized yet */
 			exit(PLUTO_EXIT_OK);

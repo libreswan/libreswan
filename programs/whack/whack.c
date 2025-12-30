@@ -1112,7 +1112,7 @@ int main(int argc, char **argv)
 			exit(0);
 
 		case OPT_VERSION:	/* --version */
-			printf("%s\n", ipsec_version_string());
+			printf("Libreswan %s\n", libreswan_version);
 			/* GNU coding standards say to stop here */
 			exit(0);
 

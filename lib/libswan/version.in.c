@@ -18,15 +18,7 @@
 
 #include "lswversion.h"
 
-#define V "@@IPSECVERSION@@"	/* substituted in by Makefile */
-static const char libreswan_string[] = "Libreswan " V;
-
 const char libreswan_version[] =
 	"@@IPSECVERSION@@";			/* substituted in by Makefile */
 const char libreswan_vendorid[] =
 	"OE-Libreswan-@IPSECVIDVERSION@";	/* substituted in by Makefile */
-
-const char *ipsec_version_string(void)
-{
-	return libreswan_string;
-}
