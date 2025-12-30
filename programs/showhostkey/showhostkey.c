@@ -537,8 +537,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_VERSION:
-			fprintf(stdout, "%s\n", ipsec_version_string());
-			exit(0);
+			optarg_version("");
 
 		}
 

@@ -106,7 +106,7 @@ const struct config_setup *config_setup_singleton(void)
 		update_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
 		update_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
 		update_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
-		update_setup_string(KSF_MYVENDORID, ipsec_version_vendorid());
+		update_setup_string(KSF_MYVENDORID, libreswan_vendorid);
 
 		update_setup_string(KSF_DNSSEC_ROOTKEY_FILE, DEFAULT_DNSSEC_ROOTKEY_FILE);
 		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);

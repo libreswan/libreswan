@@ -450,11 +450,11 @@ version.o: $(builddir)/version.c
 
 IPSECVIDVERSION ?= $(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 
-$(builddir)/version.c: version.in.c $(top_srcdir)/mk/version.mk
+$(builddir)/%.c: %.in.c $(top_srcdir)/mk/version.mk
 	rm -f $@.tmp
 	sed -e '/"/s/@@IPSECVERSION@@/$(subst /,_,$(IPSECVERSION))/' \
 	    -e '/"/s/@IPSECVIDVERSION@/$(subst /,_,$(IPSECVIDVERSION))/' \
-	    $(srcdir)/version.in.c \
+	    $(srcdir)/$(*).in.c \
 	    > $@.tmp
 	mv $@.tmp $@
 

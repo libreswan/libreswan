@@ -167,9 +167,8 @@ int main(int argc, char *argv[])
 			optarg_usage("ipsec eddsasigkey", "[<curve-name>]", "");
 
 		case OPT_VERSION:       /* version */
-			printf("%s %s\n", progname, ipsec_version_code());
-			exit(0);
-			continue;
+			optarg_version("");
+
 		case OPT_NSSDIR:       /* -d is used for nssdirdir with nss tools */
 			update_setup_string(KSF_NSSDIR, optarg_nonempty(logger));
 			continue;

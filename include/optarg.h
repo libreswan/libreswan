@@ -147,4 +147,6 @@ enum optarg_debug {
 void optarg_debug(enum optarg_debug);
 void optarg_debug_lmod(enum optarg_debug, lmod_t *debugging);
 
+void optarg_version(const char *suffix) NEVER_RETURNS;
+
 #endif
