@@ -41,12 +41,10 @@
  * @return void
  */
 
-static bool config_setup_is_set;
 static struct config_setup config_setup;
 
 void update_setup_string(enum config_setup_keyword kw, const char *string)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	pfreeany(kv->string);
@@ -56,7 +54,6 @@ void update_setup_string(enum config_setup_keyword kw, const char *string)
 
 void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = yn;
@@ -65,7 +62,6 @@ void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 
 void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->deltatime = deltatime;
@@ -74,7 +70,6 @@ void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 
 void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = option;
@@ -146,7 +141,6 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 
 const struct config_setup *config_setup_singleton(void)
 {
-	config_setup_is_set = true;
 	return &config_setup;
 }
 
@@ -155,7 +149,6 @@ void free_config_setup(void)
 	for (unsigned i = 0; i < elemsof(config_setup.values); i++) {
 		pfreeany(config_setup.values[i].string);
 	}
-	config_setup_is_set = false;
 }
 
 const char *config_setup_string(const struct config_setup *setup,
