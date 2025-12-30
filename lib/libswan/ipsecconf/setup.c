@@ -139,7 +139,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 
 };
 
-const struct config_setup *config_setup_singleton(void)
+const struct config_setup *config_setup_updates(void)
 {
 	return &config_setup;
 }
@@ -151,11 +151,10 @@ void free_config_setup(void)
 	}
 }
 
-const char *config_setup_string(const struct config_setup *setup,
-				enum config_setup_keyword field)
+const char *config_setup_string(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	const struct keyword_value *kv = &setup->values[field];
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
 	if (kv->set == k_set) {
 		return kv->string; /* can be set to NULL? */
 	}
@@ -169,21 +168,19 @@ const char *config_setup_string(const struct config_setup *setup,
 	return NULL;
 }
 
-const char *config_setup_string_or_unset(const struct config_setup *setup,
-					 enum config_setup_keyword field,
+const char *config_setup_string_or_unset(enum config_setup_keyword field,
 					 const char *unset)
 {
-	const char *string = config_setup_string(setup, field);
+	const char *string = config_setup_string(field);
 	if (string == NULL) {
 		return unset;
 	}
 	return string;
 }
 
-bool config_setup_yn(const struct config_setup *setup,
-		     enum config_setup_keyword field)
+bool config_setup_yn(enum config_setup_keyword field)
 {
-	enum yn_options yn = config_setup_option(setup, field);
+	enum yn_options yn = config_setup_option(field);
 
 	switch (yn) {
 	case 0: return false;
@@ -193,11 +190,10 @@ bool config_setup_yn(const struct config_setup *setup,
 	bad_case(yn);
 }
 
-deltatime_t config_setup_deltatime(const struct config_setup *setup,
-				   enum config_setup_keyword field)
+deltatime_t config_setup_deltatime(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	const struct keyword_value *kv = &setup->values[field];
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
 	if (kv->set == k_set) {
 		deltatime_t deltatime = kv->deltatime;
 		pexpect(deltatime.is_set);
@@ -218,11 +214,10 @@ deltatime_t config_setup_deltatime(const struct config_setup *setup,
 	return unset_deltatime;
 }
 
-uintmax_t config_setup_option(const struct config_setup *setup,
-			      enum config_setup_keyword field)
+uintmax_t config_setup_option(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	const struct keyword_value *kv = &setup->values[field];
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
 	if (kv->set == k_set) {
 		return kv->option;
 	}
@@ -256,27 +251,27 @@ uintmax_t config_setup_option(const struct config_setup *setup,
 
 const char *config_setup_ipsecdir(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_IPSECDIR);
+	return config_setup_string(KSF_IPSECDIR);
 }
 
 const char *config_setup_secretsfile(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_SECRETSFILE);
+	return config_setup_string(KSF_SECRETSFILE);
 }
 
 const char *config_setup_nssdir(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_NSSDIR);
+	return config_setup_string(KSF_NSSDIR);
 }
 
 const char *config_setup_dumpdir(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_DUMPDIR);
+	return config_setup_string(KSF_DUMPDIR);
 }
 
 const char *config_setup_vendorid(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_MYVENDORID);
+	return config_setup_string(KSF_MYVENDORID);
 }
 
 lset_t config_setup_debugging(struct logger *logger)
@@ -287,7 +282,7 @@ lset_t config_setup_debugging(struct logger *logger)
 	 * The final set of enabled bits is returned in .set.
 	 */
 	lmod_t result = {0};
-	const char *plutodebug = config_setup_string(config_setup_singleton(), KSF_PLUTODEBUG);
+	const char *plutodebug = config_setup_string(KSF_PLUTODEBUG);
 	if (!ttolmod(shunk1(plutodebug), &result, &debug_lmod_info, true/*enable*/)) {
 		/*
 		 * If the lookup failed, complain.
@@ -321,8 +316,6 @@ static void llog_bad(struct logger *logger, const struct ipsec_conf_keyval *kv, 
 bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 				   struct logger *logger)
 {
-	config_setup_singleton();
-
 	const struct keyval_entry *kw;
 
 	TAILQ_FOREACH(kw, &cfgp->config_setup, next) {

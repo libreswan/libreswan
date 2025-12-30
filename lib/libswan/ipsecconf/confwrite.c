@@ -221,9 +221,9 @@ void confwrite(struct starter_config *cfg, FILE *out, bool setup, char *name, bo
 
 	/* output config setup section */
 	if (setup) {
-		const struct config_setup *setup = config_setup_singleton();
+		const struct config_setup *updates = config_setup_updates();
 		fprintf(out, "config setup\n");
-		confwrite_value(out, "", &config_setup_keywords, ARRAY_REF(setup->values));
+		confwrite_value(out, "", &config_setup_keywords, ARRAY_REF(updates->values));
 		fprintf(out, "\n");
 	}
 

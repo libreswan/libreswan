@@ -90,9 +90,9 @@ err_t drop_new_exchanges(struct logger *logger)
 	return false;
 }
 
-void init_ddos(const struct config_setup *oco, struct logger *logger UNUSED)
+void init_ddos(struct logger *logger UNUSED)
 {
-	pluto_ddos_mode = config_setup_option(oco, KBF_DDOS_MODE);
-	pluto_ddos_ike_threshold = config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD);
-	pluto_max_halfopen_ike = config_setup_option(oco, KBF_MAX_HALFOPEN_IKE);
+	pluto_ddos_mode = config_setup_option(KBF_DDOS_MODE);
+	pluto_ddos_ike_threshold = config_setup_option(KBF_DDOS_IKE_THRESHOLD);
+	pluto_max_halfopen_ike = config_setup_option(KBF_MAX_HALFOPEN_IKE);
 }

@@ -2392,7 +2392,7 @@ static void kernel_scan_shunts(struct verbose verbose)
 	expire_bare_shunts(verbose);
 }
 
-void init_kernel(const struct config_setup *oco, struct logger *logger)
+void init_kernel(struct logger *logger)
 {
 	/*
 	 * Hack to stop early startup failure cascading into kernel
@@ -2406,7 +2406,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	 * kernel policy.
 	 */
 
-	pluto_expire_shunt_interval = config_setup_deltatime(oco, KSF_EXPIRE_SHUNT_INTERVAL);
+	pluto_expire_shunt_interval = config_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL);
 	if (deltasecs(pluto_expire_shunt_interval) < 0 ||
 	    deltasecs(pluto_expire_shunt_interval) > MAX_EXPIRE_SHUNT_INTERVAL_SECONDS) {
 		fatal(PLUTO_EXIT_FAIL, logger, /*no-errno*/0,
@@ -2420,7 +2420,7 @@ void init_kernel(const struct config_setup *oco, struct logger *logger)
 	 *
 	 * The shunt evictor compares the age of a shunt against this.
 	 */
-	pluto_shunt_lifetime = config_setup_deltatime(oco, KBF_SHUNTLIFETIME);
+	pluto_shunt_lifetime = config_setup_deltatime(KBF_SHUNTLIFETIME);
 
 	/*
 	 * Expiration to put on bare (orphan) shunt (kernel policy).

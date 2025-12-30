@@ -42,7 +42,7 @@ struct config_setup;
  */
 
 struct logger *init_log(const char *progname);
-void switch_log(const struct config_setup *oco, struct logger **logger);
+void switch_log(struct logger **logger);
 void close_log(void);	/* call after report_leaks() */
 void show_log(struct show *s);
 
@@ -80,7 +80,7 @@ void whack_detach_where(struct logger *dst, const struct logger *src, where_t wh
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)
 #define binlog_fake_state(st, new_state) binlog_state((st), (new_state))
 extern void binlog_state(struct state *st, enum state_kind state);
-void init_binlog(const struct config_setup *oco, struct logger *logger);
+void init_binlog(struct logger *logger);
 
 extern void set_debugging(lset_t deb);
 

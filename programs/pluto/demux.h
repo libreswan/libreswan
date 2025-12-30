@@ -271,6 +271,6 @@ void limited_llog_md(const struct msg_digest *md, const char *message, ...) PRIN
 
 void process_md(struct msg_digest *md);
 
-void init_demux(const struct config_setup *oco, struct logger *logger);
+void init_demux(struct logger *logger);
 
 #endif /* _DEMUX_H */

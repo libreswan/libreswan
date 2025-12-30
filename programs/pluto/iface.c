@@ -790,11 +790,11 @@ void show_ifaces_status(struct show *s)
 	}
 }
 
-void init_ifaces(const struct config_setup *oco, struct logger *logger UNUSED)
+void init_ifaces(struct logger *logger UNUSED)
 {
-	pluto_listen = config_setup_string(oco, KSF_LISTEN);
-	pluto_listen_tcp = config_setup_yn(oco, KYN_LISTEN_TCP);
-	pluto_listen_udp = config_setup_yn(oco, KYN_LISTEN_UDP);
+	pluto_listen = config_setup_string(KSF_LISTEN);
+	pluto_listen_tcp = config_setup_yn(KYN_LISTEN_TCP);
+	pluto_listen_udp = config_setup_yn(KYN_LISTEN_UDP);
 }
 
 void shutdown_ifaces(struct logger *logger)

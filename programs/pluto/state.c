@@ -1797,11 +1797,10 @@ void send_n_log_delete_ike_family_now(struct ike_sa **ike,
 
 void show_globalstate_status(struct show *s)
 {
-	const struct config_setup *oco = config_setup_singleton();
 	unsigned shunts = shunt_count();
 
-	show(s, "config.setup.ike.ddos_threshold=%ju", config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD));
-	show(s, "config.setup.ike.max_halfopen=%ju", config_setup_option(oco, KBF_MAX_HALFOPEN_IKE));
+	show(s, "config.setup.ike.ddos_threshold=%ju", config_setup_option(KBF_DDOS_IKE_THRESHOLD));
+	show(s, "config.setup.ike.max_halfopen=%ju", config_setup_option(KBF_MAX_HALFOPEN_IKE));
 
 	/* technically shunts are not a struct state's - but makes it easier to group */
 	show(s, "current.states.all="PRI_CAT, shunts + total_sa());

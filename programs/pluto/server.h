@@ -44,7 +44,7 @@ struct timeout;
 struct config_setup;
 
 void check_open_fds(struct logger *logger);
-void init_ctl_socket(const struct config_setup *oco, struct logger *logger);
+void init_ctl_socket(struct logger *logger);
 void delete_ctl_socket(void);
 
 struct iface_endpoint *connect_to_tcp_endpoint(struct iface_device *local_dev,

@@ -261,9 +261,9 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	ldbg(st->logger, "%s() for connection %s completed", __func__, conn->name);
 }
 
-void init_binlog(const struct config_setup *oco, struct logger *logger)
+void init_binlog(struct logger *logger)
 {
-	const char *binary = config_setup_string(oco, KSF_STATSBIN);
+	const char *binary = config_setup_string(KSF_STATSBIN);
 	if (binary != NULL) {
 		if (access(binary, X_OK) == 0) {
 			/* statsbin= */

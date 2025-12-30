@@ -323,8 +323,7 @@ static void update_xfrm_acq_expires(struct logger *logger)
 		return;
 	}
 
-	const struct config_setup *oco = config_setup_singleton();
-	deltatime_t expire_lifetime = config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME);
+	deltatime_t expire_lifetime = config_setup_deltatime(KBF_EXPIRE_LIFETIME);
 	if (!expire_lifetime.is_set || deltasecs(expire_lifetime) < 1/*second*/) {
 		expire_lifetime = deltatime(lifetime);
 		llog(RC_LOG, logger, "setting expire-lifetime= to %jd from '"XFRM_ACQ_EXPIRES"'",
