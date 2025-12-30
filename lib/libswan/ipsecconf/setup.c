@@ -190,24 +190,7 @@ const char *config_setup_string_or_unset(const struct config_setup *setup,
 bool config_setup_yn(const struct config_setup *setup,
 		     enum config_setup_keyword field)
 {
-	enum yn_options yn;
-
-	passert(field < elemsof(setup->values));
-	passert(field < elemsof(config_setup_defaults));
-
-	const struct keyword_value *kv = &setup->values[field];
-	const char *defaults = config_setup_defaults[field];
-
-	if (kv->set == k_set) {
-		yn = kv->option;
-	} else if (defaults != NULL) {
-		const struct sparse_name *name =
-			sparse_lookup_by_name(&yn_option_names,
-					      shunk1(defaults));
-		yn = (pexpect(name != NULL) ? name->value : 0);
-	} else {
-		yn = 0;
-	}
+	enum yn_options yn = config_setup_option(setup, field);
 
 	switch (yn) {
 	case 0: return false;
