@@ -32,6 +32,7 @@
 #endif
 #include "ddos_mode.h"
 #include "timescale.h"
+#include "sparse_names.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -112,6 +113,19 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KSF_EXPIRE_SHUNT_INTERVAL] = DEFAULT_EXPIRE_SHUNT_INTERVAL,
 	[KBF_SHUNTLIFETIME] = DEFAULT_SHUNT_LIFETIME,
 
+	[KYN_DNSSEC_ENABLE] = "yes",
+
+	[KYN_LOGIP] = "yes",
+	[KYN_LOGTIME] = "yes",
+	[KYN_LOGAPPEND] = "yes",
+
+	[KYN_AUDIT_LOG] = "yes",
+	[KYN_UNIQUEIDS] = "yes",
+
+	[KYN_IKE_SOCKET_ERRQUEUE] = "yes",
+	[KYN_LISTEN_UDP] = "yes",
+	[KYN_LISTEN_TCP] = "no",
+
 };
 
 const struct config_setup *config_setup_singleton(void)
@@ -136,25 +150,12 @@ const struct config_setup *config_setup_singleton(void)
 		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
 #endif
 
-		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
-
-		update_setup_yn(KYN_LOGIP, YN_YES);
-		update_setup_yn(KYN_LOGTIME, YN_YES);
-		update_setup_yn(KYN_LOGAPPEND, YN_YES);
-
 		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
 		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
 
-		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
-		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
-
 		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
 
-		update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, YN_YES);
 		update_setup_option(KBF_IKE_SOCKET_BUFSIZE, 0); /*redundant*/
-
-		update_setup_yn(KYN_LISTEN_UDP, YN_YES);
-		update_setup_yn(KYN_LISTEN_TCP, YN_NO);
 
 		/*
 		 * Clear .set, which is set by update_setup*().  Don't
@@ -210,8 +211,25 @@ const char *config_setup_string_or_unset(const struct config_setup *setup,
 bool config_setup_yn(const struct config_setup *setup,
 		     enum config_setup_keyword field)
 {
+	enum yn_options yn;
+
 	passert(field < elemsof(setup->values));
-	enum yn_options yn = setup->values[field].option;
+	passert(field < elemsof(config_setup_defaults));
+
+	const struct keyword_value *kv = &setup->values[field];
+	const char *defaults = config_setup_defaults[field];
+
+	if (kv->set == k_set) {
+		yn = kv->option;
+	} else if (defaults != NULL) {
+		const struct sparse_name *name =
+			sparse_lookup_by_name(&yn_option_names,
+					      shunk1(defaults));
+		yn = (pexpect(name != NULL) ? name->value : 0);
+	} else {
+		yn = 0;
+	}
+
 	switch (yn) {
 	case 0: return false;
 	case YN_NO: return false;
