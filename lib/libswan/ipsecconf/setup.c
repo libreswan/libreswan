@@ -83,6 +83,14 @@ void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 
 static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 
+	[KBF_NHELPERS] = "-1",
+
+	[KBF_DDOS_MODE] = "auto",
+	[KBF_DDOS_IKE_THRESHOLD] = DEFAULT_IKE_SA_DDOS_THRESHOLD,
+	[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA,
+
+	[KBF_IKEv1_POLICY] = "drop",
+
 	[KSF_NSSDIR] = IPSEC_NSSDIR,
 	[KSF_SECRETSFILE] = IPSEC_SECRETS,
 	[KSF_DUMPDIR] = IPSEC_RUNDIR,
@@ -105,10 +113,18 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 
 	[KBF_CRL_TIMEOUT_SECONDS] = "5s",
 
+#ifdef USE_SECCOMP
+	[KBF_SECCOMP] = "disabled",
+#endif
+
 	/* x509_ocsp */
 	[KBF_OCSP_TIMEOUT_SECONDS] = OCSP_DEFAULT_TIMEOUT,
 	[KBF_OCSP_CACHE_MIN_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MIN_AGE,
 	[KBF_OCSP_CACHE_MAX_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MAX_AGE,
+	[KBF_OCSP_CACHE_SIZE] = OCSP_DEFAULT_CACHE_SIZE,
+	[KBF_OCSP_METHOD] = "get",
+
+	[KBF_GLOBAL_REDIRECT] = "no",
 
 	[KSF_EXPIRE_SHUNT_INTERVAL] = DEFAULT_EXPIRE_SHUNT_INTERVAL,
 	[KBF_SHUNTLIFETIME] = DEFAULT_SHUNT_LIFETIME,
@@ -130,44 +146,7 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 
 const struct config_setup *config_setup_singleton(void)
 {
-	if (!config_setup_is_set) {
-		config_setup_is_set = true;
-
-		/*
-		 * Note: these calls .set=k_set.  The damage is undone
-		 * at the end.
-		 */
-
-		update_setup_option(KBF_NHELPERS, -1);
-
-		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
-		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
-		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
-
-		update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
-		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-#ifdef USE_SECCOMP
-		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
-#endif
-
-		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
-		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-
-		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
-
-		update_setup_option(KBF_IKE_SOCKET_BUFSIZE, 0); /*redundant*/
-
-		/*
-		 * Clear .set, which is set by update_setup*().  Don't
-		 * use k_default as that is intended for 'conn
-		 * %default' section and seems to make for general
-		 * confusion.
-		 */
-		FOR_EACH_ELEMENT(kv, config_setup.values) {
-			kv->set = k_unset;
-		}
-
-	}
+	config_setup_is_set = true;
 	return &config_setup;
 }
 
@@ -267,8 +246,36 @@ uintmax_t config_setup_option(const struct config_setup *setup,
 			      enum config_setup_keyword field)
 {
 	passert(field < elemsof(setup->values));
-	/* being .set doesn't matter, as default is zero */
-	return setup->values[field].option;
+	const struct keyword_value *kv = &setup->values[field];
+	if (kv->set == k_set) {
+		return kv->option;
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		passert(field < config_setup_keywords.len);
+		const struct keyword_def *def = &config_setup_keywords.item[field];
+		switch (def->type) {
+		case kt_sparse_name:
+		{
+			const struct sparse_name *name = sparse_lookup_by_name(def->sparse_names,
+									       shunk1(value));
+			return (pexpect(name != NULL) ? name->value : 0);
+		}
+		case kt_unsigned:
+		{
+			uintmax_t option = 0;
+			err_t e = shunk_to_uintmax(shunk1(value), NULL, 0, &option);
+			pexpect(e == NULL);
+			return option;
+		}
+		default:
+			bad_case(def->type);
+		}
+	}
+
+	return 0;
 }
 
 const char *config_setup_ipsecdir(void)

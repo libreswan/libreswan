@@ -123,7 +123,7 @@ enum keyword_pubkey {
 extern const struct sparse_names keyword_pubkey_names;
 
 /* OCSP related constants - defaults picked from NSS defaults */
-#define OCSP_DEFAULT_CACHE_SIZE 1000
+#define OCSP_DEFAULT_CACHE_SIZE "1000"
 #define OCSP_DEFAULT_CACHE_MIN_AGE "1h"
 #define OCSP_DEFAULT_CACHE_MAX_AGE "1d"
 #define OCSP_DEFAULT_TIMEOUT "2s"
@@ -349,8 +349,8 @@ typedef enum {
 #define MAX_IKE_FRAGMENTS       32 /* Windows has been observed to send 29 fragments :/ */
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
-#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
-#define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
+#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA "50000" /* fairly arbitrary */
+#define DEFAULT_IKE_SA_DDOS_THRESHOLD "25000" /* fairly arbitrary */
 
 #define IPSEC_SA_DEFAULT_REPLAY_WINDOW 128 /* for Linux, requires 2.6.39+ */
 
