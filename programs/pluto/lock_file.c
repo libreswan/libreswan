@@ -43,9 +43,9 @@
 
 static char *pluto_lock_filename;
 
-int create_lock_file(const struct config_setup *oco, bool fork_desired, struct logger *logger)
+int create_lock_file(bool fork_desired, struct logger *logger)
 {
-	const char *rundir = config_setup_string(oco, KSF_RUNDIR);
+	const char *rundir = config_setup_string(KSF_RUNDIR);
 	if (mkdir(rundir, 0755) != 0) {
 		if (errno != EEXIST) {
 			fatal(PLUTO_EXIT_LOCK_FAIL, logger, errno,

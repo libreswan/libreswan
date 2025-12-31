@@ -69,12 +69,12 @@ struct logger *init_log(const char *progname)
 	return string_logger(HERE, "%s", progname);
 }
 
-void switch_log(const struct config_setup *oco, struct logger **logger)
+void switch_log(struct logger **logger)
 {
-	log_param.log_to_stderr = config_setup_yn(oco, KYN_LOGSTDERR);
-	log_param.log_to_file = config_setup_string(oco, KSF_LOGFILE);
-	log_param.log_with_timestamp = config_setup_yn(oco, KYN_LOGTIME);
-	log_param.append = config_setup_yn(oco, KYN_LOGAPPEND);
+	log_param.log_to_stderr = config_setup_yn(KYN_LOGSTDERR);
+	log_param.log_to_file = config_setup_string(KSF_LOGFILE);
+	log_param.log_with_timestamp = config_setup_yn(KYN_LOGTIME);
+	log_param.append = config_setup_yn(KYN_LOGAPPEND);
 
 	/*
 	 * NOTE: Can't touch global PLUTO_LOG_FILE as it is in use.

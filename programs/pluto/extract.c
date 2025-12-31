@@ -3012,8 +3012,7 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (ike_version == IKEv1) {
 #ifdef USE_IKEv1
 		/* avoid using global */
-		enum global_ikev1_policy ikev1_policy =
-			config_setup_option(config_setup_singleton(), KBF_IKEv1_POLICY);
+		enum global_ikev1_policy ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
 		if (ikev1_policy != GLOBAL_IKEv1_ACCEPT) {
 			name_buf pb;
 			return diag("global ikev1-policy=%s does not allow IKEv1 connections",

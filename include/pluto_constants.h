@@ -123,10 +123,10 @@ enum keyword_pubkey {
 extern const struct sparse_names keyword_pubkey_names;
 
 /* OCSP related constants - defaults picked from NSS defaults */
-#define OCSP_DEFAULT_CACHE_SIZE 1000
-#define OCSP_DEFAULT_CACHE_MIN_AGE 3600
-#define OCSP_DEFAULT_CACHE_MAX_AGE 24 * 3600
-#define OCSP_DEFAULT_TIMEOUT 2
+#define OCSP_DEFAULT_CACHE_SIZE "1000"
+#define OCSP_DEFAULT_CACHE_MIN_AGE "1h"
+#define OCSP_DEFAULT_CACHE_MAX_AGE "1d"
+#define OCSP_DEFAULT_TIMEOUT "2s"
 
 enum global_ikev1_policy {
 	GLOBAL_IKEv1_ACCEPT = 0,
@@ -349,8 +349,8 @@ typedef enum {
 #define MAX_IKE_FRAGMENTS       32 /* Windows has been observed to send 29 fragments :/ */
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
-#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
-#define DEFAULT_IKE_SA_DDOS_THRESHOLD 25000 /* fairly arbitrary */
+#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA "50000" /* fairly arbitrary */
+#define DEFAULT_IKE_SA_DDOS_THRESHOLD "25000" /* fairly arbitrary */
 
 #define IPSEC_SA_DEFAULT_REPLAY_WINDOW 128 /* for Linux, requires 2.6.39+ */
 
@@ -947,10 +947,10 @@ extern void init_pluto_constants(void);
  */
 
 /* time between scans of eroutes */
-#define DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS (2*10)
+#define DEFAULT_EXPIRE_SHUNT_INTERVAL "20s"
 #define MAX_EXPIRE_SHUNT_INTERVAL_SECONDS 1000
 
-#define DEFAULT_SHUNT_LIFETIME_SECONDS (15 * secs_per_minute)
+#define DEFAULT_SHUNT_LIFETIME "15m"
 
 /* DDNS
  *

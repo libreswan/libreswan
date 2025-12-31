@@ -786,12 +786,17 @@ static void check__shunk_to_uintmax(void)
 		{ "0xfffffffffffffff",       0, UINTMAX_MAX/16, "", },
 		{ "0xffffffffffffffff",      0, UINTMAX_MAX, "", },
 		{ "0x10000000000000000",     0, 0, NULL, },
+
+		{ "-1",                      0, UINTMAX_MAX, "", },
+		{ "-1:",                     0, UINTMAX_MAX, ":", },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
+
 		PRINT_S(stdout, " base=%u unsigned=%ju out=%s",
 			t->base, t->u, t->o == NULL ? "<invalid>" : t->o);
+
 		uintmax_t u;
 		err_t err;
 
@@ -804,20 +809,24 @@ static void check__shunk_to_uintmax(void)
 		bool t_ok = t->o != NULL && t->o[0] == '\0';
 		if (err != NULL) {
 			if (t_ok) {
-				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly failed: %s", t->s, err);
+				FAIL("shunk_to_uintmax(%s,cursor=NULL,%d) unexpectedly failed: %s",
+				     t->s, t->base, err);
 			} else {
-				PRINT("shunk_to_uintmax(%s,NULL) failed with: %s", t->s, err);
+				PRINT("shunk_to_uintmax(%s,cursor=NULL,%d) expected to fail, %s",
+				      t->s, t->base, err);
 			}
 		} else {
 			if (!t_ok) {
-				FAIL("shunk_to_uintmax(%s,NULL) unexpectedly succeeded", t->s);
+				FAIL("shunk_to_uintmax(%s,cursor=NULL,%d) unexpectedly succeeded",
+				     t->s, t->base);
 			} else {
-				PRINT("shunk_to_uintmax(%s,NULL) succeeded with %ju", t->s, u);
+				PRINT("shunk_to_uintmax(%s,cursor=NULL,%d) succeeded with %ju",
+				      t->s, t->base, u);
 			}
 		}
 		if (u != (t_ok ? t->u : 0)) {
-			FAIL_S("shunk_to_uintmax(cursor==NULL) returned %ju (0x%jx), expecting %ju (0x%jx)",
-			       u, u, t->u, t->u);
+			FAIL_S("shunk_to_uintmax(%s,cursor=NULL,%d) returned %ju (0x%jx), expecting %ju (0x%jx)",
+			       t->s, t->base, u, u, t->u, t->u);
 		}
 
 		/* remainder left in O */

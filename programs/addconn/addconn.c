@@ -521,10 +521,8 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	const struct config_setup *oco = config_setup_singleton();
-
 #ifdef USE_SECCOMP
-	enum seccomp_mode seccomp = config_setup_option(oco, KBF_SECCOMP);
+	enum seccomp_mode seccomp = config_setup_option(KBF_SECCOMP);
 	switch (seccomp) {
 	case SECCOMP_ENABLED:
 		init_seccomp_addconn(SCMP_ACT_KILL, logger);
@@ -703,7 +701,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (opt_liststack) {
-		const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
+		const char *protostack = config_setup_string(KSF_PROTOSTACK);
 		if (pexpect(protostack != NULL)) {
 			printf("%s\n", protostack);
 		}
@@ -740,7 +738,7 @@ int main(int argc, char *argv[])
 			switch (kd->type) {
 			case kt_string:
 			{
-				const char *string = config_setup_string(oco, kd->field);
+				const char *string = config_setup_string(kd->field);
 				if (string != NULL) {
 					print_option(configsetup, kd->keyname, "%s", string);
 				}
@@ -749,7 +747,7 @@ int main(int argc, char *argv[])
 
 			case kt_sparse_name:
 			{
-				uintmax_t option = config_setup_option(oco, kd->field);
+				uintmax_t option = config_setup_option(kd->field);
 				if (option != 0) {
 					name_buf nb;
 					print_option(configsetup, kd->keyname, "%s",
@@ -760,7 +758,7 @@ int main(int argc, char *argv[])
 
 			case kt_seconds:
 			{
-				deltatime_t deltatime = config_setup_deltatime(oco, kd->field);
+				deltatime_t deltatime = config_setup_deltatime(kd->field);
 				if (deltatime.is_set) {
 					print_option(configsetup, kd->keyname, "%jd", deltasecs(deltatime));
 				}
@@ -772,10 +770,10 @@ int main(int argc, char *argv[])
 
 			default:
 			{
-				uintmax_t option = config_setup_option(oco, kd->field);
-				if (option != 0 ||
-				    oco->values[kd->field].set) {
-					print_option(configsetup, kd->keyname, "%jd", option);
+				const struct config_setup *updates = config_setup_updates();
+				if (updates->values[kd->field].set) {
+					print_option(configsetup, kd->keyname, "%jd",
+						     updates->values[kd->field].option);
 				}
 				break;
 			}

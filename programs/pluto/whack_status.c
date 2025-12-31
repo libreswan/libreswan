@@ -50,7 +50,6 @@
 
 static void show_system_security(struct show *s)
 {
-	UNUSED const struct config_setup *oco = config_setup_singleton();
 	int selinux = libreswan_selinux(show_logger(s));
 	bool fips = is_fips_mode();
 
@@ -59,7 +58,7 @@ static void show_system_security(struct show *s)
 	show(s, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 #ifdef USE_SECCOMP
-	show_seccomp(oco, s);
+	show_seccomp(s);
 #else
 	show(s, "seccomp=unsupported");
 #endif

@@ -343,7 +343,7 @@ void free_bare_shunt(struct bare_shunt **pp, struct verbose verbose);
 # define EM_MAXRELSPIS 4        /* AH ESP IPCOMP IPIP */
 #endif
 
-extern void init_kernel(const struct config_setup *oco, struct logger *logger);
+extern void init_kernel(struct logger *logger);
 
 extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const struct ip_protocol *transport_proto,

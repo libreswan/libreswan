@@ -42,9 +42,8 @@ void whack_listen_1(const struct whack_listen *wl, struct logger *logger)
 
 	/* first extract current values from config */
 
-	const struct config_setup *oco = config_setup_singleton();
-	pluto_ike_socket_errqueue = config_setup_yn(oco, KYN_IKE_SOCKET_ERRQUEUE);
-	pluto_ike_socket_bufsize = config_setup_option(oco, KBF_IKE_SOCKET_BUFSIZE);
+	pluto_ike_socket_errqueue = config_setup_yn(KYN_IKE_SOCKET_ERRQUEUE);
+	pluto_ike_socket_bufsize = config_setup_option(KBF_IKE_SOCKET_BUFSIZE);
 
 	/* Update MSG_ERRQUEUE settings before listen. */
 

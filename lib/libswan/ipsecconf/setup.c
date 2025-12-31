@@ -32,6 +32,7 @@
 #endif
 #include "ddos_mode.h"
 #include "timescale.h"
+#include "sparse_names.h"
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -40,12 +41,10 @@
  * @return void
  */
 
-static bool config_setup_is_set;
 static struct config_setup config_setup;
 
 void update_setup_string(enum config_setup_keyword kw, const char *string)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	pfreeany(kv->string);
@@ -55,7 +54,6 @@ void update_setup_string(enum config_setup_keyword kw, const char *string)
 
 void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = yn;
@@ -64,7 +62,6 @@ void update_setup_yn(enum config_setup_keyword kw, enum yn_options yn)
 
 void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->deltatime = deltatime;
@@ -73,98 +70,78 @@ void update_setup_deltatime(enum config_setup_keyword kw, deltatime_t deltatime)
 
 void update_setup_option(enum config_setup_keyword kw, uintmax_t option)
 {
-	config_setup_singleton();
 	passert(kw < elemsof(config_setup.values));
 	struct keyword_value *kv = &config_setup.values[kw];
 	kv->option = option;
 	kv->set = k_set;
 }
 
-const struct config_setup *config_setup_singleton(void)
-{
-	if (!config_setup_is_set) {
-		config_setup_is_set = true;
+static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 
-		/*
-		 * Note: these calls .set=k_set.  The damage is undone
-		 * at the end.
-		 */
+	[KBF_NHELPERS] = "-1",
 
-		update_setup_option(KBF_NHELPERS, -1);
+	[KBF_DDOS_MODE] = "auto",
+	[KBF_DDOS_IKE_THRESHOLD] = DEFAULT_IKE_SA_DDOS_THRESHOLD,
+	[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA,
 
-		update_setup_option(KBF_DDOS_MODE, DDOS_AUTO);
-		update_setup_option(KBF_DDOS_IKE_THRESHOLD, DEFAULT_IKE_SA_DDOS_THRESHOLD);
-		update_setup_option(KBF_MAX_HALFOPEN_IKE, DEFAULT_MAXIMUM_HALFOPEN_IKE_SA);
+	[KBF_IKEv1_POLICY] = "drop",
 
-		update_setup_option(KBF_IKEv1_POLICY, GLOBAL_IKEv1_DROP);
-		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-#ifdef USE_SECCOMP
-		update_setup_option(KBF_SECCOMP, SECCOMP_DISABLED);
-#endif
-
-		update_setup_string(KSF_NSSDIR, IPSEC_NSSDIR);
-		update_setup_string(KSF_SECRETSFILE, IPSEC_SECRETS);
-		update_setup_string(KSF_DUMPDIR, IPSEC_RUNDIR);
-		update_setup_string(KSF_IPSECDIR, IPSEC_CONFDDIR);
-		update_setup_string(KSF_MYVENDORID, libreswan_vendorid);
-
-		update_setup_string(KSF_DNSSEC_ROOTKEY_FILE, DEFAULT_DNSSEC_ROOTKEY_FILE);
-		update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
-
-		update_setup_yn(KYN_LOGIP, YN_YES);
-		update_setup_yn(KYN_LOGTIME, YN_YES);
-		update_setup_yn(KYN_LOGAPPEND, YN_YES);
+	[KSF_NSSDIR] = IPSEC_NSSDIR,
+	[KSF_SECRETSFILE] = IPSEC_SECRETS,
+	[KSF_DUMPDIR] = IPSEC_RUNDIR,
+	[KSF_IPSECDIR] = IPSEC_CONFDDIR,
+	[KSF_MYVENDORID] = libreswan_vendorid,
+	[KSF_DNSSEC_ROOTKEY_FILE] = DEFAULT_DNSSEC_ROOTKEY_FILE,
 #ifdef USE_LOGFILE
-		update_setup_string(KSF_LOGFILE, LOGFILE);
+	[KSF_LOGFILE] = LOGFILE,
 #endif
+	[KSF_RUNDIR] = IPSEC_RUNDIR,
 
-		update_setup_string(KSF_RUNDIR, IPSEC_RUNDIR);
-
-		update_setup_deltatime(KBF_CRL_TIMEOUT_SECONDS, deltatime_from_seconds(5/*seconds*/));
-
-		/* x509_ocsp */
-		update_setup_deltatime(KBF_OCSP_TIMEOUT_SECONDS, deltatime_from_seconds(OCSP_DEFAULT_TIMEOUT));
-		update_setup_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, deltatime_from_seconds(OCSP_DEFAULT_CACHE_MIN_AGE));
-		update_setup_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, deltatime_from_seconds(OCSP_DEFAULT_CACHE_MAX_AGE));
-		update_setup_option(KBF_OCSP_METHOD, OCSP_METHOD_GET);
-		update_setup_option(KBF_OCSP_CACHE_SIZE, OCSP_DEFAULT_CACHE_SIZE);
-
-		update_setup_yn(KYN_AUDIT_LOG, YN_YES);
-		update_setup_yn(KYN_UNIQUEIDS, YN_YES);
-
-		update_setup_deltatime(KSF_EXPIRE_SHUNT_INTERVAL, deltatime_from_seconds(DEFAULT_EXPIRE_SHUNT_INTERVAL_SECONDS));
-		update_setup_deltatime(KBF_SHUNTLIFETIME, deltatime_from_seconds(DEFAULT_SHUNT_LIFETIME_SECONDS));
-
-		update_setup_option(KBF_GLOBAL_REDIRECT, GLOBAL_REDIRECT_NO);
-
-		update_setup_yn(KYN_IKE_SOCKET_ERRQUEUE, YN_YES);
-		update_setup_option(KBF_IKE_SOCKET_BUFSIZE, 0); /*redundant*/
-
-		update_setup_yn(KYN_LISTEN_UDP, YN_YES);
-		update_setup_yn(KYN_LISTEN_TCP, YN_NO);
-
-		update_setup_string(KSF_PROTOSTACK,
+	[KSF_PROTOSTACK] =
 #ifdef KERNEL_XFRM
-				    "xfrm"
+	"xfrm"
 #endif
 #ifdef KERNEL_PFKEYV2
-				    "pfkeyv2"
+	"pfkeyv2"
 #endif
-			);
+	,
+	[KSF_DNS_RESOLVER] = "file",
 
-		update_setup_string(KSF_DNS_RESOLVER, "file");
+	[KBF_CRL_TIMEOUT_SECONDS] = "5s",
 
-		/*
-		 * Clear .set, which is set by update_setup*().  Don't
-		 * use k_default as that is intended for 'conn
-		 * %default' section and seems to make for general
-		 * confusion.
-		 */
-		FOR_EACH_ELEMENT(kv, config_setup.values) {
-			kv->set = k_unset;
-		}
+#ifdef USE_SECCOMP
+	[KBF_SECCOMP] = "disabled",
+#endif
 
-	}
+	/* x509_ocsp */
+	[KBF_OCSP_TIMEOUT_SECONDS] = OCSP_DEFAULT_TIMEOUT,
+	[KBF_OCSP_CACHE_MIN_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MIN_AGE,
+	[KBF_OCSP_CACHE_MAX_AGE_SECONDS] = OCSP_DEFAULT_CACHE_MAX_AGE,
+	[KBF_OCSP_CACHE_SIZE] = OCSP_DEFAULT_CACHE_SIZE,
+	[KBF_OCSP_METHOD] = "get",
+
+	[KBF_GLOBAL_REDIRECT] = "no",
+
+	[KSF_EXPIRE_SHUNT_INTERVAL] = DEFAULT_EXPIRE_SHUNT_INTERVAL,
+	[KBF_SHUNTLIFETIME] = DEFAULT_SHUNT_LIFETIME,
+
+	[KYN_DNSSEC_ENABLE] = "yes",
+
+	[KYN_LOGIP] = "yes",
+	[KYN_LOGTIME] = "yes",
+	[KYN_LOGAPPEND] = "yes",
+
+	[KYN_AUDIT_LOG] = "yes",
+	[KYN_UNIQUEIDS] = "yes",
+
+	[KYN_IKE_SOCKET_ERRQUEUE] = "yes",
+	[KYN_LISTEN_UDP] = "yes",
+	[KYN_LISTEN_TCP] = "no",
+
+};
+
+const struct config_setup *config_setup_updates(void)
+{
 	return &config_setup;
 }
 
@@ -173,32 +150,39 @@ void free_config_setup(void)
 	for (unsigned i = 0; i < elemsof(config_setup.values); i++) {
 		pfreeany(config_setup.values[i].string);
 	}
-	config_setup_is_set = false;
 }
 
-const char *config_setup_string(const struct config_setup *setup,
-				enum config_setup_keyword field)
+const char *config_setup_string(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	return setup->values[field].string;
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
+	if (kv->set == k_set) {
+		return kv->string; /* can be set to NULL? */
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		return value;
+	}
+
+	return NULL;
 }
 
-const char *config_setup_string_or_unset(const struct config_setup *setup,
-					 enum config_setup_keyword field,
+const char *config_setup_string_or_unset(enum config_setup_keyword field,
 					 const char *unset)
 {
-	const char *string = config_setup_string(setup, field);
+	const char *string = config_setup_string(field);
 	if (string == NULL) {
 		return unset;
 	}
 	return string;
 }
 
-bool config_setup_yn(const struct config_setup *setup,
-		     enum config_setup_keyword field)
+bool config_setup_yn(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	enum yn_options yn = setup->values[field].option;
+	enum yn_options yn = config_setup_option(field);
+
 	switch (yn) {
 	case 0: return false;
 	case YN_NO: return false;
@@ -207,44 +191,88 @@ bool config_setup_yn(const struct config_setup *setup,
 	bad_case(yn);
 }
 
-deltatime_t config_setup_deltatime(const struct config_setup *setup,
-				   enum config_setup_keyword field)
+deltatime_t config_setup_deltatime(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	return setup->values[field].deltatime;
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
+	if (kv->set == k_set) {
+		deltatime_t deltatime = kv->deltatime;
+		pexpect(deltatime.is_set);
+		return deltatime;
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		deltatime_t deltatime = unset_deltatime;
+		diag_t d = ttodeltatime(shunk1(value), &deltatime);
+		pexpect(d == NULL);
+		pexpect(deltatime.is_set);
+		pfree_diag(&d);
+		return deltatime;
+	}
+
+	return unset_deltatime;
 }
 
-uintmax_t config_setup_option(const struct config_setup *setup,
-			      enum config_setup_keyword field)
+uintmax_t config_setup_option(enum config_setup_keyword field)
 {
-	passert(field < elemsof(setup->values));
-	/* being .set doesn't matter, as default is zero */
-	return setup->values[field].option;
+	passert(field < elemsof(config_setup.values));
+	const struct keyword_value *kv = &config_setup.values[field];
+	if (kv->set == k_set) {
+		return kv->option;
+	}
+
+	passert(field < elemsof(config_setup_defaults));
+	const char *value = config_setup_defaults[field];
+	if (value != NULL) {
+		passert(field < config_setup_keywords.len);
+		const struct keyword_def *def = &config_setup_keywords.item[field];
+		switch (def->type) {
+		case kt_sparse_name:
+		{
+			const struct sparse_name *name = sparse_lookup_by_name(def->sparse_names,
+									       shunk1(value));
+			return (pexpect(name != NULL) ? name->value : 0);
+		}
+		case kt_unsigned:
+		{
+			uintmax_t option = 0;
+			err_t e = shunk_to_uintmax(shunk1(value), NULL, 0, &option);
+			pexpect(e == NULL);
+			return option;
+		}
+		default:
+			bad_case(def->type);
+		}
+	}
+
+	return 0;
 }
 
 const char *config_setup_ipsecdir(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_IPSECDIR);
+	return config_setup_string(KSF_IPSECDIR);
 }
 
 const char *config_setup_secretsfile(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_SECRETSFILE);
+	return config_setup_string(KSF_SECRETSFILE);
 }
 
 const char *config_setup_nssdir(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_NSSDIR);
+	return config_setup_string(KSF_NSSDIR);
 }
 
 const char *config_setup_dumpdir(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_DUMPDIR);
+	return config_setup_string(KSF_DUMPDIR);
 }
 
 const char *config_setup_vendorid(void)
 {
-	return config_setup_string(config_setup_singleton(), KSF_MYVENDORID);
+	return config_setup_string(KSF_MYVENDORID);
 }
 
 lset_t config_setup_debugging(struct logger *logger)
@@ -255,7 +283,7 @@ lset_t config_setup_debugging(struct logger *logger)
 	 * The final set of enabled bits is returned in .set.
 	 */
 	lmod_t result = {0};
-	const char *plutodebug = config_setup_string(config_setup_singleton(), KSF_PLUTODEBUG);
+	const char *plutodebug = config_setup_string(KSF_PLUTODEBUG);
 	if (!ttolmod(shunk1(plutodebug), &result, &debug_lmod_info, true/*enable*/)) {
 		/*
 		 * If the lookup failed, complain.
@@ -289,8 +317,6 @@ static void llog_bad(struct logger *logger, const struct ipsec_conf_keyval *kv, 
 bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 				   struct logger *logger)
 {
-	config_setup_singleton();
-
 	const struct keyval_entry *kw;
 
 	TAILQ_FOREACH(kw, &cfgp->config_setup, next) {

@@ -226,7 +226,7 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    where_t where);
 
 
-void init_ifaces(const struct config_setup *oco, struct logger *logger);
+void init_ifaces(struct logger *logger);
 void shutdown_ifaces(struct logger *logger);
 
 #endif

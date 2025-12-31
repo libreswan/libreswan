@@ -458,9 +458,9 @@ void limited_llog_md(const struct msg_digest *md,
 	}
 }
 
-void init_demux(const struct config_setup *oco, struct logger *logger UNUSED)
+void init_demux(struct logger *logger UNUSED)
 {
-	global_ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+	global_ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
 #ifndef USE_IKEv1
 	if (global_ikev1_policy != GLOBAL_IKEv1_DROP) {
 		name_buf pb;

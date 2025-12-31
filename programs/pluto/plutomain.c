@@ -261,9 +261,9 @@ static void pluto_init_nss(const char *nssdir, struct logger *logger)
  * on other users
  */
 
-static void init_seedbits(const struct config_setup *oco, struct logger *logger)
+static void init_seedbits(struct logger *logger)
 {
-	uintmax_t seedbits = config_setup_option(oco, KBF_SEEDBITS);
+	uintmax_t seedbits = config_setup_option(KBF_SEEDBITS);
 	if (seedbits != 0) {
 		int seedbytes = BYTES_FOR_BITS(seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes, "TLA seedmix");
@@ -565,12 +565,11 @@ static void update_optarg_deltatime(enum config_setup_keyword kw,
 	update_setup_deltatime(kw, time);
 }
 
-static deltatime_t check_config_deltatime(const struct config_setup *oco,
-					  enum config_setup_keyword kw,
+static deltatime_t check_config_deltatime(enum config_setup_keyword kw,
 					  struct logger *logger,
 					  int lower, int upper, const char *name)
 {
-	deltatime_t time = config_setup_deltatime(oco, kw);
+	deltatime_t time = config_setup_deltatime(kw);
 	if (time.is_set) {
 		check_conf(deltatime_ok(time, lower, upper), name, logger);
 	}
@@ -1040,9 +1039,7 @@ int main(int argc, char **argv)
 	}
 
 	/* options processed save to obtain the setup */
-	const struct config_setup *oco = config_setup_singleton();
-
-	const char *protostack = config_setup_string(oco, KSF_PROTOSTACK);
+	const char *protostack = config_setup_string(KSF_PROTOSTACK);
 	if (protostack != NULL) {
 		for (const struct kernel_ops *const *stack = kernel_stacks;
 		     *stack != NULL; stack++) {
@@ -1067,56 +1064,56 @@ int main(int argc, char **argv)
 		     kernel_ops->protostack_names[0]);
 	}
 
-	enum yn_options managed = config_setup_option(oco, KYN_IPSEC_INTERFACE_MANAGED);
+	enum yn_options managed = config_setup_option(KYN_IPSEC_INTERFACE_MANAGED);
 	config_ipsec_interface(managed, logger);
 
 	/* trash default; which is true */
-	log_ip = config_setup_yn(oco, KYN_LOGIP);
+	log_ip = config_setup_yn(KYN_LOGIP);
 
 	/* there's a rumor this is going away */
-	pluto_uniqueIDs = config_setup_yn(oco, KYN_UNIQUEIDS);
+	pluto_uniqueIDs = config_setup_yn(KYN_UNIQUEIDS);
 
 	/* IKEv2 ignoring OPPO? */
-	pluto_drop_oppo_null = config_setup_yn(oco, KYN_DROP_OPPO_NULL);
+	pluto_drop_oppo_null = config_setup_yn(KYN_DROP_OPPO_NULL);
 
 	/* redirect|to */
 
-	init_global_redirect(config_setup_option(oco, KBF_GLOBAL_REDIRECT),
-			     config_setup_string(oco, KSF_GLOBAL_REDIRECT_TO),
+	init_global_redirect(config_setup_option(KBF_GLOBAL_REDIRECT),
+			     config_setup_string(KSF_GLOBAL_REDIRECT_TO),
 			     logger);
 
 	/* ddos */
-	init_ddos(oco, logger);
+	init_ddos(logger);
 
 	/* listening et.al.? */
-	init_ifaces(oco, logger);
+	init_ifaces(logger);
 
 	/*
 	 * Extract/check x509 crl configuration before forking.
 	 */
 
-	x509_crl.curl_iface = config_setup_string(oco, KSF_CURLIFACE);
-	x509_crl.strict = config_setup_yn(oco, KYN_CRL_STRICT);
-	x509_crl.check_interval = config_setup_deltatime(oco, KBF_CRL_CHECKINTERVAL);
-	x509_crl.timeout = check_config_deltatime(oco, KBF_CRL_TIMEOUT_SECONDS, logger,
+	x509_crl.curl_iface = config_setup_string(KSF_CURLIFACE);
+	x509_crl.strict = config_setup_yn(KYN_CRL_STRICT);
+	x509_crl.check_interval = config_setup_deltatime(KBF_CRL_CHECKINTERVAL);
+	x509_crl.timeout = check_config_deltatime(KBF_CRL_TIMEOUT_SECONDS, logger,
 						  CRL_TIMEOUT_RANGE, "crl-timeout");
 
 	/*
 	 * Extract/check X509 OCSP.
 	 */
 
-	x509_ocsp.enable = config_setup_yn(oco, KYN_OCSP_ENABLE);
-	x509_ocsp.strict = config_setup_yn(oco, KYN_OCSP_STRICT);
-	x509_ocsp.uri = config_setup_string(oco, KSF_OCSP_URI);
-	x509_ocsp.trust_name = config_setup_string(oco, KSF_OCSP_TRUSTNAME);
-	x509_ocsp.timeout = check_config_deltatime(oco, KBF_OCSP_TIMEOUT_SECONDS, logger,
+	x509_ocsp.enable = config_setup_yn(KYN_OCSP_ENABLE);
+	x509_ocsp.strict = config_setup_yn(KYN_OCSP_STRICT);
+	x509_ocsp.uri = config_setup_string(KSF_OCSP_URI);
+	x509_ocsp.trust_name = config_setup_string(KSF_OCSP_TRUSTNAME);
+	x509_ocsp.timeout = check_config_deltatime(KBF_OCSP_TIMEOUT_SECONDS, logger,
 						   OCSP_TIMEOUT_RANGE, "ocsp-timeout");
-	x509_ocsp.cache_min_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
+	x509_ocsp.cache_min_age = check_config_deltatime(KBF_OCSP_CACHE_MIN_AGE_SECONDS, logger,
 							 OCSP_CACHE_MIN_AGE_RANGE, "ocsp-cache-min-age");
-	x509_ocsp.cache_max_age = check_config_deltatime(oco, KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
+	x509_ocsp.cache_max_age = check_config_deltatime(KBF_OCSP_CACHE_MAX_AGE_SECONDS, logger,
 							 OCSP_CACHE_MAX_AGE_RANGE, "ocsp-cache-max-age");
-	x509_ocsp.method = config_setup_option(oco, KBF_OCSP_METHOD);
-	x509_ocsp.cache_size = config_setup_option(oco, KBF_OCSP_CACHE_SIZE);
+	x509_ocsp.method = config_setup_option(KBF_OCSP_METHOD);
+	x509_ocsp.cache_size = config_setup_option(KBF_OCSP_CACHE_SIZE);
 
 	/*
 	 * Create the lock file before things fork.
@@ -1130,7 +1127,7 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "selftest: skipping lock");
 		lockfd = -1;
 	} else {
-		lockfd = create_lock_file(oco, fork_desired, logger);
+		lockfd = create_lock_file(fork_desired, logger);
 	}
 
 	/*
@@ -1147,7 +1144,7 @@ int main(int argc, char **argv)
 		llog(RC_LOG, logger, "selftest: skipping control socket");
 	} else {
 		/* may never return */
-		init_ctl_socket(oco, logger);
+		init_ctl_socket(logger);
 	}
 
 	/*
@@ -1206,7 +1203,7 @@ int main(int argc, char **argv)
 		/* no daemon fork: we have to fill in lock file */
 		fill_and_close_lock_file(&lockfd, getpid());
 
-		if (isatty(fileno(stdout)) && !config_setup_yn(oco, KYN_LOGSTDERR)) {
+		if (isatty(fileno(stdout)) && !config_setup_yn(KYN_LOGSTDERR)) {
 			/*
 			 * Last gasp; from now on everything goes to
 			 * the file/syslog.
@@ -1243,7 +1240,7 @@ int main(int argc, char **argv)
 	 * switch debugging flags when specified).
 	 */
 
-	switch_log(oco, &logger);
+	switch_log(&logger);
 
 	/*
 	 * Forking done; logging enabled.  Time to announce things to
@@ -1271,12 +1268,12 @@ int main(int argc, char **argv)
 	}
 
 	init_kernel_info(logger);
-	init_binlog(oco, logger);
+	init_binlog(logger);
 
 	/*
 	 * DNS.
 	 */
-	pluto_dns_resolver = config_setup_string(oco, KSF_DNS_RESOLVER);
+	pluto_dns_resolver = config_setup_string(KSF_DNS_RESOLVER);
 	if (streq(pluto_dns_resolver, "file") ||
 	    streq(pluto_dns_resolver, "systemd")) {
 		llog(RC_LOG, logger, "using dns-resolver=%s",
@@ -1312,8 +1309,8 @@ int main(int argc, char **argv)
 	spd_db_init(logger);
 
 	pluto_init_nss(config_setup_nssdir(), logger);
-	init_seedbits(oco, logger);
-	init_demux(oco, logger);
+	init_seedbits(logger);
+	init_demux(logger);
 
 	if (is_fips_mode()) {
 		/*
@@ -1443,7 +1440,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	bool audit_ok = linux_audit_init(config_setup_yn(oco, KYN_AUDIT_LOG), logger);
+	bool audit_ok = linux_audit_init(config_setup_yn(KYN_AUDIT_LOG), logger);
 	llog(RC_LOG, logger, "Linux audit support [%s]",
 	     (audit_ok ? "enabled" : "disabled"));
 #else
@@ -1478,10 +1475,10 @@ int main(int argc, char **argv)
 
 	/* server initialized; timers can follow */
 	init_log_limiter(logger);
-	deltatime_t keep_alive = config_setup_deltatime(oco, KBF_KEEP_ALIVE);
+	deltatime_t keep_alive = config_setup_deltatime(KBF_KEEP_ALIVE);
 	init_nat_traversal_timer(keep_alive, logger);
 
-	const char *virtual_private = config_setup_string(oco, KSF_VIRTUAL_PRIVATE);
+	const char *virtual_private = config_setup_string(KSF_VIRTUAL_PRIVATE);
 	init_virtual_ip(virtual_private, logger);
 
 	enum yn_options ipsec_interface_managed = init_ipsec_interface(logger);
@@ -1510,10 +1507,10 @@ int main(int argc, char **argv)
 		exit(PLUTO_EXIT_OK);
 	}
 
-	uintmax_t nhelpers = config_setup_option(oco, KBF_NHELPERS);
+	uintmax_t nhelpers = config_setup_option(KBF_NHELPERS);
 	start_helpers(nhelpers, logger);
 
-	init_kernel(oco, logger);
+	init_kernel(logger);
 
 #if defined(USE_LIBCURL) || defined(USE_LDAP)
 	bool crl_enabled = init_x509_crl_queue(logger);
@@ -1525,9 +1522,9 @@ int main(int argc, char **argv)
 	pluto_sd_init(logger);
 #endif
 
-	pluto_dnssec.enable = config_setup_yn(oco, KYN_DNSSEC_ENABLE);
-	pluto_dnssec.rootkey_file = config_setup_string(oco, KSF_DNSSEC_ROOTKEY_FILE);
-	pluto_dnssec.anchors = config_setup_string(oco, KSF_DNSSEC_ANCHORS);
+	pluto_dnssec.enable = config_setup_yn(KYN_DNSSEC_ENABLE);
+	pluto_dnssec.rootkey_file = config_setup_string(KSF_DNSSEC_ROOTKEY_FILE);
+	pluto_dnssec.anchors = config_setup_string(KSF_DNSSEC_ANCHORS);
 	init_resolve_helper(&pluto_dnssec, logger);
 #ifdef USE_DNSSEC
 	init_ikev2_ipseckey(get_pluto_event_base(), &pluto_dnssec, logger);
@@ -1568,8 +1565,6 @@ int main(int argc, char **argv)
 
 void show_setup_plutomain(struct show *s)
 {
-	const struct config_setup *oco = config_setup_singleton();
-
 	show_separator(s);
 	show(s, "config setup options:");
 	show_separator(s);
@@ -1582,7 +1577,7 @@ void show_setup_plutomain(struct show *s)
 	show(s, "nssdir=%s, dumpdir=%s, statsbin=%s",
 	     config_setup_nssdir(),
 	     config_setup_dumpdir(),
-	     config_setup_string_or_unset(oco, KSF_STATSBIN, "unset"));
+	     config_setup_string_or_unset(KSF_STATSBIN, "unset"));
 
 	SHOW_JAMBUF(s, buf) {
 		jam(buf, "dnssec-enable=%s", bool_str(pluto_dnssec.enable));
@@ -1604,7 +1599,7 @@ void show_setup_plutomain(struct show *s)
 
 	SHOW_JAMBUF(s, buf) {
 		jam_string(buf, "nhelpers=");
-		uintmax_t nhelpers = config_setup_option(oco, KBF_NHELPERS);
+		uintmax_t nhelpers = config_setup_option(KBF_NHELPERS);
 		if (nhelpers == UINTMAX_MAX) {
 			jam_string(buf, "-1");
 		} else {
@@ -1612,23 +1607,23 @@ void show_setup_plutomain(struct show *s)
 		}
 		jam(buf, ", uniqueids=%s", bool_str(pluto_uniqueIDs));
 		jam(buf, ", shuntlifetime=%jds",
-		    deltasecs(config_setup_deltatime(oco, KBF_SHUNTLIFETIME)));
+		    deltasecs(config_setup_deltatime(KBF_SHUNTLIFETIME)));
 		jam(buf, ", expire-lifetime=%jds",
-		    deltasecs(config_setup_deltatime(oco, KBF_EXPIRE_LIFETIME)));
+		    deltasecs(config_setup_deltatime(KBF_EXPIRE_LIFETIME)));
 	}
 
 	show_log(s);
 
-	enum global_ikev1_policy ikev1_policy = config_setup_option(oco, KBF_IKEv1_POLICY);
+	enum global_ikev1_policy ikev1_policy = config_setup_option(KBF_IKEv1_POLICY);
 
 	name_buf pb;
 	name_buf mb;
 
 	show(s,
 	     "ddos-cookies-threshold=%ju, ddos-max-halfopen=%ju, ddos-mode=%s, ikev1-policy=%s",
-	     config_setup_option(oco, KBF_DDOS_IKE_THRESHOLD),
-	     config_setup_option(oco, KBF_MAX_HALFOPEN_IKE),
-	     str_sparse_long(&ddos_mode_names, config_setup_option(oco, KBF_DDOS_MODE), &mb),
+	     config_setup_option(KBF_DDOS_IKE_THRESHOLD),
+	     config_setup_option(KBF_MAX_HALFOPEN_IKE),
+	     str_sparse_long(&ddos_mode_names, config_setup_option(KBF_DDOS_MODE), &mb),
 	     str_sparse_long(&global_ikev1_policy_names, ikev1_policy, &pb));
 
 	/*
@@ -1641,7 +1636,7 @@ void show_setup_plutomain(struct show *s)
 	 *
 	 * NFLOG group - 0 means no logging.
 	 */
-	uintmax_t nflog_all = config_setup_option(oco, KBF_NFLOG_ALL);
+	uintmax_t nflog_all = config_setup_option(KBF_NFLOG_ALL);
 
 	show(s,
 	     "ikebuf=%d, msg_errqueue=%s, crl-strict=%s, crlcheckinterval=%jd, listen=%s, nflog-all=%ju, dns-resolver=%s,",

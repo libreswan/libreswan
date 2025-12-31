@@ -140,10 +140,9 @@ void check_open_fds(struct logger *logger)
  * it.
  */
 
-void init_ctl_socket(const struct config_setup *oco,
-		       struct logger *logger)
+void init_ctl_socket(struct logger *logger)
 {
-	const char *rundir = config_setup_string(oco, KSF_RUNDIR);
+	const char *rundir = config_setup_string(KSF_RUNDIR);
 	int n = snprintf(ctl_addr.sun_path, sizeof(ctl_addr.sun_path),
 			 "%s/pluto.ctl", rundir);
 	if (n < 0 || n >= (ssize_t)sizeof(ctl_addr.sun_path)) {
@@ -1119,8 +1118,6 @@ static server_stopped_cb *server_stopped NEVER_RETURNS;
 
 void run_server(const char *conffile, struct logger *logger)
 {
-	UNUSED const struct config_setup *oco = config_setup_singleton(); /*param?*/
-
 	/*
 	 * setup basic events, CTL and SIGNALs
 	 */
@@ -1160,7 +1157,7 @@ void run_server(const char *conffile, struct logger *logger)
 	/* parent continues */
 
 #ifdef USE_SECCOMP
-	init_seccomp_main(oco, logger);
+	init_seccomp_main(logger);
 #else
 	llog(RC_LOG, logger, "seccomp security not supported");
 #endif

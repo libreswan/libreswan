@@ -346,9 +346,6 @@ uintmax_t optarg_uintmax(const struct logger *logger)
 {
 	passert((optarg_options[optarg_index].has_arg == required_argument) ||
 		(optarg_options[optarg_index].has_arg == optional_argument && optarg != NULL));
-	if (streq(optarg, "-1")) {
-		return UINTMAX_MAX;
-	}
 
 	uintmax_t val;
 	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, &val);
