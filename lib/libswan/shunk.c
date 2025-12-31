@@ -129,6 +129,19 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 		return "empty string";
 	}
 
+	if (hunk_streat(&input, "-1")) {
+		if (output != NULL) {
+			*output = input;
+			*dest = UINTMAX_MAX;
+			return NULL;
+		}
+		if (input.len == 0) {
+			*dest = UINTMAX_MAX;
+			return NULL;
+		}
+		return "trailing junk";
+	}
+
 	/*
 	 * Detect standard prefixes.
 	 *

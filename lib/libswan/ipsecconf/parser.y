@@ -562,12 +562,6 @@ static void append_parser_key_value(struct parser *parser,
 diag_t parse_kt_unsigned(const struct ipsec_conf_keyval *key UNUSED,
 			 shunk_t value, uintmax_t *number)
 {
-	/* treat -1 as special, turning it into max */
-	if (hunk_streq(value, "-1")) {
-		(*number) = UINTMAX_MAX;
-		return NULL;
-	}
-
 	err_t err = shunk_to_uintmax(value, NULL, /*base*/10, number);
 	if (err == NULL) {
 		return NULL;
