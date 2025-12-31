@@ -47,4 +47,6 @@ enum lswub_resolve_event_secure_kind {
 	UB_EVENT_SECURE		= 2,
 };
 
+extern const struct sparse_names dnssec_rcode_stories;
+
 #endif

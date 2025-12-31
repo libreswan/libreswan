@@ -338,6 +338,7 @@ ifeq ($(USE_UNBOUND),true)
 OBJS += dnssec/unbound.o
 endif
 OBJS += dnssec/dnssec_config.o
+OBJS += dnssec/dnssec_rcode_stories.o
 
 #
 # whack stuff
