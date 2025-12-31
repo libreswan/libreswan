@@ -366,7 +366,7 @@ static void dpd_outI(struct ike_sa *p1, struct state *st,
 	deltatime_t next_delay = monotime_diff(next_time, now);
 
 	/* has there been enough activity of late? */
-	if (deltatime_cmp(next_delay, >, deltatime(0))) {
+	if (deltatime_cmp(next_delay, >, deltatime_from_seconds(0))) {
 		/* Yes, just reschedule "phase 2" */
 		monotime_buf mb1, mb2;
 		ldbg(p1->sa.logger, "DPD: not yet time for dpd event: %s < %s",

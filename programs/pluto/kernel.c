@@ -1866,7 +1866,7 @@ bool install_outbound_ipsec_sa(struct child_sa *child, enum routing new_routing,
 	 * complete an IPsec SA to us.
 	 */
 	child->sa.st_connection->revival.attempt = 0;
-	child->sa.st_connection->revival.delay = deltatime(0);
+	child->sa.st_connection->revival.delay = deltatime_from_seconds(0);
 
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
 
@@ -2088,7 +2088,7 @@ bool get_ipsec_traffic(struct child_sa *child,
 	if (bytes > flow->bytes) {
 		flow->bytes = bytes;
 		if (lastused > 0)
-			flow->last_used = realtime(lastused);
+			flow->last_used = realtime_from_seconds(lastused);
 		else
 			flow->last_used = realnow();
 	}

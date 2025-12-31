@@ -36,13 +36,13 @@ void check_realtime(void)
 	};
 	for (unsigned i = 0; i < elemsof(test_realtimediff); i++) {
 		const struct test_realtimediff *t = &test_realtimediff[i];
-		realtime_t l = realtime(t->l);
-		realtime_t r = realtime(t->r);
+		realtime_t l = realtime_from_seconds(t->l);
+		realtime_t r = realtime_from_seconds(t->r);
 		deltatime_t d = realtime_diff(l, r);
 		deltatime_buf buf;
 		const char *str = str_deltatime(d, &buf);
 
-		snprintf(what, sizeof(what), "realtime(%jd) - realtime(%jd) = %s", t->l, t->r, t->diff);
+		snprintf(what, sizeof(what), "realtime(%jds) - realtime(%jds) = %s", t->l, t->r, t->diff);
 		if (strcmp(str, t->diff) != 0) {
 			fprintf(stderr, "FAIL: %s vs %s\n", what, str);
 			fails++;

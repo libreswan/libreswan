@@ -647,7 +647,7 @@ void accept_ike_in_tcp_cb(struct verbose verbose,
 	 * The timeout has a reference so unless it is deleted.
 	 */
 	schedule_timeout("IKETCP", &ifp->iketcp.prefix_timeout,
-			 deltatime(5) /* TCP: how much? */,
+			 deltatime_from_seconds(5) /* TCP: how much? */,
 			 iketcp_server_timeout, ifp);
 	attach_fd_read_listener(&ifp->iketcp.read_listener, ifp->fd,
 				"IKETCP", process_iface_packet, ifp);

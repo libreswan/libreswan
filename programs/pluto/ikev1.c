@@ -2395,7 +2395,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				if (deltatime_cmp(event_delay, >, marg)) {
 					st->st_replace_margin = marg;
 				} else {
-					marg = deltatime(0);
+					marg = deltatime_from_seconds(0);
 				}
 				event_delay = deltatime_sub(event_delay, marg);
 			}

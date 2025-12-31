@@ -1901,7 +1901,7 @@ static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike))
 {
-	schedule_callback("reinitiating IKE_SA_INIT", deltatime(0),
+	schedule_callback("reinitiating IKE_SA_INIT", deltatime_from_seconds(0),
 			  ike->sa.st_serialno,
 			  reinitiate_v2_ike_sa_init, resume,
 			  ike->sa.logger);

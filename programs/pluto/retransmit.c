@@ -102,9 +102,9 @@ void clear_retransmits(struct state *st)
 	rt->nr_duplicate_replies = 0;
 	rt->nr_retransmits = 0;
 	rt->limit = 0;
-	rt->delay = deltatime(0);
+	rt->delay = deltatime_from_seconds(0);
 	rt->start = monotime_epoch;
-	rt->timeout = deltatime(0);
+	rt->timeout = deltatime_from_seconds(0);
 	event_delete(st->st_connection->config->ike_info->retransmit_event, st);
 	ldbg_retransmit(st, "cleared");
 }

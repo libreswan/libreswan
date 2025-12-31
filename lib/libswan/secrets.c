@@ -1454,9 +1454,9 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	realtime_t until_time;
 	PRTime not_before, not_after;
 	if (CERT_GetCertTimes(cert, &not_before, &not_after) != SECSuccess) {
-		until_time = realtime(-1);
+		until_time = realtime_from_seconds(-1);
 	} else {
-		until_time = realtime(not_after / PR_USEC_PER_SEC);
+		until_time = realtime_from_seconds(not_after / PR_USEC_PER_SEC);
 	}
 	*pk = alloc_pubkey(id, /*dns_auth_level*/0/*default*/,
 			   install_time, until_time,

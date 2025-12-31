@@ -540,7 +540,7 @@ bool init_x509_crl_queue(struct logger *logger)
 	 * before the CRL fetch list has been refreshed (for the
 	 * latter, use impair.event_check_crls).
 	 */
-	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime(5), logger);
+	schedule_oneshot_timer(EVENT_CHECK_CRLS, deltatime_from_seconds(5), logger);
 	return true;
 }
 

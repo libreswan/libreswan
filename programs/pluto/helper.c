@@ -171,7 +171,7 @@ static void do_job(struct job *job)
 	     (job->callback == NULL ? "failed" : "succeeded"));
 
 	schedule_callback("helper finished",
-			  deltatime(0), SOS_NOBODY,
+			  deltatime_from_seconds(0), SOS_NOBODY,
 			  resume_main_thread, job,
 			  job->logger);
 }
@@ -246,7 +246,7 @@ static void *helper(void *arg)
 	}
 
 	ldbg(h->logger, "helper %u: telling main thread that it is exiting", h->id);
-	schedule_callback("helper exiting", deltatime(0), SOS_NOBODY,
+	schedule_callback("helper exiting", deltatime_from_seconds(0), SOS_NOBODY,
 			  helper_stopped_callback,
 			  /*w-but-rw*/arg, h->logger);
 
@@ -358,7 +358,7 @@ void request_help_where(struct refcnt *request,
 		ldbg(logger, PRI_JOB": adding to event queue", pri_job(job));
 
 		schedule_callback("inline helper",
-				  deltatime(0),
+				  deltatime_from_seconds(0),
 				  SOS_NOBODY,
 				  inline_helper, job,
 				  job->logger);
@@ -550,7 +550,7 @@ void stop_helpers(void (*helpers_stopped_cb)(void), struct logger *logger)
 		ldbg(logger, "no helpers to shutdown");
 		pexpect(helpers == NULL);
 		schedule_callback("no helpers to stop",
-				  deltatime(0), SOS_NOBODY,
+				  deltatime_from_seconds(0), SOS_NOBODY,
 				  call_helpers_stopped_callback, /*context*/NULL,
 				  logger);
 		return;

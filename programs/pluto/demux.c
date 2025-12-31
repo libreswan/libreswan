@@ -344,7 +344,7 @@ static void handle_md_event(const char *story UNUSED, struct state *st, void *co
 
 void schedule_md_event(const char *story, struct msg_digest *md)
 {
-	schedule_callback(story, deltatime(0), SOS_NOBODY,
+	schedule_callback(story, deltatime_from_seconds(0), SOS_NOBODY,
 			  handle_md_event, md, md->logger);
 }
 

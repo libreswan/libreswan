@@ -118,7 +118,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		diag_t d = unpack_dns_pubkey(keyid, /*dns_auth_level*/al,
 					     dns_pubkey->algorithm_type,
 					     install_time,
-					     realtime_add(install_time, deltatime(ttl_used)),
+					     realtime_add(install_time, deltatime_from_seconds(ttl_used)),
 					     ttl,
 					     dns_pubkey->pubkey,
 					     &pubkey,

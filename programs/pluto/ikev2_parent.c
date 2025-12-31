@@ -304,7 +304,7 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	 */
 
 	const struct state_event *lifetime_event = st_v2_lifetime_event(rst);
-	deltatime_t lifetime = deltatime(0);
+	deltatime_t lifetime = deltatime_from_seconds(0);
 	if (lifetime_event != NULL) {
 		lifetime = monotime_diff(lifetime_event->ev_time, mononow());
 	}
@@ -375,7 +375,7 @@ void schedule_v2_replace_event(struct state *st)
 			rekey_delay = deltatime_sub(lifetime, marg);
 		} else {
 			rekey_delay = lifetime;
-			marg = deltatime(0);
+			marg = deltatime_from_seconds(0);
 		}
 		st->st_replace_margin = marg;
 

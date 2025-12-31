@@ -469,7 +469,7 @@ static bool handle_v1_delete_payload(struct ike_sa **ike,
 			llog_sa(RC_LOG, p2d,
 				"received Delete SA payload via "PRI_SO,
 				pri_so((*ike)->sa.st_serialno));
-			p2d->sa.st_replace_margin = deltatime(0); /*NEEDED?*/
+			p2d->sa.st_replace_margin = deltatime_from_seconds(0); /*NEEDED?*/
 			connection_teardown_child(&p2d, REASON_DELETED, HERE);
 
 		}

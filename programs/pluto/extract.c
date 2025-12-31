@@ -3986,7 +3986,7 @@ diag_t extract_connection(const struct whack_message *wm,
 					    wm->wm_rekeymargin);
 			}
 		} else {
-			rekeymargin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
+			rekeymargin = deltatime_from_seconds(SA_REPLACEMENT_MARGIN_DEFAULT);
 		};
 		config->sa_rekey_margin = rekeymargin;
 
@@ -4017,7 +4017,7 @@ diag_t extract_connection(const struct whack_message *wm,
 
 		config->retransmit_timeout = extract_deltatime("", "retransmit-timeout",
 							       wm->wm_retransmit_timeout,
-							       deltatime(RETRANSMIT_TIMEOUT_DEFAULT),
+							       deltatime_from_seconds(RETRANSMIT_TIMEOUT_DEFAULT),
 							       wm, &d, verbose);
 		if (d != NULL) {
 			return d;

@@ -1988,7 +1988,7 @@ rsasig_common:
 
 				switch (life_type) {
 				case OAKLEY_LIFE_SECONDS:
-					ta.life_seconds = deltatime(value);
+					ta.life_seconds = deltatime_from_seconds(value);
 					if (deltatime_cmp(ta.life_seconds, >, IKE_SA_LIFETIME_MAXIMUM)) {
 						llog(WARNING_STREAM, ike->sa.logger,
 						     "peer requested IKE lifetime of %jd seconds which we capped at our limit of %ju seconds",
@@ -2504,7 +2504,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				if (deltatime_cmp(lifemax, >, child->sa.st_connection->config->sa_ipsec_max_lifetime)) {
 					lifemax = child->sa.st_connection->config->sa_ipsec_max_lifetime;
 				}
-				deltatime_t lifetime = deltatime(value);
+				deltatime_t lifetime = deltatime_from_seconds(value);
 				attrs->lifetime = (deltatime_cmp(lifetime, >, lifemax) ? lifemax : lifetime);
 				break;
 			}

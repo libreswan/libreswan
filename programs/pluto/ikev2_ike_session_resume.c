@@ -397,7 +397,7 @@ bool emit_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike, struct pbs_out *pbs)
 
 	/* XXX: missing replace time */
 	deltatime_t lifetime = deltatime_min(realtime_diff(ike_expires, now),
-					     deltatime(EVENT_REINIT_SECRET_DELAY));
+					     deltatime_from_seconds(EVENT_REINIT_SECRET_DELAY));
 	realtime_t expiration = realtime_add(now, lifetime);
 
 	struct ikev2_ticket_lifetime tl = {
@@ -1036,7 +1036,7 @@ bool process_v2N_TICKET_LT_OPAQUE(struct ike_sa *ike,
 
 	c->session = alloc_thing(struct session, __func__);
 	c->session->sr_expires = monotime_add(mononow(),
-					      deltatime(tl.sr_lifetime));
+					      deltatime_from_seconds(tl.sr_lifetime));
 	c->session->ticket = clone_hunk_as_chunk(&ticket, __func__);
 
 	set_resume_session(&c->session->resume,

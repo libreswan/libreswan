@@ -796,7 +796,7 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	if (dpd_active_locally(child->sa.st_connection)) {
 		ldbg(logger, "dpd enabled, scheduling ikev2 liveness checks");
 		deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay,
-						  deltatime(MIN_LIVENESS));
+						  deltatime_from_seconds(MIN_LIVENESS));
 		event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 	}
 

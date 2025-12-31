@@ -43,7 +43,7 @@ static struct timeval negate_timeval(struct timeval tv)
 	return res;
 }
 
-deltatime_t deltatime(time_t seconds)
+deltatime_t deltatime_from_seconds(time_t seconds)
 {
 	return (deltatime_t) {
 		.dt = from_seconds(seconds),
@@ -154,7 +154,7 @@ intmax_t seconds_from_deltatime(deltatime_t d)
 deltatime_t deltatime_scale(deltatime_t d, int num, int denom)
 {
 	/* ??? should check for overflow */
-	return deltatime((deltasecs(d) * num) / denom);
+	return deltatime_from_seconds((deltasecs(d) * num) / denom);
 }
 
 struct timeval timeval_from_deltatime(deltatime_t d)

@@ -676,7 +676,7 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 void event_force(enum event_type type, struct state *st)
 {
 	event_delete(type, st);
-	deltatime_t delay = deltatime(0);
+	deltatime_t delay = deltatime_from_seconds(0);
 	event_schedule(type, delay, st);
 }
 
@@ -700,7 +700,7 @@ void whack_impair_call_state_event_handler(struct logger *logger, struct state *
 	 * Like timer_event_cb(), delete the old event before calling
 	 * the event handler.
 	 */
-	deltatime_t event_delay = deltatime(1);
+	deltatime_t event_delay = deltatime_from_seconds(1);
 	if (*evp == NULL) {
 		llog(IMPAIR_STREAM, logger, "no existing %s event to delete",
 		     event_name.buf);
