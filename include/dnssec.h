@@ -5,10 +5,12 @@
 
 #include "verbose.h"
 #include "ip_address.h"
+#include "shunk.h"
 
 struct logger;
 struct event_base;
 struct ub_ctx;
+struct config_setup;
 
 struct dnssec_config {
 	bool enable;
@@ -16,14 +18,15 @@ struct dnssec_config {
 	const char *anchors;
 };
 
+/* singleton */
+const struct dnssec_config *dnssec_config_singleton(struct logger *logger);
+
 void unbound_ctx_config(struct ub_ctx *dns_ctx,
 			const struct dnssec_config *config,
 			const struct logger *logger);
 
-struct ub_ctx *unbound_sync_init(const struct dnssec_config *config,
-				 struct logger *logger);
-diag_t unbound_sync_resolve(struct ub_ctx *dns_ctx,
-			    const char *src, const struct ip_info *afi,
+diag_t unbound_sync_resolve(const char *src,
+			    const struct ip_info *afi,
 			    ip_address *ipaddr,
 			    struct verbose verbose);
 
@@ -42,5 +45,7 @@ enum lswub_resolve_event_secure_kind {
 	UB_EVENT_BOGUS		= 1,
 	UB_EVENT_SECURE		= 2,
 };
+
+extern const struct sparse_names dnssec_rcode_stories;
 
 #endif

@@ -224,7 +224,7 @@ void exit_epilogue(struct logger *logger)
 	 *
 	 * THESE FUNCTIONS JUST DELETE MEMORY (hence free*())
 	 */
-	free_resolve_helper(logger);
+
 	free_server_fork(logger);
 	free_server(logger);
 

@@ -35,6 +35,7 @@
 #include <unbound-event.h>	/* ditto */
 
 #include "lswglob.h"
+#include "lswalloc.h"
 #include "dnssec.h"
 #include "constants.h"
 #include "lswlog.h"
@@ -179,26 +180,13 @@ void unbound_ctx_config(struct ub_ctx *ub_ctx,
 }
 
 /*
- * Initialize a ub_ctx for blocking dns calls.
- */
-
-struct ub_ctx *unbound_sync_init(const struct dnssec_config *config,
-				 struct logger *logger)
-{
-	struct ub_ctx *dns_ctx = ub_ctx_create();
-	PASSERT(logger, dns_ctx != NULL);
-	unbound_ctx_config(dns_ctx, config, logger);
-	return dns_ctx;
-}
-
-/*
  * synchronous blocking resolving - simple replacement of ttoaddress_dns()
  * af == AF_UNSPEC means default to AF_INET(A/IPv4)
  */
-diag_t unbound_sync_resolve(struct ub_ctx *dns_ctx,
-			    const char *src, const struct ip_info *afi,
-			    ip_address *ipaddr,
-			    struct verbose verbose)
+static diag_t unbound_sync_resolve_1(struct ub_ctx *dns_ctx,
+				     const char *src, const struct ip_info *afi,
+				     ip_address *ipaddr,
+				     struct verbose verbose)
 {
 	/* 28 = AAAA record, 1 = A record */
 	const int qtype = (afi == &ipv6_info) ? 28/*AAAA*/ : 1/*A*/;
@@ -221,9 +209,16 @@ diag_t unbound_sync_resolve(struct ub_ctx *dns_ctx,
 	}
 
 	if (!result->havedata) {
-		diag_t d = (result->secure ? diag("domain '%s' does not exist (proved by validated reply)", src) :
-			    result->nxdomain ? diag("domain '%s' does not exist (no data, rcode %d)", src, result->rcode) :
-			    diag("domain '%s' has no data (rcode %d)", src, result->rcode));
+		name_buf rcode; /*same-scope-as-rcode*/
+		str_sparse_short(&dnssec_rcode_stories, result->rcode, &rcode);
+		diag_t d =
+			(result->secure && result->rcode == 0 ? diag("domain '%s' does not exist, proved by validated reply", src) :
+			 result->secure ? diag("domain '%s' does not exist, proved by validated reply: %s (rcode %d)",
+					       src, rcode.buf, result->rcode) :
+			 result->nxdomain ? diag("domain '%s' does not exist: %s (rcode %d)",
+						 src, rcode.buf, result->rcode) :
+			 diag("domain '%s' has no data: %s (rcode %d)",
+			      src, rcode.buf, result->rcode));
 		ub_resolve_free(result);
 		return d;
 	}
@@ -267,4 +262,23 @@ diag_t unbound_sync_resolve(struct ub_ctx *dns_ctx,
 	}
 
 	return NULL;
+}
+
+
+diag_t unbound_sync_resolve(const char *src,
+			    const struct ip_info *afi,
+			    ip_address *ipaddr,
+			    struct verbose verbose)
+{
+	/*
+	 * Initialize a ub_ctx for blocking dns calls.
+	 */
+	struct ub_ctx *dns_ctx = ub_ctx_create();
+	vassert(dns_ctx != NULL);
+	unbound_ctx_config(dns_ctx, dnssec_config_singleton(verbose.logger), verbose.logger);
+
+	diag_t d = unbound_sync_resolve_1(dns_ctx, src, afi, ipaddr, verbose);
+
+	ub_ctx_delete(dns_ctx);
+	return d;
 }

@@ -51,7 +51,7 @@ west #
 "addconn-leftid=foo-at-bar": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn-leftid=foo
-"addconn-leftid=foo": failed to add connection: leftid=foo invalid, not a numeric IPv4 address and name lookup failed (no validation performed)
+"addconn-leftid=foo": failed to add connection: leftid=foo invalid, domain 'foo' has no data: Server Failure (rcode 2)
 west #
  ipsec add addconn-rightid-x509
 "addconn-rightid-x509": added oriented IKEv2 connection

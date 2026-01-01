@@ -540,8 +540,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike, struct msg_digest *m
 }
 
 void init_ikev2_ipseckey(struct event_base *event_base,
-			 const struct dnssec_config *config,
-			 const struct logger *logger)
+			 struct logger *logger)
 {
 	ldbg(logger, "allocating ipseckey's unbound ctx");
 	ipseckey_unbound_ctx = ub_ctx_create_event(event_base);
@@ -550,7 +549,7 @@ void init_ikev2_ipseckey(struct event_base *event_base,
 		      "failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
 	}
 
-	unbound_ctx_config(ipseckey_unbound_ctx, config, logger);
+	unbound_ctx_config(ipseckey_unbound_ctx, dnssec_config_singleton(logger), logger);
 }
 
 void shutdown_ikev2_ipseckey(const struct logger *logger)
