@@ -15,7 +15,6 @@ for repo in fedora-cisco-openh264 ; do
     dnf config-manager setopt ${repo}.enabled=0
 done
 
-
 :
 : enable useful repos
 :
@@ -24,7 +23,6 @@ for repo in fedora-debuginfo updates-debuginfo ; do
     echo enabling: ${repo}
     dnf config-manager setopt ${repo}.enabled=1
 done
-
 
 :
 : Point the cache at /pool/pkg.fedora.NNN
@@ -42,13 +40,11 @@ dnf config-manager setopt system_cachedir=${cachedir}
 
 sleep 5
 
-
 :
 : explicitly build the cache
 :
 
 dnf makecache
-
 
 :
 : limit kernel to two installs
@@ -57,27 +53,19 @@ dnf makecache
 # https://ask.fedoraproject.org/t/old-kernels-removal/7026/2
 sudo sed -i 's/installonly_limit=3/installonly_limit=2/' /etc/dnf/dnf.conf
 
+#
+# Packages used to build libreswan, are installed and then upgraded.
+#
 
-:
-: Install then upgrade
-:
-
-# stuff needed to build libreswan; this is first installed and then
-# constantly upgraded
-
-building() {
+packages_for_build() {
     cat <<EOF | awk '{print $1}'
 ElectricFence
 audit-libs-devel
-c++
-make
 ldns-devel
 libcurl-devel
 libseccomp-devel
 libselinux-devel
-mercurial			NSS
-gyp				NSS
-ninja-build			NSS
+make
 nss-devel
 nss-tools
 nss-util-devel
@@ -88,22 +76,25 @@ xmlto
 EOF
 }
 
-# latest kernel; this is only installed (upgrading kernels is not a
-# fedora thing).  XL2TPD sucks in the latest kernel so is included in
-# the list.
+#
+# Kernel packages are only installed to avoid drift.
+#
+# xl2tpd was included in this list because it sucks in additional
+# kernel dependencies; however Fedora 43 dropped the package for
+# kl2tpd.
 
-kernel() {
+kernel_packages() {
     cat <<EOF | awk '{print $1}'
 kernel
 kernel-devel
-xl2tpd
 EOF
 }
 
-# utilities used to test libreswan; these are only installed for now
-# (so that there isn't too much version drift).
+#
+# Packages needed for testing are only installed to avoid drift.
+#
 
-testing() {
+packages_for_testing() {
     cat <<EOF | awk '{print $1}'
 bind-dnssec-utils
 bind-utils
@@ -112,8 +103,8 @@ fping
 gawk
 gdb
 gnutls-utils				used by soft tokens
-ike-scan
 iptables
+kl2tpd
 libcap-ng-utils
 linux-system-roles
 nc
@@ -142,5 +133,32 @@ wireshark-cli
 EOF
 }
 
-dnf install -y `building` `testing` `kernel`
-dnf upgrade -y `building` `testing`
+:
+: Install build dependencies, testing, and kernel packages
+:
+
+dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
+
+:
+: Upgrade build dependencies
+:
+
+dnf upgrade -y $(packages_for_build)
+
+:
+: Pre-release and/or dropped packages that still have builds
+:
+
+downloads="
+https://kojipkgs.fedoraproject.org//packages/xl2tpd/1.3.17/8.fc43/x86_64/xl2tpd-1.3.17-8.fc43.x86_64.rpm
+https://kojipkgs.fedoraproject.org//packages/ike-scan/1.9.4/44.fc43/x86_64/ike-scan-1.9.4-44.fc43.x86_64.rpm
+"
+
+rpms=
+for package in ${downloads} ; do
+    rpm=${cachedir}/$(basename ${package})
+    curl --location --continue-at - --output ${rpm} "${package}"
+    rpms="${rpms} ${rpm}"
+done
+
+dnf upgrade -y ${rpms}
