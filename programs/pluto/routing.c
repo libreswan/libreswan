@@ -700,13 +700,12 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child);
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
-
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 		uninstall_ipsec_kernel_policy(child, c, spd, &owner,
 					      SHUNT_KIND_ONDEMAND,
@@ -725,9 +724,9 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child);
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
@@ -787,9 +786,9 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child);
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -932,9 +931,9 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child);
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
@@ -958,9 +957,9 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child);
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
