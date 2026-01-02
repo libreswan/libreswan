@@ -35,11 +35,14 @@ up
 west #
  strongswan up westnet-eastnet-ikev2b
 establishing CHILD_SA westnet-eastnet-ikev2b{2}
-generating CREATE_CHILD_SA request 2 [ SA No TSi TSr ]
+generating CREATE_CHILD_SA request 2 [ SA No KE TSi TSr ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 2 [ SA No TSi TSr ]
+parsed CREATE_CHILD_SA response 2 [ SA No KE TSi TSr ]
+invalid DH public value size (XXX bytes) for ECP_256
+applying key exchange public key failed
 selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
+ignoring KE payload, agreed on a non-PFS proposal
 CHILD_SA westnet-eastnet-ikev2b{2} established with SPIs SPISPI_i SPISPI_o and TS 192.0.100.0/24 === 192.0.200.0/24
 connection 'westnet-eastnet-ikev2b' established successfully
 west #

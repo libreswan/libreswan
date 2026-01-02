@@ -29,7 +29,7 @@ received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) ]
 selected proposal: IKE:AES_CBC_128/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_2048
 local host is behind NAT, sending keep alives
-no IDi configured, fall back on IP address
+no IDi configured, default to IP address 192.1.3.209
 authentication of '192.1.3.209' (myself) with pre-shared key
 establishing CHILD_SA road-east{1}
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]

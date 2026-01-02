@@ -16,13 +16,13 @@ east #
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
+	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
+	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
