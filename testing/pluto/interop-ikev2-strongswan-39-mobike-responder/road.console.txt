@@ -57,6 +57,7 @@ src 192.1.3.209 dst 192.1.2.23
 	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -67,6 +68,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 road #
  ipsec _kernel policy
 src 192.0.2.0/24 dst 192.0.3.1/32
@@ -101,6 +103,7 @@ road #
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     altname enp0s5
     altname ens5
+    altname enx120000abcd02
     inet 192.1.33.222/24 scope global eth0
        valid_lft forever preferred_lft forever
 road #
@@ -135,12 +138,14 @@ src 192.1.2.23 dst 192.1.33.222
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.33.222 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 road #
  ipsec _kernel policy
 src 192.0.2.0/24 dst 192.0.3.1/32

@@ -27,6 +27,7 @@ src 0.0.0.0 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 0.0.0.0
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -37,6 +38,7 @@ src 192.1.2.23 dst 0.0.0.0
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -47,6 +49,7 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
 src 192.1.2.23 dst 192.1.2.254
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
@@ -57,6 +60,7 @@ src 192.1.2.23 dst 192.1.2.254
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
 XFRM policy:
 src 192.0.20.0/24 dst 192.0.3.0/24

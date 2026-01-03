@@ -14,12 +14,14 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 	sel src ::/0 dst ::/0 
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto 41 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 
@@ -29,12 +31,14 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir in
 	sel src ::/0 dst ::/0 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag noecn nopmtudisc af-unspec
+	replay-window 0 flag noecn af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
+	dir in
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto 41 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 

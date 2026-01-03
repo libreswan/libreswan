@@ -57,6 +57,7 @@ src 198.18.1.12 dst 198.18.1.15
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 	if_id 0x1
 	dir out
 src 198.18.1.15 dst 198.18.1.12
@@ -69,6 +70,7 @@ src 198.18.1.15 dst 198.18.1.12
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	if_id 0x1
 	dir in
 rise #

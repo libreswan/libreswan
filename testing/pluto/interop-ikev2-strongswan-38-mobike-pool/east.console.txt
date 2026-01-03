@@ -20,9 +20,11 @@ src 192.1.2.254 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.2.23 dst 192.1.2.254
 	encap type espinudp sport 4500 sport NATED6501 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel policy ; fi
 src 192.0.2.0/24 dst 192.0.3.10/32

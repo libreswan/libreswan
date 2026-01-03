@@ -34,6 +34,7 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+	dir out
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -41,6 +42,7 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir in
 	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 east #
  ipsec _kernel policy

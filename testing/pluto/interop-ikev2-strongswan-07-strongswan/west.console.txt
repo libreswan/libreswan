@@ -74,12 +74,14 @@ src 192.1.2.45 dst 192.1.2.23
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	comp deflate 
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
@@ -89,14 +91,16 @@ src 192.1.2.23 dst 192.1.2.45
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir in
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag noecn nopmtudisc af-unspec
+	replay-window 0 flag noecn af-unspec
 	comp deflate 
+	dir in
 src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
-	replay-window 0 flag noecn nopmtudisc af-unspec
+	replay-window 0 flag noecn af-unspec
 	lastused YYYY-MM-DD HH:MM:SS
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec _kernel state ; fi

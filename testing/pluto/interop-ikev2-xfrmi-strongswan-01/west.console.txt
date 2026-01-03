@@ -87,10 +87,12 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 0 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	if_id 0x2
+	dir out
 src 192.1.2.23 dst 192.1.2.45
 	replay-window 32 flag af-unspec
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	if_id 0x2
+	dir in
 west #
  ../../guestbin/ip.sh link set up dev ipsec2
 west #
