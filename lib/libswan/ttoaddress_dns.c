@@ -49,6 +49,8 @@
 
 diag_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 {
+	*dst = unset_address;
+
 	/*
 	 * Try dotted IP first.
 	 *
@@ -63,13 +65,33 @@ diag_t ttoaddress_dns(shunk_t src, const struct ip_info *afi, ip_address *dst)
 	}
 	pfree_diag(&d);
 
-	*dst = unset_address;
-
 #ifdef USE_UNBOUND
 
 	char *name = clone_hunk_as_string(&src, __func__); /* must free */
-	d = unbound_sync_resolve(name, afi, dst,
-				 VERBOSE(DEBUG_STREAM, &global_logger, NULL));
+	d = NULL;
+
+	if (afi == NULL) {
+		/*
+		 * Unbound requires two explicit queries to implement
+		 * a wildcard family lookup.
+		 *
+		 * A better implementation needs to return multiple
+		 * addresses which would fit the
+		 * unimplemented-implemented ttoaddresses_dns().
+		 */
+		FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+			pfree_diag(&d);
+			d = unbound_sync_resolve(name, afi, dst,
+						 VERBOSE(DEBUG_STREAM, &global_logger, NULL));
+			if (d == NULL) {
+				break;
+			}
+		}
+	} else {
+		d = unbound_sync_resolve(name, afi, dst,
+					 VERBOSE(DEBUG_STREAM, &global_logger, NULL));
+	}
+
 	pfreeany(name);
 	return d;
 
