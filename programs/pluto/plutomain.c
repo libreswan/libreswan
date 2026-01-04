@@ -1520,8 +1520,8 @@ int main(int argc, char **argv)
 	pluto_sd_init(logger);
 #endif
 
-	const struct dnssec_config *dnssec = dnssec_config_singleton(logger);
 #ifdef USE_DNSSEC
+	const struct dnssec_config *dnssec = dnssec_config_singleton(logger);
 	init_ikev2_ipseckey(get_pluto_event_base(), logger);
 	llog(RC_LOG, logger, "DNSSEC support [%s]", (dnssec->enable ? "enabled" : "disabled"));
 #else
