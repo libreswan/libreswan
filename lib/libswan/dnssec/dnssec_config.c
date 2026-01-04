@@ -17,6 +17,7 @@
 #include "dnssec.h"
 
 #include "ipsecconf/setup.h"
+#include "lswlog.h"
 
 static struct dnssec_config config;
 static const struct dnssec_config *dnssec;
@@ -38,5 +39,9 @@ const struct dnssec_config *dnssec_config_singleton(struct logger *logger UNUSED
 	config.rootkey_file = config_setup_string(KSF_DNSSEC_ROOTKEY_FILE);
 	config.anchors = config_setup_string(KSF_DNSSEC_ANCHORS);
 	dnssec = &config;
+	ldbg(logger, "DNSSEC: enabled=%s rootkey_file=%s anchors=%s",
+	     bool_str(enable),
+	     (config.rootkey_file == NULL ? "" : config.rootkey_file),
+	     (config.anchors == NULL ? "" : config.anchors));
 	return dnssec;
 }
