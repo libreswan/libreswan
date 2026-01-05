@@ -21,6 +21,7 @@ src 192.1.2.23 dst 192.1.2.45
 	replay-window 0 flag af-unspec align4
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 src 192.1.2.45 dst 192.1.2.23
 	proto ah spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec align4
