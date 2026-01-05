@@ -240,9 +240,22 @@ uintmax_t config_setup_option(enum config_setup_keyword field)
 			pexpect(e == NULL);
 			return option;
 		}
-		default:
-			bad_case(def->type);
+		case kt_string:
+		case kt_appendstring:
+		case kt_appendlist:
+		case kt_seconds:
+		case kt_obsolete:
+		case kt_also:
+		{
+			name_buf ktn;
+			llog_pexpect(&global_logger, HERE,
+				     "\"config setup\" option %s has unexpected type %s",
+				     def->keyname,
+				     str_enum_short(&keyword_type_names, def->type, &ktn));
+			return 0;
 		}
+		}
+		bad_case(def->type);
 	}
 
 	return 0;
