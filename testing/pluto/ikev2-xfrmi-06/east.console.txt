@@ -26,6 +26,7 @@ east #
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
     altname enp0s6
     altname ens6
+    altname enx120000dcbcff
     inet 192.0.2.254/24 scope global eth0
        valid_lft forever preferred_lft forever
 east #

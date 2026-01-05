@@ -28,6 +28,7 @@ east #
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
     altname enp0s6
     altname ens6
+    altname enx120000dcbcff
     inet 192.0.2.254/24 scope global eth0
        valid_lft forever preferred_lft forever
     inet 10.0.2.254/32 scope global eth0
@@ -36,6 +37,7 @@ east #
     link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
     altname enp0s8
     altname ens8
+    altname enx120000646423
     inet 192.1.2.23/24 scope global eth1
        valid_lft forever preferred_lft forever
 east #
@@ -46,10 +48,12 @@ east #
     link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
     altname enp0s6
     altname ens6
+    altname enx120000dcbcff
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
     link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
     altname enp0s8
     altname ens8
+    altname enx120000646423
 east #
  ../../guestbin/ip.sh route show
 default via 192.1.2.254 dev eth1 proto static
