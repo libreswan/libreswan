@@ -47,6 +47,7 @@ src 192.1.3.209 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 src 192.1.2.23 dst 192.1.3.209
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
@@ -54,6 +55,7 @@ src 192.1.2.23 dst 192.1.3.209
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 road #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.3.10/32
@@ -75,6 +77,7 @@ road #
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     altname enp0s5
     altname ens5
+    altname enx120000abcd02
     inet 192.1.3.209/24 scope global eth0
 road #
  # delete the routes down to simulate WiFi link down.
@@ -107,6 +110,7 @@ road #
     link/ether 12:00:00:ab:cd:02 brd ff:ff:ff:ff:ff:ff
     altname enp0s5
     altname ens5
+    altname enx120000abcd02
     inet 192.1.33.222/24 scope global eth0
 road #
  # MOBIKE ping should work
@@ -130,12 +134,14 @@ src 192.1.2.23 dst 192.1.33.222
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 src 192.1.33.222 dst 192.1.2.23
 	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
 	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
+	dir out
 road #
  ipsec _kernel policy
 src 0.0.0.0/0 dst 192.0.3.10/32

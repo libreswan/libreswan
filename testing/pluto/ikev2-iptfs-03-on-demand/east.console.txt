@@ -26,6 +26,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 	dir out
+	dir out
 	iptfs-opts dont-frag init-delay 777 max-queue-size 10240 pkt-size 1400
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode iptfs
@@ -36,6 +37,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	dir in
 	iptfs-opts drop-time 111 reorder-window 13
 east #

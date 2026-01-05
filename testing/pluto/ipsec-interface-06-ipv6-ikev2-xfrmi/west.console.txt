@@ -71,6 +71,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 	if_id 0x1
+	dir out
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -82,6 +83,7 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	if_id 0x1
+	dir in
 west #
  ipsec _kernel policy
 src ::/0 dst ::/0 proto ipv6-icmp type 135

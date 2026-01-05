@@ -89,6 +89,7 @@ src 192.1.2.23 dst 192.1.3.33
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	sel src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701 
 north #
  ipsec _kernel policy

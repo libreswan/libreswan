@@ -63,7 +63,7 @@ sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed INFORMATIONAL response 3 [ D ]
 received DELETE for ESP CHILD_SA with SPI SPISPI
-CHILD_SA closed
+CHILD_SA westnet-eastnet-ikev2{1} closed
 CHILD_SA {1} closed successfully
 west #
  sleep 1
@@ -76,7 +76,7 @@ sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed INFORMATIONAL response 4 [ D ]
 received DELETE for ESP CHILD_SA with SPI SPISPI
-CHILD_SA closed
+CHILD_SA westnet-eastnet2-ikev2{2} closed
 CHILD_SA {2} closed successfully
 west #
  sleep 3

@@ -46,6 +46,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -57,10 +58,12 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
+	dir out
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
 west #
  ipsec _kernel policy
@@ -95,6 +98,7 @@ src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -106,10 +110,12 @@ src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
+	dir in
 	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
+	dir out
 	sel src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 proto ipv6-icmp type 128 code 0 
 west #
  ipsec _kernel policy

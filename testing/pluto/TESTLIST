@@ -87,9 +87,9 @@ kvmplutotest	linux-audit-03-ipsec-fail-ikev2	good
 #kvmplutotest	linux-audit-04-rekey-ikev1	wip
 #kvmplutotest	linux-audit-04-rekey-ikev2	wip
 
-kvmplutotest	ikev1-01-fuzzer	good
-kvmplutotest	ikev1-02-fuzzer	good
-kvmplutotest	ikev1-03-fuzzer	good
+kvmplutotest	ikev1-01-fuzzer			wip	github/2570
+kvmplutotest	ikev1-02-fuzzer			wip	github/2570
+kvmplutotest	ikev1-03-fuzzer			wip	github/2570
 kvmplutotest	ikev2-fuzzer-01	good
 
 kvmplutotest	basic-pluto-01-wrongkey		wip
@@ -1310,9 +1310,9 @@ kvmplutotest 	ikev2-55-ipseckey-09				good
 
 kvmplutotest	replay-authip-01			good
 
-kvmplutotest	ikev1-l2tp-01				good
-kvmplutotest	ikev1-l2tp-02				good
-kvmplutotest	ikev1-l2tp-03-two-interfaces		good	github/693,github/1117
+kvmplutotest	ikev1-l2tp-01				wip	github/2515
+kvmplutotest	ikev1-l2tp-02				wip	github/2515
+kvmplutotest	ikev1-l2tp-03-two-interfaces		wip	github/693,github/1117,github/2515
 
 kvmplutotest	listen-change-01			good
 
