@@ -78,9 +78,8 @@ void unbound_ctx_config(struct ub_ctx *ub_ctx,
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
 	ugh = ub_ctx_hosts(ub_ctx, "/etc/hosts");
 	if (ugh != 0) {
-		llog(RC_LOG, logger,
-			    "error reading hosts: %s: %s",
-			    ub_strerror(ugh), strerror(errno));
+		llog(WARNING_STREAM, logger, "UNBOUND could not load /etc/hosts: %s",
+		     ub_strerror(ugh));
 	} else {
 		ldbg(logger, "/etc/hosts lookups activated");
 	}
@@ -97,85 +96,71 @@ void unbound_ctx_config(struct ub_ctx *ub_ctx,
 	 * "Yes it is.  Specifically for the error-to-read-file case.
 	 *  Not other cases (eg. socket errors happen too far away in the code)."
 	 */
-	errno = 0;
 	ugh = ub_ctx_resolvconf(ub_ctx, "/etc/resolv.conf");
 	if (ugh != 0) {
-		int e = errno;	/* protect value from ub_strerror */
-
-		llog(RC_LOG, logger,
-			    "error reading /etc/resolv.conf: %s: [errno: %s]",
-			    ub_strerror(ugh), strerror(e));
+		/* ub_ctx_resolvconf() attempts to preserve errno */
+		int e = errno;
+		llog_errno(WARNING_STREAM, logger, e,
+			   "UNBOUND: could not load /etc/resolv.conf: %s; ",
+			   ub_strerror(ugh));
 	} else {
-		ldbg(logger, "/etc/resolv.conf usage activated");
+		ldbg(logger, "UNBOUND: /etc/resolv.conf usage activated");
 	}
 
 	/*
 	 * Limit outgoing ports to those allowed by common SELinux policy
 	 */
-	errno = 0;
-	ugh = ub_ctx_set_option(ub_ctx, "outgoing-port-avoid:", "0-65535");
+	const char *outgoing_port_avoid = "0-65535";
+	ugh = ub_ctx_set_option(ub_ctx, "outgoing-port-avoid:", outgoing_port_avoid);
 	if (ugh != 0) {
-		llog(RC_LOG, logger,
-			    "error setting outgoing-port-avoid: %s: %s",
-			    ub_strerror(ugh), strerror(errno));
+		llog(WARNING_STREAM, logger, "UNBOUND: could not set outgoing-port-avoid=%s: %s",
+		     outgoing_port_avoid, ub_strerror(ugh));
 	} else {
-		ldbg(logger, "outgoing-port-avoid set 0-65535");
+		ldbg(logger, "UNBOUND: set outgoing-port-avoid=%s", outgoing_port_avoid);
 	}
 
-	errno = 0;
-	ugh = ub_ctx_set_option(ub_ctx, "outgoing-port-permit:", "32768-60999");
-		if (ugh != 0) {
-		llog(RC_LOG, logger,
-			    "error setting outgoing-port-permit: %s: %s",
-			    ub_strerror(ugh), strerror(errno));
+	const char *outgoing_port_permit = "32768-60999";
+	ugh = ub_ctx_set_option(ub_ctx, "outgoing-port-permit:", outgoing_port_permit);
+	if (ugh != 0) {
+		llog(WARNING_STREAM, logger, "UNBOUND: could not set outgoing-port-permit=%s: %s",
+		     outgoing_port_permit, ub_strerror(ugh));
 	} else {
-		ldbg(logger, "outgoing-port-permit set 32768-60999");
+		ldbg(logger, "UNBOUND: set outgoing-port-permit=%s", outgoing_port_permit);
 	}
 
 	if (!config->enable) {
 		/* No DNSSEC - nothing more to configure */
-		ldbg(logger, "dnssec validation disabled by configuration");
+		ldbg(logger, "UNBOUND: dnssec validation disabled by configuration");
 		return;
 	}
 
 	/* Only DNSSEC related configuration from here */
+
 	if (config->rootkey_file == NULL) {
-		if (config->anchors == NULL) {
-			llog(RC_LOG, logger,
-			     "dnssec-enable=yes but no dnssec-rootkey-file or trust anchors specified.");
-			llog(RC_LOG, logger,
-			     "WARNING: DNSSEC validation disabled");
-			return;
-		} else {
-			llog(RC_LOG, logger,
-			     "dnssec-enable=yes but no dnssec-rootkey-file specified. Additional trust anchor file MUST include a root trust anchor or DNSSEC validation will be disabled");
-		}
-	} else {
-		ldbg(logger, "loading dnssec root key from:%s", config->rootkey_file);
-		errno = 0;
-		ugh = ub_ctx_add_ta_file(ub_ctx, config->rootkey_file);
-		if (ugh != 0) {
-			int e = errno;	/* protect value from ub_strerror */
-
-			llog(RC_LOG, logger,
-				    "error adding dnssec root key: %s [errno: %s]",
-				    ub_strerror(ugh), strerror(e));
-			llog(RC_LOG, logger,
-				    "WARNING: DNSSEC validation disabled");
-		}
-	}
-
-	if (config->anchors == NULL) {
-		ldbg(logger, "no additional dnssec trust anchors defined via dnssec-trusted= option");
+		llog(WARNING_STREAM, logger,
+		     "UNBOUND: DNSSEC validation disabled, dnssec-enable=yes but no dnssec-rootkey-file was specified");
 		return;
 	}
 
-	struct lswglob_context lswglob_context = {
-		.ub = ub_ctx,
-	};
-	if (!lswglob(config->anchors, "trusted anchor", add_trust_anchors,
-		     &lswglob_context, logger)) {
-		llog(RC_LOG, logger, "no trust anchor files matched '%s'", config->anchors);
+	ldbg(logger, "UNBOUND: loading dnssec root key from: %s", config->rootkey_file);
+	ugh = ub_ctx_add_ta_file(ub_ctx, config->rootkey_file);
+	if (ugh != 0) {
+		llog(WARNING_STREAM, logger,
+		     "UNBOUND: DNSSEC validation disabled, adding dnssec root key failed: %s; ",
+		     ub_strerror(ugh));
+	}
+
+	if (config->anchors == NULL) {
+		ldbg(logger, "UNBOUND: no additional dnssec trust anchors defined via dnssec-trusted= option");
+	} else {
+		ldbg(logger, "UNBOUND: adding additional trust anchors matching: %s", config->anchors);
+		struct lswglob_context lswglob_context = {
+			.ub = ub_ctx,
+		};
+		if (!lswglob(config->anchors, "trusted anchor", add_trust_anchors,
+			     &lswglob_context, logger)) {
+			llog(RC_LOG, logger, "UNBOUND: no trust anchor files matched '%s'", config->anchors);
+		}
 	}
 }
 
