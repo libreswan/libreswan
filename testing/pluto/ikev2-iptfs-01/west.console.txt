@@ -53,7 +53,6 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 	dir out
-	dir out
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode 5
 	replay-window 0 flag af-unspec esn
@@ -63,7 +62,6 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	dir in
 	dir in
 west #
  ipsec _kernel policy
@@ -80,7 +78,10 @@ src 192.1.2.45/32 dst 192.1.2.23/32
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode 5
 west #
- grep '^[^|].*IPTFS' /tmp/pluto.log
+ grep -e '^[^|].*IPTFS' /tmp/pluto.log
 kernel: IPTFS SA supported by kernel
 "ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN/IPTFS=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ grep -e '^[^|].*USE_AGGFRAG' /tmp/pluto.log
+"ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_AGGFRAG)}
 west #

@@ -29,15 +29,8 @@ west #
 fired and forgotten
 west #
  ipsec _kernel state | grep iptfs
-	proto esp spi 0xSPISPI reqid REQID mode iptfs
-	iptfs-opts init-delay 0 max-queue-size 10485760 pkt-size 0
-	proto esp spi 0xSPISPI reqid REQID mode iptfs
-	iptfs-opts drop-time 1000000 reorder-window 3
 west #
  ip xfrm pol |grep iptfs
-		proto esp reqid 16389 mode iptfs
-		proto esp reqid 16389 mode iptfs
-		proto esp reqid 16389 mode iptfs
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
@@ -47,7 +40,7 @@ done
 west #
  ipsec _kernel state
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	proto esp spi 0xSPISPI reqid REQID mode 5
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
@@ -55,10 +48,8 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 0, bitmap-length 0
 	dir out
-	dir out
-	iptfs-opts init-delay 0 max-queue-size 10485760 pkt-size 0
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode iptfs
+	proto esp spi 0xSPISPI reqid REQID mode 5
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	lastused YYYY-MM-DD HH:MM:SS
@@ -67,8 +58,6 @@ src 192.1.2.23 dst 192.1.2.45
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
 	dir in
-	dir in
-	iptfs-opts drop-time 1000000 reorder-window 3
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid 0 mode transport
 	replay-window 0 
@@ -79,31 +68,20 @@ west #
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode iptfs
+		proto esp reqid REQID mode 5
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir in priority PRIORITY ptype main
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto esp reqid REQID mode iptfs
+		proto esp reqid REQID mode 5
 src 192.1.2.45/32 dst 192.1.2.23/32
 	dir out priority PRIORITY ptype main
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto esp reqid REQID mode iptfs
+		proto esp reqid REQID mode 5
 west #
- grep IPTFS /tmp/pluto.log
-| netlink_add_sa() enabling IPTFS mode
-| netlink_add_sa() setting all IPTFS xfrm options
-| sendrecv_xfrm_msg() sending 16 Add SA IPTFS Support Probe
-| sendrecv_xfrm_msg() netlink response for Add SA IPTFS Support Probe included non-error error
-| kernel: IPTFS supported
-| Initiator policy is IPTFS, responder sends v2N_USE_AGGFRAG, setting CHILD SA to IPTFS
-| kernel: Enabling IPTFS with PMTU packet size
-| kernel: IPTFS with dont_frag set
-| kernel: IPTFS max_qsize=0, drop_time=0, init_delay=0, reord_win=0
-| netlink_add_sa() enabling IPTFS mode
-| netlink_add_sa() setting all IPTFS xfrm options
-| kernel: Enabling IPTFS with PMTU packet size
-| kernel: IPTFS with dont_frag set
-| kernel: IPTFS max_qsize=0, drop_time=0, init_delay=0, reord_win=0
-| netlink_add_sa() enabling IPTFS mode
-| netlink_add_sa() setting all IPTFS xfrm options
+ grep -e '^[^|].*IPTFS' /tmp/pluto.log
+kernel: IPTFS SA supported by kernel
 "ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45/32===192.1.2.23/32] {ESP/ESN/IPTFS=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+west #
+ grep -e '^[^|].*USE_AGGFRAG' /tmp/pluto.log
+"ipv4-psk-ikev2" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr,N(USE_AGGFRAG)}
+west #
