@@ -308,7 +308,6 @@ endif
 
 OBJS += autostart_names.o
 
-# always compile, won't be linked
 OBJS += seccomp_mode_names.o
 
 #

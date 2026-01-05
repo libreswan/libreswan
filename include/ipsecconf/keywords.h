@@ -49,6 +49,7 @@ enum keyword_valid_ix {
 				 * be duplicated (notably also=) */
 	KV_OPTARG_ONLY_IX,	/* pretend entry does not exist; only
 				 * allowed on command line */
+	KV_NOSUP_IX,		/* Option is not enabled in build */
 };
 
 enum keyword_valid {
@@ -57,6 +58,7 @@ enum keyword_valid {
         kv_alias	= LELEM(KV_ALIAS_IX),
         kv_optarg_only	= LELEM(KV_OPTARG_ONLY_IX),
         kv_duplicateok	= LELEM(KV_DUPLICATEOK_IX),
+        kv_nosup	= LELEM(KV_NOSUP_IX),
 };
 
 enum keyword_type {
@@ -69,7 +71,6 @@ enum keyword_type {
 	kt_also,		/* i.e., #include */
 	kt_obsolete,            /* option that is obsoleted, allow
 				 * keyword but warn and ignore */
-	kt_nosup,		/* Option is not enabled in build */
 };
 
 extern const struct enum_names keyword_type_names;

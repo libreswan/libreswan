@@ -27,9 +27,7 @@
 #include "lswversion.h"
 #include "ocsp_method.h"
 #include "global_redirect.h"
-#ifdef USE_SECCOMP
 #include "seccomp_mode.h"
-#endif
 #include "ddos_mode.h"
 #include "timescale.h"
 #include "sparse_names.h"
@@ -399,7 +397,6 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		case kt_also:
 		case kt_appendstring:
 		case kt_appendlist:
-		case kt_nosup:
 			break;
 
 		}
@@ -437,7 +434,6 @@ bool load_config_setup(const char *file,
 
 static const struct keyword_def config_setup_keyword[] = {
 #define K(KEYNAME, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, ##__VA_ARGS__ }
-#define U(KEYNAME, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = kt_nosup, }
 
   K("ikev1-policy",  kt_sparse_name,  KBF_IKEv1_POLICY, .sparse_names = &global_ikev1_policy_names),
   K("curl-iface",  kt_string,  KSF_CURLIFACE),
@@ -453,14 +449,14 @@ static const struct keyword_def config_setup_keyword[] = {
   K("audit-log",  kt_sparse_name,  KYN_AUDIT_LOG, .sparse_names = &yn_option_names),
 
 #ifdef USE_DNSSEC
-# define S K
+# define NOSUP LEMPTY
 #else
-# define S U
+# define NOSUP kv_nosup
 #endif
-  S("dnssec-enable",  kt_sparse_name,  KYN_DNSSEC_ENABLE, .sparse_names = &yn_option_names),
-  S("dnssec-rootkey-file",  kt_string, KSF_DNSSEC_ROOTKEY_FILE),
-  S("dnssec-anchors",  kt_string, KSF_DNSSEC_ANCHORS),
-#undef S
+  K("dnssec-enable", kt_sparse_name, KYN_DNSSEC_ENABLE, .sparse_names = &yn_option_names, .validity = NOSUP),
+  K("dnssec-rootkey-file", kt_string, KSF_DNSSEC_ROOTKEY_FILE, .validity = NOSUP),
+  K("dnssec-anchors", kt_string, KSF_DNSSEC_ANCHORS, .validity = NOSUP),
+#undef NOSUP
 
   K("dumpdir",  kt_string,  KSF_DUMPDIR),
   K("ipsecdir",  kt_string,  KSF_IPSECDIR),
@@ -493,12 +489,12 @@ static const struct keyword_def config_setup_keyword[] = {
   K("ocsp-method",  kt_sparse_name,  KBF_OCSP_METHOD, .sparse_names = &ocsp_method_names),
 
 #ifdef USE_SECCOMP
-# define S K
+# define NOSUP LEMPTY
 #else
-# define S U
+# define NOSUP kv_nosup
 #endif
-  S("seccomp",  kt_sparse_name,  KBF_SECCOMP, .sparse_names = &seccomp_mode_names),
-#undef S
+  K("seccomp", kt_sparse_name,  KBF_SECCOMP, .sparse_names = &seccomp_mode_names, .validity = NOSUP),
+#undef NOSUP
 
   K("ddos-mode",  kt_sparse_name,  KBF_DDOS_MODE, .sparse_names = &ddos_mode_names),
   K("ddos-ike-threshold",  kt_unsigned,  KBF_DDOS_IKE_THRESHOLD),
@@ -508,12 +504,12 @@ static const struct keyword_def config_setup_keyword[] = {
   K("ike-socket-errqueue",  kt_sparse_name,  KYN_IKE_SOCKET_ERRQUEUE, .sparse_names = &yn_option_names),
 
 #ifdef XFRM_LIFETIME_DEFAULT
-# define S K
+# define NOSUP LEMPTY
 #else
-# define S U
+# define NOSUP kv_nosup
 #endif
-  S("expire-lifetime",  kt_seconds,  KBF_EXPIRE_LIFETIME),
-#undef S
+  K("expire-lifetime", kt_seconds,  KBF_EXPIRE_LIFETIME, .validity = NOSUP),
+#undef NOSUP
 
   K("virtual-private",  kt_string,  KSF_VIRTUAL_PRIVATE),
   K("seedbits",  kt_unsigned,  KBF_SEEDBITS),
@@ -533,12 +529,12 @@ static const struct keyword_def config_setup_keyword[] = {
   K("ipsec-interface-managed", kt_sparse_name, KYN_IPSEC_INTERFACE_MANAGED, .sparse_names = &yn_option_names),
 
 #ifdef USE_NFLOG
-# define S K
+# define NOSUP LEMPTY
 #else
-# define S U
+# define NOSUP kv_nosup
 #endif
-  S("nflog-all",  kt_unsigned,  KBF_NFLOG_ALL),
-#undef S
+  K("nflog-all", kt_unsigned,  KBF_NFLOG_ALL, .validity = NOSUP),
+#undef NOSUP
 
   /*
    * Force first alias/obsolete keyword into slot following all
