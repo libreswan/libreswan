@@ -151,7 +151,6 @@ dnf upgrade -y $(packages_for_build)
 
 downloads="
 https://kojipkgs.fedoraproject.org//packages/xl2tpd/1.3.17/8.fc43/x86_64/xl2tpd-1.3.17-8.fc43.x86_64.rpm
-https://kojipkgs.fedoraproject.org//packages/ike-scan/1.9.4/44.fc43/x86_64/ike-scan-1.9.4-44.fc43.x86_64.rpm
 "
 
 rpms=
