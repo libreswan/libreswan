@@ -72,6 +72,8 @@ enum keyword_type {
 	kt_nosup,		/* Option is not enabled in build */
 };
 
+extern const struct enum_names keyword_type_names;
+
 struct keyword_def {
 	const char        *keyname;
 	unsigned int validity;          /* has bits from enum keyword_valid (kv_*) */

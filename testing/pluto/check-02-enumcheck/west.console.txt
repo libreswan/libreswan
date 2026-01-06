@@ -3961,6 +3961,63 @@ name for -1 present (should be absent)
          short_name 3: IP-TFS Mode OK
          jam_enum_short 3: IP-TFS Mode OK
          jam_enum_human 3: ip-tfs mode OK
+  keyword_type_names: [0..8)
+    0 -> kt_string
+         jam_enum 0: kt_string OK
+         match kt_string: OK
+         short_name 0: string OK
+         jam_enum_short 0: string OK
+         jam_enum_human 0: string OK
+         match string [short]: OK
+    1 -> kt_appendstring
+         jam_enum 1: kt_appendstring OK
+         match kt_appendstring: OK
+         short_name 1: appendstring OK
+         jam_enum_short 1: appendstring OK
+         jam_enum_human 1: appendstring OK
+         match appendstring [short]: OK
+    2 -> kt_appendlist
+         jam_enum 2: kt_appendlist OK
+         match kt_appendlist: OK
+         short_name 2: appendlist OK
+         jam_enum_short 2: appendlist OK
+         jam_enum_human 2: appendlist OK
+         match appendlist [short]: OK
+    3 -> kt_sparse_name
+         jam_enum 3: kt_sparse_name OK
+         match kt_sparse_name: OK
+         short_name 3: sparse_name OK
+         jam_enum_short 3: sparse_name OK
+         jam_enum_human 3: sparse-name OK
+         match sparse_name [short]: OK
+    4 -> kt_unsigned
+         jam_enum 4: kt_unsigned OK
+         match kt_unsigned: OK
+         short_name 4: unsigned OK
+         jam_enum_short 4: unsigned OK
+         jam_enum_human 4: unsigned OK
+         match unsigned [short]: OK
+    5 -> kt_seconds
+         jam_enum 5: kt_seconds OK
+         match kt_seconds: OK
+         short_name 5: seconds OK
+         jam_enum_short 5: seconds OK
+         jam_enum_human 5: seconds OK
+         match seconds [short]: OK
+    6 -> kt_also
+         jam_enum 6: kt_also OK
+         match kt_also: OK
+         short_name 6: also OK
+         jam_enum_short 6: also OK
+         jam_enum_human 6: also OK
+         match also [short]: OK
+    7 -> kt_obsolete
+         jam_enum 7: kt_obsolete OK
+         match kt_obsolete: OK
+         short_name 7: obsolete OK
+         jam_enum_short 7: obsolete OK
+         jam_enum_human 7: obsolete OK
+         match obsolete [short]: OK
   message_role_names: [0..3)
     0 -> NO_MESSAGE
          jam_enum 0: NO_MESSAGE OK
