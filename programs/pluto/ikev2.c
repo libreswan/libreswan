@@ -1967,28 +1967,55 @@ bool accept_v2_notification(v2_notification_t n,
 			    bool enabled)
 {
 	enum v2_pd pd = v2_pd_from_notification(n);
-	if (md->pd[pd] != NULL) {
-		if (enabled) {
-			name_buf eb, rb;
-			ldbg(logger, "accepted %s notification %s",
-			     str_enum_short(&v2_notification_names, n, &eb),
-			     str_enum_short(&message_role_names, v2_msg_role(md), &rb));
-			return true;
-		}
-		if (v2_msg_role(md) == MESSAGE_RESPONSE) {
+	bool responder = (v2_msg_role(md) == MESSAGE_REQUEST);
+	bool proposed = (md->pd[pd] != NULL);
+
+	if (enabled && proposed) {
+		if (responder) {
 			name_buf eb;
-			llog(RC_LOG, logger,
-			     "unsolicited %s notification response ignored",
+			ldbg(logger, "accepting proposed %s notification from initiator",
 			     str_enum_short(&v2_notification_names, n, &eb));
 		} else {
 			name_buf eb;
-			ldbg(logger, "%s notification request ignored",
+			ldbg(logger, "responder accepted our proposed %s notification",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		}
+		return true;
+	}
+
+	if (enabled) {
+		PEXPECT(logger, !proposed);
+		if (responder) {
+			name_buf eb;
+			ldbg(logger, "acceptable %s notification was not proposed by initiator",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		} else {
+			name_buf eb;
+			ldbg(logger, "our proposed %s notification was rejected by responder",
 			     str_enum_short(&v2_notification_names, n, &eb));
 		}
 		return false;
 	}
+
+	if (proposed) {
+		PEXPECT(logger, !enabled);
+		if (responder) {
+			name_buf eb;
+			ldbg(logger, "proposed %s notification is not enabled in responder",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		} else {
+			name_buf eb;
+			llog(RC_LOG, logger, "ignoring unsolicited %s notification in response",
+			     str_enum_short(&v2_notification_names, n, &eb));
+		}
+		return false;
+	}
+
+	PEXPECT(logger, !proposed);
+	PEXPECT(logger, !enabled);
+
 	name_buf eb;
-	ldbg(logger, "%s neither requested nor accepted",
+	ldbg(logger, "%s notification neither proposed nor allowed",
 	     str_enum_short(&v2_notification_names, n, &eb));
 	return false;
 }
