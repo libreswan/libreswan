@@ -1,9 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.13.89, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 07 16 d9 08 06
-strongswan U5.9.14 must be installed
-Linux strongSwan U6.0.2/K6.16.11-200.fc42.x86_64
-University of Applied Sciences Rapperswil, Switzerland
 west #
  # confirm that the network is alive
 west #
@@ -43,10 +38,10 @@ received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_INTERMEDIATE response 1 [ KE ]
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2{1}
-generating IKE_AUTH request 2 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 2 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 2 [ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) ]
+parsed IKE_AUTH response 2 [ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) ]
 authentication of 'east' with pre-shared key successful
 peer supports MOBIKE
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
@@ -70,8 +65,6 @@ west #
 Shunted Connections:
 Bypass LAN 192.0.1.0/24:  192.0.1.0/24 === 192.0.1.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Bypass LAN 198.19.0.0/16:  198.19.0.0/16 === 198.19.0.0/16 PASS
-Bypass LAN 198.19.0.1/32:  198.19.0.1/32 === 198.19.0.1/32 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o

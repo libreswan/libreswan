@@ -1,9 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.13.89, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 07 16 d9 08 06
-strongswan U5.9.14 must be installed
-Linux strongSwan U6.0.2/K6.16.11-200.fc42.x86_64
-University of Applied Sciences Rapperswil, Switzerland
 east #
  ../../guestbin/strongswan-start.sh
 east #
@@ -19,9 +14,8 @@ Status of IKE charon daemon (strongSwan VERSION):
   uptime: XXX second, since YYY
   malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
 Listening IP addresses:
-  198.19.13.89
-  192.1.2.23
   192.0.2.254
+  192.1.2.23
 Connections:
 westnet-eastnet-ikev2:  192.1.2.23...192.1.2.45  IKEv2
 westnet-eastnet-ikev2:   local:  [east] uses pre-shared key authentication
@@ -30,8 +24,6 @@ westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
 Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Bypass LAN 198.19.0.0/16:  198.19.0.0/16 === 198.19.0.0/16 PASS
-Bypass LAN 198.19.0.1/32:  198.19.0.1/32 === 198.19.0.1/32 PASS
 Security Associations (0 up, 1 connecting):
    (unnamed)[4]: CONNECTING, 192.1.2.23[%any]...192.1.2.45[%any]
    (unnamed)[4]: IKEv2 SPIs: SPISPI_i SPISPI_r*

@@ -1,11 +1,4 @@
 /testing/guestbin/swan-prep --userland strongswan
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.13.89, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 07 97 7a 08 06
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.13.89, on dev eth0
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 07 16 d9 08 06
-strongswan U5.9.14 must be installed
-Linux strongSwan U6.0.2/K6.16.11-200.fc42.x86_64
-University of Applied Sciences Rapperswil, Switzerland
 east #
  ../../guestbin/strongswan-start.sh
 east #
@@ -13,20 +6,14 @@ east #
 initdone
 east #
  update-crypto-policies --set DEFAULT:TEST-PQ
-ExperimentalValueWarning: `group` value `P384-MLKEM1024` is experimental and might go away in the future
 ExperimentalValueWarning: `group` value `P521-MLKEM1024` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `MLKEM1024` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `P256-MLKEM768` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `X25519-MLKEM768` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `MLKEM768-X25519` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `X448-MLKEM768` is experimental and might go away in the future
 ExperimentalValueWarning: `group` value `P384-MLKEM768` is experimental and might go away in the future
+ExperimentalValueWarning: `group` value `MLKEM1024` is experimental and might go away in the future
+ExperimentalValueWarning: `group` value `P256-MLKEM512` is experimental and might go away in the future
+ExperimentalValueWarning: `group` value `X448-MLKEM768` is experimental and might go away in the future
 ExperimentalValueWarning: `group` value `MLKEM768` is experimental and might go away in the future
 ExperimentalValueWarning: `group` value `X25519-MLKEM512` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `P256-MLKEM512` is experimental and might go away in the future
 ExperimentalValueWarning: `group` value `MLKEM512` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `P256-KYBER768` is experimental and might go away in the future
-ExperimentalValueWarning: `group` value `X25519-KYBER768` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `RSA3072-SPHINCSSHAKE128FSIMPLE` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `P256-SPHINCSSHAKE128FSIMPLE` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `SPHINCSSHAKE128FSIMPLE` is experimental and might go away in the future
@@ -48,18 +35,14 @@ ExperimentalValueWarning: `sign` value `FALCONPADDED512` is experimental and mig
 ExperimentalValueWarning: `sign` value `RSA3072-FALCON512` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `P256-FALCON512` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `FALCON512` is experimental and might go away in the future
-ExperimentalValueWarning: `sign` value `MLDSA87-ED448` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA87-BP384` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA87-P384` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `P521-MLDSA87` is experimental and might go away in the future
-ExperimentalValueWarning: `sign` value `MLDSA87` is experimental and might go away in the future
-ExperimentalValueWarning: `sign` value `MLDSA65-ED25519` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA65-BP256` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA65-P256` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA65-RSA3072` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA65-PSS3072` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `P384-MLDSA65` is experimental and might go away in the future
-ExperimentalValueWarning: `sign` value `MLDSA65` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA44-BP256` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA44-P256` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `MLDSA44-ED25519` is experimental and might go away in the future
@@ -67,9 +50,6 @@ ExperimentalValueWarning: `sign` value `MLDSA44-RSA2048` is experimental and mig
 ExperimentalValueWarning: `sign` value `MLDSA44-PSS2048` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `RSA3072-MLDSA44` is experimental and might go away in the future
 ExperimentalValueWarning: `sign` value `P256-MLDSA44` is experimental and might go away in the future
-ExperimentalValueWarning: `sign` value `MLDSA44` is experimental and might go away in the future
-ExperimentalValueWarning: `key_exchange` value `SNTRUP` is experimental and might go away in the future
-ExperimentalValueWarning: `key_exchange` value `KEM-ECDH` is experimental and might go away in the future
 Setting system policy to DEFAULT:TEST-PQ
 Note: System-wide crypto policies are applied on application start-up.
 It is recommended to restart the system for the change of policies
@@ -83,8 +63,6 @@ east #
 Shunted Connections:
 Bypass LAN 192.0.2.0/24:  192.0.2.0/24 === 192.0.2.0/24 PASS
 Bypass LAN 192.1.2.0/24:  192.1.2.0/24 === 192.1.2.0/24 PASS
-Bypass LAN 198.19.0.0/16:  198.19.0.0/16 === 198.19.0.0/16 PASS
-Bypass LAN 198.19.0.1/32:  198.19.0.1/32 === 198.19.0.1/32 PASS
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.2.45[west]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
