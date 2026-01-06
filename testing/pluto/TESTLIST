@@ -58,12 +58,14 @@ kvmplutotest	check-02-enumcheck		good
 kvmplutotest	check-03-vendoridcheck		good
 kvmplutotest	check-04-pki			good
 
-# interconnect
-kvmplutotest	check-10-network-fedora		good
-kvmplutotest	check-10-network-freebsd	good
-kvmplutotest	check-10-network-netbsd		good
-kvmplutotest	check-10-network-openbsd	good
-kvmplutotest	check-10-network-alpine		good
+# per-os sniff tests
+
+kvmplutotest	check-10-debian		good
+kvmplutotest	check-10-fedora		good
+kvmplutotest	check-10-freebsd	good
+kvmplutotest	check-10-netbsd		good
+kvmplutotest	check-10-openbsd	good
+kvmplutotest	check-10-alpine		good
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01			good
