@@ -804,13 +804,14 @@ static void llog_spd_conflict(struct logger *logger, const struct spd *spd,
 	}
 }
 
-bool get_connection_spd_conflict(const struct spd *spd,
-				 const enum routing new_routing,
-				 struct spd_owner *owner,
-				 struct bare_shunt ***bare_shunt,
-				 struct logger *logger)
+static bool get_connection_spd_conflict(struct spd *spd,
+					const enum routing new_routing,
+					struct logger *logger)
 {
+	struct spd_owner *owner = &spd->wip.conflicting.owner;
 	*owner = (struct spd_owner) {0};
+
+	struct bare_shunt ***bare_shunt = &spd->wip.conflicting.bare_shunt;
 	*bare_shunt = NULL;
 
 	const struct connection *c = spd->connection;
@@ -839,6 +840,17 @@ bool get_connection_spd_conflict(const struct spd *spd,
 		return false;
 	}
 
+	return true;
+}
+
+bool get_connection_spd_conflicts(struct connection *c,
+				  enum routing new_routing)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!get_connection_spd_conflict(spd, new_routing, c->logger)) {
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -932,7 +944,15 @@ void revert_kernel_policy(struct spd *spd,
 
 bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t where)
 {
+	/*
+	 * Still call spd_conflicts() when a sec_label so that the
+	 * structure is zeroed (sec_labels ignore conflicts).
+	 */
 	clear_connection_spd_conflicts(c);
+	if (!get_connection_spd_conflicts(c, new_routing)) {
+		clear_connection_spd_conflicts(c);
+		return false;
+	}
 
 	/*
 	 * Pass +1: install / replace kernel policy where needed.
@@ -941,18 +961,8 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 	bool ok = true;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
-		/*
-		 * Still call find_spd_conflicts() when a sec_label so that
-		 * the structure is zeroed (sec_labels ignore conflicts).
-		 */
-
-		struct spd_owner owner;
-		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.bare_shunt,
-						 c->logger);
-		if (!ok) {
-			break;
-		}
+		/* computed above */
+		const struct spd_owner *owner = &spd->wip.conflicting.owner;
 
 		/*
 		 * Install/replace the policy.
@@ -974,14 +984,14 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
 		PEXPECT(c->logger, spd->wip.ok);
-		if (owner.bare_route == NULL) {
+		if (owner->bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!updown_connection_spd(UPDOWN_PREPARE, c, spd, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
 		}
 
 		ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
-		if (owner.bare_route == NULL) {
+		if (owner->bare_route == NULL) {
 			ok &= spd->wip.installed.route =
 				updown_connection_spd(UPDOWN_ROUTE, c, spd, c->logger);
 		}

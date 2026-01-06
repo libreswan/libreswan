@@ -900,8 +900,8 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 }
 
 bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
-						   enum routing new_routing,
-						   struct do_updown updown)
+					    enum routing new_routing,
+					    struct do_updown updown)
 {
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
@@ -912,8 +912,14 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		return true;
 	}
 
-	/* clear the deck */
+	/*
+	 * clear the deck.
+	 */
 	clear_connection_spd_conflicts(c);
+	if (!get_connection_spd_conflicts(c, new_routing)) {
+		clear_connection_spd_conflicts(c);
+		return false;
+	}
 
 	bool ok = true;	/* sticky: once false, stays false */
 
@@ -922,6 +928,9 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 */
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		/* computed above */
+		const struct spd_owner *owner = & spd->wip.conflicting.owner;
 
 		selector_buf sb, db;
 		name_buf eb;
@@ -934,14 +943,6 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		     str_enum_short(&routing_names, c->routing.state, &eb),
 		     bool_str(updown.route),
 		     bool_str(updown.up));
-
-		struct spd_owner owner;
-		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.bare_shunt,
-						 c->logger);
-		if (!ok) {
-			break;
-		}
 
 		spd->wip.ok = true;
 
@@ -971,7 +972,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		 */
 
 		PEXPECT(logger, spd->wip.ok);
-		if ((updown.route || updown.up) && owner.bare_route == NULL) {
+		if ((updown.route || updown.up) && owner->bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!updown_child_spd(UPDOWN_PREPARE, child, spd))
 				ldbg(logger, "kernel: prepare command returned an error");
@@ -980,7 +981,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		}
 
 		PEXPECT(logger, spd->wip.ok);
-		if (updown.route && owner.bare_route == NULL) {
+		if (updown.route && owner->bare_route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				updown_child_spd(UPDOWN_ROUTE, child, spd);
