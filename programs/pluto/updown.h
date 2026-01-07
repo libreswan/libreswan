@@ -63,8 +63,26 @@ bool updown_connection_spd(enum updown updown_verb,
 bool updown_child_spd(enum updown updown_verb,
 		      struct child_sa *child,
 		      const struct spd *spd);
-void updown_child_spds(enum updown updown_verb,
-		       struct child_sa *child);
+
+/*
+ * Tweak UPDOWN's behaviour.
+ */
+struct updown_config {
+	/*
+	 * Abort, returning false, when updown fails.  By default
+	 * errors are ignored, and updown stumbles onto the next SPD.
+	 */
+	bool return_error;
+	/*
+	 * Skip conflicting.  Skip over SPDs that have a conflict
+	 * according to ...
+	 */
+	bool skip_wip_conflicting_owner_bare_route;
+};
+
+bool updown_child_spds(enum updown updown_verb,
+		       struct child_sa *child,
+		       struct updown_config config);
 
 /*
  * Value of some environment variables passed down to updown.
