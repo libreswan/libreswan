@@ -754,6 +754,12 @@ static bool parser_find_key(shunk_t skey, enum end default_end,
 		return false;
 	}
 
+	if (found->validity & kv_nosup) {
+		parser_warning(parser, /*errno*/0, "'%s' keyword '"PRI_SHUNK"' unsupported; ignored",
+			       str_parser_section(parser), pri_shunk(skey));
+		return false;
+	}
+
 	/* else, set up llval.k to point, and return KEYWORD */
 	key->key = found;
 	key->left = left;
@@ -785,7 +791,6 @@ void parse_keyval(struct parser *parser, enum end default_end,
 		return;
 	}
 
-
 	uintmax_t number = 0;		/* neutral placeholding value */
 	deltatime_t deltatime = {.is_set = false, };
 	diag_t d = NULL;
@@ -815,11 +820,6 @@ void parse_keyval(struct parser *parser, enum end default_end,
 	case kt_obsolete:
 		/* drop it on the floor */
 		parser_key_value_warning(parser, &key, value, "obsolete keyword ignored");
-		return;
-
-	case kt_nosup:
-		/* drop it on the floor */
-		parser_key_value_warning(parser, &key, value, "unsupported keyword ignored");
 		return;
 
 	}

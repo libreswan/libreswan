@@ -40,7 +40,6 @@
 
 static const struct keyword_def config_conn_keyword[] = {
 #define K(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = TYPE, .validity = VALIDITY, ##__VA_ARGS__ }
-#define U(KEYNAME, VALIDITY, TYPE, FIELD, ...) [FIELD] = { .keyname = KEYNAME, .field = FIELD, .type = kt_nosup, }
 
   /*
    * This is "left=" and "right="
@@ -77,12 +76,12 @@ static const struct keyword_def config_conn_keyword[] = {
   K("auth",  kv_leftright, kt_string,  KWS_AUTH),
 
 #ifdef USE_CAT
-# define S K
+# define NOSUP LEMPTY
 #else
-# define S U
+# define NOSUP kv_nosup
 #endif
-  S("cat",  kv_leftright,  kt_string,  KWS_CAT),
-#undef S
+  K("cat",  kv_leftright|NOSUP,  kt_string,  KWS_CAT),
+#undef NOSUP
 
   K("protoport",  kv_leftright,  kt_string,  KWS_PROTOPORT),
   K("autheap",  kv_leftright,  kt_string,  KWS_AUTHEAP),
@@ -220,12 +219,12 @@ static const struct keyword_def config_conn_keyword[] = {
   K("reqid",  LEMPTY,  kt_string,  KWS_REQID),
 
 #ifdef USE_NFLOG
-# define S K
+# define NOSUP LEMPTY
 #else
-# define S U
+# define NOSUP kv_nosup
 #endif
-  S("nflog-group",  LEMPTY,  kt_string,  KWS_NFLOG_GROUP),
-#undef S
+  K("nflog-group",  NOSUP,  kt_string,  KWS_NFLOG_GROUP),
+#undef NOSUP
 
   K("aggressive",  LEMPTY,  kt_string,  KWS_AGGRESSIVE),
 
@@ -266,7 +265,6 @@ static const struct keyword_def config_conn_keyword[] = {
   O("clientaddrfamily"),
   O("keyingtries"),
 
-#undef U
 #undef O
 #undef A
 #undef K
