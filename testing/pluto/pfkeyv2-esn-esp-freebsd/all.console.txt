@@ -18,28 +18,28 @@ east# echo "initdone"
 
 initdone
 
-freebsdw# ../../guestbin/prep.sh
+freebsdwest# ../../guestbin/prep.sh
 
 ipsec.conf -> /usr/local/etc/ipsec.conf
 ipsec.secrets -> /usr/local/etc/ipsec.secrets
 
-freebsdw# ipsec start
+freebsdwest# ipsec start
 
 Redirecting to: /usr/local/etc/rc.d/pluto onestart
 Initializing NSS database
 
 Starting pluto.
 
-freebsdw# ipsec auto --add eastnet-westnet-ikev2
+freebsdwest# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-freebsdw# echo "initdone"
+freebsdwest# echo "initdone"
 
 initdone
 
-freebsdw# ipsec auto --up eastnet-westnet-ikev2
+freebsdwest# ipsec auto --up eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -50,7 +50,7 @@ WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 
-freebsdw# ipsec _kernel policy
+freebsdwest# ipsec _kernel policy
 
 192.0.2.0/24[any] 192.0.1.0/24[any] any
 	in ipsec
@@ -63,11 +63,11 @@ freebsdw# ipsec _kernel policy
 	spid=2 seq=0 pid=PID scope=global 
 	refcnt=1
 
-freebsdw# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+freebsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 
 up
 
-freebsdw# ipsec _kernel state
+freebsdwest# ipsec _kernel state
 
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -92,11 +92,11 @@ freebsdw# ipsec _kernel state
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 
-freebsdw# ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
+freebsdwest# ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
 
 up
 
-freebsdw# ipsec _kernel state
+freebsdwest# ipsec _kernel state
 
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -121,5 +121,5 @@ freebsdw# ipsec _kernel state
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
 
-freebsdw# dmesg | grep ipsec
+freebsdwest# dmesg | grep ipsec
 
