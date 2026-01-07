@@ -9,6 +9,8 @@ cat /lib/systemd/system/unbound.service | grep -v ExecStartPre > /etc/systemd/sy
 systemctl daemon-reload
 systemctl start unbound.service
 unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
+dig +short right.libreswan.org @127.0.0.1
+dig +dnssec +short right.libreswan.org @127.0.0.1
 
 ipsec start
 ../../guestbin/wait-until-pluto-started

@@ -22,9 +22,9 @@ west #
  ipsec status |grep "===" # should show %dns for pending resolving
 "named": 192.0.1.0/24===192.1.2.45[@west]---192.1.2.23...%dns<right.libreswan.org>[@east]===192.0.2.0/24; unrouted; my_ip=unset; their_ip=unset;
 west #
- unbound-control-setup > /dev/null 2>&1
-west #
  # use modified service file that skips ICANN root key checks
+west #
+ unbound-control-setup > /dev/null 2>&1
 west #
  cat /lib/systemd/system/unbound.service | grep -v ExecStartPre > /etc/systemd/system/unbound.service
 west #
@@ -34,6 +34,12 @@ west #
 west #
  unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
 ok
+west #
+ dig +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
+ dig +dnssec +short right.libreswan.org @127.0.0.1
+192.1.2.23
 west #
  # trigger DDNS event (saves us from waiting)
 west #

@@ -20,6 +20,12 @@ west #
  unbound-control local_data right.libreswan.org 3600 IN A 192.1.2.23
 ok
 west #
+ dig +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
+ dig +dnssec +short right.libreswan.org @127.0.0.1
+192.1.2.23
+west #
  ipsec start
 Redirecting to: [initsystem]
 west #
