@@ -930,8 +930,6 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		/* computed above */
-		const struct spd_owner *owner = & spd->wip.conflicting.owner;
-
 		selector_buf sb, db;
 		name_buf eb;
 		ldbg(logger,
@@ -964,55 +962,63 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		if (!ok) {
 			break;
 		}
+	}
 
-		/*
-		 * Do we have to make a mess of the routing?
-		 *
-		 * Probably.  This code path needs a re-think.
-		 */
-
-		PEXPECT(logger, spd->wip.ok);
-		if ((updown.route || updown.up) && owner->bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!updown_child_spd(UPDOWN_PREPARE, child, spd))
+	/*
+	 * A new route?  No deletion required, but preparation is.
+	 */
+	if (ok && (updown.route || updown.up)) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			PEXPECT(logger, spd->wip.ok);
+			if (spd->wip.conflicting.owner.bare_route != NULL) {
+				ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
+				continue;
+			}
+			if (!updown_child_spd(UPDOWN_PREPARE, child, spd)) {
+				/* ignored! */
 				ldbg(logger, "kernel: prepare command returned an error");
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
+			}
 		}
 
-		PEXPECT(logger, spd->wip.ok);
-		if (updown.route && owner->bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
+	}
+
+	/*
+	 * A new route?  No deletion required, but preparation is.
+	 */
+	if (ok && updown.route) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			PEXPECT(logger, spd->wip.ok);
+			if (spd->wip.conflicting.owner.bare_route != NULL) {
+				ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
+				continue;
+			}
 			ok = spd->wip.installed.route =
 				updown_child_spd(UPDOWN_ROUTE, child, spd);
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
+			if (!ok) {
+				break;
+			}
 		}
-		if (!ok) {
-			break;
-		}
+	}
 
-		/*
-		 * Do we have to notify the firewall?
-		 *
-		 * Yes if this is the first time that the tunnel is
-		 * established (rekeys do not need to re-UP).
-		 *
-		 * Yes, if we are installing a tunnel eroute and the
-		 * firewall wasn't notified for a previous tunnel with
-		 * the same clients.  Any Previous tunnel would have
-		 * to be for our connection, so the actual test is
-		 * simple.
-		 */
-
-		if (updown.up) {
+	/*
+	 * Do we have to notify the firewall?
+	 *
+	 * Yes if this is the first time that the tunnel is
+	 * established (rekeys do not need to re-UP).
+	 *
+	 * Yes, if we are installing a tunnel eroute and the firewall
+	 * wasn't notified for a previous tunnel with the same
+	 * clients.  Any Previous tunnel would have to be for our
+	 * connection, so the actual test is simple.
+	 */
+	if (ok && updown.up) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			PEXPECT(logger, spd->wip.ok);
 			ok = spd->wip.installed.up =
 				updown_child_spd(UPDOWN_UP, child, spd);
-		}
-
-		if (!ok) {
-			break;
+			if (!ok) {
+				break;
+			}
 		}
 	}
 
