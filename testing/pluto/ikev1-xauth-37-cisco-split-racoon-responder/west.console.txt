@@ -36,10 +36,10 @@ west #
 "west-east" #2: peer client subnet returned doesn't match my proposal - us: 192.0.2.0/24 vs them: 0.0.0.0/0
 "west-east" #2: Allowing questionable (microsoft) proposal anyway
 "west-east" #2: running updown prepare 192.0.2.101/32===192.0.2.0/24
-"west-east" #2: running updown route 192.0.2.101/32===192.0.2.0/24
-"west-east" #2: running updown up 192.0.2.101/32===192.0.2.0/24
 "west-east" #2: running updown prepare 192.0.2.101/32===192.0.20.0/24
+"west-east" #2: running updown route 192.0.2.101/32===192.0.2.0/24
 "west-east" #2: running updown route 192.0.2.101/32===192.0.20.0/24
+"west-east" #2: running updown up 192.0.2.101/32===192.0.2.0/24
 "west-east" #2: running updown up 192.0.2.101/32===192.0.20.0/24
 "west-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
