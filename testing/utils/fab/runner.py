@@ -33,7 +33,7 @@ from fab import post
 from fab import skip
 from fab import ignore
 from fab import publish
-from fab.hosts import GUESTS
+from fab import hosts
 from fab import printer
 from fab import argutil
 
@@ -525,7 +525,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     logger.info("preparing test domains")
 
     domains = list()
-    for guest in GUESTS:
+    for guest in hosts.guests():
         domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest)
         domains.append(domain)
         domain.destroy()

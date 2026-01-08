@@ -80,7 +80,7 @@ def main():
 
     # Get things started
     domain = virsh.Domain(logger, name=args.domain_name,
-                          guest=hosts.lookup(args.guest_name))
+                          guest=hosts.guest_by_guestname(args.guest_name))
 
     # Get the current console, this will be None if the machine is
     # shutoff.  When there's no console need to decide if the VM

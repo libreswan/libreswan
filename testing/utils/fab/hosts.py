@@ -38,50 +38,73 @@ class Guest:
 class Set(set):
     def __str__(self):
         return " ".join(str(s) for s in self)
+class Dict(dict):
+    def __str__(self):
+        return " ".join(str(s) for s in self)
 
-HOSTS = Set()
+_HOSTS = Dict() # east west rise set ...
 for xml in utilsdir.glob("../kvm/vm/*.xml"):
-    host = re.match(r'^.*/(.*).xml$', xml).group(1)
+    hostname = re.match(r'^.*/(.*).xml$', xml).group(1)
     # For hosts, ignor E,W,N,...
-    if len(host) == 1:
+    if len(hostname) == 1:
         continue
-    HOSTS.add(Host(host))
+    host = Host(hostname)
+    _HOSTS[host.name] = host
 
-# should have kvm/platform/*
-PLATFORMS = Set()
+PLATFORMS = Set() # netbsd freebsd fedora ...
 for t in utilsdir.glob("../kvm/platform/*/upgrade.sh"):
     # what matched "*" in above pattern
     p = path.basename(path.dirname(t))
     PLATFORMS.add(p)
 
-GUESTS = Set()
-for host in HOSTS:
+_GUESTS = Dict() # netbsdrise fedoraset east freebsdw ...
+LINUX_GUESTS = list() # east west ... SORTED
+for host in _HOSTS.values():
     if host.name in ("rise", "set"):
         for platform in PLATFORMS:
             if platform not in "linux":
-                GUESTS.add(Guest(host, platform, guest=platform+host.name))
+                # netbsdrise netbsdset ...
+                guest = Guest(host, platform, guest=platform+host.name)
+                _GUESTS[guest.name] = guest
         continue
     if host.name in ("east", "west"):
-        GUESTS.add(Guest(host, platform="linux", guest=host.name))
+        # east west ...
+        guest = Guest(host, platform="linux", guest=host.name)
+        _GUESTS[guest.name] = guest
+        LINUX_GUESTS.append(guest)
         for platform in PLATFORMS:
             if platform not in "linux":
-                # netbsde et.al.
-                GUESTS.add(Guest(host, platform, guest=platform+host.name[0:1]))
+                # netbsde netbsdw ...
+                guest = Guest(host, platform, guest=platform+host.name[0:1])
+                _GUESTS[guest.name] = guest
         continue
-    GUESTS.add(Guest(host, platform="linux", guest=host.name))
+    guest = Guest(host, platform="linux", guest=host.name)
+    _GUESTS[guest.name] = guest
+    LINUX_GUESTS.append(guest)
+LINUX_GUESTS = sorted(LINUX_GUESTS)
 
 # A dictionary, with GUEST_NAME (as used to manipulate the domain
 # externally) as the KEY and HOST_NAME (what `hostname` within the
 # domain would return) as the value.
 
-_LOOKUP = dict()
-for guest in GUESTS:
-    _LOOKUP[guest.name] = guest
-
-def lookup(name):
-    if name in _LOOKUP:
-        return _LOOKUP[name]
+def guest_by_guestname(guestname):
+    if guestname in _GUESTS:
+        return _GUESTS[guestname]
     return None
 
-NIC = _LOOKUP["nic"]
-EAST = _LOOKUP["east"]
+def guests():
+    return _GUESTS.values()
+
+# \b(east|west|...)\b
+_GUEST_PATTERN = re.compile(r"\b(" + "|".join(_GUESTS.keys()) + r")\b")
+def guests_by_filename(filename):
+    guestnames = _GUEST_PATTERN.findall(filename)
+    guests = list()
+    for guestname in guestnames:
+        guests.append(_GUESTS[guestname])
+    return guests
+
+# NIC and EAST are first
+
+NIC = _GUESTS["nic"]
+EAST = _GUESTS["east"]
