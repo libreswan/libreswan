@@ -864,20 +864,6 @@ void revert_kernel_policy(struct spd *spd,
 			 logger == child->sa.logger));
 
 	/*
-	 * Kill the firewall if just installed.
-	 */
-
-	PEXPECT(logger, spd->wip.ok);
-	if (spd->wip.installed.up) {
-		PEXPECT(logger, child != NULL);
-		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
-		if (!updown_child_spd(UPDOWN_DOWN, child, spd)) {
-			ldbg(logger, "kernel: down command returned an error");
-		}
-		spd->wip.installed.up = false;
-	}
-
-	/*
 	 * Now unwind the policy.
 	 *
 	 * Of course, if things failed before the policy was

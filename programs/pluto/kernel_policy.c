@@ -1020,6 +1020,20 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 			struct spd_owner owner = spd_owner(spd, c->routing.state,
 							   logger, HERE);
 			delete_cat_kernel_policies(spd, &owner, child->sa.logger, HERE);
+
+			/*
+			 * Kill the firewall if just installed.
+			 */
+			PEXPECT(logger, spd->wip.ok);
+			if (spd->wip.installed.up) {
+				PEXPECT(logger, child != NULL);
+				ldbg(logger, "kernel: %s() reverting the firewall", __func__);
+				if (!updown_child_spd(UPDOWN_DOWN, child, spd)) {
+					ldbg(logger, "kernel: down command returned an error");
+				}
+				spd->wip.installed.up = false;
+			}
+
 			revert_kernel_policy(spd, child, logger);
 		}
 		return false;
