@@ -131,6 +131,8 @@ enum whack_command {
 	/**/
 	WHACK_LISTEN,
 	WHACK_UNLISTEN,
+	/**/
+	WHACK_KEY,
 };
 
 /*
@@ -266,6 +268,13 @@ struct whack_active_redirect {
 	const char *to;
 };
 
+struct whack_key {
+	bool add; /* vs REPLACE or DELETE */
+	const char *id;
+	const char *pubkey;
+	enum ipseckey_algorithm_type pubkey_alg;
+};
+
 /*
  */
 
@@ -358,19 +367,13 @@ struct whack_message {
 		struct whack_initiate initiate;
 		struct whack_global_redirect global_redirect;
 		struct whack_active_redirect active_redirect;
+		struct whack_key key;
 	} whack;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
 	struct whack_end end[END_ROOF];
-
-	/* for WHACK_KEY: */
-	bool whack_key;
-	bool whack_addkey;
-	const char *keyid;	/* string 8 */
-	enum ipseckey_algorithm_type pubkey_alg;
-	const char *pubkey;
 
 	/* for WHACK_ADD */
 
