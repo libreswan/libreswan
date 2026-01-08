@@ -968,36 +968,22 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 * A new route?  No deletion required, but preparation is.
 	 */
 	if (ok && (updown.route || updown.up)) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			PEXPECT(logger, spd->wip.ok);
-			if (spd->wip.conflicting.owner.bare_route != NULL) {
-				ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
-				continue;
-			}
-			if (!updown_child_spd(UPDOWN_PREPARE, child, spd)) {
-				/* ignored! */
-				ldbg(logger, "kernel: prepare command returned an error");
-			}
-		}
-
+		updown_child_spds(UPDOWN_PREPARE, child,
+				  (struct updown_config) {
+					  .return_error = false,
+					  .skip_wip_conflicting_owner_bare_route = true,
+				  });
 	}
 
 	/*
 	 * A new route?  No deletion required, but preparation is.
 	 */
 	if (ok && updown.route) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			PEXPECT(logger, spd->wip.ok);
-			if (spd->wip.conflicting.owner.bare_route != NULL) {
-				ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
-				continue;
-			}
-			ok = spd->wip.installed.route =
-				updown_child_spd(UPDOWN_ROUTE, child, spd);
-			if (!ok) {
-				break;
-			}
-		}
+		ok = updown_child_spds(UPDOWN_ROUTE, child,
+				       (struct updown_config) {
+					       .return_error = true,
+					       .skip_wip_conflicting_owner_bare_route = true,
+				       });
 	}
 
 	/*
@@ -1012,14 +998,11 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 * connection, so the actual test is simple.
 	 */
 	if (ok && updown.up) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			PEXPECT(logger, spd->wip.ok);
-			ok = spd->wip.installed.up =
-				updown_child_spd(UPDOWN_UP, child, spd);
-			if (!ok) {
-				break;
-			}
-		}
+		ok = updown_child_spds(UPDOWN_UP, child,
+				       (struct updown_config) {
+					       .return_error = true,
+					       .skip_wip_conflicting_owner_bare_route = false,
+				       });
 	}
 
 	if (impair.install_ipsec_sa_outbound_policy) {
