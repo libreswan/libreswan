@@ -513,34 +513,6 @@ static bool updown_child_spd_1(enum updown updown_verb,
 	return ok;
 }
 
-bool updown_child_spd(enum updown updown_verb,
-		      struct child_sa *child,
-		      const struct spd *spd)
-{
-	/* use full UPDOWN_UP as prefix */
-	name_buf vb;
-	enum_long(&updown_names, updown_verb, &vb);
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
-
-	/*
-	 * XXX: struct spds .list[] is a pointer, not an array, so
-	 * need to search .list[] for SPD.
-	 */
-	if (verbose.debug) {
-		bool found = false;
-		FOR_EACH_ITEM(sspd, &child->sa.st_connection->child.spds) {
-			if (sspd == spd) {
-				found = true;
-				break;
-			}
-		}
-		vexpect(found);
-	}
-
-	/* counted by */
-	return updown_child_spd_1(updown_verb, child, spd, verbose);
-}
-
 static void update_wip(struct spd *spd, enum updown updown_verb, bool ok)
 {
 	switch (updown_verb) {

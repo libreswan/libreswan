@@ -59,10 +59,6 @@ bool updown_connection_spd(enum updown updown_verb,
 			   const struct spd *spd,
 			   struct logger *logger/*state-or-connection*/);
 
-bool updown_child_spd(enum updown updown_verb,
-		      struct child_sa *child,
-		      const struct spd *spd);
-
 /*
  * Tweak UPDOWN's behaviour.
  *
