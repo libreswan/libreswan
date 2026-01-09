@@ -66,6 +66,8 @@ bool updown_child_spd(enum updown updown_verb,
 
 /*
  * Tweak UPDOWN's behaviour.
+ *
+ * These are hacks to mimic current behaviour.
  */
 struct updown_config {
 	/*
@@ -78,6 +80,11 @@ struct updown_config {
 	 * according to ...
 	 */
 	bool skip_wip_conflicting_owner_bare_route;
+	/*
+	 * Only run command on SPDs that are UP, and then clear up
+	 * bit.
+	 */
+	bool down_wip_installed_up;
 };
 
 bool updown_child_spds(enum updown updown_verb,

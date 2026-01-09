@@ -580,6 +580,15 @@ bool updown_child_spds(enum updown updown_verb,
 			continue;
 		}
 
+		if (updown_verb == UPDOWN_DOWN &&
+		    config.down_wip_installed_up &&
+		    !spd->wip.installed.up) {
+			selector_pair_buf spb;
+			vdbg("skipping %s as not UP",
+			     str_selector_pair_sensitive(&spd->local->client,
+							 &spd->remote->client, &spb));
+		}
+
 		if (!updown_child_spd_1(updown_verb, child, spd, verbose)) {
 			if (config.return_error) {
 				return false;
