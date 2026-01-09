@@ -418,6 +418,9 @@ const struct pickler pickle_unpacker = {
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS, logger)
 #define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD, logger)
 
+#define PICKLE_COMMAND_STRING(COMMAND, FIELD) \
+	(wm->whack_command == COMMAND ? PICKLE_STRING(FIELD) : true)
+
 static bool pickle_whack_end(struct whackpacker *wp,
 			     const char *leftright,
 			     struct whack_end *end,
@@ -436,11 +439,13 @@ static bool pickle_whack_message(struct whackpacker *wp,
 	return (PICKLE_STRING(&wm->name) && /* first */
 		pickle_whack_end(wp, "left", &wm->end[LEFT_END], pickle, logger) &&
 		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
-		PICKLE_STRING(&wm->keyid) &&
-		PICKLE_STRING(&wm->pubkey) &&
 		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
-		PICKLE_STRING(&wm->whack.initiate.remote_host) &&
-		PICKLE_STRING(&wm->whack.acquire.label) &&
+		PICKLE_COMMAND_STRING(WHACK_INITIATE, &wm->whack.initiate.remote_host) &&
+		PICKLE_COMMAND_STRING(WHACK_ACQUIRE, &wm->whack.acquire.label) &&
+		PICKLE_COMMAND_STRING(WHACK_GLOBAL_REDIRECT, &wm->whack.global_redirect.to) &&
+		PICKLE_COMMAND_STRING(WHACK_ACTIVE_REDIRECT, &wm->whack.active_redirect.to) &&
+		PICKLE_COMMAND_STRING(WHACK_KEY, &wm->whack.key.id) &&
+		PICKLE_COMMAND_STRING(WHACK_KEY, &wm->whack.key.pubkey) &&
 		pickle->conn(wp, logger) &&
 		true);
 }

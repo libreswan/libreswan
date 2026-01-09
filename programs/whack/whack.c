@@ -1015,6 +1015,8 @@ int main(int argc, char **argv)
 	/* used to accumulate authby options such as --psk, et.al. */
 	char *authby = NULL;
 	enum yne_options esn = YNE_UNSET;
+	/* --redirect-to or --global-redirect-to */
+	const char *redirect_to = NULL;
 
 	struct whack_message msg;
 	init_whack_message(&msg, WHACK_FROM_WHACK);
@@ -1145,28 +1147,31 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
-			msg.whack_key = true;
-			msg.keyid = optarg;	/* decoded by Pluto */
+			whack_command(&msg, WHACK_KEY);
+			msg.whack.key.id = optarg;	/* decoded by Pluto */
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
-			msg.whack_addkey = true;
+			whack_command(&msg, WHACK_KEY);
+			msg.whack.key.add = true;
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
-			if (msg.pubkey != NULL) {
+			whack_command(&msg, WHACK_KEY);
+			if (msg.whack.key.pubkey != NULL) {
 				diagq("only one RSA public-key allowed", optarg);
 			}
-			msg.pubkey = optarg;
-			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
+			msg.whack.key.pubkey = optarg;
+			msg.whack.key.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
 			continue;
 
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
-			if (msg.pubkey != NULL) {
+			whack_command(&msg, WHACK_KEY);
+			if (msg.whack.key.pubkey != NULL) {
 				diagq("only one ECDSA public-key allowed", optarg);
 			}
-			msg.pubkey = optarg;
-			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
+			msg.whack.key.pubkey = optarg;
+			msg.whack.key.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
 			continue;
 
 		case OPT_ROUTE:	/* --route */
@@ -1248,19 +1253,19 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REDIRECT_TO:	/* --redirect-to <ip> */
-			/* either active, or or add */
+			/* either active, global, or or add */
 			/* .whack_command deciphered below */
-			msg.wm_redirect_to = optarg;
+			redirect_to = optarg;
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect  {yes,no,auto} */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.global_redirect = optarg_sparse(logger, 0, &global_redirect_names);
+			msg.whack.global_redirect.kind = optarg_sparse(logger, 0, &global_redirect_names);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT_TO:	/* --global-redirect-to <ip> */
 			whack_command(&msg, WHACK_GLOBAL_REDIRECT);
-			msg.wm_redirect_to = optarg; /* could be empty string */
+			redirect_to = optarg;
 			continue;
 
 		case OPT_DDOS_MODE:
@@ -2191,14 +2196,18 @@ int main(int argc, char **argv)
 	 * --to sets WHACK_ADD and global-redirect-to sets
 	 * --WHACK_GLOBAL_REDIRECT.
 	 */
-	if (msg.wm_redirect_to != NULL) {
+	if (redirect_to != NULL) {
 		switch (msg.whack_command) {
 		case 0:
+		case WHACK_ACTIVE_REDIRECT:
 			whack_command(&msg, WHACK_ACTIVE_REDIRECT);
+			msg.whack.active_redirect.to = redirect_to;
+			break;
+		case WHACK_GLOBAL_REDIRECT:
+			msg.whack.global_redirect.to = redirect_to;
 			break;
 		case WHACK_ADD:
-		case WHACK_ACTIVE_REDIRECT:
-		case WHACK_GLOBAL_REDIRECT:
+			msg.wm_redirect_to = redirect_to;
 			break;
 		default:
 			diagw("unexpected --redirect-to");
@@ -2249,7 +2258,6 @@ int main(int argc, char **argv)
 	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
-	      msg.whack_key ||
 	      !lmod_empty(msg.whack_debugging) ||
 	      msg.impairments.len > 0)) {
 		diagw("no action specified; try --help for hints");
