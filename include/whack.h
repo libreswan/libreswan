@@ -131,6 +131,8 @@ enum whack_command {
 	/**/
 	WHACK_LISTEN,
 	WHACK_UNLISTEN,
+	/**/
+	WHACK_IMPAIR,
 };
 
 /*
@@ -277,10 +279,15 @@ struct whack_config_conn {
  * Impairments.
  */
 
-struct whack_impair {
+struct whack_impairment {
 	unsigned what;
 	uintmax_t value;
 	bool enable;
+};
+
+struct whack_impair {
+	unsigned len;
+	struct whack_impairment *list;
 };
 
 struct whack_message {
@@ -322,11 +329,6 @@ struct whack_message {
 
 	/* what to impair and how; a list like structure */
 
-	struct {
-		unsigned len;
-		struct whack_impair *list;
-	} impairments;
-
 	enum whack_from {
 		WHACK_FROM_WHACK = 1,
 		WHACK_FROM_ADDCONN,
@@ -358,6 +360,7 @@ struct whack_message {
 		struct whack_initiate initiate;
 		struct whack_global_redirect global_redirect;
 		struct whack_active_redirect active_redirect;
+		struct whack_impair impair;
 	} whack;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];

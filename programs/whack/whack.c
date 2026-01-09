@@ -2102,11 +2102,12 @@ int main(int argc, char **argv)
 		case DBGOPT_IMPAIR:	/* --impair */
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 		{
+			whack_command(&msg, WHACK_IMPAIR);
 			bool enable = (c == DBGOPT_IMPAIR);
-			unsigned old_len = msg.impairments.len++;
-			realloc_things(msg.impairments.list,
-				       old_len, msg.impairments.len, "impairments");
-			switch (parse_impair(optarg, &msg.impairments.list[old_len],
+			unsigned old_len = msg.whack.impair.len++;
+			realloc_things(msg.whack.impair.list,
+				       old_len, msg.whack.impair.len, "impairments");
+			switch (parse_impair(optarg, &msg.whack.impair.list[old_len],
 					     enable, logger)) {
 			case IMPAIR_OK:
 				break;
@@ -2256,8 +2257,7 @@ int main(int argc, char **argv)
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
 	      msg.whack_key ||
-	      !lmod_empty(msg.whack_debugging) ||
-	      msg.impairments.len > 0)) {
+	      !lmod_empty(msg.whack_debugging))) {
 		diagw("no action specified; try --help for hints");
 	}
 

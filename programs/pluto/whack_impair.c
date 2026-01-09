@@ -153,7 +153,7 @@ void whack_impair(const struct whack_message *m, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	if (m->name == NULL) {
-		FOR_EACH_ITEM(impairment, &m->impairments) {
+		FOR_EACH_ITEM(impairment, &m->whack.impair) {
 			/* ??? what should we do with return value? */
 			process_impair(impairment,
 				       whack_impair_action,

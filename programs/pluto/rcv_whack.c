@@ -461,6 +461,11 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 			.name = "unlisten",
 			.op = whack_unlisten,
 		},
+		/**/
+		[WHACK_IMPAIR] = {
+			.name = "impair",
+			.op = whack_impair,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -547,12 +552,6 @@ static void whack_process(struct whack_message_refcnt *const wmr, struct show *s
 		dbg_whack(s, "debugging: start: %s", str_lmod(&debug_names, m->whack_debugging, &lb));
 		whack_debug(m, s);
 		dbg_whack(s, "debugging: stop: %s", str_lmod(&debug_names, m->whack_debugging, &lb));
-	}
-
-	if (m->impairments.len > 0) {
-		dbg_whack(s, "impair: start: %d impairments", m->impairments.len);
-		whack_impair(m, s);
-		dbg_whack(s, "impair: stop: %d impairments", m->impairments.len);
 	}
 
 	/*

@@ -475,7 +475,7 @@ static bool bias_uintmax(const struct impairment *impairment,
 #define IMPAIR_LIST (elemsof(impairments) + 1)
 
 enum impair_status parse_impair(const char *optarg,
-				struct whack_impair *whack_impair,
+				struct whack_impairment *whack_impair,
 				bool enable /* --impair ... vs --no-impair ...*/,
 				struct logger *logger)
 {
@@ -485,14 +485,14 @@ enum impair_status parse_impair(const char *optarg,
 	}
 
 	if (enable && streq(optarg, "none")) {
-		*whack_impair = (struct whack_impair) {
+		*whack_impair = (struct whack_impairment) {
 			.what = IMPAIR_NONE,
 		};
 		return IMPAIR_OK;
 	}
 
 	if (enable && streq(optarg, "list")) {
-		*whack_impair = (struct whack_impair) {
+		*whack_impair = (struct whack_impairment) {
 			.what = IMPAIR_LIST,
 		};
 		return IMPAIR_OK;
@@ -548,7 +548,7 @@ enum impair_status parse_impair(const char *optarg,
 	 * Always recognize "no".
 	 */
 	if (!enable || what_no || hunk_strcaseeq(how, "no")) {
-		*whack_impair = (struct whack_impair) {
+		*whack_impair = (struct whack_impairment) {
 			.what = ci,
 			.value = 0,
 			.enable = false,
@@ -564,7 +564,7 @@ enum impair_status parse_impair(const char *optarg,
 		/* try the keyword. */
 		const struct sparse_name *sn = sparse_lookup_by_name(impairment->how_sparse_names, how);
 		if (sn != NULL) {
-			*whack_impair = (struct whack_impair) {
+			*whack_impair = (struct whack_impairment) {
 				.what = ci,
 				.value = sn->value, /* unbiased */
 				.enable = true,
@@ -576,7 +576,7 @@ enum impair_status parse_impair(const char *optarg,
 	if (impairment->how_enum_names != NULL) {
 		long e = enum_byname(impairment->how_enum_names, how);
 		if (e >= 0) {
-			*whack_impair = (struct whack_impair) {
+			*whack_impair = (struct whack_impairment) {
 				.what = ci,
 				.value = e, /* unbiased */
 				.enable = true,
@@ -591,7 +591,7 @@ enum impair_status parse_impair(const char *optarg,
 
 	if (hunk_strcaseeq(how, "no")) {
 		/* --impair WHAT:no */
-		*whack_impair = (struct whack_impair) {
+		*whack_impair = (struct whack_impairment) {
 			.what = ci,
 			.value = 0,
 			.enable = false,
@@ -609,7 +609,7 @@ enum impair_status parse_impair(const char *optarg,
 	    impairment->unsigned_help == NULL) {
 		if (how.len == 0 || hunk_strcaseeq(how, "yes")) {
 			/* --impair WHAT:yes or --impair WHAT */
-			*whack_impair = (struct whack_impair) {
+			*whack_impair = (struct whack_impairment) {
 				.what = ci,
 				.value = true,
 				.enable = true,
@@ -642,7 +642,7 @@ enum impair_status parse_impair(const char *optarg,
 		/*
 		 * When .enabled, 0 is valid so pass it along.
 		 */
-		*whack_impair = (struct whack_impair) {
+		*whack_impair = (struct whack_impairment) {
 			.what = ci, /*i.e., index*/
 			.value = value,
 			.enable = (impairment->enabled != NULL ? true : value > 0),
@@ -765,7 +765,7 @@ void jam_impairments(struct jambuf *buf, const char *sep)
 }
 
 static void process_impair_update(const struct impairment *impairment,
-				  const struct whack_impair *wc,
+				  const struct whack_impairment *wc,
 				  struct logger *logger)
 {
 	LLOG_JAMBUF(LOG_STREAM/*not-whack*/, logger, buf) {
@@ -807,7 +807,7 @@ static void process_impair_none(struct logger *logger)
 	for (unsigned ci = 1; ci < elemsof(impairments); ci++) {
 		const struct impairment *impairment = &impairments[ci];
 		if (impairment_enabled(impairment)) {
-			struct whack_impair wc = {0}; /* i.e., none */
+			struct whack_impairment wc = {0}; /* i.e., none */
 			process_impair_update(impairment, &wc, logger);
 		}
 	}
@@ -825,7 +825,7 @@ static void process_impair_list(struct logger *logger)
 	}
 }
 
-bool process_impair(const struct whack_impair *wc,
+bool process_impair(const struct whack_impairment *wc,
 		    void (*action)(enum impair_action impairment_action,
 				   unsigned impairment_param,
 				   bool whack_enable,
