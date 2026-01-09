@@ -48,8 +48,7 @@ enum updown {
 	UPDOWN_UNROUTE,
 	UPDOWN_UP,
 	UPDOWN_DOWN,
-	UPDOWN_DISCONNECT_NM,
-#define UPDOWN_ROOF (UPDOWN_DISCONNECT_NM+1)
+#define UPDOWN_ROOF (UPDOWN_DOWN+1)
 };
 
 extern const struct enum_names updown_stories;

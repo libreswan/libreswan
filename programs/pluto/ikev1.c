@@ -2579,14 +2579,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		remember_received_packet(st, md);
 		llog_rc(RC_FATAL, st->logger,
 			"encountered fatal error in state %s", st->st_state->name);
-		if (st->st_connection->config->host.cisco.peer &&
-		    st->st_connection->config->host.cisco.nm) {
-			if (!updown_child_spd(UPDOWN_DISCONNECT_NM,
-					      pexpect_child_sa(st),
-					      st->st_connection->child.spds.list))
-				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
-		}
-
 		struct ike_sa *isakmp =
 			established_isakmp_sa_for_state(st, /*viable-parent*/false);
 		llog_n_maybe_send_v1_delete(isakmp, st, HERE);
@@ -2633,14 +2625,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		ldbg(st->logger, "state transition function for %s failed: %s",
 		     st->st_state->name, notify_name.buf);
-
-		if (st->st_connection->config->host.cisco.peer &&
-		    st->st_connection->config->host.cisco.nm) {
-			if (!updown_child_spd(UPDOWN_DISCONNECT_NM,
-					      pexpect_child_sa(st),
-					      st->st_connection->child.spds.list/*first*/))
-				ldbg(st->logger, "sending disconnect to NM failed, you may need to do it manually");
-		}
 
 		if (IS_V1_QUICK(st->st_state->kind)) {
 			ldbg(st->logger, "quick delete");
