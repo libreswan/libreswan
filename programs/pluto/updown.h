@@ -48,8 +48,7 @@ enum updown {
 	UPDOWN_UNROUTE,
 	UPDOWN_UP,
 	UPDOWN_DOWN,
-	UPDOWN_DISCONNECT_NM,
-#define UPDOWN_ROOF (UPDOWN_DISCONNECT_NM+1)
+#define UPDOWN_ROOF (UPDOWN_DOWN+1)
 };
 
 extern const struct enum_names updown_stories;
@@ -60,11 +59,32 @@ bool updown_connection_spd(enum updown updown_verb,
 			   const struct spd *spd,
 			   struct logger *logger/*state-or-connection*/);
 
-bool updown_child_spd(enum updown updown_verb,
-		      struct child_sa *child,
-		      const struct spd *spd);
-void updown_child_spds(enum updown updown_verb,
-		       struct child_sa *child);
+/*
+ * Tweak UPDOWN's behaviour.
+ *
+ * These are hacks to mimic current behaviour.
+ */
+struct updown_config {
+	/*
+	 * Abort, returning false, when updown fails.  By default
+	 * errors are ignored, and updown stumbles onto the next SPD.
+	 */
+	bool return_error;
+	/*
+	 * Skip conflicting.  Skip over SPDs that have a conflict
+	 * according to ...
+	 */
+	bool skip_wip_conflicting_owner_bare_route;
+	/*
+	 * Only run command on SPDs that are UP, and then clear up
+	 * bit.
+	 */
+	bool down_wip_installed_up;
+};
+
+bool updown_child_spds(enum updown updown_verb,
+		       struct child_sa *child,
+		       struct updown_config config);
 
 /*
  * Value of some environment variables passed down to updown.

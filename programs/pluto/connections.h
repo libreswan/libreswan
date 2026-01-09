@@ -723,10 +723,12 @@ struct spd {
 	struct connection *connection;	/* must update after clone */
 	bool block;
 
+	/* scratch pad for route+up */
 	struct spd_wip {
 		bool ok;
 		struct {
 			struct bare_shunt **bare_shunt; /* aka orphan_kernel_policy */
+			struct spd_owner owner;
 		} conflicting;
 		struct {
 			bool kernel_policy;
@@ -734,6 +736,7 @@ struct spd {
 			bool up;		/* vs down */
 		} installed;
 	} wip;
+
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;

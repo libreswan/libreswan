@@ -513,35 +513,23 @@ static bool updown_child_spd_1(enum updown updown_verb,
 	return ok;
 }
 
-bool updown_child_spd(enum updown updown_verb,
-		      struct child_sa *child,
-		      const struct spd *spd)
+static void update_wip(struct spd *spd, enum updown updown_verb, bool ok)
 {
-	/* use full UPDOWN_UP as prefix */
-	name_buf vb;
-	enum_long(&updown_names, updown_verb, &vb);
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
-
-	/*
-	 * XXX: struct spds .list[] is a pointer, not an array, so
-	 * need to search .list[] for SPD.
-	 */
-	if (verbose.debug) {
-		bool found = false;
-		FOR_EACH_ITEM(sspd, &child->sa.st_connection->child.spds) {
-			if (sspd == spd) {
-				found = true;
-				break;
-			}
-		}
-		vexpect(found);
+	switch (updown_verb) {
+	case UPDOWN_UP:
+		spd->wip.installed.up = ok;
+		return;
+	case UPDOWN_ROUTE:
+		spd->wip.installed.route = ok;
+		return;
+	default:
+		return;
 	}
-
-	/* counted by */
-	return updown_child_spd_1(updown_verb, child, spd, verbose);
 }
 
-void updown_child_spds(enum updown updown_verb, struct child_sa *child)
+bool updown_child_spds(enum updown updown_verb,
+		       struct child_sa *child,
+		       struct updown_config config)
 {
 	/* use full UPDOWN_UP as prefix */
 	name_buf vb;
@@ -552,11 +540,40 @@ void updown_child_spds(enum updown updown_verb, struct child_sa *child)
 
 	verbose.level++;
 	FOR_EACH_ITEM(spd, &child->sa.st_connection->child.spds) {
-		updown_child_spd_1(updown_verb, child, spd, verbose);
+		const struct spd *bare_route = spd->wip.conflicting.owner.bare_route;
+		if (bare_route != NULL &&
+		    config.skip_wip_conflicting_owner_bare_route) {
+			selector_pair_buf spb, brb;
+			vdbg("skipping %s as conflicting owner.bare_route %s",
+			     str_selector_pair_sensitive(&spd->local->client,
+							 &spd->remote->client, &spb),
+			     str_selector_pair_sensitive(&bare_route->local->client,
+							 &bare_route->remote->client, &brb));
+			continue;
+		}
+
+		if (updown_verb == UPDOWN_DOWN &&
+		    config.down_wip_installed_up &&
+		    !spd->wip.installed.up) {
+			selector_pair_buf spb;
+			vdbg("skipping %s as not UP",
+			     str_selector_pair_sensitive(&spd->local->client,
+							 &spd->remote->client, &spb));
+		}
+
+		if (!updown_child_spd_1(updown_verb, child, spd, verbose)) {
+			if (config.return_error) {
+				return false;
+			}
+			continue;
+		}
+
+		update_wip(spd, updown_verb, true);
 	}
 	verbose.level--;
 
 	vdbg_stop(&start, "spds");
+	return true;
 }
 
 /*

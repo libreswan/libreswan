@@ -700,13 +700,12 @@ static void routed_tunnel_to_routed_ondemand(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
-
 		delete_cat_kernel_policies(spd, &owner, logger, where);
 		uninstall_ipsec_kernel_policy(child, c, spd, &owner,
 					      SHUNT_KIND_ONDEMAND,
@@ -725,9 +724,9 @@ static void routed_tunnel_to_routed_failure(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
@@ -787,9 +786,9 @@ static void routed_tunnel_to_unrouted(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_UNROUTED,
 						   logger, where);
@@ -932,9 +931,9 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_ONDEMAND,
 						   logger, where);
@@ -946,7 +945,7 @@ static void unrouted_tunnel_to_routed_ondemand(struct child_sa *child,
 					      logger, where);
 	}
 
-	updown_child_spds(UPDOWN_ROUTE, child);
+	updown_child_spds(UPDOWN_ROUTE, child, (struct updown_config){0});
 	set_routing(child->sa.st_connection, RT_ROUTED_ONDEMAND);
 }
 
@@ -958,9 +957,9 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
 
-	FOR_EACH_ITEM(spd, &c->child.spds) {
+	updown_child_spds(UPDOWN_DOWN, child, (struct updown_config){0});
 
-		updown_child_spd(UPDOWN_DOWN, child, spd);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct spd_owner owner = spd_owner(spd, RT_ROUTED_FAILURE,
 						   logger, where);
@@ -972,7 +971,7 @@ static void unrouted_tunnel_to_routed_failure(struct child_sa *child,
 					      logger, where);
 	}
 
-	updown_child_spds(UPDOWN_ROUTE, child);
+	updown_child_spds(UPDOWN_ROUTE, child, (struct updown_config){0});
 	set_routing(child->sa.st_connection, RT_ROUTED_FAILURE);
 }
 
@@ -2128,7 +2127,7 @@ static bool dispatch_1(enum routing_event event,
 		 * NULL (which happens when there is no other matching
 		 * SPD).  Think of .bare_route as .other_route_owner).
 		 */
-		updown_child_spds(UPDOWN_DOWN, (*e->child));
+		updown_child_spds(UPDOWN_DOWN, (*e->child), (struct updown_config){0});
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			/* only unroute if no other connection shares it */
 			struct spd_owner owner = spd_owner(spd, RT_UNROUTED/*ignored*/,
@@ -2147,8 +2146,8 @@ static bool dispatch_1(enum routing_event event,
 	case X(RESUME, UNROUTED_TUNNEL, INSTANCE):
 	case X(RESUME, UNROUTED_TUNNEL, PERMANENT):
 		c->routing.state = RT_ROUTED_TUNNEL;
-		updown_child_spds(UPDOWN_ROUTE, (*e->child));
-		updown_child_spds(UPDOWN_UP, (*e->child));
+		updown_child_spds(UPDOWN_ROUTE, (*e->child), (struct updown_config){0});
+		updown_child_spds(UPDOWN_UP, (*e->child), (struct updown_config){0});
 		return true;
 
 	case X(ROUTE, UNROUTED_BARE_NEGOTIATION, PERMANENT):

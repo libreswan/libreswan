@@ -900,8 +900,8 @@ bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 }
 
 bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
-						   enum routing new_routing,
-						   struct do_updown updown)
+					    enum routing new_routing,
+					    struct do_updown updown)
 {
 	struct logger *logger = child->sa.logger;
 	struct connection *c = child->sa.st_connection;
@@ -912,8 +912,14 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		return true;
 	}
 
-	/* clear the deck */
+	/*
+	 * clear the deck.
+	 */
 	clear_connection_spd_conflicts(c);
+	if (!get_connection_spd_conflicts(c, new_routing)) {
+		clear_connection_spd_conflicts(c);
+		return false;
+	}
 
 	bool ok = true;	/* sticky: once false, stays false */
 
@@ -923,6 +929,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 
+		/* computed above */
 		selector_buf sb, db;
 		name_buf eb;
 		ldbg(logger,
@@ -934,14 +941,6 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		     str_enum_short(&routing_names, c->routing.state, &eb),
 		     bool_str(updown.route),
 		     bool_str(updown.up));
-
-		struct spd_owner owner;
-		ok = get_connection_spd_conflict(spd, new_routing, &owner,
-						 &spd->wip.conflicting.bare_shunt,
-						 c->logger);
-		if (!ok) {
-			break;
-		}
 
 		spd->wip.ok = true;
 
@@ -963,56 +962,47 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 		if (!ok) {
 			break;
 		}
+	}
 
-		/*
-		 * Do we have to make a mess of the routing?
-		 *
-		 * Probably.  This code path needs a re-think.
-		 */
+	/*
+	 * A new route?  No deletion required, but preparation is.
+	 */
+	if (ok && (updown.route || updown.up)) {
+		updown_child_spds(UPDOWN_PREPARE, child,
+				  (struct updown_config) {
+					  .return_error = false,
+					  .skip_wip_conflicting_owner_bare_route = true,
+				  });
+	}
 
-		PEXPECT(logger, spd->wip.ok);
-		if ((updown.route || updown.up) && owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!updown_child_spd(UPDOWN_PREPARE, child, spd))
-				ldbg(logger, "kernel: prepare command returned an error");
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-prepare", __func__);
-		}
+	/*
+	 * A new route?  No deletion required, but preparation is.
+	 */
+	if (ok && updown.route) {
+		ok = updown_child_spds(UPDOWN_ROUTE, child,
+				       (struct updown_config) {
+					       .return_error = true,
+					       .skip_wip_conflicting_owner_bare_route = true,
+				       });
+	}
 
-		PEXPECT(logger, spd->wip.ok);
-		if (updown.route && owner.bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			ok = spd->wip.installed.route =
-				updown_child_spd(UPDOWN_ROUTE, child, spd);
-		} else {
-			ldbg(logger, "kernel: %s() skipping updown-route as non-bare", __func__);
-		}
-		if (!ok) {
-			break;
-		}
-
-		/*
-		 * Do we have to notify the firewall?
-		 *
-		 * Yes if this is the first time that the tunnel is
-		 * established (rekeys do not need to re-UP).
-		 *
-		 * Yes, if we are installing a tunnel eroute and the
-		 * firewall wasn't notified for a previous tunnel with
-		 * the same clients.  Any Previous tunnel would have
-		 * to be for our connection, so the actual test is
-		 * simple.
-		 */
-
-		if (updown.up) {
-			PEXPECT(logger, spd->wip.ok);
-			ok = spd->wip.installed.up =
-				updown_child_spd(UPDOWN_UP, child, spd);
-		}
-
-		if (!ok) {
-			break;
-		}
+	/*
+	 * Do we have to notify the firewall?
+	 *
+	 * Yes if this is the first time that the tunnel is
+	 * established (rekeys do not need to re-UP).
+	 *
+	 * Yes, if we are installing a tunnel eroute and the firewall
+	 * wasn't notified for a previous tunnel with the same
+	 * clients.  Any Previous tunnel would have to be for our
+	 * connection, so the actual test is simple.
+	 */
+	if (ok && updown.up) {
+		ok = updown_child_spds(UPDOWN_UP, child,
+				       (struct updown_config) {
+					       .return_error = true,
+					       .skip_wip_conflicting_owner_bare_route = false,
+				       });
 	}
 
 	if (impair.install_ipsec_sa_outbound_policy) {
@@ -1030,6 +1020,15 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 			struct spd_owner owner = spd_owner(spd, c->routing.state,
 							   logger, HERE);
 			delete_cat_kernel_policies(spd, &owner, child->sa.logger, HERE);
+		}
+
+		updown_child_spds(UPDOWN_DOWN, child,
+				  (struct updown_config) {
+					  .down_wip_installed_up = true,
+				  });
+
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* go back to old routing */
 			revert_kernel_policy(spd, child, logger);
 		}
 		return false;

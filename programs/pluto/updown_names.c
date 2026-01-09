@@ -24,7 +24,6 @@ static const char *updown_story[] = {
 	C(UPDOWN_UNROUTE, "unroute"),
 	C(UPDOWN_UP, "up"),
 	C(UPDOWN_DOWN, "down"),
-	C(UPDOWN_DISCONNECT_NM, "disconnectNM"), /*legacy; do not change*/
 #undef C
 };
 
@@ -41,7 +40,6 @@ static const char *updown_name[] = {
 	C(UPDOWN_UNROUTE),
 	C(UPDOWN_UP),
 	C(UPDOWN_DOWN),
-	C(UPDOWN_DISCONNECT_NM),
 #undef C
 };
 
