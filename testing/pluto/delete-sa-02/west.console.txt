@@ -26,7 +26,9 @@ west #
 west #
  # enable sending a bogus Notify with the Delete
 west #
- ipsec whack --debug-all --impair ikev1_del_with_notify
+ ipsec whack --debug-all
+west #
+ ipsec whack --impair ikev1_del_with_notify
 west #
  ipsec auto --down west-east
 "west-east": initiating delete of connection's IPsec SA #2 and ISAKMP SA #1

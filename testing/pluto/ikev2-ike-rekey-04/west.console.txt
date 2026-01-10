@@ -26,7 +26,9 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec whack --debug-all --impair suppress_retransmits
+ ipsec whack --debug-all
+west #
+ ipsec whack --impair suppress_retransmits
 west #
  ipsec auto --add westnet-eastnet-ikev2a
 "westnet-eastnet-ikev2a": added oriented IKEv2 connection
