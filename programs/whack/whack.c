@@ -1147,31 +1147,28 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
-			whack_command(&msg, WHACK_KEY);
-			msg.whack.key.id = optarg;	/* decoded by Pluto */
+			msg.whack_key = true;
+			msg.keyid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
-			whack_command(&msg, WHACK_KEY);
-			msg.whack.key.add = true;
+			msg.whack_addkey = true;
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
-			whack_command(&msg, WHACK_KEY);
-			if (msg.whack.key.pubkey != NULL) {
+			if (msg.pubkey != NULL) {
 				diagq("only one RSA public-key allowed", optarg);
 			}
-			msg.whack.key.pubkey = optarg;
-			msg.whack.key.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
+			msg.pubkey = optarg;
+			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
 			continue;
 
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
-			whack_command(&msg, WHACK_KEY);
-			if (msg.whack.key.pubkey != NULL) {
+			if (msg.pubkey != NULL) {
 				diagq("only one ECDSA public-key allowed", optarg);
 			}
-			msg.whack.key.pubkey = optarg;
-			msg.whack.key.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
+			msg.pubkey = optarg;
+			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
 			continue;
 
 		case OPT_ROUTE:	/* --route */
@@ -2258,6 +2255,7 @@ int main(int argc, char **argv)
 	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
+	      msg.whack_key ||
 	      !lmod_empty(msg.whack_debugging) ||
 	      msg.impairments.len > 0)) {
 		diagw("no action specified; try --help for hints");

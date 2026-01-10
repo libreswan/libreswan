@@ -461,11 +461,6 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 			.name = "unlisten",
 			.op = whack_unlisten,
 		},
-		/**/
-		[WHACK_KEY] = {
-			.name = "key",
-			.op = whack_key,
-		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -566,6 +561,13 @@ static void whack_process(struct whack_message_refcnt *const wmr, struct show *s
 
 	if (m->whack_command != 0) {
 		dispatch_command(wmr, s);
+	}
+
+	if (m->whack_key) {
+		dbg_whack(s, "key: start:");
+		/* add a public key */
+		key_add_request(m, show_logger(s));
+		dbg_whack(s, "key: stop:");
 	}
 
 	return;
