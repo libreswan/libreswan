@@ -1239,11 +1239,6 @@ diag_t add_connection(const struct whack_message *wm,
 		      const struct logger *logger)
 {
 	/*
-	 * For instance ipsec add --debug.
-	 */
-	lset_t debugging = lmod(LEMPTY, wm->whack_debugging);
-
-	/*
 	 * Use lmod_args() since it both knows how to parse a comma
 	 * separated list and can handle no-XXX (ex: all,no-xauth).
 	 * The final set of enabled bits is returned in .set.
@@ -1265,7 +1260,7 @@ diag_t add_connection(const struct whack_message *wm,
 
 	struct config *root_config = alloc_config(wm->name);
 	struct connection *c = alloc_connection(root_config->name, NULL, root_config,
-						debugging | debug.set,
+						debug.set,
 						logger, HERE);
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, c->logger, c->name);
 
