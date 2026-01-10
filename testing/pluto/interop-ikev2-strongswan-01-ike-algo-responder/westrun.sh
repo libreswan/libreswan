@@ -1,4 +1,5 @@
-ipsec whack --impair suppress_retransmits --debug crypt
+ipsec whack --impair suppress_retransmits
+ipsec whack --debug crypt
 
 ../../guestbin/libreswan-up-down.sh ike=chacha20poly1305-sha2-dh19 -I 192.0.1.254 192.0.2.254
 
