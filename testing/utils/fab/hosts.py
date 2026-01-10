@@ -67,7 +67,7 @@ for host in _HOSTS.values():
                 guest = Guest(host, platform, guest=platform+host.name)
                 _GUESTS[guest.name] = guest
         continue
-    if host.name in ("east", "west"):
+    if host.name in ("east", "west", "north"):
         # east west ...
         guest = Guest(host, platform="linux", guest=host.name)
         _GUESTS[guest.name] = guest

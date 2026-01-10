@@ -277,7 +277,7 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 
 # override below
 KVM_LINUX_TEST_HOST_NAMES = east west north road nic
-KVM_OS_TEST_HOST_NAMES = e w rise set
+KVM_OS_TEST_HOST_NAMES = e w n rise set
 
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_UPGRADEDIR ?= $(KVM_POOLDIR)
