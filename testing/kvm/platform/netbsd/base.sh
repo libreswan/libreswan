@@ -133,14 +133,9 @@ cat <<EOF | tee -a /targetroot/etc/rc.conf
 rc_configured=YES
 no_swap=YES
 savecore=NO
-EOF
-
-cat <<EOF | tee /targetroot/etc/ifconfig.vioif0
-dhcp
-EOF
-
-cat <<EOF | tee /targetroot/etc/myname
-netbsd
+dhcpcd=YES
+dhcpcd_flags=vioif0
+hostname=netbsd
 EOF
 
 :

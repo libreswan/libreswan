@@ -1,0 +1,96 @@
+#!/bin/sh
+
+hostname=
+uname=$(uname)
+
+case ${uname} in
+    *BSD)
+	macs=$(ifconfig | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
+	;;
+    *)
+	macs=$(ip addr show | awk '/link.ether/ { print $2}')
+	;;
+esac
+echo macs=$macs > /dev/console
+
+for mac in ${macs} ; do
+    case "$mac" in
+	12:00:00:64:64:23 ) hostname=east ;;
+	12:00:00:64:64:45 ) hostname=west ;;
+	12:00:00:96:96:49 ) hostname=north ;;
+	12:00:00:ab:cd:02 ) hostname=road ;;
+	12:52:49:53:45:01 ) hostname=rise ;;
+	12:00:53:45:54:01 ) hostname=set ;;
+    esac
+    test "${hostname}" && break
+done
+test "${hostname}" || hostname=$(echo ${uname} | tr '[A-Z]' '[a-z]]')
+echo hostname=${hostname} > /dev/console
+
+# interfaces
+case ${hostname} in
+    east)
+	dhcp_ethN=0
+        ipv4_eth1=192.1.2.23/24
+	ipv6_eth1=2001:db8:1:2::23/64
+     	ipv4_eth2=192.0.2.254/24
+	ipv6_eth2=2001:db8:0:2::254/64
+	ipv4_gw=192.1.2.254
+	ipv6_gw=2001:db8:1:2::254
+	;;
+    west)
+	dhcp_ethN=0
+	ipv4_eth1=192.1.2.45/24
+	ipv6_eth1=2001:db8:1:2::45/64
+	ipv4_eth2=192.0.1.254/24
+	ipv6_eth2=2001:db8:0:1::254/64
+	ipv4_gw=192.1.2.254
+	ipv6_gw=2001:db8:1:2::254
+	;;
+    north)
+	dhcp_ethN=0
+	ipv4_eth1=192.1.3.33/24
+	ipv6_eth1=2001:db8:1.3::33/64
+	ipv4_eth2=192.0.3.254/24
+	ipv6_eth2=2001:db8:0:3::254/64
+	ipv4_gw=192.1.3.254
+	ipv6_gw=2001:db8:1.3::254
+	;;
+    road)
+	dhcp_ethN=0
+	ipv4_eth1=192.1.3.209/24
+	ipv6_eth1=2001:db8:1.3::209/64
+	ipv4_gw=192.1.3.254
+	ipv6_gw=2001:db8:1.3::254
+	;;
+    rise)
+	dhcp_ethN=0
+	ipv4_eth1=192.0.2.12/24
+	ipv6_eth1=2001:db8:0:2::12/64
+	ipv4_eth2=198.18.1.12/24
+	ipv6_eth2=2001:db8:1::12/64
+	ipv4_gw=192.0.2.254
+	ipv6_gw=2001:db8:0:2::254
+	;;
+    set)
+	dhcp_ethN=0
+	ipv4_eth1=192.0.1.15/24
+	ipv6_eth1=2001:db8:0:1::15/64
+	ipv4_eth2=198.18.1.15/24
+	ipv6_eth2=2001:db8:1::15/64
+	ipv4_gw=192.0.1.254
+	ipv6_gw=2001:db8:0:1::254
+	;;
+    *)
+	dhcp_ethN=0
+	;;
+esac
+
+test "${ipv4_eth0}" && echo ipv4_eth0=${ipv4_eth0} > /dev/console
+test "${ipv6_eth0}" && echo ipv6_eth0=${ipv6_eth0} > /dev/console
+test "${ipv4_eth1}" && echo ipv4_eth1=${ipv4_eth1} > /dev/console
+test "${ipv6_eth1}" && echo ipv6_eth1=${ipv6_eth1} > /dev/console
+test "${ipv4_eth2}" && echo ipv4_eth2=${ipv4_eth2} > /dev/console
+test "${ipv6_eth2}" && echo ipv6_eth2=${ipv6_eth2} > /dev/console
+
+echo ipv4_gw=${ipv4_gw} ipv6_gw=${ipv6_gw} dhcp_ethN=${dhcp_ethN} > /dev/console

@@ -19,8 +19,10 @@ cat /etc/fstab
 # Replace the HOSTNAME init script with one that can figure out the
 # HOSTNAME and interface configuration based on interfaces (it saves
 # the result in /etc/network/interfaces).
-cp -v /bench/testing/kvm/platform/alpine/hostname /etc/init.d/hostname
+
+cp -v /bench/testing/kvm/platform/alpine/hostname.sh /etc/init.d/hostname
 chmod a+x /etc/init.d/hostname
+cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/rc.hostname
 
 # chsh -s /bin/bash root
 sed -i -e 's,root:/bin/.*,root:/bin/bash,' /etc/passwd

@@ -22,8 +22,12 @@ EOF
 cp -v /bench/testing/kvm/platform/openbsd/rc.conf.local /etc/rc.conf.local
 chmod a+r /etc/rc.conf.local
 
-cp -v /bench/testing/kvm/rc.d/rc.local /etc/
-chmod a+x /etc/rc.local
+cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/
+chmod a+x /etc/rc.hostname
+
+cp -v /bench/testing/kvm/platform/openbsd/rc.network /etc/
+chmod a+x /etc/rc.network
+cp -v /bench/testing/kvm/platform/openbsd/hostname.vio0 /etc/
 
 chsh -s /usr/local/bin/bash root
 

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# kluge to bring up OpenBSD's networks during network configuration.
+# Unlike *BSD, there's no rc.conf[.local] hook for doing this.
+
+. /etc/rc.hostname
+
+hostname ${hostname}
+
+test "${ipv4_eth0}" && ifconfig vio0 inet ${ipv4_eth0} up
+test "${ipv4_eth1}" && ifconfig vio1 inet ${ipv4_eth1} up
+test "${ipv4_eth2}" && ifconfig vio2 inet ${ipv4_eth2} up
+
+test "${ipv6_eth0}" && ifconfig vio0 inet6 -tentative ${ipv6_eth0} up
+test "${ipv6_eth1}" && ifconfig vio1 inet6 -tentative ${ipv6_eth1} up
+test "${ipv6_eth2}" && ifconfig vio2 inet6 -tentative ${ipv6_eth2} up
+
+test "${ipv4_gw}" && route add default ${ipv4_gw}
+test "${ipv6_gw}" && route add default ${ipv6_gw}
