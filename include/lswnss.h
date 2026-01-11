@@ -46,8 +46,9 @@
 
 #include <nss.h>
 
-#if 0 && (( NSS_VMAJOR > 3 ) ||				\
-	  ( NSS_VMAJOR == 3 &&	NSS_VMINOR >= 116 ))
+#if (( NSS_VMAJOR > 3 ) || \
+     ( NSS_VMAJOR == 3 && NSS_VMINOR >= 118 ) || \
+     ( NSS_VMAJOR == 3 && NSS_VMINOR == 118 && NSS_VPATCH == 1))
 #define LSW_CKM_ML_KEM_KEY_PAIR_GEN CKM_ML_KEM_KEY_PAIR_GEN
 #define LSW_CKM_ML_KEM CKM_ML_KEM
 #define LSW_CKP_ML_KEM_768 CKP_ML_KEM_768
