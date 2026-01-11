@@ -1,0 +1,4 @@
+# /etc/netstart, when trying to bring up vio0, will invoke rc.network.
+
+dhcp
+!/etc/rc.network
