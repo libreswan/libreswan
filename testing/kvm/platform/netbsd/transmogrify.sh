@@ -34,9 +34,9 @@ for f in /bench/testing/kvm/root/[a-z]* ; do
     cp -v ${f} /root/.$(basename $f)
 done
 
-cp -v /bench/testing/kvm/rc.d/rc.local               /etc/
-cp -v /bench/testing/kvm/platform/netbsd/auto_master /etc/
+cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/
 cp -v /bench/testing/kvm/platform/netbsd/rc.conf     /etc/
+cp -v /bench/testing/kvm/platform/netbsd/auto_master /etc/
 cp -v /bench/testing/kvm/platform/netbsd/sysctl.conf /etc/
 
 exit 0
