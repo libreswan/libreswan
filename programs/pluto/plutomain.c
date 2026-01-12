@@ -1004,7 +1004,7 @@ int main(int argc, char **argv)
 
 		case OPT_IMPAIR:
 		{
-			struct whack_impair impairment;
+			struct whack_impairment impairment;
 			switch (parse_impair(optarg, &impairment, true, logger)) {
 			case IMPAIR_OK:
 				if (!process_impair(&impairment, NULL, true, logger)) {

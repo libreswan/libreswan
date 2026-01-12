@@ -131,6 +131,9 @@ enum whack_command {
 	/**/
 	WHACK_LISTEN,
 	WHACK_UNLISTEN,
+	/**/
+	WHACK_IMPAIR,
+	WHACK_DEBUG,
 };
 
 /*
@@ -277,10 +280,22 @@ struct whack_config_conn {
  * Impairments.
  */
 
-struct whack_impair {
+struct whack_impairment {
 	unsigned what;
 	uintmax_t value;
 	bool enable;
+};
+
+struct whack_impair {
+	unsigned len;
+	struct whack_impairment *list;
+};
+
+struct whack_debug {
+#if 0
+	const char *connection;
+#endif
+	lmod_t debugging;
 };
 
 struct whack_message {
@@ -316,16 +331,7 @@ struct whack_message {
 	/* name is used in connection and initiate */
 	const char *name;
 
-	/* debugging updates to apply */
-
-	lmod_t whack_debugging;
-
 	/* what to impair and how; a list like structure */
-
-	struct {
-		unsigned len;
-		struct whack_impair *list;
-	} impairments;
 
 	enum whack_from {
 		WHACK_FROM_WHACK = 1,
@@ -358,6 +364,8 @@ struct whack_message {
 		struct whack_initiate initiate;
 		struct whack_global_redirect global_redirect;
 		struct whack_active_redirect active_redirect;
+		struct whack_impair impair;
+		struct whack_debug debug;
 	} whack;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];

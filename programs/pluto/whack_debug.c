@@ -37,7 +37,7 @@ static unsigned whack_debug_connection(const struct whack_message *m,
 				       struct connection_visitor_context *context UNUSED)
 {
 	whack_attach(c, show_logger(s));
-	c->logger->debugging = lmod(c->logger->debugging, m->whack_debugging);
+	c->logger->debugging = lmod(c->logger->debugging, m->whack.debug.debugging);
 	if (LDBGP(DBG_BASE, c->logger)) {
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 			jam_string(buf, "extra_debugging = ");
@@ -53,12 +53,12 @@ void whack_debug(const struct whack_message *m, struct show *s)
 {
 	struct logger *logger = show_logger(s);
 	if (is_fips_mode()) {
-		if (lmod_is_set(m->whack_debugging, DBG_PRIVATE)) {
+		if (lmod_is_set(m->whack.debug.debugging, DBG_PRIVATE)) {
 			llog_rc(RC_FATAL, logger,
 				"FIPS: --debug private is not allowed in FIPS mode, aborted");
 			return; /*don't shutdown*/
 		}
-		if (lmod_is_set(m->whack_debugging, DBG_CRYPT)) {
+		if (lmod_is_set(m->whack.debug.debugging, DBG_CRYPT)) {
 			llog_rc(RC_FATAL, logger,
 				"FIPS: --debug crypt is not allowed in FIPS mode, aborted");
 			return; /*don't shutdown*/
@@ -71,14 +71,14 @@ void whack_debug(const struct whack_message *m, struct show *s)
 		 * will be printed.
 		 */
 		lset_t old_debugging = cur_debugging;
-		lset_t new_debugging = lmod(old_debugging, m->whack_debugging);
+		lset_t new_debugging = lmod(old_debugging, m->whack.debug.debugging);
 		set_debugging(cur_debugging | new_debugging);
 		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 			jam(buf, "old debugging ");
 			jam_lset_short(buf, &debug_names,
 				       "+", old_debugging);
 			jam(buf, " + ");
-			jam_lmod(buf, &debug_names, m->whack_debugging);
+			jam_lmod(buf, &debug_names, m->whack.debug.debugging);
 		}
 		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 			jam(buf, "new debugging = ");

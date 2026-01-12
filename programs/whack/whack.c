@@ -2071,7 +2071,8 @@ int main(int argc, char **argv)
 			 * force all debug/impair options to values
 			 * defined by whack.
 			 */
-			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_mask);
+			whack_command(&msg, WHACK_DEBUG);
+			msg.whack.debug.debugging = lmod_clr(msg.whack.debug.debugging, DBG_mask);
 			continue;
 
 		case DBGOPT_ALL:	/* --debug-all (obsolete) */
@@ -2079,34 +2080,29 @@ int main(int argc, char **argv)
 			 * Set most debug options ('all' does not
 			 * include PRIVATE which is cleared) and clear
 			 * all impair options.
-			 *
-			 * This preserves existing behaviour where
-			 * sequences like:
-			 *
-			 *     --debug-all
-			 *     --debug-all --impair something
-			 *
-			 * force all debug/impair options to values
-			 * defined by whack.
 			 */
-			msg.whack_debugging = lmod_clr(msg.whack_debugging, DBG_mask);
-			msg.whack_debugging = lmod_set(msg.whack_debugging, DBG_all);
+			whack_command(&msg, WHACK_DEBUG);
+			msg.whack.debug.debugging = lmod_clr(msg.whack.debug.debugging, DBG_mask);
+			msg.whack.debug.debugging = lmod_set(msg.whack.debug.debugging, DBG_all);
 			continue;
 		case DBGOPT_DEBUG:	/* --debug */
-			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack_debugging);
+			whack_command(&msg, WHACK_DEBUG);
+			optarg_debug_lmod(OPTARG_DEBUG_YES, &msg.whack.debug.debugging);
 			continue;
 		case DBGOPT_NO_DEBUG:	/* --no-debug */
-			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.whack_debugging);
+			whack_command(&msg, WHACK_DEBUG);
+			optarg_debug_lmod(OPTARG_DEBUG_NO, &msg.whack.debug.debugging);
 			continue;
 
 		case DBGOPT_IMPAIR:	/* --impair */
 		case DBGOPT_NO_IMPAIR:	/* --no-impair */
 		{
+			whack_command(&msg, WHACK_IMPAIR);
 			bool enable = (c == DBGOPT_IMPAIR);
-			unsigned old_len = msg.impairments.len++;
-			realloc_things(msg.impairments.list,
-				       old_len, msg.impairments.len, "impairments");
-			switch (parse_impair(optarg, &msg.impairments.list[old_len],
+			unsigned old_len = msg.whack.impair.len++;
+			realloc_things(msg.whack.impair.list,
+				       old_len, msg.whack.impair.len, "impairments");
+			switch (parse_impair(optarg, &msg.whack.impair.list[old_len],
 					     enable, logger)) {
 			case IMPAIR_OK:
 				break;
@@ -2255,9 +2251,7 @@ int main(int argc, char **argv)
 	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
 	      msg.whack_command != 0 ||
-	      msg.whack_key ||
-	      !lmod_empty(msg.whack_debugging) ||
-	      msg.impairments.len > 0)) {
+	      msg.whack_key)) {
 		diagw("no action specified; try --help for hints");
 	}
 

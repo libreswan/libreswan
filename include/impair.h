@@ -24,7 +24,7 @@
 struct fd;
 struct logger;
 struct jambuf;
-struct whack_impair;
+struct whack_impairment;
 
 /*
  * Make a mess of the DDOS cookie.
@@ -221,7 +221,7 @@ enum impair_status {
 };
 
 enum impair_status parse_impair(const char *optarg,
-				struct whack_impair *whack_impair,
+				struct whack_impairment *impairment,
 				bool enable, struct logger *logger);
 
 enum impair_message_direction {
@@ -251,7 +251,7 @@ enum impair_action {
 #endif
 };
 
-bool process_impair(const struct whack_impair *whack_impair,
+bool process_impair(const struct whack_impairment *impairment,
 		    void (*action)(enum impair_action impairment_action,
 				   unsigned impairment_param,
 				   bool whack_enable,

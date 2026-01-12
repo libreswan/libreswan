@@ -418,6 +418,8 @@ const struct pickler pickle_unpacker = {
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS, logger)
 #define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD, logger)
 
+#define PICKLE_COMMAND_THINGS(COMMAND, THINGS, NR)			\
+	(wm->whack_command == COMMAND ? PICKLE_THINGS(THINGS, NR) : true)
 #define PICKLE_COMMAND_STRING(COMMAND, FIELD) \
 	(wm->whack_command == COMMAND ? PICKLE_STRING(FIELD) : true)
 
@@ -441,7 +443,7 @@ static bool pickle_whack_message(struct whackpacker *wp,
 		pickle_whack_end(wp, "right",&wm->end[RIGHT_END], pickle, logger) &&
 		PICKLE_STRING(&wm->keyid) &&
 		PICKLE_STRING(&wm->pubkey) &&
-		PICKLE_THINGS(&wm->impairments.list, wm->impairments.len) &&
+		PICKLE_COMMAND_THINGS(WHACK_IMPAIR, &wm->whack.impair.list, wm->whack.impair.len) &&
 		PICKLE_COMMAND_STRING(WHACK_INITIATE, &wm->whack.initiate.remote_host) &&
 		PICKLE_COMMAND_STRING(WHACK_ACQUIRE, &wm->whack.acquire.label) &&
 		PICKLE_COMMAND_STRING(WHACK_GLOBAL_REDIRECT, &wm->whack.global_redirect.to) &&
