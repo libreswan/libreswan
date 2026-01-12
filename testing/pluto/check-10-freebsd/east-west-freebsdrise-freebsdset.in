@@ -12,13 +12,13 @@ west# ../../guestbin/ip.sh link set eth1 up
 
 rise# ifconfig vtnet1
 rise# ifconfig vtnet1 up
-rise# ifconfig vtnet2
-rise# ifconfig vtnet2 up
+rise# ifconfig vtnet0
+rise# ifconfig vtnet0 up
 
 set# ifconfig vtnet1
 set# ifconfig vtnet1 up
-set# ifconfig vtnet2
-set# ifconfig vtnet2 up
+set# ifconfig vtnet0
+set# ifconfig vtnet0 up
 
 rise# ../../guestbin/ping-once.sh --up 198.18.1.15  # SET
 rise# ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST

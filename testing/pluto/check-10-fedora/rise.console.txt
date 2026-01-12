@@ -2,9 +2,9 @@ ip link set eth1
 rise #
  ip link set eth1 up
 rise #
- ip link set eth2
+ ip link set eth0
 rise #
- ip link set eth2 up
+ ip link set eth0 up
 rise #
  ../../guestbin/ping-once.sh --up 198.18.1.15  # SET
 up

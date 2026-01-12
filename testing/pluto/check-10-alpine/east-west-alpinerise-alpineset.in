@@ -12,13 +12,13 @@ west# ../../guestbin/ip.sh link set eth1 up
 
 rise# ifconfig eth1
 rise# ifconfig eth1 up
-rise# ifconfig eth2
-rise# ifconfig eth2 up
+rise# ifconfig eth0
+rise# ifconfig eth0 up
 
 set# ifconfig eth1
 set# ifconfig eth1 up
-set# ifconfig eth2
-set# ifconfig eth2 up
+set# ifconfig eth0
+set# ifconfig eth0 up
 
 rise# ../../guestbin/ping-once.sh --up 198.18.1.15  # SET
 rise# ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST
