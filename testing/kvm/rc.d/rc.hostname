@@ -92,5 +92,7 @@ test "${ipv4_eth1}" && echo ipv4_eth1=${ipv4_eth1} > /dev/console
 test "${ipv6_eth1}" && echo ipv6_eth1=${ipv6_eth1} > /dev/console
 test "${ipv4_eth2}" && echo ipv4_eth2=${ipv4_eth2} > /dev/console
 test "${ipv6_eth2}" && echo ipv6_eth2=${ipv6_eth2} > /dev/console
+test "${ipv4_gw}" && echo ipv4_gw=${ipv4_gw} > /dev/console
+test "${ipv6_gw}" && echo ipv6_gw=${ipv6_gw} > /dev/console
+test "${dhcp_ethN}" && echo dhcp_ethN=${dhcp_ethN} > /dev/console
 
-echo ipv4_gw=${ipv4_gw} ipv6_gw=${ipv6_gw} dhcp_ethN=${dhcp_ethN} > /dev/console
