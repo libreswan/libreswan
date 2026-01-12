@@ -1,0 +1,6 @@
+[Match]
+Name=eth2
+[Network]
+Description=fallback for when no other interface matches
+DHCP=ipv4
+KeepConfiguration=no

@@ -17,3 +17,5 @@ test "${ipv6_eth2}" && ifconfig vio2 inet6 -tentative ${ipv6_eth2} up
 
 test "${ipv4_gw}" && route add default ${ipv4_gw}
 test "${ipv6_gw}" && route add default ${ipv6_gw}
+
+dhcpleasectl vio${dhcp_ethN}

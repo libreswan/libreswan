@@ -38,10 +38,10 @@ You can load this machine definition into libvirt using:
     <controller type='virtio-serial' index='0'>
     </controller>
     <!--
-	While the BSDs and Alpine use NFS to mount /testing, fedora
-	uses p9fs.  Hence keep these mount points.  Include /source as
-	it is needed when debugging; and /pool as it is used when
-	installing packages.
+	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
+	Debian uses p9fs.  Hence keep these mount points.  Include
+	/source as it is needed when debugging; and /pool as it is
+	used when installing packages.
     -->
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
@@ -55,22 +55,21 @@ You can load this machine definition into libvirt using:
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <!--
-      Keep the first interface pointing at the gateway (if it moves
-      first boot gets confused as the new interface isn't configured).
-    -->
+    <!-- eth0: WEST-SET -->
     <interface type='bridge'>
-      <source bridge='swandefault'/>
+      <mac address='12:00:00:ab:cd:ff'/>
+      <source bridge='@@TEST_PREFIX@@192_0_1'/>
       <model type='virtio'/>
     </interface>
+    <!-- eth1: WEST-NIC-EAST -->
     <interface type='bridge'>
       <mac address='12:00:00:64:64:45'/>
       <source bridge='@@TEST_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
+    <!-- eth2: dhcp -->
     <interface type='bridge'>
-      <mac address='12:00:00:ab:cd:ff'/>
-      <source bridge='@@TEST_PREFIX@@192_0_1'/>
+      <source bridge='swandefault'/>
       <model type='virtio'/>
     </interface>
     <serial type='pty'>
