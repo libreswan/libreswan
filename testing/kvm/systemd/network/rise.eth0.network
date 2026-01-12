@@ -1,11 +1,10 @@
 [Match]
-Name=eth2
-MACAddress=12:00:00:ab:cd:ff
+Name=eth0
+MACAddress=12:52:49:53:45:02
 
 [Network]
-Address=192.0.1.254/24
-Address=2001:db8:0:1::254/64
+Address=198.18.1.12/24
+Address=2001:db8:1::12/64
 IPForward=yes
 IPv6DuplicateAddressDetection=0
 IPv6AcceptRouterAdvertisements=false
-

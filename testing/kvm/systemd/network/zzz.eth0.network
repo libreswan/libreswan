@@ -1,0 +1,9 @@
+[Match]
+ Name=eth0
+[Network]
+ Description=fallback for when no other interface matches
+ DHCP=ipv4
+ KeepConfiguration=no
+[DHCPV4]
+ Hostname=@@PLATFORM@@
+ SendHostname=false

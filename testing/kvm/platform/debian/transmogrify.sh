@@ -4,12 +4,12 @@ set -xe ; exec < /dev/null
 
 # update /etc/fstab with current /source and /testing
 
-GATEWAY=@@GATEWAY@@
-PREFIX=@@PREFIX@@
-BENCHDIR=@@BENCHDIR@@
-POOLDIR=@@POOLDIR@@
-SOURCEDIR=@@SOURCEDIR@@
-TESTINGDIR=@@TESTINGDIR@@
+export GATEWAY=@@GATEWAY@@
+export PREFIX=@@PREFIX@@
+export BENCHDIR=@@BENCHDIR@@
+export POOLDIR=@@POOLDIR@@
+export SOURCEDIR=@@SOURCEDIR@@
+export TESTINGDIR=@@TESTINGDIR@@
 
 :
 : fstab
