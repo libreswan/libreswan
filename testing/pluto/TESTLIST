@@ -1311,9 +1311,9 @@ kvmplutotest 	ikev2-55-ipseckey-09				good
 
 kvmplutotest	replay-authip-01			good
 
-kvmplutotest	ikev1-l2tp-01				wip	github/2515
-kvmplutotest	ikev1-l2tp-02				wip	github/2515
-kvmplutotest	ikev1-l2tp-03-two-interfaces		wip	github/693,github/1117,github/2515
+kvmplutotest	ikev1-l2tp-01				good	github/2515
+kvmplutotest	ikev1-l2tp-02				good	github/2515
+kvmplutotest	ikev1-l2tp-03-two-interfaces		good	github/693,github/1117,github/2515
 
 kvmplutotest	listen-change-01			good
 

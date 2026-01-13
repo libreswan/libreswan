@@ -1,12 +1,15 @@
-/testing/guestbin/swan-prep --hostkeys
-Creating NSS database containing host keys
+/testing/guestbin/prep.sh --hostkeys
+'east.conf' -> '/etc/ipsec.conf'
+'/testing/baseconfigs/east/etc/ipsec.d/cert9.db' -> '/var/lib/ipsec/nss/cert9.db'
+'/testing/baseconfigs/east/etc/ipsec.d/key4.db' -> '/var/lib/ipsec/nss/key4.db'
 east #
  ipsec start
 Redirecting to: [initsystem]
+ * Starting ipsec ... [ ok ]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add any-east-l2tp
+ ipsec add any-east-l2tp
 "any-east-l2tp": added oriented IKEv1 connection
 east #
  # ensure that clear text does not get through
@@ -20,6 +23,9 @@ east #
  iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
 east #
  ../../guestbin/l2tpd.sh
+'east.xl2tpd.conf' -> '/etc/xl2tpd/xl2tpd.conf'
+'chap-secrets' -> '/etc/ppp/chap-secrets'
+'east.ppp-options.xl2tpd' -> '/etc/ppp/options.xl2tpd'
 east #
  ../../guestbin/echo-server.sh -tcp -4 7 -daemon
 listening on IPv4 TCP port 7
@@ -34,6 +40,7 @@ src 192.1.2.23 dst 192.1.3.33
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
 	lastused YYYY-MM-DD HH:MM:SS
+	dir out
 	sel src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701 
 src 192.1.3.33 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -57,6 +64,18 @@ src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701
 	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
 east #
  grep 'Result using RFC 3947' /tmp/pluto.log
 | NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
