@@ -54,5 +54,17 @@ iface eth2
 EOF
     fi
 
+    cp /dev/null /etc/route.conf
+    if test "${ipv4_gw}" ; then
+	cat <<EOF >> /etc/route.conf
+net default gw ${ipv4_gw}
+EOF
+    fi
+    if test "${ipv6_gw}" ; then
+	cat <<EOF >> /etc/route.conf
+net default gw ${ipv6_gw}
+EOF
+    fi
+
     mv /etc/network/interfaces.new /etc/network/interfaces
 }

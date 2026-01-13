@@ -1,40 +1,20 @@
-ifconfig eth1
-eth1      Link encap:Ethernet  HWaddr 12:00:53:45:54:01  
-          inet addr:192.0.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
-          inet6 addr: fe80::1000:53ff:fe45:5401/64 Scope:Link
-          inet6 addr: 2001:db8:0:1::15/64 Scope:Global
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:26 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:14 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000 
-          RX bytes:3298 (3.2 KiB)  TX bytes:1088 (1.0 KiB)
-set #
- ifconfig eth1 up
-set #
- ifconfig eth0
-eth0      Link encap:Ethernet  HWaddr 12:00:53:45:54:02  
-          inet addr:198.18.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
-          inet6 addr: 2001:db8:1::15/64 Scope:Global
-          inet6 addr: fe80::1000:53ff:fe45:5402/64 Scope:Link
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:30 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000 
-          RX bytes:3490 (3.4 KiB)  TX bytes:1052 (1.0 KiB)
-set #
- ifconfig eth0 up
-set #
- ../../guestbin/ping-once.sh --up 198.18.1.12  # RISE
+../../guestbin/ping-once.sh --up 192.1.3.254  # NIC
 up
-set #
- ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
+north #
+ ../../guestbin/ping-once.sh --up 192.1.2.254  # NIC
 up
-set #
+north #
+ ../../guestbin/ping-once.sh --up 192.1.2.23   # EAST
+up
+north #
+ ../../guestbin/ping-once.sh --up 192.1.2.45   # WEST
+up
+north #
  ../../guestbin/prep.sh
-set #
+north #
  ipsec initnss
 Initializing NSS database
-set #
+north #
  ipsec pluto --selftest
 ipsec pluto: selftest: skipping lock
 ipsec pluto: selftest: skipping control socket
@@ -42,16 +22,16 @@ ipsec pluto: selftest: skipping fork
 Starting Pluto (Libreswan Version ...) pid:PID
 operating system: ...
 using dns-resolver=file
-core dump dir: /run/pluto
-warning: chdir("/run/pluto") to dumpdir failed (2: No such file or directory)
-secrets file: /etc/ipsec.secrets
-Initializing NSS using read-only database "sql:/var/lib/ipsec/nss"
+core dump dir: /var/run/pluto
+warning: chdir("/var/run/pluto") to dumpdir failed (2: No such file or directory)
+secrets file: PATH/etc/ipsec.secrets
+Initializing NSS using read-only database "sql:PATH/etc/ipsec.d"
 FIPS Mode: OFF
 NSS crypto library initialized
 FIPS mode disabled for pluto daemon
 NSS: OCSP [disabled]
 FIPS HMAC integrity support [not required]
-libcap-ng support [enabled]
+libcap-ng support [disabled]
 Linux audit support [DISABLED]
 leak-detective disabled
 NSS crypto [enabled]
@@ -162,4 +142,4 @@ testing HMAC_MD5:
 testing HMAC_SHA1:
   CAVP: IKEv2 key derivation with HMAC-SHA1
 selftest: exiting pluto
-set #
+north #

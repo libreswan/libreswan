@@ -27,6 +27,7 @@ for f in /bench/testing/kvm/root/[a-z]* ; do
 done
 
 cp -v /bench/testing/kvm/rc.d/rc.hostname /etc/
+cp -v /bench/testing/kvm/platform/freebsd/dhclient.conf /etc/
 cp -v /bench/testing/kvm/platform/freebsd/rc.conf /etc/
 cp -v /bench/testing/kvm/platform/freebsd/auto_master /etc/
 

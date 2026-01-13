@@ -1,12 +1,11 @@
 <!--
-You can load this machine definition into libvirt using:
-	sudo virsh define openbsde.xml
+./kvm install-linux will transmogrify and then load this .xml file
 -->
 
 <domain type='kvm'>
   <name>@@DOMAIN@@</name>
   <memory unit='MiB'>@@MEMORY@@</memory>
-  <vcpu placement='static'>1</vcpu>
+  <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
@@ -27,7 +26,7 @@ You can load this machine definition into libvirt using:
   <devices>
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2'/>
+      <driver name='qemu' type='qcow2' cache='writeback'/>
       <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
@@ -38,10 +37,10 @@ You can load this machine definition into libvirt using:
     <controller type='virtio-serial' index='0'>
     </controller>
     <!--
-	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
-	Debian uses p9fs.  Hence keep these mount points.  Include
-	/source as it is needed when debugging; and /pool as it is
-	used when installing packages.
+	While the BSDs and Alpine use NFS to mount /testing, fedora
+	uses p9fs.  Hence keep these mount points.  Include /source as
+	it is needed when debugging; and /pool as it is used when
+	installing packages.
     -->
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
@@ -55,19 +54,19 @@ You can load this machine definition into libvirt using:
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <!-- eth0: EAST-RISE -->
+    <!--eth0: north's private network-->
     <interface type='bridge'>
-      <mac address='12:00:00:dc:bc:ff'/>
-      <source bridge='@@TEST_PREFIX@@192_0_2'/>
+      <mac address='12:00:00:de:cd:49'/>
+      <source bridge='@@TEST_PREFIX@@192_0_3'/>
       <model type='virtio'/>
     </interface>
-    <!-- eth1: EAST-NIC-WEST -->
+    <!--eth1: NORTH-NIC -->
     <interface type='bridge'>
-      <mac address='12:00:00:64:64:23'/>
-      <source bridge='@@TEST_PREFIX@@192_1_2'/>
+      <mac address='12:00:00:96:96:49'/>
+      <source bridge='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
-    <!-- eth2: dhcp -->
+    <!--eth2: gateway-->
     <interface type='bridge'>
       <source bridge='swandefault'/>
       <model type='virtio'/>
@@ -85,10 +84,9 @@ You can load this machine definition into libvirt using:
     </memballoon>
     <rng model='virtio'>
       <backend model='random'>/dev/random</backend>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
+      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
     </rng>
   </devices>
-  <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
    <label>@@USER@@:@@GROUP@@</label>
    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
