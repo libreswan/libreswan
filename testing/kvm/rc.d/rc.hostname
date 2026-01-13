@@ -83,6 +83,7 @@ case ${hostname} in
 	;;
     *)
 	dhcp_ethN=0
+	ipv4_gw=192.19.0.1
 	;;
 esac
 
