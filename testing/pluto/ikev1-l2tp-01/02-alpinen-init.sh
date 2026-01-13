@@ -1,9 +1,9 @@
-/testing/guestbin/swan-prep --x509
+/testing/guestbin/prep.sh --hostkeys
 
-iptables -F INPUT
-iptables -F OUTPUT
 # ensure that clear text does not get through
 # block port 7 via ipsec to confirm IPsec only covers 17/1701
+iptables -F INPUT
+iptables -F OUTPUT
 iptables -A OUTPUT -m policy --dir out --pol ipsec -p tcp --dport 7 -j REJECT
 iptables -A OUTPUT -o eth1 -d 192.1.2.23 -m policy --dir out --pol none -p udp --dport 1701 -j REJECT
 iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
@@ -12,8 +12,8 @@ iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add l2tp-north-to-east-on-north
+ipsec add north-east-l2tp
 
 ../../guestbin/l2tpd.sh
-ipsec auto --route l2tp-north-to-east-on-north
+ipsec route north-east-l2tp
 echo done

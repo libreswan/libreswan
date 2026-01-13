@@ -1,4 +1,4 @@
-ipsec auto --up l2tp-north-to-east-on-north
+ipsec up l2tp-north-to-east-on-north
 
 # give the kernel messages time to appear
 echo "c server" > /var/run/xl2tpd/l2tp-control ; sleep 5

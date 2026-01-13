@@ -31,6 +31,8 @@ add gawk           gawk-doc
 add gcc            gcc-doc
 add git            git-doc
 add gmp-dev        gmp-doc
+add iproute2        iproute2-doc
+add iptables        iptables-doc
 add ldns-dev       ldns-doc
 add libcap-ng-dev  libcap-ng-doc
 add libevent-dev
@@ -42,6 +44,8 @@ add nss-dev
 add nss-tools
 add pkgconfig
 add sed             sed-doc
-add unbound-doc     unbound-dev
-add xmlto           xmlto-doc
+add socat           socat-doc
 add tcpdump         tcpdump-doc
+add unbound-doc     unbound-dev
+add xl2tpd          xl2tpd-doc
+add xmlto           xmlto-doc
