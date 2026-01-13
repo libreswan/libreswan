@@ -16,9 +16,14 @@ EOF
 mv /tmp/fstab /etc/fstab
 cat /etc/fstab
 
+# enable static routes
+
+touch /etc/route.conf
+rc-update add staticroute
+
 # Replace the HOSTNAME init script with one that can figure out the
 # HOSTNAME and interface configuration based on interfaces (it saves
-# the result in /etc/network/interfaces).
+# the result in /etc/network/interfaces and /etc/route.conf.
 
 cp -v /bench/testing/kvm/platform/alpine/hostname.sh /etc/init.d/hostname
 chmod a+x /etc/init.d/hostname
