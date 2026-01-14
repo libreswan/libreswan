@@ -13,6 +13,7 @@ depend() {
 start()
 {
 
+    hostname=alpine # default
     . /etc/rc.hostname
 
     ebegin "Setting hostname ${hostname}"

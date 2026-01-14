@@ -1,7 +1,11 @@
 #!/bin/sh
 
-hostname=
 uname=$(uname)
+
+debug()
+{
+    : # echo "$@" > /dev/console
+}
 
 case ${uname} in
     *BSD)
@@ -11,21 +15,20 @@ case ${uname} in
 	macs=$(ip addr show | awk '/link.ether/ { print $2}')
 	;;
 esac
-echo macs=$macs > /dev/console
+debug macs=$macs > /dev/console
 
 for mac in ${macs} ; do
     case "$mac" in
-	12:00:00:64:64:23 ) hostname=east ;;
-	12:00:00:64:64:45 ) hostname=west ;;
-	12:00:00:96:96:49 ) hostname=north ;;
-	12:00:00:ab:cd:02 ) hostname=road ;;
-	12:52:49:53:45:01 ) hostname=rise ;;
-	12:00:53:45:54:01 ) hostname=set ;;
+	12:00:00:64:64:23 ) hostname=east ; break ;;
+	12:00:00:64:64:45 ) hostname=west ; break ;;
+	12:00:00:96:96:49 ) hostname=north ; break ;;
+	12:00:00:ab:cd:02 ) hostname=road ; break ;;
+	12:52:49:53:45:01 ) hostname=rise ; break ;;
+	12:00:53:45:54:01 ) hostname=set ; break ;;
     esac
-    test "${hostname}" && break
 done
 test "${hostname}" || hostname=$(echo ${uname} | tr '[A-Z]' '[a-z]]')
-echo hostname=${hostname} > /dev/console
+debug hostname=${hostname}
 
 # interfaces
 case ${hostname} in
@@ -87,13 +90,12 @@ case ${hostname} in
 	;;
 esac
 
-test "${ipv4_eth0}" && echo ipv4_eth0=${ipv4_eth0} > /dev/console
-test "${ipv6_eth0}" && echo ipv6_eth0=${ipv6_eth0} > /dev/console
-test "${ipv4_eth1}" && echo ipv4_eth1=${ipv4_eth1} > /dev/console
-test "${ipv6_eth1}" && echo ipv6_eth1=${ipv6_eth1} > /dev/console
-test "${ipv4_eth2}" && echo ipv4_eth2=${ipv4_eth2} > /dev/console
-test "${ipv6_eth2}" && echo ipv6_eth2=${ipv6_eth2} > /dev/console
-test "${ipv4_gw}" && echo ipv4_gw=${ipv4_gw} > /dev/console
-test "${ipv6_gw}" && echo ipv6_gw=${ipv6_gw} > /dev/console
-test "${dhcp_ethN}" && echo dhcp_ethN=${dhcp_ethN} > /dev/console
-
+test "${ipv4_eth0}" && debug ipv4_eth0=${ipv4_eth0}
+test "${ipv6_eth0}" && debug ipv6_eth0=${ipv6_eth0}
+test "${ipv4_eth1}" && debug ipv4_eth1=${ipv4_eth1}
+test "${ipv6_eth1}" && debug ipv6_eth1=${ipv6_eth1}
+test "${ipv4_eth2}" && debug ipv4_eth2=${ipv4_eth2}
+test "${ipv6_eth2}" && debug ipv6_eth2=${ipv6_eth2}
+test "${ipv4_gw}"   && debug ipv4_gw=${ipv4_gw}
+test "${ipv6_gw}"   && debug ipv6_gw=${ipv6_gw}
+test "${dhcp_ethN}" && debug dhcp_ethN=${dhcp_ethN}
