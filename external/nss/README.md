@@ -13,9 +13,13 @@ This directory is used to build a local version of NSS.
 - for a kvm build:
 
     $ ./kvm sh linux
+
+    linux#  dnf install gyp ninja c++ ...?
+
     linux#  make -C /source/external/nss
 
-  IT MIGHT TAKE SEVERAL ATTEMPTS AS THE MECURIAL DOWNLOAD CAN FAIL!
+  -> there are likely missing packages, above is a guess
+  -> it may take several attempts; mecurial download can fail
 
   and then add:
 
