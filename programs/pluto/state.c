@@ -996,6 +996,11 @@ void delete_state(struct state *st)
 	free_chunk_content(&st->st_v2_ike_intermediate.initiator);
 	free_chunk_content(&st->st_v2_ike_intermediate.responder);
 
+	/* followup ke */
+	FOR_EACH_ITEM(key, &st->st_v2_ike_followup_ke.keys) {
+		symkey_delref(st->logger, "SK(n)", key);
+	}
+
 	/* session resumption */
 	pfreeany(st->st_v2_resume_session);
 

@@ -59,6 +59,7 @@ OBJS += ikev2_unsecured.o
 OBJS += ikev2_ike_sa_init.o
 OBJS += ikev2_ike_session_resume.o
 OBJS += ikev2_ike_intermediate.o
+OBJS += ikev2_ike_followup_ke.o
 OBJS += ikev2_ike_auth.o
 OBJS += ikev2_create_child_sa.o
 OBJS += ikev2_informational.o
