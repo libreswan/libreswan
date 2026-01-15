@@ -566,6 +566,10 @@ enum state_kind {
 	STATE_V2_REKEY_IKE_R0,		/* larval: sent nothing yet terminal state STATE_V2_PARENT_R2 */
 	STATE_V2_REKEY_CHILD_R0,	/* larval: sent nothing yet. */
 
+	STATE_V2_REKEY_IKE_FOLLOWUP_KE_I0,
+	STATE_V2_REKEY_IKE_FOLLOWUP_KE_I1,
+	STATE_V2_REKEY_IKE_FOLLOWUP_KE_R0,
+
 	/* IKEv2's established states */
 
 	STATE_V2_ESTABLISHED_IKE_SA,

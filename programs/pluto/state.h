@@ -55,6 +55,7 @@
 #include "list_entry.h"
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
+#include "ikev2_prf.h"		/* for struct prf_keys */
 #include "ike_spi.h"
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
@@ -155,6 +156,14 @@ struct v2_id_payload {
 	struct crypt_mac mac;
 	/* Same for non-ppk */
 	struct crypt_mac mac_no_ppk_auth;
+};
+
+/* Used by IKE_FOLLOWUP_KE to link between previous response and the
+ * next request.
+ */
+#define ADDKE_LINK_SIZE 8
+struct addke_link {
+	uint8_t bytes[ADDKE_LINK_SIZE];
 };
 
 /*
@@ -424,6 +433,17 @@ struct state {
 		uint32_t id;		/* ID of last IKE_INTERMEDIATE exchange */
 		unsigned next_exchange;
 	} st_v2_ike_intermediate;
+
+	/*
+	 * IKEv2 followup_ke exchange.
+	 */
+
+	struct {
+		struct child_sa *larval_sa;
+		struct addke_link link; /* opaque value set by responder */
+		unsigned next_exchange;
+		struct prf_keys *keys;
+	} st_v2_ike_followup_ke;
 
 	/** end of IKEv2-only things **/
 

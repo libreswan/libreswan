@@ -44,6 +44,7 @@ enum v2_pd v2_pd_from_notification(v2_notification_t n)
 {
 	switch (n) {
 #define C(N) case v2N_##N: return PD_v2N_##N;
+	C(ADDITIONAL_KEY_EXCHANGE);
 	C(AUTHENTICATION_FAILED);
 	C(COOKIE);
 	C(COOKIE2);

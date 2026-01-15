@@ -41,6 +41,7 @@
 #include "ikev2_ike_auth.h"
 #include "ikev2_ike_sa_init.h"
 #include "ikev2_ike_intermediate.h"
+#include "ikev2_ike_followup_ke.h"
 #include "ikev2_informational.h"
 #include "ikev2_liveness.h"
 #include "ikev2_cookie.h"
@@ -173,7 +174,7 @@ V2_LARVAL_SA(REKEY_IKE_I0, "STATE_V2_REKEY_IKE_I0",
 
 static const struct v2_transition v2_REKEY_IKE_R0_transition = {
 	.story      = "process CREATE_CHILD_SA rekey IKE SA request (larval)",
-	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.to = &state_v2_REKEY_IKE_FOLLOWUP_KE_R0,
 	.exchange = &v2_CREATE_CHILD_SA_rekey_ike_exchange,
 };
 
@@ -182,12 +183,39 @@ V2_LARVAL_SA(REKEY_IKE_R0, "STATE_V2_REKEY_IKE_R0",
 
 static const struct v2_transition v2_REKEY_IKE_I1_transition = {
 	.story      = "process CREATE_CHILD_SA rekey IKE SA response (larval)",
-	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.to = &state_v2_REKEY_IKE_FOLLOWUP_KE_I0,
 	.exchange = &v2_CREATE_CHILD_SA_rekey_ike_exchange,
 };
 
 V2_LARVAL_SA(REKEY_IKE_I1, "sent CREATE_CHILD_SA request to rekey IKE SA",
-	     CAT_OPEN_CHILD_SA);
+	     CAT_OPEN_IKE_SA);
+
+static const struct v2_transition v2_REKEY_IKE_FOLLOWUP_KE_R0_transition = {
+	.story      = "process IKE_FOLLOWUP_KE rekey IKE SA request (larval)",
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_IKE_FOLLOWUP_KE_rekey_ike_exchange,
+};
+
+V2_LARVAL_SA(REKEY_IKE_FOLLOWUP_KE_R0, "process IKE_FOLLOWUP_KE rekey IKE SA request (larval)",
+             CAT_OPEN_IKE_SA);
+
+static const struct v2_transition v2_REKEY_IKE_FOLLOWUP_KE_I0_transition = {
+	.story      = "initiate IKE_FOLLOWUP_KE rekey IKE SA (larval)",
+	.to = &state_v2_REKEY_IKE_FOLLOWUP_KE_I1,
+	.exchange = &v2_IKE_FOLLOWUP_KE_rekey_ike_exchange,
+};
+
+V2_LARVAL_SA(REKEY_IKE_FOLLOWUP_KE_I0, "STATE_V2_REKEY_IKE_FOLLOWUP_KE_I0",
+             CAT_OPEN_CHILD_SA);
+
+static const struct v2_transition v2_REKEY_IKE_FOLLOWUP_KE_I1_transition = {
+	.story      = "process IKE_FOLLOWUP_KE rekey IKE SA response (larval)",
+	.to = &state_v2_ESTABLISHED_IKE_SA,
+	.exchange = &v2_IKE_FOLLOWUP_KE_rekey_ike_exchange,
+};
+
+V2_LARVAL_SA(REKEY_IKE_FOLLOWUP_KE_I1, "sent IKE_FOLLOWUP_KE request to rekey IKE SA",
+             CAT_OPEN_IKE_SA);
 
 /*
  * Child states when rekeying a Child SA using CREATE_CHILD_SA.
@@ -275,7 +303,8 @@ V2_STATE(ESTABLISHED_IKE_SA, "established IKE SA",
 	  */
 	 &v2_CREATE_CHILD_SA_rekey_ike_exchange,
 	 &v2_CREATE_CHILD_SA_rekey_child_exchange,
-	 &v2_CREATE_CHILD_SA_new_child_exchange);
+	 &v2_CREATE_CHILD_SA_new_child_exchange,
+	 &v2_IKE_FOLLOWUP_KE_rekey_ike_exchange);
 
 V2_STATE(ESTABLISHED_CHILD_SA, "established Child SA",
 	 CAT_ESTABLISHED_CHILD_SA, /*secured*/true);
@@ -314,6 +343,9 @@ static const struct finite_state *v2_states[] = {
 	S(REKEY_IKE_I0),
 	S(REKEY_IKE_I1),
 	S(REKEY_IKE_R0),
+	S(REKEY_IKE_FOLLOWUP_KE_I0),
+	S(REKEY_IKE_FOLLOWUP_KE_I1),
+	S(REKEY_IKE_FOLLOWUP_KE_R0),
 	S(ESTABLISHED_IKE_SA),
 	S(ESTABLISHED_CHILD_SA),
 	S(ZOMBIE),
@@ -970,7 +1002,7 @@ static void validate_state_larval_sa_transition(struct verbose verbose,
 	}
 	vassert(t->exchange != NULL);
 	vassert(!(t->exchange->log_transition_start && t->log_transition_start));
-	vassert(t->exchange->type == ISAKMP_v2_CREATE_CHILD_SA);
+	vassert(t->exchange->type == ISAKMP_v2_CREATE_CHILD_SA || t->exchange->type == ISAKMP_v2_IKE_FOLLOWUP_KE);
 	vassert(t->recv_role == 0);
 	vassert(t->processor == NULL);
 	vassert(t->llog_success == NULL);
