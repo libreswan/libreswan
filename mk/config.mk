@@ -20,25 +20,13 @@ ifndef config.mk
 config.mk = true
 
 #
-# Configuration options.
+# Configuration options.  Include this file early!
 #
 # USE_ assume a package and enable features that depend on it
 #
 #       For instance USE_SECCOMP assumes the seccomp library and
 #       enables the seccomp code.
 #
-# A Makefile wanting to test variables defined below has two choices:
-#
-# - include config.mk early and use GNU-make's 'ifeq' statement
-#
-# - include config.mk late, and use $(call if-enabled,VARIABLE,result)
-#
-
-if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
-
-
-# TODO: Some creative ifeq ($(OSDEP,xxx) to automatically determine
-# where we are building on and disable things
 
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
