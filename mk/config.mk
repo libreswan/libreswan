@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012-2020 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015,2017-2018 Andrew Cagney
+# Copyright (C) 2015,2017-2026 Andrew Cagney
 # Copyright (C) 2015-2023 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -22,17 +22,11 @@ config.mk = true
 #
 # Configuration options.
 #
-# Sometimes the make variable is called USE_<feature> and the C macro
-# is called HAVE_<feature>, but not always.
-#
-# USE_  assume a package and enable corresponding feature
+# USE_ assume a package and enable features that depend on it
 #
 #       For instance USE_SECCOMP assumes the seccomp library and
 #       enables the seccomp code.
 #
-# HAVE_ variables let you tell Libreswan what system related libraries
-#       you may or maynot have
-
 # A Makefile wanting to test variables defined below has two choices:
 #
 # - include config.mk early and use GNU-make's 'ifeq' statement
