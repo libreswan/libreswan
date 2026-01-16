@@ -126,7 +126,7 @@ static void help(void)
 		"	[--tcp <no|yes|fallback>] --tcp-remote-port <port>\\\n"
 		"	[--session-resumption[={yes,no}]] \\\n"
 		"	[--nm-configured] \\\n"
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 		"	[--policylabel <label>] \\\n"
 #endif
 		"	[--dontrekey] [--dont-share-lease] [--aggressive] \\\n"

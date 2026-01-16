@@ -169,7 +169,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_SYSTEMD_WATCHDOG
 	" SYSTEMD_WATCHDOG"
 #endif
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 	" LABELED_IPSEC"
 	" (SELINUX)"
 #endif
