@@ -90,7 +90,7 @@
 #define IPSECDIR "/etc/ipsec.d"
 #endif
 
-#ifdef HAVE_LIBCAP_NG
+#ifdef USE_LIBCAP_NG
 # include <cap-ng.h>	/* rpm:libcap-ng-devel deb:libcap-ng-dev */
 #endif
 
@@ -176,7 +176,7 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_SECCOMP
 	" SECCOMP"
 #endif
-#ifdef HAVE_LIBCAP_NG
+#ifdef USE_LIBCAP_NG
 	" LIBCAP_NG"
 #endif
 #ifdef USE_LINUX_AUDIT
@@ -1377,7 +1377,7 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "FIPS HMAC integrity support [DISABLED]");
 #endif
 
-#ifdef HAVE_LIBCAP_NG
+#ifdef USE_LIBCAP_NG
 	/*
 	 * If we don't have the capability to drop capailities, do nothing.
 	 *

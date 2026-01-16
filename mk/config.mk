@@ -971,7 +971,7 @@ CRYPT_LDFLAGS ?= -lcrypt
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG ?= true
 ifeq ($(USE_LIBCAP_NG),true)
-USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
+USERLAND_CFLAGS += -USE_LIBCAP_NG
 LIBCAP_NG_LDFLAGS ?= -lcap-ng
 endif
 
