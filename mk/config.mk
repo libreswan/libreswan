@@ -595,9 +595,6 @@ USE_LDAP ?= false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL ?= true
 
-# For Angstrom linux with broken popen() set to true. See bug #1067
-HAVE_BROKEN_POPEN ?= false
-
 NONINTCONFIG = oldconfig
 
 include $(top_srcdir)/mk/version.mk
@@ -1028,10 +1025,6 @@ USERLAND_CFLAGS += -DFORCE_PR_ASSERT
 # stick with RETRANSMIT_INTERVAL_DEFAULT as makefile variable name
 ifdef RETRANSMIT_INTERVAL_DEFAULT
 USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
-endif
-
-ifeq ($(HAVE_BROKEN_POPEN),true)
-USERLAND_CFLAGS += -DHAVE_BROKEN_POPEN
 endif
 
 # Do things like create a daemon using the sequence fork()+exit().  If

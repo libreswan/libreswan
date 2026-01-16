@@ -150,9 +150,6 @@ static const char compile_time_interop_options[] = ""
 #if defined __GNUC__ && defined __EXCEPTIONS
 	" GCC_EXCEPTIONS"
 #endif
-#ifdef HAVE_BROKEN_POPEN
-	" BROKEN_POPEN"
-#endif
 	" NSS"
 	" (IPsec profile)"
 #ifdef USE_NSS_KDF
