@@ -30,7 +30,6 @@ You can load this machine definition into libvirt using:
       <driver name='qemu' type='qcow2'/>
       <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x04' function='0x0'/>
       <transient shareBacking='yes'/>
     </disk>
     <controller type='usb' index='0'>
@@ -81,11 +80,9 @@ You can load this machine definition into libvirt using:
       <target type='serial' port='0'/>
     </console>
     <memballoon model='virtio'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x05' function='0x0'/>
     </memballoon>
     <rng model='virtio'>
       <backend model='random'>/dev/random</backend>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
     </rng>
   </devices>
   <!-- used by p9fs -->
