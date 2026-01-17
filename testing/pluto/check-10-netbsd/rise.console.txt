@@ -22,10 +22,10 @@ vioif0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 rise #
  ifconfig vioif0 up
 rise #
- ../../guestbin/ping-once.sh --up 198.18.1.15  # SET
+ ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
 up
 rise #
- ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # set_sunnet
 up
 rise #
  ../../guestbin/prep.sh

@@ -23,10 +23,10 @@ vio0: flags=2808843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,AUTOCONF4,LRO> mtu 15
 rise #
  ifconfig vio0 up
 rise #
- ../../guestbin/ping-once.sh --up 198.18.1.15  # SET
+ ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
 up
 rise #
- ../../guestbin/ping-once.sh --up 192.0.2.254  # EAST
+ ../../guestbin/ping-once.sh --up 198.18.1.15 # set_sunnet
 up
 rise #
  ../../guestbin/prep.sh

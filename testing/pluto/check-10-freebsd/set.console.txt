@@ -24,10 +24,10 @@ vtnet0: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 
 set #
  ifconfig vtnet0 up
 set #
- ../../guestbin/ping-once.sh --up 198.18.1.12  # RISE
+ ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
 up
 set #
- ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
+ ../../guestbin/ping-once.sh --up 198.18.1.12 # rise_sunnet
 up
 set #
  ../../guestbin/prep.sh

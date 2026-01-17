@@ -6,10 +6,10 @@ set #
 set #
  ip link set eth0 up
 set #
- ../../guestbin/ping-once.sh --up 198.18.1.12  # RISE
+ ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
 up
 set #
- ../../guestbin/ping-once.sh --up 192.0.1.254  # WEST
+ ../../guestbin/ping-once.sh --up 198.18.1.12 # rise_sunnet
 up
 set #
  ../../guestbin/prep.sh

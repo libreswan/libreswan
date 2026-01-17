@@ -1,2 +1,2 @@
-: up
+: make certain NIC is running
 nic #

@@ -28,3 +28,15 @@ east #
 east #
  ../../guestbin/ip.sh link set eth1 up
 east #
+ ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
+up
+east #
+ ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_pubnet
+up
+east #
+ ../../guestbin/ping-once.sh --up 192.1.3.33 # north_nicnet
+up
+east #
+ ../../guestbin/ping-once.sh --up 192.0.2.12 # rise_eastnet
+up
+east # 
