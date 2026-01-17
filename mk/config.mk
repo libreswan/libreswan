@@ -3,7 +3,7 @@
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012-2020 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015,2017-2018 Andrew Cagney
+# Copyright (C) 2015,2017-2026 Andrew Cagney
 # Copyright (C) 2015-2023 Tuomo Soini <tis@foobar.fi>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -20,31 +20,13 @@ ifndef config.mk
 config.mk = true
 
 #
-# Configuration options.
+# Configuration options.  Include this file early!
 #
-# Sometimes the make variable is called USE_<feature> and the C macro
-# is called HAVE_<feature>, but not always.
-#
-# USE_  assume a package and enable corresponding feature
+# USE_ assume a package and enable features that depend on it
 #
 #       For instance USE_SECCOMP assumes the seccomp library and
 #       enables the seccomp code.
 #
-# HAVE_ variables let you tell Libreswan what system related libraries
-#       you may or maynot have
-
-# A Makefile wanting to test variables defined below has two choices:
-#
-# - include config.mk early and use GNU-make's 'ifeq' statement
-#
-# - include config.mk late, and use $(call if-enabled,VARIABLE,result)
-#
-
-if-enabled = $(if $(filter true, $($(strip $(1)))),$(2),$(3))
-
-
-# TODO: Some creative ifeq ($(OSDEP,xxx) to automatically determine
-# where we are building on and disable things
 
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
@@ -89,177 +71,64 @@ USERLAND_CFLAGS += -pthread
 USERLAND_CFLAGS += -std=gnu99
 
 #
-# Error out on deprecated since 5.1 config variables.
+# Error out dead make variables
 #
-ifdef USE_NSS_AVA_COPY
-$(error ERROR: Deprecated USE_NSS_AVA_COPY variable set, please remove)
-endif
-
+# Goal is to stop attempts to build using old configs ASAP.
 #
-# Error out on deprecated since 5.0 config variables.
-#
-ifdef HAVE_IPTABLES
-$(error ERROR: Deprecated HAVE_IPTABLES variable set, use USE_IPTABLES instead)
-endif
 
-ifdef HAVE_NFTABLES
-$(error ERROR: Deprecated HAVE_NFTABLES variable set, use USE_NFTABLES instead)
-endif
+define error_removed # VERSION MACRO
+ ifdef $2
+  $$(error ERROR: $2 removed in $1)
+ endif
+endef
 
-#
-# Error out on deprecated since 4.0 config variables.
-#
-ifdef BINDIR
-$(error ERROR: Deprecated BINDIR variable set, use LIBEXECDIR instead)
-endif
+$(eval $(call error_removed, 4.0, USE_KLIPS))
+$(eval $(call error_removed, 5.1, USE_NSS_AVA_COPY))
+$(eval $(call error_removed, 5.4, HAVE_BROKEN_POPEN))
 
-ifdef PUBDIR
-$(error ERROR: Deprecated PUBDIR variable is set, use SBINDIR instead)
-endif
+define error_replaced $ VERSION MACRO REPLACEMENT
+ ifdef $2
+  \$(error ERROR: $2 replaced by $3 in $1)
+ endif
+endef
 
-ifdef EFENCE
-$(error ERROR: Deprecated EFENCE variable is set, use USE_EFENCE instead)
-endif
-
-ifdef INC_USRLOCAL
-$(error ERROR: Deprecated INC_USRLOCAL variable is set, use PREFIX instead)
-endif
-
-ifdef MANTREE
-$(error ERROR: Deprecated MANTREE variable is set, use MANDIR instead)
-endif
-
-ifdef USE_XAUTHPAM
-$(error ERROR: Deprecated USE_XAUTHPAM variable is set, use USE_AUTHPAM instead)
-endif
-
-ifdef USE_NETKEY
-$(error ERROR: Deprecated USE_NETKEY variable is set, use USE_XFRM instead)
-endif
-
-ifdef USE_KLIPS
-$(error ERROR: Deprecated USE_KLIPS variable is set, migrate to use USE_XFRM instead)
-endif
-
-ifdef INC_MANDIR
-$(error ERROR: Deprecated INC_MANDIR variable is set, use MANDIR instead)
-endif
-
-ifdef INC_DOCDIR
-$(error ERROR: Deprecated INC_DOCDIR variable is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
-endif
-
-ifdef INC_RCDIRS
-$(error ERROR: Deprecated variable INC_RCDIRS is set, use INIT_D_DIR instead
-endif
-
-ifdef INC_RCDEFAULT
-$(error ERROR: Deprecated variable INC_RCDEFAULT is set, use INIT_D_DIR instead)
-endif
-
-ifdef FINALLIBEXECDIR
-$(error ERROR: deprecated variable FINALLIBEXECDIR is set, use LIBEXECDIR instead)
-endif
-
-ifdef FINALMANDIR
-$(error ERROR: deprecated variable FINALMANDIR is set, use MANDIR instead)
-endif
-
-ifdef FINALCONFFILE
-$(error ERROR: deprecated variable FINALCONFFILE is set, use IPSEC_CONF instead)
-endif
-
-ifdef CONFFILE
-$(error ERROR: deprecated variable CONFFILE is set, use IPSEC_CONF instead)
-endif
-
-ifdef IPSEC_CONF
-$(error ERROR: deprecated variable IPSEC_CONF is set, use IPSEC_CONF instead)
-endif
-
-ifdef IPSEC_SECRETS_FILE
-$(error ERROR: deprecated variable IPSEC_SECRETS_FILE is set, use IPSEC_SECRETS instead)
-endif
-
-ifdef CONFDDIR
-$(error ERROR: deprecated variable CONFDDIR is set, use IPSEC_CONFDDIR instead)
-endif
-
-ifdef FINALCONFDDIR
-$(error ERROR: deprecated variable FINALCONFDDIR is set, use IPSEC_CONFDDIR instead)
-endif
-
-ifdef EXAMPLECONFDDIR
-$(error ERROR: deprecated variable EXAMPLECONFDDIR is set, use EXAMPLE_IPSEC_CONFDDIR instead)
-endif
-
-ifdef EXAMPLEFINALCONFDDIR
-$(error ERROR: deprecated variable EXAMPLEFINALCONFDDIR is set, use EXAMPLE_IPSEC_CONFDDIR instead)
-endif
-
-ifdef FINALLOGDIR
-$(error ERROR: deprecated variable FINALLOGDIR is set, use LOGDIR instead)
-endif
-
-ifdef FINALSBINDIR
-$(error ERROR: deprecated variable FINALSBINDIR is set, use SBINDIR instead)
-endif
-
-ifdef FINALVARDIR
-$(error ERROR: deprecated variable FINALVARDIR is set, use VARDIR instead)
-endif
-
-ifdef FINALPPKDIR
-$(error ERROR: deprecated variable FINALPPKDIR is set)
-endif
-
-ifdef PPKDIR
-$(error ERROR: deprecated variable PPKDIR is set)
-endif
-
-ifdef FINALSYSCONFDIR
-$(error ERROR: deprecated variable FINALSYSCONFDIR is set, use SYSCONFDIR instead)
-endif
-
-ifdef FINALCONFDIR
-$(error ERROR: deprecated variable FINALCONFDIR is set, use SYSCONFDIR instead)
-endif
-
-ifdef CONFDIR
-$(error ERROR: deprecated variable CONFDIR is set, use SYSCONFDIR instead)
-endif
-
-ifdef FINALDOCDIR
-$(error ERROR: deprecated variable FINALDOCDIR is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
-endif
-
-ifdef DOCDIR
-$(error ERROR: deprecated variable DOCDIR is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
-endif
-
-ifdef FINALINITDDIR
-$(error ERROR: deprecated variable FINALINITDDIR is set, use INIT_D_DIR instead)
-endif
-
-ifdef FINALRUNDIR
-$(error ERROR: deprecated variable FINALRUNDIR is set, use RUNDIR instead)
-endif
-
-ifdef FINALLOGROTATEDDIR
-$(error ERROR: deprecated variable FINALLOGROTATEDDIR is set, use LOGROTATEDDIR instead)
-endif
-
-ifdef EXAMPLEFINALLOGROTATEDDIR
-$(error ERROR: deprecated variable EXAMPLEFINALLOGROTATEDDIR is set, use EXAMPLE_LOGROTATEDDIR instead)
-endif
-
-ifdef FINALPAMCONFDIR
-$(error ERROR: deprecated variable FINALPAMCONFDIR is set, use PAMCONFDIR instead)
-endif
-
-ifdef EXAMPLEFINALPAMCONFDIR
-$(error ERROR: deprecated variable EXAMPLEFINALPAMCONFDIR is set, use EXAMPLE_PAMCONFDIR instead)
-endif
+$(eval $(call error_replaced, 4.0, BINDIR, LIBEXECDIR))
+$(eval $(call error_replaced, 4.0, CONFDDIR, IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, CONFDIR, SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, CONFFILE, IPSEC_CONF))
+$(eval $(call error_replaced, 4.0, DOCDIR, EXAMPLE_IPSEC_SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, EFENCE, USE_EFENCE))
+$(eval $(call error_replaced, 4.0, EXAMPLECONFDDIR, EXAMPLE_IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, EXAMPLEFINALCONFDDIR, EXAMPLE_IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, EXAMPLEFINALLOGROTATEDDIR, EXAMPLE_LOGROTATEDDIR))
+$(eval $(call error_replaced, 4.0, EXAMPLEFINALPAMCONFDIR, EXAMPLE_PAMCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALCONFDDIR, IPSEC_CONFDDIR))
+$(eval $(call error_replaced, 4.0, FINALCONFDIR, SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALCONFFILE, IPSEC_CONF))
+$(eval $(call error_replaced, 4.0, FINALDOCDIR, EXAMPLE_IPSEC_SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALINITDDIR, INIT_D_DIR))
+$(eval $(call error_replaced, 4.0, FINALLIBEXECDIR, LIBEXECDIR))
+$(eval $(call error_replaced, 4.0, FINALLOGDIR, LOGDIR))
+$(eval $(call error_replaced, 4.0, FINALLOGROTATEDDIR, LOGROTATEDDIR))
+$(eval $(call error_replaced, 4.0, FINALMANDIR, MANDIR))
+$(eval $(call error_replaced, 4.0, FINALPAMCONFDIR, PAMCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALPPKDIR, SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, FINALRUNDIR, RUNDIR))
+$(eval $(call error_replaced, 4.0, FINALSBINDIR, SBINDIR))
+$(eval $(call error_replaced, 4.0, FINALVARDIR, VARDIR))
+$(eval $(call error_replaced, 4.0, INC_DOCDIR, EXAMPLE_IPSEC_SYSCONFDIR))
+$(eval $(call error_replaced, 4.0, INC_MANDIR, MANDIR))
+$(eval $(call error_replaced, 4.0, INC_RCDEFAULT, INIT_D_DIR))
+$(eval $(call error_replaced, 4.0, INC_RCDIRS, INIT_D_DIR))
+$(eval $(call error_replaced, 4.0, INC_USRLOCAL, PREFIX))
+$(eval $(call error_replaced, 4.0, IPSEC_CONF, IPSEC_CONF))
+$(eval $(call error_replaced, 4.0, IPSEC_SECRETS_FILE, IPSEC_SECRETS))
+$(eval $(call error_replaced, 4.0, MANTREE, MANDIR))
+$(eval $(call error_replaced, 4.0, PUBDIR, SBINDIR))
+$(eval $(call error_replaced, 4.0, USE_NETKEY, USE_XFRM))
+$(eval $(call error_replaced, 4.0, USE_XAUTHPAM, USE_AUTHPAM))
+$(eval $(call error_replaced, 5.0, HAVE_IPTABLES, USE_IPTABLES))
+$(eval $(call error_replaced, 5.0, HAVE_NFTABLES, USE_NFTABLES))
 
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
@@ -595,9 +464,6 @@ USE_LDAP ?= false
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL ?= true
 
-# For Angstrom linux with broken popen() set to true. See bug #1067
-HAVE_BROKEN_POPEN ?= false
-
 NONINTCONFIG = oldconfig
 
 include $(top_srcdir)/mk/version.mk
@@ -749,8 +615,13 @@ endif
 USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
 endif
 
+# Implement LABELED_IPSEC feature using SELINUX
+#
+# This is sketchy.  It should be USE_SELINUX and
+# ENABLE_LABLELED_IPSEC.
+
 ifeq ($(USE_LABELED_IPSEC),true)
-USERLAND_CFLAGS += -DHAVE_LABELED_IPSEC
+USERLAND_CFLAGS += -DUSE_LABELED_IPSEC
 endif
 
 ifeq ($(USE_SECCOMP),true)
@@ -1030,10 +901,6 @@ ifdef RETRANSMIT_INTERVAL_DEFAULT
 USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
 endif
 
-ifeq ($(HAVE_BROKEN_POPEN),true)
-USERLAND_CFLAGS += -DHAVE_BROKEN_POPEN
-endif
-
 # Do things like create a daemon using the sequence fork()+exit().  If
 # you don't have or don't want to use fork() disable this.
 USE_FORK ?= true
@@ -1086,7 +953,7 @@ CRYPT_LDFLAGS ?= -lcrypt
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG ?= true
 ifeq ($(USE_LIBCAP_NG),true)
-USERLAND_CFLAGS += -DHAVE_LIBCAP_NG
+USERLAND_CFLAGS += -USE_LIBCAP_NG
 LIBCAP_NG_LDFLAGS ?= -lcap-ng
 endif
 

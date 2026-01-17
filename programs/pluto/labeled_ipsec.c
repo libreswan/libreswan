@@ -23,13 +23,13 @@
 #include "log.h"
 #include "connections.h"
 
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 #include <selinux/selinux.h>		/* rpm:libselinux-devel */
 #endif
 
 err_t vet_seclabel(shunk_t sl)
 {
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 	if (sl.len > MAX_SECCTX_LEN)
 		return "security label is too long";
 
@@ -53,7 +53,7 @@ err_t vet_seclabel(shunk_t sl)
 
 void init_labeled_ipsec(const struct logger *logger)
 {
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 	if (!is_selinux_enabled()) {
 		llog(RC_LOG, logger, "selinux support is NOT enabled.");
 		return;
@@ -65,7 +65,7 @@ void init_labeled_ipsec(const struct logger *logger)
 #endif
 }
 
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 static bool check_access(const char *perm,
 			 const char *source, const char *scontext,
 			 const char *target, const char *tcontext,
@@ -91,7 +91,7 @@ static bool check_access(const char *perm,
 bool sec_label_within_range(const char *source, shunk_t label, chunk_t range,
 			    const struct logger *logger)
 {
-#ifdef HAVE_LABELED_IPSEC
+#ifdef USE_LABELED_IPSEC
 	if (label.len == 0 || range.len == 0) {
 		return false;
 	}

@@ -72,21 +72,6 @@ bool server_run(const char *verb, const char *verb_suffix,
 		FILE *f = popen(cmd, "r");
 
 		if (f == NULL) {
-#ifdef HAVE_BROKEN_POPEN
-			/*
-			 * See bug #1067  Angstrom Linux on a arm7 has no
-			 * popen()
-			 */
-			if (errno == ENOSYS) {
-				/*
-				 * Try system(), though it will not give us
-				 * output
-				 */
-				vlog("unable to popen(), falling back to system()");
-				system(cmd);
-				return true;
-			}
-#endif
 			vlog("unable to popen %s%s command",
 			     verb, verb_suffix);
 			return false;

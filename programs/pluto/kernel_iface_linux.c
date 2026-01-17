@@ -27,14 +27,6 @@
 #include "log.h"
 #include "kernel_iface.h"
 
-#ifdef HAVE_BROKEN_POPEN
-/*
- * including this may be acceptable on a system without a working popen
- * but a normal system should not need this, <errno.h> should cover it ;-)
- */
-#include <asm-generic/errno.h>
-#endif
-
 /* invoke the updown script to do the routing and firewall commands required
  *
  * The user-specified updown script is run.  Parameters are fed to it in

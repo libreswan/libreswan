@@ -16,6 +16,8 @@ v5.4 (unreleased)
     Note: old Linux distros may need USE_XFRM_HEADER_COPY=true
   - fix RPM package file/directory ownership [Joseph Marreo Corchado, Tuomo, #2167]
   - fix seccomp rules to work with Bash 5.3 [Maciej S. Szmigiero, #2371]
+  - remove HAVE_BROKEN_POPEN=true needed by Angstrom linux [Andrew, #2588]
+    Angstrom's last release was 2017 or 8 years ago
 * testing:
   - Alpine test domain upgraded to 3.22.2 [Andrew]
   - Debian test domain upgraded to 12.12 [Andrew]
