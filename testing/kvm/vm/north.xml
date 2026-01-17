@@ -9,9 +9,10 @@
   <vcpu>1</vcpu>
   <os>
     <type arch='x86_64'>hvm</type>
-    <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
-    <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
-    <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=north</cmdline>
+    <!--linux?--> <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
+    <!--linux?--> <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
+    <!--linux?--> <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=@@HOST_NAME@@</cmdline>
+    <!--bsd?--> <boot dev='hd'/>
   </os>
   <!--override default of mode=host-model -->
   <cpu mode='host-passthrough'/>
@@ -60,6 +61,11 @@
       <source bridge='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
+    <!-- eth2: dhcp -->
+    <!--bsd?--> <interface type='bridge'>
+      <!--bsd?--> <source bridge='swandefault'/>
+      <!--bsd?--> <model type='virtio'/>
+    <!--bsd?--> </interface>
     <!-- serial console -->
     <console type='pty'/>
     <!-- memory -->

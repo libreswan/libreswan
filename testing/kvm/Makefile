@@ -1470,6 +1470,7 @@ define define-test-domain
 	:  guest_name=$(2)
 	:  platform=$(3)
 	:  host_name=$(4)
+	:  enable=$(5)
 	:  KVM_OS_TEST_MEMORY=$$(KVM_$($(strip $(3)))_TEST_MEMORY)
 	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
@@ -1483,6 +1484,10 @@ define define-test-domain
 		-e 's;@@PLATFORM@@;$(strip $(3));' \
 		-e 's;@@HOST_NAME@@;$(strip $(4));' \
 		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(3)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
+		-e 's/<!--[a-z?]*\($(strip $(3))\)[?].*-->/<!--*\1*-->/' \
+		-e 's/<!--[a-z?]*\($(strip $(4))\)[?].*-->/<!--*\1*-->/' \
+		-e 's/<!--[a-z?]*\($(strip $(5))\)[?].*-->/<!--*\1*-->/' \
+		-e '/<!--[a-z?]*-->/ { s/--> / / ; s/$$$$/ -->/ }' \
 		vm/$(strip $(4)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
@@ -1493,13 +1498,22 @@ endef
 # Need to pass platform|host and platform and host as, per below,
 # linux domains don't get the linux prefix.
 
+# H is E, W, .. and not EAST, WEST, ...
+e=east
+w=west
+n=north
+r=road
+rise=rise
+set=set
+
 $(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach host, $(KVM_OS_TEST_HOST_NAMES), \
+		$(foreach h, $(KVM_OS_TEST_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
-				$(prefix), $(platform)$(host), \
+				$(prefix), $(platform)$(h), \
 				$(platform), \
-				$(host))))))
+				$($(h)), \
+				bsd)))))
 
 # generate rules for "linux" hosts
 $(foreach prefix, $(KVM_TEST_PREFIXES), \
@@ -1507,7 +1521,8 @@ $(foreach prefix, $(KVM_TEST_PREFIXES), \
 		$(eval $(call define-test-domain, \
 			$(prefix), $(host), \
 			linux, \
-			$(host)))))
+			$(host), \
+                        linux))))
 
 #
 # Get rid of (almost) everything
