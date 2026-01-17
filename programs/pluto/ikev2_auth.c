@@ -1094,18 +1094,18 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
  * IKE_AUTH request outstanding. This is useful to detect potential
  * IKE_AUTH crossing streams scenarios.
  */
-bool has_outstanding_ike_auth_request(const struct connection *c,
+struct ike_sa *get_sa_with_outstanding_ike_auth_request(const struct connection *c,
 		const struct ike_sa *ike,
 		const struct msg_digest *md)
 {
 	/* Check can be disabled in a connection config */
 	if (!c->config->reject_simultaneous_ike_auth) {
-		return false;
+		return NULL;
 	}
 
 	/* Connection must be permanent and request must be incoming */
 	if (v2_msg_role(md) != MESSAGE_REQUEST || !is_permanent(c)) {
-		return false;
+		return NULL;
 	}
 
 	struct state_filter sf = {
@@ -1136,8 +1136,8 @@ bool has_outstanding_ike_auth_request(const struct connection *c,
 		if (outstanding_request != NULL && outstanding_request->type == ISAKMP_v2_IKE_AUTH) {
 			llog(RC_LOG, ike->sa.logger, "IKE SA "PRI_SO" has outstanding IKE_AUTH request",
 					pri_so(simultaneous_ike->sa.st_serialno));
-			return true;
+			return simultaneous_ike;
 		}
 	}
-	return false;
+	return NULL;
 }

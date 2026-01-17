@@ -77,6 +77,7 @@
 #include "peer_id.h"
 #include "ddos.h"
 #include "ikev2_nat.h"
+#include "terminate.h"
 
 static ikev2_llog_success_fn llog_success_process_v2_IKE_AUTH_response;
 static ikev2_llog_success_fn llog_success_initiate_v2_IKE_AUTH_request;
@@ -685,10 +686,36 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	 * IKE_AUTH request and terminate current IKE SA. This is to
 	 * prevent potential crossing streams scenario.
 	 */
-	if (has_outstanding_ike_auth_request(c, ike, md)) {
-		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
-				empty_shunk, ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
+	struct ike_sa *simultaneous_ike =
+		get_sa_with_outstanding_ike_auth_request(c, ike, md);
+	if (simultaneous_ike != NULL) {
+		/* Compare our initiated SPIs vs their initiated SPIs
+		 * from the message. Note that the ordering doesn't
+		 * matter, but it ensures that both sides have the
+		 * same consensus on which IKE SA should be dropped.
+		 */
+		if (ike_spis_gt(&simultaneous_ike->sa.st_ike_spis,
+				&ike->sa.st_ike_spis)) {
+			/* Our IKE SA with oustanding IKE AUTH request
+			 * has SPI higher, delete this IKE SA, keep
+			 * the simultaneous_ike.
+			 */
+			ldbg(ike->sa.logger, "preferring the outstanding "PRI_SO" over the current "PRI_SO,
+			     pri_so(simultaneous_ike->sa.st_serialno),
+			     pri_so(ike->sa.st_serialno));
+			record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
+					    empty_shunk, ENCRYPTED_PAYLOAD);
+			return STF_FATAL;
+		} else {
+			/* IKE SA for the current IKE AUTH request has
+			 * SPI higher, continue with IKE AUTH reply
+			 * and drop the other one.
+			 */
+			ldbg(ike->sa.logger, "preferring the current "PRI_SO" over the outstanding "PRI_SO"",
+			     pri_so(ike->sa.st_serialno),
+			     pri_so(simultaneous_ike->sa.st_serialno));
+			terminate_ike_family(&simultaneous_ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
+		}
 	}
 
 	/*

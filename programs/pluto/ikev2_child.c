@@ -70,6 +70,7 @@
 #include "nat_traversal.h"
 #include "ikev2_ke.h"
 #include "ikev2_auth.h"
+#include "terminate.h"
 
 static bool emit_v2_child_response_payloads(struct ike_sa *ike,
 					    const struct child_sa *child,
@@ -1043,10 +1044,36 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 * This is to prevent potential crossing streams scenario for
 	 * IKE AUTH exchange.
 	 */
-	if (has_outstanding_ike_auth_request(child->sa.st_connection, ike, md)) {
-		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
-				empty_shunk, ENCRYPTED_PAYLOAD);
-		return v2N_AUTHENTICATION_FAILED;
+	struct ike_sa *simultaneous_ike =
+		get_sa_with_outstanding_ike_auth_request(child->sa.st_connection, ike, md);
+	if (simultaneous_ike != NULL) {
+		/* Compare our initiated SPI vs their initiated SPI
+		 * from the message. Note that the ordering doesn't
+		 * matter, but it ensures that both sides have the
+		 * same consensus on which IKE SA should be dropped.
+		 */
+		if (ike_spis_gt(&simultaneous_ike->sa.st_ike_spis,
+				&ike->sa.st_ike_spis)) {
+			/* Our IKE SA with oustanding IKE AUTH request
+			 * has SPI higher, delete this IKE SA, keep
+			 * the simultaneous_ike.
+			 */
+			ldbg(ike->sa.logger, "preferring the outstanding "PRI_SO" over the current "PRI_SO,
+			     pri_so(simultaneous_ike->sa.st_serialno),
+			     pri_so(ike->sa.st_serialno));
+			record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
+					    empty_shunk, ENCRYPTED_PAYLOAD);
+			return v2N_AUTHENTICATION_FAILED;
+		} else {
+			/* IKE SA for the current IKE AUTH request has
+			 * SPI higher, continue with IKE AUTH reply
+			 * and drop the other one.
+			 */
+			ldbg(ike->sa.logger, "preferring the current "PRI_SO" over the outstanding "PRI_SO"",
+			     pri_so(ike->sa.st_serialno),
+			     pri_so(simultaneous_ike->sa.st_serialno));
+			terminate_ike_family(&simultaneous_ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
+		}
 	}
 
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",

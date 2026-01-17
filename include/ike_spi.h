@@ -39,6 +39,7 @@ typedef struct {
 } ike_spis_t;
 
 bool ike_spis_eq(const ike_spis_t *lhs, const ike_spis_t *rhs);
+bool ike_spis_gt(const ike_spis_t *lhs, const ike_spis_t *rhs);
 
 /*
  * Need to handle two cases:
