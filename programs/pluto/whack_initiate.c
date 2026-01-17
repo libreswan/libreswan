@@ -36,6 +36,7 @@
 #include "initiate.h"
 #include "kernel.h"		/* for struct kernel_acquire [oppo] */
 #include "acquire.h"		/* for initiate_ondemand() [oppo] */
+#include "whack_pubkey.h"
 
 static unsigned whack_initiate_connection(const struct whack_message *m,
 					  struct show *s,
@@ -104,6 +105,11 @@ void whack_acquire(const struct whack_message *wm, struct show *s)
 		show_rc(RC_DEAF, s,
 			"need --listen before opportunistic initiation");
 		return;
+	}
+
+	const struct whack_pubkey *pubkey = &wm->whack.acquire.pubkey;
+	if (pubkey->id != NULL) {
+		whack_pubkey(pubkey, s);
 	}
 
 	const struct whack_acquire *wa = &wm->whack.acquire;

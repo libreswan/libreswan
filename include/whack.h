@@ -134,6 +134,8 @@ enum whack_command {
 	/**/
 	WHACK_IMPAIR,
 	WHACK_DEBUG,
+	/**/
+	WHACK_PUBKEY,
 };
 
 /*
@@ -214,11 +216,19 @@ struct whack_ddos {
 	enum ddos_mode mode;	/* for DDOS modes */
 };
 
+struct whack_pubkey {
+	bool add; /* vs REPLACE or DELETE */
+	const char *id;
+	const char *key;
+	enum ipseckey_algorithm_type alg;
+};
+
 struct whack_acquire {
 	struct {
 		ip_address address;
 		ip_port port;
 	} local, remote;
+	struct whack_pubkey pubkey; /* embedded side effect */
 	const char *label;
 	unsigned ipproto;
 };
@@ -366,19 +376,13 @@ struct whack_message {
 		struct whack_active_redirect active_redirect;
 		struct whack_impair impair;
 		struct whack_debug debug;
+		struct whack_pubkey pubkey;
 	} whack;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 
 	struct whack_end end[END_ROOF];
-
-	/* for WHACK_KEY: */
-	bool whack_key;
-	bool whack_addkey;
-	const char *keyid;	/* string 8 */
-	enum ipseckey_algorithm_type pubkey_alg;
-	const char *pubkey;
 
 	/* for WHACK_ADD */
 

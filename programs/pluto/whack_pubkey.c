@@ -56,26 +56,27 @@ err_t whack_pubkey_to_chunk(enum ipseckey_algorithm_type pubkey_alg,
  *     invalid as public key is missing (keyval.len is 0)
  */
 
-void key_add_request(const struct whack_message *wm, struct logger *logger)
+void whack_pubkey(const struct whack_pubkey *wm_pubkey,
+		  struct show *s)
 {
+	struct logger *logger = show_logger(s);
 	err_t err;
 
 	name_buf pkb;
-	ldbg(logger, "processing key=%s addkey=%s keyid=%s pubkey_alg=%s(%d) pubkey=%s",
-	     bool_str(wm->whack_key),
-	     bool_str(wm->whack_addkey),
-	     (wm->keyid == NULL ? "" : wm->keyid),
-	     str_enum_long(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
-	     wm->pubkey_alg,
-	     (wm->pubkey == NULL ? "" : wm->pubkey));
+	ldbg(logger, "processing key addkey=%s keyid=%s pubkey_alg=%s(%d) pubkey=%s",
+	     bool_str(wm_pubkey->add),
+	     (wm_pubkey->id == NULL ? "" : wm_pubkey->id),
+	     str_enum_long(&ipseckey_algorithm_config_names, wm_pubkey->alg, &pkb),
+	     wm_pubkey->alg,
+	     (wm_pubkey->key == NULL ? "" : wm_pubkey->key));
 
-	if (wm->keyid == NULL) {
+	if (wm_pubkey->id == NULL) {
 		/* must be a keyid */
 		llog_pexpect(logger, HERE, "missing keyid");
 		return;
 	}
 
-	if (wm->whack_addkey && wm->pubkey == NULL) {
+	if (wm_pubkey->add && wm_pubkey->key == NULL) {
 		/* add requires pubkey */
 		llog_pexpect(logger, HERE, "addkey missing pubkey");
 		return;
@@ -85,12 +86,12 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * Figure out the key type.
 	 */
 
-	const struct pubkey_type *type = pubkey_type_from_ipseckey_algorithm(wm->pubkey_alg);
+	const struct pubkey_type *type = pubkey_type_from_ipseckey_algorithm(wm_pubkey->alg);
 	struct id keyid; /* must free_id_content() */
-	diag_t d = ttoid(wm->keyid, &keyid);
+	diag_t d = ttoid(wm_pubkey->id, &keyid);
 	if (d != NULL) {
 		llog_rc(RC_BADID, logger, "bad --keyid \"%s\": %s",
-			wm->keyid, str_diag(d));
+			wm_pubkey->id, str_diag(d));
 		pfree_diag(&d);
 		return;
 	}
@@ -103,13 +104,13 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * No --addkey just means that is no existing key to delete.
 	 * For instance !add with a key means replace.
 	 */
-	if (wm->pubkey == NULL) {
+	if (wm_pubkey->key == NULL) {
 		/*
 		 * XXX: this gets called by "add" so be
 		 * silent.
 		 */
 		llog(LOG_STREAM/*not-whack*/, logger,
-		     "delete keyid %s", wm->keyid);
+		     "delete keyid %s", wm_pubkey->id);
 		delete_public_keys(&pluto_pubkeys, &keyid, type);
 		free_id_content(&keyid);
 		/*
@@ -125,13 +126,13 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * No --addkey with a key means replace.
 	 */
 
-	chunk_t rawkey = NULL_HUNK;
-	err = whack_pubkey_to_chunk(wm->pubkey_alg, wm->pubkey, &rawkey);
+	chunk_t raw_pubkey = NULL_HUNK;
+	err = whack_pubkey_to_chunk(wm_pubkey->alg, wm_pubkey->key, &raw_pubkey);
 	if (err != NULL) {
 		name_buf pkb;
 		llog(ERROR_STREAM, logger, "malformed %s pubkey %s: %s",
-		     str_enum_long(&ipseckey_algorithm_config_names, wm->pubkey_alg, &pkb),
-		     wm->pubkey,
+		     str_enum_long(&ipseckey_algorithm_config_names, wm_pubkey->alg, &pkb),
+		     wm_pubkey->key,
 		     err);
 		free_id_content(&keyid);
 		return;
@@ -143,23 +144,23 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * XXX: this gets called by "add" so be silent.
 	 */
 	llog(LOG_STREAM/*not-whack*/, logger,
-	     "%s keyid %s", (wm->whack_addkey ? "add" : "replace"),
-	     wm->keyid);
-	ldbg(logger, "pubkey: %s", wm->pubkey);
+	     "%s keyid %s", (wm_pubkey->add ? "add" : "replace"),
+	     wm_pubkey->id);
+	ldbg(logger, "pubkey: %s", wm_pubkey->key);
 
 	/* add the public key */
 	struct pubkey *pubkey = NULL; /* must-delref */
-	d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm->pubkey_alg,
+	d = unpack_dns_pubkey(&keyid, PUBKEY_LOCAL, wm_pubkey->alg,
 			      /*install_time*/realnow(),
 			      /*until_time*/realtime_epoch,
 			      /*ttl*/0,
-			      HUNK_AS_SHUNK(&rawkey),
+			      HUNK_AS_SHUNK(&raw_pubkey),
 			      &pubkey/*new-public-key:must-delref*/,
 			      logger);
 	if (d != NULL) {
 		llog(RC_LOG, logger, "%s", str_diag(d));
 		pfree_diag(&d);
-		free_chunk_content(&rawkey);
+		free_chunk_content(&raw_pubkey);
 		free_id_content(&keyid);
 		return;
 	}
@@ -169,7 +170,7 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 	 * Perhaps when they have different CKAIDs or expiration
 	 * dates?
 	 */
-	if (wm->whack_addkey) {
+	if (wm_pubkey->add) {
 		add_pubkey(pubkey, &pluto_pubkeys);
 	} else {
 		replace_pubkey(pubkey, &pluto_pubkeys);
@@ -189,6 +190,6 @@ void key_add_request(const struct whack_message *wm, struct logger *logger)
 		     str_ckaid(ckaid, &ckb));
 	}
 
-	free_chunk_content(&rawkey);
+	free_chunk_content(&raw_pubkey);
 	free_id_content(&keyid);
 }

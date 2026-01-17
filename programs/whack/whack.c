@@ -1009,6 +1009,7 @@ int main(int argc, char **argv)
 	int usernamelen = 0;	/* includes '\0' */
 	int xauthpasslen = 0;	/* includes '\0' */
 	bool ignore_errors = false;
+	struct whack_pubkey pubkey = {0};
 
 	struct optarg_family child_family = { 0, };
 
@@ -1147,28 +1148,31 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_KEYID:	/* --keyid <identity> */
-			msg.whack_key = true;
-			msg.keyid = optarg;	/* decoded by Pluto */
+			/* either WHACK_KEY or WHACK_ACQUIRE */
+			pubkey.id = optarg;
 			continue;
 
 		case OPT_ADDKEY:	/* --addkey */
-			msg.whack_addkey = true;
+			whack_command(&msg, WHACK_PUBKEY);
+			pubkey.add = true;
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
-			if (msg.pubkey != NULL) {
+			/* either WHACK_PUBKEY or WHACK_ACQUIRE */
+			if (pubkey.key != NULL) {
 				diagq("only one RSA public-key allowed", optarg);
 			}
-			msg.pubkey = optarg;
-			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
+			pubkey.key = optarg;
+			pubkey.alg = IPSECKEY_ALGORITHM_RSA;
 			continue;
 
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
-			if (msg.pubkey != NULL) {
+			/* either WHACK_PUBKEY or WHACK_ACQUIRE */
+			if (pubkey.key != NULL) {
 				diagq("only one ECDSA public-key allowed", optarg);
 			}
-			msg.pubkey = optarg;
-			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
+			pubkey.key = optarg;
+			pubkey.alg = IPSECKEY_ALGORITHM_ECDSA;
 			continue;
 
 		case OPT_ROUTE:	/* --route */
@@ -2207,6 +2211,22 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (pubkey.id != NULL) {
+		switch (msg.whack_command) {
+		case WHACK_ACQUIRE:
+			whack_command(&msg, WHACK_ACQUIRE);
+			msg.whack.acquire.pubkey = pubkey;
+			break;
+		case 0:
+		case WHACK_PUBKEY:
+			whack_command(&msg, WHACK_PUBKEY);
+			msg.whack.pubkey = pubkey;
+			break;
+		default:
+			diagw("unexpected --keyid");
+		}
+	}
+
 	/*
 	 * Decide whether --name is mandatory, optional, or forbidden.
 	 */
@@ -2250,8 +2270,7 @@ int main(int argc, char **argv)
 
 	if (!(msg.basic.whack_status ||
 	      msg.basic.whack_shutdown ||
-	      msg.whack_command != 0 ||
-	      msg.whack_key)) {
+	      msg.whack_command != 0)) {
 		diagw("no action specified; try --help for hints");
 	}
 

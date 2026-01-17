@@ -21,7 +21,7 @@
 #include "chunk.h"
 #include "err.h"
 
-struct whack_message;
+struct whack_pubkey;
 struct show;
 struct logger;
 enum ipseckey_algorithm_type;
@@ -29,6 +29,6 @@ enum ipseckey_algorithm_type;
 err_t whack_pubkey_to_chunk(enum ipseckey_algorithm_type algorithm_type,
 			    const char *pubkey_in, chunk_t *pubkey_out);
 
-void key_add_request(const struct whack_message *msg, struct logger *logger);
+void whack_pubkey(const struct whack_pubkey *key, struct show *s);
 
 #endif

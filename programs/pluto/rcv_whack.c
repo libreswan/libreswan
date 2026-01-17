@@ -88,6 +88,11 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger);
 static void whack_handle_1(struct fd *whackfd, struct logger *whack_logger,
 			   struct whack_message_refcnt *rwm);
 
+static void rcv_whack_pubkey(const struct whack_message *wm, struct show *s)
+{
+	whack_pubkey(&wm->whack.pubkey, s);
+}
+
 static void whack_unlisten(const struct whack_message *wm UNUSED, struct show *s)
 {
 	struct logger *logger = show_logger(s);
@@ -470,6 +475,11 @@ static void dispatch_command(struct whack_message_refcnt *const wmr, struct show
 			.name = "debug",
 			.op = whack_debug,
 		},
+		/**/
+		[WHACK_PUBKEY] = {
+			.name = "pubkey",
+			.op = rcv_whack_pubkey,
+		},
 	};
 
 	struct logger *logger = show_logger(s);
@@ -557,13 +567,6 @@ static void whack_process(struct whack_message_refcnt *const wmr, struct show *s
 
 	if (m->whack_command != 0) {
 		dispatch_command(wmr, s);
-	}
-
-	if (m->whack_key) {
-		dbg_whack(s, "key: start:");
-		/* add a public key */
-		key_add_request(m, show_logger(s));
-		dbg_whack(s, "key: stop:");
 	}
 
 	return;
