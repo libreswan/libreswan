@@ -16,8 +16,8 @@ west #
  ../../guestbin/ip.sh addr show eth1
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
     link/ether 12:00:00:64:64:45 brd ff:ff:ff:ff:ff:ff
-    altname enp0s8
-    altname ens8
+    altname enp0s7
+    altname ens7
     altname enx120000646445
     inet 192.1.2.45/24 scope global eth1
        valid_lft forever preferred_lft forever

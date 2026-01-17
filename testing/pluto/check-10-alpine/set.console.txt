@@ -4,10 +4,10 @@ eth1      Link encap:Ethernet  HWaddr 12:00:53:45:54:01
           inet6 addr: fe80::1000:53ff:fe45:5401/64 Scope:Link
           inet6 addr: 2001:db8:0:1::15/64 Scope:Global
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:26 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:14 errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:25 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:13 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
-          RX bytes:3298 (3.2 KiB)  TX bytes:1088 (1.0 KiB)
+          RX bytes:3288 (3.2 KiB)  TX bytes:1018 (1018.0 B)
 set #
  ifconfig eth1 up
 set #
@@ -17,10 +17,10 @@ eth0      Link encap:Ethernet  HWaddr 12:00:53:45:54:02
           inet6 addr: 2001:db8:1::15/64 Scope:Global
           inet6 addr: fe80::1000:53ff:fe45:5402/64 Scope:Link
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:30 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
+          RX packets:29 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:10 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
-          RX bytes:3490 (3.4 KiB)  TX bytes:1052 (1.0 KiB)
+          RX bytes:3400 (3.3 KiB)  TX bytes:892 (892.0 B)
 set #
  ifconfig eth0 up
 set #
