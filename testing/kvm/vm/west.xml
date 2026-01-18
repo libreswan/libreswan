@@ -59,12 +59,7 @@
       <source bridge='@@TEST_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
-    <serial type='pty'>
-      <target port='0'/>
-    </serial>
-    <console type='pty'>
-      <target type='serial' port='0'/>
-    </console>
+    <console type='pty'/>
     <memballoon model='virtio'>
     </memballoon>
     <rng model='virtio'>
