@@ -11,7 +11,8 @@ You can load this machine definition into libvirt using:
     <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
   </os>
-  <cpu mode='host-passthrough' check='none' migratable='on'/>
+  <!--override default of mode=host-model -->
+  <cpu mode='host-passthrough'/>
   <features>
     <acpi/>
     <apic/>
