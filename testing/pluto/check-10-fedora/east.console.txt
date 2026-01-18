@@ -39,4 +39,4 @@ up
 east #
  ../../guestbin/ping-once.sh --up 192.0.2.12 # rise_eastnet
 up
-east # 
+east #
