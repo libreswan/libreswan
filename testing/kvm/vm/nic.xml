@@ -69,7 +69,7 @@
     <console type='pty'/>
     <memballoon model='virtio'/>
     <rng model='virtio'>
-      <backend model='random'>/dev/random</backend>
+      <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
   <seclabel type='static' model='dac' relabel='yes'>

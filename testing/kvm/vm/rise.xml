@@ -74,7 +74,7 @@ You can load this machine definition into libvirt using:
     <console type='pty'/>
     <memballoon model='virtio'/>
     <rng model='virtio'>
-      <backend model='random'>/dev/random</backend>
+      <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
   <!-- used by p9fs -->
