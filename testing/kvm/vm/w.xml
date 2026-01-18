@@ -11,21 +11,17 @@ You can load this machine definition into libvirt using:
     <type arch='x86_64'>hvm</type>
     <boot dev='hd'/>
   </os>
-  <cpu mode='host-passthrough' check='none' migratable='on'/>
+  <!--override default of mode=host-model -->
+  <cpu mode='host-passthrough'/>
   <features>
     <acpi/>
     <apic/>
   </features>
-  <clock offset='utc'>
-    <timer name='rtc' tickpolicy='catchup'/>
-    <timer name='pit' tickpolicy='delay'/>
-    <timer name='hpet' present='no'/>
-  </clock>
+  <clock offset='utc'/>
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
-  	<emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
       <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
