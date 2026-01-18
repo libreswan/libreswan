@@ -25,7 +25,6 @@ You can load this machine definition into libvirt using:
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
-  	<emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
       <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
