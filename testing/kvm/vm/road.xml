@@ -59,7 +59,6 @@
     </memballoon>
     <rng model='virtio'>
       <backend model='random'>/dev/random</backend>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
     </rng>
   </devices>
   <seclabel type='static' model='dac' relabel='yes'>
