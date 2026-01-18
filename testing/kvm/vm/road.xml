@@ -50,16 +50,10 @@
       <source bridge='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
-    <serial type='pty'>
-      <target port='0'/>
-    </serial>
-    <console type='pty'>
-      <target type='serial' port='0'/>
-    </console>
-    <memballoon model='virtio'>
-    </memballoon>
+    <console type='pty'/>
+    <memballoon model='virtio'/>
     <rng model='virtio'>
-      <backend model='random'>/dev/random</backend>
+      <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
   <seclabel type='static' model='dac' relabel='yes'>
