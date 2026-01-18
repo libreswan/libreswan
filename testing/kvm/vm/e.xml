@@ -68,8 +68,7 @@ You can load this machine definition into libvirt using:
       <model type='virtio'/>
     </interface>
     <console type='pty'/>
-    <memballoon model='virtio'>
-    </memballoon>
+    <memballoon model='virtio'/>
     <rng model='virtio'>
       <backend model='random'>/dev/random</backend>
     </rng>
