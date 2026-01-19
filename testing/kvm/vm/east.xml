@@ -45,10 +45,6 @@
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <filesystem type='mount' accessmode='squash'>
-      <source dir='/tmp'/>
-      <target dir='tmp'/>
-    </filesystem>
     <interface type='bridge'>
       <mac address='12:00:00:dc:bc:ff'/>
       <source bridge='@@TEST_PREFIX@@192_0_2'/>

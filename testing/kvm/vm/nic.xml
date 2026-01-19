@@ -45,10 +45,6 @@
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <filesystem type='mount' accessmode='squash'>
-      <source dir='/tmp'/>
-      <target dir='tmp'/>
-    </filesystem>
     <interface type='bridge'>
       <!-- eth0 -->
       <source bridge='swandefault'/>
