@@ -1,5 +1,6 @@
 <!--
-./kvm install-linux will transmogrify and then load this .xml file
+    ./kvm transmogrify will transmogrify and then load this .xml file using
+    sudo virsh define east.xmk
 -->
 
 <domain type='kvm'>
@@ -62,14 +63,17 @@
       <source bridge='swandefault'/>
       <model type='virtio'/>
     </interface>
+    <!-- serial console -->
     <console type='pty'/>
+    <!-- memory -->
     <memballoon model='virtio'/>
+    <!-- randomness -->
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
   <seclabel type='static' model='dac' relabel='yes'>
-   <label>@@USER@@:@@GROUP@@</label>
-   <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+    <label>@@USER@@:@@GROUP@@</label>
+    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
   </seclabel>
 </domain>
