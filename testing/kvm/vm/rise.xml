@@ -1,6 +1,6 @@
 <!--
-You can load this machine definition into libvirt using:
-	sudo virsh define rise.xml
+    ./kvm transmogrify will transmogrify and then load this .xml file using
+    sudo virsh define east.xmk
 -->
 
 <domain type='kvm'>
@@ -28,10 +28,6 @@ You can load this machine definition into libvirt using:
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
-    <controller type='usb' index='0'>
-    </controller>
-    <controller type='virtio-serial' index='0'>
-    </controller>
     <!--
 	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
 	Debian uses p9fs.  Hence keep these mount points.  Include
@@ -70,16 +66,18 @@ You can load this machine definition into libvirt using:
       <source bridge='swandefault'/>
       <model type='virtio'/>
     </interface>
-    <!-- -->
+    <!-- serial console -->
     <console type='pty'/>
+    <!-- memory -->
     <memballoon model='virtio'/>
+    <!-- randomness -->
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
   <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
-   <label>@@USER@@:@@GROUP@@</label>
-   <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+    <label>@@USER@@:@@GROUP@@</label>
+    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
   </seclabel>
 </domain>

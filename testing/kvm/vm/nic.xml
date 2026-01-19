@@ -1,5 +1,6 @@
 <!--
-./kvm install-linux will transmogrify and then load this .xml file
+    ./kvm transmogrify will transmogrify and then load this .xml file using
+    sudo virsh define east.xmk
 -->
 
 <domain type='kvm'>
@@ -23,16 +24,18 @@
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
   <devices>
+    <!--
+	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
+	Debian uses p9fs.  Hence keep these mount points.  Include
+	/source as it is needed when debugging; and /pool as it is
+	used when installing packages.
+    -->
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='writeback'/>
       <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
-    <controller type='usb' index='0'>
-    </controller>
-    <controller type='virtio-serial' index='0'>
-    </controller>
     <filesystem type='mount' accessmode='squash'>
       <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>
@@ -45,35 +48,35 @@
       <source dir='@@POOLDIR@@'/>
       <target dir='pool'/>
     </filesystem>
-    <filesystem type='mount' accessmode='squash'>
-      <source dir='/tmp'/>
-      <target dir='tmp'/>
-    </filesystem>
+    <!-- eth0: dhcp -->
     <interface type='bridge'>
-      <!-- eth0 -->
       <source bridge='swandefault'/>
       <model type='virtio'/>
     </interface>
+    <!-- eth1: NIC-EAST-WEST -->
     <interface type='bridge'>
-      <!-- eth1 -->
       <mac address='12:00:00:de:ad:ba'/>
       <source bridge='@@TEST_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
+    <!-- eth2: NIC-NORTH-ROAD -->
     <interface type='bridge'>
-      <!-- eth2 -->
       <mac address='12:00:00:32:64:ba'/>
       <source bridge='@@TEST_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
+    <!-- serial console -->
     <console type='pty'/>
+    <!-- memory -->
     <memballoon model='virtio'/>
+    <!-- randomness -->
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
+  <!-- used by p9fs -->
   <seclabel type='static' model='dac' relabel='yes'>
-   <label>@@USER@@:@@GROUP@@</label>
-   <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
+    <label>@@USER@@:@@GROUP@@</label>
+    <imagelabel>@@USER@@:@@GROUP@@</imagelabel>
   </seclabel>
 </domain>
