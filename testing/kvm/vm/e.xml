@@ -28,10 +28,6 @@ You can load this machine definition into libvirt using:
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
-    <controller type='usb' index='0'>
-    </controller>
-    <controller type='virtio-serial' index='0'>
-    </controller>
     <!--
 	While the BSDs use NFS to mount /testing, Fedora, Alpine, and
 	Debian uses p9fs.  Hence keep these mount points.  Include

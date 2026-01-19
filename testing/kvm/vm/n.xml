@@ -27,10 +27,6 @@
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
-    <controller type='usb' index='0'>
-    </controller>
-    <controller type='virtio-serial' index='0'>
-    </controller>
     <!--
 	While the BSDs and Alpine use NFS to mount /testing, fedora
 	uses p9fs.  Hence keep these mount points.  Include /source as
