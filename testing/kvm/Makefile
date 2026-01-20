@@ -277,7 +277,7 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 
 # override below
 KVM_LINUX_TEST_HOST_NAMES = east west north road nic
-KVM_OS_TEST_HOST_NAMES = e w n rise set
+KVM_OS_TEST_HOST_NAMES = east west rise set north
 
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_UPGRADEDIR ?= $(KVM_POOLDIR)
@@ -297,6 +297,7 @@ KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
 # don't override KVM_LINUX_TEST_HOST_NAMES above
 KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
 KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(KVM_$($(strip $1))_TEST_HOST_NAMES)))
+KVM_$($(strip $1))_LEGACY_DOMAINS    = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $1, e w n)))
 
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
@@ -1308,6 +1309,7 @@ kvm-uninstall-%:
 	./kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	./kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 	: delete generated dependencies missed by above
+	./kvm-uninstall-domain.sh $(KVM_$($*)_LEGACY_DOMAINS)
 	rm -f $(KVM_$($*)_BUILD_DOMAIN).*
 	rm -f $(KVM_$($*)_BUILD_DOMAIN)
 	: transmogrify.sh is in /pool
@@ -1498,24 +1500,17 @@ endef
 # Need to pass platform|host and platform and host as, per below,
 # linux domains don't get the linux prefix.
 
-# H is E, W, .. and not EAST, WEST, ...
-e=east
-w=west
-n=north
-r=road
-rise=rise
-set=set
-
 $(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach h, $(KVM_OS_TEST_HOST_NAMES), \
+		$(foreach host, $(KVM_OS_TEST_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
-				$(prefix), $(platform)$(h), \
+				$(prefix), $(platform)$(host), \
 				$(platform), \
-				$($(h)), \
+				$(host), \
 				bsd)))))
 
-# generate rules for "linux" hosts
+# "linux" hosts don't have platform in name
+
 $(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach host, $(KVM_LINUX_TEST_HOST_NAMES), \
 		$(eval $(call define-test-domain, \

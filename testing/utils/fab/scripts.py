@@ -73,15 +73,10 @@ def _guest_scripts(directory, logger):
 
     # Compatibility hack:
     #
-    # Find the commands matching <guest>init.sh and within that force
-    # "nic" then "east" to at the front of the list.  These will be
-    # run first.
+    # Find the commands matching <linux-guest>init.sh and within that
+    # force LINUX_GUESTS is ordered with "nic" then "east" first.
 
     init_commands = Commands()
-    for guest in (hosts.NIC, hosts.EAST):
-        _add_script(guest.name+"init.sh", init_commands,
-                    scripts, directory,
-                    [guest], test_guests)
     for guest in hosts.LINUX_GUESTS:
         _add_script(guest.name+"init.sh", init_commands,
                     scripts, directory,
@@ -90,8 +85,8 @@ def _guest_scripts(directory, logger):
 
     # Compatibility hack:
     #
-    # Find the commands matching <guest>run.sh.  These will be run
-    # second.
+    # Find the commands matching <linux-guest>run.sh.  These will be
+    # run second.
 
     run_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
@@ -186,10 +181,10 @@ def commands(directory, logger):
             for script in scripts:
                 domains.update(hosts.guests_by_filename(script))
             domains = sorted(domains)
-            DOMAIN_BY_HOSTNAME = dict()
+            DOMAIN_BY_HOSTNAME = hosts.Dict()
             for domain in domains:
                 DOMAIN_BY_HOSTNAME[domain.host.name] = domain
-            logger.debug(f"DOMAIN_BY_HOSTNAME: {', '.join(str(g) for g in DOMAIN_BY_HOSTNAME)}")
+            logger.debug(f"DOMAIN_BY_HOSTNAME: {DOMAIN_BY_HOSTNAME}")
 
             commands = Commands()
             for script in scripts:
