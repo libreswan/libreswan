@@ -18,28 +18,28 @@ east# echo "initdone"
 
 initdone
 
-netbsdw# ../../guestbin/prep.sh
+netbsdwest# ../../guestbin/prep.sh
 
 ipsec.conf -> /usr/local/etc/ipsec.conf
 ipsec.secrets -> /usr/local/etc/ipsec.secrets
 
-netbsdw# ipsec start
+netbsdwest# ipsec start
 
 Redirecting to: /usr/local/etc/rc.d/pluto onestart
 Initializing NSS database
 
 Starting pluto.
 
-netbsdw# ipsec auto --add eastnet-westnet-ikev2
+netbsdwest# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-netbsdw# echo "initdone"
+netbsdwest# echo "initdone"
 
 initdone
 
-netbsdw# ipsec auto --up eastnet-westnet-ikev2
+netbsdwest# ipsec auto --up eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection to 192.1.2.23 using UDP
@@ -50,7 +50,7 @@ WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45/32===192.1.2.23/32] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 
-netbsdw# ipsec _kernel policy
+netbsdwest# ipsec _kernel policy
 
 192.1.2.23[any] 192.1.2.45[any] 255(reserved)
 	in ipsec
@@ -63,11 +63,11 @@ netbsdw# ipsec _kernel policy
 	spid=2 seq=0 pid=PID
 	refcnt=0
 
-netbsdw# ../../guestbin/ping-once.sh --up 192.1.2.23
+netbsdwest# ../../guestbin/ping-once.sh --up 192.1.2.23
 
 up
 
-netbsdw# ipsec _kernel state
+netbsdwest# ipsec _kernel state
 
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
@@ -90,11 +90,11 @@ netbsdw# ipsec _kernel state
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdw# ../../guestbin/ping-once.sh --medium --up 192.1.2.23
+netbsdwest# ../../guestbin/ping-once.sh --medium --up 192.1.2.23
 
 up
 
-netbsdw# ipsec _kernel state
+netbsdwest# ipsec _kernel state
 
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
@@ -117,5 +117,5 @@ netbsdw# ipsec _kernel state
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 
-netbsdw# dmesg | grep ipsec
+netbsdwest# dmesg | grep ipsec
 

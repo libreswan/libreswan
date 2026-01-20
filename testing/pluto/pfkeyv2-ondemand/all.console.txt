@@ -5,27 +5,27 @@ east# ../../guestbin/wait-until-pluto-started
 east# ipsec whack --impair suppress_retransmits
 east# echo "initdone"
 initdone
-netbsdw# ../../guestbin/prep.sh
+netbsdwest# ../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
-netbsdw# ipsec start
+netbsdwest# ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
-netbsdw# ipsec auto --add eastnet-westnet-ikev2
+netbsdwest# ipsec auto --add eastnet-westnet-ikev2
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
-netbsdw# echo "initdone"
+netbsdwest# echo "initdone"
 initdone
-netbsdw# ipsec auto --route eastnet-westnet-ikev2
-netbsdw# ipsec _kernel state
+netbsdwest# ipsec auto --route eastnet-westnet-ikev2
+netbsdwest# ipsec _kernel state
 No SAD entries.
-netbsdw# ipsec _kernel policy
+netbsdwest# ipsec _kernel policy
 192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
 	out ipsec
 	esp/transport//require
 	spid=1 seq=0 pid=PID
 	refcnt=0
-netbsdw# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+netbsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
-netbsdw# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+netbsdwest# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up

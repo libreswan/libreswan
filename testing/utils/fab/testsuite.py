@@ -84,7 +84,7 @@ class Test:
         # Get an ordered list of {guest_name:,command:} to run.
         self.commands = scripts.commands(self.directory, self.logger)
 
-        # Just assume any non-empty hosts mentioned in scripts needs
+        # Just assume any non-empty guests mentioned in scripts needs
         # to run.
         guests = hosts.Set()
         for command in self.commands:
