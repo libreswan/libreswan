@@ -63,11 +63,10 @@ for host in sorted(_HOSTS.values()):
     for platform in PLATFORMS:
         match platform:
             case "linux":
-                if host in ("rise", "set"): # not yet
-                    continue
                 # east west ...
-                guest = Guest(host, platform="linux", guest=host.name)
+                guest = Guest(host, platform=platform, guest=host.name)
                 _GUESTS[guest.name] = guest
+                _GUESTS[platform+host.name] = guest # also add linuxEAST et.al.
                 _ALL_LINUX_GUESTS.add(guest)
             case _:
                 if host in ("nic", "road"): # not yet
@@ -103,7 +102,7 @@ def guests():
 _GUEST_PATTERN = re.compile(r"\b(" + "|".join(_GUESTS.keys()) + r")\b")
 def guests_by_filename(filename):
     guestnames = _GUEST_PATTERN.findall(filename)
-    guests = list()
+    guests = List()
     for guestname in guestnames:
         guests.append(_GUESTS[guestname])
     return guests

@@ -275,9 +275,9 @@ KVM_OS += $(if $(filter true, $(KVM_OPENBSD)), openbsd)
 # expand anything using $1 (such as make variable names and values)
 # immediately, but delay everything else by using $$.
 
-# override below
-KVM_LINUX_TEST_HOST_NAMES = east west north road nic
+# Linux also has ROAD and NIC
 KVM_OS_TEST_HOST_NAMES = east west rise set north
+KVM_LINUX_TEST_HOST_NAMES = $(KVM_OS_TEST_HOST_NAMES) road nic
 
 KVM_BASEDIR ?= $(KVM_POOLDIR)
 KVM_UPGRADEDIR ?= $(KVM_POOLDIR)
