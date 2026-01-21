@@ -177,9 +177,11 @@ def commands(directory, logger):
         if scripts:
 
             # figure out the host->domain map
-            domains = set()
+            domains = hosts.Set()
             for script in scripts:
-                domains.update(hosts.guests_by_filename(script))
+                guests = hosts.guests_by_filename(script);
+                domains.update(guests)
+                logger.debug(f"script {script} guests: {guests}")
             domains = sorted(domains)
             DOMAIN_BY_HOSTNAME = hosts.Dict()
             for domain in domains:
