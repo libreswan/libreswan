@@ -2,7 +2,8 @@
 
 basedir=testing/pluto/$(basename $0 .sh)
 hosts="east west rise set nic north"
-oss="alpine debian netbsd freebsd openbsd fedora"
+# same platforms as KVM
+platforms=$(ls -d1 testing/kvm/platform/ | cut -d/ -f3)
 
 # public network, name is arbitrary
 pubnet=192.1.2
@@ -64,15 +65,15 @@ do_not_modify()
     echo "#####   do not modify"
 }
 
-for os in ${oss} ; do
+for platform in ${platforms} ; do
 
-    dir=${basedir}-${os}
+    dir=${basedir}-${platform}
     echo ${dir}
 
     mkdir -p ${dir}
 
     cat <<EOF > ${dir}/description.txt
-connectivity and sniff test for ${os}
+connectivity and sniff test for ${platform}
 EOF
     do_not_modify >> ${dir}/description.txt
     cat <<EOF >> ${dir}/description.txt
@@ -90,7 +91,7 @@ EOF
 	touch ${dir}/${host}.console.txt
     done
 
-    case $os in
+    case ${platform} in
 	netbsd )  eth=vioif ; ifconfig=ifconfig ;;
 	openbsd ) eth=vio   ; ifconfig=ifconfig ;;
 	freebsd ) eth=vtnet ; ifconfig=ifconfig ;;
@@ -99,7 +100,7 @@ EOF
     esac
 
     # start again
-    in=${dir}/east-west-${os}rise-${os}set-nic-${os}n.in
+    in=${dir}/east-west-${platform}rise-${platform}set-nic-${platform}north.in
     rm -f ${in}
     do_not_modify > ${in}
 
