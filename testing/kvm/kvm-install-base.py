@@ -23,6 +23,7 @@ import sys
 import pexpect
 import re
 from enum import Enum
+from enum import auto
 
 from platform import alpine
 from platform import debian
@@ -74,29 +75,60 @@ os = OS[param.os]
 # there must be a python version of this table?
 class Char(Enum):
     NUL = 0x00
+    SOH = 0x01
+    STX = 0x02
+    ETX = 0x03
+    EOT = 0x04
+    ENQ = 0x05
+    ACK = 0x06
     BEL = 0x07
-    BS  = 0x08
-    HT  = 0x09
-    LF  = 0x0a
-    VT  = 0x0b
-    FF  = 0x0c
-    CR  = 0x0d
+    BS  = 0x08, True
+    HT  = 0x09, True
+    LF  = 0x0a, True
+    VT  = 0x0b, True
+    FF  = 0x0c, True
+    CR  = 0x0d, True
+    SO  = 0x0e, True
+    SI  = 0x0f, True
+    DLE = 0x10
+    DC1 = 0x11
+    DC2 = 0x12
+    DC3 = 0x13
+    DC4 = 0x14
+    NAK = 0x15
+    SYN = 0x16
+    ETB = 0x17
+    CAN = 0x18
+    EM  = 0x19
+    SUB = 0x1a
     ESC = 0x1b
+    FS  = 0x1c
+    GS  = 0x1d
+    RS  = 0x1e
+    US  = 0x1f
     DEL = 0x7f
+    def __new__(cls, value, ok=False):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
+    def __init__(self, value, ok=False):
+        self.byte = bytes([value])
+        self.safe = (ok and self.byte or f'<{self.name}>'.encode())
 
 class State(Enum):
-    NORMAL = 1
+    NORMAL = auto()
     # https://en.wikipedia.org/wiki/ANSI_escape_code#Fe_Escape_sequences
-    ESCAPE_SEQUENCE = 2
+    ESCAPE_SEQUENCE = auto()
     # https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
-    CONTROL_SEQUENCE_INTRODUCER = 3
-    CONTROL_SEQUENCE_INTERMEDIATE = 4
+    CONTROL_SEQUENCE_INTRODUCER = auto()
+    CONTROL_SEQUENCE_INTERMEDIATE = auto()
+    # https://en.wikipedia.org/wiki/ISO/IEC_2022#Character_set_designations
+    CHARACTER_SET = auto()
     #
-    STRING_TERMINATOR = 5
+    STRING_TERMINATOR = auto()
 
-_parameter = re.compile(rb'[0-9:;<=>?]')
-_intermediate = re.compile(rb'[!"#$%&\'()*+,-./]')
 
+# https://en.wikipedia.org/wiki/ANSI_escape_code#OSC
 class EscapeStringSequence(Enum):
     OSC = ord(']')
     ST  = ord('\\')
@@ -104,8 +136,25 @@ class EscapeStringSequence(Enum):
     SOS = ord('X')
     PM  = ord('^')
     APC = ord('_')
+    # linux stuff see console_codes(4)
+    RIS = ord('c')
+    IND = ord('D')
+    NEL = ord('E')
+    HTS = ord('H')
+    RI = ord('M')
+    DECID = ord('Z')
+    DECSC = ord('7')
+    DECCR = ord('8')
+    DECPNM = ord('>')
+    DECPAM = ord('=')
 
-class Final(Enum):
+# https://en.wikipedia.org/wiki/ANSI_escape_code#Control_Sequence_Introducer_commands
+_control_sequence_parameter = re.compile(rb'[0-9:;<=>?]')
+_control_sequence_intermediate = re.compile(rb'[!"#$%&\'()*+,-./]')
+_control_sequence_final = re.compile(rb'[\x40-\x7e]')
+
+# Entries in this table are acceptable and passed through.
+class ControlSequenceFinalByte(Enum):
     CURSOR_UP = ord('A')
     CURSOR_DOWN = ord('B')
     CURSOR_FORWARD = ord('C')
@@ -114,8 +163,16 @@ class Final(Enum):
     CURSOR_PREVIOUS_LINE = ord('F')
     CURSOR_HORIZONTAL_ABSOLUTE = ord('G')
     CURSOR_POSITION = ord('H')
+    ERASE_DISPLAY = ord('J')
+    ERASE_LINE = ord('K')
+    INSERT_BLANK_LINES = ord('L')
+    DELETE_BLANK_LINES = ord('M')
+    DELETE_CHARACTERS = ord('P')
+    ERASE_CHARACTERS = ord('X')
 
-_final = re.compile(rb'[\x40-\x7e]')
+# https://en.wikipedia.org/wiki/ISO/IEC_2022#Character_set_designations
+_character_set_intermediate = re.compile(rb'[\x20-\x2f]')
+_character_set_final = re.compile(rb'[\x30-\x7e]')
 
 class Filter:
     def __init__(self):
@@ -124,13 +181,10 @@ class Filter:
         self.sequence = b''
 
     def _putChar(self, char):
-        if  char == Char.CR.value or char == Char.LF.value:
-            self.stream.write(bytes([char]))
+        if char <= 0x1f:
+            self.stream.write(Char(char).safe)
             return
-        if char in Char:
-            self.stream.write(f'<{Char(char).name}>'.encode())
-            return
-        if char <= 0x1f or char > 0x7f:
+        if char > 0x7f:
             self.stream.write(f'<{char}>'.encode())
             return
         self.stream.write(bytes([char]));
@@ -155,6 +209,11 @@ class Filter:
                     self.state = State.CONTROL_SEQUENCE_INTRODUCER
                     self.sequence += byte
                     return
+                if _character_set_intermediate.match(byte):
+                    # https://en.wikipedia.org/wiki/ISO/IEC_2022#Character_set_designations
+                    self.state = State.CHARACTER_SET
+                    self.sequence += byte
+                    return
                 if char in EscapeStringSequence:
                     # https://en.wikipedia.org/wiki/ANSI_escape_code#OSC et.al.
                     self.stream.write(b'<')
@@ -164,44 +223,59 @@ class Filter:
                     return
 
             case State.CONTROL_SEQUENCE_INTRODUCER:
-                if _parameter.match(byte):
+                if _control_sequence_parameter.match(byte):
                     self.sequence += byte
                     return
-                if _intermediate.match(byte):
-                    self.sequence += byte;
+                if _control_sequence_intermediate.match(byte):
+                    self.sequence += byte
                     self.state = State.CONTROL_SEQUENCE_INTERMEDIATE
                     return
-                if char in Final:
-                    self.stream.write(b'<')
-                    self.stream.write(Final(char).name.encode());
-                    self.stream.write(b'>')
+                if char in ControlSequenceFinalByte:
+                    #self.stream.write(b'<')
+                    #self.stream.write(ControlSequenceFinalByte(char).name.encode());
+                    #self.stream.write(b'>')
+                    self.sequence += byte
+                    self.stream.write(Char.ESC.byte + self.sequence)
                     self.state = State.NORMAL
                     return
-                if _final.match(byte):
+                if _control_sequence_final.match(byte):
                     self.sequence += byte
                     self.state = State.NORMAL
                     return
             case State.CONTROL_SEQUENCE_INTERMEDIATE:
-                if _intermediate.match(byte):
+                if _control_sequence_intermediate.match(byte):
                     self.sequence += byte
                     return
-                if char in Final:
-                    self.stream.write(b'<')
-                    self.stream.write(Final(char).name.encode());
-                    self.stream.write(b'>')
+                if char in ControlSequenceFinalByte:
+                    #self.stream.write(b'<')
+                    #self.stream.write(ControlSequenceFinalByte(char).name.encode());
+                    #self.stream.write(b'>')
+                    self.sequence += byte
+                    self.stream.write(Char.ESC.byte + self.sequence)
                     self.state = State.NORMAL
                     return
-                if _final.match(byte):
+                if _control_sequence_final.match(byte):
                     self.sequence += byte
+                    self.state = State.NORMAL
+                    return
+
+            case State.CHARACTER_SET:
+                if _character_set_intermediate.match(byte):
+                    self.sequence += byte
+                    return
+                if _character_set_final.match(byte):
+                    self.sequence += byte
+                    #self.stream.write(b"<nF>")
                     self.state = State.NORMAL
                     return
 
         # escape engine failed, dump the sequence and go back to
         # normal
         self.state = State.NORMAL
-        self.stream.write(b'<ESC>')
+        self.stream.write(b'<ESC')
         self.stream.write(self.sequence)
         self._putChar(char)
+        self.stream.write(b'>')
 
     def write(self, record):
         for char in record:

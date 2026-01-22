@@ -14,21 +14,19 @@ export TESTINGDIR=@@TESTINGDIR@@
 :
 : fstab
 :
-
-# strip out /pool and bench, then add in /source and /testing
+: strip out all mounts first
 
 mkdir -p /source /testing
-sed -e '/:/d' /etc/fstab > /tmp/fstab
+sed -e '/9p/d' /etc/fstab > /tmp/fstab
 
 cat <<EOF >> /tmp/fstab
-@@GATEWAY@@:@@SOURCEDIR@@   /source         nfs     rw
-@@GATEWAY@@:@@TESTINGDIR@@  /testing        nfs     rw
-@@GATEWAY@@:@@POOLDIR@@     /pool           nfs     rw
+pool  /pool  9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+source /source 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+testing /testing 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
 
 mv /tmp/fstab /etc/fstab
 cat /etc/fstab
-
 
 :
 : systemd

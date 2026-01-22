@@ -3,7 +3,7 @@
 basedir=testing/pluto/$(basename $0 .sh)
 hosts="east west rise set nic north"
 # same platforms as KVM
-platforms=$(ls -d1 testing/kvm/platform/ | cut -d/ -f3)
+platforms=$(ls -d1 testing/kvm/platform/[a-z]*/ | cut -d/ -f4)
 
 # public network, name is arbitrary
 pubnet=192.1.2
