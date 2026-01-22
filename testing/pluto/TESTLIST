@@ -190,7 +190,8 @@ kvmplutotest	ikev2-ddos-cookie-03-add		good
 kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
-kvmplutotest	ikev2-delete-03-valgrind		skiptest
+kvmplutotest	ikev2-delete-03-valgrind		wip
+kvmplutotest	ikev2-delete-03-callgrind		wip
 kvmplutotest	ikev2-delete-04				good
 kvmplutotest	ikev2-delete-05-sa-start		good
 kvmplutotest	ikev2-delete-06-start-both		good

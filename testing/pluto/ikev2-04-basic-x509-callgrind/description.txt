@@ -1,0 +1,14 @@
+Standard IKEv2 X.509 exchange, but with pluto under callgrind
+
+Callgrind accumulates an estimate of the on-CPU cost (~cpu-time) of
+each function; not the off-CPU cost (for instance when a thread
+becomes blocked).
+
+There's a blog here: https://www.brendangregg.com/offcpuanalysis.html
+
+Hence this is useful when investigating CPU bottle necks; but useless
+when investigating stuck threads.
+
+Set nhelpers=0 to stop threads becomming a distraction (pluto still
+offloads crypto code, but as callbacks on the main thread's event
+queue).
