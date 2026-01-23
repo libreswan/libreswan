@@ -195,9 +195,10 @@ kvmplutotest	ikev2-delete-05-sa-start		good
 kvmplutotest	ikev2-delete-06-start-both		good
 
 # performance
-kvmplutotest	basic-pluto-01-valgrind	skiptest
-kvmplutotest	ikev2-delete-03-valgrind		wip
-kvmplutotest	ikev2-04-basic-x509-callgrind		wip
+#
+# These demonstrate how to profile pluto.
+kvmplutotest	perf-memory-ikev2-psk-valgrind		wip
+kvmplutotest	perf-on-cpu-ikev2-x509-callgrind	wip
 
 kvmplutotest	ikev2-09-rw-rsa				good
 kvmplutotest	ikev2-11-simple-psk			good
