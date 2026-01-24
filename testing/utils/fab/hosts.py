@@ -36,10 +36,10 @@ class Host:
         return self.name < peer.name
 
 class Guest:
-    def __init__(self, host, platform=None, guest=None):
-        self.platform = platform  # Platform("netbsd"), ...
-        self.host = host	  # see Host("east"), ...
-        self.name = guest	  # netbsde, ...
+    def __init__(self, host, platform):
+        self.platform = platform
+        self.host = host
+        self.name = platform+host.name
     def __str__(self):
         return self.name
     def __lt__(self, peer):
@@ -61,18 +61,17 @@ _GUESTS = Dict() # netbsdrise fedoraset east freebsdwest ...
 _ALL_LINUX_GUESTS = Set() # nic east west ... ordered
 for host in sorted(_HOSTS.values()):
     for platform in PLATFORMS:
+        guest = Guest(host, platform)
         match platform:
             case "linux":
                 # east west ...
-                guest = Guest(host, platform=platform, guest=host.name)
                 _GUESTS[guest.name] = guest
-                _GUESTS[platform+host.name] = guest # also add linuxEAST et.al.
+                _GUESTS[host.name] = guest # also add linuxEAST et.al.
                 _ALL_LINUX_GUESTS.add(guest)
             case _:
                 if host in ("nic", "road"): # not yet
                     continue
                 # netbsdrise netbsdnorth ...
-                guest = Guest(host, platform, guest=platform+host.name)
                 _GUESTS[guest.name] = guest
 
 # NIC and EAST are special
