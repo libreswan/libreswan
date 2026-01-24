@@ -82,9 +82,27 @@ KVM_PIDFILE ?= $(KVM_BENCHDIR)/kvmrunner.pid
 KVM_UID ?= $(shell id -u)
 KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 
-# Don't include @@SOURCEDIR@@ @@TESTINGDIR@@ and @@DOMAIN@@ as they
-# change depending on what is being transformed.  Instead they are
-# added as needed.
+# The following are added by the "caller":
+#
+# @@SOURCEDIR@@ and @@TESTINGDIR@@: these are only pinned down during
+# transmogrify (changing KVM_SOURCEDIR and re-running transmogrify is
+# expected to work); hence they are only added explicitly.
+#
+# @@PREFIX@@: it's either $(KVM_PREFIX) or the per-test group prefix,
+# let caller specify.
+#
+# @@PLATFORM@@: it's often $(*), the "%" in a pattern target such as
+# as "/pool/b.%", but not always; let caller specify.
+#
+# When defining domains this is added:
+#
+# @@HOSTNAME@@: it's either @@PLATFORM@@ (i.e., $(*)) or the per-test
+# name; let caller specify.
+#
+# @@DOMAIN@@: it's probably $(notdir $@), but easier to let caller
+# specify.
+#
+#
 
 KVM_TRANSMOGRIFY = \
 	sed \
@@ -93,8 +111,7 @@ KVM_TRANSMOGRIFY = \
 	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
-	-e 's;@@GROUP@@;$(KVM_GID);' \
-	-e 's;@@PREFIX@@;$(KVM_PREFIX);'
+	-e 's;@@GROUP@@;$(KVM_GID);'
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -295,9 +312,9 @@ KVM_UPGRADE_DOMAINS  += $$(KVM_$($(strip $1))_UPGRADE_DOMAIN)
 KVM_BUILD_DOMAINS    += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
 
 # don't override KVM_LINUX_TEST_HOST_NAMES above
-KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(addprefix $1, $$(KVM_OS_TEST_HOST_NAMES))
-KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(KVM_$($(strip $1))_TEST_HOST_NAMES)))
-KVM_$($(strip $1))_LEGACY_DOMAINS    = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $1, e w n)))
+KVM_$($(strip $1))_TEST_HOST_NAMES  ?= $$(KVM_OS_TEST_HOST_NAMES)
+KVM_$($(strip $1))_TEST_DOMAINS      = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), $$(KVM_$($(strip $1))_TEST_HOST_NAMES))))
+KVM_$($(strip $1))_LEGACY_DOMAINS    = $$(foreach prefix, $$(KVM_TEST_PREFIXES), $$(addprefix $$(prefix), $$(addprefix $(1), e w n)))
 
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BASE_DOMAIN)
 KVM_$($(strip $1))_DOMAINS += $$(KVM_$($(strip $1))_BUILD_DOMAIN)
@@ -954,6 +971,8 @@ $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
+		-e 's;@@PLATFORM@@;debian;' \
 		platform/debian/base.sh \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
 	growisofs -M $@.tmp -l -R \
@@ -1007,6 +1026,7 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_BASE_DOMAIN).ks
 
 $(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;fedora;' \
 		$(KVM_FEDORA_KICKSTART_FILE) \
 		> $@.tmp
@@ -1050,6 +1070,8 @@ $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
 $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
+		-e 's;@@PLATFORM@@;freebsd;' \
 		$(KVM_FREEBSD_BASE_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
 	growisofs -M $@.tmp -l -R \
@@ -1099,6 +1121,7 @@ $(KVM_LINUX_BASE_DOMAIN): | $(KVM_LINUX_BASE_DOMAIN).ks
 
 $(KVM_LINUX_BASE_DOMAIN).ks: | $(KVM_LINUX_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;linux;' \
 		$(KVM_LINUX_KICKSTART_FILE) \
 		> $@.tmp
@@ -1150,6 +1173,8 @@ $(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
+		-e 's;@@PLATFORM@@;netbsd;' \
 		$(KVM_NETBSD_BASE_SH) \
 		> $(KVM_NETBSD_BASE_DOMAIN).sh
 	: this mangles file/directory names
@@ -1203,6 +1228,8 @@ $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.sh
 $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
+		-e 's;@@PLATFORM@@;openbsd;' \
 		platform/openbsd/base.sh \
 		> $(KVM_OPENBSD_BASE_DOMAIN).sh
 	: boot.conf sets up a serial console
@@ -1273,6 +1300,9 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
+		-e 's;@@PLATFORM@@;$*;' \
+		-e 's;@@HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
 		platform/$*/upgrade.sh \
 		> $@.sh
@@ -1350,10 +1380,12 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
+		-e 's;@@PLATFORM@@;$*;' \
+		-e 's;@@HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
 		-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
-		-e 's;@@PLATFORM@@;$*;' \
 		platform/$*/transmogrify.sh \
 		> $(KVM_POOLDIR)/$(KVM_PREFIX)$(*).transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
@@ -1459,65 +1491,51 @@ KVM_TEST_MEMORY ?= 512
 .PRECIOUS: $(KVM_TEST_DOMAINS)
 
 define define-test-domain
-  $(addprefix $(1), $(2)): \
-		$(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(3)) \
+  $(addprefix $(1), $(addprefix $(2), $(3))): \
+		$(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(2)) \
 		| \
 		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
-		vm/$(strip $(4)).xml
+		vm/$(strip $(3)).xml
 	: define-test-domain
 	:  *=$$*
 	:  @=$$@
 	:  domain=notdir $$@
-	:  test_prefix=$(1)
-	:  guest_name=$(2)
-	:  platform=$(3)
-	:  host_name=$(4)
-	:  enable=$(5)
+	:  prefix=$(1)   /pool/b. /pool/b2 ...
+	:  platform=$(2) linux netbsd ...
+	:  host=$(3)     east west ...
+	:  enable=$(4)   linux OR bsd
 	:  KVM_OS_TEST_MEMORY=$$(KVM_$($(strip $(3)))_TEST_MEMORY)
 	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
 	rm -f $(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
 	$$(KVM_TRANSMOGRIFY) \
+		-e 's;@@PREFIX@@;$(notdir $(1));' \
+		-e 's;@@PLATFORM@@;$(strip $(2));' \
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
+		-e 's;@@HOSTNAME@@;$(strip $(3));' \
+		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(2)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
 		-e 's;@@SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
-		-e "s;@@TEST_PREFIX@@;$(notdir $(1));" \
-		-e 's;@@GUEST_NAME@@;$(strip $(2));' \
-		-e 's;@@PLATFORM@@;$(strip $(3));' \
-		-e 's;@@HOST_NAME@@;$(strip $(4));' \
-		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(3)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
+		-e 's/<!--[a-z?]*\($(strip $(2))\)[?].*-->/<!--*\1*-->/' \
 		-e 's/<!--[a-z?]*\($(strip $(3))\)[?].*-->/<!--*\1*-->/' \
 		-e 's/<!--[a-z?]*\($(strip $(4))\)[?].*-->/<!--*\1*-->/' \
-		-e 's/<!--[a-z?]*\($(strip $(5))\)[?].*-->/<!--*\1*-->/' \
 		-e '/<!--[a-z?]*-->/ { s/--> / / ; s/$$$$/ -->/ }' \
-		vm/$(strip $(4)).xml \
+		vm/$(strip $(3)).xml \
 		> '$$@.tmp'
 	$$(VIRSH) define $$@.tmp
 	mv $$@.tmp $$@
 endef
 
 # Generate rules for all combinations, including those not enabled.
-# Need to pass platform|host and platform and host as, per below,
-# linux domains don't get the linux prefix.
 
 $(foreach prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORMS), \
-		$(foreach host, $(KVM_OS_TEST_HOST_NAMES), \
+		$(foreach host, $(KVM_$($(platform))_TEST_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
-				$(prefix), $(platform)$(host), \
+				$(prefix), \
 				$(platform), \
 				$(host), \
-				bsd)))))
-
-# "linux" hosts don't have platform in name
-
-$(foreach prefix, $(KVM_TEST_PREFIXES), \
-	$(foreach host, $(KVM_LINUX_TEST_HOST_NAMES), \
-		$(eval $(call define-test-domain, \
-			$(prefix), $(host), \
-			linux, \
-			$(host), \
-                        linux))))
+				$(if $(filter linux, $(platform)), linux, bsd))))))
 
 #
 # Get rid of (almost) everything

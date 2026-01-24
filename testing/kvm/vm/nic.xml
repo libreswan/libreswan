@@ -56,13 +56,13 @@
     <!-- eth1: NIC-EAST-WEST -->
     <interface type='bridge'>
       <mac address='12:00:00:de:ad:ba'/>
-      <source bridge='@@TEST_PREFIX@@192_1_2'/>
+      <source bridge='@@PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
     <!-- eth2: NIC-NORTH-ROAD -->
     <interface type='bridge'>
       <mac address='12:00:00:32:64:ba'/>
-      <source bridge='@@TEST_PREFIX@@192_1_3'/>
+      <source bridge='@@PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
     <!-- serial console -->

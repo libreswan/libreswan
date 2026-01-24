@@ -29,8 +29,12 @@ rutdir=${kvm_testingdir:+$(realpath $(dirname "${kvm_testingdir}"))}
 # eat newlines
 
 hosts="${kvm_test_host_names}"
+guests=
 for platform in ${kvm_platforms} ; do
-    hosts="${hosts} ${platform} ${platform}-base ${platform}-upgrade"
+    guests="${guests} ${platform} ${platform}-base ${platform}-upgrade"
+    for host in ${hosts} ; do
+	guests="${guests} ${platform}${host}"
+    done
 done
 
 # Note: pass1help() is fed into AWK.  Anything that matches
@@ -343,12 +347,20 @@ while test $# -gt 0 ; do
 		echo "missing hostname" 1>&2
 		exit 1
 	    fi
-	    # try matching without prefix
+	    # HOST, without prefix, is linux
 	    if [[ " ${hosts} " =~ " $1 " ]] ; then
-		host=${kvm_prefix}$1
-		shift # drop HOST; add prefix
+		# add prefix+linux
+		host=${kvm_prefix}linux$1
+		shift # drop HOST
 		echo "Connecting to ${host}" 1>&2
 		exec testing/utils/kvmsh.py ${host} "$@"
+	    fi
+	    if [[ " ${guests} " =~ " $1 " ]] ; then
+		# add prefix
+		guest=${kvm_prefix}$1
+		shift # drop GUEST
+		echo "Connecting to ${guest}" 1>&2
+		exec testing/utils/kvmsh.py ${guest} "$@"
 	    fi
 	    # try matching with prefix?
 	    echo "unrecognized hostname" 1>&2

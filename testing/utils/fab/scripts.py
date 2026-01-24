@@ -78,7 +78,7 @@ def _guest_scripts(directory, logger):
 
     init_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
-        _add_script(guest.name+"init.sh", init_commands,
+        _add_script(guest.host.name+"init.sh", init_commands,
                     scripts, directory,
                     [guest], test_guests)
     logger.debug(f"init commands {test_guests} {scripts}:\n{init_commands}")
@@ -90,7 +90,7 @@ def _guest_scripts(directory, logger):
 
     run_commands = Commands()
     for guest in hosts.LINUX_GUESTS:
-        _add_script(guest.name+"run.sh", run_commands,
+        _add_script(guest.host.name+"run.sh", run_commands,
                     scripts, directory,
                     [guest], test_guests)
     logger.debug(f"run commands {test_guests} {scripts}:\n{run_commands}")
