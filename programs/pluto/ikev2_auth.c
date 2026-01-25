@@ -1098,6 +1098,7 @@ lset_t proposed_v2AUTH(struct ike_sa *ike,
  *	- same connection
  *	- initiating IKE
  *	- non-established with IKE_AUTH request waiting for reply
+ *	- established within 1 second of processing this IKE_AUTH request
  *
  * Returns:
  *  - ike: reject current IKE_AUTH request
@@ -1152,6 +1153,17 @@ struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
 				break;
 			}
 		}
+
+		/* Was candidate established within the last second of the current IKE_AUTH request arrival? */
+		if (candidate->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) {
+			deltatime_t age = monotime_diff(mononow(), candidate->sa.st_v2_msgid_windows.initiator.last_recv);
+			if (deltatime_cmp(age, <, one_second)) {
+				llog(RC_LOG, ike->sa.logger, "IKE SA "PRI_SO" recently established",
+						pri_so(candidate->sa.st_serialno));
+				simultaneous_ike = candidate;
+				break;
+			}
+		}
 	}
 
 	/* No simultaneous IKE found */
@@ -1161,8 +1173,15 @@ struct ike_sa *check_simultaneous_ike_auth(const struct connection *c,
 
 	/* Simultaneous IKE found, we need to decide if we keep that one or current IKE.
 	 *
-	 * We keep one with higher SPI.
+	 * If simultaneous IKE is already established, we keep it. Otherwise we keep one
+	 * with higher SPI.
 	 */
+	if (simultaneous_ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA) {
+		llog(RC_LOG, ike->sa.logger, "rejecting IKE_AUTH request; IKE SA "PRI_SO" already established",
+				pri_so(simultaneous_ike->sa.st_serialno));
+		return (struct ike_sa *) ike;
+	}
+
 	if (ike_spis_gt(&simultaneous_ike->sa.st_ike_spis, &ike->sa.st_ike_spis)) {
 		ldbg(ike->sa.logger, "preferring the simultaneous IKE SA "PRI_SO" over the current IKE SA "PRI_SO,
 				pri_so(simultaneous_ike->sa.st_serialno), pri_so(ike->sa.st_serialno));
