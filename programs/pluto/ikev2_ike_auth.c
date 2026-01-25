@@ -681,41 +681,18 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 	const struct connection *c = ike->sa.st_connection;
 
 	/* If initiator has another IKE SA with IKE_AUTH request
-	 * outstanding for the same permanent connection then send
-	 * AUTHENTICATION_FAILED instead of IKE_AUTH response for this
-	 * IKE_AUTH request and terminate current IKE SA. This is to
+	 * outstanding for the same permanent connection (or recently
+	 * established one) then we keep only one of them. This is to
 	 * prevent potential crossing streams scenario.
 	 */
-	struct ike_sa *simultaneous_ike =
-		get_sa_with_outstanding_ike_auth_request(c, ike, md);
-	if (simultaneous_ike != NULL) {
-		/* Compare our initiated SPIs vs their initiated SPIs
-		 * from the message. Note that the ordering doesn't
-		 * matter, but it ensures that both sides have the
-		 * same consensus on which IKE SA should be dropped.
-		 */
-		if (ike_spis_gt(&simultaneous_ike->sa.st_ike_spis,
-				&ike->sa.st_ike_spis)) {
-			/* Our IKE SA with oustanding IKE AUTH request
-			 * has SPI higher, delete this IKE SA, keep
-			 * the simultaneous_ike.
-			 */
-			ldbg(ike->sa.logger, "preferring the outstanding "PRI_SO" over the current "PRI_SO,
-			     pri_so(simultaneous_ike->sa.st_serialno),
-			     pri_so(ike->sa.st_serialno));
-			record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
-					    empty_shunk, ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
-		} else {
-			/* IKE SA for the current IKE AUTH request has
-			 * SPI higher, continue with IKE AUTH reply
-			 * and drop the other one.
-			 */
-			ldbg(ike->sa.logger, "preferring the current "PRI_SO" over the outstanding "PRI_SO"",
-			     pri_so(ike->sa.st_serialno),
-			     pri_so(simultaneous_ike->sa.st_serialno));
-			terminate_ike_family(&simultaneous_ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
-		}
+	struct ike_sa *ike_to_reject = check_simultaneous_ike_auth(c, ike, md);
+	if (ike_to_reject == ike) {
+		/* Reject current IKE_AUTH request */
+		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED, empty_shunk, ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	} else if (ike_to_reject != NULL) {
+		/* Terminate the other IKE SA, continue with current */
+		terminate_ike_family(&ike_to_reject, REASON_SUPERSEDED_BY_NEW_SA, HERE);
 	}
 
 	/*

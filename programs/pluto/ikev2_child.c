@@ -1039,41 +1039,19 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	}
 
 	/* It is possible that Child SA switched to permanent connection
-	 * where initiator has IKE SA with IKE_AUTH request outstanding,
-	 * in that case send AUTHENTICATION_FAILED and terminate this IKE SA.
-	 * This is to prevent potential crossing streams scenario for
+	 * where initiator has IKE SA with IKE_AUTH request outstanding
+	 * (or recently established IKE SA) in that case keep only one of
+	 * them. This is to prevent potential crossing streams scenario for
 	 * IKE AUTH exchange.
 	 */
-	struct ike_sa *simultaneous_ike =
-		get_sa_with_outstanding_ike_auth_request(child->sa.st_connection, ike, md);
-	if (simultaneous_ike != NULL) {
-		/* Compare our initiated SPI vs their initiated SPI
-		 * from the message. Note that the ordering doesn't
-		 * matter, but it ensures that both sides have the
-		 * same consensus on which IKE SA should be dropped.
-		 */
-		if (ike_spis_gt(&simultaneous_ike->sa.st_ike_spis,
-				&ike->sa.st_ike_spis)) {
-			/* Our IKE SA with oustanding IKE AUTH request
-			 * has SPI higher, delete this IKE SA, keep
-			 * the simultaneous_ike.
-			 */
-			ldbg(ike->sa.logger, "preferring the outstanding "PRI_SO" over the current "PRI_SO,
-			     pri_so(simultaneous_ike->sa.st_serialno),
-			     pri_so(ike->sa.st_serialno));
-			record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED,
-					    empty_shunk, ENCRYPTED_PAYLOAD);
-			return v2N_AUTHENTICATION_FAILED;
-		} else {
-			/* IKE SA for the current IKE AUTH request has
-			 * SPI higher, continue with IKE AUTH reply
-			 * and drop the other one.
-			 */
-			ldbg(ike->sa.logger, "preferring the current "PRI_SO" over the outstanding "PRI_SO"",
-			     pri_so(ike->sa.st_serialno),
-			     pri_so(simultaneous_ike->sa.st_serialno));
-			terminate_ike_family(&simultaneous_ike, REASON_SUPERSEDED_BY_NEW_SA, HERE);
-		}
+	struct ike_sa *ike_to_reject = check_simultaneous_ike_auth(child->sa.st_connection, ike, md);
+	if (ike_to_reject == ike) {
+		/* Reject current IKE_AUTH request */
+		record_v2N_response(ike->sa.logger, ike, md, v2N_AUTHENTICATION_FAILED, empty_shunk, ENCRYPTED_PAYLOAD);
+		return v2N_AUTHENTICATION_FAILED;
+	} else if (ike_to_reject != NULL) {
+		/* Terminate the other IKE SA, continue with current */
+		terminate_ike_family(&ike_to_reject, REASON_SUPERSEDED_BY_NEW_SA, HERE);
 	}
 
 	n = process_childs_v2SA_payload("IKE_AUTH responder matching remote ESP/AH proposals",
