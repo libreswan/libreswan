@@ -26,7 +26,7 @@
   <on_crash>restart</on_crash>
   <devices>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2' cache='writeback'/>
+      <driver name='qemu' type='qcow2' cache='unsafe'/>
       <source file='@@LOCALDIR@@/@@PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
