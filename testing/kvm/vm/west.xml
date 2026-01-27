@@ -11,7 +11,7 @@
     <type arch='x86_64'>hvm</type>
     <!--linux?--> <kernel>@@POOLDIR@@/@@PREFIX@@linux.vmlinuz</kernel>
     <!--linux?--> <initrd>@@POOLDIR@@/@@PREFIX@@linux.initramfs</initrd>
-    <!--linux?--> <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=@@HOSTNAME@@</cmdline>
+    <!--linux?--> <cmdline>root=/dev/vda3 ro quiet console=tty0 plymouth.enable=0 mitigations=off biosdevname=0 net.ifnames=0 console=ttyS0,115200 systemd.hostname=@@DOMAIN_HOSTNAME@@</cmdline>
     <!--bsd?--> <boot dev='hd'/>
   </os>
   <!--override default of mode=host-model -->
@@ -27,7 +27,7 @@
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='writeback'/>
-      <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
+      <source file='@@LOCALDIR@@/@@PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
@@ -52,13 +52,13 @@
     <!-- eth0: WEST-SET -->
     <interface type='bridge'>
       <mac address='12:00:00:ab:cd:ff'/>
-      <source bridge='@@PREFIX@@192_0_1'/>
+      <source bridge='@@DOMAIN_PREFIX@@192_0_1'/>
       <model type='virtio'/>
     </interface>
     <!-- eth1: WEST-NIC-EAST -->
     <interface type='bridge'>
       <mac address='12:00:00:64:64:45'/>
-      <source bridge='@@PREFIX@@192_1_2'/>
+      <source bridge='@@DOMAIN_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
     <!-- eth2: dhcp -->

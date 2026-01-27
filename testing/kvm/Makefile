@@ -88,9 +88,6 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 # transmogrify (changing KVM_SOURCEDIR and re-running transmogrify is
 # expected to work); hence they are only added explicitly.
 #
-# @@PREFIX@@: it's either $(KVM_PREFIX) or the per-test group prefix,
-# let caller specify.
-#
 # @@PLATFORM@@: it's often $(*), the "%" in a pattern target such as
 # as "/pool/b.%", but not always; let caller specify.
 #
@@ -111,7 +108,8 @@ KVM_TRANSMOGRIFY = \
 	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
-	-e 's;@@GROUP@@;$(KVM_GID);'
+	-e 's;@@GROUP@@;$(KVM_GID);' \
+	-e 's;@@PREFIX@@;$(KVM_PREFIX);'
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
@@ -971,7 +969,6 @@ $(KVM_DEBIAN_BASE_DOMAIN).iso: $(KVM_DEBIAN_ISO)
 $(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 	cp $(KVM_DEBIAN_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;debian;' \
 		platform/debian/base.sh \
 		> $(KVM_DEBIAN_BASE_DOMAIN).sh
@@ -1026,7 +1023,6 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_BASE_DOMAIN).ks
 
 $(KVM_FEDORA_BASE_DOMAIN).ks: | $(KVM_FEDORA_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;fedora;' \
 		$(KVM_FEDORA_KICKSTART_FILE) \
 		> $@.tmp
@@ -1070,7 +1066,6 @@ $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_LOADER_CONF)
 $(KVM_FREEBSD_BASE_DOMAIN).iso: | $(KVM_FREEBSD_BASE_CONF)
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;freebsd;' \
 		$(KVM_FREEBSD_BASE_CONF) \
 		> $(KVM_FREEBSD_BASE_DOMAIN).conf
@@ -1121,7 +1116,6 @@ $(KVM_LINUX_BASE_DOMAIN): | $(KVM_LINUX_BASE_DOMAIN).ks
 
 $(KVM_LINUX_BASE_DOMAIN).ks: | $(KVM_LINUX_KICKSTART_FILE)
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;linux;' \
 		$(KVM_LINUX_KICKSTART_FILE) \
 		> $@.tmp
@@ -1173,7 +1167,6 @@ $(KVM_NETBSD_BASE_DOMAIN).iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_BASE_DOMAIN).iso: | $(KVM_NETBSD_BASE_SH)
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;netbsd;' \
 		$(KVM_NETBSD_BASE_SH) \
 		> $(KVM_NETBSD_BASE_DOMAIN).sh
@@ -1228,7 +1221,6 @@ $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.sh
 $(KVM_OPENBSD_BASE_DOMAIN).iso: | platform/openbsd/base.disk
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;openbsd;' \
 		platform/openbsd/base.sh \
 		> $(KVM_OPENBSD_BASE_DOMAIN).sh
@@ -1300,7 +1292,6 @@ $(KVM_UPGRADEDIR)/$(KVM_PREFIX)%-upgrade: \
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;$*;' \
 		-e 's;@@HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
@@ -1380,7 +1371,6 @@ $(KVM_BUILDDIR)/$(KVM_PREFIX)%: \
 	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
 	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(KVM_PREFIX);' \
 		-e 's;@@PLATFORM@@;$*;' \
 		-e 's;@@HOSTNAME@@;$*;' \
 		-e 's;@@DOMAIN@@;$(notdir $@);' \
@@ -1500,19 +1490,19 @@ define define-test-domain
 	:  *=$$*
 	:  @=$$@
 	:  domain=notdir $$@
-	:  prefix=$(1)   /pool/b. /pool/b2 ...
-	:  platform=$(2) linux netbsd ...
-	:  host=$(3)     east west ...
+	:  domain_prefix=$(1)   /pool/b. /pool/b2 ...
+	:  domain_platform=$(2) linux netbsd ...
+	:  domain_hostname=$(3)     east west ...
 	:  enable=$(4)   linux OR bsd
 	:  KVM_OS_TEST_MEMORY=$$(KVM_$($(strip $(3)))_TEST_MEMORY)
 	./kvm-uninstall-domain.sh $$@
 	: work around virsh leaving a file behind
 	rm -f $(KVM_TESTDIR)/$(KVM_PREFIX)$(strip $(3)).qcow2.TRANSIENT-$$(notdir $$@)
 	$$(KVM_TRANSMOGRIFY) \
-		-e 's;@@PREFIX@@;$(notdir $(1));' \
-		-e 's;@@PLATFORM@@;$(strip $(2));' \
 		-e 's;@@DOMAIN@@;$$(notdir $$@);' \
-		-e 's;@@HOSTNAME@@;$(strip $(3));' \
+		-e 's;@@DOMAIN_PREFIX@@;$(notdir $(1));' \
+		-e 's;@@DOMAIN_PLATFORM@@;$(strip $(2));' \
+		-e 's;@@DOMAIN_HOSTNAME@@;$(strip $(3));' \
 		-e 's;@@MEMORY@@;$$(firstword $$(KVM_$($(strip $(2)))_TEST_MEMORY) $$(KVM_TEST_MEMORY));' \
 		-e 's;@@SOURCEDIR@@;$$(KVM_SOURCEDIR);' \
 		-e 's;@@TESTINGDIR@@;$$(KVM_TESTINGDIR);' \
@@ -1528,11 +1518,11 @@ endef
 
 # Generate rules for all combinations, including those not enabled.
 
-$(foreach prefix, $(KVM_TEST_PREFIXES), \
+$(foreach test_prefix, $(KVM_TEST_PREFIXES), \
 	$(foreach platform, $(KVM_PLATFORMS), \
 		$(foreach host, $(KVM_$($(platform))_TEST_HOST_NAMES), \
 			$(eval $(call define-test-domain, \
-				$(prefix), \
+				$(test_prefix), \
 				$(platform), \
 				$(host), \
 				$(if $(filter linux, $(platform)), linux, bsd))))))

@@ -32,7 +32,7 @@
     -->
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='writeback'/>
-      <source file='@@LOCALDIR@@/@@PREFIX@@@@PLATFORM@@.qcow2'/>
+      <source file='@@LOCALDIR@@/@@PREFIX@@@@DOMAIN_PLATFORM@@.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <transient shareBacking='yes'/>
     </disk>
@@ -56,13 +56,13 @@
     <!-- eth1: NIC-EAST-WEST -->
     <interface type='bridge'>
       <mac address='12:00:00:de:ad:ba'/>
-      <source bridge='@@PREFIX@@192_1_2'/>
+      <source bridge='@@DOMAIN_PREFIX@@192_1_2'/>
       <model type='virtio'/>
     </interface>
     <!-- eth2: NIC-NORTH-ROAD -->
     <interface type='bridge'>
       <mac address='12:00:00:32:64:ba'/>
-      <source bridge='@@PREFIX@@192_1_3'/>
+      <source bridge='@@DOMAIN_PREFIX@@192_1_3'/>
       <model type='virtio'/>
     </interface>
     <!-- serial console -->
