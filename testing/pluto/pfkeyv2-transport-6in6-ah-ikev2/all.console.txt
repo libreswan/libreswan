@@ -1,18 +1,18 @@
-east# /testing/guestbin/swan-prep --46
+linuxeast# /testing/guestbin/swan-prep --46
 
-east# ipsec start
+linuxeast# ipsec start
 
 Redirecting to: systemctl start ipsec.service
 
-east# ../../guestbin/wait-until-pluto-started
+linuxeast# ../../guestbin/wait-until-pluto-started
 
 
-east# ipsec auto --add eastnet-westnet-ikev2
+linuxeast# ipsec auto --add eastnet-westnet-ikev2
 
 WARNING: ipsec auto has been deprecated
 "eastnet-westnet-ikev2": added oriented IKEv2 connection
 
-east# ipsec whack --impair suppress_retransmits
+linuxeast# ipsec whack --impair suppress_retransmits
 
 netbsdwest# ../../guestbin/prep.sh
 

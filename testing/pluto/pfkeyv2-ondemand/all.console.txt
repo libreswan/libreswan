@@ -1,9 +1,9 @@
-east# /testing/guestbin/swan-prep --46
-east# ipsec start
+linuxeast# /testing/guestbin/swan-prep --46
+linuxeast# ipsec start
 Redirecting to: [initsystem]
-east# ../../guestbin/wait-until-pluto-started
-east# ipsec whack --impair suppress_retransmits
-east# echo "initdone"
+linuxeast# ../../guestbin/wait-until-pluto-started
+linuxeast# ipsec whack --impair suppress_retransmits
+linuxeast# echo "initdone"
 initdone
 netbsdwest# ../../guestbin/prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
