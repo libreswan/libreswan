@@ -790,9 +790,7 @@ const struct option optarg_options[] = {
 	{ "client\0", required_argument, NULL, END_SUBNET },	/* alias / backward compat */
 	{ "subnet\0", required_argument, NULL, END_SUBNET },
 	{ "clientprotoport\0", required_argument, NULL, END_CLIENTPROTOPORT },
-#ifdef USE_DNSSEC
 	{ "dnskeyondemand\0", no_argument, NULL, END_DNSKEYONDEMAND },
-#endif
 	{ "sourceip\0",  required_argument, NULL, END_SOURCEIP },
 	{ "srcip\0",  required_argument, NULL, END_SOURCEIP },	/* alias / backwards compat */
 	{ "interface-ip\0", required_argument, NULL, END_INTERFACE_IP },	/* match config */
