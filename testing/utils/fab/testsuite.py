@@ -199,6 +199,10 @@ def add_arguments(parser):
     group.add_argument("--testing-directory", metavar="DIRECTORY",
                        default=utilsdir.relpath(".."),
                        help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
+    # Required argument, so that no arguments triggers usage.
+    # Everyone uses ./kvm anyway?
+    group.add_argument("directories", metavar="DIRECTORY", nargs="+",
+                       help="a testsuite directory, a TESTLIST file, or a list of test directories")
 
 
 def is_test_directory(directory):
@@ -383,5 +387,9 @@ def load_testsuite_or_tests(logger, directories, args,
 
         logger.error("directory '%s' is invalid", directory)
         continue
+
+    if not tests:
+        logger.error("test or testsuite directory invalid: %s", args.directories)
+        os.exit(1)
 
     return tests
