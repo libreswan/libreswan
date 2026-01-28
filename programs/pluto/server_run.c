@@ -99,9 +99,16 @@ bool server_run(const char *verb, const char *verb_suffix,
 			} else {
 				char *e = resp + strlen(resp);
 
-				if (e > resp && e[-1] == '\n')
+				if (e > resp && e[-1] == '\n') {
 					e[-1] = '\0'; /* trim trailing '\n' */
-				vlog("%s%s output: %s", verb, verb_suffix, resp);
+				}
+
+				LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
+					jam_string(buf, verb);
+					jam_string(buf, verb_suffix);
+					jam_string(buf, " output: ");
+					jam_sanitized_hunk(buf, shunk1(resp));
+				}
 			}
 		}
 
