@@ -946,14 +946,9 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 
 	bool ok = true;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		/* computed above */
-		const struct spd_owner *owner = &spd->wip.conflicting.owner;
-
 		/*
 		 * Install/replace the policy.
 		 */
-
 		spd->wip.ok = true;
 		PEXPECT(c->logger, spd->wip.ok);
 
@@ -963,29 +958,38 @@ bool unrouted_to_routed(struct connection *c, enum routing new_routing, where_t 
 		if (!ok) {
 			break;
 		}
+	}
 
+	if (ok) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
+			/* computed above */
+			const struct spd_owner *owner = &spd->wip.conflicting.owner;
+			PEXPECT(c->logger, spd->wip.ok);
+			if (owner->bare_route == NULL) {
+				/* a new route: no deletion required, but preparation is */
+				if (!updown_connection_spd(UPDOWN_PREPARE, c, spd, c->logger))
+					ldbg(c->logger, "kernel: prepare command returned an error");
+			}
+		}
+	}
+
+	if (ok) {
 		/*
 		 * Add the route.
 		 */
-
-		ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
-		PEXPECT(c->logger, spd->wip.ok);
-		if (owner->bare_route == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!updown_connection_spd(UPDOWN_PREPARE, c, spd, c->logger))
-				ldbg(c->logger, "kernel: prepare command returned an error");
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
+			/* computed above */
+			const struct spd_owner *owner = &spd->wip.conflicting.owner;
+			if (owner->bare_route == NULL) {
+				ok &= spd->wip.installed.route =
+					updown_connection_spd(UPDOWN_ROUTE, c, spd, c->logger);
+			}
+			if (!ok) {
+				break;
+			}
 		}
-
-		ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
-		if (owner->bare_route == NULL) {
-			ok &= spd->wip.installed.route =
-				updown_connection_spd(UPDOWN_ROUTE, c, spd, c->logger);
-		}
-
-		if (!ok) {
-			break;
-		}
-
 	}
 
 	/*
