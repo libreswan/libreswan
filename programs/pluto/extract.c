@@ -1382,8 +1382,8 @@ static diag_t extract_host_end(struct host_end *host,
 	 * Not obvious, but it is one less table to maintain!
 	 */
 
-	const char *found_keyname = NULL;
-	const char *pubkey = NULL;
+	const char *pubkey_key = NULL;
+	const char *pubkey_value = NULL;
 	enum ipseckey_algorithm_type pubkey_alg = 0;
 	FOR_EACH_THING(key, KWS_RSASIGKEY, KWS_ECDSAKEY, KWS_EDDSAKEY, KWS_PUBKEY) {
 
@@ -1395,10 +1395,10 @@ static diag_t extract_host_end(struct host_end *host,
 
 		/* convert the keyname into the algorithm */
 		const char *keyname = config_conn_keywords.item[key].keyname;
-		if (found_keyname != NULL) {
-			pexpect(pubkey != NULL);
+		if (pubkey_key != NULL) {
+			pexpect(pubkey_value != NULL);
 			return diag("duplicate key fields %s= and %s=",
-				    found_keyname, keyname);
+				    pubkey_key, keyname);
 		}
 
 		int alg = enum_byname(&ipseckey_algorithm_config_names, shunk1(keyname));
@@ -1406,23 +1406,38 @@ static diag_t extract_host_end(struct host_end *host,
 			return diag("could not find '%s'", keyname);
 		}
 
-		found_keyname = keyname;
-		pubkey = value;
+		pubkey_key = keyname;
+		pubkey_value = value;
 		pubkey_alg = alg;
 	}
 
 	/*
-	 * Handle %dnsondemand and %cert.  Only keep .PUBKEY when it's
-	 * a rawkey.
+	 * Is PUBKEY_VALUE %dnsondemand, %cert, .... ?
+	 *
+	 * Only leave .PUBKEY_VALUE non-NULL when it's a rawkey (i.e.,
+	 * not a known %WORD).
 	 */
-	if (pubkey != NULL) {
+	if (pubkey_value != NULL) {
 		const struct sparse_name *sparse = sparse_lookup_by_name(&keyword_pubkey_names,
-									 shunk1(pubkey));
+									 shunk1(pubkey_value));
 		if (sparse != NULL) {
-			pubkey = NULL;
-			if (sparse->value == PUBKEY_DNSONDEMAND) {
+			/* a %WORD */
+			enum keyword_pubkey kind = sparse->value;
+			switch (kind) {
+			case PUBKEY_DNSONDEMAND:
+#ifdef USE_DNSSEC
 				host_config->key_from_DNS_on_demand = true;
-			} /* else, ignore %cert! */
+				break;
+#else
+				return diag("%s%s=%s: support not compiled in",
+					    leftright, pubkey_key, pubkey_value);
+#endif
+			case PUBKEY_CERTIFICATE:
+				/* ignore %cert */
+				break;
+			}
+			/* PUBKEY_VALUE handled */
+			pubkey_value = NULL;
 		}
 	}
 
@@ -1442,13 +1457,9 @@ static diag_t extract_host_end(struct host_end *host,
 				 leftright, src->we_cert);
 		}
 
-		if (pubkey != NULL) {
-			name_buf pkb;
-			vwarning("ignoring %s %s '%s' and using %s certificate '%s'",
-				 leftright,
-				 str_enum_long(&ipseckey_algorithm_config_names,
-					       pubkey_alg, &pkb),
-				 pubkey,
+		if (pubkey_value != NULL) {
+			vwarning("ignoring '%s%s=%s' and using %s certificate '%s'",
+				 leftright, pubkey_key, pubkey_value,
 				 leftright, src->we_cert);
 		}
 
@@ -1466,7 +1477,7 @@ static diag_t extract_host_end(struct host_end *host,
 			return diag;
 		}
 
-	} else if (pubkey != NULL) {
+	} else if (pubkey_value != NULL) {
 
 		/*
 		 * Extract the CKAID from the PUBKEY.  When there's an
@@ -1492,21 +1503,16 @@ static diag_t extract_host_end(struct host_end *host,
 		 */
 
 		if (src->we_ckaid != NULL) {
-			name_buf pkb;
-			vwarning("ignoring %sckaid=%s and using %s%s",
+			vwarning("ignoring %sckaid=%s and using %s%s=%s",
 				 leftright, src->we_ckaid,
-				 leftright, str_enum_long(&ipseckey_algorithm_config_names,
-							  pubkey_alg, &pkb));
+				 leftright, pubkey_key, pubkey_value);
 		}
 
 		chunk_t keyspace = NULL_HUNK; /* must free_chunk_content() */
-		err = whack_pubkey_to_chunk(pubkey_alg, pubkey, &keyspace);
+		err = whack_pubkey_to_chunk(pubkey_alg, pubkey_value, &keyspace);
 		if (err != NULL) {
-			name_buf pkb;
 			return diag("%s%s invalid: %s",
-				    leftright, str_enum_long(&ipseckey_algorithm_config_names,
-							     pubkey_alg, &pkb),
-				    err);
+				    leftright, pubkey_key, err);
 		}
 
 		/* must-free keyspace */
@@ -1518,21 +1524,17 @@ static diag_t extract_host_end(struct host_end *host,
 						      &pubkey_content, verbose.logger);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
-				name_buf pkb;
 				return diag_diag(&d, "%s%s invalid, ",
-						 leftright, str_enum_long(&ipseckey_algorithm_config_names,
-									  pubkey_alg, &pkb));
+						 leftright, pubkey_key);
 			}
 
 			/* must free keyspace pubkey_content */
 			vassert(pubkey_content.type != NULL);
 
 			ckaid_buf ckb;
-			name_buf pkb;
 			vdbg("saving CKAID %s extracted from %s%s",
 			     str_ckaid(&pubkey_content.ckaid, &ckb),
-			     leftright, str_enum_long(&ipseckey_algorithm_config_names,
-						      pubkey_alg, &pkb));
+			     leftright, pubkey_key);
 			host_config->ckaid = clone_const_thing(pubkey_content.ckaid, "raw pubkey's ckaid");
 
 			free_chunk_content(&keyspace);
@@ -1583,11 +1585,9 @@ static diag_t extract_host_end(struct host_end *host,
 			     leftright, str_ckaid(host_config->ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
-			name_buf pkb;
 			llog(LOG_STREAM/*not-whack-for-now*/, verbose.logger,
 			     "loaded private key matching %s%s CKAID %s",
-			     leftright, str_enum_long(&ipseckey_algorithm_config_names,
-						      pubkey_alg, &pkb),
+			     leftright, pubkey_key,
 			     str_ckaid(host_config->ckaid, &ckb));
 		}
 
