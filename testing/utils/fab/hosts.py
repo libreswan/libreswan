@@ -15,7 +15,7 @@
 import re
 from os import path
 
-from fab import utilsdir
+from fab import testingdir
 
 class Set(set):
     def __str__(self):
@@ -46,15 +46,15 @@ class Guest:
         return self.name < peer.name
 
 _HOSTS = Dict() # east west rise set ...
-for xml in utilsdir.glob("../kvm/vm/*.xml"):
-    hostname = re.match(r'^.*/(.*).xml$', xml).group(1)
+for xml in testingdir.glob("kvm/vm/*.xml"):
+    # STEM is .basename(.xml)
+    hostname = xml.stem
     host = Host(hostname)
     _HOSTS[host.name] = host
 
 PLATFORMS = Set() # netbsd freebsd fedora ...
-for t in utilsdir.glob("../kvm/platform/*/upgrade.sh"):
-    # what matched "*" in above pattern
-    p = path.basename(path.dirname(t))
+for platform in testingdir.glob("kvm/platform/*/upgrade.sh"):
+    p = platform.parent.name
     PLATFORMS.add(p)
 
 _GUESTS = Dict() # netbsdrise fedoraset east freebsdwest ...

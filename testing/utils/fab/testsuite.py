@@ -17,7 +17,7 @@ import re
 import collections
 
 from fab import logutil
-from fab import utilsdir
+from fab import testingdir
 from fab import scripts
 from fab import hosts
 
@@ -79,7 +79,7 @@ class Test:
             # trust it
             self._testing_directory = os.path.relpath(testing_directory)
         else:
-            self._testing_directory = utilsdir.relpath("..")
+            self._testing_directory = testingdir.joinpath()
 
         # Get an ordered list of {guest_name:,command:} to run.
         self.commands = scripts.commands(self.directory, self.logger)
@@ -112,7 +112,7 @@ def add_arguments(parser):
                                       "options for configuring the testsuite or test directories")
 
     group.add_argument("--testing-directory", metavar="DIRECTORY",
-                       default=utilsdir.relpath(".."),
+                       default=testingdir.joinpath(),
                        help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
     # Required argument, so that no arguments triggers usage.
     # Everyone uses ./kvm anyway?

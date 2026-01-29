@@ -12,18 +12,17 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+from pathlib import Path
 import sys
-import glob as _glob
-from os import path
 
-def _directory(*util):
-    return path.join(path.dirname(sys.argv[0]), *util)
+# Assuming argv[0] is .../testing/util/{kvmrunner,kvmresults,kvmsh}
+# form TESTINGDIR (.../testing) as an absolute path.  Need to first
+# .resolve() to eliminate anything relative (see .parent() docs).
 
-def realpath(*util):
-    return path.realpath(_directory(*util))
+_TESTINGDIR = Path(sys.argv[0]).resolve().parent.parent
 
-def relpath(*util):
-    return path.relpath(_directory(*util))
+def joinpath(*pathsegments):
+    return _TESTINGDIR.joinpath(*pathsegments)
 
-def glob(*util):
-    return _glob.glob(_directory(*util))
+def glob(*pattern):
+    return _TESTINGDIR.glob(*pattern)
