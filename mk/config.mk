@@ -22,11 +22,57 @@ config.mk = true
 #
 # Configuration options.  Include this file early!
 #
-# USE_ assume a package and enable features that depend on it
+# USE_<package>={true,}: PUBLIC
 #
-#       For instance USE_SECCOMP assumes the seccomp library and
-#       enables the seccomp code.
+#       Assume <package> is available; and enable any features that
+#       depend on the package.
 #
+#       For instance, when USE_SECCOMP=true, the libseccomp library is
+#       assumed and the SECCOMP code is enabled in the build.
+#
+#       When USE_<package>=true, -DUSE_<package> is added to CFLAGS
+#       (technically USERLAND_CFLAGS) (so that code wrapped in #ifdef
+#       is enabled) and <package>_LDFLAGS is set to the list of
+#       libraries (else it is empty).
+#
+#       For instance, with USE_SECCOMP=true, -DUSE_SECCOMP is added to
+#       CFLAGS, and the MAKE variable SECCOMP_LDFLAGS=-lseccomp is
+#       set.  Consequently, this is compiled:
+#
+#          #ifdef USE_SECCOMP
+#          #include <seccomp.h>
+#          #endif
+#
+#       And:
+#
+#          USERLAND_LDFLAGS += $(SECCOMP_LDFLAGS)
+#
+#       adds the seccomp library.
+#
+# ENABLE_<feature>={true,false}: INTERNAL
+#
+#       For more complex build dependencies, an ENABLE_<feature> MAKE
+#       variable may also be defined.
+#
+#       Unlike USE_<package>, the MAKE variable, and corresponding C
+#       MACRO are both ALWAYS defined.  Either as "true" or "false".
+#
+#       For instance, since IPSECKEY support requires both USE_UNBOUND
+#       and USE_LDNS.  When packages are available, the MAKE variable
+#       ENABLE_IPSECKEY=true, and the C macro is defined as
+#       -DENABLE_IPSECKEY=true; otherwise ENABLE_IPSECKEY=false, and
+#       -DENABLE_IPSECKEY=false.
+#
+#       IPSECKEY code is then enabled using either:
+#
+#           #if ENABLE_IPSECKEY // NOT #ifdef ENABLE_IPSECKEY
+#
+#       or:
+#
+#           if (ENABLE_IPSECKEY)
+#
+#       (unlike #ifdef USE_<package>, #ifdef ENABLE_<feature> always
+#       succeeds)
 
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
@@ -619,6 +665,15 @@ $(error DEFAULT_DNSSEC_ROOTKEY_FILE unknown)
 endif
 USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
 endif
+
+# Enable the IPsec KEY code - fetching keys via DNS?
+#
+# IPSECKEY's current implementation requires both UNBOUND and LDNS.
+# ENABLE_ variables, unlike USE_ variables are set to true/false so
+# that they can be used in code.
+
+ENABLE_IPSECKEY ?= $(if $(filter truetrue, $(USE_UNBOUND)$(USE_LDNS)),true,false)
+USERLAND_CFLAGS += -DENABLE_IPSECKEY=$(ENABLE_IPSECKEY)
 
 # Implement LABELED_IPSEC feature using SELINUX
 #

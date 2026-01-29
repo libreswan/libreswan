@@ -319,7 +319,7 @@ struct ike_sa *initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		release_whack(ike->sa.logger, HERE);
 	}
 
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
+	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
 		/*
 		 * This submits a background task?  How is it ever
 		 * synced?

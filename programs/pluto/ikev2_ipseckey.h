@@ -3,14 +3,6 @@
 
 struct dnssec_config;
 
-#ifdef USE_DNSSEC
-# define LSW_LIBUNBOUND_ENABLED true
-#else
-# define LSW_LIBUNBOUND_ENABLED false
-#endif
-
-#define IS_LIBUNBOUND LSW_LIBUNBOUND_ENABLED
-
 struct ike_sa;
 
 typedef enum {

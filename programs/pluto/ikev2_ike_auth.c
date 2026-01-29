@@ -789,7 +789,7 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 		return s;
 
 	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
+	if (ENABLE_IPSECKEY && id_ipseckey_allowed(ike, atype)) {
 		dns_status ret = responder_fetch_idi_ipseckey(ike, md, process_v2_IKE_AUTH_request_ipseckey_continue);
 		switch (ret) {
 		case DNS_SUSPEND:
