@@ -581,7 +581,7 @@ kvm-%: kvm-ready kvm-web
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
 		$(foreach prefix,$(KVM_TEST_PREFIXES), --prefix '$(notdir $(prefix))') \
-		--testing-directory $(KVM_TESTINGDIR) \
+		--testingdir $(KVM_TESTINGDIR) \
 		$(if $(WEB_ENABLED), --publish-hash        $(TESTING_HASH)) \
 		$(if $(WEB_ENABLED), --publish-resultsdir  $(TESTING_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status      $(TESTING_WEBDIR)/status.json) \

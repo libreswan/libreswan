@@ -19,6 +19,7 @@ import difflib
 import weakref
 import gzip
 import bz2
+from pathlib import Path
 
 from fab import logutil
 from fab import jsonutil
@@ -176,9 +177,9 @@ def _diff(logger, ln, l, rn, r):
 def _sanitize_output(logger, raw_path, test):
     # Run the sanitizer found next to the test_sanitize_directory.
     command = [
-        test.testing_directory("utils", "sanitizer.sh"),
+        test.testingdir.joinpath("utils", "sanitizer.sh"),
         raw_path,
-        test.testing_directory("pluto", test.name)
+        test.testingdir.joinpath("pluto", test.name)
     ]
     logger.debug("sanitize command: %s", command)
     # Note: It is faster to have "sanitize.sh" read the file on disk
@@ -420,8 +421,8 @@ class TestResult:
                 self.issues.add(Issues.KERNEL, host_name)
                 self.resolution.failed()
 
-            expected_output_path = test.testing_directory("pluto", test.name,
-                                                          host_name + ".console.txt")
+            expected_output_path = test.testingdir.joinpath("pluto", test.name,
+                                                            host_name + ".console.txt")
             self.logger.debug("comparing %s against known-good output '%s'",
                               sanitized_filename, expected_output_path)
 
@@ -519,7 +520,7 @@ class TestResult:
             self.logger.debug("loading contents of '%s'", path)
             self._file_contents_cache[path] = None
             for suffix, open_op in [("", open), (".gz", gzip.open), (".bz2", bz2.open),]:
-                zippath = path + suffix
+                zippath = Path(path).joinpath(suffix)
                 if os.path.isfile(zippath):
                     self.logger.debug("loading '%s' into cache", zippath)
                     with open_op(path, "rb") as f:

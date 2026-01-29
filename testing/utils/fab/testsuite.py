@@ -20,10 +20,11 @@ from fab import logutil
 from fab import testingdir
 from fab import scripts
 from fab import hosts
+from pathlib import Path
 
 class Test:
 
-    def __init__(self, test_directory, testing_directory,
+    def __init__(self, test_directory,
                  saved_test_output_directory=None,
                  kind="kvmplutotest", status="good"):
         # basics
@@ -38,6 +39,10 @@ class Test:
         # The test's name is the same as the directory's basename.
         self.name = os.path.basename(test_directory)
         self.full_name = "test " + self.name
+
+        # always us the test's TESTINGDIR, that is given
+        # testing/pluto/test/, use testing/
+        self.testingdir = Path(test_directory).resolve().parent.parent
 
         self.logger = logutil.getLogger(self.name)
 
@@ -69,18 +74,6 @@ class Test:
         else:
             self.saved_output_directory = None
 
-        # The testing_directory to use when performing post.mortem
-        # tasks such as running the sanitizer.
-        #
-        # Since test.directory may be incomplete (sanitizers directory
-        # may be missing), use the testing directory belonging to this
-        # script.
-        if testing_directory:
-            # trust it
-            self._testing_directory = os.path.relpath(testing_directory)
-        else:
-            self._testing_directory = testingdir.joinpath()
-
         # Get an ordered list of {guest_name:,command:} to run.
         self.commands = scripts.commands(self.directory, self.logger)
 
@@ -99,9 +92,6 @@ class Test:
                 platforms.add(guest.platform)
         self.platforms = sorted(platforms)
 
-    def testing_directory(self, *path):
-        return os.path.relpath(os.path.join(self._testing_directory, *path))
-
     def __str__(self):
         return self.full_name
 
@@ -111,9 +101,9 @@ def add_arguments(parser):
     group = parser.add_argument_group("testsuite arguments",
                                       "options for configuring the testsuite or test directories")
 
-    group.add_argument("--testing-directory", metavar="DIRECTORY",
+    group.add_argument("--testingdir", metavar="DIRECTORY", type=Path,
                        default=testingdir.joinpath(),
-                       help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
+                       help="directory containing 'sanitizers/', 'default-testparams.sh' and 'pluto/' along with other scripts and files used to perform test postmortem; default: '%(default)s/'")
     # Required argument, so that no arguments triggers usage.
     # Everyone uses ./kvm anyway?
     group.add_argument("directories", metavar="DIRECTORY", nargs="+",
@@ -220,8 +210,7 @@ def _load_testlist(logger, log_level, args, directory):
                 continue
 
             test = Test(kind=test_kind, status=test_status,
-                        test_directory=test_directory,
-                        testing_directory=args.testing_directory)
+                        test_directory=test_directory)
             logger.debug("test directory: %s", test.directory)
             # an OrderedDict which saves insertion order
             tests[test_name] = test
@@ -248,7 +237,7 @@ def append_test(logger, log_level, tests, args, directory,
 
     if test:
         assert not test_directory
-        test_directory = os.path.join(args.testing_directory, "pluto", test)
+        test_directory = args.testingdir.joinpath("pluto", test)
 
     if not test_directory:
         return False
@@ -257,8 +246,7 @@ def append_test(logger, log_level, tests, args, directory,
         return False
 
     test = Test(test_directory=test_directory,
-                saved_test_output_directory=saved_test_output_directory,
-                testing_directory=args.testing_directory)
+                saved_test_output_directory=saved_test_output_directory)
     logger.log(log_level, "directory '%s' contains %s '%s'", directory, message, test.name)
     tests.append(test)
 
