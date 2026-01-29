@@ -144,9 +144,3 @@ dnf install -y $(packages_for_build) $(packages_for_testing) $(kernel_packages)
 :
 
 dnf upgrade -y $(packages_for_build)
-
-:
-: Hold some packages back
-:
-
-dnf downgrade -y fping # no longer accepts --timeout 5s
