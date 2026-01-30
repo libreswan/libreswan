@@ -199,6 +199,7 @@ kvmplutotest	ikev2-delete-06-start-both		good
 # These demonstrate how to profile pluto.
 kvmplutotest	perf-memory-ikev2-psk-valgrind		wip
 kvmplutotest	perf-on-cpu-ikev2-x509-callgrind	wip
+kvmplutotest	perf-debug-ikev2-x509-nss		skiptest # requires custom NSS
 
 kvmplutotest	ikev2-09-rw-rsa				good
 kvmplutotest	ikev2-11-simple-psk			good
@@ -459,7 +460,6 @@ kvmplutotest	ikev1-x509-aggr-13-san-dn-mismatch	good
 kvmplutotest	ikev1-x509-aggr-14-san-dn-fromcert	good
 
 kvmplutotest	ikev2-x509-01				good
-kvmplutotest	ikev2-x509-01-nss-debug			skiptest
 kvmplutotest	ikev2-x509-03				good
 kvmplutotest	ikev2-x509-05-san-firstemail-match	good
 kvmplutotest	ikev2-x509-05-san-firstemail-match-responder	good

@@ -1,0 +1,14 @@
+IKEv2 x509 interop with NSS debugging enabled.
+
+See external/nss/README.md for how to link pluto against an NSS built
+with debugging enabled.  Hint, include Makefile.kvm.linux.
+
+This test also sets all known maybe related environment variables
+supported, which also activate the nss debug logging, and throw it to
+console to see.
+
+nss statistics are printed. deep detailed call logs are in the
+*.console.verbose.txt logs (since they have pointers, etc, we dont
+want to sanitizer).
+
+Marked as SKIPTEST as it requires a custom NSS build.
