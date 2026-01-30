@@ -1081,18 +1081,14 @@ addvti() {
 		# Tuomo should improve this with using ${PLUTO_MY_CLIENT_NET}
 		# echo "setting up vti routing"
 		r=add
-		ip route list | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
+		ip route list dev "${VTI_IFACE}" | grep -q "${PLUTO_PEER_CLIENT%/*}" && r=change
 		if [ "${r}" = change ]; then
 		    # resolve LAN conflict by forcing host route for default gw
 		    gw="$(ip route list | grep ^default | awk '{ print $3;}')"
 		    gwdev="$(ip route list | grep ^default | awk '{ print $5;}')"
 		    RUN ip route add ${gw} dev ${gwdev} || echo "(ip route error ignored)"
 		fi
-		srcip=""
-		if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
-		    srcip=" src ${PLUTO_MY_SOURCEIP}"
-		fi
-		RUN ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} ${srcip}
+		RUN ip route ${r} ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE}${PLUTO_MY_SOURCEIP:+ src ${PLUTO_MY_SOURCEIP}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}}
 		echo "done ip route"
 	    fi
 	fi
@@ -1102,8 +1098,7 @@ addvti() {
 delvti() {
     if [ -n "${VTI_IFACE}" -a -d /proc/sys/net/ipv4/conf/${VTI_IFACE} ]; then
 	if [ "${VTI_ROUTING}" = yes ]; then
-	    RUN ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE} \
-		src ${PLUTO_MY_SOURCEIP} ||:
+	    RUN ip route del ${PLUTO_PEER_CLIENT} dev ${VTI_IFACE}${PLUTO_MY_SOURCEIP:+ src ${PLUTO_MY_SOURCEIP}}${PLUTO_METRIC:+ metric ${PLUTO_METRIC}} ||:
 	fi
 	# TODO: we can't delete vti interface because we don't have proper reference
 	# counting.
