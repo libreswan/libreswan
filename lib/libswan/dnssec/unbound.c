@@ -128,9 +128,10 @@ void unbound_ctx_config(struct ub_ctx *ub_ctx,
 		ldbg(logger, "UNBOUND: set outgoing-port-permit=%s", outgoing_port_permit);
 	}
 
-	if (!config->enable) {
+	if (config->disabled != NULL) {
 		/* No DNSSEC - nothing more to configure */
-		ldbg(logger, "UNBOUND: dnssec validation disabled by configuration");
+		ldbg(logger, "UNBOUND: dnssec validation %s",
+		     config->disabled);
 		return;
 	}
 

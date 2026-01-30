@@ -13,7 +13,7 @@ struct ub_ctx;
 struct config_setup;
 
 struct dnssec_config {
-	bool enable;
+	const char *disabled; /*when non-NULL string is why; clearly a hack*/
 	const char *rootkey_file;
 	const char *anchors;
 };

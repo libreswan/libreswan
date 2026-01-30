@@ -30,8 +30,9 @@ const struct dnssec_config *dnssec_config_singleton(struct logger *logger UNUSED
 
 	bool enable = config_setup_yn(KYN_DNSSEC_ENABLE);
 #ifdef USE_UNBOUND
-	config.enable = enable;
+	config.disabled = (enable ? NULL : "disabled");
 #else
+	config.disabled = "not compiled in";
 	if (enable) {
 		llog(WARNING_STREAM, logger, "dnssec= ignored");
 	}
