@@ -304,6 +304,7 @@ enum opt {
 	OPT_DEBUG_NONE,
 	OPT_DEBUG_ALL,
 	OPT_IMPAIR,
+	OPT_DNSSEC_ENABLE,
 	OPT_DNSSEC_ROOTKEY_FILE,
 	OPT_DNSSEC_ANCHORS,
 	OPT_HELP,
@@ -407,6 +408,7 @@ const struct option optarg_options[] = {
 	{ OPT("leak-detective"), no_argument, NULL, OPT_LEAK_DETECTIVE },
 	{ OPT("efence-protect"), no_argument, NULL, OPT_EFENCE_PROTECT, },
 
+	{ OPT("dnssec-enable", "<bool>"), required_argument, NULL, OPT_DNSSEC_ENABLE },
 	{ OPT("dnssec-rootkey-file", "<filename>"), required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
 	{ OPT("dnssec-anchors", "<filename>"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
 	{ REPLACE_OPT("dnssec-trusted", "dnssec-anchors", "5.3"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
@@ -719,12 +721,14 @@ int main(int argc, char **argv)
 			update_setup_string(KSF_LOGFILE, optarg_nonempty(logger));
 			continue;
 
+		case OPT_DNSSEC_ENABLE:	/* --dnssec-enable yes|no */
+			update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
+			continue;
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
 			/* reject '' */
 			update_setup_string(KSF_DNSSEC_ROOTKEY_FILE,
 					    optarg_nonempty(logger));
 			continue;
-
 		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
 			/* allow '', become NULL */
 			update_setup_string(KSF_DNSSEC_ANCHORS,
