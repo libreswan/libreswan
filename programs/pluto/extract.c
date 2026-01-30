@@ -1425,13 +1425,12 @@ static diag_t extract_host_end(struct host_end *host,
 			enum keyword_pubkey kind = sparse->value;
 			switch (kind) {
 			case PUBKEY_DNSONDEMAND:
-#ifdef USE_DNSSEC
-				host_config->key_from_DNS_on_demand = true;
-				break;
-#else
+				if (ENABLE_IPSECKEY) {
+					host_config->key_from_DNS_on_demand = true;
+					break;
+				}
 				return diag("%s%s=%s: support not compiled in",
 					    leftright, pubkey_key, pubkey_value);
-#endif
 			case PUBKEY_CERTIFICATE:
 				/* ignore %cert */
 				break;
