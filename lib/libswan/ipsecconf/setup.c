@@ -89,7 +89,6 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KSF_DUMPDIR] = IPSEC_RUNDIR,
 	[KSF_IPSECDIR] = IPSEC_CONFDDIR,
 	[KSF_MYVENDORID] = libreswan_vendorid,
-	[KSF_DNSSEC_ROOTKEY_FILE] = DEFAULT_DNSSEC_ROOTKEY_FILE,
 #ifdef USE_LOGFILE
 	[KSF_LOGFILE] = LOGFILE,
 #endif
@@ -124,6 +123,9 @@ static const char *const config_setup_defaults[CONFIG_SETUP_KEYWORD_ROOF] = {
 	[KBF_SHUNTLIFETIME] = DEFAULT_SHUNT_LIFETIME,
 
 	[KYN_DNSSEC_ENABLE] = "yes",
+#ifdef DEFAULT_DNSSEC_ROOTKEY_FILE
+	[KSF_DNSSEC_ROOTKEY_FILE] = DEFAULT_DNSSEC_ROOTKEY_FILE,
+#endif
 
 	[KYN_LOGIP] = "yes",
 	[KYN_LOGTIME] = "yes",
