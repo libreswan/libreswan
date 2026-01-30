@@ -19,18 +19,22 @@
  * for more details.
  */
 
-#ifndef USE_DNSSEC
-# error this file should only be compiled when DNSSEC is defined
-#endif
-
 #include "ttodata.h"
+
+#ifndef USE_UNBOUND
+# error this file should only be compiled when USE_UNBOUND is defined
+#endif
+#include <unbound.h>		/* rpm:unbound-devel */
+#include "unbound-event.h"
+
+#ifndef USE_LDNS
+# error this file should only be compiled when USE_LDNS is defined
+#endif
+#include <ldns/ldns.h>		/* rpm:ldns-devel deb:libldns-dev */
+#include <ldns/rr.h>
 
 #include "defs.h"
 #include "log.h"
-#include <ldns/ldns.h>		/* rpm:ldns-devel deb:libldns-dev */
-#include <ldns/rr.h>
-#include <unbound.h>		/* rpm:unbound-devel */
-#include "unbound-event.h"
 #include "dnssec.h" 		/* includes unbound.h */
 #include "demux.h"		/* for md_delref() */
 #include "ikev2_ipseckey.h" /* for dns_status */

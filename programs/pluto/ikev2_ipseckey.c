@@ -19,13 +19,12 @@
  * for more details.
  */
 
-#ifndef USE_DNSSEC
-# error this file should only be compiled when DNSSEC is defined
-#endif
-
 #include <arpa/inet.h>	/* for inet_ntop */
 #include <arpa/nameser.h>
 
+#ifndef USE_UNBOUND
+# error this file should only be compiled when USE_UNBOUND
+#endif
 #include <unbound.h>
 #include <unbound-event.h>
 
@@ -546,7 +545,7 @@ void init_ikev2_ipseckey(struct event_base *event_base,
 	ipseckey_unbound_ctx = ub_ctx_create_event(event_base);
 	if (ipseckey_unbound_ctx == NULL) {
 		fatal(PLUTO_EXIT_UNBOUND_FAIL, logger, /*no-errno*/0,
-		      "failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_DNSSEC");
+		      "failed to initialize unbound libevent ABI, please recompile libunbound with libevent support or recompile libreswan without USE_UNBOUND");
 	}
 
 	unbound_ctx_config(ipseckey_unbound_ctx, dnssec_config_singleton(logger), logger);
