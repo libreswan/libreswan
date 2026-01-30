@@ -1,5 +1,5 @@
-#ifndef _IKEV2_IPSECKEY_H
-#define _IKEV2_IPSECKEY_H
+#ifndef IKEV2_IPSECKEY_H
+#define IKEV2_IPSECKEY_H
 
 struct dnssec_config;
 

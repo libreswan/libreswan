@@ -160,11 +160,14 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_UNBOUND
 	" UNBOUND"
 #endif
-#ifdef USE_UNBOUND
-	" UNBOUND"
+#ifdef USE_LDNS
+	" LDNS"
 #endif
 #ifdef USE_DNSSEC
 	" DNSSEC"
+#endif
+#if ENABLE_IPSECKEY
+	" IPSECKEY"
 #endif
 #ifdef USE_SYSTEMD_WATCHDOG
 	" SYSTEMD_WATCHDOG"
@@ -1519,10 +1522,16 @@ int main(int argc, char **argv)
 
 #ifdef USE_DNSSEC
 	const struct dnssec_config *dnssec = dnssec_config_singleton(logger);
-	init_ikev2_ipseckey(get_pluto_event_base(), logger);
 	llog(RC_LOG, logger, "DNSSEC support [%s]", (dnssec->enable ? "enabled" : "disabled"));
 #else
 	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");
+#endif
+
+#if ENABLE_IPSECKEY
+	init_ikev2_ipseckey(get_pluto_event_base(), logger);
+	llog(RC_LOG, logger, "IPSECKEY support [enabled]");
+#else
+	llog(RC_LOG, logger, "IPSECKEY support [not compiled in]");
 #endif
 
 	/*
