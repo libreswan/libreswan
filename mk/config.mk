@@ -640,11 +640,19 @@ XFRM_LIFETIME_DEFAULT ?= 30
 USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 endif
 
-# Enable support for DNSSEC. This requires the unbound and ldns
-# libraries.  The default DNSSEC root key location must be set in
-# default/*.mk; look for auto-trust-anchor-file in unbound.conf.
+# Enable builtin support for DNSSEC.
+#
+# DNSSEC requires USE_UNBOUND (but to preserve build compatibility
+# USE_UNBOUND defaults to $(USE_DNSSEC)).
+#
+# UNBOUND, in turn, requires that the default DNSSEC root key location
+# is set default/*.mk; look for auto-trust-anchor-file in
+# unbound.conf.
 
 USE_DNSSEC ?= true
+ifeq ($(USE_DNSSEC),true)
+USERLAND_CFLAGS += -DUSE_DNSSEC
+endif
 
 USE_UNBOUND ?= $(USE_DNSSEC)
 ifeq ($(USE_UNBOUND),true)
@@ -658,12 +666,10 @@ USERLAND_CFLAGS += -DUSE_LDNS
 LDNS_LDFLAGS ?= -lldns
 endif
 
-ifeq ($(USE_DNSSEC),true)
-USERLAND_CFLAGS += -DUSE_DNSSEC
-ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
-$(error DEFAULT_DNSSEC_ROOTKEY_FILE unknown)
-endif
+ifdef DEFAULT_DNSSEC_ROOTKEY_FILE
 USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
+else ifeq ($(USE_UNBOUND),true)
+$(error USE_UNBOUND requires DEFAULT_DNSSEC_ROOTKEY_FILE)
 endif
 
 # Enable the IPsec KEY code - fetching keys via DNS?

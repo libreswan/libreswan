@@ -40,10 +40,6 @@
 #define DEFAULT_UPDOWN "ipsec _updown"
 #define UPDOWN_DISABLED "%disabled"
 
-# ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
-#  define DEFAULT_DNSSEC_ROOTKEY_FILE "<unused>"
-# endif
-
 enum ike_version {
 	/* 0 reserved */
 #define IKE_VERSION_FLOOR 1

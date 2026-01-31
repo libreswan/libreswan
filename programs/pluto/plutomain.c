@@ -304,6 +304,7 @@ enum opt {
 	OPT_DEBUG_NONE,
 	OPT_DEBUG_ALL,
 	OPT_IMPAIR,
+	OPT_DNSSEC_ENABLE,
 	OPT_DNSSEC_ROOTKEY_FILE,
 	OPT_DNSSEC_ANCHORS,
 	OPT_HELP,
@@ -407,11 +408,10 @@ const struct option optarg_options[] = {
 	{ OPT("leak-detective"), no_argument, NULL, OPT_LEAK_DETECTIVE },
 	{ OPT("efence-protect"), no_argument, NULL, OPT_EFENCE_PROTECT, },
 
-#ifdef USE_DNSSEC
+	{ OPT("dnssec-enable", "<bool>"), required_argument, NULL, OPT_DNSSEC_ENABLE },
 	{ OPT("dnssec-rootkey-file", "<filename>"), required_argument, NULL, OPT_DNSSEC_ROOTKEY_FILE },
 	{ OPT("dnssec-anchors", "<filename>"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
 	{ REPLACE_OPT("dnssec-trusted", "dnssec-anchors", "5.3"), required_argument, NULL, OPT_DNSSEC_ANCHORS },
-#endif
 
 	{ OPT("ddos-mode", "{auto,busy,unlimited}"), required_argument, NULL, OPT_DDOS_MODE },
 	{ OPT("ddos-ike-threshold", "<count>"), required_argument, NULL, OPT_DDOS_IKE_THRESHOLD },
@@ -721,12 +721,14 @@ int main(int argc, char **argv)
 			update_setup_string(KSF_LOGFILE, optarg_nonempty(logger));
 			continue;
 
+		case OPT_DNSSEC_ENABLE:	/* --dnssec-enable yes|no */
+			update_setup_yn(KYN_DNSSEC_ENABLE, YN_YES);
+			continue;
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
 			/* reject '' */
 			update_setup_string(KSF_DNSSEC_ROOTKEY_FILE,
 					    optarg_nonempty(logger));
 			continue;
-
 		case OPT_DNSSEC_ANCHORS:	/* --dnssec-anchors */
 			/* allow '', become NULL */
 			update_setup_string(KSF_DNSSEC_ANCHORS,
@@ -1520,12 +1522,9 @@ int main(int argc, char **argv)
 	pluto_sd_init(logger);
 #endif
 
-#ifdef USE_DNSSEC
 	const struct dnssec_config *dnssec = dnssec_config_singleton(logger);
-	llog(RC_LOG, logger, "DNSSEC support [%s]", (dnssec->enable ? "enabled" : "disabled"));
-#else
-	llog(RC_LOG, logger, "DNSSEC support [not compiled in]");
-#endif
+	llog(RC_LOG, logger, "DNSSEC support [%s]",
+	     (dnssec->disabled != NULL ? dnssec->disabled : "enabled"));
 
 #if ENABLE_IPSECKEY
 	init_ikev2_ipseckey(get_pluto_event_base(), logger);
@@ -1578,7 +1577,7 @@ void show_setup_plutomain(struct show *s)
 
 	SHOW_JAMBUF(s, buf) {
 		const struct dnssec_config *dnssec = dnssec_config_singleton(show_logger(s));
-		jam(buf, "dnssec-enable=%s", bool_str(dnssec->enable));
+		jam(buf, "dnssec-enable=%s", bool_str(dnssec->disabled == NULL));
 		jam_string(buf, ", ");
 		jam(buf, "dnssec-rootkey-file=%s",
 		    (dnssec->rootkey_file == NULL ? "<unset>" : dnssec->rootkey_file));

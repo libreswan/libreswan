@@ -147,7 +147,7 @@ KVM_LINUX_USE_LABELED_IPSEC ?= true
 KVM_LINUX_USE_SECCOMP ?= true
 
 # On Alpine, do a cutdown build
-KVM_ALPINE_USE_DNSSEC ?= false
+KVM_ALPINE_USE_LDNS ?= false
 KVM_ALPINE_USE_UNBOUND ?= false
 
 # On Debian, EDDSA doesn't yet exist
@@ -186,7 +186,7 @@ KVM_MAKEFLAGS ?= $(strip \
 	$(call KVM-MAKEFLAG, KVM_USE_EDDSA) \
 	$(call KVM-MAKEFLAG, KVM_USE_SYSTEMD_WATCHDOG) \
 	$(call KVM-MAKEFLAG, KVM_USE_UNBOUND) \
-	$(call KVM-MAKEFLAG, KVM_USE_DNSSEC) \
+	$(call KVM-MAKEFLAG, KVM_USE_LDNS) \
 	)
 
 # Fine-tune the BASE and BUILD machines.
