@@ -572,7 +572,7 @@ kvm-ready: kvm-keys-ok
 kvm-ready: $(KVM_HOST_OK)
 kvm-ready:
 	: shutdown all the build domains, kvmrunner shuts down the test domains
-	true $(foreach domain, $(KVM_BUILD_DOMAINS), && $(KVMSH) --shutdown $(notdir $(domain)))
+	true $(foreach os, $(KVM_OS), && $(KVMSH) --shutdown $(KVM_PREFIX)$(os))
 
 kvm-test kvm-check kvm-retest kvm-recheck: \
 kvm-%: kvm-ready kvm-web
