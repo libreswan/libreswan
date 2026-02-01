@@ -195,8 +195,9 @@ bool server_runv(const char *argv[], const struct verbose verbose)
 	return true;
 }
 
-struct server_run server_runve_chunk(const char *argv[], const char *envp[],
-				     shunk_t input, const struct verbose verbose)
+int server_runve_io(const char *argv[], const char *envp[],
+		    shunk_t input, chunk_t *output,
+		    const struct verbose verbose)
 {
 	VERBOSE_JAMBUF(buf) {
 		jam_string(buf, "command:");
@@ -206,16 +207,20 @@ struct server_run server_runve_chunk(const char *argv[], const char *envp[],
 		}
 	}
 
+	if (output != NULL) {
+		zero(output);
+	}
+
 	int fd[2];
 	if (pipe(fd) == -1) {
 		llog_errno(ERROR_STREAM, verbose.logger, errno, "pipe(): ");
-		return (struct server_run) { .status = -1, };
+		return -1;
 	}
 
 	pid_t child = fork();
 	if (child < 0) {
 		llog_errno(ERROR_STREAM, verbose.logger, errno, "fork(): ");
-		return (struct server_run) { .status = -1, };
+		return -1;
 	}
 
 	if (child == 0) {
@@ -266,8 +271,6 @@ struct server_run server_runve_chunk(const char *argv[], const char *envp[],
 		/* stumble on to waitpid() */
 	}
 
-	struct server_run result = {0};
-
 	while (true) {
 		char inp[100];
 		ssize_t n = read(fd[0], inp, sizeof(inp));
@@ -276,21 +279,22 @@ struct server_run server_runve_chunk(const char *argv[], const char *envp[],
 				jam_string(buf, "output: ");
 				jam_sanitized_hunk(buf, shunk2(inp, n));
 			}
-			append_chunk_hunk("output", &result.output, shunk2(inp, n));
+			if (output != NULL) {
+				append_chunk_hunk("output", output, shunk2(inp, n));
+			}
 			continue;
 		}
 
+		int status;
 		const char *why = (n == 0 ? "EOF" : strerror(errno));
-		waitpid(child, &result.status, 0);
+		waitpid(child, &status, 0);
 		verbose("wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
-			result.status,
-			bool_str(WIFEXITED(result.status)), WEXITSTATUS(result.status),
-			bool_str(WIFSIGNALED(result.status)), WTERMSIG(result.status),
-			bool_str(WIFSTOPPED(result.status)), WSTOPSIG(result.status),
-			bool_str(WCOREDUMP(result.status)),
+			status,
+			bool_str(WIFEXITED(status)), WEXITSTATUS(status),
+			bool_str(WIFSIGNALED(status)), WTERMSIG(status),
+			bool_str(WIFSTOPPED(status)), WSTOPSIG(status),
+			bool_str(WCOREDUMP(status)),
 			why);
-		break;
+		return status;
 	}
-
-	return result;
 }

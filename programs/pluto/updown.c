@@ -401,9 +401,10 @@ static bool do_updown_verb(const char *verb,
 		NULL,
 	};
 
-	struct server_run run = server_runve_chunk(argv, envp, empty_shunk, verbose);
-	free_chunk_content(&run.output);
-	return (run.status == 0);
+	int status = server_runve_io(argv, envp, empty_shunk,
+				     /*discard output*/NULL,
+				     verbose);
+	return (status == 0);
 #else
 	/* must free */
 	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */

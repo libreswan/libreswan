@@ -34,17 +34,16 @@ bool server_run(const char *verb, const char *verb_suffix,
 bool server_runv(const char *argv[], struct verbose verbose);
 
 /*
- * Sends INPUT.
- * Returns captured OUTPUT (also logs).
+ * When non-empty, sends INPUT.
+ * When non-NULL, captures OUTPUT.
+ * Returns -1, 0, exit code.
  * When envp is non-NULL, use execve(argv,envp).
  */
 
-struct server_run {
-	chunk_t output;
-	int status;
-};
-
-struct server_run server_runve_chunk(const char *argv[], const char *envp[],
-				     shunk_t input, struct verbose verbose);
+int server_runve_io(const char *argv[],
+		    const char *envp[],
+		    shunk_t input,
+		    chunk_t *output,
+		    struct verbose verbose);
 
 #endif
