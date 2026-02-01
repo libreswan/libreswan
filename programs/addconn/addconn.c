@@ -181,7 +181,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_KEEP:
 		break;
-	case AUTOSTART_START:
 	case AUTOSTART_ROUTE:
 	case AUTOSTART_ONDEMAND:
 	case AUTOSTART_UP:
@@ -568,7 +567,6 @@ int main(int argc, char *argv[])
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
-			case AUTOSTART_START:
 				break;
 			}
 
@@ -660,7 +658,6 @@ int main(int argc, char *argv[])
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START ||
 				    autostart == AUTOSTART_ROUTE ||
 				    autostart == AUTOSTART_ONDEMAND) {
 					printf("%s ", conn->name);
@@ -676,8 +673,7 @@ int main(int argc, char *argv[])
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START) {
+				if (autostart == AUTOSTART_UP) {
 					printf("%s ", conn->name);
 				}
 			}

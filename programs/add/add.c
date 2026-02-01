@@ -168,7 +168,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_KEEP:
 		break;
-	case AUTOSTART_START:
 	case AUTOSTART_ROUTE:
 	case AUTOSTART_ONDEMAND:
 	case AUTOSTART_UP:
@@ -413,7 +412,6 @@ int main(int argc, char *argv[])
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
-			case AUTOSTART_START:
 				break;
 			}
 
