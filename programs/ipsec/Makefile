@@ -21,7 +21,6 @@ MANPROGPREFIX=
 PROGRAM_MANPAGE = # suppress default
 
 MANPAGES += ipsec.8
-MANPAGES += ipsec-add.8
 MANPAGES += ipsec-briefconnectionstatus.8
 MANPAGES += ipsec-briefstatus.8
 MANPAGES += ipsec-certutil.8
