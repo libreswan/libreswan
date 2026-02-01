@@ -33,7 +33,7 @@
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
-#include "starterwhack.h"
+#include "ipsecconf/starterwhack.h"
 
 #ifdef USE_SECCOMP
 #include "seccomp_mode.h"

@@ -27,7 +27,7 @@
 
 #include <stdbool.h>
 
-#include "starterwhack.h"
+#include "ipsecconf/starterwhack.h"
 #include "whack.h"
 #include "ipsecconf/confread.h"
 
