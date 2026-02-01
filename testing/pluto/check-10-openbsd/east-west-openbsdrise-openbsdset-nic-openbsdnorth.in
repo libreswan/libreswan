@@ -44,12 +44,13 @@ north# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
 
 rise# ../../guestbin/prep.sh
 rise# ipsec initnss
-rise# ipsec pluto --selftest
+rise# ipsec start
+rise# ../../guestbin/wait-until-pluto-started
+rise# ipsec add rise-set
 
 set# ../../guestbin/prep.sh
 set# ipsec initnss
-set# ipsec pluto --selftest
-
-north# ../../guestbin/prep.sh
-north# ipsec initnss
-north# ipsec pluto --selftest
+set# ipsec start
+set# ../../guestbin/wait-until-pluto-started
+set# ipsec add rise-set
+rise# ipsec up rise-set

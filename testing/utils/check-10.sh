@@ -143,13 +143,39 @@ EOF
 
     # sniff test ipsec
 
-    for host in rise set north ; do
+    cat <<EOF > ${dir}/ipsec.secrets
+@east @west @rise @set @north @road : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+EOF
+
+    cat <<EOF > ${dir}/ipsec.conf
+config setup
+	logfile=/tmp/pluto.log
+	logtime=no
+	logappend=no
+	plutodebug=all
+	dumpdir=/tmp
+conn rise-set
+	leftid=@rise
+	rightid=@set
+	authby=secret
+	left=${rise_sunnet}
+	right=${set_sunnet}
+        leftsubnet=${eastnet}.0/24
+        rightsubnet=${westnet}.0/24
+EOF
+
+    for host in rise set ; do
 	echo "" >> ${in}
 	cat <<EOF >> ${in}
 ${host}# ../../guestbin/prep.sh
 ${host}# ipsec initnss
-${host}# ipsec pluto --selftest
+${host}# ipsec start
+${host}# ../../guestbin/wait-until-pluto-started
+${host}# ipsec add rise-set
 EOF
     done
+    cat <<EOF >> ${in}
+rise# ipsec up rise-set
+EOF
 
 done
