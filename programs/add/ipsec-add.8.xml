@@ -24,6 +24,7 @@
       <command>ipsec add</command>
       <group>
 	<arg choice='plain'><replaceable>connection</replaceable></arg>
+	<arg choice='plain'>--auto <replaceable>{keep,route,up}</replaceable></arg>
 	<arg choice='plain'>--checkconfig</arg>
       </group>
       <arg choice='opt'>--dry-run</arg>
@@ -36,20 +37,22 @@
     <title>DESCRIPTION</title>
     <para>
       <command>ipsec add <replaceable>connection</replaceable>
-      </command> adds a connection specification from
-      <filename>@@IPSEC_CONF@@</filename> to internal database within
-      pluto, The Libreswan IKE daemon.  If there already was
-      connection specification with same connectionname, old tunnels
-      are torn down and new specification replaces old one.
+      </command> adds connection specification
+      <replaceable>connection</replaceable> from
+      <filename>@@IPSEC_CONF@@</filename> to &pluto;'s internal
+      connection database.  If a connection specification with same
+      name exists, old tunnels are torn down and the new
+      specification replaces old one.
     </para>
     <para>
       This only adds the connection specification making it possible
-      for remote to connect. To establish the connection you need to
-      use <command>ipsec up
-      <replaceable>connection</replaceable></command> or to do both
-      <option>add</option> and <option>up</option> with one run you
-      can use <command>ipsec start
-      <replaceable>connection</replaceable></command>.
+      for remote to connect. Specify <option>--auto=up</option> (or
+      run the additional command <command>ipsec up
+      <replaceable>connection</replaceable></command> to also initiate
+      the connection.  Specify <option>--auto=route</option> (or run
+      the additional command <command>ipsec route
+      <replaceable>connection</replaceable></command>) make the
+      connection on-demand.
     </para>
     <para>
       Note: you might also need to run <command>ipsec
@@ -65,8 +68,7 @@
     </para>
     <para>
       With <option>--dry-run</option> the underlying
-      <command>whack</command> or <command>addconn</command> command
-      is displayed but not executed.
+      <command>add</command> is displayed but not executed..
     </para>
   </refsect1>
 
