@@ -118,10 +118,10 @@ ipsec_add() {
 		;;
 	esac
     done
-    # addconn performs a replace.  FIrst it deletes all connections
-    # and aliases matching ${conn_name} and then creates a new
-    # connection or aliases.
-    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${checkconfig} ${verbose} ${conn_name}
+    # "add" performs a replace.  First it deletes all connections and
+    # aliases matching ${conn_name} and then creates a new connection
+    # or aliases.
+    ${dry_run} "${IPSEC_EXECDIR}/add" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${checkconfig} ${verbose} ${conn_name}
     exit $?
 }
 
@@ -217,7 +217,7 @@ ipsec_combined() {
 		;;
 	esac
     done
-    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
+    ${dry_run} "${IPSEC_EXECDIR}/add" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
     ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} --name ${conn_name} ${cmd} ${remote_host}
     exit $?
 }
