@@ -7,7 +7,7 @@ west #
 west #
  # sourceip is shown as {my,their}_ip=
 west #
- add() { ipsec auto --add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
+ add() { ipsec add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
 west #
  # sourceip=;host=;#subnet= ok
 west #

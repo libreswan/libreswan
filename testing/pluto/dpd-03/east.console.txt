@@ -6,8 +6,8 @@ Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add west-east
-ipsec addconn: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=hold
+ ipsec add west-east
+ipsec add: warning: /etc/ipsec.conf:17: obsolete keyword ignored: dpdaction=hold
 "west-east": added oriented IKEv1 connection
 east #
  echo "initdone"

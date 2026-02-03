@@ -13,7 +13,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGRAM=addconn
+PROGRAM=add
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)

@@ -5,7 +5,7 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add west-east
+ ipsec add west-east
 "west-east": added oriented IKEv1 connection
 west #
  ipsec whack --impair suppress_retransmits

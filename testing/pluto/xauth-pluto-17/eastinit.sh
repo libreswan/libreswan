@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --nokeys
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add xauth-road-eastnet-psk
+ipsec add xauth-road-eastnet-psk
 echo "initdone"

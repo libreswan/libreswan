@@ -375,6 +375,7 @@ OBJS += ipsecconf/confwrite.o
 OBJS += ipsecconf/interfaces.o
 OBJS += ipsecconf/keywords.o
 OBJS += ipsecconf/keyword_type_names.o
+OBJS += ipsecconf/starterwhack.o
 
 # Avoid flex bugs:
 #

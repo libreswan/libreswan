@@ -26,6 +26,7 @@ SUBDIRS += _import_crl
 SUBDIRS += _plutorun
 SUBDIRS += _unbound-hook
 SUBDIRS += _updown
+SUBDIRS += add
 SUBDIRS += addconn
 SUBDIRS += algparse
 SUBDIRS += cavp

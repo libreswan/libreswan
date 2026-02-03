@@ -1,4 +1,4 @@
-ipsec auto --add time-good
+ipsec add time-good
 # rekey_margin: should be less than rekey interval
 ipsec status | grep margin
 # output is unpredictable, include ephemeral values

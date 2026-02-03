@@ -5,4 +5,4 @@ ipsec start
 grep include /etc/ipsec.conf
 
 # expect no complaints
-ipsec auto --add west
+ipsec add west

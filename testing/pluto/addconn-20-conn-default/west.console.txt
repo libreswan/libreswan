@@ -8,10 +8,10 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --add first
+ ipsec add first
 "first": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add second
+ ipsec add second
 "second": added unoriented IKEv2 connection (neither left=2.3.4.5 nor right=5.6.7.8 match an interface)
 west #
  # conn second should inherit the conn %default values with 3des-sha1
@@ -24,12 +24,12 @@ west #
 west #
  # connection should fail to load - don't accept %fromcert without cert
 west #
- ipsec auto --add cert-complain
+ ipsec add cert-complain
 "cert-complain": failed to add connection: ID cannot be specified as %fromcert if PSK or AUTH-NULL is used
 west #
  # this one should work as %fromcert means for the CERT received with IKE
 west #
- ipsec auto --add cert-allow
+ ipsec add cert-allow
 "cert-allow": added oriented IKEv2 connection
 west #
  echo done

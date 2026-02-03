@@ -8,7 +8,7 @@ west #
  echo "initdone"
 initdone
 west #
- ipsec auto --add time-good
+ ipsec add time-good
 "time-good": added oriented IKEv2 connection
 west #
  # rekey_margin: should be less than rekey interval

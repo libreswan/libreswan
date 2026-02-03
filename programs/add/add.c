@@ -4,7 +4,7 @@
  * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2026 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -41,19 +41,6 @@
 #endif
 
 #include "optarg.h"
-
-/*
- * make options valid environment variables
- */
-static char *environlize(const char *str)
-{
-	char *cpy = strndup(str, strlen(str));
-	char *cur = cpy;
-	while((cur = strchr(cur, '-')) != NULL) {
-		*cur++ = '_';
-	}
-	return cpy;
-}
 
 #ifdef USE_SECCOMP
 static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
@@ -247,39 +234,6 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	return found; /* not-found */
 }
 
-struct configsetup_options {
-	const char *name;
-	const char *export;
-	const char *varprefix;
-};
-
-PRINTF_LIKE(3)
-static void print_option(const struct configsetup_options po,
-			 const char *kwname,
-			 const char *fmt,
-			 ...)
-{
-	if (strlen(po.name) > 0) {
-		va_list ap;
-		va_start(ap, fmt);
-		vprintf(fmt, ap);
-		va_end(ap);
-		printf("\n");
-		return;
-	}
-	if (strlen(po.export) > 0) {
-		printf("%s ", po.export);
-	}
-	char *safe_kwname = environlize(kwname);
-	printf("%s%s='", po.varprefix, safe_kwname);
-	pfreeany(safe_kwname);
-	va_list ap;
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("'\n");
-}
-
 enum opt {
 	OPT_DEBUG = 256,
 	OPT_HELP,
@@ -287,18 +241,8 @@ enum opt {
 	OPT_VERBOSE,
 	OPT_QUIET,
 	OPT_AUTOALL,
-	OPT_LISTALL,
-	OPT_LISTADD,
-	OPT_LISTROUTE,
-	OPT_LISTSTART,
-	OPT_LISTIGNORE,
-	OPT_VARPREFIX,
 	OPT_CTLSOCKET,
-	OPT_CONFIGSETUP,
-	OPT_LISTSTACK,
 	OPT_CHECKCONFIG,
-	OPT_NOEXPORT,
-	OPT_NAME,
 };
 
 const struct option optarg_options[] =
@@ -316,26 +260,9 @@ const struct option optarg_options[] =
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
 	{ OPT("quiet"), no_argument, NULL, OPT_QUIET, },
 
-	HEADING_OPT("  Display content of 'ipsec.conf' 'conn' sections:"),
-	{ OPT("listall"), no_argument, NULL, OPT_LISTALL, },
-	{ OPT("listadd"), no_argument, NULL, OPT_LISTADD, },
-	{ OPT("listroute"), no_argument, NULL, OPT_LISTROUTE, },
-	{ OPT("liststart"), no_argument, NULL, OPT_LISTSTART, },
-	{ OPT("listignore"), no_argument, NULL, OPT_LISTIGNORE, },
-
-	HEADING_OPT("  Display content of 'ipsec.conf' 'config setup' section:"),
-	{ OPT("liststack"), no_argument, NULL, OPT_LISTSTACK, },
-	{ OPT("configsetup", "<option>"), optional_argument, NULL, OPT_CONFIGSETUP, },
-	{ OPT("noexport"), no_argument, NULL, OPT_NOEXPORT, },
-	{ OPT("varprefix", "<prefix>"), required_argument, NULL, OPT_VARPREFIX, },
-
 	HEADING_OPT("  Override default pluto socket:"),
 	{ OPT("ctlsocket", "<socketfile>"), required_argument, NULL, OPT_CTLSOCKET, },
 	{ REPLACE_OPT("ctlbase", "ctlsocket", "3.22"), required_argument, NULL, OPT_CTLSOCKET, }, /* backwards compatibility */
-
-	HEADING_OPT("  Specify connection on command line:"),
-	{ OPT("name", "<connection-name>"), required_argument, NULL, OPT_NAME, },
-	HEADING_OPT("\tleft=<ip>\n\tright=<ip>\n\t..."),
 
 	/* obsoleted, eat and ignore for compatibility */
 	{ IGNORE_OPT("defaultroute", "3.8"), required_argument, NULL, 0, },
@@ -349,25 +276,10 @@ int main(int argc, char *argv[])
 
 	bool autoall = false;
 
-	struct configsetup_options configsetup = {
-		.name = NULL,
-		.export = "export",
-		.varprefix = "",
-	};
-
 	bool checkconfig = false;
-	bool
-		dolist = false,
-		listadd = false,
-		listroute = false,
-		liststart = false,
-		listignore = false,
-		listall = false;
-	bool opt_liststack = false;
 	const char *configfile = NULL;
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
-	const char *name = NULL;
 	enum whack_noise noise = NOISY_WHACK;
 
 #if 0
@@ -379,11 +291,7 @@ int main(int argc, char *argv[])
 	EF_PROTECT_FREE = 1;
 #endif
 
-	/*
-	 * NAME terminates argument list early.
-	 */
-
-	while (name == NULL) {
+	while (true) {
 
 		int c = optarg_getopt(logger, argc, argv);
 		if (c < 0) {
@@ -411,16 +319,8 @@ int main(int argc, char *argv[])
 			noise = QUIET_WHACK;
 			continue;
 
-		case OPT_CONFIGSETUP:
-			configsetup.name = (optarg == NULL ? "" : optarg);
-			continue;
-
 		case OPT_CHECKCONFIG:
 			checkconfig = true;
-			continue;
-
-		case OPT_NOEXPORT:
-			configsetup.export = "";
 			continue;
 
 		case OPT_CONFIG:
@@ -431,51 +331,14 @@ int main(int argc, char *argv[])
 			ctlsocket = optarg;
 			continue;
 
-		case OPT_LISTADD:
-			listadd = true;
-			dolist = true;
-			continue;
-
-		case OPT_LISTROUTE:
-			listroute = true;
-			dolist = true;
-			continue;
-
-		case OPT_LISTSTART:
-			liststart = true;
-			dolist = true;
-			continue;
-
-		case OPT_LISTSTACK:
-			opt_liststack = true;
-			dolist = true;
-			continue;
-
-		case OPT_LISTIGNORE:
-			listignore = true;
-			dolist = true;
-			continue;
-
-		case OPT_LISTALL:
-			listall = true;
-			dolist = true;
-			continue;
-
-		case OPT_VARPREFIX:
-			configsetup.varprefix = optarg;
-			continue;
-
-		case OPT_NAME:
-			name = optarg;
-			continue;
 		}
 
 		bad_case(c);
 	}
 
 	/* if nothing to add, then complain */
-	if (optind == argc && !autoall && !dolist &&
-	    configsetup.name == NULL &&
+	if (optind == argc &&
+	    !autoall &&
 	    !checkconfig) {
 		llog(RC_LOG, logger, "nothing to do, see --help");
 		exit(1);
@@ -488,28 +351,10 @@ int main(int argc, char *argv[])
 		printf("opening file: %s\n", configfile);
 	}
 
-	struct starter_config *cfg;
-	if (name != NULL) {
-		if (configsetup.name != NULL) {
-			llog(ERROR_STREAM, logger, "--conn %s conflicts with --configsetup=%s",
-			     name, configsetup.name);
-			exit(1);
-		}
-		if (autoall) {
-			llog(ERROR_STREAM, logger, "--conn %s conflicts with --autoall", name);
-			exit(1);
-		}
-		cfg = confread_load_argv(configfile, name, argv, optind, logger, verbose);
-		if (cfg == NULL) {
-			llog(RC_LOG, logger, "parsing config arguments failed");
-			exit(3);
-		}
-	} else {
-		cfg = confread_load(configfile, (configsetup.name != NULL), logger, verbose);
-		if (cfg == NULL) {
-			llog(RC_LOG, logger, "loading config file '%s' failed", configfile);
-			exit(3);
-		}
+	struct starter_config *cfg = confread_load(configfile, false, logger, verbose);
+	if (cfg == NULL) {
+		llog(RC_LOG, logger, "loading config file '%s' failed", configfile);
+		exit(3);
 	}
 
 	PASSERT(logger, cfg != NULL);
@@ -582,16 +427,6 @@ int main(int argc, char *argv[])
 		if (verbose > 0)
 			printf("\n");
 
-	} else if (name != NULL) {
-
-		struct starter_conn *conn = TAILQ_LAST(&cfg->conns, conns_head);
-		if (conn == NULL) {
-			llog(ERROR_STREAM, logger, "no conn %s to load", name);
-			exit(1);
-		}
-
-		exit_status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
-
 	} else {
 
 		/* load named conns, regardless of their state */
@@ -619,170 +454,6 @@ int main(int argc, char *argv[])
 			exit_status += RC_UNKNOWN_NAME; /* cause non-zero exit code */
 			fprintf(stderr, "conn %s: not found (tried aliases)\n", connname);
 		}
-	}
-
-	if (listall) {
-
-		if (verbose > 0) {
-			printf("listing all conns\n");
-		}
-		struct starter_conn *conn;
-		TAILQ_FOREACH(conn, &cfg->conns, link) {
-			printf("%s ", conn->name);
-		}
-		printf("\n");
-
-	} else {
-
-		if (listadd) {
-			/* list all conns marked as auto=add */
-			if (verbose > 0) {
-				printf("listing all conns marked as auto=add\n");
-			}
-			struct starter_conn *conn;
-			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_ADD) {
-					printf("%s ", conn->name);
-				}
-			}
-		}
-
-		if (listroute) {
-			/*
-			 * list all conns marked as auto=route or start or
-			 * better
-			 */
-			if (verbose > 0) {
-				printf("listing all conns marked as auto=route and auto=up\n");
-			}
-			struct starter_conn *conn;
-			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START ||
-				    autostart == AUTOSTART_ROUTE ||
-				    autostart == AUTOSTART_ONDEMAND) {
-					printf("%s ", conn->name);
-				}
-			}
-		}
-
-		if (liststart && !listroute) {
-			/* list all conns marked as auto=up */
-			if (verbose > 0) {
-				printf("listing all conns marked as auto=up\n");
-			}
-			struct starter_conn *conn;
-			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START) {
-					printf("%s ", conn->name);
-				}
-			}
-		}
-
-		if (listignore) {
-			/* list all conns marked as auto=up */
-			if (verbose > 0) {
-				printf("listing all conns marked as auto=ignore\n");
-			}
-			struct starter_conn *conn;
-			TAILQ_FOREACH(conn, &cfg->conns, link) {
-				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_IGNORE ||
-				    autostart == AUTOSTART_UNSET) {
-					printf("%s ", conn->name);
-				}
-			}
-			printf("\n");
-		}
-	}
-
-	if (opt_liststack) {
-		const char *protostack = config_setup_string(KSF_PROTOSTACK);
-		if (pexpect(protostack != NULL)) {
-			printf("%s\n", protostack);
-		}
-		confread_free(cfg);
-		free_config_setup();
-		exit(0);
-	}
-
-	if (configsetup.name != NULL) {
-
-		if (strlen(configsetup.name) == 0) {
-			print_option(configsetup, "confreadstatus", "%s", "");
-			print_option(configsetup, "configfile", "%s", configfile);
-			print_option(configsetup, "ctlsocket", "%s", ctlsocket);
-		}
-
-		ITEMS_FOR_EACH(kd, &config_setup_keywords) {
-
-			if (kd->keyname == NULL) {
-				continue;
-			}
-
-			/* don't print backwards compatible aliases */
-			if ((kd->validity & kv_alias) != 0) {
-				continue;
-			}
-
-			/* only print --configsetup=NAME? */
-			if (strlen(configsetup.name) > 0 &&
-			    !strheq(configsetup.name, kd->keyname)) {
-				continue;
-			}
-
-			switch (kd->type) {
-			case kt_string:
-			{
-				const char *string = config_setup_string(kd->field);
-				if (string != NULL) {
-					print_option(configsetup, kd->keyname, "%s", string);
-				}
-				break;
-			}
-
-			case kt_sparse_name:
-			{
-				uintmax_t option = config_setup_option(kd->field);
-				if (option != 0) {
-					name_buf nb;
-					print_option(configsetup, kd->keyname, "%s",
-						     str_sparse_short(kd->sparse_names, option, &nb));
-				}
-				break;
-			}
-
-			case kt_seconds:
-			{
-				deltatime_t deltatime = config_setup_deltatime(kd->field);
-				if (deltatime.is_set) {
-					print_option(configsetup, kd->keyname, "%jd", deltasecs(deltatime));
-				}
-				break;
-			}
-
-			case kt_obsolete:
-				break;
-
-			default:
-			{
-				const struct config_setup *updates = config_setup_updates();
-				if (updates->values[kd->field].set) {
-					print_option(configsetup, kd->keyname, "%jd",
-						     updates->values[kd->field].option);
-				}
-				break;
-			}
-			}
-
-		}
-		confread_free(cfg);
-		free_config_setup();
-		exit(0);
 	}
 
 	confread_free(cfg);

@@ -10,49 +10,49 @@ initdone
 west #
  # these should load properly
 west #
- ipsec auto --add default-implicit-authby
+ ipsec add default-implicit-authby
 "default-implicit-authby": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add default-specified-authby
+ ipsec add default-specified-authby
 "default-specified-authby": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add eddsa
+ ipsec add eddsa
 "eddsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add eddsa,rsa
+ ipsec add eddsa,rsa
 "eddsa,rsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa
+ ipsec add ecdsa
 "ecdsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa,rsa
+ ipsec add ecdsa,rsa
 "ecdsa,rsa": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2
+ ipsec add ecdsa-sha2
 "ecdsa-sha2": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2_256
+ ipsec add ecdsa-sha2_256
 "ecdsa-sha2_256": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2_384
+ ipsec add ecdsa-sha2_384
 "ecdsa-sha2_384": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add ecdsa-sha2_512
+ ipsec add ecdsa-sha2_512
 "ecdsa-sha2_512": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha1
+ ipsec add rsa-sha1
 "rsa-sha1": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2
+ ipsec add rsa-sha2
 "rsa-sha2": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2_256
+ ipsec add rsa-sha2_256
 "rsa-sha2_256": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2_384
+ ipsec add rsa-sha2_384
 "rsa-sha2_384": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
- ipsec auto --add rsa-sha2_512
+ ipsec add rsa-sha2_512
 "rsa-sha2_512": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=4.5.6.7 match an interface)
 west #
  ipsec status |grep policy: | grep -v modecfg
@@ -93,13 +93,13 @@ west #
 west #
  echo "include /etc/ipsec.d/west-errors.conf" >> /etc/ipsec.conf
 west #
- ipsec auto --add ecdsa-sha1-should-fail
+ ipsec add ecdsa-sha1-should-fail
 "ecdsa-sha1-should-fail": failed to add connection: authby=ecdsa cannot use sha1, only sha2
 west #
- ipsec auto --add ikev1-rsa2-should-fail
+ ipsec add ikev1-rsa2-should-fail
 "ikev1-rsa2-should-fail": failed to add connection: authby=rsa-sha2 is not valid for IKEv1
 west #
- ipsec auto --add ikev1-ecdsa-should-fail
+ ipsec add ikev1-ecdsa-should-fail
 "ikev1-ecdsa-should-fail": failed to add connection: authby=ecdsa is not valid for IKEv1
 west #
  rm /etc/ipsec.d/west-errors.conf
