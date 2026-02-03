@@ -28,7 +28,7 @@ set #
 "rise-set": command: 'ifconfig' 'sec1'
 "rise-set": output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\tindex 7 priority 0 llprio 3\n\tgroups: se
 "rise-set": output: c\n\tinet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00\n
-"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set": wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
 "rise-set": added oriented IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12

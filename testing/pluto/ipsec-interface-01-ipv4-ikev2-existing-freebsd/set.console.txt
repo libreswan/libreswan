@@ -54,7 +54,7 @@ set #
 "rise-set": output: ipsec1: flags=1008051<UP,POINTOPOINT,RUNNING,MULTICAST,LOWER_UP> metric 0 mtu 1400\n\toptions=0\n\ttunne
 "rise-set": output: l inet 198.18.1.15 --> 198.18.1.12\n\tinet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00\n\tgroups: i
 "rise-set": output: psec\n\treqid: 100\n\tnd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>\n
-"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set": wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
 "rise-set": added oriented IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
