@@ -5,52 +5,52 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add 4in4-base
+ ipsec add 4in4-base
 "4in4-base": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
- ipsec auto --add 4in4-good
+ ipsec add 4in4-good
 "4in4-good": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
- ipsec auto --add 4in4-bad
+ ipsec add 4in4-bad
 "4in4-bad": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
 west #
- ipsec auto --add 4in4-protoport
+ ipsec add 4in4-protoport
 "4in4-protoport": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
- ipsec auto --add 6in6-base
+ ipsec add 6in6-base
 "6in6-base": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
- ipsec auto --add 6in6-good
+ ipsec add 6in6-good
 "6in6-good": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
- ipsec auto --add 6in6-bad
+ ipsec add 6in6-bad
 "6in6-bad": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0.0/0
 west #
- ipsec auto --add 6in6-protoport
+ ipsec add 6in6-protoport
 "6in6-protoport": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
- ipsec auto --add 4in6-base # also bad
+ ipsec add 4in6-base # also bad
 "4in6-base": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with right=20:21:22:23::
 west #
- ipsec auto --add 4in6-good
+ ipsec add 4in6-good
 "4in6-good": added unoriented IKEv2 connection (neither left=10:11:12:13:: nor right=20:21:22:23:: match an interface)
 west #
- ipsec auto --add 4in6-bad
+ ipsec add 4in6-bad
 "4in6-bad": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
 west #
- ipsec auto --add 4in6-protoport
+ ipsec add 4in6-protoport
 "4in6-protoport": failed to add connection: address family of leftsubnet=1.2.3.0/24 conflicts with right=20:21:22:23::
 west #
- ipsec auto --add 6in4-base # also bad
+ ipsec add 6in4-base # also bad
 "6in4-base": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with right=20.21.22.23
 west #
- ipsec auto --add 6in4-good
+ ipsec add 6in4-good
 "6in4-good": added unoriented IKEv2 connection (neither left=10.11.12.13 nor right=20.21.22.23 match an interface)
 west #
- ipsec auto --add 6in4-bad
+ ipsec add 6in4-bad
 "6in4-bad": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0/0
 west #
- ipsec auto --add 6in4-protoport
+ ipsec add 6in4-protoport
 "6in4-protoport": failed to add connection: address family of leftsubnet=1:2:3::/64 conflicts with right=20.21.22.23
 west #
  ipsec status | grep '==='
