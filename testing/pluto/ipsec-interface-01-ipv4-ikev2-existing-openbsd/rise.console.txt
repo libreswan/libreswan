@@ -28,7 +28,7 @@ rise #
 "rise-set": command: 'ifconfig' 'sec1'
 "rise-set": output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\tindex 7 priority 0 llprio 3\n\tgroups: se
 "rise-set": output: c\n\tinet 198.18.12.12 --> 198.18.15.15 netmask 0xffffff00\n
-"rise-set": eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set": wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
 "rise-set": added oriented IKEv2 connection
 rise #
  ipsec up rise-set
@@ -40,7 +40,7 @@ rise #
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio0)
 "rise-set" #2: command: 'ifconfig' 'sec1' 'up'
-"rise-set" #2: eof: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no
+"rise-set" #2: wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (sec1@vio0)
 "rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #

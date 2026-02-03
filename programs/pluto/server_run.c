@@ -142,80 +142,48 @@ bool server_run(const char *verb, const char *verb_suffix,
 	return true;
 }
 
-bool server_runv(const char *argv[], const struct verbose verbose)
+bool server_runv(const char *argv[], struct verbose verbose)
 {
-	char command[LOG_WIDTH];
-	struct jambuf buf[] = { ARRAY_AS_JAMBUF(command), };
-	const char *sep = "";
-	for (const char **c = argv; *c != NULL; c++) {
-		jam_string(buf, sep); sep = " ";
-		jam_string(buf, "'");
-		jam_shell_quoted_hunk(buf, shunk1(*c));
-		jam_string(buf, "'");
-	}
-	if (!vexpect(jambuf_ok(buf))) {
-		return false;
-	}
-	vlog("command: %s", command);
-
-	FILE *out = popen(command, "re");	/*'e' is an extension
-						 * for close on
-						 * exec */
-	if (out == NULL) {
-		llog_errno(ERROR_STREAM, verbose.logger, errno,
-			   "command '%s' failed: ", command);
-		return false;
-	}
-
-	while (true) {
-		char inp[100];
-		int n = fread(inp, 1, sizeof(inp), out);
-		if (n > 0) {
-			LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-				jam_string(buf, "output: ");
-				jam_sanitized_hunk(buf, shunk2(inp, n));
-			}
-			continue;
-		}
-		if (feof(out) || ferror(out)) {
-			const char *why = (feof(out) ? "eof" :
-					   ferror(out) ? "error" :
-					   "???");
-			int wstatus = pclose(out);
-			llog(RC_LOG, verbose.logger,
-			     "%s: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s",
-			     why, wstatus,
-			     bool_str(WIFEXITED(wstatus)), WEXITSTATUS(wstatus),
-			     bool_str(WIFSIGNALED(wstatus)), WTERMSIG(wstatus),
-			     bool_str(WIFSTOPPED(wstatus)), WSTOPSIG(wstatus),
-			     bool_str(WCOREDUMP(wstatus)));
-			break;
-		}
-	}
-	return true;
+	int status = server_runve_io(argv, NULL/*envp*/,
+				     /*input*/empty_shunk,
+				     /*output*/NULL,
+				     /*send-output-to*/ALL_STREAMS,
+				     verbose);
+	return (status == 0);
 }
 
-struct server_run server_runve_chunk(const char *argv[], const char *envp[],
-				     shunk_t input, const struct verbose verbose)
+int server_runve_io(const char *argv[], const char *envp[],
+		    shunk_t input, chunk_t *output,
+		    enum stream output_stream,
+		    const struct verbose verbose)
 {
-	VERBOSE_JAMBUF(buf) {
-		jam_string(buf, "command:");
-		for (const char **arg = argv; (*arg) != NULL; arg++) {
-			jam_string(buf, " ");
-			jam_shell_quoted_hunk(buf, shunk1(*arg));
+	if (output_stream != 0) {
+		LLOG_JAMBUF(output_stream, verbose.logger, buf) {
+			jam_string(buf, "command: ");
+			const char *sep = "";
+			for (const char **c = argv; *c != NULL; c++) {
+				jam_string(buf, sep); sep = " ";
+				jam_string(buf, "'");
+				jam_shell_quoted_hunk(buf, shunk1(*c));
+				jam_string(buf, "'");
+			}
 		}
+	}
+
+	if (output != NULL) {
+		zero(output);
 	}
 
 	int fd[2];
 	if (pipe(fd) == -1) {
 		llog_errno(ERROR_STREAM, verbose.logger, errno, "pipe(): ");
-		return (struct server_run) { .status = -1, };
+		return -1;
 	}
 
 	pid_t child = fork();
 	if (child < 0) {
 		llog_errno(ERROR_STREAM, verbose.logger, errno, "fork(): ");
-		return (struct server_run) { .status = -1, };
+		return -1;
 	}
 
 	if (child == 0) {
@@ -266,31 +234,35 @@ struct server_run server_runve_chunk(const char *argv[], const char *envp[],
 		/* stumble on to waitpid() */
 	}
 
-	struct server_run result = {0};
-
 	while (true) {
 		char inp[100];
 		ssize_t n = read(fd[0], inp, sizeof(inp));
 		if (n > 0) {
-			VERBOSE_JAMBUF(buf) {
-				jam_string(buf, "output: ");
-				jam_sanitized_hunk(buf, shunk2(inp, n));
+			if (output_stream != 0) {
+				LLOG_JAMBUF(output_stream, verbose.logger, buf) {
+					jam_string(buf, "output: ");
+					jam_sanitized_hunk(buf, shunk2(inp, n));
+				}
 			}
-			append_chunk_hunk("output", &result.output, shunk2(inp, n));
+			if (output != NULL) {
+				append_chunk_hunk("output", output, shunk2(inp, n));
+			}
 			continue;
 		}
 
+		int status;
 		const char *why = (n == 0 ? "EOF" : strerror(errno));
-		waitpid(child, &result.status, 0);
-		verbose("wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
-			result.status,
-			bool_str(WIFEXITED(result.status)), WEXITSTATUS(result.status),
-			bool_str(WIFSIGNALED(result.status)), WTERMSIG(result.status),
-			bool_str(WIFSTOPPED(result.status)), WSTOPSIG(result.status),
-			bool_str(WCOREDUMP(result.status)),
-			why);
-		break;
+		waitpid(child, &status, 0);
+		if (output_stream != 0) {
+			llog(output_stream, verbose.logger,
+			     "wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
+			     status,
+			     bool_str(WIFEXITED(status)), WEXITSTATUS(status),
+			     bool_str(WIFSIGNALED(status)), WTERMSIG(status),
+			     bool_str(WIFSTOPPED(status)), WSTOPSIG(status),
+			     bool_str(WCOREDUMP(status)),
+			     why);
+		}
+		return status;
 	}
-
-	return result;
 }
