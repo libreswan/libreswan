@@ -44,6 +44,7 @@ int server_runve_io(const char *argv[],
 		    const char *envp[],
 		    shunk_t input,
 		    chunk_t *output,
+		    enum stream output_stream,
 		    struct verbose verbose);
 
 #endif

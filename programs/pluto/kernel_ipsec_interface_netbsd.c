@@ -148,6 +148,7 @@ static err_t read_sysctl(const char *ctl, uintmax_t *value, struct verbose verbo
 	chunk_t output = {0};
 	int status = server_runve_io(sysctl, NULL,
 				     null_shunk, &output,
+				     DEBUG_STREAM,
 				     verbose);
 	if (status != 0) {
 		free_chunk_content(&output);

@@ -403,7 +403,7 @@ static bool do_updown_verb(const char *verb,
 
 	int status = server_runve_io(argv, envp, empty_shunk,
 				     /*discard output*/NULL,
-				     verbose);
+				     DEBUG_STREAM, verbose);
 	return (status == 0);
 #else
 	/* must free */
