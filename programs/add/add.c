@@ -43,15 +43,15 @@
 #include "optarg.h"
 
 #ifdef USE_SECCOMP
-static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
+static void init_seccomp(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0, "seccomp_init_addconn() failed!");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0, "%s() failed!", __func__);
 	}
 
 	/*
-	 * Because on bootup, addconn is started by pluto, any syscall
+	 * Because on bootup, add is started by pluto, any syscall
 	 * here MUST also appear in the syscall list for "main" inside
 	 * pluto
 	 */
@@ -300,8 +300,8 @@ int main(int argc, char *argv[])
 
 		switch ((enum opt)c) {
 		case OPT_HELP:
-			optarg_usage("ipsec addconn", "<connection-name> ...",
-				     "By default, 'addconn' will load <connection-name> into pluto.\n");
+			optarg_usage("ipsec add", "<connection-name> ...",
+				     "By default, 'add' will load <connection-name> into pluto.\n");
 
 		case OPT_AUTOALL:
 			autoall = true;
@@ -370,10 +370,10 @@ int main(int argc, char *argv[])
 	enum seccomp_mode seccomp = config_setup_option(KBF_SECCOMP);
 	switch (seccomp) {
 	case SECCOMP_ENABLED:
-		init_seccomp_addconn(SCMP_ACT_KILL, logger);
+		init_seccomp(SCMP_ACT_KILL, logger);
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), logger);
+		init_seccomp(SCMP_ACT_ERRNO(EACCES), logger);
 		break;
 	case SECCOMP_DISABLED:
 		break;
