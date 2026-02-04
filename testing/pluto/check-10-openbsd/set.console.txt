@@ -42,3 +42,6 @@ pluto(ok)
 set #
  ../../guestbin/wait-until-pluto-started
 set #
+ ipsec add rise-set
+"rise-set": added oriented IKEv2 connection
+set #

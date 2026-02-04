@@ -26,6 +26,7 @@
 #include "chunk.h"
 #include "hunk.h"
 #include "ike_alg_integ.h"	/* for ike_alg_integ_none; */
+#include "ike_alg_encrypt.h"	/* for aes_gcm, an OpenBSD hack */
 
 #include "kernel.h"
 #include "kernel_alg.h"
@@ -662,6 +663,19 @@ static void kernel_pfkeyv2_init(struct logger *logger)
 	register_satype(&ip_protocol_ah, verbose);
 	register_satype(&ip_protocol_esp, verbose);
 	register_satype(&ip_protocol_ipcomp, verbose);
+
+#ifdef __OpenBSD__
+	/*
+	 * OpenBSD probably supports these algorithms, but forgets to
+	 * mention them.
+	 *
+	 * See https://marc.info/?l=openbsd-bugs&m=177017688300753
+	 * See https://github.com/libreswan/libreswan/issues/2607
+	 */
+	kernel_alg_add(&ike_alg_encrypt_aes_gcm_16.common, verbose.logger);
+	kernel_alg_add(&ike_alg_encrypt_chacha20_poly1305.common, verbose.logger);
+	kernel_alg_add(&ike_alg_integ_none.common, verbose.logger);
+#endif
 }
 
 static void kernel_pfkeyv2_flush(struct logger *logger)
