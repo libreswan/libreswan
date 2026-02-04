@@ -26,6 +26,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "ipsecconf/starterwhack.h"
 #include "whack.h"
@@ -47,6 +48,7 @@ static bool set_whack_end(struct whack_end *w,
 int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger,
+			   bool dry_run,
 			   enum whack_noise noise)
 {
 	struct whack_message msg;
@@ -71,6 +73,18 @@ int starter_whack_add_conn(const char *ctlsocket,
 	}
 	if (!set_whack_end(&msg.end[RIGHT_END], &conn->end[RIGHT_END])) {
 		return -1;
+	}
+
+	if (dry_run) {
+		enum autostart autostart = conn->values[KNCF_AUTO].option;
+		printf("ipsec add");
+		if (autostart != 0) {
+			name_buf asb;
+			printf(" --auto=%s",
+			       str_sparse_short(&autostart_names, autostart, &asb));
+		}
+		printf(" %s\n", conn->name);
+		return 0;
 	}
 
 	int r = whack_send_msg(&msg, ctlsocket, NULL, NULL, 0, 0, logger, noise);

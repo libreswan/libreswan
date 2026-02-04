@@ -143,6 +143,7 @@ static void fprint_conn(FILE *file,
 
 static void add_conn(struct starter_conn *conn,
 		     enum autostart autostart,
+		     bool dry_run,
 		     const char *alias/*possibly-NULL*/,
 		     const char *ctlsocket, int *exit_status,
 		     struct logger *logger,
@@ -176,7 +177,8 @@ static void add_conn(struct starter_conn *conn,
 		fprintf(stdout, "\n");
 	}
 
-	int status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
+	int status = starter_whack_add_conn(ctlsocket, conn, logger, dry_run, noise);
+
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -186,6 +188,7 @@ static void add_conn(struct starter_conn *conn,
 
 static bool find_and_add_conn_by_name(const char *connname,
 				      enum autostart autostart,
+				      bool dry_run,
 				      struct starter_config *cfg,
 				      const char *ctlsocket,
 				      int *exit_status,
@@ -196,7 +199,8 @@ static bool find_and_add_conn_by_name(const char *connname,
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link)  {
 		if (streq(conn->name, connname)) {
-			add_conn(conn, autostart, NULL, ctlsocket, exit_status, logger, noise);
+			add_conn(conn, autostart, dry_run,
+				 NULL, ctlsocket, exit_status, logger, noise);
 			return true;
 		}
 	}
@@ -206,6 +210,7 @@ static bool find_and_add_conn_by_name(const char *connname,
 
 static bool find_and_add_conn_by_alias(const char *connname,
 				       enum autostart autostart,
+				       bool dry_run,
 				       struct starter_config *cfg,
 				       const char *ctlsocket,
 				       int *exit_status,
@@ -218,7 +223,8 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
 				  conn->values[KWS_CONNALIAS].string)) {
-			add_conn(conn, autostart, connname, ctlsocket, exit_status, logger, noise);
+			add_conn(conn, autostart, dry_run,
+				 connname, ctlsocket, exit_status, logger, noise);
 			found = true;
 		}
 	}
@@ -227,6 +233,7 @@ static bool find_and_add_conn_by_alias(const char *connname,
 }
 
 enum opt {
+	OPT_DRY_RUN = 'n',
 	OPT_DEBUG = 256,
 	OPT_HELP,
 	OPT_CONFIG,
@@ -253,6 +260,7 @@ const struct option optarg_options[] =
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
 	{ OPT("quiet"), no_argument, NULL, OPT_QUIET, },
+	{ OPT("dry-run"), no_argument, NULL, OPT_DRY_RUN, },
 
 	HEADING_OPT("  Override default pluto socket:"),
 	{ OPT("ctlsocket", "<socketfile>"), required_argument, NULL, OPT_CTLSOCKET, },
@@ -275,6 +283,7 @@ int main(int argc, char *argv[])
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 	enum whack_noise noise = NOISY_WHACK;
+	bool dry_run = false;
 
 #if 0
 	/* efence settings */
@@ -341,6 +350,10 @@ int main(int argc, char *argv[])
 
 		case OPT_CTLSOCKET:
 			ctlsocket = optarg;
+			continue;
+
+		case OPT_DRY_RUN:
+			dry_run = true;
 			continue;
 
 		}
@@ -432,7 +445,8 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			starter_whack_add_conn(ctlsocket, conn, logger, noise);
+			starter_whack_add_conn(ctlsocket, conn,
+					       logger, dry_run, noise);
 		}
 
 		if (verbose > 0)
@@ -450,14 +464,14 @@ int main(int argc, char *argv[])
 
 			}
 
-			if (find_and_add_conn_by_name(connname, autostart,
+			if (find_and_add_conn_by_name(connname, autostart, dry_run,
 						      cfg, ctlsocket,
 						      &exit_status, logger, noise)) {
 				continue;
 			}
 
 			/* We didn't find name; look for first alias */
-			if (find_and_add_conn_by_alias(connname, autostart,
+			if (find_and_add_conn_by_alias(connname, autostart, dry_run,
 						       cfg, ctlsocket,
 						       &exit_status, logger, noise)) {
 				continue;
