@@ -952,7 +952,7 @@ KVM_DEBIAN_MAJOR ?= 12
 KVM_DEBIAN_RELEASE ?= ${KVM_DEBIAN_MAJOR}.12.0
 KVM_DEBIAN_BUILD ?= 1
 KVM_DEBIAN_MACHINE ?= i386
-KVM_DEBIAN_OSINFO  ?= linux2022
+KVM_DEBIAN_OSINFO  ?= debian12
 
 # https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
 KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/$(KVM_DEBIAN_MACHINE)/iso-dvd
@@ -981,8 +981,8 @@ $(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 $(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
-	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso \
-	--initrd-inject=platform/debian/preseed.cfg \
+	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso,kernel=install.386/vmlinuz,initrd=install.386/initrd.gz \
+	--initrd-inject=$(srcdir)/platform/debian/preseed.cfg \
 	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
 
