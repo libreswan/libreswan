@@ -43,7 +43,6 @@ MANPAGES += ipsec-listcrls.8
 MANPAGES += ipsec-listen.8
 MANPAGES += ipsec-listpubkeys.8
 MANPAGES += ipsec-modutil.8
-MANPAGES += ipsec-ondemand.8
 MANPAGES += ipsec-pk12util.8
 MANPAGES += ipsec-purgeocsp.8
 MANPAGES += ipsec-redirect.8

@@ -53,75 +53,36 @@ DONTMENTION='^(_.*|.*\.old|.*\.orig|.*~)$'
 # version numbering (details filled in by build)
 export IPSEC_VERSION="@@IPSECVERSION@@"
 
-ipsec_add() {
-    #
-    # ipsec add/replace command
-    #
-    local conn_name usage
-    local verbose
+ipsec_command() {
 
-    while [ ${#} -gt 0 ]; do
-	case "${1}" in
-	    add|--add)
-		usage="Usage: ipsec add connectionname|--chekcconfig \\
-		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
-		shift
-		;;
-	    replace|--replace)
-		usage="Usage: ipsec replace connectionname \\
-		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
-		shift
-		;;
-	    checkconfig)
-		usage="Usage: ipsec checkconfig [--config ${IPSEC_CONF}] [--verbose]"
-		checkconfig="--checkconfig"
-		shift
-		;;
-	    help|--help|-h)
-		echo "${usage}"
-		shift
-		exit 0
-		;;
-	    --config)
-		IPSEC_CONF="${2}"
-		export IPSEC_CONF
-		shift
-		shift
-		;;
-	    --ctlsocket)
-		CTLSOCKET="${2}"
-		export CTLSOCKET
-		shift
-		shift
-		;;
-	    --dry-run|-n)
-		dry_run="echo"
-		shift
-		;;
-	    --verbose)
-		verbose="${1}"
-		shift
-		;;
-	    --checkconfig)
-		checkconfig="${1}"
-		shift
-		;;
-	    -*)
-		echo "Unknown option \"${1}\"" >&2
-		echo >&2
-		echo "${usage}" >&2
-		exit 2
-		;;
-	    *)
-		conn_name="${1}"
-		shift
-		;;
-	esac
-    done
-    # "add" performs a replace.  First it deletes all connections and
-    # aliases matching ${conn_name} and then creates a new connection
-    # or aliases.
-    ${dry_run} "${IPSEC_EXECDIR}/add" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${checkconfig} ${verbose} ${conn_name}
+    command="${1}" ; shift
+
+    # Only pass --ctlsocket and --config when it is expected by
+    # ${command}, and then only pass it once.
+
+    case "${command}" in
+	add | whack )
+	    case " ${@} " in
+		*" --ctlsocket "*) ;;
+		*)
+		    set - --ctlsocket "${CTLSOCKET}" "${@}"
+		    ;;
+	    esac
+	    ;;
+    esac
+
+    case "${command}" in
+	add )
+	    case " ${@} " in
+		*" --config "*) ;;
+		*)
+		    set - --config "${IPSEC_CONF}" "${@}"
+		    ;;
+	    esac
+	    ;;
+    esac
+
+    ${dry_run} "${IPSEC_EXECDIR}/${command}" ${verbose} "${@}"
     exit $?
 }
 
@@ -1218,19 +1179,18 @@ while [ ${#} -gt 0 ]; do
 	    # Whack command is special because --ctlsocket is a whack cmdline option
 	    # We need to make sure we don't give it twice
 	    shift
-	    case " ${@} " in
-		*" --ctlsocket "*)
-		    exec ${dry_run} "${IPSEC_EXECDIR}/whack" "${@}"
-		    ;;
-		*)
-		    exec ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${@}"
-		    ;;
-	    esac
-	    # exec failed?
-	    exit $?
+	    ipsec_command whack "${@}"
 	    ;;
-	add|--add|checkconfig|replace|--replace)
-	    ipsec_add "${@}"
+	add|--add|replace|--replace)
+	    # "add" performs a replace.  First it deletes all
+	    # connections and aliases matching ${conn_name} and then
+	    # creates a new connection or aliases.
+	    shift
+	    ipsec_command add "${@}"
+	    ;;
+	checkconfig|--checkconfig)
+	    shift
+	    ipsec_command add --checkconfig "${@}"
 	    ;;
 	briefstatus|--briefstatus|\
 	checkpubkeys|--checkpubkeys|\

@@ -3522,7 +3522,6 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	switch (wm->autostart) {
 	case AUTOSTART_UP:
-	case AUTOSTART_START:
 	{
 		name_buf nb;
 		vdbg("autostart=%s implies +UP",

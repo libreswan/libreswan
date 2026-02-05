@@ -181,7 +181,6 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 	case AUTOSTART_IGNORE:
 	case AUTOSTART_KEEP:
 		break;
-	case AUTOSTART_START:
 	case AUTOSTART_ROUTE:
 	case AUTOSTART_ONDEMAND:
 	case AUTOSTART_UP:
@@ -199,7 +198,8 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		fprintf(stdout, "\n");
 	}
 
-	int status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
+	int status = starter_whack_add_conn(ctlsocket, conn,
+					    logger, /*dry_run*/false, noise);
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -568,7 +568,6 @@ int main(int argc, char *argv[])
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
-			case AUTOSTART_START:
 				break;
 			}
 
@@ -576,7 +575,8 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			starter_whack_add_conn(ctlsocket, conn, logger, noise);
+			starter_whack_add_conn(ctlsocket, conn,
+					       logger, /*dry_run*/false, noise);
 		}
 
 		if (verbose > 0)
@@ -590,7 +590,8 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		exit_status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
+		exit_status = starter_whack_add_conn(ctlsocket, conn,
+						     logger, /*dry_run*/false, noise);
 
 	} else {
 
@@ -660,7 +661,6 @@ int main(int argc, char *argv[])
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
 				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START ||
 				    autostart == AUTOSTART_ROUTE ||
 				    autostart == AUTOSTART_ONDEMAND) {
 					printf("%s ", conn->name);
@@ -676,8 +676,7 @@ int main(int argc, char *argv[])
 			struct starter_conn *conn;
 			TAILQ_FOREACH(conn, &cfg->conns, link) {
 				enum autostart autostart = conn->values[KNCF_AUTO].option;
-				if (autostart == AUTOSTART_UP ||
-				    autostart == AUTOSTART_START) {
+				if (autostart == AUTOSTART_UP) {
 					printf("%s ", conn->name);
 				}
 			}

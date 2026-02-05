@@ -43,15 +43,15 @@
 #include "optarg.h"
 
 #ifdef USE_SECCOMP
-static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
+static void init_seccomp(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
 	if (ctx == NULL) {
-		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0, "seccomp_init_addconn() failed!");
+		fatal(PLUTO_EXIT_SECCOMP_FAIL, logger, /*no-errno*/0, "%s() failed!", __func__);
 	}
 
 	/*
-	 * Because on bootup, addconn is started by pluto, any syscall
+	 * Because on bootup, add is started by pluto, any syscall
 	 * here MUST also appear in the syscall list for "main" inside
 	 * pluto
 	 */
@@ -141,7 +141,10 @@ static void fprint_conn(FILE *file,
 	fprintf(file, "\n");
 }
 
-static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL*/,
+static void add_conn(struct starter_conn *conn,
+		     enum autostart autostart,
+		     bool dry_run,
+		     const char *alias/*possibly-NULL*/,
 		     const char *ctlsocket, int *exit_status,
 		     struct logger *logger,
 		     enum whack_noise noise)
@@ -157,36 +160,25 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		return;
 	}
 
-	/*
-	 * Scrub AUTOSTART; conns will need to be
-	 * started manually.
-	 */
-	enum autostart autostart = conn->values[KNCF_AUTO].option;
-	switch (autostart) {
-	case AUTOSTART_UNSET:
-	case AUTOSTART_ADD:
-	case AUTOSTART_IGNORE:
-	case AUTOSTART_KEEP:
-		break;
-	case AUTOSTART_START:
-	case AUTOSTART_ROUTE:
-	case AUTOSTART_ONDEMAND:
-	case AUTOSTART_UP:
-	{
-		name_buf nb;
-		fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=add",
-			    str_sparse_short(&autostart_names, autostart, &nb));
-		conn->values[KNCF_AUTO].option = AUTOSTART_ADD;
+	/* force (or clear) autostart; caller's checked it is sane */
+	if (verbose) {
+		enum autostart conn_autostart = conn->values[KNCF_AUTO].option;
+		if (conn_autostart != autostart) {
+			name_buf cab, ab;
+			fprint_conn(stderr, conn, alias, "overriding auto=%s with auto=%s",
+				    str_sparse_short(&autostart_names, conn_autostart, &cab),
+				    str_sparse_short(&autostart_names, autostart, &ab));
+		}
 	}
-
-	}
+	conn->values[KNCF_AUTO].option = autostart;
 
 	if (verbose) {
 		fprintf(stdout, "  sending to pluto");
 		fprintf(stdout, "\n");
 	}
 
-	int status = starter_whack_add_conn(ctlsocket, conn, logger, noise);
+	int status = starter_whack_add_conn(ctlsocket, conn, logger, dry_run, noise);
+
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -195,6 +187,8 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 }
 
 static bool find_and_add_conn_by_name(const char *connname,
+				      enum autostart autostart,
+				      bool dry_run,
 				      struct starter_config *cfg,
 				      const char *ctlsocket,
 				      int *exit_status,
@@ -205,7 +199,8 @@ static bool find_and_add_conn_by_name(const char *connname,
 	struct starter_conn *conn = NULL;
 	TAILQ_FOREACH(conn, &cfg->conns, link)  {
 		if (streq(conn->name, connname)) {
-			add_conn(conn, NULL, ctlsocket, exit_status, logger, noise);
+			add_conn(conn, autostart, dry_run,
+				 NULL, ctlsocket, exit_status, logger, noise);
 			return true;
 		}
 	}
@@ -214,6 +209,8 @@ static bool find_and_add_conn_by_name(const char *connname,
 }
 
 static bool find_and_add_conn_by_alias(const char *connname,
+				       enum autostart autostart,
+				       bool dry_run,
 				       struct starter_config *cfg,
 				       const char *ctlsocket,
 				       int *exit_status,
@@ -226,7 +223,8 @@ static bool find_and_add_conn_by_alias(const char *connname,
 	TAILQ_FOREACH(conn, &cfg->conns, link) {
 		if (lsw_alias_cmp(connname,
 				  conn->values[KWS_CONNALIAS].string)) {
-			add_conn(conn, connname, ctlsocket, exit_status, logger, noise);
+			add_conn(conn, autostart, dry_run,
+				 connname, ctlsocket, exit_status, logger, noise);
 			found = true;
 		}
 	}
@@ -235,11 +233,13 @@ static bool find_and_add_conn_by_alias(const char *connname,
 }
 
 enum opt {
+	OPT_DRY_RUN = 'n',
 	OPT_DEBUG = 256,
 	OPT_HELP,
 	OPT_CONFIG,
 	OPT_VERBOSE,
 	OPT_QUIET,
+	OPT_AUTO,
 	OPT_AUTOALL,
 	OPT_CTLSOCKET,
 	OPT_CHECKCONFIG,
@@ -249,6 +249,7 @@ const struct option optarg_options[] =
 {
 	{ OPT("help"), no_argument, NULL, OPT_HELP, },
 	{ OPT("checkconfig"), no_argument, NULL, OPT_CHECKCONFIG, },
+	{ OPT("auto", "<auto>"), required_argument, NULL, OPT_AUTO, },
 	{ OPT("autoall"), no_argument, NULL, OPT_AUTOALL, },
 	{ REPLACE_OPT("addall", "autoall", "2.9"), no_argument, NULL, OPT_AUTOALL, }, /* alias, backwards compat */
 
@@ -259,6 +260,7 @@ const struct option optarg_options[] =
 	{ OPT("debug", "help|<debug-flags>"), optional_argument, NULL, OPT_DEBUG, },
 	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
 	{ OPT("quiet"), no_argument, NULL, OPT_QUIET, },
+	{ OPT("dry-run"), no_argument, NULL, OPT_DRY_RUN, },
 
 	HEADING_OPT("  Override default pluto socket:"),
 	{ OPT("ctlsocket", "<socketfile>"), required_argument, NULL, OPT_CTLSOCKET, },
@@ -275,12 +277,13 @@ int main(int argc, char *argv[])
 	struct logger *logger = tool_logger(argc, argv);
 
 	bool autoall = false;
-
+	enum autostart autostart = AUTOSTART_UNSET; /*aka 0*/
 	bool checkconfig = false;
 	const char *configfile = NULL;
 	int exit_status = 0;
 	const char *ctlsocket = DEFAULT_CTL_SOCKET;
 	enum whack_noise noise = NOISY_WHACK;
+	bool dry_run = false;
 
 #if 0
 	/* efence settings */
@@ -300,8 +303,26 @@ int main(int argc, char *argv[])
 
 		switch ((enum opt)c) {
 		case OPT_HELP:
-			optarg_usage("ipsec addconn", "<connection-name> ...",
-				     "By default, 'addconn' will load <connection-name> into pluto.\n");
+			optarg_usage("ipsec add", "<connection-name> ...",
+				     "By default, 'add' will load <connection-name> into pluto.\n");
+
+		case OPT_AUTO:
+			/* force autostart, if reasonable */
+			autostart = optarg_sparse(logger, AUTOSTART_UNSET, &autostart_names);
+			switch (autostart) {
+			case AUTOSTART_UNSET:
+			case AUTOSTART_ADD:
+			case AUTOSTART_IGNORE:
+				optarg_fatal(logger, "--auto=%s invalid", optarg);
+				/* no-return */
+			case AUTOSTART_KEEP:
+			case AUTOSTART_ROUTE:
+			case AUTOSTART_ONDEMAND:
+			case AUTOSTART_UP:
+				/* sure ... */
+				break;
+			}
+			continue;
 
 		case OPT_AUTOALL:
 			autoall = true;
@@ -329,6 +350,10 @@ int main(int argc, char *argv[])
 
 		case OPT_CTLSOCKET:
 			ctlsocket = optarg;
+			continue;
+
+		case OPT_DRY_RUN:
+			dry_run = true;
 			continue;
 
 		}
@@ -370,10 +395,10 @@ int main(int argc, char *argv[])
 	enum seccomp_mode seccomp = config_setup_option(KBF_SECCOMP);
 	switch (seccomp) {
 	case SECCOMP_ENABLED:
-		init_seccomp_addconn(SCMP_ACT_KILL, logger);
+		init_seccomp(SCMP_ACT_KILL, logger);
 		break;
 	case SECCOMP_TOLERANT:
-		init_seccomp_addconn(SCMP_ACT_ERRNO(EACCES), logger);
+		init_seccomp(SCMP_ACT_ERRNO(EACCES), logger);
 		break;
 	case SECCOMP_DISABLED:
 		break;
@@ -413,7 +438,6 @@ int main(int argc, char *argv[])
 			case AUTOSTART_ONDEMAND:
 			case AUTOSTART_KEEP:
 			case AUTOSTART_UP:
-			case AUTOSTART_START:
 				break;
 			}
 
@@ -421,7 +445,8 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			starter_whack_add_conn(ctlsocket, conn, logger, noise);
+			starter_whack_add_conn(ctlsocket, conn,
+					       logger, dry_run, noise);
 		}
 
 		if (verbose > 0)
@@ -439,13 +464,15 @@ int main(int argc, char *argv[])
 
 			}
 
-			if (find_and_add_conn_by_name(connname, cfg, ctlsocket,
+			if (find_and_add_conn_by_name(connname, autostart, dry_run,
+						      cfg, ctlsocket,
 						      &exit_status, logger, noise)) {
 				continue;
 			}
 
 			/* We didn't find name; look for first alias */
-			if (find_and_add_conn_by_alias(connname, cfg, ctlsocket,
+			if (find_and_add_conn_by_alias(connname, autostart, dry_run,
+						       cfg, ctlsocket,
 						       &exit_status, logger, noise)) {
 				continue;
 			}
