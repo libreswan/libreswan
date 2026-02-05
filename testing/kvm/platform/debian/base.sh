@@ -18,7 +18,7 @@ echo
 echo grub
 echo
 
-sed -i -e 's/GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' /etc/default/grub
+sed -i -e '/^GRUB_TIMEOUT=/ s/=.*/=0/' /etc/default/grub
 update-grub
 
 
