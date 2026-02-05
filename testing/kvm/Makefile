@@ -949,17 +949,18 @@ $(KVM_ALPINE_BASE_DOMAIN): $(KVM_ALPINE_ISO)
 #   https://gitlab.com/libvirt/libvirt/-/issues/755
 
 KVM_DEBIAN_MAJOR ?= 12
-KVM_DEBIAN_RELEASE ?= ${KVM_DEBIAN_MAJOR}.12.0
+KVM_DEBIAN_RELEASE ?= ${KVM_DEBIAN_MAJOR}.13.0
 KVM_DEBIAN_BUILD ?= 1
-KVM_DEBIAN_MACHINE ?= i386
+KVM_DEBIAN_MACHINE ?= amd64
 KVM_DEBIAN_OSINFO  ?= debian12
+KVM_DEBIAN_KERNELDIR ?= install.amd
 
 # https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd
 KVM_DEBIAN_URL ?= https://cdimage.debian.org/mirror/cdimage/archive/$(KVM_DEBIAN_RELEASE)/$(KVM_DEBIAN_MACHINE)/iso-dvd
 
 KVM_DEBIAN_ISO = $(KVM_POOLDIR)/debian-$(KVM_DEBIAN_RELEASE)-$(KVM_DEBIAN_MACHINE)-DVD-$(KVM_DEBIAN_BUILD).iso
 KVM_DEBIAN_ISO_HASH = SHA256
-KVM_DEBIAN_ISO_CKSUM = cb7732457e93b42d848a783a5fd405ad8c236a4465c725fc9319f8abaa20af43
+KVM_DEBIAN_ISO_CKSUM = 3e2c2092d79deca0aba80f9ffc6ff96b9b9b303d858f91e1bc2790fd83856fdb
 KVM_DEBIAN_ISO_URL ?= $(KVM_DEBIAN_URL)/$(notdir $(KVM_DEBIAN_ISO))
 
 $(KVM_DEBIAN_ISO): | $(KVM_POOLDIR)
@@ -980,8 +981,10 @@ $(KVM_DEBIAN_BASE_DOMAIN).iso: | platform/debian/base.sh
 
 $(KVM_DEBIAN_BASE_DOMAIN): $(KVM_DEBIAN_BASE_DOMAIN).iso
 
+# Give libvirt a hint as to where the kernel can be found
+
 KVM_DEBIAN_VIRT_INSTALL_FLAGS = \
-	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso,kernel=install.386/vmlinuz,initrd=install.386/initrd.gz \
+	--location=$(KVM_DEBIAN_BASE_DOMAIN).iso,kernel=$(KVM_DEBIAN_KERNELDIR)/vmlinuz,initrd=$(KVM_DEBIAN_KERNELDIR)/initrd.gz \
 	--initrd-inject=$(srcdir)/platform/debian/preseed.cfg \
 	--extra-args="console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
