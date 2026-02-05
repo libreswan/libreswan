@@ -771,6 +771,20 @@ void delete_child_sa(struct child_sa **child)
 	}
 
 	struct state *st = &(*child)->sa;
+
+	/* Parent IKE SA might still refer to this child, clear these references */
+	if (st->st_clonedfrom != SOS_NOBODY) {
+		struct ike_sa *ike = ike_sa_by_serialno(st->st_clonedfrom);
+		if (ike != NULL) {
+			if (ike->sa.st_v2_msgid_windows.initiator.wip_sa == *child) {
+				ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
+			}
+			if (ike->sa.st_v2_msgid_windows.responder.wip_sa == *child) {
+				ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			}
+		}
+	}
+
 	*child = NULL;
 	on_delete(st, skip_send_delete);
 	delete_state(st);
