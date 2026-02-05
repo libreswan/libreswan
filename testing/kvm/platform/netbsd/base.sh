@@ -47,6 +47,9 @@ newfs /dev/ld0a
 # installed into the just built root file system.
 #
 # Should (can) speed be changed, 9600 is so retro?
+#
+# Danger, boot likes to read boot.cfc overriding the below; bootconf
+# could stop it.
 
 fdisk -f -0 -a ld0
 fdisk -f -c /usr/mdec/mbr_com0 ld0
@@ -54,7 +57,7 @@ mount -o async /dev/ld0a /targetroot
 cp /usr/mdec/boot /targetroot/boot # file: /boot not /boot/
 umount /targetroot
 dumpfs /dev/ld0a | grep format # expect FFSv1
-installboot -v -o console=com0,timeout=5,speed=9600 /dev/rld0a /usr/mdec/bootxx_ffsv1
+installboot -v -o console=com0,timeout=0,speed=9600,bootconf /dev/rld0a /usr/mdec/bootxx_ffsv1
 
 :
 : Unpack the files into the root file system.
