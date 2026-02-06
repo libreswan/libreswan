@@ -1,4 +1,25 @@
-../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet
+ifconfig eth0
+eth0      Link encap:Ethernet  HWaddr 12:00:00:DE:CD:49  
+          inet addr:192.0.3.254  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: fe80::1000:ff:fede:cd49/64 Scope:Link
+          inet6 addr: 2001:db8:0:3::254/64 Scope:Global
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:18 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:10 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2438 (2.3 KiB)  TX bytes:892 (892.0 B)
+north #
+ ifconfig eth1
+eth1      Link encap:Ethernet  HWaddr 12:00:00:96:96:49  
+          inet addr:192.1.3.33  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: fe80::1000:ff:fe96:9649/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:17 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2180 (2.1 KiB)  TX bytes:920 (920.0 B)
+north #
+ ../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet
 up
 north #
  ../../guestbin/ping-once.sh --up 192.1.3.254 # nic_nicnet

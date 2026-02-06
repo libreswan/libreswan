@@ -1,28 +1,24 @@
-../../guestbin/ip.sh addr show eth0
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
-    link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
-    altname enp0s5
-    altname ens5
-    altname enx120000dcbcff
-    inet 192.0.2.254/24 scope global eth0
-       valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:2::254/64 scope global
-       valid_lft forever preferred_lft forever
-    inet6 fe80::1000:ff:fedc:bcff/64 scope link proto kernel_ll
-       valid_lft forever preferred_lft forever
+ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.0.2.254  netmask 255.255.255.0  broadcast 192.0.2.255
+        inet6 fe80::1000:ff:fedc:bcff  prefixlen 64  scopeid 0x20<link>
+        inet6 2001:db8:0:2::254  prefixlen 64  scopeid 0x0<global>
+        ether 12:00:00:dc:bc:ff  txqueuelen 1000  (Ethernet)
+        RX packets 32  bytes 3534 (3.4 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 8  bytes 892 (892.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 east #
- ../../guestbin/ip.sh addr show eth1
-3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
-    link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
-    altname enp0s6
-    altname ens6
-    altname enx120000646423
-    inet 192.1.2.23/24 scope global eth1
-       valid_lft forever preferred_lft forever
-    inet6 2001:db8:1:2::23/64 scope global
-       valid_lft forever preferred_lft forever
-    inet6 fe80::1000:ff:fe64:6423/64 scope link proto kernel_ll
-       valid_lft forever preferred_lft forever
+ ifconfig eth1
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.1.2.23  netmask 255.255.255.0  broadcast 192.1.2.255
+        inet6 fe80::1000:ff:fe64:6423  prefixlen 64  scopeid 0x20<link>
+        inet6 2001:db8:1:2::23  prefixlen 64  scopeid 0x0<global>
+        ether 12:00:00:64:64:23  txqueuelen 1000  (Ethernet)
+        RX packets 33  bytes 4180 (4.0 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 9  bytes 974 (974.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 east #
  ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
 up

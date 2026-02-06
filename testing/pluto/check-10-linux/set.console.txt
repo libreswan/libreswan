@@ -1,6 +1,24 @@
-ip link set eth0
+ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 198.18.1.15  netmask 255.255.255.0  broadcast 198.18.1.255
+        inet6 fe80::1000:53ff:fe45:5402  prefixlen 64  scopeid 0x20<link>
+        inet6 2001:db8:1::15  prefixlen 64  scopeid 0x0<global>
+        ether 12:00:53:45:54:02  txqueuelen 1000  (Ethernet)
+        RX packets 15  bytes 2068 (2.0 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 7  bytes 850 (850.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 set #
- ip link set eth1
+ ifconfig eth1
+eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 192.0.1.15  netmask 255.255.255.0  broadcast 192.0.1.255
+        inet6 2001:db8:0:1::15  prefixlen 64  scopeid 0x0<global>
+        inet6 fe80::1000:53ff:fe45:5401  prefixlen 64  scopeid 0x20<link>
+        ether 12:00:53:45:54:01  txqueuelen 1000  (Ethernet)
+        RX packets 23  bytes 3148 (3.0 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 6  bytes 780 (780.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 set #
  ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
 up

@@ -1,4 +1,23 @@
-../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet
+ifconfig vioif0
+vioif0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	ec_capabilities=0x1<VLAN_MTU>
+	ec_enabled=0
+	address: 12:00:00:de:cd:49
+	status: active
+	inet6 fe80::1000:ff:fede:cd49%vioif0/64 flags 0 scopeid 0x1
+	inet6 2001:db8:0:3::254/64 flags 0
+	inet 192.0.3.254/24 broadcast 192.0.3.255 flags 0
+north #
+ ifconfig vioif1
+vioif1: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	ec_capabilities=0x1<VLAN_MTU>
+	ec_enabled=0
+	address: 12:00:00:96:96:49
+	status: active
+	inet6 fe80::1000:ff:fe96:9649%vioif1/64 flags 0 scopeid 0x2
+	inet 192.1.3.33/24 broadcast 192.1.3.255 flags 0
+north #
+ ../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet
 up
 north #
  ../../guestbin/ping-once.sh --up 192.1.3.254 # nic_nicnet
