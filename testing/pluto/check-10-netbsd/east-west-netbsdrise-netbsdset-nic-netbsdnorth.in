@@ -1,24 +1,16 @@
 nic# : make certain NIC is running
 
 east# ../../guestbin/ip.sh addr show eth0
-east# ../../guestbin/ip.sh link set eth0 up
 east# ../../guestbin/ip.sh addr show eth1
-east# ../../guestbin/ip.sh link set eth1 up
 
 west# ../../guestbin/ip.sh addr show eth0
-west# ../../guestbin/ip.sh link set eth0 up
 west# ../../guestbin/ip.sh addr show eth1
-west# ../../guestbin/ip.sh link set eth1 up
 
-rise# ifconfig vioif1
-rise# ifconfig vioif1 up
 rise# ifconfig vioif0
-rise# ifconfig vioif0 up
+rise# ifconfig vioif1
 
-set# ifconfig vioif1
-set# ifconfig vioif1 up
 set# ifconfig vioif0
-set# ifconfig vioif0 up
+set# ifconfig vioif1
 # east to west_pubnet nic_pubnet north_nicnet rise_eastnet
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
 east# ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_pubnet

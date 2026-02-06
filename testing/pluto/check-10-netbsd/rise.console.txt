@@ -1,16 +1,4 @@
-ifconfig vioif1
-vioif1: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
-	ec_capabilities=0x1<VLAN_MTU>
-	ec_enabled=0
-	address: 12:52:49:53:45:01
-	status: active
-	inet6 fe80::1052:49ff:fe53:4501%vioif1/64 flags 0 scopeid 0x2
-	inet6 2001:db8:0:2::12/64 flags 0
-	inet 192.0.2.12/24 broadcast 192.0.2.255 flags 0
-rise #
- ifconfig vioif1 up
-rise #
- ifconfig vioif0
+ifconfig vioif0
 vioif0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 	ec_capabilities=0x1<VLAN_MTU>
 	ec_enabled=0
@@ -20,7 +8,15 @@ vioif0: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
 	inet6 2001:db8:1::12/64 flags 0
 	inet 198.18.1.12/24 broadcast 198.18.1.255 flags 0
 rise #
- ifconfig vioif0 up
+ ifconfig vioif1
+vioif1: flags=0x8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	ec_capabilities=0x1<VLAN_MTU>
+	ec_enabled=0
+	address: 12:52:49:53:45:01
+	status: active
+	inet6 fe80::1052:49ff:fe53:4501%vioif1/64 flags 0 scopeid 0x2
+	inet6 2001:db8:0:2::12/64 flags 0
+	inet 192.0.2.12/24 broadcast 192.0.2.255 flags 0
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
 up

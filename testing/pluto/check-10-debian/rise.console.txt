@@ -1,10 +1,6 @@
-ip link set eth1
+ip link set eth0
 rise #
- ip link set eth1 up
-rise #
- ip link set eth0
-rise #
- ip link set eth0 up
+ ip link set eth1
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
 up

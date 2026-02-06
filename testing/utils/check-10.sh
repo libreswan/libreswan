@@ -95,7 +95,7 @@ EOF
 	netbsd )  eth=vioif ; ifconfig=ifconfig ;;
 	openbsd ) eth=vio   ; ifconfig=ifconfig ;;
 	freebsd ) eth=vtnet ; ifconfig=ifconfig ;;
-	alpine )  eth=eth ; ifconfig=ifconfig ;;
+	alpine )  eth=eth   ; ifconfig=ifconfig ;;
 	* )       eth=eth   ; ifconfig="ip link set" ;;
     esac
 
@@ -115,19 +115,15 @@ EOF
 	echo "" >> ${in}
 	cat <<EOF >> ${in}
 ${host}# ../../guestbin/ip.sh addr show eth0
-${host}# ../../guestbin/ip.sh link set eth0 up
 ${host}# ../../guestbin/ip.sh addr show eth1
-${host}# ../../guestbin/ip.sh link set eth1 up
 EOF
     done
 
     for host in rise set ; do
 	echo "" >> ${in}
 	cat <<EOF >> ${in}
-${host}# ${ifconfig} ${eth}1
-${host}# ${ifconfig} ${eth}1 up
 ${host}# ${ifconfig} ${eth}0
-${host}# ${ifconfig} ${eth}0 up
+${host}# ${ifconfig} ${eth}1
 EOF
     done
 
