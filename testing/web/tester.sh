@@ -60,16 +60,14 @@ RESTART()
 {
     # don't publish location of log file on WEB via STATUS
     STATUS "restarting: $@"
-    echo "switching output to ${summarydir}/tester.log"
-    exec ${tester} >> ${summarydir}/tester.log 2>&1 < /dev/null
+    exec ${tester}
 }
 
 LOG()
 {
-    if test "${logfile}" ; then
-	echo logfile: ${logfile} >> ${summarydir}/tester.log
-	echo "$*" >> ${summarydir}/tester.log
-    fi
+    echo
+    echo "$*"
+    echo
 }
 
 STATUS()
@@ -108,7 +106,6 @@ SLEEP()
 
 start_time=$(NOW)
 subdir=		# TBD ASAP
-logfile=	# TBD ASAP
 summarydir=	# TBD ASAP
 
 STATUS "starting at ${start_time}"
@@ -193,18 +190,6 @@ STATUS "creating results directory ${resultsdir}"
 mkdir -p ${resultsdir}
 rm -f ${summarydir}/current
 ln -s ${subdir} ${summarydir}/current
-
-# switch to the per-test logfile
-#
-# And make remaining logging very verbose
-
-logfile=${resultsdir}/tester.log
-echo writing log to ${logfile}
-exec "$@" >> ${logfile} 2>&1 </dev/null
-
-STATUS switched to ${logfile}
-
-set -vx
 
 # Populate the resultsdir with a summary.json asap so that the web
 # page can pick it up.  The fields that matter are .hash(commit) and
