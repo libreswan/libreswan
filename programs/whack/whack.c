@@ -751,7 +751,7 @@ const struct option optarg_options[] = {
 	{ OPT("oppodport", "<destination-port> (8)"), required_argument, NULL, OPT_OPPO_DPORT },
 	{ OPT("oppolabel", "<security-label>"), required_argument, NULL, OPT_OPPO_LABEL },
 
-	{ "asynchronous\0", no_argument, NULL, OPT_ASYNC },
+	ASYNC_OPTS,
 
 	{ "rekey-ike\0", no_argument, NULL, OPT_REKEY_IKE },
 	{ "rekey-child\0", no_argument, NULL, OPT_REKEY_CHILD },
@@ -1435,7 +1435,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
-			msg.whack_async = true;
+			msg.whack_async = (optarg_yn(logger, YN_YES) == YN_YES);
 			continue;
 		case OPT_UTC:	/* --utc */
 			msg.whack_utc = true;

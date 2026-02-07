@@ -75,6 +75,15 @@ int optarg_getopt(struct logger *logger, int argc, char **argv);
 #define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__
 #define SILENT_OPT(OPT, ...)		OPT METAOPT_SILENT __VA_ARGS__
 
+/*
+ * Common OPTS and their names.
+ */
+
+#define ASYNC_OPTS							\
+	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
+	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
+	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
+
 void optarg_usage(const char *progname, const char *synopsis,
 		  const char *details) NEVER_RETURNS;
 
