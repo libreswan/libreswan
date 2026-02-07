@@ -1,24 +1,24 @@
 ifconfig eth0
-eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
-        inet 192.0.1.254  netmask 255.255.255.0  broadcast 192.0.1.255
-        inet6 2001:db8:0:1::254  prefixlen 64  scopeid 0x0<global>
-        inet6 fe80::1000:ff:feab:cdff  prefixlen 64  scopeid 0x20<link>
-        ether 12:00:00:ab:cd:ff  txqueuelen 1000  (Ethernet)
-        RX packets 15  bytes 2068 (2.0 KiB)
-        RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 7  bytes 850 (850.0 B)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+eth0      Link encap:Ethernet  HWaddr 12:00:00:AB:CD:FF  
+          inet addr:192.0.1.254  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:0:1::254/64 Scope:Global
+          inet6 addr: fe80::1000:ff:feab:cdff/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:15 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2068 (2.0 KiB)  TX bytes:752 (752.0 B)
 west #
  ifconfig eth1
-eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
-        inet 192.1.2.45  netmask 255.255.255.0  broadcast 192.1.2.255
-        inet6 fe80::1000:ff:fe64:6445  prefixlen 64  scopeid 0x20<link>
-        inet6 2001:db8:1:2::45  prefixlen 64  scopeid 0x0<global>
-        ether 12:00:00:64:64:45  txqueuelen 1000  (Ethernet)
-        RX packets 14  bytes 1998 (1.9 KiB)
-        RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 6  bytes 780 (780.0 B)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+eth1      Link encap:Ethernet  HWaddr 12:00:00:64:64:45  
+          inet addr:192.1.2.45  Bcast:0.0.0.0  Mask:255.255.255.0
+          inet6 addr: 2001:db8:1:2::45/64 Scope:Global
+          inet6 addr: fe80::1000:ff:fe64:6445/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:15 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:11 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2040 (1.9 KiB)  TX bytes:946 (946.0 B)
 west #
  ../../guestbin/ping-once.sh --up 192.1.2.23 # east_pubnet
 up

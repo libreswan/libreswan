@@ -1,21 +1,21 @@
 ifconfig eth0
 eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 198.18.1.12  netmask 255.255.255.0  broadcast 198.18.1.255
-        inet6 2001:db8:1::12  prefixlen 64  scopeid 0x0<global>
         inet6 fe80::1052:49ff:fe53:4502  prefixlen 64  scopeid 0x20<link>
+        inet6 2001:db8:1::12  prefixlen 64  scopeid 0x0<global>
         ether 12:52:49:53:45:02  txqueuelen 1000  (Ethernet)
-        RX packets 31  bytes 4932 (4.8 KiB)
+        RX packets 28  bytes 4178 (4.0 KiB)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 13  bytes 2494 (2.4 KiB)
+        TX packets 12  bytes 2152 (2.1 KiB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 rise #
  ifconfig eth1
 eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 192.0.2.12  netmask 255.255.255.0  broadcast 192.0.2.255
-        inet6 fe80::1052:49ff:fe53:4501  prefixlen 64  scopeid 0x20<link>
         inet6 2001:db8:0:2::12  prefixlen 64  scopeid 0x0<global>
+        inet6 fe80::1052:49ff:fe53:4501  prefixlen 64  scopeid 0x20<link>
         ether 12:52:49:53:45:01  txqueuelen 1000  (Ethernet)
-        RX packets 16  bytes 2138 (2.0 KiB)
+        RX packets 17  bytes 2752 (2.6 KiB)
         RX errors 0  dropped 0  overruns 0  frame 0
         TX packets 7  bytes 950 (950.0 B)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0

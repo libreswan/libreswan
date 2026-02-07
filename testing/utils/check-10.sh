@@ -97,12 +97,11 @@ EOF
 	netbsd )  eth=vioif ;;
 	openbsd ) eth=vio ;;
 	freebsd ) eth=vtnet ;;
-	alpine )  eth=eth ;;
 	* )       eth=eth ;;
     esac
 
     # start again
-    in=${dir}/east-west-${platform}rise-${platform}set-nic-${platform}north.in
+    in=${dir}/${platform}east-${platform}west-${platform}rise-${platform}set-nic-${platform}north.in
     rm -f ${in}
     do_not_modify > ${in}
 

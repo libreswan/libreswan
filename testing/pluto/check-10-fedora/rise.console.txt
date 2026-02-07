@@ -1,14 +1,12 @@
 ifconfig eth0
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.2.135, on dev eth2
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 8b 48 f4 08 06
 eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 198.18.1.12  netmask 255.255.255.0  broadcast 198.18.1.255
-        inet6 fe80::1052:49ff:fe53:4502  prefixlen 64  scopeid 0x20<link>
         inet6 2001:db8:1::12  prefixlen 64  scopeid 0x0<global>
+        inet6 fe80::1052:49ff:fe53:4502  prefixlen 64  scopeid 0x20<link>
         ether 12:52:49:53:45:02  txqueuelen 1000  (Ethernet)
         RX packets 24  bytes 3218 (3.1 KiB)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 5  bytes 710 (710.0 B)
+        TX packets 6  bytes 780 (780.0 B)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 rise #
  ifconfig eth1
@@ -19,7 +17,7 @@ eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         ether 12:52:49:53:45:01  txqueuelen 1000  (Ethernet)
         RX packets 16  bytes 2138 (2.0 KiB)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 6  bytes 780 (780.0 B)
+        TX packets 7  bytes 850 (850.0 B)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet

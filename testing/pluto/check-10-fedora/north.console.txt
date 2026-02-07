@@ -1,14 +1,10 @@
 ifconfig eth0
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.2.135, on dev eth2
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 65 44 f7 08 06
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.2.135, on dev eth2
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 8b 48 f4 08 06
 eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 192.0.3.254  netmask 255.255.255.0  broadcast 192.0.3.255
-        inet6 2001:db8:0:3::254  prefixlen 64  scopeid 0x0<global>
         inet6 fe80::1000:ff:fede:cd49  prefixlen 64  scopeid 0x20<link>
+        inet6 2001:db8:0:3::254  prefixlen 64  scopeid 0x0<global>
         ether 12:00:00:de:cd:49  txqueuelen 1000  (Ethernet)
-        RX packets 19  bytes 2508 (2.4 KiB)
+        RX packets 18  bytes 2438 (2.3 KiB)
         RX errors 0  dropped 0  overruns 0  frame 0
         TX packets 6  bytes 780 (780.0 B)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
@@ -16,12 +12,12 @@ north #
  ifconfig eth1
 eth1: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet 192.1.3.33  netmask 255.255.255.0  broadcast 192.1.3.255
-        inet6 fe80::1000:ff:fe96:9649  prefixlen 64  scopeid 0x20<link>
         inet6 2001:db8:1:3::33  prefixlen 64  scopeid 0x0<global>
+        inet6 fe80::1000:ff:fe96:9649  prefixlen 64  scopeid 0x20<link>
         ether 12:00:00:96:96:49  txqueuelen 1000  (Ethernet)
-        RX packets 37  bytes 4656 (4.5 KiB)
+        RX packets 17  bytes 2180 (2.1 KiB)
         RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 47  bytes 4524 (4.4 KiB)
+        TX packets 9  bytes 1247 (1.2 KiB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 north #
  ../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet

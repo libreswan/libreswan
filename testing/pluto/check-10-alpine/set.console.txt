@@ -12,13 +12,13 @@ set #
  ifconfig eth1
 eth1      Link encap:Ethernet  HWaddr 12:00:53:45:54:01  
           inet addr:192.0.1.15  Bcast:0.0.0.0  Mask:255.255.255.0
-          inet6 addr: fe80::1000:53ff:fe45:5401/64 Scope:Link
           inet6 addr: 2001:db8:0:1::15/64 Scope:Global
+          inet6 addr: fe80::1000:53ff:fe45:5401/64 Scope:Link
           UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:24 errors:0 dropped:0 overruns:0 frame:0
+          RX packets:25 errors:0 dropped:0 overruns:0 frame:0
           TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
           collisions:0 txqueuelen:1000 
-          RX bytes:3218 (3.1 KiB)  TX bytes:948 (948.0 B)
+          RX bytes:3120 (3.0 KiB)  TX bytes:948 (948.0 B)
 set #
  ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
 up
