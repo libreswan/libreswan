@@ -198,8 +198,9 @@ static void add_conn(struct starter_conn *conn, const char *alias/*possibly-NULL
 		fprintf(stdout, "\n");
 	}
 
-	int status = starter_whack_add_conn(ctlsocket, conn,
-					    logger, /*dry_run*/false, noise);
+	int status = starter_whack_add_conn(ctlsocket, conn, logger,
+					    /*dry_run*/false, /*async*/true,
+					    noise);
 	/* don't loose existing status */
 	if (status != 0) {
 		(*exit_status) = status;
@@ -575,8 +576,9 @@ int main(int argc, char *argv[])
 				printf("    %s\n", conn->name);
 			}
 
-			starter_whack_add_conn(ctlsocket, conn,
-					       logger, /*dry_run*/false, noise);
+			starter_whack_add_conn(ctlsocket, conn, logger,
+					       /*dry_run*/false, /*async*/true,
+					       noise);
 		}
 
 		if (verbose > 0)
@@ -590,8 +592,9 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		exit_status = starter_whack_add_conn(ctlsocket, conn,
-						     logger, /*dry_run*/false, noise);
+		exit_status = starter_whack_add_conn(ctlsocket, conn, logger,
+						     /*dry_run*/false, /*async*/true,
+						     noise);
 
 	} else {
 
