@@ -74,16 +74,19 @@ int optarg_getopt(struct logger *logger, int argc, char **argv)
 		}
 		const char *optname = optarg_options[optarg_index].name;
 		const char *optmeta = optname + strlen(optname);	/* at '\0?' */
+
 		if (memeq(optmeta, METAOPT_IGNORE, 2)) {
 			const char *release = optmeta + 2;
 			llog(WARNING_STREAM, logger,
 			     "ignoring option \"--%s\" that was removed in Libreswan %s", optname, release);
 			continue;	/* ignore it! */
 		}
+
 		if (memeq(optmeta, METAOPT_FATAL, 2)) {
 			const char *release = optmeta + 2;
 			optarg_fatal(logger, "option \"--%s\" was removed in Libreswan %s", optname, release);
 		}
+
 		if (memeq(optmeta, METAOPT_REPLACE, 2)) {
 			/* NEWNAME\nVERSION */
 			shunk_t cursor = shunk1(optmeta + 2);
@@ -98,7 +101,12 @@ int optarg_getopt(struct logger *logger, int argc, char **argv)
 				jam_string(buf, "\" in libreswan version ");
 				jam_shunk(buf, release);
 			}
+#if 0
+		} else if (memeq(optmeta, METAOPT_ALIAS, 2)) {
+			/* do nothing */
+#endif
 		}
+
 		if (c == 0) {
 			/*
 			 * Long option already handled by getopt_long.
@@ -215,6 +223,13 @@ void optarg_usage(const char *progname, const char *synopsys, const char *detail
 		if (memeq(meta, METAOPT_IGNORE, 2)) {
 			/*
 			 * Option is no longer valid, skip.
+			 */
+			continue;
+		}
+
+		if (memeq(meta, METAOPT_SILENT, 2)) {
+			/*
+			 * Option is just a common alias, skip.
 			 */
 			continue;
 		}
