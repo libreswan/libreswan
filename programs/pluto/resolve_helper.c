@@ -146,17 +146,5 @@ void resolve_finish(struct connection *c,
 
 	build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
 
-	/*
-	 * Always try to orient; should skip when both ends have
-	 * unresolved DNS?
-	 */
-	vassert(!oriented(c));
-	if (orient(c, verbose)) {
-		if (verbose.debug) {
-			vdbg("connection oriented; rechecking DB");
-			connection_db_check(verbose.logger, HERE);
-		}
-	}
-
 	cb(c, resolved, verbose);
 }

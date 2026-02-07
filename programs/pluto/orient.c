@@ -33,7 +33,6 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 #include "terminate.h"
-#include "initiate.h"
 #include "ipsec_interface.h"
 #include "addresspool.h"
 #include "connection_event.h"
@@ -341,10 +340,10 @@ bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attach
 			/* when there's an interface, CHECK_DDNS is
 			 * disabled; re-enable it */
 			schedule_connection_check_ddns(c, verbose);
-		} else {
-			vdbg("still disoriented");
+			return false; /* ORIENTATION_LOST */
 		}
-		return false;
+		vdbg("still disoriented");
+		return false; /* ORIENTATION_UNCHANGED */
 	}
 
 	if (matching_iface == c->iface) {
@@ -353,7 +352,7 @@ bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attach
 			jam(buf, "already oriented to ");
 			jam_iface(buf, c->iface);
 		}
-		return true;
+		return false; /* ORIENTATION_UNCHANGED */
 	}
 
 	/*
@@ -372,7 +371,7 @@ bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attach
 	if (c->config->ipsec_interface.enabled) {
 		if (!add_ipsec_interface(c, matching_iface)) {
 			schedule_connection_check_ddns(c, verbose);
-			return false;
+			return false; /* ORIENTATION_LOST */
 		}
 	}
 
@@ -411,20 +410,9 @@ bool orient(struct connection *c, struct verbose verbose/*either-C,-or-SA;attach
 	add_iface_endpoints(c);
 
 	/*
-	 * If the connection was previously unoriented, route things
-	 * when needed.
+	 * Caller needs to update route/initiate.
 	 */
-	if (old_iface == NULL/*i.e., unoriented*/) {
-		vexpect(c->routing.state == RT_UNROUTED);
-		if (c->policy.route) {
-			connection_route(c, HERE);
-		}
-		if (c->policy.up) {
-			initiate_connection(c, /*REMOTE_HOST*/NULL, /*background*/true, c->logger);
-		}
-	}
-
-	return true;
+	return true; /* oriented */
 }
 
 /*
@@ -455,12 +443,16 @@ void check_orientations(struct logger *logger)
 		verbose.logger = c->logger;
 		/* just try */
 		bool was_oriented = oriented(c);
-		bool is_oriented = orient(c, verbose);
+		bool route_or_up = orient(c, verbose);
+		bool is_oriented = oriented(c);
 		/* log when it becomes oriented */
 		if (!was_oriented && is_oriented) {
 			VLOG_JAMBUF(buf) {
 				jam_orientation(buf, c, /*orientation_details*/true);
 			}
+		}
+		if (route_or_up) {
+			connection_oriented(c, /*background*/true, HERE);
 		}
 		whack_detach(c, logger);
 	}

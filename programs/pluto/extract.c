@@ -4710,10 +4710,30 @@ void extract_connection_resolve_continue(struct connection *c,
 		vlog("connection is using multiple %s", tss);
 	}
 
+	/*
+	 * First orient connection, then and log that connection was
+	 * loaded with result.
+	 */
+
+	orient(c, verbose);
+
 	VLOG_JAMBUF(buf) {
 		jam_string(buf, "added");
 		jam_string(buf, " ");
 		jam_orientation(buf, c, /*oriented_details*/false);
+	}
+
+	/*
+	 * Once connection addition has been logged, can initiate.
+	 * Else initiate appears to happen before connection has been
+	 * added.
+	 *
+	 * Since a just-extracted connection starts out as unoriented,
+	 * just need to test success.
+	 */
+
+	if (oriented(c)) {
+		connection_oriented(c, /*background*/false, HERE);
 	}
 
 	release_whack(c->logger, HERE);

@@ -152,16 +152,9 @@ void connection_check_ddns1_continue(struct connection *c,
 		return;
 	}
 
-	if (c->policy.route) {
-		vdbg("connection was updated, restoring route");
-		connection_route(c, HERE);
-	}
-
-	if (c->policy.up) {
-		vdbg("connection was updated, (re-)initiating");
-		initiate_connection(c, /*remote-host-name*/NULL,
-				    /*background*/true,
-				    verbose.logger);
+	if (orient(c, verbose)) {
+		/* new orientation */
+		connection_oriented(c, /*background*/true, HERE);
 	}
 
 	whack_detach(c, verbose.logger);
