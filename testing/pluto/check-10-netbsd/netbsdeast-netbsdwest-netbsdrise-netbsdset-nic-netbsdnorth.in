@@ -1,19 +1,19 @@
 nic# : make certain NIC is running
 
-east# ifconfig vioif0
-east# ifconfig vioif1
+east# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+east# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-west# ifconfig vioif0
-west# ifconfig vioif1
+west# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+west# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-rise# ifconfig vioif0
-rise# ifconfig vioif1
+rise# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+rise# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-set# ifconfig vioif0
-set# ifconfig vioif1
+set# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+set# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 
-north# ifconfig vioif0
-north# ifconfig vioif1
+north# ifconfig vioif0 | grep -e 'inet ' -e 'inet6 .*2001:'
+north# ifconfig vioif1 | grep -e 'inet ' -e 'inet6 .*2001:'
 # east to west_pubnet nic_pubnet north_nicnet rise_eastnet
 east# ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
 east# ../../guestbin/ping-once.sh --up 192.1.2.254 # nic_pubnet

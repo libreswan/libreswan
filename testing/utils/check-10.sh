@@ -115,8 +115,8 @@ EOF
     for host in east west rise set north ; do
 	echo "" >> ${in}
 	cat <<EOF >> ${in}
-${host}# ifconfig ${eth}0
-${host}# ifconfig ${eth}1
+${host}# ifconfig ${eth}0 | grep -e 'inet ' -e 'inet6 .*2001:'
+${host}# ifconfig ${eth}1 | grep -e 'inet ' -e 'inet6 .*2001:'
 EOF
     done
 

@@ -1,24 +1,10 @@
-ifconfig eth0
-eth0      Link encap:Ethernet  HWaddr 12:00:00:DC:BC:FF  
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
           inet addr:192.0.2.254  Bcast:0.0.0.0  Mask:255.255.255.0
           inet6 addr: 2001:db8:0:2::254/64 Scope:Global
-          inet6 addr: fe80::1000:ff:fedc:bcff/64 Scope:Link
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:32 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:12 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000 
-          RX bytes:3534 (3.4 KiB)  TX bytes:1004 (1004.0 B)
 east #
- ifconfig eth1
-eth1      Link encap:Ethernet  HWaddr 12:00:00:64:64:23  
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
           inet addr:192.1.2.23  Bcast:0.0.0.0  Mask:255.255.255.0
-          inet6 addr: fe80::1000:ff:fe64:6423/64 Scope:Link
           inet6 addr: 2001:db8:1:2::23/64 Scope:Global
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:34 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:14 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:1000 
-          RX bytes:4082 (3.9 KiB)  TX bytes:1088 (1.0 KiB)
 east #
  ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
 up

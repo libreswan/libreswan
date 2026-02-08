@@ -1,24 +1,10 @@
-ifconfig vtnet0
-vtnet0: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
-	options=4c07bb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,TSO4,TSO6,LRO,VLAN_HWTSO,LINKSTATE,TXCSUM_IPV6>
-	ether 12:00:00:ab:cd:ff
+ifconfig vtnet0 | grep -e 'inet ' -e 'inet6 .*2001:'
 	inet 192.0.1.254 netmask 0xffffff00 broadcast 192.0.1.255
-	inet6 fe80::1000:ff:feab:cdff%vtnet0 prefixlen 64 scopeid 0x1
 	inet6 2001:db8:0:1::254 prefixlen 64
-	media: Ethernet autoselect (10Gbase-T <full-duplex>)
-	status: active
-	nd6 options=1<PERFORMNUD>
 west #
- ifconfig vtnet1
-vtnet1: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
-	options=4c07bb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,TSO4,TSO6,LRO,VLAN_HWTSO,LINKSTATE,TXCSUM_IPV6>
-	ether 12:00:00:64:64:45
+ ifconfig vtnet1 | grep -e 'inet ' -e 'inet6 .*2001:'
 	inet 192.1.2.45 netmask 0xffffff00 broadcast 192.1.2.255
-	inet6 fe80::1000:ff:fe64:6445%vtnet1 prefixlen 64 scopeid 0x2
 	inet6 2001:db8:1:2::45 prefixlen 64
-	media: Ethernet autoselect (10Gbase-T <full-duplex>)
-	status: active
-	nd6 options=1<PERFORMNUD>
 west #
  ../../guestbin/ping-once.sh --up 192.1.2.23 # east_pubnet
 up

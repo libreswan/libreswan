@@ -1,22 +1,9 @@
-ifconfig vio0
-vio0: flags=2808843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,AUTOCONF4,LRO> mtu 1500
-	lladdr 12:52:49:53:45:02
-	index 1 priority 0 llprio 3
-	media: Ethernet autoselect
-	status: active
+ifconfig vio0 | grep -e 'inet ' -e 'inet6 .*2001:'
 	inet 198.18.1.12 netmask 0xffffff00 broadcast 198.18.1.255
-	inet6 fe80::1052:49ff:fe53:4502%vio0 prefixlen 64 scopeid 0x1
 	inet6 2001:db8:1::12 prefixlen 64
 rise #
- ifconfig vio1
-vio1: flags=2008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LRO> mtu 1500
-	lladdr 12:52:49:53:45:01
-	index 2 priority 0 llprio 3
-	groups: egress
-	media: Ethernet autoselect
-	status: active
+ ifconfig vio1 | grep -e 'inet ' -e 'inet6 .*2001:'
 	inet 192.0.2.12 netmask 0xffffff00 broadcast 192.0.2.255
-	inet6 fe80::1052:49ff:fe53:4501%vio1 prefixlen 64 scopeid 0x2
 	inet6 2001:db8:0:2::12 prefixlen 64
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
