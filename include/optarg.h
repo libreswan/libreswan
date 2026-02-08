@@ -60,16 +60,29 @@ int optarg_getopt(struct logger *logger, int argc, char **argv);
  *
  */
 
-#define METAOPT_REPLACE   "\0>"		/* warn that option was replaced */
-#define METAOPT_IGNORE "\0!"		/* warn, and ignore, option */
-#define METAOPT_FATAL "\0*"		/* fatal, use when can't be ignored */
-#define METAOPT_HEADING  "\r\a\n\t"	/* new line with heading */
+#define METAOPT_SILENT	"\0."		/* not documented; probably common alias */
+#define METAOPT_REPLACE	"\0>"		/* warn that option was replaced */
+#define METAOPT_IGNORE	"\0!"		/* warn, and ignore, option */
+#define METAOPT_FATAL	"\0*"		/* fatal, use when can't be ignored */
+
+#define METAOPT_HEADING	"\r\a\n\t"	/* new line with heading */
 
 #define REPLACE_OPT(OLD, NEW, RELEASE, ...)	OLD METAOPT_REPLACE NEW "\n" RELEASE
 #define IGNORE_OPT(OLD, RELEASE, ...)		OLD METAOPT_IGNORE "\n" RELEASE
 #define FATAL_OPT(OLD, RELEASE, ...)		OLD METAOPT_FATAL "\n" RELEASE
 #define HEADING_OPT(HEADING)		{ METAOPT_HEADING HEADING, no_argument, NULL, 0, }
+
 #define OPT(OPT, ...) 			OPT "\0" __VA_ARGS__
+#define SILENT_OPT(OPT, ...)		OPT METAOPT_SILENT __VA_ARGS__
+
+/*
+ * Common OPTS and their names.
+ */
+
+#define ASYNC_OPTS							\
+	{ OPT("asynchronous", "{yes,no}"), optional_argument, NULL, OPT_ASYNC }, \
+	{ OPT("bg", "{yes,no}"), optional_argument, NULL, OPT_ASYNC },	\
+	{ SILENT_OPT("async", "{yes,no}"), no_argument, NULL, OPT_ASYNC }
 
 void optarg_usage(const char *progname, const char *synopsis,
 		  const char *details) NEVER_RETURNS;

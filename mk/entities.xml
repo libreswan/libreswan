@@ -236,3 +236,8 @@
 <!ENTITY yes '<literal>yes</literal>'>
 <!ENTITY no '<literal>no</literal>'>
 <!ENTITY auto '<literal>auto</literal>'>
+
+<!-- command line options -->
+
+<!ENTITY opt_async '<group choice="plain"><arg choice="opt">--bg[={yes,no}</arg><arg choice="opt">--asynchronous[={yes,no}]</arg></group>'>
+
