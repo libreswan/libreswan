@@ -1,7 +1,7 @@
 #!/bin/sh
 
 basedir=testing/pluto/$(basename $0 .sh)
-hosts="east west rise set nic north"
+hosts="east west rise set north" # nic
 # same platforms as KVM
 platforms=$(ls -d1 testing/kvm/platform/[a-z]*/ | cut -d/ -f4)
 
@@ -41,6 +41,8 @@ set_sunnet=${sunnet}.15
 set_westnet=${westnet}.15
 
 in=
+
+# connectivity HOST name-of-dest ...
 
 connectivity()
 {
@@ -87,20 +89,19 @@ test pluto between:
 - RISE and SET
 EOF
 
-    for host in ${hosts} ; do
+    for host in ${hosts} nic ; do
 	touch ${dir}/${host}.console.txt
     done
 
     case ${platform} in
-	netbsd )  eth=vioif ; ifconfig=ifconfig ;;
-	openbsd ) eth=vio   ; ifconfig=ifconfig ;;
-	freebsd ) eth=vtnet ; ifconfig=ifconfig ;;
-	alpine )  eth=eth ; ifconfig=ifconfig ;;
-	* )       eth=eth   ; ifconfig="ip link set" ;;
+	netbsd )  eth=vioif ;;
+	openbsd ) eth=vio ;;
+	freebsd ) eth=vtnet ;;
+	* )       eth=eth ;;
     esac
 
     # start again
-    in=${dir}/east-west-${platform}rise-${platform}set-nic-${platform}north.in
+    in=${dir}/${platform}east-${platform}west-${platform}rise-${platform}set-nic-${platform}north.in
     rm -f ${in}
     do_not_modify > ${in}
 
@@ -111,23 +112,11 @@ EOF
 
     # bring up all the networks
 
-    for host in east west ; do
+    for host in east west rise set north ; do
 	echo "" >> ${in}
 	cat <<EOF >> ${in}
-${host}# ../../guestbin/ip.sh addr show eth0
-${host}# ../../guestbin/ip.sh link set eth0 up
-${host}# ../../guestbin/ip.sh addr show eth1
-${host}# ../../guestbin/ip.sh link set eth1 up
-EOF
-    done
-
-    for host in rise set ; do
-	echo "" >> ${in}
-	cat <<EOF >> ${in}
-${host}# ${ifconfig} ${eth}1
-${host}# ${ifconfig} ${eth}1 up
-${host}# ${ifconfig} ${eth}0
-${host}# ${ifconfig} ${eth}0 up
+${host}# ifconfig ${eth}0 | grep -e 'inet ' -e 'inet6 .*2001:'
+${host}# ifconfig ${eth}1 | grep -e 'inet ' -e 'inet6 .*2001:'
 EOF
     done
 

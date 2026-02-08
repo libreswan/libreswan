@@ -1,32 +1,12 @@
-../../guestbin/ip.sh addr show eth0
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
-    link/ether 12:00:00:dc:bc:ff brd ff:ff:ff:ff:ff:ff
-    altname enp0s5
-    altname ens5
-    altname enx120000dcbcff
-    inet 192.0.2.254/24 scope global eth0
-       valid_lft forever preferred_lft forever
-    inet6 2001:db8:0:2::254/64 scope global
-       valid_lft forever preferred_lft forever
-    inet6 fe80::1000:ff:fedc:bcff/64 scope link proto kernel_ll
-       valid_lft forever preferred_lft forever
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.3.209, on dev eth2
+[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 8b 48 f4 08 06
+        inet 192.0.2.254  netmask 255.255.255.0  broadcast 192.0.2.255
+        inet6 2001:db8:0:2::254  prefixlen 64  scopeid 0x0<global>
 east #
- ../../guestbin/ip.sh link set eth0 up
-east #
- ../../guestbin/ip.sh addr show eth1
-3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP qlen 1000
-    link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
-    altname enp0s6
-    altname ens6
-    altname enx120000646423
-    inet 192.1.2.23/24 scope global eth1
-       valid_lft forever preferred_lft forever
-    inet6 2001:db8:1:2::23/64 scope global
-       valid_lft forever preferred_lft forever
-    inet6 fe80::1000:ff:fe64:6423/64 scope link proto kernel_ll
-       valid_lft forever preferred_lft forever
-east #
- ../../guestbin/ip.sh link set eth1 up
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 192.1.2.23  netmask 255.255.255.0  broadcast 192.1.2.255
+        inet6 2001:db8:1:2::23  prefixlen 64  scopeid 0x0<global>
 east #
  ../../guestbin/ping-once.sh --up 192.1.2.45 # west_pubnet
 up

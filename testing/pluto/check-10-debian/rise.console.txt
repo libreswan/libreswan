@@ -1,10 +1,10 @@
-ip link set eth1
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 198.18.1.12  netmask 255.255.255.0  broadcast 198.18.1.255
+        inet6 2001:db8:1::12  prefixlen 64  scopeid 0x0<global>
 rise #
- ip link set eth1 up
-rise #
- ip link set eth0
-rise #
- ip link set eth0 up
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 192.0.2.12  netmask 255.255.255.0  broadcast 192.0.2.255
+        inet6 2001:db8:0:2::12  prefixlen 64  scopeid 0x0<global>
 rise #
  ../../guestbin/ping-once.sh --up 192.0.2.254 # east_eastnet
 up

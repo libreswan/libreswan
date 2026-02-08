@@ -1,10 +1,10 @@
-ip link set eth1
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 198.18.1.15  netmask 255.255.255.0  broadcast 198.18.1.255
+        inet6 2001:db8:1::15  prefixlen 64  scopeid 0x0<global>
 set #
- ip link set eth1 up
-set #
- ip link set eth0
-set #
- ip link set eth0 up
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 192.0.1.15  netmask 255.255.255.0  broadcast 192.0.1.255
+        inet6 2001:db8:0:1::15  prefixlen 64  scopeid 0x0<global>
 set #
  ../../guestbin/ping-once.sh --up 192.0.1.254 # west_westnet
 up

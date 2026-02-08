@@ -1,4 +1,12 @@
-../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet
+ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 192.0.3.254  netmask 255.255.255.0  broadcast 192.0.3.255
+        inet6 2001:db8:0:3::254  prefixlen 64  scopeid 0x0<global>
+north #
+ ifconfig eth1 | grep -e 'inet ' -e 'inet6 .*2001:'
+        inet 192.1.3.33  netmask 255.255.255.0  broadcast 192.1.3.255
+        inet6 2001:db8:1:3::33  prefixlen 64  scopeid 0x0<global>
+north #
+ ../../guestbin/ping-once.sh --up 192.0.3.254 # north_northnet
 up
 north #
  ../../guestbin/ping-once.sh --up 192.1.3.254 # nic_nicnet
