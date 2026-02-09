@@ -30,6 +30,7 @@
 static void resolve_finish(struct connection *c,
 			   struct host_addrs *resolved,
 			   resolve_helper_cb *callback,
+			   bool background,
 			   struct verbose verbose);
 
 static helper_fn resolve_helper;
@@ -43,6 +44,7 @@ struct help_request {
 	struct host_addrs extracted_host_addrs;
 	struct host_addrs resolved_host_addrs;
 	resolve_helper_cb *callback;
+	bool background;
 };
 
 void discard_resolve_help_request_content(void *pointer, const struct logger *owner, where_t where)
@@ -53,6 +55,7 @@ void discard_resolve_help_request_content(void *pointer, const struct logger *ow
 
 void request_resolve_help(struct connection *c,
 			  resolve_helper_cb *callback,
+			  bool background,
 			  struct logger *logger)
 {
 	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, NULL);
@@ -64,11 +67,12 @@ void request_resolve_help(struct connection *c,
 		request->connection = connection_addref(c, logger);
 		request->extracted_host_addrs = raw_addrs;
 		request->callback = callback;
+		request->background = background;
 		request_help(request, resolve_helper, logger);
 		return;
 	}
 
-	resolve_finish(c, &raw_addrs, callback, verbose);
+	resolve_finish(c, &raw_addrs, callback, background, verbose);
 }
 
 helper_cb *resolve_helper(struct help_request *request,
@@ -113,12 +117,14 @@ void resolve_continue(struct help_request *request,
 	resolve_finish(request->connection,
 		       &request->resolved_host_addrs,
 		       request->callback,
+		       request->background,
 		       verbose);
 }
 
 void resolve_finish(struct connection *c,
 		    struct host_addrs *resolved,
 		    resolve_helper_cb *cb,
+		    bool background,
 		    struct verbose verbose)
 {
 
@@ -146,5 +152,5 @@ void resolve_finish(struct connection *c,
 
 	build_connection_host_and_proposals_from_resolve(c, resolved, verbose);
 
-	cb(c, resolved, verbose);
+	cb(c, resolved, background, verbose);
 }

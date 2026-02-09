@@ -4697,12 +4697,13 @@ diag_t extract_connection(const struct whack_message *wm,
 
 
 	request_resolve_help(c, extract_connection_resolve_continue,
-			     verbose.logger);
+			     /*background*/wm->whack_async, verbose.logger);
 	return NULL;
 }
 
 void extract_connection_resolve_continue(struct connection *c,
 					 const struct host_addrs *resolved UNUSED,
+					 bool background,
 					 struct verbose verbose)
 {
 	err_t tss = connection_requires_tss(c);
@@ -4733,7 +4734,7 @@ void extract_connection_resolve_continue(struct connection *c,
 	 */
 
 	if (oriented(c)) {
-		connection_oriented(c, /*background*/false, HERE);
+		connection_oriented(c, background, HERE);
 	}
 
 	release_whack(c->logger, HERE);

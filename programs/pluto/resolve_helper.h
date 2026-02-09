@@ -28,10 +28,12 @@ struct dnssec_config;
 
 typedef void (resolve_helper_cb)(struct connection *c,
 				 const struct host_addrs *resolved_host_addrs,
+				 bool background,
 				 struct verbose verbose);
 
 void request_resolve_help(struct connection *c,
 			  resolve_helper_cb *callback,
+			  bool background,
 			  struct logger *logger);
 
 #endif
