@@ -8,17 +8,14 @@ west #
 west #
  ipsec auto --ondemand missing
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
-no connection or alias named "missing"
 west #
  ipsec auto --ondemand missing
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
-no connection or alias named "missing"
 west #
  ipsec auto --ondemand missing > OUTPUT/ondemand.log 2>&1
 west #
  cat OUTPUT/ondemand.log
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
-no connection or alias named "missing"
 west #
  grep "failed to add" /tmp/pluto.log
 "missing": failed to add connection: left certificate 'west' not found in the NSS database
