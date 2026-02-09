@@ -90,13 +90,14 @@ ipsec_combined() {
     #
     # ipsec start and ipsec ondemand commands
     #
-    local cmd conn_name usage
+    local auto
+    local conn_name usage
     local verbose
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
 	    ondemand|--ondemand)
-		cmd="--route"
+		auto="route"
 		usage="Usage: ipsec ondemand [--asynchronous] connectionname \\
 		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
 		[--ctlsocket ${CTLSOCKET}] [--verbose]"
@@ -115,7 +116,7 @@ ipsec_combined() {
 		esac
 		;;
 	    start|--start)
-		cmd="--initiate"
+		auto="up"
 		usage="Usage: ipsec start [--asynchronous] connectionname \\
 		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
 		[--ctlsocket ${CTLSOCKET}] [--verbose]"
@@ -178,8 +179,7 @@ ipsec_combined() {
 		;;
 	esac
     done
-    ${dry_run} "${IPSEC_EXECDIR}/add" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
-    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} --name ${conn_name} ${cmd} ${remote_host}
+    ${dry_run} "${IPSEC_EXECDIR}/add" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} --auto=${auto} ${conn_name}
     exit $?
 }
 

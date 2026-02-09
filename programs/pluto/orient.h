@@ -22,14 +22,27 @@
 struct connection;
 
 bool oriented(const struct connection *c);
+
 /*
  * Caller must hold a local reference, or be able to guarantee that
  * there is a floating reference.
  *
  * Caller must whack_attach() when whack output is desired (orient
  * can't tell if a whack_detach() is needed).
+ *
+ * orient() will strip routing et.al. when orientation is lost or
+ * changed; but will never add routing or initiate.  Instead it
+ * returns true when additional action is required.
  */
+
+enum orientation {
+	ORIENTATION_UNCHANGED, /*call oriented()*/
+	ORIENTATION_LOST,
+	ORIENTED,
+};
+
 bool orient(struct connection *c, struct verbose verbose);
+
 void disorient(struct connection *c);
 void check_orientations(struct logger *logger);
 

@@ -138,12 +138,14 @@ static bool connection_check_ddns1(struct connection *c,
 
 	delete_connection_proposals(c);
 
-	request_resolve_help(c, connection_check_ddns1_continue, c->logger);
+	request_resolve_help(c, connection_check_ddns1_continue,
+			     /*background*/false, c->logger);
 	return true;
 }
 
 void connection_check_ddns1_continue(struct connection *c,
 				     const struct host_addrs *resolved_host_addrs,
+				     bool background UNUSED,
 				     struct verbose verbose)
 {
 	if (host_addrs_need_dns(resolved_host_addrs, verbose)) {
@@ -152,16 +154,9 @@ void connection_check_ddns1_continue(struct connection *c,
 		return;
 	}
 
-	if (c->policy.route) {
-		vdbg("connection was updated, restoring route");
-		connection_route(c, HERE);
-	}
-
-	if (c->policy.up) {
-		vdbg("connection was updated, (re-)initiating");
-		initiate_connection(c, /*remote-host-name*/NULL,
-				    /*background*/true,
-				    verbose.logger);
+	if (orient(c, verbose)) {
+		/* new orientation */
+		connection_oriented(c, /*background*/true, HERE);
 	}
 
 	whack_detach(c, verbose.logger);

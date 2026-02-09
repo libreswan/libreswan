@@ -32,6 +32,7 @@
 #include "instantiate.h"
 #include "connection_event.h"
 #include "ipsec_interface.h"
+#include "initiate.h"
 
 enum routing_event {
 	/* fiddle with the ROUTE bit */
@@ -1449,6 +1450,19 @@ void connection_establish_ike(struct ike_sa *ike, where_t where)
 		.initiated_by = INITIATED_BY_PEER,
 	};
 	dispatch(CONNECTION_ESTABLISH_IKE, c, logger, &annex);
+}
+
+void connection_oriented(struct connection *c, bool background, where_t where)
+{
+	/* new orientation */
+	PEXPECT(c->logger, c->routing.state == RT_UNROUTED);
+	if (c->policy.route) {
+		connection_route(c, where);
+	}
+	if (c->policy.up) {
+		initiate_connection(c, /*REMOTE_HOST*/NULL,
+				    background, c->logger);
+	}
 }
 
 void connection_route(struct connection *c, where_t where)
