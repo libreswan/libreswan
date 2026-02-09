@@ -1,6 +1,4 @@
 ifconfig eth0 | grep -e 'inet ' -e 'inet6 .*2001:'
-[ 00.00] IPv4: martian source 198.19.0.1 from 198.19.3.209, on dev eth2
-[ 00.00] ll header: 00000000: ff ff ff ff ff ff 52 54 00 8b 48 f4 08 06
         inet 198.18.1.12  netmask 255.255.255.0  broadcast 198.18.1.255
         inet6 2001:db8:1::12  prefixlen 64  scopeid 0x0<global>
 rise #
