@@ -6,6 +6,7 @@
   After=systemd-networkd-wait-online.service
   Wants=systemd-networkd-wait-online.service
   Before=network-online.target
+  Before=getty.service
 [Service]
   Type=oneshot
   ExecStart=/usr/local/sbin/hostnamer.sh
