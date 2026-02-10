@@ -58,85 +58,23 @@ bool server_run(const char *story,
 	}
 #	undef CHUNK_WIDTH
 
+	/*
+	 * Both BSD and Linux document popen() as invoking /bin/sh -c
+	 * '...'.
+	 */
+	const char *argv[] = {
+		"/bin/sh",
+		"-c",
+		cmd,
+		NULL,
+	};
 
-	{
-		/*
-		 * invoke the script, catching stderr and stdout
-		 * It may be of concern that some file descriptors will
-		 * be inherited.  For the ones under our control, we
-		 * have done fcntl(fd, F_SETFD, FD_CLOEXEC) to prevent this.
-		 * Any used by library routines (perhaps the resolver or
-		 * syslog) will remain.
-		 */
-		FILE *f = popen(cmd, "r");
-
-		if (f == NULL) {
-			vlog("\"%s\" popen() failed", story);
-			return false;
-		}
-
-		/* log any output */
-		for (;; ) {
-			/*
-			 * if response doesn't fit in this buffer, it will
-			 * be folded
-			 */
-			char resp[256];
-
-			if (fgets(resp, sizeof(resp), f) == NULL) {
-				if (ferror(f)) {
-					llog_errno(ERROR_STREAM, verbose.logger, errno,
-						   "\"%s\" fgets() failed reading output: ",
-						   story);
-					pclose(f);
-					return false;
-				} else {
-					passert(feof(f));
-					break;
-				}
-			} else {
-				char *e = resp + strlen(resp);
-
-				if (e > resp && e[-1] == '\n') {
-					e[-1] = '\0'; /* trim trailing '\n' */
-				}
-
-				LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-					jam_string(buf, "\"");
-					jam_string(buf, story);
-					jam_string(buf, "\"");
-					jam_string(buf, " output: ");
-					jam_sanitized_hunk(buf, shunk1(resp));
-				}
-			}
-		}
-
-		/* report on and react to return code */
-		{
-			int r = pclose(f);
-
-			if (r == -1) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno,
-					   "\"%s\" pclose() failed: ", story);
-				return false;
-			} else if (WIFEXITED(r)) {
-				if (WEXITSTATUS(r) != 0) {
-					vlog("\"%s\" command exited with status %d",
-					     story, WEXITSTATUS(r));
-					return false;
-				}
-			} else if (WIFSIGNALED(r)) {
-				vlog("\"%s\" command killed by signal %d",
-				     story, WTERMSIG(r));
-				return false;
-			} else {
-				vlog("\"%s\" command exited with unknown status %d",
-				     story, r);
-				return false;
-			}
-		}
-	}
-	return true;
+	int status = server_runve_io(story, argv, NULL/*envp*/,
+				     /*input*/empty_shunk,
+				     /*output*/NULL,
+				     verbose,
+				     (verbose.debug ? DEBUG_STREAM : 0));
+	return (status == 0);
 }
 
 bool server_runv(const char *story, const char *argv[], struct verbose verbose)
