@@ -186,8 +186,9 @@ static const struct keyword_def config_conn_keyword[] = {
   K("rekeyfuzz",  LEMPTY,  kt_string,  KWS_REKEYFUZZ),
   K("replay-window",  LEMPTY,  kt_string,  KWS_REPLAY_WINDOW),
   K("ikelifetime",  LEMPTY,  kt_string,  KWS_IKELIFETIME),
-  K("failureshunt",  LEMPTY,  kt_sparse_name,  KNCF_FAILURESHUNT, .sparse_names = &failure_shunt_names),
-  K("negotiationshunt",  LEMPTY,  kt_sparse_name,  KNCF_NEGOTIATIONSHUNT, .sparse_names = &negotiation_shunt_names),
+
+  K("failureshunt",  LEMPTY,  kt_string,  KWS_FAILURESHUNT),
+  K("negotiationshunt",  LEMPTY,  kt_string,  KWS_NEGOTIATIONSHUNT),
 
   K("enable-tcp",  LEMPTY, kt_string, KWS_ENABLE_TCP),
   K("tcp-remoteport",  LEMPTY, kt_string, KWS_TCP_REMOTEPORT),

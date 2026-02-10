@@ -6,80 +6,56 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add negotiationshunt=
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "negotiationshunt=": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=passthrough
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "negotiationshunt=passthrough": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=drop
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "negotiationshunt=drop": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=hold
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "negotiationshunt=hold": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "failureshunt=": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=none
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "failureshunt=none": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=passthrough
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "failureshunt=passthrough": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=drop
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "failureshunt=drop": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
+warning: "failureshunt=hold": failureshunt "hold" implemented as "drop"
 "failureshunt=hold": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=reject
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
+warning: "failureshunt=reject": failureshunt "reject" implemented as "drop"
 "failureshunt=reject": added oriented IKEv2 connection
 west #
  ipsec add type=drop
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "type=drop": added oriented drop connection
 west #
  ipsec add type=reject
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "type=reject": added oriented drop connection
 west #
  ipsec add type=passthrough
-ipsec add: warning: /etc/ipsec.conf:35: hold implemented as drop: failureshunt=hold
-ipsec add: warning: /etc/ipsec.conf:44: reject implemented as drop: failureshunt=reject
 ipsec add: warning: type=%reject implemented as type=%drop
 "type=passthrough": added oriented passthrough connection
 west #

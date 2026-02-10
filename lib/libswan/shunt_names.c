@@ -83,8 +83,8 @@ const struct sparse_names failure_shunt_names = {
 
 const struct sparse_names negotiation_shunt_names = {
 	.list = {
-		SPARSE("pass", SHUNT_PASS),
-		SPARSE("passthrough", SHUNT_PASS),
+		SPARSE("pass",	      SHUNT_PASS),
+		SPARSE("passthrough", SHUNT_PASS), /* alias */
 		SPARSE("hold",        SHUNT_DROP),
 		SPARSE("drop",        SHUNT_DROP), /* alias */
 		SPARSE_NULL
