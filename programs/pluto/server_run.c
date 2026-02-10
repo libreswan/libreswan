@@ -152,7 +152,82 @@ bool server_runv(const char *argv[], struct verbose verbose)
 	return (status == 0);
 }
 
-int server_runve_io(const char *argv[], const char *envp[],
+NEVER_RETURNS
+static void child_process(const char *story,
+			  int fd[],
+			  const char *argv[],
+			  const char *envp[],
+			  struct verbose verbose)
+{
+	/*
+	 * In child, connect child's STDIN to fd[0] -
+	 * parent->child.
+	 */
+
+	if (dup2(fd[0], STDIN_FILENO) < 0) {
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" dup2(fd[0], STDIN) failed: ", story);
+		exit(127);
+	}
+
+	/*
+	 * In child, connect fd[1] - child->parent - to
+	 * child's STDOUT and STDERR.
+	 */
+
+	if (dup2(fd[1], STDOUT_FILENO) < 0) {
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" dup2(fd[1], STDOUT) failed: ", story);
+		exit(127);
+	}
+
+	if (dup2(fd[1], STDOUT_FILENO) < 0) {
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" dup2(fd[1], STDERR) failed: ", story);
+		exit(127);
+	}
+
+	/*
+	 * In child, close fd[0,1], but only when they are not
+	 * STDIN, STDOUT, or STDERR.
+	 */
+
+	if (fd[0] != STDIN_FILENO) {
+		if (close(fd[0]) < 0) {
+			llog_errno(ERROR_STREAM, verbose.logger, errno,
+				   "\"%s\" close(fd[0]) failed: ", story);
+			exit(127);
+		}
+	}
+
+	if (fd[1] != STDOUT_FILENO && fd[1] != STDERR_FILENO) {
+		if (close(fd[1]) < 0) {
+			llog_errno(ERROR_STREAM, verbose.logger, errno,
+				   "\"%s\" close(fd[1]) failed: ", story);
+			exit(127);
+		}
+	}
+
+	/*
+	 * In child, with redirection done, exec new command.
+	 *
+	 * execvpe(), always available on BSD, is available on
+	 * Linux when #define _GNU_SOURCE.
+	 */
+
+	if (envp == NULL) {
+		execvp(argv[0], (char**)argv);
+	} else {
+		/* definition requires _GNU_SOURCE on Linux */
+		execvpe(argv[0], (char**)argv, (char**)envp);
+	}
+	llog_errno(ERROR_STREAM, verbose.logger, errno,
+		   "\"%s\" execve() failed: ", story);
+	exit(127);
+}
+
+int server_runve_io(const char *argv[],
+		    const char *envp[],
 		    shunk_t input, chunk_t *output,
 		    enum stream output_stream,
 		    const struct verbose verbose)
@@ -174,6 +249,10 @@ int server_runve_io(const char *argv[], const char *envp[],
 		zero(output);
 	}
 
+	/*
+	 * fd[0] will be parent->child
+	 * fd[1] will be child->parent
+	 */
 	int fd[2];
 	if (pipe(fd) == -1) {
 		llog_errno(ERROR_STREAM, verbose.logger, errno, "pipe(): ");
@@ -187,41 +266,12 @@ int server_runve_io(const char *argv[], const char *envp[],
 	}
 
 	if (child == 0) {
-
-		/* dup() write side, fd[1], of pipe to STDOUT */
-		if (fd[1] != STDOUT_FILENO) {
-			if (dup2(fd[1], STDOUT_FILENO) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "dup2(fd[1], STDOUT): ");
-				exit(127);
-			}
-			if (close(fd[1]) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[1]): ");
-				exit(127);
-			}
-		}
-
-		/* dup() read side, fd[0], of pipe() to child's STDIN */
-		if (fd[0] != STDIN_FILENO) {
-			/* switch fd[0] to STDIN */
-			if (dup2(fd[0], STDIN_FILENO) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "dup2(fd[0], STDIN): ");
-				exit(127);
-			}
-			if (close(fd[0]) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[0]): ");
-				exit(127);
-			}
-		}
-
-		if (envp == NULL) {
-			execvp(argv[0], (char**)argv);
-		} else {
-			/* definition requires _GNU_SOURCE on Linux */
-			execvpe(argv[0], (char**)argv, (char**)envp);
-		}
-		llog_errno(ERROR_STREAM, verbose.logger, errno, "execve(): ");
-		exit(127);
+		child_process(argv[0], fd, argv, envp, verbose);
 	}
+
+	/*
+	 * PARENT
+	 */
 
 	if (input.len > 0 &&
 	    write(fd[1], input.ptr, input.len) != (ssize_t)input.len) {
