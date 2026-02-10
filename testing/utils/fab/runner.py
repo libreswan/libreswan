@@ -23,6 +23,8 @@ import argparse
 from datetime import datetime
 from concurrent import futures
 
+from fab.datautil import *
+
 from fab import jsonutil
 from fab import timing
 from fab import virsh
@@ -182,8 +184,8 @@ def executor_qsize_hack(executor):
 
 def _test_domains(logger, test, domains):
 
-    test_domains = dict()
-    unused_domains = set()
+    test_domains = Dict()
+    unused_domains = Set()
     for domain in domains:
         domain.nest(logger, test.name + " ")
         # new test domain
@@ -524,7 +526,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
 
     logger.info("preparing test domains")
 
-    domains = list()
+    domains = List()
     for guest in hosts.guests():
         domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest)
         domains.append(domain)

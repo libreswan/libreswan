@@ -17,6 +17,8 @@ import re
 from glob import glob
 from os import path
 
+from fab.datautil import *
+
 from fab import argutil
 from fab import hosts
 
@@ -41,7 +43,7 @@ class Commands(list):
 
 def _scripts(directory):
     """Returns a set of *.sh scripts found in DIRECTORY"""
-    scripts = set()
+    scripts = Set()
     for script in glob(path.join(directory, "*.sh")):
         if not path.isfile(script):
             continue

@@ -14,18 +14,8 @@
 
 import re
 from os import path
-
+from fab.datautil import *
 from fab import testingdir
-
-class Set(set):
-    def __str__(self):
-        return " ".join(str(s) for s in self)
-class Dict(dict):
-    def __str__(self):
-        return " ".join(str(s) for s in self)
-class List(list):
-    def __str__(self):
-        return " ".join(str(s) for s in self)
 
 class Host:
     def __init__(self, name):

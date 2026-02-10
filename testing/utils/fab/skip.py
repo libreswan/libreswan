@@ -12,6 +12,8 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+from fab.datautil import *
+
 from fab import argutil
 from fab import resolution
 from enum import Enum
@@ -26,10 +28,10 @@ _RESULTS = [resolution.PASSED,
 def add_arguments(parser):
     group = parser.add_argument_group("Result arguments")
     group.add_argument("--skip", action="append",
-                       default=list(), choices=_RESULTS,
+                       default=List(), choices=_RESULTS,
                        help="skip test with previous result; default: '%(default)s'")
     group.add_argument("--result", action="append",
-                       default=list(), choices=_RESULTS,
+                       default=List(), choices=_RESULTS,
                        help="include test with previous result; default: '%(default)s'")
 
 def result(logger, args, result):

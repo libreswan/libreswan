@@ -21,6 +21,8 @@ import gzip
 import bz2
 from pathlib import Path
 
+from fab.datautil import *
+
 from fab import logutil
 from fab import jsonutil
 from fab import printer
@@ -163,7 +165,7 @@ def _diff(logger, ln, l, rn, r):
         logger.debug("_diff '%s' and '%s' fast match", ln, rn)
         return []
     # compare
-    diff = list(difflib.diff_bytes(difflib.unified_diff,
+    diff = List(difflib.diff_bytes(difflib.unified_diff,
                                    l.splitlines(), r.splitlines(),
                                    fromfile=ln.encode(), tofile=rn.encode(),
                                    lineterm=rb""))
