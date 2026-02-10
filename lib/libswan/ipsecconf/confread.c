@@ -349,9 +349,6 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	conn->negotiation_shunt = conn->values[KNCF_NEGOTIATIONSHUNT].option;
-	conn->failure_shunt = conn->values[KNCF_FAILURESHUNT].option;
-
 	return true;
 }
 

@@ -605,7 +605,23 @@ static unsigned extract_sparse_name(const char *leftright,
 		return value_when_unset;
 	}
 
-	return sparse->value;
+	unsigned name_value = (sparse->value & ~NAME_FLAGS);
+	enum name_flags flag = (sparse->value & NAME_FLAGS);
+	name_buf new_name;
+	switch (flag) {
+	case NAME_IMPLEMENTED_AS:
+		vwarning("%s%s \"%s\" implemented as \"%s\"",
+			 leftright, name, value,
+			 str_sparse_short(names, name_value, &new_name));
+		break;
+	case NAME_RENAMED_TO:
+		vwarning("%s%s \"%s\" renamed to \"%s\"",
+			 leftright, name, value,
+			 str_sparse_short(names, name_value, &new_name));
+		break;
+	}
+
+	return name_value;
 }
 
 static bool extract_bool(const char *leftright,
@@ -2528,6 +2544,23 @@ static diag_t extract_shunt(struct config *config,
 	return NULL;
 }
 
+static enum shunt_policy extract_shunt_policy(const struct whack_message *wm,
+					      enum config_conn_keyword kws,
+					      const struct sparse_names *shunt_names,
+					      enum shunt_policy value_when_unset,
+					      diag_t *d,
+					      struct verbose verbose)
+{
+	const char *name = config_conn_keywords.item[kws].keyname;
+	const char *value = wm->conn[END_ROOF].value[kws];
+
+	enum shunt_policy shunt_policy = extract_sparse_name("", name, value,
+							     value_when_unset,
+							     shunt_names,
+							     wm, d, verbose);
+	return shunt_policy;
+}
+
 static diag_t extract_cisco_host_config(struct cisco_host_config *cisco,
 					const struct whack_message *wm,
 					struct verbose verbose)
@@ -3562,8 +3595,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		return d;
 	}
 
-	d = extract_shunt(config, wm, SHUNT_KIND_NEGOTIATION,
-			  &negotiation_shunt_names, /*unset*/SHUNT_DROP);
+	config->negotiation_shunt = extract_shunt_policy(wm, KWS_NEGOTIATIONSHUNT,
+							 &negotiation_shunt_names,
+							 /*unset*/SHUNT_DROP,
+							 &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
@@ -3575,8 +3610,10 @@ diag_t extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_DROP;
 	}
 
-	d = extract_shunt(config, wm, SHUNT_KIND_FAILURE,
-			  &failure_shunt_names, /*unset*/SHUNT_NONE);
+	config->failure_shunt = extract_shunt_policy(wm, KWS_FAILURESHUNT,
+						     &failure_shunt_names,
+						     /*unset*/SHUNT_NONE,
+						     &d, verbose);
 	if (d != NULL) {
 		return d;
 	}
