@@ -150,7 +150,6 @@ void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos);
  */
 
 size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap) VPRINTF_LIKE(2);
-size_t jam_raw_bytes(struct jambuf *buf, const void *bytes, size_t nr_bytes);
 
 size_t jam(struct jambuf *buf, const char *format, ...) PRINTF_LIKE(2);
 
@@ -165,6 +164,8 @@ size_t jam_jambuf(struct jambuf *buf, struct jambuf *in);
  */
 
 typedef size_t (jam_bytes_fn)(struct jambuf *buf, const void *bytes, size_t size);
+
+jam_bytes_fn jam_raw_bytes;
 
 /*
  * bytes as hex ...
