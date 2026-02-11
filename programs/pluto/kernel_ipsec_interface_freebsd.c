@@ -55,7 +55,7 @@ static bool freebsd_ipsec_interface_add_cidr(const char *ipsec_if_name,
 		str_address(&address, &ab),
 		NULL,
 	};
-	return server_runv(add, verbose);
+	return server_runv("ifconfig add", add, verbose);
 }
 
 static void freebsd_ipsec_interface_del_cidr(const char *ipsec_if_name,
@@ -76,7 +76,7 @@ static void freebsd_ipsec_interface_del_cidr(const char *ipsec_if_name,
 		str_address(&address, &ab),
 		NULL,
 	};
-	server_runv(delete, verbose);
+	server_runv("ifconfig delete", delete, verbose);
 }
 
 static bool freebsd_ipsec_interface_add(const char *ipsec_if_name,
@@ -93,7 +93,7 @@ static bool freebsd_ipsec_interface_add(const char *ipsec_if_name,
 		"create",
 		NULL,
 	};
-	return server_runv(create, verbose);
+	return server_runv("ifconfig create", create, verbose);
 }
 
 static bool freebsd_ipsec_interface_up(const char *ipsec_if_name UNUSED,
@@ -105,7 +105,7 @@ static bool freebsd_ipsec_interface_up(const char *ipsec_if_name UNUSED,
 		"up",
 		NULL,
 	};
-	return server_runv(up, verbose);
+	return server_runv("ifconfig up", up, verbose);
 }
 
 static bool freebsd_ipsec_interface_del(const char *ipsec_if_name,
@@ -117,7 +117,7 @@ static bool freebsd_ipsec_interface_del(const char *ipsec_if_name,
 		"destroy",
 		NULL,
 	};
-	return server_runv(destroy, verbose);
+	return server_runv("ifconfig destroy", destroy, verbose);
 }
 
 static bool freebsd_ipsec_interface_match(struct ipsec_interface_match *match,
@@ -128,7 +128,7 @@ static bool freebsd_ipsec_interface_match(struct ipsec_interface_match *match,
 		match->ipsec_if_name,
 		NULL,
 	};
-	bool ok = server_runv(run, verbose);
+	bool ok = server_runv("ifconfig", run, verbose);
 	if (ok) {
 		jam_str(match->found, sizeof(match->found), match->ipsec_if_name);
 	} else {
