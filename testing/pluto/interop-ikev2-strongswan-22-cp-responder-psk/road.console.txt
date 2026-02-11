@@ -145,7 +145,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 192.168.0.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 192.168.0.2
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: up-client output: updating resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.1/32===0.0.0.0/0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 road #
  route -n

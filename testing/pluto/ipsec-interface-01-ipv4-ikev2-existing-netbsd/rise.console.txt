@@ -45,11 +45,11 @@ rise #
  ../../guestbin/wait-until-pluto-started
 rise #
  ipsec add rise-set
-"rise-set": command: 'ifconfig' 'ipsec1'
-"rise-set": output: ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\ttunnel inet 198.18.1.12 --> 198.18.
-"rise-set": output: 1.15\n\tstatus: active\n\tinet6 fe80::4f3:8d5f:332a:9410%ipsec1/64 ->  flags 0 scopeid 0x5\n\tinet 198.18.
-"rise-set": output: 12.12/24 -> 198.18.15.15 flags 0\n
-"rise-set": wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
+"rise-set": "ifconfig" command: 'ifconfig' 'ipsec1'
+"rise-set": "ifconfig" output: ipsec1: flags=0x8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\ttunnel inet 198.18.1.12 --> 198.18.
+"rise-set": "ifconfig" output: 1.15\n\tstatus: active\n\tinet6 fe80::4f3:8d5f:332a:9410%ipsec1/64 ->  flags 0 scopeid 0x5\n\tinet 198.18.
+"rise-set": "ifconfig" output: 12.12/24 -> 198.18.15.15 flags 0\n
+"rise-set": "ifconfig" wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
 "rise-set": added oriented IKEv2 connection
 rise #
  ipsec up rise-set
@@ -60,8 +60,8 @@ rise #
 "rise-set" #1: processing IKE_AUTH response from 198.18.1.15:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "rise-set" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vioif0)
-"rise-set" #2: command: 'ifconfig' 'ipsec1' 'up'
-"rise-set" #2: wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
+"rise-set" #2: "ifconfig up" command: 'ifconfig' 'ipsec1' 'up'
+"rise-set" #2: "ifconfig up" wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
 "rise-set" #2: BSD doesn't add kernel-policy to an ipsec-interface (ipsec1@vioif0)
 "rise-set" #2: initiator established Child SA using #1; IPsec tunnel [198.18.15.0/24===192.19.12.0/24] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 rise #
