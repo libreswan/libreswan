@@ -438,7 +438,7 @@ static bool do_updown_verb(const char *verb,
 		NULL,
 	};
 
-	int status = server_runve_io(argv, envp, empty_shunk,
+	int status = server_runve_io(verb, argv, envp, empty_shunk,
 				     /*discard output*/NULL,
 				     DEBUG_STREAM, verbose);
 	return (status == 0);
@@ -455,7 +455,7 @@ static bool do_updown_verb(const char *verb,
 		return false;
 	}
 
-	bool ok = server_run(verb, verb_suffix, cmd, verbose);
+	bool ok = server_run(verb, cmd, verbose);
 	pfree(cmd);
 	return ok;
 #endif

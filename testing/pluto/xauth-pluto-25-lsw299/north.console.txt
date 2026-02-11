@@ -33,7 +33,7 @@ north #
 "north-east" #1: ISAKMP SA established {auth=PRESHARED_KEY cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 "north-east" #2: initiating Quick Mode IKEv1+PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 "north-east" #2: sent Quick Mode request
-"north-east" #2: up-client output: updating resolvconf
+"north-east" #2: "up" output: updating resolvconf
 "north-east" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=xnorth}
 north #
  ../../guestbin/ping-once.sh --up -I 192.0.2.101 192.0.2.254

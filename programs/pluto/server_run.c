@@ -40,7 +40,7 @@
 #include "verbose.h"
 #include "log.h"
 
-bool server_run(const char *verb, const char *verb_suffix,
+bool server_run(const char *story,
 		const char *cmd,
 		struct verbose verbose)
 {
@@ -49,8 +49,7 @@ bool server_run(const char *verb, const char *verb_suffix,
 		int slen = strlen(cmd);
 		int i;
 
-		VDBG_log("executing %s%s: %s",
-			 verb, verb_suffix, cmd);
+		VDBG_log("\"%s\" executing: %s", story, cmd);
 		VDBG_log("popen cmd is %d chars long", slen);
 		for (i = 0; i < slen; i += CHUNK_WIDTH)
 			VDBG_log("cmd(%4d):%.*s:", i,
@@ -72,8 +71,7 @@ bool server_run(const char *verb, const char *verb_suffix,
 		FILE *f = popen(cmd, "r");
 
 		if (f == NULL) {
-			vlog("unable to popen %s%s command",
-			     verb, verb_suffix);
+			vlog("\"%s\" popen() failed", story);
 			return false;
 		}
 
@@ -88,8 +86,8 @@ bool server_run(const char *verb, const char *verb_suffix,
 			if (fgets(resp, sizeof(resp), f) == NULL) {
 				if (ferror(f)) {
 					llog_errno(ERROR_STREAM, verbose.logger, errno,
-						   "fgets failed on output of %s%s command: ",
-						   verb, verb_suffix);
+						   "\"%s\" fgets() failed reading output: ",
+						   story);
 					pclose(f);
 					return false;
 				} else {
@@ -104,8 +102,9 @@ bool server_run(const char *verb, const char *verb_suffix,
 				}
 
 				LLOG_JAMBUF(RC_LOG, verbose.logger, buf) {
-					jam_string(buf, verb);
-					jam_string(buf, verb_suffix);
+					jam_string(buf, "\"");
+					jam_string(buf, story);
+					jam_string(buf, "\"");
 					jam_string(buf, " output: ");
 					jam_sanitized_hunk(buf, shunk1(resp));
 				}
@@ -118,23 +117,21 @@ bool server_run(const char *verb, const char *verb_suffix,
 
 			if (r == -1) {
 				llog_errno(ERROR_STREAM, verbose.logger, errno,
-					   "pclose failed for %s%s command: ",
-					   verb, verb_suffix);
+					   "\"%s\" pclose() failed: ", story);
 				return false;
 			} else if (WIFEXITED(r)) {
 				if (WEXITSTATUS(r) != 0) {
-					vlog("%s%s command exited with status %d",
-					     verb, verb_suffix,
-					     WEXITSTATUS(r));
+					vlog("\"%s\" command exited with status %d",
+					     story, WEXITSTATUS(r));
 					return false;
 				}
 			} else if (WIFSIGNALED(r)) {
-				vlog("%s%s command exited with signal %d",
-				     verb, verb_suffix, WTERMSIG(r));
+				vlog("\"%s\" command killed by signal %d",
+				     story, WTERMSIG(r));
 				return false;
 			} else {
-				vlog("%s%s command exited with unknown status %d",
-				     verb, verb_suffix, r);
+				vlog("\"%s\" command exited with unknown status %d",
+				     story, r);
 				return false;
 			}
 		}
@@ -142,9 +139,9 @@ bool server_run(const char *verb, const char *verb_suffix,
 	return true;
 }
 
-bool server_runv(const char *argv[], struct verbose verbose)
+bool server_runv(const char *story, const char *argv[], struct verbose verbose)
 {
-	int status = server_runve_io(argv, NULL/*envp*/,
+	int status = server_runve_io(story, argv, NULL/*envp*/,
 				     /*input*/empty_shunk,
 				     /*output*/NULL,
 				     /*send-output-to*/ALL_STREAMS,
@@ -152,14 +149,93 @@ bool server_runv(const char *argv[], struct verbose verbose)
 	return (status == 0);
 }
 
-int server_runve_io(const char *argv[], const char *envp[],
+NEVER_RETURNS
+static void child_process(const char *story,
+			  int fd[],
+			  const char *argv[],
+			  const char *envp[],
+			  struct verbose verbose)
+{
+	/*
+	 * In child, connect child's STDIN to fd[0] -
+	 * parent->child.
+	 */
+
+	if (dup2(fd[0], STDIN_FILENO) < 0) {
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" dup2(fd[0], STDIN) failed: ", story);
+		exit(127);
+	}
+
+	/*
+	 * In child, connect fd[1] - child->parent - to
+	 * child's STDOUT and STDERR.
+	 */
+
+	if (dup2(fd[1], STDOUT_FILENO) < 0) {
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" dup2(fd[1], STDOUT) failed: ", story);
+		exit(127);
+	}
+
+	if (dup2(fd[1], STDOUT_FILENO) < 0) {
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" dup2(fd[1], STDERR) failed: ", story);
+		exit(127);
+	}
+
+	/*
+	 * In child, close fd[0,1], but only when they are not
+	 * STDIN, STDOUT, or STDERR.
+	 */
+
+	if (fd[0] != STDIN_FILENO) {
+		if (close(fd[0]) < 0) {
+			llog_errno(ERROR_STREAM, verbose.logger, errno,
+				   "\"%s\" close(fd[0]) failed: ", story);
+			exit(127);
+		}
+	}
+
+	if (fd[1] != STDOUT_FILENO && fd[1] != STDERR_FILENO) {
+		if (close(fd[1]) < 0) {
+			llog_errno(ERROR_STREAM, verbose.logger, errno,
+				   "\"%s\" close(fd[1]) failed: ", story);
+			exit(127);
+		}
+	}
+
+	/*
+	 * In child, with redirection done, exec new command.
+	 *
+	 * execvpe(), always available on BSD, is available on
+	 * Linux when #define _GNU_SOURCE.
+	 */
+
+	if (envp == NULL) {
+		execvp(argv[0], (char**)argv);
+	} else {
+		/* definition requires _GNU_SOURCE on Linux */
+		execvpe(argv[0], (char**)argv, (char**)envp);
+	}
+	llog_errno(ERROR_STREAM, verbose.logger, errno,
+		   "\"%s\" execve() failed: ", story);
+	exit(127);
+}
+
+int server_runve_io(const char *story,
+		    const char *argv[],
+		    const char *envp[],
 		    shunk_t input, chunk_t *output,
 		    enum stream output_stream,
 		    const struct verbose verbose)
 {
 	if (output_stream != 0) {
 		LLOG_JAMBUF(output_stream, verbose.logger, buf) {
-			jam_string(buf, "command: ");
+			jam_string(buf, "\"");
+			jam_string(buf, story);
+			jam_string(buf, "\"");
+			jam_string(buf, " command: ");
 			const char *sep = "";
 			for (const char **c = argv; *c != NULL; c++) {
 				jam_string(buf, sep); sep = " ";
@@ -174,63 +250,42 @@ int server_runve_io(const char *argv[], const char *envp[],
 		zero(output);
 	}
 
+	/*
+	 * fd[0] will be parent->child
+	 * fd[1] will be child->parent
+	 */
 	int fd[2];
 	if (pipe(fd) == -1) {
-		llog_errno(ERROR_STREAM, verbose.logger, errno, "pipe(): ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" pipe() failed: ", story);
 		return -1;
 	}
 
 	pid_t child = fork();
 	if (child < 0) {
-		llog_errno(ERROR_STREAM, verbose.logger, errno, "fork(): ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" fork() failed: ", story);
 		return -1;
 	}
 
 	if (child == 0) {
-
-		/* dup() write side, fd[1], of pipe to STDOUT */
-		if (fd[1] != STDOUT_FILENO) {
-			if (dup2(fd[1], STDOUT_FILENO) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "dup2(fd[1], STDOUT): ");
-				exit(127);
-			}
-			if (close(fd[1]) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[1]): ");
-				exit(127);
-			}
-		}
-
-		/* dup() read side, fd[0], of pipe() to child's STDIN */
-		if (fd[0] != STDIN_FILENO) {
-			/* switch fd[0] to STDIN */
-			if (dup2(fd[0], STDIN_FILENO) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "dup2(fd[0], STDIN): ");
-				exit(127);
-			}
-			if (close(fd[0]) < 0) {
-				llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[0]): ");
-				exit(127);
-			}
-		}
-
-		if (envp == NULL) {
-			execvp(argv[0], (char**)argv);
-		} else {
-			/* definition requires _GNU_SOURCE on Linux */
-			execvpe(argv[0], (char**)argv, (char**)envp);
-		}
-		llog_errno(ERROR_STREAM, verbose.logger, errno, "execve(): ");
-		exit(127);
+		child_process(story, fd, argv, envp, verbose);
 	}
+
+	/*
+	 * PARENT
+	 */
 
 	if (input.len > 0 &&
 	    write(fd[1], input.ptr, input.len) != (ssize_t)input.len) {
-		llog_errno(ERROR_STREAM, verbose.logger, errno, "partial write: ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" partial write(): ", story);
 		/* stumble on to waitpid() */
 	}
 
 	if (close(fd[1]) < 0) {
-		llog_errno(ERROR_STREAM, verbose.logger, errno, "close(fd[1]): ");
+		llog_errno(ERROR_STREAM, verbose.logger, errno,
+			   "\"%s\" close(fd[1]) failed: ", story);
 		/* stumble on to waitpid() */
 	}
 
@@ -240,7 +295,10 @@ int server_runve_io(const char *argv[], const char *envp[],
 		if (n > 0) {
 			if (output_stream != 0) {
 				LLOG_JAMBUF(output_stream, verbose.logger, buf) {
-					jam_string(buf, "output: ");
+					jam_string(buf, "\"");
+					jam_string(buf, story);
+					jam_string(buf, "\"");
+					jam_string(buf, " output: ");
 					jam_sanitized_hunk(buf, shunk2(inp, n));
 				}
 			}
@@ -255,8 +313,8 @@ int server_runve_io(const char *argv[], const char *envp[],
 		waitpid(child, &status, 0);
 		if (output_stream != 0) {
 			llog(output_stream, verbose.logger,
-			     "wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
-			     status,
+			     "\"%s\" wstatus: %d; exited %s(%d); signaled: %s(%d); stopped: %s(%d); core: %s; %s",
+			     story, status,
 			     bool_str(WIFEXITED(status)), WEXITSTATUS(status),
 			     bool_str(WIFSIGNALED(status)), WTERMSIG(status),
 			     bool_str(WIFSTOPPED(status)), WSTOPSIG(status),

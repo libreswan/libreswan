@@ -27,11 +27,11 @@
 struct verbose;
 struct logger;
 
-bool server_run(const char *verb, const char *verb_suffix,
-		const char *cmd,
+bool server_run(const char *story, const char *cmd,
 		struct verbose verbose);
 
-bool server_runv(const char *argv[], struct verbose verbose);
+bool server_runv(const char *story, const char *argv[],
+		 struct verbose verbose);
 
 /*
  * When non-empty, sends INPUT.
@@ -40,7 +40,8 @@ bool server_runv(const char *argv[], struct verbose verbose);
  * When envp is non-NULL, use execve(argv,envp).
  */
 
-int server_runve_io(const char *argv[],
+int server_runve_io(const char *story,
+		    const char *argv[],
 		    const char *envp[],
 		    shunk_t input,
 		    chunk_t *output,

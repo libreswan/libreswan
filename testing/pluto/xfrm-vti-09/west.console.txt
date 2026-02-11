@@ -44,28 +44,28 @@ west #
 "westnet-eastnet-vti-01" #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with digital-signature and FQDN '@west'; Child SA #2 {ESP <0xESPESP}
 "westnet-eastnet-vti-01" #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-eastnet-vti-01" #1: initiator established IKE SA; authenticated peer using preloaded certificate '@east' and 2nnn-bit RSASSA-PSS with SHA2_512 digital signature
-"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.disable_policy = 1
-"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.rp_filter = 0
-"westnet-eastnet-vti-01" #2: prepare-client output: net.ipv4.conf.ipsec0.forwarding = 1
-"westnet-eastnet-vti-01" #2: route-client output: done ip route
-"westnet-eastnet-vti-01" #2: up-client output: vti interface "ipsec0" already exists with conflicting setting
-"westnet-eastnet-vti-01" #2: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-01" #2: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-01" #2: up-client output: done ip route
+"westnet-eastnet-vti-01" #2: "prepare" output: net.ipv4.conf.ipsec0.disable_policy = 1
+"westnet-eastnet-vti-01" #2: "prepare" output: net.ipv4.conf.ipsec0.rp_filter = 0
+"westnet-eastnet-vti-01" #2: "prepare" output: net.ipv4.conf.ipsec0.forwarding = 1
+"westnet-eastnet-vti-01" #2: "route" output: done ip route
+"westnet-eastnet-vti-01" #2: "up" output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-01" #2: "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-01" #2: "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-01" #2: "up" output: done ip route
 "westnet-eastnet-vti-01" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0/24===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-vti-02
 "westnet-eastnet-vti-02" #3: initiating Child SA using IKE SA #1
 "westnet-eastnet-vti-02" #3: sent CREATE_CHILD_SA request to create Child SA using IKE SA #1 {ESP <0xESPESP}
-"westnet-eastnet-vti-02" #3: prepare-client output: vti interface "ipsec0" already exists with conflicting setting
-"westnet-eastnet-vti-02" #3: prepare-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: prepare-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-02" #3: route-client output: done ip route
-"westnet-eastnet-vti-02" #3: up-client output: vti interface "ipsec0" already exists with conflicting setting
-"westnet-eastnet-vti-02" #3: up-client output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
-"westnet-eastnet-vti-02" #3: up-client output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
-"westnet-eastnet-vti-02" #3: up-client output: RTNETLINK answers: File exists
-"westnet-eastnet-vti-02" #3: up-client output: done ip route
+"westnet-eastnet-vti-02" #3: "prepare" output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-02" #3: "prepare" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-02" #3: "prepare" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: "route" output: done ip route
+"westnet-eastnet-vti-02" #3: "up" output: vti interface "ipsec0" already exists with conflicting setting
+"westnet-eastnet-vti-02" #3: "up" output: existing: ipsec0: ip/ip remote any local 192.1.2.45 ttl inherit ikey 20 okey 21
+"westnet-eastnet-vti-02" #3: "up" output: wanted  : ipsec0: ip/ip  remote any  local 192.1.2.45  ttl inherit  key 21
+"westnet-eastnet-vti-02" #3: "up" output: RTNETLINK answers: File exists
+"westnet-eastnet-vti-02" #3: "up" output: done ip route
 "westnet-eastnet-vti-02" #3: initiator established Child SA using #1; IPsec tunnel [10.0.1.0/24===10.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-DH19 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
