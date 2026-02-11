@@ -42,6 +42,21 @@
 
 const char *pluto_dns_resolver;
 
+static struct verbose verbose_updown(struct logger *logger,
+				     enum updown updown_verb,
+				     const char **verb)
+{
+	name_buf vb;
+	if (PEXPECT(logger, enum_short(&updown_stories, updown_verb, &vb))) {
+		/* points into static string */
+		PEXPECT(logger, vb.buf != vb.tmp);
+		*verb = vb.buf;
+	} else {
+		*verb = "???";
+	}
+	return VERBOSE(DEBUG_STREAM, logger, *verb);
+}
+
 /*
  * Remove all characters but [-_.0-9a-zA-Z] from a character string.
  * Truncates the result if it would be too long.
@@ -465,9 +480,8 @@ bool updown_connection_spd(enum updown updown_verb,
 			   const struct spd *spd,
 			   struct logger *logger/*C-or-CHILD*/)
 {
-	name_buf vb;
-	enum_long(&updown_names, updown_verb, &vb);
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, vb.buf);
+	const char *verb;
+	struct verbose verbose = verbose_updown(logger, updown_verb, &verb);
 
 	selector_pair_buf sb;
 	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
@@ -532,10 +546,8 @@ bool updown_child_spds(enum updown updown_verb,
 		       struct child_sa *child,
 		       struct updown_config config)
 {
-	/* use full UPDOWN_UP as prefix */
-	name_buf vb;
-	enum_long(&updown_names, updown_verb, &vb);
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, vb.buf);
+	const char *verb;
+	struct verbose verbose = verbose_updown(child->sa.logger, updown_verb, &verb);
 
 	vtime_t start = vdbg_start("spds");
 
@@ -588,7 +600,9 @@ void do_updown_unroute_spd(const struct spd *spd,
 			   struct logger *logger/*could-be-ST-or-connection*/,
 			   struct updown_env updown_env)
 {
-	struct verbose verbose = VERBOSE(DEBUG_STREAM, logger, "UPDOWN_UNROUTE");
+	const char *verb;
+	struct verbose verbose = verbose_updown(logger, UPDOWN_UNROUTE, &verb);
+
 	if (owner->bare_route != NULL) {
 		vdbg("skip as has owner->bare_route");
 		return;
