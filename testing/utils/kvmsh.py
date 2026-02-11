@@ -27,7 +27,6 @@ from fab import virsh
 from fab import remote
 from fab import argutil
 from fab import logutil
-from fab import pathutil
 from fab import hosts
 
 def main():
@@ -48,14 +47,9 @@ def main():
                                   default=sys.stdout, metavar="FILE")
 
     parser.add_argument("--chdir", default=None, action="store", metavar="PATH",
-                        help=("first change directory to %(metavar)s on the remote"
+                        help=("first change directory to the absolute path %(metavar)s on the remote"
                               " domain and update prompt-match logic to expect"
-                              " that directory"
-                              "; an absolute %(metavar)s is used unmodified"
-                              "; a relative  %(metavar)s, which is interpreted"
-                              " as relative to the current local working directory"
-                              ", is converted to an absolute remote path before use"
-                              " (default: leave directory unchanged)"))
+                              " that directory (default: leave directory unchanged)"))
     parser.add_argument("--boot", default=False, action="store_true",
                         help=("force the domain to shutdown and then boot"
                               " (default: leave existing domain running)"))
@@ -107,16 +101,11 @@ def main():
 
     status = 0
 
-    if args.chdir and os.path.isabs(args.chdir):
-        chdir = args.chdir
-    elif args.chdir:
-        # convert host path to guest path
-        chdir = pathutil.guest_path(domain, args.chdir)
-    else:
-        chdir = None
-    if chdir:
-        domain.logger.info("'cd' to %s", chdir)
-        console.chdir(chdir)
+    if args.chdir:
+        if not os.path.isabs(args.chdir):
+            sys.exit(f"--chdir expects an absolute path")
+        domain.logger.info("'cd' to %s", args.chdir)
+        console.chdir(args.chdir)
 
     if args.command:
 

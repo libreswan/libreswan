@@ -1625,9 +1625,9 @@ ifeq ($(KVM_INSTALL_RPM), true)
 kvm-fedora-install: $(KVM_BUILDDIR)/$(KVM_PREFIX)fedora
 	rm -fr rpmbuild/*RPMS
 	$(MAKE) kvm-rpm
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -i /source/rpmbuild/RPMS/x86_64/libreswan*rpm'
-	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir /source $(notdir $<) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir /source $(notdir $<) 'rpm -i /source/rpmbuild/RPMS/x86_64/libreswan*rpm'
+	$(KVMSH) $(KVMSH_FLAGS) --chdir /source $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 endif
 
 
