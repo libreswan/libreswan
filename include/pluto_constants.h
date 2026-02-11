@@ -819,7 +819,6 @@ enum type_options {
 	KS_TRANSPORT,
 	KS_PASSTHROUGH,
 	KS_DROP,
-	KS_REJECT,
 };
 
 extern const struct sparse_names type_option_names;

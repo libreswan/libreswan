@@ -1741,20 +1741,20 @@ int main(int argc, char **argv)
 			continue;
 
 		case CDS_NEGOTIATION_PASS:	/* --negopass */
-			msg.negotiation_shunt = SHUNT_PASS;
+			msg.wm_negotiationshunt = "pass";
 			continue;
 		case CDS_NEGOTIATION_HOLD:	/* --negohold */
-			msg.negotiation_shunt = SHUNT_DROP;
+			msg.wm_negotiationshunt = "drop";
 			continue;
 
 		case CDS_FAILURE_NONE:		/* --failnone */
-			msg.failure_shunt = SHUNT_NONE;
+			msg.wm_failureshunt = "none";
 			continue;
 		case CDS_FAILURE_PASS:		/* --failpass */
-			msg.failure_shunt = SHUNT_PASS;
+			msg.wm_failureshunt = "pass";
 			continue;
 		case CDS_FAILURE_DROP:		/* --faildrop */
-			msg.failure_shunt = SHUNT_DROP;
+			msg.wm_failureshunt = "drop";
 			continue;
 
 		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */

@@ -380,6 +380,9 @@ struct whack_message {
 	} whack;
 
 	enum shunt_policy shunt[SHUNT_KIND_ROOF];
+#define wm_failureshunt conn[END_ROOF].value[KWS_FAILURESHUNT]
+#define wm_negotiationshunt conn[END_ROOF].value[KWS_NEGOTIATIONSHUNT]
+
 	enum autostart autostart;
 
 	struct whack_end end[END_ROOF];

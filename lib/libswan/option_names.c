@@ -172,8 +172,8 @@ const struct sparse_names type_option_names = {
 		SPARSE("transport",   KS_TRANSPORT),
 		SPARSE("pass",        KS_PASSTHROUGH),
 		SPARSE("passthrough", KS_PASSTHROUGH),
-		SPARSE("reject",      KS_REJECT),
 		SPARSE("drop",        KS_DROP),
+		SPARSE("reject",      NAME_IMPLEMENTED_AS|KS_DROP),
 		SPARSE_NULL
 	},
 };
