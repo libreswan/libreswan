@@ -50,8 +50,6 @@ def add_arguments(parser):
                                       "Arguments controlling how tests are run")
     group.add_argument("--prefix", metavar="HOST-PREFIX", action="append",
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
-    group.add_argument("--parallel", action="store_true",
-                       help="force parallel testing; by default parallel testing is only used when more than one prefix (--prefix) has been specified")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
     group.add_argument("--run-post-mortem", default=None, metavar="Y|N", type=argutil.boolean,
@@ -267,7 +265,7 @@ def _write_guest_prompt(domain, test):
     f.write(test.name)
     f.write("]# ")
 
-def _process_test(domain_prefix, domains, args, result_stats, task, logger):
+def _process_test(domains, args, result_stats, task, logger):
 
     test = task.test
     old_result = None
@@ -537,19 +535,18 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
         while True:
             task = test_queue.get(block=False)
             task_logger = logger.nest(task.test.name + " " + domain_prefix)
-            _process_test(domain_prefix, domains, args,
-                          result_stats, task, task_logger)
+            _process_test(domains, args, result_stats, task, task_logger)
     except queue.Empty:
         None
     finally:
         done.release()
 
 
-def _parallel_test_processor(domain_prefixes, test_queue, nr_tests, args, result_stats, logger):
+def _parallel_test_processor(test_queue, nr_tests, args, result_stats, logger):
 
     done = threading.Semaphore(value=0) # block
     threads = []
-    for domain_prefix in domain_prefixes:
+    for domain_prefix in args.prefix:
         threads.append(threading.Thread(name=domain_prefix,
                                         target=_process_test_queue,
                                         daemon=True,
@@ -595,13 +592,5 @@ def run_tests(logger, args, tests, result_stats):
         test_nr += 1
         test_queue.put(Task(test, test_nr, len(tests)), block=False)
 
-    domain_prefixes = args.prefix or [""]
-    if args.parallel or (len(domain_prefixes) > 1 and len(tests) > 1):
-        logger.info("using the parallel test processor and domain prefixes %s to run %d tests", domain_prefixes, len(tests))
-        _parallel_test_processor(domain_prefixes, test_queue, len(tests), args, result_stats, logger)
-    else:
-        domain_prefix = domain_prefixes[0]
-        done = threading.Semaphore(value=0) # block
-        logger.info("using the serial test processor and domain prefix '%s'", domain_prefix)
-        _process_test_queue(domain_prefix, test_queue, len(tests), args, done, result_stats)
+    _parallel_test_processor(test_queue, len(tests), args, result_stats, logger)
     publish.json_status(logger, args, "finished")
