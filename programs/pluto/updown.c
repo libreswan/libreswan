@@ -337,6 +337,28 @@ static bool do_updown_verb(const char *verb,
 			   struct updown_env updown_env,
 			   struct verbose verbose/*C-or-CHILD*/)
 {
+#if 0
+	/*
+	 * Depending on context, logging for either the connection or
+	 * the state?
+	 *
+	 * The sec_label code violates this expectation somehow.
+	 * Perhaps the logger points at the IKE SA?
+	 */
+	PEXPECT(logger, ((c != NULL && c->logger == logger) ||
+			 (child != NULL && child->sa.logger == logger)));
+#endif
+
+	/*
+	 * Support for skipping updown, eg leftupdown="".  Useful on
+	 * busy servers that do not need to use updown for anything.
+	 * Same for never_negotiate().
+	 */
+	if (c->local->config->child.updown == NULL) {
+		vdbg("skipped updown command - disabled per policy");
+		return true;
+	}
+
 	if (c->child.spds.len > 1) {
 		/* i.e., more selectors than just this */
 		selector_pair_buf sb;
@@ -439,42 +461,6 @@ static bool do_updown_verb(const char *verb,
 #endif
 }
 
-static bool do_updown_1(enum updown updown_verb,
-			const struct connection *c,
-			const struct spd *spd,
-			struct child_sa *child,
-			struct updown_env updown_env,
-			struct verbose verbose/*C-or-CHILD*/)
-{
-#if 0
-	/*
-	 * Depending on context, logging for either the connection or
-	 * the state?
-	 *
-	 * The sec_label code violates this expectation somehow.
-	 */
-	PEXPECT(logger, ((c != NULL && c->logger == logger) ||
-			 (st != NULL && st->logger == logger)));
-#endif
-
-	/*
-	 * Support for skipping updown, eg leftupdown="".  Useful on
-	 * busy servers that do not need to use updown for anything.
-	 * Same for never_negotiate().
-	 */
-	if (c->local->config->child.updown == NULL) {
-		vdbg("skipped updown command - disabled per policy");
-		return true;
-	}
-
-	name_buf verb;
-	if (!vexpect(enum_short(&updown_stories, updown_verb, &verb))) {
-		return false;
-	}
-
-	return do_updown_verb(verb.buf, c, spd, child, updown_env, verbose);
-}
-
 bool updown_connection_spd(enum updown updown_verb,
 			   const struct connection *c,
 			   const struct spd *spd,
@@ -504,14 +490,15 @@ bool updown_connection_spd(enum updown updown_verb,
 		vexpect(found);
 	}
 
-	bool ok = do_updown_1(updown_verb, c, spd, /*child*/NULL,
-			      (struct updown_env) {0}, verbose);
+	bool ok = do_updown_verb(verb, c, spd, /*child*/NULL,
+				 (struct updown_env) {0},
+				 verbose);
 
 	vdbg_stop(&start, "%s", sb.buf);
 	return ok;
 }
 
-static bool updown_child_spd_1(enum updown updown_verb,
+static bool updown_child_spd_1(const char *verb,
 			       struct child_sa *child,
 			       const struct spd *spd,
 			       struct verbose verbose)
@@ -521,8 +508,8 @@ static bool updown_child_spd_1(enum updown updown_verb,
 
 	vtime_t start = vdbg_start("%s", sb.buf);
 
-	bool ok = do_updown_1(updown_verb, child->sa.st_connection, spd, child,
-			      (struct updown_env) {0}, verbose);
+	bool ok = do_updown_verb(verb, child->sa.st_connection, spd, child,
+				 (struct updown_env) {0}, verbose);
 
 	vdbg_stop(&start, "%s", sb.buf);
 	return ok;
@@ -574,7 +561,7 @@ bool updown_child_spds(enum updown updown_verb,
 							 &spd->remote->client, &spb));
 		}
 
-		if (!updown_child_spd_1(updown_verb, child, spd, verbose)) {
+		if (!updown_child_spd_1(verb, child, spd, verbose)) {
 			if (config.return_error) {
 				return false;
 			}
@@ -614,6 +601,6 @@ void do_updown_unroute_spd(const struct spd *spd,
 	str_selector_pair_sensitive(&spd->local->client, &spd->remote->client, &sb);
 
 	vtime_t start = vdbg_start("%s", sb.buf);
-	do_updown_1(UPDOWN_UNROUTE, spd->connection, spd, child, updown_env, verbose);
+	do_updown_verb(verb, spd->connection, spd, child, updown_env, verbose);
 	vdbg_stop(&start, "%s", sb.buf);
 }
