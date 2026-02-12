@@ -34,18 +34,24 @@ bool server_runv(const char *story, const char *argv[],
 		 struct verbose verbose);
 
 /*
- * When non-empty, sends INPUT.
- * When non-NULL, captures OUTPUT.
- * Returns -1, 0, exit code.
+ * When INPUT is non-empty it is written to the child.
+ *
+ * When SAVE_OUTPUT is non-NULL, output from the child is captured;
+ * else output is logged.
+ *
  * When envp is non-NULL, use execve(argv,envp).
+ *
+ * Write command being executed to COMMAND_STREAM (when non-zero).
+ *
+ * Returns -1, 0, exit code.
  */
 
 int server_runve_io(const char *story,
 		    const char *argv[],
 		    const char *envp[],
 		    shunk_t input,
-		    chunk_t *output,
-		    enum stream output_stream,
-		    struct verbose verbose);
+		    chunk_t *save_output,
+		    struct verbose verbose,
+		    enum stream command_stream);
 
 #endif
