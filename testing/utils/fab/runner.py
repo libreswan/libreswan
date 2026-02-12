@@ -22,6 +22,7 @@ import subprocess
 import argparse
 from datetime import datetime
 from concurrent import futures
+from pathlib import Path
 
 from fab.datautil import *
 
@@ -48,7 +49,7 @@ POST_MORTEM_TIMEOUT = 120
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
                                       "Arguments controlling how tests are run")
-    group.add_argument("--prefix", metavar="HOST-PREFIX", action="append",
+    group.add_argument("--prefix", metavar="HOST-PREFIX", action="append", type=Path,
                        help="use <PREFIX><host> as the domain for <host> (for instance, PREFIXeast instead of east); if multiple prefixes are specified tests will be run in parallel using PREFIX* as a test pool")
     group.add_argument("--stop-at", metavar="SCRIPT", action="store",
                        help="stop the test at (before executing) the specified script")
@@ -520,13 +521,15 @@ def _process_test(domains, args, result_stats, task, logger):
 
 def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_stats):
     # New (per-thread/process) logger!
-    logger = logutil.getLogger(domain_prefix and domain_prefix or "kvmrunner")
-
+    logger_name = domain_prefix.name and domain_prefix.name or "kvmrunner"
+    logger = logutil.getLogger(logger_name)
     logger.info("preparing test domains")
 
     domains = List()
     for guest in hosts.guests():
-        domain = virsh.Domain(logger=logger, prefix=domain_prefix, guest=guest)
+        domain = virsh.Domain(logger=logger,
+                              prefix=domain_prefix.name,
+                              guest=guest)
         domains.append(domain)
         domain.destroy()
 
@@ -534,7 +537,8 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     try:
         while True:
             task = test_queue.get(block=False)
-            task_logger = logger.nest(task.test.name + " " + domain_prefix)
+            task_logger_name = task.test.name + (domain_prefix.name and " " + domain_prefix.name or "")
+            task_logger = logger.nest(task_logger_name)
             _process_test(domains, args, result_stats, task, task_logger)
     except queue.Empty:
         None
@@ -547,7 +551,8 @@ def _parallel_test_processor(test_queue, nr_tests, args, result_stats, logger):
     done = threading.Semaphore(value=0) # block
     threads = []
     for domain_prefix in args.prefix:
-        threads.append(threading.Thread(name=domain_prefix,
+        thread_name = domain_prefix.name and domain_prefix.name or "kvmrunner"
+        threads.append(threading.Thread(name=thread_name,
                                         target=_process_test_queue,
                                         daemon=True,
                                         args=(domain_prefix, test_queue,

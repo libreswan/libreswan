@@ -580,7 +580,7 @@ kvm-%: kvm-ready kvm-web
 	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
-		$(foreach prefix,$(KVM_TEST_PREFIXES), --prefix '$(notdir $(prefix))') \
+		$(addprefix --prefix=, $(KVM_TEST_PREFIXES)) \
 		--testingdir $(KVM_TESTINGDIR) \
 		$(if $(WEB_ENABLED), --publish-hash        $(TESTING_HASH)) \
 		$(if $(WEB_ENABLED), --publish-resultsdir  $(TESTING_RESULTSDIR)) \
