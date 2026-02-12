@@ -519,16 +519,18 @@ def _process_test(domains, args, result_stats, task, logger):
             result_stats.log_progress(logger.info)
 
 
-def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_stats):
+def _process_test_queue(domain_prefix, name_prefix,
+                        test_queue, nr_tests,
+                        args, done, result_stats):
     # New (per-thread/process) logger!
-    logger_name = domain_prefix.name and domain_prefix.name or "kvmrunner"
+    logger_name = (name_prefix and name_prefix or "kvmrunner")
     logger = logutil.getLogger(logger_name)
     logger.info("preparing test domains")
 
     domains = List()
     for guest in hosts.guests():
         domain = virsh.Domain(logger=logger,
-                              prefix=domain_prefix.name,
+                              prefix=name_prefix,
                               guest=guest)
         domains.append(domain)
         domain.destroy()
@@ -537,7 +539,7 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     try:
         while True:
             task = test_queue.get(block=False)
-            task_logger_name = task.test.name + (domain_prefix.name and " " + domain_prefix.name or "")
+            task_logger_name = task.test.name + (name_prefix and " " + name_prefix or "")
             task_logger = logger.nest(task_logger_name)
             _process_test(domains, args, result_stats, task, task_logger)
     except queue.Empty:
@@ -551,12 +553,19 @@ def _parallel_test_processor(test_queue, nr_tests, args, result_stats, logger):
     done = threading.Semaphore(value=0) # block
     threads = []
     for domain_prefix in args.prefix:
-        thread_name = domain_prefix.name and domain_prefix.name or "kvmrunner"
+        if domain_prefix.is_dir():
+            name_prefix = ""
+        elif domain_prefix.parent.is_dir():
+            name_prefix = domain_prefix.name
+        else:
+            raise Exception(f"invalid prefix {domain_prefix}")
+        thread_name = (name_prefix and name_prefix+"runner" or "runner")
         threads.append(threading.Thread(name=thread_name,
                                         target=_process_test_queue,
                                         daemon=True,
-                                        args=(domain_prefix, test_queue,
-                                              nr_tests, args, done,
+                                        args=(domain_prefix, name_prefix,
+                                              test_queue, nr_tests,
+                                              args, done,
                                               result_stats)))
         # don't start more threads then needed
         if len(threads) >= nr_tests:
