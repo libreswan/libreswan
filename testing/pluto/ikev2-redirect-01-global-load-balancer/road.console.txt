@@ -45,7 +45,7 @@ IMPAIR: "road-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 192
 "road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
 "road-east" #3: received INTERNAL_IP4_DNS server address 1.2.3.4
 "road-east" #3: received INTERNAL_IP4_DNS server address 5.6.7.8
-"road-east" #3: "up" output: updating resolvconf
+"road-east" #3: command "up" output: updating resolvconf
 "road-east" #3: initiator established Child SA using #2; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
@@ -57,7 +57,7 @@ road #
  ipsec auto --delete road-east
 "road-east": terminating SAs using this connection
 "road-east" #2: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"road-east" #3: "down" output: restoring resolvconf
+"road-east" #3: command "down" output: restoring resolvconf
 "road-east" #3: ESP traffic information: in=84B out=84B
 road #
  # road is redirected to 1 - 192.1.2.44 - which is down

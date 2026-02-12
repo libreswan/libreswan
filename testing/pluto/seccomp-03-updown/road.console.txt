@@ -32,14 +32,14 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 8.8.8.8
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_DNS_DOMAIN 'test.tld'
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: updating local nameserver for test.tld with 1.2.3.4 1.2.3.4 8.8.8.8
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: ok
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: ok removed 0 rrsets, 0 messages and 0 key entries
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: ok
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: updating local nameserver for test.tld with 1.2.3.4 1.2.3.4 8.8.8.8
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: ok
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: ok removed 0 rrsets, 0 messages and 0 key entries
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: updating local nameserver for test.tld with 1.2.3.4 1.2.3.4 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: ok removed 0 rrsets, 0 messages and 0 key entries
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: updating local nameserver for test.tld with 1.2.3.4 1.2.3.4 8.8.8.8
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: ok removed 0 rrsets, 0 messages and 0 key entries
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: ok
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.0.1/32===0.0.0.0/0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec whack --trafficstatus
@@ -57,14 +57,14 @@ road #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: flushing local nameserver of test.tld
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: ok
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: ok removed 0 rrsets, 0 messages and 0 key entries
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: ok
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: flushing local nameserver of test.tld
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: ok
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: ok removed 0 rrsets, 0 messages and 0 key entries
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: flushing local nameserver of test.tld
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: ok removed 0 rrsets, 0 messages and 0 key entries
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: flushing local nameserver of test.tld
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: ok
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: ok removed 0 rrsets, 0 messages and 0 key entries
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: ok
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=56B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (established IKE SA)
 road #

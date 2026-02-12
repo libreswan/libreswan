@@ -101,7 +101,7 @@ IMPAIR: "north-east": dispatch REVIVAL; redirect attempt 1 from 192.1.2.23 to 19
 "north-east" #7: received INTERNAL_IP4_ADDRESS 192.0.2.101
 "north-east" #7: received INTERNAL_IP4_DNS server address 1.2.3.4
 "north-east" #7: received INTERNAL_IP4_DNS server address 5.6.7.8
-"north-east" #7: "up" output: updating resolvconf
+"north-east" #7: command "up" output: updating resolvconf
 "north-east" #7: initiator established Child SA using #6; IPsec tunnel [192.0.2.101/32===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ../../guestbin/ping-once.sh --up 192.0.2.254
@@ -113,7 +113,7 @@ north #
  ipsec auto --delete north-east
 "north-east": terminating SAs using this connection
 "north-east" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-"north-east" #7: "down" output: restoring resolvconf
+"north-east" #7: command "down" output: restoring resolvconf
 "north-east" #7: ESP traffic information: in=84B out=84B
 north #
  ipsec whack --trafficstatus
