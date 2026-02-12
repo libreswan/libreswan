@@ -25,10 +25,12 @@ set #
  ../../guestbin/wait-until-pluto-started
 set #
  ipsec add rise-set
-"rise-set": "ifconfig" command: 'ifconfig' 'sec1'
-"rise-set": "ifconfig" output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280\n\tindex 7 priority 0 llprio 3\n\tgroups: se
-"rise-set": "ifconfig" output: c\n\tinet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00\n
-"rise-set": "ifconfig" wstatus: 0; exited yes(0); signaled: no(0); stopped: no(0); core: no; EOF
+"rise-set": command "ifconfig": 'ifconfig' 'sec1'
+"rise-set": command "ifconfig" output: sec1: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST> mtu 1280
+"rise-set": command "ifconfig" output: \tindex 7 priority 0 llprio 3
+"rise-set": command "ifconfig" output: \tgroups: sec
+"rise-set": command "ifconfig" output: \tinet 198.18.15.15 --> 198.18.12.12 netmask 0xffffff00
+"rise-set": command "ifconfig": exited normally
 "rise-set": added oriented IKEv2 connection
 set #
  ../../guestbin/ping-once.sh --up -I 198.18.15.15 198.18.12.12
