@@ -50,11 +50,11 @@ west #
 "whack--pass": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--encrypt      --encrypt      --pass --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--pass--encrypt": phase2=esp ignored for never-negotiate (type=passthrough) connection
+warning: "whack--pass--encrypt": phase2=esp ignored for never-negotiate (type=pass) connection
 "whack--pass--encrypt": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--pass--authenticate --authenticate --pass --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--pass--authenticate": phase2=ah ignored for never-negotiate (type=passthrough) connection
+warning: "whack--pass--authenticate": phase2=ah ignored for never-negotiate (type=pass) connection
 "whack--pass--authenticate": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*ENCRYPT.*/\1 ENCRYPT/p'
