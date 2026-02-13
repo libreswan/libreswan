@@ -25,7 +25,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 8.8.8.8
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "up" output: updating resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23
@@ -43,7 +43,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: send_no_delete set - not sending Delete/Notify
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: "down" output: restoring resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
@@ -59,7 +59,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: received INTERNAL_IP4_DNS server address 8.8.8.8
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: "up" output: updating resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
@@ -67,7 +67,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #3: send_no_delete set - not sending Delete/Notify
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: "down" output: restoring resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
@@ -83,7 +83,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: received INTERNAL_IP4_DNS server address 8.8.8.8
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: "up" output: updating resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: initiator established Child SA using #5; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
@@ -91,7 +91,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: terminating SAs using this connection
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 IMPAIR: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #5: send_no_delete set - not sending Delete/Notify
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: "down" output: restoring resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: command "down" output: restoring resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #6: ESP traffic information: in=0B out=0B
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23
 "westnet-eastnet-ipv4-psk-ikev2": added oriented IKEv2 connection
@@ -107,7 +107,7 @@ road #
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_ADDRESS 192.0.2.1
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS server address 1.2.3.4
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: received INTERNAL_IP4_DNS server address 8.8.8.8
-"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: "up" output: updating resolvconf
+"westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: command "up" output: updating resolvconf
 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #8: initiator established Child SA using #7; IPsec tunnel [192.0.2.1/32===192.1.2.23/32] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 NATD=192.1.2.23:4500 DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up -I 192.0.2.1 192.1.2.23

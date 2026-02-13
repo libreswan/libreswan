@@ -28,7 +28,7 @@ north #
 "north-west" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP}
 "north-west" #1: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "north-west" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@west'
-"north-west" #2: "route" output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
+"north-west" #2: command "route" output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
 "north-west" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0/0===0.0.0.0/0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
 north #
  ../../guestbin/ip.sh -s link show ipsec2

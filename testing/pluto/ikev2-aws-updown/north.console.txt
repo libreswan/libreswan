@@ -23,7 +23,7 @@ north #
 "westnet-northnet" #1: sent IKE_AUTH request to 192.1.2.45:UDP/500 with shared-key-mac and FQDN '@north'; Child SA #2 {ESP <0xESPESP}
 "westnet-northnet" #1: processing IKE_AUTH response from 192.1.2.45:UDP/500 containing SK{IDr,AUTH,SA,TSi,TSr}
 "westnet-northnet" #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@west'
-"westnet-northnet" #2: "route" output: westnet-northnet routed: setting eastnet-northnet passive
+"westnet-northnet" #2: command "route" output: westnet-northnet routed: setting eastnet-northnet passive
 "westnet-northnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
 north #
  ipsec whack --trafficstatus
@@ -52,8 +52,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#2: connection is supposed to remain up'
 "westnet-northnet" #2: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 north #
- ../../guestbin/wait-for-pluto.sh --match '#2: "down" output: down: unrouting'
-"westnet-northnet" #2: "down" output: down: unrouting...
+ ../../guestbin/wait-for-pluto.sh --match '#2: command "down" output: down: unrouting'
+"westnet-northnet" #2: command "down" output: down: unrouting...
 north #
  ../../guestbin/wait-for-pluto.sh --match '#2: ESP traffic information'
 "westnet-northnet" #2: ESP traffic information: in=168B out=168B
@@ -66,8 +66,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#3: initiating IKEv2 connection'
 "eastnet-northnet" #3: initiating IKEv2 connection to 192.1.2.23 using UDP
 north #
- ../../guestbin/wait-for-pluto.sh --match '#4: "route" output: eastnet-northnet routed: setting westnet-northnet passive'
-"eastnet-northnet" #4: "route" output: eastnet-northnet routed: setting westnet-northnet passive
+ ../../guestbin/wait-for-pluto.sh --match '#4: command "route" output: eastnet-northnet routed: setting westnet-northnet passive'
+"eastnet-northnet" #4: command "route" output: eastnet-northnet routed: setting westnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#4: initiator established Child SA using #3'
 "eastnet-northnet" #4: initiator established Child SA using #3; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
@@ -118,8 +118,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#4: connection is supposed to remain up'
 "eastnet-northnet" #4: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 north #
- ../../guestbin/wait-for-pluto.sh --match '#4: "down" output: down: unrouting'
-"eastnet-northnet" #4: "down" output: down: unrouting...
+ ../../guestbin/wait-for-pluto.sh --match '#4: command "down" output: down: unrouting'
+"eastnet-northnet" #4: command "down" output: down: unrouting...
 north #
  ../../guestbin/wait-for-pluto.sh --match '#4: ESP traffic information'
 "eastnet-northnet" #4: ESP traffic information: in=336B out=336B
@@ -132,8 +132,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#5: initiating IKEv2 connection'
 "westnet-northnet" #5: initiating IKEv2 connection to 192.1.2.45 using UDP
 north #
- ../../guestbin/wait-for-pluto.sh --match '#6: "route" output: westnet-northnet routed: setting eastnet-northnet passive'
-"westnet-northnet" #6: "route" output: westnet-northnet routed: setting eastnet-northnet passive
+ ../../guestbin/wait-for-pluto.sh --match '#6: command "route" output: westnet-northnet routed: setting eastnet-northnet passive'
+"westnet-northnet" #6: command "route" output: westnet-northnet routed: setting eastnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#6: initiator established Child SA using #5'
 "westnet-northnet" #6: initiator established Child SA using #5; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}
@@ -188,8 +188,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#6: connection is supposed to remain up'
 "westnet-northnet" #6: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 north #
- ../../guestbin/wait-for-pluto.sh --match '#6: "down" output: down: unrouting'
-"westnet-northnet" #6: "down" output: down: unrouting...
+ ../../guestbin/wait-for-pluto.sh --match '#6: command "down" output: down: unrouting'
+"westnet-northnet" #6: command "down" output: down: unrouting...
 north #
  ../../guestbin/wait-for-pluto.sh --match '#6: ESP traffic information'
 "westnet-northnet" #6: ESP traffic information: in=336B out=336B
@@ -218,8 +218,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#7: connection is supposed to remain up'
 "eastnet-northnet" #7: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 north #
- ../../guestbin/wait-for-pluto.sh --match '#7: "unroute" output: westnet-northnet up'
-"eastnet-northnet" #7: "unroute" output: westnet-northnet up
+ ../../guestbin/wait-for-pluto.sh --match '#7: command "unroute" output: westnet-northnet up'
+"eastnet-northnet" #7: command "unroute" output: westnet-northnet up
 north #
  ../../guestbin/wait-for-pluto.sh --match '#7: deleting IKE SA'
 "eastnet-northnet" #7: deleting IKE SA (sent IKE_SA_INIT request)
@@ -235,8 +235,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#8: connection is supposed to remain up'
 "westnet-northnet" #8: connection is supposed to remain up; revival attempt 2 scheduled in 5 seconds
 north #
- ../../guestbin/wait-for-pluto.sh --match '#8: "unroute" output: eastnet-northnet up'
-"westnet-northnet" #8: "unroute" output: eastnet-northnet up
+ ../../guestbin/wait-for-pluto.sh --match '#8: command "unroute" output: eastnet-northnet up'
+"westnet-northnet" #8: command "unroute" output: eastnet-northnet up
 north #
  ../../guestbin/wait-for-pluto.sh --match '#8: deleting IKE SA'
 "westnet-northnet" #8: deleting IKE SA (sent IKE_SA_INIT request)
@@ -252,8 +252,8 @@ north #
  ../../guestbin/wait-for-pluto.sh --match '#9: initiating IKEv2 connection'
 "eastnet-northnet" #9: initiating IKEv2 connection to 192.1.2.23 using UDP
 north #
- ../../guestbin/wait-for-pluto.sh --match '#10: "route" output: eastnet-northnet routed: setting westnet-northnet passive'
-"eastnet-northnet" #10: "route" output: eastnet-northnet routed: setting westnet-northnet passive
+ ../../guestbin/wait-for-pluto.sh --match '#10: command "route" output: eastnet-northnet routed: setting westnet-northnet passive'
+"eastnet-northnet" #10: command "route" output: eastnet-northnet routed: setting westnet-northnet passive
 north #
  ../../guestbin/wait-for-pluto.sh --match '#10: initiator established Child SA using #9'
 "eastnet-northnet" #10: initiator established Child SA using #9; IPsec tunnel [192.0.3.0/24===192.1.4.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=active}

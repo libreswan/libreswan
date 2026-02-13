@@ -439,8 +439,9 @@ static bool do_updown_verb(const char *verb,
 	};
 
 	int status = server_runve_io(verb, argv, envp, empty_shunk,
-				     /*discard output*/NULL,
-				     DEBUG_STREAM, verbose);
+				     /*save_output*/NULL,
+				     verbose,
+				     /*command_stream*/ALL_STREAMS);
 	return (status == 0);
 #else
 	/* must free */
