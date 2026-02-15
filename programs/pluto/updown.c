@@ -87,46 +87,35 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 }
 
 /*
- * fmt_common_shell_out: form the command string
+ * build updown's environment; strings are saved in JB.
  *
  * note: this mutates *st by calling get_sa_bundle_info().
  */
 
-static bool fmt_common_shell_out(char *buf, size_t blen,
-#ifdef UPDOWN_EXECVE
-				 const char **envp, unsigned envp_len,
-#endif
-				 const char *verb, const char *verb_suffix,
-				 const struct connection *c,
-				 const struct spd *sr,
-				 struct child_sa *child,
-				 struct updown_env updown_env,
-				 struct verbose verbose/*C-or-CHILD*/)
+static bool build_updown_envp(struct jambuf jb,
+			      const char **envp, unsigned envp_len,
+			      const char *verb, const char *verb_suffix,
+			      const struct connection *c,
+			      const struct spd *sr,
+			      struct child_sa *child,
+			      struct updown_env updown_env,
+			      struct verbose verbose/*C-or-CHILD*/)
 {
-	struct jambuf jb = array_as_jambuf(buf, blen);
 	const bool tunneling = (c->config->child.encap_mode == ENCAP_MODE_TUNNEL);
 
 	/* macros to jam definitions of various forms */
 
-#ifdef UPDOWN_EXECVE
 	const char **envp_end = envp + envp_len - 1;
 #	define JDemitter(NAME, EMITTER)			\
 	{						\
 		if (envp < envp_end) {			\
 			*envp++ = jambuf_cursor(&jb);	\
 		}					\
-		jam_string(&jb, NAME "='");		\
+		jam_string(&jb, NAME "=");		\
 		EMITTER;				\
-		jam(&jb, "' ");				\
+		uint8_t byte = 0;			\
+		jam_raw_bytes(&jb, &byte, 1);		\
 	}
-#else
-#	define JDemitter(NAME, EMITTER)			\
-	{						\
-		jam_string(&jb, NAME "='");		\
-		EMITTER;				\
-		jam(&jb, "' ");				\
-	}
-#endif
 
 #	define JD(NAME, FMT, ...)  JDemitter(NAME, jam(&jb, FMT, ##__VA_ARGS__))
 #	define JDstr(NAME, STRING) JD(NAME, "%s", STRING)
@@ -149,7 +138,7 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 	}
 
 	JDipaddr("PLUTO_ME", sr->local->host->addr);
-	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
+	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_sanitized_bytes));
 	JD("PLUTO_CLIENT_FAMILY", "ipv%s", selector_info(sr->local->client)->n_name);
 	JDemitter("PLUTO_MY_CLIENT", jam_selector_range(&jb, &sr->local->client));
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
@@ -178,7 +167,7 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 				"unknown?"));
 
 	JDipaddr("PLUTO_PEER", sr->remote->host->addr);
-	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_shell_quoted_bytes));
+	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_sanitized_bytes));
 
 	/* for transport mode, things are complicated */
 	JDemitter("PLUTO_PEER_CLIENT",
@@ -208,7 +197,7 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 			      same_id(&c->remote->host.id, &key->id) &&
 			      trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca),
 					 &pathlen, verbose)) {
-				  jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
+				  jam_dn_or_null(&jb, key->issuer, "", jam_sanitized_bytes);
 				  break;
 			  }
 		  });
@@ -313,13 +302,11 @@ static bool fmt_common_shell_out(char *buf, size_t blen,
 	/*
 	 * Terminate envp
 	 */
-#ifdef UPDOWN_EXECVE
 	if (envp == envp_end) {
 		verror(0, "environment overflow");
 		return false;
 	}
 	*envp++ = NULL;
-#endif
 
 	return jambuf_ok(&jb);
 
@@ -417,49 +404,20 @@ static bool do_updown_verb(const char *verb,
 	}
 
 	vdbg("kernel: command executing %s%s", verb, verb_suffix);
-	char common_shell_out_str[2048];
-#ifdef UPDOWN_EXECVE
+	char envp_buffer[2048];
 	const char *envp[100];
-#endif
-	if (!fmt_common_shell_out(common_shell_out_str, sizeof(common_shell_out_str),
-#ifdef UPDOWN_EXECVE
-				  envp, elemsof(envp),
-#endif
-				  verb, verb_suffix, c, spd,
-				  child, updown_env, verbose)) {
+
+	if (!build_updown_envp(ARRAY_AS_JAMBUF(envp_buffer),
+			 envp, elemsof(envp),
+			 verb, verb_suffix, c, spd,
+			 child, updown_env, verbose)) {
 		vlog("%s%s command too long!", verb,
 		     verb_suffix);
 		return false;
 	}
 
-#ifdef UPDOWN_EXECVE
-	const char *argv[] = {
-		IPSEC_EXECDIR"/_updown",
-		NULL,
-	};
-
-	int status = server_runve_io(verb, argv, envp, empty_shunk,
-				     /*save_output*/NULL,
-				     verbose,
-				     /*command_stream*/ALL_STREAMS);
-	return (status == 0);
-#else
-	/* must free */
-	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */
-				 "%s"         /* other stuff */
-				 "%s",        /* actual script */
-				 common_shell_out_str,
-				 c->local->config->child.updown);
-	if (cmd == NULL) {
-		vlog("%s%s command too long!", verb,
-		     verb_suffix);
-		return false;
-	}
-
-	bool ok = server_run(verb, cmd, verbose);
-	pfree(cmd);
+	bool ok = server_rune(verb, c->local->config->child.updown, envp, verbose);
 	return ok;
-#endif
 }
 
 bool updown_connection_spd(enum updown updown_verb,
