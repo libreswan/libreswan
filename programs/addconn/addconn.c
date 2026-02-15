@@ -477,6 +477,7 @@ int main(int argc, char *argv[])
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist &&
 	    configsetup.name == NULL &&
+	    name == NULL &&
 	    !checkconfig) {
 		llog(RC_LOG, logger, "nothing to do, see --help");
 		exit(1);
