@@ -92,7 +92,6 @@ static const struct keyword_def config_conn_keyword[] = {
   K("auto",  LEMPTY,  kt_sparse_name,  KNCF_AUTO, .sparse_names = &autostart_names),
   K("also",  kv_duplicateok,  kt_also,  KSCF_ALSO),
   K("hostaddrfamily",  LEMPTY,  kt_string,  KWS_HOSTADDRFAMILY),
-  K("type",  LEMPTY,  kt_sparse_name,  KNCF_TYPE, .sparse_names = &type_option_names),
   K("authby",  LEMPTY,  kt_string,  KWS_AUTHBY),
   K("keyexchange",  LEMPTY,  kt_string,  KWS_KEYEXCHANGE),
   K("ikev2",  LEMPTY,  kt_string,  KWS_IKEv2),
@@ -187,6 +186,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("replay-window",  LEMPTY,  kt_string,  KWS_REPLAY_WINDOW),
   K("ikelifetime",  LEMPTY,  kt_string,  KWS_IKELIFETIME),
 
+  K("type",  LEMPTY,  kt_string,  KWS_TYPE),
   K("failureshunt",  LEMPTY,  kt_string,  KWS_FAILURESHUNT),
   K("negotiationshunt",  LEMPTY,  kt_string,  KWS_NEGOTIATIONSHUNT),
 

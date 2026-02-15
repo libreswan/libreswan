@@ -627,8 +627,8 @@ enum opt {
 	 * Connection shunt policies.
 	 */
 
-	CDS_NEVER_NEGOTIATE_PASS,
-	CDS_NEVER_NEGOTIATE_DROP,
+	CDS_PASS,
+	CDS_DROP,
 	CDS_NEGOTIATION_PASS,
 	CDS_NEGOTIATION_HOLD,
 	CDS_FAILURE_NONE,
@@ -827,9 +827,9 @@ const struct option optarg_options[] = {
 
 	{ FATAL_OPT("initiateontraffic", ""), no_argument, NULL, 0, }, /* obsolete */
 
-	{ "drop\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
-	{ "pass\0", no_argument, NULL, CDS_NEVER_NEGOTIATE_PASS },
-	{ "reject\0>drop", no_argument, NULL, CDS_NEVER_NEGOTIATE_DROP },
+	{ "drop\0", no_argument, NULL, CDS_DROP },
+	{ "pass\0", no_argument, NULL, CDS_PASS },
+	{ REPLACE_OPT("reject", "drop", "5.3"), no_argument, NULL, CDS_DROP },
 
 	{ "negodrop\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
 	{ "negohold\0", no_argument, NULL, CDS_NEGOTIATION_HOLD },
@@ -1529,7 +1529,7 @@ int main(int argc, char **argv)
 
 		case END_SUBNET:	/* --subnet <subnet> | --client <subnet> */
 			end->we_subnet = optarg;	/* decoded by Pluto */
-			msg.type = KS_TUNNEL;	/* client => tunnel */
+			msg.wm_type = "tunnel";	/* client => tunnel */
 			continue;
 
 		case END_CLIENTPROTOPORT:	/* --clientprotoport <protocol>/<port> */
@@ -1622,11 +1622,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TUNNEL:		/* --tunnel */
-			msg.type = KS_TUNNEL;
+			msg.wm_type = "tunnel";
 			continue;
 
 		case CD_TRANSPORT:	/* --transport */
-			msg.type = KS_TRANSPORT;
+			msg.wm_type = "transport";
 			continue;
 
 		case CD_ENCRYPT:	/* --encrypt */
@@ -1733,11 +1733,11 @@ int main(int argc, char **argv)
 			msg.wm_mobike = (optarg == NULL ? "yes" : optarg);
 			continue;
 
-		case CDS_NEVER_NEGOTIATE_PASS:	/* --pass */
-			msg.never_negotiate_shunt = SHUNT_PASS;
+		case CDS_PASS:	/* --pass */
+			msg.wm_type = "pass";
 			continue;
-		case CDS_NEVER_NEGOTIATE_DROP:	/* --drop */
-			msg.never_negotiate_shunt = SHUNT_DROP;
+		case CDS_DROP:	/* --drop */
+			msg.wm_type = "drop";
 			continue;
 
 		case CDS_NEGOTIATION_PASS:	/* --negopass */

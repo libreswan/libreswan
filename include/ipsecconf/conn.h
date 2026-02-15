@@ -142,7 +142,7 @@ enum config_conn_keyword {
 
 	KWS_FAILURESHUNT,
 	KWS_NEGOTIATIONSHUNT,
-	KNCF_TYPE,
+	KWS_TYPE,
 
 	KWS_MOBIKE,
 	KWS_MTU,
