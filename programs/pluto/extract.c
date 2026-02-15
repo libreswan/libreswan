@@ -3283,31 +3283,28 @@ diag_t extract_connection(const struct whack_message *wm,
 	if (iptfs) {
 		/* lots of incompatibility */
 		if (ike_version < IKEv2) {
-			return diag("IPTFS requires IKEv2");
+			return diag("IPTFS is not compatible with keyexchange=IKEv1, either omit option or specify keyexchange=IKEv2");
 		}
 		if (encap_mode != ENCAP_MODE_TUNNEL) {
 			name_buf sb;
-			return diag("type=%s must be transport",
+			return diag("IPTFS is not compatible with type=%s, either omit option or specify type=tunnel",
 				    str_sparse_long(&type_option_names, wm->type, &sb));
 		}
 		if (tfc > 0) {
-			return diag("IPTFS is not compatible with tfc=%ju", tfc);
+			return diag("IPTFS is not compatible with tfc=%ju, either omit option or specify tfc=0", tfc);
 		}
 		if (compress) {
-			return diag("IPTFS is not compatible with compress=yes");
-		}
-		if (encap_mode == ENCAP_MODE_TRANSPORT) {
-			return diag("IPTFS is not compatible with type=transport");
+			return diag("IPTFS is not compatible with compress=yes, either omit option or specify compress=no");
 		}
 		if (encap_proto != ENCAP_PROTO_ESP) {
 			name_buf eb;
-			return diag("IPTFS is not compatible with %s=",
+			return diag("IPTFS is not compatible with %s=, either omit option or specify esp=",
 				    str_enum_short(&encap_proto_story, encap_proto, &eb));
 		}
 
 		err_t err = kernel_ops->iptfs_ipsec_sa_is_enabled(verbose.logger);
 		if (err != NULL) {
-			return diag("IPTFS is not supported by the kernel: %s", err);
+			return diag("IPTFS is not supported by the kernel, %s", err);
 		}
 
 		deltatime_t uint32_max = deltatime_from_microseconds(UINT32_MAX);
