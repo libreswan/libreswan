@@ -3992,7 +3992,7 @@ diag_t extract_connection(const struct whack_message *wm,
 			return diag("nic-offload=packet restricted to phase2=esp");
 		}
 		if (compress) {
-			return diag("nic-offload=packet restricted to compression=no");
+			return diag("nic-offload=packet restricted to compress=no");
 		}
 		if (config->encapsulation == YNA_YES) {
 			return diag("nic-offload=packet cannot specify encapsulation=yes");
