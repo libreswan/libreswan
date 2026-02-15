@@ -341,7 +341,7 @@ static bool do_updown_verb(const char *verb,
 	 * busy servers that do not need to use updown for anything.
 	 * Same for never_negotiate().
 	 */
-	if (c->local->config->child.updown == NULL) {
+	if (c->local->config->child.updown.command == NULL) {
 		vdbg("skipped updown command - disabled per policy");
 		return true;
 	}
@@ -353,7 +353,7 @@ static bool do_updown_verb(const char *verb,
 		     str_selector_pair(&spd->local->client, &spd->remote->client, &sb));
 	} else {
 		vdbg("kernel: running updown command \"%s\" for verb %s ",
-		     c->local->config->child.updown, verb);
+		     c->local->config->child.updown.command, verb);
 	}
 
 	/*
@@ -416,7 +416,8 @@ static bool do_updown_verb(const char *verb,
 		return false;
 	}
 
-	bool ok = server_rune(verb, c->local->config->child.updown, envp, verbose);
+	bool ok = server_rune(verb, c->local->config->child.updown.command,
+			      envp, verbose);
 	return ok;
 }
 

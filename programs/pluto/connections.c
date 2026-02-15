@@ -522,7 +522,7 @@ static void discard_connection(struct connection **cp, bool connection_valid, wh
 			pfreeany(end->heap.nexthop);
 			free_id_content(&end->host.id);
 			/* child */
-			pfreeany(end->child.updown);
+			pfreeany(end->child.updown.command);
 			pfree_list(&end->child.selectors);
 			pfree_list(&end->child.sourceip);
 			virtual_ip_delref(&end->child.virt);

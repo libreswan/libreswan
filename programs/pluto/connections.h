@@ -141,7 +141,14 @@ struct host_end_config {
 struct child_end_config {
 	const char *leftright;
 	ip_protoport protoport;
-	char *updown;
+
+	/*
+	 * XXX: should command be pre-sliced ready for passing to
+	 * execve() (depending on exec option).
+	 */
+	struct {
+		char *command;
+	} updown;
 
 	bool has_client_address_translation;		/* aka CAT */
 

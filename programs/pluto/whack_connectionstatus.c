@@ -511,10 +511,10 @@ static void show_connection_status(struct show *s, const struct connection *c)
 
 #define JAM_UPDOWN(BUF, E)						\
 		{							\
-			if ((E)->config->child.updown == NULL) {	\
+			if ((E)->config->child.updown.command == NULL) { \
 				jam_string(BUF, "<disabled>");		\
 			} else {					\
-				jam_string(BUF, (E)->config->child.updown); \
+				jam_string(BUF, (E)->config->child.updown.command); \
 			}						\
 			jam_string(BUF, ";");				\
 		}

@@ -2049,7 +2049,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		vdbg("never-negotiate updown");
 	} else {
 		/* Note: "" disables updown; but no updown gets default */
-		child_config->updown =
+		child_config->updown.command =
 			(src->we_updown == NULL ? clone_str(DEFAULT_UPDOWN, "default_updown") :
 			 streq(src->we_updown, UPDOWN_DISABLED) ? NULL :
 			 streq(src->we_updown, "") ? NULL :
