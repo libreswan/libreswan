@@ -6,57 +6,57 @@ west #
  ../../guestbin/wait-until-pluto-started
 west #
  ipsec add negotiationshunt=
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "negotiationshunt=": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=passthrough
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "negotiationshunt=passthrough": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=drop
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "negotiationshunt=drop": added oriented IKEv2 connection
 west #
  ipsec add negotiationshunt=hold
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "negotiationshunt=hold": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "failureshunt=": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=none
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "failureshunt=none": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=passthrough
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "failureshunt=passthrough": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=drop
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "failureshunt=drop": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=hold
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 warning: "failureshunt=hold": failureshunt "hold" implemented as "drop"
 "failureshunt=hold": added oriented IKEv2 connection
 west #
  ipsec add failureshunt=reject
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 warning: "failureshunt=reject": failureshunt "reject" implemented as "drop"
 "failureshunt=reject": added oriented IKEv2 connection
 west #
  ipsec add type=drop
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "type=drop": added oriented drop connection
 west #
  ipsec add type=reject
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "type=reject": added oriented drop connection
 west #
  ipsec add type=passthrough
-ipsec add: warning: type=%reject implemented as type=%drop
+ipsec add: warning: /etc/ipsec.conf:51: reject implemented as drop: type=reject
 "type=passthrough": added oriented passthrough connection
 west #
  ipsec connectionstatus | sed -n -e 's/\(.* policy:\) .*\(DROP\).*/\1 \2/p' | sort -u
