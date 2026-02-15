@@ -1,6 +1,6 @@
-# Test programs that run on the GUEST, for libreswan
+# flags tests, for libreswan
 #
-# Copyright (C) 2015-2022  Andrew Cagney
+# Copyright (C) 2026 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,25 +12,21 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-include ../../mk/dirs.mk
-include $(top_srcdir)/mk/config.mk
+# XXX: Hack to suppress the man page.  Should one be added?
+PROGRAM_MANPAGE =
 
-SUBDIRS += asn1check
-SUBDIRS += authbycheck
-SUBDIRS += dncheck
-SUBDIRS += enumcheck
-SUBDIRS += flagscheck
-SUBDIRS += hunkcheck
-SUBDIRS += ipcheck
-SUBDIRS += jambufcheck
-SUBDIRS += kernel
-SUBDIRS += keyidcheck
-SUBDIRS += timecheck
-SUBDIRS += ttodatacheck
-SUBDIRS += vendoridcheck
+PROGRAM = _flagscheck
 
-ifeq ($(USE_LABELED_IPSEC),true)
-SUBDIRS += getpeercon_server
+OBJS += flagscheck.o
+
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWTOOLLIBS)
+
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../../mk/program.mk
 endif
 
-include $(top_srcdir)/mk/targets.mk
+local-check: $(PROGRAM)
+	$(builddir)/$(PROGRAM)
