@@ -5,25 +5,49 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec add addconn
-"addconn": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name nic-offload=        #nic-offload=
+"nic-offload=": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--nic-offload=no
-"addconn--nic-offload=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name nic-offload=no      nic-offload=no
+"nic-offload=no": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--nic-offload=yes
-"addconn--nic-offload=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name nic-offload=yes     nic-offload=yes
+"nic-offload=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn--nic-offload=packet
-"addconn--nic-offload=packet": failed to add connection: nic-offload=packet restricted to type=transport
+ ipsec addconn --name nic-offload=packet  nic-offload=packet
+"nic-offload=packet": failed to add connection: nic-offload=packet restricted to type=transport
 west #
- ipsec add addconn--nic-offload=crypto
-"addconn--nic-offload=crypto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+ ipsec addconn --name nic-offload=crypto  nic-offload=crypto
+"nic-offload=crypto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- # should fail to load
+ ipsec addconn --name type=transport-nic-offload=packet  type=transport nic-offload=packet
+"type=transport-nic-offload=packet": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add addconn-encapsulation=yes
-"addconn-encapsulation=yes": failed to add connection: nic-offload=packet restricted to type=transport
+ ipsec addconn --name type=tunnel-nic-offload=packet     type=tunnel    nic-offload=packet
+"type=tunnel-nic-offload=packet": failed to add connection: nic-offload=packet restricted to type=transport
+west #
+ ipsec addconn --name phase2=esp-type=transport-nic-offload=packet  phase2=esp type=transport nic-offload=packet
+"phase2=esp-type=transport-nic-offload=packet": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name phase2=ah-type=transport-nic-offload=packet   phase2=ah  type=transport nic-offload=packet
+"phase2=ah-type=transport-nic-offload=packet": failed to add connection: nic-offload=packet restricted to phase2=esp
+west #
+ ipsec addconn --name compress=yes-type=transport-nic-offload=packet  compress=yes type=transport nic-offload=packet
+"compress=yes-type=transport-nic-offload=packet": failed to add connection: nic-offload=packet restricted to compress=no
+west #
+ ipsec addconn --name compress=no-type=transport-nic-offload=packet   compress=no  type=transport nic-offload=packet
+"compress=no-type=transport-nic-offload=packet": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name encapsulation=yes-type=transport-nic-offload=packet   encapsulation=yes  type=transport nic-offload=packet
+"encapsulation=yes-type=transport-nic-offload=packet": failed to add connection: nic-offload=packet cannot specify encapsulation=yes
+west #
+ ipsec addconn --name encapsulation=no-type=transport-nic-offload=packet    encapsulation=no   type=transport nic-offload=packet
+"encapsulation=no-type=transport-nic-offload=packet": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ ipsec addconn --name encapsulation=auto-type=transport-nic-offload=packet  encapsulation=auto type=transport nic-offload=packet
+"encapsulation=auto-type=transport-nic-offload=packet": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+west #
+ #
 west #
  ipsec whack --name whack                                           --transport --host 1.2.3.4 --to --host 5.6.7.8
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
@@ -63,10 +87,15 @@ warning: "whack--passthrough--nic-offload=crypto": nic-offload=crypto ignored fo
 "whack--passthrough--nic-offload=crypto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(nic-offload:[^;]*\);.*/\1 \2/p' | sort
-"addconn--nic-offload=crypto": nic-offload:crypto
-"addconn": nic-offload:no
-"addconn--nic-offload=no": nic-offload:no
-"addconn--nic-offload=yes": nic-offload:crypto
+"compress=no-type=transport-nic-offload=packet": nic-offload:packet
+"encapsulation=auto-type=transport-nic-offload=packet": nic-offload:packet
+"encapsulation=no-type=transport-nic-offload=packet": nic-offload:packet
+"nic-offload=crypto": nic-offload:crypto
+"nic-offload=": nic-offload:no
+"nic-offload=no": nic-offload:no
+"nic-offload=yes": nic-offload:crypto
+"phase2=esp-type=transport-nic-offload=packet": nic-offload:packet
+"type=transport-nic-offload=packet": nic-offload:packet
 "whack--nic-offload=crypto": nic-offload:crypto
 "whack": nic-offload:no
 "whack--nic-offload=no": nic-offload:no
