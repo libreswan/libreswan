@@ -71,10 +71,38 @@
 
 static resolve_helper_cb extract_connection_resolve_continue;
 
+static bool is_never_negotiate_type(enum type_options type)
+{
+	switch (type) {
+	case KS_TUNNEL:
+	case KS_TRANSPORT:
+		return false;
+	case KS_PASSTHROUGH:
+	case KS_DROP:
+		return true;
+	case KS_UNSET:
+		break;
+	}
+	bad_case(type);
+}
+
 static bool is_never_negotiate_wm(const struct whack_message *wm)
 {
-	/* with no never-negotiate shunt, things must negotiate */
-	return (wm->never_negotiate_shunt != SHUNT_UNSET);
+	/*
+	 * not efficient, but easier.
+	 */
+	if (wm->wm_type == NULL) {
+		return false;
+	}
+
+	const struct sparse_name *sparse = sparse_lookup_by_name(&type_option_names,
+								 shunk1(wm->wm_type));
+	if (sparse == NULL) {
+		/* logged later */
+		return false;
+	}
+
+	return is_never_negotiate_type(sparse->value & ~NAME_FLAGS);
 }
 
 static void llog_never_negotiate_option(struct verbose verbose,
@@ -88,12 +116,8 @@ static void llog_never_negotiate_option(struct verbose verbose,
 		return;
 	}
 	/* need to reverse engineer type= */
-	enum shunt_policy shunt = wm->never_negotiate_shunt;
 	vwarning("%s%s=%s ignored for never-negotiate (type=%s) connection",
-		 leftright, name, value,
-		 (shunt == SHUNT_PASS ? "passthrough" :
-		  shunt == SHUNT_DROP ? "drop" :
-		  "???"));
+		 leftright, name, value, wm->wm_type);
 }
 
 static bool never_negotiate_string_option(const char *leftright,
@@ -576,24 +600,14 @@ static unsigned extract_enum_name(const char *leftright,
 	return match;
 }
 
-static unsigned extract_sparse_name(const char *leftright,
+static unsigned lookup_sparse_name(const char *leftright,
 				    const char *name,
 				    const char *value,
 				    unsigned value_when_unset,
 				    const struct sparse_names *names,
-				    const struct whack_message *wm,
 				    diag_t *d,
 				    struct verbose verbose)
 {
-	if (*d != NULL) {
-		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
-		return value_when_unset;
-	}
-
-	if (!can_extract_string(leftright, name, value, wm, verbose)) {
-		return value_when_unset;
-	}
-
 	const struct sparse_name *sparse = sparse_lookup_by_name(names, shunk1(value));
 	if (sparse == NULL) {
 		JAMBUF(buf) {
@@ -622,6 +636,29 @@ static unsigned extract_sparse_name(const char *leftright,
 	}
 
 	return name_value;
+}
+
+static unsigned extract_sparse_name(const char *leftright,
+				    const char *name,
+				    const char *value,
+				    unsigned value_when_unset,
+				    const struct sparse_names *names,
+				    const struct whack_message *wm,
+				    diag_t *d,
+				    struct verbose verbose)
+{
+	if (*d != NULL) {
+		vdbg("skip %s(), have diag %s", __func__, str_diag(*d));
+		return value_when_unset;
+	}
+
+	if (!can_extract_string(leftright, name, value, wm, verbose)) {
+		return value_when_unset;
+	}
+
+	return lookup_sparse_name(leftright, name, value,
+				  value_when_unset,
+				  names, d, verbose);
 }
 
 static bool extract_bool(const char *leftright,
@@ -2521,29 +2558,6 @@ static bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 	return ok[shunt_kind][shunt_policy];
 }
 
-static diag_t extract_shunt(struct config *config,
-			    const struct whack_message *wm,
-			    enum shunt_kind shunt_kind,
-			    const struct sparse_names *shunt_names,
-			    enum shunt_policy unset_shunt)
-{
-	enum shunt_policy shunt_policy = wm->shunt[shunt_kind];
-	if (shunt_policy == SHUNT_UNSET) {
-		shunt_policy = unset_shunt;
-	}
-	if (!shunt_ok(shunt_kind, shunt_policy)) {
-		JAMBUF(buf) {
-			jam_enum_human(buf, &shunt_kind_names, shunt_kind);
-			jam_string(buf, "shunt=");
-			jam_sparse_long(buf, shunt_names, shunt_policy);
-			jam_string(buf, " invalid");
-			return diag_jambuf(buf);
-		}
-	}
-	config->shunt[shunt_kind] = shunt_policy;
-	return NULL;
-}
-
 static enum shunt_policy extract_shunt_policy(const struct whack_message *wm,
 					      enum config_conn_keyword kws,
 					      const struct sparse_names *shunt_names,
@@ -3003,21 +3017,32 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	config->child.encap_proto = encap_proto;
 
+	enum type_options type = KS_TUNNEL;
+	if (wm->wm_type != NULL) {
+		type = lookup_sparse_name("", "type", wm->wm_type,
+					  KS_TUNNEL,
+					  &type_option_names,
+					  &d, verbose);
+	}
+	if (d != NULL) {
+		return d;
+	}
+
 	enum encap_mode encap_mode;
-	if (wm->type == KS_UNSET) {
+	switch (type) {
+	case KS_TUNNEL:
 		encap_mode = ENCAP_MODE_TUNNEL;
-	} else if (wm->type == KS_TUNNEL) {
-		encap_mode = ENCAP_MODE_TUNNEL;
-	} else if (wm->type == KS_TRANSPORT) {
+		break;
+	case KS_TRANSPORT:
 		encap_mode = ENCAP_MODE_TRANSPORT;
-	} else {
-		if (!is_never_negotiate_wm(wm)) {
-			name_buf sb;
-			vlog_pexpect(HERE,
-				     "type=%s should be never-negotiate",
-				     str_sparse_long(&type_option_names, wm->type, &sb));
-		}
+		break;
+	case KS_DROP:
+	case KS_PASSTHROUGH:
 		encap_mode = ENCAP_MODE_UNSET;
+		break;
+	default:
+	case KS_UNSET:
+		bad_case(type);
 	}
 	config->child.encap_mode = encap_mode;
 
@@ -3028,17 +3053,15 @@ diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	if (whack_authby.never) {
-		if (wm->never_negotiate_shunt == SHUNT_UNSET) {
+		if (!is_never_negotiate_wm(wm)) {
 			return diag("connection with authby=never must specify shunt type via type=");
 		}
-	} else if (wm->never_negotiate_shunt != SHUNT_UNSET &&
-		   authby_is_set(whack_authby)) {
+	} else if (authby_is_set(whack_authby) &&
+		   is_never_negotiate_wm(wm)) {
 		/* can't be .never and can't be empty */
 		authby_buf ab;
-		name_buf sb;
-		return diag("kind=%s shunt connection cannot have authby=%s authentication",
-			    str_sparse_short(&never_negotiate_shunt_names, wm->never_negotiate_shunt, &sb),
-			    str_authby(whack_authby, &ab));
+		return diag("type=%s never-negotiate connection cannot have authby=%s authentication",
+			    wm->wm_type, str_authby(whack_authby, &ab));
 	}
 
 	if (ike_version == IKEv1) {
@@ -3286,9 +3309,14 @@ diag_t extract_connection(const struct whack_message *wm,
 			return diag("IPTFS is not compatible with keyexchange=IKEv1, either omit option or specify keyexchange=IKEv2");
 		}
 		if (encap_mode != ENCAP_MODE_TUNNEL) {
-			name_buf sb;
+			/*
+			 * XXX: the default is tunnel, so for type to
+			 * be something else, it must have been
+			 * specified.
+			 */
+			vexpect(wm->wm_type != NULL);
 			return diag("IPTFS is not compatible with type=%s, either omit option or specify type=tunnel",
-				    str_sparse_long(&type_option_names, wm->type, &sb));
+				    wm->wm_type);
 		}
 		if (tfc > 0) {
 			return diag("IPTFS is not compatible with tfc=%ju, either omit option or specify tfc=0", tfc);
@@ -3584,12 +3612,24 @@ diag_t extract_connection(const struct whack_message *wm,
 
 	/*
 	 * Extract configurable shunts, set hardwired shunts.
+	 *
+	 * XXX: Can't use extract_sparse_name() as that complains when
+	 * type is defining a never-negotiate connection, oops!
 	 */
 
-	d = extract_shunt(config, wm, SHUNT_KIND_NEVER_NEGOTIATE,
-			  &never_negotiate_shunt_names, /*unset*/SHUNT_UNSET);
-	if (d != NULL) {
-		return d;
+	switch (type) {
+	case KS_UNSET:
+		bad_case(type);
+	case KS_TUNNEL:
+		break;
+	case KS_TRANSPORT:
+		break;
+	case KS_PASSTHROUGH:
+		config->never_negotiate_shunt = SHUNT_PASS;
+		break;
+	case KS_DROP:
+		config->never_negotiate_shunt = SHUNT_DROP;
+		break;
 	}
 
 	config->negotiation_shunt = extract_shunt_policy(wm, KWS_NEGOTIATIONSHUNT,

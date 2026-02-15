@@ -63,10 +63,6 @@ int starter_whack_add_conn(const char *ctlsocket,
 		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;
 	}
 
-	msg.type = conn->values[KNCF_TYPE].option;
-
-	msg.never_negotiate_shunt = conn->never_negotiate_shunt;
-
 	msg.autostart = conn->values[KNCF_AUTO].option;
 
 	if (!set_whack_end(&msg.end[LEFT_END], &conn->end[LEFT_END])) {

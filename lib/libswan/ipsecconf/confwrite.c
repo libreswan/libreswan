@@ -201,13 +201,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		cwf("auto", str_sparse_long(&autostart_names, conn->values[KNCF_AUTO].option, &sb));
 	}
 
-	if (conn->never_negotiate_shunt != SHUNT_UNSET) {
-		name_buf nb;
-		cwf("type", str_sparse_long(&never_negotiate_shunt_names,
-					    conn->never_negotiate_shunt,
-					    &nb));
-	}
-
 	if (verbose)
 		fprintf(out, "# end conn %s\n\n", conn->name);
 #	undef cwf

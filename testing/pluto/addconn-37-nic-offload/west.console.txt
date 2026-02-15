@@ -15,7 +15,7 @@ west #
 "addconn--nic-offload=yes": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec add addconn--nic-offload=packet
-"addconn--nic-offload=packet": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
+"addconn--nic-offload=packet": failed to add connection: nic-offload=packet restricted to type=transport
 west #
  ipsec add addconn--nic-offload=crypto
 "addconn--nic-offload=crypto": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
@@ -23,7 +23,7 @@ west #
  # should fail to load
 west #
  ipsec add addconn-encapsulation=yes
-"addconn-encapsulation=yes": failed to add connection: nic-offload=packet cannot specify encapsulation=yes
+"addconn-encapsulation=yes": failed to add connection: nic-offload=packet restricted to type=transport
 west #
  ipsec whack --name whack                                           --transport --host 1.2.3.4 --to --host 5.6.7.8
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
@@ -47,26 +47,25 @@ west #
 "whack--passthrough": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=no      --nic-offload=no      --pass --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--passthrough--nic-offload=no": nic-offload=no ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--nic-offload=no": nic-offload=no ignored for never-negotiate (type=pass) connection
 "whack--passthrough--nic-offload=no": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=yes     --nic-offload=yes     --pass --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--passthrough--nic-offload=yes": nic-offload=yes ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--nic-offload=yes": nic-offload=yes ignored for never-negotiate (type=pass) connection
 "whack--passthrough--nic-offload=yes": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=packet  --nic-offload=packet  --pass --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--passthrough--nic-offload=packet": nic-offload=packet ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--nic-offload=packet": nic-offload=packet ignored for never-negotiate (type=pass) connection
 "whack--passthrough--nic-offload=packet": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec whack --name whack--passthrough--nic-offload=crypto  --nic-offload=crypto  --pass --host 1.2.3.4 --to --host 5.6.7.8
-warning: "whack--passthrough--nic-offload=crypto": nic-offload=crypto ignored for never-negotiate (type=passthrough) connection
+warning: "whack--passthrough--nic-offload=crypto": nic-offload=crypto ignored for never-negotiate (type=pass) connection
 "whack--passthrough--nic-offload=crypto": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e 's/\(^[^:]*:\).* \(nic-offload:[^;]*\);.*/\1 \2/p' | sort
 "addconn--nic-offload=crypto": nic-offload:crypto
 "addconn": nic-offload:no
 "addconn--nic-offload=no": nic-offload:no
-"addconn--nic-offload=packet": nic-offload:packet
 "addconn--nic-offload=yes": nic-offload:crypto
 "whack--nic-offload=crypto": nic-offload:crypto
 "whack": nic-offload:no

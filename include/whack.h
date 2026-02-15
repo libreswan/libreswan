@@ -41,7 +41,6 @@
 #include "sa_kind.h"
 #include "constants.h"		/* for enum keyword_auth; et.al. */
 #include "end.h"
-#include "shunt.h"
 #include "global_redirect.h"
 #include "xauthby.h"
 #include "xauthfail.h"
@@ -379,7 +378,8 @@ struct whack_message {
 		struct whack_pubkey pubkey;
 	} whack;
 
-	enum shunt_policy shunt[SHUNT_KIND_ROOF];
+
+#define wm_type conn[END_ROOF].value[KWS_TYPE]
 #define wm_failureshunt conn[END_ROOF].value[KWS_FAILURESHUNT]
 #define wm_negotiationshunt conn[END_ROOF].value[KWS_NEGOTIATIONSHUNT]
 
@@ -456,7 +456,6 @@ struct whack_message {
 #define wm_fragmentation conn[END_ROOF].value[KWS_FRAGMENTATION]	/* fragment IKE payload */
 #define wm_esn conn[END_ROOF].value[KWS_ESN]		/* accept or request ESN{yes,no} */
 #define wm_ppk conn[END_ROOF].value[KWS_PPK]		/* pre-shared post-quantum key */
-	enum type_options type;		/* type=tunnel|transport|SHUNT */
 #define wm_replay_window conn[END_ROOF].value[KWS_REPLAY_WINDOW]
 
 #define wm_nic_offload conn[END_ROOF].value[KWS_NIC_OFFLOAD]

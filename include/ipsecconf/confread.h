@@ -31,7 +31,6 @@
 #include "deltatime.h"
 #include "ip_address.h"
 #include "authby.h"
-#include "shunt.h"		/* for SHUNT_KIND_ROOF */
 #include "end.h"
 
 struct logger;
@@ -78,9 +77,6 @@ struct starter_conn {
 
 	config_conn_values values;
 	struct starter_end end[END_ROOF];
-
-	enum shunt_policy shunt[SHUNT_KIND_ROOF];
-
 
 	enum {
 		STATE_INVALID,

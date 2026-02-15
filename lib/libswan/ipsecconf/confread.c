@@ -323,28 +323,6 @@ static bool load_conn(struct starter_conn *conn,
 		return false;	/* error */
 	}
 
-	if (conn->values[KNCF_TYPE].set) {
-		switch ((enum type_options)conn->values[KNCF_TYPE].option) {
-		case KS_UNSET:
-			bad_case(KS_UNSET);
-
-		case KS_TUNNEL:
-			break;
-
-		case KS_TRANSPORT:
-			break;
-
-		case KS_PASSTHROUGH:
-			conn->never_negotiate_shunt = SHUNT_PASS;
-			break;
-
-		case KS_DROP:
-			conn->never_negotiate_shunt = SHUNT_DROP;
-			break;
-
-		}
-	}
-
 	return true;
 }
 
