@@ -27,8 +27,10 @@
 struct verbose;
 struct logger;
 
-bool server_run(const char *story, const char *cmd,
-		struct verbose verbose);
+bool server_rune(const char *story,
+		 const char *cmd,
+		 const char *envp[],
+		 struct verbose verbose);
 
 bool server_runv(const char *story, const char *argv[],
 		 struct verbose verbose);

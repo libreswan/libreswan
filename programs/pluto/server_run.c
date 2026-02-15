@@ -40,16 +40,18 @@
 #include "verbose.h"
 #include "log.h"
 
-bool server_run(const char *story,
-		const char *cmd,
-		struct verbose verbose)
+bool server_rune(const char *story,
+		 const char *cmd,
+		 const char *envp[],
+		 struct verbose verbose)
 {
+	vdbg("executing %s: %s", story, cmd);
+#if 0
 #	define CHUNK_WIDTH	80	/* units for cmd logging */
 	if (verbose.debug) {
 		int slen = strlen(cmd);
 		int i;
 
-		VDBG_log("\"%s\" executing: %s", story, cmd);
 		VDBG_log("popen cmd is %d chars long", slen);
 		for (i = 0; i < slen; i += CHUNK_WIDTH)
 			VDBG_log("cmd(%4d):%.*s:", i,
@@ -57,6 +59,7 @@ bool server_run(const char *story,
 				 &cmd[i]);
 	}
 #	undef CHUNK_WIDTH
+#endif
 
 	/*
 	 * Both BSD and Linux document popen() as invoking /bin/sh -c
@@ -69,7 +72,7 @@ bool server_run(const char *story,
 		NULL,
 	};
 
-	int status = server_runve_io(story, argv, NULL/*envp*/,
+	int status = server_runve_io(story, argv, envp,
 				     /*input*/empty_shunk,
 				     /*output*/NULL,
 				     verbose,
@@ -186,6 +189,10 @@ int server_runve_io(const char *story,
 				jam_string(buf, "'");
 			}
 		}
+	}
+
+	for (const char **p = envp; p != NULL && *p != NULL; p++) {
+		vdbg("%s", *p);
 	}
 
 	if (save_output != NULL) {
