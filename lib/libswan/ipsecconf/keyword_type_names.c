@@ -21,8 +21,7 @@
 static const char *const keyword_type_name[] = {
 #define S(E) [E - kt_string] = #E
 	S(kt_string),
-	S(kt_appendstring),
-	S(kt_appendlist),
+	S(kt_appendstrings),
 	S(kt_sparse_name),
 	S(kt_unsigned),
 	S(kt_seconds),

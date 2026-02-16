@@ -243,8 +243,7 @@ uintmax_t config_setup_option(enum config_setup_keyword field)
 			return option;
 		}
 		case kt_string:
-		case kt_appendstring:
-		case kt_appendlist:
+		case kt_appendstrings:
 		case kt_seconds:
 		case kt_obsolete:
 		case kt_also:
@@ -410,8 +409,7 @@ bool parse_ipsec_conf_config_setup(const struct ipsec_conf *cfgp,
 		}
 
 		case kt_also:
-		case kt_appendstring:
-		case kt_appendlist:
+		case kt_appendstrings:
 			break;
 
 		}

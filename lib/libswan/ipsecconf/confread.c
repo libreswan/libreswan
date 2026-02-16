@@ -166,17 +166,16 @@ static bool translate_field(struct starter_conn *conn,
 		values[field].set = assigned_value;
 		break;
 
-	case kt_appendstring:
-	case kt_appendlist:
+	case kt_appendstrings:
 		/* implicitly, this field can have multiple values */
 		if (values[field].string == NULL) {
 			values[field].string = clone_str(kw->keyval.val,
-							 "kt_appendlist kw->keyval.val");
+							 "kt_appendstrings kw->keyval.val");
 		} else {
 			char *s = values[field].string;
 			size_t old_len = strlen(s);	/* excludes '\0' */
 			size_t new_len = strlen(kw->keyval.val);
-			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
+			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendstrings");
 
 			memcpy(n, s, old_len);
 			n[old_len] = ' ';

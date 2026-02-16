@@ -49,7 +49,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("debug",  LEMPTY, kt_string, KWS_DEBUG),
 
   K("subnet",  kv_leftright,  kt_string,  KWS_SUBNET),
-  K("subnets",  kv_leftright,  kt_appendlist,  KWS_SUBNETS),
+  K("subnets",  kv_leftright,  kt_appendstrings,  KWS_SUBNETS),
   K("sourceip",  kv_leftright,  kt_string,  KWS_SOURCEIP),
   K("ikeport",  kv_leftright,  kt_string,  KWS_IKEPORT),
   K("interface-ip", kv_leftright,  kt_string, KWS_INTERFACE_IP),
@@ -194,7 +194,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("enable-tcp",  LEMPTY, kt_string, KWS_ENABLE_TCP),
   K("tcp-remoteport",  LEMPTY, kt_string, KWS_TCP_REMOTEPORT),
 
-  K("connalias",  LEMPTY,  kt_appendstring,  KWS_CONNALIAS),
+  K("connalias",  LEMPTY,  kt_appendstrings,  KWS_CONNALIAS),
 
   /* attributes of the phase1 policy */
   K("ike",  LEMPTY,  kt_string,  KWS_IKE),
