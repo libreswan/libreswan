@@ -112,6 +112,8 @@ enum yn_options optarg_yn(const struct logger *logger, enum yn_options optional)
 enum yna_options optarg_yna(const struct logger *logger, enum yna_options optional);
 enum yne_options optarg_yne(const struct logger *logger, enum yne_options optional);
 
+bool optarg_bool(const struct logger *logger);
+
 /*
  * Adddres family dependent options.
  *

@@ -1435,7 +1435,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_ASYNC:	/* --asynchronous */
-			msg.whack_async = (optarg_yn(logger, YN_YES) == YN_YES);
+			msg.whack_async = optarg_bool(logger);
 			continue;
 		case OPT_UTC:	/* --utc */
 			msg.whack_utc = true;

@@ -2,7 +2,7 @@
 west #
  # Run the parser tests.
 west #
- ipsec algparse -tp -v1
+ ipsec algparse --tp --v1
 algparse -v1 'esp' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
@@ -607,7 +607,7 @@ algparse -v1 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1
 	AES_CBC-HMAC_SHA1-DH19
 	AES_CBC-HMAC_SHA1-DH31
 west #
- ipsec algparse -tp -v1 -pfs
+ ipsec algparse --tp --v1 --pfs
 algparse -v1 -pfs 'esp' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1_96
 	AES_CBC-HMAC_SHA2_512_256
@@ -1170,7 +1170,7 @@ algparse -v1 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes
 	AES_CBC-HMAC_SHA1-DH19
 	AES_CBC-HMAC_SHA1-DH31
 west #
- ipsec algparse -tp -v2
+ ipsec algparse --tp --v2
 algparse -v2 'esp' (expect SUCCESS)
 	AES_GCM_16_256
 	AES_GCM_16_128
@@ -1736,7 +1736,7 @@ algparse -v2 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 algparse -v2 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
- ipsec algparse -tp -v2 -pfs
+ ipsec algparse --tp --v2 --pfs
 algparse -v2 -pfs 'esp' (expect SUCCESS)
 	AES_GCM_16_256
 	AES_GCM_16_128
@@ -2256,7 +2256,7 @@ algparse -v2 -pfs 'ike=aes-sha1;integ=sha2;dh20' (expect SUCCESS)
 algparse -v2 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1' (expect SUCCESS)
 	AES_CBC-HMAC_SHA1-DH19+DH20+DH21+DH31+MODP4096+MODP3072+MODP2048+MODP8192
 west #
- ipsec algparse -tp -v2 -pfs -addke
+ ipsec algparse --tp --v2 --pfs --addke
 algparse -addke -v2 -pfs 'esp' (expect SUCCESS)
 	AES_GCM_16_256
 	AES_GCM_16_128
@@ -2778,7 +2778,7 @@ algparse -addke -v2 -pfs 'ike=aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-sha1,aes-s
 west #
  # Run the algorithm tests; there should be no fails.
 west #
- ipsec algparse -ta > /dev/null
+ ipsec algparse --ta > /dev/null
 west #
  # Check pluto is starting in the correct mode.
 west #

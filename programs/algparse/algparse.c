@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "optarg.h"
 #include "lswlog.h"
 #include "lswtool.h"
 #include "lswalloc.h"
@@ -12,7 +13,6 @@
 
 static bool test_proposals = false;
 static bool test_algs = false;
-static bool verbose = false;
 static bool debug = false;
 static enum ike_version ike_version = IKEv2;
 static bool ignore_transform_lookup_error = false;
@@ -591,55 +591,43 @@ static void test(struct logger *logger)
 	test_ike(logger);
 }
 
+enum opt {
+	OPT_VERBOSE = 'v',
+	OPT_HELP = 'h',
+	OPT_DEBUG = 256,
+	OPT_TP,
+	OPT_TA,
+	OPT_IKEv1,
+	OPT_IKEv2,
+	OPT_PFS,
+	OPT_ADDKE,
+	OPT_FIPS,
+	OPT_IGNORE,
+	OPT_PASSWORD,
+	OPT_VERSION,
+};
+
+const struct option optarg_options[] = {
+	{ OPT("help"), no_argument, NULL, OPT_HELP, },
+	{ OPT("verbose"), no_argument, NULL, OPT_VERBOSE, },
+	{ OPT("version"), no_argument, NULL, OPT_VERSION, },
+	{ OPT("ikev1"), no_argument, NULL, OPT_IKEv1, },
+	{ OPT("v1"), no_argument, NULL, OPT_IKEv1, },
+	{ OPT("ikev2"), no_argument, NULL, OPT_IKEv2, },
+	{ OPT("v2"), no_argument, NULL, OPT_IKEv2, },
+	{ OPT("ta"), no_argument, NULL, OPT_TA, },
+	{ OPT("tp"), no_argument, NULL, OPT_TP, },
+	{ OPT("pfs", "{yes,no}"), optional_argument, NULL, OPT_PFS, },
+	{ OPT("addke", "{yes,no}"), optional_argument, NULL, OPT_ADDKE, },
+	{ OPT("fips", "{yes,no}"), optional_argument, NULL, OPT_FIPS, },
+	{ 0, 0, 0, 0 }
+};
+
+NEVER_RETURNS
 static void usage(void)
 {
-	fprintf(stderr,
-		"Usage:\n"
-		"\n"
-		"    algparse [ <option> ... ] -tp | -ta | [<protocol>=][<proposal>{,<proposal>}] ...\n"
-		"\n"
-		"Parse one or more proposals using the algorithm parser.\n"
-		"Either specify the proposals to be parsed on the command line\n"
-		"(exit non-zero if a proposal is not valid):\n"
-		"\n"
-		"    [<protocol>=][<proposals>]\n"
-		"        <protocol>: the 'ike', 'esp' or 'ah' specific parser to use\n"
-		"            if omitted, the proposal is parsed using all three parsers\n"
-		"        <proposals>: a comma separated list of proposals\n"
-		"            if omitted, a default algorithm list is used\n"
-		"\n"
-		"or run a pre-defined testsuite (exit non-zero if a test fails):\n"
-		"\n"
-		"    -tp: run the proposal testsuite\n"
-		"    -ta: also run the algorithm testsuite\n"
-		"\n"
-		"Additional options:\n"
-		"\n"
-		"    -v2 | -ikev2: configure for IKEv2 (default)\n"
-		"    -v1 | -ikev1: configure for IKEv1\n"
-		"    -pfs | -pfs=yes | -pfs=no: specify PFS (perfect forward privicy)\n"
-		"         default: no\n"
-		"    -addke | -addke=yes | -addke=no: specify additional Key Exchange algorithms\n"
-		"         default: no\n"
-		"    -fips | -fips=yes | -fips=no: force NSS's FIPS mode\n"
-		"         default: determined by system environment\n"
-		"    -v --verbose: be more verbose\n"
-		"    --debug: enable debug logging\n"
-		/* -d <NSSDB> is reserved */
-		"    -P <password> | -nsspw <password> | -password <password>: NSS password\n"
-		"    --impair: disable all algorithm parser checks\n"
-		"    --ignore: ignore parser errors (or at least some)\n"
-		"    -p1: simple parser\n"
-		"    -p2: complex parser\n"
-		"\n"
-		"Examples:\n"
-		"\n"
-		"    algparse -v1 ike\n"
-		"        expand the default IKEv1 'ike' algorithm table\n"
-		"        (with IKEv1, this is the default algorithms, with IKEv2 it is not)\n"
-		"    algparse -v2 ike=aes-sha1-dh23\n"
-		"        expand 'aes-sha1-dh23' using the the IKEv2 'ike' parser\n"
-		);
+	optarg_usage("ipsec algparse", "<proposal>...",
+		     "By default, will test hardwired proposals\n");
 }
 
 int main(int argc, char *argv[])
@@ -647,64 +635,66 @@ int main(int argc, char *argv[])
 	log_to_stderr = false;
 	struct logger *logger = tool_logger(argc, argv);
 
-	if (argc == 1) {
+	if (argc <= 1) {
 		usage();
-		exit(1);
 	}
 
 	struct nss_flags nss = {
 		.open_readonly = true,
 	};
 
-	char **argp = argv + 1;
-	for (; *argp != NULL; argp++) {
-		const char *arg = *argp;
-		if (arg[0] != '-') {
+	while (true) {
+
+		int c = optarg_getopt(logger, argc, argv);
+		if (c < 0) {
 			break;
 		}
-		do {
-			arg++;
-		} while (arg[0] == '-');
-		if (streq(arg, "?") || streq(arg, "h")) {
+
+		switch ((enum opt)c) {
+		case OPT_HELP:
 			usage();
-			exit(0);
-		} else if (streq(arg, "tp")) {
+		case OPT_TP:
 			test_proposals = true;
-		} else if (streq(arg, "ta")) {
+			continue;
+		case OPT_TA:
 			test_algs = true;
-		} else if (streq(arg, "v1") || streq(arg, "ikev1")) {
+			continue;
+		case OPT_IKEv1:
 			ike_version = IKEv1;
-		} else if (streq(arg, "v2") || streq(arg, "ikev2")) {
+			continue;
+		case OPT_IKEv2:
 			ike_version = IKEv2;
-		} else if (streq(arg, "pfs") || streq(arg, "pfs=yes") || streq(arg, "pfs=on")) {
-			pfs = true;
-		} else if (streq(arg, "pfs=no") || streq(arg, "pfs=off")) {
-			pfs = false;
-		} else if (streq(arg, "addke") || streq(arg, "addke=yes") || streq(arg, "addke=on")) {
-			addke = true;
-		} else if (streq(arg, "addke=no") || streq(arg, "addke=off")) {
-			addke = false;
-		} else if (streq(arg, "fips") || streq(arg, "fips=yes") || streq(arg, "fips=on")) {
-			set_fips_mode(FIPS_MODE_ON);
-		} else if (streq(arg, "fips=no") || streq(arg, "fips=off")) {
-			set_fips_mode(FIPS_MODE_OFF);
-		} else if (streq(arg, "v") || streq(arg, "verbose")) {
-			verbose = true;
-		} else if (streq(arg, "debug")) {
-			/* -d <NSSDB> is reserved */
-			debug = true;
-		} else if (streq(arg, "ignore")) {
-			ignore_transform_lookup_error = true;
-		} else if (streq(arg, "P") || streq(arg, "nsspw") || streq(arg, "password")) {
-			nss.password = *++argp;
-			if (nss.password == NULL) {
-				fprintf(stderr, "missing nss password\n");
-				exit(ERROR);
+			continue;
+		case OPT_PFS:
+			pfs = optarg_bool(logger);
+			continue;
+		case OPT_ADDKE:
+			addke = optarg_bool(logger);
+			continue;
+		case OPT_FIPS:
+			if (optarg_bool(logger)) {
+				set_fips_mode(FIPS_MODE_ON);
+			} else {
+				set_fips_mode(FIPS_MODE_OFF);
 			}
-		} else {
-			fprintf(stderr, "unknown option: %s\n", *argp);
-			exit(ERROR);
+			continue;
+		case OPT_VERSION:
+			optarg_version("algparse");
+		case OPT_VERBOSE:
+			optarg_verbose(logger, LEMPTY);
+			continue;
+		case OPT_DEBUG:
+			optarg_debug(OPTARG_DEBUG_YES);
+			continue;
+		case OPT_IGNORE:
+			ignore_transform_lookup_error = true;
+			continue;
+		case OPT_PASSWORD:
+			nss.password = optarg_nonempty(logger);
+			continue;
 		}
+		fprintf(stderr, "unknown option: %s\n", optarg);
+		exit(ERROR);
 	}
 
 	/*
@@ -736,12 +726,12 @@ int main(int argc, char *argv[])
 		test_ike_alg(logger);
 	}
 
-	if (*argp) {
+	if (argv[optind] != NULL) {
 		if (test_proposals) {
 			fprintf(stderr, "-t conflicts with algorithm list\n");
 			exit(ERROR);
 		}
-		for (; *argp != NULL; argp++) {
+		for (char **argp = &argv[optind]; *argp != NULL; argp++) {
 			test_proposal(*argp, logger);
 		}
 	} else if (test_proposals) {

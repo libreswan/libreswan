@@ -424,6 +424,11 @@ uintmax_t optarg_sparse(const struct logger *logger, unsigned optional, const st
 	return name->value;
 }
 
+bool optarg_bool(const struct logger *logger)
+{
+	return (optarg_yn(logger, YN_YES) == YN_YES);
+}
+
 enum yn_options optarg_yn(const struct logger *logger, enum yn_options optional)
 {
 	return optarg_sparse(logger, optional, &yn_option_names);
