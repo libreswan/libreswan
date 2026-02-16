@@ -92,14 +92,13 @@ static void confwrite_value(FILE *out,
 
 		switch (k->type) {
 		case kt_also:
-		case kt_appendlist:
 			if (values[k->field].set)
 				fprintf(out, "\t%s%s={%s}\n", side, k->keyname,
 					values[k->field].string);
 			break;
 
 		case kt_string:
-		case kt_appendstring:
+		case kt_appendstrings:
 			/* these are strings */
 
 			if (values[k->field].set) {

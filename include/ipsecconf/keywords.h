@@ -63,8 +63,7 @@ enum keyword_valid {
 
 enum keyword_type {
 	kt_string,              /* value is some string */
-	kt_appendstring,        /* value is some string, append duplicates */
-	kt_appendlist,          /* value is some list, append duplicates */
+	kt_appendstrings,       /* value is some string, space append duplicates */
 	kt_sparse_name,         /* value is from .sparse_name table */
 	kt_unsigned,            /* an unsigned integer */
 	kt_seconds,             /* deltatime, default in seconds */
