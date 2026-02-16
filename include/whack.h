@@ -180,7 +180,9 @@ struct whack_end {
 #define we_subnets conn->value[KWS_SUBNETS]	/* alias subnet expansion */
 #define we_protoport conn->value[KWS_PROTOPORT]
 
-#define we_updown conn->value[KWS_UPDOWN]	/* string */
+#define we_updown conn->value[KWS_UPDOWN]
+#define we_updown_flags conn->value[KWS_UPDOWN_FLAGS]
+
 #define we_addresspool conn->value[KWS_ADDRESSPOOL]
 
 #define we_xauthserver conn->value[KWS_XAUTHSERVER]	/* for XAUTH */

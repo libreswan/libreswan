@@ -37,6 +37,7 @@
 #include "visit_connection.h"
 
 #include "ike_alg.h"
+#include "flags.h"
 
 #include "defs.h"
 #include "connections.h"
@@ -522,11 +523,26 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			/* left? */
 			jam_string(buf, " my_updown=");
 			JAM_UPDOWN(buf, c->local);
+			/**/
+			jam_string(buf, " my_updown-flags=");
+			jam_flags_human(buf,
+					c->local->config->child.updown.updown_flags,
+					&updown_flag_names);
+			jam_string(buf, ";");
 		} else {
 			jam_string(buf, " leftupdown=");
 			JAM_UPDOWN(buf, &c->end[LEFT_END]);
+			jam_string(buf, " leftupdown-flags=");
+			jam_flags_human(buf,
+					c->end[LEFT_END].config->child.updown.updown_flags,
+					&updown_flag_names);
+			jam_string(buf, ";");
 			jam_string(buf, " rightupdown=");
 			JAM_UPDOWN(buf, &c->end[RIGHT_END]);
+			jam_string(buf, " rightupdown-flags=");
+			jam_flags_human(buf,
+					c->end[RIGHT_END].config->child.updown.updown_flags,
+					&updown_flag_names);
 		}
 #undef JAM_UPDOWN
 	}

@@ -54,6 +54,15 @@ enum updown {
 extern const struct enum_names updown_stories;
 extern const struct enum_names updown_names;
 
+enum updown_flags {
+	UPDOWN_FLAG_EXEC,
+#define UPDOWN_FLAG_ROOF (UPDOWN_FLAG_EXEC+1)
+};
+
+#define updown_exec_flag updown_flags[UPDOWN_FLAG_EXEC]
+
+extern const struct enum_names updown_flag_names;
+
 bool updown_connection_spd(enum updown updown_verb,
 			   const struct connection *c,
 			   const struct spd *spd,

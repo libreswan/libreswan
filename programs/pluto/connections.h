@@ -48,6 +48,7 @@
 #include "shunt.h"
 
 #include "defs.h"
+#include "updown.h"
 #include "proposals.h"
 #include "hash_table.h"
 #include "diag.h"
@@ -148,6 +149,7 @@ struct child_end_config {
 	 */
 	struct {
 		char *command;
+		bool updown_flags[UPDOWN_FLAG_ROOF];
 	} updown;
 
 	bool has_client_address_translation;		/* aka CAT */

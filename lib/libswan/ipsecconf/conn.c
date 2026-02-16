@@ -56,6 +56,7 @@ static const struct keyword_def config_conn_keyword[] = {
   K("vti",  kv_leftright,  kt_string,  KWS_VTI),
   K("nexthop",  kv_leftright,  kt_string,  KWS_NEXTHOP),
   K("updown",  kv_leftright,  kt_string,  KWS_UPDOWN),
+  K("updown-flags",  kv_leftright,  kt_string,  KWS_UPDOWN_FLAGS),
   K("id",  kv_leftright,  kt_string,  KWS_ID),
 
   K("rsasigkey",  kv_leftright,  kt_string,  KWS_RSASIGKEY),

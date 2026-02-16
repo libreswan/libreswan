@@ -48,3 +48,16 @@ const struct enum_names updown_names = {
 	ARRAY_REF(updown_name),
 	"UPDOWN_", NULL,
 };
+
+static const char *updown_flag_name[] = {
+#define C(E) [E] = #E
+	C(UPDOWN_FLAG_EXEC),
+#undef C
+};
+
+const struct enum_names updown_flag_names = {
+	0, UPDOWN_FLAG_ROOF-1,
+	ARRAY_REF(updown_flag_name),
+	"UPDOWN_FLAG_",
+	NULL,
+};

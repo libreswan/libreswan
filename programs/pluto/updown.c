@@ -416,9 +416,16 @@ static bool do_updown_verb(const char *verb,
 		return false;
 	}
 
-	bool ok = server_rune(verb, c->local->config->child.updown.command,
-			      envp, verbose);
-	return ok;
+	if (c->local->config->child.updown.updown_exec_flag) {
+		const char *argv[] = {
+			c->local->config->child.updown.command,
+			NULL,
+		};
+		return server_runve(verb, argv, envp, verbose);
+	}
+
+	return server_rune(verb, c->local->config->child.updown.command,
+			   envp, verbose);
 }
 
 bool updown_connection_spd(enum updown updown_verb,

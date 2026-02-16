@@ -35,6 +35,7 @@
 #include "extract.h"
 
 #include "whack.h"
+#include "flags.h"
 #include "verbose.h"
 #include "ip_info.h"
 #include "sparse_names.h"
@@ -2054,6 +2055,20 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			 streq(src->we_updown, UPDOWN_DISABLED) ? NULL :
 			 streq(src->we_updown, "") ? NULL :
 			 clone_str(src->we_updown, "child_config.updown"));
+	}
+
+	if (never_negotiate_string_option(leftright, "updown-flags",
+					  src->we_updown_flags, wm, verbose)) {
+		vdbg("never-negotiate updown-flags");
+	} else {
+		d = ttoflags(src->we_updown_flags,
+			     child_config->updown.updown_flags,
+			     &updown_flag_names);
+		if (d != NULL) {
+			return diag_diag(&d, "%s-updown-flags=%s invalid, ",
+					 leftright,
+					 src->we_updown_flags);
+		}
 	}
 
 

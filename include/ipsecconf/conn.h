@@ -79,6 +79,7 @@ enum config_conn_keyword {
 
 	KWS_GROUNDHOG,	/* left/right */
 	KWS_UPDOWN,	/* left/right */
+	KWS_UPDOWN_FLAGS,	/* left/right */
 	KWS_ID,		/* left/right */
 	KWS_CERT,	/* left/right */
 	KWS_CKAID,	/* left/right */
