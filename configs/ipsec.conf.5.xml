@@ -138,6 +138,7 @@
 <!ENTITY conn.tfc SYSTEM "d.ipsec.conf/conn/tfc.xml">
 <!ENTITY conn.type SYSTEM "d.ipsec.conf/conn/type.xml">
 <!ENTITY conn.updown SYSTEM "d.ipsec.conf/conn/updown.xml">
+<!ENTITY conn.updown-flags SYSTEM "d.ipsec.conf/conn/updown-flags.xml">
 <!ENTITY conn.username SYSTEM "d.ipsec.conf/conn/username.xml">
 <!ENTITY conn.vti SYSTEM "d.ipsec.conf/conn/vti.xml">
 <!ENTITY conn.vti-interface SYSTEM "d.ipsec.conf/conn/vti-interface.xml">
@@ -249,6 +250,7 @@
 	&conn.nexthop;
 	&conn.sourceip;
 	&conn.updown;
+	&conn.updown-flags;
 	&conn.cat;
 	&conn.firewall;
       </variablelist>

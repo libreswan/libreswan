@@ -1,0 +1,39 @@
+<varlistentry id='conn.updown-flags'>
+  <term>
+    <option>leftupdown-flags=</option>
+  </term>
+  <term>
+    <option>rightupdown-flags=</option>
+  </term>
+  <listitem>
+    <para>
+      Modify how the <option> updown </option> <replaceable> command
+      </replaceable> is run.
+    </para>
+    <note>
+      <para>
+	This option is experimental.
+      </para>
+    </note>
+    <variablelist>
+      <varlistentry>
+	<term>
+	  <option>exec</option>
+	</term>
+	<listitem>
+	  <para>
+	    Assume <option> updown </option> <replaceable> command
+	    </replaceable> is an executable; invoke it directly using
+	    &exec.3;.  Normally the <option> updown </option>
+	    <replaceable> command </replaceable> is invoked using
+	    <command>/bin/sh -c</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      The option <option>updown-flags=</option> was added in
+      &Libreswan; 5.4.
+    </para>
+  </listitem>
+</varlistentry>
