@@ -38,45 +38,6 @@
 #include "verbose.h"
 #include "log.h"
 
-bool server_rune(const char *story,
-		 const char *cmd,
-		 const char *envp[],
-		 struct verbose verbose)
-{
-	vdbg("executing %s: %s", story, cmd);
-#if 0
-#	define CHUNK_WIDTH	80	/* units for cmd logging */
-	if (verbose.debug) {
-		int slen = strlen(cmd);
-		int i;
-
-		VDBG_log("popen cmd is %d chars long", slen);
-		for (i = 0; i < slen; i += CHUNK_WIDTH)
-			VDBG_log("cmd(%4d):%.*s:", i,
-				 slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
-				 &cmd[i]);
-	}
-#	undef CHUNK_WIDTH
-#endif
-
-	/*
-	 * Both BSD and Linux document popen() as invoking /bin/sh -c
-	 * '...'.
-	 */
-	const char *argv[] = {
-		"/bin/sh",
-		"-c",
-		cmd,
-		NULL,
-	};
-
-	int status = server_runve_io(story, argv, envp,
-				     /*input*/empty_shunk,
-				     /*output*/NULL,
-				     verbose,
-				     (verbose.debug ? DEBUG_STREAM : 0));
-	return (status == 0);
-}
 
 bool server_runv(const char *story, const char *argv[], struct verbose verbose)
 {
