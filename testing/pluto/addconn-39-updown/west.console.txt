@@ -1,4 +1,9 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ cp ../../guestbin/updown.sh /tmp
+west #
+ chmod a+x /tmp/updown.sh
 west #
  ipsec start
 Redirecting to: [initsystem]
@@ -33,6 +38,25 @@ west #
 warning: "addconn--type=passthrough--leftupdown=left": leftupdown=left ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--leftupdown=left": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
+ ipsec add --auto=route addconn--updown-flags=exec
+"addconn--updown-flags=exec": added oriented IKEv2 connection
+"addconn--updown-flags=exec": command "prepare": '/tmp/updown.sh'
+"addconn--updown-flags=exec": command "prepare": exited normally
+"addconn--updown-flags=exec": command "route": '/tmp/updown.sh'
+"addconn--updown-flags=exec": command "route": exited normally
+west #
+ grep -e VERB -e CONN /tmp/updown.env
+PLUTO_CONN_ADDRFAMILY=ipv4
+PLUTO_CONNECTION_TYPE=tunnel
+PLUTO_CONNECTION=addconn--updown-flags=exec
+PLUTO_CONN_KIND=CK_PERMANENT
+PLUTO_VERB=route-client
+PLUTO_CONN_POLICY=IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+west #
+ ipsec delete addconn--updown-flags=exec
+"addconn--updown-flags=exec": command "unroute": '/tmp/updown.sh'
+"addconn--updown-flags=exec": command "unroute": exited normally
+west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
@@ -47,16 +71,16 @@ warning: "whack--pass--updown=from": leftupdown=from ignored for never-negotiate
 "whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
-"addconn--leftupdown=%disabled": leftupdown=<disabled>; rightupdown=ipsec _updown;
-"addconn": leftupdown=ipsec _updown; rightupdown=ipsec _updown;
-"addconn--leftupdown=left": leftupdown=left; rightupdown=ipsec _updown;
-"addconn--leftupdown=": leftupdown=<disabled>; rightupdown=ipsec _updown;
-"addconn--leftupdown=quotes": leftupdown=<disabled>; rightupdown=ipsec _updown;
-"addconn--rightupdown=right": leftupdown=ipsec _updown; rightupdown=right;
-"addconn--type=passthrough": leftupdown=<disabled>; rightupdown=<disabled>;
-"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; rightupdown=<disabled>;
-"whack": leftupdown=ipsec _updown; rightupdown=ipsec _updown;
-"whack--pass": leftupdown=<disabled>; rightupdown=<disabled>;
-"whack--pass--updown=from": leftupdown=<disabled>; rightupdown=<disabled>;
-"whack--updown=from": leftupdown=from; rightupdown=ipsec _updown;
+"addconn--leftupdown=%disabled": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
+"addconn": leftupdown=ipsec _updown; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
+"addconn--leftupdown=left": leftupdown=left; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
+"addconn--leftupdown=": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
+"addconn--leftupdown=quotes": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
+"addconn--rightupdown=right": leftupdown=ipsec _updown; leftupdown-flagsnoexec; rightupdown=right; rightupdown-flagsnoexec
+"addconn--type=passthrough": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=<disabled>; rightupdown-flagsnoexec
+"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=<disabled>; rightupdown-flagsnoexec
+"whack": leftupdown=ipsec _updown; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
+"whack--pass": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=<disabled>; rightupdown-flagsnoexec
+"whack--pass--updown=from": leftupdown=<disabled>; leftupdown-flagsnoexec; rightupdown=<disabled>; rightupdown-flagsnoexec
+"whack--updown=from": leftupdown=from; leftupdown-flagsnoexec; rightupdown=ipsec _updown; rightupdown-flagsnoexec
 west #
