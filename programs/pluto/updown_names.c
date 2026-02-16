@@ -51,6 +51,7 @@ const struct enum_names updown_names = {
 
 static const char *updown_flag_name[] = {
 #define C(E) [E] = #E
+	C(UPDOWN_FLAG_ASYNC),
 	C(UPDOWN_FLAG_EXEC),
 #undef C
 };
