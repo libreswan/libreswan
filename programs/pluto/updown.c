@@ -95,6 +95,7 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 struct updown_exec {
 	char buffer[2048];
 	const char *env[100];
+	const char *arg[4];
 };
 
 static bool build_updown_exec(struct updown_exec *exec,
@@ -105,6 +106,23 @@ static bool build_updown_exec(struct updown_exec *exec,
 			      struct updown_env updown_env,
 			      struct verbose verbose/*C-or-CHILD*/)
 {
+	/*
+	 * Build argv[]
+	 */
+	const char **argv = exec->arg;
+	if (c->local->config->child.updown.updown_exec_flag) {
+		(*argv++) = c->local->config->child.updown.command;
+	} else {
+		(*argv++) = "/bin/sh";
+		(*argv++) = "-c";
+		(*argv++) = c->local->config->child.updown.command;
+	}
+	(*argv++) = NULL;
+	vassert(argv <= exec->arg + elemsof(exec->arg));
+
+	/*
+	 * Build envp[]
+	 */
 	struct jambuf jb = ARRAY_AS_JAMBUF(exec->buffer);
 	const char **envp = exec->env;
 	/* leave space for trailing NULL */
@@ -420,16 +438,7 @@ static bool do_updown_verb(const char *verb,
 		return false;
 	}
 
-	if (c->local->config->child.updown.updown_exec_flag) {
-		const char *argv[] = {
-			c->local->config->child.updown.command,
-			NULL,
-		};
-		return server_runve(verb, argv, exec.env, verbose);
-	}
-
-	return server_rune(verb, c->local->config->child.updown.command,
-			   exec.env, verbose);
+	return server_runve(verb, exec.arg, exec.env, verbose);
 }
 
 bool updown_connection_spd(enum updown updown_verb,
