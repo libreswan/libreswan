@@ -91,6 +91,19 @@ bool server_runv(const char *story, const char *argv[], struct verbose verbose)
 	return (status == 0);
 }
 
+bool server_runve(const char *story,
+		  const char *argv[],
+		  const char *envp[],
+		  struct verbose verbose)
+{
+	int status = server_runve_io(story, argv, envp,
+				     /*input*/empty_shunk,
+				     /*save_output*/NULL,
+				     verbose,
+				     /*command_stream*/ALL_STREAMS);
+	return (status == 0);
+}
+
 NEVER_RETURNS
 static void child_process(const char *story,
 			  int fd[],
