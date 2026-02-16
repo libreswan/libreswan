@@ -41,7 +41,7 @@
 
 <!ENTITY pluto '<command>pluto</command>'>
 
-<!-- system stuff -->
+<!-- NSS stuff -->
 
 <!ENTITY certutil.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
 <!ENTITY crlutil.1 '<citerefentry><refentrytitle>crlutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
@@ -49,10 +49,11 @@
 <!ENTITY pk12util.1 '<citerefentry><refentrytitle>pk12util</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
 <!ENTITY vfychain.1 '<citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
 
-<!ENTITY sh.1 '<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
+<!-- UNIX-like stuff -->
 
 <!ENTITY crypt.3 '<citerefentry><refentrytitle>crypt</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY efence.2 '<citerefentry><refentrytitle>efence</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
+<!ENTITY exec.3 '<citerefentry><refentrytitle>exec</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY glob.3 '<citerefentry><refentrytitle>glob</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY init.8 '<citerefentry><refentrytitle>init</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY ip.8 '<citerefentry><refentrytitle>ip</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
@@ -60,6 +61,7 @@
 <!ENTITY random.4 '<citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>'>
 <!ENTITY rc.8 '<citerefentry><refentrytitle>rc</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
 <!ENTITY rngd.8 '<citerefentry><refentrytitle>rngd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>
+<!ENTITY sh.1 '<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>'>
 <!ENTITY syslog.2 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>2</manvolnum></citerefentry>'>
 <!ENTITY syslog.3 '<citerefentry><refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum></citerefentry>'>
 <!ENTITY syslogd.8 '<citerefentry><refentrytitle>syslogd</refentrytitle><manvolnum>8</manvolnum></citerefentry>'>

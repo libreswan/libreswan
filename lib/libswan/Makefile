@@ -170,6 +170,7 @@ OBJS += ip_selector.o
 OBJS += ip_sockaddr.o
 OBJS += ip_subnet.o
 
+OBJS += flags.o
 OBJS += lmod.o
 OBJS += lset.o
 OBJS += scale.o

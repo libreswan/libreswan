@@ -48,6 +48,7 @@
 #include "shunt.h"
 
 #include "defs.h"
+#include "updown.h"
 #include "proposals.h"
 #include "hash_table.h"
 #include "diag.h"
@@ -141,7 +142,15 @@ struct host_end_config {
 struct child_end_config {
 	const char *leftright;
 	ip_protoport protoport;
-	char *updown;
+
+	/*
+	 * XXX: should command be pre-sliced ready for passing to
+	 * execve() (depending on exec option).
+	 */
+	struct {
+		char *command;
+		bool updown_flags[UPDOWN_FLAG_ROOF];
+	} updown;
 
 	bool has_client_address_translation;		/* aka CAT */
 

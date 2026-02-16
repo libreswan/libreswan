@@ -1,25 +1,28 @@
 /testing/guestbin/swan-prep
 west #
+ valgrind --quiet $(ipsec -n _asn1check) > /dev/null || echo failed
+ipsec _asn1check: leak detective found no leaks
+west #
  valgrind --quiet $(ipsec -n _authbycheck) > /dev/null || echo failed
 ipsec _authbycheck: leak detective found no leaks
-west #
- valgrind --quiet $(ipsec -n _jambufcheck) > /dev/null || echo failed
-ipsec _jambufcheck: leak detective found no leaks
-west #
- valgrind --quiet $(ipsec -n _timecheck) > /dev/null || echo failed
-ipsec _timecheck: leak detective found no leaks
-west #
- valgrind --quiet $(ipsec -n _hunkcheck) > /dev/null || echo failed
-ipsec _hunkcheck: leak detective found no leaks
 west #
  valgrind --quiet $(ipsec -n _dncheck) > /dev/null || echo failed
 ipsec _dncheck: leak detective found no leaks
 west #
+ valgrind --quiet $(ipsec -n _flagscheck) > /dev/null || echo failed
+ipsec _flagscheck: 0,2
+west #
+ valgrind --quiet $(ipsec -n _hunkcheck) > /dev/null || echo failed
+ipsec _hunkcheck: leak detective found no leaks
+west #
+ valgrind --quiet $(ipsec -n _jambufcheck) > /dev/null || echo failed
+ipsec _jambufcheck: leak detective found no leaks
+west #
  valgrind --quiet $(ipsec -n _keyidcheck) > /dev/null || echo failed
 ipsec _keyidcheck: leak detective found no leaks
 west #
- valgrind --quiet $(ipsec -n _asn1check) > /dev/null || echo failed
-ipsec _asn1check: leak detective found no leaks
+ valgrind --quiet $(ipsec -n _timecheck) > /dev/null || echo failed
+ipsec _timecheck: leak detective found no leaks
 west #
  valgrind --quiet $(ipsec -n _ttodatacheck -r)
 west #
