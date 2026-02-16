@@ -2,16 +2,16 @@
 
 # Run the parser tests.
 
-ipsec algparse -tp -v1
-ipsec algparse -tp -v1 -pfs
-ipsec algparse -tp -v2
-ipsec algparse -tp -v2 -pfs
+ipsec algparse --tp --v1
+ipsec algparse --tp --v1 --pfs
+ipsec algparse --tp --v2
+ipsec algparse --tp --v2 --pfs
 
-ipsec algparse -tp -v2 -pfs -addke
+ipsec algparse --tp --v2 --pfs --addke
 
 # Run the algorithm tests; there should be no fails.
 
-ipsec algparse -ta > /dev/null
+ipsec algparse --ta > /dev/null
 
 # Check pluto is starting in the correct mode.
 
