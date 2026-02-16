@@ -91,7 +91,7 @@ Connection list:
  
 "road-eastnet-nonat": 192.0.2.0/24===192.1.2.23[@east]...%any[@road]===192.0.2.219/32; unrouted; my_ip=unset; their_ip=192.0.2.219;
 "road-eastnet-nonat":   host: oriented; local: 192.1.2.23; remote: %any;
-"road-eastnet-nonat":   my_updown=ipsec _updown;
+"road-eastnet-nonat":   my_updown=ipsec _updown; my_updown-flags=noexec;
 "road-eastnet-nonat":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 "road-eastnet-nonat":   cisco-split: no; cisco-unity: no; cisco-peer: no; nm-configured: no;
