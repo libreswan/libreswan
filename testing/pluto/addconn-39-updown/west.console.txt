@@ -40,18 +40,12 @@ warning: "addconn--type=passthrough--leftupdown=left": leftupdown=left ignored f
 west #
  ipsec add --auto=route addconn--updown-flags=exec
 "addconn--updown-flags=exec": added oriented IKEv2 connection
-"addconn--updown-flags=exec": command "prepare": '/tmp/updown.sh'
-"addconn--updown-flags=exec": command "prepare": exited normally
-"addconn--updown-flags=exec": command "route": '/tmp/updown.sh'
-"addconn--updown-flags=exec": command "route": exited normally
 west #
  grep -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
 PLUTO_CONNECTION=addconn--updown-flags=exec
 PLUTO_VERB=route-client
 west #
  ipsec delete addconn--updown-flags=exec
-"addconn--updown-flags=exec": command "unroute": '/tmp/updown.sh'
-"addconn--updown-flags=exec": command "unroute": exited normally
 west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
