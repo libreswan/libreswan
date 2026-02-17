@@ -968,7 +968,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 * A new route?  No deletion required, but preparation is.
 	 */
 	if (ok && (updown.route || updown.up) &&
-	    !c->local->config->child.updown.updown_async_flag) {
+	    !c->local->config->child.updown.updown_config_async) {
 		updown_child_spds(UPDOWN_PREPARE, child,
 				  (struct updown_config) {
 					  .return_error = false,
@@ -980,7 +980,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 * A new route?  No deletion required, but preparation is.
 	 */
 	if (ok && updown.route &&
-	    !c->local->config->child.updown.updown_async_flag) {
+	    !c->local->config->child.updown.updown_config_async) {
 		ok = updown_child_spds(UPDOWN_ROUTE, child,
 				       (struct updown_config) {
 					       .return_error = true,
@@ -1000,7 +1000,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	 * connection, so the actual test is simple.
 	 */
 	if (ok && updown.up &&
-	    !c->local->config->child.updown.updown_async_flag) {
+	    !c->local->config->child.updown.updown_config_async) {
 		ok = updown_child_spds(UPDOWN_UP, child,
 				       (struct updown_config) {
 					       .return_error = true,
@@ -1009,7 +1009,7 @@ bool install_outbound_ipsec_kernel_policies(struct child_sa *child,
 	}
 
 	if (ok && (updown.route || updown.up) &&
-	    c->local->config->child.updown.updown_async_flag) {
+	    c->local->config->child.updown.updown_config_async) {
 		ok = updown_async_child(/*prepare*/(updown.route || updown.up),
 					updown.route, updown.up, child);
 	}

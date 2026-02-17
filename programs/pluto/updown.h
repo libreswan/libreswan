@@ -56,16 +56,16 @@ enum updown {
 extern const struct enum_names updown_stories;
 extern const struct enum_names updown_names;
 
-enum updown_flags {
-	UPDOWN_FLAG_ASYNC,
-	UPDOWN_FLAG_EXEC,
-#define UPDOWN_FLAG_ROOF (UPDOWN_FLAG_EXEC+1)
+enum updown_configs {
+	UPDOWN_CONFIG_ASYNC,
+	UPDOWN_CONFIG_EXEC,
+#define UPDOWN_CONFIG_ROOF (UPDOWN_CONFIG_EXEC+1)
 };
 
-#define updown_async_flag updown_flags[UPDOWN_FLAG_ASYNC]
-#define updown_exec_flag updown_flags[UPDOWN_FLAG_EXEC]
+#define updown_config_async updown_config[UPDOWN_CONFIG_ASYNC]
+#define updown_config_exec updown_config[UPDOWN_CONFIG_EXEC]
 
-extern const struct enum_names updown_flag_names;
+extern const struct enum_names updown_config_names;
 
 bool updown_connection_spd(enum updown updown_verb,
 			   const struct connection *c,

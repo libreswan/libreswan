@@ -181,7 +181,7 @@ struct whack_end {
 #define we_protoport conn->value[KWS_PROTOPORT]
 
 #define we_updown conn->value[KWS_UPDOWN]
-#define we_updown_flags conn->value[KWS_UPDOWN_FLAGS]
+#define we_updown_config conn->value[KWS_UPDOWN_CONFIG]
 
 #define we_addresspool conn->value[KWS_ADDRESSPOOL]
 

@@ -2057,17 +2057,17 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			 clone_str(src->we_updown, "child_config.updown"));
 	}
 
-	if (never_negotiate_string_option(leftright, "updown-flags",
-					  src->we_updown_flags, wm, verbose)) {
-		vdbg("never-negotiate updown-flags");
+	if (never_negotiate_string_option(leftright, "updown-config",
+					  src->we_updown_config, wm, verbose)) {
+		vdbg("never-negotiate updown-config");
 	} else {
-		d = ttoflags(src->we_updown_flags,
-			     child_config->updown.updown_flags,
-			     &updown_flag_names);
+		d = ttoflags(src->we_updown_config,
+			     child_config->updown.updown_config,
+			     &updown_config_names);
 		if (d != NULL) {
-			return diag_diag(&d, "%s-updown-flags=%s invalid, ",
+			return diag_diag(&d, "%s-updown-config=%s invalid, ",
 					 leftright,
-					 src->we_updown_flags);
+					 src->we_updown_config);
 		}
 	}
 
