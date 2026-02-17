@@ -510,41 +510,13 @@ static void show_connection_status(struct show *s, const struct connection *c)
 			jam(buf, " peercert=%s;", remote_cert);
 		}
 
-#define JAM_UPDOWN(BUF, E)						\
-		{							\
-			if ((E)->config->child.updown.command == NULL) { \
-				jam_string(BUF, "<disabled>");		\
-			} else {					\
-				jam_string(BUF, (E)->config->child.updown.command); \
-			}						\
-			jam_string(BUF, ";");				\
-		}
 		if (oriented(c)) {
-			/* left? */
-			jam_string(buf, " my_updown=");
-			JAM_UPDOWN(buf, c->local);
-			/**/
-			jam_string(buf, " my_updown-flags=");
-			jam_flags_human(buf,
-					c->local->config->child.updown.updown_flags,
-					&updown_flag_names);
-			jam_string(buf, ";");
+			/* my_updown=... */
+			jam_updown_status(buf, "my_", c->local);
 		} else {
-			jam_string(buf, " leftupdown=");
-			JAM_UPDOWN(buf, &c->end[LEFT_END]);
-			jam_string(buf, " leftupdown-flags=");
-			jam_flags_human(buf,
-					c->end[LEFT_END].config->child.updown.updown_flags,
-					&updown_flag_names);
-			jam_string(buf, ";");
-			jam_string(buf, " rightupdown=");
-			JAM_UPDOWN(buf, &c->end[RIGHT_END]);
-			jam_string(buf, " rightupdown-flags=");
-			jam_flags_human(buf,
-					c->end[RIGHT_END].config->child.updown.updown_flags,
-					&updown_flag_names);
+			jam_updown_status(buf, "left", &c->end[LEFT_END]);
+			jam_updown_status(buf, "right", &c->end[LEFT_END]);
 		}
-#undef JAM_UPDOWN
 	}
 
 	/*
