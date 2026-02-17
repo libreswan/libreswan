@@ -92,8 +92,13 @@ static void jam_clean_xauth_username(struct jambuf *buf,
  * note: this mutates *st by calling get_sa_bundle_info().
  */
 
-static bool build_updown_envp(struct jambuf jb,
-			      const char **envp, unsigned envp_len,
+struct updown_exec {
+	char buffer[2048];
+	const char *env[100];
+	const char *arg[4];
+};
+
+static bool build_updown_exec(struct updown_exec *exec,
 			      const char *verb, const char *verb_suffix,
 			      const struct connection *c,
 			      const struct spd *sr,
@@ -101,11 +106,32 @@ static bool build_updown_envp(struct jambuf jb,
 			      struct updown_env updown_env,
 			      struct verbose verbose/*C-or-CHILD*/)
 {
+	/*
+	 * Build argv[]
+	 */
+	const char **argv = exec->arg;
+	if (c->local->config->child.updown.updown_exec_flag) {
+		(*argv++) = c->local->config->child.updown.command;
+	} else {
+		(*argv++) = "/bin/sh";
+		(*argv++) = "-c";
+		(*argv++) = c->local->config->child.updown.command;
+	}
+	(*argv++) = NULL;
+	vassert(argv <= exec->arg + elemsof(exec->arg));
+
+	/*
+	 * Build envp[]
+	 */
+	struct jambuf jb = ARRAY_AS_JAMBUF(exec->buffer);
+	const char **envp = exec->env;
+	/* leave space for trailing NULL */
+	const char **envp_end = envp + elemsof(exec->env) - 1;
+
 	const bool tunneling = (c->config->child.encap_mode == ENCAP_MODE_TUNNEL);
 
 	/* macros to jam definitions of various forms */
 
-	const char **envp_end = envp + envp_len - 1;
 #	define JDemitter(NAME, EMITTER)			\
 	{						\
 		if (envp < envp_end) {			\
@@ -404,28 +430,15 @@ static bool do_updown_verb(const char *verb,
 	}
 
 	vdbg("kernel: command executing %s%s", verb, verb_suffix);
-	char envp_buffer[2048];
-	const char *envp[100];
-
-	if (!build_updown_envp(ARRAY_AS_JAMBUF(envp_buffer),
-			 envp, elemsof(envp),
-			 verb, verb_suffix, c, spd,
-			 child, updown_env, verbose)) {
+	struct updown_exec exec;
+	if (!build_updown_exec(&exec, verb, verb_suffix, c, spd,
+			       child, updown_env, verbose)) {
 		vlog("%s%s command too long!", verb,
 		     verb_suffix);
 		return false;
 	}
 
-	if (c->local->config->child.updown.updown_exec_flag) {
-		const char *argv[] = {
-			c->local->config->child.updown.command,
-			NULL,
-		};
-		return server_runve(verb, argv, envp, verbose);
-	}
-
-	return server_rune(verb, c->local->config->child.updown.command,
-			   envp, verbose);
+	return server_runve(verb, exec.arg, exec.env, verbose);
 }
 
 bool updown_connection_spd(enum updown updown_verb,
