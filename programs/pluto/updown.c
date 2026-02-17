@@ -133,11 +133,11 @@ static bool build_updown_envp(struct jambuf jb,
 	JDstr("PLUTO_INTERFACE", c->iface == NULL ? "NULL" : c->iface->real_device_name);
 	JDstr("PLUTO_XFRMI_ROUTE",  (c->ipsec_interface != NULL && c->ipsec_interface->if_id > 0) ? "yes" : "");
 
-	if (address_is_specified(sr->local->host->nexthop)) {
-		JDipaddr("PLUTO_NEXT_HOP", sr->local->host->nexthop);
+	if (address_is_specified(c->local->host.nexthop)) {
+		JDipaddr("PLUTO_NEXT_HOP", c->local->host.nexthop);
 	}
 
-	JDipaddr("PLUTO_ME", sr->local->host->addr);
+	JDipaddr("PLUTO_ME", c->local->host.addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_sanitized_bytes));
 	JD("PLUTO_CLIENT_FAMILY", "ipv%s", selector_info(sr->local->client)->n_name);
 	JDemitter("PLUTO_MY_CLIENT", jam_selector_range(&jb, &sr->local->client));
@@ -166,7 +166,7 @@ static bool build_updown_envp(struct jambuf jb,
 				child->sa.st_ipcomp.protocol == &ip_protocol_ipcomp ? "IPCOMP" :
 				"unknown?"));
 
-	JDipaddr("PLUTO_PEER", sr->remote->host->addr);
+	JDipaddr("PLUTO_PEER", c->remote->host.addr);
 	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_sanitized_bytes));
 
 	/* for transport mode, things are complicated */
@@ -174,8 +174,8 @@ static bool build_updown_envp(struct jambuf jb,
 		  if (!tunneling && child != NULL &&
 		      child->sa.hidden_variables.st_nated_peer) {
 			  /* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
-			  jam_address(&jb, &sr->remote->host->addr);
-			  jam(&jb, "/%d", address_info(sr->local->host->addr)->mask_cnt/*32 or 128*/);
+			  jam_address(&jb, &c->remote->host.addr);
+			  jam(&jb, "/%d", address_info(c->local->host.addr)->mask_cnt/*32 or 128*/);
 		  } else {
 			  jam_selector_range(&jb, &sr->remote->client);
 		  });
@@ -183,7 +183,7 @@ static bool build_updown_envp(struct jambuf jb,
 	JDipaddr("PLUTO_PEER_CLIENT_NET",
 		 (!tunneling && child != NULL &&
 		  child->sa.hidden_variables.st_nated_peer) ?
-		 sr->remote->host->addr : selector_prefix(sr->remote->client));
+		 c->remote->host.addr : selector_prefix(sr->remote->client));
 
 	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->remote->client));
 	JDunsigned("PLUTO_PEER_PORT", sr->remote->client.hport);
@@ -195,7 +195,7 @@ static bool build_updown_envp(struct jambuf jb,
 			  int pathlen;	/* value ignored */
 			  if (key->content.type == &pubkey_type_rsa &&
 			      same_id(&c->remote->host.id, &key->id) &&
-			      trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca),
+			      trusted_ca(key->issuer, ASN1(c->remote->host.config->ca),
 					 &pathlen, verbose)) {
 				  jam_dn_or_null(&jb, key->issuer, "", jam_sanitized_bytes);
 				  break;
@@ -216,7 +216,7 @@ static bool build_updown_envp(struct jambuf jb,
 	JDuint64("PLUTO_ADDTIME", (child == NULL ? (uint64_t)0 : child->sa.st_esp.add_time));
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
 	JDemitter("PLUTO_CONN_KIND", jam_enum_long(&jb, &connection_kind_names, c->local->kind));
-	JD("PLUTO_CONN_ADDRFAMILY", "ipv%s", address_info(sr->local->host->addr)->n_name);
+	JD("PLUTO_CONN_ADDRFAMILY", "ipv%s", address_info(c->local->host.addr)->n_name);
 	JDunsigned("XAUTH_FAILED", (child != NULL && child->sa.st_xauth_soft ? 1 : 0));
 
 	if (child != NULL && child->sa.st_xauth_username[0] != '\0') {
@@ -236,8 +236,8 @@ static bool build_updown_envp(struct jambuf jb,
 	JDstr("PLUTO_PEER_DNS_INFO", (child != NULL && child->sa.st_seen_cfg_dns != NULL ? child->sa.st_seen_cfg_dns : ""));
 	JDstr("PLUTO_PEER_DOMAIN_INFO", (child != NULL && child->sa.st_seen_cfg_domains != NULL ? child->sa.st_seen_cfg_domains : ""));
 	JDstr("PLUTO_PEER_BANNER", (child != NULL && child->sa.st_seen_cfg_banner != NULL ? child->sa.st_seen_cfg_banner : ""));
-	JDunsigned("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
-	JDunsigned("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
+	JDunsigned("PLUTO_CFG_SERVER", c->local->host.config->modecfg.server);
+	JDunsigned("PLUTO_CFG_CLIENT", c->local->host.config->modecfg.client);
 	JDunsigned("PLUTO_NM_CONFIGURED", c->config->host.cisco.nm);
 
 	struct ipsec_proto_info *const first_ipsec_proto = (child == NULL ? NULL :
@@ -272,13 +272,13 @@ static bool build_updown_envp(struct jambuf jb,
 		if (c->sa_marks.out.val != 0) {
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			JD("PLUTO_XFRMI_FWMARK", "%"PRIu32"/%#08"PRIx32, c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (address_in_selector_range(sr->remote->host->addr, sr->remote->client)) {
+		} else if (address_in_selector_range(c->remote->host.addr, sr->remote->client)) {
 			JD("PLUTO_XFRMI_FWMARK", "%"PRIu32"/0xffffffff", c->ipsec_interface->if_id);
 		} else {
 			address_buf bpeer;
 			selector_buf peerclient_str;
 			vdbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
-			     str_address(&sr->remote->host->addr, &bpeer),
+			     str_address(&c->remote->host.addr, &bpeer),
 			     str_selector_range_port(&sr->remote->client, &peerclient_str));
 			JDstr("PLUTO_XFRMI_FWMARK", "");
 		}
