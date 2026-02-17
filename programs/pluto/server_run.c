@@ -98,7 +98,7 @@ bool server_runve(const char *story,
 				     /*input*/empty_shunk,
 				     /*save_output*/NULL,
 				     verbose,
-				     /*command_stream*/ALL_STREAMS);
+				     (verbose.debug ? DEBUG_STREAM : 0));
 	return (status == 0);
 }
 
