@@ -1,16 +1,16 @@
 <varlistentry id='conn.updown'>
   <term>
-    <option>leftupdown=</option>
+    <option>leftupdown=[&command;]</option>
   </term>
   <term>
-    <option>rightupdown=</option>
+    <option>rightupdown=[&command;]</option>
   </term>
   <listitem>
     <para>
-      The script to run to adjust routing and/or firewalling when the
-      status of the connection changes.  May include positional
-      parameters separated by white space (although this requires
-      enclosing the whole string in quotes); including shell
+      The shell command to run to adjust routing and/or firewalling
+      when the status of the connection changes.  May include
+      positional parameters separated by white space (although this
+      requires enclosing the whole string in quotes); including shell
       metacharacters is unwise.  An example to enable routing when
       using the XFRM stack, one can use:
     </para>
@@ -29,7 +29,7 @@
       <option>drop</option> never run <command>ipsec _updown</command>.
     </para>
     <para>
-      See &libreswan.7; for details.
+      For more information, see &ipsec-updown.8;.
     </para>
     <para>
       The default is <command>ipsec _updown</command>.

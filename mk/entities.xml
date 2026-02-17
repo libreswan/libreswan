@@ -148,6 +148,7 @@
 <!ENTITY ah '<literal>ah</literal>'>
 <!ENTITY all '<literal>all</literal>'>
 <!ENTITY alwaysok '<literal>alwaysok</literal>'>
+<!ENTITY async '<literal>async</literal>'>
 <!ENTITY auto '<literal>auto</literal>'>
 <!ENTITY both '<literal>both</literal>'>
 <!ENTITY busy '<literal>busy</literal>'>
@@ -156,6 +157,7 @@
 <!ENTITY drop '<literal>drop</literal>'>
 <!ENTITY either '<literal>either</literal>'>
 <!ENTITY esp '<literal>esp</literal>'>
+<!ENTITY exec '<literal>exec</literal>'>
 <!ENTITY fallback '<literal>fallback</literal>'>
 <!ENTITY file '<literal>file</literal>'>
 <!ENTITY force '<literal>force</literal>'>
@@ -185,24 +187,26 @@
 <!ENTITY unlimited '<literal>unlimited</literal>'>
 <!ENTITY yes '<literal>yes</literal>'>
 
-<!ENTITY yn_option '{&yes;|&no;}'>
-<!ENTITY yna_option '{&yes;|&no;|&auto;}'>
+<!ENTITY autheap_option '{&none;|&tls;}'>
 <!ENTITY ddos_mode_option '{&busy;|&unlimited;|&auto;}'>
-<!ENTITY http_method_option '{&get;|&post;}'>
+<!ENTITY enable_tcp_option '{&no;|&fallback;|&yes;}'>
+<!ENTITY esn_option '{&yes;|&no;|&either;}'>
 <!ENTITY failureshunt_option '{&none;|&pass;|&drop;|&reject;}'>
+<!ENTITY http_method_option '{&get;|&post;}'>
+<!ENTITY keyexchange_option '{&ikev1;|&ikev2;}'>
+<!ENTITY nat_ikev1_method_option '{&drafts;|&rfc;|&both;|&none;}'>
 <!ENTITY negotiationshunt_option '{&hold;|&pass;}'>
 <!ENTITY nic_offload_option '{&no;|&crypto;|&packet;}'>
-<!ENTITY enable_tcp_option '{&no;|&fallback;|&yes;}'>
-<!ENTITY ppk_option '{&no;|&propose;|&yes;|&insist;|&never;}'>
-<!ENTITY xauthfail_option '{&hard;|&soft;}'>
-<!ENTITY xauthby_option '{&file;|&pam;|&alwaysok;}'>
-<!ENTITY keyexchange_option '{&ikev1;|&ikev2;}'>
-<!ENTITY type_option '{&tunnel;|&transport;|&passthrough;|&drop;}'>
-<!ENTITY nat_ikev1_method_option '{&drafts;|&rfc;|&both;|&none;}'>
-<!ENTITY sendca_option '{&none;|&issuer;|&all;}'>
-<!ENTITY esn_option '{&yes;|&no;|&either;}'>
 <!ENTITY phase2_option '{&esp;|&ah;}'>
-<!ENTITY autheap_option '{&none;|&tls;}'>
+<!ENTITY ppk_option '{&no;|&propose;|&yes;|&insist;|&never;}'>
+<!ENTITY sendca_option '{&none;|&issuer;|&all;}'>
+<!ENTITY type_option '{&tunnel;|&transport;|&passthrough;|&drop;}'>
+<!ENTITY updown_flags_option '{&async;|&exec;}'>
+<!ENTITY xauthby_option '{&file;|&pam;|&alwaysok;}'>
+<!ENTITY xauthfail_option '{&hard;|&soft;}'>
+<!ENTITY yn_option '{&yes;|&no;}'>
+<!ENTITY yna_option '{&yes;|&no;|&auto;}'>
+<!ENTITY command '<replaceable>command</replaceable>'>
 
 <!-- -->
 
@@ -234,10 +238,6 @@
 <!ENTITY duration_unit '<literal>us</literal>|<literal>ms</literal>|<literal>s</literal>|<literal>m</literal>|<literal>h</literal>|<literal>d</literal>|<literal>w</literal>]'>
 <!ENTITY seconds '<replaceable>seconds</replaceable>&duration_unit;'>
 <!ENTITY milliseconds '<replaceable>milliseconds</replaceable>&duration_unit;'>
-
-<!ENTITY yes '<literal>yes</literal>'>
-<!ENTITY no '<literal>no</literal>'>
-<!ENTITY auto '<literal>auto</literal>'>
 
 <!-- command line options -->
 
