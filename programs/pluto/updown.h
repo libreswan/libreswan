@@ -31,8 +31,10 @@
 
 #include <stdbool.h>
 
+struct jambuf;
 struct state;
 struct connection;
+struct connection_end;
 struct spd;
 struct spds;
 struct logger;
@@ -117,5 +119,8 @@ void do_updown_unroute_spd(const struct spd *spd, const struct spd_owner *owner,
 			   struct updown_env);
 
 extern const char *pluto_dns_resolver;
+
+void jam_updown_status(struct jambuf *buf, const char *prefix,
+		       const struct connection_end *end);
 
 #endif

@@ -27,6 +27,7 @@
  */
 
 #include "ip_info.h"
+#include "flags.h"
 
 #include "defs.h"
 #include "updown.h"
@@ -633,3 +634,27 @@ void do_updown_unroute_spd(const struct spd *spd,
 	do_updown_verb(verb, spd->connection, spd, child, updown_env, verbose);
 	vdbg_stop(&start, "%s", sb.buf);
 }
+
+void jam_updown_status(struct jambuf *buf, const char *prefix,
+		       const struct connection_end *end)
+{
+	/* PREFIX-updown= */
+	jam_string(buf, " ");
+	jam_string(buf, prefix);
+	jam_string(buf, "updown=");
+	if (end->config->child.updown.command == NULL) {
+		jam_string(buf, "<disabled>");
+	} else {
+		jam_string(buf, end->config->child.updown.command);
+	}
+	jam_string(buf, ";");
+	/* PREFIX-updown-flags= */
+	jam_string(buf, " ");
+	jam_string(buf, prefix);
+	jam_string(buf, "updown-flags=");
+	jam_flags_human(buf,
+			end->config->child.updown.updown_flags,
+			&updown_flag_names);
+	jam_string(buf, ";");
+}
+
