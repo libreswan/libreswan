@@ -154,6 +154,9 @@ static bool build_updown_exec(struct updown_exec *exec,
 #	define JDipaddr(name, addr)					\
 	JDemitter(name, { ip_address ta = addr; jam_address(&jb, &ta); } )
 
+	/* use PLUTO's environment for defaults */
+	JDstr("PATH", getenv("PATH"));
+
 	JD("PLUTO_VERB", "%s%s", verb, verb_suffix);
 
 	JDstr("PLUTO_CONNECTION", c->base_name);
