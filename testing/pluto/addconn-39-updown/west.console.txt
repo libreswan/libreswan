@@ -38,15 +38,6 @@ west #
 warning: "addconn--type=passthrough--leftupdown=left": leftupdown=left ignored for never-negotiate (type=passthrough) connection
 "addconn--type=passthrough--leftupdown=left": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
- ipsec add --auto=route addconn--updown-flags=exec
-"addconn--updown-flags=exec": added oriented IKEv2 connection
-west #
- grep -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
-PLUTO_CONNECTION=addconn--updown-flags=exec
-PLUTO_VERB=route-client
-west #
- ipsec delete addconn--updown-flags=exec
-west #
  ipsec whack --name whack                                      --host 1.2.3.4 --to --host 5.6.7.8
 "whack": added unoriented IKEv2 connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
@@ -73,4 +64,24 @@ west #
 "whack--pass": leftupdown=<disabled>; leftupdown-flags=noasync,noexec; rightupdown=<disabled>; rightupdown-flags=noasync,noexec;
 "whack--pass--updown=from": leftupdown=<disabled>; leftupdown-flags=noasync,noexec; rightupdown=<disabled>; rightupdown-flags=noasync,noexec;
 "whack--updown=from": leftupdown=from; leftupdown-flags=noasync,noexec; rightupdown=from; rightupdown-flags=noasync,noexec;
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ PATH=$PATH:/silly/path ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec add --auto=route addconn--updown-flags=exec
+"addconn--updown-flags=exec": added oriented IKEv2 connection
+west #
+ grep -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
+PLUTO_CONNECTION=addconn--updown-flags=exec
+PLUTO_VERB=route-client
+PATH=PATH/sbin:PATH/bin:/bin:/sbin:PATH/bin:PATH/sbin:PATH/pkg/bin:PATH/pkg/sbin:PATH/bin:PATH/sbin:/testing/guestbin:/silly/path
+west #
+ ipsec delete addconn--updown-flags=exec
+west #
+ ipsec stop
+Redirecting to: [initsystem]
 west #
