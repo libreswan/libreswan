@@ -32,8 +32,8 @@ ipsec stop
 PATH=$PATH:/silly/path ipsec pluto --config /etc/ipsec.conf --logfile /tmp/pluto.log
 ../../guestbin/wait-until-pluto-started
 
-ipsec add --auto=route addconn--updown-flags=exec
+ipsec add --auto=route addconn--updown-config=exec
 grep -e PATH= -e PLUTO_VERB= -e PLUTO_CONNECTION= /tmp/updown.env
-ipsec delete addconn--updown-flags=exec
+ipsec delete addconn--updown-config=exec
 
 ipsec stop
