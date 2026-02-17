@@ -588,7 +588,7 @@ bool updown_async_child(bool prepare, bool route, bool up,
 	struct updown_exec exec;
 	if (!build_updown_exec(&exec, verb, /*verb_suffix*/"",
 			       child->sa.st_connection,
-			       /*spd*/NULL,
+			       /*spd*/child->sa.st_connection->child.spds.list,
 			       child,
 			       (struct updown_env) {0},
 			       verbose)) {
