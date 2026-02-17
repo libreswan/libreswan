@@ -201,7 +201,7 @@
 <!ENTITY ppk_option '{&no;|&propose;|&yes;|&insist;|&never;}'>
 <!ENTITY sendca_option '{&none;|&issuer;|&all;}'>
 <!ENTITY type_option '{&tunnel;|&transport;|&passthrough;|&drop;}'>
-<!ENTITY updown_flags_option '{&async;|&exec;}'>
+<!ENTITY updown_config_option '{&async;|&exec;}'>
 <!ENTITY xauthby_option '{&file;|&pam;|&alwaysok;}'>
 <!ENTITY xauthfail_option '{&hard;|&soft;}'>
 <!ENTITY yn_option '{&yes;|&no;}'>
