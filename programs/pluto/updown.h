@@ -55,10 +55,12 @@ extern const struct enum_names updown_stories;
 extern const struct enum_names updown_names;
 
 enum updown_flags {
+	UPDOWN_FLAG_ASYNC,
 	UPDOWN_FLAG_EXEC,
 #define UPDOWN_FLAG_ROOF (UPDOWN_FLAG_EXEC+1)
 };
 
+#define updown_async_flag updown_flags[UPDOWN_FLAG_ASYNC]
 #define updown_exec_flag updown_flags[UPDOWN_FLAG_EXEC]
 
 extern const struct enum_names updown_flag_names;
@@ -94,6 +96,9 @@ struct updown_config {
 bool updown_child_spds(enum updown updown_verb,
 		       struct child_sa *child,
 		       struct updown_config config);
+
+bool updown_async_child(bool prepare, bool route, bool up,
+			struct child_sa *child);
 
 /*
  * Value of some environment variables passed down to updown.

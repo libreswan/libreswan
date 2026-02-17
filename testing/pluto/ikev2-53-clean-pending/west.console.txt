@@ -9,7 +9,7 @@ west #
  ipsec auto --status |grep westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted-bare-negotiation; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; negotiating IKE SA: #1;
-"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-flags=noexec;
+"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-flags=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -38,7 +38,7 @@ west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted-bare-negotiation; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; negotiating IKE SA: #1;
-"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-flags=noexec;
+"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-flags=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -69,7 +69,7 @@ west #
  ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
 "westnet-eastnet-ipv4-psk-ikev2": 192.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted-bare-negotiation; my_ip=unset; their_ip=unset;
 "westnet-eastnet-ipv4-psk-ikev2":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; negotiating IKE SA: #2;
-"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-flags=noexec;
+"westnet-eastnet-ipv4-psk-ikev2":   my_updown=ipsec _updown; my_updown-flags=noasync,noexec;
 "westnet-eastnet-ipv4-psk-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

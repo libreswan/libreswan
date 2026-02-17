@@ -39,7 +39,9 @@
 #include "keys.h"		/* for pluto_pubkeys */
 #include "secrets.h"		/* for struct pubkey_list */
 #include "server_run.h"
+#include "server_fork.h"
 
+static server_fork_cb updown_async_callback;
 const char *pluto_dns_resolver;
 
 static struct verbose verbose_updown(struct logger *logger,
@@ -555,6 +557,53 @@ bool updown_child_spds(enum updown updown_verb,
 	vdbg_stop(&start, "spds");
 	return true;
 }
+
+stf_status updown_async_callback(struct state *st,
+				 struct msg_digest *md,
+				 int wstatus, shunk_t output,
+				 void *callback_context,
+				 struct logger *logger)
+{
+	PEXPECT(logger, st == NULL);
+	PEXPECT(logger, md == NULL);
+	PEXPECT(logger, callback_context == NULL);
+	llog(ALL_STREAMS, logger, "async finished %d "PRI_SHUNK,
+	     wstatus, pri_shunk(output));
+	return STF_OK;
+}
+
+bool updown_async_child(bool prepare, bool route, bool up,
+			struct child_sa *child)
+{
+	char verb[sizeof("prepare-route-up")];
+	snprintf(verb, sizeof(verb),
+		 "%s%s%s%s%s",
+		 (prepare ? "prepare" : ""),
+		 (prepare && (route || up) ? "-" : ""),
+		 (route ? "route" : ""),
+		 (route && up ? "-" : ""),
+		 (up ? "up" : ""));
+
+	struct verbose verbose = VERBOSE(DEBUG_STREAM, child->sa.logger, verb);
+	struct updown_exec exec;
+	if (!build_updown_exec(&exec, verb, /*verb_suffix*/"",
+			       child->sa.st_connection,
+			       /*spd*/child->sa.st_connection->child.spds.list,
+			       child,
+			       (struct updown_env) {0},
+			       verbose)) {
+		return false;
+	}
+
+	server_fork_exec(exec.arg[0], (char**)exec.arg, (char**)exec.env,
+			 /*input*/null_shunk,
+			 ALL_STREAMS,
+			 updown_async_callback,
+			 /*callback_context*/NULL,
+			 child->sa.logger);
+	return true;
+}
+
 
 /*
  * Delete any kernel policies for a connection and unroute it if route

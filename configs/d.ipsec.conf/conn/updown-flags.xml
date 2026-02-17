@@ -1,33 +1,64 @@
 <varlistentry id='conn.updown-flags'>
   <term>
-    <option>leftupdown-flags=</option>
+    <option>leftupdown-flags=&updown_flags_option;</option>
   </term>
   <term>
-    <option>rightupdown-flags=</option>
+    <option>rightupdown-flags=&updown_flags_option;</option>
   </term>
   <listitem>
     <para>
-      Modify how the <option> updown </option> <replaceable> command
-      </replaceable> is run.
+      Modify how the <option>updown</option>
+      &command; is run.
     </para>
-    <note>
-      <para>
-	This option is experimental.
-      </para>
-    </note>
     <variablelist>
       <varlistentry>
 	<term>
-	  <option>exec</option>
+	  <option>
+	    &async;
+	  </option>
 	</term>
 	<listitem>
 	  <para>
-	    Assume <option> updown </option> <replaceable> command
-	    </replaceable> is an executable; invoke it directly using
-	    &exec.3;.  Normally the <option> updown </option>
-	    <replaceable> command </replaceable> is invoked using
-	    <command>/bin/sh -c</command>.
+	    On the IKE SA responder (server), when establishing an
+	    IKEv2 Child SA, invoke the <option>updown</option>
+	    &command; once and asynchronously.  Normally there is one
+	    invocation of the <option>updown</option> &command; for
+	    each combinations of the <envar>PLUTO_VERB</envar>
+	    (<option>prepare</option>, <option>route</option>,
+	    <option>up</option>) combined with each combinations of
+	    the Child SA's selectors.
 	  </para>
+	  <para>
+	    When invoked asynchronously, the variable
+	    <envar>PLUTO_VERB</envar> will contain
+	    <option>prepare-route-up</option>.  For more information
+	    see &ipsec-updown.8;
+	  </para>
+	  <caution>
+	    <para>
+	      This option is experimental.
+	    </para>
+	  </caution>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>
+	  <option>
+	    &exec;
+	  </option>
+	</term>
+	<listitem>
+	  <para>
+	    Assume the <option>updown</option> &command; is the path
+	    to an executable and invoke it directly using &exec.3;.
+	    Normally the <option>updown</option> &command; is invoked
+	    using <command>/bin/sh -c</command>.
+	  </para>
+	  <caution>
+	    <para>
+	      This option is experimental.
+	    </para>
+	  </caution>
 	</listitem>
       </varlistentry>
     </variablelist>
