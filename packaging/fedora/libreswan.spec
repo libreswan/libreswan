@@ -162,8 +162,8 @@ bunzip2 *.fax.bz2
 %endif
 
 # Some of these tests will show ERROR for negative testing - it will exit on real errors
-%{buildroot}%{_libexecdir}/ipsec/algparse -tp || { echo prooposal test failed; exit 1; }
-%{buildroot}%{_libexecdir}/ipsec/algparse -ta || { echo algorithm test failed; exit 1; }
+%{buildroot}%{_libexecdir}/ipsec/algparse --tp || { echo prooposal test failed; exit 1; }
+%{buildroot}%{_libexecdir}/ipsec/algparse --ta || { echo algorithm test failed; exit 1; }
 : Algorithm parser tests passed
 
 # self test for pluto daemon - this also shows which algorithms it allows in FIPS mode

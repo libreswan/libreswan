@@ -155,8 +155,8 @@ bunzip2 *.fax.bz2
     diff -u ikev1_psk.fax - > /dev/null
 : CAVS tests passed
 
-%{buildroot}%{_libexecdir}/ipsec/algparse -tp || { echo prooposal test failed; exit 1; }
-%{buildroot}%{_libexecdir}/ipsec/algparse -ta || { echo algorithm test failed; exit 1; }
+%{buildroot}%{_libexecdir}/ipsec/algparse --tp || { echo prooposal test failed; exit 1; }
+%{buildroot}%{_libexecdir}/ipsec/algparse --ta || { echo algorithm test failed; exit 1; }
 
 # self test for pluto daemon - this also shows which algorithms it allows in FIPS mode
 tmpdir=$(mktemp -d /tmp/libreswan-XXXXX)
