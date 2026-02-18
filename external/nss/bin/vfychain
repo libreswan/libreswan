@@ -1,0 +1,5 @@
+#!/bin/sh
+
+prog=$(basename $0 .sh)
+nss=$(realpath $(dirname $(dirname $0)))
+LD_LIBRARY_PATH=${nss}/dist/Debug/lib ${nss}/dist/Debug/bin/${prog} "$@"
