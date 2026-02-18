@@ -4784,7 +4784,6 @@ diag_t extract_connection(const struct whack_message *wm,
 		connection_db_check(verbose.logger, HERE);
 	}
 
-
 	request_resolve_help(c, extract_connection_resolve_continue,
 			     /*background*/wm->whack_async, verbose.logger);
 	return NULL;

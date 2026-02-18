@@ -49,7 +49,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 			   const struct starter_conn *conn,
 			   struct logger *logger,
 			   bool dry_run,
-			   bool async,
+			   enum yn_options async,
 			   enum whack_noise noise)
 {
 	struct whack_message msg;
@@ -57,7 +57,7 @@ int starter_whack_add_conn(const char *ctlsocket,
 
 	msg.whack_command = WHACK_ADD;
 	msg.name = conn->name;
-	msg.whack_async = async;
+	msg.whack_async = (async == YN_YES);
 
 	for (enum config_conn_keyword kw = 1; kw < CONFIG_CONN_KEYWORD_ROOF; kw++) {
 		msg.conn[END_ROOF].value[kw] = conn->values[kw].string;

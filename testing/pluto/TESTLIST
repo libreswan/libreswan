@@ -111,6 +111,19 @@ kvmplutotest	readwriteconf-01				wip
 kvmplutotest	algparse-01					good
 kvmplutotest	algparse-02-fips				good
 
+#################################################################
+#
+# Test parsing/loading ipsec.conf connection options
+#
+# Connections can be loaded using add, addconn, and whack. In an ideal
+# world these would cover all possible ipsec.conn connection options.
+# The tests are named addconn- as, originally, that was the command
+# that did most of the heavy lifting.
+#
+# See whack-add-NN-* for tests messing with add options.
+#
+#################################################################
+
 kvmplutotest	addconn-02-many-routes				good
 kvmplutotest	addconn-04-config-path				good
 kvmplutotest	addconn-05-bogus-left-interface			good
@@ -1455,7 +1468,13 @@ kvmplutotest	seccomp-02-tolerant		good	github/795
 kvmplutotest	seccomp-03-updown		wip	github/492
 
 #################################################################
-# Whack/IPSEC UI tests
+#
+# Tests for <<ipsec ...>> and <<ipsec whack ...>>
+#
+# The prefix whack- ... comes about because, originally, many of the
+# commands were implemented by whack (and everything qualifies for an
+# ipsec- prefix).
+#
 #################################################################
 
 kvmplutotest	whack-basics-01				good
@@ -1463,6 +1482,10 @@ kvmplutotest	whack-globalstatus-01			good
 kvmplutotest	whack-rereadcerts-01			good
 kvmplutotest	whack-rereadsecrets-01-privatekey	good	github/1894
 kvmplutotest	whack-ctlsocket-01			good
+
+# "ipsec add/start/ondemand
+
+kvmplutotest	whack-add-01-auto-up-async-hang		good	github/2615
 
 # "ipsec newhostkey" "ipsec showhostkey"
 
