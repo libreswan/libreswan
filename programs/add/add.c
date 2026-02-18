@@ -144,7 +144,7 @@ static void fprint_conn(FILE *file,
 static void add_conn(struct starter_conn *conn,
 		     enum autostart autostart,
 		     bool dry_run,
-		     bool async,
+		     enum yn_options async,
 		     const char *alias/*possibly-NULL*/,
 		     const char *ctlsocket, int *exit_status,
 		     struct logger *logger,
@@ -179,7 +179,8 @@ static void add_conn(struct starter_conn *conn,
 	}
 
 	int status = starter_whack_add_conn(ctlsocket, conn, logger,
-					    dry_run, async, noise);
+					    dry_run, async,
+					    noise);
 
 	/* don't loose existing status */
 	if (status != 0) {
@@ -191,7 +192,7 @@ static void add_conn(struct starter_conn *conn,
 static bool find_and_add_conn_by_name(const char *connname,
 				      enum autostart autostart,
 				      bool dry_run,
-				      bool async,
+				      enum yn_options async,
 				      struct starter_config *cfg,
 				      const char *ctlsocket,
 				      int *exit_status,
@@ -215,7 +216,7 @@ static bool find_and_add_conn_by_name(const char *connname,
 static bool find_and_add_conn_by_alias(const char *connname,
 				       enum autostart autostart,
 				       bool dry_run,
-				       bool async,
+				       enum yn_options async,
 				       struct starter_config *cfg,
 				       const char *ctlsocket,
 				       int *exit_status,
@@ -367,7 +368,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		case OPT_ASYNC:
-			async = YN_YES;
+			async = optarg_yn(logger, YN_YES);
 			continue;
 
 		}
@@ -465,8 +466,7 @@ int main(int argc, char *argv[])
 			}
 
 			starter_whack_add_conn(ctlsocket, conn, logger,
-					       dry_run, (async == YN_YES),
-					       noise);
+					       dry_run, async, noise);
 		}
 
 		if (verbose > 0)
@@ -489,7 +489,7 @@ int main(int argc, char *argv[])
 			}
 
 			if (find_and_add_conn_by_name(connname, autostart,
-						      dry_run, (async == YN_YES),
+						      dry_run, async,
 						      cfg, ctlsocket,
 						      &exit_status, logger, noise)) {
 				continue;
@@ -497,7 +497,7 @@ int main(int argc, char *argv[])
 
 			/* We didn't find name; look for first alias */
 			if (find_and_add_conn_by_alias(connname, autostart,
-						       dry_run, (async == YN_YES),
+						       dry_run, async,
 						       cfg, ctlsocket,
 						       &exit_status, logger, noise)) {
 				continue;
