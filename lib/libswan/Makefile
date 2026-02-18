@@ -202,6 +202,7 @@ OBJS += bad_sparse_where.o
 OBJS += lswglob.o
 
 OBJS += global_logger.o
+OBJS += global_event_base.o
 OBJS += jambuf.o
 OBJS += jam_humber.o
 OBJS += jam_bytes.o

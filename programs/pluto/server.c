@@ -88,6 +88,7 @@
 #include "hash_table.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "global_event_base.h"
 
 /*
  *  Server main loop and socket initialization routines.
@@ -519,6 +520,7 @@ void free_server(struct logger *logger)
 	free_signal_handlers(logger);
 
 	ldbg(logger, "releasing event base");
+	set_global_event_base(NULL);
 	event_base_free(pluto_eb);
 	pluto_eb = NULL;
 #if LIBEVENT_VERSION_NUMBER >= 0x02010100
@@ -1103,6 +1105,7 @@ void init_server(struct logger *logger)
 
 	int s = evthread_make_base_notifiable(pluto_eb);
 	passert(s >= 0);
+	set_global_event_base(pluto_eb);
 	ldbg(logger, "libevent initialized");
 }
 
@@ -1179,7 +1182,7 @@ void stop_server(server_stopped_cb *cb NEVER_RETURNS)
 
 struct event_base *get_pluto_event_base(void)
 {
-	return pluto_eb;
+	return get_global_event_base();
 }
 
 unsigned nr_processors_online(void)
