@@ -86,103 +86,6 @@ ipsec_command() {
     exit $?
 }
 
-ipsec_combined() {
-    #
-    # ipsec start and ipsec ondemand commands
-    #
-    local auto
-    local conn_name usage
-    local verbose
-
-    while [ ${#} -gt 0 ]; do
-	case "${1}" in
-	    ondemand|--ondemand)
-		auto="route"
-		usage="Usage: ipsec ondemand [--asynchronous] connectionname \\
-		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
-		[--ctlsocket ${CTLSOCKET}] [--verbose]"
-		shift
-		case ${1} in
-		    --asynchronous)
-			asynchronous="${1}"
-			shift
-			;;
-		esac
-		case ${1} in
-		    "")
-			echo "${usage}" >&2
-			exit 2
-			;;
-		esac
-		;;
-	    start|--start)
-		auto="up"
-		usage="Usage: ipsec start [--asynchronous] connectionname \\
-		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
-		[--ctlsocket ${CTLSOCKET}] [--verbose]"
-		shift
-		case ${1} in
-		    --asynchronous)
-			asynchronous="${1}"
-			shift
-			;;
-		esac
-		case ${1} in
-		    "")
-			echo "${usage}" >&2
-			exit 2
-			;;
-		esac
-		;;
-	    help|--help|-h)
-		echo "${usage}"
-		exit 0
-		;;
-	    --asynchronous)
-		asynchronous="${1}"
-		shift
-		;;
-	    --config)
-		IPSEC_CONF="${2}"
-		export IPSEC_CONF
-		shift
-		shift
-		;;
-	    --ctlsocket)
-		CTLSOCKET="${2}"
-		export CTLSOCKET
-		shift
-		shift
-		;;
-	    --dry-run|-n)
-		dry_run="echo"
-		shift
-		;;
-	    --verbose)
-		verbose="${1}"
-		shift
-		;;
-	    --remote-host)
-		remote_host="--remote-host ${2}"
-		shift
-		shift
-		;;
-	    -*)
-		echo "Unknown option \"${1}\"" >&2
-		echo >&2
-		echo "${usage}" >&2
-		exit 2
-		;;
-	    *)
-		conn_name="${1}"
-		shift
-		;;
-	esac
-    done
-    ${dry_run} "${IPSEC_EXECDIR}/add" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} --auto=${auto} ${conn_name}
-    exit $?
-}
-
 ipsec_redirect() {
     #
     # ipsec redirect command
@@ -1221,7 +1124,8 @@ while [ ${#} -gt 0 ]; do
 	    ipsec_whack "${@}"
 	    ;;
 	ondemand|--ondemand)
-	    ipsec_combined "${@}"
+	    shift
+	    ipsec_command add --auto=route "${@}"
 	    ;;
 	redirect)
 	    ipsec_redirect "${@}"
@@ -1233,7 +1137,8 @@ while [ ${#} -gt 0 ]; do
 	    if [ -z "${2}" ]; then
 		ipsec_setup "${@}"
 	    else
-	        ipsec_combined "${@}"
+		shift
+	        ipsec_command add --auto=up "${@}"
 	    fi
 	    ;;
 	stop|--stop)
