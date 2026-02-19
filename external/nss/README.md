@@ -1,35 +1,55 @@
 This directory is used to build a local version of NSS.
 
-- for a local native build:
+## LOCAL NATIVE BUILD
 
-    $ make -C external/nss
+```
+$ make -C external/nss
+```
 
-  then add:
+then add:
 
-    include $(top_srcdir)/external/nss/Makefile.nss
+```
+include $(top_srcdir)/external/nss/Makefile.nss
+```
 
-  to Makefile.inc.local
+to Makefile.inc.local
 
-- add dependencies to KVM machine
+## KVM build
 
-  (linux build domain should have this pre-installed)
+First check that the build depencencies are installed (linux does this
+by default during upgrade):
 
-    $ ./kvm sh linux
-    linux#  dnf install gyp ninja c++ ...?
+```
+$ ./kvm sh linux
+linux#  dnf install gyp ninja c++ ...?
+```
 
-- build from within the KVM
+Build from within the KVM
 
-    $ ./kvm sh linux
-    linux# make -C /source/external/nss
+```
+$ ./kvm sh linux
+linux# make -C /source/external/nss
+```
 
-  -> there are likely missing packages, above is a guess
-  -> it may take several attempts; mecurial download can fail
+- there are likely missing packages, above is a guess
+- it may take several attempts; mecurial download can fail
 
-  and then add:
+Add dependencies:
 
-    ifeq ($(shell hostname),linux)
-    include $(top_srcdir)/external/nss/Makefile.nss
-    endif
+```
+ifeq ($(shell hostname),linux)
+include $(top_srcdir)/external/nss/Makefile.nss
+endif
+```
 
-  to Makefile.inc.local (I'm assuming your machine isn't called
-  linux).
+To Makefile.inc.local (I'm assuming your machine isn't called linux).
+
+## TODO
+
+- support separate build tree so that multiple NSS builds can co-exist
+
+## To update the REPO
+
+```
+make -C external/nss update
+```

@@ -55,3 +55,9 @@ nspr/:
 	hg clone https://hg.mozilla.org/projects/nspr
 nss/:
 	hg clone https://hg.mozilla.org/projects/nss
+
+.PHONY: update
+
+update:
+	cd nspr && hg pull && hg update
+	cd nss && hg pull && hg update
