@@ -113,7 +113,7 @@ static bool build_updown_exec(struct updown_exec *exec,
 	 * Build argv[]
 	 */
 	const char **argv = exec->arg;
-	if (c->local->config->child.updown.updown_exec_flag) {
+	if (c->local->config->child.updown.updown_config_exec) {
 		(*argv++) = c->local->config->child.updown.command;
 	} else {
 		(*argv++) = "/bin/sh";
@@ -651,13 +651,13 @@ void jam_updown_status(struct jambuf *buf, const char *prefix,
 		jam_string(buf, end->config->child.updown.command);
 	}
 	jam_string(buf, ";");
-	/* PREFIX-updown-flags= */
+	/* PREFIX-updown-config= */
 	jam_string(buf, " ");
 	jam_string(buf, prefix);
-	jam_string(buf, "updown-flags=");
+	jam_string(buf, "updown-config=");
 	jam_flags_human(buf,
-			end->config->child.updown.updown_flags,
-			&updown_flag_names);
+			end->config->child.updown.updown_config,
+			&updown_config_names);
 	jam_string(buf, ";");
 }
 

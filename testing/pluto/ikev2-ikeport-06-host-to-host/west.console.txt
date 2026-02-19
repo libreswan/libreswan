@@ -13,7 +13,7 @@ west #
  ipsec auto --status | grep west-east-ikev2
 "west-east-ikev2": 192.1.2.45:2500[@west]...192.1.2.23:4500[@east]; unrouted; my_ip=unset; their_ip=unset;
 "west-east-ikev2":   host: oriented; local: 192.1.2.45:2500; remote: 192.1.2.23:4500;
-"west-east-ikev2":   my_updown=ipsec _updown; my_updown-flags=noasync,noexec;
+"west-east-ikev2":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "west-east-ikev2":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "west-east-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "west-east-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

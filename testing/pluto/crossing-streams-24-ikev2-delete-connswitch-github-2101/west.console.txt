@@ -30,7 +30,7 @@ Connection list:
  
 "a": 192.0.3.253/32===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; routed-tunnel; my_ip=192.0.3.253; their_ip=unset;
 "a":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23; established IKE SA: #3;
-"a":   my_updown=ipsec _updown; my_updown-flags=noasync,noexec;
+"a":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "a":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -54,7 +54,7 @@ Connection list:
 "a":   ESP algorithm newest: AES_GCM_16_256; pfsgroup=<Phase1>
 "b": 192.0.3.254/32===192.1.2.45[@west]...192.1.2.23[@east]===192.0.20.0/24; routed-tunnel; my_ip=192.0.3.254; their_ip=unset;
 "b":   host: oriented; local: 192.1.2.45; remote: 192.1.2.23;
-"b":   my_updown=ipsec _updown; my_updown-flags=noasync,noexec;
+"b":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "b":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 "b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

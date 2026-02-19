@@ -49,16 +49,16 @@ const struct enum_names updown_names = {
 	"UPDOWN_", NULL,
 };
 
-static const char *updown_flag_name[] = {
+static const char *updown_config_name[] = {
 #define C(E) [E] = #E
-	C(UPDOWN_FLAG_ASYNC),
-	C(UPDOWN_FLAG_EXEC),
+	C(UPDOWN_CONFIG_ASYNC),
+	C(UPDOWN_CONFIG_EXEC),
 #undef C
 };
 
-const struct enum_names updown_flag_names = {
-	0, UPDOWN_FLAG_ROOF-1,
-	ARRAY_REF(updown_flag_name),
-	"UPDOWN_FLAG_",
+const struct enum_names updown_config_names = {
+	0, UPDOWN_CONFIG_ROOF-1,
+	ARRAY_REF(updown_config_name),
+	"UPDOWN_CONFIG_",
 	NULL,
 };

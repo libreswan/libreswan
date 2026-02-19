@@ -149,7 +149,7 @@ struct child_end_config {
 	 */
 	struct {
 		char *command;
-		bool updown_flags[UPDOWN_FLAG_ROOF];
+		bool updown_config[UPDOWN_CONFIG_ROOF];
 	} updown;
 
 	bool has_client_address_translation;		/* aka CAT */

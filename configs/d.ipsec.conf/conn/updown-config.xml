@@ -1,14 +1,13 @@
-<varlistentry id='conn.updown-flags'>
+<varlistentry id='conn.updown-config'>
   <term>
-    <option>leftupdown-flags=&updown_flags_option;</option>
+    <option>leftupdown-config=&updown_config_option;</option>
   </term>
   <term>
-    <option>rightupdown-flags=&updown_flags_option;</option>
+    <option>rightupdown-config=&updown_config_option;</option>
   </term>
   <listitem>
     <para>
-      Modify how the <option>updown</option>
-      &command; is run.
+      Modify how the <option>updown</option> &command; is run.
     </para>
     <variablelist>
       <varlistentry>
@@ -29,10 +28,7 @@
 	    the Child SA's selectors.
 	  </para>
 	  <para>
-	    When invoked asynchronously, the variable
-	    <envar>PLUTO_VERB</envar> will contain
-	    <option>prepare-route-up</option>.  For more information
-	    see &ipsec-updown.8;
+	    For more information see &ipsec-updown.8;
 	  </para>
 	  <caution>
 	    <para>
@@ -63,7 +59,7 @@
       </varlistentry>
     </variablelist>
     <para>
-      The option <option>updown-flags=</option> was added in
+      The option <option>updown-config=</option> was added in
       &Libreswan; 5.4.
     </para>
   </listitem>
