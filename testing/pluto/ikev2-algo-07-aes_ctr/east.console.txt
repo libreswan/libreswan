@@ -39,7 +39,6 @@ global-redirect=no, global-redirect-to=<unset>
 debug ...
  
 nat-traversal: keep-alive=20, nat-ikeport=4500
-virtual-private (%priv):
  
 Kernel algorithms supported:
  
