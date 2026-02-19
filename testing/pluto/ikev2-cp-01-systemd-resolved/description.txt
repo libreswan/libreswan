@@ -1,0 +1,4 @@
+Test IKEv2 with addresspool and DNS CP payloads and dns-resolver=systemd
+
+ROAD tests to see if its systemd resolver is overwritten and restored
+properly
