@@ -1,0 +1,119 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ ipsec auto --add eastnet-any
+"eastnet-any": added oriented IKEv2 connection
+road #
+ # confirm we have stock resolv.conf
+road #
+ cat /etc/resolv.conf
+domain testing.libreswan.org
+nameserver 192.1.3.254
+road #
+ echo initdone
+initdone
+road #
+ systemctl start systemd-resolved
+road #
+ # update from blank
+road #
+ resolvectl dns eth0
+Link 2 (eth0):
+road #
+ resolvectl domain eth0
+Link 2 (eth0):
+road #
+ ipsec up eastnet-any
+"eastnet-any"[1] 192.1.2.23 #1: initiating IKEv2 connection to 192.1.2.23 using UDP
+"eastnet-any"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"eastnet-any"[1] 192.1.2.23 #1: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"eastnet-any"[1] 192.1.2.23 #1: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@GroupID'; Child SA #2 {ESP <0xESPESP}
+"eastnet-any"[1] 192.1.2.23 #1: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr}
+"eastnet-any"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 100.64.13.2
+"eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 1.2.3.4
+"eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS server address 5.6.7.8
+"eastnet-any"[1] 192.1.2.23 #2: received INTERNAL_DNS_DOMAIN 'libreswan.org'
+"eastnet-any"[1] 192.1.2.23 #2: command "up" output: setting DNS: 1.2.3.4 1.2.3.4 5.6.7.8 on eth0
+"eastnet-any"[1] 192.1.2.23 #2: command "up" output: setting domain: libreswan.org libreswan.org on eth0
+"eastnet-any"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+road #
+ resolvectl dns eth0
+Link 2 (eth0): 1.2.3.4 5.6.7.8
+road #
+ resolvectl domain eth0
+Link 2 (eth0): libreswan.org
+road #
+ ../../guestbin/ping-once.sh --up -I 100.64.13.2 192.0.2.254
+up
+road #
+ ipsec whack --trafficstatus
+#2: "eastnet-any"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east', lease=100.64.13.2/32
+road #
+ # restore to blank
+road #
+ ipsec down eastnet-any
+"eastnet-any"[1] 192.1.2.23: initiating delete of connection's IKE SA #1 (and Child SA #2)
+"eastnet-any"[1] 192.1.2.23 #1: sent INFORMATIONAL request to delete IKE SA
+"eastnet-any"[1] 192.1.2.23 #2: command "down" output: clearing DNS
+"eastnet-any"[1] 192.1.2.23 #2: command "down" output: clearing Domain
+"eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
+"eastnet-any"[1] 192.1.2.23 #1: deleting IKE SA (established IKE SA)
+road #
+ resolvectl dns eth0
+Link 2 (eth0):
+road #
+ resolvectl domain eth0
+Link 2 (eth0):
+road #
+ # update from non-blank
+road #
+ resolvectl dns eth0 8.8.8.8
+road #
+ resolvectl domain eth0 google.com
+road #
+ ipsec up eastnet-any
+"eastnet-any"[2] 192.1.2.23 #3: initiating IKEv2 connection to 192.1.2.23 using UDP
+"eastnet-any"[2] 192.1.2.23 #3: sent IKE_SA_INIT request to 192.1.2.23:UDP/500
+"eastnet-any"[2] 192.1.2.23 #3: processed IKE_SA_INIT response from 192.1.2.23:UDP/500 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=DH19}, initiating IKE_AUTH
+"eastnet-any"[2] 192.1.2.23 #3: sent IKE_AUTH request to 192.1.2.23:UDP/500 with shared-key-mac and FQDN '@GroupID'; Child SA #4 {ESP <0xESPESP}
+"eastnet-any"[2] 192.1.2.23 #3: processing IKE_AUTH response from 192.1.2.23:UDP/500 containing SK{IDr,AUTH,CP,SA,TSi,TSr}
+"eastnet-any"[2] 192.1.2.23 #3: initiator established IKE SA; authenticated peer using authby=secret and FQDN '@east'
+"eastnet-any"[2] 192.1.2.23 #4: received INTERNAL_IP4_ADDRESS 100.64.13.2
+"eastnet-any"[2] 192.1.2.23 #4: received INTERNAL_IP4_DNS server address 1.2.3.4
+"eastnet-any"[2] 192.1.2.23 #4: received INTERNAL_IP4_DNS server address 5.6.7.8
+"eastnet-any"[2] 192.1.2.23 #4: received INTERNAL_DNS_DOMAIN 'libreswan.org'
+"eastnet-any"[2] 192.1.2.23 #4: command "up" output: setting DNS: 1.2.3.4 1.2.3.4 5.6.7.8 on eth0
+"eastnet-any"[2] 192.1.2.23 #4: command "up" output: setting domain: libreswan.org libreswan.org on eth0
+"eastnet-any"[2] 192.1.2.23 #4: initiator established Child SA using #3; IPsec tunnel [100.64.13.2/32===192.0.2.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256 DPD=passive}
+road #
+ resolvectl dns eth0
+Link 2 (eth0): 1.2.3.4 5.6.7.8
+road #
+ resolvectl domain eth0
+Link 2 (eth0): libreswan.org
+road #
+ # restore to non-blank
+road #
+ ipsec down eastnet-any
+"eastnet-any"[2] 192.1.2.23: initiating delete of connection's IKE SA #3 (and Child SA #4)
+"eastnet-any"[2] 192.1.2.23 #3: sent INFORMATIONAL request to delete IKE SA
+"eastnet-any"[2] 192.1.2.23 #4: command "down" output: restoring DNS to "8.8.8.8" from "/run/pluto/libreswan-prev-dns-eth0"
+"eastnet-any"[2] 192.1.2.23 #4: command "down" output: restoring Domain to "google.com" from "/run/pluto/libreswan-prev-domain-eth0"
+"eastnet-any"[2] 192.1.2.23 #4: ESP traffic information: in=0B out=0B
+"eastnet-any"[2] 192.1.2.23 #3: deleting IKE SA (established IKE SA)
+road #
+ resolvectl dns eth0
+Link 2 (eth0): 8.8.8.8
+road #
+ resolvectl domain eth0
+Link 2 (eth0): google.com
+road #
+ echo done
+done
+road #

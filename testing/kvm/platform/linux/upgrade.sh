@@ -124,6 +124,7 @@ strace
 strongswan
 strongswan-sqlite
 systemd-networkd
+systemd-resolved
 tar
 tcpdump
 tpm2-abrmd

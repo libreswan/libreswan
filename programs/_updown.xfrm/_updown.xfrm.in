@@ -161,6 +161,9 @@ export LC_ALL
 #	PLUTO_NM_CONFIGURED=0|1
 #		is NetworkManager used for resolv.conf update
 #
+#       PLUTO_DNS_RESOLVER={file,systemd}
+#               the DNS resolver being used
+#
 #	PLUTO_CONN_ADDRFAMILY
 #		is the host family type, "ipv4" or "ipv6"
 #
@@ -251,6 +254,8 @@ fi
 
 BACKUP_RESOLV_CONF=@@RUNDIR@@/libreswan-resolv-conf-backup
 ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
+DNS_BACKUP=@@RUNDIR@@/libreswan-prev-dns-$PLUTO_INTERFACE
+DOMAIN_BACKUP=@@RUNDIR@@/libreswan-prev-domain-$PLUTO_INTERFACE
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)
@@ -337,7 +342,36 @@ downrule() {
     fi
 }
 
-updateresolvconf() {
+update_systemd_resolver() {
+
+    if [ ! -f "${DNS_BACKUP}" ]; then
+	resolvectl dns "${PLUTO_INTERFACE}" | sed -n -e 's/^Link[^:]*: *//p' | xargs > "${DNS_BACKUP}" 2>/dev/null
+    else
+	echo "skipping DNS backup, \"${DNS_BACKUP}\" already exists"
+    fi
+
+    if [ ! -f "${DOMAIN_BACKUP}" ]; then
+	resolvectl domain "${PLUTO_INTERFACE}" | sed -n -e 's/^Link[^:]*: *//p' | xargs > "${DOMAIN_BACKUP}" 2>/dev/null
+    else
+	echo "skipping Domain backup, \"${DOMAIN_BACKUP}\" already exists"
+    fi
+
+    if [ -n "$PLUTO_PEER_DNS_INFO" ]; then
+	echo "setting DNS: $PLUTO_PEER_DNS_INFO on ${PLUTO_INTERFACE}"
+	resolvectl dns "${PLUTO_INTERFACE}" $PLUTO_PEER_DNS_INFO
+    fi
+
+    if [ -n "$PLUTO_PEER_DOMAIN_INFO" ]; then
+	echo "setting domain: $PLUTO_PEER_DOMAIN_INFO on ${PLUTO_INTERFACE}"
+	resolvectl domain "${PLUTO_INTERFACE}" $PLUTO_PEER_DOMAIN_INFO
+    fi
+
+    return 0
+}
+
+update_resolv_conf() {
+
+    # Fallback for non-systemd systems
     local domain
     local nameserver
     local new_nameserver
@@ -425,12 +459,57 @@ nameserver ${nameserver}"
 	done
 
 	echo "${new_resolv_conf}" > "${ETC_RESOLV_CONF}"
-	rc=$?
+ 	rc=$?
+
     fi
     return ${rc}
 }
 
-restoreresolvconf() {
+update_dns_resolver() {
+    case "${PLUTO_DNS_RESOLVER}" in
+	systemd ) update_systemd_resolver ;;
+	file ) update_resolv_conf ;;
+	* ) echo "${PLUTO_DNS_RESOLVER}: resolver unrecognized" ; exit 1 ;;
+    esac
+}
+
+restore_systemd_resolver() {
+
+    # Restore previous DNS if backup exists
+    if [ -f "${DNS_BACKUP}" ]; then
+        PREV_DNS=$(cat "${DNS_BACKUP}")
+        if [ -n "$PREV_DNS" ]; then
+	    echo "restoring DNS to \"${PREV_DNS}\" from \"${DNS_BACKUP}\""
+            resolvectl dns "${PLUTO_INTERFACE}" $PREV_DNS
+	else
+	    echo "clearing DNS"
+            resolvectl dns "${PLUTO_INTERFACE}" ""
+        fi
+	rm -f "${DNS_BACKUP}"
+    else
+	echo "no DNS backup to restore"
+    fi
+
+    # Restore backed up domain if present
+    if [ -f "${DOMAIN_BACKUP}" ]; then
+        PREV_DOMAIN=$(cat "${DOMAIN_BACKUP}")
+        if [ -n "$PREV_DOMAIN" ]; then
+	    echo "restoring Domain to \"${PREV_DOMAIN}\" from \"${DOMAIN_BACKUP}\""
+            resolvectl domain "${PLUTO_INTERFACE}" $PREV_DOMAIN
+	else
+	    echo "clearing Domain"
+            resolvectl domain "${PLUTO_INTERFACE}" ""
+        fi
+   	rm -f "${DOMAIN_BACKUP}"
+    else
+	echo "no Domain backup to restore"
+    fi
+
+    return 0
+}
+
+restore_resolv_conf() {
+    # Fallback for non-systemd system
     local domain
     local rc
     rc=0
@@ -463,6 +542,15 @@ restoreresolvconf() {
 	rc=0
     fi
     return ${rc}
+
+}
+
+restore_dns_resolver() {
+    case "${PLUTO_DNS_RESOLVER}" in
+	systemd ) restore_systemd_resolver ;;
+	file ) restore_resolv_conf ;;
+	* ) echo "${PLUTO_DNS_RESOLVER}: resolver unrecognized" ; exit 1 ;;
+    esac
 }
 
 notifyNM() {
@@ -1106,7 +1194,7 @@ case "${PLUTO_VERB}" in
     up-client)
 	# connection to my client subnet coming up
 	addvtiiface
-	updateresolvconf
+	update_dns_resolver
 	addcat
 	addsource
 	notifyNM connect
@@ -1119,7 +1207,7 @@ case "${PLUTO_VERB}" in
 	delnflog
 	delcat
 	delvti
-	restoreresolvconf
+	restore_dns_resolver
 	notifyNM disconnect
 	# If you are doing a custom version, firewall commands go here.
 	;;
@@ -1149,13 +1237,13 @@ case "${PLUTO_VERB}" in
     up-client-v6)
 	# connection to my client subnet coming up
 	addsource
-	updateresolvconf
+	update_resolv_conf
 	notifyNM connect
 	# If you are doing a custom version, firewall commands go here.
 	;;
     down-client-v6)
 	# connection to my client subnet going down
-	restoreresolvconf
+	restore_resolv_conf
 	notifyNM disconnect
 	# If you are doing a custom version, firewall commands go here.
 	;;
