@@ -615,7 +615,7 @@ static unsigned lookup_sparse_name(const char *leftright,
 			jam(buf, "%s%s=%s is invalid, valid options are ",
 			    leftright, name, value);
 			jam_sparse_names_quoted(buf, names);
-			(*d) = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+			(*d) = diag_jambuf(buf);
 		}
 		return value_when_unset;
 	}
