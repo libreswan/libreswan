@@ -632,6 +632,10 @@ static void show_virtual_private_kind(struct show *s,
 
 void show_virtual_private(struct show *s)
 {
+	if (private_net_incl == NULL &&
+	    private_net_excl == NULL) {
+		return;
+	}
 	show(s, "virtual-private (%%priv):");
 	show_virtual_private_kind(s, "allowed",
 				  private_net_incl,
