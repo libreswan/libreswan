@@ -178,7 +178,8 @@ Connection list:
 "clear#192.1.2.254/32":   conn serial: $6, instantiated from: $3;
 "private": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
 "private":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunisticgroup;
-"private":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"private":   mycert=east;
+"private":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -201,7 +202,8 @@ Connection list:
 "private":   conn serial: $1;
 "private#10.1.0.0/24": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===10.1.0.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
 "private#10.1.0.0/24":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunistic;
-"private#10.1.0.0/24":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"private#10.1.0.0/24":   mycert=east;
+"private#10.1.0.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private#10.1.0.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private#10.1.0.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private#10.1.0.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -224,7 +226,8 @@ Connection list:
 "private#10.1.0.0/24":   conn serial: $4, instantiated from: $1;
 "private-or-clear": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; my_ip=unset; their_ip=unset;
 "private-or-clear":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunisticgroup;
-"private-or-clear":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"private-or-clear":   mycert=east;
+"private-or-clear":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
@@ -247,7 +250,8 @@ Connection list:
 "private-or-clear":   conn serial: $2;
 "private-or-clear#192.1.2.0/24": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===192.1.2.0/24; routed-ondemand; my_ip=unset; their_ip=unset;
 "private-or-clear#192.1.2.0/24":   host: oriented; local: 192.1.2.23; nexthop: 192.1.2.254; remote: %opportunistic;
-"private-or-clear#192.1.2.0/24":   mycert=east; my_updown=ipsec _updown; my_updown-config=noasync,noexec;
+"private-or-clear#192.1.2.0/24":   mycert=east;
+"private-or-clear#192.1.2.0/24":   my_updown=ipsec _updown; my_updown-config=noasync,noexec;
 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none, my_username=[any]; their_username=[any]
 "private-or-clear#192.1.2.0/24":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 "private-or-clear#192.1.2.0/24":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;

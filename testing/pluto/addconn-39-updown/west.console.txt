@@ -52,18 +52,30 @@ warning: "whack--pass--updown=from": leftupdown=from ignored for never-negotiate
 "whack--pass--updown=from": added unoriented passthrough connection (neither left=1.2.3.4 nor right=5.6.7.8 match an interface)
 west #
  ipsec connectionstatus | sed -n -e '/: .*updown=/ s/  */ /gp' | sort
-"addconn--leftupdown=%disabled": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"addconn": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec; rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
-"addconn--leftupdown=left": leftupdown=left; leftupdown-config=noasync,noexec; rightupdown=left; rightupdown-config=noasync,noexec;
-"addconn--leftupdown=": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"addconn--leftupdown=quotes": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"addconn--rightupdown=right": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec; rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
-"addconn--type=passthrough": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"whack": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec; rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
-"whack--pass": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"whack--pass--updown=from": leftupdown=<disabled>; leftupdown-config=noasync,noexec; rightupdown=<disabled>; rightupdown-config=noasync,noexec;
-"whack--updown=from": leftupdown=from; leftupdown-config=noasync,noexec; rightupdown=from; rightupdown-config=noasync,noexec;
+"addconn--leftupdown=%disabled": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"addconn--leftupdown=%disabled": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec;
+"addconn--leftupdown=left": leftupdown=left; leftupdown-config=noasync,noexec;
+"addconn--leftupdown=left": rightupdown=left; rightupdown-config=noasync,noexec;
+"addconn--leftupdown=": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"addconn--leftupdown=quotes": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"addconn--leftupdown=quotes": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn--leftupdown=": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn": rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
+"addconn--rightupdown=right": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec;
+"addconn--rightupdown=right": rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
+"addconn--type=passthrough": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"addconn--type=passthrough--leftupdown=left": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"addconn--type=passthrough--leftupdown=left": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"addconn--type=passthrough": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"whack": leftupdown=ipsec _updown; leftupdown-config=noasync,noexec;
+"whack--pass": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"whack--pass": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"whack--pass--updown=from": leftupdown=<disabled>; leftupdown-config=noasync,noexec;
+"whack--pass--updown=from": rightupdown=<disabled>; rightupdown-config=noasync,noexec;
+"whack": rightupdown=ipsec _updown; rightupdown-config=noasync,noexec;
+"whack--updown=from": leftupdown=from; leftupdown-config=noasync,noexec;
+"whack--updown=from": rightupdown=from; rightupdown-config=noasync,noexec;
 west #
  ipsec stop
 Redirecting to: [initsystem]
